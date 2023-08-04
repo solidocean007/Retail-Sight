@@ -68,32 +68,55 @@ export const UserPhoneInput = ({
       }
     };
 
-  return (
-    <div id="phone-input-wrap">
-      <label htmlFor="">Phone</label>
-      <input
-        id="phone-input-1"
-        type="text"
-        ref={ref0}
-        value={userInputs.phoneInput[0]}
-        onChange={createOnChangeHandler(0)}
-      />
-      -
-      <input
-        id="phone-input-2"
-        type="text"
-        ref={ref1}
-        value={userInputs.phoneInput[1]}
-        onChange={createOnChangeHandler(1)}
-      />
-      -
-      <input
-        id="phone-input-3"
-        type="text"
-        ref={ref2}
-        value={userInputs.phoneInput[2]}
-        onChange={createOnChangeHandler(2)}
-      />
-    </div>
-  );
-};
+  const firstInputValue = userInputs.phoneInput[0];
+  const shouldRenderSingleInput =
+    firstInputValue.length >= 10 && firstInputValue.length <= 11;
+
+    return (
+      <div id="phone-input-wrap">
+        <label htmlFor="">Phone</label>
+        {shouldRenderSingleInput ? (
+          <input
+            id="phone-input-1"
+            type="text"
+            ref={ref0}
+            value={firstInputValue}
+            onChange={createOnChangeHandler(0)}
+          />
+        ) : (
+          <>
+            <input
+              id="phone-input-1"
+              type="text"
+              ref={ref0}
+              value={userInputs.phoneInput[0]}
+              onChange={createOnChangeHandler(0)}
+            />
+            -
+            <input
+              id="phone-input-2"
+              type="text"
+              ref={ref1}
+              value={userInputs.phoneInput[1]}
+              onChange={createOnChangeHandler(1)}
+            />
+            -
+            <input
+              id="phone-input-3"
+              type="text"
+              ref={ref2}
+              value={userInputs.phoneInput[2]}
+              onChange={createOnChangeHandler(2)}
+            />
+          </>
+        )}
+      </div>
+    );
+  };
+  
+  
+  
+  
+  
+  
+  

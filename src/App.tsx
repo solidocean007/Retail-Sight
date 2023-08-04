@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import './App.css'
 import { SignUpLogin } from './components/SignUpLogIn'
+import { TUserInformation } from './utils/types'
 
 function App() {
   const [count, setCount] = useState(0)
+  const [profileData, setProfileData] = useState<TUserInformation | null>(null);
 
   return (
     <>
@@ -16,7 +18,7 @@ function App() {
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
       </div>
-      <SignUpLogin />
+      <SignUpLogin setProfileData={setProfileData} />
     </>
   )
 }

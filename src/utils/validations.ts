@@ -10,8 +10,18 @@ export function isEmailValid(emailAddress: string) {
 
 export const isPhoneValid = (userPhoneInput: TPhoneInputState) => {
   const phoneNumberString = userPhoneInput.join("");
-  return /^\d{7}$/.test(phoneNumberString);
+  if (phoneNumberString.length >= 10 && phoneNumberString.length <= 11) {
+    return true;
+  } else {
+    return /^\d{10}$/.test(phoneNumberString);
+  }
 };
+
+
+export const isPasswordGood = (password: string) => {
+  const passwordRegex = /^.{8,}$/;
+  return (password.match(passwordRegex))   
+}
 
 export const validateUserInputs = (
   userInputs: TUserInputType
@@ -20,8 +30,10 @@ export const validateUserInputs = (
     firstNameInputError: "",
     lastNameInputError: "",
     emailInputError: "",
-    cityInputError: "",
-    phoneNumberInputError: "",
+    companyInputError: "",
+    phoneInputError: "",
+    passwordInputError: "",
+    verifyPasswordInputError: "",
   };
 
   if (
@@ -37,14 +49,22 @@ export const validateUserInputs = (
   }
 
   if (
-    !isEmailValid(userInputs.userEmailInput) ||
-    userInputs.userEmailInput === ""
+    !isEmailValid(userInputs.emailInput) ||
+    userInputs.emailInput === ""
   ) {
     errors.emailInputError = "Email is Invalid";
   }
 
-  if (!isPhoneValid(userInputs.userPhoneInput)) {
-    errors.phoneNumberInputError = "Phone Number is Invalid";
+  if (!isPhoneValid(userInputs.phoneInput)) {
+    errors.phoneInputError = "Phone Number is Invalid";
+  }
+
+  if(!isPasswordGood(userInputs.passwordInput)){
+    errors.passwordInputError = "Password must contain at least 8 characters, including at least one letter and one number"
+  }
+
+  if(!isPasswordGood(userInputs.verifyPasswordInput)){
+    errors.passwordInputError = "Password must contain at least 8 characters, including at least one letter and one number"
   }
 
   return errors;
