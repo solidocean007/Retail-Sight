@@ -1,15 +1,7 @@
-// Import the functions you need from the SDKs you need
-
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-
-
-// import { getAnalytics } from "firebase/analytics"
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
   authDomain: "retail-sight.firebaseapp.com",
@@ -26,6 +18,12 @@ const app = initializeApp(firebaseConfig);
 // Get a reference to the auth service
 const auth = getAuth(app);
 
-export { auth };
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("Persistence set to local");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence", error);
+  });
 
-// const analytics = getAnalytics(app);
+export { auth };
