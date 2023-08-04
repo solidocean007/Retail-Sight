@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserInput } from "./UserInput";
 import { UserPhoneInput } from "./UserPhoneInput";
 import { TErrorsOfInputs, TUserInputType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { TUserInformation } from "../utils/types";
+import { handleSignUp, handleLogin } from "../utils/authenticate";
 
 //Import validation
 import { validateUserInputs } from "../utils/validations";
@@ -14,6 +15,13 @@ export const SignUpLogin = ({
   setProfileData: (profileData: TUserInformation) => void;
 }) => {
   // State
+  const [signUpError, setSignUpError] = useState("");
+
+  const [passwordVisibility, setPasswordVisibility] = useState({
+    password: false,
+    passwordConfirm: false,
+  });
+  const [isSignUp, setIsSignUp] = useState(true);
   const [triedSubmit, setTriedSubmit] = useState(false);
   const [userInputs, setUserInputs] = useState<TUserInputType>({
     firstNameInput: "",
@@ -36,7 +44,10 @@ export const SignUpLogin = ({
     verifyPasswordInputError: "",
   });
 
-  // Array for user inputs
+  useEffect(() => {
+    console.log(userInputs);
+  }, [userInputs]);
+
   type InputKey =
     | "firstNameInput"
     | "lastNameInput"
@@ -54,6 +65,7 @@ export const SignUpLogin = ({
     | "passwordInputError"
     | "verifyPasswordInputError";
 
+  // Array for user create account inputs
   const NewUserProperties: {
     label: string;
     field: InputKey;
@@ -92,8 +104,30 @@ export const SignUpLogin = ({
     },
   ];
 
+  const UserLoginProperties: {
+    label: string;
+    field: InputKey;
+    errorField: ErrorKey;
+  }[] = [
+    { label: "Email", field: "emailInput", errorField: "emailInputError" },
+    {
+      label: "Password",
+      field: "passwordInput",
+      errorField: "passwordInputError",
+    },
+  ];
+
   const handleInputChange = (name: string, value: string) => {
     setUserInputs((prevState) => ({ ...prevState, [name]: value }));
+  };
+
+  type PasswordVisibilityKey = "password" | "passwordConfirm";
+
+  const togglePasswordVisibility = (fieldName: PasswordVisibilityKey) => {
+    setPasswordVisibility((prevState) => ({
+      ...prevState,
+      [fieldName]: !prevState[fieldName],
+    }));
   };
 
   function resetForm() {
@@ -107,6 +141,12 @@ export const SignUpLogin = ({
       verifyPasswordInput: "",
     });
   }
+
+  function formButtonMessage() {
+    return isSignUp ? "Login" : "Sign-up";
+  }
+
+  const setFormMode = () => setIsSignUp((prevIsSignUp) => !prevIsSignUp);
 
   return (
     <form
@@ -135,36 +175,95 @@ export const SignUpLogin = ({
         if (Object.values(validationErrors).every((error) => error === "")) {
           setProfileData(newProfileInformation);
         }
+
+        const { emailInput, passwordInput } = userInputs;
+
+        if (isSignUp) {
+          handleSignUp(
+            userInputs.emailInput,
+            userInputs.passwordInput,
+            setSignUpError
+          );
+        } else {
+          handleLogin(emailInput, passwordInput);
+        }
+
         resetForm();
       }}
     >
       <div className="signUp-login-form">
-        {NewUserProperties.map((item, index) => (
-          <div key={index} className="user-input-field">
-            {item.field !== "phoneInput" ? (
-              <UserInput
-                labelText={item.label}
-                inputProps={{
-                  type: item.field === "passwordInput" || item.field === "verifyPasswordInput" ? "password" : "text",
-                  onChange: (e) => {
-                    handleInputChange(item.field, e.target.value);
-                  },
-                }}
-              />
-            ) : (
-              <UserPhoneInput
-                userInputs={userInputs}
-                setUserInputs={setUserInputs}
-                setErrorsOfInputs={setErrorsOfInputs}
-              />
-            )}
-            <ErrorMessage
-              message={errorsOfInputs[item.errorField]}
-              show={triedSubmit && errorsOfInputs[item.errorField].length > 0}
-            />
-          </div>
-        ))}
+        <button type="button" onClick={setFormMode}>
+          {formButtonMessage()}
+        </button>
+        {isSignUp
+          ? NewUserProperties.map((item, index) => (
+              <div key={index} className="user-input-field">
+                {item.field !== "phoneInput" ? (
+                  <UserInput
+                    labelText={item.label}
+                    inputProps={{
+                      type:
+                        (item.field === "passwordInput" &&
+                          passwordVisibility.password !== true) ||
+                        (item.field === "verifyPasswordInput" &&
+                          passwordVisibility.passwordConfirm !== true)
+                          ? "password"
+                          : "text",
+                      onChange: (e) => {
+                        handleInputChange(item.field, e.target.value);
+                      },
+                    }}
+                    isPasswordField={
+                      item.field === "passwordInput" ||
+                      item.field === "verifyPasswordInput"
+                    } // Indicates whether this is a password field
+                    onToggleVisibility={
+                      () =>
+                        item.field === "passwordInput"
+                          ? togglePasswordVisibility("password")
+                          : togglePasswordVisibility("passwordConfirm") // Use correct key based on item.field
+                    }
+                  />
+                ) : (
+                  <UserPhoneInput
+                    userInputs={userInputs}
+                    setUserInputs={setUserInputs}
+                    setErrorsOfInputs={setErrorsOfInputs}
+                  />
+                )}
+                <ErrorMessage
+                  message={errorsOfInputs[item.errorField]}
+                  show={
+                    triedSubmit && errorsOfInputs[item.errorField].length > 0
+                  }
+                />
+              </div>
+            ))
+          : UserLoginProperties.map((item, index) => (
+              <div key={index} className="user-input-field">
+                <UserInput
+                  labelText={item.label}
+                  inputProps={{
+                    type:
+                      item.field === "passwordInput" ||
+                      item.field === "verifyPasswordInput"
+                        ? "password"
+                        : "text",
+                    onChange: (e) => {
+                      handleInputChange(item.field, e.target.value);
+                    },
+                  }}
+                />
+                <ErrorMessage
+                  message={errorsOfInputs[item.errorField]}
+                  show={
+                    triedSubmit && errorsOfInputs[item.errorField].length > 0
+                  }
+                />
+              </div>
+            ))}
       </div>
+      {signUpError && <div className="error">{signUpError}</div>}
       <input type="submit" />
     </form>
   );

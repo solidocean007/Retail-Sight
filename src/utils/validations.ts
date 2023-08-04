@@ -64,7 +64,11 @@ export const validateUserInputs = (
   }
 
   if(!isPasswordGood(userInputs.verifyPasswordInput)){
-    errors.passwordInputError = "Password must contain at least 8 characters, including at least one letter and one number"
+    errors.verifyPasswordInputError = "Password must contain at least 8 characters, including at least one letter and one number"
+  }
+
+  if (userInputs.passwordInput !== userInputs.verifyPasswordInput) {
+    errors.verifyPasswordInputError = "Passwords do not match";
   }
 
   return errors;
