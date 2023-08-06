@@ -4,6 +4,9 @@ import { SignUpLogin } from "./components/SignUpLogIn";
 import { TUserInformation } from "./utils/types";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import UserProfilePage from "./components/UserProfilePage";
+import { UserHomePage } from "./components/UserHomePage";
+
+
 
 function App() {
   const [profileData, setProfileData] = useState<TUserInformation | null>(null);
@@ -13,6 +16,7 @@ function App() {
       <Routes>
         <Route path="/" element={<SignUpLogin setProfileData={setProfileData} />} />
         <Route path="/profile-page" element={<UserProfilePage />} />
+        <Route path="/userHomePage" element={<UserHomePage />} />
       </Routes>
     </Router>
   );

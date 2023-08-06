@@ -5,6 +5,9 @@ import { TErrorsOfInputs, TUserInputType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { TUserInformation } from "../utils/types";
 import { handleSignUp, handleLogin } from "../utils/authenticate";
+import { useNavigate } from "react-router-dom";
+
+
 
 //Import validation
 import { validateUserInputs } from "../utils/validations";
@@ -16,7 +19,6 @@ export const SignUpLogin = ({
 }) => {
   // State
   const [signUpError, setSignUpError] = useState("");
-
   const [passwordVisibility, setPasswordVisibility] = useState({
     password: false,
     passwordConfirm: false,
@@ -33,6 +35,8 @@ export const SignUpLogin = ({
     verifyPasswordInput: "",
   });
 
+  const navigate = useNavigate();
+
   // Types Unique to this component
   const [errorsOfInputs, setErrorsOfInputs] = useState<TErrorsOfInputs>({
     firstNameInputError: "",
@@ -44,9 +48,6 @@ export const SignUpLogin = ({
     verifyPasswordInputError: "",
   });
 
-  useEffect(() => {
-    console.log(userInputs);
-  }, [userInputs]);
 
   type InputKey =
     | "firstNameInput"
@@ -157,12 +158,14 @@ export const SignUpLogin = ({
         const validationErrors = validateUserInputs(userInputs);
         setErrorsOfInputs(validationErrors);
 
+        // I don't think I need this.  Errors are already handled and displayed individually.
         const errorValues = Object.values(validationErrors);
         if (errorValues.some((error) => error !== "")) {
-          alert("Bad data input");
+          alert("Bad data input", error);
           return;
         }
 
+        // I don't know why I'm using this either If I have firestore and firebase to retrieve user info.
         const newProfileInformation: TUserInformation = {
           firstName: userInputs.firstNameInput,
           lastName: userInputs.lastNameInput,
@@ -172,6 +175,7 @@ export const SignUpLogin = ({
           password: userInputs.passwordInput,
         };
 
+        // again i might not need this
         if (Object.values(validationErrors).every((error) => error === "")) {
           setProfileData(newProfileInformation);
         }
@@ -179,13 +183,21 @@ export const SignUpLogin = ({
         const { emailInput, passwordInput } = userInputs;
 
         if (isSignUp) {
-          handleSignUp(
-            userInputs.emailInput,
-            userInputs.passwordInput,
-            setSignUpError
-          );
+          handleSignUp(userInputs.emailInput, userInputs.passwordInput, setSignUpError)
+            .then(() => {
+              navigate("/userHomePage");
+            })
+            .catch((error) => {
+              // Handle or display error
+            });
         } else {
-          handleLogin(emailInput, passwordInput);
+          handleLogin(userInputs.emailInput, userInputs.passwordInput)
+            .then(() => {
+              navigate("/userHomePage");
+            })
+            .catch((error) => {
+              // Handle or display error
+            });
         }
 
         resetForm();

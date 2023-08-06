@@ -1,7 +1,7 @@
 // Import necessary functionalities
 import React, { useEffect, useState } from "react";  // useEffect and useState are hooks provided by React
 import { useForm } from "react-hook-form";  // useForm is a hook provided by react-hook-form for managing form state
-import { auth } from "./firebase";  // auth is the Firebase auth service which lets you interact with Firebase Authentication
+import { auth } from "../firebase";  // auth is the Firebase auth service which lets you interact with Firebase Authentication
 
 // Define the UserProfilePage component
 const UserProfilePage = () => {
