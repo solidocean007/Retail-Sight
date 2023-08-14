@@ -1,6 +1,7 @@
 import { useState } from "react";
-
+import { CreatePost } from "./CreatePost";
 import Button from '@mui/material/Button';
+import LogOutButton from "./LogOutButton";
 
 export const UserHomePage = () => {
   const [open, setOpen] = useState(false);
@@ -16,7 +17,7 @@ export const UserHomePage = () => {
 
   return (
     <div>
-      STuff
+      <LogOutButton />
       <Button variant="contained" color="primary" onClick={handleOpen}>
         Create Post
       </Button>
