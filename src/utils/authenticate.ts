@@ -87,8 +87,10 @@ export const handleSignUp = async (
       const additionalData = {
         firstName: firstNameInput,
         lastName: lastNameInput,
+        email: email,
         company: companyInput,
-        phone: phoneInput
+        phone: phoneInput,
+        password: passwordInput,
       };
       
       // await addDoc(collection(db, "users"), {

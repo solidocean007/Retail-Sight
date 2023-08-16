@@ -15,6 +15,7 @@
     "@firebase/auth": "^1.1.0",
     "@firebase/firestore": "^2.3.7",
     "@firebase/functions": "^0.10.0",
+    "@mui/icons-material": "^5.14.3",
     "@mui/material": "^5.14.3",
     "firebase": "^10.1.0",
     "node-fetch": "^3.3.2",
