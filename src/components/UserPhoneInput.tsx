@@ -59,12 +59,12 @@ export const UserPhoneInput = ({
           phoneInput: newState,
         });
 
-        // Validate input after setting state and update error state
-        const validationErrors = validateUserInputs({
-          ...userInputs,
-          phoneInput: newState,
-        });
-        setErrorsOfInputs(validationErrors);
+        // Do I need this snippet below?  I think its redundant.
+        // const validationErrors = validateUserInputs({
+        //   ...userInputs,
+        //   phoneInput: newState,
+        // });
+        // setErrorsOfInputs(validationErrors);
       }
     };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { UserInput } from "./UserInput";
 import { UserPhoneInput } from "./UserPhoneInput";
 import { TErrorsOfInputs, TUserInputType } from "../utils/types";
@@ -7,18 +7,23 @@ import { TUserInformation } from "../utils/types";
 import { handleSignUp, handleLogin } from "../utils/authenticate";
 import { useNavigate } from "react-router-dom";
 
-
-
 //Import validation
 import { validateUserInputs } from "../utils/validations";
 
-export const SignUpLogin = ({
-  setProfileData,
-}: {
-  setProfileData: (profileData: TUserInformation) => void;
-}) => {
+interface TNewUser {
+  firstName: string;
+  lastName: string;
+  email: string;
+  company: string;
+  phone: string;
+  password: string;
+  verifyPasswordInput: string;
+}
+
+export const SignUpLogin = () => {
   // State
   const [signUpError, setSignUpError] = useState("");
+  const [logInError, setLogInError] = useState("");
   const [passwordVisibility, setPasswordVisibility] = useState({
     password: false,
     passwordConfirm: false,
@@ -47,7 +52,6 @@ export const SignUpLogin = ({
     passwordInputError: "",
     verifyPasswordInputError: "",
   });
-
 
   type InputKey =
     | "firstNameInput"
@@ -152,54 +156,115 @@ export const SignUpLogin = ({
   return (
     <form
       noValidate
+      // onSubmit={(e) => {
+      //   e.preventDefault();
+      //   setTriedSubmit(true);
+
+      //   const {
+      //     firstNameInput,
+      //     lastNameInput,
+      //     emailInput,
+      //     companyInput,
+      //     phoneInput,
+      //     passwordInput,
+      //   } = userInputs;
+
+      //   if (isSignUp) {
+      //     const validationErrors = validateUserInputs(userInputs); // This 'validationErrors' will return false if there are no errors;
+      //     setErrorsOfInputs(validationErrors); // This will set the state of the errorsOfInputs
+      //     const firstError = Object.values(validationErrors).find(
+      //       (error: string) => error !== ""
+      //     );
+
+      //     if (firstError) {
+      //       alert(`Bad data input: ${firstError}`);
+      //       return;
+      //     }
+
+      //     handleSignUp(
+      //       firstNameInput,
+      //       lastNameInput,
+      //       emailInput,
+      //       companyInput,
+      //       phoneInput,
+      //       passwordInput,
+      //       setSignUpError
+      //     )
+      //       .then(() => {
+      //         navigate("/userHomePage");
+      //       })
+      //       .catch((error) => {
+      //         // Handle or display error
+      //         console.log(error);
+      //       });
+      //   } else {
+      //     console.log("attempting login");
+      //     handleLogin(emailInput, passwordInput)
+      //       .then(() => {
+      //         navigate("/userHomePage");
+      //       })
+      //       .catch((error) => {
+      //         // Handle or display error
+      //         console.log(error);
+      //       });
+      //   }
+      //   console.log('reset form next')
+      //   resetForm();
+      // }}
       onSubmit={(e) => {
         e.preventDefault();
         setTriedSubmit(true);
-        const validationErrors = validateUserInputs(userInputs);
-        setErrorsOfInputs(validationErrors);
 
-        // I don't think I need this.  Errors are already handled and displayed individually.
-        const errorValues = Object.values(validationErrors);
-        if (errorValues.some((error) => error !== "")) {
-          alert("Bad data input", error);
-          return;
-        }
-
-        // I don't know why I'm using this either If I have firestore and firebase to retrieve user info.
-        const newProfileInformation: TUserInformation = {
-          firstName: userInputs.firstNameInput,
-          lastName: userInputs.lastNameInput,
-          email: userInputs.emailInput,
-          company: userInputs.companyInput,
-          phone: userInputs.phoneInput.join(""),
-          password: userInputs.passwordInput,
-        };
-
-        // again i might not need this
-        if (Object.values(validationErrors).every((error) => error === "")) {
-          setProfileData(newProfileInformation);
-        }
-
-        const { emailInput, passwordInput } = userInputs;
+        const {
+          firstNameInput,
+          lastNameInput,
+          emailInput,
+          companyInput,
+          phoneInput,
+          passwordInput,
+        } = userInputs;
 
         if (isSignUp) {
-          handleSignUp(userInputs.emailInput, userInputs.passwordInput, setSignUpError)
+          const validationErrors = validateUserInputs(userInputs);
+          setErrorsOfInputs(validationErrors);
+          const firstError = Object.values(validationErrors).find(
+            (error: string) => error !== ""
+          );
+
+          if (firstError) {
+            alert(`Bad data input: ${firstError}`);
+            return;
+          }
+
+          handleSignUp(
+            firstNameInput,
+            lastNameInput,
+            emailInput,
+            companyInput,
+            phoneInput,
+            passwordInput,
+            setSignUpError
+          )
             .then(() => {
+              console.log("Sign-up successful");
               navigate("/userHomePage");
             })
             .catch((error) => {
-              // Handle or display error
+              console.log("Error during sign-up:", error);
             });
         } else {
-          handleLogin(userInputs.emailInput, userInputs.passwordInput)
+          console.log("attempting login");
+          handleLogin(emailInput, passwordInput)
             .then(() => {
+              console.log("Login successful");
               navigate("/userHomePage");
             })
             .catch((error) => {
-              // Handle or display error
+              console.log("Error during login:", error);
             });
         }
 
+        console.log("Resetting form");
         resetForm();
       }}
     >
@@ -221,6 +286,7 @@ export const SignUpLogin = ({
                           passwordVisibility.passwordConfirm !== true)
                           ? "password"
                           : "text",
+                      value: userInputs[item.field],
                       onChange: (e) => {
                         handleInputChange(item.field, e.target.value);
                       },
@@ -257,14 +323,18 @@ export const SignUpLogin = ({
                   labelText={item.label}
                   inputProps={{
                     type:
-                      item.field === "passwordInput" ||
-                      item.field === "verifyPasswordInput"
+                      item.field === "passwordInput" &&
+                      !passwordVisibility.password
                         ? "password"
                         : "text",
                     onChange: (e) => {
                       handleInputChange(item.field, e.target.value);
                     },
                   }}
+                  isPasswordField={item.field === "passwordInput"} // Indicates whether this is a password field
+                  onToggleVisibility={() =>
+                    togglePasswordVisibility("password")
+                  }
                 />
                 <ErrorMessage
                   message={errorsOfInputs[item.errorField]}

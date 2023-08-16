@@ -18,10 +18,11 @@ export const isPhoneValid = (userPhoneInput: TPhoneInputState) => {
 };
 
 
-export const isPasswordGood = (password: string) => {
-  const passwordRegex = /^.{8,}$/;
-  return (password.match(passwordRegex))   
+export const isPasswordGood = (password: string): boolean => {
+  const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
+  return passwordRegex.test(password);
 }
+
 
 export const validateUserInputs = (
   userInputs: TUserInputType
