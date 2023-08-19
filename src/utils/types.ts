@@ -28,3 +28,23 @@ export type TErrorsOfInputs = {
   passwordInputError: string;
   verifyPasswordInputError: string;
 };
+
+// types.ts
+export interface UserType {
+  id: number;
+  name: string;
+  company: string;
+}
+
+import { Timestamp } from "firebase/firestore";
+
+export interface PostType {
+  id: string;
+  description: string;
+  imageUrl: string;
+  postType: string;
+  timestamp: Timestamp;
+  user?: UserType;
+}
+
+

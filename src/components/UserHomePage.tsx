@@ -1,17 +1,18 @@
-import { useState } from "react";
-import { CreatePost } from "./CreatePost";
+// import { useState } from "react";
+// import { CreatePost } from "./CreatePost";
 import Button from "@mui/material/Button";
 import LogOutButton from "./LogOutButton";
 import { useNavigate } from "react-router-dom";
 import { Container, Grid, AppBar, Toolbar } from "@mui/material";
+import ActivityFeed from "./ActivityFeed";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
 
-  const [open, setOpen] = useState(false);
+  // const [open, setOpen] = useState(false);
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  // const handleOpen = () => setOpen(true);
+  // const handleClose = () => setOpen(false);
   
   const openProfile = () => navigate('/profile-page');
   const openCreatePost = () => navigate('/CreatePost');
@@ -32,10 +33,11 @@ export const UserHomePage = () => {
 
       <Grid container spacing={3} style={{ marginTop: '70px' }}> 
         <Grid item xs={12}>
-          {open && <CreatePost closeCreatePost={handleClose} />}
+          {/* {open && <CreatePost />} */}
         </Grid>
         <Grid item xs={12}>
           {/* Place your ActivityFeed component here */}
+          <ActivityFeed />
         </Grid>
       </Grid>
     </Container>

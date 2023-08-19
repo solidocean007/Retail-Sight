@@ -12,54 +12,6 @@ interface FirebaseError extends Error {
   code: string;
 }
 
-// export const handleSignUp = async (
-//   firstNameInput: string,
-//   lastNameInput: string,
-//   email: string,
-//   companyInput: string,
-//   phoneInput: TPhoneInputState,
-//   passwordInput: string,
-//   setSignUpError: (error: string) => void
-// ) => {
-//   try {
-//     // Create user with email and password in Firebase Authentication
-//     const userCredential = await createUserWithEmailAndPassword(auth, email, passwordInput);
-    
-//     // Check if user is created successfully
-//     if (userCredential.user) {
-//       const uid = userCredential.user.uid;
-      
-//       // Add the additional user data to Firestore
-//       const additionalData = {
-//         firstName: firstNameInput,
-//         lastName: lastNameInput,
-//         company: companyInput,
-//         phone: phoneInput
-//       };
-      
-//       await addDoc(collection(db, "users"), {
-//         uid: uid,
-//         ...additionalData
-//       });
-//     }
-    
-//     return userCredential.user;
-
-//   } catch (error) {
-//     const firebaseError = error as FirebaseError;
-//     const errorCode = firebaseError.code;
-//     const errorMessage = firebaseError.message;
-//     console.error("Error signing up: ", errorCode, errorMessage);
-
-//     // Check if error code is 'auth/email-already-in-use'
-//     if (errorCode === "auth/email-already-in-use") {
-//       setSignUpError("The email address is already in use by another account.");
-//     }
-
-//     throw error;
-//   }
-// };
-
 export const handleSignUp = async (
   firstNameInput: string,
   lastNameInput: string,
@@ -92,11 +44,6 @@ export const handleSignUp = async (
         phone: phoneInput,
         password: passwordInput,
       };
-      
-      // await addDoc(collection(db, "users"), {
-      //   uid: uid,
-      //   ...additionalData
-      // });
 
       await setDoc(doc(collection(db, "users"), uid), {
         uid: uid,
