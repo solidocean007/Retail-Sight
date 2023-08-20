@@ -13,9 +13,10 @@ import { PostDescription } from "./PostDescription";
 
 interface PostCardProps {
   post: PostType;
+  getPostsByTag: (hashTag: string)=> void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag }) => {
   const [comment, setComment] = useState("");
   let formattedDate = "N/A"; // default value
   if (post.timestamp && post.timestamp.toDate) {
@@ -47,8 +48,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             style={{ width: "100%", maxHeight: "400px", objectFit: "cover" }}
           />
         )}
-        <Typography variant="body2">{post.description}</Typography>{" "}
-        <PostDescription description={post.description} />
+        {/* <Typography variant="body2">{post.description}</Typography>{" "} */}
+        <PostDescription description={post.description} getPostsByTag={getPostsByTag} />
         {/* Display the post's description */}
         <TextField
           label="Comment"

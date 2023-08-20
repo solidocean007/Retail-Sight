@@ -2,8 +2,8 @@ import { db } from "../firebase"; // adjust the path as necessary
 import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import { auth } from "../firebase";
 
-import { useDispatch } from 'react-redux';
-import { showMessage } from '../snackbarSlice';  // Adjust the path as necessary
+import { useDispatch } from "react-redux";
+import { showMessage } from "../snackbarSlice"; // Adjust the path as necessary
 
 import {
   getStorage,
@@ -30,6 +30,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { useNavigate } from "react-router-dom";
+import StoreLocator from "./StoreLocator";
 
 export const CreatePost: React.FC = () => {
   const [postType, setPostType] = useState<string>("public");
@@ -61,13 +62,24 @@ export const CreatePost: React.FC = () => {
       }
     }
   };
+  const extractHashtags = (description) => {
+    const hashtagPattern = /#\w+/g;
+    return description.match(hashtagPattern) || [];
+  };
+
+  const handleLocationSelection = (location) => {
+    // Do something with the selected location
+    // Maybe set it in the state, to be used when the post is submitted
+  };
 
   const handlePostSubmission = async () => {
     const user = auth.currentUser;
 
     if (!user) return; // No user, abort the function
-    
+
     const uid = user.uid;
+    console.log("User UID:", uid); // 2. Logging user's UID
+
     const currentDate = new Date();
     const formattedDate = `${currentDate.getFullYear()}-${String(
       currentDate.getMonth() + 1
@@ -75,6 +87,11 @@ export const CreatePost: React.FC = () => {
 
     const imageFileName = `${uid}-${Date.now()}.jpg`;
     const imagePath = `images/${formattedDate}/${uid}/${imageFileName}`;
+
+    console.log("Image Path:", imagePath); // 3. Logging the image path
+
+    const hashtags = extractHashtags(description);
+    console.log("Extracted Hashtags:", hashtags); // 1. Logging the extracted hashtags
 
     try {
       const storage = getStorage();
@@ -94,7 +111,9 @@ export const CreatePost: React.FC = () => {
             console.log("Upload is " + progress + "% done");
           },
           (error) => {
-            dispatch(showMessage(`Error uploading image. Please try again.${error}`));
+            dispatch(
+              showMessage(`Error uploading image. Please try again.${error}`)
+            );
           },
           async () => {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
@@ -109,6 +128,8 @@ export const CreatePost: React.FC = () => {
               return;
             }
 
+            console.log("User Data from Firestore:", userData); // 4. Logging fetched user data
+
             const postData = {
               description: description,
               imageUrl: downloadURL,
@@ -116,9 +137,12 @@ export const CreatePost: React.FC = () => {
               timestamp: new Date(),
               user: {
                 name: `${userData.firstName} ${userData.lastName}`,
-                company: userData.company
-              }
+                company: userData.company,
+              },
+              hashtags: hashtags,
             };
+
+            console.log("Post Data to be added:", postData); // 5. Logging post data
 
             await addDoc(collection(db, "posts"), postData);
             dispatch(showMessage("Post added successfully!"));
@@ -131,8 +155,7 @@ export const CreatePost: React.FC = () => {
     } catch (error) {
       console.error("Error adding post:", error);
     }
-};
-
+  };
 
   return (
     <div>
@@ -142,7 +165,7 @@ export const CreatePost: React.FC = () => {
             edge="start"
             color="inherit"
             onClick={() => {
-              navigate('/userHomePage')
+              navigate("/userHomePage");
             }}
           >
             <CloseIcon />
@@ -152,6 +175,7 @@ export const CreatePost: React.FC = () => {
           </Typography>
         </Toolbar>
       </AppBar>
+      <StoreLocator onLocationSelect={handleLocationSelection} />
 
       <Box p={3}>
         <Button
@@ -175,7 +199,7 @@ export const CreatePost: React.FC = () => {
                 component="img"
                 image={selectedImage}
                 alt="Selected Preview"
-                style={{ maxHeight: '400px', width: 'auto' }} 
+                style={{ maxHeight: "400px", width: "auto" }}
               />
             </Card>
           </Box>
