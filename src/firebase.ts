@@ -2,9 +2,15 @@ import { initializeApp } from "firebase/app";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+const functions = require('firebase-functions'); // Require statement not part of import statement.
+
+const MY_APP_FIREBASE_KEY = functions.config().myapp.firebasekey;
+
+
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
+  // apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
+  apiKey: MY_APP_FIREBASE_KEY,
   authDomain: "retail-sight.firebaseapp.com",
   projectId: "retail-sight",
   storageBucket: "retail-sight.appspot.com",
