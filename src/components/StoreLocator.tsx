@@ -1,134 +1,162 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
+
+// Assuming you've refactored the GOOGLE_MAPS_KEY import using Vite
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+interface StoreLocatorProps {
+  setSelectedStore: (
+    store: google.maps.places.PlaceResult,
+    storeAddress: string
+  ) => void;
+}
 
 declare global {
   interface Window {
-    initMap?: () => void;
+    initMap: () => void;
   }
 }
 
-const StoreLocator: React.FC = () => {
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
+  const mapRef = useRef<HTMLDivElement | null>(null);
+   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [selectedPlace, setSelectedPlace] =
+    useState<google.maps.places.PlaceResult | null>(null);
 
-  const centerMapOnUserLocation = (mapInstance: google.maps.Map) => {
-    console.log("Attempting to center on user's location...");
-
-    if (!navigator.geolocation) {
-      console.error("Geolocation is not supported by your browser");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const userLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-
-        console.log("User location fetched:", userLocation);
-
-        if (mapInstance) {
-          console.log("Setting map center to user's location");
-          mapInstance.setCenter(userLocation);
-          new google.maps.Marker({
-            position: userLocation,
-            map: mapInstance,
-            title: "You are here!",
-          });
-        } else {
-          console.warn("Map reference not found while trying to center!");
-        }
-      },
-      (error) => {
-        console.error("Error retrieving your location", error);
-      }
-    );
-  };
-
-  const initMap = () => {
-    console.log("Initializing the map...");
-
-    if (!window.google) {
-      console.warn("Google Maps library not loaded yet.");
-      return;
-    }
-
-    const defaultLocation = { lat: 80.397, lng: 100.644 };
-
-    const myMap = new google.maps.Map(
-      document.getElementById("map") as HTMLElement,
-      {
-        center: defaultLocation,
-        zoom: 15,
-      }
-    );
-
-    console.log("Map initialized with default location:", defaultLocation);
-
-    setMap(myMap);
-    console.log("Map reference set to state.");
-
-    myMap.addListener("click", (e) => {
-      searchStores(e.latLng.toJSON());
-    });
-
-    delete window.initMap;
-
-    // Use the map reference directly to center on user location.
-    centerMapOnUserLocation(myMap);
-  };
-
-  const loadGoogleMaps = () => {
-    console.log("Initiating Google Maps script loading...");
-
-    if (window.google && window.google.maps) {
-      initMap();
-      return;
-    }
-
-    const existingScript = document.querySelector(
-      `script[src="${`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&callback=initMap`}"]`
-    );
-
-    if (existingScript) {
-      console.log("Attempted to load Google Maps script again.");
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&callback=initMap`;
-    document.body.appendChild(script);
-
-    window.initMap = initMap;
-  };
+  const renderCountMap = useRef(0);
+  const renderCountLoc = useRef(0);
 
   useEffect(() => {
-    loadGoogleMaps();
-  }, []);  // If the linter warns about missing dependencies, you can safely ignore it for this line since loadGoogleMaps does not have external dependencies.
+    console.log("Component mounted!");
+    return () => {
+      console.log("Component unmounted!");
+    };
+  }, []);
 
-  const searchStores = (location: { lat: number; lng: number }) => {
-    if (!map) return;
+  // Load Google Maps script
+  useEffect(() => {
+    renderCountMap.current += 1;
+    console.log(`useEffect for map has run ${renderCountMap.current} times.`);
+    // Check if Google Maps API is already available on window object
+    if (!window.google) {
+      const existingScript = document.getElementById("googleMapsScript");
+      if (!existingScript) {
+        // Load the Google Maps script only if it hasn't been loaded
+        const script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places&callback=initMap`;
+        script.async = true;
+        script.defer = true;
 
-    const service = new google.maps.places.PlacesService(map);
-    service.nearbySearch(
-      {
-        location,
-        radius: "500",
-        type: ["store"],
-      },
-      (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          // Process results here
-        }
+        window.initMap = () => setIsMapLoaded(true);
+
+        document.body.appendChild(script);
+        script.id = "googleMapsScript";
+        return () => {
+          document.body.removeChild(script);
+        };
+      } else {
+        setIsMapLoaded(true);
       }
-    );
-  };
+    } else {
+      // If Google Maps API is already available, set map as loaded
+      setIsMapLoaded(true);
+    }
+  }, []);
 
-  return <div id="map" style={{ width: "100%", height: "400px" }}></div>;
+  // useEffect(() => {
+  //   renderCountMap.current += 1;
+  //   console.log(`useEffect for map has run ${renderCountMap.current} times.`)
+  //   const existingScript = document.getElementById("googleMapsScript");
+  //   if (!window.google && !existingScript) {
+  //     const script = document.createElement('script');
+  //     script.type = 'text/javascript';
+  //     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places&callback=initMap`;
+  //     script.async = true;
+  //     script.defer = true;
+
+  //     window.initMap = () => setIsMapLoaded(true);
+
+  //     document.body.appendChild(script);
+  //     script.id = "googleMapsScript";
+  //     return () => {
+  //       document.body.removeChild(script);
+  //       // delete window.initMap; // Property 'initMap' does not exist on type 'Window & typeof globalThis'.
+  //     };
+
+  //   } else {
+  //     setIsMapLoaded(true);
+  //   }
+  // }, []);
+
+  // Initialize map, set to user's current location, and add a click listener
+  useEffect(() => {
+    renderCountLoc.current += 1;
+    console.log(
+      `useEffect for user location has run ${renderCountLoc.current} times.`
+    );
+    if (isMapLoaded && mapRef.current) {
+      const map = new google.maps.Map(mapRef.current, {
+        center: { lat: -34.397, lng: 150.644 }, // default center, will be updated with user location
+        zoom: 15,
+      });
+
+      // Set map to user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          map.setCenter(pos);
+        });
+      }
+
+      const service = new google.maps.places.PlacesService(map);
+
+      map.addListener("click", (e) => {
+        service.nearbySearch(
+          {
+            location: e.latLng,
+            radius: 30,
+            type: "store" as string,
+          },
+          (results, status) => {
+            if (
+              status === google.maps.places.PlacesServiceStatus.OK &&
+              results &&
+              results.length > 0
+            ) {
+              const firstResult = results[0];
+              setSelectedPlace(firstResult);
+              setSelectedStore(firstResult, firstResult.vicinity || "");
+            }
+          }
+        );
+      });
+    }
+  }, [isMapLoaded, setSelectedStore]);
+
+  return (
+    <div>
+      <div ref={mapRef} style={{ width: "300px", height: "300px" }}></div>
+      <input
+        type="text"
+        value={selectedPlace?.name || ""}
+        onChange={(e) =>
+          setSelectedPlace((prev) => ({ ...prev!, name: e.target.value }))
+        }
+      />
+      <button
+        onClick={() => {
+          if (selectedPlace) {
+            setSelectedStore(selectedPlace, selectedPlace.vicinity || "");
+          }
+        }}
+      >
+        Submit
+      </button>
+    </div>
+  );
 };
 
 export default StoreLocator;
-
-
-

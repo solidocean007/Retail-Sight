@@ -1,9 +1,8 @@
 import { db } from "../firebase"; // adjust the path as necessary
 import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import { auth } from "../firebase";
-
 import { useDispatch } from "react-redux";
-import { showMessage } from "../snackbarSlice"; // Adjust the path as necessary
+import { showMessage } from "../Slices/snackbarSlice"; // Adjust the path as necessary
 
 import {
   getStorage,
@@ -32,44 +31,58 @@ import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { useNavigate } from "react-router-dom";
 import StoreLocator from "./StoreLocator";
 
+type StoreType = {
+  storeName: string;
+  storeAddress: string;
+};
+
 export const CreatePost: React.FC = () => {
   const [postType, setPostType] = useState<string>("public");
   const [description, setDescription] = useState<string>("");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<String | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [selectedStore, setSelectedStore] = useState<StoreType | null>(null);
+
+  const handleSelectedStore = (store: google.maps.places.PlaceResult, storeAddress: string) => {
+    setSelectedStore({
+      storeName: store.name,
+      storeAddress: storeAddress,
+    });
+  };
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
-
+  
     if (file) {
       // Check for supported image types
       const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
       if (validImageTypes.includes(file.type)) {
+        setSelectedFile(file);
+        
+        // Convert to DataURL just for preview purposes (displaying in the UI)
         const reader = new FileReader();
         reader.onloadend = () => {
           setSelectedImage(reader.result as string);
         };
         reader.readAsDataURL(file);
       } else {
-        setSnackbarMessage(
-          "Unsupported file type. Please upload a valid image."
-        );
+        setSnackbarMessage("Unsupported file type. Please upload a valid image.");
         setSnackbarOpen(true);
       }
     }
   };
-  const extractHashtags = (description) => {
+  
+  
+
+  const extractHashtags = (description: string) => {
     const hashtagPattern = /#\w+/g;
     return description.match(hashtagPattern) || [];
-  };
-
-  const handleLocationSelection = (location) => {
-    // Do something with the selected location
-    // Maybe set it in the state, to be used when the post is submitted
   };
 
   const handlePostSubmission = async () => {
@@ -78,7 +91,7 @@ export const CreatePost: React.FC = () => {
     if (!user) return; // No user, abort the function
 
     const uid = user.uid;
-    console.log("User UID:", uid); // 2. Logging user's UID
+    console.log("User UID:", uid); 
 
     const currentDate = new Date();
     const formattedDate = `${currentDate.getFullYear()}-${String(
@@ -88,20 +101,17 @@ export const CreatePost: React.FC = () => {
     const imageFileName = `${uid}-${Date.now()}.jpg`;
     const imagePath = `images/${formattedDate}/${uid}/${imageFileName}`;
 
-    console.log("Image Path:", imagePath); // 3. Logging the image path
+    console.log("Image Path:", imagePath);
 
     const hashtags = extractHashtags(description);
-    console.log("Extracted Hashtags:", hashtags); // 1. Logging the extracted hashtags
+    console.log("Extracted Hashtags:", hashtags);
 
     try {
       const storage = getStorage();
       const storageRef = ref(storage, imagePath);
 
-      if (selectedImage) {
-        const response = await fetch(selectedImage);
-        const blob = await response.blob();
-
-        const uploadTask = uploadBytesResumable(storageRef, blob);
+      if (selectedFile) {
+        const uploadTask = uploadBytesResumable(storageRef, selectedFile);
 
         uploadTask.on(
           "state_changed",
@@ -138,22 +148,25 @@ export const CreatePost: React.FC = () => {
               user: {
                 name: `${userData.firstName} ${userData.lastName}`,
                 company: userData.company,
+                userId: uid,
+                email: userData.email,
               },
               hashtags: hashtags,
+              store: selectedStore,
             };
 
-            console.log("Post Data to be added:", postData); // 5. Logging post data
+            console.log("Post Data to be added:", postData); // This logs after a submit post.  The post is added to the database
 
-            await addDoc(collection(db, "posts"), postData);
-            dispatch(showMessage("Post added successfully!"));
+            await addDoc(collection(db, "posts"), postData); // its been added
+            dispatch(showMessage("Post added successfully!")); // this line doesnt log
 
             // Navigate to another page or provide feedback to the user
-            navigate("/userHomePage");
+            navigate("/userHomePage"); // the page doesnt navigate back to userHomePage
           }
         );
       }
     } catch (error) {
-      console.error("Error adding post:", error);
+      console.error("Error adding post:", error); // this doesnt log
     }
   };
 
@@ -175,8 +188,9 @@ export const CreatePost: React.FC = () => {
           </Typography>
         </Toolbar>
       </AppBar>
-      <StoreLocator onLocationSelect={handleLocationSelection} />
-
+      <StoreLocator setSelectedStore={handleSelectedStore} />
+            <h5>Store: {selectedStore?.storeName}</h5>
+            <h4>Address: {selectedStore?.storeAddress}</h4>
       <Box p={3}>
         <Button
           variant="contained"

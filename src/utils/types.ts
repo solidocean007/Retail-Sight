@@ -31,9 +31,11 @@ export type TErrorsOfInputs = {
 
 // types.ts
 export interface UserType {
-  id: number;
+  id: string;
   name: string;
   company: string;
+  userId: string;
+  email: string;
 }
 
 import { Timestamp } from "firebase/firestore";

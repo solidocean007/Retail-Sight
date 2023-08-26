@@ -1,7 +1,7 @@
 // import { useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import { useSelector, useDispatch } from "react-redux";
-import { hideMessage } from "./snackbarSlice";
+import { hideMessage } from "./Slices/snackbarSlice";
 import "./App.css";
 import { SignUpLogin } from "./components/SignUpLogIn";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";

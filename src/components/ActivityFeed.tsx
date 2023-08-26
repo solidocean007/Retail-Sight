@@ -1,68 +1,74 @@
 // ActivityFeed.tsx
 import React, { useEffect, useState } from "react";
 import PostCard from "./PostCard";
-import { PostType } from "../utils/types"; // Assuming you have types defined somewhere
+import { FixedSizeList as List } from 'react-window';
+import { PostType } from "../utils/types";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+
+interface PostCardRendererProps {
+  index: number;
+  style: React.CSSProperties;
+}
+
 
 const ActivityFeed: React.FC = () => {
   const [posts, setPosts] = useState<PostType[]>([]);
-  // const [postsByHashTags, setPostsByHashTags] = useState([]);
-
-  const extractHashtags = (description) => {
-    const hashtagPattern = /#\w+/g;
-    return description.match(hashtagPattern) || [];
-  };
+  const ITEM_HEIGHT = 700; // Adjust this based on your PostCard height
   
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const db = getFirestore();
+  //     const postCollection = collection(db, "posts");
+  //     try{
+  //       const postSnapshot = await getDocs(postCollection);
+  //     const postData = postSnapshot.docs.map((doc) => ({
+  //       ...doc.data(),
+  //       id: doc.id,
+  //     }));
+  //     setPosts(postData);
+  //     } catch (error) {
+  //       console.error("Error fetching from Firestore:", error);
+  //     }
+      
+  //   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const db = getFirestore();
-      const postCollection = collection(db, "posts");
-      const postSnapshot = await getDocs(postCollection);
-      const postData = postSnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
-      setPosts(postData);
-    };
-
-    fetchData();
-  }, []);
+  //   fetchData();
+  // }, []);
 
   const getPostsByTag = async (hashTag: string) => {
-    console.log("Fetching posts for hashtag:", hashTag); // 1. Logging the hashtag
-
     const db = getFirestore();
     const postCollection = collection(db, 'posts');
     const postsByTagQuery = query(postCollection, where("hashtags", "array-contains", hashTag));
-    console.log("Constructed query:", postsByTagQuery); // This will print the query structure, may not be very informative
 
     try {
         const postSnapshot = await getDocs(postsByTagQuery);
-        console.log("Snapshot fetched:", postSnapshot); // This will print snapshot details
-        
         const postData = postSnapshot.docs.map((doc) => ({
             ...doc.data(),
             id: doc.id,
         }));
-
-        console.log("Posts fetched by hashtag:", postData); // 2. Log the results
-
-        setPosts(postData); // Directly set the fetched posts to the main state
+        setPosts(postData); 
     } catch (error) {
-        console.error("Error fetching posts by hashtag:", error); // 3. Log any potential errors
+        console.error("Error fetching posts by hashtag:", error);
     }
-}
+  };
 
-
+  const PostCardRenderer = ({ index, style }: PostCardRendererProps) => { // unexpected any
+    const post = posts[index];
+    return <PostCard key={post.id} post={post} getPostsByTag={getPostsByTag} style={style} />;
+  };
 
   return (
-    <div>
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} getPostsByTag={getPostsByTag}/>
-      ))}
-    </div>
+    <List
+      height={1000}  // Adjust this value based on how tall you want the visible window to be.
+      itemCount={posts.length}
+      itemSize={ITEM_HEIGHT}
+      // width="100%"  // The list takes up the full width
+      width={1000}  // The list takes up the full width
+    >
+      {PostCardRenderer}
+    </List>
   );
 };
 
 export default ActivityFeed;
+

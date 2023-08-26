@@ -1,3 +1,4 @@
+//Authenticate
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -22,6 +23,7 @@ export const handleSignUp = async (
   setSignUpError: (error: string) => void
 ) => {
   try {
+
     console.log("Starting user creation with Firebase Auth...");
 
     // Create user with email and password in Firebase Authentication
@@ -32,9 +34,7 @@ export const handleSignUp = async (
     // Check if user is created successfully
     if (userCredential.user) {
       const uid = userCredential.user.uid;
-
       console.log("Adding user data to Firestore...");
-      
       // Add the additional user data to Firestore
       const additionalData = {
         firstName: firstNameInput,
