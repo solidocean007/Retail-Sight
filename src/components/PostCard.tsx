@@ -11,26 +11,31 @@ import {
 import { PostType } from "../utils/types"; // Assuming you have types defined somewhere
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { db } from "../firebase";
 import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
+import { deletePost, updatePost } from "../Slices/postsSlice";
 
 interface PostCardProps {
   post: PostType;
-  getPostsByTag: (hashTag: string)=> void;
+  getPostsByTag: (hashTag: string) => void;
   style?: React.CSSProperties;
+  setPosts: React.Dispatch<React.SetStateAction<PostType[]>>;
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   const [comment, setComment] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  const dispatch = useDispatch();
+  const posts = useSelector(state => state.posts); // posts is declared but value is never read.
+
   const user = useSelector(selectUser);
-  useEffect(()=>{
-    console.log(user?.uid) // logs undefined
-  },[user])
+  useEffect(() => {
+    console.log(user?.uid);
+  }, [user]);
 
   const handleEditPost = () => {
     setIsEditModalOpen(true);
@@ -41,38 +46,35 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   };
 
   const handleSavePost = async (updatedPost: PostType) => {
-    const postRef = doc(collection(db, 'posts'), updatedPost.id);
+    const postRef = doc(collection(db, "posts"), updatedPost.id);
     try {
-      await updateDoc(postRef, updatedPost);
+      const { id, ...restOfUpdatedPost } = updatedPost; // id is assigned but value never used
+      await updateDoc(postRef, restOfUpdatedPost);
+      dispatch(updatePost(updatedPost));
       console.log("Post updated successfully");
-      // After saving, you can close the modal
       handleCloseEditModal();
     } catch (error) {
       console.error("Error updating post: ", error);
     }
   };
-  
+
   const handleDeletePost = async (postId: string) => {
-    const postRef = doc(collection(db, 'posts'), postId);
+    const postRef = doc(collection(db, "posts"), postId);
     try {
       await deleteDoc(postRef);
+      dispatch(deletePost(postId));
       console.log("Post deleted successfully");
-      // After deleting, you can close the modal and maybe refresh the post list
       handleCloseEditModal();
-      // You may want to call a function here to refresh the list of posts or handle it in another way.
     } catch (error) {
       console.error("Error deleting post: ", error);
     }
   };
-  
-  
 
   let formattedDate = "N/A"; // default value
-  if (post.timestamp && post.timestamp.toDate) {
-    const jsDate = post.timestamp.toDate();
+  if (post.timestamp) {
+    const jsDate = new Date(post.timestamp); // Creating a Date object from ISO string
     formattedDate = jsDate.toLocaleDateString();
   }
-
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setComment(e.target.value);
   };
@@ -82,11 +84,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   };
 
   return (
-    <Card style={{...style}}>
+    <Card style={{ ...style }}>
       <CardContent>
-      {user?.uid && user.uid === post.user?.userId && ( // I cant check this because user is undefined.
-        <Button onClick={handleEditPost}>Edit Post</Button>
-        )}
+        {user?.uid &&
+          user.uid === post.user?.userId && (
+            <Button onClick={handleEditPost}>Edit Post</Button>
+          )}
 
         <Typography variant="h6">
           {post.user?.name} ({post.user?.company})
@@ -102,7 +105,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
           />
         )}
         {/* <Typography variant="body2">{post.description}</Typography>{" "} */}
-        <PostDescription description={post.description} getPostsByTag={getPostsByTag} />
+        <PostDescription
+          description={post.description}
+          getPostsByTag={getPostsByTag}
+        />
         {/* Display the post's description */}
         <TextField
           label="Comment"
@@ -113,10 +119,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
         <Button onClick={submitComment}>Post Comment</Button>
       </CardContent>
 
-      <EditPostModal 
-        post={post} 
-        isOpen={isEditModalOpen} 
-        onClose={handleCloseEditModal} 
+      <EditPostModal
+        post={post}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
         onSave={handleSavePost}
         onDelete={handleDeletePost}
       />

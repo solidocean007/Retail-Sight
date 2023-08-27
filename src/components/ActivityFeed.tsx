@@ -4,36 +4,40 @@ import PostCard from "./PostCard";
 import { FixedSizeList as List } from 'react-window';
 import { PostType } from "../utils/types";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import { useSelector, useDispatch } from 'react-redux';
+import { setPosts } from "../Slices/postsSlice";
+import { incrementRead } from "../firestoreReadsSlice";
 
 interface PostCardRendererProps {
   index: number;
   style: React.CSSProperties;
 }
 
-
 const ActivityFeed: React.FC = () => {
-  const [posts, setPosts] = useState<PostType[]>([]);
-  const ITEM_HEIGHT = 700; // Adjust this based on your PostCard height
+  // const [posts, setPosts] = useState<PostType[]>([]);
+  const posts = useSelector((state: any)=>state.posts)
+  const ITEM_HEIGHT = 700;
+  const dispatch = useDispatch(); // <-- Connect to Redux
   
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const db = getFirestore();
-  //     const postCollection = collection(db, "posts");
-  //     try{
-  //       const postSnapshot = await getDocs(postCollection);
-  //     const postData = postSnapshot.docs.map((doc) => ({
-  //       ...doc.data(),
-  //       id: doc.id,
-  //     }));
-  //     setPosts(postData);
-  //     } catch (error) {
-  //       console.error("Error fetching from Firestore:", error);
-  //     }
-      
-  //   };
-
-  //   fetchData();
-  // }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      const db = getFirestore();
+      const postCollection = collection(db, "posts");
+      try {
+        const postSnapshot = await getDocs(postCollection);
+        dispatch(incrementRead()); // <-- Log read
+        
+        const postData = postSnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        dispatch(setPosts(postData));
+      } catch (error) {
+        console.error("Error fetching from Firestore:", error);
+      }
+    };
+    fetchData();
+  }, [dispatch]); // why is this dependency set on dispatch?
 
   const getPostsByTag = async (hashTag: string) => {
     const db = getFirestore();
@@ -42,28 +46,29 @@ const ActivityFeed: React.FC = () => {
 
     try {
         const postSnapshot = await getDocs(postsByTagQuery);
+        dispatch(incrementRead()); // <-- Log read
+        
         const postData = postSnapshot.docs.map((doc) => ({
             ...doc.data(),
             id: doc.id,
         }));
-        setPosts(postData); 
+        dispatch(setPosts(postData)); 
     } catch (error) {
         console.error("Error fetching posts by hashtag:", error);
     }
   };
 
-  const PostCardRenderer = ({ index, style }: PostCardRendererProps) => { // unexpected any
+  const PostCardRenderer: React.FC<PostCardRendererProps> = ({ index, style }) => {
     const post = posts[index];
     return <PostCard key={post.id} post={post} getPostsByTag={getPostsByTag} style={style} />;
   };
 
   return (
     <List
-      height={1000}  // Adjust this value based on how tall you want the visible window to be.
+      height={1000}
       itemCount={posts.length}
       itemSize={ITEM_HEIGHT}
-      // width="100%"  // The list takes up the full width
-      width={1000}  // The list takes up the full width
+      width={1000}
     >
       {PostCardRenderer}
     </List>
@@ -71,4 +76,5 @@ const ActivityFeed: React.FC = () => {
 };
 
 export default ActivityFeed;
+
 

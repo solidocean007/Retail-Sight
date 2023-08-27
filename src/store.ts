@@ -2,11 +2,15 @@
 import { configureStore } from "@reduxjs/toolkit";
 import snackbarReducer from "./Slices/snackbarSlice";
 import userSlice from "./Slices/userSlice";
+import firestoreReadsReducer from "./firestoreReadsSlice";
+import postsReducer from "./Slices/postsSlice";
 
 const store = configureStore({
   reducer: {
     snackbar: snackbarReducer,
     user: userSlice,
+    firestoreReads: firestoreReadsReducer,
+    posts: postsReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

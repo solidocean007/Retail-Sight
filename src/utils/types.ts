@@ -41,11 +41,12 @@ export interface UserType {
 import { Timestamp } from "firebase/firestore";
 
 export interface PostType {
-  id: string;
-  description: string;
-  imageUrl: string;
-  postType: string;
-  timestamp: Timestamp;
+  id: string;  // id for post
+  // should there be a user id?
+  description?: string;
+  imageUrl?: string;
+  postType?: string;
+  timestamp?: Timestamp;
   user?: UserType;
 }
 

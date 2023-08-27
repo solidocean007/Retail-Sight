@@ -9,7 +9,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
 // import items from Redux
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { incrementRead, incrementWrite, resetReads } from "../firestoreReadsSlice"; // no exported incrementWrite in store
 import { setUser } from "../Slices/userSlice";
 
 //Import validation
@@ -26,6 +27,12 @@ import { validateUserInputs } from "../utils/validations";
 // }
 
 export const SignUpLogin = () => {
+  const dispatch = useDispatch();
+  const firestoreReadCount = useSelector((state) => state.firestoreReads.count);
+  const maxFirestoreReads = useSelector(
+    (state) => state.firestoreReads.maxCount
+  );
+
   // State
   const [signUpError, setSignUpError] = useState("");
   const [logInError, setLogInError] = useState("");
@@ -158,7 +165,6 @@ export const SignUpLogin = () => {
 
   const setFormMode = () => setIsSignUp((prevIsSignUp) => !prevIsSignUp);
 
-  const dispatch = useDispatch();
   const {
     firstNameInput,
     lastNameInput,
@@ -171,6 +177,11 @@ export const SignUpLogin = () => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTriedSubmit(true);
+
+    if (firestoreReadCount >= maxFirestoreReads) {
+      alert("You've reached the maximum allowed reads!");
+      return;
+    }
 
     if (isSignUp) {
       const validationErrors = validateUserInputs(userInputs);
@@ -195,6 +206,31 @@ export const SignUpLogin = () => {
           setSignUpError
         );
 
+        if (authData && authData.user && authData.user.uid) { 
+          // Extract relevant properties from authData.user
+          const userData = {
+            uid: authData.user.uid,
+            email: authData.user.email,
+            displayName: authData.user.displayName,
+            emailVerified: authData.user.emailVerified,
+            // Add any other properties you want to store
+          };
+          dispatch(setUser(userData));
+        }
+        
+
+        // If successful:
+        dispatch(incrementRead());
+
+        console.log("Sign-up successful");
+        navigate("/userHomePage");
+      } catch (error) {
+        console.error("Error during sign-up:", error);
+      }
+    } else {
+      try {
+        const authData = await handleLogin(emailInput, passwordInput);
+
         if (authData && authData.uid) {
           // Extract relevant properties from authData
           const userData = {
@@ -207,28 +243,9 @@ export const SignUpLogin = () => {
           dispatch(setUser(userData));
         }
 
-        console.log("Sign-up successful");
-        navigate("/userHomePage");
-      } catch (error) {
-        console.error("Error during sign-up:", error);
-      }
-    } else {
-      try {
-        const authData = await handleLogin(emailInput, passwordInput);
-        console.log(authData) // logging the authData to see its structure
-        
-        if (authData && authData.uid) {
-          // Extract relevant properties from authData
-          const userData = {
-            uid: authData.uid,
-            email: authData.email,
-            displayName: authData.displayName,
-            emailVerified: authData.emailVerified,
-            // Add any other properties you want to store
-          };
-          dispatch(setUser(userData));
-        }
-  
+        // If successful:
+        dispatch(incrementRead());
+
         console.log("Login successful");
         navigate("/userHomePage");
       } catch (error) {
@@ -239,7 +256,8 @@ export const SignUpLogin = () => {
     console.log("Resetting form");
     resetForm();
   };
-  
+
+
   return (
     <form noValidate onSubmit={onSubmit}>
       <div className="signUp-login-form">
@@ -323,4 +341,4 @@ export const SignUpLogin = () => {
       <input type="submit" />
     </form>
   );
-};
+}; // I think i copied and pasted some snippets wrong.  theres an error here.

@@ -63,31 +63,6 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
     }
   }, []);
 
-  // useEffect(() => {
-  //   renderCountMap.current += 1;
-  //   console.log(`useEffect for map has run ${renderCountMap.current} times.`)
-  //   const existingScript = document.getElementById("googleMapsScript");
-  //   if (!window.google && !existingScript) {
-  //     const script = document.createElement('script');
-  //     script.type = 'text/javascript';
-  //     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places&callback=initMap`;
-  //     script.async = true;
-  //     script.defer = true;
-
-  //     window.initMap = () => setIsMapLoaded(true);
-
-  //     document.body.appendChild(script);
-  //     script.id = "googleMapsScript";
-  //     return () => {
-  //       document.body.removeChild(script);
-  //       // delete window.initMap; // Property 'initMap' does not exist on type 'Window & typeof globalThis'.
-  //     };
-
-  //   } else {
-  //     setIsMapLoaded(true);
-  //   }
-  // }, []);
-
   // Initialize map, set to user's current location, and add a click listener
   useEffect(() => {
     renderCountLoc.current += 1;

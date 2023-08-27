@@ -12,7 +12,7 @@ import {
 } from "firebase/storage";
 import Snackbar from "@mui/material/Snackbar";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Button,
   TextField,
@@ -39,32 +39,35 @@ type StoreType = {
 export const CreatePost: React.FC = () => {
   const [postType, setPostType] = useState<string>("public");
   const [description, setDescription] = useState<string>("");
-  const [selectedImage, setSelectedImage] = useState<String | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [selectedStore, setSelectedStore] = useState<StoreType | null>(null);
 
-  const handleSelectedStore = (store: google.maps.places.PlaceResult, storeAddress: string) => {
-    setSelectedStore({
-      storeName: store.name,
-      storeAddress: storeAddress,
-    });
-  };
+  const handleSelectedStore = useCallback(
+    (store: google.maps.places.PlaceResult, storeAddress: string) => {
+      setSelectedStore({
+        storeName: store.name,
+        storeAddress: storeAddress,
+      });
+    },
+    []
+  );
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
-  
+
     if (file) {
       // Check for supported image types
       const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
       if (validImageTypes.includes(file.type)) {
         setSelectedFile(file);
-        
+
         // Convert to DataURL just for preview purposes (displaying in the UI)
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -72,13 +75,13 @@ export const CreatePost: React.FC = () => {
         };
         reader.readAsDataURL(file);
       } else {
-        setSnackbarMessage("Unsupported file type. Please upload a valid image.");
+        setSnackbarMessage(
+          "Unsupported file type. Please upload a valid image."
+        );
         setSnackbarOpen(true);
       }
     }
   };
-  
-  
 
   const extractHashtags = (description: string) => {
     const hashtagPattern = /#\w+/g;
@@ -87,28 +90,33 @@ export const CreatePost: React.FC = () => {
 
   const handlePostSubmission = async () => {
     const user = auth.currentUser;
-
     if (!user) return; // No user, abort the function
-
     const uid = user.uid;
-    console.log("User UID:", uid); 
-
+    console.log("User UID:", uid);
     const currentDate = new Date();
     const formattedDate = `${currentDate.getFullYear()}-${String(
       currentDate.getMonth() + 1
     ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
-
     const imageFileName = `${uid}-${Date.now()}.jpg`;
     const imagePath = `images/${formattedDate}/${uid}/${imageFileName}`;
-
-    console.log("Image Path:", imagePath);
-
     const hashtags = extractHashtags(description);
     console.log("Extracted Hashtags:", hashtags);
 
     try {
       const storage = getStorage();
       const storageRef = ref(storage, imagePath);
+
+      // Fetch the user's data from Firestore
+      const userDocRef = doc(db, "users", uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+      const userData = userDocSnapshot.data();
+
+      if (!userData) {
+        console.error("User data not found for ID:", uid);
+        return;
+      }
+
+      console.log("User Data from Firestore:", userData); // Logging fetched user data
 
       if (selectedFile) {
         const uploadTask = uploadBytesResumable(storageRef, selectedFile);
@@ -128,23 +136,11 @@ export const CreatePost: React.FC = () => {
           async () => {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-            // Fetch the user's data from Firestore
-            const userDocRef = doc(db, "users", uid);
-            const userDocSnapshot = await getDoc(userDocRef);
-            const userData = userDocSnapshot.data();
-
-            if (!userData) {
-              console.error("User data not found for ID:", uid);
-              return;
-            }
-
-            console.log("User Data from Firestore:", userData); // 4. Logging fetched user data
-
             const postData = {
               description: description,
               imageUrl: downloadURL,
               postType: postType,
-              timestamp: new Date(),
+              timestamp: new Date().toISOString(),
               user: {
                 name: `${userData.firstName} ${userData.lastName}`,
                 company: userData.company,
@@ -155,18 +151,18 @@ export const CreatePost: React.FC = () => {
               store: selectedStore,
             };
 
-            console.log("Post Data to be added:", postData); // This logs after a submit post.  The post is added to the database
+            console.log("Post Data to be added:", postData);
 
-            await addDoc(collection(db, "posts"), postData); // its been added
-            dispatch(showMessage("Post added successfully!")); // this line doesnt log
+            await addDoc(collection(db, "posts"), postData);
+            dispatch(showMessage("Post added successfully!"));
 
             // Navigate to another page or provide feedback to the user
-            navigate("/userHomePage"); // the page doesnt navigate back to userHomePage
+            navigate("/userHomePage");
           }
         );
       }
     } catch (error) {
-      console.error("Error adding post:", error); // this doesnt log
+      console.error("Error adding post:", error);
     }
   };
 
@@ -189,8 +185,8 @@ export const CreatePost: React.FC = () => {
         </Toolbar>
       </AppBar>
       <StoreLocator setSelectedStore={handleSelectedStore} />
-            <h5>Store: {selectedStore?.storeName}</h5>
-            <h4>Address: {selectedStore?.storeAddress}</h4>
+      <h5>Store: {selectedStore?.storeName}</h5>
+      <h4>Address: {selectedStore?.storeAddress}</h4>
       <Box p={3}>
         <Button
           variant="contained"
