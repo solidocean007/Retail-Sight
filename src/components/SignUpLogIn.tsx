@@ -1,26 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserInput } from "./UserInput";
 import { UserPhoneInput } from "./UserPhoneInput";
 import { TErrorsOfInputs, TUserInputType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
-import { TUserInformation } from "../utils/types";
 import { handleSignUp, handleLogin } from "../utils/authenticate";
 import { useNavigate } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+
+// import items from Redux
+import { useDispatch, useSelector } from "react-redux";
+import { incrementRead, incrementWrite, resetReads } from "../firestoreReadsSlice"; // no exported incrementWrite in store
+import { setUser } from "../Slices/userSlice";
 
 //Import validation
 import { validateUserInputs } from "../utils/validations";
 
-interface TNewUser {
-  firstName: string;
-  lastName: string;
-  email: string;
-  company: string;
-  phone: string;
-  password: string;
-  verifyPasswordInput: string;
-}
+// interface TNewUser {
+//   firstName: string;
+//   lastName: string;
+//   email: string;
+//   company: string;
+//   phone: string;
+//   password: string;
+//   verifyPasswordInput: string;
+// }
 
 export const SignUpLogin = () => {
+  const dispatch = useDispatch();
+  const firestoreReadCount = useSelector((state) => state.firestoreReads.count);
+  const maxFirestoreReads = useSelector(
+    (state) => state.firestoreReads.maxCount
+  );
+
   // State
   const [signUpError, setSignUpError] = useState("");
   const [logInError, setLogInError] = useState("");
@@ -153,121 +165,101 @@ export const SignUpLogin = () => {
 
   const setFormMode = () => setIsSignUp((prevIsSignUp) => !prevIsSignUp);
 
-  return (
-    <form
-      noValidate
-      // onSubmit={(e) => {
-      //   e.preventDefault();
-      //   setTriedSubmit(true);
+  const {
+    firstNameInput,
+    lastNameInput,
+    emailInput,
+    companyInput,
+    phoneInput,
+    passwordInput,
+  } = userInputs;
 
-      //   const {
-      //     firstNameInput,
-      //     lastNameInput,
-      //     emailInput,
-      //     companyInput,
-      //     phoneInput,
-      //     passwordInput,
-      //   } = userInputs;
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTriedSubmit(true);
 
-      //   if (isSignUp) {
-      //     const validationErrors = validateUserInputs(userInputs); // This 'validationErrors' will return false if there are no errors;
-      //     setErrorsOfInputs(validationErrors); // This will set the state of the errorsOfInputs
-      //     const firstError = Object.values(validationErrors).find(
-      //       (error: string) => error !== ""
-      //     );
+    if (firestoreReadCount >= maxFirestoreReads) {
+      alert("You've reached the maximum allowed reads!");
+      return;
+    }
 
-      //     if (firstError) {
-      //       alert(`Bad data input: ${firstError}`);
-      //       return;
-      //     }
+    if (isSignUp) {
+      const validationErrors = validateUserInputs(userInputs);
+      setErrorsOfInputs(validationErrors);
+      const firstError = Object.values(validationErrors).find(
+        (error: string) => error !== ""
+      );
 
-      //     handleSignUp(
-      //       firstNameInput,
-      //       lastNameInput,
-      //       emailInput,
-      //       companyInput,
-      //       phoneInput,
-      //       passwordInput,
-      //       setSignUpError
-      //     )
-      //       .then(() => {
-      //         navigate("/userHomePage");
-      //       })
-      //       .catch((error) => {
-      //         // Handle or display error
-      //         console.log(error);
-      //       });
-      //   } else {
-      //     console.log("attempting login");
-      //     handleLogin(emailInput, passwordInput)
-      //       .then(() => {
-      //         navigate("/userHomePage");
-      //       })
-      //       .catch((error) => {
-      //         // Handle or display error
-      //         console.log(error);
-      //       });
-      //   }
-      //   console.log('reset form next')
-      //   resetForm();
-      // }}
-      onSubmit={(e) => {
-        e.preventDefault();
-        setTriedSubmit(true);
+      if (firstError) {
+        alert(`Bad data input: ${firstError}`);
+        return;
+      }
 
-        const {
+      try {
+        const authData = await handleSignUp(
           firstNameInput,
           lastNameInput,
           emailInput,
           companyInput,
           phoneInput,
           passwordInput,
-        } = userInputs;
+          setSignUpError
+        );
 
-        if (isSignUp) {
-          const validationErrors = validateUserInputs(userInputs);
-          setErrorsOfInputs(validationErrors);
-          const firstError = Object.values(validationErrors).find(
-            (error: string) => error !== ""
-          );
+        if (authData && authData.user && authData.user.uid) { 
+          // Extract relevant properties from authData.user
+          const userData = {
+            uid: authData.user.uid,
+            email: authData.user.email,
+            displayName: authData.user.displayName,
+            emailVerified: authData.user.emailVerified,
+            // Add any other properties you want to store
+          };
+          dispatch(setUser(userData));
+        }
+        
 
-          if (firstError) {
-            alert(`Bad data input: ${firstError}`);
-            return;
-          }
+        // If successful:
+        dispatch(incrementRead());
 
-          handleSignUp(
-            firstNameInput,
-            lastNameInput,
-            emailInput,
-            companyInput,
-            phoneInput,
-            passwordInput,
-            setSignUpError
-          )
-            .then(() => {
-              console.log("Sign-up successful");
-              navigate("/userHomePage");
-            })
-            .catch((error) => {
-              console.log("Error during sign-up:", error);
-            });
-        } else {
-          console.log("attempting login");
-          handleLogin(emailInput, passwordInput)
-            .then(() => {
-              console.log("Login successful");
-              navigate("/userHomePage");
-            })
-            .catch((error) => {
-              console.log("Error during login:", error);
-            });
+        console.log("Sign-up successful");
+        navigate("/userHomePage");
+      } catch (error) {
+        console.error("Error during sign-up:", error);
+      }
+    } else {
+      try {
+        const authData = await handleLogin(emailInput, passwordInput);
+
+        if (authData && authData.uid) {
+          // Extract relevant properties from authData
+          const userData = {
+            uid: authData.uid,
+            email: authData.email,
+            displayName: authData.displayName,
+            emailVerified: authData.emailVerified,
+            // Add any other properties you want to store
+          };
+          dispatch(setUser(userData));
         }
 
-        console.log("Resetting form");
-        resetForm();
-      }}
-    >
+        // If successful:
+        dispatch(incrementRead());
+
+        console.log("Login successful");
+        navigate("/userHomePage");
+      } catch (error) {
+        console.error("Error during login:", error);
+      }
+    }
+
+    console.log("Resetting form");
+    resetForm();
+  };
+
+
+  return (
+    <form noValidate onSubmit={onSubmit}>
       <div className="signUp-login-form">
         <button type="button" onClick={setFormMode}>
           {formButtonMessage()}
@@ -349,4 +341,4 @@ export const SignUpLogin = () => {
       <input type="submit" />
     </form>
   );
-};
+}; // I think i copied and pasted some snippets wrong.  theres an error here.

@@ -1,5 +1,5 @@
 // PostCard.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import {
   Card,
@@ -10,20 +10,71 @@ import {
 } from "@mui/material";
 import { PostType } from "../utils/types"; // Assuming you have types defined somewhere
 import { PostDescription } from "./PostDescription";
+import EditPostModal from "./EditPostModal";
+import { useSelector, useDispatch } from "react-redux";
+import { selectUser } from "../Slices/userSlice";
+import { db } from "../firebase";
+import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
+
+import { deletePost, updatePost } from "../Slices/postsSlice";
 
 interface PostCardProps {
   post: PostType;
-  getPostsByTag: (hashTag: string)=> void;
+  getPostsByTag: (hashTag: string) => void;
+  style?: React.CSSProperties;
+  setPosts: React.Dispatch<React.SetStateAction<PostType[]>>;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   const [comment, setComment] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const dispatch = useDispatch();
+  const posts = useSelector(state => state.posts); // posts is declared but value is never read.
+
+  const user = useSelector(selectUser);
+  useEffect(() => {
+    console.log(user?.uid);
+  }, [user]);
+
+  const handleEditPost = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleSavePost = async (updatedPost: PostType) => {
+    const postRef = doc(collection(db, "posts"), updatedPost.id);
+    try {
+      const { id, ...restOfUpdatedPost } = updatedPost; // id is assigned but value never used
+      await updateDoc(postRef, restOfUpdatedPost);
+      dispatch(updatePost(updatedPost));
+      console.log("Post updated successfully");
+      handleCloseEditModal();
+    } catch (error) {
+      console.error("Error updating post: ", error);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    const postRef = doc(collection(db, "posts"), postId);
+    try {
+      await deleteDoc(postRef);
+      dispatch(deletePost(postId));
+      console.log("Post deleted successfully");
+      handleCloseEditModal();
+    } catch (error) {
+      console.error("Error deleting post: ", error);
+    }
+  };
+
   let formattedDate = "N/A"; // default value
-  if (post.timestamp && post.timestamp.toDate) {
-    const jsDate = post.timestamp.toDate();
+  if (post.timestamp) {
+    const jsDate = new Date(post.timestamp); // Creating a Date object from ISO string
     formattedDate = jsDate.toLocaleDateString();
   }
-
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setComment(e.target.value);
   };
@@ -33,10 +84,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag }) => {
   };
 
   return (
-    <Card>
+    <Card style={{ ...style }}>
       <CardContent>
+        {user?.uid &&
+          user.uid === post.user?.userId && (
+            <Button onClick={handleEditPost}>Edit Post</Button>
+          )}
+
         <Typography variant="h6">
-          {post.user.name} ({post.user.company})
+          {post.user?.name} ({post.user?.company})
         </Typography>
         {/* <Typography color="textSecondary">{new Date(post.createdAt).toLocaleDateString()}</Typography> */}
         <Typography color="textSecondary">{formattedDate}</Typography>
@@ -49,7 +105,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag }) => {
           />
         )}
         {/* <Typography variant="body2">{post.description}</Typography>{" "} */}
-        <PostDescription description={post.description} getPostsByTag={getPostsByTag} />
+        <PostDescription
+          description={post.description}
+          getPostsByTag={getPostsByTag}
+        />
         {/* Display the post's description */}
         <TextField
           label="Comment"
@@ -59,6 +118,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag }) => {
         />
         <Button onClick={submitComment}>Post Comment</Button>
       </CardContent>
+
+      <EditPostModal
+        post={post}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleSavePost}
+        onDelete={handleDeletePost}
+      />
     </Card>
   );
 };
