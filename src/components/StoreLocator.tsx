@@ -121,7 +121,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
           setSelectedPlace((prev) => ({ ...prev!, name: e.target.value }))
         }
       />
-      <button
+      {/* <button
         onClick={() => {
           if (selectedPlace) {
             setSelectedStore(selectedPlace, selectedPlace.vicinity || "");
@@ -129,7 +129,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
         }}
       >
         Submit
-      </button>
+      </button> */}
     </div>
   );
 };

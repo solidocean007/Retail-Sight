@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { auth } from "../firebase";
+import { auth } from "../utils/firebase";
 import { User } from "firebase/auth";
 import { Button, TextField, Container, Typography } from "@mui/material";
 

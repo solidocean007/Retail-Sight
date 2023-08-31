@@ -13,7 +13,7 @@ import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
-import { db } from "../firebase";
+import { db } from "../utils/firebase";
 import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 import { deletePost, updatePost } from "../Slices/postsSlice";

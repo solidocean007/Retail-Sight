@@ -6,7 +6,7 @@ import { PostType } from "../utils/types";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import { useSelector, useDispatch } from 'react-redux';
 import { setPosts } from "../Slices/postsSlice";
-import { incrementRead } from "../firestoreReadsSlice";
+import { incrementRead } from "../Slices/firestoreReadsSlice";
 
 interface PostCardRendererProps {
   index: number;

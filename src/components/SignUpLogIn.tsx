@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UserInput } from "./UserInput";
 import { UserPhoneInput } from "./UserPhoneInput";
 import { TErrorsOfInputs, TUserInputType } from "../utils/types";
@@ -6,11 +6,15 @@ import { ErrorMessage } from "./ErrorMessage";
 import { handleSignUp, handleLogin } from "../utils/authenticate";
 import { useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
-
+import { db } from "../utils/firebase";
+// Import necessary Material-UI components
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 // import items from Redux
 import { useDispatch, useSelector } from "react-redux";
-import { incrementRead, incrementWrite, resetReads } from "../firestoreReadsSlice"; // no exported incrementWrite in store
+import { incrementRead, incrementWrite, resetReads } from "../Slices/firestoreReadsSlice"; // no exported incrementWrite in store
 import { setUser } from "../Slices/userSlice";
 
 //Import validation
@@ -341,4 +345,4 @@ export const SignUpLogin = () => {
       <input type="submit" />
     </form>
   );
-}; // I think i copied and pasted some snippets wrong.  theres an error here.
+}; 
