@@ -1,7 +1,8 @@
-//Authenticate
+//Authenticate.ts
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
@@ -23,7 +24,6 @@ export const handleSignUp = async (
   setSignUpError: (error: string) => void
 ) => {
   try {
-    let firestoreWrites = 0;
     console.log("Starting user creation with Firebase Auth...");
 
     // Create user with email and password in Firebase Authentication
@@ -33,6 +33,12 @@ export const handleSignUp = async (
     // Check if user is created successfully
     if (userCredential.user) {
       const uid = userCredential.user.uid;
+
+      // Set the displayName for the user
+      const displayName = `${firstNameInput} ${lastNameInput}`;
+      await updateProfile(userCredential.user, { displayName });
+      console.log("User displayName set successfully in Firebase Auth");
+
       console.log("Adding user data to Firestore...");
       // Add the additional user data to Firestore
       const additionalData = {
@@ -41,7 +47,6 @@ export const handleSignUp = async (
         email: email,
         company: companyInput,
         phone: phoneInput,
-        password: passwordInput,
       };
 
       await setDoc(doc(collection(db, "users"), uid), {
@@ -53,7 +58,7 @@ export const handleSignUp = async (
       console.log("User data added to Firestore successfully");
     }
     
-    return { user: userCredential.user, firestoreWrites };
+    return { user: userCredential.user };
 
   } catch (error) {
     const firebaseError = error as FirebaseError;
@@ -67,6 +72,7 @@ export const handleSignUp = async (
       setSignUpError("The email address is already in use by another account.");
     } else {
       // Handle other potential errors or set a general error message
+      // I don't know how to check for other errors
       setSignUpError(errorMessage);
     }
 

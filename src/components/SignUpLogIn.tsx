@@ -14,21 +14,11 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 // import items from Redux
 import { useDispatch, useSelector } from "react-redux";
-import { incrementRead, incrementWrite, resetReads } from "../Slices/firestoreReadsSlice"; // no exported incrementWrite in store
+import { incrementRead } from "../Slices/firestoreReadsSlice"; // no exported incrementWrite in store
 import { setUser } from "../Slices/userSlice";
 
 //Import validation
 import { validateUserInputs } from "../utils/validations";
-
-// interface TNewUser {
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   company: string;
-//   phone: string;
-//   password: string;
-//   verifyPasswordInput: string;
-// }
 
 export const SignUpLogin = () => {
   const dispatch = useDispatch();

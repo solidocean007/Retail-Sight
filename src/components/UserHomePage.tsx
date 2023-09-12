@@ -7,9 +7,12 @@ import { Container, Grid, AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
 import { useState } from "react";
 
+import { useSelector } from 'react-redux';
+
 export const UserHomePage = () => {
   const navigate = useNavigate();
-
+  const currentUser = useSelector(state => state.user);
+  console.log(currentUser);
   const openProfile = () => navigate("/profile-page");
   const [isCreatePostOpen, setIsCreatePostOpen] = useState<boolean>(false);
 
@@ -47,6 +50,9 @@ export const UserHomePage = () => {
         </Grid>
         <Grid item xs={12}>
           {/* Place your ActivityFeed component here */}
+          <div>
+            <h1>Welcome, {currentUser.displayName}!</h1>
+        </div>
           <ActivityFeed />
         </Grid>
       </Grid>

@@ -17,6 +17,7 @@ export type TUserInputType = {
   phoneInput: TPhoneInputState;
   passwordInput: string;
   verifyPasswordInput: string;
+  setSignUpError?: (error: string) => void;
 };
 
 export type TErrorsOfInputs = {
@@ -41,7 +42,7 @@ export interface UserType {
 import { Timestamp } from "firebase/firestore";
 
 export interface PostType {
-  id: string;  // id for post
+  id: string; // id for post
   // should there be a user id?
   description?: string;
   imageUrl?: string;
@@ -49,5 +50,3 @@ export interface PostType {
   timestamp?: Timestamp;
   user?: UserType;
 }
-
-

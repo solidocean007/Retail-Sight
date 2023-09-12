@@ -1,6 +1,7 @@
 // Slices/postsSlice.ts
 
 import { createSlice } from "@reduxjs/toolkit";
+import { PostType } from "../utils/types";
 
 const postsSlice = createSlice({
   name: "posts",
