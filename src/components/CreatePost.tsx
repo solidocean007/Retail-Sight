@@ -95,7 +95,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({
             </Typography>
           </Toolbar>
         </AppBar>
-        <StoreLocator setSelectedStore={handleSelectedStore} />
+        <StoreLocator  setSelectedStore={handleSelectedStore} />
         <h4>Store: {selectedStore?.storeName}</h4>
         <h6>Address: {selectedStore?.storeAddress}</h6>
         <Box p={3}>

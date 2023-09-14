@@ -21,7 +21,7 @@ export const UserHomePage = () => {
   };
 
   return (
-    <Container>
+    <Container style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
       {isCreatePostOpen && (
             <CreatePost
               toggleOpenCreatePost={toggleOpenCreatePost}
