@@ -55,6 +55,15 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.create-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  scroll-behavior: smooth;
+  /* transform: translate(-50%, -50%); */
+}
+
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

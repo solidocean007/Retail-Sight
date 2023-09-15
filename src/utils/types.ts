@@ -7,14 +7,14 @@ export type TUserInformation = {
   password: string;
 };
 
-export type TPhoneInputState = [string, string, string];
+export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
 export type TUserInputType = {
   firstNameInput: string;
   lastNameInput: string;
   emailInput: string;
   companyInput: string;
-  phoneInput: TPhoneInputState;
+  phoneInput: TPhoneInputState; // change this to string
   passwordInput: string;
   verifyPasswordInput: string;
   setSignUpError?: (error: string) => void;
@@ -30,7 +30,6 @@ export type TErrorsOfInputs = {
   verifyPasswordInputError: string;
 };
 
-// types.ts
 export interface UserType {
   id: string;
   name: string;
@@ -42,8 +41,7 @@ export interface UserType {
 import { Timestamp } from "firebase/firestore";
 
 export interface PostType {
-  id: string; // id for post
-  // should there be a user id?
+  id: string;
   description?: string;
   imageUrl?: string;
   postType?: string;

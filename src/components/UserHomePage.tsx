@@ -7,27 +7,16 @@ import { Container, Grid, AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
 import { useState } from "react";
 
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
-  const currentUser = useSelector(state => state.user);
+  const currentUser = useSelector((state) => state.user);
   console.log(currentUser);
   const openProfile = () => navigate("/profile-page");
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState<boolean>(false);
-
-  const toggleOpenCreatePost = () => {
-    setIsCreatePostOpen((prevState) => !prevState);
-  };
 
   return (
-    <Container style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-      {isCreatePostOpen && (
-            <CreatePost
-              toggleOpenCreatePost={toggleOpenCreatePost}
-              isOpen={isCreatePostOpen}
-            />
-          )}
+    <Container className="container user-home-page">
       <AppBar position="fixed">
         <Toolbar>
           <Button variant="contained" color="secondary" onClick={openProfile}>
@@ -36,7 +25,7 @@ export const UserHomePage = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={toggleOpenCreatePost}
+            onClick={() => navigate("/createPost")}
           >
             Create Post
           </Button>
@@ -45,14 +34,12 @@ export const UserHomePage = () => {
       </AppBar>
 
       <Grid container spacing={3} style={{ marginTop: "70px" }}>
-        <Grid item xs={12}>
-          
-        </Grid>
+        <Grid item xs={12}></Grid>
         <Grid item xs={12}>
           {/* Place your ActivityFeed component here */}
           <div>
             <h1>Welcome, {currentUser.displayName}!</h1>
-        </div>
+          </div>
           <ActivityFeed />
         </Grid>
       </Grid>

@@ -7,7 +7,7 @@ import { SignUpLogin } from "./components/SignUpLogIn";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { UserHomePage } from "./components/UserHomePage";
 import { UserProfilePage } from "./components/UserProfilePage";
-// import { CreatePost } from "./components/CreatePost";
+import { CreatePost } from "./components/CreatePost";
 
 import { RootState } from "./utils/store"; // import RootState
 
@@ -20,9 +20,9 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<SignUpLogin />} />
-          <Route path="/profile-page" element={<UserProfilePage />} />
           <Route path="/userHomePage" element={<UserHomePage />} />
-          {/* <Route path="/createPost" element={<CreatePost />} /> */}
+          <Route path="/profile-page" element={<UserProfilePage />} />
+          <Route path="/createPost" element={<CreatePost />} />
         </Routes>
       </Router>
       <Snackbar

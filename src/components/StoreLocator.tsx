@@ -113,7 +113,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
 
   return (
     <div>
-      <div ref={mapRef} style={{ width: "300px", height: "300px" }}></div>
+      <div ref={mapRef} style={{ width: "300px", height: "200px" }}></div>
       <input
         type="text"
         value={selectedPlace?.name || ""}
@@ -121,15 +121,6 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
           setSelectedPlace((prev) => ({ ...prev!, name: e.target.value }))
         }
       />
-      {/* <button
-        onClick={() => {
-          if (selectedPlace) {
-            setSelectedStore(selectedPlace, selectedPlace.vicinity || "");
-          }
-        }}
-      >
-        Submit
-      </button> */}
     </div>
   );
 };

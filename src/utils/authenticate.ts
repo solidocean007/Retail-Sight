@@ -8,7 +8,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
 import { db } from "./firebase";
 import { TPhoneInputState } from "./types";
-import { setDoc, doc, addDoc, collection } from "firebase/firestore";
+import { setDoc, doc, collection } from "firebase/firestore";
 
 interface FirebaseError extends Error {
   code: string;
