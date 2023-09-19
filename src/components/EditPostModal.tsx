@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 
-import { handleImageChangeLogic } from "../utils/handlePostLogic";
+// import { handleImageChangeLogic } from "../utils/handlePostLogic";
 
 interface EditPostModalProps {
   post: PostType;

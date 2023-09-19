@@ -1,67 +1,80 @@
-//CreatePost.tsx
-// import Modal from "@mui/material/Modal";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import Snackbar from "@mui/material/Snackbar";
-
+// CreatePost.tsx
 import React, { useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { Timestamp } from "firebase/firestore";
+import { selectUser } from "../Slices/userSlice";
 import {
-  Button,
-  TextField,
-  Select,
-  MenuItem,
   AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
   Box,
+  Button,
   Card,
   CardMedia,
+  IconButton,
+  MenuItem,
+  Select,
+  Snackbar,
+  TextField,
+  Toolbar,
+  Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
+
 import StoreLocator from "./StoreLocator";
-
-import {
-  handleSelectedStoreLogic,
-  handleImageChangeLogic,
-  handlePostSubmission,
-} from "../utils/handlePostLogic";
-
-type StoreType = {
-  storeName: string;
-  storeAddress: string;
-};
+import { useHandlePostSubmission } from "../utils/handlePostLogic";
+import { PostType } from "../utils/types";
 
 export const CreatePost = () => {
-  const [postType, setPostType] = useState<string>("public");
-  const [description, setDescription] = useState<string>("");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const handlePostSubmission = useHandlePostSubmission();
+  // State Management
+  const currentUser = useSelector(selectUser);
+  const [post, setPost] = useState<PostType>({
+    description: "",
+    imageUrl: "",
+    selectedStore: "",
+    storeAddress: '',
+    postType: "public",
+    timeStamp: '',
+    uid: currentUser.user?.uid,
+    likes: 0,
+  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [selectedStore, setSelectedStore] = useState<StoreType | null>(null);
 
-  const dispatch = useDispatch(); // this is for setting store variables right?
-
-  const handleSelectedStore = useCallback(
-    (store: google.maps.places.PlaceResult, storeAddress: string) =>
-      handleSelectedStoreLogic(store, storeAddress, setSelectedStore),
-    []
-  );
+  // Logic
+  const navigate = useNavigate();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleImageChangeLogic({
-      e,
-      setSelectedFile,
-      setSelectedImage,
-      setSnackbarMessage,
-      setSnackbarOpen,
-    });
+    const file = e.target.files![0];
+    setSelectedFile(file);
+    if (file) {
+      const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (validImageTypes.includes(file.type)) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPost({ ...post, imageUrl: reader.result as string });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setSnackbarMessage("Unsupported file type. Please upload a valid image.");
+        setSnackbarOpen(true);
+      }
+    }
+  };
+  
+  const handleSelectedStore = (storeName: string, storeAddress: string) => {
+    setPost(prev => ({
+      ...prev,
+      selectedStore: storeName,
+      storeAddress: storeAddress,
+    }));
   };
 
-  const navigate = useNavigate();
+  const handleFieldChange = (field: string, value: string | number) => {
+    setPost({ ...post, [field]: value });
+  };
 
   return (
     <div>
@@ -85,7 +98,7 @@ export const CreatePost = () => {
           component="label"
           startIcon={<AddAPhotoIcon />}
         >
-          {selectedFile ? "ChangeImage" : "Upload Image"}
+          {post.imageUrl ? "ChangeImage" : "Upload Image"}
           <input
             type="file"
             hidden
@@ -94,21 +107,21 @@ export const CreatePost = () => {
           />
         </Button>
 
-        {selectedImage && (
+        {post.imageUrl && (
           <Box mt={2}>
             <Card>
               <CardMedia
                 component="img"
-                image={selectedImage}
+                image={post.imageUrl}
                 alt="Selected Preview"
                 style={{ maxHeight: "300px", width: "auto" }}
               />
             </Card>
           </Box>
         )}
-        <StoreLocator setSelectedStore={handleSelectedStore} />
-        <h4>Store: {selectedStore?.storeName}</h4>
-        <h6>Address: {selectedStore?.storeAddress}</h6>
+        <StoreLocator post={post} handleSelectedStore={handleSelectedStore} />
+        <h4>Store: {post.selectedStore}</h4> 
+        <h6>Address: {post.selectedStore}</h6>
 
         <Box mt={2}>
           <TextField
@@ -117,8 +130,8 @@ export const CreatePost = () => {
             label="Description"
             multiline
             rows={4}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={post.description}
+            onChange={(e) => handleFieldChange('description', e.target.value)}
           />
         </Box>
 
@@ -126,8 +139,8 @@ export const CreatePost = () => {
           <Select
             fullWidth
             variant="outlined"
-            value={postType}
-            onChange={(e) => setPostType(e.target.value as string)}
+            value={post.postType}
+            onChange={(e) => handleFieldChange('postType', e.target.value)}
           >
             <MenuItem value="public">Public</MenuItem>
             <MenuItem value="private">Private</MenuItem>
@@ -142,7 +155,13 @@ export const CreatePost = () => {
           variant="contained"
           color="primary"
           fullWidth
-          onClick={handlePostSubmission}
+          onClick={() => {
+            if (selectedFile) {
+              handlePostSubmission(post, selectedFile);
+            } else {
+              // handle the situation where selectedFile is null
+            }
+          }}
         >
           Submit Post
         </Button>
@@ -150,7 +169,7 @@ export const CreatePost = () => {
 
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={6000} // Hide after 6 seconds
+        autoHideDuration={4000} // Hide after 4 seconds
         onClose={() => setSnackbarOpen(false)}
         message={snackbarMessage}
         action={

@@ -1,11 +1,4 @@
-export type TUserInformation = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  company: string;
-  phone: string;
-  password: string;
-};
+
 
 export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
@@ -31,20 +24,23 @@ export type TErrorsOfInputs = {
 };
 
 export interface UserType {
-  id: string;
-  name: string;
-  company: string;
-  userId: string;
-  email: string;
+  uid: string; // from Firebase
+  firstName: string; // from signup
+  lastName: string; // from signup
+  email: string; // from signup
+  company: string; // from signup
+  phone: string; // from signup
 }
 
-import { Timestamp } from "firebase/firestore";
+// import { Timestamp } from "firebase/firestore";
 
 export interface PostType {
-  id: string;
   description?: string;
   imageUrl?: string;
+  selectedStore?: string;
+  storeAddress: string;
   postType?: string;
-  timestamp?: Timestamp;
-  user?: UserType;
+  timeStamp?: string;
+  uid?: string;
+  likes?: number;
 }

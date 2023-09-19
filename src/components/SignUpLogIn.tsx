@@ -188,19 +188,25 @@ export const SignUpLogin = () => {
           companyInput,
           phoneInput,
           passwordInput,
-          setSignUpError
+          setSignUpError, // do I need this?
         );
 
-        if (authData && authData.user && authData.user.uid) { // checks if authData and user and userid exsists, why check all three?
+        if (authData &&  authData.uid) { 
           // Extract relevant properties from authData.user
           const userData = {
-            uid: authData.user.uid,
-            email: authData.user.email,
-            displayName: authData.user.displayName,
-            emailVerified: authData.user.emailVerified,
+            uid: authData.uid,
+            firstName: authData.firstName, // does not exsist on type User.
+            lastName: authData.lastName, // does not exsist on type User.
+            company: authData.comapny, // does not exsist on type User.
+            phone: authData.phoneNumber,
+            email: authData.email, 
+            displayName: authData.displayName, 
+            emailVerified: authData.emailVerified, 
             // Add any other properties you want to store
           };
-          dispatch(setUser(userData)); // sets this to the store
+          dispatch(setUser(userData)); // Types of property 'email' are incompatible.
+          // Type 'string | null' is not assignable to type 'string'.
+          //   Type 'null' is not assignable to type 'string'.ts
         }
 
         console.log("Sign-up successful");
@@ -216,12 +222,17 @@ export const SignUpLogin = () => {
           // Extract relevant properties from authData
           const userData = {
             uid: authData.uid,
-            email: authData.email,
-            displayName: authData.displayName,
-            emailVerified: authData.emailVerified,
-            // Add any other properties you want to store
+            firstName: authData.firstName, // does not exsist on type User.
+            lastName: authData.lastName, // does not exsist on type User.
+            company: authData.comapny, // does not exsist on type User.
+            phone: authData.phoneNumber,
+            email: authData.email, 
+            displayName: authData.displayName, 
+            emailVerified: authData.emailVerified, 
           };
-          dispatch(setUser(userData));
+          dispatch(setUser(userData)); // Types of property 'email' are incompatible.
+          // Type 'string | null' is not assignable to type 'string'.
+          //   Type 'null' is not assignable to type 'string'.ts
         }
 
         console.log("Login successful");

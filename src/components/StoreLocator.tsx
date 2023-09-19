@@ -1,13 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { PostType } from "../utils/types";
 
 // Assuming you've refactored the GOOGLE_MAPS_KEY import using Vite
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
+// interface StoreLocatorProps {
+//   setSelectedStore: (
+//     store: google.maps.places.PlaceResult,
+//     storeAddress: string
+//   ) => void;
+// }
+
 interface StoreLocatorProps {
-  setSelectedStore: (
-    store: google.maps.places.PlaceResult,
-    storeAddress: string
-  ) => void;
+  post: PostType;
+  handleSelectedStore: (storeName: string, storeAddress: string) => void
 }
 
 declare global {
@@ -16,7 +22,8 @@ declare global {
   }
 }
 
-const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
+// const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
+const StoreLocator: React.FC<StoreLocatorProps> = ({ post, handleSelectedStore } ) => {
   const mapRef = useRef<HTMLDivElement | null>(null);
    const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [selectedPlace, setSelectedPlace] =
@@ -103,22 +110,24 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
             ) {
               const firstResult = results[0];
               setSelectedPlace(firstResult);
-              setSelectedStore(firstResult, firstResult.vicinity || "");
+              // setSelectedStore(firstResult, firstResult.vicinity || "");
+              handleSelectedStore(firstResult.name || "", firstResult.vicinity || "");
             }
           }
         );
       });
     }
-  }, [isMapLoaded, setSelectedStore]);
+  }, [isMapLoaded, handleSelectedStore]);
 
   return (
     <div>
       <div ref={mapRef} style={{ width: "300px", height: "200px" }}></div>
       <input
         type="text"
-        value={selectedPlace?.name || ""}
+        // value={selectedPlace?.name || ""}
+        value={post.selectedStore}
         onChange={(e) =>
-          setSelectedPlace((prev) => ({ ...prev!, name: e.target.value }))
+          handleSelectedStore(e.target.value, selectedPlace?.vicinity || "")
         }
       />
     </div>

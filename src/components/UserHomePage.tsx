@@ -1,18 +1,16 @@
 // userHomePage.tsx
-import { CreatePost } from "./CreatePost";
 import Button from "@mui/material/Button";
 import LogOutButton from "./LogOutButton";
 import { useNavigate } from "react-router-dom";
 import { Container, Grid, AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
-import { useState } from "react";
 
 import { useSelector } from "react-redux";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
   const currentUser = useSelector((state) => state.user);
-  console.log(currentUser);
+  console.log(currentUser, ' : currentUser');
   const openProfile = () => navigate("/profile-page");
 
   return (
@@ -38,7 +36,7 @@ export const UserHomePage = () => {
         <Grid item xs={12}>
           {/* Place your ActivityFeed component here */}
           <div>
-            <h1>Welcome, {currentUser.displayName}!</h1>
+            <h1>Welcome, {currentUser.user?.displayName}!</h1>
           </div>
           <ActivityFeed />
         </Grid>

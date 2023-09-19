@@ -1,55 +1,43 @@
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { auth } from "../utils/firebase";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { auth, updateProfile } from "../utils/firebase"; 
 import { User } from "firebase/auth";
 import { Button, TextField, Container, Typography } from "@mui/material";
 
 type FormData = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber?: string | null; // This is optional and can be null based on the data you shared
-  // Add any other fields you want the user to be able to update
+  displayName: string; // Changed to display name
 };
 
-
 export const UserProfilePage = () => {
-  const { register, handleSubmit, setValue, formState } = useForm();
-  // const {  setValue, formState } = useForm();
+  const { register, handleSubmit, setValue, formState } = useForm<FormData>();
   const { errors } = formState;
   const [user, setUser] = useState<null | User>(null);
-
   const [updateMessage, setUpdateMessage] = useState("");
-
-  useEffect(() => {
-    console.log(auth.currentUser, ': auth.currentUser')
-    if (auth.currentUser) {
-      setUser(auth.currentUser);
-      console.log(user, ':user')
-      // setValue("firstName", auth.currentUser.firstName);  I cannot set firstName or lastName because they dont exist on 'user'  
-      // setValue("lastName", auth.currentUser.lastName);
-      setValue("email", auth.currentUser.email);
-    }
-  }, [setValue]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((loggedInUser) => {
         if (loggedInUser) {
             setUser(loggedInUser);
-            setValue("email", loggedInUser.email);
+            setValue("displayName", loggedInUser.displayName || "");
         }
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-}, [setValue]);
+  }, [setValue]);
 
-
-  const onSubmit = (data: FormData)  => { 
-    // Here, add functionality to update user data in Firebase.
-    // For now, let's just display a success message.
-    setUpdateMessage("Profile updated successfully!");
-    console.log(data);
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    if (user) {
+      await updateProfile(user, {
+        displayName: data.displayName
+      }).then(() => {
+        // Update successful
+        setUpdateMessage("Display name updated successfully!");
+      }).catch((error) => {
+        // An error occurred
+        // Handle errors here
+      });
+    }
   };
 
   if (!user) {
@@ -61,37 +49,15 @@ export const UserProfilePage = () => {
       <Typography variant="h5" gutterBottom>
         Edit Profile
       </Typography>
-      <form onSubmit={handleSubmit(onSubmit)}> {/*Argument of type '(data: FormData) => void' is not assignable to parameter of type
-       'SubmitHandler<FieldValues>'.Types of parameters 'data' and 'data' are incompatible.Type 'FieldValues' is missing the following
-        properties from type 'FormData': firstName, lastName, emailts(2345)*/}
+      <form onSubmit={handleSubmit(onSubmit)}>
         <TextField
           fullWidth
           margin="normal"
-          label="First Name"
-          {...register('firstName', { required: true })}
-
-          error={Boolean(errors.firstName)}
-          helperText={errors.firstName && "First name is required"}
+          label="Display Name"
+          {...register('displayName', { required: true })}
+          error={Boolean(errors.displayName)}
+          helperText={errors.displayName && "Display name is required"}
         />
-
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Last Name"
-          {...register('lastName', { required: true })}
-          error={Boolean(errors.lastName)}
-          helperText={errors.lastName && "Last name is required"}
-        />
-
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Email"
-          {...register('email', { required: true })}
-          error={Boolean(errors.email)}
-          helperText={errors.email && "Email is required"}
-        />
-
         <Button 
           type="submit"
           variant="contained" 
@@ -106,6 +72,3 @@ export const UserProfilePage = () => {
     </Container>
   );
 };
-
-
-

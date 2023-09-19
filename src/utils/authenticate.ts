@@ -21,7 +21,7 @@ export const handleSignUp = async (
   companyInput: string,
   phoneInput: TPhoneInputState,
   passwordInput: string,
-  setSignUpError: (error: string) => void
+  setSignUpError?: (error: string) => void
 ) => {
   try {
     console.log("Starting user creation with Firebase Auth...");
@@ -58,7 +58,7 @@ export const handleSignUp = async (
       console.log("User data added to Firestore successfully");
     }
     
-    return { user: userCredential.user };
+    return userCredential.user;
 
   } catch (error) {
     const firebaseError = error as FirebaseError;

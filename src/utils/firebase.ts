@@ -1,11 +1,13 @@
+// firebase.ts
 import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence, updateProfile, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+// import store from "./store";
+// import { setUser, logoutUser } from "../Slices/userSlice";
 
 // Firebase configuration
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  // apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
   authDomain: "retail-sight.firebaseapp.com",
   projectId: "retail-sight",
   storageBucket: "retail-sight.appspot.com",
@@ -16,6 +18,7 @@ const firebaseConfig = {
 
 // Initialize Firebase with the config
 const app = initializeApp(firebaseConfig);
+console.log("Firebase initialized.");
 
 // Get a reference to the auth service
 const auth = getAuth(app);
@@ -31,6 +34,14 @@ setPersistence(auth, browserLocalPersistence)
     console.error("Error setting persistence", error);
   });
 
-export { auth, db };
+  // onAuthStateChanged(auth, (user) => {
+  //   if (user) {
+  //     // User is signed in, you can dispatch a Redux action here
+  //     store.dispatch(setUser(user)); // Type 'User' is missing the following properties from type 'UserType': id, name, company, userId
+  //   } else {
+  //     // No user is signed in, you can set user to null in Redux store
+  //     store.dispatch(logoutUser());
+  //   }
+  // });
 
-
+export { auth, db, updateProfile };
