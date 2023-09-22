@@ -7,7 +7,7 @@ import {
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
 import { db } from "./firebase";
-import { TPhoneInputState } from "./types";
+// import { TPhoneInputState } from "./types";
 import { setDoc, doc, collection } from "firebase/firestore";
 
 interface FirebaseError extends Error {
@@ -19,7 +19,8 @@ export const handleSignUp = async (
   lastNameInput: string,
   email: string,
   companyInput: string,
-  phoneInput: TPhoneInputState,
+  // phoneInput: TPhoneInputState,
+  phoneInput: string,
   passwordInput: string,
   setSignUpError?: (error: string) => void
 ) => {

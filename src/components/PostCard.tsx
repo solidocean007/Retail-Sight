@@ -34,7 +34,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
 
   const user = useSelector(selectUser);
   useEffect(() => {
-    console.log(user?.uid);
+    console.log(user.user?.uid);
   }, [user]);
 
   const handleEditPost = () => {
@@ -83,11 +83,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
     // Logic to submit comment here
   };
 
+  console.log(post.user.userId, ': post uid')
+
   return (
     <Card style={{ ...style }}>
       <CardContent>
-        {user?.uid &&
-          user.uid === post.user?.userId && (
+        {user.user?.uid &&
+          user.user.uid === post.user.userId && (
             <Button onClick={handleEditPost}>Edit Post</Button>
           )}
 

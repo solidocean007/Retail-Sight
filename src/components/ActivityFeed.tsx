@@ -14,7 +14,6 @@ interface PostCardRendererProps {
 }
 
 const ActivityFeed: React.FC = () => {
-  // const [posts, setPosts] = useState<PostType[]>([]);
   const posts = useSelector((state: any)=>state.posts)
   const ITEM_HEIGHT = 700;
   const dispatch = useDispatch(); // <-- Connect to Redux
@@ -60,7 +59,7 @@ const ActivityFeed: React.FC = () => {
 
   const PostCardRenderer: React.FC<PostCardRendererProps> = ({ index, style }) => {
     const post = posts[index];
-    return <PostCard key={post.id} post={post} getPostsByTag={getPostsByTag} style={style} />;
+    return <PostCard key={post.id} post={post} getPostsByTag={getPostsByTag} style={style} setPosts={setPosts}/>;
   };
 
   return (

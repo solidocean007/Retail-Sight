@@ -1,5 +1,5 @@
 import { TUserInputType } from "./types";
-import { TPhoneInputState } from "./types";
+// import { TPhoneInputState } from "./types";
 import { TErrorsOfInputs } from "./types";
 
 export function isEmailValid(emailAddress: string) {
@@ -8,14 +8,22 @@ export function isEmailValid(emailAddress: string) {
   return !!emailAddress.match(regex);
 }
 
-export const isPhoneValid = (userPhoneInput: TPhoneInputState) => {
-  const phoneNumberString = userPhoneInput.join("");
-  if (phoneNumberString.length >= 10 && phoneNumberString.length <= 11) {
+export const isPhoneValid = (userPhoneInput: string) => {
+  // const phoneNumberString = userPhoneInput.join("");
+  if (userPhoneInput.length >= 10 && userPhoneInput.length <= 11) {
     return true;
   } else {
-    return /^\d{10}$/.test(phoneNumberString);
+    return /^\d{10}$/.test(userPhoneInput);
   }
 };
+// export const isPhoneValid = (userPhoneInput: TPhoneInputState) => {
+//   const phoneNumberString = userPhoneInput.join("");
+//   if (phoneNumberString.length >= 10 && phoneNumberString.length <= 11) {
+//     return true;
+//   } else {
+//     return /^\d{10}$/.test(phoneNumberString);
+//   }
+// };
 
 
 export const isPasswordGood = (password: string): boolean => {

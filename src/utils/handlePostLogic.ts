@@ -12,17 +12,12 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 
-
-
 import { PostType } from "./types";
 
 const extractHashtags = (description: string) => {
   const hashtagPattern = /#\w+/g;
   return description.match(hashtagPattern) || [];
 };
-
-
-// ... (other imports)
 
 export const useHandlePostSubmission = () => {
   const dispatch = useDispatch();
@@ -116,9 +111,6 @@ export const useHandlePostSubmission = () => {
 
   return handlePostSubmission;
 };
-
-
-
 
 export const handleSelectedStoreLogic = (
   store: google.maps.places.PlaceResult,

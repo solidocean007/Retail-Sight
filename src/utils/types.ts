@@ -1,13 +1,14 @@
 
 
-export type TPhoneInputState = [string, string, string]; // going to change this to one string
+// export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
 export type TUserInputType = {
   firstNameInput: string;
   lastNameInput: string;
   emailInput: string;
   companyInput: string;
-  phoneInput: TPhoneInputState; // change this to string
+  // phoneInput: TPhoneInputState; // change this to string
+  phoneInput: string; // change this to string
   passwordInput: string;
   verifyPasswordInput: string;
   setSignUpError?: (error: string) => void;

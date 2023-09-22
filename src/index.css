@@ -67,12 +67,37 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-image: radial-gradient(circle at center,
+                                      rgba(255, 255, 200, 1) 0%, 
+                                      rgba(255, 248, 220, 1) 50%, 
+                                      rgb(231, 196, 38) 90%);
   }
   a:hover {
     color: #747bff;
   }
   button {
     background-color: #f9f9f9;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: rgba(255, 255, 255, 0.87);
+    background-image: radial-gradient(circle at center, 
+    rgba(28, 64, 119, 1) 0%, 
+    rgba(14, 32, 59, 1) 50%, 
+    rgba(0, 0, 0, 1) 100%);
+  }
+  a {
+    color: #9fa8ff; /* Lighter shade for better visibility in dark mode */
+  }
+  a:hover {
+    color: #888cff; /* Even lighter on hover */
+  }
+  button {
+    background-color: #1a1a1a;
+  }
+  button:hover {
+    border-color: #646cff;
   }
 }

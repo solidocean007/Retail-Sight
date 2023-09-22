@@ -119,7 +119,7 @@ export const CreatePost = () => {
             </Card>
           </Box>
         )}
-        <StoreLocator post={post} handleSelectedStore={handleSelectedStore} />
+        <StoreLocator post={post} handleSelectedStore={handleSelectedStore}  />
         <h4>Store: {post.selectedStore}</h4> 
         <h6>Address: {post.selectedStore}</h6>
 

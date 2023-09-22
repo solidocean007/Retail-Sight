@@ -28,16 +28,18 @@ export const UserHomePage = () => {
             Create Post
           </Button>
           <LogOutButton />
+          <div>
+            <h2>Welcome, {currentUser.user?.displayName}!</h2>
+          </div>
         </Toolbar>
+       
       </AppBar>
 
       <Grid container spacing={3} style={{ marginTop: "70px" }}>
         <Grid item xs={12}></Grid>
         <Grid item xs={12}>
           {/* Place your ActivityFeed component here */}
-          <div>
-            <h1>Welcome, {currentUser.user?.displayName}!</h1>
-          </div>
+         
           <ActivityFeed />
         </Grid>
       </Grid>
