@@ -19,7 +19,7 @@
 }
 
 /* text fields */
-.MuiTextField-root {
+.MuiInputBase-root {
   margin: 8px;
   width: 50ch;
 }

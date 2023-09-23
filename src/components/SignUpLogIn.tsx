@@ -9,6 +9,7 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
+import { styled } from "@mui/system";
 // import { makeStyles } from "@mui/material";
 // import items from Redux
 import { useDispatch, useSelector } from "react-redux";
@@ -92,7 +93,7 @@ export const SignUpLogin = () => {
   }
 
   function formButtonMessage() {
-    return isSignUp ? "Login" : "Sign-up";
+    return isSignUp ? "switch to login" : "switch to sign-up";
   }
 
   const setFormMode = () => setIsSignUp((prevIsSignUp) => !prevIsSignUp);
@@ -197,12 +198,11 @@ export const SignUpLogin = () => {
   return (
     <Container component="main" maxWidth="xs">
       <Typography variant="h5">{isSignUp ? "Sign Up" : "Log In"}</Typography>
-      <form noValidate onSubmit={onSubmit}>
-        <div className="signUp-login-form">
-          <Button variant="contained" color="primary" onClick={setFormMode}>
+      <Button variant="contained" color="primary" onClick={setFormMode}>
             {formButtonMessage()}
           </Button>
-
+      <form noValidate onSubmit={onSubmit}>
+        <div className="signUp-login-form">
           {isSignUp ? (
             <>
               <Container>
@@ -395,6 +395,7 @@ export const SignUpLogin = () => {
               </Container>
             </>
           )}
+         
         </div>
         {signUpError && <div className="error">{signUpError}</div>}
         <Button type="submit" variant="contained" color="primary">
