@@ -6,10 +6,12 @@ import { Container, Grid, AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
 
 import { useSelector } from "react-redux";
+import "./userHomePage.css"
+import { RootState } from "../utils/store";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
-  const currentUser = useSelector((state) => state.user);
+  const {user: currentUser} = useSelector((state: RootState) => state.user);
   console.log(currentUser, ' : currentUser');
   const openProfile = () => navigate("/profile-page");
 
@@ -17,10 +19,12 @@ export const UserHomePage = () => {
     <Container className="container user-home-page">
       <AppBar position="fixed">
         <Toolbar>
-          <Button variant="contained" color="secondary" onClick={openProfile}>
+          <div className="tool-bar">
+          <Button className="profile-btn" variant="contained" color="secondary" onClick={openProfile}>
             Profile
           </Button>
           <Button
+            className="create-post-btn"
             variant="contained"
             color="primary"
             onClick={() => navigate("/createPost")}
@@ -28,8 +32,10 @@ export const UserHomePage = () => {
             Create Post
           </Button>
           <LogOutButton />
+          </div>
+         
           <div>
-            <h2>Welcome, {currentUser.user?.displayName}!</h2>
+            <h2>Welcome, {currentUser?.displayName}</h2>
           </div>
         </Toolbar>
        
@@ -38,8 +44,6 @@ export const UserHomePage = () => {
       <Grid container spacing={3} style={{ marginTop: "70px" }}>
         <Grid item xs={12}></Grid>
         <Grid item xs={12}>
-          {/* Place your ActivityFeed component here */}
-         
           <ActivityFeed />
         </Grid>
       </Grid>

@@ -22,8 +22,8 @@
     "cors": "^2.8.5",
     "firebase": "^10.1.0",
     "node-fetch": "^3.3.2",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.45.3",
     "react-redux": "^8.1.2",
     "react-router-dom": "^6.14.2",
@@ -33,7 +33,7 @@
     "yup": "^1.2.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.15",
+    "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.7",
     "@types/react-window": "^1.8.5",
     "@typescript-eslint/eslint-plugin": "^6.4.0",

@@ -5,18 +5,18 @@ import {
   Card,
   CardContent,
   Typography,
-  TextField,
   Button,
 } from "@mui/material";
-import { PostType } from "../utils/types"; // Assuming you have types defined somewhere
+import { PostType } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { db } from "../utils/firebase";
 import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
-
 import { deletePost, updatePost } from "../Slices/postsSlice";
+import "./postCard.css";
+import CommentSection from "./CommentSection";
 
 interface PostCardProps {
   post: PostType;
@@ -26,11 +26,10 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
-  const [comment, setComment] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const dispatch = useDispatch();
-  const posts = useSelector(state => state.posts); // posts is declared but value is never read.
+  const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
 
   const user = useSelector(selectUser);
   useEffect(() => {
@@ -75,26 +74,19 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
     const jsDate = new Date(post.timestamp); // Creating a Date object from ISO string
     formattedDate = jsDate.toLocaleDateString();
   }
-  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setComment(e.target.value);
-  };
 
-  const submitComment = () => {
-    // Logic to submit comment here
-  };
-
-  console.log(post.user.userId, ': post uid')
+  // console.log(post.uid, ": post uid");
+  console.log(post, ': post')
 
   return (
-    <Card style={{ ...style }}>
+    <Card className="post-card" style={{ ...style }}>
       <CardContent>
-        {user.user?.uid &&
-          user.user.uid === post.user.userId && (
-            <Button onClick={handleEditPost}>Edit Post</Button>
-          )}
+        {user.user?.uid && user.user.uid === post.uid && (
+          <Button onClick={handleEditPost}>Edit Post</Button>
+        )}
 
         <Typography variant="h6">
-          {post.user?.name} ({post.user?.company})
+          {post.user.name} {post.user?.company}
         </Typography>
         {/* <Typography color="textSecondary">{new Date(post.createdAt).toLocaleDateString()}</Typography> */}
         <Typography color="textSecondary">{formattedDate}</Typography>
@@ -106,19 +98,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
             style={{ width: "100%", maxHeight: "400px", objectFit: "cover" }}
           />
         )}
-        {/* <Typography variant="body2">{post.description}</Typography>{" "} */}
         <PostDescription
           description={post.description}
           getPostsByTag={getPostsByTag}
         />
         {/* Display the post's description */}
-        <TextField
-          label="Comment"
-          value={comment}
-          onChange={handleCommentChange}
-          fullWidth
-        />
-        <Button onClick={submitComment}>Post Comment</Button>
+        <CommentSection post={post}/>
       </CardContent>
 
       <EditPostModal

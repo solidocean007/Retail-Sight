@@ -2,6 +2,8 @@
 
 // export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
+import { Timestamp } from "firebase/firestore";
+
 export type TUserInputType = {
   firstNameInput: string;
   lastNameInput: string;
@@ -36,12 +38,26 @@ export interface UserType {
 // import { Timestamp } from "firebase/firestore";
 
 export interface PostType {
+  id: string;
   description?: string;
   imageUrl?: string;
   selectedStore?: string;
   storeAddress: string;
   postType?: string;
-  timeStamp?: string;
+  timestamp?: string;
+  userName: string;
   uid?: string;
   likes?: number;
+  comments?: CommentType[];
+  commentCount: number;
+}
+
+export interface CommentType {
+  id: string;
+  text: string;
+  userId: string | undefined;
+  userName: string;
+  // timestamp: Timestamp;
+  timestamp: number;
+  likes: string[];
 }

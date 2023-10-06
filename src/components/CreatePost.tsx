@@ -30,12 +30,14 @@ export const CreatePost = () => {
   // State Management
   const currentUser = useSelector(selectUser);
   const [post, setPost] = useState<PostType>({
+    id: '',
     description: "",
     imageUrl: "",
     selectedStore: "",
     storeAddress: '',
     postType: "public",
     timeStamp: '',
+    userName: '',
     uid: currentUser.user?.uid,
     likes: 0,
   });

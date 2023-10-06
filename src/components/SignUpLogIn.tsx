@@ -25,17 +25,9 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 //Import validation
 import { validateUserInputs } from "../utils/validations";
 
-// const useStyles = makeStyles((theme) => ({
-//   textField: {
-//     margin: theme.spacing(1),
-//     width: "25ch",
-//   },
-// }));
-
 export const SignUpLogin = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  // const classes = useStyles();
 
   // State
   const [signUpError, setSignUpError] = useState("");
@@ -67,11 +59,12 @@ export const SignUpLogin = () => {
     verifyPasswordInputError: "",
   });
 
+  type PasswordVisibilityKey = "password" | "passwordConfirm";
+
+  // helper functions
   const handleInputChange = (name: string, value: string) => {
     setUserInputs((prevState) => ({ ...prevState, [name]: value }));
   };
-
-  type PasswordVisibilityKey = "password" | "passwordConfirm";
 
   const togglePasswordVisibility = (fieldName: PasswordVisibilityKey) => {
     setPasswordVisibility((prevState) => ({
@@ -98,6 +91,7 @@ export const SignUpLogin = () => {
 
   const setFormMode = () => setIsSignUp((prevIsSignUp) => !prevIsSignUp);
 
+  // destructure state of userInputs
   const {
     firstNameInput,
     lastNameInput,
@@ -112,9 +106,8 @@ export const SignUpLogin = () => {
     setTriedSubmit(true); // set tried attempt to true
 
     if (isSignUp) {
-      // checks if this is a signup
-      const validationErrors = validateUserInputs(userInputs); // sets any errors to variable
-      setErrorsOfInputs(validationErrors); // sets state of errors
+      const validationErrors = validateUserInputs(userInputs); // sets any errors to object
+      setErrorsOfInputs(validationErrors); // sets state of errors if present
       const firstError = Object.values(validationErrors).find(
         // finds first error
         (error: string) => error !== ""
@@ -123,11 +116,10 @@ export const SignUpLogin = () => {
       if (firstError) {
         // sets alert to first error
         alert(`Bad data input: ${firstError}`); // use he snackbar somehow??
-        return; // quits onSubmit here
+        return; // quits onSubmit here if there is any error found
       }
 
       try {
-        // begins signup
         const authData = await handleSignUp(
           firstNameInput,
           lastNameInput,
@@ -138,26 +130,11 @@ export const SignUpLogin = () => {
           setSignUpError // do I need this?
         );
 
-        if (authData && authData.uid) {
-          // Extract relevant properties from authData.user
-          const userData = {
-            uid: authData.uid,
-            firstName: authData.firstName, // does not exsist on type User.
-            lastName: authData.lastName, // does not exsist on type User.
-            company: authData.comapny, // does not exsist on type User.
-            phone: authData.phoneNumber,
-            email: authData.email,
-            displayName: authData.displayName,
-            emailVerified: authData.emailVerified,
-            // Add any other properties you want to store
-          };
-          dispatch(setUser(userData)); // Types of property 'email' are incompatible.
-          // Type 'string | null' is not assignable to type 'string'.
-          //   Type 'null' is not assignable to type 'string'.ts
+        if (authData) {
+          dispatch(setUser(authData));  // userData is now of UserType
+          console.log("Sign-up successful");
+          navigate("/userHomePage");
         }
-
-        console.log("Sign-up successful");
-        navigate("/userHomePage");
       } catch (error) {
         // signup wasnt successful
         console.error("Error during sign-up:", error);
@@ -199,8 +176,8 @@ export const SignUpLogin = () => {
     <Container component="main" maxWidth="xs">
       <Typography variant="h5">{isSignUp ? "Sign Up" : "Log In"}</Typography>
       <Button variant="contained" color="primary" onClick={setFormMode}>
-            {formButtonMessage()}
-          </Button>
+        {formButtonMessage()}
+      </Button>
       <form noValidate onSubmit={onSubmit}>
         <div className="signUp-login-form">
           {isSignUp ? (
@@ -346,7 +323,6 @@ export const SignUpLogin = () => {
               </Container>
             </>
           ) : (
-            // Code for the login form can be added here
             <>
               <Container>
                 <TextField
@@ -395,7 +371,6 @@ export const SignUpLogin = () => {
               </Container>
             </>
           )}
-         
         </div>
         {signUpError && <div className="error">{signUpError}</div>}
         <Button type="submit" variant="contained" color="primary">

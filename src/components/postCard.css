@@ -1,0 +1,10 @@
+ /* postCard.css */
+.comment-field {
+  display: flex;
+  border: 1px solid black;
+  border-radius: 5px;
+}
+
+.post-card {
+  /* background-color: red; */
+}

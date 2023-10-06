@@ -14,34 +14,47 @@ import { setUser, logoutUser } from './Slices/userSlice';
 
 
 import { RootState } from "./utils/store"; // import RootState
+import { ThemeToggle } from "./ThemeToggle";
+import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 
 function App() {
+  const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
+  useFirebaseAuth();
+  const theme = createTheme({
+    palette: {
+      mode: isDarkMode ? 'dark' : 'light',
+    },
+  });
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      if (user) {
-        const plainUser = {
-          uid: user.uid,
-          comapny: user.company, // does not exist on type user.
-          email: user.email,
-          displayName: user.displayName, // I created a new user and this was null
-          phone: user.phoneNumber,
-        }
-        dispatch(setUser(plainUser)); // Type 'User' is missing the following properties from type 'UserType': firstName, lastName
-      } else {
-        dispatch(logoutUser());
-      }
-    });
+  // useEffect(() => {
+  //   const auth = getAuth();
+  //   const unsubscribe = onAuthStateChanged(auth, user => {
+  //     if (user) {
+  //       const plainUser = {
+  //         uid: user.uid,
+  //         comapny: user.company, // does not exist on type user.
+  //         email: user.email,
+  //         displayName: user.displayName, // I created a new user and this was null
+  //         phone: user.phoneNumber,
+  //       }
+  //       dispatch(setUser(plainUser)); // Type 'User' is missing the following properties from type 'UserType': firstName, lastName
+  //     } else {
+  //       dispatch(logoutUser());
+  //     }
+  //   });
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, [dispatch]);
+  //   // Cleanup subscription on unmount
+  //   return () => unsubscribe();
+  // }, [dispatch]);
 
   return (
     <>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+      <ThemeToggle/>
       <Router>
         <Routes>
           <Route path="/" element={<SignUpLogin />} />
@@ -58,6 +71,7 @@ function App() {
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
         /* other snackbar props */
       />
+      </ThemeProvider>
     </>
   );
 }

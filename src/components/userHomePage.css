@@ -1,0 +1,13 @@
+.profile-btn, .create-post-btn, .log-out-btn {
+  margin-right: 30px;
+}
+
+.create-post-btn {
+  background-color: aquamarine;
+  /* color: black; */
+}
+
+.log-out-btn {
+
+  color: white;
+}

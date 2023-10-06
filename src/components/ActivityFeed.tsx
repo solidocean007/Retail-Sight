@@ -6,7 +6,7 @@ import { PostType } from "../utils/types";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import { useSelector, useDispatch } from 'react-redux';
 import { setPosts } from "../Slices/postsSlice";
-import { incrementRead } from "../Slices/firestoreReadsSlice";
+// import { incrementRead } from "../Slices/firestoreReadsSlice";
 
 interface PostCardRendererProps {
   index: number;
@@ -24,7 +24,7 @@ const ActivityFeed: React.FC = () => {
       const postCollection = collection(db, "posts");
       try {
         const postSnapshot = await getDocs(postCollection);
-        dispatch(incrementRead()); // <-- Log read
+        // dispatch(incrementRead()); // <-- Log read
         
         const postData = postSnapshot.docs.map((doc) => ({
           ...doc.data(),

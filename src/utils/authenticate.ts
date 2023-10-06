@@ -8,7 +8,8 @@ import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
 import { db } from "./firebase";
 // import { TPhoneInputState } from "./types";
-import { setDoc, doc, collection } from "firebase/firestore";
+import { setDoc, getDoc,doc, collection } from "firebase/firestore";
+import { UserType } from "./types";
 
 interface FirebaseError extends Error {
   code: string;
@@ -19,11 +20,10 @@ export const handleSignUp = async (
   lastNameInput: string,
   email: string,
   companyInput: string,
-  // phoneInput: TPhoneInputState,
   phoneInput: string,
   passwordInput: string,
   setSignUpError?: (error: string) => void
-) => {
+): Promise<UserType | null> => {  // lacks ending return statement and return type doesnt include undefined.  How do I fix this?
   try {
     console.log("Starting user creation with Firebase Auth...");
 
@@ -42,7 +42,8 @@ export const handleSignUp = async (
 
       console.log("Adding user data to Firestore...");
       // Add the additional user data to Firestore
-      const additionalData = {
+      const userData: UserType = {
+        uid: userCredential.user.uid,
         firstName: firstNameInput,
         lastName: lastNameInput,
         email: email,
@@ -51,16 +52,13 @@ export const handleSignUp = async (
       };
 
       await setDoc(doc(collection(db, "users"), uid), {
-        uid: uid,
-        ...additionalData
+        // uid: uid,
+        ...userData
       });
       
-
       console.log("User data added to Firestore successfully");
+      return userData;
     }
-    
-    return userCredential.user;
-
   } catch (error) {
     const firebaseError = error as FirebaseError;
     const errorCode = firebaseError.code;
@@ -82,7 +80,7 @@ export const handleSignUp = async (
 };
 
 
-export const handleLogin = async (email: string, password: string) => {
+export const handleLogin = async (email: string, password: string): Promise<UserType | null> => {
   try {
     const userCredential = await signInWithEmailAndPassword(
       auth,
@@ -90,7 +88,25 @@ export const handleLogin = async (email: string, password: string) => {
       password
     );
     const user = userCredential.user;
-    return user;
+    if (user) {
+      const uid = user.uid;
+      // Fetch additional user data from Firestore
+      const docRef = doc(collection(db, "users"), uid);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data() as UserType;
+        return {
+          // uid: uid,
+          ...data
+        };
+      } else {
+        console.log("No such user!");
+        return null;
+      }
+    }
+    
+    return null;
   } catch (error) {
     const firebaseError = error as FirebaseError;
     const errorCode = firebaseError.code;
