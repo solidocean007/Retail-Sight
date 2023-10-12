@@ -1,12 +1,17 @@
 // ActivityFeed.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import PostCard from "./PostCard";
-import { FixedSizeList as List } from 'react-window';
-import { PostType } from "../utils/types";
-import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
-import { useSelector, useDispatch } from 'react-redux';
+import { FixedSizeList as List } from "react-window";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import { useSelector, useDispatch } from "react-redux";
 import { setPosts } from "../Slices/postsSlice";
-// import { incrementRead } from "../Slices/firestoreReadsSlice";
+import { incrementRead } from "../Slices/firestoreReadsSlice";
 
 interface PostCardRendererProps {
   index: number;
@@ -14,18 +19,21 @@ interface PostCardRendererProps {
 }
 
 const ActivityFeed: React.FC = () => {
-  const posts = useSelector((state: any)=>state.posts)
+  const posts = useSelector((state: any) => state.posts);
   const ITEM_HEIGHT = 700;
-  const dispatch = useDispatch(); // <-- Connect to Redux
-  
+  const dispatch = useDispatch();
+
   useEffect(() => {
     const fetchData = async () => {
+      console.log("Fetching all posts...");
       const db = getFirestore();
       const postCollection = collection(db, "posts");
       try {
         const postSnapshot = await getDocs(postCollection);
-        // dispatch(incrementRead()); // <-- Log read
-        
+        console.log(`Fetched ${postSnapshot.docs.length} posts.`);
+        // dispatch(incrementRead());
+        dispatch(incrementRead(postSnapshot.docs.length));
+
         const postData = postSnapshot.docs.map((doc) => ({
           ...doc.data(),
           id: doc.id,
@@ -36,30 +44,46 @@ const ActivityFeed: React.FC = () => {
       }
     };
     fetchData();
-  }, [dispatch]); // why is this dependency set on dispatch?
+  }, [dispatch]);
 
   const getPostsByTag = async (hashTag: string) => {
+    console.log(`Fetching posts with hashtag: ${hashTag}`);
     const db = getFirestore();
-    const postCollection = collection(db, 'posts');
-    const postsByTagQuery = query(postCollection, where("hashtags", "array-contains", hashTag));
+    const postCollection = collection(db, "posts");
+    const postsByTagQuery = query(
+      postCollection,
+      where("hashtags", "array-contains", hashTag)
+    );
 
     try {
-        const postSnapshot = await getDocs(postsByTagQuery);
-        dispatch(incrementRead()); // <-- Log read
-        
-        const postData = postSnapshot.docs.map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
-        }));
-        dispatch(setPosts(postData)); 
+      const postSnapshot = await getDocs(postsByTagQuery);
+      console.log(`Fetched ${postSnapshot.docs.length} posts by hashtag.`);
+      dispatch(incrementRead(postSnapshot.docs.length)); // <-- Log read
+
+      const postData = postSnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      dispatch(setPosts(postData));
     } catch (error) {
-        console.error("Error fetching posts by hashtag:", error);
+      console.error("Error fetching posts by hashtag:", error);
     }
   };
 
-  const PostCardRenderer: React.FC<PostCardRendererProps> = ({ index, style }) => {
+  const PostCardRenderer: React.FC<PostCardRendererProps> = ({
+    index,
+    style,
+  }) => {
     const post = posts[index];
-    return <PostCard key={post.id} post={post} getPostsByTag={getPostsByTag} style={style} setPosts={setPosts}/>;
+    return (
+      <PostCard
+        key={post.id}
+        post={post}
+        getPostsByTag={getPostsByTag}
+        style={style}
+        setPosts={setPosts}
+      />
+    );
   };
 
   return (
@@ -75,5 +99,3 @@ const ActivityFeed: React.FC = () => {
 };
 
 export default ActivityFeed;
-
-

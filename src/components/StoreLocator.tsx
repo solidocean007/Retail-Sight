@@ -1,15 +1,9 @@
+// StoreLocator
 import { useEffect, useRef, useState } from "react";
 import { PostType } from "../utils/types";
 
 // Assuming you've refactored the GOOGLE_MAPS_KEY import using Vite
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-// interface StoreLocatorProps {
-//   setSelectedStore: (
-//     store: google.maps.places.PlaceResult,
-//     storeAddress: string
-//   ) => void;
-// }
 
 interface StoreLocatorProps {
   post: PostType;
@@ -70,9 +64,13 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ post, handleSelectedStore }
     }
   }, []);
 
+
+  // Use a ref to keep track of the previous value of the address:
+  const previousStoreAddressRef = useRef<string | undefined>();
+
   // Initialize map, set to user's current location, and add a click listener
   useEffect(() => {
-    renderCountLoc.current += 1;
+    if (post.storeAddress !== previousStoreAddressRef.current) {renderCountLoc.current += 1;
     console.log(
       `useEffect for user location has run ${renderCountLoc.current} times.`
     );
@@ -116,7 +114,8 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ post, handleSelectedStore }
           }
         );
       });
-    }
+      previousStoreAddressRef.current = post.storeAddress;
+    }}
   }, [isMapLoaded, handleSelectedStore]);
 
   return (

@@ -36,9 +36,13 @@ export const CreatePost = () => {
     selectedStore: "",
     storeAddress: '',
     postType: "public",
-    timeStamp: '',
+    timestamp: '',
     userName: '',
-    uid: currentUser.user?.uid,
+    user: {
+      postUserName: currentUser?.user?.firstName, //type mismatch.  currentUser doesnt have a displayName either which I need to fix 
+      postUserId: currentUser?.user?.uid,
+      postUserCompany: currentUser?.user?.company,
+    },
     likes: 0,
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

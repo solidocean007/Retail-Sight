@@ -1,4 +1,5 @@
 // userHomePage.tsx
+import { useEffect } from "react";
 import Button from "@mui/material/Button";
 import LogOutButton from "./LogOutButton";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +15,11 @@ export const UserHomePage = () => {
   const {user: currentUser} = useSelector((state: RootState) => state.user);
   console.log(currentUser, ' : currentUser');
   const openProfile = () => navigate("/profile-page");
+
+  useEffect(() => {
+    console.log("UserHomePage mounted");
+  }, []);
+  
 
   return (
     <Container className="container user-home-page">
@@ -35,7 +41,7 @@ export const UserHomePage = () => {
           </div>
          
           <div>
-            <h2>Welcome, {currentUser?.displayName}</h2>
+            <h2>Welcome, {currentUser?.firstName} {currentUser?.lastName}</h2>
           </div>
         </Toolbar>
        

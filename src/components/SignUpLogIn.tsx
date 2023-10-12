@@ -342,6 +342,7 @@ export const SignUpLogin = () => {
                 <TextField
                   label="Password"
                   name="passwordInput"
+                  value={userInputs.passwordInput}
                   type={passwordVisibility.password ? "text" : "password"}
                   onChange={(e) =>
                     handleInputChange("passwordInput", e.target.value)

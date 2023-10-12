@@ -85,13 +85,14 @@ export const useHandlePostSubmission = () => {
               postType: post.postType,
               timestamp: new Date().toISOString(),
               user: {
-                name: `${userData.firstName} ${userData.lastName}`,
-                company: userData.company,
-                userId: uid,
-                email: userData.email,
+                postUserName: user.displayName,
+                postUserId: uid,
+                // postUserCompany: user.company, unsupported field value
               },
               hashtags: hashtags, // Cannot find name hashtags
+              commentCount: 0,
               store: post.selectedStore,
+              likes: 0,
             };
   
             console.log("Post Data to be added:", postData);

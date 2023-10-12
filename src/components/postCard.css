@@ -1,10 +1,65 @@
- /* postCard.css */
-.comment-field {
-  display: flex;
-  border: 1px solid black;
+.post-card {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border-radius: 5px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+  position: relative;
 }
 
-.post-card {
-  /* background-color: red; */
+.post-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.post-card img.post-image {
+  width: 90%; /* reduced size to 90% as per your request */
+  margin: 10px auto;
+  display: block;
+}
+
+.post-card-content {
+  padding: 15px;
+}
+
+.post-card-content .edit-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.hash-tags {
+  margin-bottom: 10px;
+}
+
+.likes-comments {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+
+.like-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.5); /* Muted color if not liked by user */
+}
+
+.comments-button {
+  border: none;
+  background-color: #e0e0e0;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.header-content {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }

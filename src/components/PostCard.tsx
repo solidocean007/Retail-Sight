@@ -33,7 +33,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
 
   const user = useSelector(selectUser);
   useEffect(() => {
-    console.log(user.user?.uid);
+    // console.log(user.user?.uid);
   }, [user]);
 
   const handleEditPost = () => {
@@ -75,46 +75,60 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
     formattedDate = jsDate.toLocaleDateString();
   }
 
-  // console.log(post.uid, ": post uid");
-  console.log(post, ': post')
+  // console.log(post.user.postUserId, ": post userId");
+  // console.log(post, ': post')
 
   return (
-    <Card className="post-card" style={{ ...style }}>
-      <CardContent>
-        {user.user?.uid && user.user.uid === post.uid && (
-          <Button onClick={handleEditPost}>Edit Post</Button>
-        )}
+    <Card className="post-card dynamic-height" style={{ ...style }}>
+        <CardContent>
+            <div className="post-header">
+                <Typography variant="h6">
+                    {post.user.postUserName}
+                </Typography>
+                
+                {user.user?.uid && user.user.uid === post.user?.postUserId && (
+                    <Button variant="contained" color="primary" onClick={handleEditPost} className="edit-btn">
+                        Edit Post
+                    </Button>
+                )}
+            </div>
 
-        <Typography variant="h6">
-          {post.user.name} {post.user?.company}
-        </Typography>
-        {/* <Typography color="textSecondary">{new Date(post.createdAt).toLocaleDateString()}</Typography> */}
-        <Typography color="textSecondary">{formattedDate}</Typography>
-        {/* Display the post's image */}
-        {post.imageUrl && (
-          <img
-            src={post.imageUrl}
-            alt="Post"
-            style={{ width: "100%", maxHeight: "400px", objectFit: "cover" }}
-          />
-        )}
-        <PostDescription
-          description={post.description}
-          getPostsByTag={getPostsByTag}
+            {/* Display hashtags above the image */}
+            <PostDescription
+                description={post.description}
+                getPostsByTag={getPostsByTag}
+            />
+
+            {/* Display the post's image */}
+            {post.imageUrl && (
+                <img className="post-image"
+                    src={post.imageUrl}
+                    alt="Post"
+                />
+            )}
+
+            <div className="likes-comments">
+                <h5>{post.likes} likes</h5>
+                {/* Placeholder for like button, logic to be implemented */}
+                <button className="like-button">❤</button>
+                <p>{post.commentCount} Comments</p>
+            </div>
+            
+            <CommentSection post={post}/>
+            
+        </CardContent>
+
+        <EditPostModal
+            post={post}
+            isOpen={isEditModalOpen}
+            onClose={handleCloseEditModal}
+            onSave={handleSavePost}
+            onDelete={handleDeletePost}
         />
-        {/* Display the post's description */}
-        <CommentSection post={post}/>
-      </CardContent>
-
-      <EditPostModal
-        post={post}
-        isOpen={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        onSave={handleSavePost}
-        onDelete={handleDeletePost}
-      />
     </Card>
-  );
+);
+
+
 };
 
 export default PostCard;

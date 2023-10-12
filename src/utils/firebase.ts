@@ -34,14 +34,4 @@ setPersistence(auth, browserLocalPersistence)
     console.error("Error setting persistence", error);
   });
 
-  // onAuthStateChanged(auth, (user) => {
-  //   if (user) {
-  //     // User is signed in, you can dispatch a Redux action here
-  //     store.dispatch(setUser(user)); // Type 'User' is missing the following properties from type 'UserType': id, name, company, userId
-  //   } else {
-  //     // No user is signed in, you can set user to null in Redux store
-  //     store.dispatch(logoutUser());
-  //   }
-  // });
-
 export { auth, db, updateProfile };

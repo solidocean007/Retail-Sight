@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import { useSelector, useDispatch } from "react-redux";
 import { hideMessage } from "./Slices/snackbarSlice";
@@ -8,12 +7,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { UserHomePage } from "./components/UserHomePage";
 import { UserProfilePage } from "./components/UserProfilePage";
 import { CreatePost } from "./components/CreatePost";
-
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { setUser, logoutUser } from './Slices/userSlice';
-
-
-import { RootState } from "./utils/store"; // import RootState
+import { RootState } from "./utils/store"; 
 import { ThemeToggle } from "./ThemeToggle";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
@@ -28,27 +22,6 @@ function App() {
   });
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const dispatch = useDispatch();
-
-  // useEffect(() => {
-  //   const auth = getAuth();
-  //   const unsubscribe = onAuthStateChanged(auth, user => {
-  //     if (user) {
-  //       const plainUser = {
-  //         uid: user.uid,
-  //         comapny: user.company, // does not exist on type user.
-  //         email: user.email,
-  //         displayName: user.displayName, // I created a new user and this was null
-  //         phone: user.phoneNumber,
-  //       }
-  //       dispatch(setUser(plainUser)); // Type 'User' is missing the following properties from type 'UserType': firstName, lastName
-  //     } else {
-  //       dispatch(logoutUser());
-  //     }
-  //   });
-
-  //   // Cleanup subscription on unmount
-  //   return () => unsubscribe();
-  // }, [dispatch]);
 
   return (
     <>

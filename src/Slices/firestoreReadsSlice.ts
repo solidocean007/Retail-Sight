@@ -1,5 +1,5 @@
 //firestoreReadsSlice.ts
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export const firestoreReadsSlice = createSlice({
   name: "firestoreReads",
@@ -8,8 +8,8 @@ export const firestoreReadsSlice = createSlice({
     maxCount: 100,
   },
   reducers: {
-    incrementRead: (state) => {
-      state.count += 1;
+    incrementRead: (state, action: PayloadAction<number>) => {
+      state.count += action.payload;
     },
     resetReads: (state) => {
       state.count = 0;

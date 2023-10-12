@@ -46,18 +46,20 @@ export interface PostType {
   postType?: string;
   timestamp?: string;
   userName: string;
-  uid?: string;
+  user: {
+    postUserName: string;
+    postUserId: string;
+    postUserCompany: string;
+  }
   likes?: number;
-  comments?: CommentType[];
+  hashtags: [];
   commentCount: number;
 }
 
 export interface CommentType {
-  id: string;
   text: string;
   userId: string | undefined;
   userName: string;
-  // timestamp: Timestamp;
   timestamp: number;
   likes: string[];
 }
