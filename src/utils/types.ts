@@ -1,5 +1,3 @@
-
-
 // export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
 import { Timestamp } from "firebase/firestore";
@@ -37,22 +35,47 @@ export interface UserType {
 
 // import { Timestamp } from "firebase/firestore";
 
+export type ChannelType =
+  | "Grocery"
+  | "Convenience"
+  | "Restaurant"
+  | "Warehouse Club"
+  | "Department Store";
+
+export type CategoryType =
+  | "Water"
+  | "Beer"
+  | "Soda"
+  | "Chips"
+  | "Fresh Produce"
+  | "Canned Goods"
+  | "Dairy"
+  | "Meat and Poultry"
+  | "Snacks"
+  | "Bakery"
+  | "Seafood"
+  | "Spices and Seasonings"
+  | "Household Items"
+  | "Personal Care"
+  | "Baby Products";
+
 export interface PostType {
   id: string;
+  category: CategoryType | '';
+  channel: ChannelType | '';
   description?: string;
   imageUrl?: string;
   selectedStore?: string;
   storeAddress: string;
   postType?: string;
   timestamp?: string;
-  userName: string;
   user: {
     postUserName: string;
     postUserId: string;
     postUserCompany: string;
-  }
+  };
   likes?: number;
-  hashtags: [];
+  hashtags: string[];
   commentCount: number;
 }
 

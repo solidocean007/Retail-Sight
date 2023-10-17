@@ -1,5 +1,6 @@
 //EditPostModal.tsx
 import React, { useState, useEffect } from "react";
+import { userDeletePost } from "../utils/PostLogic/deletePostLogic";
 import Modal from "@mui/material/Modal";
 import { PostType } from "../utils/types";
 import {
@@ -11,40 +12,37 @@ import {
   Card,
   CardMedia,
 } from "@mui/material";
-import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 
-// import { handleImageChangeLogic } from "../utils/handlePostLogic";
+import './editPostModal.css'
+import { useDispatch } from "react-redux";
 
 interface EditPostModalProps {
   post: PostType;
   isOpen: boolean;
+  setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onClose: () => void;
   onSave: (updatedPost: PostType) => void;
-  onDelete: (postId: string) => void;
 }
 
 const EditPostModal: React.FC<EditPostModalProps> = ({
   post,
   isOpen,
+  setIsEditModalOpen,
   onClose,
   onSave,
-  onDelete,
 }) => {
+  const dispatch = useDispatch();
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
   const [postType, setPostType] = useState<string>(post.postType || "public");
-  const [selectedImage, setSelectedImage] = useState<string | null>(
-    post.imageUrl || null
-  );
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
   useEffect(() => {
     setDescription(post.description); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
     setPostType(post.postType); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
-    setSelectedImage(post.imageUrl); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
     // ... initialize other states
   }, [post]);
 
@@ -58,93 +56,66 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     onSave(updatedPost);
   };
 
-  // ... rest of your methods including handleImageChange
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("handleImageChange triggered");
-    handleImageChangeLogic({
-      e,
-      setSelectedFile, // Cannot find
-      setSelectedImage,
-      setSnackbarMessage, //No value exists in scope for the shorthand property 'setSnackbarMessage'.
-      setSnackbarOpen, // No value exists in scope for the shorthand property 'setSnackbarOpen'
-    });
-  };
-
+  console.log(post, "edit post");
   return (
     <Modal open={isOpen} onClose={onClose}>
-      <div style={{ padding: "20px", backgroundColor: "white" }}>
-        <h4>Store: {post.store.storeName}</h4>{" "}
-        {/* I should be able to edit this field*/}
-        <h6>Address: {post.store.storeAddress}</h6>
-        <Box p={3}>
+      <div className="edit-post-modal-container">
+        <h4 className="store-title">Store: {post.selectedStore}</h4>
+        <h6 className="store-address">Address: {post.storeAddress}</h6>
+        {post.imageUrl && (
+          <div className="image-container">
+            <Card>
+              <CardMedia
+                component="img"
+                image={post.imageUrl}
+                alt="Selected Preview"
+                className="image"
+              />
+            </Card>
+          </div>
+        )}
+        <div className="input-container">
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Description"
+            multiline
+            rows={4}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="description-input"
+          />
+          <Select
+            fullWidth
+            variant="outlined"
+            value={postType}
+            onChange={(e) => setPostType(e.target.value as string)}
+            className="select-input"
+          >
+            <MenuItem value="public">Public</MenuItem>
+            <MenuItem value="private">Private</MenuItem>
+            <MenuItem value="group">Group</MenuItem>
+          </Select>
           <Button
             variant="contained"
-            component="label"
-            startIcon={<AddAPhotoIcon />}
+            color="primary"
+            fullWidth
+            onClick={handleSave}
+            className="save-btn"
           >
-            Update Image
-            <input
-              type="file"
-              hidden
-              onChange={handleImageChange}
-              accept="image/*"
-            />
+            Save Changes
           </Button>
-
-          {selectedImage && (
-            <Box mt={2}>
-              <Card>
-                <CardMedia
-                  component="img"
-                  image={selectedImage}
-                  alt="Selected Preview"
-                  style={{ maxHeight: "400px", width: "auto" }}
-                />
-              </Card>
-            </Box>
-          )}
-
-          <Box mt={2}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Description"
-              multiline
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </Box>
-
-          <Box mt={2}>
-            <Select
-              fullWidth
-              variant="outlined"
-              value={postType}
-              onChange={(e) => setPostType(e.target.value as string)}
-            >
-              <MenuItem value="public">Public</MenuItem>
-              <MenuItem value="private">Private</MenuItem>
-              <MenuItem value="group">Group</MenuItem>
-            </Select>
-          </Box>
-
-          <Box mt={2}>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={handleSave}
-            >
-              Save Changes
-            </Button>
-            <Button onClick={() => onDelete(post.id)}>Delete Post</Button>
-
-          </Box>
-        </Box>
+          <Button
+            className="delete-btn"
+            onClick={() => userDeletePost({ post, setIsEditModalOpen, dispatch })}
+          >
+            Delete Post
+          </Button>
+        </div>
       </div>
     </Modal>
   );
+  
 };
 
 export default EditPostModal;

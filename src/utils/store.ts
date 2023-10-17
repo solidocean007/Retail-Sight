@@ -1,5 +1,6 @@
 // store.ts
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore, Action } from "@reduxjs/toolkit";
+import { ThunkAction } from "@reduxjs/toolkit";
 import snackbarReducer from "../Slices/snackbarSlice";
 import userSlice from "../Slices/userSlice";
 import firestoreReadsReducer from "../Slices/firestoreReadsSlice";
@@ -16,6 +17,16 @@ const store = configureStore({
   },
   devTools: process.env.NODE_ENV !== 'production',
 });
+
+export type AppDispatch = typeof store.dispatch;
+
+// This is a type for thunks, if needed elsewhere:
+export type AppThunk<ReturnType = void> = ThunkAction<
+  ReturnType,
+  RootState,
+  unknown,
+  Action<string>
+>;
 
 export type RootState = ReturnType<typeof store.getState>;
 

@@ -1,12 +1,7 @@
 // PostCard.tsx
 import React, { useEffect } from "react";
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Button,
-} from "@mui/material";
+import { Card, CardContent, Typography, Button } from "@mui/material";
 import { PostType } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
@@ -22,20 +17,16 @@ interface PostCardProps {
   post: PostType;
   getPostsByTag: (hashTag: string) => void;
   style?: React.CSSProperties;
-  setPosts: React.Dispatch<React.SetStateAction<PostType[]>>;
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const dispatch = useDispatch();
-  const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
+  // const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
 
   const user = useSelector(selectUser);
-  useEffect(() => {
-    // console.log(user.user?.uid);
-  }, [user]);
-
+  
   const handleEditPost = () => {
     setIsEditModalOpen(true);
   };
@@ -57,18 +48,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
-    const postRef = doc(collection(db, "posts"), postId);
-    try {
-      await deleteDoc(postRef);
-      dispatch(deletePost(postId));
-      console.log("Post deleted successfully");
-      handleCloseEditModal();
-    } catch (error) {
-      console.error("Error deleting post: ", error);
-    }
-  };
-
   let formattedDate = "N/A"; // default value
   if (post.timestamp) {
     const jsDate = new Date(post.timestamp); // Creating a Date object from ISO string
@@ -76,59 +55,64 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   }
 
   // console.log(post.user.postUserId, ": post userId");
-  // console.log(post, ': post')
+  // console.log(": post");
 
   return (
     <Card className="post-card dynamic-height" style={{ ...style }}>
-        <CardContent>
-            <div className="post-header">
-                <Typography variant="h6">
-                    {post.user.postUserName}
-                </Typography>
-                
-                {user.user?.uid && user.user.uid === post.user?.postUserId && (
-                    <Button variant="contained" color="primary" onClick={handleEditPost} className="edit-btn">
-                        Edit Post
-                    </Button>
-                )}
-            </div>
-
-            {/* Display hashtags above the image */}
-            <PostDescription
-                description={post.description}
-                getPostsByTag={getPostsByTag}
-            />
-
-            {/* Display the post's image */}
-            {post.imageUrl && (
-                <img className="post-image"
-                    src={post.imageUrl}
-                    alt="Post"
-                />
+      <CardContent>
+        <div className="post-header">
+          <div className="store-details">
+            <Typography variant="h6">{formattedDate}</Typography>
+            <Typography variant="h6">{post.selectedStore}</Typography>
+            <Typography variant="h6">{post.storeAddress}</Typography>
+          </div>
+          <div className="post-user-details">
+            {user.user?.uid && user.user.uid === post.user?.postUserId && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleEditPost}
+                className="edit-btn"
+              >
+                Edit Post
+              </Button>
             )}
+            <Typography variant="h6"> by: {post.user.postUserName}</Typography>
 
-            <div className="likes-comments">
-                <h5>{post.likes} likes</h5>
-                {/* Placeholder for like button, logic to be implemented */}
-                <button className="like-button">❤</button>
-                <p>{post.commentCount} Comments</p>
-            </div>
-            
-            <CommentSection post={post}/>
-            
-        </CardContent>
+          </div>
+        </div>
 
-        <EditPostModal
-            post={post}
-            isOpen={isEditModalOpen}
-            onClose={handleCloseEditModal}
-            onSave={handleSavePost}
-            onDelete={handleDeletePost}
+        {/* Display hashtags above the image */}
+        <PostDescription
+          description={post.description}
+          getPostsByTag={getPostsByTag}
         />
+
+        {/* Display the post's image */}
+        {post.imageUrl && (
+          <img className="post-image" src={post.imageUrl} alt="Post" />
+        )}
+
+        <div className="likes-comments">
+          <h5>{post.likes} likes</h5>
+          {/* Placeholder for like button, logic to be implemented */}
+          <button className="like-button">❤</button>
+          <p>{post.commentCount} Comments</p>
+        </div>
+
+        <CommentSection post={post} />
+      </CardContent>
+
+      <EditPostModal
+        post={post}
+        isOpen={isEditModalOpen}
+        setIsEditModalOpen={setIsEditModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleSavePost}
+      />
     </Card>
-);
-
-
+  );
 };
 
-export default PostCard;
+const MemoizedPostCard = React.memo(PostCard);
+export default MemoizedPostCard;

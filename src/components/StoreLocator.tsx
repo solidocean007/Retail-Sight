@@ -16,7 +16,6 @@ declare global {
   }
 }
 
-// const StoreLocator: React.FC<StoreLocatorProps> = ({ setSelectedStore }) => {
 const StoreLocator: React.FC<StoreLocatorProps> = ({ post, handleSelectedStore } ) => {
   const mapRef = useRef<HTMLDivElement | null>(null);
    const [isMapLoaded, setIsMapLoaded] = useState(false);

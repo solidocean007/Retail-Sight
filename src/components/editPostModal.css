@@ -1,0 +1,64 @@
+.edit-post-modal-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: white;
+  max-width: 600px;
+  margin: auto;
+}
+
+.store-title, .store-address {
+  width: 100%;
+  text-align: center;
+}
+
+.image-container {
+  margin-top: 20px;
+}
+
+.image {
+  max-height: 400px;
+  width: auto;
+  margin: auto;
+}
+
+.input-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.description-input, .select-input {
+  margin-top: 10px;
+}
+
+.save-btn {
+  margin-top: 10px;
+  height: 40px;
+}
+
+.delete-btn {
+  margin-top: 10px;
+  color: red;
+}
+
+/* Mobile responsiveness */
+@media only screen and (max-width: 600px) {
+  .edit-post-modal-container {
+    padding: 15px;
+  }
+
+  .image {
+    max-height: 250px;
+  }
+
+  .description-input, .select-input {
+    font-size: 14px;
+  }
+
+  .save-btn, .delete-btn {
+    height: 35px;
+  }
+}

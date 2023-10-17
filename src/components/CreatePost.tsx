@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Timestamp } from "firebase/firestore";
 import { selectUser } from "../Slices/userSlice";
+import ChannelSelector from "./ChannelSelector";
+import CategorySelector from "./CategorySelector";
 import {
   AppBar,
   Box,
@@ -22,32 +24,37 @@ import CloseIcon from "@mui/icons-material/Close";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 
 import StoreLocator from "./StoreLocator";
-import { useHandlePostSubmission } from "../utils/handlePostLogic";
-import { PostType } from "../utils/types";
+// import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
+import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
+import { CategoryType, ChannelType, PostType } from "../utils/types";
 
 export const CreatePost = () => {
   const handlePostSubmission = useHandlePostSubmission();
   // State Management
   const currentUser = useSelector(selectUser);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>('Beer');
+  const [selectedChannel, setSelectedChannel] = useState<ChannelType>('Grocery')
   const [post, setPost] = useState<PostType>({
-    id: '',
+    id: "",
+    category: selectedCategory,
+    channel: selectedChannel,
     description: "",
     imageUrl: "",
     selectedStore: "",
-    storeAddress: '',
+    storeAddress: "",
     postType: "public",
-    timestamp: '',
-    userName: '',
+    timestamp: "",
     user: {
-      postUserName: currentUser?.user?.firstName, //type mismatch.  currentUser doesnt have a displayName either which I need to fix 
+      postUserName: currentUser?.user?.firstName, //type mismatch.  currentUser doesnt have a displayName either which I need to fix
       postUserId: currentUser?.user?.uid,
       postUserCompany: currentUser?.user?.company,
     },
     likes: 0,
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  
 
   // Logic
   const navigate = useNavigate();
@@ -64,14 +71,16 @@ export const CreatePost = () => {
         };
         reader.readAsDataURL(file);
       } else {
-        setSnackbarMessage("Unsupported file type. Please upload a valid image.");
+        setSnackbarMessage(
+          "Unsupported file type. Please upload a valid image."
+        );
         setSnackbarOpen(true);
       }
     }
   };
-  
+
   const handleSelectedStore = (storeName: string, storeAddress: string) => {
-    setPost(prev => ({
+    setPost((prev) => ({
       ...prev,
       selectedStore: storeName,
       storeAddress: storeAddress,
@@ -125,9 +134,19 @@ export const CreatePost = () => {
             </Card>
           </Box>
         )}
-        <StoreLocator post={post} handleSelectedStore={handleSelectedStore}  />
-        <h4>Store: {post.selectedStore}</h4> 
-        <h6>Address: {post.selectedStore}</h6>
+        <StoreLocator post={post} handleSelectedStore={handleSelectedStore} />
+        <h4>Store: {post.selectedStore}</h4>
+        <h6>Address: {post.storeAddress}</h6>
+
+        <ChannelSelector
+          selectedChannel={selectedChannel}
+          onChannelChange={setSelectedChannel}
+        />
+
+        <CategorySelector
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
 
         <Box mt={2}>
           <TextField
@@ -135,9 +154,9 @@ export const CreatePost = () => {
             variant="outlined"
             label="Description"
             multiline
-            rows={4}
+            rows={3}
             value={post.description}
-            onChange={(e) => handleFieldChange('description', e.target.value)}
+            onChange={(e) => handleFieldChange("description", e.target.value)}
           />
         </Box>
 
@@ -146,7 +165,7 @@ export const CreatePost = () => {
             fullWidth
             variant="outlined"
             value={post.postType}
-            onChange={(e) => handleFieldChange('postType', e.target.value)}
+            onChange={(e) => handleFieldChange("postType", e.target.value)}
           >
             <MenuItem value="public">Public</MenuItem>
             <MenuItem value="private">Private</MenuItem>
@@ -160,6 +179,7 @@ export const CreatePost = () => {
         <Button
           variant="contained"
           color="primary"
+          type="submit"
           fullWidth
           onClick={() => {
             if (selectedFile) {
