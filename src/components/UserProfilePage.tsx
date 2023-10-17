@@ -5,7 +5,11 @@ import { User } from "firebase/auth";
 import { Button, TextField, Container, Typography } from "@mui/material";
 
 type FormData = {
-  displayName: string; // Changed to display name
+  firstName: string;
+  lastName: string;
+  company: string;
+  email: string;
+  displayName: string;
 };
 
 export const UserProfilePage = () => {
@@ -16,9 +20,12 @@ export const UserProfilePage = () => {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((loggedInUser) => {
+      console.log(loggedInUser, 'loggedInUser')
         if (loggedInUser) {
             setUser(loggedInUser);
             setValue("displayName", loggedInUser.displayName || "");
+            setValue("email", loggedInUser.email || ""); // Setting initial value for email
+            // You might need to fetch 'firstName', 'lastName', and 'company' if stored elsewhere
         }
     });
 
@@ -29,12 +36,13 @@ export const UserProfilePage = () => {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (user) {
       await updateProfile(user, {
-        displayName: data.displayName
+        displayName: data.displayName,
+        // Update the email address using Firebase SDK
+        email: data.email
+        // You might need to save 'firstName', 'lastName', and 'company' in your database or other storage
       }).then(() => {
-        // Update successful
-        setUpdateMessage("Display name updated successfully!");
+        setUpdateMessage("Profile updated successfully!");
       }).catch((error) => {
-        // An error occurred
         // Handle errors here
       });
     }
@@ -53,10 +61,32 @@ export const UserProfilePage = () => {
         <TextField
           fullWidth
           margin="normal"
-          label="Display Name"
-          {...register('displayName', { required: true })}
-          error={Boolean(errors.displayName)}
-          helperText={errors.displayName && "Display name is required"}
+          label="First Name"
+          {...register('firstName')}
+          error={Boolean(errors.firstName)}
+          helperText={errors.firstName && "First name is required"}
+        />
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Last Name"
+          {...register('lastName')}
+          error={Boolean(errors.lastName)}
+          helperText={errors.lastName && "Last name is required"}
+        />
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Email"
+          {...register('email')}
+          error={Boolean(errors.email)}
+          helperText={errors.email && "Last name is required"}
+        />
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Company"
+          {...register('company')}
         />
         <Button 
           type="submit"
