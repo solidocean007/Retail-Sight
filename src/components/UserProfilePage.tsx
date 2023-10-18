@@ -1,49 +1,88 @@
 import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { auth, updateProfile } from "../utils/firebase"; 
-import { User } from "firebase/auth";
 import { Button, TextField, Container, Typography } from "@mui/material";
+import { fetchUserData } from "../utils/userData/fetchUserFromFirebase";
+import { useDispatch, useSelector } from "react-redux";
+import { selectUser, setUser } from "../Slices/userSlice";
+import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
+import { db } from "../utils/firebase";
 
 type FormData = {
   firstName: string;
   lastName: string;
-  company: string;
-  email: string;
-  displayName: string;
+};
+
+const UserProfileForm: React.FC<{ onSubmit: SubmitHandler<FormData>, form: ReturnType<typeof useForm> }> = ({ onSubmit, form }) => {
+  const { register, handleSubmit, formState } = form;
+  const { errors } = formState;
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+        <TextField
+          fullWidth
+          margin="normal"
+          label="First Name"
+          {...register('firstName', { required: "First name is required" })}
+          error={Boolean(errors.firstName)}
+          helperText={errors.firstName && "First name is required"}
+        />
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Last Name"
+          {...register('lastName', { required: "Last name is required" })}
+          error={Boolean(errors.lastName)}
+          helperText={errors.lastName && "Last name is required"}
+        />
+        <Button 
+          type="submit"
+          variant="contained" 
+          color="primary"
+          disabled={formState.isSubmitting}
+          style={{ marginTop: '16px' }}
+        >
+          Update Profile
+        </Button>
+      </form>
+  );
 };
 
 export const UserProfilePage = () => {
-  const { register, handleSubmit, setValue, formState } = useForm<FormData>();
-  const { errors } = formState;
-  const [user, setUser] = useState<null | User>(null);
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
+  console.log(user)
+  const { setValue } = useForm<FormData>();
   const [updateMessage, setUpdateMessage] = useState("");
+  const form = useForm<FormData>();
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((loggedInUser) => {
-      console.log(loggedInUser, 'loggedInUser')
+   // Check if user data is not available in Redux, then fetch and store
+   useEffect(() => {
+    if (!user) {
+      const fetchAndSetUser = async () => {
+        const loggedInUser = auth.currentUser; // you need to import and configure auth 
         if (loggedInUser) {
-            setUser(loggedInUser);
-            setValue("displayName", loggedInUser.displayName || "");
-            setValue("email", loggedInUser.email || ""); // Setting initial value for email
-            // You might need to fetch 'firstName', 'lastName', and 'company' if stored elsewhere
+          const fetchedUserData = await fetchUserData(loggedInUser.uid);
+          dispatch(setUser(fetchedUserData));
         }
-    });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, [setValue]);
+        console.log(fetchUserData)
+      };
+      fetchAndSetUser();
+    }
+  }, [user, dispatch]);
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (user) {
-      await updateProfile(user, {
-        displayName: data.displayName,
-        // Update the email address using Firebase SDK
-        email: data.email
-        // You might need to save 'firstName', 'lastName', and 'company' in your database or other storage
-      }).then(() => {
+      // Updating Firestore directly with the updated user data
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      await setDoc(userDocRef, {
+        firstName: data.firstName,
+        lastName: data.lastName
+      }, { merge: true })
+      .then(() => {
         setUpdateMessage("Profile updated successfully!");
-      }).catch((error) => {
-        // Handle errors here
+      })
+      .catch((error) => {
+        console.error("Error updating user profile:", error);
       });
     }
   };
@@ -57,47 +96,7 @@ export const UserProfilePage = () => {
       <Typography variant="h5" gutterBottom>
         Edit Profile
       </Typography>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <TextField
-          fullWidth
-          margin="normal"
-          label="First Name"
-          {...register('firstName')}
-          error={Boolean(errors.firstName)}
-          helperText={errors.firstName && "First name is required"}
-        />
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Last Name"
-          {...register('lastName')}
-          error={Boolean(errors.lastName)}
-          helperText={errors.lastName && "Last name is required"}
-        />
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Email"
-          {...register('email')}
-          error={Boolean(errors.email)}
-          helperText={errors.email && "Last name is required"}
-        />
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Company"
-          {...register('company')}
-        />
-        <Button 
-          type="submit"
-          variant="contained" 
-          color="primary"
-          disabled={formState.isSubmitting}
-          style={{ marginTop: '16px' }}
-        >
-          Update Profile
-        </Button>
-      </form>
+      {user && <UserProfileForm onSubmit={onSubmit} form={form} />}
       {updateMessage && <Typography color="primary" style={{ marginTop: '16px' }}>{updateMessage}</Typography>}
     </Container>
   );

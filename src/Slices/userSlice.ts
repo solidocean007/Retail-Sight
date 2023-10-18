@@ -5,6 +5,7 @@ import {
   handleLogin as loginService,
 } from "../utils/authenticate";
 import { UserType , TUserInputType } from "../utils/types";
+import { getUserDataFromFirestore } from "../utils/userData/fetchUserDataFromFirestore";
 
 type UserState = {
   user?: UserType | null;
@@ -59,7 +60,11 @@ export const handleLogin = createAsyncThunk(
     const { emailInput, passwordInput } = credentials;
     try {
       const user = await loginService(emailInput, passwordInput);
-      return { user };
+      if (user && user.uid) {
+        const userData = await getUserDataFromFirestore(user.uid);
+        return { user: { ...user, ...userData } };
+      }
+      throw new Error("User not found");
     } catch (error) {
       return thunkAPI.rejectWithValue(error);
     }
