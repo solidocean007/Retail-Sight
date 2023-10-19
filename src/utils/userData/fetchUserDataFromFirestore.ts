@@ -1,13 +1,14 @@
-import { getFirestore } from 'firebase/firestore';
-import { Firestore } from 'firebase/firestore';
+import { doc, getDoc, collection } from 'firebase/firestore';
 
 export const getUserDataFromFirestore = async (uid: string) => {
-  const userRef = firestore.collection('users').doc(uid);
-  const doc = await userRef.get();
-  if (doc.exists) {
-    return doc.data();
+  const userRef = doc(collection(db, 'users'), uid);
+  const userSnap = await getDoc(userRef);
+
+  if (userSnap.exists()) {
+    return userSnap.data();
   } else {
     console.error("No such user!");
     return null;
   }
 }
+

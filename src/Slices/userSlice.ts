@@ -80,6 +80,7 @@ export const userSlice = createSlice({
     },
     logoutUser: (state) => {
       state.user = null;
+      localStorage.removeItem('userData');
     },
   },
   extraReducers: (builder) => {
@@ -87,6 +88,7 @@ export const userSlice = createSlice({
     .addCase(handleSignUp.fulfilled, (state, action: PayloadAction<UserType>) => {
       state.user = action.payload;
       state.error = undefined;
+      localStorage.setItem('userData', JSON.stringify(action.payload));
     })
     .addCase(handleSignUp.rejected, (state, action) => {
       state.error = action.error.message || 'An error occured'; 
@@ -94,6 +96,7 @@ export const userSlice = createSlice({
     .addCase(handleLogin.fulfilled, (state, action: PayloadAction<{ user: UserType }>) => {
       state.user = action.payload.user;
       state.error = undefined;
+      localStorage.setItem('userData', JSON.stringify(action.payload.user));
     })
     .addCase(handleLogin.rejected, (state, action ) => {
       state.error = action.error.message; 

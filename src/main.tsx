@@ -8,6 +8,16 @@ import "./index.css";
 
 import "./utils/firebase.ts";
 
+import { setUser } from "./Slices/userSlice.ts";
+
+const userData = localStorage.getItem('userData');
+if (userData) {
+  store.dispatch(setUser(JSON.parse(userData)));
+}
+
+// render your App...
+
+
 // ReactDOM.createRoot(document.getElementById("root")!).render(
 //   <React.StrictMode>
 //       <Provider store={store}>

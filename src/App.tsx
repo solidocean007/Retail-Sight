@@ -1,3 +1,4 @@
+// app.tsx
 import Snackbar from "@mui/material/Snackbar";
 import { useSelector, useDispatch } from "react-redux";
 import { hideMessage } from "./Slices/snackbarSlice";
