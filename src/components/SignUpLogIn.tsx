@@ -149,10 +149,10 @@ export const SignUpLogin = () => {
           // Extract relevant properties from authData
           const userData = {
             uid: authData.uid,
-            firstName: authData.firstName, // does not exsist on type User.
-            lastName: authData.lastName, // does not exsist on type User.
-            company: authData.comapny, // does not exsist on type User.
-            phone: authData.phoneNumber,
+            firstName: authData.firstName,
+            lastName: authData.lastName, 
+            company: authData.company, 
+            phone: authData.phone,
             email: authData.email,
             displayName: authData.displayName,
             emailVerified: authData.emailVerified,

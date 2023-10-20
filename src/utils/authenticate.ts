@@ -97,7 +97,6 @@ export const handleLogin = async (email: string, password: string): Promise<User
       if (docSnap.exists()) {
         const data = docSnap.data() as UserType;
         return {
-          // uid: uid,
           ...data
         };
       } else {

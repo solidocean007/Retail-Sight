@@ -12,6 +12,7 @@ import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { deletePost, updatePost } from "../Slices/postsSlice";
 import "./postCard.css";
 import CommentSection from "./CommentSection";
+import SharePost from "./SharePost";
 
 interface PostCardProps {
   post: PostType;
@@ -26,7 +27,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   // const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
 
   const user = useSelector(selectUser);
-  
+
   const handleEditPost = () => {
     setIsEditModalOpen(true);
   };
@@ -78,7 +79,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
               </Button>
             )}
             <Typography variant="h6"> by: {post.user.postUserName}</Typography>
-
+            <SharePost
+              // postLink={`https://yourwebsite.com/post/${postId}`}
+              postLink={`https://yourwebsite.com/post`}
+              postTitle="Check out this awesome post!"
+            />
           </div>
         </div>
 

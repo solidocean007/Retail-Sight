@@ -4,24 +4,33 @@ import {
   handleSignUp as signUpService,
   handleLogin as loginService,
 } from "../utils/authenticate";
-import { UserType , TUserInputType } from "../utils/types";
+import { UserType, TUserInputType } from "../utils/types";
 import { getUserDataFromFirestore } from "../utils/userData/fetchUserDataFromFirestore";
+import { ThunkAPI } from "@reduxjs/toolkit";
 
 type UserState = {
   user?: UserType | null;
   error?: string;
-}
+};
 
 const initialState: UserState = {
   user: undefined,
-  error: undefined
+  error: undefined,
 };
 
-
 // Define handleSignUp thunk
-export const handleSignUp = createAsyncThunk(
+export const handleSignUp = createAsyncThunk<
+  UserType, // Return type of the thunk, you can adjust based on your actual return type
+  TUserInputType, // Arguments type
+  {
+    rejectValue: any; // Type of the value in case of a rejection
+  }
+>(
   "user/signUp",
-  async (userDetails: TUserInputType, thunkAPI: any) => {
+  async (
+    userDetails: TUserInputType,
+    thunkAPI: ThunkAPI<void, UserState, undefined, any>
+  ) => {
     const {
       firstNameInput,
       lastNameInput,
@@ -39,7 +48,7 @@ export const handleSignUp = createAsyncThunk(
         companyInput,
         phoneInput,
         passwordInput,
-        setSignUpError,
+        setSignUpError
       );
       return result;
     } catch (error) {
@@ -54,9 +63,15 @@ interface TypeUserCredentials {
 }
 
 // Define handleLogin thunk
-export const handleLogin = createAsyncThunk(
+export const handleLogin = createAsyncThunk<
+  { user: UserType }, // Return type of the thunk
+  TypeUserCredentials, // Arguments type
+  {
+    rejectValue: any; // Type of the value in case of a rejection
+  }
+>(
   "user/login",
-  async (credentials: TypeUserCredentials, thunkAPI: any) => {
+  async (credentials: TypeUserCredentials, thunkAPI: ThunkAPI<void, UserState, undefined, any>) => {
     const { emailInput, passwordInput } = credentials;
     try {
       const user = await loginService(emailInput, passwordInput);
@@ -80,31 +95,36 @@ export const userSlice = createSlice({
     },
     logoutUser: (state) => {
       state.user = null;
-      localStorage.removeItem('userData');
+      localStorage.removeItem("userData");
     },
   },
   extraReducers: (builder) => {
     builder
-    .addCase(handleSignUp.fulfilled, (state, action: PayloadAction<UserType>) => {
-      state.user = action.payload;
-      state.error = undefined;
-      localStorage.setItem('userData', JSON.stringify(action.payload));
-    })
-    .addCase(handleSignUp.rejected, (state, action) => {
-      state.error = action.error.message || 'An error occured'; 
-    })
-    .addCase(handleLogin.fulfilled, (state, action: PayloadAction<{ user: UserType }>) => {
-      state.user = action.payload.user;
-      state.error = undefined;
-      localStorage.setItem('userData', JSON.stringify(action.payload.user));
-    })
-    .addCase(handleLogin.rejected, (state, action ) => {
-      state.error = action.error.message; 
-    });
+      .addCase(
+        handleSignUp.fulfilled,
+        (state, action: PayloadAction<UserType>) => {
+          state.user = action.payload;
+          state.error = undefined;
+          localStorage.setItem("userData", JSON.stringify(action.payload));
+        }
+      )
+      .addCase(handleSignUp.rejected, (state, action) => {
+        state.error = action.error.message || "An error occured";
+      })
+      .addCase(
+        handleLogin.fulfilled,
+        (state, action: PayloadAction<{ user: UserType }>) => {
+          state.user = action.payload.user;
+          state.error = undefined;
+          localStorage.setItem("userData", JSON.stringify(action.payload.user));
+        }
+      )
+      .addCase(handleLogin.rejected, (state, action) => {
+        state.error = action.error.message;
+      });
   },
 });
 
 export const { setUser, logoutUser } = userSlice.actions;
-export const selectUser = (state: { user: UserState }) => state.user; 
+export const selectUser = (state: { user: UserState }) => state.user;
 export default userSlice.reducer;
-
