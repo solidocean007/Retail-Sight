@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
 import { TextField, Button } from "@mui/material";
 import { CommentType, PostType } from "../utils/types";
-import { Timestamp, increment } from "firebase/firestore";
+import { Timestamp, deleteDoc, increment } from "firebase/firestore";
 
 import {
   doc,
@@ -26,12 +26,15 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
   const [sortedComments, setSortedComments] = useState<CommentType[]>([]);
   const user = useSelector((state: RootState) => state.user.user);
   const [newComment, setNewComment] = useState<CommentType>({
+    commentId: '',
     text: "",
     userId: user?.uid,
-    userName: `${user?.displayName}`,
+    userName: `${user?.firstName} ${user?.lastName}`,
     timestamp: 0,
     likes: [],
   });
+
+  console.log(user, " : user");
 
   // Removed the useEffect that fetches comments on mount
 
@@ -67,20 +70,43 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
           postId: post.id,
           timestamp: timestamp,
         });
-
+  
         // Increment commentCount for the relevant post
         const postRef = doc(db, "posts", post.id);
         await updateDoc(postRef, {
           commentCount: increment(1),
         });
-
+  
         // Here's the part where you add the ID to your local state
-        const addedComment = { ...newComment, id: docRef.id };
+        const addedComment = { ...newComment, commentId: docRef.id, timestamp: timestamp };
         setSortedComments([...sortedComments, addedComment]);
         setNewComment({ ...newComment, text: "" });
       } catch (error) {
         console.error("Failed to add comment in Firestore:", error);
       }
+    }
+  };
+  
+
+  const handleDeleteComment = async (commentId: string) => {
+    console.log("Deleting comment with ID:", commentId);
+
+    try {
+      const commentRef = doc(db, "comments", commentId);
+      await deleteDoc(commentRef);
+
+      // Decrement the commentCount for the relevant post
+      const postRef = doc(db, "posts", post.id);
+      await updateDoc(postRef, {
+        commentCount: increment(-1), // Assuming you've already imported decrement from Firebase SDK
+      });
+
+      // Remove the comment from local state
+      setSortedComments(
+        sortedComments.filter((comment) => comment.id !== commentId)
+      );
+    } catch (error) {
+      console.error("Failed to delete comment:", error);
     }
   };
 
@@ -95,7 +121,7 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
       }
     }
   };
-//  console.log(user, ' comment section user')
+  //  console.log(user, ' comment section user')
   return (
     <div>
       <form
@@ -120,9 +146,15 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
             <div key={comment.timestamp}>
               <span>{comment.userName} </span>
               <span>{comment.text}</span>
+              {comment.userId === user?.uid ? (
+                <Button onClick={() => handleDeleteComment(comment.commentId)}>
+                  Delete
+                </Button>
+              ) : null}
+
               <button
                 disabled={comment.likes.includes(user?.uid || "")}
-                onClick={() => handleLike(comment.id, comment.likes)}
+                onClick={() => handleLike(comment.commentId, comment.likes)}
               >
                 Like ({comment.likes.length})
               </button>

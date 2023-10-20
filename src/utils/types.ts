@@ -80,6 +80,7 @@ export interface PostType {
 }
 
 export interface CommentType {
+  commentId: string;
   text: string;
   userId: string | undefined;
   userName: string;
