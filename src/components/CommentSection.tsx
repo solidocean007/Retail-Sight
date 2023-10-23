@@ -45,8 +45,6 @@ const CommentSection: React.FC<CommentProps> = ({
 
   console.log(user, " : user");
 
-  // Removed the useEffect that fetches comments on mount
-
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewComment({ ...newComment, text: e.target.value });
   };
@@ -76,6 +74,7 @@ const CommentSection: React.FC<CommentProps> = ({
         // The following line will automatically generate an ID for the new comment
         const docRef = await addDoc(collection(db, "comments"), {
           ...newComment,
+          id: docRef.id,
           postId: post.id,
           timestamp: timestamp,
         });
@@ -162,7 +161,7 @@ const CommentSection: React.FC<CommentProps> = ({
               </div>
               <div>
               <ThumbUpIcon
-                disabled={comment.likes.includes(user?.uid || "")}
+                // disabled={comment.likes.includes(user?.uid || "")}
                 onClick={() => handleLike(comment.commentId, comment.likes)}
               >
                 Like ({comment.likes.length})
