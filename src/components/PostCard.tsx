@@ -21,12 +21,14 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
+  const [showAllComments, setShowAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const dispatch = useDispatch();
   // const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
 
-  const user = useSelector(selectUser);
+  // grab user from redux
+  const user = useSelector(selectUser); 
 
   const handleEditPost = () => {
     setIsEditModalOpen(true);
@@ -59,8 +61,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   // console.log(": post");
 
   return (
-    <Card className="post-card dynamic-height" style={{ ...style }}>
-      <CardContent>
+    <Card className="post-card dynamic-height" style={{ ...style, height: showAllComments ? 'auto' : '900px' }}>
+      <CardContent className="card-content">
         <div className="post-header">
           <div className="store-details">
             <Typography variant="h6">{formattedDate}</Typography>
@@ -105,7 +107,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
           <p>{post.commentCount} Comments</p>
         </div>
 
-        <CommentSection post={post} />
+        <CommentSection post={post} showAllComments={showAllComments} setShowAllComments={setShowAllComments}/>
       </CardContent>
 
       <EditPostModal

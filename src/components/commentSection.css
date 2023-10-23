@@ -5,12 +5,45 @@
   padding: 10px;
 }
 
-.new-comment-container {
-  margin-top: 15px;
+.comments-container {
   display: flex;
-  gap: 15px;
+  flex-direction: column;
+  background-color: rgb(206, 203, 198);
+  justify-content: flex-start;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.comment-details {
+  display: flex;
+  justify-content: space-between;
+}
+
+.comment {
+  display: flex;
+  align-items: center;
+}
+
+.user-of-comment {
+  display: flex;
+  width: 180px;
+  justify-content: start;
 }
 
 .new-comment-container button {
   align-self: flex-end;
+}
+
+/* For the like button */
+button.like-button {
+  font-size: 0.8rem;  /* makes the font smaller */
+  padding: 5px 10px;  /* smaller padding */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button.like-button:hover {
+  background-color: #eee;  /* a subtle hover effect */
 }

@@ -5,6 +5,10 @@ import { TextField, Button } from "@mui/material";
 import { CommentType, PostType } from "../utils/types";
 import { Timestamp, deleteDoc, increment } from "firebase/firestore";
 
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+
 import {
   doc,
   collection,
@@ -19,14 +23,19 @@ import "./commentSection.css";
 
 interface CommentProps {
   post: PostType;
+  showAllComments: boolean;
+  setShowAllComments: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CommentSection: React.FC<CommentProps> = ({ post }) => {
-  const [showAllComments, setShowAllComments] = useState(false);
+const CommentSection: React.FC<CommentProps> = ({
+  post,
+  showAllComments,
+  setShowAllComments,
+}) => {
   const [sortedComments, setSortedComments] = useState<CommentType[]>([]);
   const user = useSelector((state: RootState) => state.user.user);
   const [newComment, setNewComment] = useState<CommentType>({
-    commentId: '',
+    commentId: "",
     text: "",
     userId: user?.uid,
     userName: `${user?.firstName} ${user?.lastName}`,
@@ -70,15 +79,19 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
           postId: post.id,
           timestamp: timestamp,
         });
-  
+
         // Increment commentCount for the relevant post
         const postRef = doc(db, "posts", post.id);
         await updateDoc(postRef, {
           commentCount: increment(1),
         });
-  
+
         // Here's the part where you add the ID to your local state
-        const addedComment = { ...newComment, commentId: docRef.id, timestamp: timestamp };
+        const addedComment = {
+          ...newComment,
+          commentId: docRef.id,
+          timestamp: timestamp,
+        };
         setSortedComments([...sortedComments, addedComment]);
         setNewComment({ ...newComment, text: "" });
       } catch (error) {
@@ -86,7 +99,6 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
       }
     }
   };
-  
 
   const handleDeleteComment = async (commentId: string) => {
     console.log("Deleting comment with ID:", commentId);
@@ -103,7 +115,7 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
 
       // Remove the comment from local state
       setSortedComments(
-        sortedComments.filter((comment) => comment.id !== commentId)
+        sortedComments.filter((comment) => comment.commentId !== commentId)
       );
     } catch (error) {
       console.error("Failed to delete comment:", error);
@@ -140,28 +152,35 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
           <Button type="submit">Submit</Button>
         </div>
       </form>
-      <div>
+      <div className="comments-container">
         {showAllComments &&
           sortedComments.map((comment) => (
-            <div key={comment.timestamp}>
-              <span>{comment.userName} </span>
-              <span>{comment.text}</span>
-              {comment.userId === user?.uid ? (
-                <Button onClick={() => handleDeleteComment(comment.commentId)}>
-                  Delete
-                </Button>
-              ) : null}
-
-              <button
+            <div className="comment-details">
+              <div className="comment" key={comment.timestamp}>
+                <span className="user-of-comment">{comment.userName}: </span>
+                <span>{comment.text}</span>
+              </div>
+              <div>
+              <ThumbUpIcon
                 disabled={comment.likes.includes(user?.uid || "")}
                 onClick={() => handleLike(comment.commentId, comment.likes)}
               >
                 Like ({comment.likes.length})
-              </button>
+              </ThumbUpIcon>
+              {comment.userId === user?.uid ? (
+                <DeleteIcon
+                  className="delte-comment-btn"
+                  onClick={() => handleDeleteComment(comment.commentId)}
+                >
+                  Delete
+                </DeleteIcon>
+              ) : null}
+              </div>
             </div>
           ))}
       </div>
-      <Button onClick={toggleComments} disabled={sortedComments.length === 0}>
+      {/* <Button onClick={toggleComments} disabled={sortedComments.length === 0}> */}
+      <Button onClick={toggleComments} disabled={false}>
         {showAllComments ? "Hide Comments" : `${post.commentCount} Comments`}
       </Button>
     </div>
