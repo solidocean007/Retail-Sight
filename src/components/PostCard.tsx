@@ -28,7 +28,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   // const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
 
   // grab user from redux
-  const user = useSelector(selectUser); 
+  const user = useSelector(selectUser);
 
   const handleEditPost = () => {
     setIsEditModalOpen(true);
@@ -61,7 +61,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   // console.log(": post");
 
   return (
-    <Card className="post-card dynamic-height" style={{ ...style, height: showAllComments ? 'auto' : '900px' }}>
+    <Card
+      className="post-card dynamic-height"
+      style={{ ...style, height: showAllComments ? "auto" : "900px" }}
+    >
       <CardContent className="card-content">
         <div className="post-header">
           <div className="store-details">
@@ -107,16 +110,21 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
           <p>{post.commentCount} Comments</p>
         </div>
 
-        <CommentSection post={post} showAllComments={showAllComments} setShowAllComments={setShowAllComments}/>
+        <CommentSection
+          post={post}
+          showAllComments={showAllComments}
+          setShowAllComments={setShowAllComments}
+        />
       </CardContent>
-
-      <EditPostModal
-        post={post}
-        isOpen={isEditModalOpen}
-        setIsEditModalOpen={setIsEditModalOpen}
-        onClose={handleCloseEditModal}
-        onSave={handleSavePost}
-      />
+      {isEditModalOpen ? (
+        <EditPostModal
+          post={post}
+          isOpen={isEditModalOpen}
+          setIsEditModalOpen={setIsEditModalOpen}
+          onClose={handleCloseEditModal}
+          onSave={handleSavePost}
+        />
+      ) : null}
     </Card>
   );
 };

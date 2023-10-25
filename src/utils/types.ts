@@ -84,6 +84,7 @@ export interface CommentType {
   text: string;
   userId: string | undefined;
   userName: string;
-  timestamp: number;
+  postId: string;
+  timestamp: Timestamp | undefined;
   likes: string[];
 }
