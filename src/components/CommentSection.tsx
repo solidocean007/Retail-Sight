@@ -46,8 +46,6 @@ const CommentSection: React.FC<CommentProps> = ({
     likes: [],
   });
 
-  console.log(user, " : user");
-
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewComment({ ...newComment, text: e.target.value });
   };
@@ -75,45 +73,37 @@ const CommentSection: React.FC<CommentProps> = ({
   const handleCommentSubmit = async () => {
     const timestamp = Timestamp.now();
     if (newComment.text.length > 0) {
-      try {
-        // Create a new comment document in Firestore and capture the reference
-        const docRef = await addDoc(collection(db, "comments"), {
-          ...newComment, // Add the content of the comment
-          timestamp: timestamp,
-        });
+        try {
+            // Instead of adding the whole newComment to Firestore right away, 
+            // you can exclude the commentId property at this point.
+            const commentToAdd = {
+                ...newComment,
+                timestamp: timestamp,
+            };
+            delete commentToAdd.commentId;  // Ensure commentId isn't included
 
-        // Capture the auto-generated ID from Firestore and set it to the commentId
-        const commentId = docRef.id;
+            const docRef = await addDoc(collection(db, "comments"), commentToAdd);
 
-        // Construct the comment object with the auto-generated ID and other fields
-        const updatedComment = {
-          ...newComment,
-          commentId: commentId,
-          timestamp: timestamp,
-        };
+            const commentId = docRef.id;
+            const updatedComment = {
+                ...newComment,
+                commentId: commentId,
+                timestamp: timestamp,
+            };
 
-        setSortedComments((prevComments) => {
-          const updatedComments = [...prevComments, updatedComment];
-          console.log("Updated comments after submit:", updatedComments);
-          return updatedComments;
-        });
+            setSortedComments(prevComments => [...prevComments, updatedComment]);
+            setCommentCount(prevCount => prevCount + 1);
 
-        // Increment local commentCount
-        setCommentCount((prevCount) => prevCount + 1);
+            const postRef = doc(db, "posts", post.id);
+            await updateDoc(postRef, { commentCount: increment(1) });
 
-        // Increment commentCount for the relevant post
-        const postRef = doc(db, "posts", post.id);
-        await updateDoc(postRef, {
-          commentCount: increment(1),
-        });
-
-        // Reset the newComment state to clear the input field
-        setNewComment({ ...newComment, text: "" });
-      } catch (error) {
-        console.error("Failed to add comment in Firestore:", error);
-      }
+            setNewComment({ ...newComment, text: "" });
+        } catch (error) {
+            console.error("Failed to add comment in Firestore:", error);
+        }
     }
-  };
+};
+
 
   const handleDeleteComment = async (commentId: string) => {
     console.log("Deleting comment with ID:", commentId);
@@ -171,7 +161,7 @@ const CommentSection: React.FC<CommentProps> = ({
         </div>
       </form>
 
-      {showAllComments ? (
+      {showAllComments && sortedComments.length > 0 ? (
         <div className="comments-container">
           {sortedComments.map((comment) => (
             <div className="comment-details" key={comment.commentId}>
