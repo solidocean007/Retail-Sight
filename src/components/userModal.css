@@ -1,0 +1,11 @@
+.modal {
+  width: 500px;
+  height: 400px;
+  border-radius: 10px;
+  background-color: aquamarine;
+  position: fixed; /* Change this to fixed to make it relative to the window */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000; /* Ensure it's on top of other content */
+}

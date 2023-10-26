@@ -14,6 +14,11 @@ import "./postCard.css";
 import CommentSection from "./CommentSection";
 import SharePost from "./SharePost";
 
+// UserModalImports
+import { handleUserNameClick } from "../utils/userModalUtils";
+import { selectIsUserModalOpen, selectSelectedUid } from "../Slices/userModalSlice";
+import UserModal from "./UserModal";
+
 interface PostCardProps {
   post: PostType;
   getPostsByTag: (hashTag: string) => void;
@@ -24,11 +29,20 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  // User profile modal state from redux
+  const isUserModalOpen = useSelector(selectIsUserModalOpen);
+  const selectedUid = useSelector(selectSelectedUid);
+
   const dispatch = useDispatch();
   // const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
 
+  const onUserNameClick = (uid: string) => {
+    handleUserNameClick(uid, dispatch);
+  }
+
   // grab user from redux
   const user = useSelector(selectUser);
+  console.log(user)
 
   const handleEditPost = () => {
     setIsEditModalOpen(true);
@@ -73,7 +87,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
             <Typography variant="h6">{post.storeAddress}</Typography>
           </div>
           <div className="post-user-details">
-            {user.user?.uid && user.user.uid === post.user?.postUserId && (
+            {/* {user.user.uid === post.user?.postUserId && ( */}
+            {user.currentUser?.uid === post.user?.postUserId && (
               <Button
                 variant="contained"
                 color="primary"
@@ -83,7 +98,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
                 Edit Post
               </Button>
             )}
-            <Typography variant="h6"> by: {post.user.postUserName}</Typography>
+            <Typography onClick={() => onUserNameClick(post.user.postUserId)} variant="h6"> by: {post.user.postUserName}</Typography>
+            {/* <Typography onClick={() => console.log('clicked!')} variant="h6"> by: {post.user.postUserName}</Typography> */}
+            {/* <button onClick={() => onUserNameClick(post.user.postUserId)} > by: {post.user.postUserName}</button> */}
             <SharePost
               // postLink={`https://yourwebsite.com/post/${postId}`}
               postLink={`https://yourwebsite.com/post`}
@@ -125,6 +142,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
           onSave={handleSavePost}
         />
       ) : null}
+      <UserModal isOpen={isUserModalOpen} />
     </Card>
   );
 };

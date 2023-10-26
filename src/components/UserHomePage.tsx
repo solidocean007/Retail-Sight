@@ -13,7 +13,7 @@ import SideBar from "./SideBar";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
-  const { user: currentUser } = useSelector((state: RootState) => state.user);
+  const { currentUser: currentUser } = useSelector((state: RootState) => state.user);
   console.log(currentUser, " : currentUser");
   const openProfile = () => navigate("/profile-page");
 

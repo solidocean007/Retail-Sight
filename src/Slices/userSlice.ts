@@ -9,12 +9,14 @@ import { getUserDataFromFirestore } from "../utils/userData/fetchUserDataFromFir
 import { ThunkAPI } from "@reduxjs/toolkit";
 
 type UserState = {
-  user?: UserType | null;
+  currentUser: UserType | null;
+  otherUsers: { [uid: string]: UserType }; // <--- added this line
   error?: string;
 };
 
 const initialState: UserState = {
-  user: undefined,
+  currentUser: null,
+  otherUsers: {}, // <--- added this line
   error: undefined,
 };
 
@@ -57,6 +59,18 @@ export const handleSignUp = createAsyncThunk<
   }
 );
 
+// Define fetchIndividualUser thunk
+export const fetchIndividualUser = createAsyncThunk(
+  "user/fetchIndividualUser",
+  async (uid: string) => {
+    const userData = await getUserDataFromFirestore(uid);
+    if (userData === null) {
+      throw new Error('User data not found');
+    }
+    return { uid, userData };
+  }
+);
+
 interface TypeUserCredentials {
   emailInput: string;
   passwordInput: string;
@@ -91,10 +105,10 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     setUser: (state, action: PayloadAction<UserType | null>) => {
-      state.user = action.payload;
+      state.currentUser = action.payload;
     },
     logoutUser: (state) => {
-      state.user = null;
+      state.currentUser = null;
       localStorage.removeItem("userData");
     },
   },
@@ -103,7 +117,7 @@ export const userSlice = createSlice({
       .addCase(
         handleSignUp.fulfilled,
         (state, action: PayloadAction<UserType>) => {
-          state.user = action.payload;
+          state.currentUser = action.payload;
           state.error = undefined;
           localStorage.setItem("userData", JSON.stringify(action.payload));
         }
@@ -114,17 +128,26 @@ export const userSlice = createSlice({
       .addCase(
         handleLogin.fulfilled,
         (state, action: PayloadAction<{ user: UserType }>) => {
-          state.user = action.payload.user;
+          state.currentUser = action.payload.user;
           state.error = undefined;
           localStorage.setItem("userData", JSON.stringify(action.payload.user));
         }
       )
       .addCase(handleLogin.rejected, (state, action) => {
         state.error = action.error.message;
-      });
+      })
+      .addCase(
+        fetchIndividualUser.fulfilled,
+        (state, action: PayloadAction<{ uid: string, userData: DocumentData }>) => {  // <-- Adjusted the type here
+          state.otherUsers[action.payload.uid] = action.payload.userData as UserType; // <-- Typecast here
+        }
+      )
+      
   },
 });
 
+
 export const { setUser, logoutUser } = userSlice.actions;
 export const selectUser = (state: { user: UserState }) => state.user;
+export const selectOtherUser = (state: { user: UserState }, uid: string) => state.user.otherUsers[uid]; // <--- added this line
 export default userSlice.reducer;

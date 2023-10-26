@@ -6,6 +6,7 @@ import userSlice from "../Slices/userSlice";
 import firestoreReadsReducer from "../Slices/firestoreReadsSlice";
 import postsReducer from "../Slices/postsSlice";
 import { themeReducer } from "../reducers/themeReducer";
+import userModalReducer from "../Slices/userModalSlice";
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     firestoreReads: firestoreReadsReducer,
     posts: postsReducer,
     theme: themeReducer,
+    userModal: userModalReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });
