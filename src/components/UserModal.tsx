@@ -25,13 +25,12 @@ const UserModal = () => {
   if (!isUserModalOpen) return null;  // Prevent modal from rendering if it's not open.
 
   return (
-    <div className="modal active">
-      <div className="modal-content">
+    <div className="modal-overlay">
+      <div className="modal">
         <span className="close" onClick={handleClose}>&times;</span>
         <h2>{userData?.name}</h2>
-        <p>{userData?.company}</p>
-        <p><a href={`mailto:${userData?.email}`}>{userData?.email}</a>
-</p>
+        <p className="user-company">{userData?.company}</p>
+        <p className="user-email"><a href={`mailto:${userData?.email}`}>{userData?.email}</a></p>
       </div>
     </div>
   );
