@@ -4,7 +4,7 @@ import { RootState } from "../utils/store";
 import { TextField, Button } from "@mui/material";
 import { CommentType, PostType } from "../utils/types";
 import { Timestamp, deleteDoc, increment } from "firebase/firestore";
-
+import { useDispatch } from "react-redux";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./commentSection.css";
+import { onUserNameClick } from "../App";
 
 interface CommentProps {
   post: PostType;
@@ -33,7 +34,7 @@ const CommentSection: React.FC<CommentProps> = ({
 }) => {
   const [sortedComments, setSortedComments] = useState<CommentType[]>([]);
   const [commentCount, setCommentCount] = useState(post.commentCount);
-  const user = useSelector((state: RootState) => state.user.user);
+  const user = useSelector((state: RootState) => state.user.currentUser);
   const userFullName = user?.firstName + " " + user?.lastName; // or just user?.username
 
   const [newComment, setNewComment] = useState<CommentType>({
@@ -41,10 +42,17 @@ const CommentSection: React.FC<CommentProps> = ({
     text: "",
     userName: userFullName,
     userId: user?.uid,
+    // userId: currentUser?.uid,
     postId: post.id,
     timestamp: undefined,
     likes: [],
   });
+  const dispatch = useDispatch();
+  // User profile modal state from redux
+ 
+  const selectedUid = useSelector(selectSelectedUid);
+
+  
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewComment({ ...newComment, text: e.target.value });
@@ -166,7 +174,7 @@ const CommentSection: React.FC<CommentProps> = ({
           {sortedComments.map((comment) => (
             <div className="comment-details" key={comment.commentId}>
               <div className="comment">
-                <span className="user-of-comment">{comment.userName}: </span>
+                <span onClick={() => onUserNameClick(post.user.postUserId)} className="user-of-comment">{comment.userName}: </span>
                 <span>{comment.text}</span>
                 <span>{comment.commentId}</span>
               </div>
@@ -197,6 +205,7 @@ const CommentSection: React.FC<CommentProps> = ({
           {showAllComments ? "Hide Comments" : `${commentCount} Comments`}
         </Button>
       )}
+      {/* <UserModal isOpen={isUserModalOpen} /> */}
     </div>
   );
 };
