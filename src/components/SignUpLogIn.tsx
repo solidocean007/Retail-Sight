@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TErrorsOfInputs, TUserInputType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
-import { handleSignUp, handleLogin } from "../utils/authenticate";
+import { handleSignUp, handleLogin } from "../utils/validation/authenticate";
 import { useNavigate } from "react-router-dom";
 
 // Import necessary Material-UI components
@@ -23,7 +23,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 //Import validation
-import { validateUserInputs } from "../utils/validations";
+import { validateUserInputs } from "../utils/validation/validations";
 
 export const SignUpLogin = () => {
   const navigate = useNavigate();

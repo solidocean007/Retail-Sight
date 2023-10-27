@@ -1,6 +1,6 @@
-import { TUserInputType } from "./types";
+import { TUserInputType } from "../types";
 // import { TPhoneInputState } from "./types";
-import { TErrorsOfInputs } from "./types";
+import { TErrorsOfInputs } from "../types";
 
 export function isEmailValid(emailAddress: string) {
   // eslint-disable-next-line no-useless-escape

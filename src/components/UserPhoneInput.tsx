@@ -1,7 +1,7 @@
 import { ChangeEventHandler, useRef } from "react";
 import { TUserInputType } from "../utils/types";
 import { TPhoneInputState } from "../utils/types";
-import { validateUserInputs } from "../utils/validations";
+import { validateUserInputs } from "../utils/validation/validations";
 import { TErrorsOfInputs } from "../utils/types";
 
 export const UserPhoneInput = ({

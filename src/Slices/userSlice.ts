@@ -3,7 +3,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import {
   handleSignUp as signUpService,
   handleLogin as loginService,
-} from "../utils/authenticate";
+} from "../utils/validation/authenticate";
 import { UserType, TUserInputType } from "../utils/types";
 import { getUserDataFromFirestore } from "../utils/userData/fetchUserDataFromFirestore";
 import { ThunkAPI } from "@reduxjs/toolkit";
