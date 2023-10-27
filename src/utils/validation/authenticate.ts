@@ -5,11 +5,11 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { signOut } from "firebase/auth";
-import { auth } from "./firebase";
-import { db } from "./firebase";
+import { auth } from "../firebase";
+import { db } from "../firebase";
 // import { TPhoneInputState } from "./types";
 import { setDoc, getDoc,doc, collection } from "firebase/firestore";
-import { UserType } from "./types";
+import { UserType } from "../types";
 
 interface FirebaseError extends Error {
   code: string;

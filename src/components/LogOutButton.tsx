@@ -1,7 +1,7 @@
 // LogOutButton.tsx
 
 import React from 'react';
-import { handleLogout } from '../utils/authenticate';
+import { handleLogout } from '../utils/validation/authenticate';
 import { useNavigate } from "react-router-dom";
 
 const LogOutButton: React.FC = () => {
