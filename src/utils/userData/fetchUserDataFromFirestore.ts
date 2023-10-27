@@ -1,3 +1,4 @@
+// fetchUserDataFromFirestore
 import { doc, getDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 

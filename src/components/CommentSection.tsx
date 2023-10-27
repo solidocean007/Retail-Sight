@@ -1,3 +1,4 @@
+// CommentSection
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
@@ -7,6 +8,7 @@ import { Timestamp, deleteDoc, increment } from "firebase/firestore";
 import { useDispatch } from "react-redux";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { handleUserNameClick } from "../utils/userModalUtils.ts";
 
 import {
   doc,
@@ -19,7 +21,6 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./commentSection.css";
-import { onUserNameClick } from "../App";
 
 interface CommentProps {
   post: PostType;
@@ -47,12 +48,13 @@ const CommentSection: React.FC<CommentProps> = ({
     timestamp: undefined,
     likes: [],
   });
-  const dispatch = useDispatch();
-  // User profile modal state from redux
- 
-  const selectedUid = useSelector(selectSelectedUid);
 
-  
+  const dispatch = useDispatch();
+  // const selectedUid = useSelector(selectSelectedUid);
+
+  const onUserNameClick = (uid: string) => {
+    handleUserNameClick(uid, dispatch);
+  }
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewComment({ ...newComment, text: e.target.value });
@@ -176,7 +178,6 @@ const CommentSection: React.FC<CommentProps> = ({
               <div className="comment">
                 <span onClick={() => onUserNameClick(post.user.postUserId)} className="user-of-comment">{comment.userName}: </span>
                 <span>{comment.text}</span>
-                <span>{comment.commentId}</span>
               </div>
               <div>
                 <ThumbUpIcon

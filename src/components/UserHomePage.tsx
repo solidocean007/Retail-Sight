@@ -13,7 +13,7 @@ import SideBar from "./SideBar";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
-  const { currentUser: currentUser } = useSelector((state: RootState) => state.user);
+  const { currentUser: currentUser } = useSelector((state: RootState) => state.user); // Does this work because userSlice now has a currentUser
   console.log(currentUser, " : currentUser");
   const openProfile = () => navigate("/profile-page");
 
@@ -47,7 +47,7 @@ export const UserHomePage = () => {
 
           <div>
             <h2>
-              Welcome, {currentUser?.firstName} {currentUser?.lastName}
+              Welcome, {currentUser?.firstName} {currentUser?.lastName} {/*Here is the line that loses the users data on page refresh*/}
             </h2>
           </div>
         </Toolbar>

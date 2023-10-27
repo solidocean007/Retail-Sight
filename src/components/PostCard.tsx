@@ -142,7 +142,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
           onSave={handleSavePost}
         />
       ) : null}
-      <UserModal isOpen={isUserModalOpen} />
     </Card>
   );
 };

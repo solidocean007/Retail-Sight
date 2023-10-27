@@ -15,11 +15,7 @@ import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 
 import UserModal from "./components/UserModal.tsx";
 import { selectIsUserModalOpen } from "./Slices/userModalSlice.ts";
-import { handleUserNameClick } from "./utils/userModalUtils.ts";
 
-export const onUserNameClick = (uid: string) => {
-  handleUserNameClick(uid, dispatch);
-}
 
 function App() {
   const isUserModalOpen = useSelector(selectIsUserModalOpen);
