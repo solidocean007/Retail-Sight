@@ -10,7 +10,7 @@ import {
   updateCategoriesInFirestore,
   updateChannelsInFirestore,
 } from "./updateFirestore";
-import { fetchUserData } from "../userData/fetchUserFromFirebase";
+import { fetchUserFromFirebase } from "../userData/fetchUserFromFirebase";
 
 export const useHandlePostSubmission = () => {
   const dispatch = useDispatch();
@@ -27,7 +27,7 @@ export const useHandlePostSubmission = () => {
     }
 
     try {
-      const userData = await fetchUserData(user.uid);
+      const userData = await fetchUserFromFirebase(user.uid);
 
       if (!userData) {
         console.error("User data not found for ID:", user.uid);
@@ -76,7 +76,7 @@ export const useHandlePostSubmission = () => {
       }
     } catch (error) {
       console.error("Error adding post:", error);
-      dispatch(showMessage(`Error adding post: ${error.message}`));
+      dispatch(showMessage(`Error adding post: ${error.message}`)); // error is of type unknown
     }
   };
   return handlePostSubmission;

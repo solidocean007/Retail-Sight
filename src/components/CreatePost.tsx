@@ -1,8 +1,8 @@
 // CreatePost.tsx
-import React, { useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Timestamp } from "firebase/firestore";
+// import { Timestamp } from "firebase/firestore";
 import { selectUser } from "../Slices/userSlice";
 import ChannelSelector from "./ChannelSelector";
 import CategorySelector from "./CategorySelector";
@@ -31,7 +31,7 @@ import { CategoryType, ChannelType, PostType } from "../utils/types";
 export const CreatePost = () => {
   const handlePostSubmission = useHandlePostSubmission();
   // State Management
-  const currentUser = useSelector(selectUser);
+  const userData = useSelector(selectUser);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -48,11 +48,13 @@ export const CreatePost = () => {
     postType: "public",
     timestamp: "",
     user: {
-      postUserName: currentUser?.user?.firstName, //type mismatch.  currentUser doesnt have a displayName either which I need to fix
-      postUserId: currentUser?.user?.uid,
-      postUserCompany: currentUser?.user?.company,
+      postUserName: `${userData.currentUser!.firstName} ${userData.currentUser!.lastName}`, 
+      postUserId: userData.currentUser!.uid,
+      postUserCompany: userData.currentUser!.company,
     },
     likes: 0,
+    hashtags: [''],
+    commentCount: 0,
   });
   
 

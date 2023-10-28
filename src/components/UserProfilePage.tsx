@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Button, TextField, Container, Typography } from "@mui/material";
-import { fetchUserData } from "../utils/userData/fetchUserFromFirebase";
+import { fetchUserFromFirebase } from "../utils/userData/fetchUserFromFirebase";
 import { useDispatch, useSelector } from "react-redux";
-import { selectUser, setUser } from "../Slices/userSlice";
+import { selectUser } from "../Slices/userSlice";
 import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
-import { auth, db } from "../utils/firebase";
+import { db } from "../utils/firebase";
 import { useNavigate } from "react-router-dom";
 
 type FormData = {

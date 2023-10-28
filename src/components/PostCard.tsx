@@ -1,5 +1,5 @@
 // PostCard.tsx
-import React, { useEffect } from "react";
+import React from "react";
 import { useState } from "react";
 import { Card, CardContent, Typography, Button } from "@mui/material";
 import { PostType } from "../utils/types";
@@ -8,16 +8,15 @@ import EditPostModal from "./EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { db } from "../utils/firebase";
-import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { deletePost, updatePost } from "../Slices/postsSlice";
+import { collection, doc, updateDoc } from "firebase/firestore";
+import { updatePost } from "../Slices/postsSlice";
 import "./postCard.css";
 import CommentSection from "./CommentSection";
 import SharePost from "./SharePost";
 
 // UserModalImports
 import { handleUserNameClick } from "../utils/userModalUtils";
-import { selectIsUserModalOpen, selectSelectedUid } from "../Slices/userModalSlice";
-import UserModal from "./UserModal";
+// import { selectIsUserModalOpen, selectSelectedUid } from "../Slices/userModalSlice";
 
 interface PostCardProps {
   post: PostType;
@@ -30,8 +29,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // User profile modal state from redux
-  const isUserModalOpen = useSelector(selectIsUserModalOpen);
-  const selectedUid = useSelector(selectSelectedUid);
+  // const isUserModalOpen = useSelector(selectIsUserModalOpen);
+  // const selectedUid = useSelector(selectSelectedUid);
 
   const dispatch = useDispatch();
   // const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
@@ -44,25 +43,25 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   const user = useSelector(selectUser);
   console.log(user)
 
-  const handleEditPost = () => {
-    setIsEditModalOpen(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-  };
-
   const handleSavePost = async (updatedPost: PostType) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
     try {
-      const { id, ...restOfUpdatedPost } = updatedPost; // id is assigned but value never used
-      await updateDoc(postRef, restOfUpdatedPost);
+      await updateDoc(postRef, updatedPost);
       dispatch(updatePost(updatedPost));
       console.log("Post updated successfully");
       handleCloseEditModal();
     } catch (error) {
       console.error("Error updating post: ", error);
     }
+};
+
+
+  const handleEditPost = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
   };
 
   let formattedDate = "N/A"; // default value

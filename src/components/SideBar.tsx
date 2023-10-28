@@ -3,12 +3,17 @@ import { Button, Select, MenuItem } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
 
-const SideBar = ({openProfile}) => {
+const SideBar = ({ openProfile } : { openProfile: () => void }) => {
   const navigate = useNavigate();
 
   return (
     <div>
-      <Button className="profile-btn" variant="contained" color="secondary" onClick={openProfile}>
+      <Button
+        className="profile-btn"
+        variant="contained"
+        color="secondary"
+        onClick={openProfile}
+      >
         Profile
       </Button>
       <Button

@@ -2,7 +2,7 @@
 import { doc, getDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 
-export const getUserDataFromFirestore = async (uid: string) => {
+export const fetchUserDocFromFirestore= async (uid: string) => {
   const userRef = doc(collection(db, 'users'), uid);
   const userSnap = await getDoc(userRef);
 

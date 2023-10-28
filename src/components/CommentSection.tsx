@@ -84,20 +84,18 @@ const CommentSection: React.FC<CommentProps> = ({
     const timestamp = Timestamp.now();
     if (newComment.text.length > 0) {
         try {
-            // Instead of adding the whole newComment to Firestore right away, 
-            // you can exclude the commentId property at this point.
-            const commentToAdd = {
+            // Type commentToAdd to exclude commentId property
+            const commentToAdd: Omit<CommentType, 'commentId'> = {
                 ...newComment,
                 timestamp: timestamp,
             };
-            delete commentToAdd.commentId;  // Ensure commentId isn't included
 
             const docRef = await addDoc(collection(db, "comments"), commentToAdd);
 
-            const commentId = docRef.id;
-            const updatedComment = {
-                ...newComment,
-                commentId: commentId,
+            const commentIdFromFirestore = docRef.id;
+            const updatedComment: CommentType = {
+                ...commentToAdd,
+                commentId: commentIdFromFirestore,
                 timestamp: timestamp,
             };
 
@@ -113,7 +111,6 @@ const CommentSection: React.FC<CommentProps> = ({
         }
     }
 };
-
 
   const handleDeleteComment = async (commentId: string) => {
     console.log("Deleting comment with ID:", commentId);

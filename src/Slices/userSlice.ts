@@ -5,7 +5,7 @@ import {
   handleLogin as loginService,
 } from "../utils/authenticate";
 import { UserType, TUserInputType } from "../utils/types";
-import { getUserDataFromFirestore } from "../utils/userData/fetchUserDataFromFirestore";
+import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFirestore";
 import { ThunkAPI } from "@reduxjs/toolkit";
 
 type UserState = {
@@ -63,7 +63,7 @@ export const handleSignUp = createAsyncThunk<
 export const fetchIndividualUser = createAsyncThunk(
   "user/fetchIndividualUser",
   async (uid: string) => {
-    const userData = await getUserDataFromFirestore(uid);
+    const userData = await fetchUserDocFromFirestore(uid);
     if (userData === null) {
       throw new Error('User data not found');
     }

@@ -3,18 +3,18 @@ import React, { useState, useEffect } from "react";
 import { userDeletePost } from "../utils/PostLogic/deletePostLogic";
 import Modal from "@mui/material/Modal";
 import { PostType } from "../utils/types";
+import { useDispatch } from "react-redux";
+import { showMessage } from "../Slices/snackbarSlice";
 import {
   Button,
   TextField,
   Select,
   MenuItem,
-  Box,
   Card,
   CardMedia,
 } from "@mui/material";
 
 import './editPostModal.css'
-import { useDispatch } from "react-redux";
 
 interface EditPostModalProps {
   post: PostType;
@@ -31,18 +31,16 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   onClose,
   onSave,
 }) => {
+
   const dispatch = useDispatch();
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
   const [postType, setPostType] = useState<string>(post.postType || "public");
 
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-
   useEffect(() => {
-    setDescription(post.description); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
-    setPostType(post.postType); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
+    setDescription(post?.description || ""); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
+    setPostType(post?.postType || "Public"); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
     // ... initialize other states
   }, [post]);
 
@@ -54,6 +52,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       // ... other updated fields
     };
     onSave(updatedPost);
+    dispatch(showMessage("Post edited successfully!"));
   };
 
   console.log(post, "edit post");
@@ -107,7 +106,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
           </Button>
           <Button
             className="delete-btn"
-            onClick={() => userDeletePost({ post, setIsEditModalOpen, dispatch })}
+            onClick={() => {
+              userDeletePost({ post, setIsEditModalOpen, dispatch });
+              dispatch(showMessage("Post deleted successfully!"));
+            }}
           >
             Delete Post
           </Button>

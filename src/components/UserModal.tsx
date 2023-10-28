@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from 'react-redux';
-import { getUserDataFromFirestore } from "../utils/userData/fetchUserDataFromFirestore";
+import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFirestore";
 import { closeUserModal, selectIsUserModalOpen, selectSelectedUid } from "../Slices/userModalSlice";
 import './userModal.css';
 
@@ -12,7 +12,7 @@ const UserModal = () => {
 
   useEffect(() => {
     if (isUserModalOpen && selectedUid) {
-      getUserDataFromFirestore(selectedUid)
+      fetchUserDocFromFirestore(selectedUid)
         .then(data => setUserData(data))
         .catch(err => console.error(err));
     }

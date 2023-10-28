@@ -3,17 +3,17 @@ import { TErrorsOfInputs, TUserInputType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { handleSignUp, handleLogin } from "../utils/authenticate";
 import { useNavigate } from "react-router-dom";
+import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFirestore";
 
 // Import necessary Material-UI components
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
-import { styled } from "@mui/system";
 // import { makeStyles } from "@mui/material";
 // import items from Redux
-import { useDispatch, useSelector } from "react-redux";
-import { incrementRead } from "../Slices/firestoreReadsSlice"; // no exported incrementWrite in store
+import { useDispatch } from "react-redux";
+// import { incrementRead } from "../Slices/firestoreReadsSlice";
 import { setUser } from "../Slices/userSlice";
 
 //imports for password visibility
@@ -31,7 +31,8 @@ export const SignUpLogin = () => {
 
   // State
   const [signUpError, setSignUpError] = useState("");
-  const [logInError, setLogInError] = useState(""); // not used going to eventually make a logIn component
+  // const [logInError, setLogInError] = useState(""); // not used going to eventually make a logIn component
+  // const [ setLogInError] = useState(""); // not used going to eventually make a logIn component
   const [passwordVisibility, setPasswordVisibility] = useState({
     password: false,
     passwordConfirm: false,
@@ -145,21 +146,13 @@ export const SignUpLogin = () => {
         const authData = await handleLogin(emailInput, passwordInput); // attempt to login
 
         if (authData && authData.uid) {
-          // why check for both?
-          // Extract relevant properties from authData
-          const userData = {
-            uid: authData.uid,
-            firstName: authData.firstName,
-            lastName: authData.lastName, 
-            company: authData.company, 
-            phone: authData.phone,
-            email: authData.email,
-            displayName: authData.displayName,
-            emailVerified: authData.emailVerified,
-          };
-          dispatch(setUser(userData)); // Types of property 'email' are incompatible.
-          // Type 'string | null' is not assignable to type 'string'.
-          //   Type 'null' is not assignable to type 'string'.ts
+          // Fetch user data from Firestore or Firebase auth as required
+          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid);
+          console.log(fetchedUserData, ' fetchedUserData')
+          if (fetchedUserData) {
+            dispatch(setUser(fetchedUserData)); // Argument of type 'DocumentData' is not assignable to parameter of type 'UserType'.
+            // Type 'DocumentData' is missing the following properties from type 'UserType': uid, firstName, lastName, email, and 2 more.ts(2345)
+          }
         }
 
         console.log("Login successful");

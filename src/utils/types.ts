@@ -44,6 +44,7 @@ export type ChannelType =
 
 export type CategoryType =
   | "Water"
+  | "Wine"
   | "Beer"
   | "Soda"
   | "Chips"

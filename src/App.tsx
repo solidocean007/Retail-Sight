@@ -52,7 +52,8 @@ function App() {
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
           /* other snackbar props */
         />
-        <UserModal isOpen={isUserModalOpen} />
+        {/* <UserModal isOpen={isUserModalOpen} /> */}
+        <UserModal />
       </ThemeProvider>
     </>
   );
