@@ -7,9 +7,6 @@ import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
-import { db } from "../utils/firebase";
-import { collection, doc, updateDoc } from "firebase/firestore";
-import { updatePost } from "../Slices/postsSlice";
 import "./postCard.css";
 import CommentSection from "./CommentSection";
 import SharePost from "./SharePost";
@@ -27,41 +24,17 @@ interface PostCardProps {
 const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  // User profile modal state from redux
-  // const isUserModalOpen = useSelector(selectIsUserModalOpen);
-  // const selectedUid = useSelector(selectSelectedUid);
-
   const dispatch = useDispatch();
-  // const posts = useSelector((state) => state.posts); // posts is declared but value is never read.
+
+  // grab user from redux
+  const user = useSelector(selectUser);
 
   const onUserNameClick = (uid: string) => {
     handleUserNameClick(uid, dispatch);
   }
 
-  // grab user from redux
-  const user = useSelector(selectUser);
-  console.log(user)
-
-  const handleSavePost = async (updatedPost: PostType) => {
-    const postRef = doc(collection(db, "posts"), updatedPost.id);
-    try {
-      await updateDoc(postRef, updatedPost);
-      dispatch(updatePost(updatedPost));
-      console.log("Post updated successfully");
-      handleCloseEditModal();
-    } catch (error) {
-      console.error("Error updating post: ", error);
-    }
-};
-
-
   const handleEditPost = () => {
     setIsEditModalOpen(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
   };
 
   let formattedDate = "N/A"; // default value
@@ -69,9 +42,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
     const jsDate = new Date(post.timestamp); // Creating a Date object from ISO string
     formattedDate = jsDate.toLocaleDateString();
   }
-
-  // console.log(post.user.postUserId, ": post userId");
-  // console.log(": post");
 
   return (
     <Card
@@ -137,8 +107,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
           post={post}
           isOpen={isEditModalOpen}
           setIsEditModalOpen={setIsEditModalOpen}
-          onClose={handleCloseEditModal}
-          onSave={handleSavePost}
+          // onClose={handleCloseEditModal}
+          // onSave={handleSavePost}
         />
       ) : null}
     </Card>

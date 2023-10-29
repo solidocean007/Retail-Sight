@@ -3,17 +3,18 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFirestore";
 import { closeUserModal, selectIsUserModalOpen, selectSelectedUid } from "../Slices/userModalSlice";
 import './userModal.css';
+import { UserType } from "../utils/types";
 
 const UserModal = () => {
   const dispatch = useDispatch();
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState<UserType | null>(null);
   const isUserModalOpen = useSelector(selectIsUserModalOpen);
   const selectedUid = useSelector(selectSelectedUid);
 
   useEffect(() => {
     if (isUserModalOpen && selectedUid) {
       fetchUserDocFromFirestore(selectedUid)
-        .then(data => setUserData(data))
+        .then(data => setUserData(data)) // type error with data
         .catch(err => console.error(err));
     }
   }, [isUserModalOpen, selectedUid]);

@@ -5,6 +5,10 @@ import Modal from "@mui/material/Modal";
 import { PostType } from "../utils/types";
 import { useDispatch } from "react-redux";
 import { showMessage } from "../Slices/snackbarSlice";
+import { doc, collection, updateDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
+import { updatePost } from "../Slices/postsSlice";
+
 import {
   Button,
   TextField,
@@ -21,15 +25,15 @@ interface EditPostModalProps {
   isOpen: boolean;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onClose: () => void;
-  onSave: (updatedPost: PostType) => void;
+  // onSave: (updatedPost: PostType) => void;
 }
 
 const EditPostModal: React.FC<EditPostModalProps> = ({
   post,
   isOpen,
   setIsEditModalOpen,
-  onClose,
-  onSave,
+  // onClose,
+  // onSave,
 }) => {
 
   const dispatch = useDispatch();
@@ -38,20 +42,37 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   );
   const [postType, setPostType] = useState<string>(post.postType || "public");
 
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
   useEffect(() => {
     setDescription(post?.description || ""); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
     setPostType(post?.postType || "Public"); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
     // ... initialize other states
   }, [post]);
 
+  const handleSavePost = async (updatedPost: PostType) => {
+    const postRef = doc(collection(db, "posts"), updatedPost.id); 
+    try {
+      await updateDoc(postRef, updatedPost);
+      dispatch(updatePost(updatedPost)); // updtePost is a postSlice actionCreator
+      console.log('postRef', postRef)
+      console.log("Post updated successfully");
+      handleCloseEditModal();
+    } catch (error) {
+      console.error("Error updating post: ", error);
+    }
+  };
+
   const handleSave = () => {
-    const updatedPost = {
+    const updatedPost: PostType = {
       ...post,
       description,
       postType,
       // ... other updated fields
     };
-    onSave(updatedPost);
+    handleSavePost(updatedPost);
     dispatch(showMessage("Post edited successfully!"));
   };
 
@@ -59,8 +80,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   return (
     <Modal open={isOpen} onClose={onClose}>
       <div className="edit-post-modal-container">
-        <h4 className="store-title">Store: {post.selectedStore}</h4>
-        <h6 className="store-address">Address: {post.storeAddress}</h6>
+        {/* <h4 className="store-title">Store: {post.selectedStore}</h4>
+        <h6 className="store-address">Address: {post.storeAddress}</h6> */}
         {post.imageUrl && (
           <div className="image-container">
             <Card>

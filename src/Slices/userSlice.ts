@@ -90,7 +90,7 @@ export const handleLogin = createAsyncThunk<
     try {
       const user = await loginService(emailInput, passwordInput);
       if (user && user.uid) {
-        const userData = await getUserDataFromFirestore(user.uid);
+        const userData = await fetchUserDocFromFirestore(user.uid);
         return { user: { ...user, ...userData } };
       }
       throw new Error("User not found");

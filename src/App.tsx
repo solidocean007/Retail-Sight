@@ -3,23 +3,22 @@ import Snackbar from "@mui/material/Snackbar";
 import { useSelector, useDispatch } from "react-redux";
 import { hideMessage } from "./Slices/snackbarSlice";
 import "./App.css";
-import { SignUpLogin } from "./components/SignUpLogIn";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { UserHomePage } from "./components/UserHomePage";
-import { UserProfilePage } from "./components/UserProfilePage";
-import { CreatePost } from "./components/CreatePost";
+// import { SignUpLogin } from "./components/SignUpLogIn";
+import { BrowserRouter as Router } from "react-router-dom"; // no exported member named Routes. Did i mean Route?
+// import { UserHomePage } from "./components/UserHomePage";
+// import { UserProfilePage } from "./components/UserProfilePage";
+// import { CreatePost } from "./components/CreatePost";
 import { RootState } from "./utils/store";
 import { ThemeToggle } from "./ThemeToggle";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 
 import UserModal from "./components/UserModal.tsx";
-import { selectIsUserModalOpen } from "./Slices/userModalSlice.ts";
+import { AppRoutes } from "./utils/Routes.tsx";
+// import { selectIsUserModalOpen } from "./Slices/userModalSlice.ts";
 
 
 function App() {
-  const isUserModalOpen = useSelector(selectIsUserModalOpen);
-
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   useFirebaseAuth();
   const theme = createTheme({
@@ -29,7 +28,6 @@ function App() {
   });
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const dispatch = useDispatch();
-  
 
   return (
     <>
@@ -37,22 +35,15 @@ function App() {
         <CssBaseline />
         <ThemeToggle />
         <Router>
-          <Routes>
-            <Route path="/" element={<SignUpLogin />} />
-            <Route path="/userHomePage" element={<UserHomePage />} />
-            <Route path="/profile-page" element={<UserProfilePage />} />
-            <Route path="/createPost" element={<CreatePost />} />
-          </Routes>
+          <AppRoutes /> {/* Use your routes component here */}
         </Router>
         <Snackbar
           message={snackbar.message}
           open={snackbar.open}
           onClose={() => dispatch(hideMessage())}
-          autoHideDuration={3000} // Auto hides after 3 seconds
+          autoHideDuration={3000}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          /* other snackbar props */
         />
-        {/* <UserModal isOpen={isUserModalOpen} /> */}
         <UserModal />
       </ThemeProvider>
     </>

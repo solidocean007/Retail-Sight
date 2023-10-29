@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TErrorsOfInputs, TUserInputType } from "../utils/types";
+import { TErrorsOfInputs, TUserInputType, UserType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { handleSignUp, handleLogin } from "../utils/validation/authenticate";
 import { useNavigate } from "react-router-dom";
@@ -29,10 +29,7 @@ export const SignUpLogin = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // State
   const [signUpError, setSignUpError] = useState("");
-  // const [logInError, setLogInError] = useState(""); // not used going to eventually make a logIn component
-  // const [ setLogInError] = useState(""); // not used going to eventually make a logIn component
   const [passwordVisibility, setPasswordVisibility] = useState({
     password: false,
     passwordConfirm: false,
@@ -128,30 +125,27 @@ export const SignUpLogin = () => {
           companyInput,
           phoneInput,
           passwordInput,
-          setSignUpError // do I need this?
+          setSignUpError,
         );
 
         if (authData) {
-          dispatch(setUser(authData));  // userData is now of UserType
+          dispatch(setUser(authData)); 
           console.log("Sign-up successful");
           navigate("/userHomePage");
         }
       } catch (error) {
-        // signup wasnt successful
         console.error("Error during sign-up:", error);
       }
     } else {
       try {
         // begin login.
-        const authData = await handleLogin(emailInput, passwordInput); // attempt to login
+        const authData = await handleLogin(emailInput, passwordInput);
 
         if (authData && authData.uid) {
           // Fetch user data from Firestore or Firebase auth as required
           const fetchedUserData = await fetchUserDocFromFirestore(authData.uid);
-          console.log(fetchedUserData, ' fetchedUserData')
           if (fetchedUserData) {
-            dispatch(setUser(fetchedUserData)); // Argument of type 'DocumentData' is not assignable to parameter of type 'UserType'.
-            // Type 'DocumentData' is missing the following properties from type 'UserType': uid, firstName, lastName, email, and 2 more.ts(2345)
+            dispatch(setUser(fetchedUserData as UserType)); 
           }
         }
 
