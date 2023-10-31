@@ -8,6 +8,8 @@ import postsReducer from "../Slices/postsSlice";
 import { themeReducer } from "../reducers/themeReducer";
 import userModalReducer from "../Slices/userModalSlice";
 
+import { useDispatch as _useDispatch } from 'react-redux';
+
 const store = configureStore({
   reducer: {
     snackbar: snackbarReducer,
@@ -21,6 +23,7 @@ const store = configureStore({
 });
 
 export type AppDispatch = typeof store.dispatch;
+export const useAppDispatch = () => _useDispatch<AppDispatch>();
 
 // This is a type for thunks, if needed elsewhere:
 export type AppThunk<ReturnType = void> = ThunkAction<

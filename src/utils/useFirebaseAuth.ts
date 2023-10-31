@@ -1,27 +1,36 @@
-import { useEffect } from 'react';
+// useFirebaseAuth.ts
+import { useEffect, useCallback } from 'react';
+import { AppDispatch } from './store';
 import { useDispatch } from 'react-redux';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { setUser, logoutUser } from '../Slices/userSlice';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { setUser } from '../actions/userActions';
 import { fetchUserDocFromFirestore } from './userData/fetchUserDocFromFirestore';
-import { UserType } from './types';
 
 export const useFirebaseAuth = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const handleUserChange = useCallback(async (user: User | null) => {
+    if (user) {
+      try {
+        const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid);
+        if (userDataFromFirestore) {
+          dispatch(setUser({ uid: user.uid }));
+        } else {
+          dispatch(setUser({ uid: '' }));
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    } else {
+      dispatch(setUser({ uid: '' }));
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async user => {
-      if (user) {
-        const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid);
-        if (userDataFromFirestore) {
-          dispatch(setUser(userDataFromFirestore as UserType));
-        }
-      } else {
-        dispatch(logoutUser());
-      }
-    });
+    const unsubscribe = onAuthStateChanged(auth, handleUserChange);
 
     return () => unsubscribe();
-  }, [dispatch]);
+  }, [handleUserChange]); 
 };
 

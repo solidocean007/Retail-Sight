@@ -9,6 +9,7 @@ import { useDispatch } from "react-redux";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { handleUserNameClick } from "../utils/userModalUtils.ts";
+// import { UserType } from "../utils/types";
 
 import {
   doc,
@@ -21,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./commentSection.css";
+// import { UserState } from "../Slices/userSlice.ts";
 
 interface CommentProps {
   post: PostType;
@@ -35,7 +37,7 @@ const CommentSection: React.FC<CommentProps> = ({
 }) => {
   const [sortedComments, setSortedComments] = useState<CommentType[]>([]);
   const [commentCount, setCommentCount] = useState(post.commentCount);
-  const user = useSelector((state: RootState) => state.user.currentUser);
+  const user = useSelector((state: RootState) => state.user.currentUser);  // state.user is of type unknown
   const userFullName = user?.firstName + " " + user?.lastName; // or just user?.username
 
   const [newComment, setNewComment] = useState<CommentType>({
@@ -173,7 +175,7 @@ const CommentSection: React.FC<CommentProps> = ({
           {sortedComments.map((comment) => (
             <div className="comment-details" key={comment.commentId}>
               <div className="comment">
-                <span onClick={() => onUserNameClick(post.user.postUserId)} className="user-of-comment">{comment.userName}: </span>
+                <span onClick={() => onUserNameClick(post.user.postUserId!)} className="user-of-comment">{comment.userName}: </span> 
                 <span>{comment.text}</span>
               </div>
               <div>

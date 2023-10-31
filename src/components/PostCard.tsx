@@ -56,8 +56,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
             <Typography variant="h6">{post.storeAddress}</Typography>
           </div>
           <div className="post-user-details">
-            {/* {user.user.uid === post.user?.postUserId && ( */}
-            {user.currentUser?.uid === post.user?.postUserId && (
+            {user?.uid === post.user?.postUserId && (
               <Button
                 variant="contained"
                 color="primary"
@@ -67,9 +66,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
                 Edit Post
               </Button>
             )}
-            <Typography onClick={() => onUserNameClick(post.user.postUserId)} variant="h6"> by: {post.user.postUserName}</Typography>
-            {/* <Typography onClick={() => console.log('clicked!')} variant="h6"> by: {post.user.postUserName}</Typography> */}
-            {/* <button onClick={() => onUserNameClick(post.user.postUserId)} > by: {post.user.postUserName}</button> */}
+            <Typography onClick={() => onUserNameClick(post.user.postUserId!)} variant="h6"> by: {post.user.postUserName}</Typography>
             <SharePost
               // postLink={`https://yourwebsite.com/post/${postId}`}
               postLink={`https://yourwebsite.com/post`}

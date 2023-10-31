@@ -8,7 +8,6 @@ import {
 } from "firebase/firestore";
 import { ref, deleteObject, getStorage } from "firebase/storage";
 import { PostType } from "../types";
-import { useDispatch } from "react-redux";
 import { deletePost } from "../../Slices/postsSlice";
 import { AnyAction } from "redux";
 

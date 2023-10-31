@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
-import { selectUser } from "../Slices/userSlice";
+import { selectUser } from "../Slices/userSlice"; // Module '"../Slices/userSlice"' has no exported member 'selectUser'. Did you mean to use 'import selectUser from "../Slices/userSlice"' instead?ts(2614)
+
 import ChannelSelector from "./ChannelSelector";
 import CategorySelector from "./CategorySelector";
 import {
@@ -48,9 +49,9 @@ export const CreatePost = () => {
     postType: "public",
     timestamp: "",
     user: {
-      postUserName: `${userData.currentUser!.firstName} ${userData.currentUser!.lastName}`, 
-      postUserId: userData.currentUser!.uid,
-      postUserCompany: userData.currentUser!.company,
+      postUserName: `${userData?.firstName} ${userData?.lastName}`, 
+      postUserId: userData?.uid,
+      postUserCompany: userData?.company,
     },
     likes: 0,
     hashtags: [''],

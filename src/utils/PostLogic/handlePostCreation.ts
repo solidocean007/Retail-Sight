@@ -76,7 +76,7 @@ export const useHandlePostSubmission = () => {
       }
     } catch (error) {
       console.error("Error adding post:", error);
-      dispatch(showMessage(`Error adding post: ${error.message}`)); // error is of type unknown
+      dispatch(showMessage(`Error adding post: ${(error as Error).message}`));
     }
   };
   return handlePostSubmission;

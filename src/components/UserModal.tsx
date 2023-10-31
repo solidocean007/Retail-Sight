@@ -14,7 +14,10 @@ const UserModal = () => {
   useEffect(() => {
     if (isUserModalOpen && selectedUid) {
       fetchUserDocFromFirestore(selectedUid)
-        .then(data => setUserData(data)) // type error with data
+        .then(data => {
+          console.log("Fetched data:", data);
+          setUserData(data as UserType);
+        }) // type error with data
         .catch(err => console.error(err));
     }
   }, [isUserModalOpen, selectedUid]);

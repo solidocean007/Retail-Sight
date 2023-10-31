@@ -24,7 +24,7 @@ interface EditPostModalProps {
   post: PostType;
   isOpen: boolean;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onClose: () => void;
+  // onClose: () => void;
   // onSave: (updatedPost: PostType) => void;
 }
 
@@ -55,7 +55,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const handleSavePost = async (updatedPost: PostType) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id); 
     try {
-      await updateDoc(postRef, updatedPost);
+      const updatedFields = {
+        description: updatedPost.description,
+        postType: updatedPost.postType,
+        // add other fields you want to update here
+    };
+      await updateDoc(postRef, updatedFields);
       dispatch(updatePost(updatedPost)); // updtePost is a postSlice actionCreator
       console.log('postRef', postRef)
       console.log("Post updated successfully");
@@ -78,7 +83,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   console.log(post, "edit post");
   return (
-    <Modal open={isOpen} onClose={onClose}>
+    // <Modal open={isOpen} onClose={onClose}>
+    <Modal open={isOpen}>
       <div className="edit-post-modal-container">
         {/* <h4 className="store-title">Store: {post.selectedStore}</h4>
         <h6 className="store-address">Address: {post.storeAddress}</h6> */}

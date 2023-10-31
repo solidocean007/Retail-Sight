@@ -25,12 +25,12 @@ export type TErrorsOfInputs = {
 };
 
 export interface UserType {
-  uid: string; // from Firebase
-  firstName: string; // from signup
-  lastName: string; // from signup
-  email: string; // from signup
-  company: string; // from signup
-  phone: string; // from signup
+  uid: string | undefined; // from Firebase
+  firstName: string | undefined; // from signup
+  lastName: string | undefined; // from signup
+  email: string | undefined; // from signup
+  company: string | undefined; // from signup
+  phone: string | undefined; // from signup
 }
 
 // import { Timestamp } from "firebase/firestore";
@@ -71,9 +71,9 @@ export interface PostType {
   postType?: string;
   timestamp?: string;
   user: {
-    postUserName: string;
-    postUserId: string;
-    postUserCompany: string;
+    postUserName: string | undefined;
+    postUserId: string | undefined;
+    postUserCompany: string | undefined;
   };
   likes?: number;
   hashtags: string[];

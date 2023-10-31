@@ -23,7 +23,7 @@ export const handleSignUp = async (
   phoneInput: string,
   passwordInput: string,
   setSignUpError?: (error: string) => void
-): Promise<UserType | null> => {  // lacks ending return statement and return type doesnt include undefined.  How do I fix this?
+): Promise<UserType | undefined> => { 
   try {
     console.log("Starting user creation with Firebase Auth...");
 
@@ -66,14 +66,14 @@ export const handleSignUp = async (
 
     console.error("Error encountered during sign-up process:", errorCode, errorMessage);
 
-    // Check if error code is 'auth/email-already-in-use'
-    if (errorCode === "auth/email-already-in-use") {
-      setSignUpError("The email address is already in use by another account.");
-    } else {
-      // Handle other potential errors or set a general error message
-      // I don't know how to check for other errors
-      setSignUpError(errorMessage);
+    if (setSignUpError) { // Check if setSignUpError is defined
+      if (errorCode === "auth/email-already-in-use") {
+        setSignUpError("The email address is already in use by another account.");
+      } else {
+        setSignUpError(errorMessage || "An error occurred during the sign-up process.");
+      }
     }
+
 
     throw error;
   }

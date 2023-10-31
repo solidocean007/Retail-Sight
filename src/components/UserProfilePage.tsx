@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Button, TextField, Container, Typography } from "@mui/material";
-import { fetchUserFromFirebase } from "../utils/userData/fetchUserFromFirebase";
-import { useDispatch, useSelector } from "react-redux";
+// import { fetchUserFromFirebase } from "../utils/userData/fetchUserFromFirebase";
+import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
 import { db } from "../utils/firebase";
@@ -15,7 +15,7 @@ type FormData = {
 
 interface UserProfileFormProps {
   onSubmit: SubmitHandler<FormData>;
-  form: ReturnType<typeof useForm>;
+  form: ReturnType<typeof useForm<FormData>>;
   currentUserFirstName?: string;
   currentUserLastName?: string;
 }
@@ -36,7 +36,8 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
   }, [currentUserFirstName, currentUserLastName, setValue]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit)}> {/*rgument of type 'SubmitHandler<FormData>' is not assignable to parameter of type 'SubmitHandler<FieldValues>'.
+  Type 'FieldValues' is missing the following properties from type 'FormData': firstName, lastNamets(2345)*/}
       <TextField
         fullWidth
         margin="normal"
@@ -67,7 +68,8 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 };
 
 export const UserProfilePage = () => {
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
+
   const userData = useSelector(selectUser);
   const form = useForm<FormData>();
   const [updateMessage, setUpdateMessage] = useState("");
@@ -75,9 +77,8 @@ export const UserProfilePage = () => {
   const navigate = useNavigate();
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    if (userData.user?.uid) {
-      // Does not exsits on typ UserState
-      const userDocRef = doc(db, "users", userData.user.uid);
+    if (userData?.uid) {
+      const userDocRef = doc(db, "users", userData.uid);
       await setDoc(
         userDocRef,
         {
@@ -116,9 +117,9 @@ export const UserProfilePage = () => {
       </Typography>
       <UserProfileForm
         onSubmit={onSubmit}
-        form={form}
-        currentUserFirstName={userData.user?.firstName}
-        currentUserLastName={userData.user?.lastName}
+        form={form} 
+        currentUserFirstName={userData.firstName}
+        currentUserLastName={userData.lastName}
       />
 
       {updateMessage && (

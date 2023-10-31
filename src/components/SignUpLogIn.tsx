@@ -1,5 +1,6 @@
+// SignUpLogin.tsx
 import { useState } from "react";
-import { TErrorsOfInputs, TUserInputType, UserType } from "../utils/types";
+import { TErrorsOfInputs, TUserInputType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { handleSignUp, handleLogin } from "../utils/validation/authenticate";
 import { useNavigate } from "react-router-dom";
@@ -12,10 +13,9 @@ import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 // import { makeStyles } from "@mui/material";
 // import items from Redux
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "../utils/store";
 // import { incrementRead } from "../Slices/firestoreReadsSlice";
-import { setUser } from "../Slices/userSlice";
-
+import { setUser } from "../actions/userActions";
 //imports for password visibility
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -27,7 +27,7 @@ import { validateUserInputs } from "../utils/validation/validations";
 
 export const SignUpLogin = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const [signUpError, setSignUpError] = useState("");
   const [passwordVisibility, setPasswordVisibility] = useState({
@@ -128,8 +128,8 @@ export const SignUpLogin = () => {
           setSignUpError,
         );
 
-        if (authData) {
-          dispatch(setUser(authData)); 
+        if (authData?.uid) {
+          dispatch(setUser({ uid: authData.uid }));
           console.log("Sign-up successful");
           navigate("/userHomePage");
         }
@@ -145,7 +145,9 @@ export const SignUpLogin = () => {
           // Fetch user data from Firestore or Firebase auth as required
           const fetchedUserData = await fetchUserDocFromFirestore(authData.uid);
           if (fetchedUserData) {
-            dispatch(setUser(fetchedUserData as UserType)); 
+            dispatch(setUser({ uid: fetchedUserData.uid }));
+
+ 
           }
         }
 
