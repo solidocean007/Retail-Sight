@@ -15,6 +15,17 @@
   -webkit-text-size-adjust: 100%;
 }
 
+#root {
+  max-width: 100%;
+  overflow-x: hidden; 
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -62,5 +73,17 @@ button:focus-visible {
   left: 50%;
   scroll-behavior: smooth;
   /* transform: translate(-50%, -50%); */
+}
+
+/* Default styles for desktops and larger screens here */
+
+/* Styles for tablets */
+@media (max-width: 1024px) {
+  /* Your styles for tablets */
+}
+
+/* Styles for mobile devices */
+@media (max-width: 768px) {
+  /* Your styles for mobile devices */
 }
 

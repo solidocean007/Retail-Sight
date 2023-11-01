@@ -24,6 +24,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 //Import validation
 import { validateUserInputs } from "../utils/validation/validations";
+import './signUpLogIn.css'
 
 export const SignUpLogin = () => {
   const navigate = useNavigate();
@@ -162,7 +163,7 @@ export const SignUpLogin = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container className="sign-up-container" component="main" maxWidth="xs">
       <Typography variant="h5">{isSignUp ? "Sign Up" : "Log In"}</Typography>
       <Button variant="contained" color="primary" onClick={setFormMode}>
         {formButtonMessage()}
@@ -173,6 +174,7 @@ export const SignUpLogin = () => {
             <>
               <Container>
                 <TextField
+                  className="sign-up-text-field"
                   label="First Name"
                   name="firstNameInput"
                   value={userInputs.firstNameInput}
