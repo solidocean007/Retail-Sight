@@ -1,65 +1,50 @@
-//SideBar.tsx
-import { Button, Select, MenuItem } from "@mui/material";
+import { Button, Select, MenuItem, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import LogOutButton from "./LogOutButton";
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
-const SideBar = ({ openProfile } : { openProfile: () => void }) => {
+// const SideBar = ({ openProfile } : { openProfile: () => void }) => {
+const SideBar = () => {
   const navigate = useNavigate();
 
   return (
     <div>
+      <IconButton onClick={() => navigate('/notifications')}>
+        <NotificationsIcon />
+      </IconButton>
       <Button
-        className="profile-btn"
         variant="contained"
         color="secondary"
-        onClick={openProfile}
+        onClick={() => navigate('/feedback')}
       >
-        Profile
+        Feedback
       </Button>
-      <Button
-        className="create-post-btn"
-        variant="contained"
-        color="primary"
-        onClick={() => navigate("/createPost")}
-      >
-        Create Post
-      </Button>
-      <LogOutButton />
 
-      <Select
+      <Select 
+        multiple
         displayEmpty
         className="dropdown"
-        value=""
-        placeholder="Select Option 1"
+        value={[]}
+        placeholder="Filter by Channel"
       >
-        {/* Populate with real options */}
-        <MenuItem value="">Option 1</MenuItem>
-        {/* More options */}
+        {/* Populate with real channel options */}
+        <MenuItem value="channel1">Channel 1</MenuItem>
+        {/* More channel options */}
       </Select>
 
       <Select
+        multiple
         displayEmpty
         className="dropdown"
-        value=""
-        placeholder="Select Option 2"
+        value={[]}
+        placeholder="Filter by Category"
       >
-        {/* Populate with real options */}
-        <MenuItem value="">Option 2</MenuItem>
-        {/* More options */}
-      </Select>
-
-      <Select
-        displayEmpty
-        className="dropdown"
-        value=""
-        placeholder="Select Option 3"
-      >
-        {/* Populate with real options */}
-        <MenuItem value="">Option 3</MenuItem>
-        {/* More options */}
+        {/* Populate with real category options */}
+        <MenuItem value="category1">Category 1</MenuItem>
+        {/* More category options */}
       </Select>
     </div>
   );
 };
 
 export default SideBar;
+

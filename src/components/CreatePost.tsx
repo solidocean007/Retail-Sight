@@ -66,7 +66,7 @@ export const CreatePost = () => {
     const file = e.target.files![0];
     setSelectedFile(file);
     if (file) {
-      const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
+      const validImageTypes = ["image/jpeg", "image/png", "image/gif","image/webp"];
       if (validImageTypes.includes(file.type)) {
         const reader = new FileReader();
         reader.onloadend = () => {

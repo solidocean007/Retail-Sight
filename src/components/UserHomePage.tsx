@@ -22,7 +22,7 @@ export const UserHomePage = () => {
   }, []);
 
   return (
-    <Container className="container user-home-page">
+    <Container className="container-user-home-page">
       <AppBar position="fixed">
         <Toolbar>
           <div className="tool-bar">
@@ -62,7 +62,8 @@ export const UserHomePage = () => {
         <Grid item xs={4}>
           {" "}
           {/* This will occupy 4/12 of the screen width for the sidebar */}
-          <SideBar openProfile={openProfile} />
+          {/* <SideBar openProfile={openProfile} /> */}
+          <SideBar />
         </Grid>
       </Grid>
     </Container>

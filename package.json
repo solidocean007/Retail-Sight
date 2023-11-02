@@ -19,6 +19,7 @@
     "@mui/material": "^5.14.3",
     "@reduxjs/toolkit": "^1.9.5",
     "@types/googlemaps": "^3.43.3",
+    "compressorjs": "^1.2.1",
     "cors": "^2.8.5",
     "firebase": "^10.1.0",
     "node-fetch": "^3.3.2",

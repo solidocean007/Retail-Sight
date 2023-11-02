@@ -1,4 +1,9 @@
 /*  userHomePage.css */
+
+.container-user-home-page {
+  margin-top: 150px;
+}
+
 .profile-btn, .create-post-btn, .log-out-btn {
   margin-right: 30px;
 }
