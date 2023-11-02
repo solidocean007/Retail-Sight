@@ -13,6 +13,26 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  /* Light theme */
+  --light-background-color: #ffffff;
+  --light-text-color: #242424;
+  --light-button-background: #eaeaea;
+
+  /* Dark theme */
+  --dark-background-color: #242424;
+  --dark-text-color: rgba(255, 255, 255, 0.87);
+  --dark-button-background: #1a1a1a;
+  
+  /* Current theme - default to light */
+  --background-color: var(--light-background-color);
+  --text-color: var(--light-text-color);
+  --button-background: var(--light-button-background);
+}
+
+[data-theme='dark'] {
+  --background-color: var(--dark-background-color);
+  --text-color: var(--dark-text-color);
+  --button-background: var(--dark-button-background);
 }
 
 #root {

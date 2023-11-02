@@ -9,3 +9,119 @@
 .MuiInputBase-root {
   max-width: 100%;
 }
+
+body {
+  background-image: url(../assets/store.jpg) !important;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;  /* Adjusts the position */
+  width: 100vw;
+  height: 100vh;
+}
+
+.outer-frame {
+  border: 1px solid black;
+  border-radius: 8px;
+}
+
+/* Container that surrounds the form */
+.outer-container {
+  width: 90%;
+  max-width: 600px;
+  margin: 10px;
+  padding: 20px;
+  border: 2px solid #333;
+  border-radius: 8px;
+  /* background: linear-gradient(160deg, #1a1a1a, #0e0e0e); */
+  background-color: var(--background-color);
+  color: var(--text-color);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Lines that jut out from the sides */
+.outer-container::before,
+.outer-container::after {
+  content: "";
+  width: 2px;
+  height: 50px;
+  background: #333;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.outer-container::before {
+  left: -10px;
+}
+
+.outer-container::after {
+  right: -10px;
+}
+
+/* Form itself */
+.form-container {
+  padding: 20px;
+  border: 2px solid #444;
+  border-radius: 4px;
+  background: #222;
+  position: relative;
+}
+
+/* Input styles */
+.form-container input[type="text"],
+.form-container input[type="password"],
+.form-container textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-bottom: 2px solid #555;
+  background: #333;
+  color: #eee;
+  font-size: 1rem;
+  outline: none;
+}
+
+button {
+  background-color: var(--button-background);
+}
+
+/* Pulsing light effect */
+@keyframes pulseLight {
+  0% {
+    box-shadow: 0 0 5px #00f;
+  }
+  50% {
+    box-shadow: 0 0 20px #00f, 0 0 30px #00f;
+  }
+  100% {
+    box-shadow: 0 0 5px #00f;
+  }
+}
+
+.form-container::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 2px;
+  background: #00f;
+  animation: pulseLight 2s infinite;
+}
+
+/* Button styling (if needed) */
+.form-container button {
+  padding: 10px 20px;
+  background: #00f;
+  border: none;
+  color: #eee;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.form-container button:hover {
+  background: #0077dd;
+}

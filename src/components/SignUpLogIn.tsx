@@ -163,7 +163,8 @@ export const SignUpLogin = () => {
   };
 
   return (
-    <Container className="sign-up-container" component="main" maxWidth="xs">
+    <div className="outer-container">
+       <Container className="sign-up-container" component="main" maxWidth="xs">
       <Typography variant="h5">{isSignUp ? "Sign Up" : "Log In"}</Typography>
       <Button variant="contained" color="primary" onClick={setFormMode}>
         {formButtonMessage()}
@@ -370,5 +371,7 @@ export const SignUpLogin = () => {
         </Button>
       </form>
     </Container>
+    </div>
+   
   );
 };

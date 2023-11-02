@@ -15,9 +15,18 @@ export const ThemeToggle: React.FC = () => {
     setIsDrawerOpen(!isDrawerOpen);
   };
 
-  const handleThemeChange = () => {
-    dispatch(toggleTheme());
-  };
+  // ThemeToggle.tsx
+const handleThemeChange = () => {
+  dispatch(toggleTheme());
+
+  // Update the body's data-theme attribute
+  if (isDarkMode) {
+    document.body.setAttribute('data-theme', 'light');
+  } else {
+    document.body.setAttribute('data-theme', 'dark');
+  }
+};
+
 
   return (
     <div style={{ position: 'fixed', bottom: '1rem', right: '1rem' }}>
