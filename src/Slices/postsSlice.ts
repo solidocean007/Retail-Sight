@@ -1,14 +1,52 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { 
+    getFirestore, collection, getDocs,query, Query, DocumentData, DocumentSnapshot, 
+    startAfter, limit 
+} from "firebase/firestore";
 import { PostType } from "../utils/types";
+import { incrementRead } from "./firestoreReadsSlice";
+import { filterByChannel, filterByCategory, filterByCity, filterByState } from "../services/postsServices";
 
-export const fetchAllPosts = createAsyncThunk<PostType[], void>(
+
+type FilterCriteria = {
+  channel?: string;
+  category?: string;
+  city?: string;
+  state?: string;
+};
+
+type FetchPostsArgs = {
+  filters: FilterCriteria;
+  lastVisible?: DocumentSnapshot;
+};
+
+export const fetchAllPosts = createAsyncThunk<PostType[], FetchPostsArgs>(
   "posts/fetchAll",
-  async () => {
-    console.log("Fetching all posts...");
-    const db = getFirestore();
-    const postCollection = collection(db, "posts");
-    const postSnapshot = await getDocs(postCollection);
+  async ({ filters, lastVisible }) => { // Destructure here
+    console.log("Fetching posts...");
+    let baseQuery: Query<DocumentData> = collection(getFirestore(), "posts");
+
+    if (filters.channel) {
+      baseQuery = filterByChannel(filters.channel, baseQuery);
+    }
+    if (filters.category) {
+      baseQuery = filterByCategory(filters.category, baseQuery);
+    }
+    if (filters.state) {
+      baseQuery = filterByState(filters.state, baseQuery);
+    }
+    if (filters.city) {
+      baseQuery = filterByCity(filters.city, baseQuery);
+    }
+
+    // Handle Pagination
+    const PAGE_SIZE = 10;
+    let paginatedQuery = query(baseQuery, limit(PAGE_SIZE));
+    if (lastVisible) {
+      paginatedQuery = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
+    }
+
+    const postSnapshot = await getDocs(paginatedQuery);
 
     const postData: PostType[] = postSnapshot.docs.map((doc) => ({
       ...(doc.data() as PostType),
@@ -18,8 +56,6 @@ export const fetchAllPosts = createAsyncThunk<PostType[], void>(
     return postData;
   }
 );
-
-
 
 const initialState: PostType[] = [];
 
@@ -32,11 +68,12 @@ const postsSlice = createSlice({
     updatePost: (state, action) => state.map(post => post.id === action.payload.id ? action.payload : post),
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchAllPosts.fulfilled, (_, action) => action.payload);
+    builder.addCase(fetchAllPosts.fulfilled, (state, action) => {
+      state.push(...action.payload);
+      incrementRead(action.payload.length);
+    });
   }
 });
 
 export const { setPosts, deletePost, updatePost } = postsSlice.actions;
-
-
 export default postsSlice.reducer;
