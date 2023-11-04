@@ -1,13 +1,21 @@
-import { Button, Select, MenuItem, IconButton } from "@mui/material";
+import React from 'react';
+import { Button, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import ChannelSelector, { ChannelType } from './ChannelSelector';
+import CategorySelector, { CategoryType } from './CategorySelector';
+import './sideBar.css';
 
-// const SideBar = ({ openProfile } : { openProfile: () => void }) => {
-const SideBar = () => {
+interface SideBarProps {
+  setSelectedChannel: React.Dispatch<React.SetStateAction<ChannelType | undefined>>;
+  setSelectedCategory: React.Dispatch<React.SetStateAction<CategoryType | undefined>>;
+}
+
+const SideBar: React.FC<SideBarProps> = ({ setSelectedChannel, setSelectedCategory }) => {
   const navigate = useNavigate();
 
   return (
-    <div>
+    <div className='side-bar'>
       <IconButton onClick={() => navigate('/notifications')}>
         <NotificationsIcon />
       </IconButton>
@@ -18,33 +26,14 @@ const SideBar = () => {
       >
         Feedback
       </Button>
-
-      <Select 
-        multiple
-        displayEmpty
-        className="dropdown"
-        value={[]}
-        placeholder="Filter by Channel"
-      >
-        {/* Populate with real channel options */}
-        <MenuItem value="channel1">Channel 1</MenuItem>
-        {/* More channel options */}
-      </Select>
-
-      <Select
-        multiple
-        displayEmpty
-        className="dropdown"
-        value={[]}
-        placeholder="Filter by Category"
-      >
-        {/* Populate with real category options */}
-        <MenuItem value="category1">Category 1</MenuItem>
-        {/* More category options */}
-      </Select>
+      <ChannelSelector onChannelChange={setSelectedChannel} />
+      <CategorySelector onCategoryChange={setSelectedCategory} />
+      {/* Add your city and state selectors similarly here */}
     </div>
   );
 };
 
 export default SideBar;
+
+
 

@@ -20,13 +20,34 @@ interface Post {
   // ... other post attributes
 }
 
-const ActivityFeed: React.FC = () => {
-  const allPosts: Post[] = useSelector((state: any) => state.posts);
+interface ActivityFeedProps {
+  selectedChannel: string;
+  selectedCategory: string;
+}
+
+const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannel, selectedCategory }) => {
+  const allPosts: Post[] = useSelector((state: any) => state.posts); // unknown any specify a different type
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchAllPosts());
-  }, [dispatch]);
+    async function fetchPosts() {
+      const fetchedPosts = await dispatch(fetchAllPosts({
+        filters: {
+          channel: selectedChannel,
+          category: selectedCategory
+          // You can add other filters like city and state as needed
+        }
+      }));
+      
+      // Ensure the promise resolved successfully and we have data
+      if (fetchAllPosts.fulfilled.match(fetchedPosts)) {
+        dispatch(setPosts(fetchedPosts.payload));
+      }
+    }
+
+    fetchPosts();
+}, [selectedChannel, selectedCategory, dispatch]);
+
 
 
   const getPostsByTag = async (hashTag: string) => {

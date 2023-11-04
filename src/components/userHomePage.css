@@ -13,6 +13,12 @@
   /* color: black; */
 }
 
+.side-bar-container {
+  /* position: fixed;
+  right: 0; */
+  background-color:beige;
+}
+
 .log-out-btn {
 
   color: white;

@@ -1,5 +1,5 @@
 // userHomePage.tsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import LogOutButton from "./LogOutButton";
 import { useNavigate } from "react-router-dom";
@@ -11,15 +11,25 @@ import "./userHomePage.css";
 import { RootState } from "../utils/store";
 import SideBar from "./SideBar";
 
+import { ChannelType } from "./ChannelSelector";
+import { CategoryType } from "./CategorySelector";
+
 export const UserHomePage = () => {
   const navigate = useNavigate();
-  const { currentUser: currentUser } = useSelector((state: RootState) => state.user); // Does this work because userSlice now has a currentUser
+  // const { currentUser: currentUser } = useSelector((state: RootState) => state.user); // Does this work because userSlice now has a currentUser
+  const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
   console.log(currentUser, " : currentUser");
-  const openProfile = () => navigate("/profile-page");
+
+   // States for selected filters
+   const [selectedChannel, setSelectedChannel] = useState<ChannelType | undefined>();
+   const [selectedCategory, setSelectedCategory] = useState<CategoryType | undefined>();
 
   useEffect(() => {
     console.log("UserHomePage mounted");
   }, []);
+
+  const openProfile = () => navigate("/profile-page");
+
 
   return (
     <Container className="container-user-home-page">
@@ -57,13 +67,13 @@ export const UserHomePage = () => {
         <Grid item xs={8}>
           {" "}
           {/* This will occupy 8/12 of the screen width */}
-          <ActivityFeed />
+          <ActivityFeed selectedChannel={selectedChannel} selectedCategory={selectedCategory} />
         </Grid>
-        <Grid item xs={4}>
+        <Grid className="side-bar-container" item xs={4}>
           {" "}
           {/* This will occupy 4/12 of the screen width for the sidebar */}
           {/* <SideBar openProfile={openProfile} /> */}
-          <SideBar />
+          <SideBar setSelectedChannel={setSelectedChannel} setSelectedCategory={setSelectedCategory} />
         </Grid>
       </Grid>
     </Container>
