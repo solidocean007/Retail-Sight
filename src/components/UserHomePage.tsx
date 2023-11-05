@@ -21,8 +21,9 @@ export const UserHomePage = () => {
   console.log(currentUser, " : currentUser");
 
    // States for selected filters
-   const [selectedChannel, setSelectedChannel] = useState<ChannelType | undefined>();
-   const [selectedCategory, setSelectedCategory] = useState<CategoryType | undefined>();
+   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
+   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([]);
+   
 
   useEffect(() => {
     console.log("UserHomePage mounted");
@@ -67,13 +68,13 @@ export const UserHomePage = () => {
         <Grid item xs={8}>
           {" "}
           {/* This will occupy 8/12 of the screen width */}
-          <ActivityFeed selectedChannel={selectedChannel} selectedCategory={selectedCategory} />
+          <ActivityFeed selectedChannels={selectedChannels} selectedCategories={selectedCategories} />
         </Grid>
         <Grid className="side-bar-container" item xs={4}>
           {" "}
           {/* This will occupy 4/12 of the screen width for the sidebar */}
           {/* <SideBar openProfile={openProfile} /> */}
-          <SideBar setSelectedChannel={setSelectedChannel} setSelectedCategory={setSelectedCategory} />
+          <SideBar setSelectedChannels={setSelectedChannels} setSelectedCategories={setSelectedCategories} />
         </Grid>
       </Grid>
     </Container>

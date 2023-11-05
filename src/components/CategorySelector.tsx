@@ -13,20 +13,13 @@ export type CategoryType =
   | "Beer"
   | "Soda"
   | "Chips"
-  | "Fresh Produce"
-  | "Canned Goods"
+  | "Produce"
   | "Dairy"
-  | "Meat and Poultry"
-  | "Snacks"
-  | "Bakery"
-  | "Seafood"
-  | "Spices and Seasonings"
-  | "Household Items"
-  | "Personal Care"
-  | "Baby Products";
+  | "Meat"
+  | "Cookies and Pastries"
 
 // Create an array of categories for mapping in the component
-const CATEGORIES: CategoryType[] = ['Water', 'Wine', 'Beer', 'Soda', 'Chips', 'Fresh Produce', 'Canned Goods', 'Dairy', 'Meat and Poultry', 'Snacks', 'Bakery', 'Seafood', 'Spices and Seasonings', 'Household Items', 'Personal Care', 'Baby Products'];
+const CATEGORIES: CategoryType[] = ['Water', 'Wine', 'Beer', 'Soda', 'Chips', 'Produce', 'Dairy', 'Meat', 'Cookies and Pastries'];
 
 interface CategorySelectorProps {
   selectedCategory?: CategoryType;

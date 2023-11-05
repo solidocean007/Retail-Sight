@@ -40,7 +40,8 @@ export type ChannelType =
   | "Convenience"
   | "Restaurant"
   | "Warehouse Club"
-  | "Department Store";
+  | "Department Store"
+  | "Drug Store";
 
 export type CategoryType =
   | "Water"
@@ -48,17 +49,10 @@ export type CategoryType =
   | "Beer"
   | "Soda"
   | "Chips"
-  | "Fresh Produce"
-  | "Canned Goods"
+  | "Produce"
   | "Dairy"
-  | "Meat and Poultry"
-  | "Snacks"
-  | "Bakery"
-  | "Seafood"
-  | "Spices and Seasonings"
-  | "Household Items"
-  | "Personal Care"
-  | "Baby Products";
+  | "Meat"
+  | "Cookies and Pastries"
 
 export interface PostType {
   id: string;

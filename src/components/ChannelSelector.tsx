@@ -7,10 +7,10 @@ interface ChannelSelectorProps {
   onChannelChange: (channel: ChannelType) => void;
 }
 
-export type ChannelType = 'Grocery' | 'Convenience' | 'Restaurant' | 'Warehouse Club' | 'Department Store';
+export type ChannelType = 'Grocery' | 'Convenience' | 'Restaurant' | 'Warehouse Club' | 'Department Store' | 'Bar' | 'Drug Store';
 
 // Create an array of channels for mapping in the component
-const CHANNELS: ChannelType[] = ['Grocery', 'Convenience', 'Restaurant', 'Warehouse Club', 'Department Store'];
+const CHANNELS: ChannelType[] = ['Grocery', 'Convenience', 'Restaurant', 'Warehouse Club', 'Department Store', 'Bar', 'Drug Store'];
 
 interface ChannelSelectorProps {
   selectedChannel?: ChannelType;

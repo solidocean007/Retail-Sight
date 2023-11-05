@@ -21,11 +21,11 @@ interface Post {
 }
 
 interface ActivityFeedProps {
-  selectedChannel: string;
-  selectedCategory: string;
+  selectedChannels: string[];
+  selectedCategories: string[];
 }
 
-const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannel, selectedCategory }) => {
+const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannels, selectedCategories }) => {
   const allPosts: Post[] = useSelector((state: any) => state.posts); // unknown any specify a different type
   const dispatch: AppDispatch = useDispatch();
 
@@ -33,20 +33,24 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannel, selectedCa
     async function fetchPosts() {
       const fetchedPosts = await dispatch(fetchAllPosts({
         filters: {
-          channel: selectedChannel,
-          category: selectedCategory
+          channels: selectedChannels, // This should be an array of channel IDs
+          categories: selectedCategories, // This should be an array of category IDs
           // You can add other filters like city and state as needed
         }
       }));
-      
+  
       // Ensure the promise resolved successfully and we have data
       if (fetchAllPosts.fulfilled.match(fetchedPosts)) {
         dispatch(setPosts(fetchedPosts.payload));
       }
     }
-
-    fetchPosts();
-}, [selectedChannel, selectedCategory, dispatch]);
+  
+    // Only run the effect if selected channels or categories change
+    if (selectedChannels.length > 0 || selectedCategories.length > 0) {
+      fetchPosts();
+    }
+  }, [selectedChannels, selectedCategories, dispatch]);
+  
 
 
 

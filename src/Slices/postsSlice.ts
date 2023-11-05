@@ -14,17 +14,17 @@ import {
 import { PostType } from "../utils/types";
 import { incrementRead } from "./firestoreReadsSlice";
 import {
-  filterByChannel,
-  filterByCategory,
-  filterByCity,
-  filterByState,
+  filterByChannels,
+  filterByCategories,
+  // filterByCity,
+  // filterByState,
 } from "../services/postsServices";
 
-type FilterCriteria = {
-  channel?: string;
-  category?: string;
-  city?: string;
-  state?: string;
+export type FilterCriteria = {
+  channels?: string[];
+  categories?: string[];
+  // city?: string;
+  // state?: string;
 };
 
 type FetchPostsArgs = {
@@ -41,25 +41,25 @@ export const fetchAllPosts = createAsyncThunk<PostType[], FetchPostsArgs>(
 
     // If no filters provided, get the last 10 posts
     if (
-      !filters.channel &&
-      !filters.category &&
-      !filters.state &&
-      !filters.city
+      !filters.channels &&
+      !filters.categories
+      // !filters.state &&
+      // !filters.city
     ) {
       baseQuery = query(baseQuery, orderBy("timestamp", "desc"), limit(10)); // Assuming 'timestamp' is a field in your posts
     } else {
-      if (filters.channel) {
-        baseQuery = filterByChannel(filters.channel, baseQuery);
+      if (filters.channels) {
+        baseQuery = filterByChannels(filters.channels, baseQuery);
       }
-      if (filters.category) {
-        baseQuery = filterByCategory(filters.category, baseQuery);
+      if (filters.categories) {
+        baseQuery = filterByCategories(filters.categories, baseQuery);
       }
-      if (filters.state) {
-        baseQuery = filterByState(filters.state, baseQuery);
-      }
-      if (filters.city) {
-        baseQuery = filterByCity(filters.city, baseQuery);
-      }
+      // if (filters.state) {
+      //   baseQuery = filterByState(filters.state, baseQuery);
+      // }
+      // if (filters.city) {
+      //   baseQuery = filterByCity(filters.city, baseQuery);
+      // }
     }
 
     // Handle Pagination
