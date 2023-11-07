@@ -41,7 +41,8 @@ export type ChannelType =
   | "Restaurant"
   | "Warehouse Club"
   | "Department Store"
-  | "Drug Store";
+  | "Drug Store"
+  | "Bar";
 
 export type CategoryType =
   | "Water"

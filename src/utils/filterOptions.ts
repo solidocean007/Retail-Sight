@@ -1,23 +1,23 @@
 export const CategoryOptions = [
-  { id: 'water', name: 'Water' },
-  { id: 'wine', name: 'Wine' },
-  { id: 'beer', name: 'Beer' },
-  { id: 'soda', name: 'Soda' },
-  { id: 'chips', name: 'Chips' },
-  { id: 'produce', name: 'Produce' },
-  { id: 'dairy', name: 'Dairy' },
-  { id: 'meat', name: 'Meat' },
-  { id: 'cookies', name: 'Cookies and Pastries' },
+  { id: 'Water', name: 'Water' },
+  { id: 'Wine', name: 'Wine' },
+  { id: 'Beer', name: 'Beer' },
+  { id: 'Soda', name: 'Soda' },
+  { id: 'Chips', name: 'Chips' },
+  { id: 'Produce', name: 'Produce' },
+  { id: 'Dairy', name: 'Dairy' },
+  { id: 'Meat', name: 'Meat' },
+  { id: 'Cookies', name: 'Cookies and Pastries' },
   // ... Add other categories here
 ];
 
 export const ChannelOptions = [
-  { id: 'grocery', name: 'Grocery' },
-  { id: 'convenience', name: 'Convenience' },
-  { id: 'restaurant', name: 'Restaurant' },
-  { id: 'bar', name: 'Bar' },
-  { id: 'warehouse_club', name: 'Warehouse Club' },
-  { id: 'department_store', name: 'Department Store' },
-  { id: 'drug_store', name: 'Drug Store' },
+  { id: 'Grocery', name: 'Grocery' },
+  { id: 'Convenience', name: 'Convenience' },
+  { id: 'Restaurant', name: 'Restaurant' },
+  { id: 'Bar', name: 'Bar' },
+  { id: 'Warehouse_club', name: 'Warehouse Club' },
+  { id: 'Department_store', name: 'Department Store' },
+  { id: 'Drug_store', name: 'Drug Store' },
   // ... Add other channels here
 ];

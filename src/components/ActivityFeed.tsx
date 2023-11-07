@@ -9,49 +9,48 @@ import {
 } from "firebase/firestore";
 import { AppDispatch } from "../utils/store";
 import { useSelector, useDispatch } from "react-redux";
-import { setPosts } from "../Slices/postsSlice";
+import { fetchLatestPosts, setPosts } from "../Slices/postsSlice";
 import { incrementRead } from "../Slices/firestoreReadsSlice";
 // import PostCard from "./PostCard";
 import PostCardRenderer from "./PostCardRenderer";
-import { fetchAllPosts } from "../Slices/postsSlice";
+import { fetchFilteredPosts } from "../Slices/postsSlice";
+import { ChannelType } from "./ChannelSelector";
+import { CategoryType } from "./CategorySelector";
+import NoContentCard from "./NoContentCard";
 
-interface Post {
-  id: string;
-  // ... other post attributes
-}
+// interface Post {
+//   id: string;
+//   // ... other post attributes
+// }
 
 interface ActivityFeedProps {
-  selectedChannels: string[];
-  selectedCategories: string[];
+  selectedChannels: ChannelType[];
+  selectedCategories: CategoryType[];
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannels, selectedCategories }) => {
-  const allPosts: Post[] = useSelector((state: any) => state.posts); // unknown any specify a different type
-  const dispatch: AppDispatch = useDispatch();
+  const { posts, lastVisible } = useSelector((state: any) => ({
+    posts: state.posts.posts, // specify the correct path depending on the state structure
+    lastVisible: state.posts.lastVisible,
+  }));
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    async function fetchPosts() {
-      const fetchedPosts = await dispatch(fetchAllPosts({
+    if (selectedChannels.length === 0 && selectedCategories.length === 0) {
+      console.log('fetch latest posts')
+      dispatch(fetchLatestPosts());
+    } else {
+      dispatch(fetchFilteredPosts({
         filters: {
-          channels: selectedChannels, // This should be an array of channel IDs
-          categories: selectedCategories, // This should be an array of category IDs
-          // You can add other filters like city and state as needed
-        }
+          channels: selectedChannels,
+          categories: selectedCategories,
+        },
+        lastVisible: lastVisible, // Assuming `lastVisible` is defined in your component's scope
+        
       }));
-  
-      // Ensure the promise resolved successfully and we have data
-      if (fetchAllPosts.fulfilled.match(fetchedPosts)) {
-        dispatch(setPosts(fetchedPosts.payload));
-      }
     }
+  }, [selectedChannels, selectedCategories, lastVisible, dispatch]);
   
-    // Only run the effect if selected channels or categories change
-    if (selectedChannels.length > 0 || selectedCategories.length > 0) {
-      fetchPosts();
-    }
-  }, [selectedChannels, selectedCategories, dispatch]);
-  
-
 
 
   const getPostsByTag = async (hashTag: string) => {
@@ -79,19 +78,26 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannels, selectedC
   };
 
   return (
-    <List
-      height={window.innerHeight} // or any height you desire for the feed viewport
-      itemCount={allPosts.length}
-      itemSize={900} // from your CSS
-      width={650} // a bit more than the card's width to account for potential scrollbars and padding
-      itemData={{
-        posts: allPosts,
-        getPostsByTag: getPostsByTag,
-        // ... any other data or methods you need to pass
-      }}
-    >
-      {PostCardRenderer}
-    </List>
+    <>
+    {posts.length === 0 ? (
+      <NoContentCard />
+    ) : (
+      <List
+        className="list"
+        height={window.innerHeight} // or any height you desire for the feed viewport
+        itemCount={posts.length}
+        itemSize={900} // from your CSS
+        width={650} // a bit more than the card's width to account for potential scrollbars and padding
+        itemData={{
+          posts: posts,
+          getPostsByTag: getPostsByTag,
+          // ... any other data or methods you need to pass
+        }}
+      >
+        {PostCardRenderer}
+      </List>
+    )}
+  </>
   );
 };
 

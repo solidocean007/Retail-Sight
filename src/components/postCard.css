@@ -78,3 +78,14 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
+/* .no-content-container {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  overflow: visible;
+  transition: box-shadow 0.3s ease;
+  position: relative;
+  height: 900px; 
+  width: 600px;
+} */

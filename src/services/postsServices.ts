@@ -1,5 +1,4 @@
 // postsService.ts
-// old logic
 import { query, where, Query, DocumentData } from 'firebase/firestore';
 
 // Update the filter functions to handle an array of strings

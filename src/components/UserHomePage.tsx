@@ -74,7 +74,7 @@ export const UserHomePage = () => {
           {" "}
           {/* This will occupy 4/12 of the screen width for the sidebar */}
           {/* <SideBar openProfile={openProfile} /> */}
-          <SideBar setSelectedChannels={setSelectedChannels} setSelectedCategories={setSelectedCategories} />
+          <SideBar selectedChannels={selectedChannels} setSelectedChannels={setSelectedChannels} selectedCategories={selectedCategories} setSelectedCategories={setSelectedCategories}/>
         </Grid>
       </Grid>
     </Container>

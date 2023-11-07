@@ -1,3 +1,4 @@
+// postsSlice
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   getFirestore,
@@ -11,14 +12,15 @@ import {
   limit,
   orderBy,
 } from "firebase/firestore";
-import { PostType } from "../utils/types";
-import { incrementRead } from "./firestoreReadsSlice";
+// import { incrementRead } from "./firestoreReadsSlice";
 import {
   filterByChannels,
   filterByCategories,
   // filterByCity,
   // filterByState,
 } from "../services/postsServices";
+import { PostType } from "../utils/types";
+import { PayloadAction } from "@reduxjs/toolkit";
 
 export type FilterCriteria = {
   channels?: string[];
@@ -28,79 +30,202 @@ export type FilterCriteria = {
 };
 
 type FetchPostsArgs = {
-  filters: FilterCriteria;
-  lastVisible?: DocumentSnapshot;
+  filters: {
+    channels: string[];
+    categories: string[];
+  };
+  lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
 };
 
-export const fetchAllPosts = createAsyncThunk<PostType[], FetchPostsArgs>(
-  "posts/fetchAll",
-  async ({ filters, lastVisible }) => {
-    // Destructure here
-    console.log("Fetching posts...");
-    let baseQuery: Query<DocumentData> = collection(getFirestore(), "posts");
+export const fetchLatestPosts = createAsyncThunk<
+  PostType[],
+  void,
+  { rejectValue: string }
+>("posts/fetchLatest", async (_, { rejectWithValue }) => {
+  console.log("Attempting to fetch the latest posts...");
 
-    // If no filters provided, get the last 10 posts
-    if (
-      !filters.channels &&
-      !filters.categories
-      // !filters.state &&
-      // !filters.city
-    ) {
-      baseQuery = query(baseQuery, orderBy("timestamp", "desc"), limit(10)); // Assuming 'timestamp' is a field in your posts
-    } else {
-      if (filters.channels) {
-        baseQuery = filterByChannels(filters.channels, baseQuery);
-      }
-      if (filters.categories) {
-        baseQuery = filterByCategories(filters.categories, baseQuery);
-      }
-      // if (filters.state) {
-      //   baseQuery = filterByState(filters.state, baseQuery);
-      // }
-      // if (filters.city) {
-      //   baseQuery = filterByCity(filters.city, baseQuery);
-      // }
+  const firestoreInstance = getFirestore();
+  const postsCollectionRef = collection(firestoreInstance, "posts");
+  const baseQuery = query(
+    postsCollectionRef,
+    orderBy("timestamp", "desc"),
+    limit(10)
+  );
+
+  console.log("Constructed query for latest posts:", baseQuery);
+
+  try {
+    const postSnapshot = await getDocs(baseQuery);
+
+    if (postSnapshot.empty) {
+      console.log("No posts found in the snapshot.");
+      return []; // Return an empty array if no documents are found
     }
 
-    // Handle Pagination
-    const PAGE_SIZE = 10;
-    let paginatedQuery = query(baseQuery, limit(PAGE_SIZE));
-    if (lastVisible) {
-      paginatedQuery = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
-    }
+    console.log(
+      `Found ${postSnapshot.docs.length} posts, preparing to map them to PostType...`
+    );
 
-    const postSnapshot = await getDocs(paginatedQuery);
-
-    const postData: PostType[] = postSnapshot.docs.map((doc) => ({
+    const posts: PostType[] = postSnapshot.docs.map((doc) => ({
       ...(doc.data() as PostType),
       id: doc.id,
     }));
 
-    return postData;
+    console.log("Successfully fetched the latest posts:", posts);
+    return posts;
+  } catch (error) {
+    console.error("Error fetching latest posts:", error);
+    return rejectWithValue("Error fetching latest posts.");
+  }
+});
+
+export const fetchFilteredPosts = createAsyncThunk<
+  PostType[],
+  FetchPostsArgs,
+  { rejectValue: string }
+>(
+  "posts/fetchFiltered",
+  async ({ filters, lastVisible }, { dispatch, rejectWithValue }) => {
+    console.log("Fetching filtered posts...");
+    let baseQuery: Query<DocumentData> = collection(getFirestore(), "posts");
+
+    // Apply filters if they are present
+    if (filters.channels && filters.channels.length > 0) {
+      console.log(`Filtering by channels: ${filters.channels}`);
+      baseQuery = filterByChannels(filters.channels, baseQuery);
+    }
+    if (filters.categories && filters.categories.length > 0) {
+      console.log(`Filtering by categories: ${filters.categories}`);
+      baseQuery = filterByCategories(filters.categories, baseQuery);
+    }
+
+    const PAGE_SIZE = 10;
+    const paginatedQuery = lastVisible
+      ? query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE))
+      : query(baseQuery, limit(PAGE_SIZE));
+
+    try {
+      const postSnapshot = await getDocs(paginatedQuery);
+      console.log(`Fetched ${postSnapshot.docs.length} posts.`);
+
+      if (postSnapshot.docs.length === 0) {
+        console.warn("No documents found with the current query.");
+        return [];
+      }
+
+      const postData: PostType[] = postSnapshot.docs.map((doc) => ({
+        ...(doc.data() as PostType),
+        id: doc.id,
+      }));
+
+      if (postSnapshot.docs.length > 0) {
+        const lastVisibleData = {
+          id: postSnapshot.docs[postSnapshot.docs.length - 1].id
+        };
+        dispatch(setLastVisible(lastVisibleData));
+      }
+      
+      return postData;
+    } catch (error) {
+      console.error("Error fetching filtered posts:", error);
+      return rejectWithValue("Error fetching filtered posts.");
+    }
   }
 );
 
-const initialState: PostType[] = [];
+type LastVisible = {
+  id: string;
+} | null;
+
+
+// New state shape including loading and error states
+interface PostsState {
+  posts: PostType[];
+  loading: boolean;
+  error: string | null;
+  lastVisible: LastVisible;
+}
+
+const initialState: PostsState = {
+  posts: [],
+  loading: false,
+  error: null,
+  lastVisible: null,
+};
 
 const postsSlice = createSlice({
   name: "posts",
   initialState,
   reducers: {
-    setPosts: (_, action) => action.payload,
-    deletePost: (state, action) =>
-      state.filter((post) => post.id !== action.payload),
-    updatePost: (state, action) =>
-      state.map((post) =>
+    // Adjusted to the correct state.posts property
+    setPosts: (state, action) => {
+      state.posts = action.payload;
+    },
+    // Adjusted to the correct state.posts property
+    deletePost: (state, action) => {
+      state.posts = state.posts.filter((post) => post.id !== action.payload);
+    },
+    // Adjusted to the correct state.posts property
+    updatePost: (state, action) => {
+      state.posts = state.posts.map((post) =>
         post.id === action.payload.id ? action.payload : post
-      ),
+      );
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
+    },
+    // Instead of storing the whole DocumentSnapshot, you can store just the ID, or necessary data.
+    setLastVisible(state, action: PayloadAction<LastVisible>) {
+      state.lastVisible = action.payload;
+    },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchAllPosts.fulfilled, (state, action) => {
-      state.push(...action.payload);
-      incrementRead(action.payload.length);
-    });
+    builder
+      .addCase(fetchFilteredPosts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchFilteredPosts.fulfilled, (state, action) => {
+        console.log("fetchAllPosts.fulfilled with payload:", action.payload);
+        state.loading = false;
+        state.posts = action.payload;
+        // Update the lastVisible if posts are fetched
+        // state.lastVisible = action.payload.length > 0 ? action.payload[action.payload.length - 1].docRef : null;
+      })
+      .addCase(fetchFilteredPosts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Error fetching posts";
+      })
+      .addCase(fetchLatestPosts.pending, (state) => {
+        // Set loading state before fetching the latest posts
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchLatestPosts.fulfilled, (state, action) => {
+        // Set the posts and update the lastVisible when posts are fetched
+        state.loading = false;
+        state.posts = action.payload;
+        state.lastVisible = action.payload.length > 0 
+          ? action.payload[action.payload.length - 1].id // Assuming you want to track the last post's ID for pagination
+          : null;
+      })
+      .addCase(fetchLatestPosts.rejected, (state, action) => {
+        // Handle any errors if the fetch fails
+        state.loading = false;
+        state.error = action.error.message || "Error fetching latest posts";
+      });
   },
 });
 
-export const { setPosts, deletePost, updatePost } = postsSlice.actions;
+export const {
+  setPosts,
+  deletePost,
+  updatePost,
+  setLoading,
+  setError,
+  setLastVisible,
+} = postsSlice.actions;
 export default postsSlice.reducer;
