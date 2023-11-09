@@ -4,6 +4,7 @@ import { DialogActions } from '@mui/material';
 import DialogTitle from '@mui/material/DialogTitle';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import FilterSection from './FilterSection';
 import Button from '@mui/material/Button';
 import './checkBoxModal.css'
 
@@ -55,40 +56,22 @@ const CheckBoxModal: React.FC<CheckboxModalProps> = ({ open, handleClose, applyF
   return (
     <Dialog onClose={handleCloseModal} open={open} className="modal-container">
       <DialogTitle className="dialog-title">Select Channels and Categories</DialogTitle>
-      <div className="checkbox-container">
-        <div className="checkbox-column">
-          <h3>Channels</h3>
-          {/* Assuming ChannelOptions is an array of { id, name } objects */}
-          {ChannelOptions.map((channel) => (
-            <FormControlLabel
-              key={channel.id}
-              control={
-                <Checkbox
-                  checked={selectedChannels.includes(channel.id)}
-                  onChange={() => toggleChannel(channel.id)}
-                />
-              }
-              label={channel.name}
-            />
-          ))}
-        </div>
-        <div className="checkbox-column">
-          <h3>Categories</h3>
-          {/* Assuming CategoryOptions is an array of { id, name } objects */}
-          {CategoryOptions.map((category) => (
-            <FormControlLabel
-              key={category.id}
-              control={
-                <Checkbox
-                  checked={selectedCategories.includes(category.id)}
-                  onChange={() => toggleCategory(category.id)}
-                />
-              }
-              label={category.name}
-            />
-          ))}
-        </div>
-      </div>
+     {/* Reuse FilterSection for Channels and Categories */}
+     <FilterSection
+        title="Channels"
+        options={ChannelOptions}
+        selected={selectedChannels}
+        toggleOption={toggleChannel}
+      />
+      
+      <FilterSection
+        title="Categories"
+        options={CategoryOptions}
+        selected={selectedCategories}
+        toggleOption={toggleCategory}
+      />
+      
+      {/* Add other sections for Location and Time Frame here */}
       <DialogActions className="dialog-actions">
         <Button onClick={handleCloseModal}>Close</Button>
         <Button onClick={handleClear}>Clear All</Button>

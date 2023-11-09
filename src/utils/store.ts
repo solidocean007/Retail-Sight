@@ -5,6 +5,7 @@ import snackbarReducer from "../Slices/snackbarSlice";
 import userSlice from "../Slices/userSlice";
 import firestoreReadsReducer from "../Slices/firestoreReadsSlice";
 import postsReducer from "../Slices/postsSlice";
+import locationReducer from '../Slices/locationSlice'
 import { themeReducer } from "../reducers/themeReducer";
 import userModalReducer from "../Slices/userModalSlice";
 
@@ -18,6 +19,7 @@ const store = configureStore({
     posts: postsReducer,
     theme: themeReducer,
     userModal: userModalReducer,
+    locations: locationReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

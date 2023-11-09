@@ -3,6 +3,7 @@ import { Button, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import CheckBoxModal from './CheckBoxModal';
+import FilterSection from './FilterSection';
 import FilterDisplay from './FilterDisplay';
 import { useDispatch } from 'react-redux';
 import { fetchFilteredPosts } from '../Slices/postsSlice';
@@ -11,6 +12,8 @@ import './sideBar.css';
 import { AppDispatch } from '../utils/store';
 import { ChannelType } from '../utils/types';
 import { CategoryType } from '../utils/types';
+import { ChannelOptions } from '../utils/filterOptions';
+import { CategoryOptions } from '../utils/filterOptions';
 
 // We assume these types are correct based on your previous code.
 // You should adjust these types based on actual channel and category types you have.
@@ -41,33 +44,36 @@ const SideBar: React.FC<SideBarProps> = ({ selectedChannels, setSelectedChannels
     // Dispatch the fetchAllPosts action with the filters
     dispatch(fetchFilteredPosts({ filters: { channels, categories } }));
   };
+
+  const toggleChannel = (channel: string) => {
+    setSelectedChannels((prev) =>
+      prev.includes(channel) ? prev.filter((ch) => ch !== channel) : [...prev, channel]
+    );
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((ct) => ct !== category) : [...prev, category]
+    );
+  };
   
 
   return (
-    <div className='side-bar'>
-      <IconButton onClick={() => navigate('/notifications')}>
-        <NotificationsIcon />
-      </IconButton>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={() => navigate('/feedback')}
-      >
-        Feedback
-      </Button>
-      <Button variant="contained" onClick={() => setModalOpen(true)}>
-        Select Filters
-      </Button>
-      <FilterDisplay
-        selectedChannels={selectedChannels}
-        selectedCategories={selectedCategories}
+    <aside className="sidebar">
+      <FilterSection
+        title="Channels"
+        options={ChannelOptions}
+        selected={selectedChannels}
+        toggleOption={toggleChannel}
       />
-      <CheckBoxModal
-        open={modalOpen}
-        handleClose={() => setModalOpen(false)}
-        applyFilters={applyFilters}
+      <FilterSection
+        title="Categories"
+        options={CategoryOptions}
+        selected={selectedCategories}
+        toggleOption={toggleCategory}
       />
-    </div>
+      {/* Add other sections for Location and Time Frame here */}
+    </aside>
   );
 };
 

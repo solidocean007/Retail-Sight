@@ -84,3 +84,15 @@ export interface CommentType {
   timestamp: Timestamp | undefined;
   likes: string[];
 }
+
+export interface LocationOptions {
+  [key: string]: string[]; // This will store states as keys and cities as arrays
+}
+
+export interface LocationState {
+  locations: object;
+  loading: boolean;
+  error: string | null;
+}
+
+

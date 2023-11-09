@@ -1,13 +1,14 @@
 // StoreLocator
 import { useEffect, useRef, useState } from "react";
 import { PostType } from "../utils/types";
+import { updateLocationsCollection } from "../utils/PostLogic/updateLocationsCollection";
 
 // Assuming you've refactored the GOOGLE_MAPS_KEY import using Vite
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 interface StoreLocatorProps {
   post: PostType;
-  handleSelectedStore: (storeName: string, storeAddress: string) => void
+  handleSelectedStore: (storeName: string, storeAddress: string) => void;
 }
 
 declare global {
@@ -16,9 +17,12 @@ declare global {
   }
 }
 
-const StoreLocator: React.FC<StoreLocatorProps> = ({ post, handleSelectedStore } ) => {
+const StoreLocator: React.FC<StoreLocatorProps> = ({
+  post,
+  handleSelectedStore,
+}) => {
   const mapRef = useRef<HTMLDivElement | null>(null);
-   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [selectedPlace, setSelectedPlace] =
     useState<google.maps.places.PlaceResult | null>(null);
 
@@ -63,59 +67,159 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ post, handleSelectedStore }
     }
   }, []);
 
-
   // Use a ref to keep track of the previous value of the address:
   const previousStoreAddressRef = useRef<string | undefined>();
 
-  // Initialize map, set to user's current location, and add a click listener
+  interface PlaceResult extends google.maps.places.PlaceResult {
+    address_components?: google.maps.GeocoderAddressComponent[];
+  }
+
+  // The updated useEffect hook
   useEffect(() => {
-    if (post.storeAddress !== previousStoreAddressRef.current) {renderCountLoc.current += 1;
-    console.log(
-      `useEffect for user location has run ${renderCountLoc.current} times.`
-    );
-    if (isMapLoaded && mapRef.current) {
-      const map = new google.maps.Map(mapRef.current, {
-        center: { lat: -34.397, lng: 150.644 }, // default center, will be updated with user location
-        zoom: 15,
-      });
-
-      // Set map to user's current location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          map.setCenter(pos);
+    if (post.storeAddress !== previousStoreAddressRef.current) {
+      renderCountLoc.current += 1;
+      console.log(
+        `useEffect for user location has run ${renderCountLoc.current} times.`
+      );
+      if (isMapLoaded && mapRef.current) {
+        const map = new google.maps.Map(mapRef.current, {
+          center: { lat: 34.0522, lng: -118.2437 },
+          zoom: 15,
         });
-      }
 
-      const service = new google.maps.places.PlacesService(map);
+        // Set map to user's current location
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+            map.setCenter(pos);
+          });
+        }
 
-      map.addListener("click", (e) => {
-        service.nearbySearch(
-          {
-            location: e.latLng,
-            radius: 30,
-            type: "store" as string,
-          },
-          (results, status) => {
-            if (
-              status === google.maps.places.PlacesServiceStatus.OK &&
-              results &&
-              results.length > 0
-            ) {
-              const firstResult = results[0];
-              setSelectedPlace(firstResult);
-              // setSelectedStore(firstResult, firstResult.vicinity || "");
-              handleSelectedStore(firstResult.name || "", firstResult.vicinity || "");
+        const service = new google.maps.places.PlacesService(map);
+        // Function to fetch city and state using the place_id
+        const fetchCityAndState = (placeId: string) => {
+          service.getDetails(
+            {
+              placeId: placeId,
+              fields: ["address_components"],
+            },
+            (result: PlaceResult, status) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK) {
+                const addressComponents = result.address_components;
+                if (addressComponents) {
+                  const cityComponent = addressComponents.find((component) =>
+                    component.types.includes("locality")
+                  );
+                  const stateComponent = addressComponents.find((component) =>
+                    component.types.includes("administrative_area_level_1")
+                  );
+
+                  const city = cityComponent ? cityComponent.long_name : "";
+                  const state = stateComponent ? stateComponent.short_name : "";
+
+                  // Log the city and state
+                  console.log("City:", city, "State:", state);
+
+                  // Here you would update Firestore with the city and state
+                  updateLocationsCollection(state, city);
+                }
+              }
             }
-          }
-        );
-      });
-      previousStoreAddressRef.current = post.storeAddress;
-    }}
-  }, [isMapLoaded, handleSelectedStore]);
+          );
+        };
+
+        map.addListener("click", (e) => {
+          service.nearbySearch(
+            {
+              location: e.latLng,
+              radius: 30,
+              type: "store",
+            },
+            (
+              results: google.maps.places.PlaceResult[],
+              status: google.maps.places.PlacesServiceStatus
+            ) => {
+              if (
+                status === google.maps.places.PlacesServiceStatus.OK &&
+                results &&
+                results.length > 0
+              ) {
+                const firstResult = results[0] as PlaceResult;
+                setSelectedPlace(firstResult);
+                handleSelectedStore(
+                  firstResult.name || "",
+                  firstResult.vicinity || ""
+                );
+                // Retrieve city and state for the clicked place
+                if (firstResult.place_id) {
+                  fetchCityAndState(firstResult.place_id);
+                } else {
+                  console.error("Place ID is undefined.");
+                }
+              }
+            }
+          );
+        });
+
+        previousStoreAddressRef.current = post.storeAddress;
+      }
+    }
+  }, [isMapLoaded, handleSelectedStore, post.storeAddress]);
+
+  // Initialize map, set to user's current location, and add a click listener
+  // useEffect(() => {
+  //   if (post.storeAddress !== previousStoreAddressRef.current) {renderCountLoc.current += 1;
+  //   console.log(
+  //     `useEffect for user location has run ${renderCountLoc.current} times.`
+  //   );
+  //   if (isMapLoaded && mapRef.current) {
+  //     const map = new google.maps.Map(mapRef.current, {
+  //       center: { lat: -34.397, lng: 150.644 }, // default center, will be updated with user location
+  //       zoom: 15,
+  //     });
+
+  //     // Set map to user's current location
+  //     if (navigator.geolocation) {
+  //       navigator.geolocation.getCurrentPosition((position) => {
+  //         const pos = {
+  //           lat: position.coords.latitude,
+  //           lng: position.coords.longitude,
+  //         };
+  //         map.setCenter(pos);
+  //       });
+  //     }
+
+  //     const service = new google.maps.places.PlacesService(map);
+
+  //     map.addListener("click", (e) => {
+  //       service.nearbySearch(
+  //         {
+  //           location: e.latLng,
+  //           radius: 30,
+  //           type: "store" as string,
+  //         },
+  //         (results, status) => {
+  //           if (
+  //             status === google.maps.places.PlacesServiceStatus.OK &&
+  //             results &&
+  //             results.length > 0
+  //           ) {
+  //             const firstResult = results[0];
+  //             console.log(firstResult)
+  //             setSelectedPlace(firstResult);
+  //             // setSelectedStore(firstResult, firstResult.vicinity || "");
+  //             handleSelectedStore(firstResult.name || "", firstResult.vicinity || "");
+  //             // updateLocationsCollection(location information)
+  //           }
+  //         }
+  //       );
+  //     });
+  //     previousStoreAddressRef.current = post.storeAddress;
+  //   }}
+  // }, [isMapLoaded, handleSelectedStore]);
 
   return (
     <div>
