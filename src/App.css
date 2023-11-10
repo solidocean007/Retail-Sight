@@ -12,4 +12,21 @@
   width: 50ch;
 }
 
+/* // CSS (pseudo code) */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+  .filter-button {
+    display: block;
+  }
+}
 
+@media (min-width: 769px) {
+  .filter-button {
+    display: none;
+  }
+  .sidebar {
+    display: block;
+  }
+}

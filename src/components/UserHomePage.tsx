@@ -15,6 +15,7 @@ import { ChannelType } from "./ChannelSelector";
 import { CategoryType } from "./CategorySelector";
 import { useDispatch } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
+import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,21 +42,20 @@ export const UserHomePage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    console.log('Locations: ', locations, 'Loading: ', loading);
+    console.log("Locations: ", locations, "Loading: ", loading);
     if (!loading && locations) {
-      console.log('Fetching options...');
+      console.log("Fetching options...");
       Object.entries(locations).forEach(([state, cities]) => {
         console.log(`State: ${state}, Cities: `, cities);
       });
     }
   }, [locations, loading]);
-  
 
   if (loading) {
     return <div>Loading location options....</div>;
   }
 
-  if ( error) {
+  if (error) {
     return <div>Error fetching locations: {error}</div>;
   }
 
@@ -112,6 +112,15 @@ export const UserHomePage = () => {
             setSelectedChannels={setSelectedChannels}
             selectedCategories={selectedCategories}
             setSelectedCategories={setSelectedCategories}
+          />
+          <CheckBoxModal
+            // open={isModalOpen}
+            // handleClose={handleCloseModal}
+            // applyFilters={/* ... */}
+            // selectedChannels={/* ... */}
+            // toggleChannel={/* ... */}
+            // selectedCategories={/* ... */}
+            // toggleCategory={/* ... */}
           />
         </Grid>
       </Grid>
