@@ -26,20 +26,17 @@ interface ActivityFeedProps {
 }
 
   // Define a memoized selector outside the component
-const selectFilteredPosts = createSelector(
-  [(state: RootState) => state.posts.posts, (state: RootState) => state.locations],
-  (posts, locations) => {
-    // Add your filtering logic here based on the locations state
-    // You might need to adjust the logic depending on how you're storing the state and city in your posts
-    if (locations.selectedState) {  // Property 'selectedState' does not exist on type 'LocationState'.ts(2339)
-      return posts.filter(post => post.state === locations.selectedState);
+  export const selectFilteredPosts = createSelector(
+    [selectAllPosts, (state: RootState) => state.locations.selectedStates, (state: RootState) => state.locations.selectedCities],
+    (posts, selectedStates, selectedCities) => {
+      return posts.filter(post => {
+        const matchesState = selectedStates.length === 0 || selectedStates.includes(post.state);
+        const matchesCity = selectedCities.length === 0 || selectedCities.includes(post.city);
+        return matchesState && matchesCity;
+      });
     }
-    if (locations.selectedCity) {
-      return posts.filter(post => post.city === locations.selectedCity);
-    }
-    return posts; // If no filters are applied, return all posts
-  }
-);
+  );
+  
   
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannels, selectedCategories }) => {
@@ -64,7 +61,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannels, selectedC
         
       }));
     }
-  }, [selectedChannels, selectedCategories, lastVisible, dispatch]);
+  }, [ lastVisible, dispatch ]);
   
 
 

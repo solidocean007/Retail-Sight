@@ -94,8 +94,8 @@ export interface LocationOptions {
 // Define the structure of the location state, including selected state and city
 export interface LocationState {
   locations: { [key: string]: string[] };
-  selectedState: string;
-  selectedCity: string;
+  selectedStates: string[];
+  selectedCities: string[];
   loading: boolean;
   error: string | null;
 }

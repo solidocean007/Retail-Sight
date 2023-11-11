@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Container, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import CheckBoxModal from "./CheckBoxModal";
+// import CheckBoxModal from "./CheckBoxModal";
 import FilterSection from "./FilterSection";
 import FilterDisplay from "./FilterDisplay";
 import { useDispatch } from "react-redux";
@@ -46,26 +46,13 @@ const SideBar: React.FC<SideBarProps> = ({
     // Dispatch the fetchFilteredPosts action with the filters
     dispatch(
       fetchFilteredPosts({
-        filters: { channels: selectedChannels, categories: selectedCategories },
+        filters: {
+          channels: selectedChannels,
+          categories: selectedCategories,
+        },
       })
     );
   };
-
-  // const toggleChannel = (channel: string) => {
-  //   setSelectedChannels((prev) =>
-  //     prev.includes(channel)
-  //       ? prev.filter((ch) => ch !== channel)
-  //       : [...prev, channel]
-  //   );
-  // };
-
-  // const toggleCategory = (category: string) => {
-  //   setSelectedCategories((prev) =>
-  //     prev.includes(category)
-  //       ? prev.filter((ct) => ct !== category)
-  //       : [...prev, category]
-  //   );
-  // };
 
   const clearFilters = () => {
     // Clear the currently selected filters
@@ -104,17 +91,23 @@ const SideBar: React.FC<SideBarProps> = ({
           }
         />
         {/* Add other sections for Location and Time Frame here */}
-       
       </aside>
-      <Button variant="contained" color="primary" onClick={applyFilters}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={applyFilters}
+        disabled={
+          selectedChannels.length == 0 && selectedCategories.length == 0
+        }
+      >
         Apply Now
       </Button>
       <FilterLocation
-          // title="Location"
-          // options={states}
-          // selected={}
-          // toggleOption={}
-        />
+      // title="Location"
+      // options={states}
+      // selected={}
+      // toggleOption={}
+      />
       <Button variant="outlined" color="secondary" onClick={clearFilters}>
         Clear Filters
       </Button>
