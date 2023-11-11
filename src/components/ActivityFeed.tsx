@@ -17,23 +17,38 @@ import { fetchFilteredPosts } from "../Slices/postsSlice";
 import { ChannelType } from "./ChannelSelector";
 import { CategoryType } from "./CategorySelector";
 import NoContentCard from "./NoContentCard";
-
-// interface Post {
-//   id: string;
-//   // ... other post attributes
-// }
+import { createSelector } from "@reduxjs/toolkit";
+import { RootState } from "../utils/store";
 
 interface ActivityFeedProps {
   selectedChannels: ChannelType[];
   selectedCategories: CategoryType[];
 }
 
+  // Define a memoized selector outside the component
+const selectFilteredPosts = createSelector(
+  [(state: RootState) => state.posts.posts, (state: RootState) => state.locations],
+  (posts, locations) => {
+    // Add your filtering logic here based on the locations state
+    // You might need to adjust the logic depending on how you're storing the state and city in your posts
+    if (locations.selectedState) {  // Property 'selectedState' does not exist on type 'LocationState'.ts(2339)
+      return posts.filter(post => post.state === locations.selectedState);
+    }
+    if (locations.selectedCity) {
+      return posts.filter(post => post.city === locations.selectedCity);
+    }
+    return posts; // If no filters are applied, return all posts
+  }
+);
+  
+
 const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannels, selectedCategories }) => {
-  const { posts, lastVisible } = useSelector((state: any) => ({
-    posts: state.posts.posts, // specify the correct path depending on the state structure
-    lastVisible: state.posts.lastVisible,
-  }));
+   const { lastVisible } = useSelector((state: RootState) => ({
+     lastVisible: state.posts.lastVisible,
+   }));
+  const filteredPosts = useSelector(selectFilteredPosts); // Use the selector in your component
   const dispatch = useDispatch<AppDispatch>();
+
 
   useEffect(() => {
     if (selectedChannels.length === 0 && selectedCategories.length === 0) {
@@ -79,17 +94,17 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannels, selectedC
 
   return (
     <>
-    {posts.length === 0 ? (
+    {filteredPosts.length === 0 ? (
       <NoContentCard />
     ) : (
       <List
         className="list"
         height={window.innerHeight} // or any height you desire for the feed viewport
-        itemCount={posts.length}
+        itemCount={filteredPosts.length}
         itemSize={900} // from your CSS
         width={650} // a bit more than the card's width to account for potential scrollbars and padding
         itemData={{
-          posts: posts,
+          posts: filteredPosts,
           getPostsByTag: getPostsByTag,
           // ... any other data or methods you need to pass
         }}

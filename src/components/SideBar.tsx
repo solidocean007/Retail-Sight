@@ -51,21 +51,21 @@ const SideBar: React.FC<SideBarProps> = ({
     );
   };
 
-  const toggleChannel = (channel: string) => {
-    setSelectedChannels((prev) =>
-      prev.includes(channel)
-        ? prev.filter((ch) => ch !== channel)
-        : [...prev, channel]
-    );
-  };
+  // const toggleChannel = (channel: string) => {
+  //   setSelectedChannels((prev) =>
+  //     prev.includes(channel)
+  //       ? prev.filter((ch) => ch !== channel)
+  //       : [...prev, channel]
+  //   );
+  // };
 
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((ct) => ct !== category)
-        : [...prev, category]
-    );
-  };
+  // const toggleCategory = (category: string) => {
+  //   setSelectedCategories((prev) =>
+  //     prev.includes(category)
+  //       ? prev.filter((ct) => ct !== category)
+  //       : [...prev, category]
+  //   );
+  // };
 
   const clearFilters = () => {
     // Clear the currently selected filters
@@ -104,16 +104,17 @@ const SideBar: React.FC<SideBarProps> = ({
           }
         />
         {/* Add other sections for Location and Time Frame here */}
-        <FilterLocation
+       
+      </aside>
+      <Button variant="contained" color="primary" onClick={applyFilters}>
+        Apply Now
+      </Button>
+      <FilterLocation
           // title="Location"
           // options={states}
           // selected={}
           // toggleOption={}
         />
-      </aside>
-      <Button variant="contained" color="primary" onClick={applyFilters}>
-        Apply Now
-      </Button>
       <Button variant="outlined" color="secondary" onClick={clearFilters}>
         Clear Filters
       </Button>

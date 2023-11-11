@@ -63,6 +63,8 @@ export interface PostType {
   imageUrl?: string;
   selectedStore?: string;
   storeAddress: string;
+  state?: string;  // Added state
+  city?: string;   // Added city
   postType?: string;
   timestamp?: string;
   user: {
@@ -89,8 +91,11 @@ export interface LocationOptions {
   [key: string]: string[]; // This will store states as keys and cities as arrays
 }
 
+// Define the structure of the location state, including selected state and city
 export interface LocationState {
-  locations: object;
+  locations: { [key: string]: string[] };
+  selectedState: string;
+  selectedCity: string;
   loading: boolean;
   error: string | null;
 }

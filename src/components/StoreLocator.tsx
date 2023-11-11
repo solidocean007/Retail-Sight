@@ -8,7 +8,12 @@ const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 interface StoreLocatorProps {
   post: PostType;
-  handleSelectedStore: (storeName: string, storeAddress: string) => void;
+  handleSelectedStore: (
+    storeName: string,
+    storeAddress: string,
+    state?: string,
+    city?: string
+  ) => void;
 }
 
 declare global {
@@ -100,7 +105,10 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
 
         const service = new google.maps.places.PlacesService(map);
         // Function to fetch city and state using the place_id
-        const fetchCityAndState = (placeId: string) => {
+        const fetchCityAndState = (
+          placeId: string,
+          callback: (state: string, city: string) => void
+        ) => {
           service.getDetails(
             {
               placeId: placeId,
@@ -120,11 +128,8 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
                   const city = cityComponent ? cityComponent.long_name : "";
                   const state = stateComponent ? stateComponent.short_name : "";
 
-                  // Log the city and state
-                  console.log("City:", city, "State:", state);
-
-                  // Here you would update Firestore with the city and state
-                  updateLocationsCollection(state, city);
+                  // Call the callback with the city and state
+                  callback(state, city);
                 }
               }
             }
@@ -149,13 +154,23 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
               ) {
                 const firstResult = results[0] as PlaceResult;
                 setSelectedPlace(firstResult);
-                handleSelectedStore(
-                  firstResult.name || "",
-                  firstResult.vicinity || ""
-                );
+
                 // Retrieve city and state for the clicked place
                 if (firstResult.place_id) {
-                  fetchCityAndState(firstResult.place_id);
+                  fetchCityAndState(
+                    firstResult.place_id,
+                    (fetchedState, fetchedCity) => {
+                      // Now that we have the state and city, handle the store selection
+                      handleSelectedStore(
+                        firstResult.name || "",
+                        firstResult.vicinity || "",
+                        fetchedState,
+                        fetchedCity
+                      );
+                      // Update Firestore with the new location data
+                      updateLocationsCollection(fetchedState, fetchedCity);
+                    }
+                  );
                 } else {
                   console.error("Place ID is undefined.");
                 }
@@ -168,58 +183,6 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       }
     }
   }, [isMapLoaded, handleSelectedStore, post.storeAddress]);
-
-  // Initialize map, set to user's current location, and add a click listener
-  // useEffect(() => {
-  //   if (post.storeAddress !== previousStoreAddressRef.current) {renderCountLoc.current += 1;
-  //   console.log(
-  //     `useEffect for user location has run ${renderCountLoc.current} times.`
-  //   );
-  //   if (isMapLoaded && mapRef.current) {
-  //     const map = new google.maps.Map(mapRef.current, {
-  //       center: { lat: -34.397, lng: 150.644 }, // default center, will be updated with user location
-  //       zoom: 15,
-  //     });
-
-  //     // Set map to user's current location
-  //     if (navigator.geolocation) {
-  //       navigator.geolocation.getCurrentPosition((position) => {
-  //         const pos = {
-  //           lat: position.coords.latitude,
-  //           lng: position.coords.longitude,
-  //         };
-  //         map.setCenter(pos);
-  //       });
-  //     }
-
-  //     const service = new google.maps.places.PlacesService(map);
-
-  //     map.addListener("click", (e) => {
-  //       service.nearbySearch(
-  //         {
-  //           location: e.latLng,
-  //           radius: 30,
-  //           type: "store" as string,
-  //         },
-  //         (results, status) => {
-  //           if (
-  //             status === google.maps.places.PlacesServiceStatus.OK &&
-  //             results &&
-  //             results.length > 0
-  //           ) {
-  //             const firstResult = results[0];
-  //             console.log(firstResult)
-  //             setSelectedPlace(firstResult);
-  //             // setSelectedStore(firstResult, firstResult.vicinity || "");
-  //             handleSelectedStore(firstResult.name || "", firstResult.vicinity || "");
-  //             // updateLocationsCollection(location information)
-  //           }
-  //         }
-  //       );
-  //     });
-  //     previousStoreAddressRef.current = post.storeAddress;
-  //   }}
-  // }, [isMapLoaded, handleSelectedStore]);
 
   return (
     <div>

@@ -1,8 +1,15 @@
 // locationSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';  // payload action is defined but never used.  why?
-import { LocationState, LocationOptions } from '../utils/types';
+import { LocationState, LocationOptions } from '../utils/types'; // locationOptions is defined but never used
 import { collection, getDocs } from 'firebase/firestore';
+import { createSelector } from '@reduxjs/toolkit';
 import { db } from '../utils/firebase';
+import { RootState } from '../utils/store';
+
+
+
+// Define a selector to get all posts (assuming it is defined elsewhere)
+export const selectAllPosts = (state: RootState) => state.posts.posts;
 
 
 export const fetchLocationOptions = createAsyncThunk(
@@ -31,13 +38,21 @@ export const fetchLocationOptions = createAsyncThunk(
   }
 );
 
+export const selectFilteredPosts = createSelector(
+  [selectAllPosts, (state: RootState) => state.locations.selectedState, (state: RootState) => state.locations.selectedCity],
+  (posts, selectedState, selectedCity) => {
+    return posts.filter(post => {
+      const matchesState = post.state === selectedState || selectedState === '';
+      const matchesCity = post.city === selectedCity || selectedCity === '';
+      return matchesState && matchesCity;
+    });
+  }
+);
 
-
-
-
-// Initial state with types
 const initialState: LocationState = {
-  locations: {}, // 'states' and 'cities' are now within a single 'locations' object
+  locations: {},
+  selectedState: '',
+  selectedCity: '',
   loading: false,
   error: null,
 };
@@ -47,7 +62,16 @@ const locationSlice = createSlice({
   name: 'locations',
   initialState,
   reducers: {
-    // Add reducers for other sync actions if necessary
+    setStateFilter: (state, action) => {
+      state.selectedState = action.payload;
+    },
+    setCityFilter: (state, action) => {
+      state.selectedCity = action.payload;
+    },
+    clearLocationFilters: (state) => {
+      state.selectedState = '';
+      state.selectedCity = '';
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchLocationOptions.pending, (state) => {
@@ -58,13 +82,14 @@ const locationSlice = createSlice({
       state.locations = action.payload;
       state.loading = false;
     });
-    
     builder.addCase(fetchLocationOptions.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || 'An error occurred';
     });
   }
 });
+
+export const { setStateFilter, setCityFilter, clearLocationFilters } = locationSlice.actions;
 
 export default locationSlice.reducer;
 

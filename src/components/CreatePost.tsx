@@ -46,6 +46,8 @@ export const CreatePost = () => {
     imageUrl: "",
     selectedStore: "",
     storeAddress: "",
+    state: "",
+    city: "",
     postType: "public",
     timestamp: "",
     user: {
@@ -82,11 +84,13 @@ export const CreatePost = () => {
     }
   };
 
-  const handleSelectedStore = (storeName: string, storeAddress: string) => {
+  const handleSelectedStore = (storeName: string, storeAddress: string, state?: string, city?: string) => {
     setPost((prev) => ({
       ...prev,
       selectedStore: storeName,
       storeAddress: storeAddress,
+      state: state,
+      city: city,
     }));
   };
 
