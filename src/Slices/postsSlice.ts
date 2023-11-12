@@ -7,7 +7,7 @@ import {
   query,
   Query,
   DocumentData,
-  DocumentSnapshot,
+  // DocumentSnapshot,
   startAfter,
   limit,
   orderBy,
@@ -34,7 +34,7 @@ type FetchPostsArgs = {
     channels: string[];
     categories: string[];
   };
-  lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
+  // lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
 };
 
 export const fetchLatestPosts = createAsyncThunk<
@@ -42,8 +42,7 @@ export const fetchLatestPosts = createAsyncThunk<
   void,
   { rejectValue: string }
 >("posts/fetchLatest", async (_, { rejectWithValue }) => {
-  console.log("Attempting to fetch the latest posts...");
-
+  // console.log("Attempting to fetch the latest posts...");
   const firestoreInstance = getFirestore();
   const postsCollectionRef = collection(firestoreInstance, "posts");
   const baseQuery = query(
@@ -52,7 +51,7 @@ export const fetchLatestPosts = createAsyncThunk<
     limit(10)
   );
 
-  console.log("Constructed query for latest posts:", baseQuery);
+  // console.log("Constructed query for latest posts:", baseQuery);
 
   try {
     const postSnapshot = await getDocs(baseQuery);

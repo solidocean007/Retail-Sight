@@ -16,8 +16,9 @@ interface FilterSectionProps {
 
 const FilterSection: React.FC<FilterSectionProps> = ({ title, options, selected, toggleOption }) => {
   return (
-    <Accordion>
+    <Accordion className='accordian'>
       <AccordionSummary
+        className='accordian-summary'
         expandIcon={<ExpandMoreIcon />}
       >
         <div className="filter-summary">

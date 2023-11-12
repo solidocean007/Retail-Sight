@@ -44,6 +44,8 @@ export const useHandlePostSubmission = () => {
           imageUrl: downloadURL,
           selectedStore: post.selectedStore,
           storeAddress: post.storeAddress,
+          state: post.state,
+          city: post.city, 
           postType: post.postType,
           timestamp: new Date().toISOString(),
           user: {

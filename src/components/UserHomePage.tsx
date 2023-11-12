@@ -29,35 +29,35 @@ export const UserHomePage = () => {
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(
     []
   );
+  const [selectedStates, setSelectedStates] = useState([]);
+  const [selectedCities, setSelectedCities] = useState([]);
 
   // Selectors to get states and cities from the Redux store
-  const { locations, loading, error } = useSelector(
-    (state: RootState) => state.locations
-  );
+  // const { locations, loading, error } = useSelector(
+  //   (state: RootState) => state.locations
+  // );
 
   useEffect(() => {
-    console.log("UserHomePage mounted");
+    // console.log("UserHomePage mounted");
     // Dispatch the action to fetch location options
     dispatch(fetchLocationOptions()); // Argument of type 'AsyncThunkAction<LocationOptions, void, AsyncThunkConfig>' is not assignable to parameter of type 'AnyAction'.ts(2345)
   }, [dispatch]);
 
-  useEffect(() => {
-    console.log("Locations: ", locations, "Loading: ", loading);
-    if (!loading && locations) {
-      console.log("Fetching options...");
-      Object.entries(locations).forEach(([state, cities]) => {
-        console.log(`State: ${state}, Cities: `, cities);
-      });
-    }
-  }, [locations, loading]);
+  // useEffect(() => {
+  //   console.log("Locations: ", locations, "Loading: ", loading);
+  //   if (!loading && locations) {
+  //     Object.entries(locations).forEach(([state, cities]) => {
+  //     });
+  //   }
+  // }, [locations, loading]);
 
-  if (loading) {
-    return <div>Loading location options....</div>;
-  }
+  // if (loading) {
+  //   return <div>Loading location options....</div>;
+  // }
 
-  if (error) {
-    return <div>Error fetching locations: {error}</div>;
-  }
+  // if (error) {
+  //   return <div>Error fetching locations: {error}</div>;
+  // }
 
   const openProfile = () => navigate("/profile-page");
 
@@ -103,7 +103,7 @@ export const UserHomePage = () => {
             selectedCategories={selectedCategories}
           />
         </Grid>
-        <Grid className="side-bar-container" item xs={4}>
+        <Grid item xs={4}>
           {" "}
           {/* This will occupy 4/12 of the screen width for the sidebar */}
           {/* <SideBar openProfile={openProfile} /> */}
@@ -112,18 +112,18 @@ export const UserHomePage = () => {
             setSelectedChannels={setSelectedChannels}
             selectedCategories={selectedCategories}
             setSelectedCategories={setSelectedCategories}
-          />
-          <CheckBoxModal
-            // open={isModalOpen}
-            // handleClose={handleCloseModal}
-            // applyFilters={/* ... */}
-            // selectedChannels={/* ... */}
-            // toggleChannel={/* ... */}
-            // selectedCategories={/* ... */}
-            // toggleCategory={/* ... */}
+            selectedStates={selectedStates}
+            setSelectedStates={setSelectedStates}
+            selectedCities={selectedCities}
+            setSelectedCities={setSelectedCities}
           />
         </Grid>
       </Grid>
     </Container>
   );
 };
+
+
+{/* <CheckBoxModal
+
+/> */}

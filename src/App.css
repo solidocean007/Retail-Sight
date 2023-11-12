@@ -27,6 +27,8 @@
     display: none;
   }
   .sidebar {
-    display: block;
+    display: flex;
+    justify-content: space-between;
+    height: 100%;
   }
 }

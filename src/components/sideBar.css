@@ -1,4 +1,22 @@
 .side-bar {
   background-color: black;
   height: 100%;
+  margin-top: 300px;
+}
+
+aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 600px;
+}
+
+.MuiButton-root {
+  margin-bottom: 20px;
+}
+
+.side-bar-container {
+  display: flex;
+  height: 100%;
+  /* background-color: --background-color; */
 }

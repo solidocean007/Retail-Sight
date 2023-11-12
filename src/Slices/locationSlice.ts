@@ -13,19 +13,19 @@ export const fetchLocationOptions = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const locationsCollectionRef = collection(db, "locations");
-      console.log('Fetching locations from Firestore');
+      // console.log('Fetching locations from Firestore');
       const querySnapshot = await getDocs(locationsCollectionRef);
       const locations: { [key: string]: string[] } = {};
-      console.log('Documents fetched:', querySnapshot.docs.length);
+      // console.log('Documents fetched:', querySnapshot.docs.length);
       querySnapshot.forEach((doc) => {
         const state = doc.id; // Get the document ID, which might be the state name
         const data = doc.data();
-        console.log(`State: ${state}, Document data:`, data);
+        // console.log(`State: ${state}, Document data:`, data);
         if (data.cities) {
           locations[state] = data.cities; // Use the document ID as the key
         }
       });
-      console.log('Locations object constructed:', locations);
+      // console.log('Locations object constructed:', locations);
       return locations;
     } catch (error) {
       console.error('Error fetching locations:', error);

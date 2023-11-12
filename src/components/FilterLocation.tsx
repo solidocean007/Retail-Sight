@@ -8,8 +8,9 @@ import { setStateFilter, setCityFilter } from "../Slices/locationSlice";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import OutlinedInput from "@mui/material/OutlinedInput";
-import Chip from '@mui/material/Chip';
-import { Theme, useTheme } from '@mui/material/styles';
+import Chip from "@mui/material/Chip";
+import { Theme, useTheme } from "@mui/material/styles";
+import "./filter-location.css";
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -22,7 +23,8 @@ const MenuProps = {
   },
 };
 
-function getStyles(name: string, selected: string[], theme: Theme) { // arguments need types
+function getStyles(name: string, selected: string[], theme: Theme) {
+  // arguments need types
   return {
     fontWeight:
       selected.indexOf(name) === -1
@@ -31,14 +33,22 @@ function getStyles(name: string, selected: string[], theme: Theme) { // argument
   };
 }
 
+interface FilterLocationProps {
+  selectedStates: never[];
+  setSelectedStates: React.Dispatch<React.SetStateAction<never[]>>;
+  selectedCities: never[];
+  setSelectedCities: React.Dispatch<React.SetStateAction<never[]>>;
+}
 
-const FilterLocation = () => {
-  const [selectedStates, setSelectedStates] = useState([]);
-  const [selectedCities, setSelectedCities] = useState([]);
+const FilterLocation: React.FC<FilterLocationProps> = ({
+  selectedStates,
+  setSelectedStates,
+  selectedCities,
+  setSelectedCities,
+}) => {
   const { locations } = useSelector((state: RootState) => state.locations);
   const dispatch = useDispatch();
   const theme = useTheme();
-
 
   const handleStateChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     setSelectedStates(event.target.value as string[]);
@@ -57,8 +67,9 @@ const FilterLocation = () => {
   return (
     <div>
       <FormControl fullWidth>
-      <InputLabel id="state-multiple-chip-label">State</InputLabel> 
+        <InputLabel id="state-multiple-chip-label">State</InputLabel>
         <Select
+          className="location-input"
           labelId="state-multiple-chip-label"
           id="state-multiple-chip"
           multiple
@@ -67,7 +78,7 @@ const FilterLocation = () => {
           input={<OutlinedInput id="select-multiple-chip" label="State" />}
           renderValue={(selected) => (
             <div>
-              {selected.map((value) => ( 
+              {selected.map((value) => (
                 <Chip key={value} label={value} />
               ))}
             </div>
@@ -89,6 +100,7 @@ const FilterLocation = () => {
         <FormControl fullWidth>
           <InputLabel id="city-multiple-chip-label">City</InputLabel>
           <Select
+            className="location-input"
             labelId="city-multiple-chip-label"
             id="city-multiple-chip"
             multiple
@@ -118,14 +130,14 @@ const FilterLocation = () => {
           </Select>
         </FormControl>
       )}
-      <Button
+      {/* <Button // I dont need this button now I dont think after consolidating my logic to only have one apply now button
         onClick={applyLocationFilters}
         disabled={!selectedStates.length}
         variant="contained"
         color="primary"
       >
         Apply Location Filters
-      </Button>
+      </Button> */}
     </div>
   );
 };

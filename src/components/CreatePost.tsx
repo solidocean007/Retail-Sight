@@ -94,9 +94,10 @@ export const CreatePost = () => {
     }));
   };
 
-  const handleFieldChange = (field: string, value: string | number) => {
-    setPost({ ...post, [field]: value });
-  };
+ // Update this to handle all field changes generically, including channel and category
+const handleFieldChange = (field: keyof PostType, value: any) => {
+  setPost({ ...post, [field]: value });
+};
 
   return (
     <div>
@@ -190,9 +191,10 @@ export const CreatePost = () => {
           fullWidth
           onClick={() => {
             if (selectedFile) {
-              handlePostSubmission(post, selectedFile);
+              // Pass the current post state directly
+              handlePostSubmission({ ...post, category: selectedCategory, channel: selectedChannel }, selectedFile);
             } else {
-              // handle the situation where selectedFile is null
+              // Handle the situation where selectedFile is null
             }
           }}
         >

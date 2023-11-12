@@ -19,6 +19,7 @@ import { CategoryType } from "./CategorySelector";
 import NoContentCard from "./NoContentCard";
 import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "../utils/store";
+import { selectAllPosts } from "../Slices/locationSlice";
 
 interface ActivityFeedProps {
   selectedChannels: ChannelType[];
