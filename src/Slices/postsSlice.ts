@@ -1,5 +1,6 @@
 // postsSlice
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { DocumentSnapshot } from "firebase/firestore";
 import {
   getFirestore,
   collection,
@@ -25,8 +26,6 @@ import { PayloadAction } from "@reduxjs/toolkit";
 export type FilterCriteria = {
   channels?: string[];
   categories?: string[];
-  // city?: string;
-  // state?: string;
 };
 
 type FetchPostsArgs = {
@@ -34,7 +33,7 @@ type FetchPostsArgs = {
     channels: string[];
     categories: string[];
   };
-  // lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
+  lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
 };
 
 export const fetchLatestPosts = createAsyncThunk<
@@ -163,6 +162,7 @@ const postsSlice = createSlice({
     // Adjusted to the correct state.posts property
     deletePost: (state, action) => {
       state.posts = state.posts.filter((post) => post.id !== action.payload);
+      // i need to delete images and comments as well
     },
     // Adjusted to the correct state.posts property
     updatePost: (state, action) => {
@@ -207,7 +207,8 @@ const postsSlice = createSlice({
         // Set the posts and update the lastVisible when posts are fetched
         state.loading = false;
         state.posts = action.payload;
-        state.lastVisible = action.payload.length > 0 
+        state.lastVisible = action.payload.length > 0  // Type 'string | null' is not assignable to type 'WritableDraft<{ id: string; }> | null'.
+        // Type 'string' is not assignable to type 'WritableDraft<{ id: string; }>'.ts(2322
           ? action.payload[action.payload.length - 1].id // Assuming you want to track the last post's ID for pagination
           : null;
       })

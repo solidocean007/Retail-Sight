@@ -1,3 +1,4 @@
+// Sidebar
 import React, { useState } from "react";
 import { Button, Container, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -5,6 +6,7 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 // import CheckBoxModal from "./CheckBoxModal";
 import FilterSection from "./FilterSection";
 import FilterDisplay from "./FilterDisplay";
+import { fetchLatestPosts } from "../Slices/postsSlice";
 import { useDispatch } from "react-redux";
 import { fetchFilteredPosts } from "../Slices/postsSlice";
 // import { FilterCriteria } from '../Slices/postsSlice';
@@ -16,57 +18,60 @@ import { ChannelOptions } from "../utils/filterOptions";
 import { CategoryOptions } from "../utils/filterOptions";
 import FilterLocation from "./FilterLocation";
 import { DocumentSnapshot } from "firebase/firestore";
+import { createSelector } from "@reduxjs/toolkit";
 
-interface SideBarProps {
-  selectedChannels: ChannelType[];
-  setSelectedChannels: React.Dispatch<React.SetStateAction<ChannelType[]>>;
-  selectedCategories: CategoryType[];
-  setSelectedCategories: React.Dispatch<React.SetStateAction<CategoryType[]>>;
-  selectedStates: never[];
-  setSelectedStates: React.Dispatch<React.SetStateAction<never[]>>;
-  selectedCities: never[];
-  setSelectedCities: React.Dispatch<React.SetStateAction<never[]>>;
-}
+// Define a memoized selector outside the component
+export const selectFilteredPosts = createSelector(
+  [
+    selectAllPosts,
+    (state: RootState) => state.locations.selectedStates,
+    (state: RootState) => state.locations.selectedCities,
+  ],
+  (posts, selectedStates, selectedCities) => {
+    return posts.filter((post) => {
+      const matchesState =
+        selectedStates.length === 0 || selectedStates.includes(post.state);
+      const matchesCity =
+        selectedCities.length === 0 || selectedCities.includes(post.city);
+      return matchesState && matchesCity;
+    });
+  }
+);
 
-const SideBar: React.FC<SideBarProps> = ({
-  selectedChannels,
-  setSelectedChannels,
-  selectedCategories,
-  setSelectedCategories,
-  selectedStates,
-  setSelectedStates,
-  selectedCities,
-  setSelectedCities,
-}) => {
+const SideBar = () => {
   // const navigate = useNavigate();
   // const [modalOpen, setModalOpen] = useState(false);
-  // const [selectedChannels, setSelectedChannels] = useState<Channel[]>([]);
-  // const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
+  // States for selected filters
+  const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(
+    []
+  );
+  const [selectedStates, setSelectedStates] = useState([]);
+  const [selectedCities, setSelectedCities] = useState([]);
 
   const dispatch = useDispatch<AppDispatch>();
 
-  // This function should not take parameters because it uses the state directly
+  // Apply filters based on the state managed within Sidebar
   const applyFilters = () => {
-    // Dispatch the fetchFilteredPosts action with the filters
     dispatch(
       fetchFilteredPosts({
         filters: {
           channels: selectedChannels,
           categories: selectedCategories,
         },
-        // lastVisible: DocumentSnapshot, // not sure what to put here
+        lastVisible: DocumentSnapshot
       })
     );
   };
 
+  // Clear all filters and fetch latest posts
   const clearFilters = () => {
-    // Clear the currently selected filters
     setSelectedChannels([]);
     setSelectedCategories([]);
+    setSelectedStates([]);
+    setSelectedCities([]);
 
-    // Dispatch the fetchFilteredPosts action without any filters
-    // dispatch(fetchFilteredPosts({ filters: { channels: [], categories: [],}, lastVisible:DocumentSnapshot }));
-    dispatch(fetchFilteredPosts({ filters: { channels: [], categories: [] } }));
+    dispatch(fetchLatestPosts());
   };
 
   return (

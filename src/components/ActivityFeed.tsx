@@ -1,3 +1,4 @@
+//ActivityFeed
 import React, { useEffect } from "react";
 import { FixedSizeList as List } from "react-window";
 import {
@@ -14,55 +15,28 @@ import { incrementRead } from "../Slices/firestoreReadsSlice";
 // import PostCard from "./PostCard";
 import PostCardRenderer from "./PostCardRenderer";
 import { fetchFilteredPosts } from "../Slices/postsSlice";
-import { ChannelType } from "./ChannelSelector";
-import { CategoryType } from "./CategorySelector";
+// import { ChannelType } from "./ChannelSelector";
+// import { CategoryType } from "./CategorySelector";
 import NoContentCard from "./NoContentCard";
-import { createSelector } from "@reduxjs/toolkit";
-import { RootState } from "../utils/store";
-import { selectAllPosts } from "../Slices/locationSlice";
-
-interface ActivityFeedProps {
-  selectedChannels: ChannelType[];
-  selectedCategories: CategoryType[];
-}
-
-  // Define a memoized selector outside the component
-  export const selectFilteredPosts = createSelector(
-    [selectAllPosts, (state: RootState) => state.locations.selectedStates, (state: RootState) => state.locations.selectedCities],
-    (posts, selectedStates, selectedCities) => {
-      return posts.filter(post => {
-        const matchesState = selectedStates.length === 0 || selectedStates.includes(post.state);
-        const matchesCity = selectedCities.length === 0 || selectedCities.includes(post.city);
-        return matchesState && matchesCity;
-      });
-    }
-  );
+// import { createSelector } from "@reduxjs/toolkit";
+// import { RootState } from "../utils/store";
+// import { selectAllPosts } from "../Slices/locationSlice";
+import { selectFilteredPosts } from "./SideBar";
   
   
 
-const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedChannels, selectedCategories }) => {
-   const { lastVisible } = useSelector((state: RootState) => ({
-     lastVisible: state.posts.lastVisible,
-   }));
+const ActivityFeed = () => {
+  //  const { lastVisible } = useSelector((state: RootState) => ({
+  //    lastVisible: state.posts.lastVisible,
+  //  }));
   const filteredPosts = useSelector(selectFilteredPosts); // Use the selector in your component
   const dispatch = useDispatch<AppDispatch>();
 
 
+  // You only need to fetch the latest posts once, when the component mounts
   useEffect(() => {
-    if (selectedChannels.length === 0 && selectedCategories.length === 0) {
-      console.log('fetch latest posts')
-      dispatch(fetchLatestPosts());
-    } else {
-      dispatch(fetchFilteredPosts({
-        filters: {
-          channels: selectedChannels,
-          categories: selectedCategories,
-        },
-        lastVisible: lastVisible, // Assuming `lastVisible` is defined in your component's scope
-        
-      }));
-    }
-  }, [ lastVisible, dispatch ]);
+    dispatch(fetchLatestPosts());
+  }, [dispatch]);
   
 
 

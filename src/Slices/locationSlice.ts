@@ -1,3 +1,4 @@
+// locationSlice
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { collection, getDocs } from 'firebase/firestore';
 import { RootState } from '../utils/store';

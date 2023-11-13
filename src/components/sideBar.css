@@ -18,5 +18,6 @@ aside {
 .side-bar-container {
   display: flex;
   height: 100%;
-  /* background-color: --background-color; */
+
+  background-color: azure;
 }

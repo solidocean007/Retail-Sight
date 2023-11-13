@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+// import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import Button from "@mui/material/Button";
+// import Button from "@mui/material/Button";
 import { setStateFilter, setCityFilter } from "../Slices/locationSlice";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
@@ -47,7 +47,6 @@ const FilterLocation: React.FC<FilterLocationProps> = ({
   setSelectedCities,
 }) => {
   const { locations } = useSelector((state: RootState) => state.locations);
-  const dispatch = useDispatch();
   const theme = useTheme();
 
   const handleStateChange = (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -57,11 +56,6 @@ const FilterLocation: React.FC<FilterLocationProps> = ({
 
   const handleCityChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     setSelectedCities(event.target.value as string[]);
-  };
-
-  const applyLocationFilters = () => {
-    dispatch(setStateFilter(selectedStates));
-    dispatch(setCityFilter(selectedCities));
   };
 
   return (
