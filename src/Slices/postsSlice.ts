@@ -1,6 +1,6 @@
 // postsSlice
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { DocumentSnapshot } from "firebase/firestore";
+// import { DocumentSnapshot } from "firebase/firestore";
 import {
   getFirestore,
   collection,
@@ -9,7 +9,7 @@ import {
   Query,
   DocumentData,
   // DocumentSnapshot,
-  startAfter,
+  // startAfter,
   limit,
   orderBy,
 } from "firebase/firestore";
@@ -33,7 +33,7 @@ type FetchPostsArgs = {
     channels: string[];
     categories: string[];
   };
-  lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
+  // lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
 };
 
 export const fetchLatestPosts = createAsyncThunk<
@@ -83,7 +83,9 @@ export const fetchFilteredPosts = createAsyncThunk<
   { rejectValue: string }
 >(
   "posts/fetchFiltered",
-  async ({ filters, lastVisible }, { dispatch, rejectWithValue }) => {
+  // async ({ filters, lastVisible }, { dispatch, rejectWithValue }) => {
+  // async ({ filters }, { dispatch, rejectWithValue }) => {
+  async ({ filters }, { rejectWithValue }) => {
     console.log("Fetching filtered posts...");
     let baseQuery: Query<DocumentData> = collection(getFirestore(), "posts");
 
@@ -97,13 +99,17 @@ export const fetchFilteredPosts = createAsyncThunk<
       baseQuery = filterByCategories(filters.categories, baseQuery);
     }
 
-    const PAGE_SIZE = 10;
-    const paginatedQuery = lastVisible
-      ? query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE))
-      : query(baseQuery, limit(PAGE_SIZE));
+    // const PAGE_SIZE = 10;
+    // const paginatedQuery = lastVisible
+    //   ? query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE))
+    //   : query(baseQuery, limit(PAGE_SIZE));
+
+    // Simplified query without pagination logic
+    const queryToExecute = query(baseQuery, limit(10));
 
     try {
-      const postSnapshot = await getDocs(paginatedQuery);
+      // const postSnapshot = await getDocs(paginatedQuery);
+      const postSnapshot = await getDocs(queryToExecute);
       console.log(`Fetched ${postSnapshot.docs.length} posts.`);
 
       if (postSnapshot.docs.length === 0) {
@@ -111,19 +117,10 @@ export const fetchFilteredPosts = createAsyncThunk<
         return [];
       }
 
-      const postData: PostType[] = postSnapshot.docs.map((doc) => ({
+      return postSnapshot.docs.map((doc) => ({
         ...(doc.data() as PostType),
         id: doc.id,
       }));
-
-      if (postSnapshot.docs.length > 0) {
-        const lastVisibleData = {
-          id: postSnapshot.docs[postSnapshot.docs.length - 1].id
-        };
-        dispatch(setLastVisible(lastVisibleData));
-      }
-      
-      return postData;
     } catch (error) {
       console.error("Error fetching filtered posts:", error);
       return rejectWithValue("Error fetching filtered posts.");
@@ -131,9 +128,29 @@ export const fetchFilteredPosts = createAsyncThunk<
   }
 );
 
-type LastVisible = {
-  id: string;
-} | null;
+//       const postData: PostType[] = postSnapshot.docs.map((doc) => ({
+//         ...(doc.data() as PostType),
+//         id: doc.id,
+//       }));
+
+//       if (postSnapshot.docs.length > 0) {
+//         const lastVisibleData = {
+//           id: postSnapshot.docs[postSnapshot.docs.length - 1].id
+//         };
+//         dispatch(setLastVisible(lastVisibleData));
+//       }
+      
+//       return postData;
+//     } catch (error) {
+//       console.error("Error fetching filtered posts:", error);
+//       return rejectWithValue("Error fetching filtered posts.");
+//     }
+//   }
+// );
+
+// type LastVisible = {
+//   id: string;
+// } | null;
 
 
 // New state shape including loading and error states
@@ -141,14 +158,14 @@ interface PostsState {
   posts: PostType[];
   loading: boolean;
   error: string | null;
-  lastVisible: LastVisible;
+  // lastVisible: LastVisible;
 }
 
 const initialState: PostsState = {
   posts: [],
   loading: false,
   error: null,
-  lastVisible: null,
+  // lastVisible: null,
 };
 
 const postsSlice = createSlice({
@@ -177,9 +194,9 @@ const postsSlice = createSlice({
       state.error = action.payload;
     },
     // Instead of storing the whole DocumentSnapshot, you can store just the ID, or necessary data.
-    setLastVisible(state, action: PayloadAction<LastVisible>) {
-      state.lastVisible = action.payload;
-    },
+    // setLastVisible(state, action: PayloadAction<LastVisible>) {
+    //   state.lastVisible = action.payload;
+    // },
   },
   extraReducers: (builder) => {
     builder
@@ -207,10 +224,10 @@ const postsSlice = createSlice({
         // Set the posts and update the lastVisible when posts are fetched
         state.loading = false;
         state.posts = action.payload;
-        state.lastVisible = action.payload.length > 0  // Type 'string | null' is not assignable to type 'WritableDraft<{ id: string; }> | null'.
-        // Type 'string' is not assignable to type 'WritableDraft<{ id: string; }>'.ts(2322
-          ? action.payload[action.payload.length - 1].id // Assuming you want to track the last post's ID for pagination
-          : null;
+        // state.lastVisible = action.payload.length > 0  // Type 'string | null' is not assignable to type 'WritableDraft<{ id: string; }> | null'.
+        // // Type 'string' is not assignable to type 'WritableDraft<{ id: string; }>'.ts(2322
+        //   ? action.payload[action.payload.length - 1].id // Assuming you want to track the last post's ID for pagination
+        //   : null;
       })
       .addCase(fetchLatestPosts.rejected, (state, action) => {
         // Handle any errors if the fetch fails
@@ -226,6 +243,6 @@ export const {
   updatePost,
   setLoading,
   setError,
-  setLastVisible,
+  // setLastVisible,
 } = postsSlice.actions;
 export default postsSlice.reducer;

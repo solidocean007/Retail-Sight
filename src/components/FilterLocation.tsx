@@ -1,6 +1,6 @@
 // import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "../utils/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../utils/store";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 // import Button from "@mui/material/Button";
@@ -34,9 +34,9 @@ function getStyles(name: string, selected: string[], theme: Theme) {
 }
 
 interface FilterLocationProps {
-  selectedStates: never[];
+  selectedStates: string[];
   setSelectedStates: React.Dispatch<React.SetStateAction<never[]>>;
-  selectedCities: never[];
+  selectedCities: string[];
   setSelectedCities: React.Dispatch<React.SetStateAction<never[]>>;
 }
 
@@ -48,14 +48,19 @@ const FilterLocation: React.FC<FilterLocationProps> = ({
 }) => {
   const { locations } = useSelector((state: RootState) => state.locations);
   const theme = useTheme();
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleStateChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSelectedStates(event.target.value as string[]);
+    const newStates = event.target.value as string[];
+    setSelectedStates(newStates);
+    dispatch(setStateFilter(newStates)); // Dispatch the action to update the Redux store
     setSelectedCities([]); // Reset cities when states change
   };
 
   const handleCityChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSelectedCities(event.target.value as string[]);
+    const newCities = event.target.value as string[];
+    setSelectedCities(newCities);
+    dispatch(setCityFilter(newCities)); // Dispatch the action to update the Redux store
   };
 
   return (
@@ -83,7 +88,7 @@ const FilterLocation: React.FC<FilterLocationProps> = ({
             <MenuItem
               key={state}
               value={state}
-              style={getStyles(state, selectedStates, theme)} // cannot find name them
+              style={getStyles(state, selectedStates, theme)}
             >
               {state}
             </MenuItem>
@@ -115,7 +120,7 @@ const FilterLocation: React.FC<FilterLocationProps> = ({
                 <MenuItem
                   key={city}
                   value={city}
-                  style={getStyles(city, selectedCities, theme)} // cannot find name them
+                  style={getStyles(city, selectedCities, theme)}
                 >
                   {city}
                 </MenuItem>
@@ -124,14 +129,6 @@ const FilterLocation: React.FC<FilterLocationProps> = ({
           </Select>
         </FormControl>
       )}
-      {/* <Button // I dont need this button now I dont think after consolidating my logic to only have one apply now button
-        onClick={applyLocationFilters}
-        disabled={!selectedStates.length}
-        variant="contained"
-        color="primary"
-      >
-        Apply Location Filters
-      </Button> */}
     </div>
   );
 };

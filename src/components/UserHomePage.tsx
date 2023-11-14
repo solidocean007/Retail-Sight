@@ -24,10 +24,8 @@ export const UserHomePage = () => {
   console.log(currentUser, " : currentUser");
 
   useEffect(() => {
-    // does this useEffect define the options of state and city inside of redux?
-    // console.log("UserHomePage mounted");
     // Dispatch the action to fetch location options
-    dispatch(fetchLocationOptions()); // Argument of type 'AsyncThunkAction<LocationOptions, void, AsyncThunkConfig>' is not assignable to parameter of type 'AnyAction'.ts(2345)
+    dispatch(fetchLocationOptions());
   }, [dispatch]);
 
   const openProfile = () => navigate("/profile-page");

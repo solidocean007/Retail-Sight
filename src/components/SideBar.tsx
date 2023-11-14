@@ -19,6 +19,7 @@ import { CategoryOptions } from "../utils/filterOptions";
 import FilterLocation from "./FilterLocation";
 import { DocumentSnapshot } from "firebase/firestore";
 import { createSelector } from "@reduxjs/toolkit";
+import { selectAllPosts } from "../Slices/locationSlice";
 
 // Define a memoized selector outside the component
 export const selectFilteredPosts = createSelector(
@@ -46,20 +47,22 @@ const SideBar = () => {
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(
     []
   );
-  const [selectedStates, setSelectedStates] = useState([]);
-  const [selectedCities, setSelectedCities] = useState([]);
+  const [selectedStates, setSelectedStates] = useState<string[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  
 
   const dispatch = useDispatch<AppDispatch>();
 
   // Apply filters based on the state managed within Sidebar
   const applyFilters = () => {
+    console.log(selectedChannels, selectedCategories, ": filters")
     dispatch(
       fetchFilteredPosts({
         filters: {
           channels: selectedChannels,
           categories: selectedCategories,
         },
-        lastVisible: DocumentSnapshot
+        // lastVisible: DocumentSnapshot
       })
     );
   };
