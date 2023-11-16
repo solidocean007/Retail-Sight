@@ -1,24 +1,7 @@
 // postsSlice
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // import { DocumentSnapshot } from "firebase/firestore";
-import {
-  collection,
-  getDocs,
-  query,
-  Query,
-  DocumentData,
-  // DocumentSnapshot,
-  // startAfter,
-  limit,
-  orderBy,
-} from "firebase/firestore";
-// import { incrementRead } from "./firestoreReadsSlice";
-import {
-  filterByChannels,
-  filterByCategories,
-  // filterByCity,
-  // filterByState,
-} from "../services/postsServices";
+import { fetchFilteredPosts, fetchLatestPosts } from "../thunks/postsThunks";
 import { PostType } from "../utils/types";
 import { PayloadAction } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";

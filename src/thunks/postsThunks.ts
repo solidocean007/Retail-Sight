@@ -7,6 +7,7 @@ import {
   filterByCategories,
   filterByChannels,
 } from "../services/postsServices";
+import { getFilteredPostsFromIndexedDB, storeFilteredPostsInIndexedDB } from "../utils/database/indexedDBUtils";
 
 type FetchPostsArgs = {
   filters: {

@@ -78,18 +78,53 @@ export async function getPostsFromIndexedDB(): Promise<PostType[]> {
 }
 
 // Create a utility function that retrieves filtered posts from IndexedDB
-async function getFilteredPostsFromIndexedDB(filters) {
-  // This function should connect to IndexedDB, apply the filters to the posts stored there,
-  // and return a promise that resolves with the filtered posts.
-  // Here you need to implement the IndexedDB retrieval logic based on the filters.
+export async function getFilteredPostsFromIndexedDB(filters) {
+  const db = await openDB();
+  const transaction = db.transaction(['posts'], 'readonly');
+  const store = transaction.objectStore('posts');
+  const getAllRequest = store.getAll();
+
+  return new Promise((resolve, reject) => {
+    getAllRequest.onsuccess = () => {
+      const allPosts = getAllRequest.result;
+      const filteredPosts = allPosts.filter(post => 
+        (!filters.channels.length || filters.channels.includes(post.channel)) &&
+        (!filters.categories.length || filters.categories.includes(post.category))
+      );
+      resolve(filteredPosts);
+    };
+    getAllRequest.onerror = () => {
+      reject('Error getting filtered posts from IndexedDB');
+    };
+  });
 }
 
+
 // Create a utility function that stores filtered posts in IndexedDB
-async function storeFilteredPostsInIndexedDB(posts, filters) {
-  // This function should connect to IndexedDB and store the posts.
-  // Each post could have an additional field indicating the filters it matches.
-  // Here you need to implement the IndexedDB storage logic.
+export async function storeFilteredPostsInIndexedDB(posts, filters) {
+  const db = await openDB();
+  const transaction = db.transaction(['posts'], 'readwrite');
+  const store = transaction.objectStore('posts');
+
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      resolve();
+    };
+    transaction.onerror = (event) => {
+      reject((event.target as IDBRequest).error);
+    };
+
+    posts.forEach((post) => {
+      // Clone the post object and add filter criteria to it
+      const postWithFilters = { ...post, filters };
+      const request = store.put(postWithFilters);
+      request.onerror = () => {
+        reject(request.error);
+      };
+    });
+  });
 }
+
 
 // Similar functions for 'categories', 'channels', 'locations', and later 'companies'
 

@@ -10,12 +10,12 @@ import {
 import { db } from "../utils/firebase";
 import { AppDispatch } from "../utils/store";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchLatestPosts, setPosts } from "../Slices/postsSlice";
+import { setPosts } from "../Slices/postsSlice";
 import { incrementRead } from "../Slices/firestoreReadsSlice";
 // import PostCard from "./PostCard";
 import PostCardRenderer from "./PostCardRenderer";
-import { fetchFilteredPosts } from "../Slices/postsSlice";
 // import { ChannelType } from "./ChannelSelector";
+import { fetchLatestPosts } from "../thunks/postsThunks";
 // import { CategoryType } from "./CategorySelector";
 import NoContentCard from "./NoContentCard";
 // import { createSelector } from "@reduxjs/toolkit";
