@@ -17,11 +17,3 @@ export const filterByCategories = (categories: string[], baseQuery: Query<Docume
 };
 
 
-// export const filterByState = (state: string, baseQuery: Query<DocumentData>) => { 
-//   return query(baseQuery, where("state", "==", state));
-// };
-
-// export const filterByCity = (city: string, baseQuery: Query<DocumentData>) => {
-//   return query(baseQuery, where("city", "==", city));
-// };
-

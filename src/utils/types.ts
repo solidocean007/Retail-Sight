@@ -35,25 +35,25 @@ export interface UserType {
 
 // import { Timestamp } from "firebase/firestore";
 
-export type ChannelType =
-  | "Grocery"
-  | "Convenience"
-  | "Restaurant"
-  | "Warehouse Club"
-  | "Department Store"
-  | "Drug Store"
-  | "Bar";
+// export type ChannelType =
+//   | "Grocery"
+//   | "Convenience"
+//   | "Restaurant"
+//   | "Warehouse Club"
+//   | "Department_store"
+//   | "Drug Store"
+//   | "Bar";
 
-export type CategoryType =
-  | "Water"
-  | "Wine"
-  | "Beer"
-  | "Soda"
-  | "Chips"
-  | "Produce"
-  | "Dairy"
-  | "Meat"
-  | "Cookies and Pastries"
+// export type CategoryType =
+//   | "Water"
+//   | "Wine"
+//   | "Beer"
+//   | "Soda"
+//   | "Chips"
+//   | "Produce"
+//   | "Dairy"
+//   | "Meat"
+//   | "Cookies and Pastries"
 
 export interface PostType {
   id: string;

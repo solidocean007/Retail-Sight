@@ -6,20 +6,20 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 // import CheckBoxModal from "./CheckBoxModal";
 import FilterSection from "./FilterSection";
 import FilterDisplay from "./FilterDisplay";
-import { fetchLatestPosts } from "../Slices/postsSlice";
+import { fetchLatestPosts, fetchFilteredPosts } from "../thunks/postsThunks";
 import { useDispatch } from "react-redux";
-import { fetchFilteredPosts } from "../Slices/postsSlice";
 // import { FilterCriteria } from '../Slices/postsSlice';
 import "./sideBar.css";
 import { AppDispatch } from "../utils/store";
-import { ChannelType } from "../utils/types";
-import { CategoryType } from "../utils/types";
+import { ChannelType } from "./ChannelSelector";
+import { CategoryType } from "./CategorySelector";
 import { ChannelOptions } from "../utils/filterOptions";
 import { CategoryOptions } from "../utils/filterOptions";
 import FilterLocation from "./FilterLocation";
 import { DocumentSnapshot } from "firebase/firestore";
 import { createSelector } from "@reduxjs/toolkit";
 import { selectAllPosts } from "../Slices/locationSlice";
+import { RootState } from "../utils/store";
 
 // Define a memoized selector outside the component
 export const selectFilteredPosts = createSelector(

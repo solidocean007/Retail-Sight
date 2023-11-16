@@ -2,7 +2,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // import { DocumentSnapshot } from "firebase/firestore";
 import {
-  getFirestore,
   collection,
   getDocs,
   query,
@@ -22,6 +21,7 @@ import {
 } from "../services/postsServices";
 import { PostType } from "../utils/types";
 import { PayloadAction } from "@reduxjs/toolkit";
+import { db } from "../utils/firebase";
 
 export type FilterCriteria = {
   channels?: string[];
@@ -36,121 +36,96 @@ type FetchPostsArgs = {
   // lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
 };
 
-export const fetchLatestPosts = createAsyncThunk<
-  PostType[],
-  void,
-  { rejectValue: string }
->("posts/fetchLatest", async (_, { rejectWithValue }) => {
-  // console.log("Attempting to fetch the latest posts...");
-  const firestoreInstance = getFirestore();
-  const postsCollectionRef = collection(firestoreInstance, "posts");
-  const baseQuery = query(
-    postsCollectionRef,
-    orderBy("timestamp", "desc"),
-    limit(10)
-  );
+// export const fetchLatestPosts = createAsyncThunk<
+//   PostType[],
+//   void,
+//   { rejectValue: string }
+// >("posts/fetchLatest", async (_, { rejectWithValue }) => {
+//   // console.log("Attempting to fetch the latest posts...");
+//   const postsCollectionRef = collection(db, "posts");
+//   const baseQuery = query(
+//     postsCollectionRef,
+//     orderBy("timestamp", "desc"),
+//     limit(10)
+//   );
 
-  // console.log("Constructed query for latest posts:", baseQuery);
+//   // console.log("Constructed query for latest posts:", baseQuery);
 
-  try {
-    const postSnapshot = await getDocs(baseQuery);
+//   try {
+//     const postSnapshot = await getDocs(baseQuery);
 
-    if (postSnapshot.empty) {
-      console.log("No posts found in the snapshot.");
-      return []; // Return an empty array if no documents are found
-    }
+//     if (postSnapshot.empty) {
+//       console.log("No posts found in the snapshot.");
+//       return []; // Return an empty array if no documents are found
+//     }
 
-    console.log(
-      `Found ${postSnapshot.docs.length} posts, preparing to map them to PostType...`
-    );
+//     console.log(
+//       `Found ${postSnapshot.docs.length} posts, preparing to map them to PostType...`
+//     );
 
-    const posts: PostType[] = postSnapshot.docs.map((doc) => ({
-      ...(doc.data() as PostType),
-      id: doc.id,
-    }));
+//     const posts: PostType[] = postSnapshot.docs.map((doc) => ({
+//       ...(doc.data() as PostType),
+//       id: doc.id,
+//     }));
 
-    console.log("Successfully fetched the latest posts:", posts);
-    return posts;
-  } catch (error) {
-    console.error("Error fetching latest posts:", error);
-    return rejectWithValue("Error fetching latest posts.");
-  }
-});
+//     console.log("Successfully fetched the latest posts:", posts);
+//     return posts;
+//   } catch (error) {
+//     console.error("Error fetching latest posts:", error);
+//     return rejectWithValue("Error fetching latest posts.");
+//   }
+// });
 
-export const fetchFilteredPosts = createAsyncThunk<
-  PostType[],
-  FetchPostsArgs,
-  { rejectValue: string }
->(
-  "posts/fetchFiltered",
-  // async ({ filters, lastVisible }, { dispatch, rejectWithValue }) => {
-  // async ({ filters }, { dispatch, rejectWithValue }) => {
-  async ({ filters }, { rejectWithValue }) => {
-    console.log("Fetching filtered posts...");
-    let baseQuery: Query<DocumentData> = collection(getFirestore(), "posts");
+// export const fetchFilteredPosts = createAsyncThunk<
+//   PostType[],
+//   FetchPostsArgs,
+//   { rejectValue: string }
+// >(
+//   "posts/fetchFiltered",
+//   // async ({ filters, lastVisible }, { dispatch, rejectWithValue }) => {
+//   // async ({ filters }, { dispatch, rejectWithValue }) => {
+//   async ({ filters }, { rejectWithValue }) => {
+//     console.log("Fetching filtered posts...");
+//     let baseQuery: Query<DocumentData> = collection(db, "posts");
 
-    // Apply filters if they are present
-    if (filters.channels && filters.channels.length > 0) {
-      console.log(`Filtering by channels: ${filters.channels}`);
-      baseQuery = filterByChannels(filters.channels, baseQuery);
-    }
-    if (filters.categories && filters.categories.length > 0) {
-      console.log(`Filtering by categories: ${filters.categories}`);
-      baseQuery = filterByCategories(filters.categories, baseQuery);
-    }
+//     // Apply filters if they are present
+//     if (filters.channels && filters.channels.length > 0) {
+//       console.log(`Filtering by channels: ${filters.channels}`);
+//       baseQuery = filterByChannels(filters.channels, baseQuery);
+//     }
+//     if (filters.categories && filters.categories.length > 0) {
+//       console.log(`Filtering by categories: ${filters.categories}`);
+//       baseQuery = filterByCategories(filters.categories, baseQuery);
+//     }
 
-    // const PAGE_SIZE = 10;
-    // const paginatedQuery = lastVisible
-    //   ? query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE))
-    //   : query(baseQuery, limit(PAGE_SIZE));
+//     // const PAGE_SIZE = 10;
+//     // const paginatedQuery = lastVisible
+//     //   ? query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE))
+//     //   : query(baseQuery, limit(PAGE_SIZE));
 
-    // Simplified query without pagination logic
-    const queryToExecute = query(baseQuery, limit(10));
+//     // Simplified query without pagination logic
+//     const queryToExecute = query(baseQuery, limit(10));
 
-    try {
-      // const postSnapshot = await getDocs(paginatedQuery);
-      const postSnapshot = await getDocs(queryToExecute);
-      console.log(`Fetched ${postSnapshot.docs.length} posts.`);
+//     try {
+//       // const postSnapshot = await getDocs(paginatedQuery);
+//       const postSnapshot = await getDocs(queryToExecute);
+//       console.log(`Fetched ${postSnapshot.docs.length} posts.`);
 
-      if (postSnapshot.docs.length === 0) {
-        console.warn("No documents found with the current query.");
-        return [];
-      }
+//       if (postSnapshot.docs.length === 0) {
+//         console.warn("No documents found with the current query.");
+//         return [];
+//       }
 
-      return postSnapshot.docs.map((doc) => ({
-        ...(doc.data() as PostType),
-        id: doc.id,
-      }));
-    } catch (error) {
-      console.error("Error fetching filtered posts:", error);
-      return rejectWithValue("Error fetching filtered posts.");
-    }
-  }
-);
-
-//       const postData: PostType[] = postSnapshot.docs.map((doc) => ({
+//       return postSnapshot.docs.map((doc) => ({
 //         ...(doc.data() as PostType),
 //         id: doc.id,
 //       }));
-
-//       if (postSnapshot.docs.length > 0) {
-//         const lastVisibleData = {
-//           id: postSnapshot.docs[postSnapshot.docs.length - 1].id
-//         };
-//         dispatch(setLastVisible(lastVisibleData));
-//       }
-      
-//       return postData;
 //     } catch (error) {
 //       console.error("Error fetching filtered posts:", error);
 //       return rejectWithValue("Error fetching filtered posts.");
 //     }
 //   }
 // );
-
-// type LastVisible = {
-//   id: string;
-// } | null;
 
 
 // New state shape including loading and error states

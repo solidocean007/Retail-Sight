@@ -2,12 +2,12 @@
 import React, { useEffect } from "react";
 import { FixedSizeList as List } from "react-window";
 import {
-  getFirestore,
   collection,
   getDocs,
   query,
   where,
 } from "firebase/firestore";
+import { db } from "../utils/firebase";
 import { AppDispatch } from "../utils/store";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchLatestPosts, setPosts } from "../Slices/postsSlice";
@@ -42,7 +42,6 @@ const ActivityFeed = () => {
 
   const getPostsByTag = async (hashTag: string) => {
     console.log(`Fetching posts with hashtag: ${hashTag}`);
-    const db = getFirestore();
     const postCollection = collection(db, "posts");
     const postsByTagQuery = query(
       postCollection,

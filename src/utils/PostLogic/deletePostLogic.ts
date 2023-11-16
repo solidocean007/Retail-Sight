@@ -4,12 +4,12 @@ import {
   doc,
   updateDoc,
   arrayRemove,
-  getFirestore,
 } from "firebase/firestore";
 import { ref, deleteObject, getStorage } from "firebase/storage";
 import { PostType } from "../types";
 import { deletePost } from "../../Slices/postsSlice";
 import { AnyAction } from "redux";
+import { db } from "../firebase";
 
 interface userDeletePostprops {
   post: PostType;
@@ -21,7 +21,6 @@ export const userDeletePost = async ({ post, setIsEditModalOpen, dispatch }: use
   // Optimistically remove the post from the UI
   dispatch(deletePost(post.id));
 
-  const db = getFirestore();
   const storage = getStorage();
   try {
     // Delete post from 'posts' collection
