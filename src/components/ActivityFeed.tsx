@@ -22,7 +22,7 @@ import NoContentCard from "./NoContentCard";
 // import { RootState } from "../utils/store";
 // import { selectAllPosts } from "../Slices/locationSlice";
 import { selectFilteredPosts } from "./SideBar";
-  
+import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
   
 
 const ActivityFeed = () => {
@@ -33,9 +33,29 @@ const ActivityFeed = () => {
   const dispatch = useDispatch<AppDispatch>();
 
 
-  // You only need to fetch the latest posts once, when the component mounts
+  
+  // useEffect(() => {
+  //   dispatch(fetchLatestPosts());
+  // }, [dispatch]);
+
   useEffect(() => {
-    dispatch(fetchLatestPosts());
+    const loadPosts = async () => {
+      // Load posts from IndexedDB
+      const cachedPosts = await getPostsFromIndexedDB();
+
+      if (cachedPosts.length > 0) {
+        // If there are cached posts, dispatch an action to update the store
+        dispatch(setPosts(cachedPosts)); // Assuming you have a setPosts action
+      } else {
+        // If IndexedDB is empty, fetch posts from Firestore
+        dispatch(fetchLatestPosts());
+      }
+
+      // Optionally, after displaying cached data, check Firestore for new updates
+      // and update both the Redux store and IndexedDB cache if needed
+    };
+
+    loadPosts();
   }, [dispatch]);
   
 

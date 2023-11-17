@@ -1,6 +1,8 @@
 // export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
 import { Timestamp } from "firebase/firestore";
+import { ChannelType } from "../components/ChannelSelector";
+import { CategoryType } from "../components/CategorySelector";
 
 export type TUserInputType = {
   firstNameInput: string;

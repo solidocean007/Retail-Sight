@@ -2,20 +2,20 @@
 const dbName = "myRetailAppDB";
 const dbVersion = 1; // Increment for each schema change
 import { PostType } from "../types";
+import { FilterCriteria } from "../../Slices/postsSlice";
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
 
     request.onerror = (event) => {
-      reject(`IndexedDB database error: ${event.target} `); // Expected 0-1 arguments, but got 2
+      reject(`IndexedDB database error: ${event.target} `); 
     };
 
     request.onsuccess = () => { // event is defined but never used
       resolve(request.result);
     };
 
-    // request.onupgradeneeded = (event) => {
     request.onupgradeneeded = () => {
       const db = request.result; // Directly use request.result
       if (!db.objectStoreNames.contains('posts')) {
@@ -78,7 +78,7 @@ export async function getPostsFromIndexedDB(): Promise<PostType[]> {
 }
 
 // Create a utility function that retrieves filtered posts from IndexedDB
-export async function getFilteredPostsFromIndexedDB(filters) {
+export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostType[]> {
   const db = await openDB();
   const transaction = db.transaction(['posts'], 'readonly');
   const store = transaction.objectStore('posts');
@@ -88,9 +88,11 @@ export async function getFilteredPostsFromIndexedDB(filters) {
     getAllRequest.onsuccess = () => {
       const allPosts = getAllRequest.result;
       const filteredPosts = allPosts.filter(post => 
-        (!filters.channels.length || filters.channels.includes(post.channel)) &&
-        (!filters.categories.length || filters.categories.includes(post.category))
+        (!filters.channels!.length || filters.channels!.includes(post.channel!)) &&
+        (!filters.categories!.length || filters.categories!.includes(post.category!))
       );
+      
+      
       resolve(filteredPosts);
     };
     getAllRequest.onerror = () => {
@@ -101,7 +103,7 @@ export async function getFilteredPostsFromIndexedDB(filters) {
 
 
 // Create a utility function that stores filtered posts in IndexedDB
-export async function storeFilteredPostsInIndexedDB(posts, filters) {
+export async function storeFilteredPostsInIndexedDB(posts: PostType[], filters: FilterCriteria): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(['posts'], 'readwrite');
   const store = transaction.objectStore('posts');

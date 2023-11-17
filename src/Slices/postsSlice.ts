@@ -1,5 +1,5 @@
 // postsSlice
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 // import { DocumentSnapshot } from "firebase/firestore";
 import { fetchFilteredPosts, fetchLatestPosts } from "../thunks/postsThunks";
 import { PostType } from "../utils/types";

@@ -16,10 +16,10 @@ export type CategoryType =
   | "Produce"
   | "Dairy"
   | "Meat"
-  | "Cookies and Pastries"
+  | "Cookies_and_Pastries"
 
 // Create an array of categories for mapping in the component
-const CATEGORIES: CategoryType[] = ['Water', 'Wine', 'Beer', 'Soda', 'Chips', 'Produce', 'Dairy', 'Meat', 'Cookies and Pastries'];
+const CATEGORIES: CategoryType[] = ['Water', 'Wine', 'Beer', 'Soda', 'Chips', 'Produce', 'Dairy', 'Meat', 'Cookies_and_Pastries'];
 
 interface CategorySelectorProps {
   selectedCategory?: CategoryType;

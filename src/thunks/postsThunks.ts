@@ -61,12 +61,13 @@ export const fetchFilteredPosts = createAsyncThunk<
   PostType[],
   FetchPostsArgs,
   { rejectValue: string }
->("posts/fetchFiltered", async ({ filters }, { getState, rejectWithValue }) => { // getState is defined but never used
+>("posts/fetchFiltered", async ({ filters }, { getState, rejectWithValue }) => { // getState is defined but never used // Type 'Promise<unknown>' is not assignable to type 'Promise<PostType[]>'.
+  // Type 'unknown' is not assignable to type 'PostType[]'.
   try {
     // First, try to get filtered posts from IndexedDB
     const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
 
-    if (cachedPosts.length > 0) {
+    if (cachedPosts.length > 0) { // cachedPosts is of type unknown
       // If there are cached posts, return them
       return cachedPosts;
     } else {
