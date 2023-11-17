@@ -12,6 +12,8 @@ import { AppDispatch } from "../utils/store";
 import { useSelector, useDispatch } from "react-redux";
 import { setPosts } from "../Slices/postsSlice";
 import { incrementRead } from "../Slices/firestoreReadsSlice";
+import { createSelector } from "@reduxjs/toolkit";
+import { RootState } from "../utils/store";
 // import PostCard from "./PostCard";
 import PostCardRenderer from "./PostCardRenderer";
 // import { ChannelType } from "./ChannelSelector";
@@ -21,9 +23,25 @@ import NoContentCard from "./NoContentCard";
 // import { createSelector } from "@reduxjs/toolkit";
 // import { RootState } from "../utils/store";
 // import { selectAllPosts } from "../Slices/locationSlice";
-import { selectFilteredPosts } from "./SideBar";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
   
+// Define the memoized selector
+const selectFilteredPosts = createSelector(
+  [
+    (state: RootState) => state.posts.posts,
+    (state: RootState) => state.locations.selectedStates,
+    (state: RootState) => state.locations.selectedCities,
+  ],
+  (posts, selectedStates, selectedCities) => {
+    return posts.filter((post) => {
+      const matchesState =
+        selectedStates.length === 0 || selectedStates.includes(post.state);
+      const matchesCity =
+        selectedCities.length === 0 || selectedCities.includes(post.city);
+      return matchesState && matchesCity;
+    });
+  }
+);
 
 const ActivityFeed = () => {
   //  const { lastVisible } = useSelector((state: RootState) => ({

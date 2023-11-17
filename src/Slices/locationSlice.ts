@@ -6,8 +6,9 @@ import { db } from '../utils/firebase';
 import { LocationState } from '../utils/types';
 
 // Define a selector to get all posts (assuming it is defined elsewhere)
+// now that im storing posts in indexDB maybe I should store these locations there also?
+// can I cut down on firestore reads by doing this?
 export const selectAllPosts = (state: RootState) => state.posts.posts;
-
 
 export const fetchLocationOptions = createAsyncThunk(
   'locations/fetchOptions',
@@ -34,7 +35,6 @@ export const fetchLocationOptions = createAsyncThunk(
     }
   }
 );
-
 
 const initialState: LocationState = {
   locations: {},

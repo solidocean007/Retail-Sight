@@ -1,79 +1,37 @@
 // Sidebar
 import React, { useState } from "react";
-import { Button, Container, IconButton } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-// import CheckBoxModal from "./CheckBoxModal";
+import { Button, Container } from "@mui/material";
 import FilterSection from "./FilterSection";
-import FilterDisplay from "./FilterDisplay";
+import FilterLocation from "./FilterLocation";
 import { fetchLatestPosts, fetchFilteredPosts } from "../thunks/postsThunks";
 import { useDispatch } from "react-redux";
-// import { FilterCriteria } from '../Slices/postsSlice';
 import "./sideBar.css";
-import { AppDispatch } from "../utils/store";
 import { ChannelType } from "./ChannelSelector";
 import { CategoryType } from "./CategorySelector";
-import { ChannelOptions } from "../utils/filterOptions";
-import { CategoryOptions } from "../utils/filterOptions";
-import FilterLocation from "./FilterLocation";
-import { DocumentSnapshot } from "firebase/firestore";
-import { createSelector } from "@reduxjs/toolkit";
-import { selectAllPosts } from "../Slices/locationSlice";
-import { RootState } from "../utils/store";
-
-// Define a memoized selector outside the component
-export const selectFilteredPosts = createSelector(
-  [
-    selectAllPosts,
-    (state: RootState) => state.locations.selectedStates,
-    (state: RootState) => state.locations.selectedCities,
-  ],
-  (posts, selectedStates, selectedCities) => {
-    return posts.filter((post) => {
-      const matchesState =
-        selectedStates.length === 0 || selectedStates.includes(post.state);
-      const matchesCity =
-        selectedCities.length === 0 || selectedCities.includes(post.city);
-      return matchesState && matchesCity;
-    });
-  }
-);
+import { ChannelOptions, CategoryOptions } from "../utils/filterOptions";
+import { useSelector } from "react-redux";
 
 const SideBar = () => {
-  // const navigate = useNavigate();
-  // const [modalOpen, setModalOpen] = useState(false);
-  // States for selected filters
   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(
-    []
-  );
-  const [selectedStates, setSelectedStates] = useState<string[]>([]);
-  const [selectedCities, setSelectedCities] = useState<string[]>([]);
-  
+  const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([]);
+  const selectedStates = useSelector((state: RootState) => state.locations.selectedStates);
+  const selectedCities = useSelector((state: RootState) => state.locations.selectedCities);
+  const dispatch = useDispatch();
 
-  const dispatch = useDispatch<AppDispatch>();
-
-  // Apply filters based on the state managed within Sidebar
   const applyFilters = () => {
-    console.log(selectedChannels, selectedCategories, ": filters")
-    dispatch(
-      fetchFilteredPosts({
-        filters: {
-          channels: selectedChannels,
-          categories: selectedCategories,
-        },
-        // lastVisible: DocumentSnapshot
-      })
-    );
+    dispatch(fetchFilteredPosts({
+      filters: {
+        channels: selectedChannels,
+        categories: selectedCategories,
+        states: selectedStates,
+        cities: selectedCities
+      },
+    }));
   };
 
-  // Clear all filters and fetch latest posts
   const clearFilters = () => {
     setSelectedChannels([]);
     setSelectedCategories([]);
-    setSelectedStates([]);
-    setSelectedCities([]);
-
     dispatch(fetchLatestPosts());
   };
 
@@ -85,10 +43,10 @@ const SideBar = () => {
             title="Channels"
             options={ChannelOptions}
             selected={selectedChannels}
-            toggleOption={(channel: ChannelType) =>
-              setSelectedChannels((prev) =>
+            toggleOption={(channel: ChannelType) => 
+              setSelectedChannels(prev =>
                 prev.includes(channel)
-                  ? prev.filter((c) => c !== channel)
+                  ? prev.filter(c => c !== channel)
                   : [...prev, channel]
               )
             }
@@ -97,40 +55,17 @@ const SideBar = () => {
             title="Categories"
             options={CategoryOptions}
             selected={selectedCategories}
-            toggleOption={(category: CategoryType) =>
-              setSelectedCategories((prev) =>
+            toggleOption={(category: CategoryType) => 
+              setSelectedCategories(prev =>
                 prev.includes(category)
-                  ? prev.filter((c) => c !== category)
+                  ? prev.filter(c => c !== category)
                   : [...prev, category]
               )
             }
           />
         </div>
-
-        {/* Add other sections for Location and Time Frame here */}
-        <div className="post-location-filter">
-          <FilterLocation
-            selectedStates={selectedStates}
-            setSelectedStates={setSelectedStates}
-            selectedCities={selectedCities}
-            setSelectedCities={setSelectedCities}
-            title="Location"
-            // options={states}
-            toggleOption={(states: CategoryType) =>
-              setSelectedCategories((prev) =>
-                prev.includes(category)
-                  ? prev.filter((c) => c !== category)
-                  : [...prev, category]
-              )
-            }
-          />
-        </div>
-        <Button
-          className="btn"
-          variant="outlined"
-          color="secondary"
-          onClick={clearFilters}
-        >
+        <FilterLocation />
+        <Button className="btn" variant="outlined" color="secondary" onClick={clearFilters}>
           Clear Filters
         </Button>
         <Button
@@ -139,9 +74,10 @@ const SideBar = () => {
           color="primary"
           onClick={applyFilters}
           disabled={
-            selectedChannels.length == 0 &&
-            selectedCategories.length == 0 &&
-            selectedStates.length == 0
+            selectedChannels.length === 0 &&
+            selectedCategories.length === 0 &&
+            selectedStates.length === 0 &&
+            selectedCities.length === 0 // Add this line to include city filter in the condition
           }
         >
           Apply Now
@@ -152,3 +88,4 @@ const SideBar = () => {
 };
 
 export default SideBar;
+
