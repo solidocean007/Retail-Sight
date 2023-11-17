@@ -10,13 +10,15 @@ import { ChannelType } from "./ChannelSelector";
 import { CategoryType } from "./CategorySelector";
 import { ChannelOptions, CategoryOptions } from "../utils/filterOptions";
 import { useSelector } from "react-redux";
+import { AppDispatch } from "../utils/store";
+import { RootState } from "../utils/store";
 
 const SideBar = () => {
   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([]);
   const selectedStates = useSelector((state: RootState) => state.locations.selectedStates);
   const selectedCities = useSelector((state: RootState) => state.locations.selectedCities);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   const applyFilters = () => {
     dispatch(fetchFilteredPosts({
@@ -24,7 +26,7 @@ const SideBar = () => {
         channels: selectedChannels,
         categories: selectedCategories,
         states: selectedStates,
-        cities: selectedCities
+        cities: selectedCities,
       },
     }));
   };

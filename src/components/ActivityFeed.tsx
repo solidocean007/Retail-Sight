@@ -33,12 +33,12 @@ const selectFilteredPosts = createSelector(
     (state: RootState) => state.locations.selectedCities,
   ],
   (posts, selectedStates, selectedCities) => {
+    console.log('posts: ', posts)
     return posts.filter((post) => {
-      const matchesState =
-        selectedStates.length === 0 || selectedStates.includes(post.state);
-      const matchesCity =
-        selectedCities.length === 0 || selectedCities.includes(post.city);
-      return matchesState && matchesCity;
+      const matchesState = selectedStates.length === 0 || (post.state && selectedStates.includes(post.state));
+      // const matchesCity = selectedCities.length === 0 || (post.city && selectedCities.includes(post.city));
+      // return matchesState && matchesCity;
+      return matchesState;
     });
   }
 );

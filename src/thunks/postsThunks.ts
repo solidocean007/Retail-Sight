@@ -13,6 +13,8 @@ type FetchPostsArgs = {
   filters: {
     channels: string[];
     categories: string[];
+    states: string[];
+    cities: string[];
   };
   // lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
 };
@@ -62,6 +64,7 @@ export const fetchFilteredPosts = createAsyncThunk<
   FetchPostsArgs,
   { rejectValue: string }
 >("posts/fetchFiltered", async ({ filters }, { getState, rejectWithValue }) => { // getState is defined but never used // Type 'Promise<unknown>' is not assignable to type 'Promise<PostType[]>'.
+  console.log(filters, ' : filters')
   // Type 'unknown' is not assignable to type 'PostType[]'.
   try {
     // First, try to get filtered posts from IndexedDB
