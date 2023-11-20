@@ -23,7 +23,7 @@ import NoContentCard from "./NoContentCard";
 // import { createSelector } from "@reduxjs/toolkit";
 // import { RootState } from "../utils/store";
 // import { selectAllPosts } from "../Slices/locationSlice";
-import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { getPostsFromIndexedDB, addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
   
 // Define the memoized selector
 const selectFilteredPosts = createSelector(
@@ -36,8 +36,8 @@ const selectFilteredPosts = createSelector(
     console.log('posts: ', posts)
     return posts.filter((post) => {
       const matchesState = selectedStates.length === 0 || (post.state && selectedStates.includes(post.state));
-      // const matchesCity = selectedCities.length === 0 || (post.city && selectedCities.includes(post.city));
-      // return matchesState && matchesCity;
+      const matchesCity = selectedCities.length === 0 || (post.city && selectedCities.includes(post.city));
+      return matchesState && matchesCity;
       return matchesState;
     });
   }
@@ -57,24 +57,25 @@ const ActivityFeed = () => {
   // }, [dispatch]);
 
   useEffect(() => {
-    const loadPosts = async () => {
-      // Load posts from IndexedDB
+    const loadAndUpdatePosts = async () => {
       const cachedPosts = await getPostsFromIndexedDB();
-
+  
       if (cachedPosts.length > 0) {
-        // If there are cached posts, dispatch an action to update the store
-        dispatch(setPosts(cachedPosts)); // Assuming you have a setPosts action
-      } else {
-        // If IndexedDB is empty, fetch posts from Firestore
-        dispatch(fetchLatestPosts());
+        dispatch(setPosts(cachedPosts));
       }
-
-      // Optionally, after displaying cached data, check Firestore for new updates
-      // and update both the Redux store and IndexedDB cache if needed
+  
+      // Fetch latest posts from Firestore
+      const latestPosts = await dispatch(fetchLatestPosts()).unwrap();
+  
+      if (latestPosts.length > 0) {
+        dispatch(setPosts(latestPosts)); // Update Redux store
+        await addPostsToIndexedDB(latestPosts); // Update IndexedDB
+      }
     };
-
-    loadPosts();
+  
+    loadAndUpdatePosts();
   }, [dispatch]);
+  
   
 
 

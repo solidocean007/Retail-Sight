@@ -12,6 +12,7 @@ import { ChannelOptions, CategoryOptions } from "../utils/filterOptions";
 import { useSelector } from "react-redux";
 import { AppDispatch } from "../utils/store";
 import { RootState } from "../utils/store";
+import { clearLocationFilters } from "../Slices/locationSlice";
 
 const SideBar = () => {
   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
@@ -31,11 +32,19 @@ const SideBar = () => {
     }));
   };
 
-  const clearFilters = () => {
-    setSelectedChannels([]);
-    setSelectedCategories([]);
-    dispatch(fetchLatestPosts());
-  };
+  // In SideBar component
+const clearFilters = () => {
+  // Clear local states for channels and categories
+  setSelectedChannels([]);
+  setSelectedCategories([]);
+
+  // Dispatch actions to clear filters in Redux store
+  dispatch(clearLocationFilters()); // This will reset both state and city filters in your Redux store
+
+  // Fetch latest posts
+  dispatch(fetchLatestPosts());
+};
+
 
   return (
     <Container className="side-bar-container">

@@ -1,39 +1,7 @@
 // indexedDBUtils.ts
-const dbName = "myRetailAppDB";
-const dbVersion = 1; // Increment for each schema change
 import { PostType } from "../types";
 import { FilterCriteria } from "../../Slices/postsSlice";
-
-function openDB(): Promise<IDBDatabase> {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(dbName, dbVersion);
-
-    request.onerror = (event) => {
-      reject(`IndexedDB database error: ${event.target} `); 
-    };
-
-    request.onsuccess = () => { // event is defined but never used
-      resolve(request.result);
-    };
-
-    request.onupgradeneeded = () => {
-      const db = request.result; // Directly use request.result
-      if (!db.objectStoreNames.contains('posts')) {
-        db.createObjectStore('posts', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('categories')) {
-        db.createObjectStore('categories', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('channels')) {
-        db.createObjectStore('channels', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('locations')) {
-        db.createObjectStore('locations', { keyPath: 'state' });
-      }
-      // Add 'companies' object store when you add that collection
-    };
-  });
-}
+import { openDB } from "./indexedDBOpen";
 
 export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
   const db = await openDB();

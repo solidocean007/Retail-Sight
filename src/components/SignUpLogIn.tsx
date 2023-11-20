@@ -26,6 +26,9 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { validateUserInputs } from "../utils/validation/validations";
 import './signUpLogIn.css'
 
+// Import Snackbar related actions
+import { showMessage, hideMessage } from "../Slices/snackbarSlice";
+
 export const SignUpLogin = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -114,7 +117,7 @@ export const SignUpLogin = () => {
 
       if (firstError) {
         // sets alert to first error
-        alert(`Bad data input: ${firstError}`); // use he snackbar somehow??
+        dispatch(showMessage(`Bad data input: ${firstError}`));
         return; // quits onSubmit here if there is any error found
       }
 
@@ -131,11 +134,11 @@ export const SignUpLogin = () => {
 
         if (authData?.uid) {
           dispatch(setUser({ uid: authData.uid }));
-          console.log("Sign-up successful");
+          dispatch(showMessage(`Sign-up successful`));
           navigate("/userHomePage");
         }
       } catch (error) {
-        console.error("Error during sign-up:", error);
+        dispatch(showMessage(`Sign-up error: ${error}`));
       }
     } else {
       try {
@@ -152,10 +155,10 @@ export const SignUpLogin = () => {
           }
         }
 
-        console.log("Login successful");
+        dispatch(showMessage(`Login successful`));
         navigate("/userHomePage");
       } catch (error) {
-        console.error("Error during login:", error);
+        dispatch(showMessage(`Login error:  ${error}`));
       }
     }
     console.log("Resetting form");
