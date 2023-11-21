@@ -15,5 +15,3 @@ export const filterByCategories = (categories: string[], baseQuery: Query<Docume
   }
   return query(baseQuery, where("category", "in", categories));
 };
-
-

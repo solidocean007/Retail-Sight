@@ -8,6 +8,7 @@ import {
   filterByChannels,
 } from "../services/postsServices";
 import { getFilteredPostsFromIndexedDB, storeFilteredPostsInIndexedDB } from "../utils/database/indexedDBUtils";
+import { firestoreRead } from "../utils/firestoreUtils";
 
 type FetchPostsArgs = {
   filters: {
@@ -35,23 +36,16 @@ export const fetchLatestPosts = createAsyncThunk<
   // console.log("Constructed query for latest posts:", baseQuery);
 
   try {
-    const postSnapshot = await getDocs(baseQuery);
+    const posts = await firestoreRead(async () => {
+      const postSnapshot = await getDocs(baseQuery);
+      if (postSnapshot.empty) return [];
 
-    if (postSnapshot.empty) {
-      console.log("No posts found in the snapshot.");
-      return []; // Return an empty array if no documents are found
-    }
+      return postSnapshot.docs.map((doc) => ({
+        ...(doc.data() as PostType),
+        id: doc.id,
+      }));
+    }, 'Fetching the latest posts');
 
-    console.log(
-      `Found ${postSnapshot.docs.length} posts, preparing to map them to PostType...`
-    );
-
-    const posts: PostType[] = postSnapshot.docs.map((doc) => ({
-      ...(doc.data() as PostType),
-      id: doc.id,
-    }));
-
-    console.log("Successfully fetched the latest posts:", posts);
     return posts;
   } catch (error) {
     console.error("Error fetching latest posts:", error);
@@ -63,10 +57,11 @@ export const fetchFilteredPosts = createAsyncThunk<
   PostType[],
   FetchPostsArgs,
   { rejectValue: string }
->("posts/fetchFiltered", async ({ filters }, { getState, rejectWithValue }) => { // getState is defined but never used // Type 'Promise<unknown>' is not assignable to type 'Promise<PostType[]>'.
+>("posts/fetchFiltered", async ({ filters }, { rejectWithValue }) => { // getState is defined but never used // Type 'Promise<unknown>' is not assignable to type 'Promise<PostType[]>'.
   console.log(filters, ' : filters')
   // Type 'unknown' is not assignable to type 'PostType[]'.
   try {
+    
     // First, try to get filtered posts from IndexedDB
     const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
 
@@ -86,25 +81,17 @@ export const fetchFilteredPosts = createAsyncThunk<
         baseQuery = filterByCategories(filters.categories, baseQuery);
       }
 
-      // Execute the query
-      const queryToExecute = query(baseQuery, limit(25)); // or any other limit you prefer
-      const postSnapshot = await getDocs(queryToExecute);
+      const posts = await firestoreRead(async () => {
+        const postSnapshot = await getDocs(query(baseQuery, limit(25)));
+        if (postSnapshot.empty) return [];
 
-      if (postSnapshot.empty) {
-        // No documents found with the current filters
-        return [];
-      }
+        return postSnapshot.docs.map((doc) => ({
+          ...(doc.data() as PostType),
+          id: doc.id,
+        }));
+      }, 'Fetching filtered posts');
 
-      // Transform Firestore docs into PostType array
-      const posts = postSnapshot.docs.map((doc) => ({
-        ...(doc.data() as PostType),
-        id: doc.id,
-      }));
-
-      // Store the fetched posts in IndexedDB
       await storeFilteredPostsInIndexedDB(posts, filters);
-
-      // Return the fetched posts
       return posts;
     }
   } catch (error) {
