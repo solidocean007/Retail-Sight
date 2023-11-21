@@ -8,7 +8,7 @@ export const saveUserDataToIndexedDB = async (userData: UserType) => {
   const db = await openDB();
   const transaction = db.transaction([USER_DATA_STORE], 'readwrite');
   const store = transaction.objectStore(USER_DATA_STORE);
-  const request = store.put(userData); 
+  const request = store.put(userData, USER_DATA_KEY); // Use put if you want to update existing entries, add if not
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);

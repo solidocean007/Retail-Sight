@@ -10,7 +10,6 @@ import { db } from "../firebase";
 // import { TPhoneInputState } from "./types";
 import { setDoc, getDoc,doc, collection } from "firebase/firestore";
 import { UserType } from "../types";
-import { firestoreRead } from "../firestoreUtils";
 
 interface FirebaseError extends Error {
   code: string;
@@ -80,47 +79,39 @@ export const handleSignUp = async (
   }
 };
 
-export const handleLogin = async (email: string, password: string): Promise<UserType | null> => {
-  console.log("Attempting to log in with:", email, password); // Logging credentials (be cautious with logging sensitive data like passwords in production)
-  
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    console.log("UserCredential obtained:", userCredential);
 
+export const handleLogin = async (email: string, password: string): Promise<UserType | null> => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    const user = userCredential.user;
     if (user) {
       const uid = user.uid;
-      console.log("User UID:", uid);
-
       // Fetch additional user data from Firestore
       const docRef = doc(collection(db, "users"), uid);
-      console.log("Document reference for Firestore:", docRef);
-
-      const data = await firestoreRead(async () => {
-        const docSnap = await getDoc(doc(collection(db, "users"), uid));
-        if (docSnap.exists()) {
-          return docSnap.data() as UserType;
-        }
-        return null;
-      }, `Fetching user data for UID: ${uid}`);
-
-      if (data) {
-        console.log("User data from Firestore:", data);
-        return data;
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data() as UserType;
+        return {
+          ...data
+        };
       } else {
-        console.log("No such user in Firestore!");
+        console.log("No such user!");
         return null;
       }
-    } else {
-      console.log("No user found in Firebase Auth");
-      return null;
     }
+    
+    return null;
   } catch (error) {
     const firebaseError = error as FirebaseError;
     const errorCode = firebaseError.code;
     const errorMessage = firebaseError.message;
     console.error("Error logging in: ", errorCode, errorMessage);
-    throw error; // Rethrowing the error to be handled or logged elsewhere
+    throw error;
   }
 };
 

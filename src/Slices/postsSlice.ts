@@ -71,7 +71,7 @@ const postsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchFilteredPosts.fulfilled, (state, action) => {
-        console.log("fetchFilteredPosts.fulfilled with payload:", action.payload);
+        console.log("fetchAllPosts.fulfilled with payload:", action.payload); // shouldnt this say fetchFilteredPosts.fullfilled with payload?
         state.loading = false;
         state.posts = action.payload;
         // Update the lastVisible if posts are fetched

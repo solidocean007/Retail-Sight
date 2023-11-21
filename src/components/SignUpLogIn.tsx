@@ -1,36 +1,36 @@
 // SignUpLogin.tsx
-import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
-
+import { useState } from "react";
 import { TErrorsOfInputs, TUserInputType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
+import { handleSignUp, handleLogin } from "../utils/validation/authenticate";
 import { useNavigate } from "react-router-dom";
+import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFirestore";
 
 // Import necessary Material-UI components
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
-
+// import { makeStyles } from "@mui/material";
 // import items from Redux
 import { useAppDispatch } from "../utils/store";
+// import { incrementRead } from "../Slices/firestoreReadsSlice";
+import { setUser } from "../actions/userActions";
 //imports for password visibility
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
-// submit validation functions
-import { handleSignUpSubmit, handleLoginSubmit } from "../utils/validation/validationSubmit";
-
-//Import style sheet
+//Import validation
+import { validateUserInputs } from "../utils/validation/validations";
 import './signUpLogIn.css'
-import { selectLoadingState, selectUser } from "../Slices/userSlice";
+
+// Import Snackbar related actions
+import { showMessage, hideMessage } from "../Slices/snackbarSlice";
 
 export const SignUpLogin = () => {
   const navigate = useNavigate();
-  const currentUserInRedux = useSelector(selectUser)
-  const isLoading = useSelector(selectLoadingState);
   const dispatch = useAppDispatch();
 
   const [signUpError, setSignUpError] = useState("");
@@ -61,21 +61,6 @@ export const SignUpLogin = () => {
     verifyPasswordInputError: "",
   });
 
-   // Refactor to a separate function for readability
-   const redirectIfLoggedIn = () => {
-    if (isLoading === 'succeeded' && currentUserInRedux) {
-      navigate('/userHomePage');
-    }
-  };
-
-  useEffect(() => {
-    redirectIfLoggedIn();
-  }, [currentUserInRedux, isLoading, navigate]); // missing dependency
-
-  if (isLoading === 'pending') {
-    return <div>Loading...</div>; // Use a proper loading indicator
-  }
-  
   type PasswordVisibilityKey = "password" | "passwordConfirm";
 
   // helper functions
@@ -108,23 +93,77 @@ export const SignUpLogin = () => {
 
   const setFormMode = () => setIsSignUp((prevIsSignUp) => !prevIsSignUp);
 
-  const onSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setTriedSubmit(true);
-    try {
-      if (isSignUp) {
-        await handleSignUpSubmit(userInputs, setErrorsOfInputs, setSignUpError, dispatch, navigate);
-      } else {
-        await handleLoginSubmit(userInputs, dispatch, navigate);
-      }
-    } catch (error) {
+  // destructure state of userInputs
+  const {
+    firstNameInput,
+    lastNameInput,
+    emailInput,
+    companyInput,
+    phoneInput,
+    passwordInput,
+  } = userInputs;
 
-      console.error('An error occurred during form submission:', error);
-    } finally {
-      resetForm(); // Reset the form after submission attempt
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // prevent refresh
+    setTriedSubmit(true); // set tried attempt to true
+
+    if (isSignUp) {
+      const validationErrors = validateUserInputs(userInputs); // sets any errors to object
+      setErrorsOfInputs(validationErrors); // sets state of errors if present
+      const firstError = Object.values(validationErrors).find(
+        // finds first error
+        (error: string) => error !== ""
+      );
+
+      if (firstError) {
+        // sets alert to first error
+        dispatch(showMessage(`Bad data input: ${firstError}`));
+        return; // quits onSubmit here if there is any error found
+      }
+
+      try {
+        const authData = await handleSignUp(
+          firstNameInput,
+          lastNameInput,
+          emailInput,
+          companyInput,
+          phoneInput,
+          passwordInput,
+          setSignUpError,
+        );
+
+        if (authData?.uid) {
+          dispatch(setUser({ uid: authData.uid }));
+          dispatch(showMessage(`Sign-up successful`));
+          navigate("/userHomePage");
+        }
+      } catch (error) {
+        dispatch(showMessage(`Sign-up error: ${error}`));
+      }
+    } else {
+      try {
+        // begin login.
+        const authData = await handleLogin(emailInput, passwordInput);
+
+        if (authData && authData.uid) {
+          // Fetch user data from Firestore or Firebase auth as required
+          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid);
+          if (fetchedUserData) {
+            dispatch(setUser({ uid: fetchedUserData.uid }));
+
+ 
+          }
+        }
+
+        dispatch(showMessage(`Login successful`));
+        navigate("/userHomePage");
+      } catch (error) {
+        dispatch(showMessage(`Login error:  ${error}`));
+      }
     }
+    console.log("Resetting form");
+    resetForm();
   };
-  
 
   return (
     <div className="outer-container">
@@ -336,5 +375,6 @@ export const SignUpLogin = () => {
       </form>
     </Container>
     </div>
+   
   );
 };
