@@ -15,7 +15,7 @@ export const fetchLocationOptions = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const locationsCollectionRef = collection(db, "locations");
-      // console.log('Fetching locations from Firestore');
+      console.log('Fetching locations from Firestore read');
       const querySnapshot = await getDocs(locationsCollectionRef);
       const locations: { [key: string]: string[] } = {};
       // console.log('Documents fetched:', querySnapshot.docs.length);

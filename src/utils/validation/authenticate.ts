@@ -92,6 +92,7 @@ export const handleLogin = async (email: string, password: string): Promise<User
       const uid = user.uid;
       // Fetch additional user data from Firestore
       const docRef = doc(collection(db, "users"), uid);
+      console.log('get user from login read')
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {

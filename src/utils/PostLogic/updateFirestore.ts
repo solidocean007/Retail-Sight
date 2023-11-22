@@ -6,6 +6,7 @@ export const addPostToFirestore = async (db: any, postData: any) => {
 
 export const updateChannelsInFirestore = async (db: any, channel: string, postId: string) => {
   const channelRef = doc(db, "channels", channel);
+  console.log('update channels in firestore read')
   const channelDoc = await getDoc(channelRef);
   
   if (channelDoc.exists()) {
@@ -21,6 +22,7 @@ export const updateChannelsInFirestore = async (db: any, channel: string, postId
 
 export const updateCategoriesInFirestore = async (db: any, category: string, postId: string) => {
   const categoryRef = doc(db, "categories", category);
+  console.log('update categories in firestore read')
   const categoryDoc = await getDoc(categoryRef);
   
   if (categoryDoc.exists()) {

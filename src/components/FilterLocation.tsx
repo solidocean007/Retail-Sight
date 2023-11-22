@@ -26,7 +26,7 @@ const MenuProps = {
 
 const FilterLocation = () => {
   const { locations, selectedStates, selectedCities } = useSelector((state: RootState) => state.locations);
-  const theme = useTheme(); 
+  const theme = useTheme();  // assigned but never read
   const dispatch = useDispatch<AppDispatch>();
 
   const handleStateChange = (event: SelectChangeEvent<typeof selectedStates>) => {

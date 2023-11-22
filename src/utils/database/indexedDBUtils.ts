@@ -95,6 +95,55 @@ export async function storeFilteredPostsInIndexedDB(posts: PostType[], filters: 
   });
 }
 
+// Add this new function to indexedDBUtils.ts
+
+export async function storeLatestPostsInIndexedDB(posts: PostType[]): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(['latestPosts'], 'readwrite'); // Consider using a separate object store for latest posts
+  const store = transaction.objectStore('latestPosts');
+
+  return new Promise<void>((resolve, reject) => {
+    // Clear existing posts before storing new ones to ensure the store only contains the latest posts
+    const clearRequest = store.clear();
+    clearRequest.onerror = (event) => {
+      reject((event.target as IDBRequest).error);
+    };
+
+    clearRequest.onsuccess = () => {
+      // Handle the successful completion of the transaction
+      transaction.oncomplete = () => {
+        resolve();
+      };
+
+      // Handle any errors that occur during the transaction
+      transaction.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+
+      // Perform the 'put' operations for each post
+      posts.forEach((post) => {
+        const request = store.put(post);
+        request.onerror = () => {
+          reject(request.error);
+        };
+      });
+    };
+  });
+}
+
+// Add this new function to indexedDBUtils.ts
+
+export async function getLatestPostsFromIndexedDB(): Promise<PostType[]> {
+  const db = await openDB();
+  const transaction = db.transaction(['latestPosts'], 'readonly');
+  const store = transaction.objectStore('latestPosts');
+  const getAllRequest = store.getAll();
+
+  return new Promise((resolve, reject) => {
+    getAllRequest.onsuccess = () => resolve(getAllRequest.result as PostType[]);
+    getAllRequest.onerror = () => reject(getAllRequest.error);
+  });
+}
 
 // Similar functions for 'categories', 'channels', 'locations', and later 'companies'
 

@@ -12,6 +12,7 @@ export const useFirebaseAuth = () => {
   const handleUserChange = useCallback(async (user: User | null) => {
     if (user) {
       try {
+        console.log('handleUserChange in useFirebaseAuth read')
         const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid);
         if (userDataFromFirestore) {
           dispatch(setUser({ uid: user.uid }));

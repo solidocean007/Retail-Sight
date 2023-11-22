@@ -1,128 +1,55 @@
-//ActivityFeed
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { FixedSizeList as List } from "react-window";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
-import { db } from "../utils/firebase";
-import { AppDispatch } from "../utils/store";
-import { useSelector, useDispatch } from "react-redux";
-import { setPosts } from "../Slices/postsSlice";
-import { incrementRead } from "../Slices/firestoreReadsSlice";
-import { createSelector } from "@reduxjs/toolkit";
-import { RootState } from "../utils/store";
-// import PostCard from "./PostCard";
+import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
-// import { ChannelType } from "./ChannelSelector";
-import { fetchLatestPosts } from "../thunks/postsThunks";
-// import { CategoryType } from "./CategorySelector";
 import NoContentCard from "./NoContentCard";
-// import { createSelector } from "@reduxjs/toolkit";
-// import { RootState } from "../utils/store";
-// import { selectAllPosts } from "../Slices/locationSlice";
-import { getPostsFromIndexedDB, addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
-  
-// Define the memoized selector
-const selectFilteredPosts = createSelector(
-  [
-    (state: RootState) => state.posts.posts,
-    (state: RootState) => state.locations.selectedStates,
-    (state: RootState) => state.locations.selectedCities,
-  ],
-  (posts, selectedStates, selectedCities) => {
-    console.log('posts: ', posts)
-    return posts.filter((post) => {
-      const matchesState = selectedStates.length === 0 || (post.state && selectedStates.includes(post.state));
-      const matchesCity = selectedCities.length === 0 || (post.city && selectedCities.includes(post.city));
-      return matchesState && matchesCity;
-      return matchesState;
-    });
-  }
-);
+import { fetchMorePostsBatch } from "../thunks/postsThunks";
+import { RootState } from "../utils/store";
+import { useAppDispatch } from "../utils/store";
+import { fetchInitialPostsBatch } from "../thunks/postsThunks";
+
+const POST_BATCH_SIZE = 10;
 
 const ActivityFeed = () => {
-  //  const { lastVisible } = useSelector((state: RootState) => ({
-  //    lastVisible: state.posts.lastVisible,
-  //  }));
-  const filteredPosts = useSelector(selectFilteredPosts); // Use the selector in your component
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
+  const posts = useSelector((state: RootState) => state.posts.posts);
+  const lastVisible = useSelector((state: RootState) => state.posts.lastVisible);
+  const loading = useSelector((state: RootState) => state.posts.loading);
 
-
-  
-  // useEffect(() => {
-  //   dispatch(fetchLatestPosts());
-  // }, [dispatch]);
+  const loadMorePosts = useCallback(() => {
+    if (loading || !lastVisible) return;
+    dispatch(fetchMorePostsBatch({ lastVisible, limit: POST_BATCH_SIZE })); // type mismatch
+  }, [dispatch, loading, lastVisible]);
 
   useEffect(() => {
-    const loadAndUpdatePosts = async () => {
-      const cachedPosts = await getPostsFromIndexedDB();
-  
-      if (cachedPosts.length > 0) {
-        dispatch(setPosts(cachedPosts));
-      }
-  
-      // Fetch latest posts from Firestore
-      const latestPosts = await dispatch(fetchLatestPosts()).unwrap();
-  
-      if (latestPosts.length > 0) {
-        dispatch(setPosts(latestPosts)); // Update Redux store
-        await addPostsToIndexedDB(latestPosts); // Update IndexedDB
-      }
-    };
-  
-    loadAndUpdatePosts();
+    dispatch(fetchInitialPostsBatch(POST_BATCH_SIZE)); // Fetch the initial batch of posts
   }, [dispatch]);
-  
-  
 
+  const isItemLoaded = (index : number) => index < posts.length;
 
-  const getPostsByTag = async (hashTag: string) => {
-    console.log(`Fetching posts with hashtag: ${hashTag}`);
-    const postCollection = collection(db, "posts");
-    const postsByTagQuery = query(
-      postCollection,
-      where("hashtags", "array-contains", hashTag)
-    );
-
-    try {
-      const postSnapshot = await getDocs(postsByTagQuery);
-      console.log(`Fetched ${postSnapshot.docs.length} posts by hashtag.`);
-      dispatch(incrementRead(postSnapshot.docs.length));
-
-      const postData = postSnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
-      dispatch(setPosts(postData));
-    } catch (error) {
-      console.error("Error fetching posts by hashtag:", error);
+  const handleItemsRendered = ({ visibleStopIndex }: { visibleStopIndex: number }) => {
+    if (isItemLoaded(visibleStopIndex)) {
+      loadMorePosts();
     }
   };
 
   return (
     <>
-    {filteredPosts.length === 0 ? (
-      <NoContentCard />
-    ) : (
-      <List
-        className="list"
-        height={window.innerHeight} // or any height you desire for the feed viewport
-        itemCount={filteredPosts.length}
-        itemSize={900} // from your CSS
-        width={650} // a bit more than the card's width to account for potential scrollbars and padding
-        itemData={{
-          posts: filteredPosts,
-          getPostsByTag: getPostsByTag,
-          // ... any other data or methods you need to pass
-        }}
-      >
-        {PostCardRenderer}
-      </List>
-    )}
-  </>
+      {posts.length === 0 ? (
+        <NoContentCard />
+      ) : (
+        <List
+          height={window.innerHeight}
+          itemCount={posts.length}
+          itemSize={900} // Adjust based on your item size
+          width={650}
+          onItemsRendered={handleItemsRendered}
+          itemData={{ posts }}
+        >
+          {PostCardRenderer}
+        </List>
+      )}
+    </>
   );
 };
 

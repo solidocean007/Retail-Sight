@@ -2,12 +2,15 @@
 import { PostType } from "../utils/types";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
-import { collection, query, orderBy, limit, getDocs, Query, DocumentData } from "firebase/firestore";
+import { collection, query, orderBy, limit, doc, getDocs, getDoc, Query, DocumentData, startAfter } from "firebase/firestore";
 import {
   filterByCategories,
   filterByChannels,
 } from "../services/postsServices";
-import { getFilteredPostsFromIndexedDB, storeFilteredPostsInIndexedDB } from "../utils/database/indexedDBUtils";
+import { getFilteredPostsFromIndexedDB, storeFilteredPostsInIndexedDB, storeLatestPostsInIndexedDB, getLatestPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { DocumentSnapshot } from "firebase/firestore";
+
+// const POSTS_BATCH_SIZE = 10; // Number of posts to fetch per batch
 
 type FetchPostsArgs = {
   filters: {
@@ -16,44 +19,106 @@ type FetchPostsArgs = {
     states: string[];
     cities: string[];
   };
-  // lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
+  lastVisible: DocumentSnapshot | null; // This should be the type for your lastVisible document snapshot
 };
+
+export const fetchInitialPostsBatch = createAsyncThunk(
+  'posts/fetchInitial',
+  async (POSTS_BATCH_SIZE: number, { rejectWithValue }) => {
+    try {
+      const postsCollectionRef = collection(db, "posts");
+      const postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"), limit(POSTS_BATCH_SIZE));
+      console.log('fetchInitialPosts read')
+      const snapshot = await getDocs(postsQuery);
+      
+      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+
+      return { posts, lastVisible };
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+
+// Define a type for the thunk argument
+type FetchMorePostsArgs = {
+  lastVisible: string | null;  // Use string to represent the last document ID
+  limit: number;
+};
+
+export const fetchMorePostsBatch = createAsyncThunk(
+  'posts/fetchMore',
+  async ({ lastVisible, limit: BatchSize }: FetchMorePostsArgs, { rejectWithValue }) => {
+    try {
+      const postsCollectionRef = collection(db, "posts");
+      let postsQuery;
+      
+      // If lastVisible is not null, convert it to a DocumentSnapshot
+      if (lastVisible) {
+        const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
+        postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"), startAfter(lastVisibleSnapshot), limit(BatchSize));
+      } else {
+        postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"), limit(BatchSize));
+      }
+
+      const snapshot = await getDocs(postsQuery);
+      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Get the last visible document's ID for pagination
+      const newLastVisible = snapshot.docs[snapshot.docs.length - 1]?.id || null;
+
+      return { posts, lastVisible: newLastVisible };
+    } catch (error) {
+      // Check if error is an instance of Error and has a message property
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      // If it's not an Error instance or doesn't have a message, return a default message
+      return rejectWithValue('An unknown error occurred');
+    }
+  }
+);
 
 export const fetchLatestPosts = createAsyncThunk<
   PostType[],
   void,
   { rejectValue: string }
 >("posts/fetchLatest", async (_, { rejectWithValue }) => {
-  // console.log("Attempting to fetch the latest posts...");
-  const postsCollectionRef = collection(db, "posts");
-  const baseQuery = query(
-    postsCollectionRef,
-    orderBy("timestamp", "desc"),
-    limit(10)
-  );
-
-  // console.log("Constructed query for latest posts:", baseQuery);
-
+  
   try {
-    const postSnapshot = await getDocs(baseQuery);
+    // First, try to get the latest posts from IndexedDB
+    const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
 
-    if (postSnapshot.empty) {
-      console.log("No posts found in the snapshot.");
-      return []; // Return an empty array if no documents are found
+    if (cachedPosts.length > 0) {
+      return cachedPosts; // Return cached posts to avoid Firestore reads
+    } else {
+      // Fetch from Firestore as fallback
+      const postsCollectionRef = collection(db, "posts");
+      const baseQuery = query(
+        postsCollectionRef,
+        orderBy("timestamp", "desc"),
+        limit(10)
+      );
+      
+      console.log('fetchLatestPosts read')
+      const postSnapshot = await getDocs(baseQuery);
+
+      if (postSnapshot.empty) {
+        return [];
+      }
+
+      const posts: PostType[] = postSnapshot.docs.map((doc) => ({
+        ...(doc.data() as PostType),
+        id: doc.id,
+      }));
+
+      // Optionally, store the fetched posts in IndexedDB
+      await storeLatestPostsInIndexedDB(posts); // Assume this function exists
+
+      return posts;
     }
-
-    console.log(
-      `Found ${postSnapshot.docs.length} posts, preparing to map them to PostType...`
-    );
-
-    const posts: PostType[] = postSnapshot.docs.map((doc) => ({
-      ...(doc.data() as PostType),
-      id: doc.id,
-    }));
-
-    console.log("Successfully fetched the latest posts:", posts);
-    return posts;
-  } catch (error) {
+  }  catch (error) {
     console.error("Error fetching latest posts:", error);
     return rejectWithValue("Error fetching latest posts.");
   }
@@ -63,18 +128,18 @@ export const fetchFilteredPosts = createAsyncThunk<
   PostType[],
   FetchPostsArgs,
   { rejectValue: string }
->("posts/fetchFiltered", async ({ filters }, { getState, rejectWithValue }) => { // getState is defined but never used // Type 'Promise<unknown>' is not assignable to type 'Promise<PostType[]>'.
-  console.log(filters, ' : filters')
-  // Type 'unknown' is not assignable to type 'PostType[]'.
+>("posts/fetchFiltered", async ({ filters }, { rejectWithValue }) => { 
   try {
     // First, try to get filtered posts from IndexedDB
+    console.log("Attempting to fetch filtered posts from IndexedDB...");
     const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
 
-    if (cachedPosts.length > 0) { // cachedPosts is of type unknown
-      // If there are cached posts, return them
+    if (cachedPosts.length > 0) { 
+      console.log(`Found ${cachedPosts.length} cached posts in IndexedDB. Using cached data.`);
       return cachedPosts;
     } else {
       // If there are no cached posts, fetch from Firestore
+      console.log("No suitable cached posts found in IndexedDB. Fetching from Firestore...");
       let baseQuery: Query<DocumentData> = collection(db, "posts");
 
       // Apply channel filters if they are present
@@ -88,10 +153,11 @@ export const fetchFilteredPosts = createAsyncThunk<
 
       // Execute the query
       const queryToExecute = query(baseQuery, limit(25)); // or any other limit you prefer
+      console.log('fetchFilteredPosts read')
       const postSnapshot = await getDocs(queryToExecute);
 
       if (postSnapshot.empty) {
-        // No documents found with the current filters
+        console.log("No documents found with the current filters in Firestore.");
         return [];
       }
 
@@ -102,6 +168,7 @@ export const fetchFilteredPosts = createAsyncThunk<
       }));
 
       // Store the fetched posts in IndexedDB
+      console.log(`Fetched ${posts.length} posts from Firestore. Storing in IndexedDB.`);
       await storeFilteredPostsInIndexedDB(posts, filters);
 
       // Return the fetched posts

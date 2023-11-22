@@ -4,6 +4,7 @@ import { db } from '../firebase';
 
 export const fetchUserDocFromFirestore= async (uid: string) => {
   const userRef = doc(collection(db, 'users'), uid);
+  console.log('fetchUserDocFromFirestore from firestore read')
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {

@@ -69,6 +69,7 @@ const CommentSection: React.FC<CommentProps> = ({
           collection(db, "comments"),
           where("postId", "==", post.id)
         );
+        console.log('commentQuery read')
         const commentSnapshot = await getDocs(commentQuery);
         const comments = commentSnapshot.docs.map(
           (doc) => ({ commentId: doc.id, ...doc.data() } as CommentType)

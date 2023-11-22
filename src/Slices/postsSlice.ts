@@ -1,6 +1,5 @@
 // postsSlice
 import { createSlice } from "@reduxjs/toolkit";
-// import { DocumentSnapshot } from "firebase/firestore";
 import { fetchFilteredPosts, fetchLatestPosts } from "../thunks/postsThunks";
 import { PostType } from "../utils/types";
 import { PayloadAction } from "@reduxjs/toolkit";
@@ -15,23 +14,24 @@ type FetchPostsArgs = {
     channels: string[];
     categories: string[];
   };
-  // lastVisible: DocumentSnapshot; // This should be the type for your lastVisible document snapshot
+  lastVisible: string;
 };
 
+type CursorType = string;
 
 // New state shape including loading and error states
 interface PostsState {
   posts: PostType[];
   loading: boolean;
   error: string | null;
-  // lastVisible: LastVisible;
+  lastVisible: CursorType;
 }
 
 const initialState: PostsState = {
   posts: [],
   loading: false,
   error: null,
-  // lastVisible: null,
+  lastVisible: '',
 };
 
 const postsSlice = createSlice({
@@ -39,13 +39,16 @@ const postsSlice = createSlice({
   initialState,
   reducers: {
     // Adjusted to the correct state.posts property
-    setPosts: (state, action) => {
+    setPosts: (state, action: PayloadAction<PostType[]>) => {
       state.posts = action.payload;
     },
     // Adjusted to the correct state.posts property
     deletePost: (state, action) => {
       state.posts = state.posts.filter((post) => post.id !== action.payload);
       // i need to delete images and comments as well
+    },
+    appendPosts: (state, action: PayloadAction<PostType[]>) => {
+      state.posts = [...state.posts, ...action.payload];
     },
     // Adjusted to the correct state.posts property
     updatePost: (state, action) => {
@@ -60,9 +63,9 @@ const postsSlice = createSlice({
       state.error = action.payload;
     },
     // Instead of storing the whole DocumentSnapshot, you can store just the ID, or necessary data.
-    // setLastVisible(state, action: PayloadAction<LastVisible>) {
-    //   state.lastVisible = action.payload;
-    // },
+    setLastVisible: (state, action: PayloadAction<CursorType>) => { // Cannot find CursorType
+      state.lastVisible = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -71,11 +74,13 @@ const postsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchFilteredPosts.fulfilled, (state, action) => {
-        console.log("fetchAllPosts.fulfilled with payload:", action.payload); // shouldnt this say fetchFilteredPosts.fullfilled with payload?
         state.loading = false;
-        state.posts = action.payload;
-        // Update the lastVisible if posts are fetched
-        // state.lastVisible = action.payload.length > 0 ? action.payload[action.payload.length - 1].docRef : null;
+        // Append new posts instead of replacing
+        state.posts = [...state.posts, ...action.payload];
+        // Update lastVisible based on the last post fetched
+        state.lastVisible = action.payload.length > 0
+          ? action.payload[action.payload.length - 1].id
+          : state.lastVisible;
       })
       .addCase(fetchFilteredPosts.rejected, (state, action) => {
         state.loading = false;
@@ -87,14 +92,13 @@ const postsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchLatestPosts.fulfilled, (state, action) => {
-        console.log('fetchLatestPosts.fullFilled with payload:', action.payload)
-        // Set the posts and update the lastVisible when posts are fetched
         state.loading = false;
-        state.posts = action.payload;
-        // state.lastVisible = action.payload.length > 0  // Type 'string | null' is not assignable to type 'WritableDraft<{ id: string; }> | null'.
-        // // Type 'string' is not assignable to type 'WritableDraft<{ id: string; }>'.ts(2322
-        //   ? action.payload[action.payload.length - 1].id // Assuming you want to track the last post's ID for pagination
-        //   : null;
+        // Append new posts instead of replacing
+        state.posts = [...state.posts, ...action.payload];
+        // Update lastVisible based on the last post fetched
+        state.lastVisible = action.payload.length > 0
+          ? action.payload[action.payload.length - 1].id
+          : state.lastVisible;
       })
       .addCase(fetchLatestPosts.rejected, (state, action) => {
         // Handle any errors if the fetch fails
@@ -110,6 +114,6 @@ export const {
   updatePost,
   setLoading,
   setError,
-  // setLastVisible,
+  setLastVisible,
 } = postsSlice.actions;
 export default postsSlice.reducer;

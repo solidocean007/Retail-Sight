@@ -1,9 +1,10 @@
 // firebase.ts
 import { initializeApp } from "firebase/app";
 import { getAuth, setPersistence, browserLocalPersistence, updateProfile } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-// import store from "./store";
-// import { setUser, logoutUser } from "../Slices/userSlice";
+import { getFirestore} from "firebase/firestore";
+// import { setLogLevel } from "firebase/app";
+// setLogLevel('debug');
+
 
 // Firebase configuration
 const firebaseConfig = {
