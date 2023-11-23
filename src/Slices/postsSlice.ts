@@ -1,6 +1,6 @@
 // postsSlice
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchFilteredPosts, fetchLatestPosts } from "../thunks/postsThunks";
+import { fetchFilteredPosts, fetchLatestPosts, fetchInitialPostsBatch, fetchMorePostsBatch } from "../thunks/postsThunks";
 import { PostType } from "../utils/types";
 import { PayloadAction } from "@reduxjs/toolkit";
 
@@ -24,7 +24,7 @@ interface PostsState {
   posts: PostType[];
   loading: boolean;
   error: string | null;
-  lastVisible: CursorType;
+  lastVisible: CursorType | null;
 }
 
 const initialState: PostsState = {
@@ -104,6 +104,30 @@ const postsSlice = createSlice({
         // Handle any errors if the fetch fails
         state.loading = false;
         state.error = action.error.message || "Error fetching latest posts";
+      })
+      .addCase(fetchInitialPostsBatch.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchInitialPostsBatch.fulfilled, (state, action) => {
+        state.posts = action.payload.posts;
+        state.lastVisible = action.payload.lastVisible;
+        state.loading = false;
+      })
+      .addCase(fetchInitialPostsBatch.rejected, (state, action) => {
+        state.error = action.error.message || "Error fetching initial posts";
+        state.loading = false;
+      })
+      .addCase(fetchMorePostsBatch.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchMorePostsBatch.fulfilled, (state, action) => {
+        state.posts = [...state.posts, ...action.payload.posts];
+        state.lastVisible = action.payload.lastVisible;
+        state.loading = false;
+      })
+      .addCase(fetchMorePostsBatch.rejected, (state, action) => {
+        state.error = action.error.message || "Error fetching more posts";
+        state.loading = false;
       });
   },
 });

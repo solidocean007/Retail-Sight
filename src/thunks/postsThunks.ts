@@ -10,6 +10,7 @@ import {
 import { getFilteredPostsFromIndexedDB, storeFilteredPostsInIndexedDB, storeLatestPostsInIndexedDB, getLatestPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { DocumentSnapshot } from "firebase/firestore";
 
+
 // const POSTS_BATCH_SIZE = 10; // Number of posts to fetch per batch
 
 type FetchPostsArgs = {
@@ -26,20 +27,29 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   'posts/fetchInitial',
   async (POSTS_BATCH_SIZE: number, { rejectWithValue }) => {
     try {
+      // Define the reference to the posts collection
       const postsCollectionRef = collection(db, "posts");
+      console.log(`Attempting to fetch initial batch of posts with size: ${POSTS_BATCH_SIZE}`);
       const postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"), limit(POSTS_BATCH_SIZE));
-      console.log('fetchInitialPosts read')
       const snapshot = await getDocs(postsQuery);
-      
-      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-      return { posts, lastVisible };
+      console.log(`Fetched ${snapshot.docs.length} posts.`);
+      const posts = snapshot.docs.map(doc => {
+        const postData = doc.data() as PostType;
+        console.log(`Post ID: ${doc.id}`, postData);
+        return { id: doc.id, ...postData }; 
+      });
+      const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+      console.log(`Last visible post ID: ${lastVisible?.id}`);
+
+      return { posts, lastVisible: lastVisible?.id }; // Ensure you return just the ID, not the whole DocumentSnapshot
     } catch (error) {
-      return rejectWithValue(error);
+      console.error('Error fetching initial posts:', error);
+      return rejectWithValue(error instanceof Error ? error.message : error);
     }
   }
 );
+
 
 
 // Define a type for the thunk argument
@@ -64,7 +74,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
       }
 
       const snapshot = await getDocs(postsQuery);
-      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PostType[];
       // Get the last visible document's ID for pagination
       const newLastVisible = snapshot.docs[snapshot.docs.length - 1]?.id || null;
 
