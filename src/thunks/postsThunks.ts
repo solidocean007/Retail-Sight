@@ -36,8 +36,8 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       console.log(`Fetched ${snapshot.docs.length} posts.`);
       const posts = snapshot.docs.map(doc => {
         const postData = doc.data() as PostType;
-        console.log(`Post ID: ${doc.id}`, postData);
-        return { id: doc.id, ...postData }; 
+        return { id: doc.id, ...postData }; // 'id' is specified more than once, so this usage will be overwritten.ts(2783)
+        // postsThunks.ts(39, 30): This spread always overwrites this property.
       });
       const lastVisible = snapshot.docs[snapshot.docs.length - 1];
       console.log(`Last visible post ID: ${lastVisible?.id}`);
