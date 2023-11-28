@@ -29,7 +29,7 @@ const handleThemeChange = () => {
 
 
   return (
-    <div style={{ position: 'fixed', bottom: '1rem', right: '1rem' }}>
+    <div style={{ position: 'fixed', bottom: '1rem', right: '1rem', zIndex: '20' }}>
       <Fab color="primary" aria-label="settings" onClick={handleToggleClick}>
         <SettingsIcon />
       </Fab>

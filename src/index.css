@@ -33,6 +33,10 @@
   --background-color: var(--dark-background-color);
   --text-color: var(--dark-text-color);
   --button-background: var(--dark-button-background);
+
+  .sign-up-body {
+    --background-color: rgb(35, 21, 61);
+  }
 }
 
 #root {
@@ -43,8 +47,6 @@
 *, *::before, *::after {
   box-sizing: border-box;
 }
-
-
 
 a {
   font-weight: 500;

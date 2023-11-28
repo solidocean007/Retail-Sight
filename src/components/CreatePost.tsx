@@ -1,5 +1,5 @@
 // CreatePost.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
@@ -27,7 +27,9 @@ import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import StoreLocator from "./StoreLocator";
 // import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
 import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
-import { CategoryType, ChannelType, PostType } from "../utils/types";
+import { PostType } from "../utils/types";
+import { CategoryType } from "./CategorySelector";
+import { ChannelType } from "./ChannelSelector";
 
 export const CreatePost = () => {
   const handlePostSubmission = useHandlePostSubmission();
@@ -48,7 +50,9 @@ export const CreatePost = () => {
     storeAddress: "",
     state: "",
     city: "",
-    postType: "public",
+    visibility: "public",
+    supplier: '',
+    brands: [],
     timestamp: "",
     user: {
       postUserName: `${userData?.firstName} ${userData?.lastName}`, 
@@ -59,6 +63,11 @@ export const CreatePost = () => {
     hashtags: [''],
     commentCount: 0,
   });
+
+  useEffect(() => {
+    // Fetch suppliers and brands logic here
+  }, []);
+  
   
 
   // Logic
@@ -95,7 +104,7 @@ export const CreatePost = () => {
   };
 
  // Update this to handle all field changes generically, including channel and category
-const handleFieldChange = (field: keyof PostType, value: any) => {
+const handleFieldChange = (field: keyof PostType, value: any) => { // specify a different type other than any
   setPost({ ...post, [field]: value });
 };
 
@@ -156,6 +165,9 @@ const handleFieldChange = (field: keyof PostType, value: any) => {
           onCategoryChange={setSelectedCategory}
         />
 
+        {/* <SupplierSelector/>
+        <BrandsSelector/> */}
+
         <Box mt={2}>
           <TextField
             fullWidth
@@ -172,13 +184,13 @@ const handleFieldChange = (field: keyof PostType, value: any) => {
           <Select
             fullWidth
             variant="outlined"
-            value={post.postType}
-            onChange={(e) => handleFieldChange("postType", e.target.value)}
+            value={post.visibility}
+            onChange={(e) => handleFieldChange("visibility", e.target.value)}
           >
             <MenuItem value="public">Public</MenuItem>
-            <MenuItem value="private">Private</MenuItem>
-            <MenuItem value="group">Group</MenuItem>
-            {/* Add more types as needed */}
+            <MenuItem value="private">Company</MenuItem>
+            <MenuItem value="group">Supplier</MenuItem>
+            <MenuItem value="group">Supplier & Company</MenuItem>
           </Select>
         </Box>
       </Box>

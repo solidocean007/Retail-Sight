@@ -11,13 +11,13 @@ import { deletePost } from "../../Slices/postsSlice";
 import { AnyAction } from "redux";
 import { db } from "../firebase";
 
-interface userDeletePostprops {
+interface userDeletePostProps {
   post: PostType;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   dispatch: React.Dispatch<AnyAction>;
 }
 
-export const userDeletePost = async ({ post, setIsEditModalOpen, dispatch }: userDeletePostprops) => {
+export const userDeletePost = async ({ post, setIsEditModalOpen, dispatch }: userDeletePostProps) => {
   // Optimistically remove the post from the UI
   dispatch(deletePost(post.id));
 

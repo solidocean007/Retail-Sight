@@ -1,3 +1,4 @@
+/* signUpLogin.css */
 .sign-up-container {
   max-width: 100%;
 }
@@ -11,12 +12,26 @@
 }
 
 body {
-  background-image: url(../assets/store.jpg) !important;
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center center;  /* Adjusts the position */
   width: 100vw;
   height: 100vh;
+}
+
+.title {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-weight: bold;
+}
+
+.sign-up-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #0077dd;
+  min-height: 100vh;
+  min-width: 100vw;
 }
 
 .outer-frame {
@@ -26,7 +41,7 @@ body {
 
 /* Container that surrounds the form */
 .outer-container {
-  width: 90%;
+  width: 80%;
   max-width: 600px;
   margin: 10px;
   padding: 20px;

@@ -67,13 +67,15 @@ export interface PostType {
   storeAddress: string;
   state?: string;  // Added state
   city?: string;   // Added city
-  postType?: string;
+  visibility?: 'public' | 'company' | 'supplier' | 'private';
   timestamp?: string;
   user: {
     postUserName: string | undefined;
     postUserId: string | undefined;
     postUserCompany: string | undefined;
   };
+  supplier?: string;
+  brands: string[];
   likes?: number;
   hashtags: string[];
   commentCount: number;
