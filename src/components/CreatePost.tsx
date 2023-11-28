@@ -30,6 +30,8 @@ import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
 import { PostType } from "../utils/types";
 import { CategoryType } from "./CategorySelector";
 import { ChannelType } from "./ChannelSelector";
+import SupplierSelector, { SupplierType } from "./SupplierSelector";
+import BrandsSelector, { BrandType } from "./BrandsSelector";
 
 export const CreatePost = () => {
   const handlePostSubmission = useHandlePostSubmission();
@@ -38,8 +40,15 @@ export const CreatePost = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType>('Beer');
-  const [selectedChannel, setSelectedChannel] = useState<ChannelType>('Grocery')
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryType>("Beer");
+  const [selectedChannel, setSelectedChannel] =
+    useState<ChannelType>("Grocery");
+  const [selectedSupplier, setSelectedSupplier] = useState<SupplierType>({
+    id: "",
+    name: "",
+  });
+  const [selectedBrands, setSelectedBrands] = useState<BrandType>([]);
   const [post, setPost] = useState<PostType>({
     id: "",
     category: selectedCategory,
@@ -51,24 +60,22 @@ export const CreatePost = () => {
     state: "",
     city: "",
     visibility: "public",
-    supplier: '',
+    supplier: "",
     brands: [],
     timestamp: "",
     user: {
-      postUserName: `${userData?.firstName} ${userData?.lastName}`, 
+      postUserName: `${userData?.firstName} ${userData?.lastName}`,
       postUserId: userData?.uid,
       postUserCompany: userData?.company,
     },
     likes: 0,
-    hashtags: [''],
+    hashtags: [""],
     commentCount: 0,
   });
 
   useEffect(() => {
     // Fetch suppliers and brands logic here
   }, []);
-  
-  
 
   // Logic
   const navigate = useNavigate();
@@ -77,7 +84,12 @@ export const CreatePost = () => {
     const file = e.target.files![0];
     setSelectedFile(file);
     if (file) {
-      const validImageTypes = ["image/jpeg", "image/png", "image/gif","image/webp"];
+      const validImageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
       if (validImageTypes.includes(file.type)) {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -93,7 +105,12 @@ export const CreatePost = () => {
     }
   };
 
-  const handleSelectedStore = (storeName: string, storeAddress: string, state?: string, city?: string) => {
+  const handleSelectedStore = (
+    storeName: string,
+    storeAddress: string,
+    state?: string,
+    city?: string
+  ) => {
     setPost((prev) => ({
       ...prev,
       selectedStore: storeName,
@@ -103,10 +120,32 @@ export const CreatePost = () => {
     }));
   };
 
- // Update this to handle all field changes generically, including channel and category
-const handleFieldChange = (field: keyof PostType, value: any) => { // specify a different type other than any
-  setPost({ ...post, [field]: value });
-};
+  // Update this to handle all field changes generically, including channel and category
+  const handleFieldChange = (field: keyof PostType, value: any) => {
+    // specify a different type other than any
+    setPost({ ...post, [field]: value });
+  };
+
+  // Add handlers for Supplier and Brand changes
+  const handleSupplierChange = (supplierId: string) => {
+    setSelectedSupplier(supplierId);
+    // Update the post object
+    setPost((prev) => ({ ...prev, supplier: supplierId }));
+  };
+
+  const handleBrandChange = (brandId: string) => {
+    // If you're allowing multiple brands, you'll need logic to handle selection and deselection
+    setSelectedBrands((prevBrands) => {
+      // This is just an example logic, assuming you want to toggle brands in the selection
+      if (prevBrands.includes(brandId)) {
+        return prevBrands.filter((id) => id !== brandId);
+      } else {
+        return [...prevBrands, brandId];
+      }
+    });
+    // Update the post object
+    setPost((prev) => ({ ...prev, brands: selectedBrands }));
+  };
 
   return (
     <div>
@@ -165,8 +204,16 @@ const handleFieldChange = (field: keyof PostType, value: any) => { // specify a 
           onCategoryChange={setSelectedCategory}
         />
 
-        {/* <SupplierSelector/>
-        <BrandsSelector/> */}
+        <SupplierSelector
+          selectedSupplier={selectedSupplier.id} // Pass the selected supplier ID
+          suppliers={suppliers}
+          onSupplierChange={handleSupplierChange}
+        />
+        <BrandsSelector
+          selectedBrands={selectedBrands} // Pass the selected brands array
+          brands={brands}
+          onBrandChange={handleBrandChange}
+        />
 
         <Box mt={2}>
           <TextField
@@ -204,7 +251,16 @@ const handleFieldChange = (field: keyof PostType, value: any) => { // specify a 
           onClick={() => {
             if (selectedFile) {
               // Pass the current post state directly
-              handlePostSubmission({ ...post, category: selectedCategory, channel: selectedChannel }, selectedFile);
+              handlePostSubmission(
+                {
+                  ...post,
+                  category: selectedCategory,
+                  channel: selectedChannel,
+                  supplier: selectedSupplier,
+                  brands: selectedBrands,
+                },
+                selectedFile
+              );
             } else {
               // Handle the situation where selectedFile is null
             }

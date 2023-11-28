@@ -46,7 +46,9 @@ export const useHandlePostSubmission = () => {
           storeAddress: post.storeAddress,
           state: post.state,
           city: post.city, 
-          postType: post.postType,
+          visibility: post.visibility,
+          supplier: post.supplier,
+          brands: post.brands,
           timestamp: new Date().toISOString(),
           user: {
             postUserName: user.displayName,
