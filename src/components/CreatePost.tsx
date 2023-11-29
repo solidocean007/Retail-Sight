@@ -32,6 +32,7 @@ import { CategoryType } from "./CategorySelector";
 import { ChannelType } from "./ChannelSelector";
 import SupplierSelector, { SupplierType } from "./SupplierSelector";
 import BrandsSelector, { BrandType } from "./BrandsSelector";
+import "./createPost.css";
 
 export const CreatePost = () => {
   const handlePostSubmission = useHandlePostSubmission();
@@ -48,7 +49,7 @@ export const CreatePost = () => {
     id: "",
     name: "",
   });
-  const [selectedBrands, setSelectedBrands] = useState<BrandType>([]);
+  const [selectedBrands, setSelectedBrands] = useState<BrandType[]>([]);
   const [post, setPost] = useState<PostType>({
     id: "",
     category: selectedCategory,
@@ -127,28 +128,28 @@ export const CreatePost = () => {
   };
 
   // Add handlers for Supplier and Brand changes
-  const handleSupplierChange = (supplierId: string) => {
-    setSelectedSupplier(supplierId);
-    // Update the post object
-    setPost((prev) => ({ ...prev, supplier: supplierId }));
-  };
+  // const handleSupplierChange = (supplierId: string) => {
+  //   setSelectedSupplier(supplierId);
+  //   // Update the post object
+  //   setPost((prev) => ({ ...prev, supplier: supplierId }));
+  // };
 
-  const handleBrandChange = (brandId: string) => {
-    // If you're allowing multiple brands, you'll need logic to handle selection and deselection
-    setSelectedBrands((prevBrands) => {
-      // This is just an example logic, assuming you want to toggle brands in the selection
-      if (prevBrands.includes(brandId)) {
-        return prevBrands.filter((id) => id !== brandId);
-      } else {
-        return [...prevBrands, brandId];
-      }
-    });
-    // Update the post object
-    setPost((prev) => ({ ...prev, brands: selectedBrands }));
-  };
+  // const handleBrandChange = (brandId: string) => {
+  //   // If you're allowing multiple brands, you'll need logic to handle selection and deselection
+  //   setSelectedBrands((prevBrands) => {
+  //     // This is just an example logic, assuming you want to toggle brands in the selection
+  //     if (prevBrands.includes(brandId)) {
+  //       return prevBrands.filter((id) => id !== brandId);
+  //     } else {
+  //       return [...prevBrands, brandId];
+  //     }
+  //   });
+  //   // Update the post object
+  //   setPost((prev) => ({ ...prev, brands: selectedBrands }));
+  // };
 
   return (
-    <div>
+    <div className="create-post-container">
       <AppBar position="static" style={{ flexShrink: 0 }}>
         <Toolbar>
           <IconButton
@@ -194,29 +195,34 @@ export const CreatePost = () => {
         <h4>Store: {post.selectedStore}</h4>
         <h6>Address: {post.storeAddress}</h6>
 
-        <ChannelSelector
-          selectedChannel={selectedChannel}
-          onChannelChange={setSelectedChannel}
-        />
+        <div className="property-zone">
+          <ChannelSelector
+            selectedChannel={selectedChannel}
+            onChannelChange={setSelectedChannel}
+          />
 
-        <CategorySelector
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
+          <CategorySelector
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+        </div>
 
-        <SupplierSelector
-          selectedSupplier={selectedSupplier.id} // Pass the selected supplier ID
-          suppliers={suppliers}
-          onSupplierChange={handleSupplierChange}
-        />
-        <BrandsSelector
+        <div className="supplier-brands-selector">
+          {/* <SupplierSelector
+            selectedSupplier={selectedSupplier.id} // Pass the selected supplier ID
+            suppliers={suppliers}
+            onSupplierChange={handleSupplierChange}
+          />
+          <BrandsSelector
           selectedBrands={selectedBrands} // Pass the selected brands array
           brands={brands}
           onBrandChange={handleBrandChange}
-        />
+          /> */}
+        </div>
 
         <Box mt={2}>
           <TextField
+            className="description-box"
             fullWidth
             variant="outlined"
             label="Description"
@@ -235,9 +241,9 @@ export const CreatePost = () => {
             onChange={(e) => handleFieldChange("visibility", e.target.value)}
           >
             <MenuItem value="public">Public</MenuItem>
-            <MenuItem value="private">Company</MenuItem>
-            <MenuItem value="group">Supplier</MenuItem>
-            <MenuItem value="group">Supplier & Company</MenuItem>
+            <MenuItem value="private">Company only</MenuItem>
+            {/* <MenuItem disabled value="group">Supplier</MenuItem> */}
+            {/* <MenuItem value="group">Supplier & Company</MenuItem> */}
           </Select>
         </Box>
       </Box>
@@ -256,8 +262,8 @@ export const CreatePost = () => {
                   ...post,
                   category: selectedCategory,
                   channel: selectedChannel,
-                  supplier: selectedSupplier,
-                  brands: selectedBrands,
+                  // supplier: selectedSupplier,
+                  // brands: selectedBrands,
                 },
                 selectedFile
               );

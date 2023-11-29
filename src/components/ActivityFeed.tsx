@@ -7,10 +7,10 @@ import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
+import { Input } from "@mui/material";
 
 const POST_BATCH_SIZE = 10;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
-
 
 const ActivityFeed = () => {
   const dispatch = useAppDispatch();
@@ -32,34 +32,39 @@ const ActivityFeed = () => {
   // Determine the total item count (1 for the ad + number of posts)
   // const itemCount = 1 + posts.length;
 
-// Calculate the total number of items (posts + ads)
-const numberOfAds = Math.ceil(posts.length / AD_INTERVAL);
-const itemCount = posts.length + numberOfAds;
+  // Calculate the total number of items (posts + ads)
+  const numberOfAds = Math.ceil(posts.length / AD_INTERVAL);
+  const itemCount = posts.length + numberOfAds;
 
+  const itemRenderer = ({
+    index,
+    style,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+  }) => {
+    const adIndex = Math.floor((index + 1) / (AD_INTERVAL + 1));
+    const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
+    const postIndex = index - adIndex; // Adjust the index to account for ads
 
-const itemRenderer = ({ index, style } : { index : number, style : React.CSSProperties}) => {
-  const adIndex = Math.floor((index + 1) / (AD_INTERVAL + 1));
-  const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
-  const postIndex = index - adIndex; // Adjust the index to account for ads
-
-  if (isAdPosition) {
-    return <AdComponent key={`ad-${adIndex}`} style={style} />;
-  } else if (postIndex < posts.length) {
-    const post = posts[postIndex];
-    return (
-      <PostCardRenderer
-        key={post.id}
-        index={postIndex}
-        style={style}
-        data={{ post, getPostsByTag }}
-      />
-    );
-  } else {
-    // This block is for the case where the index is out of bounds
-    // You could return null or a placeholder if you want to keep the spacing consistent
-    return null;
-  }
-};
+    if (isAdPosition) {
+      return <AdComponent key={`ad-${adIndex}`} style={style} />;
+    } else if (postIndex < posts.length) {
+      const post = posts[postIndex];
+      return (
+        <PostCardRenderer
+          key={post.id}
+          index={postIndex}
+          style={style}
+          data={{ post, getPostsByTag }}
+        />
+      );
+    } else {
+      // This block is for the case where the index is out of bounds
+      // You could return null or a placeholder if you want to keep the spacing consistent
+      return null;
+    }
+  };
 
   // If loading, show a loading indicator
   if (loading) {
@@ -73,21 +78,23 @@ const itemRenderer = ({ index, style } : { index : number, style : React.CSSProp
 
   // Render the list with the ad at the top followed by posts
   return (
-    <List
-      height={window.innerHeight}
-      itemCount={itemCount}
-      itemSize={900} // Adjust based on your item size
-      width={650}
-      itemData={{
-        posts: posts,
-        getPostsByTag: getPostsByTag, // Pass the function here
-      }}
-    >
-      {itemRenderer}
-    </List>
+    <div>
+      <h5>Search by hashtag:</h5>
+      <Input placeholder="search by hashtag"></Input><button color="white"></button>
+      <List
+        height={window.innerHeight}
+        itemCount={itemCount}
+        itemSize={900} // Adjust based on your item size
+        width={650}
+        itemData={{
+          posts: posts,
+          getPostsByTag: getPostsByTag, // Pass the function here
+        }}
+      >
+        {itemRenderer}
+      </List>
+    </div>
   );
 };
 
 export default ActivityFeed;
-
-

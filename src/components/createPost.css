@@ -1,0 +1,22 @@
+.property-zone, .supplier-brands-selector {
+  display: flex;
+  justify-content: space-around;
+}
+
+.create-post-container {
+  background-color: rgb(124, 147, 139);
+  padding: 5px;
+  border-radius: 5px;
+}
+
+h4, h6 {
+  margin: 3px;
+}
+
+select {
+  border-radius: 5px;
+}
+
+.description-box {
+  width: 300px;
+}

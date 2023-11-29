@@ -1,6 +1,7 @@
 // CategorySelector.tsx
 import React from "react";
 // import { CategoryType } from "../utils/types";
+import './createPost.css'
 
 interface CategorySelectorProps {
   selectedCategory?: CategoryType;

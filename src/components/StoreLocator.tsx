@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PostType } from "../utils/types";
 import { updateLocationsCollection } from "../utils/PostLogic/updateLocationsCollection";
+import './storeSelector.css'
 
 // Assuming you've refactored the GOOGLE_MAPS_KEY import using Vite
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -185,7 +186,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
   }, [isMapLoaded, handleSelectedStore, post.storeAddress]);
 
   return (
-    <div>
+    <div className="map-container">
       <div ref={mapRef} style={{ width: "300px", height: "200px" }}></div>
       <input
         type="text"

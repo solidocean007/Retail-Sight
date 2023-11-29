@@ -1,0 +1,11 @@
+.map-container {
+  margin: 10px 0px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+input {
+  margin-top: 5px;
+  border-radius: 5px;
+}
