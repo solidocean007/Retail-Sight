@@ -7,6 +7,7 @@ import { selectUser } from "../Slices/userSlice";
 import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
 import { db } from "../utils/firebase";
 import { useNavigate } from "react-router-dom";
+import LogOutButton from "./LogOutButton";
 
 type FormData = {
   firstName: string;
@@ -38,6 +39,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)}> {/*rgument of type 'SubmitHandler<FormData>' is not assignable to parameter of type 'SubmitHandler<FieldValues>'.
   Type 'FieldValues' is missing the following properties from type 'FormData': firstName, lastNamets(2345)*/}
+      <LogOutButton />
       <TextField
         fullWidth
         margin="normal"

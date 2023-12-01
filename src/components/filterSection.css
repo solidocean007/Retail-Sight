@@ -1,8 +1,29 @@
+ /* filterSection.css */
+.accordion-container {
+  position: relative;
+  z-index: 1;
+}
+
 .filter-options {
   display: flex;
   flex-direction: column;
 }
 
-.accordian {
-  margin-bottom: 10px;
+.accordion {
+  position: absolute;
+  margin-top: 10px;
+  width: 200px;
+  z-index: 2;
+}
+
+.accordion-details {
+  z-index: 5;
+}
+
+@media (max-width: 1100px) {
+  /* Your styles for tablets */
+  .btn {
+    height: 50px;
+    width: 200px;
+  }
 }

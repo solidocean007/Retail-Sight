@@ -8,6 +8,7 @@ import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { Input } from "@mui/material";
+import './activityFeed.css'
 
 const POST_BATCH_SIZE = 10;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
@@ -78,7 +79,7 @@ const ActivityFeed = () => {
 
   // Render the list with the ad at the top followed by posts
   return (
-    <div>
+    <div className="activity-feed-container">
       <h5>Search by hashtag:</h5>
       <Input placeholder="search by hashtag"></Input><button color="white"></button>
       <List

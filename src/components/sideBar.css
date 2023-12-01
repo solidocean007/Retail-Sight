@@ -1,23 +1,40 @@
-.side-bar {
-  background-color: black;
-  height: 100%;
-  margin-top: 300px;
-}
-
-aside {
+.side-bar-container {
+  border-radius: 5px;
+  margin-left: 10px;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  height: 600px;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: rgb(164, 163, 168);
+  height: 100%;
 }
+
+.post-content-filter {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filter-by-content {
+  display: flex;
+}
+
 
 .MuiButton-root {
   margin-bottom: 20px;
 }
 
-.side-bar-container {
-  display: flex;
-  height: 100%;
 
-  background-color: azure;
+@media (max-width: 1100px) {
+  /* Your styles for tablets */
+  .btn {
+    height: 50px;
+  }
+ 
+  .MuiGrid-root {
+    width: 100%;
+  }
+  .post-content-filter {
+    display: flex;
+    flex-direction: row;
+  }
 }

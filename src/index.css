@@ -81,7 +81,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #646cff;
+  color: whitesmoke;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -104,7 +105,7 @@ button:focus-visible {
 /* Default styles for desktops and larger screens here */
 
 /* Styles for tablets */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   /* Your styles for tablets */
 }
 

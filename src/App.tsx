@@ -10,22 +10,24 @@ import { BrowserRouter as Router } from "react-router-dom"; // no exported membe
 // import { CreatePost } from "./components/CreatePost";
 import { RootState } from "./utils/store";
 import { ThemeToggle } from "./ThemeToggle";
-import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 
 import UserModal from "./components/UserModal.tsx";
 import { AppRoutes } from "./utils/Routes.tsx";
+import { getTheme } from "./theme.ts";
 // import { selectIsUserModalOpen } from "./Slices/userModalSlice.ts";
 
 
 function App() {
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   useFirebaseAuth();
-  const theme = createTheme({
-    palette: {
-      mode: isDarkMode ? "dark" : "light",
-    },
-  });
+  // const theme = createTheme({
+  //   palette: {
+  //     mode: isDarkMode ? "dark" : "light",
+  //   },
+  // });
+  const theme = getTheme(isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const dispatch = useDispatch();
 

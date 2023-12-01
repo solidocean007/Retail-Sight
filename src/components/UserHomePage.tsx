@@ -1,9 +1,8 @@
 // userHomePage.tsx
 import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
-import LogOutButton from "./LogOutButton";
 import { useNavigate } from "react-router-dom";
-import { Container, Grid, AppBar, Toolbar } from "@mui/material";
+import { Container, AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
 
 import { useSelector } from "react-redux";
@@ -31,14 +30,20 @@ export const UserHomePage = () => {
   const openProfile = () => navigate("/profile-page");
 
   return (
-    <Container className="container-user-home-page">
-      <AppBar position="fixed">
-        <Toolbar>
-          <div className="tool-bar">
+    <div className="container-user-home-page">
+      <AppBar position="fixed" style={{ backgroundColor: "#333" }}>
+        <Toolbar className="tool-bar">
+          <div>
+            <h3>
+              Welcome, {currentUser?.firstName} {currentUser?.lastName}{" "}
+              {/*Here is the line that loses the users data on page refresh*/}
+            </h3>
+          </div>
+          <div className="menu-buttons">
             <Button
               className="profile-btn"
               variant="contained"
-              color="secondary"
+              color="primary"
               onClick={openProfile}
             >
               Profile
@@ -46,37 +51,24 @@ export const UserHomePage = () => {
             <Button
               className="create-post-btn"
               variant="contained"
-              color="primary"
+              color="secondary"
               onClick={() => navigate("/createPost")}
             >
               Create Post
             </Button>
-            <LogOutButton />
-          </div>
-
-          <div>
-            <h2>
-              Welcome, {currentUser?.firstName} {currentUser?.lastName}{" "}
-              {/*Here is the line that loses the users data on page refresh*/}
-            </h2>
+            {/* <LogOutButton /> */}
           </div>
         </Toolbar>
       </AppBar>
-
-      <Grid container spacing={3} style={{ marginTop: "70px" }}>
-        <Grid item xs={8}>
-          {" "}
-          {/* This will occupy 8/12 of the screen width */}
+      <div className="home-page-content">
+        <div className="activity-feed-container">
           <ActivityFeed />
-        </Grid>
-        <Grid item xs={4}>
-          {" "}
-          {/* This will occupy 4/12 of the screen width for the sidebar */}
-          {/* <SideBar openProfile={openProfile} /> */}
+        </div>
+        <div className="side-bar-container">
           <SideBar />
-        </Grid>
-      </Grid>
-    </Container>
+        </div>
+      </div>
+    </div>
   );
 };
 

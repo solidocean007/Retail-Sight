@@ -1,5 +1,6 @@
 // ChannelSelector.tsx
 import React from 'react';
+import './channelSelector.css'
 // import { ChannelType } from '../utils/types';
 
 interface ChannelSelectorProps {
@@ -20,6 +21,7 @@ interface ChannelSelectorProps {
 const ChannelSelector: React.FC<ChannelSelectorProps> = ({ selectedChannel, onChannelChange }) => {
   return (
     <select 
+      className='channel-selector'
       title='channel selector'
       value={selectedChannel}
       onChange={(e) => onChannelChange(e.target.value as ChannelType)}

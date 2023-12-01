@@ -1,0 +1,49 @@
+/* CustomAccordion.css */
+
+h3 {
+  margin: 0px;
+}
+
+.custom-accordion {
+  position: relative;
+  background-color: white;
+  border-radius: 8px;
+  padding: 5px 10px;
+  margin: 10px;
+}
+
+.accordion-summary {
+  cursor: pointer;
+  
+  /* Additional styles for the summary section */
+}
+
+.accordion-details {
+  display: none;
+  position: absolute;
+  top: 0px;
+  left: -15px;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  max-height: 0;
+  border-radius: 8px;
+  /* Additional styles for the details section */
+}
+
+/* When accordion is active */
+.custom-accordion .accordion-details.open {
+  display: flex;
+  width: 200px;
+  flex-direction: column;
+  align-items: start;
+  justify-content: flex-start;
+  background-color: aliceblue;
+  z-index: 2;
+  max-height: 500px; /* Adjust as necessary */
+  /* Additional styles for the active state */
+}
+
+.close-button {
+  cursor: pointer;
+  /* position and style the button */
+}

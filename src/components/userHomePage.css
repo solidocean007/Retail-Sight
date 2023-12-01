@@ -1,19 +1,57 @@
 /*  userHomePage.css */
-
-.container-user-home-page {
-  margin-top: 150px;
+.tool-bar {
+  display: flex;
+  justify-content: space-between;
+  color:blanchedalmond;
 }
+
+
+.menu-buttons {
+  display: flex;
+  justify-content: space-around;
+  width: 50%;
+}
+
 
 .profile-btn, .create-post-btn, .log-out-btn {
   margin-right: 30px;
 }
 
 .create-post-btn {
-  background-color: aquamarine;
+  background-color: rgb(23, 114, 84);
   /* color: black; */
 }
 
-.log-out-btn {
+.container-user-home-page {
+  padding-top: 80px;
+}
 
-  color: white;
+.home-page-content {
+  padding-top: 200px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.side-bar-container {
+  width: 40%;
+}
+
+
+/* Styles for tablets */
+@media (max-width: 1100px) {
+  /* Your styles for tablets */
+  .filter-container {
+   /* display: flex; */
+   width: 100%;
+   position: fixed;
+   top: 64px;
+   left: 0;
+   z-index: 10;
+  }
+}
+
+/* Styles for mobile devices */
+@media (max-width: 768px) {
+  /* Your styles for mobile devices */
 }

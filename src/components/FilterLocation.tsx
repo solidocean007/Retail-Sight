@@ -11,7 +11,7 @@ import OutlinedInput from "@mui/material/OutlinedInput";
 import Chip from "@mui/material/Chip";
 import { useTheme } from "@mui/material/styles";
 import { SelectChangeEvent } from "@mui/material/Select";
-import "./filter-location.css";
+import "./filterLocation.css";
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -26,7 +26,6 @@ const MenuProps = {
 
 const FilterLocation = () => {
   const { locations, selectedStates, selectedCities } = useSelector((state: RootState) => state.locations);
-  const theme = useTheme();  // assigned but never read
   const dispatch = useDispatch<AppDispatch>();
 
   const handleStateChange = (event: SelectChangeEvent<typeof selectedStates>) => {
@@ -40,10 +39,11 @@ const FilterLocation = () => {
   };
 
   return (
-    <div>
+    <div className="location-selection-container">
       <FormControl fullWidth>
         <InputLabel id="state-multiple-chip-label">State</InputLabel>
         <Select
+          className="btn"
           labelId="state-multiple-chip-label"
           id="state-multiple-chip"
           multiple
@@ -63,6 +63,7 @@ const FilterLocation = () => {
       <FormControl fullWidth>
         <InputLabel id="city-multiple-chip-label">City</InputLabel>
         <Select
+          className="btn"
           labelId="city-multiple-chip-label"
           id="city-multiple-chip"
           multiple
