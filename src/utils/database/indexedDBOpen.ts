@@ -6,16 +6,23 @@ export function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
 
-    request.onerror = (event) => {
-      reject(`IndexedDB database error: ${event.target.error}`); // event.target is possibly null
-    };
+    request.onerror = (event: Event) => {
+  // Cast the event.target to an IDBRequest which has the error property
+  const target = event.target as IDBRequest;
+  if (target.error) {
+    reject(`IndexedDB database error: ${target.error.message}`);
+  } else {
+    reject(`IndexedDB database error: Unknown error`);
+  }
+};
+    
 
     request.onsuccess = () => {
       resolve(request.result);
     };
 
-    request.onupgradeneeded = () => {  // event is defined but never used
-      const db = request.result;
+    request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+      const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains('posts')) {
         db.createObjectStore('posts', { keyPath: 'id' });
       }
@@ -32,7 +39,7 @@ export function openDB(): Promise<IDBDatabase> {
         db.createObjectStore('locations', { keyPath: 'state' });
       }
       if (!db.objectStoreNames.contains('latestPosts')) {
-        db.createObjectStore('latestPosts', { keyPath: 'id' }); // Assuming 'id' is the primary key for posts
+        db.createObjectStore('latestPosts', { keyPath: 'id' });
       }
       // Add additional object stores here if needed
     };

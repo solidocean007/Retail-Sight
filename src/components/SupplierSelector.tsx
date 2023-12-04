@@ -8,8 +8,8 @@ export type SupplierType = {
 
 interface SupplierSelectorProps {
   selectedSupplier?: string;
-  // suppliers: SupplierType[];
-  // onSupplierChange: (supplierId: string) => void;
+  suppliers: SupplierType[];
+  onSupplierChange: (supplierId: string) => void;
 }
 
 // const SupplierSelector: React.FC<SupplierSelectorProps> = ({ selectedSupplier, suppliers, onSupplierChange }) => {

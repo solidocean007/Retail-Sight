@@ -8,6 +8,7 @@ import { showMessage } from "../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { updatePost } from "../Slices/postsSlice";
+import { SelectChangeEvent } from "@mui/material";
 
 import {
   Button,
@@ -40,16 +41,16 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
-  const [postType, setPostType] = useState<string>(post.postType || "public");
+  const [postVisibility, setPostVisibility] = useState<"public" | "company" | "supplier" | "private" | undefined>("public");
+
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
 
   useEffect(() => {
-    setDescription(post?.description || ""); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
-    setPostType(post?.postType || "Public"); // Type 'undefined' is not assignable to type 'SetStateAction<string>'
-    // ... initialize other states
+    setDescription(post?.description || ""); 
+    setPostVisibility(post?.visibility || "public");
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostType) => {
@@ -57,11 +58,11 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     try {
       const updatedFields = {
         description: updatedPost.description,
-        postType: updatedPost.postType,
+        visibility: updatedPost.visibility,
         // add other fields you want to update here
     };
       await updateDoc(postRef, updatedFields);
-      dispatch(updatePost(updatedPost)); // updtePost is a postSlice actionCreator
+      dispatch(updatePost(updatedPost));
       console.log('postRef', postRef)
       console.log("Post updated successfully");
       handleCloseEditModal();
@@ -74,8 +75,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     const updatedPost: PostType = {
       ...post,
       description,
-      postType,
-      // ... other updated fields
+      visibility: postVisibility,
     };
     handleSavePost(updatedPost);
     dispatch(showMessage("Post edited successfully!"));
@@ -114,13 +114,16 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
           <Select
             fullWidth
             variant="outlined"
-            value={postType}
-            onChange={(e) => setPostType(e.target.value as string)}
+            value={postVisibility}
+            onChange={(e: SelectChangeEvent<'public' | 'company' | 'supplier' | 'private' | undefined>) => {
+              setPostVisibility(e.target.value as 'public' | 'company' | 'supplier' | 'private');
+            }}
             className="select-input"
           >
             <MenuItem value="public">Public</MenuItem>
-            <MenuItem value="private">Private</MenuItem>
-            <MenuItem value="group">Group</MenuItem>
+            {/* <MenuItem value="private">Private</MenuItem> */}
+            <MenuItem value="company">Company</MenuItem>
+            {/* <MenuItem value="group">Group</MenuItem> */}
           </Select>
           <Button
             variant="contained"

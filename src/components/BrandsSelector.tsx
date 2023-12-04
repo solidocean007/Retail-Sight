@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// import React, { useState } from "react";
+import React from "react";
 
 // Define your Brand type
 export type BrandType = {
@@ -20,14 +21,14 @@ const BrandSelector: React.FC<BrandSelectorProps> = ({
   // onBrandChange,
   // addNewBrand,
 }) => {
-  const [brandInput, setBrandInput] = useState('');
+  // const [brandInput, setBrandInput] = useState('');
 
-  const handleAddBrand = () => {
-    if (brandInput.trim()) {
-      // addNewBrand(brandInput);
-      setBrandInput(''); // Reset the input field after adding
-    }
-  };
+  // const handleAddBrand = () => {
+  //   if (brandInput.trim()) {
+  //     // addNewBrand(brandInput);
+  //     setBrandInput(''); // Reset the input field after adding
+  //   }
+  // };
   return (
     <>
       <select

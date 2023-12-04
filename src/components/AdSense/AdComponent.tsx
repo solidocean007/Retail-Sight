@@ -1,15 +1,17 @@
-import React, { useEffect } from 'react';
+// import React, { useEffect } from 'react';
+import React from 'react';
+
 
 interface AdComponentProps {
   style: React.CSSProperties; // Add style to the props for AdComponent
 }
 
 const AdComponent: React.FC<AdComponentProps> = ({ style }) => {
-  useEffect(() => {
-    if (window.adsbygoogle && process.env.NODE_ENV !== 'development') { // process is not defined
-      window.adsbygoogle.push({});
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (window.adsbygoogle && process.env.NODE_ENV !== 'development') { // process is not defined
+  //     window.adsbygoogle.push({});
+  //   }
+  // }, []);
 
   return (
     <div style={style}>Ad Placeholder</div> // Simple placeholder for an ad

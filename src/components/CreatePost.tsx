@@ -30,8 +30,8 @@ import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
 import { PostType } from "../utils/types";
 import { CategoryType } from "./CategorySelector";
 import { ChannelType } from "./ChannelSelector";
-import SupplierSelector, { SupplierType } from "./SupplierSelector";
-import BrandsSelector, { BrandType } from "./BrandsSelector";
+// import { SupplierType } from "./SupplierSelector";
+// import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
 
 export const CreatePost = () => {
@@ -45,11 +45,11 @@ export const CreatePost = () => {
     useState<CategoryType>("Beer");
   const [selectedChannel, setSelectedChannel] =
     useState<ChannelType>("Grocery");
-  const [selectedSupplier, setSelectedSupplier] = useState<SupplierType>({
-    id: "",
-    name: "",
-  });
-  const [selectedBrands, setSelectedBrands] = useState<BrandType[]>([]);
+  // const [selectedSupplier, setSelectedSupplier] = useState<SupplierType>({
+  //   id: "",
+  //   name: "",
+  // });
+  // const [selectedBrands, setSelectedBrands] = useState<BrandType[]>([]);
   const [post, setPost] = useState<PostType>({
     id: "",
     category: selectedCategory,
@@ -122,7 +122,10 @@ export const CreatePost = () => {
   };
 
   // Update this to handle all field changes generically, including channel and category
-  const handleFieldChange = (field: keyof PostType, value: any) => {
+  const handleFieldChange = (
+    field: keyof PostType,
+    value: string | number | boolean | string[] // Add other types as needed
+  ) => { // what type should value be?
     // specify a different type other than any
     setPost({ ...post, [field]: value });
   };
