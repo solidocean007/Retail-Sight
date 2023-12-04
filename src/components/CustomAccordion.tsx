@@ -1,57 +1,59 @@
 // CustomAccordion.tsx
-import React, { useState } from "react";
+import { useState, useRef } from "react";
 import { Checkbox } from "@mui/material";
+import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import "./customAccordion.css";
 
-interface CustomAccordionProps {
+interface CustomAccordionProps<T extends string> {
   title: string;
-  options: { id: string; name: string }[];
-  selected: string[];
-  toggleOption: (id: string) => void;
+  options: T[];
+  selected: T[];
+  toggleOption: (option: T) => void;
 }
 
-const CustomAccordion: React.FC<CustomAccordionProps> = ({
+const CustomAccordion = <T extends string>({
   title,
   options,
   selected,
   toggleOption,
-}) => {
+}: CustomAccordionProps<T>) => {
   const [isActive, setIsActive] = useState(false);
 
   const toggleAccordion = () => {
     setIsActive(!isActive);
   };
 
+  const wrapperRef = useRef(null);
+  useOutsideAlerter(wrapperRef, () => setIsActive(false));
+
   return (
-    <div className="custom-accordion">
+    <div className="custom-accordion" ref={wrapperRef}>
       <div className="accordion-summary" onClick={toggleAccordion}>
         <h3>{title}</h3>
         {selected.length <= 2 ? (
-          selected.map((id) => (
-            <span key={id}>
-              {options.find((option) => option.id === id)?.name}{" "}
-            </span>
+          selected.map((value: string, index: number) => (
+            <span key={index}>{value} </span>
           ))
         ) : (
           <span>
-            {selected
-              .slice(0, 2)
-              .map((id) => options.find((option) => option.id === id)?.name)
-              .join(", ")}{" "}
-            and {selected.length - 2} more
+            {selected.slice(0, 2).join(", ")} and {selected.length - 2} more
           </span>
         )}
       </div>
       {isActive && (
         <div className={`accordion-details ${isActive ? "open" : ""}`}>
-           <button className="close-button" onClick={() => setIsActive(false)}>X</button>
-          {options.map((option) => (
-            <div key={option.id} onClick={() => toggleOption(option.id)}>
+          <div className="button-box">
+            <button className="close-button" onClick={() => setIsActive(false)}>
+              X
+            </button>
+          </div>
+          {options.map((option: T) => (
+            <div key={option} onClick={() => toggleOption(option)}>
               <Checkbox
-                checked={selected.includes(option.id)}
-                onChange={() => {}} // Empty function since click on div handles it
+                checked={selected.includes(option)}
+                onChange={() => {}}
               />
-              {option.name}
+              {option}
             </div>
           ))}
         </div>

@@ -9,14 +9,6 @@ export type FilterCriteria = {
   categories?: string[];
 };
 
-type FetchPostsArgs = {
-  filters: {
-    channels: string[];
-    categories: string[];
-  };
-  lastVisible: string;
-};
-
 type CursorType = string;
 
 // New state shape including loading and error states

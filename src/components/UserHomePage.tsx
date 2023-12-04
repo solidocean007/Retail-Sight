@@ -1,8 +1,8 @@
 // userHomePage.tsx
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
-import { Container, AppBar, Toolbar } from "@mui/material";
+import { AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
 
 import { useSelector } from "react-redux";

@@ -1,5 +1,5 @@
 // FilterLocation
-import React from "react";
+import { useState} from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../utils/store";
 import Select from "@mui/material/Select";
@@ -9,7 +9,7 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import Chip from "@mui/material/Chip";
-import { useTheme } from "@mui/material/styles";
+// import { useTheme } from "@mui/material/styles";
 import { SelectChangeEvent } from "@mui/material/Select";
 import "./filterLocation.css";
 
@@ -25,24 +25,42 @@ const MenuProps = {
 };
 
 const FilterLocation = () => {
-  const { locations, selectedStates, selectedCities } = useSelector((state: RootState) => state.locations);
+  const [stateSelectOpen, setStateSelectOpen] = useState(false);
+  const [citySelectOpen, setCitySelectOpen] = useState(false);
+  const { locations, selectedStates, selectedCities } = useSelector(
+    (state: RootState) => state.locations
+  );
   const dispatch = useDispatch<AppDispatch>();
 
-  const handleStateChange = (event: SelectChangeEvent<typeof selectedStates>) => {
+  const handleStateChange = (
+    event: SelectChangeEvent<typeof selectedStates>
+  ) => {
     const newStates = event.target.value as string[];
     dispatch(setStateFilter(newStates));
   };
 
-  const handleCityChange = (event: SelectChangeEvent<typeof selectedCities>) => {
+  const handleCityChange = (
+    event: SelectChangeEvent<typeof selectedCities>
+  ) => {
     const newCities = event.target.value as string[];
     dispatch(setCityFilter(newCities));
   };
 
+  const handleClose = (event : React.MouseEvent<HTMLElement> ) => {
+    event.stopPropagation(); // Prevents triggering the onChange of Select
+    setStateSelectOpen(false);
+  };
+  
+
   return (
     <div className="location-selection-container">
-      <FormControl fullWidth>
+      <FormControl>
+        <div className="filter-box">
         <InputLabel id="state-multiple-chip-label">State</InputLabel>
         <Select
+          open={stateSelectOpen}
+          onOpen={() => setStateSelectOpen(true)}
+          onClose={() => setStateSelectOpen(false)}
           className="btn"
           labelId="state-multiple-chip-label"
           id="state-multiple-chip"
@@ -50,39 +68,72 @@ const FilterLocation = () => {
           value={selectedStates}
           onChange={handleStateChange}
           input={<OutlinedInput label="State" />}
-          renderValue={(selected) => selected.map(value => <Chip key={value} label={value} />)}
+          renderValue={(selected) =>
+            selected.map((value) => <Chip key={value} label={value} />)
+          }
           MenuProps={MenuProps}
         >
+          <div className="close-box">
+            <button
+              className="close-button"
+              onClick={handleClose}
+            >
+              X
+            </button>
+          </div>
           {Object.keys(locations).map((state) => (
             <MenuItem key={state} value={state}>
               {state}
             </MenuItem>
           ))}
         </Select>
+        </div>
+       
       </FormControl>
-      <FormControl fullWidth>
-        <InputLabel id="city-multiple-chip-label">City</InputLabel>
-        <Select
-          className="btn"
-          labelId="city-multiple-chip-label"
-          id="city-multiple-chip"
-          multiple
-          value={selectedCities}
-          onChange={handleCityChange}
-          input={<OutlinedInput label="City" />}
-          renderValue={(selected) => selected.map(value => <Chip key={value} label={value} />)}
-          MenuProps={MenuProps}
-        >
-          {selectedStates.flatMap(state => locations[state]?.map(city => (
-            <MenuItem key={city} value={city}>
-              {city}
-            </MenuItem>
-          )))}
-        </Select>
-      </FormControl>
+      {selectedStates.length > 0 && (
+        <FormControl>
+          <div className="filter-box">
+            <InputLabel id="city-multiple-chip-label">City</InputLabel>
+            <Select
+              open={citySelectOpen}
+              onOpen={() => setCitySelectOpen(true)}
+              onClose={() => setCitySelectOpen(false)}
+              className="btn"
+              labelId="city-multiple-chip-label"
+              id="city-multiple-chip"
+              multiple
+              value={selectedCities}
+              onChange={handleCityChange}
+              input={<OutlinedInput label="City" />}
+              renderValue={(selected) =>
+                selected.map((value) => <Chip key={value} label={value} />)
+              }
+              MenuProps={MenuProps}
+            >
+              <div className="close-box">
+                <button
+                  className="close-button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setCitySelectOpen(false);
+                  }}
+                >
+                  X
+                </button>
+              </div>
+              {selectedStates.flatMap((state) =>
+                locations[state]?.map((city) => (
+                  <MenuItem key={city} value={city}>
+                    {city}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+          </div>
+        </FormControl>
+      )}
     </div>
   );
 };
 
 export default FilterLocation;
-

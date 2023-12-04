@@ -1,8 +1,22 @@
-.location-input {
-  max-width: 100%;
-  margin: 10px 0px ;
+.location-selection-container {
+  width: 200px;
 }
 
+.filter-box {
+  margin-right: 10px;
+}
+
+#state-multiple-chip-label {
+  margin-right: 20px;
+}
+
+.close-box {
+  display: flex;
+  width: 100%;
+  justify-content: end;
+  padding: 5px;
+  cursor: pointer;
+}
 
 @media (max-width: 1100px) {
   /* Your styles for tablets */

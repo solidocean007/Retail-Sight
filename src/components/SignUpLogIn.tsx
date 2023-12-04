@@ -27,7 +27,8 @@ import { validateUserInputs } from "../utils/validation/validations";
 import './signUpLogIn.css'
 
 // Import Snackbar related actions
-import { showMessage, hideMessage } from "../Slices/snackbarSlice";
+// import { showMessage, hideMessage } from "../Slices/snackbarSlice";  // hideMessage is defined but never used.  What is it for?
+import { showMessage } from "../Slices/snackbarSlice";  // hideMessage is defined but never used.  What is it for?
 
 export const SignUpLogin = () => {
   const navigate = useNavigate();

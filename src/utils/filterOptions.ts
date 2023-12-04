@@ -1,23 +1,24 @@
-export const CategoryOptions = [
-  { id: 'Water', name: 'Water' },
-  { id: 'Wine', name: 'Wine' },
-  { id: 'Beer', name: 'Beer' },
-  { id: 'Soda', name: 'Soda' },
-  { id: 'Chips', name: 'Chips' },
-  { id: 'Produce', name: 'Produce' },
-  { id: 'Dairy', name: 'Dairy' },
-  { id: 'Meat', name: 'Meat' },
-  { id: 'Cookies', name: 'Cookies and Pastries' },
-  // ... Add other categories here
+import { CategoryType } from "../components/CategorySelector";
+import { ChannelType } from "../components/ChannelSelector";
+
+export const CategoryOptions: CategoryType[] = [
+  "Water",
+  "Wine",
+  "Beer",
+  "Soda",
+  "Chips",
+  "Produce",
+  "Dairy",
+  "Meat",
+  "Cookies_and_Pastries",
 ];
 
-export const ChannelOptions = [
-  { id: 'Grocery', name: 'Grocery' },
-  { id: 'Convenience', name: 'Convenience' },
-  { id: 'Restaurant', name: 'Restaurant' },
-  { id: 'Bar', name: 'Bar' },
-  { id: 'Warehouse_club', name: 'Warehouse Club' },
-  { id: 'Department_store', name: 'Department Store' },
-  { id: 'Drug_store', name: 'Drug Store' },
-  // ... Add other channels here
+export const ChannelOptions: ChannelType[] = [
+  "Grocery",
+  "Convenience",
+  "Restaurant",
+  "Bar",
+  "Warehouse_club",
+  "Department_store",
+  "Drug_store",
 ];

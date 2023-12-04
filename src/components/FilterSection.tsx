@@ -1,5 +1,5 @@
 // FilterSection.tsx
-import React, { useState } from "react";
+import React from "react";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -21,17 +21,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   selected,
   toggleOption,
 }) => {
-  const [isActive, setIsActive] = useState(false);
   
-  const toggleAccordion = () => {
-    setIsActive(!isActive);
-  };
 
   return (
     <div className="accordion-container">
-      <Accordion
-        className={isActive ? "accordion accordionActive" : "accordion"}
-      >
+      <Accordion>
         <AccordionSummary
           className="accordion-summary btn"
           expandIcon={<ExpandMoreIcon />}

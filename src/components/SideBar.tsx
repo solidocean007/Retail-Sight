@@ -1,7 +1,7 @@
 // Sidebar
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@mui/material";
-import FilterSection from "./FilterSection";
+// import FilterSection from "./FilterSection";
 import FilterLocation from "./FilterLocation";
 import { fetchLatestPosts, fetchFilteredPosts } from "../thunks/postsThunks";
 import { useDispatch } from "react-redux";
@@ -37,6 +37,7 @@ const SideBar = () => {
           states: selectedStates,
           cities: selectedCities,
         },
+        lastVisible: null,
       })
     );
   };
@@ -55,64 +56,41 @@ const SideBar = () => {
   };
 
   return (
-    <div className="side-bar-container">
+    <div className="side-bar-box">
       <div className="post-content-filter">
         <div className="filter-by-content">
-          <CustomAccordion
+          <CustomAccordion<ChannelType>
             title="Channels"
             options={ChannelOptions}
             selected={selectedChannels}
-            toggleOption={(channel: ChannelType) =>
+            toggleOption={(option : ChannelType) => {
+              // 'option' is a string
               setSelectedChannels((prev) =>
-                prev.includes(channel)
-                  ? prev.filter((c) => c !== channel)
-                  : [...prev, channel]
-              )
-            }
-          >
-          </CustomAccordion>
-          <CustomAccordion
+                prev.includes(option)
+                  ? prev.filter((c) => c !== option)
+                  : [...prev, option]
+              );
+            }}
+          ></CustomAccordion>
+          <CustomAccordion<CategoryType>
             title="Categories"
-            options={CategoryOptions}
-            selected={selectedCategories}
-            toggleOption={(category: CategoryType) =>
+            options={CategoryOptions} // This should be an array of strings
+            selected={selectedCategories} // This should be an array of strings representing selected categories
+            toggleOption={(option: CategoryType) => {
+              // 'option' is a string
               setSelectedCategories((prev) =>
-                prev.includes(category)
-                  ? prev.filter((c) => c !== category)
-                  : [...prev, category]
-              )
-            }
-          >
-          </CustomAccordion>
-          
-          {/* Add more accordions as needed */}
+                prev.includes(option)
+                  ? prev.filter((c) => c !== option)
+                  : [...prev, option]
+              );
+            }}
+          />
         </div>
-        {/* <FilterSection
-          title="Channels"
-          options={ChannelOptions}
-          selected={selectedChannels}
-          toggleOption={(channel: ChannelType) =>
-            setSelectedChannels((prev) =>
-              prev.includes(channel)
-                ? prev.filter((c) => c !== channel)
-                : [...prev, channel]
-            )
-          }
-        />
-        <FilterSection
-          title="Categories"
-          options={CategoryOptions}
-          selected={selectedCategories}
-          toggleOption={(category: CategoryType) =>
-            setSelectedCategories((prev) =>
-              prev.includes(category)
-                ? prev.filter((c) => c !== category)
-                : [...prev, category]
-            )
-          }
-        /> */}
       </div>
-      <FilterLocation />
+      <div className="location-filter-container">
+        <FilterLocation />
+      </div>
+
       <Button
         className="btn"
         variant="outlined"

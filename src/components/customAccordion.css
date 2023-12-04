@@ -4,6 +4,14 @@ h3 {
   margin: 0px;
 }
 
+.button-box {
+  display: flex;
+  width: 100%;
+  padding: 5px;
+  align-items: end;
+  justify-content: end;
+}
+
 .custom-accordion {
   position: relative;
   background-color: white;
@@ -44,6 +52,13 @@ h3 {
 }
 
 .close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  background-color: rgb(210, 206, 202);
   cursor: pointer;
+  width: 20px;
+  height: 20px;
   /* position and style the button */
 }

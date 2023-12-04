@@ -5,10 +5,11 @@ import { toggleTheme } from './actions/themeActions';
 import Switch from '@mui/material/Switch';
 import Fab from '@mui/material/Fab';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { RootState } from './utils/store';
 
 export const ThemeToggle: React.FC = () => {
   const dispatch = useDispatch();
-  const isDarkMode = useSelector((state: any) => state.theme.isDarkMode);
+  const isDarkMode = useSelector((state: RootState ) => state.theme.isDarkMode);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleToggleClick = () => {
