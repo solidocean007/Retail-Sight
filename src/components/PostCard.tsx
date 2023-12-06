@@ -10,28 +10,58 @@ import { selectUser } from "../Slices/userSlice";
 import "./postCard.css";
 import CommentSection from "./CommentSection";
 import SharePost from "./SharePost";
+import { handleLikePost } from "../utils/PostLogic/handleLikePost";
 
 // UserModalImports
 import { handleUserNameClick } from "../utils/userModalUtils";
-// import { selectIsUserModalOpen, selectSelectedUid } from "../Slices/userModalSlice";
 
 interface PostCardProps {
+  id: string;
+  currentUserUid: string;
   post: PostType;
   getPostsByTag: (hashTag: string) => void;
   style?: React.CSSProperties;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
+const PostCard: React.FC<PostCardProps> = ({
+  id,
+  currentUserUid,
+  post,
+  getPostsByTag,
+  style,
+}) => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const dispatch = useDispatch();
+  const [likes, setLikes] = useState(post.likes?.length || 0);
+  const [likedByUser, setLikedByUser] = useState(
+    post.likes?.includes(currentUserUid) || false
+  );
+
+  const onLikeButtonClick = async () => {
+    const newLikedByUser = !likedByUser; // Optimistically toggle the liked state
+    const newLikes = newLikedByUser ? likes + 1 : likes - 1; // Adjust like count optimistically
+
+    setLikedByUser(newLikedByUser); // Set the new liked state
+    setLikes(newLikes); // Set the new like count
+
+    try {
+      await handleLikePost(id, currentUserUid, newLikedByUser);
+      // If you want to refetch or subscribe to the post to get the updated likes, do so here
+    } catch (error) {
+      console.error("Failed to update like status:", error);
+      // Revert the optimistic updates in case of error
+      setLikedByUser(likedByUser);
+      setLikes(likes);
+    }
+  };
 
   // grab user from redux
   const user = useSelector(selectUser);
 
   const onUserNameClick = (uid: string) => {
     handleUserNameClick(uid, dispatch);
-  }
+  };
 
   const handleEditPost = () => {
     setIsEditModalOpen(true);
@@ -66,7 +96,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
                 Edit Post
               </Button>
             )}
-            <Typography onClick={() => onUserNameClick(post.user.postUserId!)} variant="h6"> by: {post.user.postUserName}</Typography>
+            <Typography
+              onClick={() => onUserNameClick(post.user.postUserId!)}
+              variant="h6"
+            >
+              {" "}
+              by: {post.user.postUserName}
+            </Typography>
             <SharePost
               // postLink={`https://yourwebsite.com/post/${postId}`}
               postLink={`https://yourwebsite.com/post`}
@@ -87,9 +123,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, getPostsByTag, style }) => {
         )}
 
         <div className="likes-comments">
-          <h5>{post.likes} likes</h5>
-          {/* Placeholder for like button, logic to be implemented */}
-          <button className="like-button">❤</button>
+          <h5>{likes} likes</h5>
+          <button className="like-button" onClick={onLikeButtonClick}>
+            {likedByUser ? "❤️" : "🤍"}
+          </button>
           <p>{post.commentCount} Comments</p>
         </div>
 

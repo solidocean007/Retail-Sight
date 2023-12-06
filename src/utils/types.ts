@@ -58,7 +58,7 @@ export interface UserType {
 //   | "Cookies and Pastries"
 
 export interface PostType {
-  id: string;
+  // postId: string;
   category: CategoryType | '';
   channel: ChannelType | '';
   description?: string;
@@ -76,7 +76,7 @@ export interface PostType {
   };
   supplier?: string;
   brands: string[];
-  likes?: number;
+  likes?: string[];
   hashtags: string[];
   commentCount: number;
 }

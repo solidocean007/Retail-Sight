@@ -18,6 +18,7 @@ export const useHandlePostSubmission = () => {
 
   const handlePostSubmission = async (post: PostType, selectedFile: File) => {
     const user = auth.currentUser;
+    console.log(user, ' : user');
     if (!user) return;
     // const uid = user.uid;
 
@@ -28,9 +29,9 @@ export const useHandlePostSubmission = () => {
 
     try {
       const userData = await fetchUserFromFirebase(user.uid);
-
+      console.log(userData, ': userData')
       if (!userData) {
-        console.error("User data not found for ID:", user.uid);
+        console.error("User data not found for ID:", user.uid); // this doesnt log so i have userData
         return;
       }
 
@@ -57,17 +58,17 @@ export const useHandlePostSubmission = () => {
           },
           hashtags: hashtags,
           commentCount: 0,
-          likes: 0,
+          likes: [],
         };
 
-        console.log("Channel:", post.channel);
-        console.log("Category:", post.category);
+        console.log("Channel:", post.channel); // doesnt log
+        console.log("Category:", post.category); // doesn't log
 
         // Add post to 'posts' collection
         const newDocRef = await addPostToFirestore(db, postData);
 
-        console.log("Post ID:", newDocRef.id);
-
+        console.log("Post ID:", newDocRef.id); // doesn't log
+ 
 
         // Update channels collection
         await updateChannelsInFirestore(db, post.channel, newDocRef.id);
@@ -79,7 +80,7 @@ export const useHandlePostSubmission = () => {
         navigate("/userHomePage");
       }
     } catch (error) {
-      console.error("Error adding post:", error);
+      console.error("Error adding post:", error); // this logs
       dispatch(showMessage(`Error adding post: ${(error as Error).message}`));
     }
   };

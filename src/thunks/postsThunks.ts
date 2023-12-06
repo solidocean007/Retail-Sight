@@ -23,33 +23,44 @@ type FetchPostsArgs = {
   lastVisible: DocumentSnapshot | null; // This should be the type for your lastVisible document snapshot
 };
 
+type FetchInitialPostsArgs = {
+  POSTS_BATCH_SIZE: number;
+  currentUserCompany: string;
+};
+
+
 export const fetchInitialPostsBatch = createAsyncThunk(
   'posts/fetchInitial',
-  async (POSTS_BATCH_SIZE: number, { rejectWithValue }) => {
+  async ({ POSTS_BATCH_SIZE, currentUserCompany }: FetchInitialPostsArgs, { rejectWithValue }) => {
     try {
-      // Define the reference to the posts collection
       const postsCollectionRef = collection(db, "posts");
       console.log(`Attempting to fetch initial batch of posts with size: ${POSTS_BATCH_SIZE}`);
-      const postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"), limit(POSTS_BATCH_SIZE));
+      
+      // Fetch all posts, sorting by timestamp
+      const postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"));
       const snapshot = await getDocs(postsQuery);
+      snapshot.docs.forEach(doc => console.log(doc.data()));
 
-      console.log(`Fetched ${snapshot.docs.length} posts.`);
-      const posts = snapshot.docs.map(doc => {
-        const postData = doc.data() as PostType;
-        // return { id: doc.id, ...postData }; // 'id' is specified more than once, so this usage will be overwritten.ts(2783)
-        return { ...postData }; // 'id' is specified more than once, so this usage will be overwritten.ts(2783)
-        // postsThunks.ts(39, 30): This spread always overwrites this property.
-      });
-      const lastVisible = snapshot.docs[snapshot.docs.length - 1];
-      console.log(`Last visible post ID: ${lastVisible?.id}`);
 
-      return { posts, lastVisible: lastVisible?.id }; // Ensure you return just the ID, not the whole DocumentSnapshot
+      // Filter posts based on visibility and company
+      const filteredPosts = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() as PostType })) 
+        .filter(post => post.visibility === 'public' ||
+               (post.visibility === 'company' && post.user.postUserCompany === currentUserCompany))
+        .slice(0, POSTS_BATCH_SIZE); 
+
+      console.log(`Fetched ${filteredPosts.length} posts.`);
+      const lastVisible = filteredPosts[filteredPosts.length - 1]?.id;
+      console.log(`Last visible post ID: ${lastVisible}`);
+
+      return { posts: filteredPosts, lastVisible };
     } catch (error) {
       console.error('Error fetching initial posts:', error);
       return rejectWithValue(error instanceof Error ? error.message : error);
     }
   }
 );
+
 
 
 

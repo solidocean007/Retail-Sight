@@ -8,34 +8,56 @@ import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { Input } from "@mui/material";
-import './activityFeed.css'
+import getPostsByTag from "../utils/PostLogic/getPostsByTag";
+import "./activityFeed.css";
+import { PostType } from "../utils/types";
 
-const POST_BATCH_SIZE = 10;
+const POSTS_BATCH_SIZE = 10;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
 
 const ActivityFeed = () => {
   const dispatch = useAppDispatch();
-  const posts = useSelector((state: RootState) => state.posts.posts);
+  const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const currentUserCompany = currentUser?.company;
+  console.log(currentUserCompany, " : currentUserCompany");
+
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searchResults, setSearchResults] = React.useState<PostType[] | null>(
+    null
+  );
+
+  const posts = useSelector((state: RootState) => state.posts.posts); // this is all posts in redux right?
   const loading = useSelector((state: RootState) => state.posts.loading);
 
-  // Define the getPostsByTag function
-  const getPostsByTag = async (hashTag: string) => {
-    // Logic to fetch posts by tag goes here
-    console.log(`Fetching posts with hashtag: ${hashTag}`);
-    // Perform your fetching logic and update the state as needed
+  // Determine which posts to display - search results or all posts
+  const displayPosts = searchResults ? searchResults : posts;
+
+  const handleHashtagSearch = async () => {
+    try {
+      const hashtagPosts = await getPostsByTag(searchTerm);
+      setSearchResults(hashtagPosts); //  Type 'PostType[]' provides no match for the signature '(prevState: null): null'.ts(2345)
+      // const hashtagPosts: PostType[]
+    } catch (error) {
+      console.error("Error searching posts by hashtag:", error);
+      // Optionally show an error message to the user
+    }
   };
 
   // Fetch the initial posts when the component mounts
   useEffect(() => {
-    dispatch(fetchInitialPostsBatch(POST_BATCH_SIZE));
-  }, [dispatch]);
+    if (currentUserCompany) {
+      dispatch(
+        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
+      );
+    }
+  }, [dispatch, currentUserCompany]);
 
   // Determine the total item count (1 for the ad + number of posts)
   // const itemCount = 1 + posts.length;
 
-  // Calculate the total number of items (posts + ads)
-  const numberOfAds = Math.ceil(posts.length / AD_INTERVAL);
-  const itemCount = posts.length + numberOfAds;
+  // Calculate the number of items (posts + ads)
+  const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL);
+  const itemCount = displayPosts.length + numberOfAds;
 
   const itemRenderer = ({
     index,
@@ -50,20 +72,19 @@ const ActivityFeed = () => {
 
     if (isAdPosition) {
       return <AdComponent key={`ad-${adIndex}`} style={style} />;
-    } else if (postIndex < posts.length) {
-      const post = posts[postIndex];
+    } else if (postIndex < displayPosts.length) {
+      const post = displayPosts[postIndex];
       return (
         <PostCardRenderer
           key={post.id}
+          currentUserUid={currentUser?.uid}
           index={postIndex}
           style={style}
           data={{ post, getPostsByTag }}
         />
       );
     } else {
-      // This block is for the case where the index is out of bounds
-      // You could return null or a placeholder if you want to keep the spacing consistent
-      return null;
+      return null; // For out of bounds index
     }
   };
 
@@ -81,7 +102,15 @@ const ActivityFeed = () => {
   return (
     <div className="activity-feed-container">
       <h5>Search by hashtag:</h5>
-      <Input placeholder="search by hashtag"></Input><button color="white"></button>
+      {/* call the handleHashtagSearch on submit */}
+      <Input
+        placeholder="Search by hashtag"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <button onClick={handleHashtagSearch} color="white">
+        Search
+      </button>
       <List
         height={window.innerHeight}
         itemCount={itemCount}
