@@ -63,7 +63,7 @@ const SideBar = () => {
             title="Channels"
             options={ChannelOptions}
             selected={selectedChannels}
-            toggleOption={(option : ChannelType) => {
+            toggleOption={(option: ChannelType) => {
               // 'option' is a string
               setSelectedChannels((prev) =>
                 prev.includes(option)
@@ -90,29 +90,30 @@ const SideBar = () => {
       <div className="location-filter-container">
         <FilterLocation />
       </div>
-
-      <Button
-        className="btn"
-        variant="outlined"
-        color="secondary"
-        onClick={clearFilters}
-      >
-        Clear Filters
-      </Button>
-      <Button
-        className="btn"
-        variant="contained"
-        color="primary"
-        onClick={applyFilters}
-        disabled={
-          selectedChannels.length === 0 &&
-          selectedCategories.length === 0 &&
-          selectedStates.length === 0 &&
-          selectedCities.length === 0 // Add this line to include city filter in the condition
-        }
-      >
-        Apply Now
-      </Button>
+      <div className="filter-button-box">
+        <Button
+          className="btn"
+          variant="contained"
+          color="secondary"
+          onClick={clearFilters}
+        >
+          Clear Filters
+        </Button>
+        <Button
+          className="btn"
+          variant="contained"
+          color="primary"
+          onClick={applyFilters}
+          disabled={
+            selectedChannels.length === 0 &&
+            selectedCategories.length === 0 &&
+            selectedStates.length === 0 &&
+            selectedCities.length === 0 // Add this line to include city filter in the condition
+          }
+        >
+          Apply Now
+        </Button>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 .side-bar-box {
+  width: 100%;
+  padding: 20px 10px;
   border-radius: 5px;
-  margin-left: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,21 +11,31 @@
 }
 
 .location-filter-container {
-  margin-right: 50px;
+  display: flex;
+  width: 100%;
 }
 
 .post-content-filter {
   display: flex;
-  justify-content: space-between;
+  width: 100%;
+  justify-content: center;
 }
 
 .filter-by-content {
   display: flex;
+  justify-content: space-between;
+  width: 60%;
 }
-
 
 .MuiButton-root {
   margin-bottom: 20px;
+}
+
+.filter-button-box {
+  display: flex;
+  width: 90%;
+  justify-content: space-between;
+  padding: 30px;
 }
 
 
@@ -32,6 +43,17 @@
   /* Your styles for tablets */
   .side-bar-box {
     flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .filter-by-content {
+    width: 100%;
+  }
+
+  .location-filter-container {
+    width: 30%;
   }
   .btn {
     height: 50px;
@@ -42,6 +64,8 @@
   }
   .post-content-filter {
     display: flex;
+    width: 100%;
     flex-direction: row;
+    justify-content: flex-start;
   }
 }

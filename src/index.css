@@ -103,6 +103,9 @@ button:focus-visible {
   /* transform: translate(-50%, -50%); */
 }
 
+.mobile-filter-button {
+  display: none;
+}
 /* Default styles for desktops and larger screens here */
 
 /* Styles for tablets */
@@ -111,7 +114,14 @@ button:focus-visible {
 }
 
 /* Styles for mobile devices */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   /* Your styles for mobile devices */
+  .side-bar-container {
+    display: none;
+  }
+
+  .mobile-filter-button {
+    display: block;
+  }
 }
 

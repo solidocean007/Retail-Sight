@@ -34,13 +34,14 @@
   padding-top: 200px;
   display: flex;
   flex-direction: row;
+  justify-content: space-around;
   width: 100%;
 }
 
 .side-bar-container {
-  width: 100%;
+  width: 30%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 

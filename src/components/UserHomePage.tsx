@@ -56,7 +56,9 @@ export const UserHomePage = () => {
             >
               Create Post
             </Button>
-            {/* <LogOutButton /> */}
+            <div className="mobile-filter-button">
+              Filters
+            </div>
           </div>
         </Toolbar>
       </AppBar>
