@@ -35,7 +35,7 @@
   display: flex;
   width: 90%;
   justify-content: space-between;
-  padding: 30px;
+
 }
 
 
@@ -62,10 +62,18 @@
   .MuiGrid-root {
     width: 100%;
   }
+
   .post-content-filter {
     display: flex;
     width: 100%;
     flex-direction: row;
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 900px) {
+  .side-bar-box {
+    flex-direction: column;
+    padding:  20px 100px;
   }
 }

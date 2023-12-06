@@ -1,5 +1,5 @@
 // userHomePage.tsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
 import { AppBar, Toolbar } from "@mui/material";
@@ -20,7 +20,11 @@ export const UserHomePage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
-  console.log(currentUser, " : currentUser");
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+
+  const toggleFilterMenu = () => {
+    setIsFilterMenuOpen(!isFilterMenuOpen);
+  };
 
   useEffect(() => {
     // Dispatch the action to fetch location options
@@ -56,9 +60,10 @@ export const UserHomePage = () => {
             >
               Create Post
             </Button>
-            <div className="mobile-filter-button">
+
+            <button className="filter-menu-button" onClick={toggleFilterMenu}>
               Filters
-            </div>
+            </button>
           </div>
         </Toolbar>
       </AppBar>
@@ -66,16 +71,10 @@ export const UserHomePage = () => {
         <div className="activity-feed-container">
           <ActivityFeed />
         </div>
-        <div className="side-bar-container">
+        <div className={`side-bar-container ${isFilterMenuOpen? 'sidebar-fullscreen': ''}`}>
           <SideBar />
         </div>
       </div>
     </div>
   );
 };
-
-{
-  /* <CheckBoxModal
-
-/> */
-}

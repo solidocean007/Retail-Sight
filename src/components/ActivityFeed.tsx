@@ -100,7 +100,7 @@ const ActivityFeed = () => {
 
   // Render the list with the ad at the top followed by posts
   return (
-    <div className="activity-feed-container">
+    <div className="activity-feed-box">
       <h5>Search by hashtag:</h5>
       {/* call the handleHashtagSearch on submit */}
       <Input
