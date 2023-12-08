@@ -137,14 +137,14 @@ export async function storeLatestPostsInIndexedDB(posts: PostType[]): Promise<vo
 
 // Add this new function to indexedDBUtils.ts
 
-export async function getLatestPostsFromIndexedDB(): Promise<PostType[]> {
+export async function getLatestPostsFromIndexedDB(): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(['latestPosts'], 'readonly');
   const store = transaction.objectStore('latestPosts');
   const getAllRequest = store.getAll();
 
   return new Promise((resolve, reject) => {
-    getAllRequest.onsuccess = () => resolve(getAllRequest.result as PostType[]);
+    getAllRequest.onsuccess = () => resolve(getAllRequest.result as PostWithID[]);
     getAllRequest.onerror = () => reject(getAllRequest.error);
   });
 }

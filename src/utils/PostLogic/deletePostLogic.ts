@@ -6,13 +6,13 @@ import {
   arrayRemove,
 } from "firebase/firestore";
 import { ref, deleteObject, getStorage } from "firebase/storage";
-import { PostType } from "../types";
+import { PostWithID } from "../types";
 import { deletePost } from "../../Slices/postsSlice";
 import { AnyAction } from "redux";
 import { db } from "../firebase";
 
 interface userDeletePostProps {
-  post: PostType;
+  post: PostWithID;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   dispatch: React.Dispatch<AnyAction>;
 }
