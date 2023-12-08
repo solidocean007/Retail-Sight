@@ -1,8 +1,13 @@
 // postsSlice
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchFilteredPosts, fetchLatestPosts, fetchInitialPostsBatch, fetchMorePostsBatch } from "../thunks/postsThunks";
-import { PostType } from "../utils/types";
+import {
+  fetchFilteredPosts,
+  fetchLatestPosts,
+  fetchInitialPostsBatch,
+  fetchMorePostsBatch,
+} from "../thunks/postsThunks";
 import { PayloadAction } from "@reduxjs/toolkit";
+import { PostWithID } from "../utils/types";
 
 export type FilterCriteria = {
   channels?: string[];
@@ -13,7 +18,7 @@ type CursorType = string;
 
 // New state shape including loading and error states
 interface PostsState {
-  posts: PostType[];
+  posts: PostWithID[];
   loading: boolean;
   error: string | null;
   lastVisible: CursorType | null;
@@ -23,7 +28,7 @@ const initialState: PostsState = {
   posts: [],
   loading: false,
   error: null,
-  lastVisible: '',
+  lastVisible: "",
 };
 
 const postsSlice = createSlice({
@@ -31,7 +36,7 @@ const postsSlice = createSlice({
   initialState,
   reducers: {
     // Adjusted to the correct state.posts property
-    setPosts: (state, action: PayloadAction<PostType[]>) => {
+    setPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.posts = action.payload;
     },
     // Adjusted to the correct state.posts property
@@ -39,11 +44,11 @@ const postsSlice = createSlice({
       state.posts = state.posts.filter((post) => post.id !== action.payload);
       // i need to delete images and comments as well
     },
-    appendPosts: (state, action: PayloadAction<PostType[]>) => {
+    appendPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.posts = [...state.posts, ...action.payload];
     },
     // Adjusted to the correct state.posts property
-    updatePost: (state, action) => {
+    updatePost: (state, action: PayloadAction<PostWithID>) => {
       state.posts = state.posts.map((post) =>
         post.id === action.payload.id ? action.payload : post
       );
@@ -55,8 +60,11 @@ const postsSlice = createSlice({
       state.error = action.payload;
     },
     // Instead of storing the whole DocumentSnapshot, you can store just the ID, or necessary data.
-    setLastVisible: (state, action: PayloadAction<CursorType>) => { // Cannot find CursorType
+    setLastVisible: (state, action: PayloadAction<string | null>) => {
       state.lastVisible = action.payload;
+    },
+    addNewPost: (state, action: PayloadAction<PostWithID>) => {
+      state.posts.push(action.payload);
     },
   },
   extraReducers: (builder) => {
@@ -65,33 +73,38 @@ const postsSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchFilteredPosts.fulfilled, (state, action) => {
-        state.loading = false;
-        // Append new posts instead of replacing
-        state.posts = [...state.posts, ...action.payload];
-        // Update lastVisible based on the last post fetched
-        state.lastVisible = action.payload.length > 0
-          ? action.payload[action.payload.length - 1].id
-          : state.lastVisible;
-      })
+      .addCase(
+        fetchFilteredPosts.fulfilled,
+        (state, action: PayloadAction<PostWithID[]>) => {
+          state.loading = false;
+          // Directly append PostWithID[] to the state.posts
+          state.posts = [...state.posts, ...action.payload];
+          state.lastVisible =
+            action.payload.length > 0
+              ? action.payload[action.payload.length - 1].id
+              : state.lastVisible;
+        }
+      )
       .addCase(fetchFilteredPosts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Error fetching posts";
       })
       .addCase(fetchLatestPosts.pending, (state) => {
-        // Set loading state before fetching the latest posts
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchLatestPosts.fulfilled, (state, action) => {
-        state.loading = false;
-        // Append new posts instead of replacing
-        state.posts = [...state.posts, ...action.payload];
-        // Update lastVisible based on the last post fetched
-        state.lastVisible = action.payload.length > 0
-          ? action.payload[action.payload.length - 1].id
-          : state.lastVisible;
-      })
+      .addCase(
+        fetchLatestPosts.fulfilled,
+        (state, action: PayloadAction<PostWithID[]>) => {
+          state.loading = false;
+          // Directly append PostWithID[] to the state.posts
+          state.posts = [...state.posts, ...action.payload];
+          state.lastVisible =
+            action.payload.length > 0
+              ? action.payload[action.payload.length - 1].id
+              : state.lastVisible;
+        }
+      )
       .addCase(fetchLatestPosts.rejected, (state, action) => {
         // Handle any errors if the fetch fails
         state.loading = false;
@@ -131,5 +144,6 @@ export const {
   setLoading,
   setError,
   setLastVisible,
+  addNewPost,
 } = postsSlice.actions;
 export default postsSlice.reducer;

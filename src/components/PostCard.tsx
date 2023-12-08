@@ -2,7 +2,7 @@
 import React from "react";
 import { useState } from "react";
 import { Card, CardContent, Typography, Button } from "@mui/material";
-import { PostType } from "../utils/types";
+import { PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
@@ -18,7 +18,7 @@ import { handleUserNameClick } from "../utils/userModalUtils";
 interface PostCardProps {
   id: string;
   currentUserUid: string;
-  post: PostType;
+  post: PostWithID;
   getPostsByTag: (hashTag: string) => void;
   style?: React.CSSProperties;
 }

@@ -25,7 +25,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 
 import StoreLocator from "./StoreLocator";
-// import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
 import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
 import { PostType } from "../utils/types";
 import { CategoryType } from "./CategorySelector";
@@ -51,7 +50,6 @@ export const CreatePost = () => {
   // });
   // const [selectedBrands, setSelectedBrands] = useState<BrandType[]>([]);
   const [post, setPost] = useState<PostType>({
-    id: "",
     category: selectedCategory,
     channel: selectedChannel,
     description: "",
@@ -69,7 +67,7 @@ export const CreatePost = () => {
       postUserId: userData?.uid,
       postUserCompany: userData?.company,
     },
-    likes: 0,
+    likes: [],
     hashtags: [""],
     commentCount: 0,
   });

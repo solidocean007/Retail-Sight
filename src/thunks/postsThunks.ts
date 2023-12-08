@@ -1,17 +1,30 @@
 // postsThunks.ts
-import { PostType } from "../utils/types";
+import { PostType, PostWithID } from "../utils/types";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
-import { collection, query, orderBy, limit, doc, getDocs, getDoc, Query, DocumentData, startAfter } from "firebase/firestore";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  doc,
+  getDocs,
+  getDoc,
+  Query,
+  DocumentData,
+  startAfter,
+} from "firebase/firestore";
 import {
   filterByCategories,
   filterByChannels,
 } from "../services/postsServices";
-import { getFilteredPostsFromIndexedDB, storeFilteredPostsInIndexedDB, storeLatestPostsInIndexedDB, getLatestPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import {
+  getFilteredPostsFromIndexedDB,
+  storeFilteredPostsInIndexedDB,
+  storeLatestPostsInIndexedDB,
+  getLatestPostsFromIndexedDB,
+} from "../utils/database/indexedDBUtils";
 import { DocumentSnapshot } from "firebase/firestore";
-
-
-// const POSTS_BATCH_SIZE = 10; // Number of posts to fetch per batch
 
 type FetchPostsArgs = {
   filters: {
@@ -28,86 +41,111 @@ type FetchInitialPostsArgs = {
   currentUserCompany: string;
 };
 
-
 export const fetchInitialPostsBatch = createAsyncThunk(
-  'posts/fetchInitial',
-  async ({ POSTS_BATCH_SIZE, currentUserCompany }: FetchInitialPostsArgs, { rejectWithValue }) => {
+  "posts/fetchInitial",
+  async (
+    { POSTS_BATCH_SIZE, currentUserCompany }: FetchInitialPostsArgs,
+    { rejectWithValue }
+  ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
-      console.log(`Attempting to fetch initial batch of posts with size: ${POSTS_BATCH_SIZE}`);
-      
-      // Fetch all posts, sorting by timestamp
-      const postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"));
-      const snapshot = await getDocs(postsQuery);
-      snapshot.docs.forEach(doc => console.log(doc.data()));
+      console.log(
+        `Attempting to fetch initial batch of posts with size: ${POSTS_BATCH_SIZE}`
+      );
 
+      // Fetch all posts, sorting by timestamp
+      const postsQuery = query(
+        postsCollectionRef,
+        orderBy("timestamp", "desc")
+      );
+      const querySnapshot = await getDocs(postsQuery);
 
       // Filter posts based on visibility and company
-      const filteredPosts = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() as PostType })) 
-        .filter(post => post.visibility === 'public' ||
-               (post.visibility === 'company' && post.user.postUserCompany === currentUserCompany))
-        .slice(0, POSTS_BATCH_SIZE); 
+      const postsWithIds: PostWithID[] = querySnapshot.docs.map((doc) => {
+        const postData: PostType = doc.data() as PostType;
+        return {
+          ...postData,
+          id: doc.id
+        };
+      })
+        .filter(
+          (post) =>
+            post.visibility === "public" ||
+            (post.visibility === "company" &&
+              post.user.postUserCompany === currentUserCompany)
+        )
+        .slice(0, POSTS_BATCH_SIZE);
 
-      console.log(`Fetched ${filteredPosts.length} posts.`);
-      const lastVisible = filteredPosts[filteredPosts.length - 1]?.id;
+      console.log("Fetched posts:", postsWithIds);
+
+      const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
       console.log(`Last visible post ID: ${lastVisible}`);
 
-      return { posts: filteredPosts, lastVisible };
+      return { posts: postsWithIds, lastVisible };
     } catch (error) {
-      console.error('Error fetching initial posts:', error);
+      console.error("Error fetching initial posts:", error);
       return rejectWithValue(error instanceof Error ? error.message : error);
     }
   }
 );
 
-
-
-
 // Define a type for the thunk argument
 type FetchMorePostsArgs = {
-  lastVisible: string | null;  // Use string to represent the last document ID
+  lastVisible: string | null; // Use string to represent the last document ID
   limit: number;
 };
 
 export const fetchMorePostsBatch = createAsyncThunk(
-  'posts/fetchMore',
-  async ({ lastVisible, limit: BatchSize }: FetchMorePostsArgs, { rejectWithValue }) => {
+  "posts/fetchMore",
+  async (
+    { lastVisible, limit: BatchSize }: FetchMorePostsArgs,
+    { rejectWithValue }
+  ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
       let postsQuery;
-      
+
       // If lastVisible is not null, convert it to a DocumentSnapshot
       if (lastVisible) {
         const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
-        postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"), startAfter(lastVisibleSnapshot), limit(BatchSize));
+        postsQuery = query(
+          postsCollectionRef,
+          orderBy("timestamp", "desc"),
+          startAfter(lastVisibleSnapshot),
+          limit(BatchSize)
+        );
       } else {
-        postsQuery = query(postsCollectionRef, orderBy("timestamp", "desc"), limit(BatchSize));
+        postsQuery = query(
+          postsCollectionRef,
+          orderBy("timestamp", "desc"),
+          limit(BatchSize)
+        );
       }
 
       const snapshot = await getDocs(postsQuery);
-      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PostType[];
+      const postsWithIds: PostWithID[] = snapshot.docs.map(doc => {
+        const data = doc.data() as PostType;
+        return { id: doc.id, ...data };
+      });
       // Get the last visible document's ID for pagination
-      const newLastVisible = snapshot.docs[snapshot.docs.length - 1]?.id || null;
+      const newLastVisible =
+        snapshot.docs[snapshot.docs.length - 1]?.id || null;
 
-      return { posts, lastVisible: newLastVisible };
+      return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
       // Check if error is an instance of Error and has a message property
       if (error instanceof Error) {
         return rejectWithValue(error.message);
       }
       // If it's not an Error instance or doesn't have a message, return a default message
-      return rejectWithValue('An unknown error occurred');
+      return rejectWithValue("An unknown error occurred");
     }
   }
 );
 
-export const fetchLatestPosts = createAsyncThunk<
-  PostType[],
-  void,
-  { rejectValue: string }
->("posts/fetchLatest", async (_, { rejectWithValue }) => {
-  
+export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectValue: string }>(
+  "posts/fetchLatest",
+  async (_, { rejectWithValue }) => {
   try {
     // First, try to get the latest posts from IndexedDB
     const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
@@ -122,15 +160,15 @@ export const fetchLatestPosts = createAsyncThunk<
         orderBy("timestamp", "desc"),
         limit(10)
       );
-      
-      console.log('fetchLatestPosts read')
+
+      console.log("fetchLatestPosts read");
       const postSnapshot = await getDocs(baseQuery);
 
       if (postSnapshot.empty) {
         return [];
       }
 
-      const posts: PostType[] = postSnapshot.docs.map((doc) => ({
+      const posts : PostWithID[] = postSnapshot.docs.map((doc) => ({
         ...(doc.data() as PostType),
         id: doc.id,
       }));
@@ -140,28 +178,30 @@ export const fetchLatestPosts = createAsyncThunk<
 
       return posts;
     }
-  }  catch (error) {
+  } catch (error) {
     console.error("Error fetching latest posts:", error);
     return rejectWithValue("Error fetching latest posts.");
   }
 });
 
-export const fetchFilteredPosts = createAsyncThunk<
-  PostType[],
-  FetchPostsArgs,
-  { rejectValue: string }
->("posts/fetchFiltered", async ({ filters }, { rejectWithValue }) => { 
+export const fetchFilteredPosts = createAsyncThunk<PostWithID[], FetchPostsArgs, { rejectValue: string }>(
+  "posts/fetchFiltered",
+  async ({ filters }, { rejectWithValue }) => {
   try {
     // First, try to get filtered posts from IndexedDB
     console.log("Attempting to fetch filtered posts from IndexedDB...");
     const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
 
-    if (cachedPosts.length > 0) { 
-      console.log(`Found ${cachedPosts.length} cached posts in IndexedDB. Using cached data.`);
+    if (cachedPosts.length > 0) {
+      console.log(
+        `Found ${cachedPosts.length} cached posts in IndexedDB. Using cached data.`
+      );
       return cachedPosts;
     } else {
       // If there are no cached posts, fetch from Firestore
-      console.log("No suitable cached posts found in IndexedDB. Fetching from Firestore...");
+      console.log(
+        "No suitable cached posts found in IndexedDB. Fetching from Firestore..."
+      );
       let baseQuery: Query<DocumentData> = collection(db, "posts");
 
       // Apply channel filters if they are present
@@ -174,23 +214,27 @@ export const fetchFilteredPosts = createAsyncThunk<
       }
 
       // Execute the query
-      const queryToExecute = query(baseQuery, limit(25)); // or any other limit you prefer
-      console.log('fetchFilteredPosts read')
+      const queryToExecute = query(baseQuery);
+      console.log("fetchFilteredPosts read");
       const postSnapshot = await getDocs(queryToExecute);
 
       if (postSnapshot.empty) {
-        console.log("No documents found with the current filters in Firestore.");
+        console.log(
+          "No documents found with the current filters in Firestore."
+        );
         return [];
       }
 
-      // Transform Firestore docs into PostType array
-      const posts = postSnapshot.docs.map((doc) => ({
-        ...(doc.data() as PostType),
+      // When mapping, create PostWithID objects
+      const posts: PostWithID[] = postSnapshot.docs.map(doc => ({
         id: doc.id,
+        ...doc.data() as PostType
       }));
 
       // Store the fetched posts in IndexedDB
-      console.log(`Fetched ${posts.length} posts from Firestore. Storing in IndexedDB.`);
+      console.log(
+        `Fetched ${posts.length} posts from Firestore. Storing in IndexedDB.`
+      );
       await storeFilteredPostsInIndexedDB(posts, filters);
 
       // Return the fetched posts

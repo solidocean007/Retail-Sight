@@ -1,9 +1,10 @@
 // indexedDBUtils.ts
-import { PostType } from "../types";
+import { PostType, PostWithID } from "../types";
 import { FilterCriteria } from "../../Slices/postsSlice";
 import { openDB } from "./indexedDBOpen";
 
-export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
+// export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
+export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(['posts'], 'readwrite');
   const store = transaction.objectStore('posts');
@@ -30,7 +31,8 @@ export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
 }
 
 
-export async function getPostsFromIndexedDB(): Promise<PostType[]> { 
+// export async function getPostsFromIndexedDB(): Promise<PostType[]> { 
+export async function getPostsFromIndexedDB(): Promise<PostWithID[]> { 
   const db = await openDB();
   const transaction = db.transaction(['posts'], 'readonly');
   const store = transaction.objectStore('posts');
@@ -46,7 +48,8 @@ export async function getPostsFromIndexedDB(): Promise<PostType[]> {
 }
 
 // Create a utility function that retrieves filtered posts from IndexedDB
-export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostType[]> {
+// export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostType[]> {
+export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(['posts'], 'readonly');
   const store = transaction.objectStore('posts');
@@ -71,7 +74,8 @@ export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Pr
 
 
 // Create a utility function that stores filtered posts in IndexedDB
-export async function storeFilteredPostsInIndexedDB(posts: PostType[], filters: FilterCriteria): Promise<void> {
+// export async function storeFilteredPostsInIndexedDB(posts: PostWithID[], filters: FilterCriteria): Promise<void> {
+export async function storeFilteredPostsInIndexedDB(posts: PostWithID[], filters: FilterCriteria): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(['posts'], 'readwrite');
   const store = transaction.objectStore('posts');

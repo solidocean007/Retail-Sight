@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { userDeletePost } from "../utils/PostLogic/deletePostLogic";
 import Modal from "@mui/material/Modal";
-import { PostType } from "../utils/types";
+import { PostWithID } from "../utils/types";
 import { useDispatch } from "react-redux";
 import { showMessage } from "../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
@@ -22,7 +22,7 @@ import {
 import './editPostModal.css'
 
 interface EditPostModalProps {
-  post: PostType;
+  post: PostWithID;
   isOpen: boolean;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   // onClose: () => void;
@@ -53,7 +53,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     setPostVisibility(post?.visibility || "public");
   }, [post]);
 
-  const handleSavePost = async (updatedPost: PostType) => {
+  const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id); 
     try {
       const updatedFields = {
@@ -72,7 +72,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   };
 
   const handleSave = () => {
-    const updatedPost: PostType = {
+    const updatedPost: PostWithID = {
       ...post,
       description,
       visibility: postVisibility,

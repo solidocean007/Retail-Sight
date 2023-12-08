@@ -58,7 +58,7 @@ export interface UserType {
 //   | "Cookies and Pastries"
 
 export interface PostType {
-  // postId: string;
+  // id: string;
   category: CategoryType | '';
   channel: ChannelType | '';
   description?: string;
@@ -80,6 +80,8 @@ export interface PostType {
   hashtags: string[];
   commentCount: number;
 }
+
+export type PostWithID = PostType & { id: string };
 
 export interface CommentType {
   commentId: string;

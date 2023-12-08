@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
 import { TextField, Button } from "@mui/material";
-import { CommentType, PostType } from "../utils/types";
+import { CommentType, PostWithID } from "../utils/types";
 import { Timestamp, deleteDoc, increment } from "firebase/firestore";
 import { useDispatch } from "react-redux";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
@@ -25,7 +25,7 @@ import "./commentSection.css";
 // import { UserState } from "../Slices/userSlice.ts";
 
 interface CommentProps {
-  post: PostType;
+  post: PostWithID;
   showAllComments: boolean;
   setShowAllComments: React.Dispatch<React.SetStateAction<boolean>>;
 }

@@ -10,9 +10,9 @@ import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { Input } from "@mui/material";
 import getPostsByTag from "../utils/PostLogic/getPostsByTag";
 import "./activityFeed.css";
-import { PostType } from "../utils/types";
+import {  PostWithID } from "../utils/types";
 
-const POSTS_BATCH_SIZE = 10;
+const POSTS_BATCH_SIZE = 20;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
 
 const ActivityFeed = () => {
@@ -22,7 +22,7 @@ const ActivityFeed = () => {
   console.log(currentUserCompany, " : currentUserCompany");
 
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [searchResults, setSearchResults] = React.useState<PostType[] | null>(
+  const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
     null
   );
 
@@ -35,8 +35,7 @@ const ActivityFeed = () => {
   const handleHashtagSearch = async () => {
     try {
       const hashtagPosts = await getPostsByTag(searchTerm);
-      setSearchResults(hashtagPosts); //  Type 'PostType[]' provides no match for the signature '(prevState: null): null'.ts(2345)
-      // const hashtagPosts: PostType[]
+      setSearchResults(hashtagPosts);
     } catch (error) {
       console.error("Error searching posts by hashtag:", error);
       // Optionally show an error message to the user
@@ -73,14 +72,14 @@ const ActivityFeed = () => {
     if (isAdPosition) {
       return <AdComponent key={`ad-${adIndex}`} style={style} />;
     } else if (postIndex < displayPosts.length) {
-      const post = displayPosts[postIndex];
+      const postWithID = displayPosts[postIndex];
       return (
         <PostCardRenderer
-          key={post.id}
+          key={postWithID.id}
           currentUserUid={currentUser?.uid}
           index={postIndex}
           style={style}
-          data={{ post, getPostsByTag }}
+          data={{ post: postWithID, getPostsByTag }} // Passing the entire postWithID object
         />
       );
     } else {

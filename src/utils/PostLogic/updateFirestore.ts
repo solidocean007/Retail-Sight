@@ -1,3 +1,4 @@
+// updateFirestore.ts
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, addDoc, collection } from "firebase/firestore";
 
 export const addPostToFirestore = async (db: any, postData: any) => {
@@ -35,4 +36,3 @@ export const updateCategoriesInFirestore = async (db: any, category: string, pos
     });
   }
 };
-

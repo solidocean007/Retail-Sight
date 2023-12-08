@@ -5,6 +5,7 @@ import { auth, db } from "../firebase";
 import { uploadImageToStorage } from "./upLoadImage";
 import { extractHashtags } from "../extractHashtags";
 import { showMessage } from "../../Slices/snackbarSlice";
+import { addNewPost } from "../../Slices/postsSlice";
 import {
   addPostToFirestore,
   updateCategoriesInFirestore,
@@ -18,7 +19,7 @@ export const useHandlePostSubmission = () => {
 
   const handlePostSubmission = async (post: PostType, selectedFile: File) => {
     const user = auth.currentUser;
-    console.log(user, ' : user');
+    console.log(user, " : user");
     if (!user) return;
     // const uid = user.uid;
 
@@ -28,10 +29,10 @@ export const useHandlePostSubmission = () => {
     }
 
     try {
-      const userData = await fetchUserFromFirebase(user.uid);
-      console.log(userData, ': userData')
+      const userData = await fetchUserFromFirebase(user.uid); // this should already be in redux.  I shouldnt be reading firebase again.
+      console.log(userData, ": userData");
       if (!userData) {
-        console.error("User data not found for ID:", user.uid); // this doesnt log so i have userData
+        console.error("User data not found for ID:", user.uid);
         return;
       }
 
@@ -46,13 +47,13 @@ export const useHandlePostSubmission = () => {
           selectedStore: post.selectedStore,
           storeAddress: post.storeAddress,
           state: post.state,
-          city: post.city, 
+          city: post.city,
           visibility: post.visibility,
           supplier: post.supplier,
           brands: post.brands,
           timestamp: new Date().toISOString(),
           user: {
-            postUserName: user.displayName,
+            postUserName: user.displayName || 'Unknown',
             postUserId: user.uid,
             postUserCompany: userData.company,
           },
@@ -61,14 +62,16 @@ export const useHandlePostSubmission = () => {
           likes: [],
         };
 
-        console.log("Channel:", post.channel); // doesnt log
-        console.log("Category:", post.category); // doesn't log
+        console.log("Channel:", post.channel);
+        console.log("Category:", post.category);
 
         // Add post to 'posts' collection
-        const newDocRef = await addPostToFirestore(db, postData);
+        const newDocRef = await addPostToFirestore(db, postData); // adds the postData as a new post.
+        const newPostWithID = { ...postData, id: newDocRef.id };
 
-        console.log("Post ID:", newDocRef.id); // doesn't log
- 
+        // Dispatch action to add this new post to Redux state
+        dispatch(addNewPost(newPostWithID));
+        console.log("Post ID:", newDocRef.id);
 
         // Update channels collection
         await updateChannelsInFirestore(db, post.channel, newDocRef.id);
