@@ -10,7 +10,7 @@ import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { Input } from "@mui/material";
 import getPostsByTag from "../utils/PostLogic/getPostsByTag";
 import "./activityFeed.css";
-import {  PostWithID } from "../utils/types";
+import { PostWithID } from "../utils/types";
 
 const POSTS_BATCH_SIZE = 20;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
@@ -100,18 +100,30 @@ const ActivityFeed = () => {
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
-      <h5>Search by hashtag:</h5>
-      {/* call the handleHashtagSearch on submit */}
-      <Input
-        placeholder="Search by hashtag"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      <button onClick={handleHashtagSearch} color="white">
-        Search
-      </button>
+      <div className="search-title">
+        <h5>Search by hashtag:</h5>
+      </div>
+
+      <div className="hashtag-search-box">
+        {/* call the handleHashtagSearch on submit */}
+        <Input
+          placeholder="Search by hashtag"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleHashtagSearch();
+            }
+          }}
+        />
+        <button onClick={handleHashtagSearch} color="white">
+          Search
+        </button>
+      </div>
+
       <List
-        height={window.innerHeight}
+        // height={window.innerHeight}
+        height={650}
         itemCount={itemCount}
         itemSize={900} // Adjust based on your item size
         width={650}

@@ -1,3 +1,8 @@
+.activity-feed-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
 @media (max-width: 1100px) {
   /* Your styles for tablets */

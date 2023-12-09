@@ -1,15 +1,5 @@
  /* App.css */
-#root {
-  max-width: 1280px;
-  /* margin: 0 auto; */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  margin: 0;
-  /* padding: 2rem; */
-  text-align: center;
-}
+
 
 /* text fields */
 .MuiInputBase-root {
