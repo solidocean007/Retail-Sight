@@ -1,58 +1,46 @@
-//firestoreReadsSlice.ts
-// import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-// export const firestoreReadsSlice = createSlice({
-//   name: "firestoreReads",
-//   initialState: {
-//     count: 0,
-//     maxCount: 100,
-//   },
-//   reducers: {
-//     incrementRead: (state, action: PayloadAction<number>) => {
-//       state.count += action.payload;
-//     },
-//     resetReads: (state) => {
-//       state.count = 0;
-//     },
-//   },
-// });
-
-// export const { incrementRead, resetReads } = firestoreReadsSlice.actions;
-// export default firestoreReadsSlice.reducer;
-
-// firestoreReadsSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+interface FirestoreReadDetail {
+  source: string; // The component or function that initiated the read
+  description: string; // A brief description of the data being read
+}
 
 interface FirestoreReadState {
   count: number;
   maxCount: number;
-  lastReadTimestamp: number | null; // Tracks when the last read occurred
+  lastReadTimestamp: number | null;
+  lastReadDetail: FirestoreReadDetail | null;
 }
 
 const initialState: FirestoreReadState = {
   count: 0,
   maxCount: 100,
   lastReadTimestamp: null,
+  lastReadDetail: null,
 };
 
 export const firestoreReadsSlice = createSlice({
   name: "firestoreReads",
   initialState,
   reducers: {
-    incrementRead: (state, action: PayloadAction<number>) => {
-      state.count += action.payload;
-      state.lastReadTimestamp = Date.now(); // Update the timestamp on each read
+    incrementRead: (state, action: PayloadAction<FirestoreReadDetail>) => {
+      state.count += 1;
+      state.lastReadTimestamp = Date.now();
+      state.lastReadDetail = action.payload;
     },
     resetReads: (state) => {
       state.count = 0;
-      state.lastReadTimestamp = null; // Reset the timestamp when reads are reset
+      state.lastReadTimestamp = null;
+      state.lastReadDetail = null;
     },
-    // Additional reducer to handle explicit logging of reads (could be expanded for more detailed logging)
     logRead: (state) => {
-      console.log(`Firestore read at ${new Date(state.lastReadTimestamp ?? Date.now()).toISOString()}`);
+      if (state.lastReadDetail) {
+        console.log(`Firestore read at ${new Date(state.lastReadTimestamp ?? Date.now()).toISOString()}, Source: ${state.lastReadDetail.source}, Description: ${state.lastReadDetail.description}`);
+      }
     },
   },
 });
 
 export const { incrementRead, resetReads, logRead } = firestoreReadsSlice.actions;
 export default firestoreReadsSlice.reducer;
+

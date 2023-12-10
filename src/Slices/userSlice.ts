@@ -31,9 +31,10 @@ export const userSlice = createSlice({
   extraReducers: (builder) => {
     // Use the builder callback notation here
     // Example:
-    builder.addCase(someAsyncThunk.fulfilled, (state, action) => {
-      // handle the fulfilled case
-    });
+    // builder.addCase(someAsyncThunk.fulfilled, (state, action) => {
+    //   // handle the fulfilled case
+    // }
+    // );
   },
 });
 

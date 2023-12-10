@@ -14,6 +14,8 @@ export const fetchLocationOptions = createAsyncThunk(
   'locations/fetchOptions',
   async (_, { rejectWithValue }) => {
     try {
+      const cachedLocation = await get
+
       const locationsCollectionRef = collection(db, "locations");
       console.log('Fetching locations from Firestore read');
       const querySnapshot = await getDocs(locationsCollectionRef);
