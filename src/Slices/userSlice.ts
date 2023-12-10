@@ -1,7 +1,8 @@
 // userSlice.ts
 import { createSlice, SerializedError } from '@reduxjs/toolkit';
 import { UserType } from '../utils/types';
-import { setUser } from '../actions/userActions';
+// import { setUser } from '../actions/userActions';
+import { PayloadAction } from '@reduxjs/toolkit';
 
 interface UserState {
   currentUser: UserType | null;
@@ -20,22 +21,33 @@ const initialState: UserState = {
 export const userSlice = createSlice({
   name: 'user',
   initialState,
-  reducers: {},
-  extraReducers: (builder) => {
-    builder
-      .addCase(setUser.pending, (state) => {
-        state.loading = 'pending';
-      })
-      .addCase(setUser.fulfilled, (state, action) => {
-        state.loading = 'succeeded';
-        state.currentUser = action.payload;
-      })
-      .addMatcher((action): action is ReturnType<typeof setUser.rejected> => action.type === setUser.rejected.type, (state, action) => {
-        state.loading = 'failed';
-        state.error = action.error;
-      });
+  reducers: {
+    // Simple action to set the current user
+    setUser: (state, action: PayloadAction<UserType | null>) => {
+      state.currentUser = action.payload;
+    },
+    // Handle other user-related actions here
+    // ...
+  },
+  // extraReducers: (builder) => {
+  extraReducers: {
+    // builder
+    //   .addCase(setUser.pending, (state) => {
+    //     state.loading = 'pending';
+    //   })
+    //   .addCase(setUser.fulfilled, (state, action) => {
+    //     state.loading = 'succeeded';
+    //     state.currentUser = action.payload;
+    //   })
+    //   .addMatcher((action): action is ReturnType<typeof setUser.rejected> => action.type === setUser.rejected.type, (state, action) => {
+    //     state.loading = 'failed';
+    //     state.error = action.error;
+    //   });
   }
   
 });
+
+// Export the action creator
+export const { setUser } = userSlice.actions; 
 export const selectUser = (state: { user: UserState }) => state.user.currentUser;
 export default userSlice.reducer;

@@ -26,6 +26,14 @@ export const UserHomePage = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
   };
 
+  
+    useEffect(()=>{
+      console.log('UserHomePage mounts')
+      return ()=> {
+        console.log('UserHomePage unmounts')
+      }
+    },[])
+
   useEffect(() => {
     // Dispatch the action to fetch location options
     dispatch(fetchLocationOptions());

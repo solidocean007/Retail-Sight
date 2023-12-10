@@ -1,5 +1,5 @@
 // SignUpLogin.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TErrorsOfInputs, TUserInputType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { handleSignUp, handleLogin } from "../utils/validation/authenticate";
@@ -31,6 +31,13 @@ import './signUpLogIn.css'
 import { showMessage } from "../Slices/snackbarSlice";  // hideMessage is defined but never used.  What is it for?
 
 export const SignUpLogin = () => {
+  useEffect(()=>{
+    console.log('SignUpLogin mounts')
+    return ()=> {
+      console.log('SignUpLogin unmounts')
+    }
+  },[])
+  
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 

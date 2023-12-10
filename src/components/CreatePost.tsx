@@ -34,6 +34,14 @@ import { ChannelType } from "./ChannelSelector";
 import "./createPost.css";
 
 export const CreatePost = () => {
+
+  useEffect(()=>{
+    console.log('CreatePost mounts')
+    return ()=> {
+      console.log('CreatePost unmounts')
+    }
+  },[])
+
   const handlePostSubmission = useHandlePostSubmission();
   // State Management
   const userData = useSelector(selectUser);

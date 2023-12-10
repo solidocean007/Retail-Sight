@@ -70,7 +70,12 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 };
 
 export const UserProfilePage = () => {
-  // const dispatch = useDispatch();
+  useEffect(()=>{
+    console.log('UserProfilePage mounts')
+    return ()=> {
+      console.log('UserProfilePage unmounts')
+    }
+  },[])
 
   const userData = useSelector(selectUser);
   const form = useForm<FormData>();

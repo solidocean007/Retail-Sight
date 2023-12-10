@@ -1,40 +1,55 @@
 // useFirebaseAuth.ts
 import { useEffect, useCallback } from 'react';
-import { AppDispatch } from './store';
-import { useDispatch } from 'react-redux';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { setUser } from '../actions/userActions';
+import { useDispatch, useSelector } from 'react-redux';
+import { User, getAuth, onAuthStateChanged } from 'firebase/auth';
+import { setUser } from '../Slices/userSlice';
+
 import { fetchUserDocFromFirestore } from './userData/fetchUserDocFromFirestore';
+import { RootState } from './store'; 
+import { UserType } from './types';
 
 export const useFirebaseAuth = () => {
-  const dispatch = useDispatch<AppDispatch>();
-
+  const dispatch = useDispatch();
+  // Select the current user from the Redux store
+  const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  
   const handleUserChange = useCallback(async (user: User | null) => {
+    // Exit early if the user hasn't changed
+    if ((user && user.uid === currentUser?.uid) || (!user && !currentUser)) {
+      return;
+    }
+
+    // If user is logged in and the UID has changed, fetch user document
     if (user) {
       try {
-        console.log('handleUserChange in useFirebaseAuth read')
-        const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid);
+        console.log('handleUserChange in useFirebaseAuth read');
+        const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid) as UserType;
         if (userDataFromFirestore) {
-          dispatch(setUser({ uid: user.uid }));
+          dispatch(setUser(userDataFromFirestore));
         } else {
-          dispatch(setUser({ uid: '' }));
+          // Handle the case where user data does not exist in Firestore
+          dispatch(setUser(null));
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
     } else {
-      dispatch(setUser({ uid: '' }));
+      // User is logged out
+      dispatch(setUser(null));
     }
-  }, [dispatch]);
+  }, [dispatch, currentUser]);
 
   useEffect(() => {
-    console.log('useFirebaseAuth.ts runs from App.tsx:')
+    console.log('useFirebaseAuth.ts runs from App.tsx:');
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, handleUserChange);
 
+    // Clean up the subscription
     return () => {
+      console.log('Unsubscribing from auth changes');
       unsubscribe();
-      console.log('useFirebaseAuth function unmounted');
-    }
-  }, [handleUserChange]); 
+    };
+  }, [handleUserChange]);
+
+  // Optional: Return a loading state if needed
 };

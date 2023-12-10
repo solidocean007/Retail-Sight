@@ -12,6 +12,7 @@ const UserModal = () => {
   const selectedUid = useSelector(selectSelectedUid);
 
   useEffect(() => {
+    console.log('UserModal mounts')
     if (isUserModalOpen && selectedUid) {
       fetchUserDocFromFirestore(selectedUid)
         .then(data => {
@@ -19,6 +20,9 @@ const UserModal = () => {
           setUserData(data as UserType);
         }) // type error with data
         .catch(err => console.error(err));
+    }
+    return () => {
+      console.log('UserModal unmounts')
     }
   }, [isUserModalOpen, selectedUid]);
 

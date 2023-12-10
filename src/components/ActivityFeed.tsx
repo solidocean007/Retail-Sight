@@ -54,6 +54,7 @@ const ActivityFeed = () => {
       console.log("ActivityFeed.tsx unmounts");
     };
   }, [dispatch, currentUserCompany]);
+  // }, []);
 
   // Determine the total item count (1 for the ad + number of posts)
   // const itemCount = 1 + posts.length;
