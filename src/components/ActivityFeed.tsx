@@ -19,7 +19,7 @@ const ActivityFeed = () => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompany = currentUser?.company;
-  console.log(currentUserCompany, " : currentUserCompany");
+  console.log(currentUserCompany, currentUser, " : currentUserCompany, currentUser");
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(

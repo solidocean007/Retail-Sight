@@ -1,14 +1,11 @@
-// userSlice.ts
-import { createSlice, SerializedError } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { UserType } from '../utils/types';
-// import { setUser } from '../actions/userActions';
-import { PayloadAction } from '@reduxjs/toolkit';
 
 interface UserState {
   currentUser: UserType | null;
   otherUsers: Record<string, UserType>;
   loading: 'idle' | 'pending' | 'succeeded' | 'failed';
-  error: SerializedError | null;
+  error: string | null;  // Updated to string for simplification, adjust as needed
 }
 
 const initialState: UserState = {
@@ -22,32 +19,27 @@ export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    // Simple action to set the current user
+    // Action to set the current user
     setUser: (state, action: PayloadAction<UserType | null>) => {
       state.currentUser = action.payload;
+      state.loading = 'idle';  // Optionally set loading state to 'idle'
+      state.error = null;      // Optionally clear any previous error
     },
-    // Handle other user-related actions here
-    // ...
+    // You can add other reducers here as needed
   },
-  // extraReducers: (builder) => {
-  extraReducers: {
-    // builder
-    //   .addCase(setUser.pending, (state) => {
-    //     state.loading = 'pending';
-    //   })
-    //   .addCase(setUser.fulfilled, (state, action) => {
-    //     state.loading = 'succeeded';
-    //     state.currentUser = action.payload;
-    //   })
-    //   .addMatcher((action): action is ReturnType<typeof setUser.rejected> => action.type === setUser.rejected.type, (state, action) => {
-    //     state.loading = 'failed';
-    //     state.error = action.error;
-    //   });
-  }
-  
+  // No extraReducers needed unless you are handling other async thunks
+  extraReducers: (builder) => {
+    // Use the builder callback notation here
+    // Example:
+    builder.addCase(someAsyncThunk.fulfilled, (state, action) => {
+      // handle the fulfilled case
+    });
+  },
 });
 
-// Export the action creator
-export const { setUser } = userSlice.actions; 
+// Export the action creators and selectors
+export const { setUser } = userSlice.actions;
 export const selectUser = (state: { user: UserState }) => state.user.currentUser;
+
+// Export the reducer
 export default userSlice.reducer;

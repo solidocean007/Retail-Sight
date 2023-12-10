@@ -1,6 +1,6 @@
 // SignUpLogin.tsx
 import { useEffect, useState } from "react";
-import { TErrorsOfInputs, TUserInputType } from "../utils/types";
+import { TErrorsOfInputs, TUserInputType, UserType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { handleSignUp, handleLogin } from "../utils/validation/authenticate";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +15,7 @@ import Typography from "@mui/material/Typography";
 // import items from Redux
 import { useAppDispatch } from "../utils/store";
 // import { incrementRead } from "../Slices/firestoreReadsSlice";
-import { setUser } from "../actions/userActions";
+import { setUser } from "../Slices/userSlice";
 //imports for password visibility
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -24,20 +24,20 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 //Import validation
 import { validateUserInputs } from "../utils/validation/validations";
-import './signUpLogIn.css'
+import "./signUpLogIn.css";
 
 // Import Snackbar related actions
 // import { showMessage, hideMessage } from "../Slices/snackbarSlice";  // hideMessage is defined but never used.  What is it for?
-import { showMessage } from "../Slices/snackbarSlice";  // hideMessage is defined but never used.  What is it for?
+import { showMessage } from "../Slices/snackbarSlice"; // hideMessage is defined but never used.  What is it for?
 
 export const SignUpLogin = () => {
-  useEffect(()=>{
-    console.log('SignUpLogin mounts')
-    return ()=> {
-      console.log('SignUpLogin unmounts')
-    }
-  },[])
-  
+  useEffect(() => {
+    console.log("SignUpLogin mounts");
+    return () => {
+      console.log("SignUpLogin unmounts");
+    };
+  }, []);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
@@ -137,13 +137,21 @@ export const SignUpLogin = () => {
           companyInput,
           phoneInput,
           passwordInput,
-          setSignUpError,
+          setSignUpError
         );
 
         if (authData?.uid) {
-          dispatch(setUser({ uid: authData.uid }));
-          dispatch(showMessage(`Sign-up successful`));
-          navigate("/userHomePage");
+          // Fetch user data from Firestore
+          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid) as UserType;
+          if (fetchedUserData) {
+            // Assuming fetchedUserData is of UserType or you can map it to UserType
+            dispatch(setUser(fetchedUserData)); // dispatch the full user object
+            dispatch(showMessage(`Sign-up successful`));
+            navigate("/userHomePage");
+          } else {
+            // Handle the case where user data does not exist in Firestore
+            dispatch(setUser(null));
+          }
         }
       } catch (error) {
         dispatch(showMessage(`Sign-up error: ${error}`));
@@ -155,11 +163,9 @@ export const SignUpLogin = () => {
 
         if (authData && authData.uid) {
           // Fetch user data from Firestore or Firebase auth as required
-          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid);
+          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid) as UserType;
           if (fetchedUserData) {
-            dispatch(setUser({ uid: fetchedUserData.uid }));
-
- 
+            dispatch(setUser(fetchedUserData ));
           }
         }
 
@@ -176,217 +182,229 @@ export const SignUpLogin = () => {
   return (
     <div className="sign-up-body">
       <h2 className="title">Displaygram</h2>
-       <div className="outer-container">
-       <Container className="sign-up-container" component="main" maxWidth="xs">
-      <Typography variant="h5">{isSignUp ? "Sign Up" : "Log In"}</Typography>
-      <Button variant="contained" color="primary" onClick={setFormMode}>
-        {formButtonMessage()}
-      </Button>
-      <form noValidate onSubmit={onSubmit}>
-        <div className="signUp-login-form">
-          {isSignUp ? (
-            <>
-              <Container>
-                <TextField
-                  className="sign-up-text-field"
-                  label="First Name"
-                  name="firstNameInput"
-                  value={userInputs.firstNameInput}
-                  onChange={(e) =>
-                    handleInputChange("firstNameInput", e.target.value)
-                  }
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.firstNameInputError}
-                  show={
-                    triedSubmit && errorsOfInputs.firstNameInputError.length > 0
-                  }
-                />
+      <div className="outer-container">
+        <Container className="sign-up-container" component="main" maxWidth="xs">
+          <Typography variant="h5">
+            {isSignUp ? "Sign Up" : "Log In"}
+          </Typography>
+          <Button variant="contained" color="primary" onClick={setFormMode}>
+            {formButtonMessage()}
+          </Button>
+          <form noValidate onSubmit={onSubmit}>
+            <div className="signUp-login-form">
+              {isSignUp ? (
+                <>
+                  <Container>
+                    <TextField
+                      className="sign-up-text-field"
+                      label="First Name"
+                      name="firstNameInput"
+                      value={userInputs.firstNameInput}
+                      onChange={(e) =>
+                        handleInputChange("firstNameInput", e.target.value)
+                      }
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.firstNameInputError}
+                      show={
+                        triedSubmit &&
+                        errorsOfInputs.firstNameInputError.length > 0
+                      }
+                    />
 
-                <TextField
-                  label="Last Name"
-                  name="lastNameInput"
-                  value={userInputs.lastNameInput}
-                  onChange={(e) =>
-                    handleInputChange("lastNameInput", e.target.value)
-                  }
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.lastNameInputError}
-                  show={
-                    triedSubmit && errorsOfInputs.lastNameInputError.length > 0
-                  }
-                />
+                    <TextField
+                      label="Last Name"
+                      name="lastNameInput"
+                      value={userInputs.lastNameInput}
+                      onChange={(e) =>
+                        handleInputChange("lastNameInput", e.target.value)
+                      }
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.lastNameInputError}
+                      show={
+                        triedSubmit &&
+                        errorsOfInputs.lastNameInputError.length > 0
+                      }
+                    />
 
-                <TextField
-                  label="Email"
-                  name="emailInput"
-                  value={userInputs.emailInput}
-                  onChange={(e) =>
-                    handleInputChange("emailInput", e.target.value)
-                  }
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.emailInputError}
-                  show={
-                    triedSubmit && errorsOfInputs.emailInputError.length > 0
-                  }
-                />
+                    <TextField
+                      label="Email"
+                      name="emailInput"
+                      value={userInputs.emailInput}
+                      onChange={(e) =>
+                        handleInputChange("emailInput", e.target.value)
+                      }
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.emailInputError}
+                      show={
+                        triedSubmit && errorsOfInputs.emailInputError.length > 0
+                      }
+                    />
 
-                <TextField
-                  label="Company"
-                  name="companyInput"
-                  value={userInputs.companyInput}
-                  onChange={(e) =>
-                    handleInputChange("companyInput", e.target.value)
-                  }
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.companyInputError}
-                  show={
-                    triedSubmit && errorsOfInputs.companyInputError.length > 0
-                  }
-                />
+                    <TextField
+                      label="Company"
+                      name="companyInput"
+                      value={userInputs.companyInput}
+                      onChange={(e) =>
+                        handleInputChange("companyInput", e.target.value)
+                      }
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.companyInputError}
+                      show={
+                        triedSubmit &&
+                        errorsOfInputs.companyInputError.length > 0
+                      }
+                    />
 
-                <TextField
-                  label="Phone Number"
-                  name="phoneInput"
-                  value={userInputs.phoneInput}
-                  onChange={(e) =>
-                    handleInputChange("phoneInput", e.target.value)
-                  }
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.phoneInputError}
-                  show={
-                    triedSubmit && errorsOfInputs.phoneInputError.length > 0
-                  }
-                />
+                    <TextField
+                      label="Phone Number"
+                      name="phoneInput"
+                      value={userInputs.phoneInput}
+                      onChange={(e) =>
+                        handleInputChange("phoneInput", e.target.value)
+                      }
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.phoneInputError}
+                      show={
+                        triedSubmit && errorsOfInputs.phoneInputError.length > 0
+                      }
+                    />
 
-                <TextField
-                  label="Password"
-                  name="passwordInput"
-                  value={userInputs.passwordInput}
-                  type={passwordVisibility.password ? "text" : "password"}
-                  onChange={(e) =>
-                    handleInputChange("passwordInput", e.target.value)
-                  }
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => togglePasswordVisibility("password")}
-                        >
-                          {passwordVisibility.password ? (
-                            <Visibility />
-                          ) : (
-                            <VisibilityOff />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.passwordInputError}
-                  show={
-                    triedSubmit && errorsOfInputs.passwordInputError.length > 0
-                  }
-                />
+                    <TextField
+                      label="Password"
+                      name="passwordInput"
+                      value={userInputs.passwordInput}
+                      type={passwordVisibility.password ? "text" : "password"}
+                      onChange={(e) =>
+                        handleInputChange("passwordInput", e.target.value)
+                      }
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() =>
+                                togglePasswordVisibility("password")
+                              }
+                            >
+                              {passwordVisibility.password ? (
+                                <Visibility />
+                              ) : (
+                                <VisibilityOff />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.passwordInputError}
+                      show={
+                        triedSubmit &&
+                        errorsOfInputs.passwordInputError.length > 0
+                      }
+                    />
 
-                <TextField
-                  label="Verify Password"
-                  name="verifyPasswordInput"
-                  value={userInputs.verifyPasswordInput}
-                  type={passwordVisibility.password ? "text" : "password"}
-                  onChange={(e) =>
-                    handleInputChange("verifyPasswordInput", e.target.value)
-                  }
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => togglePasswordVisibility("password")}
-                        >
-                          {passwordVisibility.passwordConfirm ? (
-                            <Visibility />
-                          ) : (
-                            <VisibilityOff />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.verifyPasswordInputError}
-                  show={
-                    triedSubmit &&
-                    errorsOfInputs.verifyPasswordInputError.length > 0
-                  }
-                />
-              </Container>
-            </>
-          ) : (
-            <>
-              <Container>
-                <TextField
-                  label="Email"
-                  name="emailInput"
-                  value={userInputs.emailInput}
-                  onChange={(e) =>
-                    handleInputChange("emailInput", e.target.value)
-                  }
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.emailInputError}
-                  show={
-                    triedSubmit && errorsOfInputs.firstNameInputError.length > 0
-                  }
-                />
-                <TextField
-                  label="Password"
-                  name="passwordInput"
-                  value={userInputs.passwordInput}
-                  type={passwordVisibility.password ? "text" : "password"}
-                  onChange={(e) =>
-                    handleInputChange("passwordInput", e.target.value)
-                  }
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => togglePasswordVisibility("password")}
-                        >
-                          {passwordVisibility.password ? (
-                            <Visibility />
-                          ) : (
-                            <VisibilityOff />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <ErrorMessage
-                  message={errorsOfInputs.passwordInputError}
-                  show={
-                    triedSubmit && errorsOfInputs.passwordInputError.length > 0
-                  }
-                />
-              </Container>
-            </>
-          )}
-        </div>
-        {signUpError && <div className="error">{signUpError}</div>}
-        <Button type="submit" variant="contained" color="primary">
-          Submit
-        </Button>
-      </form>
-    </Container>
+                    <TextField
+                      label="Verify Password"
+                      name="verifyPasswordInput"
+                      value={userInputs.verifyPasswordInput}
+                      type={passwordVisibility.password ? "text" : "password"}
+                      onChange={(e) =>
+                        handleInputChange("verifyPasswordInput", e.target.value)
+                      }
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() =>
+                                togglePasswordVisibility("password")
+                              }
+                            >
+                              {passwordVisibility.passwordConfirm ? (
+                                <Visibility />
+                              ) : (
+                                <VisibilityOff />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.verifyPasswordInputError}
+                      show={
+                        triedSubmit &&
+                        errorsOfInputs.verifyPasswordInputError.length > 0
+                      }
+                    />
+                  </Container>
+                </>
+              ) : (
+                <>
+                  <Container>
+                    <TextField
+                      label="Email"
+                      name="emailInput"
+                      value={userInputs.emailInput}
+                      onChange={(e) =>
+                        handleInputChange("emailInput", e.target.value)
+                      }
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.emailInputError}
+                      show={
+                        triedSubmit &&
+                        errorsOfInputs.firstNameInputError.length > 0
+                      }
+                    />
+                    <TextField
+                      label="Password"
+                      name="passwordInput"
+                      value={userInputs.passwordInput}
+                      type={passwordVisibility.password ? "text" : "password"}
+                      onChange={(e) =>
+                        handleInputChange("passwordInput", e.target.value)
+                      }
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() =>
+                                togglePasswordVisibility("password")
+                              }
+                            >
+                              {passwordVisibility.password ? (
+                                <Visibility />
+                              ) : (
+                                <VisibilityOff />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <ErrorMessage
+                      message={errorsOfInputs.passwordInputError}
+                      show={
+                        triedSubmit &&
+                        errorsOfInputs.passwordInputError.length > 0
+                      }
+                    />
+                  </Container>
+                </>
+              )}
+            </div>
+            {signUpError && <div className="error">{signUpError}</div>}
+            <Button type="submit" variant="contained" color="primary">
+              Submit
+            </Button>
+          </form>
+        </Container>
+      </div>
     </div>
-    </div>
-   
-   
   );
 };
