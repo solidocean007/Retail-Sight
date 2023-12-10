@@ -28,10 +28,13 @@ export const useFirebaseAuth = () => {
   }, [dispatch]);
 
   useEffect(() => {
+    console.log('useFirebaseAuth.ts runs from App.tsx:')
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, handleUserChange);
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      console.log('useFirebaseAuth function unmounted');
+    }
   }, [handleUserChange]); 
 };
-

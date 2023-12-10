@@ -44,18 +44,22 @@ const ActivityFeed = () => {
 
   // Fetch the initial posts when the component mounts
   useEffect(() => {
+    console.log('ActivityFeed.tsx mounts')
     if (currentUserCompany) {
       dispatch(
         fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
       );
     }
+    return () => {
+      console.log("ActivityFeed.tsx unmounts");
+    };
   }, [dispatch, currentUserCompany]);
 
   // Determine the total item count (1 for the ad + number of posts)
   // const itemCount = 1 + posts.length;
 
   // Calculate the number of items (posts + ads)
-  const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL);
+  const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL)-1;
   const itemCount = displayPosts.length + numberOfAds;
 
   const itemRenderer = ({

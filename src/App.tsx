@@ -16,17 +16,25 @@ import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 import UserModal from "./components/UserModal.tsx";
 import { AppRoutes } from "./utils/Routes.tsx";
 import { getTheme } from "./theme.ts";
+import { useEffect } from "react";
 // import { selectIsUserModalOpen } from "./Slices/userModalSlice.ts";
 
 
 function App() {
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   useFirebaseAuth();
-  // const theme = createTheme({
-  //   palette: {
-  //     mode: isDarkMode ? "dark" : "light",
-  //   },
-  // });
+ 
+  useEffect(() => {
+    console.log('App.tsx mounts')
+  
+    return () => {
+      // This is the cleanup function. Code here runs:
+      // 1. Before the component re-renders (if it re-renders).
+      // 2. When the component unmounts from the DOM.
+      console.log('App.tsx unmounted');
+    };
+  }, []);
+
   const theme = getTheme(isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const dispatch = useDispatch();

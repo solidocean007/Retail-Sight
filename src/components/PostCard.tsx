@@ -35,8 +35,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const dispatch = useDispatch();
   const [likes, setLikes] = useState(post.likes?.length || 0);
   const [likedByUser, setLikedByUser] = useState(
-    post.likes?.includes(currentUserUid) || false
+    Array.isArray(post.likes) && post.likes.includes(currentUserUid) || false
   );
+  
 
   const onLikeButtonClick = async () => {
     const newLikedByUser = !likedByUser; // Optimistically toggle the liked state
