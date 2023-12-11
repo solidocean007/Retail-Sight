@@ -57,6 +57,7 @@ export const useHandlePostSubmission = () => {
             postUserName: user.displayName || 'Unknown',
             postUserId: user.uid,
             postUserCompany: userData.company,
+            postUserEmail: userData.email,
           },
           hashtags: hashtags,
           commentCount: 0,

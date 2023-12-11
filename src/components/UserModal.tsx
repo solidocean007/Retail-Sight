@@ -10,17 +10,17 @@ const UserModal = () => {
   const handleClose = () => {
     dispatch(closeUserModal());
   };
-  
+  console.log(userData, ": userData")
 
-  if (!isUserModalOpen) return null;  // Prevent modal from rendering if it's not open.
+  if (!isUserModalOpen) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <span className="close" onClick={handleClose}>&times;</span> {/*Type 'MouseEvent<HTMLSpanElement, MouseEvent>' is not assignable to type 'void'.ts(2322) */}
-        <h2>{userData?.firstName} {userData?.lastName}</h2>
-        <p className="user-company">{userData?.company}</p>
-        <p className="user-email"><a href={`mailto:${userData?.email}`}>{userData?.email}</a></p>
+        <span className="close" onClick={handleClose}>&times;</span>
+        <h2>{userData?.postUserName}</h2>
+        <p className="user-company">{userData?.postUserCompany}</p>
+        <p className="user-email"><a href={`mailto:${userData?.postUserEmail}`}>{userData?.postUserEmail}</a></p>
       </div>
     </div>
   );

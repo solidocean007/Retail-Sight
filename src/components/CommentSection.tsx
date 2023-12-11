@@ -8,9 +8,7 @@ import { Timestamp, deleteDoc, increment } from "firebase/firestore";
 import { useDispatch } from "react-redux";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { handleUserNameClick } from "../utils/userModalUtils.ts";
-// import { UserType } from "../utils/types";
-
+import { onUserNameClick } from "../utils/PostLogic/onUserNameClick";
 import {
   doc,
   collection,
@@ -39,7 +37,7 @@ const CommentSection: React.FC<CommentProps> = ({
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const user = useSelector((state: RootState) => state.user.currentUser);  // state.user is of type unknown
   const userFullName = user?.firstName + " " + user?.lastName; // or just user?.username
-
+  const dispatch = useDispatch();
   const [newComment, setNewComment] = useState<CommentType>({
     commentId: "",
     text: "",
@@ -51,12 +49,8 @@ const CommentSection: React.FC<CommentProps> = ({
     likes: [],
   });
 
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   // const selectedUid = useSelector(selectSelectedUid);
-
-  const onUserNameClick = (uid: string) => {
-    handleUserNameClick(uid, dispatch);
-  }
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewComment({ ...newComment, text: e.target.value });
@@ -176,7 +170,7 @@ const CommentSection: React.FC<CommentProps> = ({
           {sortedComments.map((comment) => (
             <div className="comment-details" key={comment.commentId}>
               <div className="comment">
-                <span onClick={() => onUserNameClick(post.user.postUserId!)} className="user-of-comment">{comment.userName}: </span> 
+                <span onClick={() => onUserNameClick(post,dispatch)} className="user-of-comment">{comment.userName}: </span> 
                 <span>{comment.text}</span>
               </div>
               <div>

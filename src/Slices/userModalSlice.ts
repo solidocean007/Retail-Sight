@@ -1,12 +1,11 @@
 // userModalSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { UserType } from '../utils/types';
 import { RootState } from '../utils/store';
 import { PostType } from '../utils/types';
 
 interface UserModalState {
   isUserModalOpen: boolean;
-  userData: UserType | null;
+  userData: PostType['user'] | null;
 }
 
 const initialState: UserModalState = {
@@ -20,7 +19,7 @@ const userModalSlice = createSlice({
   reducers: {
     openUserModal: (state, action: PayloadAction<PostType['user']>) => {
       state.isUserModalOpen = true;
-      state.userData = action.payload; // payload contains user data
+      state.userData = action.payload; // Type '{ postUserName: string | undefined; postUserId: string | undefined; postUserCompany: string | undefined; postUserEmail: string | undefined; }' is missing the following properties from type 'WritableDraft<UserType>': uid, firstName, lastName, email, and 2 more.ts(2740)
     },
     closeUserModal: (state) => {
       state.isUserModalOpen = false;

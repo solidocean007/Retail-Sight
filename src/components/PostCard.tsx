@@ -2,7 +2,7 @@
 import React from "react";
 import { useState } from "react";
 import { Card, CardContent, Typography, Button } from "@mui/material";
-import { PostWithID } from "../utils/types";
+import { PostType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
@@ -11,8 +11,7 @@ import "./postCard.css";
 import CommentSection from "./CommentSection";
 import SharePost from "./SharePost";
 import { handleLikePost } from "../utils/PostLogic/handleLikePost";
-import { AppDispatch } from "../utils/store";
-import { openUserModal } from "../Slices/userModalSlice";
+import { onUserNameClick } from "../utils/PostLogic/onUserNameClick";
 
 interface PostCardProps {
   id: string;
@@ -36,10 +35,6 @@ const PostCard: React.FC<PostCardProps> = ({
   const [likedByUser, setLikedByUser] = useState(
     Array.isArray(post.likes) && post.likes.includes(currentUserUid) || false
   );
-  
-  const onUserNameClick = () => {
-    dispatch(openUserModal(post.user));
-  };
 
   const onLikeButtonClick = async () => {
     const newLikedByUser = !likedByUser; // Optimistically toggle the liked state
@@ -97,7 +92,7 @@ const PostCard: React.FC<PostCardProps> = ({
               </Button>
             )}
             <Typography
-              onClick={() => onUserNameClick(post.user.postUserId!)}
+              onClick={() => onUserNameClick(post, dispatch)}
               variant="h6"
             >
               {" "}
