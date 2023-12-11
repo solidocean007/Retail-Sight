@@ -1,6 +1,6 @@
 // postsThunks.ts
 import { PostType, PostWithID } from "../utils/types";
-import { AnyAction, createAsyncThunk } from "@reduxjs/toolkit";
+import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
 import {
   collection,
@@ -25,7 +25,6 @@ import {
   getLatestPostsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { DocumentSnapshot } from "firebase/firestore";
-import { Dispatch } from "react";
 import { incrementRead } from "../Slices/firestoreReadsSlice";
 
 type FetchPostsArgs = {

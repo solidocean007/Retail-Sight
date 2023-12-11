@@ -3,20 +3,19 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface FirestoreReadDetail {
   source: string; // The component or function that initiated the read
   description: string; // A brief description of the data being read
+  timestamp: number;
 }
 
 interface FirestoreReadState {
   count: number;
   maxCount: number;
-  lastReadTimestamp: number | null;
-  lastReadDetail: FirestoreReadDetail | null;
+  readDetails: FirestoreReadDetail[]; // Store an array of read details
 }
 
 const initialState: FirestoreReadState = {
   count: 0,
   maxCount: 100,
-  lastReadTimestamp: null,
-  lastReadDetail: null,
+  readDetails: [], // Initialize as an empty array
 };
 
 export const firestoreReadsSlice = createSlice({
@@ -25,18 +24,17 @@ export const firestoreReadsSlice = createSlice({
   reducers: {
     incrementRead: (state, action: PayloadAction<FirestoreReadDetail>) => {
       state.count += 1;
-      state.lastReadTimestamp = Date.now();
-      state.lastReadDetail = action.payload;
+      state.readDetails.push({ ...action.payload, timestamp: Date.now() }); // Add new read detail to array
     },
     resetReads: (state) => {
       state.count = 0;
-      state.lastReadTimestamp = null;
-      state.lastReadDetail = null;
+      state.readDetails = []; // Reset to an empty array
     },
+    // Optionally, you could keep the logRead reducer to log the latest read or all reads
     logRead: (state) => {
-      if (state.lastReadDetail) {
-        console.log(`Firestore read at ${new Date(state.lastReadTimestamp ?? Date.now()).toISOString()}, Source: ${state.lastReadDetail.source}, Description: ${state.lastReadDetail.description}`);
-      }
+      state.readDetails.forEach((detail) => {
+        console.log(`Firestore read at ${new Date(detail.timestamp).toISOString()}, Source: ${detail.source}, Description: ${detail.description}`);
+      });
     },
   },
 });

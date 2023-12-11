@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { FixedSizeList as List } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
@@ -21,6 +21,8 @@ const ActivityFeed = () => {
   const currentUserCompany = currentUser?.company;
   console.log(currentUserCompany, currentUser, " : currentUserCompany, currentUser");
 
+  // State to store the window width
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
     null
@@ -40,6 +42,26 @@ const ActivityFeed = () => {
       console.error("Error searching posts by hashtag:", error);
       // Optionally show an error message to the user
     }
+  };
+
+   // Effect to update the window width on resize
+   useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Calculate the width for the FixedSizeList
+  const getListWidth = () => {
+    if (windowWidth <= 480) {
+      return windowWidth - 20; // Subtract some pixels for padding/margin
+    } else if (windowWidth <= 768) {
+      return Math.min(650, windowWidth - 20);
+    }
+    return 650;
   };
 
   // Fetch the initial posts when the component mounts
@@ -106,7 +128,7 @@ const ActivityFeed = () => {
   return (
     <div className="activity-feed-box">
       <div className="search-title">
-        <h5>Search by hashtag:</h5>
+        {/* <h5>Search by hashtag:</h5> */}
       </div>
 
       <div className="hashtag-search-box">
@@ -128,10 +150,11 @@ const ActivityFeed = () => {
 
       <List
         // height={window.innerHeight}
+        className="list-card"
         height={650}
         itemCount={itemCount}
         itemSize={900} // Adjust based on your item size
-        width={650}
+        width={getListWidth()}
         itemData={{
           posts: posts,
           getPostsByTag: getPostsByTag, // Pass the function here
