@@ -1,41 +1,23 @@
-import { useState, useEffect } from "react";
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFirestore";
-import { closeUserModal, selectIsUserModalOpen, selectSelectedUid } from "../Slices/userModalSlice";
+import { useDispatch, useSelector} from 'react-redux';
+import { closeUserModal, selectIsUserModalOpen, selectUserData } from "../Slices/userModalSlice";
 import './userModal.css';
-import { UserType } from "../utils/types";
 
 const UserModal = () => {
   const dispatch = useDispatch();
-  const [userData, setUserData] = useState<UserType | null>(null);
+  const userData = useSelector(selectUserData);
   const isUserModalOpen = useSelector(selectIsUserModalOpen);
-  const selectedUid = useSelector(selectSelectedUid);
-
-  useEffect(() => {
-    console.log('UserModal mounts')
-    if (isUserModalOpen && selectedUid) {
-      fetchUserDocFromFirestore(selectedUid, dispatch)
-        .then(data => {
-          console.log("Fetched data:", data);
-          setUserData(data as UserType);
-        }) // type error with data
-        .catch(err => console.error(err));
-    }
-    return () => {
-      console.log('UserModal unmounts')
-    }
-  }, [isUserModalOpen, selectedUid, dispatch]);
 
   const handleClose = () => {
     dispatch(closeUserModal());
   };
+  
 
   if (!isUserModalOpen) return null;  // Prevent modal from rendering if it's not open.
 
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <span className="close" onClick={handleClose}>&times;</span>
+        <span className="close" onClick={handleClose}>&times;</span> {/*Type 'MouseEvent<HTMLSpanElement, MouseEvent>' is not assignable to type 'void'.ts(2322) */}
         <h2>{userData?.firstName} {userData?.lastName}</h2>
         <p className="user-company">{userData?.company}</p>
         <p className="user-email"><a href={`mailto:${userData?.email}`}>{userData?.email}</a></p>
@@ -45,9 +27,3 @@ const UserModal = () => {
 };
 
 export default UserModal;
-
-
-
-
-// How can I use redux or local storage to cache things like the current user
-//  logged in, posts fetched, other users info fetched from name clicks?

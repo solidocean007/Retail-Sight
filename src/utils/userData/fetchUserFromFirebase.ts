@@ -3,8 +3,9 @@ import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 // import { useDispatch } from "react-redux";
 import { incrementRead } from "../../Slices/firestoreReadsSlice";
+import { AppDispatch } from "../store";
 
-export const fetchUserFromFirebase = async (uid: string) => {
+export const fetchUserFromFirebase = async (uid: string, dispatch: AppDispatch) => {
   // const dispatch = useDispatch();
   try {
     const userDocRef = doc(db, "users", uid);
@@ -19,7 +20,8 @@ export const fetchUserFromFirebase = async (uid: string) => {
     // Log Firestore read
     dispatch(incrementRead({ 
       source: 'fetchUserFromFirebase', 
-      description: `Fetching user data for UID: ${uid}`
+      description: `Fetching user data for UID: ${uid}`,
+      timestamp: new Date().toISOString() // ISO 8601 format timestamp
     }));
 
     return userDocSnapshot.data();

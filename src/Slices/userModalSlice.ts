@@ -1,35 +1,38 @@
 // userModalSlice.ts
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { UserType } from '../utils/types';
 import { RootState } from '../utils/store';
+import { PostType } from '../utils/types';
 
 interface UserModalState {
   isUserModalOpen: boolean;
-  selectedUid: string | null;
+  userData: UserType | null;
 }
 
 const initialState: UserModalState = {
   isUserModalOpen: false,
-  selectedUid: null,
+  userData: null,
 };
 
 const userModalSlice = createSlice({
   name: 'userModal',
   initialState,
   reducers: {
-    openUserModal: (state, action) => {
+    openUserModal: (state, action: PayloadAction<PostType['user']>) => {
       state.isUserModalOpen = true;
-      state.selectedUid = action.payload;
+      state.userData = action.payload; // payload contains user data
     },
     closeUserModal: (state) => {
       state.isUserModalOpen = false;
-      state.selectedUid = null;
+      state.userData = null;
     },
   },
 });
 
 export const { openUserModal, closeUserModal } = userModalSlice.actions;
 
+export const selectIsUserModalOpen = (state: RootState) => state.userModal.isUserModalOpen;
+export const selectUserData = (state: RootState) => state.userModal.userData;
+
 export default userModalSlice.reducer;
 
-export const selectIsUserModalOpen = (state: RootState) => state.userModal.isUserModalOpen;
-export const selectSelectedUid = (state: RootState) => state.userModal.selectedUid;

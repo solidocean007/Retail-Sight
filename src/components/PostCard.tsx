@@ -11,9 +11,8 @@ import "./postCard.css";
 import CommentSection from "./CommentSection";
 import SharePost from "./SharePost";
 import { handleLikePost } from "../utils/PostLogic/handleLikePost";
-
-// UserModalImports
-import { handleUserNameClick } from "../utils/userModalUtils";
+import { AppDispatch } from "../utils/store";
+import { openUserModal } from "../Slices/userModalSlice";
 
 interface PostCardProps {
   id: string;
@@ -38,6 +37,9 @@ const PostCard: React.FC<PostCardProps> = ({
     Array.isArray(post.likes) && post.likes.includes(currentUserUid) || false
   );
   
+  const onUserNameClick = () => {
+    dispatch(openUserModal(post.user));
+  };
 
   const onLikeButtonClick = async () => {
     const newLikedByUser = !likedByUser; // Optimistically toggle the liked state
@@ -59,10 +61,6 @@ const PostCard: React.FC<PostCardProps> = ({
 
   // grab user from redux
   const user = useSelector(selectUser);
-
-  const onUserNameClick = (uid: string) => {
-    handleUserNameClick(uid, dispatch);
-  };
 
   const handleEditPost = () => {
     setIsEditModalOpen(true);

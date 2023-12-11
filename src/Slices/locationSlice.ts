@@ -28,7 +28,7 @@ export const fetchLocationOptions = createAsyncThunk(
       const querySnapshot = await getDocs(locationsCollectionRef);
 
       // Log Firestore read
-      dispatch(incrementRead({ source: 'fetchLocationOptions', description: 'Fetching location options' }));
+      dispatch(incrementRead({ source: 'fetchLocationOptions', description: 'Fetching location options',  timestamp: new Date().toISOString() }));
 
       const locations: { [key: string]: string[] } = {};
       querySnapshot.forEach((doc) => {

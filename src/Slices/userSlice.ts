@@ -28,7 +28,8 @@ export const userSlice = createSlice({
     // You can add other reducers here as needed
   },
   // No extraReducers needed unless you are handling other async thunks
-  extraReducers: (builder) => {
+  // extraReducers: (builder) => {
+  extraReducers: () => {
     // Use the builder callback notation here
     // Example:
     // builder.addCase(someAsyncThunk.fulfilled, (state, action) => {

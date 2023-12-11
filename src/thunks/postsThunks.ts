@@ -85,7 +85,8 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       // Dispatch incrementRead action
       dispatch(incrementRead({ 
         source: 'fetchFInitialPostsBatch', 
-        description: 'Fetching initial posts'
+        description: 'Fetching initial posts',
+        timestamp: new Date().toISOString() // ISO 8601 format timestamp
       }));
 
       return { posts: postsWithIds, lastVisible };
@@ -141,7 +142,8 @@ export const fetchMorePostsBatch = createAsyncThunk(
        // Dispatch incrementRead action
        dispatch(incrementRead({ 
         source: 'fetchMoreBatch', 
-        description: 'Fetching more posts'
+        description: 'Fetching more posts',
+        timestamp: new Date().toISOString() // ISO 8601 format timestamp
       }));
 
 
@@ -193,7 +195,8 @@ export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectVal
       // Dispatch incrementRead action
       dispatch(incrementRead({ 
         source: 'fetchLatestPosts', 
-        description: 'Fetching latest posts'
+        description: 'Fetching latest posts',
+        timestamp: new Date().toISOString() // ISO 8601 format timestamp
       }));
 
       return posts;
@@ -260,7 +263,8 @@ export const fetchFilteredPosts = createAsyncThunk<PostWithID[], FetchPostsArgs,
       // Dispatch incrementRead action
       dispatch(incrementRead({ 
         source: 'fetchFilteredPosts', 
-        description: 'Fetching filtered posts'
+        description: 'Fetching filtered posts',
+        timestamp: new Date().toISOString() // ISO 8601 format timestamp
       }));
 
       // Return the fetched posts

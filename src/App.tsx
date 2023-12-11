@@ -3,11 +3,7 @@ import Snackbar from "@mui/material/Snackbar";
 import { useSelector, useDispatch } from "react-redux";
 import { hideMessage } from "./Slices/snackbarSlice";
 import "./App.css";
-// import { SignUpLogin } from "./components/SignUpLogIn";
-import { BrowserRouter as Router } from "react-router-dom"; // no exported member named Routes. Did i mean Route?
-// import { UserHomePage } from "./components/UserHomePage";
-// import { UserProfilePage } from "./components/UserProfilePage";
-// import { CreatePost } from "./components/CreatePost";
+import { BrowserRouter as Router } from "react-router-dom"; 
 import { RootState } from "./utils/store";
 import { ThemeToggle } from "./ThemeToggle";
 import { ThemeProvider, CssBaseline } from "@mui/material";

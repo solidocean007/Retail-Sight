@@ -1,24 +1,32 @@
-// fetchUserDataFromFirestore
 import { doc, getDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import { incrementRead } from '../../Slices/firestoreReadsSlice';
 import { AppDispatch } from '../store';
 
-export const fetchUserDocFromFirestore= async (uid: string, dispatch: AppDispatch) => {
-  const userRef = doc(collection(db, 'users'), uid); // should I pas the userRef into this function to reduce reading it from firestore
+export const fetchUserDocFromFirestore = async (uid: string, dispatch: AppDispatch) => {
+  const userRef = doc(collection(db, 'users'), uid);
   console.log('fetchUserDocFromFirestore from firestore read')
 
-   // Log Firestore read
-   dispatch(incrementRead({ 
-    source: 'fetchUserDocFromFirebase', 
-    description: `Fetching user data document`
+  // Log Firestore read with timestamp
+  dispatch(incrementRead({ 
+    source: 'fetchUserDocFromFirestore', 
+    description: `Fetching user data document for UID: ${uid}`,
+    timestamp: new Date().toISOString() // ISO 8601 format timestamp
   }));
-  const userSnap = await getDoc(userRef);
 
-  if (userSnap.exists()) {
-    return userSnap.data();
-  } else {
-    console.error("No such user!");
+  try {
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      return userSnap.data();
+    } else {
+      console.error("No such user!");
+      // Handle this case as needed
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching user document:", error);
+    // Handle or propagate the error as needed
     return null;
   }
 }

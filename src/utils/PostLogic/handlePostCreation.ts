@@ -12,7 +12,7 @@ import {
   updateCategoriesInFirestore,
   updateChannelsInFirestore,
 } from "./updateFirestore";
-import { fetchUserFromFirebase } from "../userData/fetchUserFromFirebase";
+// import { fetchUserFromFirebase } from "../userData/fetchUserFromFirebase";
 
 export const useHandlePostSubmission = () => {
   const dispatch = useDispatch();
