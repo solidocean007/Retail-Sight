@@ -4,32 +4,44 @@ import { collection, getDocs } from 'firebase/firestore';
 import { RootState } from '../utils/store';
 import { db } from '../utils/firebase';
 import { LocationState } from '../utils/types';
-
+import { getLocationsFromIndexedDB, storeLocationsInIndexedDB } from '../utils/database/indexedDBUtils';
+import { incrementRead } from './firestoreReadsSlice';
 // Define a selector to get all posts (assuming it is defined elsewhere)
 // now that im storing posts in indexDB maybe I should store these locations there also?
 // can I cut down on firestore reads by doing this?
 export const selectAllPosts = (state: RootState) => state.posts.posts;
 
+
+
 export const fetchLocationOptions = createAsyncThunk(
   'locations/fetchOptions',
-  async (_, { rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue }) => {
     try {
-      const cachedLocation = await get
+      const cachedLocations = await getLocationsFromIndexedDB();
+      if(cachedLocations) {
+        return cachedLocations
+      }
 
+      // Data not in cache, fetch from Firestore
       const locationsCollectionRef = collection(db, "locations");
-      console.log('Fetching locations from Firestore read');
+      console.log('Fetching locations from Firestore');
       const querySnapshot = await getDocs(locationsCollectionRef);
+
+      // Log Firestore read
+      dispatch(incrementRead({ source: 'fetchLocationOptions', description: 'Fetching location options' }));
+
       const locations: { [key: string]: string[] } = {};
-      // console.log('Documents fetched:', querySnapshot.docs.length);
       querySnapshot.forEach((doc) => {
-        const state = doc.id; // Get the document ID, which might be the state name
+        const state = doc.id;
         const data = doc.data();
-        // console.log(`State: ${state}, Document data:`, data);
         if (data.cities) {
-          locations[state] = data.cities; // Use the document ID as the key
+          locations[state] = data.cities;
         }
       });
-      // console.log('Locations object constructed:', locations);
+
+      // Save the fetched data to IndexedDB
+      await storeLocationsInIndexedDB(locations);
+
       return locations;
     } catch (error) {
       console.error('Error fetching locations:', error);

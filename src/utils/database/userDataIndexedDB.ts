@@ -2,7 +2,6 @@ import { UserType } from "../types";
 import { openDB } from "./indexedDBOpen";
 
 const USER_DATA_STORE = 'users'; // Name of the IndexedDB store for user data
-const LOCATIONS_DATA_STORE = 'locations'; // Name of the IndexedDB store for user data
 const USER_DATA_KEY = 'currentUser'; // Assuming you use a single key for storing current user data
 
 export const saveUserDataToIndexedDB = async (userData: UserType) => {
@@ -44,15 +43,3 @@ export const clearUserDataFromIndexedDB = async () => {
     request.onerror = () => reject(request.error);
   });
 };
-
-// Save location data to IndexedDB
-export async function saveLocationData(locations : string[]) {
-  const db = await openDB();
-  const tx = db.transaction(LOCATIONS_DATA_STORE, 'readwrite');
-  const store = tx.objectStore(LOCATIONS_DATA_STORE);
-
-  await store.put({ id: 'locations', data: locations });
-
-  await tx.done;
-}
-

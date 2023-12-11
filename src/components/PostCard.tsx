@@ -80,6 +80,7 @@ const PostCard: React.FC<PostCardProps> = ({
       style={{ ...style, height: showAllComments ? "auto" : "900px" }}
     >
       <CardContent className="card-content">
+        <div>{post.visibility}</div>
         <div className="post-header">
           <div className="store-details">
             <Typography variant="h6">{formattedDate}</Typography>

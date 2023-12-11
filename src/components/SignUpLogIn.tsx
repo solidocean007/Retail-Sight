@@ -142,7 +142,7 @@ export const SignUpLogin = () => {
 
         if (authData?.uid) {
           // Fetch user data from Firestore
-          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid) as UserType;
+          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid, dispatch) as UserType;
           if (fetchedUserData) {
             // Assuming fetchedUserData is of UserType or you can map it to UserType
             dispatch(setUser(fetchedUserData)); // dispatch the full user object
@@ -163,7 +163,7 @@ export const SignUpLogin = () => {
 
         if (authData && authData.uid) {
           // Fetch user data from Firestore or Firebase auth as required
-          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid) as UserType;
+          const fetchedUserData = await fetchUserDocFromFirestore(authData.uid, dispatch ) as UserType;
           if (fetchedUserData) {
             dispatch(setUser(fetchedUserData ));
           }

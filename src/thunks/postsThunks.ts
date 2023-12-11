@@ -1,6 +1,6 @@
 // postsThunks.ts
 import { PostType, PostWithID } from "../utils/types";
-import { createAsyncThunk } from "@reduxjs/toolkit";
+import { AnyAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
 import {
   collection,
@@ -25,6 +25,8 @@ import {
   getLatestPostsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { DocumentSnapshot } from "firebase/firestore";
+import { Dispatch } from "react";
+import { incrementRead } from "../Slices/firestoreReadsSlice";
 
 type FetchPostsArgs = {
   filters: {
@@ -45,7 +47,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   "posts/fetchInitial",
   async (
     { POSTS_BATCH_SIZE, currentUserCompany }: FetchInitialPostsArgs,
-    { rejectWithValue }
+    { dispatch, rejectWithValue }
   ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
@@ -81,6 +83,12 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
       console.log(`Last visible post ID: ${lastVisible}`);
 
+      // Dispatch incrementRead action
+      dispatch(incrementRead({ 
+        source: 'fetchFInitialPostsBatch', 
+        description: 'Fetching initial posts'
+      }));
+
       return { posts: postsWithIds, lastVisible };
     } catch (error) {
       console.error("Error fetching initial posts:", error);
@@ -99,7 +107,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
     { lastVisible, limit: BatchSize }: FetchMorePostsArgs,
-    { rejectWithValue }
+    { rejectWithValue, dispatch }
   ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
@@ -131,6 +139,13 @@ export const fetchMorePostsBatch = createAsyncThunk(
       const newLastVisible =
         snapshot.docs[snapshot.docs.length - 1]?.id || null;
 
+       // Dispatch incrementRead action
+       dispatch(incrementRead({ 
+        source: 'fetchMoreBatch', 
+        description: 'Fetching more posts'
+      }));
+
+
       return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
       // Check if error is an instance of Error and has a message property
@@ -145,7 +160,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
 
 export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectValue: string }>(
   "posts/fetchLatest",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
   try {
     // First, try to get the latest posts from IndexedDB
     const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
@@ -176,6 +191,12 @@ export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectVal
       // Optionally, store the fetched posts in IndexedDB
       await storeLatestPostsInIndexedDB(posts); // Assume this function exists
 
+      // Dispatch incrementRead action
+      dispatch(incrementRead({ 
+        source: 'fetchLatestPosts', 
+        description: 'Fetching latest posts'
+      }));
+
       return posts;
     }
   } catch (error) {
@@ -186,7 +207,7 @@ export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectVal
 
 export const fetchFilteredPosts = createAsyncThunk<PostWithID[], FetchPostsArgs, { rejectValue: string }>(
   "posts/fetchFiltered",
-  async ({ filters }, { rejectWithValue }) => {
+  async ({ filters }, { rejectWithValue, dispatch }) => {
   try {
     // First, try to get filtered posts from IndexedDB
     console.log("Attempting to fetch filtered posts from IndexedDB...");
@@ -236,6 +257,12 @@ export const fetchFilteredPosts = createAsyncThunk<PostWithID[], FetchPostsArgs,
         `Fetched ${posts.length} posts from Firestore. Storing in IndexedDB.`
       );
       await storeFilteredPostsInIndexedDB(posts, filters);
+
+      // Dispatch incrementRead action
+      dispatch(incrementRead({ 
+        source: 'fetchFilteredPosts', 
+        description: 'Fetching filtered posts'
+      }));
 
       // Return the fetched posts
       return posts;

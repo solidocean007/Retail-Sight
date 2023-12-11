@@ -1,5 +1,6 @@
 // userModalSlice.ts
 import { createSlice } from '@reduxjs/toolkit';
+import { RootState } from '../utils/store';
 
 interface UserModalState {
   isUserModalOpen: boolean;
@@ -30,6 +31,5 @@ export const { openUserModal, closeUserModal } = userModalSlice.actions;
 
 export default userModalSlice.reducer;
 
-export const selectIsUserModalOpen = (state: any) => state.userModal.isUserModalOpen;
-export const selectSelectedUid = (state: any) => state.userModal.selectedUid;
-
+export const selectIsUserModalOpen = (state: RootState) => state.userModal.isUserModalOpen;
+export const selectSelectedUid = (state: RootState) => state.userModal.selectedUid;

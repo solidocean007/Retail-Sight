@@ -26,13 +26,12 @@ export const UserHomePage = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
   };
 
-  
-    useEffect(()=>{
-      console.log('UserHomePage mounts')
-      return ()=> {
-        console.log('UserHomePage unmounts')
-      }
-    },[])
+  useEffect(() => {
+    console.log("UserHomePage mounts");
+    return () => {
+      console.log("UserHomePage unmounts");
+    };
+  }, []);
 
   useEffect(() => {
     // Dispatch the action to fetch location options
@@ -46,20 +45,19 @@ export const UserHomePage = () => {
       <AppBar position="fixed" style={{ backgroundColor: "#333" }}>
         <Toolbar className="tool-bar">
           <div>
-            <h3>
-              Welcome, {currentUser?.firstName} {currentUser?.lastName}{" "}
-              {/*Here is the line that loses the users data on page refresh*/}
-            </h3>
-          </div>
-          <div className="menu-buttons">
             <Button
               className="profile-btn"
               variant="contained"
               color="primary"
               onClick={openProfile}
             >
-              Profile
+              <h3>
+                Welcome, {currentUser?.firstName} {currentUser?.lastName}{" "}
+                {/*Here is the line that loses the users data on page refresh*/}
+              </h3>
             </Button>
+          </div>
+          <div className="menu-buttons">
             <Button
               className="create-post-btn"
               variant="contained"
@@ -79,7 +77,11 @@ export const UserHomePage = () => {
         <div className="activity-feed-container">
           <ActivityFeed />
         </div>
-        <div className={`side-bar-container ${isFilterMenuOpen? 'sidebar-fullscreen': ''}`}>
+        <div
+          className={`side-bar-container ${
+            isFilterMenuOpen ? "sidebar-fullscreen" : ""
+          }`}
+        >
           <SideBar />
         </div>
       </div>

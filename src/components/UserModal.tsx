@@ -14,7 +14,7 @@ const UserModal = () => {
   useEffect(() => {
     console.log('UserModal mounts')
     if (isUserModalOpen && selectedUid) {
-      fetchUserDocFromFirestore(selectedUid)
+      fetchUserDocFromFirestore(selectedUid, dispatch)
         .then(data => {
           console.log("Fetched data:", data);
           setUserData(data as UserType);
@@ -24,7 +24,7 @@ const UserModal = () => {
     return () => {
       console.log('UserModal unmounts')
     }
-  }, [isUserModalOpen, selectedUid]);
+  }, [isUserModalOpen, selectedUid, dispatch]);
 
   const handleClose = () => {
     dispatch(closeUserModal());

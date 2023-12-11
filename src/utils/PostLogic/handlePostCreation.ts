@@ -1,4 +1,4 @@
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { PostType } from "../types";
 import { auth, db } from "../firebase";
@@ -6,6 +6,7 @@ import { uploadImageToStorage } from "./upLoadImage";
 import { extractHashtags } from "../extractHashtags";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { addNewPost } from "../../Slices/postsSlice";
+import { selectUser } from "../../Slices/userSlice";
 import {
   addPostToFirestore,
   updateCategoriesInFirestore,
@@ -16,11 +17,12 @@ import { fetchUserFromFirebase } from "../userData/fetchUserFromFirebase";
 export const useHandlePostSubmission = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const userData = useSelector(selectUser);
 
   const handlePostSubmission = async (post: PostType, selectedFile: File) => {
     const user = auth.currentUser;
     console.log(user, " : user");
-    if (!user) return;
+    if (!user || !userData) return;
     // const uid = user.uid;
 
     let hashtags: string[] = [];
@@ -29,7 +31,6 @@ export const useHandlePostSubmission = () => {
     }
 
     try {
-      const userData = await fetchUserFromFirebase(user.uid); // this should already be in redux.  I shouldnt be reading firebase again.
       console.log(userData, ": userData");
       if (!userData) {
         console.error("User data not found for ID:", user.uid);

@@ -14,7 +14,6 @@ export const useFirebaseAuth = () => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   
   const handleUserChange = useCallback(async (user: User | null) => {
-    // Exit early if the user hasn't changed
     if ((user && user.uid === currentUser?.uid) || (!user && !currentUser)) {
       return;
     }
@@ -23,7 +22,7 @@ export const useFirebaseAuth = () => {
     if (user) {
       try {
         console.log('handleUserChange in useFirebaseAuth read');
-        const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid) as UserType;
+        const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid, dispatch) as UserType;
         if (userDataFromFirestore) {
           dispatch(setUser(userDataFromFirestore));
         } else {

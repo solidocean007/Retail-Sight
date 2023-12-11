@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Button, TextField, Container, Typography } from "@mui/material";
-// import { fetchUserFromFirebase } from "../utils/userData/fetchUserFromFirebase";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
@@ -37,8 +36,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
   }, [currentUserFirstName, currentUserLastName, setValue]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}> {/*rgument of type 'SubmitHandler<FormData>' is not assignable to parameter of type 'SubmitHandler<FieldValues>'.
-  Type 'FieldValues' is missing the following properties from type 'FormData': firstName, lastNamets(2345)*/}
+    <form onSubmit={handleSubmit(onSubmit)}>
       <LogOutButton />
       <TextField
         fullWidth

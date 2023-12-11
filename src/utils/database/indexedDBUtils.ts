@@ -149,6 +149,60 @@ export async function getLatestPostsFromIndexedDB(): Promise<PostWithID[]> {
   });
 }
 
+export async function storeLocationsInIndexedDB(locations: { [key: string]: string[] }): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(['locations'], 'readwrite');
+  const store = transaction.objectStore('locations');
+
+  return new Promise<void>((resolve, reject) => {
+    // Clear existing locations before storing new ones
+    const clearRequest = store.clear();
+    clearRequest.onerror = (event) => {
+      reject((event.target as IDBRequest).error);
+    };
+
+    clearRequest.onsuccess = () => {
+      // Handle the successful completion of the transaction
+      transaction.oncomplete = () => {
+        resolve();
+      };
+
+      // Handle any errors that occur during the transaction
+      transaction.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+
+      // Perform the 'put' operations for each location
+      for (const state in locations) {
+        const request = store.put(locations[state], state);
+        request.onerror = () => {
+          reject(request.error);
+        };
+      }
+    };
+  });
+}
+
+export async function getLocationsFromIndexedDB(): Promise<{ [key: string]: string[] } | null> {
+  const db = await openDB();
+  const transaction = db.transaction(['locations'], 'readonly');
+  const store = transaction.objectStore('locations');
+  const getAllRequest = store.getAll();
+
+  return new Promise((resolve, reject) => {
+    getAllRequest.onsuccess = () => {
+      const locations = getAllRequest.result.reduce((acc, current, index) => {
+        acc[store.keyPath[index]] = current;
+        return acc;
+      }, {});
+      resolve(locations);
+    };
+    getAllRequest.onerror = () => {
+      reject('Error getting locations from IndexedDB');
+    };
+  });
+}
+
 // Similar functions for 'categories', 'channels', 'locations', and later 'companies'
 
 
