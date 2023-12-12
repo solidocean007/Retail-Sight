@@ -74,6 +74,7 @@ export const CreatePost = () => {
       postUserName: `${userData?.firstName} ${userData?.lastName}`,
       postUserId: userData?.uid,
       postUserCompany: userData?.company,
+      postUserEmail: userData?.email,
     },
     likes: [],
     hashtags: [""],

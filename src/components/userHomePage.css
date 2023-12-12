@@ -23,6 +23,8 @@
 
 .create-post-btn {
   background-color: rgb(23, 114, 84);
+  padding: 10px;
+  font-size: medium;
   /* color: black; */
 }
 
@@ -102,9 +104,36 @@
   .filter-menu-button {
     display: block;
   }
+
+  .user-button h3 {
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .menu-buttons h3 {
+    margin: 0px;
+    font-size: 15px;
+    letter-spacing: 2px;
+  }
 }
 
-@media (min-width: 900px) {
+@media (max-width: 670px) {
+  .user-button h3 {
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  .menu-buttons h3 {
+    margin: 0px;
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+
+  .profile-btn, .create-post-btn, .log-out-btn {
+    padding: 5px;
+  }
+}
+
+
+@media (min-width: 600px) {
   .sidebar-fullscreen {
     display: none
   }
@@ -112,4 +141,6 @@
   .container-user-home-page {
     margin-top: 120px;
   }
+ 
 }
+

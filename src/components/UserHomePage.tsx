@@ -1,6 +1,5 @@
 // userHomePage.tsx
 import { useEffect, useState } from "react";
-import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
 import { AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
@@ -44,10 +43,10 @@ export const UserHomePage = () => {
     <div className="container-user-home-page">
       <AppBar position="fixed" style={{ backgroundColor: "#333" }}>
         <Toolbar className="tool-bar">
-          <div>
-            <Button
+          <div className="user-button">
+            <button
               className="profile-btn"
-              variant="contained"
+              // variant="contained"
               color="primary"
               onClick={openProfile}
             >
@@ -55,20 +54,20 @@ export const UserHomePage = () => {
                 Welcome, {currentUser?.firstName} {currentUser?.lastName}{" "}
                 {/*Here is the line that loses the users data on page refresh*/}
               </h3>
-            </Button>
+            </button>
           </div>
           <div className="menu-buttons">
-            <Button
+            <button
               className="create-post-btn"
-              variant="contained"
+              // variant="contained"
               color="secondary"
               onClick={() => navigate("/createPost")}
             >
-              Create Post
-            </Button>
+              <h3>Create Post</h3>
+            </button>
 
             <button className="filter-menu-button" onClick={toggleFilterMenu}>
-              Filters
+             <h3>Filters</h3>
             </button>
           </div>
         </Toolbar>

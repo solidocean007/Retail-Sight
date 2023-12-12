@@ -76,12 +76,7 @@ const ActivityFeed = () => {
       console.log("ActivityFeed.tsx unmounts");
     };
   }, [dispatch, currentUserCompany]);
-  // }, []);
-
-  // Determine the total item count (1 for the ad + number of posts)
-  // const itemCount = 1 + posts.length;
-
-  // Calculate the number of items (posts + ads)
+  
   const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL)-1;
   const itemCount = displayPosts.length + numberOfAds;
 
@@ -143,7 +138,7 @@ const ActivityFeed = () => {
             }
           }}
         />
-        <button onClick={handleHashtagSearch} color="white">
+        <button className="search-button" onClick={handleHashtagSearch} color="white">
           Search
         </button>
       </div>

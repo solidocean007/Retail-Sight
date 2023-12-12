@@ -4,6 +4,20 @@
   align-items: center;
 }
 
+.hashtag-search-box {
+  max-width: 90%;
+  display: flex;
+}
+
+.search-button {
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: chartreuse;
+  color: black;
+}
+
 .list-card {
   width: 400px;
 }
