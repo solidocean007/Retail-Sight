@@ -74,7 +74,6 @@ export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Pr
 
 
 // Create a utility function that stores filtered posts in IndexedDB
-// export async function storeFilteredPostsInIndexedDB(posts: PostWithID[], filters: FilterCriteria): Promise<void> {
 export async function storeFilteredPostsInIndexedDB(posts: PostWithID[], filters: FilterCriteria): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(['posts'], 'readwrite');

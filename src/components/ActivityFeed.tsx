@@ -6,11 +6,15 @@ import NoContentCard from "./NoContentCard";
 import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
-import { fetchInitialPostsBatch } from "../thunks/postsThunks";
+import { fetchInitialPostsBatch, fetchLatestPosts } from "../thunks/postsThunks";
 import { Input } from "@mui/material";
 import getPostsByTag from "../utils/PostLogic/getPostsByTag";
 import "./activityFeed.css";
-import { PostWithID } from "../utils/types";
+import { PostType, PostWithID } from "../utils/types";
+import { addPostsToIndexedDB, getLatestPostsFromIndexedDB, getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { setPosts } from "../Slices/postsSlice";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { db } from "../utils/firebase";
 
 const POSTS_BATCH_SIZE = 20;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
@@ -19,7 +23,11 @@ const ActivityFeed = () => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompany = currentUser?.company;
-  console.log(currentUserCompany, currentUser, " : currentUserCompany, currentUser");
+  console.log(
+    currentUserCompany,
+    currentUser,
+    " : currentUserCompany, currentUser"
+  );
 
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -44,14 +52,14 @@ const ActivityFeed = () => {
     }
   };
 
-   // Effect to update the window width on resize
-   useEffect(() => {
+  // Effect to update the window width on resize
+  useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Calculate the width for the FixedSizeList
@@ -64,20 +72,41 @@ const ActivityFeed = () => {
     return 650;
   };
 
-  // Fetch the initial posts when the component mounts
   useEffect(() => {
-    console.log('ActivityFeed.tsx mounts')
-    if (currentUserCompany) {
-      dispatch(
-        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-      );
-    }
-    return () => {
-      console.log("ActivityFeed.tsx unmounts");
+    const loadPosts = async () => {
+      try {
+        const cachedPosts = await getPostsFromIndexedDB();
+        if (cachedPosts && cachedPosts.length > 0) {
+          dispatch(setPosts(cachedPosts));
+        } else if (currentUserCompany) {
+          dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany }));
+        }
+      } catch (error) {
+        console.error("Error fetching posts from IndexedDB:", error);
+        if (currentUserCompany) {
+          dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany }));
+        }
+      }
     };
+
+    loadPosts();
+
+    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const posts: PostWithID[] = snapshot.docs.map(doc => ({
+        ...doc.data() as PostType,
+        id: doc.id,
+      }));
+
+      dispatch(setPosts(posts)); // Update Redux store
+      await addPostsToIndexedDB(posts); // Update IndexedDB
+    });
+
+    return () => unsubscribe();
   }, [dispatch, currentUserCompany]);
   
-  const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL)-1;
+
+  const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL) - 1;
   const itemCount = displayPosts.length + numberOfAds;
 
   const itemRenderer = ({
@@ -122,9 +151,7 @@ const ActivityFeed = () => {
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
-      <div className="search-title">
-        {/* <h5>Search by hashtag:</h5> */}
-      </div>
+      <div className="search-title">{/* <h5>Search by hashtag:</h5> */}</div>
 
       <div className="hashtag-search-box">
         {/* call the handleHashtagSearch on submit */}
@@ -133,12 +160,16 @@ const ActivityFeed = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === "Enter") {
               handleHashtagSearch();
             }
           }}
         />
-        <button className="search-button" onClick={handleHashtagSearch} color="white">
+        <button
+          className="search-button"
+          onClick={handleHashtagSearch}
+          color="white"
+        >
           Search
         </button>
       </div>
