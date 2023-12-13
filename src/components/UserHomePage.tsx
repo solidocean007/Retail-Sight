@@ -81,7 +81,7 @@ export const UserHomePage = () => {
             isFilterMenuOpen ? "sidebar-fullscreen" : ""
           }`}
         >
-          <SideBar />
+          <SideBar toggleFilterMenu={toggleFilterMenu} />
         </div>
       </div>
     </div>

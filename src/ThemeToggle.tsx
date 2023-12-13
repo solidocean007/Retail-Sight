@@ -30,13 +30,13 @@ const handleThemeChange = () => {
 
 
   return (
-    <div style={{ position: 'fixed', bottom: '3.5rem', right: '2rem', zIndex: '20' }}>
+    <div style={{ position: 'fixed', top: '52rem', right: '4rem', zIndex: '20' }}>
       <Fab color="primary" aria-label="settings" onClick={handleToggleClick}>
         <SettingsIcon />
       </Fab>
 
       {isDrawerOpen && (
-        <div style={{ position: 'fixed', bottom: '3.5rem', right: '6rem', background: '#fff', padding: '1rem', borderRadius: '0.25rem' }}>
+        <div style={{ position: 'fixed', top: '52rem', right: '6rem', background: '#fff', padding: '1rem', borderRadius: '0.25rem' }}>
           <Switch checked={isDarkMode} onChange={handleThemeChange} />
         </div>
       )}

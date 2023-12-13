@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
-import { selectUser } from "../Slices/userSlice"; // Module '"../Slices/userSlice"' has no exported member 'selectUser'. Did you mean to use 'import selectUser from "../Slices/userSlice"' instead?ts(2614)
+import { selectUser } from "../Slices/userSlice"; 
 
 import ChannelSelector from "./ChannelSelector";
 import CategorySelector from "./CategorySelector";

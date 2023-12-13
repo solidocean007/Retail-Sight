@@ -1,5 +1,5 @@
 //EditPostModal.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { userDeletePost } from "../utils/PostLogic/deletePostLogic";
 import Modal from "@mui/material/Modal";
 import { PostWithID } from "../utils/types";
@@ -19,7 +19,8 @@ import {
   CardMedia,
 } from "@mui/material";
 
-import './editPostModal.css'
+import "./editPostModal.css";
+import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -36,34 +37,36 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   // onClose,
   // onSave,
 }) => {
-
   const dispatch = useDispatch();
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
-  const [postVisibility, setPostVisibility] = useState<"public" | "company" | "supplier" | "private" | undefined>("public");
-
+  const [postVisibility, setPostVisibility] = useState<
+    "public" | "company" | "supplier" | "private" | undefined
+  >("public");
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
+  const wrapperRef = useRef(null); // You are already defining this ref
+  useOutsideAlerter(wrapperRef, handleCloseEditModal); // Use the existing handleCloseEditModal which calls setIsEditModalOpen(false)
 
   useEffect(() => {
-    setDescription(post?.description || ""); 
+    setDescription(post?.description || "");
     setPostVisibility(post?.visibility || "public");
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
-    const postRef = doc(collection(db, "posts"), updatedPost.id); 
+    const postRef = doc(collection(db, "posts"), updatedPost.id);
     try {
       const updatedFields = {
         description: updatedPost.description,
         visibility: updatedPost.visibility,
         // add other fields you want to update here
-    };
+      };
       await updateDoc(postRef, updatedFields);
       dispatch(updatePost(updatedPost));
-      console.log('postRef', postRef)
+      console.log("postRef", postRef);
       console.log("Post updated successfully");
       handleCloseEditModal();
     } catch (error) {
@@ -85,7 +88,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   return (
     // <Modal open={isOpen} onClose={onClose}>
     <Modal open={isOpen}>
-      <div className="edit-post-modal-container">
+      <div className="edit-post-modal-container" ref={wrapperRef}>
+        <button className="close-modal-button" onClick={handleCloseEditModal}>
+          &times; {/* This is a common symbol used for close buttons */}
+        </button>
         {/* <h4 className="store-title">Store: {post.selectedStore}</h4>
         <h6 className="store-address">Address: {post.storeAddress}</h6> */}
         {post.imageUrl && (
@@ -115,8 +121,14 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
             fullWidth
             variant="outlined"
             value={postVisibility}
-            onChange={(e: SelectChangeEvent<'public' | 'company' | 'supplier' | 'private' | undefined>) => {
-              setPostVisibility(e.target.value as 'public' | 'company' | 'supplier' | 'private');
+            onChange={(
+              e: SelectChangeEvent<
+                "public" | "company" | "supplier" | "private" | undefined
+              >
+            ) => {
+              setPostVisibility(
+                e.target.value as "public" | "company" | "supplier" | "private"
+              );
             }}
             className="select-input"
           >
@@ -147,7 +159,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       </div>
     </Modal>
   );
-  
 };
 
 export default EditPostModal;

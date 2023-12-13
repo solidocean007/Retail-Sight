@@ -14,8 +14,9 @@ import { RootState } from "../utils/store";
 import { clearLocationFilters } from "../Slices/locationSlice";
 import "./sideBar.css";
 import CustomAccordion from "./CustomAccordion";
+import { getFilteredPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 
-const SideBar = () => {
+const SideBar = ({toggleFilterMenu}: {toggleFilterMenu : ()=> void}) => {
   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(
     []
@@ -28,19 +29,29 @@ const SideBar = () => {
   );
   const dispatch = useDispatch<AppDispatch>();
 
-  const applyFilters = () => {
-    dispatch(
-      fetchFilteredPosts({
-        filters: {
-          channels: selectedChannels,
-          categories: selectedCategories,
-          states: selectedStates,
-          cities: selectedCities,
-        },
-        lastVisible: null,
-      })
-    );
+  const applyFilters = async () => {
+    // Construct the filter object
+    const filters = {
+      channels: selectedChannels,
+      categories: selectedCategories,
+      states: selectedStates,
+      cities: selectedCities,
+    };
+  
+    // First, attempt to get filtered posts from IndexedDB
+    const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
+    if (cachedPosts.length > 0) {
+      // If cached posts exist, use them and do not fetch from Firestore
+      console.log('Using cached posts from IndexedDB');
+      // You would dispatch an action to set these posts in your Redux store here
+      // For example: dispatch(setFilteredPosts(cachedPosts));
+    } else {
+      // If there are no cached posts, fetch from Firestore
+      console.log('Fetching filtered posts from Firestore');
+      dispatch(fetchFilteredPosts({ filters, lastVisible: null }));
+    }
   };
+  
 
   // In SideBar component
   const clearFilters = () => {
@@ -57,6 +68,7 @@ const SideBar = () => {
 
   return (
     <div className="side-bar-box">
+      <button className="close-side-bar-button" onClick={toggleFilterMenu}>X</button>
       <div className="post-content-filter">
         <div className="filter-by-content">
           <CustomAccordion<ChannelType>

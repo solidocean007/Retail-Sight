@@ -19,7 +19,7 @@ import {
   filterByChannels,
 } from "../services/postsServices";
 import {
-  getFilteredPostsFromIndexedDB,
+  // getFilteredPostsFromIndexedDB,
   storeFilteredPostsInIndexedDB,
   storeLatestPostsInIndexedDB,
   getLatestPostsFromIndexedDB,
@@ -62,13 +62,14 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       const querySnapshot = await getDocs(postsQuery);
 
       // Filter posts based on visibility and company
-      const postsWithIds: PostWithID[] = querySnapshot.docs.map((doc) => {
-        const postData: PostType = doc.data() as PostType;
-        return {
-          ...postData,
-          id: doc.id
-        };
-      })
+      const postsWithIds: PostWithID[] = querySnapshot.docs
+        .map((doc) => {
+          const postData: PostType = doc.data() as PostType;
+          return {
+            ...postData,
+            id: doc.id,
+          };
+        })
         .filter(
           (post) =>
             post.visibility === "public" ||
@@ -83,11 +84,13 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       console.log(`Last visible post ID: ${lastVisible}`);
 
       // Dispatch incrementRead action
-      dispatch(incrementRead({ 
-        source: 'fetchFInitialPostsBatch', 
-        description: 'Fetching initial posts',
-        timestamp: new Date().toISOString() // ISO 8601 format timestamp
-      }));
+      dispatch(
+        incrementRead({
+          source: "fetchFInitialPostsBatch",
+          description: "Fetching initial posts",
+          timestamp: new Date().toISOString(), // ISO 8601 format timestamp
+        })
+      );
 
       return { posts: postsWithIds, lastVisible };
     } catch (error) {
@@ -131,7 +134,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
       }
 
       const snapshot = await getDocs(postsQuery);
-      const postsWithIds: PostWithID[] = snapshot.docs.map(doc => {
+      const postsWithIds: PostWithID[] = snapshot.docs.map((doc) => {
         const data = doc.data() as PostType;
         return { id: doc.id, ...data };
       });
@@ -139,13 +142,14 @@ export const fetchMorePostsBatch = createAsyncThunk(
       const newLastVisible =
         snapshot.docs[snapshot.docs.length - 1]?.id || null;
 
-       // Dispatch incrementRead action
-       dispatch(incrementRead({ 
-        source: 'fetchMoreBatch', 
-        description: 'Fetching more posts',
-        timestamp: new Date().toISOString() // ISO 8601 format timestamp
-      }));
-
+      // Dispatch incrementRead action
+      dispatch(
+        incrementRead({
+          source: "fetchMoreBatch",
+          description: "Fetching more posts",
+          timestamp: new Date().toISOString(), // ISO 8601 format timestamp
+        })
+      );
 
       return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
@@ -159,9 +163,11 @@ export const fetchMorePostsBatch = createAsyncThunk(
   }
 );
 
-export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectValue: string }>(
-  "posts/fetchLatest",
-  async (_, { rejectWithValue, dispatch }) => {
+export const fetchLatestPosts = createAsyncThunk<
+  PostWithID[],
+  void,
+  { rejectValue: string }
+>("posts/fetchLatest", async (_, { rejectWithValue, dispatch }) => {
   try {
     // First, try to get the latest posts from IndexedDB
     const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
@@ -184,7 +190,7 @@ export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectVal
         return [];
       }
 
-      const posts : PostWithID[] = postSnapshot.docs.map((doc) => ({
+      const posts: PostWithID[] = postSnapshot.docs.map((doc) => ({
         ...(doc.data() as PostType),
         id: doc.id,
       }));
@@ -193,11 +199,13 @@ export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectVal
       await storeLatestPostsInIndexedDB(posts); // Assume this function exists
 
       // Dispatch incrementRead action
-      dispatch(incrementRead({ 
-        source: 'fetchLatestPosts', 
-        description: 'Fetching latest posts',
-        timestamp: new Date().toISOString() // ISO 8601 format timestamp
-      }));
+      dispatch(
+        incrementRead({
+          source: "fetchLatestPosts",
+          description: "Fetching latest posts",
+          timestamp: new Date().toISOString(), // ISO 8601 format timestamp
+        })
+      );
 
       return posts;
     }
@@ -207,69 +215,73 @@ export const fetchLatestPosts = createAsyncThunk<PostWithID[], void, { rejectVal
   }
 });
 
-export const fetchFilteredPosts = createAsyncThunk<PostWithID[], FetchPostsArgs, { rejectValue: string }>(
-  "posts/fetchFiltered",
-  async ({ filters }, { rejectWithValue, dispatch }) => {
+export const fetchFilteredPosts = createAsyncThunk<
+  PostWithID[],
+  FetchPostsArgs,
+  { rejectValue: string }
+>("posts/fetchFiltered", async ({ filters }, { rejectWithValue, dispatch }) => {
   try {
     // First, try to get filtered posts from IndexedDB
-    console.log("Attempting to fetch filtered posts from IndexedDB...");
-    const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
+    // console.log("Attempting to fetch filtered posts from IndexedDB...");
+    // const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
 
-    if (cachedPosts.length > 0) {
-      console.log(
-        `Found ${cachedPosts.length} cached posts in IndexedDB. Using cached data.`
-      );
-      return cachedPosts;
-    } else {
-      // If there are no cached posts, fetch from Firestore
-      console.log(
-        "No suitable cached posts found in IndexedDB. Fetching from Firestore..."
-      );
-      let baseQuery: Query<DocumentData> = collection(db, "posts");
+    // if (cachedPosts.length > 0) {
+    //   console.log(
+    //     `Found ${cachedPosts.length} cached posts in IndexedDB. Using cached data.`
+    //   );
+    //   return cachedPosts;
+    // } else {
+    //   // If there are no cached posts, fetch from Firestore
+    //   console.log(
+    //     "No suitable cached posts found in IndexedDB. Fetching from Firestore..."
+    //   );
+    let baseQuery: Query<DocumentData> = collection(db, "posts");
 
-      // Apply channel filters if they are present
-      if (filters.channels && filters.channels.length > 0) {
-        baseQuery = filterByChannels(filters.channels, baseQuery);
-      }
-      // Apply category filters if they are present
-      if (filters.categories && filters.categories.length > 0) {
-        baseQuery = filterByCategories(filters.categories, baseQuery);
-      }
-
-      // Execute the query
-      const queryToExecute = query(baseQuery);
-      console.log("fetchFilteredPosts read");
-      const postSnapshot = await getDocs(queryToExecute);
-
-      if (postSnapshot.empty) {
-        console.log(
-          "No documents found with the current filters in Firestore."
-        );
-        return [];
-      }
-
-      // When mapping, create PostWithID objects
-      const posts: PostWithID[] = postSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data() as PostType
-      }));
-
-      // Store the fetched posts in IndexedDB
-      console.log(
-        `Fetched ${posts.length} posts from Firestore. Storing in IndexedDB.`
-      );
-      await storeFilteredPostsInIndexedDB(posts, filters);
-
-      // Dispatch incrementRead action
-      dispatch(incrementRead({ 
-        source: 'fetchFilteredPosts', 
-        description: 'Fetching filtered posts',
-        timestamp: new Date().toISOString() // ISO 8601 format timestamp
-      }));
-
-      // Return the fetched posts
-      return posts;
+    // Apply channel filters if they are present
+    if (filters.channels && filters.channels.length > 0) {
+      baseQuery = filterByChannels(filters.channels, baseQuery);
     }
+    // Apply category filters if they are present
+    if (filters.categories && filters.categories.length > 0) {
+      baseQuery = filterByCategories(filters.categories, baseQuery);
+    }
+
+    // Execute the query
+    const queryToExecute = query(baseQuery);
+    console.log("fetchFilteredPosts read");
+    const postSnapshot = await getDocs(queryToExecute);
+
+    if (postSnapshot.empty) {
+      console.log("No documents found with the current filters in Firestore.");
+      return [];
+    }
+
+    // When mapping, create PostWithID objects
+    const posts: PostWithID[] = postSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as PostType),
+    }));
+
+    // Store the fetched posts in IndexedDB
+    console.log(
+      `Fetched ${posts.length} posts from Firestore. Storing in IndexedDB.`
+    );
+    await storeFilteredPostsInIndexedDB(posts, filters);
+
+    // Dispatch incrementRead action
+    dispatch(
+      incrementRead({
+        source: "fetchFilteredPosts",
+        description: "Fetching filtered posts",
+        timestamp: new Date().toISOString(), // ISO 8601 format timestamp
+      })
+    );
+
+    // Inside fetchFilteredPosts after fetching from Firestore
+    await storeFilteredPostsInIndexedDB(posts, filters);
+
+    // Return the fetched posts
+    return posts;
   } catch (error) {
     console.error("Error fetching filtered posts:", error);
     return rejectWithValue("Error fetching filtered posts.");

@@ -71,6 +71,12 @@
   }
 }
 
+@media (min-width: 900px) {
+  .close-side-bar-button {
+  display: none;
+  }
+}
+
 @media (max-width: 900px) {
   .side-bar-box {
     flex-direction: column;

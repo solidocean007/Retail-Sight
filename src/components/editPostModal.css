@@ -1,11 +1,12 @@
 .edit-post-modal-container {
   display: flex;
+  border-radius: 5px;
   flex-direction: column;
   align-items: center;
   padding: 10px;
   background-color: white;
   max-width: 600px;
-  margin: auto;
+  margin: 100px 10px;
 }
 
 .store-title, .store-address {

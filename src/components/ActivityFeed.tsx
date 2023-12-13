@@ -72,6 +72,7 @@ const ActivityFeed = () => {
     return 650;
   };
 
+  // load indexDB posts or fetch from firestore
   useEffect(() => {
     const loadPosts = async () => {
       try {
@@ -115,8 +116,6 @@ const ActivityFeed = () => {
     return () => unsubscribe();
   }, [dispatch, currentUserCompany]);
   
-  
-
   const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL) - 1;
   const itemCount = displayPosts.length + numberOfAds;
 

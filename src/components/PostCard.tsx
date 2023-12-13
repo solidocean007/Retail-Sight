@@ -132,7 +132,7 @@ const PostCard: React.FC<PostCardProps> = ({
           </button>
           <p>{post.commentCount} Comments</p>
         </div>
-
+        
         <CommentSection
           post={post}
           showAllComments={showAllComments}

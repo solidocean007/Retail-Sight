@@ -1,3 +1,4 @@
+// useOutsideAlerter.ts
 import { RefObject, useEffect } from "react";
 export const useOutsideAlerter = (
   ref: RefObject<HTMLElement>, 
