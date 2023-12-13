@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from "@mui/material";
+import './shareButton.css'
 
 interface SharePostProps {
   postLink: string;
@@ -25,7 +25,7 @@ const SharePost: React.FC<SharePostProps> = ({ postLink, postTitle }) => {
   };
 
   return (
-    <Button onClick={handleShareClick}>Share It</Button>
+    <button className='share-button' onClick={handleShareClick}>Share It</button>
   );
 };
 

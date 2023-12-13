@@ -75,35 +75,46 @@ const ActivityFeed = () => {
   useEffect(() => {
     const loadPosts = async () => {
       try {
+        console.log('looking in indexDB');
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
           dispatch(setPosts(cachedPosts));
         } else if (currentUserCompany) {
-          dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany }));
+          console.log('no posts in indexDB');
+          // Dispatch the thunk action; Redux handles the promise
+          dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })).then((action) => {
+            if (fetchInitialPostsBatch.fulfilled.match(action)) {
+              // This is where you know the posts have been successfully fetched and added to the store
+              // Now you can add them to IndexedDB
+              addPostsToIndexedDB(action.payload.posts);
+            }
+          });
         }
       } catch (error) {
         console.error("Error fetching posts from IndexedDB:", error);
         if (currentUserCompany) {
+          // Dispatch the thunk action again in case of error
           dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany }));
         }
       }
     };
-
+  
     loadPosts();
-
+  
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const posts: PostWithID[] = snapshot.docs.map(doc => ({
         ...doc.data() as PostType,
         id: doc.id,
       }));
-
+  
       dispatch(setPosts(posts)); // Update Redux store
-      await addPostsToIndexedDB(posts); // Update IndexedDB
+      addPostsToIndexedDB(posts); // Update IndexedDB
     });
-
+  
     return () => unsubscribe();
   }, [dispatch, currentUserCompany]);
+  
   
 
   const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL) - 1;

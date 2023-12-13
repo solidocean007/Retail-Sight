@@ -33,7 +33,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const dispatch = useDispatch();
   const [likes, setLikes] = useState(post.likes?.length || 0);
   const [likedByUser, setLikedByUser] = useState(
-    Array.isArray(post.likes) && post.likes.includes(currentUserUid) || false
+    (Array.isArray(post.likes) && post.likes.includes(currentUserUid)) || false
   );
 
   const onLikeButtonClick = async () => {
@@ -73,36 +73,45 @@ const PostCard: React.FC<PostCardProps> = ({
       style={{ ...style, height: showAllComments ? "auto" : "900px" }}
     >
       <CardContent className="card-content">
-        <div>{post.visibility}</div>
+        <div className="card-top">
+          <div>view: {post.visibility}</div>
+        </div>
+
         <div className="post-header">
           <div className="store-details">
-            <Typography variant="h6">{formattedDate}</Typography>
-            <Typography variant="h6">{post.selectedStore}</Typography>
-            <Typography variant="h6">{post.storeAddress}</Typography>
+            <h3>{post.selectedStore}</h3>
+            <h5>{formattedDate}</h5>
+            <h5>{post.storeAddress}</h5>
           </div>
           <div className="post-user-details">
-            {user?.uid === post.user?.postUserId && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleEditPost}
-                className="edit-btn"
-              >
-                Edit Post
-              </Button>
-            )}
+            <div className="share-edit-block">
+              {user?.uid === post.user?.postUserId && (
+                <div className="edit-block">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleEditPost}
+                    className="edit-btn"
+                  >
+                    Edit Post
+                  </Button>
+                </div>
+              )}
+              <div className="share-button">
+                <SharePost
+                  // postLink={`https://yourwebsite.com/post/${postId}`}
+                  postLink={`https://yourwebsite.com/post`}
+                  postTitle="Check out this awesome post!"
+                />
+              </div>
+            </div>
+
             <Typography
               onClick={() => onUserNameClick(post, dispatch)}
               variant="h6"
             >
-              {" "}
-              by: {post.user.postUserName}
+              by:<a href=""> {post.user.postUserName}</a>
             </Typography>
-            <SharePost
-              // postLink={`https://yourwebsite.com/post/${postId}`}
-              postLink={`https://yourwebsite.com/post`}
-              postTitle="Check out this awesome post!"
-            />
           </div>
         </div>
 
@@ -116,7 +125,6 @@ const PostCard: React.FC<PostCardProps> = ({
         {post.imageUrl && (
           <img className="post-image" src={post.imageUrl} alt="Post" />
         )}
-
         <div className="likes-comments">
           <h5>{likes} likes</h5>
           <button className="like-button" onClick={onLikeButtonClick}>
