@@ -251,7 +251,7 @@ export const CreatePost = () => {
             onChange={(e) => handleFieldChange("visibility", e.target.value)}
           >
             <MenuItem value="public">Public</MenuItem>
-            <MenuItem value="private">Company only</MenuItem>
+            <MenuItem value="company">Company only</MenuItem>
             {/* <MenuItem disabled value="group">Supplier</MenuItem> */}
             {/* <MenuItem value="group">Supplier & Company</MenuItem> */}
           </Select>

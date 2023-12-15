@@ -12,6 +12,7 @@ import {
   updateCategoriesInFirestore,
   updateChannelsInFirestore,
 } from "./updateFirestore";
+import { addNewlyCreatedPostToIndexedDB, addPostsToIndexedDB } from "../database/indexedDBUtils";
 // import { fetchUserFromFirebase } from "../userData/fetchUserFromFirebase";
 
 export const useHandlePostSubmission = () => {
@@ -54,7 +55,7 @@ export const useHandlePostSubmission = () => {
           brands: post.brands,
           timestamp: new Date().toISOString(),
           user: {
-            postUserName: user.displayName || 'Unknown',
+            postUserName: user.displayName || "Unknown",
             postUserId: user.uid,
             postUserCompany: userData.company,
             postUserEmail: userData.email,
@@ -72,7 +73,10 @@ export const useHandlePostSubmission = () => {
         const newPostWithID = { ...postData, id: newDocRef.id };
 
         // Dispatch action to add this new post to Redux state
-        dispatch(addNewPost(newPostWithID));
+        dispatch(addNewPost(newPostWithID)); // Add the post to Redux
+
+        // Add the new post to IndexedDB
+        await addNewlyCreatedPostToIndexedDB(newPostWithID);
         console.log("Post ID:", newDocRef.id);
 
         // Update channels collection

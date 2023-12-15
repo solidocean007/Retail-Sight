@@ -6,15 +6,15 @@ import { openDB } from "./indexedDBOpen";
 // export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
 export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   const db = await openDB();
-  const transaction = db.transaction(['posts'], 'readwrite');
-  const store = transaction.objectStore('posts');
-  
+  const transaction = db.transaction(["posts"], "readwrite");
+  const store = transaction.objectStore("posts");
+
   return new Promise<void>((resolve, reject) => {
     // Handle the successful completion of the transaction
     transaction.oncomplete = () => {
       resolve();
     };
-  
+
     // Handle any errors that occur during the transaction
     transaction.onerror = (event) => {
       reject((event.target as IDBRequest).error);
@@ -30,54 +30,99 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   });
 }
 
-
-// export async function getPostsFromIndexedDB(): Promise<PostType[]> { 
-export async function getPostsFromIndexedDB(): Promise<PostWithID[]> { 
+// Add a single post to IndexedDB
+export async function addNewlyCreatedPostToIndexedDB(
+  post: PostWithID
+): Promise<void> {
   const db = await openDB();
-  const transaction = db.transaction(['posts'], 'readonly');
-  const store = transaction.objectStore('posts');
+  const transaction = db.transaction(["posts"], "readwrite");
+  const store = transaction.objectStore("posts");
+
+  return new Promise<void>((resolve, reject) => {
+    const request = store.put(post);
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// Remove a single post from IndexedDB
+export async function removePostFromIndexedDB(postId: string): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["posts"], "readwrite");
+  const store = transaction.objectStore("posts");
+
+  return new Promise<void>((resolve, reject) => {
+    const request = store.delete(postId);
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+// export async function getPostsFromIndexedDB(): Promise<PostType[]> {
+export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
+  const db = await openDB();
+  const transaction = db.transaction(["posts"], "readonly");
+  const store = transaction.objectStore("posts");
   const getAllRequest = store.getAll();
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
       resolve(getAllRequest.result);
     };
     getAllRequest.onerror = () => {
-      reject('Error getting posts from IndexedDB');
+      reject("Error getting posts from IndexedDB");
     };
   });
 }
 
 // Create a utility function that retrieves filtered posts from IndexedDB
 // export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostType[]> {
-export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostWithID[]> {
+export async function getFilteredPostsFromIndexedDB(
+  filters: FilterCriteria
+): Promise<PostWithID[]> {
   const db = await openDB();
-  const transaction = db.transaction(['posts'], 'readonly');
-  const store = transaction.objectStore('posts');
+  const transaction = db.transaction(["posts"], "readonly");
+  const store = transaction.objectStore("posts");
   const getAllRequest = store.getAll();
 
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
       const allPosts = getAllRequest.result;
-      const filteredPosts = allPosts.filter(post => 
-        (!filters.channels!.length || filters.channels!.includes(post.channel!)) &&
-        (!filters.categories!.length || filters.categories!.includes(post.category!))
+      const filteredPosts = allPosts.filter(
+        (post) =>
+          (!filters.channels!.length ||
+            filters.channels!.includes(post.channel!)) &&
+          (!filters.categories!.length ||
+            filters.categories!.includes(post.category!))
       );
-      
-      
+
       resolve(filteredPosts);
     };
     getAllRequest.onerror = () => {
-      reject('Error getting filtered posts from IndexedDB');
+      reject("Error getting filtered posts from IndexedDB");
     };
   });
 }
 
-
 // Create a utility function that stores filtered posts in IndexedDB
-export async function storeFilteredPostsInIndexedDB(posts: PostWithID[], filters: FilterCriteria): Promise<void> {
+export async function storeFilteredPostsInIndexedDB(
+  posts: PostWithID[],
+  filters: FilterCriteria
+): Promise<void> {
   const db = await openDB();
-  const transaction = db.transaction(['posts'], 'readwrite');
-  const store = transaction.objectStore('posts');
+  const transaction = db.transaction(["posts"], "readwrite");
+  const store = transaction.objectStore("posts");
 
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
@@ -100,10 +145,12 @@ export async function storeFilteredPostsInIndexedDB(posts: PostWithID[], filters
 
 // Add this new function to indexedDBUtils.ts
 
-export async function storeLatestPostsInIndexedDB(posts: PostType[]): Promise<void> {
+export async function storeLatestPostsInIndexedDB(
+  posts: PostType[]
+): Promise<void> {
   const db = await openDB();
-  const transaction = db.transaction(['latestPosts'], 'readwrite'); // Consider using a separate object store for latest posts
-  const store = transaction.objectStore('latestPosts');
+  const transaction = db.transaction(["latestPosts"], "readwrite"); // Consider using a separate object store for latest posts
+  const store = transaction.objectStore("latestPosts");
 
   return new Promise<void>((resolve, reject) => {
     // Clear existing posts before storing new ones to ensure the store only contains the latest posts
@@ -138,20 +185,23 @@ export async function storeLatestPostsInIndexedDB(posts: PostType[]): Promise<vo
 
 export async function getLatestPostsFromIndexedDB(): Promise<PostWithID[]> {
   const db = await openDB();
-  const transaction = db.transaction(['latestPosts'], 'readonly');
-  const store = transaction.objectStore('latestPosts');
+  const transaction = db.transaction(["latestPosts"], "readonly");
+  const store = transaction.objectStore("latestPosts");
   const getAllRequest = store.getAll();
 
   return new Promise((resolve, reject) => {
-    getAllRequest.onsuccess = () => resolve(getAllRequest.result as PostWithID[]);
+    getAllRequest.onsuccess = () =>
+      resolve(getAllRequest.result as PostWithID[]);
     getAllRequest.onerror = () => reject(getAllRequest.error);
   });
 }
 
-export async function storeLocationsInIndexedDB(locations: { [key: string]: string[] }): Promise<void> {
+export async function storeLocationsInIndexedDB(locations: {
+  [key: string]: string[];
+}): Promise<void> {
   const db = await openDB();
-  const transaction = db.transaction(['locations'], 'readwrite');
-  const store = transaction.objectStore('locations');
+  const transaction = db.transaction(["locations"], "readwrite");
+  const store = transaction.objectStore("locations");
 
   return new Promise<void>((resolve, reject) => {
     // Clear existing locations before storing new ones
@@ -182,10 +232,12 @@ export async function storeLocationsInIndexedDB(locations: { [key: string]: stri
   });
 }
 
-export async function getLocationsFromIndexedDB(): Promise<{ [key: string]: string[] } | null> {
+export async function getLocationsFromIndexedDB(): Promise<{
+  [key: string]: string[];
+} | null> {
   const db = await openDB();
-  const transaction = db.transaction(['locations'], 'readonly');
-  const store = transaction.objectStore('locations');
+  const transaction = db.transaction(["locations"], "readonly");
+  const store = transaction.objectStore("locations");
   const getAllRequest = store.getAll();
 
   return new Promise((resolve, reject) => {
@@ -197,11 +249,9 @@ export async function getLocationsFromIndexedDB(): Promise<{ [key: string]: stri
       resolve(locations);
     };
     getAllRequest.onerror = () => {
-      reject('Error getting locations from IndexedDB');
+      reject("Error getting locations from IndexedDB");
     };
   });
 }
 
 // Similar functions for 'categories', 'channels', 'locations', and later 'companies'
-
-

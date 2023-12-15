@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { FixedSizeList as List } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
@@ -11,15 +11,29 @@ import { Input } from "@mui/material";
 import getPostsByTag from "../utils/PostLogic/getPostsByTag";
 import "./activityFeed.css";
 import { PostType, PostWithID } from "../utils/types";
-import { addPostsToIndexedDB, getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
-import { setPosts } from "../Slices/postsSlice";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  addPostsToIndexedDB,
+  getPostsFromIndexedDB,
+  removePostFromIndexedDB,
+} from "../utils/database/indexedDBUtils";
+import { deletePost, mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
+import {
+  DocumentChange,
+  QuerySnapshot,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../utils/firebase";
 
-const POSTS_BATCH_SIZE = 20;
+const POSTS_BATCH_SIZE = 5;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
 
 const ActivityFeed = () => {
+  // const [publicPosts, setPublicPosts] = useState<PostWithID[]>([]);
+  // const [companyPosts, setCompanyPosts] = useState<PostWithID[]>([]);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompany = currentUser?.company;
@@ -31,6 +45,7 @@ const ActivityFeed = () => {
 
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
   const [searchTerm, setSearchTerm] = React.useState("");
   const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
     null
@@ -76,14 +91,16 @@ const ActivityFeed = () => {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        console.log('looking in indexDB');
+        console.log("looking in indexDB");
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
           dispatch(setPosts(cachedPosts));
         } else if (currentUserCompany) {
-          console.log('no posts in indexDB');
+          console.log("no posts in indexDB");
           // Dispatch the thunk action; Redux handles the promise
-          dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })).then((action) => {
+          dispatch(
+            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
+          ).then((action) => {
             if (fetchInitialPostsBatch.fulfilled.match(action)) {
               // This is where you know the posts have been successfully fetched and added to the store
               // Now you can add them to IndexedDB
@@ -95,27 +112,102 @@ const ActivityFeed = () => {
         console.error("Error fetching posts from IndexedDB:", error);
         if (currentUserCompany) {
           // Dispatch the thunk action again in case of error
-          dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany }));
+          dispatch(
+            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
+          );
         }
       }
     };
-  
+
     loadPosts();
-  
-    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const posts: PostWithID[] = snapshot.docs.map(doc => ({
-        ...doc.data() as PostType,
-        id: doc.id,
-      }));
-  
-      dispatch(setPosts(posts)); // Update Redux store
-      addPostsToIndexedDB(posts); // Update IndexedDB
-    });
-  
-    return () => unsubscribe();
   }, [dispatch, currentUserCompany]);
+
+  // const mergePosts = (posts1: PostWithID[], posts2: PostWithID[]) => {
+  //   // Combine the two arrays
+  //   const combinedPosts = [...posts1, ...posts2];
+
+  //   // Sort the combined array by timestamp (newest first)
+  //   combinedPosts.sort((a, b) => {
+  //     // Handle cases where timestamp might be undefined
+  //     const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+  //     const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+
+  //     return timeB - timeA;
+  //   });
+
+  //   return combinedPosts;
+  // };
+
+  // Function to update the feed
+  // const updateFeed = useCallback(
+  //   (newPosts: PostWithID[], isPublic: boolean) => {
+  //     const existingPosts = isPublic ? companyPosts : publicPosts;
+  //     const mergedPosts = mergePosts(newPosts, existingPosts);
+  //     dispatch(setPosts(mergedPosts)); // Update Redux store
+  //     addPostsToIndexedDB(mergedPosts); // Update IndexedDB
+  //   },
+  //   [dispatch, publicPosts, companyPosts]
+  // );
+
+  const updateFeed = useCallback(
+    (newPosts: PostWithID[]) => {
+      // Dispatch an action to merge newPosts with existing posts in Redux store
+      dispatch(mergeAndSetPosts(newPosts)); // This action handles merging logic
+      // Update IndexedDB with the merged posts
+      addPostsToIndexedDB(newPosts); // Ensure new posts are also added to IndexedDB
+    },
+    [dispatch]
+  );
   
+
+  useEffect(() => {
+    // Capture the mount time in ISO format
+    const mountTime = new Date().toISOString();
+    const userCompany = currentUser?.company;
+  
+    // Function to process document changes
+    const processDocChanges = (snapshot : QuerySnapshot) => {
+      snapshot.docChanges().forEach((change : DocumentChange) => {
+        if (change.type === "added" || change.type === "modified") {
+          // Handle added or modified documents
+          // ... existing logic to update posts
+        } else if (change.type === "removed") {
+          // Handle removed documents
+          dispatch(deletePost(change.doc.id));
+          removePostFromIndexedDB(change.doc.id);
+        }
+      });
+    };
+  
+    // Subscribe to public posts
+    const publicPostsQuery = query(
+      collection(db, "posts"),
+      where("visibility", "==", "public"),
+      where('timestamp', '>', mountTime),
+      orderBy("timestamp", "desc")
+    );
+    const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
+  
+    // Subscribe to company-specific posts, if the user's company is known
+    let unsubscribeCompany = () => {};
+    if (userCompany) {
+      const companyPostsQuery = query(
+        collection(db, "posts"),
+        where("user.postUserCompany", "==", userCompany),
+        where('timestamp', '>', mountTime),
+        orderBy("timestamp", "desc")
+      );
+      unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);
+    }
+  
+    // Cleanup function
+    return () => {
+      unsubscribePublic();
+      unsubscribeCompany();
+    };
+  }, [currentUser?.company, updateFeed, dispatch]);
+  
+
   const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL) - 1;
   const itemCount = displayPosts.length + numberOfAds;
 

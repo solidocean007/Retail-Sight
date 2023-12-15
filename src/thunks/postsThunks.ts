@@ -277,9 +277,6 @@ export const fetchFilteredPosts = createAsyncThunk<
       })
     );
 
-    // Inside fetchFilteredPosts after fetching from Firestore
-    await storeFilteredPostsInIndexedDB(posts, filters);
-
     // Return the fetched posts
     return posts;
   } catch (error) {

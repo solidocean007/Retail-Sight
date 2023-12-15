@@ -66,6 +66,26 @@ const postsSlice = createSlice({
     addNewPost: (state, action: PayloadAction<PostWithID>) => {
       state.posts.push(action.payload);
     },
+    mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
+      const newPosts = action.payload;
+      // Explicitly type the accumulator as PostWithID[]
+      const mergedPosts = [...state.posts, ...newPosts].reduce((acc: PostWithID[], post) => {
+        if (!acc.find(p => p.id === post.id)) {
+          acc.push(post);
+        }
+        return acc;
+      }, [] as PostWithID[]); // Initialize the accumulator as an empty array of PostWithID
+    
+      // Sort posts if necessary
+      mergedPosts.sort((a, b) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return timeB - timeA;
+      });
+    
+      state.posts = mergedPosts;
+    },
+    
   },
   extraReducers: (builder) => {
     builder
@@ -145,5 +165,6 @@ export const {
   setError,
   setLastVisible,
   addNewPost,
+  mergeAndSetPosts,
 } = postsSlice.actions;
 export default postsSlice.reducer;
