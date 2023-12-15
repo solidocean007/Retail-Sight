@@ -10,6 +10,7 @@ import { PostWithID } from "../types";
 import { deletePost } from "../../Slices/postsSlice";
 import { AnyAction } from "redux";
 import { db } from "../firebase";
+import { removePostFromIndexedDB } from "../database/indexedDBUtils";
 
 interface userDeletePostProps {
   post: PostWithID;
@@ -26,6 +27,8 @@ export const userDeletePost = async ({ post, setIsEditModalOpen, dispatch }: use
     // Delete post from 'posts' collection
     const postRef = doc(db, "posts", post.id);
     await deleteDoc(postRef);
+    // Remove from IndexedDB
+    await removePostFromIndexedDB(post.id);
 
     // Delete post's image from Firebase Storage
     const imageRef = ref(storage, post.imageUrl); // corrected to post.imageUrl

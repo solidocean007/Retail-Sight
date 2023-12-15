@@ -21,6 +21,7 @@ import {
 
 import "./editPostModal.css";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
+import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -66,6 +67,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       };
       await updateDoc(postRef, updatedFields);
       dispatch(updatePost(updatedPost));
+      await updatePostInIndexedDB(updatedPost);
       console.log("postRef", postRef);
       console.log("Post updated successfully");
       handleCloseEditModal();

@@ -94,6 +94,7 @@ const ActivityFeed = () => {
         console.log("looking in indexDB");
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
+          console.log('getting posts from indexedDB')
           dispatch(setPosts(cachedPosts));
         } else if (currentUserCompany) {
           console.log("no posts in indexDB");
@@ -166,18 +167,22 @@ const ActivityFeed = () => {
     const userCompany = currentUser?.company;
   
     // Function to process document changes
-    const processDocChanges = (snapshot : QuerySnapshot) => {
-      snapshot.docChanges().forEach((change : DocumentChange) => {
-        if (change.type === "added" || change.type === "modified") {
-          // Handle added or modified documents
-          // ... existing logic to update posts
-        } else if (change.type === "removed") {
-          // Handle removed documents
-          dispatch(deletePost(change.doc.id));
-          removePostFromIndexedDB(change.doc.id);
-        }
-      });
-    };
+  const processDocChanges = (snapshot: QuerySnapshot) => {
+    const changes = snapshot.docChanges();
+    changes.forEach((change : DocumentChange) => {
+      const postData = { id: change.doc.id, ...change.doc.data() as PostType };
+      
+      if (change.type === "added" || change.type === "modified") {
+        // Dispatch an action to merge this post with existing posts in Redux store
+        dispatch(mergeAndSetPosts([postData])); // Assuming mergeAndSetPosts is a redux action that handles the merge logic
+      } else if (change.type === "removed") {
+        // Dispatch an action to remove the post from Redux store
+        dispatch(deletePost(change.doc.id));
+        // Call a function to remove the post from IndexedDB
+        removePostFromIndexedDB(change.doc.id);
+      }
+    });
+  };
   
     // Subscribe to public posts
     const publicPostsQuery = query(
@@ -205,7 +210,7 @@ const ActivityFeed = () => {
       unsubscribePublic();
       unsubscribeCompany();
     };
-  }, [currentUser?.company, updateFeed, dispatch]);
+  }, [currentUser?.company, dispatch]);
   
 
   const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL) - 1;

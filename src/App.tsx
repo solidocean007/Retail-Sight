@@ -17,7 +17,7 @@ import { useEffect } from "react";
 
 function App() {
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
-  useFirebaseAuth();
+  const { currentUser, initializing } = useFirebaseAuth();
  
   useEffect(() => {
     console.log('App.tsx mounts')
@@ -46,7 +46,8 @@ function App() {
           autoHideDuration={3000}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         />
-        <UserModal />
+         {/* Conditionally render the UserModal if currentUser exists and auth has finished initializing */}
+         {!initializing && currentUser && <UserModal />}
       </ThemeProvider>
     </>
   );

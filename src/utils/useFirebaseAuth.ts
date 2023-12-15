@@ -1,5 +1,5 @@
 // useFirebaseAuth.ts
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { User, getAuth, onAuthStateChanged } from 'firebase/auth';
 import { setUser } from '../Slices/userSlice';
@@ -12,7 +12,8 @@ export const useFirebaseAuth = () => {
   const dispatch = useDispatch();
   // Select the current user from the Redux store
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  
+  const [initializing, setInitializing] = useState(true); // Add an initializing state
+
   const handleUserChange = useCallback(async (user: User | null) => {
     if ((user && user.uid === currentUser?.uid) || (!user && !currentUser)) {
       return;
@@ -41,7 +42,10 @@ export const useFirebaseAuth = () => {
   useEffect(() => {
     console.log('useFirebaseAuth.ts runs from App.tsx:');
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, handleUserChange);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      handleUserChange(user);
+      setInitializing(false); // Set initializing to false once user is determined
+    });
 
     // Clean up the subscription
     return () => {
@@ -50,5 +54,5 @@ export const useFirebaseAuth = () => {
     };
   }, [handleUserChange]);
 
-  // Optional: Return a loading state if needed
+  return { currentUser, initializing }; // Return the initializing state
 };

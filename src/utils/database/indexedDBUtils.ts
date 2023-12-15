@@ -12,23 +12,43 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     // Handle the successful completion of the transaction
     transaction.oncomplete = () => {
+      console.log("Transaction complete: Data added to IndexedDB successfully.");
       resolve();
     };
 
     // Handle any errors that occur during the transaction
     transaction.onerror = (event) => {
+      console.error("Transaction error:", (event.target as IDBRequest).error);
       reject((event.target as IDBRequest).error);
     };
 
     // Perform the 'put' operations for each post
-    posts.forEach((post) => {
+    posts.forEach((post, index) => {
       const request = store.put(post);
+      request.onsuccess = () => {
+        console.log(`Post ${index} added to IndexedDB successfully:`, post);
+      };
       request.onerror = () => {
+        console.error(`Error adding post ${index} to IndexedDB:`, request.error);
         reject(request.error);
       };
     });
   });
 }
+
+// update post in indexedDB
+export async function updatePostInIndexedDB(post: PostWithID): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["posts"], "readwrite");
+  const store = transaction.objectStore("posts");
+
+  return new Promise<void>((resolve, reject) => {
+    const request = store.put(post); // 'put' will update if the record exists
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
 
 // Add a single post to IndexedDB
 export async function addNewlyCreatedPostToIndexedDB(
@@ -78,6 +98,7 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
   const getAllRequest = store.getAll();
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
+      console.log("Posts fetched from IndexedDB:", getAllRequest.result); // Log the fetched posts
       resolve(getAllRequest.result);
     };
     getAllRequest.onerror = () => {
@@ -87,7 +108,6 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
 }
 
 // Create a utility function that retrieves filtered posts from IndexedDB
-// export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostType[]> {
 export async function getFilteredPostsFromIndexedDB(
   filters: FilterCriteria
 ): Promise<PostWithID[]> {

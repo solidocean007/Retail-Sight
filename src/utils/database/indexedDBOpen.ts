@@ -1,6 +1,6 @@
 // indexedDBOpen.ts
 const dbName = "myRetailAppDB";
-const dbVersion = 3; // Increment for each schema change
+const dbVersion = 4; // Increment for each schema change
 
 export function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
