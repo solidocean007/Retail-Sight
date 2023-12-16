@@ -12,7 +12,7 @@ import {
   updateCategoriesInFirestore,
   updateChannelsInFirestore,
 } from "./updateFirestore";
-import { addNewlyCreatedPostToIndexedDB, addPostsToIndexedDB } from "../database/indexedDBUtils";
+import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
 // import { fetchUserFromFirebase } from "../userData/fetchUserFromFirebase";
 
 export const useHandlePostSubmission = () => {

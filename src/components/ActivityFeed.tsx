@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { FixedSizeList as List } from "react-window";
+import React, { useEffect, useRef, useState } from "react";
+// import { FixedSizeList as List } from "react-window";
+import { VariableSizeList as List } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
 import NoContentCard from "./NoContentCard";
@@ -28,20 +29,19 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 
-const POSTS_BATCH_SIZE = 5;
+const POSTS_BATCH_SIZE = 10;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
+const BASE_ITEM_HEIGHT = 800; // Base height for a post item
+const EXPANDED_ITEM_HEIGHT = 900; // Height for a post item when expanded
+
 
 const ActivityFeed = () => {
-  // const [publicPosts, setPublicPosts] = useState<PostWithID[]>([]);
-  // const [companyPosts, setCompanyPosts] = useState<PostWithID[]>([]);
+  const listRef = useRef<List>(null);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  // Add a new state to track which posts are expanded
+  const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
   const currentUserCompany = currentUser?.company;
-  console.log(
-    currentUserCompany,
-    currentUser,
-    " : currentUserCompany, currentUser"
-  );
 
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -56,6 +56,42 @@ const ActivityFeed = () => {
 
   // Determine which posts to display - search results or all posts
   const displayPosts = searchResults ? searchResults : posts;
+
+  // Function to toggle post expansion
+  const togglePostExpansion = (postId: string) => {
+    setExpandedPosts((prevExpandedPosts) => {
+      const newExpandedPosts = new Set(prevExpandedPosts);
+      if (newExpandedPosts.has(postId)) {
+        newExpandedPosts.delete(postId);
+      } else {
+        newExpandedPosts.add(postId);
+      }
+      return newExpandedPosts;
+    });
+    if (listRef.current) {
+      listRef.current.resetAfterIndex(0, true); // Recalculate heights for all items
+    }
+  };
+
+  // Function to get the dynamic height of each item
+  const getItemSize = (index: number) => {
+    // Determine if the current index is an ad
+    const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
+    if (isAdPosition) {
+      return BASE_ITEM_HEIGHT; // Set the height for the ad item
+    }
+
+    // Adjust the index to account for ads
+    const postIndex = index - Math.floor((index + 1) / (AD_INTERVAL + 1));
+
+    // Check if the post at this index is expanded
+    const postId = displayPosts[postIndex]?.id;
+    if (postId && expandedPosts.has(postId)) {
+      return EXPANDED_ITEM_HEIGHT; // Set the height for an expanded post item
+    }
+
+    return BASE_ITEM_HEIGHT; // Set the base height for a regular post item
+  };
 
   const handleHashtagSearch = async () => {
     try {
@@ -150,15 +186,15 @@ const ActivityFeed = () => {
   //   [dispatch, publicPosts, companyPosts]
   // );
 
-  const updateFeed = useCallback(
-    (newPosts: PostWithID[]) => {
-      // Dispatch an action to merge newPosts with existing posts in Redux store
-      dispatch(mergeAndSetPosts(newPosts)); // This action handles merging logic
-      // Update IndexedDB with the merged posts
-      addPostsToIndexedDB(newPosts); // Ensure new posts are also added to IndexedDB
-    },
-    [dispatch]
-  );
+  // const updateFeed = useCallback(
+  //   (newPosts: PostWithID[]) => {
+  //     // Dispatch an action to merge newPosts with existing posts in Redux store
+  //     dispatch(mergeAndSetPosts(newPosts)); // This action handles merging logic
+  //     // Update IndexedDB with the merged posts
+  //     addPostsToIndexedDB(newPosts); // Ensure new posts are also added to IndexedDB
+  //   },
+  //   [dispatch]
+  // );
   
 
   useEffect(() => {
@@ -237,7 +273,7 @@ const ActivityFeed = () => {
           currentUserUid={currentUser?.uid}
           index={postIndex}
           style={style}
-          data={{ post: postWithID, getPostsByTag }} // Passing the entire postWithID object
+          data={{ post: postWithID, getPostsByTag, togglePostExpansion }} // Passing the entire postWithID object
         />
       );
     } else {
@@ -282,11 +318,11 @@ const ActivityFeed = () => {
       </div>
 
       <List
-        // height={window.innerHeight}
+        ref={listRef}
         className="list-card"
         height={650}
         itemCount={itemCount}
-        itemSize={900} // Adjust based on your item size
+        itemSize={getItemSize} // Adjust based on your item size
         width={getListWidth()}
         itemData={{
           posts: posts,

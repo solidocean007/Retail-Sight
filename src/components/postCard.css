@@ -5,8 +5,9 @@
   overflow: visible;
   transition: box-shadow 0.3s ease;
   position: relative;
-  height: 900px; 
-  width: 600px;
+  /* height: 700px;  */
+  /* width: 600px; */
+  background-color: aliceblue;
 }
 
 h5 {
@@ -43,10 +44,12 @@ h5 {
 }
 
 .post-card img.post-image {
-  height: 500px; 
+  height: 600px; 
+  border-radius: 5px;
   width: auto;
   margin: 10px auto;
   display: block;
+  /* transition: box-shadow 0.5s ease; */
 }
 
 .post-card-content {
@@ -101,5 +104,8 @@ h5 {
 }
 
 @media (max-width: 670px) {
-  
+  .post-card img.post-image {
+    height: 350px; 
+
+  }
 }

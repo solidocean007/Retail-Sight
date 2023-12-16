@@ -19,6 +19,7 @@ interface PostCardProps {
   post: PostWithID;
   getPostsByTag: (hashTag: string) => void;
   style?: React.CSSProperties;
+  handleOpenComments : ()=> void;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -27,6 +28,7 @@ const PostCard: React.FC<PostCardProps> = ({
   post,
   getPostsByTag,
   style,
+  handleOpenComments,
 }) => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -67,10 +69,15 @@ const PostCard: React.FC<PostCardProps> = ({
     formattedDate = jsDate.toLocaleDateString();
   }
 
+  const toggleComments = () => {
+    setShowAllComments(!showAllComments);
+    handleOpenComments(post.id); // This will trigger the expansion in the list
+  };
+
   return (
     <Card
       className="post-card dynamic-height"
-      style={{ ...style, height: showAllComments ? "auto" : "900px" }}
+      style={{ ...style }}
     >
       <CardContent className="card-content">
         <div className="card-top">
@@ -125,7 +132,7 @@ const PostCard: React.FC<PostCardProps> = ({
         {post.imageUrl && (
           <img className="post-image" src={post.imageUrl} alt="Post" />
         )}
-        <div className="likes-comments">
+        <div className="likes-comments" onClick={toggleComments}>
           <h5>{likes} likes</h5>
           <button className="like-button" onClick={onLikeButtonClick}>
             {likedByUser ? "❤️" : "🤍"}

@@ -1,3 +1,4 @@
+// PostCardRenderer.tsx
 import React from 'react';
 import MemoizedPostCard from './PostCard';
 import { PostWithID } from '../utils/types';
@@ -9,6 +10,7 @@ interface PostCardRendererProps {
   data: {
     post: PostWithID;
     getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
+    togglePostExpansion: () => void;
   };
 }
 
@@ -16,7 +18,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   currentUserUid,
   index,
   style,
-  data: { post, getPostsByTag }
+  data: { post, getPostsByTag, togglePostExpansion },
 }) => {
   if (!post) {
     console.error('Post data is undefined at index:', index);
@@ -30,6 +32,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
       post={post} // Now using post.data
       style={style}
       getPostsByTag={getPostsByTag}
+      handleOpenComments={togglePostExpansion}
     />
   );
 }
