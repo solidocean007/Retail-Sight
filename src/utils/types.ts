@@ -85,6 +85,7 @@ export interface PostType {
 export type PostWithID = PostType & { id: string };
 
 export interface CommentType {
+  commentId?: string;
   text: string;
   userId: string | undefined;
   userName: string;

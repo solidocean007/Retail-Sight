@@ -130,20 +130,18 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   const handleLikeComment = async (commentId: string, likes: string[]) => {
-    // Retrieve likes for the comment from comments state
-    const commentLikes =
-      comments.find((comment) => comment.commentId === commentId)?.likes || [];
-    if (user?.uid && !commentLikes.includes(user.uid)) {
+    if (user?.uid && !likes.includes(user.uid)) {
       try {
         const commentRef = doc(db, "comments", commentId);
         const updatedLikes = [...likes, user.uid];
         await updateDoc(commentRef, { likes: updatedLikes });
-        dispatch(updatePost)
+        // Update state or dispatch Redux action as needed
       } catch (error) {
-        console.error("Failed to update like in Firestore:", error);
+        console.error("Error updating like in Firestore:", error);
       }
     }
   };
+  
 
   return (
     <Card className="post-card dynamic-height" style={{ ...style }}>
@@ -233,8 +231,10 @@ const PostCard: React.FC<PostCardProps> = ({
         <CommentModal
         isOpen={isCommentModalOpen}
         onClose={() => setIsCommentModalOpen(false)}
+        post={post}
         comments={comments} // Assuming comments is an array of CommentType and includes all necessary fields
         onLikeComment={handleLikeComment}
+        likes={likes}
         onDeleteComment={handleDeleteComment}
       />
       

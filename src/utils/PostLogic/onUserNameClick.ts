@@ -1,3 +1,4 @@
+// onUserNameClick.ts
 import { PostType } from "../types";
 import { AppDispatch } from "../store";
 import { openUserModal } from "../../Slices/userModalSlice";
