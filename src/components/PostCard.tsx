@@ -2,7 +2,7 @@
 import React from "react";
 import { useState } from "react";
 import { Card, CardContent, Typography, Button } from "@mui/material";
-import { PostWithID } from "../utils/types";
+import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
@@ -12,6 +12,19 @@ import CommentSection from "./CommentSection";
 import SharePost from "./SharePost";
 import { handleLikePost } from "../utils/PostLogic/handleLikePost";
 import { onUserNameClick } from "../utils/PostLogic/onUserNameClick";
+import CommentModal from "./CommentModal";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  increment,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "../utils/firebase";
+import { updatePost } from "../Slices/postsSlice";
 
 interface PostCardProps {
   id: string;
@@ -19,42 +32,63 @@ interface PostCardProps {
   post: PostWithID;
   getPostsByTag: (hashTag: string) => void;
   style?: React.CSSProperties;
-  handleOpenComments : ()=> void;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
-  id,
   currentUserUid,
   post,
   getPostsByTag,
   style,
-  handleOpenComments,
 }) => {
-  const [showAllComments, setShowAllComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(post.commentCount);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [comments, setComments] = useState<CommentType[]>([]); // State to store comments for the modal
+  const [showAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const dispatch = useDispatch();
-  const [likes, setLikes] = useState(post.likes?.length || 0);
+  const [likes] = useState(post.likes?.length || 0);
   const [likedByUser, setLikedByUser] = useState(
     (Array.isArray(post.likes) && post.likes.includes(currentUserUid)) || false
   );
 
-  const onLikeButtonClick = async () => {
-    const newLikedByUser = !likedByUser; // Optimistically toggle the liked state
-    const newLikes = newLikedByUser ? likes + 1 : likes - 1; // Adjust like count optimistically
+  const openCommentModal = async () => {
+    setIsCommentModalOpen(true);
+    await fetchCommentsForPost(post.id); // resolved type error
+  };
 
-    setLikedByUser(newLikedByUser); // Set the new liked state
-    setLikes(newLikes); // Set the new like count
-
+  const fetchCommentsForPost = async (postId: string) => {
+    console.log("try to fetch comments");
     try {
-      await handleLikePost(id, currentUserUid, newLikedByUser);
-      // If you want to refetch or subscribe to the post to get the updated likes, do so here
+      const commentQuery = query(
+        collection(db, "comments"),
+        where("postId", "==", postId)
+      );
+      const commentSnapshot = await getDocs(commentQuery);
+      const comments: CommentType[] = commentSnapshot.docs.map((doc) => ({
+        ...(doc.data() as CommentType),
+        commentId: doc.id, // using doc.id as the unique identifier
+        likes: doc.data().likes || [],
+      }));
+
+      setComments(comments);
     } catch (error) {
-      console.error("Failed to update like status:", error);
-      // Revert the optimistic updates in case of error
-      setLikedByUser(likedByUser);
-      setLikes(likes);
+      console.error("Failed to fetch comments from Firestore:", error);
     }
   };
+
+  const onLikePostButtonClick = async () => {
+    const newLikedByUser = !likedByUser;
+    setLikedByUser(newLikedByUser); // Optimistic UI update
+  
+    try {
+      await handleLikePost(post, currentUserUid, newLikedByUser, dispatch);
+      // Redux and IndexedDB updates are handled inside handleLikePost
+    } catch (error) {
+      console.error("Failed to update like status:", error);
+      setLikedByUser(likedByUser); // Revert optimistic updates in case of error
+    }
+  };
+  
 
   // grab user from redux
   const user = useSelector(selectUser);
@@ -69,16 +103,50 @@ const PostCard: React.FC<PostCardProps> = ({
     formattedDate = jsDate.toLocaleDateString();
   }
 
-  const toggleComments = () => {
-    setShowAllComments(!showAllComments);
-    handleOpenComments(post.id); // This will trigger the expansion in the list
+  const handleDeleteComment = async (commentId: string) => {
+    console.log("Deleting comment with ID:", commentId);
+
+    try {
+      const commentRef = doc(db, "comments", commentId);
+      await deleteDoc(commentRef);
+
+      // Decrement local commentCount
+      setCommentCount((prevCount) => prevCount - 1);
+
+      // Decrement the commentCount for the relevant post
+      const postRef = doc(db, "posts", post.id);
+      await updateDoc(postRef, {
+        commentCount: increment(-1),
+      });
+      dispatch(updatePost)
+
+      // Remove the comment from local state
+      setComments(
+        comments.filter((comment) => comment.commentId !== commentId) // Property 'commentId' does not exist on type 'CommentType'
+      );
+    } catch (error) {
+      console.error("Failed to delete comment:", error);
+    }
+  };
+
+  const handleLikeComment = async (commentId: string, likes: string[]) => {
+    // Retrieve likes for the comment from comments state
+    const commentLikes =
+      comments.find((comment) => comment.commentId === commentId)?.likes || [];
+    if (user?.uid && !commentLikes.includes(user.uid)) {
+      try {
+        const commentRef = doc(db, "comments", commentId);
+        const updatedLikes = [...likes, user.uid];
+        await updateDoc(commentRef, { likes: updatedLikes });
+        dispatch(updatePost)
+      } catch (error) {
+        console.error("Failed to update like in Firestore:", error);
+      }
+    }
   };
 
   return (
-    <Card
-      className="post-card dynamic-height"
-      style={{ ...style }}
-    >
+    <Card className="post-card dynamic-height" style={{ ...style }}>
       <CardContent className="card-content">
         <div className="card-top">
           <div>view: {post.visibility}</div>
@@ -132,19 +200,25 @@ const PostCard: React.FC<PostCardProps> = ({
         {post.imageUrl && (
           <img className="post-image" src={post.imageUrl} alt="Post" />
         )}
-        <div className="likes-comments" onClick={toggleComments}>
-          <h5>{likes} likes</h5>
-          <button className="like-button" onClick={onLikeButtonClick}>
+        <div className="likes-comments">
+          {likes === 0 ? null : likes === 1 ? (
+            <h5>{likes} like</h5>
+          ) : (
+            <h5>{likes} likes</h5>
+          )}
+
+          <button className="like-button" onClick={onLikePostButtonClick}>
             {likedByUser ? "❤️" : "🤍"}
           </button>
-          <p>{post.commentCount} Comments</p>
+
+          {commentCount > 0 && (
+            <Button onClick={openCommentModal}>
+              {showAllComments ? "Hide Comments" : `${commentCount} Comments`}
+            </Button>
+          )}
         </div>
-        
-        <CommentSection
-          post={post}
-          showAllComments={showAllComments}
-          setShowAllComments={setShowAllComments}
-        />
+
+        <CommentSection post={post} />
       </CardContent>
       {isEditModalOpen ? (
         <EditPostModal
@@ -155,6 +229,16 @@ const PostCard: React.FC<PostCardProps> = ({
           // onSave={handleSavePost}
         />
       ) : null}
+      {isCommentModalOpen && (
+        <CommentModal
+        isOpen={isCommentModalOpen}
+        onClose={() => setIsCommentModalOpen(false)}
+        comments={comments} // Assuming comments is an array of CommentType and includes all necessary fields
+        onLikeComment={handleLikeComment}
+        onDeleteComment={handleDeleteComment}
+      />
+      
+      )}
     </Card>
   );
 };

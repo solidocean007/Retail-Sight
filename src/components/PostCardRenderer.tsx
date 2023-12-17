@@ -10,7 +10,6 @@ interface PostCardRendererProps {
   data: {
     post: PostWithID;
     getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
-    togglePostExpansion: () => void;
   };
 }
 
@@ -18,7 +17,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   currentUserUid,
   index,
   style,
-  data: { post, getPostsByTag, togglePostExpansion },
+  data: { post, getPostsByTag },
 }) => {
   if (!post) {
     console.error('Post data is undefined at index:', index);
@@ -32,7 +31,6 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
       post={post} // Now using post.data
       style={style}
       getPostsByTag={getPostsByTag}
-      handleOpenComments={togglePostExpansion}
     />
   );
 }
