@@ -12,30 +12,36 @@
 
 .location-filter-container {
   display: flex;
-  width: 100%;
+  width: 60%;
 }
 
-.post-content-filter {
+.channel-category-box {
   display: flex;
+  flex-direction: column;
   width: 100%;
-  justify-content: center;
-}
-
-.filter-by-content {
-  display: flex;
   justify-content: space-between;
   width: 60%;
 }
+
+/* .filter-by-content {
+  display: flex;
+  justify-content: space-between;
+  width: 60%;
+} */
 
 .MuiButton-root {
   margin-bottom: 20px;
 }
 
-.filter-button-box {
+.clear-apply-button-box {
   display: flex;
-  width: 90%;
+  flex-direction: column;
+  width: 60%;
   justify-content: space-between;
+}
 
+.clear-apply-button-box .btn {
+  margin-bottom: 20px;
 }
 
 
@@ -48,13 +54,10 @@
     padding: 0;
   }
 
-  .filter-by-content {
+  /* .filter-by-content {
     width: 100%;
-  }
+  } */
 
-  .location-filter-container {
-    width: 30%;
-  }
   .btn {
     height: 50px;
   }
@@ -63,15 +66,16 @@
     width: 100%;
   }
 
-  .post-content-filter {
+  .channel-category-box {
     display: flex;
-    width: 100%;
-    flex-direction: row;
+    /* width: 100%; */
+    /* flex-direction: row; */
     justify-content: flex-start;
   }
 }
 
 @media (min-width: 900px) {
+
   .close-side-bar-button {
   display: none;
   }
@@ -80,6 +84,6 @@
 @media (max-width: 900px) {
   .side-bar-box {
     flex-direction: column;
-    padding:  20px 100px;
+    padding:  20px 10px;
   }
 }

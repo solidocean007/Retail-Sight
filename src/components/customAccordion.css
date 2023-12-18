@@ -8,29 +8,40 @@ h3 {
   display: flex;
   width: 100%;
   padding: 5px;
-  align-items: end;
-  justify-content: end;
+  align-items: center;
+  justify-content: center;
 }
 
 .custom-accordion {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background-color: white;
   border-radius: 8px;
   padding: 5px 10px;
   margin: 10px;
 }
 
+.close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .accordion-summary {
   cursor: pointer;
-  
+  width: 100%;
   /* Additional styles for the summary section */
 }
 
 .accordion-details {
   display: none;
   position: absolute;
+  width: 100%;
   top: 0px;
-  left: -15px;
+  left: 0px;
   overflow: hidden;
   transition: max-height 0.3s ease-out;
   max-height: 0;
@@ -41,7 +52,7 @@ h3 {
 /* When accordion is active */
 .custom-accordion .accordion-details.open {
   display: flex;
-  width: 200px;
+  width: 100%;
   flex-direction: column;
   align-items: start;
   justify-content: flex-start;
@@ -58,7 +69,7 @@ h3 {
   color: black;
   background-color: rgb(210, 206, 202);
   cursor: pointer;
-  width: 20px;
+  /* width: 20px; */
   height: 20px;
   /* position and style the button */
 }

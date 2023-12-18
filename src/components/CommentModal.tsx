@@ -15,6 +15,7 @@ interface CommentModalProps {
   onLikeComment: (commentId: string, likes: string[]) => void;
   likes: number;
   onDeleteComment: (commentId: string) => void;
+  likedByUser : boolean;
 }
 
 const CommentModal: React.FC<CommentModalProps> = ({
@@ -22,9 +23,10 @@ const CommentModal: React.FC<CommentModalProps> = ({
   onClose,
   post,
   comments,
-  onLikeComment,
-  likes,
+  // onLikeComment,
+  // likes,
   onDeleteComment,
+  // likedByUser,
 }) => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -41,18 +43,18 @@ const CommentModal: React.FC<CommentModalProps> = ({
             >
               {comment.userName}
             </a>
-            {/* Expected 2 arguments, but got 1.ts(2554)  for the onUserNameClick on the line above*/}
             <p className="comment-text"> {comment.text} </p>
             <div className="comment-actions">
-              <button
-                onClick={() => onLikeComment(comment.id, likes)}
+              {/* <button
+                onClick={() => comment.commentId && onLikeComment(comment.commentId, likes)} // onClick={() => comment.commentId && onDeleteComment(comment.commentId)}
                 className="like-button"
               >
-                {comment.userLiked ? "❤️" : "🤍"} {comment.likes} 
-              </button>
+                {likedByUser ? "❤️" : "🤍"} {comment.likes} 
+              </button> */}
               {currentUser?.uid === comment.userId && (
                 <button
-                  onClick={() => onDeleteComment(comment.id)}
+                onClick={() => comment.commentId && onDeleteComment(comment.commentId)}
+
                   className="delete-button"
                 >
                   🗑️

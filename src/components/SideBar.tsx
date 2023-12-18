@@ -68,9 +68,9 @@ const SideBar = ({toggleFilterMenu}: {toggleFilterMenu : ()=> void}) => {
 
   return (
     <div className="side-bar-box">
-      <button className="close-side-bar-button" onClick={toggleFilterMenu}>X</button>
-      <div className="post-content-filter">
-        <div className="filter-by-content">
+      <button className="close-side-bar-button" onClick={toggleFilterMenu}>Close filters</button>
+      <div className="channel-category-box">
+        {/* <div className="filter-by-content"> */}
           <CustomAccordion<ChannelType>
             title="Channels"
             options={ChannelOptions}
@@ -97,12 +97,12 @@ const SideBar = ({toggleFilterMenu}: {toggleFilterMenu : ()=> void}) => {
               );
             }}
           />
-        </div>
+        {/* </div> */}
       </div>
       <div className="location-filter-container">
         <FilterLocation />
       </div>
-      <div className="filter-button-box">
+      <div className="clear-apply-button-box">
         <Button
           className="btn"
           variant="contained"

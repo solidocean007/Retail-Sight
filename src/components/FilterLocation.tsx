@@ -1,5 +1,5 @@
 // FilterLocation
-import { useState} from "react";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../utils/store";
 import Select from "@mui/material/Select";
@@ -46,16 +46,14 @@ const FilterLocation = () => {
     dispatch(setCityFilter(newCities));
   };
 
-  const handleClose = (event : React.MouseEvent<HTMLElement> ) => {
+  const handleClose = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation(); // Prevents triggering the onChange of Select
     setStateSelectOpen(false);
   };
-  
 
   return (
     <div className="location-selection-container">
-      <FormControl>
-        <div className="filter-box">
+      <FormControl className="filter-box">
         <InputLabel id="state-multiple-chip-label">State</InputLabel>
         <Select
           open={stateSelectOpen}
@@ -74,10 +72,7 @@ const FilterLocation = () => {
           MenuProps={MenuProps}
         >
           <div className="close-box">
-            <button
-              className="close-button"
-              onClick={handleClose}
-            >
+            <button className="close-button" onClick={handleClose}>
               X
             </button>
           </div>
@@ -87,49 +82,45 @@ const FilterLocation = () => {
             </MenuItem>
           ))}
         </Select>
-        </div>
-       
       </FormControl>
       {selectedStates.length > 0 && (
-        <FormControl>
-          <div className="filter-box">
-            <InputLabel id="city-multiple-chip-label">City</InputLabel>
-            <Select
-              open={citySelectOpen}
-              onOpen={() => setCitySelectOpen(true)}
-              onClose={() => setCitySelectOpen(false)}
-              className="btn"
-              labelId="city-multiple-chip-label"
-              id="city-multiple-chip"
-              multiple
-              value={selectedCities}
-              onChange={handleCityChange}
-              input={<OutlinedInput label="City" />}
-              renderValue={(selected) =>
-                selected.map((value) => <Chip key={value} label={value} />)
-              }
-              MenuProps={MenuProps}
-            >
-              <div className="close-box">
-                <button
-                  className="close-button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setCitySelectOpen(false);
-                  }}
-                >
-                  X
-                </button>
-              </div>
-              {selectedStates.flatMap((state) =>
-                locations[state]?.map((city) => (
-                  <MenuItem key={city} value={city}>
-                    {city}
-                  </MenuItem>
-                ))
-              )}
-            </Select>
-          </div>
+        <FormControl className="filter-box">
+          <InputLabel id="city-multiple-chip-label">City</InputLabel>
+          <Select
+            open={citySelectOpen}
+            onOpen={() => setCitySelectOpen(true)}
+            onClose={() => setCitySelectOpen(false)}
+            className="btn"
+            labelId="city-multiple-chip-label"
+            id="city-multiple-chip"
+            multiple
+            value={selectedCities}
+            onChange={handleCityChange}
+            input={<OutlinedInput label="City" />}
+            renderValue={(selected) =>
+              selected.map((value) => <Chip key={value} label={value} />)
+            }
+            MenuProps={MenuProps}
+          >
+            <div className="close-box">
+              <button
+                className="close-button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setCitySelectOpen(false);
+                }}
+              >
+                X
+              </button>
+            </div>
+            {selectedStates.flatMap((state) =>
+              locations[state]?.map((city) => (
+                <MenuItem key={city} value={city}>
+                  {city}
+                </MenuItem>
+              ))
+            )}
+          </Select>
         </FormControl>
       )}
     </div>

@@ -25,6 +25,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { updatePost } from "../Slices/postsSlice";
+import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 
 interface PostCardProps {
   id: string;
@@ -40,7 +41,7 @@ const PostCard: React.FC<PostCardProps> = ({
   getPostsByTag,
   style,
 }) => {
-  const [commentCount, setCommentCount] = useState(post.commentCount);
+  const [commentCount ] = useState(post.commentCount);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [comments, setComments] = useState<CommentType[]>([]); // State to store comments for the modal
   const [showAllComments] = useState(false);
@@ -105,29 +106,33 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const handleDeleteComment = async (commentId: string) => {
     console.log("Deleting comment with ID:", commentId);
-
+  
     try {
+      // Decrement the commentCount for the relevant post in Firestore
+      const postRef = doc(db, "posts", post.id);
+      await updateDoc(postRef, { commentCount: increment(-1) });
+
       const commentRef = doc(db, "comments", commentId);
       await deleteDoc(commentRef);
-
-      // Decrement local commentCount
-      setCommentCount((prevCount) => prevCount - 1);
-
-      // Decrement the commentCount for the relevant post
-      const postRef = doc(db, "posts", post.id);
-      await updateDoc(postRef, {
-        commentCount: increment(-1),
-      });
-      dispatch(updatePost)
-
+  
+      // Update the post object locally to reflect the new comment count
+      const updatedPost = { ...post, commentCount: post.commentCount - 1 };
+  
+      // Update Redux
+      dispatch(updatePost(updatedPost));
+  
+      // Update IndexedDB
+      await updatePostInIndexedDB(updatedPost);
+  
       // Remove the comment from local state
-      setComments(
-        comments.filter((comment) => comment.commentId !== commentId) // Property 'commentId' does not exist on type 'CommentType'
-      );
+      setComments(comments.filter((comment) => comment.commentId !== commentId));
     } catch (error) {
       console.error("Failed to delete comment:", error);
     }
   };
+  
+  
+  
 
   const handleLikeComment = async (commentId: string, likes: string[]) => {
     if (user?.uid && !likes.includes(user.uid)) {
@@ -227,7 +232,8 @@ const PostCard: React.FC<PostCardProps> = ({
           // onSave={handleSavePost}
         />
       ) : null}
-      {isCommentModalOpen && (
+      {isCommentModalOpen && comments.length > 0 && ( // This expression is not callable.
+  // Type 'Number' has no call signatures.ts(2349)
         <CommentModal
         isOpen={isCommentModalOpen}
         onClose={() => setIsCommentModalOpen(false)}
@@ -236,6 +242,7 @@ const PostCard: React.FC<PostCardProps> = ({
         onLikeComment={handleLikeComment}
         likes={likes}
         onDeleteComment={handleDeleteComment}
+        likedByUser={likedByUser}
       />
       
       )}

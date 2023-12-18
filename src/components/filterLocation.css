@@ -5,12 +5,13 @@
 }
 
 .filter-box {
-  margin-right: 10px;
+  width: 100%; /* This sets the width of your form control to 100% of its parent */
 }
 
 #state-multiple-chip-label {
   margin-right: 20px;
 }
+
 
 .close-box {
   display: flex;

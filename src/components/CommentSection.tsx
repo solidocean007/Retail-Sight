@@ -1,6 +1,6 @@
 // CommentSection
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../utils/store";
 import { TextField } from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
@@ -12,6 +12,8 @@ import { Timestamp, increment } from "firebase/firestore";
 import { doc, collection, addDoc, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./commentSection.css";
+import { updatePost } from "../Slices/postsSlice";
+import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 // import { UserState } from "../Slices/userSlice.ts";
 
 interface CommentProps {
@@ -21,14 +23,14 @@ interface CommentProps {
 const CommentSection: React.FC<CommentProps> = ({ post }) => {
   const user = useSelector((state: RootState) => state.user.currentUser);
   const userFullName = user?.firstName + " " + user?.lastName; // or just user?.username
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [newComment, setNewComment] = useState("");
 
   // const dispatch = useDispatch();
   // const selectedUid = useSelector(selectSelectedUid);
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewComment(e.target.value );
+    setNewComment(e.target.value);
   };
 
   const handleCommentSubmit = async () => {
@@ -48,6 +50,11 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
         // Update the comment count for the post
         const postRef = doc(db, "posts", post.id);
         await updateDoc(postRef, { commentCount: increment(1) });
+
+        // Update the comment count in the Redux store and IndexedDB
+        const updatedPost = { ...post, commentCount: post.commentCount + 1 };
+        dispatch(updatePost(updatedPost));
+        await updatePostInIndexedDB(updatedPost);
 
         // Clear the comment input field
         setNewComment("");

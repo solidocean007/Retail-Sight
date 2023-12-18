@@ -44,7 +44,7 @@ const CustomAccordion = <T extends string>({
         <div className={`accordion-details ${isActive ? "open" : ""}`}>
           <div className="button-box">
             <button className="close-button" onClick={() => setIsActive(false)}>
-              X
+              Close {title}
             </button>
           </div>
           {options.map((option: T) => (
