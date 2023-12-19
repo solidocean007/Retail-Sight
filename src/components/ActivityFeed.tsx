@@ -22,6 +22,9 @@ import {
   DocumentChange,
   QuerySnapshot,
   collection,
+  doc,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -54,6 +57,24 @@ const ActivityFeed = () => {
 
   // Determine which posts to display - search results or all posts
   const displayPosts = searchResults ? searchResults : posts;
+
+  // New function to fetch public posts
+  const temporaryAdVerificationFetch = async () => {
+    const publicPostsQuery = query(
+      collection(db, "posts"),
+      where("visibility", "==", "public"),
+      orderBy("timestamp", "desc"),
+      limit(POSTS_BATCH_SIZE) // You can adjust the number of posts to fetch
+    );
+    const querySnapshot = await getDocs(publicPostsQuery);
+    const publicPosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as PostType }));
+    dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
+  };
+
+   // useEffect to fetch public posts on mount
+   useEffect(() => {
+    temporaryAdVerificationFetch().catch(console.error);
+  }, []);
 
   // Function to get the dynamic height of each item
   const getItemSize = (index: number) => {
