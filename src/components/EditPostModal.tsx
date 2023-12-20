@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 
 import "./editPostModal.css";
-import { useOutsideAlerter } from "../utils/useOutsideAlerter";
+// import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 
 interface EditPostModalProps {
@@ -50,7 +50,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     setIsEditModalOpen(false);
   };
   const wrapperRef = useRef(null); // You are already defining this ref
-  useOutsideAlerter(wrapperRef, handleCloseEditModal); // Use the existing handleCloseEditModal which calls setIsEditModalOpen(false)
+  // useOutsideAlerter(wrapperRef, handleCloseEditModal); // Use the existing handleCloseEditModal which calls setIsEditModalOpen(false)
 
   useEffect(() => {
     setDescription(post?.description || "");
@@ -90,75 +90,84 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   return (
     // <Modal open={isOpen} onClose={onClose}>
     <Modal open={isOpen}>
-      <div className="edit-post-modal-container" ref={wrapperRef}>
-        <button className="close-modal-button" onClick={handleCloseEditModal}>
-          &times; {/* This is a common symbol used for close buttons */}
-        </button>
-        {/* <h4 className="store-title">Store: {post.selectedStore}</h4>
-        <h6 className="store-address">Address: {post.storeAddress}</h6> */}
-        {post.imageUrl && (
-          <div className="image-container">
-            <Card>
-              <CardMedia
-                component="img"
-                image={post.imageUrl}
-                alt="Selected Preview"
-                className="image"
-              />
-            </Card>
-          </div>
-        )}
-        <div className="input-container">
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Description"
-            multiline
-            rows={4}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="description-input"
-          />
-          <Select
-            fullWidth
-            variant="outlined"
-            value={postVisibility}
-            onChange={(
-              e: SelectChangeEvent<
-                "public" | "company" | "supplier" | "private" | undefined
-              >
-            ) => {
-              setPostVisibility(
-                e.target.value as "public" | "company" | "supplier" | "private"
-              );
-            }}
-            className="select-input"
-          >
-            <MenuItem value="public">Public</MenuItem>
-            {/* <MenuItem value="private">Private</MenuItem> */}
-            <MenuItem value="company">Company</MenuItem>
-            {/* <MenuItem value="group">Group</MenuItem> */}
-          </Select>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            onClick={handleSave}
-            className="save-btn"
-          >
-            Save Changes
-          </Button>
-          <Button
-            className="delete-btn"
-            onClick={() => {
-              userDeletePost({ post, setIsEditModalOpen, dispatch });
-              dispatch(showMessage("Post deleted successfully!"));
-            }}
-          >
-            Delete Post
-          </Button>
+      <>
+       
+        <div className="edit-post-modal-container" ref={wrapperRef}>
+        <div className="edit-post-header">
+          <button className="close-modal-button" onClick={handleCloseEditModal}>
+            &times; {/* This is a common symbol used for close buttons */}
+          </button>
         </div>
-      </div>
+          {/* <h4 className="store-title">Store: {post.selectedStore}</h4>
+        <h6 className="store-address">Address: {post.storeAddress}</h6> */}
+          {post.imageUrl && (
+            <div className="image-container">
+              <Card>
+                <CardMedia
+                  component="img"
+                  image={post.imageUrl}
+                  alt="Selected Preview"
+                  className="image"
+                />
+              </Card>
+            </div>
+          )}
+          <div className="input-container">
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Description"
+              multiline
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="description-input"
+            />
+            <Select
+              fullWidth
+              variant="outlined"
+              value={postVisibility}
+              onChange={(
+                e: SelectChangeEvent<
+                  "public" | "company" | "supplier" | "private" | undefined
+                >
+              ) => {
+                setPostVisibility(
+                  e.target.value as
+                    | "public"
+                    | "company"
+                    | "supplier"
+                    | "private"
+                );
+              }}
+              className="select-input"
+            >
+              <MenuItem value="public">Public</MenuItem>
+              {/* <MenuItem value="private">Private</MenuItem> */}
+              <MenuItem value="company">Company</MenuItem>
+              {/* <MenuItem value="group">Group</MenuItem> */}
+            </Select>
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={handleSave}
+              className="save-btn"
+            >
+              Save Changes
+            </Button>
+            <Button
+              className="delete-btn"
+              onClick={() => {
+                userDeletePost({ post, setIsEditModalOpen, dispatch });
+                dispatch(showMessage("Post deleted successfully!"));
+              }}
+            >
+              Delete Post
+            </Button>
+          </div>
+        </div>
+      </>
     </Modal>
   );
 };

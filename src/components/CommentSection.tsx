@@ -14,6 +14,7 @@ import { db } from "../utils/firebase";
 import "./commentSection.css";
 import { updatePost } from "../Slices/postsSlice";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
+import useProtectedAction from "../utils/useProtectedAction";
 // import { UserState } from "../Slices/userSlice.ts";
 
 interface CommentProps {
@@ -21,6 +22,7 @@ interface CommentProps {
 }
 
 const CommentSection: React.FC<CommentProps> = ({ post }) => {
+  const protectedAction = useProtectedAction();
   const user = useSelector((state: RootState) => state.user.currentUser);
   const userFullName = user?.firstName + " " + user?.lastName; // or just user?.username
   const dispatch = useDispatch();
@@ -29,11 +31,11 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
   // const dispatch = useDispatch();
   // const selectedUid = useSelector(selectSelectedUid);
 
-  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const commentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewComment(e.target.value);
   };
 
-  const handleCommentSubmit = async () => {
+  const commentSubmit = async () => {
     if (newComment.length > 0 && user) {
       try {
         const commentToAdd: CommentType = {
@@ -64,10 +66,17 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
     }
   };
 
+  const handleCommentSubmit = ()=> {
+    protectedAction(()=> {
+      commentSubmit();
+    })
+  }
+
   //  console.log(user, ' comment section user')
   return (
     <div>
       <form
+        className="comment-section-box"
         onSubmit={(e) => {
           e.preventDefault();
           handleCommentSubmit();
@@ -77,8 +86,9 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
           <TextField
             label="New Comment"
             value={newComment}
-            onChange={handleCommentChange}
+            onChange={commentChange}
             fullWidth
+            sx={{ width: '70%' }} // or any other valu
           />
           <button type="submit">Submit</button>
         </div>

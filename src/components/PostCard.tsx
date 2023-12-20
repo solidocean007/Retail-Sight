@@ -26,6 +26,7 @@ import {
 import { db } from "../utils/firebase";
 import { updatePost } from "../Slices/postsSlice";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
+import useProtectedAction from "../utils/useProtectedAction";
 
 interface PostCardProps {
   id: string;
@@ -41,6 +42,7 @@ const PostCard: React.FC<PostCardProps> = ({
   getPostsByTag,
   style,
 }) => {
+  const protectedAction = useProtectedAction();
   const [commentCount ] = useState(post.commentCount);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [comments, setComments] = useState<CommentType[]>([]); // State to store comments for the modal
@@ -90,6 +92,11 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
   
+  const handleLikePostButtonClick = () => {
+    protectedAction(()=> {
+      onLikePostButtonClick();
+    })
+  }
 
   // grab user from redux
   const user = useSelector(selectUser);
@@ -146,6 +153,12 @@ const PostCard: React.FC<PostCardProps> = ({
       }
     }
   };
+
+  const handleOnUserNameClick = () => {
+    protectedAction(()=> {
+      onUserNameClick(post, dispatch);
+    })
+  }
   
 
   return (
@@ -177,15 +190,15 @@ const PostCard: React.FC<PostCardProps> = ({
               )}
               <div className="share-button">
                 <SharePost
-                  // postLink={`https://yourwebsite.com/post/${postId}`}
-                  postLink={`https://yourwebsite.com/post`}
-                  postTitle="Check out this awesome post!"
+                
+                  postLink={`https://displaygram.com/post/}`}
+                  postTitle="Check out this display!"
                 />
               </div>
             </div>
 
             <Typography
-              onClick={() => onUserNameClick(post, dispatch)}
+              onClick={handleOnUserNameClick}
               variant="h6"
             >
               by:<a href=""> {post.user.postUserName}</a>
@@ -210,7 +223,7 @@ const PostCard: React.FC<PostCardProps> = ({
             <h5>{likes} likes</h5>
           )}
 
-          <button className="like-button" onClick={onLikePostButtonClick}>
+          <button className="like-button" onClick={handleLikePostButtonClick}>
             {likedByUser ? "❤️" : "🤍"}
           </button>
 

@@ -22,7 +22,7 @@ import {
   DocumentChange,
   QuerySnapshot,
   collection,
-  doc,
+  // doc,
   getDocs,
   limit,
   onSnapshot,
@@ -31,6 +31,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
+import useProtectedAction from "../utils/useProtectedAction";
 
 const POSTS_BATCH_SIZE = 20;
 const AD_INTERVAL = 4; // Show an ad after every 4 posts
@@ -38,9 +39,11 @@ const BASE_ITEM_HEIGHT = 900; // Base height for a post item
 
 
 const ActivityFeed = () => {
+  const protectedAction = useProtectedAction();
   const listRef = useRef<List>(null);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  console.log(currentUser, ' : currentUser')
   // Add a new state to track which posts are expanded
   const currentUserCompany = currentUser?.company;
 
@@ -59,22 +62,7 @@ const ActivityFeed = () => {
   const displayPosts = searchResults ? searchResults : posts;
 
   // New function to fetch public posts
-  const temporaryAdVerificationFetch = async () => {
-    const publicPostsQuery = query(
-      collection(db, "posts"),
-      where("visibility", "==", "public"),
-      orderBy("timestamp", "desc"),
-      limit(POSTS_BATCH_SIZE) // You can adjust the number of posts to fetch
-    );
-    const querySnapshot = await getDocs(publicPostsQuery);
-    const publicPosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as PostType }));
-    dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
-  };
-
-   // useEffect to fetch public posts on mount
-   useEffect(() => {
-    temporaryAdVerificationFetch().catch(console.error);
-  }, []);
+  
 
   // Function to get the dynamic height of each item
   const getItemSize = (index: number) => {
@@ -86,9 +74,7 @@ const ActivityFeed = () => {
     return BASE_ITEM_HEIGHT; // Set the base height for a regular post item
   };
 
-
-
-  const handleHashtagSearch = async () => {
+  const hashtagSearch = async () => {
     try {
       const hashtagPosts = await getPostsByTag(searchTerm);
       setSearchResults(hashtagPosts);
@@ -97,6 +83,12 @@ const ActivityFeed = () => {
       // Optionally show an error message to the user
     }
   };
+
+  const handleHashtagSearch = () => {
+    protectedAction(()=> {
+      hashtagSearch();
+    })
+  }
 
   // Effect to update the window width on resize
   useEffect(() => {
@@ -120,6 +112,21 @@ const ActivityFeed = () => {
 
   // load indexDB posts or fetch from firestore
   useEffect(() => {
+    const noUserLoggedInFetch = async () => { // this should use callback?
+      const publicPostsQuery = query(
+        collection(db, "posts"),
+        where("visibility", "==", "public"),
+        orderBy("timestamp", "desc"),
+        limit(POSTS_BATCH_SIZE) // You can adjust the number of posts to fetch
+      );
+      const querySnapshot = await getDocs(publicPostsQuery);
+      const publicPosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as PostType }));
+      dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
+    };
+    if (currentUser === null) {
+      noUserLoggedInFetch().catch(console.error);
+      return
+    }
     const loadPosts = async () => {
       try {
         console.log("looking in indexDB");
@@ -152,7 +159,7 @@ const ActivityFeed = () => {
     };
 
     loadPosts();
-  }, [dispatch, currentUserCompany]);
+  }, [currentUser, dispatch, currentUserCompany]);
 
   // const mergePosts = (posts1: PostWithID[], posts2: PostWithID[]) => {
   //   // Combine the two arrays

@@ -1,37 +1,50 @@
-.comment-field {
+/* .comment-field {
   display: flex;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 5px;
   padding: 10px;
-}
+} */
 
-.comments-container {
+/* .comments-container {
   display: flex;
   flex-direction: column;
   background-color: rgb(206, 203, 198);
   justify-content: flex-start;
   padding: 5px;
   border-radius: 5px;
-}
+} */
 
-.comment-details {
+/* .comment-details {
   display: flex;
   justify-content: space-between;
-}
+} */
 
-.comment {
+/* .comment {
   display: flex;
   align-items: center;
-}
+} */
 
-.user-of-comment {
+/* .user-of-comment {
   display: flex;
   width: 180px;
   justify-content: start;
+} */
+.text-field {
+  width: 200px;
+}
+.new-comment-container {
+  display: flex;
+  align-items: center;
+  margin-left: 3rem;
+
 }
 
 .new-comment-container button {
-  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 20px;
+  width: 4rem;
 }
 
 /* For the like button */

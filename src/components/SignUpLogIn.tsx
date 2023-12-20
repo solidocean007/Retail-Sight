@@ -147,7 +147,7 @@ export const SignUpLogin = () => {
             // Assuming fetchedUserData is of UserType or you can map it to UserType
             dispatch(setUser(fetchedUserData)); // dispatch the full user object
             dispatch(showMessage(`Sign-up successful`));
-            navigate("/userHomePage");
+            navigate("/");
           } else {
             // Handle the case where user data does not exist in Firestore
             dispatch(setUser(null));
@@ -170,7 +170,7 @@ export const SignUpLogin = () => {
         }
 
         dispatch(showMessage(`Login successful`));
-        navigate("/userHomePage");
+        navigate("/");
       } catch (error) {
         dispatch(showMessage(`Login error:  ${error}`));
       }

@@ -5,8 +5,15 @@
   align-items: center;
   padding: 10px;
   background-color: white;
-  max-width: 600px;
-  margin: 100px 10px;
+  max-width: 400px;
+  margin: auto;
+}
+
+.edit-post-header {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  width: 100%;
 }
 
 .store-title, .store-address {
@@ -20,7 +27,7 @@
 }
 
 .image {
-  max-height: 300px;
+  max-height: 200px;
   width: auto;
   margin: auto;
 }

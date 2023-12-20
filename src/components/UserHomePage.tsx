@@ -13,6 +13,7 @@ import { AppDispatch } from "../utils/store";
 // import { CategoryType } from "./CategorySelector";
 import { useDispatch } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
+import useProtectedAction from "../utils/useProtectedAction";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
@@ -20,6 +21,7 @@ export const UserHomePage = () => {
   const navigate = useNavigate();
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const protectedAction = useProtectedAction();
 
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
@@ -38,20 +40,33 @@ export const UserHomePage = () => {
   }, [dispatch]);
 
   const openProfile = () => navigate("/profile-page");
+  const goToSignUpLogin = () => navigate("/sign-up-login");
+  const handleCreatePostClick = () => {
+    protectedAction(() => {
+      navigate("/createPost");
+    });
+  };
 
   return (
     <div className="container-user-home-page">
-      <AppBar position="fixed" style={{ backgroundColor: "#333" }}>
+      <AppBar className="app-bar" position="fixed" style={{ backgroundColor: "#333" }}>
+      <div className="title">
+          <h1>Displaygram</h1>
+        </div>
+
         <Toolbar className="tool-bar">
+        
           <div className="user-button">
             <button
               className="profile-btn"
               // variant="contained"
               color="primary"
-              onClick={openProfile}
+              onClick={currentUser ? openProfile : goToSignUpLogin}
             >
               <h3>
-                Welcome, {currentUser?.firstName} {currentUser?.lastName}{" "}
+                {currentUser
+                  ? `Welcome, ${currentUser?.firstName} ${currentUser?.lastName} `
+                  : `Sign-up Login `}
                 {/*Here is the line that loses the users data on page refresh*/}
               </h3>
             </button>
@@ -61,13 +76,13 @@ export const UserHomePage = () => {
               className="create-post-btn"
               // variant="contained"
               color="secondary"
-              onClick={() => navigate("/createPost")}
+              onClick={handleCreatePostClick}
             >
               <h3>Create Post</h3>
             </button>
 
             <button className="filter-menu-button" onClick={toggleFilterMenu}>
-             <h3>Filters</h3>
+              <h3>Filters</h3>
             </button>
           </div>
         </Toolbar>
