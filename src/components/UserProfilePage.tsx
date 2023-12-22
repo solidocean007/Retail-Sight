@@ -111,7 +111,7 @@ export const UserProfilePage = () => {
       <Button
         variant="contained"
         color="secondary"
-        onClick={() => navigate('/userHomePage')}
+        onClick={() => navigate('/')}
         style={{ marginTop: "16px", marginLeft: "8px" }}
       >
         Close

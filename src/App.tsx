@@ -5,7 +5,7 @@ import { hideMessage } from "./Slices/snackbarSlice";
 import "./App.css";
 import { BrowserRouter as Router } from "react-router-dom"; 
 import { RootState } from "./utils/store";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "./components/ThemeToggle.tsx";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 
@@ -18,6 +18,7 @@ import { useEffect } from "react";
 function App() {
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const { currentUser, initializing } = useFirebaseAuth();
+  
  
   useEffect(() => {
     console.log('App.tsx mounts')

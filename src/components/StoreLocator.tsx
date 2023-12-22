@@ -187,7 +187,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
 
   return (
     <div className="map-container">
-      <div ref={mapRef} style={{ width: "300px", height: "200px" }}></div>
+      <div ref={mapRef} style={{ width: "250px", height: "130px" }}></div>
       <input
         type="text"
         // value={selectedPlace?.name || ""}

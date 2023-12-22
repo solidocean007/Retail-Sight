@@ -4,10 +4,47 @@
 }
 
 .create-post-container {
-  background-color: rgb(124, 147, 139);
+  background: rgb(2,0,36);
+background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgba(23,23,210,1) 30%, rgba(0,212,255,1) 100%);
   padding: 5px;
   border-radius: 5px;
+  width: 100%;
+  margin-top: 40px;
+  overflow-y: scroll;
 }
+
+.image-and-details {
+  display: flex;
+  justify-content: space-around;
+  margin: 15px 0px;
+  width: 100%;
+  
+}
+
+.image-selection-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-box {
+  display: flex;
+  justify-content: center; /* Center image horizontally */
+  align-items: center; /* Center image vertically */
+  overflow: hidden; /* In case the image is too large */
+  max-height: 400px; /* Set a maximum height for the image container */
+  width: 100%; /* Container takes full width */
+  /* border: 1px solid black; */
+  
+}
+
+.post-image {
+  max-height: 400px; /* Set a maximum height for the image */
+  width: auto; /* Maintain the aspect ratio */
+  /* max-width: 100%; Make sure the image is not wider than the container */
+}
+
 
 h4, h6 {
   margin: 3px;
@@ -19,4 +56,16 @@ select {
 
 .description-box {
   width: 300px;
+}
+
+@media (max-width: 900px) {
+  /* Your styles for tablets */
+  .image-and-details {
+    flex-direction: column;
+  }
+
+  .image-box {
+    max-height: 250px;
+  }
+
 }

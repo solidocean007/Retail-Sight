@@ -22,14 +22,14 @@
   --dark-background-color: #242424;
   --dark-text-color: rgba(255, 255, 255, 0.87);
   --dark-button-background: #1a1a1a;
-  
+
   /* Current theme - default to light */
   --background-color: var(--light-background-color);
   --text-color: var(--light-text-color);
   --button-background: var(--light-button-background);
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   --background-color: var(--dark-background-color);
   --text-color: var(--dark-text-color);
   --button-background: var(--dark-button-background);
@@ -39,23 +39,32 @@
   }
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
   overflow-y: hidden;
+  background: rgb(58, 115, 255);
+  background: linear-gradient(
+    0deg,
+    rgba(58, 115, 255, 1) 61%,
+    rgba(35, 38, 60, 1) 99%
+  );
 }
 
 #root {
   max-width: 1500px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   margin: 0;
   text-align: center;
   min-height: 100vh;
+  width: 100%;
 }
 
 body {
@@ -67,7 +76,9 @@ body {
   min-height: 100vh;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -80,8 +91,6 @@ a:hover {
   color: #535bf2;
 }
 
-
-
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
@@ -90,7 +99,7 @@ h1 {
 button {
   border-radius: 8px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  padding: 0.6em 1em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
@@ -132,5 +141,4 @@ button:focus-visible {
 }
 
 @media screen and (min-width: 900px) {
-  
 }

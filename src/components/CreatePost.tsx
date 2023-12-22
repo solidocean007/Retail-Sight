@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
-import { selectUser } from "../Slices/userSlice"; 
+import { selectUser } from "../Slices/userSlice";
 
 import ChannelSelector from "./ChannelSelector";
 import CategorySelector from "./CategorySelector";
@@ -11,8 +11,8 @@ import {
   AppBar,
   Box,
   Button,
-  Card,
-  CardMedia,
+  // Card,
+  // CardMedia,
   IconButton,
   MenuItem,
   Select,
@@ -34,13 +34,12 @@ import { ChannelType } from "./ChannelSelector";
 import "./createPost.css";
 
 export const CreatePost = () => {
-
-  useEffect(()=>{
-    console.log('CreatePost mounts')
-    return ()=> {
-      console.log('CreatePost unmounts')
-    }
-  },[])
+  useEffect(() => {
+    console.log("CreatePost mounts");
+    return () => {
+      console.log("CreatePost unmounts");
+    };
+  }, []);
 
   const handlePostSubmission = useHandlePostSubmission();
   // State Management
@@ -132,7 +131,8 @@ export const CreatePost = () => {
   const handleFieldChange = (
     field: keyof PostType,
     value: string | number | boolean | string[] // Add other types as needed
-  ) => { // what type should value be?
+  ) => {
+    // what type should value be?
     // specify a different type other than any
     setPost({ ...post, [field]: value });
   };
@@ -165,7 +165,7 @@ export const CreatePost = () => {
           <IconButton
             edge="start"
             color="inherit"
-            onClick={() => navigate("/userHomePage")}
+            onClick={() => navigate("/")}
           >
             <CloseIcon />
           </IconButton>
@@ -174,33 +174,29 @@ export const CreatePost = () => {
           </Typography>
         </Toolbar>
       </AppBar>
-      <Box p={1}>
-        <Button
-          variant="contained"
-          component="label"
-          startIcon={<AddAPhotoIcon />}
-        >
-          {post.imageUrl ? "ChangeImage" : "Upload Image"}
-          <input
-            type="file"
-            hidden
-            onChange={handleImageChange}
-            accept="image/*"
-          />
-        </Button>
 
-        {post.imageUrl && (
-          <Box mt={2}>
-            <Card>
-              <CardMedia
-                component="img"
-                image={post.imageUrl}
-                alt="Selected Preview"
-                style={{ maxHeight: "300px", width: "auto" }}
-              />
-            </Card>
-          </Box>
-        )}
+      <div className="image-and-details">
+        <div className="image-selection-box">
+          <Button
+            variant="contained"
+            component="label"
+            startIcon={<AddAPhotoIcon />}
+          >
+            {post.imageUrl ? "ChangeImage" : "Upload Image"}
+            <input
+              type="file"
+              hidden
+              onChange={handleImageChange}
+              accept="image/*"
+            />
+          </Button>
+          {post.imageUrl && (
+            <div className="image-box">
+              <img src={post.imageUrl} alt="Post" className="post-image" />
+            </div>
+          )}
+        </div>
+        <div className="post-detail-selection">
         <StoreLocator post={post} handleSelectedStore={handleSelectedStore} />
         <h4>Store: {post.selectedStore}</h4>
         <h6>Address: {post.storeAddress}</h6>
@@ -237,7 +233,7 @@ export const CreatePost = () => {
             variant="outlined"
             label="Description"
             multiline
-            rows={3}
+            rows={2}
             value={post.description}
             onChange={(e) => handleFieldChange("description", e.target.value)}
           />
@@ -256,51 +252,54 @@ export const CreatePost = () => {
             {/* <MenuItem value="group">Supplier & Company</MenuItem> */}
           </Select>
         </Box>
-      </Box>
 
-      <Box mt={2}>
-        <Button
-          variant="contained"
-          color="primary"
-          type="submit"
-          fullWidth
-          onClick={() => {
-            if (selectedFile) {
-              // Pass the current post state directly
-              handlePostSubmission(
-                {
-                  ...post,
-                  category: selectedCategory,
-                  channel: selectedChannel,
-                  // supplier: selectedSupplier,
-                  // brands: selectedBrands,
-                },
-                selectedFile
-              );
-            } else {
-              // Handle the situation where selectedFile is null
-            }
-          }}
-        >
-          Submit Post
-        </Button>
-      </Box>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={4000} // Hide after 4 seconds
-        onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
-        action={
-          <IconButton
-            size="small"
-            color="inherit"
-            onClick={() => setSnackbarOpen(false)}
+        <Box mt={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            fullWidth
+            onClick={() => {
+              if (selectedFile) {
+                // Pass the current post state directly
+                handlePostSubmission(
+                  {
+                    ...post,
+                    category: selectedCategory,
+                    channel: selectedChannel,
+                    // supplier: selectedSupplier,
+                    // brands: selectedBrands,
+                  },
+                  selectedFile
+                );
+              } else {
+                // Handle the situation where selectedFile is null
+              }
+            }}
           >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        }
-      />
+            Submit Post
+          </Button>
+        </Box>
+
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={4000} // Hide after 4 seconds
+          onClose={() => setSnackbarOpen(false)}
+          message={snackbarMessage}
+          action={
+            <IconButton
+              size="small"
+              color="inherit"
+              onClick={() => setSnackbarOpen(false)}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          }
+        />
+      </div>
+      </div>
+
+      
     </div>
   );
 };

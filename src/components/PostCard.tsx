@@ -1,7 +1,7 @@
 // PostCard.tsx
 import React from "react";
 import { useState } from "react";
-import { Card, CardContent, Typography, Button } from "@mui/material";
+import { Card, CardContent, Button } from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
@@ -43,7 +43,7 @@ const PostCard: React.FC<PostCardProps> = ({
   style,
 }) => {
   const protectedAction = useProtectedAction();
-  const [commentCount ] = useState(post.commentCount);
+  const [commentCount] = useState(post.commentCount);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [comments, setComments] = useState<CommentType[]>([]); // State to store comments for the modal
   const [showAllComments] = useState(false);
@@ -82,7 +82,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const onLikePostButtonClick = async () => {
     const newLikedByUser = !likedByUser;
     setLikedByUser(newLikedByUser); // Optimistic UI update
-  
+
     try {
       await handleLikePost(post, currentUserUid, newLikedByUser, dispatch);
       // Redux and IndexedDB updates are handled inside handleLikePost
@@ -91,12 +91,12 @@ const PostCard: React.FC<PostCardProps> = ({
       setLikedByUser(likedByUser); // Revert optimistic updates in case of error
     }
   };
-  
+
   const handleLikePostButtonClick = () => {
-    protectedAction(()=> {
+    protectedAction(() => {
       onLikePostButtonClick();
-    })
-  }
+    });
+  };
 
   // grab user from redux
   const user = useSelector(selectUser);
@@ -113,7 +113,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const handleDeleteComment = async (commentId: string) => {
     console.log("Deleting comment with ID:", commentId);
-  
+
     try {
       // Decrement the commentCount for the relevant post in Firestore
       const postRef = doc(db, "posts", post.id);
@@ -121,25 +121,24 @@ const PostCard: React.FC<PostCardProps> = ({
 
       const commentRef = doc(db, "comments", commentId);
       await deleteDoc(commentRef);
-  
+
       // Update the post object locally to reflect the new comment count
       const updatedPost = { ...post, commentCount: post.commentCount - 1 };
-  
+
       // Update Redux
       dispatch(updatePost(updatedPost));
-  
+
       // Update IndexedDB
       await updatePostInIndexedDB(updatedPost);
-  
+
       // Remove the comment from local state
-      setComments(comments.filter((comment) => comment.commentId !== commentId));
+      setComments(
+        comments.filter((comment) => comment.commentId !== commentId)
+      );
     } catch (error) {
       console.error("Failed to delete comment:", error);
     }
   };
-  
-  
-  
 
   const handleLikeComment = async (commentId: string, likes: string[]) => {
     if (user?.uid && !likes.includes(user.uid)) {
@@ -155,55 +154,75 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   const handleOnUserNameClick = () => {
-    protectedAction(()=> {
+    protectedAction(() => {
       onUserNameClick(post, dispatch);
-    })
-  }
-  
+    });
+  };
+  console.log(style);
 
   return (
     <Card className="post-card dynamic-height" style={{ ...style }}>
       <CardContent className="card-content">
-        <div className="card-top">
-          <div>view: {post.visibility}</div>
-        </div>
-
         <div className="post-header">
-          <div className="store-details">
-            <h3>{post.selectedStore}</h3>
-            <h5>{formattedDate}</h5>
-            <h5>{post.storeAddress}</h5>
+          <div className="header-top">
+            <div className="likes-comments">
+              {likes === 0 ? null : likes === 1 ? (
+                <h5>{likes} like</h5>
+              ) : (
+                <h5>{likes} likes</h5>
+              )}
+
+              <button
+                className="like-button"
+                onClick={handleLikePostButtonClick}
+              >
+                {likedByUser ? "❤️" : "🤍"}
+              </button>
+
+              {commentCount > 0 && (
+                <Button onClick={openCommentModal}>
+                  {showAllComments
+                    ? "Hide Comments"
+                    : `${commentCount} Comments`}
+                </Button>
+              )}
+            </div>
+            <div className="share-button">
+              <SharePost
+                postLink={`https://displaygram.com/post/}`}
+                postTitle="Check out this display!"
+              />
+            </div>
+            <div>view: {post.visibility}</div>
+          </div>
+          <div className="header-bottom">
+            <div className="store-details">
+              <h3>{post.selectedStore}</h3>
+              <h5>{post.storeAddress}</h5>
+            </div>
+          
           </div>
           <div className="post-user-details">
-            <div className="share-edit-block">
-              {user?.uid === post.user?.postUserId && (
-                <div className="edit-block">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleEditPost}
-                    className="edit-btn"
-                  >
-                    Edit Post
-                  </Button>
-                </div>
-              )}
-              <div className="share-button">
-                <SharePost
-                
-                  postLink={`https://displaygram.com/post/}`}
-                  postTitle="Check out this display!"
-                />
+              <div className="share-edit-block">
+                {user?.uid === post.user?.postUserId && (
+                  <div className="edit-block">
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleEditPost}
+                      className="edit-btn"
+                    >
+                      Edit Post
+                    </Button>
+                  </div>
+                )}
               </div>
-            </div>
 
-            <Typography
-              onClick={handleOnUserNameClick}
-              variant="h6"
-            >
-              by:<a href=""> {post.user.postUserName}</a>
-            </Typography>
-          </div>
+              <div onClick={handleOnUserNameClick}>
+                by:<a href=""> {post.user.postUserName}</a>
+              </div>
+              <h5>{formattedDate}</h5>
+            </div>
         </div>
 
         {/* Display hashtags above the image */}
@@ -214,25 +233,8 @@ const PostCard: React.FC<PostCardProps> = ({
 
         {/* Display the post's image */}
         {post.imageUrl && (
-          <img className="post-image" src={post.imageUrl} alt="Post" />
+          <img className="post-image" src={post.imageUrl} alt="Post image" />
         )}
-        <div className="likes-comments">
-          {likes === 0 ? null : likes === 1 ? (
-            <h5>{likes} like</h5>
-          ) : (
-            <h5>{likes} likes</h5>
-          )}
-
-          <button className="like-button" onClick={handleLikePostButtonClick}>
-            {likedByUser ? "❤️" : "🤍"}
-          </button>
-
-          {commentCount > 0 && (
-            <Button onClick={openCommentModal}>
-              {showAllComments ? "Hide Comments" : `${commentCount} Comments`}
-            </Button>
-          )}
-        </div>
 
         <CommentSection post={post} />
       </CardContent>
@@ -245,19 +247,17 @@ const PostCard: React.FC<PostCardProps> = ({
           // onSave={handleSavePost}
         />
       ) : null}
-      {isCommentModalOpen && comments.length > 0 && ( // This expression is not callable.
-  // Type 'Number' has no call signatures.ts(2349)
+      {isCommentModalOpen && comments.length > 0 && (
         <CommentModal
-        isOpen={isCommentModalOpen}
-        onClose={() => setIsCommentModalOpen(false)}
-        post={post}
-        comments={comments} // Assuming comments is an array of CommentType and includes all necessary fields
-        onLikeComment={handleLikeComment}
-        likes={likes}
-        onDeleteComment={handleDeleteComment}
-        likedByUser={likedByUser}
-      />
-      
+          isOpen={isCommentModalOpen}
+          onClose={() => setIsCommentModalOpen(false)}
+          post={post}
+          comments={comments}
+          onLikeComment={handleLikeComment}
+          likes={likes}
+          onDeleteComment={handleDeleteComment}
+          likedByUser={likedByUser}
+        />
       )}
     </Card>
   );

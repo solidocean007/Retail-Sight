@@ -5,9 +5,49 @@
   overflow: visible;
   transition: box-shadow 0.3s ease;
   position: relative;
-  /* height: 700px;  */
-  /* width: 600px; */
-  background-color: aliceblue;
+}
+
+.post-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 14px;
+}
+
+.header-bottom {
+  display: flex;
+  width: 100%;
+}
+
+.post-user-details {
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  width: 100%
+}
+
+.likes-comments {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+}
+
+.like-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.5); /* Muted color if not liked by user */
+  font-size: 10px;
 }
 
 h5 {
@@ -18,17 +58,12 @@ h5 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: flex-start;
 }
 
-.card-top {
+.store-details h5 {
   display: flex;
-  justify-content: end;
-}
-
-.post-user-details {
-  display: flex;
-  flex-direction: column;
-  cursor: pointer
+  justify-content: flex-start;
 }
 
 .edit-block {
@@ -44,10 +79,9 @@ h5 {
 }
 
 .post-card img.post-image {
-  height: 600px; 
   border-radius: 5px;
   width: auto;
-  margin: 10px auto;
+  margin: 5px auto;
   display: block;
   /* transition: box-shadow 0.5s ease; */
 }
@@ -66,32 +100,14 @@ h5 {
   margin-bottom: 10px;
 }
 
-.likes-comments {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
-}
 
-.like-button {
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  color: rgba(0, 0, 0, 0.5); /* Muted color if not liked by user */
-}
 
 .comments-button {
   border: none;
   background-color: #e0e0e0;
 }
 
-.post-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 15px;
-  background-color: rgba(0, 0, 0, 0.05);
-}
+
 
 .header-content {
   display: flex;
@@ -105,7 +121,6 @@ h5 {
 
 @media (max-width: 670px) {
   .post-card img.post-image {
-    height: 350px; 
-
+    height: 450px; 
   }
 }

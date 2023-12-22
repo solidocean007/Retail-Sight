@@ -24,7 +24,7 @@ import {
   collection,
   // doc,
   getDocs,
-  limit,
+  // limit,
   onSnapshot,
   orderBy,
   query,
@@ -33,17 +33,15 @@ import {
 import { db } from "../utils/firebase";
 import useProtectedAction from "../utils/useProtectedAction";
 
-const POSTS_BATCH_SIZE = 20;
-const AD_INTERVAL = 4; // Show an ad after every 4 posts
-const BASE_ITEM_HEIGHT = 900; // Base height for a post item
-
+const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
+const AD_INTERVAL = 4;
+// const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
   const protectedAction = useProtectedAction();
   const listRef = useRef<List>(null);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  console.log(currentUser, ' : currentUser')
   // Add a new state to track which posts are expanded
   const currentUserCompany = currentUser?.company;
 
@@ -55,23 +53,20 @@ const ActivityFeed = () => {
     null
   );
 
-  const posts = useSelector((state: RootState) => state.posts.posts); // this is all posts in redux right?
+  const posts = useSelector((state: RootState) => state.posts.posts);
   const loading = useSelector((state: RootState) => state.posts.loading);
 
   // Determine which posts to display - search results or all posts
   const displayPosts = searchResults ? searchResults : posts;
-
-  // New function to fetch public posts
-  
 
   // Function to get the dynamic height of each item
   const getItemSize = (index: number) => {
     // Determine if the current index is an ad
     const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
     if (isAdPosition) {
-      return BASE_ITEM_HEIGHT; // Set the height for the ad item
+      return getActivityItemHeight(windowWidth); // Use the responsive height
     }
-    return BASE_ITEM_HEIGHT; // Set the base height for a regular post item
+    return getActivityItemHeight(windowWidth); // Use the responsive height for regular post items as well
   };
 
   const hashtagSearch = async () => {
@@ -85,10 +80,29 @@ const ActivityFeed = () => {
   };
 
   const handleHashtagSearch = () => {
-    protectedAction(()=> {
+    protectedAction(() => {
       hashtagSearch();
-    })
-  }
+    });
+  };
+
+  // Mount alert
+  useEffect(() => {
+    console.log("ActivityFeed mounts");
+    return () => {
+      console.log("ActivityFeed.tsx unmounted");
+    };
+  });
+
+  const getActivityItemHeight = (windowWidth: number) => {
+    if (windowWidth <= 480) {
+      // return 720;
+      return 650;
+    } else if (windowWidth <= 768) {
+      return 745;
+    } else {
+      return 795;
+    }
+  };
 
   // Effect to update the window width on resize
   useEffect(() => {
@@ -103,36 +117,48 @@ const ActivityFeed = () => {
   // Calculate the width for the FixedSizeList
   const getListWidth = () => {
     if (windowWidth <= 480) {
-      return windowWidth - 20; // Subtract some pixels for padding/margin
+      return windowWidth - 25; // Subtract some pixels for padding/margin
     } else if (windowWidth <= 768) {
-      return Math.min(650, windowWidth - 20);
+      return Math.min(650, windowWidth - 25);
     }
     return 650;
   };
 
   // load indexDB posts or fetch from firestore
   useEffect(() => {
-    const noUserLoggedInFetch = async () => { // this should use callback?
+    const noUserLoggedInFetch = async () => {
+      // need to check indexedDB before doing this.
       const publicPostsQuery = query(
         collection(db, "posts"),
-        where("visibility", "==", "public"),
-        orderBy("timestamp", "desc"),
-        limit(POSTS_BATCH_SIZE) // You can adjust the number of posts to fetch
+        // where("visibility", "==", "public"),
+        orderBy("timestamp", "desc")
+        // limit(POSTS_BATCH_SIZE)
       );
       const querySnapshot = await getDocs(publicPostsQuery);
-      const publicPosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as PostType }));
+
+      const publicPosts: PostWithID[] = querySnapshot.docs
+        .map((doc) => {
+          const postData: PostType = doc.data() as PostType;
+          return {
+            ...postData,
+            id: doc.id,
+          };
+        })
+        .filter((post) => post.visibility === "public");
+      // id: doc.id, ...doc.data() as PostType }));
       dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
+      addPostsToIndexedDB(publicPosts);
     };
     if (currentUser === null) {
       noUserLoggedInFetch().catch(console.error);
-      return
+      return;
     }
     const loadPosts = async () => {
       try {
         console.log("looking in indexDB");
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
-          console.log('getting posts from indexedDB')
+          console.log("getting posts from indexedDB");
           dispatch(setPosts(cachedPosts));
         } else if (currentUserCompany) {
           console.log("no posts in indexDB");
@@ -161,96 +187,62 @@ const ActivityFeed = () => {
     loadPosts();
   }, [currentUser, dispatch, currentUserCompany]);
 
-  // const mergePosts = (posts1: PostWithID[], posts2: PostWithID[]) => {
-  //   // Combine the two arrays
-  //   const combinedPosts = [...posts1, ...posts2];
-
-  //   // Sort the combined array by timestamp (newest first)
-  //   combinedPosts.sort((a, b) => {
-  //     // Handle cases where timestamp might be undefined
-  //     const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-  //     const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-
-  //     return timeB - timeA;
-  //   });
-
-  //   return combinedPosts;
-  // };
-
-  // Function to update the feed
-  // const updateFeed = useCallback(
-  //   (newPosts: PostWithID[], isPublic: boolean) => {
-  //     const existingPosts = isPublic ? companyPosts : publicPosts;
-  //     const mergedPosts = mergePosts(newPosts, existingPosts);
-  //     dispatch(setPosts(mergedPosts)); // Update Redux store
-  //     addPostsToIndexedDB(mergedPosts); // Update IndexedDB
-  //   },
-  //   [dispatch, publicPosts, companyPosts]
-  // );
-
-  // const updateFeed = useCallback(
-  //   (newPosts: PostWithID[]) => {
-  //     // Dispatch an action to merge newPosts with existing posts in Redux store
-  //     dispatch(mergeAndSetPosts(newPosts)); // This action handles merging logic
-  //     // Update IndexedDB with the merged posts
-  //     addPostsToIndexedDB(newPosts); // Ensure new posts are also added to IndexedDB
-  //   },
-  //   [dispatch]
-  // );
-  
   // listen for new or updated posts
   useEffect(() => {
     // Capture the mount time in ISO format
     const mountTime = new Date().toISOString();
     const userCompany = currentUser?.company;
-  
+
     // Function to process document changes
-  const processDocChanges = (snapshot: QuerySnapshot) => {
-    console.log('hook has heard a change') // i liked a post and added a comment to a post.  this never logged
-    const changes = snapshot.docChanges();
-    changes.forEach((change : DocumentChange) => {
-      const postData = { id: change.doc.id, ...change.doc.data() as PostType };
-      console.log(change)
-      if (change.type === "added" || change.type === "modified") {
-        // Dispatch an action to merge this post with existing posts in Redux store
-        dispatch(mergeAndSetPosts([postData])); // Assuming mergeAndSetPosts is a redux action that handles the merge logic
-      } else if (change.type === "removed") {
-        // Dispatch an action to remove the post from Redux store
-        dispatch(deletePost(change.doc.id));
-        // Call a function to remove the post from IndexedDB
-        removePostFromIndexedDB(change.doc.id);
-      }
-    });
-  };
-  
+    const processDocChanges = (snapshot: QuerySnapshot) => {
+      console.log("hook has heard a change"); // i liked a post and added a comment to a post.  this never logged
+      const changes = snapshot.docChanges();
+      changes.forEach((change: DocumentChange) => {
+        const postData = {
+          id: change.doc.id,
+          ...(change.doc.data() as PostType),
+        };
+        console.log(change);
+        if (change.type === "added" || change.type === "modified") {
+          // Dispatch an action to merge this post with existing posts in Redux store
+          dispatch(mergeAndSetPosts([postData])); // Assuming mergeAndSetPosts is a redux action that handles the merge logic
+        } else if (change.type === "removed") {
+          // Dispatch an action to remove the post from Redux store
+          dispatch(deletePost(change.doc.id));
+          // Call a function to remove the post from IndexedDB
+          removePostFromIndexedDB(change.doc.id);
+        }
+      });
+    };
+
     // Subscribe to public posts
     const publicPostsQuery = query(
       collection(db, "posts"),
       where("visibility", "==", "public"),
-      where('timestamp', '>', mountTime),
+      where("timestamp", ">", mountTime),
       orderBy("timestamp", "desc")
     );
     const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
-  
+
     // Subscribe to company-specific posts, if the user's company is known
     let unsubscribeCompany = () => {};
     if (userCompany) {
       const companyPostsQuery = query(
         collection(db, "posts"),
         where("user.postUserCompany", "==", userCompany),
-        where('timestamp', '>', mountTime),
+        where("timestamp", ">", mountTime),
         orderBy("timestamp", "desc")
       );
       unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);
     }
-  
+
     // Cleanup function
     return () => {
       unsubscribePublic();
       unsubscribeCompany();
     };
   }, [currentUser?.company, dispatch]);
-  
+
   const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL) - 1;
   const itemCount = displayPosts.length + numberOfAds;
 
@@ -289,42 +281,42 @@ const ActivityFeed = () => {
   }
 
   // If there are no posts, show the no content card
-  if (itemCount === 1) {
+  if (itemCount === 0) {
     return <NoContentCard />;
   }
 
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
-      <div className="search-title">{/* <h5>Search by hashtag:</h5> */}</div>
-
-      <div className="hashtag-search-box">
-        {/* call the handleHashtagSearch on submit */}
-        <Input
-          placeholder="Search by hashtag"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleHashtagSearch();
-            }
-          }}
-        />
-        <button
-          className="search-button"
-          onClick={handleHashtagSearch}
-          color="white"
-        >
-          Search
-        </button>
+      <div className="theme-search-section">
+        <div className="hashtag-search-box">
+          {/* call the handleHashtagSearch on submit */}
+          <Input
+            placeholder="Search by hashtag"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleHashtagSearch();
+              }
+            }}
+          />
+          <button
+            className="search-button"
+            onClick={handleHashtagSearch}
+            color="white"
+          >
+            Search
+          </button>
+        </div>
       </div>
 
       <List
         ref={listRef}
         className="list-card"
-        height={650}
+        height={740}
         itemCount={itemCount}
-        itemSize={getItemSize} // Adjust based on your item size
+        itemSize={getItemSize} // Type '(index: number) => 600 | 800 | 850 | undefined' is not assignable to type '(index: number) => number'.t
         width={getListWidth()}
         itemData={{
           posts: posts,

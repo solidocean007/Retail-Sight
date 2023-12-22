@@ -1,0 +1,130 @@
+.header-bar {
+  display: flex;
+  /* flex-wrap: wrap; */
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  max-width: 1500px;
+  background: rgb(4,12,32);
+  background:black;
+  box-shadow: 0 8px 15px rgba(0, 0, 255, 0.5);
+  padding: 0.2rem .5rem;
+}
+
+.hamburger-menu-button {
+  display: none; /* Hidden by default */
+  cursor: pointer;
+  z-index: 11;
+  font-size: 30px;
+  color: whitesmoke;
+}
+
+.website-title {
+  margin-left: 1rem;
+  color: whitesmoke;
+}
+
+.website-title h1 {
+  margin: 0;
+}
+
+
+.menu-buttons {
+  display: flex;
+  justify-content: space-around;
+  /* width: 50%; */
+}
+
+.profile-btn {
+  width: 16rem;
+}
+
+.filter-menu-button {
+  display: none;
+  /* width: 100%; */
+}
+
+.profile-btn, .create-post-btn, .log-out-btn, .filter-menu-button {
+  margin-right: 30px;
+  max-height: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+/* Styles for tablets */
+@media (max-width: 1200px) {
+  .header-bar h1 {
+    font-size: 2rem;
+  }
+  .header-bar h4 {
+    font-size: 1rem;
+  }
+
+  button h3 {
+    font-size: 1rem;
+  }
+}
+
+/* Styles for mobile devices */
+@media (max-width: 900px) {
+  /* Your styles for mobile devices */
+  .filter-menu-button {
+    display: block;
+  }
+  
+  .profile-btn h3 {
+    font-size: .8rem;
+  }
+
+  button h3 {
+    font-size: .8rem;
+  }
+}
+
+/* Styles for mobile devices */
+@media (max-width: 780px) {
+  /* Your styles for mobile devices */
+  .header-bar h1 {
+    font-size: 1rem;
+  }
+  .header-bar h4 {
+    font-size: .8rem;
+  }
+
+  .profile-btn {
+    padding: .5rem;
+    width: 11rem;
+  }
+
+  .create-post-btn {
+    width: 7rem;
+  }
+
+  .button {
+    padding: .5rem;
+    width: 5rem;
+  }
+
+}
+/* Styles for mobile devices */
+@media (max-width: 670px) {
+  /* Your styles for mobile devices */
+  .hamburger-menu-button {
+    display: block; /* Show hamburger menu button */
+  }
+
+  .create-post-btn, .filter-menu-button {
+    display: none; /* Hide these buttons on small screens */
+  }
+}
+
+
+/* Styles for mobile devices */
+@media (max-width: 600px) {
+  /* Your styles for mobile devices */
+
+}

@@ -59,10 +59,6 @@
     padding: 15px;
   }
 
-  .image {
-    max-height: 250px;
-  }
-
   .description-input, .select-input {
     font-size: 14px;
   }

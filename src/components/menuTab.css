@@ -1,0 +1,24 @@
+/* menuTab.css */
+.menu-tab {
+  position: fixed;
+  top: 0;
+  right: -100%; /* Initially hidden */
+  /* height: 100%; */
+  width: 100%;
+  background-color: #fff;
+  box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  transition: right 0.3s ease-in-out;
+}
+
+.menu-tab.open {
+  right: 0; /* Slide in */
+}
+
+.menu-option {
+  padding: 1rem;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+}
+
+/* Add responsive styling if needed */

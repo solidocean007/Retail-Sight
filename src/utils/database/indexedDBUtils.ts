@@ -243,7 +243,17 @@ export async function storeLocationsInIndexedDB(locations: {
 
       // Perform the 'put' operations for each location
       for (const state in locations) {
-        const request = store.put(locations[state], state);
+        // Assuming that 'state' is the keyPath defined for your 'locations' object store
+        // and the 'locations[state]' array is the value you want to store.
+        // The key is already part of the value being stored, so you don't need to specify it again.
+        const locationEntry = {
+          state: state,        // This is your key path
+          cities: locations[state] // This is your value
+        };
+
+        // No need to pass the key as the second parameter since it's an inline key.
+        const request = store.put(locationEntry);
+
         request.onerror = () => {
           reject(request.error);
         };
@@ -252,9 +262,11 @@ export async function storeLocationsInIndexedDB(locations: {
   });
 }
 
+
 export async function getLocationsFromIndexedDB(): Promise<{
   [key: string]: string[];
 } | null> {
+  console.log('Opening IndexedDB to fetch locations...');
   const db = await openDB();
   const transaction = db.transaction(["locations"], "readonly");
   const store = transaction.objectStore("locations");
@@ -262,16 +274,37 @@ export async function getLocationsFromIndexedDB(): Promise<{
 
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
-      const locations = getAllRequest.result.reduce((acc, current, index) => {
-        acc[store.keyPath[index]] = current;
+      const allLocations = getAllRequest.result;
+      console.log('Fetched locations from IndexedDB:', allLocations);
+
+      if (!Array.isArray(allLocations) || allLocations.length === 0) {
+        console.log('No locations found in IndexedDB.');
+        resolve(null); // Resolve with null if no data is found
+        return;
+      }
+
+      const locations = allLocations.reduce((acc, location) => {
+        // Assuming your keyPath is "state"
+        const state = location.state; 
+        if (state && Array.isArray(location.cities)) {
+          console.log(`Processing location for state: ${state}`);
+          acc[state] = location.cities;
+        } else {
+          console.warn('Invalid location data encountered', location);
+        }
         return acc;
       }, {});
+
+      console.log('Resolved locations from IndexedDB:', locations);
       resolve(locations);
     };
     getAllRequest.onerror = () => {
-      reject("Error getting locations from IndexedDB");
+      console.error('Error fetching locations from IndexedDB:', getAllRequest.error);
+      reject(getAllRequest.error);
     };
   });
 }
+
+
 
 // Similar functions for 'categories', 'channels', 'locations', and later 'companies'
