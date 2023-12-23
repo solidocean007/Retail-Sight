@@ -28,15 +28,21 @@
   display: flex;
   width: 180px;
   justify-content: start;
+
 } */
-.text-field {
-  width: 200px;
+.comment-section-box {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
 }
+
 .new-comment-container {
+  border: 1px solid black;
+  padding: 5px;
   display: flex;
   align-items: center;
-  margin-left: 3rem;
-
+  border-radius: 5px;
+  width: 80%;
 }
 
 .new-comment-container button {
@@ -45,6 +51,11 @@
   justify-content: center;
   margin-left: 20px;
   width: 4rem;
+}
+
+.new-comment-container input {
+  border: none;
+  width: 100%;
 }
 
 /* For the like button */

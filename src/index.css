@@ -45,8 +45,9 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+  /* padding-bottom: 2rem; */
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: visible;
   background: rgb(58, 115, 255);
   background: linear-gradient(
     0deg,

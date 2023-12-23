@@ -1,3 +1,22 @@
+.card-content {
+  /* display: flex;
+  flex-direction: column; */
+  padding: 0;
+  margin: 0;
+  border-radius: 5px;
+}
+
+.image-new-comment-box {
+  display: inline-block; /* or just 'inline-block' if you prefer */
+  flex-direction: column;
+  align-items: flex-start; /* aligns items to the start of the flex container */
+}
+
+.post-image {
+  max-height: 560px;
+  width: auto; /* ensures the image scales with its height */
+}
+
 .post-card {
   border: 1px solid rgba(0, 0, 0, 0.125);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -8,6 +27,7 @@
 }
 
 .post-header {
+  margin: 2px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

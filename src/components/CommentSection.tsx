@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../utils/store";
-import { TextField } from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { Timestamp, increment } from "firebase/firestore";
 // import { useDispatch } from "react-redux";
@@ -66,11 +65,11 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
     }
   };
 
-  const handleCommentSubmit = ()=> {
-    protectedAction(()=> {
+  const handleCommentSubmit = () => {
+    protectedAction(() => {
       commentSubmit();
-    })
-  }
+    });
+  };
 
   //  console.log(user, ' comment section user')
   return (
@@ -83,12 +82,11 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
         }}
       >
         <div className="new-comment-container">
-          <TextField
-            label="New Comment"
+          <input
+            type="text"
             value={newComment}
             onChange={commentChange}
-            fullWidth
-            sx={{ width: '70%' }} // or any other valu
+            style={{ flexGrow: 1, padding: "10px" }}
           />
           <button type="submit">Submit</button>
         </div>

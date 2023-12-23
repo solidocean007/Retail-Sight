@@ -69,7 +69,7 @@ const ActivityFeed = () => {
     return getActivityItemHeight(windowWidth); // Use the responsive height for regular post items as well
   };
 
-  const hashtagSearch = async () => {
+  const hashtagSearch = async () => { // this function isnt working
     try {
       const hashtagPosts = await getPostsByTag(searchTerm);
       setSearchResults(hashtagPosts);
@@ -314,9 +314,9 @@ const ActivityFeed = () => {
       <List
         ref={listRef}
         className="list-card"
-        height={740}
+        height={700}
         itemCount={itemCount}
-        itemSize={getItemSize} // Type '(index: number) => 600 | 800 | 850 | undefined' is not assignable to type '(index: number) => number'.t
+        itemSize={getItemSize}
         width={getListWidth()}
         itemData={{
           posts: posts,

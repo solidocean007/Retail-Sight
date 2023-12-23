@@ -1,7 +1,7 @@
 // PostCard.tsx
 import React from "react";
 import { useState } from "react";
-import { Card, CardContent, Button } from "@mui/material";
+import { Card, Button } from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
@@ -162,7 +162,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <Card className="post-card dynamic-height" style={{ ...style }}>
-      <CardContent className="card-content">
+      <div className="card-content">
         <div className="post-header">
           <div className="header-top">
             <div className="likes-comments">
@@ -187,12 +187,27 @@ const PostCard: React.FC<PostCardProps> = ({
                 </Button>
               )}
             </div>
-            <div className="share-button">
-              <SharePost
-                postLink={`https://displaygram.com/post/}`}
-                postTitle="Check out this display!"
-              />
+            <div className="share-edit-block">
+              {user?.uid === post.user?.postUserId && (
+                <div className="edit-block">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleEditPost}
+                    className="edit-btn"
+                  >
+                    Edit Post
+                  </Button>
+                </div>
+              )}
+              <div className="share-button">
+                <SharePost
+                  postLink={`https://displaygram.com/post/}`}
+                  postTitle="Check out this display!"
+                />
+              </div>
             </div>
+
             <div>view: {post.visibility}</div>
           </div>
           <div className="header-bottom">
@@ -200,44 +215,31 @@ const PostCard: React.FC<PostCardProps> = ({
               <h3>{post.selectedStore}</h3>
               <h5>{post.storeAddress}</h5>
             </div>
-          
           </div>
           <div className="post-user-details">
-              <div className="share-edit-block">
-                {user?.uid === post.user?.postUserId && (
-                  <div className="edit-block">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleEditPost}
-                      className="edit-btn"
-                    >
-                      Edit Post
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <div onClick={handleOnUserNameClick}>
-                by:<a href=""> {post.user.postUserName}</a>
-              </div>
-              <h5>{formattedDate}</h5>
+            <div onClick={handleOnUserNameClick}>
+              by:<a href=""> {post.user.postUserName}</a>
             </div>
+            <h5>{formattedDate}</h5>
+          </div>
+        </div>
+        <div className="hash-tag-container">
+          {/* Display hashtags above the image */}
+          <PostDescription
+            description={post.description}
+            getPostsByTag={getPostsByTag}
+          />
         </div>
 
-        {/* Display hashtags above the image */}
-        <PostDescription
-          description={post.description}
-          getPostsByTag={getPostsByTag}
-        />
+        <div className="image-new-comment-box">
+          {/* Display the post's image */}
+          {post.imageUrl && (
+            <img className="post-image" src={post.imageUrl} alt="Post image" />
+          )}
 
-        {/* Display the post's image */}
-        {post.imageUrl && (
-          <img className="post-image" src={post.imageUrl} alt="Post image" />
-        )}
-
-        <CommentSection post={post} />
-      </CardContent>
+          <CommentSection post={post} />
+        </div>
+      </div>
       {isEditModalOpen ? (
         <EditPostModal
           post={post}
