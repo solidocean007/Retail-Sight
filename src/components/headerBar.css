@@ -22,7 +22,7 @@
 
 .website-title {
   margin-left: 1rem;
-  color: whitesmoke;
+  color: var(--text-color);
 }
 
 .website-title h1 {
@@ -40,10 +40,7 @@
   width: 16rem;
 }
 
-.filter-menu-button {
-  display: none;
-  /* width: 100%; */
-}
+
 
 .profile-btn, .create-post-btn, .log-out-btn, .filter-menu-button {
   margin-right: 30px;
@@ -51,6 +48,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.filter-menu-button {
+  display: none;
+  /* width: 100%; */
 }
 
 

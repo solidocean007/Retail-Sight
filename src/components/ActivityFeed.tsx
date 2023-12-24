@@ -96,11 +96,13 @@ const ActivityFeed = () => {
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 480) {
       // return 720;
-      return 630;
+      return 650;
     } else if (windowWidth <= 768) {
-      return 725;
+      return 680;
+    } else if (windowWidth <= 900) {
+      return 750;
     } else {
-      return 755;
+      return 850;
     }
   };
 
@@ -314,7 +316,7 @@ const ActivityFeed = () => {
       <List
         ref={listRef}
         className="list-card"
-        height={700}
+        height={740}
         itemCount={itemCount}
         itemSize={getItemSize}
         width={getListWidth()}

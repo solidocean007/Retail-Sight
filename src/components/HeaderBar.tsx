@@ -48,7 +48,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             <h3>
               {currentUser ? (
                 <>
-                  <i class="fa-solid fa-user"></i>
+                  <i className="fa-solid fa-user"></i>
                   {` ${currentUser.firstName} ${currentUser.lastName}`}
                 </>
               ) : (
@@ -64,11 +64,11 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           className="create-post-btn button"
           onClick={handleCreatePostClick}
         >
-          <h3>Create Post</h3>
+          <h3>CAPTURE</h3>
         </button>
 
         <button
-          className="filter-menu-button button"
+          className="filter-menu-button"
           onClick={toggleFilterMenu}
         >
           <h3>Filters</h3>

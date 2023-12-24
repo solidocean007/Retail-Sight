@@ -12,8 +12,8 @@
   align-items: flex-start; /* aligns items to the start of the flex container */
 }
 
-.post-image {
-  max-height: 560px;
+.image-new-comment-box .post-image {
+  max-height: 550px;
   width: auto; /* ensures the image scales with its height */
 }
 
@@ -27,7 +27,7 @@
 }
 
 .post-header {
-  margin: 2px;
+  margin: 0px 2px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -100,8 +100,8 @@ h5 {
 
 .post-card img.post-image {
   border-radius: 5px;
+  margin-bottom: 3px;
   width: auto;
-  margin: 5px auto;
   display: block;
   /* transition: box-shadow 0.5s ease; */
 }
@@ -139,6 +139,12 @@ h5 {
   display: flex;
 }
 
+@media (max-width: 1000px) {
+  .image-new-comment-box .post-image {
+    max-height: 500px;
+    width: auto; /* ensures the image scales with its height */
+  }
+}
 @media (max-width: 670px) {
   .post-card img.post-image {
     height: 450px; 
