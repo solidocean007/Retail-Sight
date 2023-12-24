@@ -15,7 +15,7 @@ interface CommentModalProps {
   onLikeComment: (commentId: string, likes: string[]) => void;
   likes: number;
   onDeleteComment: (commentId: string) => void;
-  likedByUser : boolean;
+  likedByUser: boolean;
 }
 
 const CommentModal: React.FC<CommentModalProps> = ({
@@ -36,12 +36,14 @@ const CommentModal: React.FC<CommentModalProps> = ({
     <Modal open={isOpen} onClose={onClose} className="comment-modal">
       <div className="comment-modal-content">
         {comments.map((comment) => (
+          
           <div key={comment.commentId} className="comment-item">
+            <div className="comment-name-text">
             <a
               onClick={() => onUserNameClick(post, dispatch)}
               className="comment-user-name"
             >
-              {comment.userName}
+              {comment.userName}:
             </a>
             <p className="comment-text"> {comment.text} </p>
             <div className="comment-actions">
@@ -51,16 +53,22 @@ const CommentModal: React.FC<CommentModalProps> = ({
               >
                 {likedByUser ? "❤️" : "🤍"} {comment.likes} 
               </button> */}
-              {currentUser?.uid === comment.userId && (
-                <button
-                onClick={() => comment.commentId && onDeleteComment(comment.commentId)}
-
-                  className="delete-button"
-                >
-                  🗑️
-                </button>
-              )}
             </div>
+            
+              
+            </div>
+            <div className="trash-box">
+                {currentUser?.uid === comment.userId && (
+                  <button
+                    onClick={() =>
+                      comment.commentId && onDeleteComment(comment.commentId)
+                    }
+                    className="delete-button"
+                  >
+                    🗑️
+                  </button>
+                )}
+              </div>
           </div>
         ))}
       </div>

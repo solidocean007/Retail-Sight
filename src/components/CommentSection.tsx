@@ -87,6 +87,7 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
             value={newComment}
             onChange={commentChange}
             style={{ flexGrow: 1, padding: "10px" }}
+            placeholder="New comment"
           />
           <button type="submit">Submit</button>
         </div>

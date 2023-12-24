@@ -1,4 +1,4 @@
-.channel-selector {
+.category-selector {
   width: 45%;
   height: 2rem;
   padding-left: 1rem;
@@ -13,7 +13,4 @@
   select {
     width: 400px;
   }
-  
- 
- 
 }

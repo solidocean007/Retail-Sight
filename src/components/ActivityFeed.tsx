@@ -96,11 +96,11 @@ const ActivityFeed = () => {
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 480) {
       // return 720;
-      return 650;
+      return 630;
     } else if (windowWidth <= 768) {
-      return 745;
+      return 725;
     } else {
-      return 795;
+      return 755;
     }
   };
 

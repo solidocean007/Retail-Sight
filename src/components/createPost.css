@@ -54,6 +54,13 @@ select {
   border-radius: 5px;
 }
 
+.property-zone {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+}
+
 .description-box {
   width: 300px;
 }

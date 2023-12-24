@@ -178,14 +178,6 @@ const PostCard: React.FC<PostCardProps> = ({
               >
                 {likedByUser ? "❤️" : "🤍"}
               </button>
-
-              {commentCount > 0 && (
-                <Button onClick={openCommentModal}>
-                  {showAllComments
-                    ? "Hide Comments"
-                    : `${commentCount} Comments`}
-                </Button>
-              )}
             </div>
             <div className="share-edit-block">
               {user?.uid === post.user?.postUserId && (
@@ -236,7 +228,11 @@ const PostCard: React.FC<PostCardProps> = ({
           {post.imageUrl && (
             <img className="post-image" src={post.imageUrl} alt="Post image" />
           )}
-
+          {commentCount > 0 && (
+            <Button onClick={openCommentModal}>
+              {showAllComments ? "Hide Comments" : `${commentCount} Comments`}
+            </Button>
+          )}
           <CommentSection post={post} />
         </div>
       </div>

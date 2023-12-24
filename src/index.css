@@ -1,43 +1,69 @@
 /* index.css */
 :root {
+  /* Define color palette */
+  --prussian-blue: #0B3C5D;
+  --sky-blue: #328CC1;
+  --gold-leaf: #D9B310;
+  --ivory-black: #1D2731;
+  --coral: #ff6f61;
+  --sage-green: #9cafb7;
+  --charcol-grey: #36454f;
+
+  /* Default theme (light) */
+
+  --background-color: var(--sky-blue);
+  --text-color: var(--ivory-black);
+  --header-title: var(--gold-leaf);
+  --button-background: var(--gold-leaf);
+  --button-text-color: var(--prussian-blue);
+  --border-color: var(--gold-leaf);
+  --input-background: var(--sage-green);
+  --input-text-color: var(var(--ivory-black));
+  
+  /* Common styles */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
-  /* Light theme */
-  --light-background-color: #ffffff;
-  --light-text-color: #242424;
-  --light-button-background: #eaeaea;
-
-  /* Dark theme */
-  --dark-background-color: #242424;
-  --dark-text-color: rgba(255, 255, 255, 0.87);
-  --dark-button-background: #1a1a1a;
-
-  /* Current theme - default to light */
-  --background-color: var(--light-background-color);
-  --text-color: var(--light-text-color);
-  --button-background: var(--light-button-background);
 }
 
 [data-theme="dark"] {
-  --background-color: var(--dark-background-color);
-  --text-color: var(--dark-text-color);
-  --button-background: var(--dark-button-background);
-
-  .sign-up-body {
-    --background-color: rgb(35, 21, 61);
-  }
+  /* Dark theme overrides */
+  --background-color: var(--ivory-black);
+  --text-color: var(--gold--leaf);
+  --header-title: var(--charcol-grey);
+  --button-background: var(--prussian-blue);
+  --button-text-color: var(--gold-leaf);
+  --border-color: var(--sky-blue);
+  --input-background: var(--ivory-black);
+  --input-text-color: var(var(--gold-leaf));
 }
+
+/* Assuming the use of CSS custom properties defined in :root */
+/* Light Mode */
+a {
+  font-weight: 500;
+  color: var(--sky-blue); /* Sky Blue for light mode */
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: darken(var(--sky-blue), 10%); /* Slightly darker Sky Blue on hover */
+}
+
+/* Dark Mode */
+[data-theme="dark"] a {
+  color: var(--gold-leaf); /* Gold Leaf for dark mode */
+}
+
+[data-theme="dark"] a:hover {
+  color: lighten(var(--gold-leaf), 10%); /* Slightly lighter Gold Leaf on hover */
+}
+
 
 html,
 body,
@@ -48,16 +74,12 @@ body,
   /* padding-bottom: 2rem; */
   overflow-x: hidden;
   overflow-y: visible;
-  background: rgb(58, 115, 255);
-  background: linear-gradient(
-    0deg,
-    rgba(58, 115, 255, 1) 61%,
-    rgba(35, 38, 60, 1) 99%
-  );
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 #root {
-  max-width: 1500px;
+  max-width: 1800px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -75,21 +97,13 @@ body {
   width: 100%;
   min-width: 320px;
   min-height: 100vh;
+  background-color: black;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
 }
 
 h1 {
@@ -104,8 +118,9 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #646cff;
-  color: whitesmoke;
+  background-color: var(--button-background);
+  color: var(--button-text-color);
+  border-color: var(--border-color);
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -115,14 +130,6 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-.create-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  scroll-behavior: smooth;
-  /* transform: translate(-50%, -50%); */
 }
 
 /* Default styles for desktops and larger screens here */

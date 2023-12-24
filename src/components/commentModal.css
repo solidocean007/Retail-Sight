@@ -2,24 +2,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
 }
 
 .comment-modal-content {
-  background-color: white;
+  display: flex;
+  background-color: var(--input-background);
+  color: var(--input-text-color);
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 5px;
   max-height: 80%;
   overflow-y: auto;
-  width: 80%;
+  width: 50%;
 }
 
 .comment-item {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid #ddd;
+  width: 100%;
+}
+
+.comment-name-text {
+  display: flex;
+  align-items: center;
 }
 
 .comment-user-name {
@@ -29,7 +38,7 @@
 }
 
 .comment-text {
-  margin: 5px 0;
+  margin: 5px 5px;
 }
 
 .comment-actions {

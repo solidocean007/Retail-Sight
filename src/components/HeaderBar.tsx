@@ -6,6 +6,8 @@ import "./headerBar.css";
 import MenuTab from "./MenuTab";
 import { useState } from "react";
 
+
+
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
   const [showMenuTab, setShowMenuTab] = useState(false);
@@ -44,10 +46,14 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             onClick={currentUser ? openProfile : goToSignUpLogin}
           >
             <h3>
-              {currentUser
-                ? `Welcome, ${currentUser?.firstName} ${currentUser?.lastName} `
-                : `Sign-up / Login `}
-              {/*Here is the line that loses the users data on page refresh*/}
+              {currentUser ? (
+                <>
+                  <i class="fa-solid fa-user"></i>
+                  {` ${currentUser.firstName} ${currentUser.lastName}`}
+                </>
+              ) : (
+                "Sign-up / Login"
+              )}
             </h3>
           </button>
         </div>
@@ -74,7 +80,9 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       >
         ☰
       </div>
-      {showMenuTab && <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab}/>}
+      {showMenuTab && (
+        <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab} />
+      )}
     </div>
   );
 };

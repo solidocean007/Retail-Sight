@@ -14,7 +14,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({ description, g
         if (word.startsWith("#")) {
           return (
             <span key={index} className={styles.hashtag} onClick={() => getPostsByTag(word)}>
-              {word}
+              <a href="">{word}</a>
             </span>
           );
         }

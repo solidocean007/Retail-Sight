@@ -1,7 +1,7 @@
 // CategorySelector.tsx
 import React from "react";
 // import { CategoryType } from "../utils/types";
-import './createPost.css'
+import './categorySelector.css'
 
 interface CategorySelectorProps {
   selectedCategory?: CategoryType;
@@ -30,6 +30,8 @@ interface CategorySelectorProps {
 const CategorySelector: React.FC<CategorySelectorProps> = ({ selectedCategory, onCategoryChange }) => {
   return (
     <select 
+      className="category-selector"
+      title="title selector"
       value={selectedCategory}
       onChange={(e) => onCategoryChange(e.target.value as CategoryType)}
     >
