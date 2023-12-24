@@ -150,3 +150,9 @@ h5 {
     height: 450px; 
   }
 }
+
+@media (max-width: 470px) {
+  .post-card img.post-image {
+    height: 400px; 
+  }
+}

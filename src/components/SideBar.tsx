@@ -73,6 +73,9 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
 
   const handleClearFiltersClick = () => {
     protectedAction(clearFilters);
+    if (window.innerWidth <= 900) { 
+      toggleFilterMenu();
+    }
   };
 
   return (

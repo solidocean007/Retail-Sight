@@ -32,6 +32,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import useProtectedAction from "../utils/useProtectedAction";
+import { showMessage } from "../Slices/snackbarSlice";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
@@ -69,10 +70,23 @@ const ActivityFeed = () => {
     return getActivityItemHeight(windowWidth); // Use the responsive height for regular post items as well
   };
 
-  const hashtagSearch = async () => { // this function isnt working
+  const hashtagSearch = async () => {
     try {
       const hashtagPosts = await getPostsByTag(searchTerm);
-      setSearchResults(hashtagPosts);
+      if (hashtagPosts.length === 0) {
+        // Show snackbar message
+        dispatch(showMessage("No posts for that search found"));
+        // Load posts from IndexedDB or fetch again
+        const cachedPosts = await getPostsFromIndexedDB();
+        if (cachedPosts && cachedPosts.length > 0) {
+          dispatch(setPosts(cachedPosts));
+        } else {
+          // Fetch posts again from Firestore
+          // Your logic to fetch posts again
+        }
+      } else {
+        setSearchResults(hashtagPosts);
+      }
     } catch (error) {
       console.error("Error searching posts by hashtag:", error);
       // Optionally show an error message to the user
@@ -80,9 +94,11 @@ const ActivityFeed = () => {
   };
 
   const handleHashtagSearch = () => {
-    protectedAction(() => {
-      hashtagSearch();
-    });
+    if (searchTerm.length > 0) {
+      protectedAction(() => {
+        hashtagSearch();
+      });
+    }
   };
 
   // Mount alert
