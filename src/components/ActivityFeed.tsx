@@ -7,9 +7,8 @@ import NoContentCard from "./NoContentCard";
 import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
-import { fetchInitialPostsBatch } from "../thunks/postsThunks";
-import { Input } from "@mui/material";
 import getPostsByTag from "../utils/PostLogic/getPostsByTag";
+import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import "./activityFeed.css";
 import { PostType, PostWithID } from "../utils/types";
 import {
@@ -31,15 +30,13 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import useProtectedAction from "../utils/useProtectedAction";
-import { showMessage } from "../Slices/snackbarSlice";
+import HashTagSearchBar from "./HashTagSearchBar";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
-  const protectedAction = useProtectedAction();
   const listRef = useRef<List>(null);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -49,7 +46,6 @@ const ActivityFeed = () => {
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  const [searchTerm, setSearchTerm] = React.useState("");
   const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
     null
   );
@@ -70,36 +66,7 @@ const ActivityFeed = () => {
     return getActivityItemHeight(windowWidth); // Use the responsive height for regular post items as well
   };
 
-  const hashtagSearch = async () => {
-    try {
-      const hashtagPosts = await getPostsByTag(searchTerm);
-      if (hashtagPosts.length === 0) {
-        // Show snackbar message
-        dispatch(showMessage("No posts for that search found"));
-        // Load posts from IndexedDB or fetch again
-        const cachedPosts = await getPostsFromIndexedDB();
-        if (cachedPosts && cachedPosts.length > 0) {
-          dispatch(setPosts(cachedPosts));
-        } else {
-          // Fetch posts again from Firestore
-          // Your logic to fetch posts again
-        }
-      } else {
-        setSearchResults(hashtagPosts);
-      }
-    } catch (error) {
-      console.error("Error searching posts by hashtag:", error);
-      // Optionally show an error message to the user
-    }
-  };
-
-  const handleHashtagSearch = () => {
-    if (searchTerm.length > 0) {
-      protectedAction(() => {
-        hashtagSearch();
-      });
-    }
-  };
+ 
 
   // Mount alert
   useEffect(() => {
@@ -306,28 +273,7 @@ const ActivityFeed = () => {
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
-      <div className="theme-search-section">
-        <div className="hashtag-search-box">
-          {/* call the handleHashtagSearch on submit */}
-          <Input
-            placeholder="Search by hashtag"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleHashtagSearch();
-              }
-            }}
-          />
-          <button
-            className="search-button"
-            onClick={handleHashtagSearch}
-            color="white"
-          >
-            Search
-          </button>
-        </div>
-      </div>
+      <HashTagSearchBar setSearchResults={setSearchResults} />
 
       <List
         ref={listRef}
