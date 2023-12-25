@@ -18,7 +18,8 @@
   --button-text-color: var(--prussian-blue);
   --border-color: var(--gold-leaf);
   --input-background: var(--sage-green);
-  --input-text-color: var(var(--ivory-black));
+  --input-text-color: var(--ivory-black);
+  --form-background-color: var(--sage-green);
   
   /* Common styles */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -40,7 +41,8 @@
   --button-text-color: var(--gold-leaf);
   --border-color: var(--sky-blue);
   --input-background: var(--ivory-black);
-  --input-text-color: var(var(--gold-leaf));
+  --input-text-color: var(--gold-leaf);
+  --form-background-color: var(--charcol-grey);
 }
 
 /* Assuming the use of CSS custom properties defined in :root */
@@ -123,6 +125,7 @@ button {
   border-color: var(--border-color);
   cursor: pointer;
   transition: border-color 0.25s;
+  box-shadow: 1px 3px 4px;
 }
 button:hover {
   border-color: #646cff;

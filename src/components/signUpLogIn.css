@@ -1,6 +1,11 @@
 /* signUpLogin.css */
 .sign-up-container {
-  max-width: 100%;
+  border-radius: 5px;
+  width: auto;
+  max-width: 100vw;
+  height: auto;
+  background-color: var(--form-background-color);
+  padding: 10px;
 }
 
 .MuiFormControl-root {
@@ -9,14 +14,6 @@
 
 .MuiInputBase-root {
   max-width: 100%;
-}
-
-body {
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center center;  /* Adjusts the position */
-  width: 100vw;
-  height: 100vh;
 }
 
 .title {
@@ -29,8 +26,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #0077dd;
-  min-height: 100vh;
+  background-color:var(--background-color);
+  height: 100vh;
   min-width: 100vw;
 }
 
@@ -40,19 +37,7 @@ body {
 }
 
 /* Container that surrounds the form */
-.outer-container {
-  width: 80%;
-  max-width: 600px;
-  margin: 10px 10px 200px;
-  padding: 20px;
-  border: 2px solid #333;
-  border-radius: 8px;
-  /* background: linear-gradient(160deg, #1a1a1a, #0e0e0e); */
-  background-color: var(--background-color);
-  color: var(--text-color);
-  position: relative;
-  overflow: hidden;
-}
+
 
 /* Lines that jut out from the sides */
 .outer-container::before,
@@ -74,32 +59,11 @@ body {
   right: -10px;
 }
 
-/* Form itself */
-.form-container {
-  padding: 20px;
-  border: 2px solid #444;
-  border-radius: 4px;
-  background: #222;
-  position: relative;
-}
-
 /* Input styles */
-.form-container input[type="text"],
-.form-container input[type="password"],
-.form-container textarea {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: none;
-  border-bottom: 2px solid #555;
-  background: #333;
-  color: #eee;
-  font-size: 1rem;
-  outline: none;
-}
 
 button {
-  background-color: var(--button-background);
+  /* background-color: var(--button-background); */
+  background-color: pink;
 }
 
 /* Pulsing light effect */
@@ -115,28 +79,3 @@ button {
   }
 }
 
-.form-container::before {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 2px;
-  background: #00f;
-  animation: pulseLight 2s infinite;
-}
-
-/* Button styling (if needed) */
-.form-container button {
-  padding: 10px 20px;
-  background: #00f;
-  border: none;
-  color: #eee;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.form-container button:hover {
-  background: #0077dd;
-}

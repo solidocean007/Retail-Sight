@@ -37,7 +37,6 @@ const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
-  const listRef = useRef<List>(null);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   // Add a new state to track which posts are expanded

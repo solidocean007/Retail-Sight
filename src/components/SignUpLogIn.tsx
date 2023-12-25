@@ -29,8 +29,36 @@ import "./signUpLogIn.css";
 // Import Snackbar related actions
 // import { showMessage, hideMessage } from "../Slices/snackbarSlice";  // hideMessage is defined but never used.  What is it for?
 import { showMessage } from "../Slices/snackbarSlice"; // hideMessage is defined but never used.  What is it for?
+// import { useStyles } from "../utils/PostLogic/makeStyles";
 
 export const SignUpLogin = () => {
+  // const classes = useStyles();
+  // const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  // const [textFieldStyle, setTextFieldStyle] = useState({});
+
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     setWindowWidth(window.innerWidth);
+  //   };
+
+  //   window.addEventListener('resize', handleResize);
+
+  //   return () => {
+  //     window.removeEventListener('resize', handleResize);
+  //   };
+  // }, []);
+
+  // useEffect(() => {
+  //   if (windowWidth < 600) { // Example breakpoint for narrow screens
+  //     setTextFieldStyle({ 
+  //       width: '80%',
+  //       height: '40px', // Adjust height as needed
+  //     });
+  //   } else {
+  //     setTextFieldStyle({ width: '100%', height: 'auto' }); // Default height
+  //   }
+  // }, [windowWidth]);
+
   useEffect(() => {
     console.log("SignUpLogin mounts");
     return () => {
@@ -182,14 +210,14 @@ export const SignUpLogin = () => {
   return (
     <div className="sign-up-body">
       <h2 className="title">Displaygram</h2>
-      <div className="outer-container">
-        <Container className="sign-up-container" component="main" maxWidth="xs">
+      {/* <div className="outer-container"> */}
+        <div className="sign-up-container" >
           <Typography variant="h5">
             {isSignUp ? "Sign Up" : "Log In"}
           </Typography>
-          <Button variant="contained" color="primary" onClick={setFormMode}>
+          <button onClick={setFormMode}>
             {formButtonMessage()}
-          </Button>
+          </button>
           <form noValidate onSubmit={onSubmit}>
             <div className="signUp-login-form">
               {isSignUp ? (
@@ -203,6 +231,7 @@ export const SignUpLogin = () => {
                       onChange={(e) =>
                         handleInputChange("firstNameInput", e.target.value)
                       }
+                      // InputProps={{ classes: { input: classes.input } }}
                     />
                     <ErrorMessage
                       message={errorsOfInputs.firstNameInputError}
@@ -213,12 +242,14 @@ export const SignUpLogin = () => {
                     />
 
                     <TextField
+                     className="sign-up-text-field"
                       label="Last Name"
                       name="lastNameInput"
                       value={userInputs.lastNameInput}
                       onChange={(e) =>
                         handleInputChange("lastNameInput", e.target.value)
                       }
+                      // style={textFieldStyle}
                     />
                     <ErrorMessage
                       message={errorsOfInputs.lastNameInputError}
@@ -235,6 +266,7 @@ export const SignUpLogin = () => {
                       onChange={(e) =>
                         handleInputChange("emailInput", e.target.value)
                       }
+                      // style={textFieldStyle}
                     />
                     <ErrorMessage
                       message={errorsOfInputs.emailInputError}
@@ -250,6 +282,7 @@ export const SignUpLogin = () => {
                       onChange={(e) =>
                         handleInputChange("companyInput", e.target.value)
                       }
+                      // style={textFieldStyle}
                     />
                     <ErrorMessage
                       message={errorsOfInputs.companyInputError}
@@ -266,6 +299,7 @@ export const SignUpLogin = () => {
                       onChange={(e) =>
                         handleInputChange("phoneInput", e.target.value)
                       }
+                      // style={textFieldStyle}
                     />
                     <ErrorMessage
                       message={errorsOfInputs.phoneInputError}
@@ -282,6 +316,7 @@ export const SignUpLogin = () => {
                       onChange={(e) =>
                         handleInputChange("passwordInput", e.target.value)
                       }
+                      // style={textFieldStyle}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
@@ -316,6 +351,7 @@ export const SignUpLogin = () => {
                       onChange={(e) =>
                         handleInputChange("verifyPasswordInput", e.target.value)
                       }
+                      // style={textFieldStyle}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
@@ -353,6 +389,7 @@ export const SignUpLogin = () => {
                       onChange={(e) =>
                         handleInputChange("emailInput", e.target.value)
                       }
+                      // style={textFieldStyle}
                     />
                     <ErrorMessage
                       message={errorsOfInputs.emailInputError}
@@ -369,6 +406,7 @@ export const SignUpLogin = () => {
                       onChange={(e) =>
                         handleInputChange("passwordInput", e.target.value)
                       }
+                      // style={textFieldStyle}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
@@ -399,12 +437,12 @@ export const SignUpLogin = () => {
               )}
             </div>
             {signUpError && <div className="error">{signUpError}</div>}
-            <Button type="submit" variant="contained" color="primary">
+            <button type="submit">
               Submit
-            </Button>
+            </button>
           </form>
-        </Container>
-      </div>
+        </div>
+      {/* </div> */}
     </div>
   );
 };
