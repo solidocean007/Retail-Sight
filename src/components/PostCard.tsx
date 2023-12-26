@@ -194,8 +194,10 @@ const PostCard: React.FC<PostCardProps> = ({
               )}
               <div className="share-button">
                 <SharePost
-                  postLink={`https://displaygram.com/post/}`}
+                  // postLink={`https://displaygram.com/post/${post.id}`}
+                  postLink={`https://displaygram.com/`}
                   postTitle="Check out this display!"
+                  postId={post.id}
                 />
               </div>
             </div>

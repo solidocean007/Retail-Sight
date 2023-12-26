@@ -1,26 +1,36 @@
+// SharePost.tsx
 import React from 'react';
 import './shareButton.css'
 
 interface SharePostProps {
   postLink: string;
   postTitle: string;
+  postId: string;
 }
 
-const SharePost: React.FC<SharePostProps> = ({ postLink, postTitle }) => {
+const SharePost: React.FC<SharePostProps> = ({ postLink, postTitle, postId }) => {
   
-  const handleShareClick = async () => {
+   // Generate the URL with the post ID
+   const createShareableLink = () => {
+    return `${postLink}?postId=${postId}`;
+  };
+
+   const handleShareClick = async () => {
+    const shareableLink = createShareableLink();
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: postTitle,
-          url: postLink,
+          url: shareableLink,
         });
       } catch (error) {
         console.error('Error sharing:', error);
       }
     } else {
-      // Fallback for unsupported devices.
-      console.log('Web Share API not supported. Provide a fallback here.');
+      // Fallback for unsupported devices or if Web Share API is not available.
+      navigator.clipboard.writeText(shareableLink);
+      console.log('Link copied to clipboard');
     }
   };
 

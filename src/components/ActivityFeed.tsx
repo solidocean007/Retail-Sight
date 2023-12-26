@@ -1,5 +1,4 @@
-// import React, { useEffect, useRef, useState } from "react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 // import { FixedSizeList as List } from "react-window";
 import { VariableSizeList as List } from "react-window";
 import { useSelector } from "react-redux";
@@ -38,6 +37,8 @@ const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
+  const listRef = useRef<List>(null);
+
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   // Add a new state to track which posts are expanded
@@ -51,6 +52,7 @@ const ActivityFeed = () => {
   );
 
   const posts = useSelector((state: RootState) => state.posts.posts);
+  console.log(posts, ' : posts')
   const loading = useSelector((state: RootState) => state.posts.loading);
 
   // Determine which posts to display - search results or all posts
@@ -66,7 +68,19 @@ const ActivityFeed = () => {
     return getActivityItemHeight(windowWidth); // Use the responsive height for regular post items as well
   };
 
- 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get('postId');
+    
+    if (postId) {
+      const postIndex = displayPosts.findIndex(p => p.id === postId);
+      if (postIndex !== -1) {
+        const adCountBeforePost = Math.floor(postIndex / AD_INTERVAL);
+        const adjustedIndex = postIndex + adCountBeforePost;
+        listRef.current?.scrollToItem(adjustedIndex, 'start');
+      }
+    }
+  }, [displayPosts]);
 
   // Mount alert
   useEffect(() => {
@@ -276,7 +290,7 @@ const ActivityFeed = () => {
       <HashTagSearchBar setSearchResults={setSearchResults} />
 
       <List
-        // ref={listRef}
+        ref={listRef}
         className="list-card"
         height={740}
         itemCount={itemCount}
