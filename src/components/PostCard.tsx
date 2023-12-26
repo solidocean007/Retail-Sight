@@ -228,11 +228,14 @@ const PostCard: React.FC<PostCardProps> = ({
           {post.imageUrl && (
             <img className="post-image" src={post.imageUrl} alt="Post image" />
           )}
-          {commentCount > 0 && (
-            <Button onClick={openCommentModal}>
-              {showAllComments ? "Hide Comments" : `${commentCount} Comments`}
-            </Button>
-          )}
+          <div className="comment-button-container">
+            {commentCount > 0 && (
+              <button onClick={openCommentModal}>
+                {showAllComments ? "Hide Comments" : `${commentCount} Comments`}
+              </button>
+            )}
+          </div>
+
           <CommentSection post={post} />
         </div>
       </div>

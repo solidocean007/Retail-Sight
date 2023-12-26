@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+// import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 // import { FixedSizeList as List } from "react-window";
 import { VariableSizeList as List } from "react-window";
 import { useSelector } from "react-redux";
@@ -275,7 +276,7 @@ const ActivityFeed = () => {
       <HashTagSearchBar setSearchResults={setSearchResults} />
 
       <List
-        ref={listRef}
+        // ref={listRef}
         className="list-card"
         height={740}
         itemCount={itemCount}
