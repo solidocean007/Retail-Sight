@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFirestore";
 
 // Import necessary Material-UI components
-import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
