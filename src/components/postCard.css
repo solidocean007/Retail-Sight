@@ -83,6 +83,11 @@ h5 {
   justify-content: flex-start;
 }
 
+.store-name-number {
+  display: flex;
+  width: 100%;
+}
+
 .store-details h5 {
   display: flex;
   justify-content: flex-start;

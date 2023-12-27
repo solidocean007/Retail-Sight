@@ -1,0 +1,8 @@
+.left-side-bar {
+  min-width: 200px;
+  background-color: var(--charcol-grey);
+  height: 100%;
+  margin: 5px;
+  width: 100%;
+  padding: 5px;
+}

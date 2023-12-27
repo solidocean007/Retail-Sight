@@ -12,6 +12,10 @@
   padding: 0.2rem .5rem;
 }
 
+.about-button {
+  display: none;
+}
+
 .hamburger-menu-button {
   display: none; /* Hidden by default */
   cursor: pointer;

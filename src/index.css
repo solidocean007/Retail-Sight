@@ -35,7 +35,7 @@
 [data-theme="dark"] {
   /* Dark theme overrides */
   --background-color: var(--ivory-black);
-  --text-color: var(--gold--leaf);
+  --text-color: var(--gold-leaf);
   --header-title: var(--charcol-grey);
   --button-background: var(--prussian-blue);
   --button-text-color: var(--gold-leaf);

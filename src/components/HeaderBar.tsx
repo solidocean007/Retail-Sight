@@ -11,6 +11,7 @@ import { useState } from "react";
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
   const [showMenuTab, setShowMenuTab] = useState(false);
+  // const [showAbout, setShowAbout] = useState(false);
   const navigate = useNavigate();
   const protectedAction = useProtectedAction();
 
@@ -66,6 +67,12 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
         >
           <h3>CAPTURE</h3>
         </button>
+
+        {/* <button
+        className="about-button"
+        >
+        About
+        </button> */}
 
         <button
           className="filter-menu-button"

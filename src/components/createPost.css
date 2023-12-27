@@ -1,11 +1,22 @@
-.property-zone, .supplier-brands-selector {
+.property-zone,
+.supplier-brands-selector {
   display: flex;
   justify-content: space-around;
 }
 
 .create-post-container {
-  background: rgb(2,0,36);
-background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgba(23,23,210,1) 30%, rgba(0,212,255,1) 100%);
+  /* background: rgb(2, 0, 36);
+  background: linear-gradient(
+    180deg,
+    rgba(2, 0, 36, 1) 0%,
+    rgba(23, 23, 210, 1) 30%,
+    rgba(0, 212, 255, 1) 100%
+  ); */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background-color: var(--form-background-color);
   padding: 5px;
   border-radius: 5px;
   width: 100%;
@@ -17,8 +28,7 @@ background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgba(23,23,210,1) 30%, rg
   display: flex;
   justify-content: space-around;
   margin: 15px 0px;
-  width: 100%;
-  
+  width: 80%;
 }
 
 .image-selection-box {
@@ -36,7 +46,6 @@ background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgba(23,23,210,1) 30%, rg
   max-height: 400px; /* Set a maximum height for the image container */
   width: 100%; /* Container takes full width */
   /* border: 1px solid black; */
-  
 }
 
 .post-image {
@@ -45,8 +54,8 @@ background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgba(23,23,210,1) 30%, rg
   /* max-width: 100%; Make sure the image is not wider than the container */
 }
 
-
-h4, h6 {
+h4,
+h6 {
   margin: 3px;
 }
 
@@ -74,5 +83,4 @@ select {
   .image-box {
     max-height: 250px;
   }
-
 }

@@ -58,15 +58,15 @@ export interface UserType {
 //   | "Cookies and Pastries"
 
 export interface PostType {
-  // id: string;
   category: CategoryType | '';
   channel: ChannelType | '';
   description?: string;
   imageUrl?: string;
   selectedStore?: string;
+  storeNumber?: string;
   storeAddress: string;
-  state?: string;  // Added state
   city?: string;   // Added city
+  state?: string;  // Added state
   visibility?: 'public' | 'company' | 'supplier' | 'private';
   timestamp?: string;
   user: {

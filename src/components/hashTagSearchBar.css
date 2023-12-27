@@ -1,0 +1,25 @@
+.theme-search-section {
+  display: flex;
+  justify-content: center;
+  max-width: 100vw;
+}
+
+.hashtag-search-box {
+  background-color: var(--form-background-color);
+  display: flex;
+  width: 60%;
+  border-radius: 5px;
+  padding: 3px;
+  margin: 5px;
+  justify-content: center;
+}
+
+.search-button {
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--button-background);
+  color: var(--button-text-color);
+  font-size: 1rem;
+}

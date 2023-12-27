@@ -3,18 +3,18 @@ import { useEffect, useRef, useState } from "react";
 import { PostType } from "../utils/types";
 import { updateLocationsCollection } from "../utils/PostLogic/updateLocationsCollection";
 import './storeSelector.css'
+// import store from "../utils/store";
 
 // Assuming you've refactored the GOOGLE_MAPS_KEY import using Vite
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 interface StoreLocatorProps {
   post: PostType;
-  handleSelectedStore: (
-    storeName: string,
-    storeAddress: string,
-    state?: string,
-    city?: string
-  ) => void;
+  onStoreNameChange: (storeName: string) => void;
+  onStoreNumberChange: (newStoreNumber: string) => void;
+  onStoreAddressChange: (address: string) => void;
+  onStoreCityChange: (city: string) => void;
+  onStoreStateChange: (newStoreState: string) => void;
 }
 
 declare global {
@@ -25,16 +25,33 @@ declare global {
 
 const StoreLocator: React.FC<StoreLocatorProps> = ({
   post,
-  handleSelectedStore,
+  onStoreNameChange,
+  onStoreNumberChange,
+  onStoreAddressChange,
+  onStoreCityChange,
+  onStoreStateChange,
 }) => {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [selectedPlace, setSelectedPlace] =
     useState<google.maps.places.PlaceResult | null>(null);
+  
 
   const renderCountMap = useRef(0);
   const renderCountLoc = useRef(0);
 
+  // Function to handle store name input changes
+  const handleStoreNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onStoreNameChange(e.target.value);
+  };
+
+  // Function to handle store number input changes
+  const handleStoreNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onStoreNumberChange(e.target.value);
+  };
+
+ 
+  
   useEffect(() => {
     console.log("Component mounted!");
     return () => {
@@ -82,6 +99,17 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
 
   // The updated useEffect hook
   useEffect(() => {
+
+  // Function to update store details when a store is selected on the map
+const updateStoreDetails = (name: string, address: string, city: string, state: string) => {
+  onStoreNameChange(name);
+  onStoreAddressChange(address);
+  onStoreCityChange(city);
+  onStoreStateChange(state);
+  // Reset the store number when a new store is selected
+  onStoreNumberChange('');
+};
+
     if (post.storeAddress !== previousStoreAddressRef.current) {
       renderCountLoc.current += 1;
       console.log(
@@ -128,7 +156,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
 
                   const city = cityComponent ? cityComponent.long_name : "";
                   const state = stateComponent ? stateComponent.short_name : "";
-
+                  console.log(state, city)
                   // Call the callback with the city and state
                   callback(state, city);
                 }
@@ -158,16 +186,14 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
 
                 // Retrieve city and state for the clicked place
                 if (firstResult.place_id) {
-                  fetchCityAndState(
-                    firstResult.place_id,
-                    (fetchedState, fetchedCity) => {
-                      // Now that we have the state and city, handle the store selection
-                      handleSelectedStore(
-                        firstResult.name || "",
-                        firstResult.vicinity || "",
-                        fetchedState,
-                        fetchedCity
-                      );
+                  fetchCityAndState(firstResult.place_id, (fetchedState, fetchedCity) => {
+                    // Use updateStoreDetails to update store information
+                    updateStoreDetails(
+                      firstResult.name || "",
+                      firstResult.vicinity || "",
+                      fetchedCity,
+                      fetchedState
+                    );
                       // Update Firestore with the new location data
                       updateLocationsCollection(fetchedState, fetchedCity);
                     }
@@ -183,19 +209,31 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
         previousStoreAddressRef.current = post.storeAddress;
       }
     }
-  }, [isMapLoaded, handleSelectedStore, post.storeAddress]);
+  }, [isMapLoaded, post.storeAddress, onStoreNumberChange, onStoreAddressChange, onStoreCityChange, onStoreNameChange, onStoreStateChange]);
+
+  
 
   return (
     <div className="map-container">
-      <div ref={mapRef} style={{ width: "250px", height: "130px" }}></div>
-      <input
-        type="text"
-        // value={selectedPlace?.name || ""}
-        value={post.selectedStore}
-        onChange={(e) =>
-          handleSelectedStore(e.target.value, selectedPlace?.vicinity || "")
-        }
-      />
+      <div ref={mapRef} style={{ width: "300px", height: "200px" }}></div>
+      <div className="store-input-box">
+        <div className="store-name-input-box">
+          <p>Store name:</p>
+          <input
+            type="text"
+            value={selectedPlace?.name || post.selectedStore}
+            onChange={handleStoreNameInputChange}
+          />
+        </div>
+        <div className="store-number-input-box">
+          <p>Store number:</p>
+          <input
+            type="text"
+            value={post.storeNumber}
+            onChange={handleStoreNumberChange}
+          />
+        </div>
+      </div>
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import React from "react";
 import { setPosts } from "../Slices/postsSlice";
+import './hashTagSearchBar.css'
 
 const HashTagSearchBar = ({
   setSearchResults,

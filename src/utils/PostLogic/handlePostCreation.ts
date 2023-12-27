@@ -1,3 +1,4 @@
+// handlePostCreation.ts
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { PostType } from "../types";
@@ -13,6 +14,7 @@ import {
   updateChannelsInFirestore,
 } from "./updateFirestore";
 import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
+import { DocumentReference, deleteDoc, updateDoc } from "firebase/firestore";
 // import { fetchUserFromFirebase } from "../userData/fetchUserFromFirebase";
 
 export const useHandlePostSubmission = () => {
@@ -22,7 +24,6 @@ export const useHandlePostSubmission = () => {
 
   const handlePostSubmission = async (post: PostType, selectedFile: File) => {
     const user = auth.currentUser;
-    console.log(user, " : user");
     if (!user || !userData) return;
     // const uid = user.uid;
 
@@ -31,66 +32,79 @@ export const useHandlePostSubmission = () => {
       hashtags = extractHashtags(post.description);
     }
 
+    let newDocRef: DocumentReference | null = null; // Initialize as null
+
     try {
-      console.log(userData, ": userData");
       if (!userData) {
-        console.error("User data not found for ID:", user.uid);
-        return;
+        throw new Error("User data not found.");
+        // return; why not return here?
       }
 
-      if (post.imageUrl) {
-        const downloadURL = await uploadImageToStorage(user.uid, selectedFile);
+      const postDataWithoutImage = {
+        category: post.category,
+        channel: post.channel,
+        description: post.description,
+        imageUrl: "", // Temporary placeholder
+        selectedStore: post.selectedStore,
+        storeNumber: post.selectedStoreNumber,
+        storeAddress: post.storeAddress,
+        city: post.city,
+        state: post.state,
+        visibility: post.visibility,
+        supplier: post.supplier,
+        brands: post.brands,
+        timestamp: new Date().toISOString(),
+        user: {
+          postUserName: user.displayName || "Unknown",
+          postUserId: user.uid,
+          postUserCompany: userData.company,
+          postUserEmail: userData.email,
+        },
+        hashtags: hashtags,
+        commentCount: 0,
+        likes: [],
+      };
 
-        const postData = {
-          category: post.category,
-          channel: post.channel,
-          description: post.description,
-          imageUrl: downloadURL,
-          selectedStore: post.selectedStore,
-          storeAddress: post.storeAddress,
-          state: post.state,
-          city: post.city,
-          visibility: post.visibility,
-          supplier: post.supplier,
-          brands: post.brands,
-          timestamp: new Date().toISOString(),
-          user: {
-            postUserName: user.displayName || "Unknown",
-            postUserId: user.uid,
-            postUserCompany: userData.company,
-            postUserEmail: userData.email,
-          },
-          hashtags: hashtags,
-          commentCount: 0,
-          likes: [],
-        };
+      // Add post to 'posts' collection and store the reference
+      // newDocRef = await addDoc(collection(db, "posts"), postDataWithoutImage);
+      // Create the post and get back the docRef and postData
+      // Add post to 'posts' collection and store the reference
+      newDocRef = await addPostToFirestore(db, postDataWithoutImage);
 
-        console.log("Channel:", post.channel);
-        console.log("Category:", post.category);
+     // Now upload the image and get the URL
+     const downloadURL = await uploadImageToStorage(user.uid, selectedFile);
 
-        // Add post to 'posts' collection
-        const newDocRef = await addPostToFirestore(db, postData); // adds the postData as a new post.
-        const newPostWithID = { ...postData, id: newDocRef.id };
+      // Then update the document with the imageUrl using the newDocRef returned earlier
+      await updateDoc(newDocRef, { imageUrl: downloadURL }); // Argument of type '{ docRef: DocumentReference<any, DocumentData>; postData: any; }' is not assignable to parameter of type 'DocumentReference<unknown, { imageUrl: string; }>'.
 
-        // Dispatch action to add this new post to Redux state
-        dispatch(addNewPost(newPostWithID)); // Add the post to Redux
+     // Now create newPostWithID with the imageUrl and the id from newDocRef
+     const newPostWithID = {
+      ...postDataWithoutImage,
+      imageUrl: downloadURL,
+      id: newDocRef.id, // Property 'id' does not exist on type '{ docRef: DocumentReference<any, DocumentData>; postData: any; }'
+    };
 
-        // Add the new post to IndexedDB
-        await addNewlyCreatedPostToIndexedDB(newPostWithID);
-        console.log("Post ID:", newDocRef.id);
+      // Dispatch action to add this new post to Redux state
+      dispatch(addNewPost(newPostWithID));
 
-        // Update channels collection
-        await updateChannelsInFirestore(db, post.channel, newDocRef.id);
+      // Add the new post to IndexedDB
+      await addNewlyCreatedPostToIndexedDB(newPostWithID);
 
-        // Update categories collection
-        await updateCategoriesInFirestore(db, post.category, newDocRef.id);
+      // Update channels collection
+      await updateChannelsInFirestore(db, post.channel, newDocRef.id); // Property 'id' does not exist on type '{ docRef: DocumentReference<any, DocumentData>; postData: any; }'
 
-        dispatch(showMessage("Post added successfully!"));
-        navigate("/userHomePage");
-      }
+      // Update categories collection
+      await updateCategoriesInFirestore(db, post.category, newDocRef.id);
+
+      dispatch(showMessage("Post added successfully!"));
+      navigate("/");
     } catch (error) {
       console.error("Error adding post:", error); // this logs
       dispatch(showMessage(`Error adding post: ${(error as Error).message}`));
+      if (newDocRef) {
+        // cannot find name newDocRef
+        await deleteDoc(newDocRef); // type mismatch also on newDocRef
+      }
     }
   };
   return handlePostSubmission;

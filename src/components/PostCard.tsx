@@ -158,7 +158,7 @@ const PostCard: React.FC<PostCardProps> = ({
       onUserNameClick(post, dispatch);
     });
   };
-  console.log(style);
+
 
   return (
     <Card className="post-card dynamic-height" style={{ ...style }}>
@@ -206,7 +206,11 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
           <div className="header-bottom">
             <div className="store-details">
-              <h3>{post.selectedStore}</h3>
+              <div className="store-name-number">
+                <h3>{post.selectedStore}<span> {post.storeNumber}</span></h3>
+                
+              </div>
+
               <h5>{post.storeAddress}</h5>
             </div>
           </div>
