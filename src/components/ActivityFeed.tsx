@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-// import { FixedSizeList as List } from "react-window";
 import { VariableSizeList as List } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
@@ -23,7 +22,7 @@ import {
   collection,
   // doc,
   getDocs,
-  // limit,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -31,32 +30,31 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
+import useScrollToPost from "../hooks/useScrollToPost";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
-  const listRef = useRef<List>(null);
+  const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
+    null
+  );
+  const posts = useSelector((state: RootState) => state.posts.posts);
 
+  // Determine which posts to display - search results or all posts
+  const displayPosts = searchResults ? searchResults : posts;
+  const listRef = useRef<List>(null);
+  useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  // Add a new state to track which posts are expanded
   const currentUserCompany = currentUser?.company;
 
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
-    null
-  );
-
-  const posts = useSelector((state: RootState) => state.posts.posts);
   // console.log(posts, ' : posts')
   const loading = useSelector((state: RootState) => state.posts.loading);
-
-  // Determine which posts to display - search results or all posts
-  const displayPosts = searchResults ? searchResults : posts;
 
   // Function to get the dynamic height of each item
   const getItemSize = (index: number) => {
@@ -68,20 +66,6 @@ const ActivityFeed = () => {
     }
     return getActivityItemHeight(windowWidth); // Use the responsive height for regular post items as well
   };
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const postId = params.get('postId');
-    
-    if (postId) {
-      const postIndex = displayPosts.findIndex(p => p.id === postId);
-      if (postIndex !== -1) {
-        const adCountBeforePost = Math.floor(postIndex / AD_INTERVAL);
-        const adjustedIndex = postIndex + adCountBeforePost;
-        listRef.current?.scrollToItem(adjustedIndex, 'start');
-      }
-    }
-  }, [displayPosts]);
 
   // Mount alert
   useEffect(() => {
@@ -130,9 +114,9 @@ const ActivityFeed = () => {
       // need to check indexedDB before doing this.
       const publicPostsQuery = query(
         collection(db, "posts"),
-        // where("visibility", "==", "public"),
-        orderBy("timestamp", "desc")
-        // limit(POSTS_BATCH_SIZE)
+        where("visibility", "==", "public"),
+        orderBy("timestamp", "desc"),
+        limit(POSTS_BATCH_SIZE)
       );
       const querySnapshot = await getDocs(publicPostsQuery);
 
@@ -167,8 +151,6 @@ const ActivityFeed = () => {
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
           ).then((action) => {
             if (fetchInitialPostsBatch.fulfilled.match(action)) {
-              // This is where you know the posts have been successfully fetched and added to the store
-              // Now you can add them to IndexedDB
               addPostsToIndexedDB(action.payload.posts);
             }
           });
@@ -176,7 +158,7 @@ const ActivityFeed = () => {
       } catch (error) {
         // console.error("Error fetching posts from IndexedDB:", error);
         if (currentUserCompany) {
-          // Dispatch the thunk action again in case of error
+          // Dispatch the thunk action again in case of error.  Is this a safe action to do?
           dispatch(
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
           );
@@ -195,14 +177,14 @@ const ActivityFeed = () => {
 
     // Function to process document changes
     const processDocChanges = (snapshot: QuerySnapshot) => {
-      console.log("hook has heard a change"); // i liked a post and added a comment to a post.  this never logged
+      console.log("hook has heard a change"); 
       const changes = snapshot.docChanges();
       changes.forEach((change: DocumentChange) => {
         const postData = {
           id: change.doc.id,
           ...(change.doc.data() as PostType),
         };
-        console.log(change);  // sometimes this doesnt log even if the 'hook has heard a change does log'
+        console.log(change); // sometimes this doesnt log even if the 'hook has heard a change does log'
         if (change.type === "added" || change.type === "modified") {
           // Dispatch an action to merge this post with existing posts in Redux store
           dispatch(mergeAndSetPosts([postData])); // Assuming mergeAndSetPosts is a redux action that handles the merge logic
@@ -255,7 +237,7 @@ const ActivityFeed = () => {
   }) => {
     const adIndex = Math.floor((index + 1) / (AD_INTERVAL + 1));
     const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
-    const postIndex = index - adIndex; 
+    const postIndex = index - adIndex;
 
     if (isAdPosition) {
       return <AdComponent key={`ad-${adIndex}`} style={style} />;
@@ -267,7 +249,7 @@ const ActivityFeed = () => {
           currentUserUid={currentUser?.uid}
           index={postIndex}
           style={style}
-          data={{ post: postWithID, getPostsByTag }} 
+          data={{ post: postWithID, getPostsByTag }}
         />
       );
     } else {
@@ -299,7 +281,7 @@ const ActivityFeed = () => {
         width={getListWidth()}
         itemData={{
           posts: posts,
-          getPostsByTag: getPostsByTag, 
+          getPostsByTag: getPostsByTag,
         }}
       >
         {itemRenderer}

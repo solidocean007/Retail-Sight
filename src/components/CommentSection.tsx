@@ -14,6 +14,7 @@ import "./commentSection.css";
 import { updatePost } from "../Slices/postsSlice";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
+import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 // import { UserState } from "../Slices/userSlice.ts";
 
 interface CommentProps {
@@ -36,6 +37,8 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
 
   const commentSubmit = async () => {
     if (newComment.length > 0 && user) {
+      // update timestamp of post that is being changed.
+      await updatePostWithNewTimestamp(post.id);
       try {
         const commentToAdd: CommentType = {
           text: newComment,

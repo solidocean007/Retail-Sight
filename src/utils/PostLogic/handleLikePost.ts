@@ -5,6 +5,7 @@ import { PostWithID } from "../types";
 import { updatePost } from "../../Slices/postsSlice";
 import { updatePostInIndexedDB } from "../database/indexedDBUtils";
 import { AppDispatch } from "../store";
+import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 
 // handleLikePost.ts
 export const handleLikePost = async (
@@ -14,6 +15,8 @@ export const handleLikePost = async (
   dispatch: AppDispatch // Generic type 'Dispatch' requires 1 type argument(s).
 ) => {
   try {
+     // update timestamp of post that is being changed.
+    await updatePostWithNewTimestamp(post.id);
     const updatedLikes = liked ? arrayUnion(userId) : arrayRemove(userId);
     await updateDoc(doc(db, "posts", post.id), { likes: updatedLikes });
 

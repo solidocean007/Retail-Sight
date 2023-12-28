@@ -27,6 +27,7 @@ import { db } from "../utils/firebase";
 import { updatePost } from "../Slices/postsSlice";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
+import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 
 interface PostCardProps {
   id: string;
@@ -113,7 +114,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const handleDeleteComment = async (commentId: string) => {
     console.log("Deleting comment with ID:", commentId);
-
+    await updatePostWithNewTimestamp(post.id);
     try {
       // Decrement the commentCount for the relevant post in Firestore
       const postRef = doc(db, "posts", post.id);
@@ -142,6 +143,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const handleLikeComment = async (commentId: string, likes: string[]) => {
     if (user?.uid && !likes.includes(user.uid)) {
+      await updatePostWithNewTimestamp(post.id);
       try {
         const commentRef = doc(db, "comments", commentId);
         const updatedLikes = [...likes, user.uid];

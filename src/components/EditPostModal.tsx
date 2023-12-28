@@ -22,6 +22,7 @@ import {
 import "./editPostModal.css";
 // import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
+import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -59,6 +60,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
+    await updatePostWithNewTimestamp(post.id);
     try {
       const updatedFields = {
         description: updatedPost.description,
@@ -68,11 +70,11 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       await updateDoc(postRef, updatedFields);
       dispatch(updatePost(updatedPost));
       await updatePostInIndexedDB(updatedPost);
-      console.log("postRef", postRef);
-      console.log("Post updated successfully");
+      // console.log("postRef", postRef);
+      // console.log("Post updated successfully");
       handleCloseEditModal();
     } catch (error) {
-      console.error("Error updating post: ", error);
+      // console.error("Error updating post: ", error);
     }
   };
 
@@ -86,18 +88,18 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     dispatch(showMessage("Post edited successfully!"));
   };
 
-  console.log(post, "edit post");
   return (
-    // <Modal open={isOpen} onClose={onClose}>
     <Modal open={isOpen}>
       <>
-       
         <div className="edit-post-modal-container" ref={wrapperRef}>
-        <div className="edit-post-header">
-          <button className="close-modal-button" onClick={handleCloseEditModal}>
-            &times; {/* This is a common symbol used for close buttons */}
-          </button>
-        </div>
+          <div className="edit-post-header">
+            <button
+              className="close-modal-button"
+              onClick={handleCloseEditModal}
+            >
+              &times; {/* This is a common symbol used for close buttons */}
+            </button>
+          </div>
           {/* <h4 className="store-title">Store: {post.selectedStore}</h4>
         <h6 className="store-address">Address: {post.storeAddress}</h6> */}
           {post.imageUrl && (

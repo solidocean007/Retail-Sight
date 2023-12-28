@@ -1,16 +1,12 @@
 // deletePostLogic.ts
-import {
-  deleteDoc,
-  doc,
-  updateDoc,
-  arrayRemove,
-} from "firebase/firestore";
+import { deleteDoc, doc, updateDoc, arrayRemove } from "firebase/firestore";
 import { ref, deleteObject, getStorage } from "firebase/storage";
 import { PostWithID } from "../types";
 import { deletePost } from "../../Slices/postsSlice";
 import { AnyAction } from "redux";
 import { db } from "../firebase";
 import { removePostFromIndexedDB } from "../database/indexedDBUtils";
+import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 
 interface userDeletePostProps {
   post: PostWithID;
@@ -18,7 +14,13 @@ interface userDeletePostProps {
   dispatch: React.Dispatch<AnyAction>;
 }
 
-export const userDeletePost = async ({ post, setIsEditModalOpen, dispatch }: userDeletePostProps) => {
+export const userDeletePost = async ({
+  post,
+  setIsEditModalOpen,
+  dispatch,
+}: userDeletePostProps) => {
+  // update timestamp of post that is being changed.
+  await updatePostWithNewTimestamp(post.id);
   // Optimistically remove the post from the UI
   dispatch(deletePost(post.id));
 
