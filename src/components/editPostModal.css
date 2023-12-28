@@ -4,7 +4,7 @@
   flex-direction: column;
   align-items: center;
   padding: 10px;
-  background-color: white;
+  background-color: var(--form-background-color);
   max-width: 400px;
   margin: auto;
 }
@@ -51,6 +51,7 @@
 .delete-btn {
   margin-top: 10px;
   color: red;
+  box-shadow: 1px 3px 4px black;
 }
 
 /* Mobile responsiveness */

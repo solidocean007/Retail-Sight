@@ -158,7 +158,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
             >
               Save Changes
             </Button>
-            <Button
+            <button
               className="delete-btn"
               onClick={() => {
                 userDeletePost({ post, setIsEditModalOpen, dispatch });
@@ -166,7 +166,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
               }}
             >
               Delete Post
-            </Button>
+            </button>
           </div>
         </div>
       </>

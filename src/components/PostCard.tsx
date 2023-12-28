@@ -182,18 +182,7 @@ const PostCard: React.FC<PostCardProps> = ({
               </button>
             </div>
             <div className="share-edit-block">
-              {user?.uid === post.user?.postUserId && (
-                <div className="edit-block">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleEditPost}
-                    className="edit-btn"
-                  >
-                    Edit Post
-                  </Button>
-                </div>
-              )}
+              
               <div className="share-button">
                 <SharePost
                   // postLink={`https://displaygram.com/post/${post.id}`}
@@ -204,7 +193,23 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
 
-            <div>view: {post.visibility}</div>
+            <div className="visibility-edit-box">
+              <div className="view-box">view: {post.visibility}</div>
+              <div className="edit-box">
+              {user?.uid === post.user?.postUserId && (
+                <div className="edit-block">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleEditPost}
+                    className="edit-btn"
+                  >
+                    Edit
+                  </Button>
+                </div>
+              )}
+              </div>
+            </div>
           </div>
           <div className="header-bottom">
             <div className="store-details">
