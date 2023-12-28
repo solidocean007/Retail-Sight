@@ -17,7 +17,8 @@ const UserModal = () => {
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <span className="close" onClick={handleClose}>&times;</span>
+        <button className="close" onClick={handleClose} ><span >&times;</span></button>
+        {/* <span className="close" onClick={handleClose}>&times;</span> */}
         <h2>{userData?.postUserName}</h2>
         <p className="user-company">{userData?.postUserCompany}</p>
         <p className="user-email"><a href={`mailto:${userData?.postUserEmail}`}>{userData?.postUserEmail}</a></p>

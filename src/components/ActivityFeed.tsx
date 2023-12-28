@@ -52,7 +52,7 @@ const ActivityFeed = () => {
   );
 
   const posts = useSelector((state: RootState) => state.posts.posts);
-  console.log(posts, ' : posts')
+  // console.log(posts, ' : posts')
   const loading = useSelector((state: RootState) => state.posts.loading);
 
   // Determine which posts to display - search results or all posts
@@ -63,7 +63,8 @@ const ActivityFeed = () => {
     // Determine if the current index is an ad
     const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
     if (isAdPosition) {
-      return getActivityItemHeight(windowWidth); // Use the responsive height
+      // return getActivityItemHeight(windowWidth) - 200; // Use the responsive height but how about change the height as well?
+      return 200; // Use the responsive height but how about change the height as well?
     }
     return getActivityItemHeight(windowWidth); // Use the responsive height for regular post items as well
   };
@@ -93,11 +94,11 @@ const ActivityFeed = () => {
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 480) {
       // return 720;
-      return 650;
-    } else if (windowWidth <= 768) {
-      return 680;
-    } else if (windowWidth <= 900) {
+      return 700;
+    } else if (windowWidth <= 800) {
       return 750;
+    } else if (windowWidth <= 900) {
+      return 800;
     } else {
       return 850;
     }
@@ -154,13 +155,13 @@ const ActivityFeed = () => {
     }
     const loadPosts = async () => {
       try {
-        console.log("looking in indexDB");
+        // console.log("looking in indexDB");
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
-          console.log("getting posts from indexedDB");
+          // console.log("getting posts from indexedDB");
           dispatch(setPosts(cachedPosts));
         } else if (currentUserCompany) {
-          console.log("no posts in indexDB");
+          // console.log("no posts in indexDB");
           // Dispatch the thunk action; Redux handles the promise
           dispatch(
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
@@ -173,7 +174,7 @@ const ActivityFeed = () => {
           });
         }
       } catch (error) {
-        console.error("Error fetching posts from IndexedDB:", error);
+        // console.error("Error fetching posts from IndexedDB:", error);
         if (currentUserCompany) {
           // Dispatch the thunk action again in case of error
           dispatch(
@@ -201,7 +202,7 @@ const ActivityFeed = () => {
           id: change.doc.id,
           ...(change.doc.data() as PostType),
         };
-        console.log(change);
+        console.log(change);  // sometimes this doesnt log even if the 'hook has heard a change does log'
         if (change.type === "added" || change.type === "modified") {
           // Dispatch an action to merge this post with existing posts in Redux store
           dispatch(mergeAndSetPosts([postData])); // Assuming mergeAndSetPosts is a redux action that handles the merge logic
@@ -254,7 +255,7 @@ const ActivityFeed = () => {
   }) => {
     const adIndex = Math.floor((index + 1) / (AD_INTERVAL + 1));
     const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
-    const postIndex = index - adIndex; // Adjust the index to account for ads
+    const postIndex = index - adIndex; 
 
     if (isAdPosition) {
       return <AdComponent key={`ad-${adIndex}`} style={style} />;
@@ -266,7 +267,7 @@ const ActivityFeed = () => {
           currentUserUid={currentUser?.uid}
           index={postIndex}
           style={style}
-          data={{ post: postWithID, getPostsByTag }} // Passing the entire postWithID object
+          data={{ post: postWithID, getPostsByTag }} 
         />
       );
     } else {
@@ -298,7 +299,7 @@ const ActivityFeed = () => {
         width={getListWidth()}
         itemData={{
           posts: posts,
-          getPostsByTag: getPostsByTag, // Pass the function here
+          getPostsByTag: getPostsByTag, 
         }}
       >
         {itemRenderer}

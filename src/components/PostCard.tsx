@@ -153,12 +153,12 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleOnUserNameClick = () => {
+  const handleOnUserNameClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Call this if you need to prevent the default action
     protectedAction(() => {
       onUserNameClick(post, dispatch);
     });
   };
-
 
   return (
     <Card className="post-card dynamic-height" style={{ ...style }}>
@@ -207,8 +207,10 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="header-bottom">
             <div className="store-details">
               <div className="store-name-number">
-                <h3>{post.selectedStore}<span> {post.storeNumber}</span></h3>
-                
+                <h3>
+                  {post.selectedStore}
+                  <span> {post.storeNumber}</span>
+                </h3>
               </div>
 
               <h5>{post.storeAddress}</h5>
@@ -216,7 +218,11 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
           <div className="post-user-details">
             <div onClick={handleOnUserNameClick}>
-              by:<a href=""> {post.user.postUserName}</a>
+              by:{" "}
+              <a href="#" onClick={(e) => e.preventDefault()}>
+                {" "}
+                {post.user.postUserName}
+              </a>
             </div>
             <h5>{formattedDate}</h5>
           </div>

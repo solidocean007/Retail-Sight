@@ -46,7 +46,7 @@ export const useHandlePostSubmission = () => {
         description: post.description,
         imageUrl: "", // Temporary placeholder
         selectedStore: post.selectedStore,
-        storeNumber: post.selectedStoreNumber,
+        storeNumber: post.storeNumber,
         storeAddress: post.storeAddress,
         city: post.city,
         state: post.state,

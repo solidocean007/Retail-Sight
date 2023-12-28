@@ -10,6 +10,7 @@
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.3s;
+  z-index: 2000;
 }
 
 @keyframes fadeIn {
@@ -19,9 +20,10 @@
 
 .modal {
   width: 500px;
-  height: 400px;
+  /* height: 400px; */
+  height: auto;
   border-radius: 10px;
-  background-color: #fff; /* White background for clarity */
+  background-color: whitesmoke;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
   position: relative; /* To position close button and other absolute elements */

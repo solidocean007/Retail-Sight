@@ -26,7 +26,7 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
     posts.forEach((post, index) => {
       const request = store.put(post);
       request.onsuccess = () => {
-        console.log(`Post ${index} added to IndexedDB successfully:`, post);
+        // console.log(`Post ${index} added to IndexedDB successfully:`, post);
       };
       request.onerror = () => {
         console.error(`Error adding post ${index} to IndexedDB:`, request.error);
@@ -98,7 +98,7 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
   const getAllRequest = store.getAll();
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
-      console.log("Posts fetched from IndexedDB:", getAllRequest.result); // Log the fetched posts
+      // console.log("Posts fetched from IndexedDB:", getAllRequest.result); // Log the fetched posts
       resolve(getAllRequest.result);
     };
     getAllRequest.onerror = () => {
