@@ -36,8 +36,7 @@ import LoadingIndicator from "./LoadingIndicator";
 
 export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false);
-  // const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
-  const [uploadProgress ] = useState(0); // Track upload progress
+  const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
   useEffect(() => {
     console.log("CreatePost mounts");
     return () => {
@@ -170,7 +169,11 @@ export const CreatePost = () => {
 
   return (
     <div className="create-post-container">
-       {isUploading && <LoadingIndicator progress={uploadProgress} />}
+        {isUploading && (
+        <div className="modal">
+          <LoadingIndicator progress={uploadProgress} />
+        </div>
+      )}
 
       <AppBar position="static" style={{ flexShrink: 0 }}>
         <Toolbar>
@@ -292,6 +295,7 @@ export const CreatePost = () => {
                     },
                     selectedFile,
                     setIsUploading,
+                    setUploadProgress,
                   );
                 } else {
                   // Handle the situation where selectedFile is null

@@ -1,13 +1,24 @@
-.loading-indicator {
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
+}
+
+.loading-indicator {
+  width: 50%; /* Adjust as needed */
   background-color: #e0e0e0;
   border-radius: 4px;
   overflow: hidden;
-  height: 20px; /* Adjust height as needed */
+  height: 80px; /* Adjust height as needed */
 }
 
 .loading-bar {
   height: 100%;
-  background-color: #4caf50; /* Green color, change as needed */
+  width: 100%;
+  background-color: #4caf50; /* Green color */
   transition: width 0.4s ease;
+  font-size: large;
+  font-weight: bolder;
 }
+
