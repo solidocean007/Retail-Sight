@@ -14,6 +14,7 @@ import {
   addPostsToIndexedDB,
   getPostsFromIndexedDB,
   removePostFromIndexedDB,
+  updatePostInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { deletePost, mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
 import {
@@ -48,6 +49,7 @@ const ActivityFeed = () => {
   useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  console.log(currentUser)
   const currentUserCompany = currentUser?.company;
 
   // State to store the window width
@@ -184,10 +186,10 @@ const ActivityFeed = () => {
           id: change.doc.id,
           ...(change.doc.data() as PostType),
         };
-        console.log(change); // sometimes this doesnt log even if the 'hook has heard a change does log'
+        console.log('postData: ', postData); // this logs with the expected updated array of users who like the post.  so i believe this function is being called with the correct data.
         if (change.type === "added" || change.type === "modified") {
-          // Dispatch an action to merge this post with existing posts in Redux store
-          dispatch(mergeAndSetPosts([postData])); // Assuming mergeAndSetPosts is a redux action that handles the merge logic
+          dispatch(mergeAndSetPosts([postData])); // I think this is the part that is failing and also lets add the update
+          updatePostInIndexedDB(postData);
         } else if (change.type === "removed") {
           // Dispatch an action to remove the post from Redux store
           dispatch(deletePost(change.doc.id));

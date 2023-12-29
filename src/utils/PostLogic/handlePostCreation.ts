@@ -22,7 +22,7 @@ export const useHandlePostSubmission = () => {
   const navigate = useNavigate();
   const userData = useSelector(selectUser);
 
-  const handlePostSubmission = async (post: PostType, selectedFile: File) => {
+  const handlePostSubmission = async (post: PostType, selectedFile: File, setIsUploading: React.Dispatch<React.SetStateAction<boolean>>) => {
     const user = auth.currentUser;
     if (!user || !userData) return;
     // const uid = user.uid;
@@ -97,6 +97,7 @@ export const useHandlePostSubmission = () => {
       await updateCategoriesInFirestore(db, post.category, newDocRef.id);
 
       dispatch(showMessage("Post added successfully!"));
+      setIsUploading(false);
       navigate("/");
     } catch (error) {
       console.error("Error adding post:", error); // this logs

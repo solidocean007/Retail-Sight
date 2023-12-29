@@ -1,13 +1,14 @@
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+// updatePostWithNewTimestamp.ts
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
-export const updatePostWithNewTimestamp = async (postId : string) => {
+export const updatePostWithNewTimestamp = async (postId: string) => {
   try {
     const postRef = doc(db, "posts", postId);
     await updateDoc(postRef, {
-      timestamp: serverTimestamp() // Update the timestamp field
+      timestamp: new Date().toISOString(), // Save the timestamp as an ISO string
     });
   } catch (error) {
-    console.error("Error updating post:", error);
+    console.error("Error updating post timestamp:", error);
   }
 };

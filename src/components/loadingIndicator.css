@@ -1,0 +1,13 @@
+.loading-indicator {
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 20px; /* Adjust height as needed */
+}
+
+.loading-bar {
+  height: 100%;
+  background-color: #4caf50; /* Green color, change as needed */
+  transition: width 0.4s ease;
+}

@@ -32,8 +32,12 @@ import { ChannelType } from "./ChannelSelector";
 // import { SupplierType } from "./SupplierSelector";
 // import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
+import LoadingIndicator from "./LoadingIndicator";
 
 export const CreatePost = () => {
+  const [isUploading, setIsUploading] = useState(false);
+  // const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
+  const [uploadProgress ] = useState(0); // Track upload progress
   useEffect(() => {
     console.log("CreatePost mounts");
     return () => {
@@ -166,6 +170,8 @@ export const CreatePost = () => {
 
   return (
     <div className="create-post-container">
+       {isUploading && <LoadingIndicator progress={uploadProgress} />}
+
       <AppBar position="static" style={{ flexShrink: 0 }}>
         <Toolbar>
           <IconButton
@@ -274,6 +280,7 @@ export const CreatePost = () => {
               fullWidth
               onClick={() => {
                 if (selectedFile) {
+                  setIsUploading(true);
                   // Pass the current post state directly
                   handlePostSubmission(
                     {
@@ -283,7 +290,8 @@ export const CreatePost = () => {
                       // supplier: selectedSupplier,
                       // brands: selectedBrands,
                     },
-                    selectedFile
+                    selectedFile,
+                    setIsUploading,
                   );
                 } else {
                   // Handle the situation where selectedFile is null

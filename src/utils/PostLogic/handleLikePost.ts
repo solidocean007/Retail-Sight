@@ -12,20 +12,23 @@ export const handleLikePost = async (
   post: PostWithID, 
   userId: string, 
   liked: boolean, 
-  dispatch: AppDispatch // Generic type 'Dispatch' requires 1 type argument(s).
+  dispatch: AppDispatch
 ) => {
   try {
-     // update timestamp of post that is being changed.
+    // Update the timestamp of the post
     await updatePostWithNewTimestamp(post.id);
+
+    // Update the likes array
     const updatedLikes = liked ? arrayUnion(userId) : arrayRemove(userId);
     await updateDoc(doc(db, "posts", post.id), { likes: updatedLikes });
 
-    // Update the post object for Redux and IndexedDB
+    // Prepare the updated post object for Redux and IndexedDB
     const updatedPost = { 
       ...post, 
       likes: liked 
-        ? [...(post.likes || []), userId] // Provide a default empty array if likes are undefined
+        ? [...(post.likes || []), userId]
         : (post.likes || []).filter(uid => uid !== userId)
+      // Assume the timestamp update was successful
     };
 
     // Dispatch to Redux
@@ -36,7 +39,5 @@ export const handleLikePost = async (
     
   } catch (error) {
     console.error("Error updating likes:", error);
-    // Handle the error as needed
   }
 };
-

@@ -28,6 +28,7 @@ import { updatePost } from "../Slices/postsSlice";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
+import { RootState } from "../utils/store";
 
 interface PostCardProps {
   id: string;
@@ -43,17 +44,23 @@ const PostCard: React.FC<PostCardProps> = ({
   getPostsByTag,
   style,
 }) => {
+  const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
   const [commentCount] = useState(post.commentCount);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [comments, setComments] = useState<CommentType[]>([]); // State to store comments for the modal
   const [showAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const dispatch = useDispatch();
-  const [likes] = useState(post.likes?.length || 0);
-  const [likedByUser, setLikedByUser] = useState(
-    (Array.isArray(post.likes) && post.likes.includes(currentUserUid)) || false
+  const user = useSelector(selectUser);
+
+  // Use the postId to fetch the latest post data from the Redux store
+  const updatedPost = useSelector((state: RootState) =>
+    state.posts.posts.find(p => p.id === post.id)
   );
+
+  // Extract the likes count and likedByUser status from the updated post object
+  const likesCount = updatedPost?.likes?.length || 0;
+  const likedByUser = updatedPost?.likes?.includes(currentUserUid) || false;
 
   const openCommentModal = async () => {
     setIsCommentModalOpen(true);
@@ -81,26 +88,18 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   const onLikePostButtonClick = async () => {
-    const newLikedByUser = !likedByUser;
-    setLikedByUser(newLikedByUser); // Optimistic UI update
-
     try {
+      const newLikedByUser = !likedByUser;
       await handleLikePost(post, currentUserUid, newLikedByUser, dispatch);
-      // Redux and IndexedDB updates are handled inside handleLikePost
     } catch (error) {
       console.error("Failed to update like status:", error);
-      setLikedByUser(likedByUser); // Revert optimistic updates in case of error
     }
   };
-
+  
   const handleLikePostButtonClick = () => {
-    protectedAction(() => {
-      onLikePostButtonClick();
-    });
+    protectedAction(onLikePostButtonClick);
   };
-
-  // grab user from redux
-  const user = useSelector(selectUser);
+  
 
   const handleEditPost = () => {
     setIsEditModalOpen(true);
@@ -168,10 +167,10 @@ const PostCard: React.FC<PostCardProps> = ({
         <div className="post-header">
           <div className="header-top">
             <div className="likes-comments">
-              {likes === 0 ? null : likes === 1 ? (
-                <h5>{likes} like</h5>
+              {likesCount === 0 ? null : likesCount === 1 ? (
+                <h5>{likesCount} like</h5>
               ) : (
-                <h5>{likes} likes</h5>
+                <h5>{likesCount} likes</h5>
               )}
 
               <button
@@ -274,7 +273,6 @@ const PostCard: React.FC<PostCardProps> = ({
           post={post}
           comments={comments}
           onLikeComment={handleLikeComment}
-          likes={likes}
           onDeleteComment={handleDeleteComment}
           likedByUser={likedByUser}
         />

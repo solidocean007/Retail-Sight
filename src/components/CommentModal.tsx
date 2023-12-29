@@ -13,7 +13,6 @@ interface CommentModalProps {
   post: PostType;
   comments: CommentType[]; // Use CommentType[] directly if it includes the necessary fields
   onLikeComment: (commentId: string, likes: string[]) => void;
-  likes: number;
   onDeleteComment: (commentId: string) => void;
   likedByUser: boolean;
 }
@@ -24,7 +23,6 @@ const CommentModal: React.FC<CommentModalProps> = ({
   post,
   comments,
   // onLikeComment,
-  // likes,
   onDeleteComment,
   // likedByUser,
 }) => {
