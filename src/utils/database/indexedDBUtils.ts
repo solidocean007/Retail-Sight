@@ -4,7 +4,7 @@ import { FilterCriteria } from "../../Slices/postsSlice";
 import { openDB } from "./indexedDBOpen";
 
 // export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
-export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
+export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> { // this line mentions void, why?  becuase getPostsByTag may not return anyhting?
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");
   const store = transaction.objectStore("posts");
@@ -12,7 +12,9 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     // Handle the successful completion of the transaction
     transaction.oncomplete = () => {
-      console.log("Transaction complete: Data added to IndexedDB successfully.");
+      console.log(
+        "Transaction complete: Data added to IndexedDB successfully."
+      );
       resolve();
     };
 
@@ -29,7 +31,10 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
         // console.log(`Post ${index} added to IndexedDB successfully:`, post);
       };
       request.onerror = () => {
-        console.error(`Error adding post ${index} to IndexedDB:`, request.error);
+        console.error(
+          `Error adding post ${index} to IndexedDB:`,
+          request.error
+        );
         reject(request.error);
       };
     });
@@ -48,7 +53,6 @@ export async function updatePostInIndexedDB(post: PostWithID): Promise<void> {
     request.onerror = () => reject(request.error);
   });
 }
-
 
 // Add a single post to IndexedDB
 export async function addNewlyCreatedPostToIndexedDB(
@@ -247,8 +251,8 @@ export async function storeLocationsInIndexedDB(locations: {
         // and the 'locations[state]' array is the value you want to store.
         // The key is already part of the value being stored, so you don't need to specify it again.
         const locationEntry = {
-          state: state,        // This is your key path
-          cities: locations[state] // This is your value
+          state: state, // This is your key path
+          cities: locations[state], // This is your value
         };
 
         // No need to pass the key as the second parameter since it's an inline key.
@@ -262,11 +266,10 @@ export async function storeLocationsInIndexedDB(locations: {
   });
 }
 
-
 export async function getLocationsFromIndexedDB(): Promise<{
   [key: string]: string[];
 } | null> {
-  console.log('Opening IndexedDB to fetch locations...');
+  console.log("Opening IndexedDB to fetch locations...");
   const db = await openDB();
   const transaction = db.transaction(["locations"], "readonly");
   const store = transaction.objectStore("locations");
@@ -275,36 +278,101 @@ export async function getLocationsFromIndexedDB(): Promise<{
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
       const allLocations = getAllRequest.result;
-      console.log('Fetched locations from IndexedDB:', allLocations);
+      console.log("Fetched locations from IndexedDB:", allLocations);
 
       if (!Array.isArray(allLocations) || allLocations.length === 0) {
-        console.log('No locations found in IndexedDB.');
+        console.log("No locations found in IndexedDB.");
         resolve(null); // Resolve with null if no data is found
         return;
       }
 
       const locations = allLocations.reduce((acc, location) => {
         // Assuming your keyPath is "state"
-        const state = location.state; 
+        const state = location.state;
         if (state && Array.isArray(location.cities)) {
           console.log(`Processing location for state: ${state}`);
           acc[state] = location.cities;
         } else {
-          console.warn('Invalid location data encountered', location);
+          console.warn("Invalid location data encountered", location);
         }
         return acc;
       }, {});
 
-      console.log('Resolved locations from IndexedDB:', locations);
+      console.log("Resolved locations from IndexedDB:", locations);
       resolve(locations);
     };
     getAllRequest.onerror = () => {
-      console.error('Error fetching locations from IndexedDB:', getAllRequest.error);
+      console.error(
+        "Error fetching locations from IndexedDB:",
+        getAllRequest.error
+      );
       reject(getAllRequest.error);
     };
   });
 }
 
+export async function addHashtagPostsToIndexedDB(
+  posts: PostWithID[]
+): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["hashtagPosts"], "readwrite");
+  const store = transaction.objectStore("hashtagPosts");
 
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      console.log("Hashtag posts added to IndexedDB successfully.");
+      resolve();
+    };
 
-// Similar functions for 'categories', 'channels', 'locations', and later 'companies'
+    transaction.onerror = (event) => {
+      console.error("Transaction error:", (event.target as IDBRequest).error);
+      reject((event.target as IDBRequest).error);
+    };
+
+    posts.forEach((post) => {
+      const request = store.put(post);
+      request.onerror = () => {
+        console.error("Error adding post to IndexedDB:", request.error);
+        reject(request.error);
+      };
+    });
+  });
+}
+
+export async function getHashtagPostsFromIndexedDB(): Promise<PostWithID[]> {
+  const db = await openDB();
+  const transaction = db.transaction(["hashtagPosts"], "readonly");
+  const store = transaction.objectStore("hashtagPosts");
+  const getAllRequest = store.getAll();
+
+  return new Promise((resolve, reject) => {
+    getAllRequest.onsuccess = () => {
+      resolve(getAllRequest.result as PostWithID[]);
+    };
+    getAllRequest.onerror = () => {
+      console.error(
+        "Error getting hashtag posts from IndexedDB:",
+        getAllRequest.error
+      );
+      reject(getAllRequest.error);
+    };
+  });
+}
+
+export async function clearHashtagPostsInIndexedDB(): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(['hashtagPosts'], 'readwrite');
+  const store = transaction.objectStore('hashtagPosts');
+
+  return new Promise<void>((resolve, reject) => {
+    const clearRequest = store.clear();
+    clearRequest.onsuccess = () => {
+      console.log("Hashtag posts cleared from IndexedDB successfully.");
+      resolve();
+    };
+    clearRequest.onerror = () => {
+      console.error("Error clearing hashtag posts from IndexedDB:", clearRequest.error);
+      reject(clearRequest.error);
+    };
+  });
+}

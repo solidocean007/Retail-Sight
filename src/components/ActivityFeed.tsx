@@ -38,6 +38,7 @@ const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
+  const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(null);
   const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
     null
   );
@@ -57,6 +58,16 @@ const ActivityFeed = () => {
 
   // console.log(posts, ' : posts')
   const loading = useSelector((state: RootState) => state.posts.loading);
+
+  const clearSearch = async () => {
+    setCurrentHashtag(null);
+    setSearchResults(null);
+    // Reload posts from IndexedDB
+    const cachedPosts = await getPostsFromIndexedDB();
+    if (cachedPosts && cachedPosts.length > 0) {
+      dispatch(setPosts(cachedPosts));
+    }
+  };
 
   // Function to get the dynamic height of each item
   const getItemSize = (index: number) => {
@@ -252,6 +263,8 @@ const ActivityFeed = () => {
           index={postIndex}
           style={style}
           data={{ post: postWithID, getPostsByTag }}
+          setSearchResults={setSearchResults}
+          setCurrentHashtag={setCurrentHashtag}
         />
       );
     } else {
@@ -272,7 +285,11 @@ const ActivityFeed = () => {
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
-      <HashTagSearchBar setSearchResults={setSearchResults} />
+       <HashTagSearchBar
+        setSearchResults={setSearchResults}
+        currentHashtag={currentHashtag}
+        clearSearch={clearSearch}
+      />
 
       <List
         ref={listRef}

@@ -1,6 +1,6 @@
 // indexedDBOpen.ts
 const dbName = "myRetailAppDB";
-const dbVersion = 4; // Increment for each schema change
+const dbVersion = 5; // Increment for each schema change
 
 export function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -41,7 +41,10 @@ export function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('latestPosts')) {
         db.createObjectStore('latestPosts', { keyPath: 'id' });
       }
-      // Add additional object stores here if needed
+      // Create 'hashtagPosts' object store to store posts fetched based on hashtags
+      if (!db.objectStoreNames.contains('hashtagPosts')) {
+        db.createObjectStore('hashtagPosts', { keyPath: 'id' });
+      }
     };
   });
 }

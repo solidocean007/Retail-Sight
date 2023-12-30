@@ -1,3 +1,4 @@
+// HashTagSearchBar.tsx
 import { Input } from "@mui/material";
 import { showMessage } from "../Slices/snackbarSlice";
 import getPostsByTag from "../utils/PostLogic/getPostsByTag";
@@ -5,18 +6,34 @@ import useProtectedAction from "../utils/useProtectedAction";
 import { useDispatch } from "react-redux";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
-import React from "react";
+import React, { useEffect } from "react";
 import { setPosts } from "../Slices/postsSlice";
-import './hashTagSearchBar.css'
+import "./hashTagSearchBar.css";
 
-const HashTagSearchBar = ({
-  setSearchResults,
-}: {
+interface HashTagSearchBarProps {
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
+  currentHashtag: string | null;
+  clearSearch: () => Promise<void>;
+}
+
+
+
+const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
+  setSearchResults,
+  currentHashtag,
+  clearSearch,
 }) => {
   const protectedAction = useProtectedAction();
   const [searchTerm, setSearchTerm] = React.useState("#");
+  const [lastSearchedTerm, setLastSearchedTerm] = React.useState<string | null>(null);
+
   const dispatch = useDispatch();
+
+  // Effect to update searchTerm when currentHashtag changes
+  useEffect(() => {
+    setSearchTerm(currentHashtag ?? "#");
+  }, [currentHashtag]);
+
   const hashtagSearch = async () => {
     try {
       const hashtagPosts = await getPostsByTag(searchTerm);
@@ -41,12 +58,18 @@ const HashTagSearchBar = ({
   };
 
   const handleHashtagSearch = () => {
-    if (searchTerm.length > 0) {
-      protectedAction(() => {
-        hashtagSearch();
-      });
+    if (searchTerm !== "#" && searchTerm !== lastSearchedTerm) {
+      protectedAction(hashtagSearch);
+      setLastSearchedTerm(searchTerm);
     }
   };
+
+  const handleClearSearch = () => {
+    setSearchTerm("#");
+    clearSearch();
+    setLastSearchedTerm(null);
+  };
+
   return (
     <div className="theme-search-section">
       <div className="hashtag-search-box">
@@ -57,16 +80,15 @@ const HashTagSearchBar = ({
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              handleHashtagSearch();
+              currentHashtag ? handleClearSearch() : handleHashtagSearch();
             }
           }}
         />
-        <button
+       <button
           className="search-button"
-          onClick={handleHashtagSearch}
-          color="white"
+          onClick={currentHashtag ? handleClearSearch : handleHashtagSearch}
         >
-          Search
+          {currentHashtag ? "Clear" : "Search"}
         </button>
       </div>
     </div>

@@ -22,6 +22,7 @@ interface PostsState {
   loading: boolean;
   error: string | null;
   lastVisible: CursorType | null;
+  hashtagPosts: PostWithID[];
 }
 
 const initialState: PostsState = {
@@ -29,6 +30,7 @@ const initialState: PostsState = {
   loading: false,
   error: null,
   lastVisible: "",
+  hashtagPosts: [],
 };
 
 const postsSlice = createSlice({
@@ -84,6 +86,9 @@ const postsSlice = createSlice({
       });
     
       state.posts = mergedPosts;
+    },
+    setHashtagPosts(state, action) {
+      state.hashtagPosts = action.payload;
     },
     
   },
@@ -166,5 +171,6 @@ export const {
   setLastVisible,
   addNewPost,
   mergeAndSetPosts,
+  setHashtagPosts,
 } = postsSlice.actions;
 export default postsSlice.reducer;

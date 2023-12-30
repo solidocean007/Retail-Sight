@@ -34,8 +34,10 @@ interface PostCardProps {
   id: string;
   currentUserUid: string;
   post: PostWithID;
-  getPostsByTag: (hashTag: string) => void;
+  getPostsByTag: (hashTag: string) => Promise<PostWithID[]>; // Updated return type
   style?: React.CSSProperties;
+  setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
+  setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -43,6 +45,8 @@ const PostCard: React.FC<PostCardProps> = ({
   post,
   getPostsByTag,
   style,
+  setSearchResults,
+  setCurrentHashtag,
 }) => {
   const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
@@ -238,6 +242,8 @@ const PostCard: React.FC<PostCardProps> = ({
           <PostDescription
             description={post.description}
             getPostsByTag={getPostsByTag}
+            setSearchResults={setSearchResults}
+            setCurrentHashtag={setCurrentHashtag} // string is not assignable to null
           />
         </div>
 
