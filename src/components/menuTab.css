@@ -1,14 +1,14 @@
 /* menuTab.css */
 .menu-tab {
   position: fixed;
+  width: 50%;
   top: 0;
   right: -100%; /* Initially hidden */
-  /* height: 100%; */
-  width: 100%;
-  background-color: #fff;
-  box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.5);
+  background-color: transparent;
   z-index: 10;
-  transition: right 0.3s ease-in-out;
+  transition: left 0.5s ease-in-out;
+  border-bottom-left-radius: 10px;
+  border-top-left-radius: 10px;
 }
 
 .menu-tab.open {
@@ -17,8 +17,13 @@
 
 .menu-option {
   padding: 1rem;
+  width: 100%;
   border-bottom: 1px solid #ccc;
   cursor: pointer;
+  background: var(--menu-background-color);
+  border-bottom-left-radius: 10px;
+  border-top-left-radius: 10px;
+  margin-bottom: 5px;
 }
 
 /* Add responsive styling if needed */

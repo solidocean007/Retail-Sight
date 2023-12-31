@@ -179,13 +179,13 @@ export const CreatePost = () => {
         <Toolbar>
           <IconButton
             edge="start"
-            color="inherit"
+            color="default"
             onClick={() => navigate("/")}
           >
             <CloseIcon />
           </IconButton>
           <Typography variant="h5" style={{ flexGrow: 1 }}>
-            Create Post
+            Capture Post
           </Typography>
         </Toolbar>
       </AppBar>

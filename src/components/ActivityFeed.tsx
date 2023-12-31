@@ -71,13 +71,14 @@ const ActivityFeed = () => {
 
   // Function to get the dynamic height of each item
   const getItemSize = (index: number) => {
+    const gapSize = 0;
     // Determine if the current index is an ad
     const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
     if (isAdPosition) {
       // return getActivityItemHeight(windowWidth) - 200; // Use the responsive height but how about change the height as well?
-      return 200; // Use the responsive height but how about change the height as well?
+      return 200 + gapSize; // Use the responsive height but how about change the height as well?
     }
-    return getActivityItemHeight(windowWidth); // Use the responsive height for regular post items as well
+    return getActivityItemHeight(windowWidth) + gapSize; // Use the responsive height for regular post items as well
   };
 
   // Mount alert
@@ -91,13 +92,13 @@ const ActivityFeed = () => {
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 480) {
       // return 720;
-      return 700;
+      return 650;
     } else if (windowWidth <= 800) {
-      return 750;
+      return 700;
     } else if (windowWidth <= 900) {
-      return 800;
+      return 750;
     } else {
-      return 850;
+      return 800;
     }
   };
 
@@ -252,6 +253,13 @@ const ActivityFeed = () => {
     const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
     const postIndex = index - adIndex;
 
+    const modifiedStyle: React.CSSProperties = {
+      ...style,
+      marginBottom: '10px', // Bottom margin for the gap
+      backgroundColor: 'transparent', // Corrected background color
+      borderRadius: '5px', // Add border-radius for rounded corners
+    };
+
     if (isAdPosition) {
       return <AdComponent key={`ad-${adIndex}`} style={style} />;
     } else if (postIndex < displayPosts.length) {
@@ -261,7 +269,7 @@ const ActivityFeed = () => {
           key={postWithID.id}
           currentUserUid={currentUser?.uid}
           index={postIndex}
-          style={style}
+          style={modifiedStyle}
           data={{ post: postWithID, getPostsByTag }}
           setSearchResults={setSearchResults}
           setCurrentHashtag={setCurrentHashtag}
@@ -294,7 +302,7 @@ const ActivityFeed = () => {
       <List
         ref={listRef}
         className="list-card"
-        height={740}
+        height={800}
         itemCount={itemCount}
         itemSize={getItemSize}
         width={getListWidth()}

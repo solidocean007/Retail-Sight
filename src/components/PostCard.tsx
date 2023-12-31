@@ -59,7 +59,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   // Use the postId to fetch the latest post data from the Redux store
   const updatedPost = useSelector((state: RootState) =>
-    state.posts.posts.find(p => p.id === post.id)
+    state.posts.posts.find((p) => p.id === post.id)
   );
 
   // Extract the likes count and likedByUser status from the updated post object
@@ -99,11 +99,10 @@ const PostCard: React.FC<PostCardProps> = ({
       console.error("Failed to update like status:", error);
     }
   };
-  
+
   const handleLikePostButtonClick = () => {
     protectedAction(onLikePostButtonClick);
   };
-  
 
   const handleEditPost = () => {
     setIsEditModalOpen(true);
@@ -184,34 +183,31 @@ const PostCard: React.FC<PostCardProps> = ({
                 {likedByUser ? "❤️" : "🤍"}
               </button>
             </div>
-            <div className="share-edit-block">
-              
-              <div className="share-button">
-                <SharePost
-                  // postLink={`https://displaygram.com/post/${post.id}`}
-                  postLink={`https://displaygram.com/`}
-                  postTitle="Check out this display!"
-                  postId={post.id}
-                />
-              </div>
+            <div className="share-button-container">
+              <SharePost
+                postLink={`https://displaygram.com/`}
+                postTitle="Check out this display!"
+                postId={post.id}
+              />
             </div>
 
             <div className="visibility-edit-box">
               <div className="view-box">view: {post.visibility}</div>
-              <div className="edit-box">
+
               {user?.uid === post.user?.postUserId && (
-                <div className="edit-block">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleEditPost}
-                    className="edit-btn"
-                  >
-                    Edit
-                  </Button>
+                <div className="edit-box">
+                  <div className="edit-block">
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleEditPost}
+                      className="edit-btn"
+                    >
+                      Edit
+                    </Button>
+                  </div>
                 </div>
               )}
-              </div>
             </div>
           </div>
           <div className="header-bottom">

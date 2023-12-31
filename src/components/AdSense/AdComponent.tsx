@@ -35,7 +35,7 @@ const AdComponent: React.FC<AdComponentProps> = ({ style }) => {
       ></ins>
       {/* <h1 style={{ margin: "20px", color: "gray", fontSize: "25px" }}> */}
       <h2>
-        Ad space placeholder. Keep scrolling.
+        Ad space placeholder.
       </h2>
       {/* Always show placeholder */}
     </div>

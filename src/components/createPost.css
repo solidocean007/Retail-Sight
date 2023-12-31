@@ -6,13 +6,6 @@
 
 
 .create-post-container {
-  /* background: rgb(2, 0, 36);
-  background: linear-gradient(
-    180deg,
-    rgba(2, 0, 36, 1) 0%,
-    rgba(23, 23, 210, 1) 30%,
-    rgba(0, 212, 255, 1) 100%
-  ); */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -20,9 +13,8 @@
   background-color: var(--form-background-color);
   padding: 5px;
   border-radius: 5px;
-  width: 100%;
+  width: 70%;
   margin-top: 40px;
-  overflow-y: scroll;
 }
 
 .modal {
@@ -90,6 +82,11 @@ select {
 
 @media (max-width: 900px) {
   /* Your styles for tablets */
+  .create-post-container {
+  overflow-y: scroll;
+  width: auto;
+  }
+
   .image-and-details {
     flex-direction: column;
   }

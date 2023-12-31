@@ -8,7 +8,7 @@
   border-bottom-right-radius: 10px;
   max-width: 1500px;
   background: var(--header-title);
-  box-shadow: 0 5px 5px;
+  box-shadow: 0 5px 5px rgba(229, 229, 241, 0.5);
   padding: 0.2rem .5rem;
 }
 

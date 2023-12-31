@@ -1,31 +1,33 @@
 .card-content {
-  /* display: flex;
-  flex-direction: column; */
+  position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  background-color: var(--form-background-color);
-  padding: 0;
+  background: var(--post-card-background);
+  padding-bottom: 10px;
   margin: 0;
+  justify-content: space-between;
   /* border-radius: 5px; */
   /* border: 3px solid black; */
 }
 
 .image-new-comment-box {
-  display: inline-block; /* or just 'inline-block' if you prefer */
+  display: flex; /* or just 'inline-block' if you prefer */
   flex-direction: column;
-  align-items: flex-start; /* aligns items to the start of the flex container */
+  align-items: center; /* aligns items to the start of the flex container */
+  justify-content: center;
 }
 
 .image-new-comment-box .post-image {
-  max-height: 550px;
+  max-height: 500px;
+  max-width: 95%;
   width: auto; /* ensures the image scales with its height */
 }
 
 .post-card {
   border: 1px solid rgba(0, 0, 0, 0.125);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   /* border-radius: 5px; */
   overflow: visible;
-  transition: box-shadow 0.3s ease;
   position: relative;
 }
 
@@ -42,15 +44,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 1rem;
 }
 
 .edit-block button {
-  width: 40px;
   font-size: smaller;
-  height: 20px;
-  padding: 5px;
 }
 .header-top {
+  position: relative;
   display: flex;
   justify-content: space-between;
   width: 100%;
@@ -67,6 +68,32 @@
   justify-content: space-between;
   cursor: pointer;
   width: 100%
+}
+
+.share-button-container {
+  position:absolute;
+  left: 45%;
+}
+
+.visibility-edit-box {
+  position: absolute;
+  top: -10px;
+  right: -14px;
+  display: flex;
+  align-items: start;
+  justify-content: flex-end;
+  height: 1rem;
+
+}
+
+.view-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom-left-radius: 3px;
+  padding: 3px;
+  height: 100%;
+  width: 100%;
 }
 
 .likes-comments {
@@ -105,34 +132,15 @@ h5 {
   justify-content: flex-start;
 }
 
-.edit-block {
-  width: 8rem;
-}
-
-.share-edit-block {
-  display: flex;
-}
-
-.post-card:hover {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-}
-
 .post-card img.post-image {
   border-radius: 5px;
   margin-bottom: 3px;
   width: auto;
   display: block;
-  /* transition: box-shadow 0.5s ease; */
 }
 
 .post-card-content {
   padding: 15px;
-}
-
-.post-card-content .edit-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
 }
 
 .hash-tags {
@@ -174,12 +182,12 @@ h5 {
 }
 @media (max-width: 670px) {
   .post-card img.post-image {
-    height: 450px; 
+    height: auto; 
   }
 }
 
 @media (max-width: 470px) {
   .post-card img.post-image {
-    height: 400px; 
+    height: auto; 
   }
 }

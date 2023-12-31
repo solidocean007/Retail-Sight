@@ -15,8 +15,8 @@ const UserModal = () => {
   if (!isUserModalOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
+    <div className="user-modal-overlay">
+      <div className="user-modal">
         <button className="close" onClick={handleClose} ><span >&times;</span></button>
         {/* <span className="close" onClick={handleClose}>&times;</span> */}
         <h2>{userData?.postUserName}</h2>

@@ -1,17 +1,28 @@
 /* index.css */
 :root {
   /* Define color palette */
-  --prussian-blue: #0B3C5D;
-  --sky-blue: #328CC1;
-  --gold-leaf: #D9B310;
-  --ivory-black: #1D2731;
+  --prussian-blue: #0b3c5d;
+  --sky-blue: #328cc1;
+  --gold-leaf: #d9b310;
+  --ivory-black: #1d2731;
   --coral: #ff6f61;
   --sage-green: #9cafb7;
-  --charcol-grey: #36454f;
+  --charcoal-grey: #36454f;
+  --stark: #e7dfdd;
+  --apple-core: #dcc7aa;
+  --blueberry: #6b7a8f;
 
   /* Default theme (light) */
 
-  --background-color: var(--sky-blue);
+  --background-body: rgb(202,218,221);
+  --background-body: linear-gradient(173deg, rgba(202,218,221,1) 25%, rgba(233,229,211,1) 88%);
+  --background: rgb(107, 122, 143);
+  --background: linear-gradient(
+    141deg,
+    rgba(107, 122, 143, 1) 0%,
+    rgba(240, 238, 234, 1) 100%
+  );
+  --post-card-background: var(--blueberry);
   --text-color: var(--ivory-black);
   --header-title: var(--sage-green);
   --button-background: var(--gold-leaf);
@@ -20,7 +31,8 @@
   --input-background: var(--sage-green);
   --input-text-color: var(--ivory-black);
   --form-background-color: var(--sage-green);
-  
+  --menu-background-color: var(--apple-core);
+
   /* Common styles */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -34,27 +46,29 @@
 
 [data-theme="dark"] {
   /* Dark theme overrides */
-  --background-color: var(--ivory-black);
+  --background-body: var(--ivory-black);
+  --post-card-background:rgb(4,12,32);
   --text-color: var(--gold-leaf);
-  --header-title: var(--charcol-grey);
+  --header-title: var(--charcoal-grey);
   --button-background: var(--prussian-blue);
   --button-text-color: var(--gold-leaf);
   --border-color: var(--sky-blue);
   --input-background: var(--ivory-black);
   --input-text-color: var(--gold-leaf);
-  --form-background-color: var(--charcol-grey);
+  --form-background-color: var(--charcoal-grey);
+  --menu-background-color: var(--blueberry);
 }
 
 /* Assuming the use of CSS custom properties defined in :root */
 /* Light Mode */
 a {
   font-weight: 500;
-  color: var(--sky-blue); /* Sky Blue for light mode */
+  color: var(--stark); /* Sky Blue for light mode */
   text-decoration: inherit;
 }
 
 a:hover {
-  color: darken(var(--sky-blue), 10%); /* Slightly darker Sky Blue on hover */
+  color: darken(var(--stark), 10%); /* Slightly darker Sky Blue on hover */
 }
 
 /* Dark Mode */
@@ -63,9 +77,11 @@ a:hover {
 }
 
 [data-theme="dark"] a:hover {
-  color: lighten(var(--gold-leaf), 10%); /* Slightly lighter Gold Leaf on hover */
+  color: lighten(
+    var(--gold-leaf),
+    10%
+  ); /* Slightly lighter Gold Leaf on hover */
 }
-
 
 html,
 body,
@@ -76,7 +92,7 @@ body,
   /* padding-bottom: 2rem; */
   overflow-x: hidden;
   overflow-y: visible;
-  background-color: var(--background-color);
+  background: var(--background-body);
   color: var(--text-color);
 }
 
@@ -84,10 +100,11 @@ body,
   max-width: 1800px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   margin: 0;
   text-align: center;
+  height: 100%;
   min-height: 100vh;
   width: 100%;
 }
@@ -125,7 +142,6 @@ button {
   border-color: var(--border-color);
   cursor: pointer;
   transition: border-color 0.25s;
-  box-shadow: 1px 3px 4px;
 }
 button:hover {
   border-color: #646cff;

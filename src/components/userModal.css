@@ -1,5 +1,5 @@
 /* Overlay Style */
-.modal-overlay {
+.user-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -18,8 +18,7 @@
   to { opacity: 1; }
 }
 
-.modal {
-  width: 500px;
+.user-modal {
   /* height: 400px; */
   height: auto;
   border-radius: 10px;

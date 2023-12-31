@@ -10,7 +10,7 @@
   /* background: rgb(4,12,32);
 background: linear-gradient(0deg, rgba(4,12,32,1) 11%, rgba(168,174,213,1) 75%);
   height: 100%; */
-  box-shadow: 0 15px 15px rgba(229, 229, 241, 0.5);
+  box-shadow: 0 5px 5px rgba(229, 229, 241, 0.5);
 }
 
 .location-filter-container {
@@ -39,9 +39,10 @@ background: linear-gradient(0deg, rgba(4,12,32,1) 11%, rgba(168,174,213,1) 75%);
 .clear-apply-button-box {
   display: flex;
   align-items: center;
-  flex-direction: column;
+  /* flex-direction: column; */
   width: 60%;
   justify-content: space-between;
+  padding: 1rem;
 }
 
 @media (max-width: 1100px) {
