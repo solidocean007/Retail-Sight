@@ -167,6 +167,9 @@ const PostCard: React.FC<PostCardProps> = ({
   return (
     <Card className="post-card dynamic-height" style={{ ...style }}>
       <div className="card-content">
+        <div className="visibility">
+          <div className="view-box">view: {post.visibility}</div>
+        </div>
         <div className="post-header">
           <div className="header-top">
             <div className="likes-comments">
@@ -192,8 +195,6 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
 
             <div className="visibility-edit-box">
-              <div className="view-box">view: {post.visibility}</div>
-
               {user?.uid === post.user?.postUserId && (
                 <div className="edit-box">
                   <div className="edit-block">
@@ -233,17 +234,17 @@ const PostCard: React.FC<PostCardProps> = ({
             <h5>{formattedDate}</h5>
           </div>
         </div>
-        <div className="hash-tag-container">
-          {/* Display hashtags above the image */}
-          <PostDescription
-            description={post.description}
-            getPostsByTag={getPostsByTag}
-            setSearchResults={setSearchResults}
-            setCurrentHashtag={setCurrentHashtag} // string is not assignable to null
-          />
-        </div>
 
         <div className="image-new-comment-box">
+          <div className="hash-tag-container">
+            {/* Display hashtags above the image */}
+            <PostDescription
+              description={post.description}
+              getPostsByTag={getPostsByTag}
+              setSearchResults={setSearchResults}
+              setCurrentHashtag={setCurrentHashtag} // string is not assignable to null
+            />
+          </div>
           {/* Display the post's image */}
           {post.imageUrl && (
             <img className="post-image" src={post.imageUrl} alt="Post image" />
