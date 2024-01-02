@@ -1,0 +1,9 @@
+.modal-overlay 
+
+.profile-edit-page {
+  position: absolute;
+  left: 25%;
+  top: 25%;
+  background: var(--form-background-color);
+  z-index: 10;
+}

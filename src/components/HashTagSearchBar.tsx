@@ -71,8 +71,7 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
   };
 
   return (
-    <div className="theme-search-section">
-      <div className="hashtag-search-box">
+    <div className="hashtag-search-box">
         {/* call the handleHashtagSearch on submit */}
         <Input
           placeholder="Search by hashtag"
@@ -91,7 +90,6 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
           {currentHashtag ? "Clear" : "Search"}
         </button>
       </div>
-    </div>
   );
 };
 

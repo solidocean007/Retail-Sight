@@ -32,13 +32,16 @@ import {
 import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
+import NewSection from "./NewSection";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
-  const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(null);
+  const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
+    null
+  );
   const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
     null
   );
@@ -50,7 +53,7 @@ const ActivityFeed = () => {
   useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  console.log(currentUser)
+  console.log(currentUser);
   const currentUserCompany = currentUser?.company;
 
   // State to store the window width
@@ -125,7 +128,7 @@ const ActivityFeed = () => {
   // load indexDB posts or fetch from firestore
   useEffect(() => {
     const noUserLoggedInFetch = async () => {
-      // need to check indexedDB before doing this.
+      // need to check indexedDB before doing this in case this user has visited the site before.
       const publicPostsQuery = query(
         collection(db, "posts"),
         where("visibility", "==", "public"),
@@ -191,14 +194,14 @@ const ActivityFeed = () => {
 
     // Function to process document changes
     const processDocChanges = (snapshot: QuerySnapshot) => {
-      console.log("hook has heard a change"); 
+      console.log("hook has heard a change");
       const changes = snapshot.docChanges();
       changes.forEach((change: DocumentChange) => {
         const postData = {
           id: change.doc.id,
           ...(change.doc.data() as PostType),
         };
-        console.log('postData: ', postData); // this logs with the expected updated array of users who like the post.  so i believe this function is being called with the correct data.
+        console.log("postData: ", postData); // this logs with the expected updated array of users who like the post.  so i believe this function is being called with the correct data.
         if (change.type === "added" || change.type === "modified") {
           dispatch(mergeAndSetPosts([postData])); // I think this is the part that is failing and also lets add the update
           updatePostInIndexedDB(postData);
@@ -255,9 +258,9 @@ const ActivityFeed = () => {
 
     const modifiedStyle: React.CSSProperties = {
       ...style,
-      marginBottom: '10px', // Bottom margin for the gap
-      backgroundColor: 'transparent', // Corrected background color
-      borderRadius: '5px', // Add border-radius for rounded corners
+      marginBottom: "10px", // Bottom margin for the gap
+      backgroundColor: "transparent", // Corrected background color
+      borderRadius: "5px", // Add border-radius for rounded corners
     };
 
     if (isAdPosition) {
@@ -293,11 +296,14 @@ const ActivityFeed = () => {
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
-       <HashTagSearchBar
-        setSearchResults={setSearchResults}
-        currentHashtag={currentHashtag}
-        clearSearch={clearSearch}
-      />
+      <div className="top-of-activity-feed">
+        <NewSection />
+        <HashTagSearchBar
+          setSearchResults={setSearchResults}
+          currentHashtag={currentHashtag}
+          clearSearch={clearSearch}
+        />
+      </div>
 
       <List
         ref={listRef}

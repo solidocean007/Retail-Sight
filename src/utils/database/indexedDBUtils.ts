@@ -4,7 +4,8 @@ import { FilterCriteria } from "../../Slices/postsSlice";
 import { openDB } from "./indexedDBOpen";
 
 // export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
-export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> { // this line mentions void, why?  becuase getPostsByTag may not return anyhting?
+export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
+  // this line mentions void, why?  becuase getPostsByTag may not return anyhting?
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");
   const store = transaction.objectStore("posts");
@@ -361,8 +362,8 @@ export async function getHashtagPostsFromIndexedDB(): Promise<PostWithID[]> {
 
 export async function clearHashtagPostsInIndexedDB(): Promise<void> {
   const db = await openDB();
-  const transaction = db.transaction(['hashtagPosts'], 'readwrite');
-  const store = transaction.objectStore('hashtagPosts');
+  const transaction = db.transaction(["hashtagPosts"], "readwrite");
+  const store = transaction.objectStore("hashtagPosts");
 
   return new Promise<void>((resolve, reject) => {
     const clearRequest = store.clear();
@@ -371,8 +372,65 @@ export async function clearHashtagPostsInIndexedDB(): Promise<void> {
       resolve();
     };
     clearRequest.onerror = () => {
-      console.error("Error clearing hashtag posts from IndexedDB:", clearRequest.error);
+      console.error(
+        "Error clearing hashtag posts from IndexedDB:",
+        clearRequest.error
+      );
       reject(clearRequest.error);
+    };
+  });
+}
+
+export async function addUserCreatedPostsInIndexedDB(
+  userPosts: PostWithID[]
+): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["userCreatedPosts"], "readwrite");
+  const store = transaction.objectStore("userCreatedPosts");
+
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      resolve();
+    };
+
+    transaction.onerror = (event) => {
+      console.error("Transaction error:", (event.target as IDBRequest).error);
+      reject((event.target as IDBRequest).error);
+    };
+
+    userPosts.forEach((post) => {
+      const request = store.put(post);
+      request.onerror = () => {
+        console.error(
+          "Error adding user created post to IndexedDB:",
+          request.error
+        );
+        reject(request.error);
+      };
+    });
+  });
+}
+
+export async function getUserCreatedPostsFromIndexedDB(): Promise<
+  PostWithID[] | undefined
+> {
+  const db = await openDB();
+  const transaction = db.transaction(["userCreatedPosts"], "readonly");
+  const store = transaction.objectStore("userCreatedPosts");
+
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+
+    request.onerror = () => {
+      console.error(
+        "Error fetching user created posts from IndexedDB:",
+        request.error
+      );
+      reject(request.error);
     };
   });
 }

@@ -1,0 +1,38 @@
+/* user-profile-page.css */
+.user-profile-page-header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 1rem;
+}
+
+.user-edit-section {
+  display: flex;
+  align-items: center;
+}
+
+.user-name {
+  margin-right: 1rem;
+  font-weight: bold;
+}
+
+.user-edit-section button,
+.close-profile-page button {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  margin-left: 1rem;
+  border: none;
+  background-color: #1976d2;
+  color: white;
+  border-radius: 4px;
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.user-edit-section button:hover,
+.close-profile-page button:hover {
+  background-color: #115293;
+}

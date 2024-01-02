@@ -10,7 +10,6 @@ export const AppRoutes = () => {
     <Routes>
       <Route path="/sign-up-login" element={<SignUpLogin />} />
       <Route path="/" element={<UserHomePage />} />
-      {/* <Route path="/" element={<UserHomePage />} /> */}
       <Route path="/profile-page" element={<UserProfilePage />} />
       <Route path="/createPost" element={<CreatePost />} />
     </Routes>

@@ -59,7 +59,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   // Use the postId to fetch the latest post data from the Redux store
   const updatedPost = useSelector((state: RootState) =>
-    state.posts.posts.find((p) => p.id === post.id)
+    state.posts.posts.find((p) => p.id === post.id) // Parameter 'p' implicitly has an 'any' type. This error appeared out of nowhere.
   );
 
   // Extract the likes count and likedByUser status from the updated post object

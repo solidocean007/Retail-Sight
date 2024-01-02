@@ -13,6 +13,7 @@ import {
   Query,
   DocumentData,
   startAfter,
+  where,
 } from "firebase/firestore";
 import {
   filterByCategories,
@@ -26,6 +27,7 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { DocumentSnapshot } from "firebase/firestore";
 import { incrementRead } from "../Slices/firestoreReadsSlice";
+// import { showMessage } from "../Slices/snackbarSlice";
 
 type FetchPostsArgs = {
   filters: {
@@ -42,6 +44,7 @@ type FetchInitialPostsArgs = {
   currentUserCompany: string;
 };
 
+// just noting this function fetches but doesn't store to redux or indexedDb
 export const fetchInitialPostsBatch = createAsyncThunk(
   "posts/fetchInitial",
   async (
@@ -50,9 +53,6 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
-      console.log(
-        `Attempting to fetch initial batch of posts with size: ${POSTS_BATCH_SIZE}`
-      );
 
       // Fetch all posts, sorting by timestamp
       const postsQuery = query(
@@ -77,8 +77,6 @@ export const fetchInitialPostsBatch = createAsyncThunk(
               post.user.postUserCompany === currentUserCompany)
         )
         .slice(0, POSTS_BATCH_SIZE);
-
-      console.log("Fetched posts:", postsWithIds);
 
       const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
       console.log(`Last visible post ID: ${lastVisible}`);
@@ -284,3 +282,26 @@ export const fetchFilteredPosts = createAsyncThunk<
     return rejectWithValue("Error fetching filtered posts.");
   }
 });
+
+// Thunk for fetching user posts
+export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
+  "posts/fetchUserPosts",
+  async (userId, { rejectWithValue }) => {
+    try {
+      // Firestore query to fetch user posts
+      const q = query(collection(db, "posts"), where("user.postUserId", "==", userId));
+      const querySnapshot = await getDocs(q);
+      const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as PostType),
+      }));
+      // You would add your IndexedDB caching logic here or perhaps handle it when the function is called.
+      // add Post to redux?
+      // addUserPostsToIndexedDB
+      return userCreatedPosts;
+    } catch (error) {
+      // showMessage
+      return rejectWithValue("Error fetching user posts");
+    }
+  }
+);

@@ -1,0 +1,7 @@
+.new-section {
+  display: flex;
+  border-radius: 5px;
+  width: 100%;
+  background-color: var(--form-background-color);
+  margin: 5px;
+}

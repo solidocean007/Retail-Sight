@@ -5,6 +5,7 @@ import {
   fetchLatestPosts,
   fetchInitialPostsBatch,
   fetchMorePostsBatch,
+  fetchUserCreatedPosts,
 } from "../thunks/postsThunks";
 import { PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
@@ -19,7 +20,9 @@ type CursorType = string;
 // New state shape including loading and error states
 interface PostsState {
   posts: PostWithID[];
+  userPosts: PostWithID[];
   loading: boolean;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
   lastVisible: CursorType | null;
   hashtagPosts: PostWithID[];
@@ -27,7 +30,9 @@ interface PostsState {
 
 const initialState: PostsState = {
   posts: [],
+  userPosts: [],
   loading: false,
+  status: 'idle',
   error: null,
   lastVisible: "",
   hashtagPosts: [],
@@ -40,6 +45,10 @@ const postsSlice = createSlice({
     // Adjusted to the correct state.posts property
     setPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.posts = action.payload;
+    },
+    // Add setUserPosts reducer function
+    setUserPosts: (state, action: PayloadAction<PostWithID[]>) => {
+      state.userPosts = action.payload;
     },
     // Adjusted to the correct state.posts property
     deletePost: (state, action) => {
@@ -158,12 +167,24 @@ const postsSlice = createSlice({
       .addCase(fetchMorePostsBatch.rejected, (state, action) => {
         state.error = action.error.message || "Error fetching more posts";
         state.loading = false;
+      })
+      .addCase(fetchUserCreatedPosts.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchUserCreatedPosts.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.userPosts = action.payload;
+      })
+      .addCase(fetchUserCreatedPosts.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = typeof action.payload === 'string' ? action.payload : 'An error occurred';
       });
   },
 });
 
 export const {
   setPosts,
+  setUserPosts,
   deletePost,
   updatePost,
   setLoading,
