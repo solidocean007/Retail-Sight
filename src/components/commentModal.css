@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: 100vw;
 }
 
 .comment-modal-content {
@@ -13,7 +13,8 @@
   border-radius: 5px;
   max-height: 80%;
   overflow-y: auto;
-  width: 50%;
+  width: auto;
+  min-width: 50%;
 }
 
 .comment-item {
@@ -23,22 +24,29 @@
   margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid #ddd;
-  width: 100%;
+  min-width: 95%;
 }
 
 .comment-name-text {
   display: flex;
   align-items: center;
+  width: 100%;
+  text-wrap: nowrap;
 }
 
 .comment-user-name {
   font-weight: bold;
   cursor: pointer;
   color: #007bff;
+  margin-right: 1rem;
 }
 
 .comment-text {
   margin: 5px 5px;
+  background-color: whitesmoke;
+  width: 100%;
+  padding-left: 5px;
+  
 }
 
 .comment-actions {
@@ -52,3 +60,21 @@
   cursor: pointer;
   margin-right: 10px;
 }
+
+
+/* Styles for tablets */
+@media (max-width: 1200px) {
+  .comment-modal {
+    width: auto;
+  }
+}
+
+/* Styles for mobile devices */
+@media (max-width: 600px) {
+  /* Your styles for mobile devices */
+  .comment-modal {
+    width: 95%;
+  }
+}
+
+

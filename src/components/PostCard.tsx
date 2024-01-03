@@ -58,8 +58,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const user = useSelector(selectUser);
 
   // Use the postId to fetch the latest post data from the Redux store
-  const updatedPost = useSelector((state: RootState) =>
-    state.posts.posts.find((p) => p.id === post.id) // Parameter 'p' implicitly has an 'any' type. This error appeared out of nowhere.
+  const updatedPost = useSelector(
+    (state: RootState) => state.posts.posts.find((p) => p.id === post.id) // Parameter 'p' implicitly has an 'any' type. This error appeared out of nowhere.
   );
 
   // Extract the likes count and likedByUser status from the updated post object
@@ -109,8 +109,9 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   let formattedDate = "N/A"; // default value
-  if (post.timestamp) {
-    const jsDate = new Date(post.timestamp); // Creating a Date object from ISO string
+  if (post.displayDate) {
+    console.log(post.displayDate);
+    const jsDate = new Date(post.displayDate); // Creating a Date object from ISO string
     formattedDate = jsDate.toLocaleDateString();
   }
 
@@ -157,7 +158,7 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleOnUserNameClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleOnUserNameClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault(); // Call this if you need to prevent the default action
     protectedAction(() => {
       onUserNameClick(post, dispatch);
@@ -167,10 +168,10 @@ const PostCard: React.FC<PostCardProps> = ({
   return (
     <Card className="post-card dynamic-height" style={{ ...style }}>
       <div className="card-content">
-        <div className="visibility">
-          <div className="view-box">view: {post.visibility}</div>
-        </div>
         <div className="post-header">
+          <div className="visibility">
+            <div className="view-box">view: {post.visibility}</div>
+          </div>
           <div className="header-top">
             <div className="likes-comments">
               {likesCount === 0 ? null : likesCount === 1 ? (
@@ -224,15 +225,19 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
           </div>
           <div className="post-user-details">
-            <div onClick={handleOnUserNameClick}>
-              by:{" "}
-              <a href="#" onClick={(e) => e.preventDefault()}>
-                {" "}
+            {/* <div onClick={handleOnUserNameClick}> */}
+            <div>
+              by:{"  "}
+              <a href="#" onClick={handleOnUserNameClick}>
                 {post.user.postUserName}
               </a>
             </div>
-            <h5>{formattedDate}</h5>
+            <h4>date: {formattedDate}</h4>
           </div>
+          <a href="#" onClick={(e) => e.preventDefault()}> 
+                {/* create a onCompanyNameClick */}
+            {post.user.postUserCompany}
+          </a>
         </div>
 
         <div className="image-new-comment-box">
@@ -249,13 +254,17 @@ const PostCard: React.FC<PostCardProps> = ({
           {post.imageUrl && (
             <img className="post-image" src={post.imageUrl} alt="Post image" />
           )}
-          <div className="comment-button-container">
-            {commentCount > 0 && (
-              <button onClick={openCommentModal}>
-                {showAllComments ? "Hide Comments" : `${commentCount} Comments`}
-              </button>
-            )}
-          </div>
+          {commentCount > 0 && (
+            <div className="comment-button-container">
+              {commentCount > 0 && (
+                <button onClick={openCommentModal}>
+                  {showAllComments
+                    ? "Hide Comments"
+                    : `${commentCount} Comments`}
+                </button>
+              )}
+            </div>
+          )}
 
           <CommentSection post={post} />
         </div>

@@ -84,8 +84,7 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
           handleCommentSubmit();
         }}
       >
-        <div className="new-comment-container">
-          <input
+        <input
             type="text"
             value={newComment}
             onChange={commentChange}
@@ -93,7 +92,6 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
             placeholder="New comment"
           />
           <button type="submit">Submit</button>
-        </div>
       </form>
     </div>
   );

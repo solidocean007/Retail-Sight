@@ -72,6 +72,7 @@ export const CreatePost = () => {
     visibility: "public",
     supplier: "",
     brands: [],
+    displayDate: '',
     timestamp: "",
     user: {
       postUserName: `${userData?.firstName} ${userData?.lastName}`,

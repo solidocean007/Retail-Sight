@@ -86,6 +86,7 @@ export const useHandlePostSubmission = () => {
         visibility: post.visibility,
         supplier: post.supplier,
         brands: post.brands,
+        displayDate: new Date().toISOString(),
         timestamp: new Date().toISOString(),
         user: {
           postUserName: user.displayName || "Unknown",
@@ -124,7 +125,7 @@ export const useHandlePostSubmission = () => {
       await addNewlyCreatedPostToIndexedDB(newPostWithID);
 
       // Update channels collection
-      await updateChannelsInFirestore(db, post.channel, newDocRef.id); // Property 'id' does not exist on type '{ docRef: DocumentReference<any, DocumentData>; postData: any; }'
+      await updateChannelsInFirestore(db, post.channel, newDocRef.id); 
 
       // Update categories collection
       await updateCategoriesInFirestore(db, post.category, newDocRef.id);

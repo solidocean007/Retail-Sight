@@ -9,6 +9,7 @@ import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { updatePost } from "../Slices/postsSlice";
 import { SelectChangeEvent } from "@mui/material";
+import './editPostModal.css'
 
 import {
   Button,

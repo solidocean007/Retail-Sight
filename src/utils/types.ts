@@ -68,7 +68,8 @@ export interface PostType {
   city?: string;   // Added city
   state?: string;  // Added state
   visibility?: 'public' | 'company' | 'supplier' | 'private';
-  timestamp?: string;
+  displayDate: string;
+  timestamp: string;
   user: {
     postUserName: string | undefined;
     postUserId: string | undefined;

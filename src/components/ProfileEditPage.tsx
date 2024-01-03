@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { Button, TextField, Container, Typography } from "@mui/material";
+import { Button, TextField, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
@@ -8,6 +8,7 @@ import { db } from "../utils/firebase";
 // import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
 import './profileEditPage.css'
+import { getAuth, updateProfile } from "@firebase/auth";
 
 type FormData = {
   firstName: string;
@@ -85,21 +86,18 @@ export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (userData?.uid) {
       const userDocRef = doc(db, "users", userData.uid);
-      await setDoc(
-        userDocRef,
-        {
-          firstName: data.firstName,
-          lastName: data.lastName,
-        },
-        { merge: true }
-      )
-        .then(() => {
-          // Consider updating Redux state here if necessary
-          setUpdateMessage("Profile updated successfully!");
-        })
-        .catch((error) => {
-          console.error("Error updating user profile:", error);
-        });
+      const auth = getAuth();
+      const fullName = `${data.firstName} ${data.lastName}`; // Concatenate first and last names
+
+      try {
+        await setDoc(userDocRef, { firstName: data.firstName, lastName: data.lastName }, { merge: true });
+        if (auth.currentUser) {
+          await updateProfile(auth.currentUser, { displayName: fullName });
+        }
+        setUpdateMessage("Profile updated successfully!");
+      } catch (error) {
+        console.error("Error updating user profile:", error);
+      }
     }
   };
 
@@ -109,7 +107,8 @@ export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.
 
   return (
     <div className="user-modal-overlay">
-      <Container className="profile-edit-page" maxWidth="sm">
+      {/* <div className="profile-edit-page" maxWidth="sm"> */}
+      <div className="profile-edit-page">
       <Button
         variant="contained"
         color="secondary"
@@ -135,7 +134,7 @@ export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.
           {updateMessage}
         </Typography>
       )}
-    </Container>
+    </div>
     </div>
     
   );
