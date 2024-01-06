@@ -33,12 +33,15 @@ import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
 import NewSection from "./NewSection";
+import { openDB } from "../utils/database/indexedDBOpen";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
+  const [adsOn] = useState(false);
+
   const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
     null
   );
@@ -62,6 +65,14 @@ const ActivityFeed = () => {
   // console.log(posts, ' : posts')
   const loading = useSelector((state: RootState) => state.posts.loading);
 
+  async function removeGhostPostFromIndexedDB(postId: string) {
+    const db = await openDB(); // openDB is a function to open your IndexedDB
+    const tx = db.transaction("latestPosts", "readwrite");
+    const store = tx.objectStore("latestPosts");
+
+    await store.delete(postId);
+  }
+
   const clearSearch = async () => {
     setCurrentHashtag(null);
     setSearchResults(null);
@@ -77,9 +88,11 @@ const ActivityFeed = () => {
     const gapSize = 0;
     // Determine if the current index is an ad
     const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
-    if (isAdPosition) {
+    if (isAdPosition && adsOn) {
       // return getActivityItemHeight(windowWidth) - 200; // Use the responsive height but how about change the height as well?
       return 200 + gapSize; // Use the responsive height but how about change the height as well?
+    } else if (isAdPosition && !adsOn) {
+      return 0;
     }
     return getActivityItemHeight(windowWidth) + gapSize; // Use the responsive height for regular post items as well
   };
@@ -87,6 +100,7 @@ const ActivityFeed = () => {
   // Mount alert
   useEffect(() => {
     console.log("ActivityFeed mounts");
+    removeGhostPostFromIndexedDB("QCawXVw6IjP7mkogJqrE");
     return () => {
       console.log("ActivityFeed.tsx unmounted");
     };
@@ -194,14 +208,12 @@ const ActivityFeed = () => {
 
     // Function to process document changes
     const processDocChanges = (snapshot: QuerySnapshot) => {
-      console.log("hook has heard a change");
       const changes = snapshot.docChanges();
       changes.forEach((change: DocumentChange) => {
         const postData = {
           id: change.doc.id,
           ...(change.doc.data() as PostType),
         };
-        console.log("postData: ", postData); // this logs with the expected updated array of users who like the post.  so i believe this function is being called with the correct data.
         if (change.type === "added" || change.type === "modified") {
           dispatch(mergeAndSetPosts([postData])); // I think this is the part that is failing and also lets add the update
           updatePostInIndexedDB(postData);
@@ -242,7 +254,9 @@ const ActivityFeed = () => {
     };
   }, [currentUser?.company, dispatch]);
 
-  const numberOfAds = Math.ceil(displayPosts.length / AD_INTERVAL) - 1;
+  const numberOfAds = adsOn
+    ? Math.ceil(displayPosts.length / AD_INTERVAL) - 1
+    : 0;
   const itemCount = displayPosts.length + numberOfAds;
 
   const itemRenderer = ({
@@ -258,20 +272,22 @@ const ActivityFeed = () => {
 
     const modifiedStyle: React.CSSProperties = {
       ...style,
-      marginBottom: "10px", // Bottom margin for the gap
-      backgroundColor: "transparent", // Corrected background color
-      borderRadius: "5px", // Add border-radius for rounded corners
+      marginBottom: "10px",
+      backgroundColor: "transparent",
+      borderRadius: "5px",
     };
 
     if (isAdPosition) {
-      return <AdComponent key={`ad-${adIndex}`} style={style} />;
+      return <AdComponent key={`ad-${adIndex}`} style={style} adsOn={adsOn} />;
     } else if (postIndex < displayPosts.length) {
       const postWithID = displayPosts[postIndex];
+
       return (
         <PostCardRenderer
           key={postWithID.id}
           currentUserUid={currentUser?.uid}
-          index={postIndex}
+          // index={postIndex}
+          index={index}
           style={modifiedStyle}
           data={{ post: postWithID, getPostsByTag }}
           setSearchResults={setSearchResults}
@@ -289,7 +305,7 @@ const ActivityFeed = () => {
   }
 
   // If there are no posts, show the no content card
-  if (itemCount === 0) {
+  if (displayPosts.length === 0) {
     return <NoContentCard />;
   }
 

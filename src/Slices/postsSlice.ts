@@ -46,6 +46,9 @@ const postsSlice = createSlice({
     setPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.posts = action.payload;
     },
+    setFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
+      state.posts = action.payload;
+    },
     // Add setUserPosts reducer function
     setUserPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.userPosts = action.payload;
@@ -107,18 +110,32 @@ const postsSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+      // .addCase(
+      //   fetchFilteredPosts.fulfilled,
+      //   (state, action: PayloadAction<PostWithID[]>) => {
+      //     state.loading = false;
+      //     // Directly append PostWithID[] to the state.posts
+      //     state.posts = [...state.posts, ...action.payload];
+      //     state.lastVisible =
+      //       action.payload.length > 0
+      //         ? action.payload[action.payload.length - 1].id
+      //         : state.lastVisible;
+      //   }
+      // )
       .addCase(
         fetchFilteredPosts.fulfilled,
         (state, action: PayloadAction<PostWithID[]>) => {
           state.loading = false;
-          // Directly append PostWithID[] to the state.posts
-          state.posts = [...state.posts, ...action.payload];
-          state.lastVisible =
-            action.payload.length > 0
-              ? action.payload[action.payload.length - 1].id
-              : state.lastVisible;
+          // Replace existing posts with the new filtered posts
+          state.posts = action.payload;
+      
+          // Update the last visible post's ID for pagination purposes
+          state.lastVisible = action.payload.length > 0
+            ? action.payload[action.payload.length - 1].id
+            : null;
         }
       )
+      
       .addCase(fetchFilteredPosts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Error fetching posts";
@@ -184,6 +201,7 @@ const postsSlice = createSlice({
 
 export const {
   setPosts,
+  setFilteredPosts,
   setUserPosts,
   deletePost,
   updatePost,

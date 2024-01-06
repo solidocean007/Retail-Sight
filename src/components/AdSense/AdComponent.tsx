@@ -1,19 +1,23 @@
 // AdComponents.tsx
-import React, { useEffect } from "react";
+// import React, { useEffect } from "react";
 import "./adComponent.css";
 
 interface AdComponentProps {
   style: React.CSSProperties;
+  adsOn: boolean;
 }
 
-const AdComponent: React.FC<AdComponentProps> = ({ style }) => {
-  useEffect(() => {
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+const AdComponent: React.FC<AdComponentProps> = ({ style, adsOn }) => {
+  if (!adsOn) {
+    return null;
+  }
+  // useEffect(() => {
+  //   try {
+  //     (window.adsbygoogle = window.adsbygoogle || []).push({});
+  //   } catch (e) {
+  //     console.error(e);
+  //   }
+  // }, []);
 
   return (
     <div

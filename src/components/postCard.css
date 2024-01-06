@@ -15,7 +15,7 @@
 .visibility {
   width: 100%;
   display: flex;
-  justify-content: end;
+  justify-content: start;
 }
 
 .image-new-comment-box {
@@ -97,7 +97,7 @@
 
 .view-box {
   display: flex;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
   border-bottom-left-radius: 3px;
   height: 100%;

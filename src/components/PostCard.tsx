@@ -110,7 +110,6 @@ const PostCard: React.FC<PostCardProps> = ({
 
   let formattedDate = "N/A"; // default value
   if (post.displayDate) {
-    console.log(post.displayDate);
     const jsDate = new Date(post.displayDate); // Creating a Date object from ISO string
     formattedDate = jsDate.toLocaleDateString();
   }

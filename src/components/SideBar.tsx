@@ -14,8 +14,16 @@ import { RootState } from "../utils/store";
 import { clearLocationFilters } from "../Slices/locationSlice";
 import "./sideBar.css";
 import CustomAccordion from "./CustomAccordion";
-import { getFilteredPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { getFilteredPostsFromIndexedDB, getPostsFromIndexedDB, storeFilteredPostsInIndexedDB } from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
+import { setFilteredPosts, setPosts } from "../Slices/postsSlice";
+
+interface FilterState {
+  channels: ChannelType[];
+  categories: CategoryType[];
+  states: string[]; // Assuming these are arrays of strings
+  cities: string[];
+}
 
 const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const protectedAction = useProtectedAction();
@@ -29,6 +37,15 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const selectedCities = useSelector(
     (state: RootState) => state.locations.selectedCities
   );
+
+   // State to track the last applied filters
+   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState>({
+    channels: [],
+    categories: [],
+    states: [],
+    cities: []
+  });
+  
   const dispatch = useDispatch<AppDispatch>();
 
   const applyFilters = async () => {
@@ -46,30 +63,76 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       // If cached posts exist, use them and do not fetch from Firestore
       console.log("Using cached posts from IndexedDB");
       // You would dispatch an action to set these posts in your Redux store here
-      // For example: dispatch(setFilteredPosts(cachedPosts));
+      dispatch(setFilteredPosts(cachedPosts));
+      storeFilteredPostsInIndexedDB(cachedPosts, filters);
     } else {
       // If there are no cached posts, fetch from Firestore
       console.log("Fetching filtered posts from Firestore");
       dispatch(fetchFilteredPosts({ filters, lastVisible: null }));
     }
+    // Update the last applied filters state
+    setLastAppliedFilters({
+      channels: selectedChannels, // Type 'string' is not assignable to type 'never'.
+      categories: selectedCategories, // Type 'string' is not assignable to type 'never'.
+      states: selectedStates, // Type 'string' is not assignable to type 'never'.
+      cities: selectedCities // Type 'string' is not assignable to type 'never'.
+    });
   };
 
-  // In SideBar component
-  const clearFilters = () => {
+  const clearFilters = async () => {
     // Clear local states for channels and categories
     setSelectedChannels([]);
     setSelectedCategories([]);
-
+  
     // Dispatch actions to clear filters in Redux store
     dispatch(clearLocationFilters()); // This will reset both state and city filters in your Redux store
-
-    // Fetch latest posts
-    dispatch(fetchLatestPosts());
+  
+    // Reload posts from IndexedDB and update Redux
+    try {
+      const cachedPosts = await getPostsFromIndexedDB();
+      if (cachedPosts && cachedPosts.length > 0) {
+        dispatch(setPosts(cachedPosts));
+      } else {
+        // Optionally, fetch from the server if IndexedDB is empty
+        dispatch(fetchLatestPosts());
+      }
+    } catch (error) {
+      console.error('Error reloading posts from IndexedDB:', error);
+      // Optionally, fetch from the server in case of an error
+      dispatch(fetchLatestPosts());
+    }
   };
-
+  
+  const arraysEqual = <T extends any[]>(a: T, b: T): boolean => { // Unexpected any. Specify a different type
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+  
+    // Create copies of the arrays to sort, so the original arrays are not mutated
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+  
+    for (let i = 0; i < sortedA.length; i++) {
+      if (sortedA[i] !== sortedB[i]) return false;
+    }
+    return true;
+  };
+  
   const handleApplyFiltersClick = () => {
-    protectedAction(applyFilters);
+    // Check if current filters are different from the last applied filters
+    const filtersChanged = !arraysEqual(selectedChannels, lastAppliedFilters.channels) ||
+                           !arraysEqual(selectedCategories, lastAppliedFilters.categories) ||
+                           !arraysEqual(selectedStates, lastAppliedFilters.states) ||
+                           !arraysEqual(selectedCities, lastAppliedFilters.cities);
+  
+    if (filtersChanged) {
+      protectedAction(applyFilters);
+      if (window.innerWidth <= 900) { 
+        toggleFilterMenu();
+      }
+    }
   };
+  
 
   const handleClearFiltersClick = () => {
     protectedAction(clearFilters);

@@ -24,6 +24,7 @@ import "./editPostModal.css";
 // import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
+import { extractHashtags } from "../utils/extractHashtags";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -51,9 +52,9 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
-  const wrapperRef = useRef(null); // You are already defining this ref
-  // useOutsideAlerter(wrapperRef, handleCloseEditModal); // Use the existing handleCloseEditModal which calls setIsEditModalOpen(false)
+  const wrapperRef = useRef(null); 
 
+  // what is this useEffect for?
   useEffect(() => {
     setDescription(post?.description || "");
     setPostVisibility(post?.visibility || "public");
@@ -62,10 +63,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
     await updatePostWithNewTimestamp(post.id);
+    
     try {
       const updatedFields = {
         description: updatedPost.description,
         visibility: updatedPost.visibility,
+        hashtags: updatedPost.hashtags,
         // add other fields you want to update here
       };
       await updateDoc(postRef, updatedFields);
@@ -80,10 +83,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   };
 
   const handleSave = () => {
+    const extractedHashtags = extractHashtags(description);
     const updatedPost: PostWithID = {
       ...post,
       description,
       visibility: postVisibility,
+      hashtags: extractedHashtags,
     };
     handleSavePost(updatedPost);
     dispatch(showMessage("Post edited successfully!"));

@@ -24,4 +24,3 @@ export const getPostsByTag = async (hashTag: string): Promise<PostWithID[]> => {
 };
 
 export default getPostsByTag;
-

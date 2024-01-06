@@ -12,6 +12,7 @@
   padding: 3px;
   margin: 5px;
   justify-content: center;
+  align-items: center;
 }
 
 .search-button {
