@@ -31,32 +31,6 @@ import { showMessage } from "../Slices/snackbarSlice"; // hideMessage is defined
 // import { useStyles } from "../utils/PostLogic/makeStyles";
 
 export const SignUpLogin = () => {
-  // const classes = useStyles();
-  // const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  // const [textFieldStyle, setTextFieldStyle] = useState({});
-
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     setWindowWidth(window.innerWidth);
-  //   };
-
-  //   window.addEventListener('resize', handleResize);
-
-  //   return () => {
-  //     window.removeEventListener('resize', handleResize);
-  //   };
-  // }, []);
-
-  // useEffect(() => {
-  //   if (windowWidth < 600) { // Example breakpoint for narrow screens
-  //     setTextFieldStyle({ 
-  //       width: '80%',
-  //       height: '40px', // Adjust height as needed
-  //     });
-  //   } else {
-  //     setTextFieldStyle({ width: '100%', height: 'auto' }); // Default height
-  //   }
-  // }, [windowWidth]);
 
   useEffect(() => {
     console.log("SignUpLogin mounts");
@@ -164,7 +138,7 @@ export const SignUpLogin = () => {
           companyInput,
           phoneInput,
           passwordInput,
-          setSignUpError
+          setSignUpError,
         );
 
         if (authData?.uid) {

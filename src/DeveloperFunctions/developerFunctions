@@ -1,0 +1,21 @@
+import { deleteDoc, doc, updateDoc } from 'firebase/firestore';
+
+export const deleteCompany = async (companyId : string) => {
+  try {
+    await deleteDoc(doc(db, 'companies', companyId));
+    console.log('Company deleted successfully');
+    // Additional logic (e.g., update state or UI)
+  } catch (error) {
+    console.error('Error deleting company:', error);
+  }
+};
+
+export const updateCompany = async (companyId, updatedCompanyData) => {
+  try {
+    await updateDoc(doc(db, 'companies', companyId), updatedCompanyData);
+    console.log('Company updated successfully');
+    // Additional logic (e.g., update state or UI)
+  } catch (error) {
+    console.error('Error updating company:', error);
+  }
+};

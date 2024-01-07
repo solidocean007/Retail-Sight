@@ -8,7 +8,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { db } from "../firebase";
 // import { TPhoneInputState } from "./types";
-import { setDoc, getDoc,doc, collection } from "firebase/firestore";
+import { setDoc, getDoc, doc, collection } from "firebase/firestore";
 import { UserType } from "../types";
 
 interface FirebaseError extends Error {
@@ -22,14 +22,20 @@ export const handleSignUp = async (
   companyInput: string,
   phoneInput: string,
   passwordInput: string,
-  setSignUpError?: (error: string) => void
-): Promise<UserType | undefined> => { 
+  setSignUpError?: (error: string) => void,
+  role: "admin" | "employee" | "status-pending" | "developer" = "status-pending" // error says role is declared but never used
+): Promise<UserType | undefined> => {
   try {
-    console.log("Starting user creation with Firebase Auth...");
-
     // Create user with email and password in Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, passwordInput);
-    console.log("User creation with Firebase Auth successful, userCredential:", userCredential);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      passwordInput
+    );
+    console.log(
+      "User creation with Firebase Auth successful, userCredential:",
+      userCredential
+    );
 
     // Check if user is created successfully
     if (userCredential.user) {
@@ -49,13 +55,14 @@ export const handleSignUp = async (
         email: email,
         company: companyInput,
         phone: phoneInput,
+        role: role
       };
 
       await setDoc(doc(collection(db, "users"), uid), {
         // uid: uid,
-        ...userData
+        ...userData,
       });
-      
+
       console.log("User data added to Firestore successfully");
       return userData;
     }
@@ -64,23 +71,33 @@ export const handleSignUp = async (
     const errorCode = firebaseError.code;
     const errorMessage = firebaseError.message;
 
-    console.error("Error encountered during sign-up process:", errorCode, errorMessage);
+    console.error(
+      "Error encountered during sign-up process:",
+      errorCode,
+      errorMessage
+    );
 
-    if (setSignUpError) { // Check if setSignUpError is defined
+    if (setSignUpError) {
+      // Check if setSignUpError is defined
       if (errorCode === "auth/email-already-in-use") {
-        setSignUpError("The email address is already in use by another account.");
+        setSignUpError(
+          "The email address is already in use by another account."
+        );
       } else {
-        setSignUpError(errorMessage || "An error occurred during the sign-up process.");
+        setSignUpError(
+          errorMessage || "An error occurred during the sign-up process."
+        );
       }
     }
-
 
     throw error;
   }
 };
 
-
-export const handleLogin = async (email: string, password: string): Promise<UserType | null> => {
+export const handleLogin = async (
+  email: string,
+  password: string
+): Promise<UserType | null> => {
   try {
     const userCredential = await signInWithEmailAndPassword(
       auth,
@@ -92,20 +109,20 @@ export const handleLogin = async (email: string, password: string): Promise<User
       const uid = user.uid;
       // Fetch additional user data from Firestore
       const docRef = doc(collection(db, "users"), uid);
-      console.log('get user from login read')
+      console.log("get user from login read");
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
         const data = docSnap.data() as UserType;
         return {
-          ...data
+          ...data,
         };
       } else {
         console.log("No such user!");
         return null;
       }
     }
-    
+
     return null;
   } catch (error) {
     const firebaseError = error as FirebaseError;

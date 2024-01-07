@@ -4,6 +4,13 @@ import { Timestamp } from "firebase/firestore";
 import { ChannelType } from "../components/ChannelSelector";
 import { CategoryType } from "../components/CategorySelector";
 
+export type CompanyType = {
+  companyName: string[];
+  admins: string[];
+  employees: string[];
+  statusPending: string[];
+}
+
 export type TUserInputType = {
   firstNameInput: string;
   lastNameInput: string;
@@ -27,6 +34,7 @@ export type TErrorsOfInputs = {
 };
 
 export interface UserType {
+  role: "admin" | "employee" | "status-pending" | "developer";
   uid: string | undefined; // from Firebase
   firstName: string | undefined; // from signup
   lastName: string | undefined; // from signup
@@ -58,16 +66,16 @@ export interface UserType {
 //   | "Cookies and Pastries"
 
 export interface PostType {
-  category: CategoryType | '';
-  channel: ChannelType | '';
+  category: CategoryType | "";
+  channel: ChannelType | "";
   description?: string;
   imageUrl?: string;
   selectedStore?: string;
   storeNumber?: string;
   storeAddress: string;
-  city?: string;   // Added city
-  state?: string;  // Added state
-  visibility?: 'public' | 'company' | 'supplier' | 'private';
+  city?: string; // Added city
+  state?: string; // Added state
+  visibility?: "public" | "company" | "supplier" | "private";
   displayDate: string;
   timestamp: string;
   user: {
@@ -107,5 +115,3 @@ export interface LocationState {
   loading: boolean;
   error: string | null;
 }
-
-
