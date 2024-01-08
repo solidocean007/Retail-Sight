@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { getDocs, collection } from "firebase/firestore";
+import { getDocs, collection, onSnapshot, where, query } from "firebase/firestore";
 import { db } from "../utils/firebase";
 // import { CompanyType, UserType } from "../utils/types";
 import { CompanyType } from "../utils/types";
 // import { updateSelectedUser } from "../DeveloperAdminFunctions/developerAdminFunctions";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
+import { useAppDispatch } from "../utils/store";
 
 // import { deleteUser } from "@firebase/auth";
 
@@ -19,6 +20,30 @@ const DeveloperDashboard = () => {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
     null
   );
+  const dispatch = useAppDispatch();
+  const [lastMountTime, setLastMountTime] = useState("");
+
+  // listen for changes to the company firestore document and update the state of companies
+  useEffect(() => {
+    // Store the mount time of the component
+    const mountTime = new Date().toISOString();
+    setLastMountTime(mountTime);
+
+    const q = query(
+      collection(db, "companies"),
+      where("lastUpdated", ">", mountTime)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const updatedCompanies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as CompanyType }));
+      setCompanies(prevCompanies => [...prevCompanies, ...updatedCompanies]);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+  
 
   useEffect(() => {
     const fetchCompanies = async () => {

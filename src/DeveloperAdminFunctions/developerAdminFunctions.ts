@@ -1,7 +1,7 @@
-// import { deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 // import { auth, db } from "../utils/firebase";
 import {db} from '../utils/firebase';
+import { UserType } from "../utils/types";
 // import { deleteUser } from "@firebase/auth";
 
 export const deleteCompany = async (companyId: string) => {
@@ -49,12 +49,12 @@ export const deleteCompany = async (companyId: string) => {
 //   await deleteFirestoreUser(userId);
 // };
 
-// export const updateSelectedUser = async (userId, updatedUserData) => {
-//   try {
-//     await updateDoc(doc(db, "users", userId), updatedUserData);
-//     console.log("User updated successfully");
-//     // Additional logic (e.g., update state or UI)
-//   } catch (error) {
-//     console.error("Error updating user:", error);
-//   }
-// };
+export const updateSelectedUser = async (userId:string, updatedUserData : { [key: string]: any }) => {
+  try {
+    await updateDoc(doc(db, "users", userId), updatedUserData);
+    console.log("User updated successfully");
+    // Additional logic (e.g., update state or UI)
+  } catch (error) {
+    console.error("Error updating user:", error);
+  }
+};

@@ -5,7 +5,9 @@ import { ChannelType } from "../components/ChannelSelector";
 import { CategoryType } from "../components/CategorySelector";
 
 export type CompanyType = {
-  companyName: string[];
+  lastUpdated: string;
+  companyName: string;
+  altCompanyNames: string[];
   admins: string[];
   employees: string[];
   statusPending: string[];
