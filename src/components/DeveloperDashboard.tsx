@@ -64,10 +64,10 @@ const DeveloperDashboard = () => {
   //   deleteUser
   // };
 
-  // const handleEditUser = async (adminId:string, user: UserType) => {
-  //   // Call updateUser function here
-  //   // updateSelectedUser(userId, user)
-  // };
+  const handleEditUser = async (adminId:string, user: UserType) => {
+    // Call updateUser function here
+    // updateSelectedUser(userId, user)
+  };
 
   return (
     <div>
@@ -85,10 +85,10 @@ const DeveloperDashboard = () => {
               {company.admins.map((adminId) => (
                 <div key={adminId}>
                   {adminId}
-                  {/* <button onClick={() => handleEditUser(adminId)}>Edit</button> */}
-                  {/* <button onClick={() => handleDeleteUser(adminId)}>
+                  <button onClick={() => handleEditUser(adminId)}>Edit</button>
+                  <button onClick={() => handleDeleteUser(adminId)}>
                     Delete
-                  </button> */}
+                  </button>
                 </div>
               ))}
 
@@ -98,12 +98,12 @@ const DeveloperDashboard = () => {
               {company.employees.map((employeeId) => (
                 <div key={employeeId}>
                   {employeeId}
-                  {/* <button onClick={() => handleEditUser(employeeId)}>
+                  <button onClick={() => handleEditUser(employeeId)}>
                     Edit
-                  </button> */}
-                  {/*  <button onClick={() => handleDeleteUser(employeeId)}>
+                  </button>
+                   <button onClick={() => handleDeleteUser(employeeId)}>
                      Delete
-                   </button> */}
+                   </button>
                 </div>
               ))}
 
@@ -113,10 +113,10 @@ const DeveloperDashboard = () => {
               {company.statusPending.map((userId) => (
                 <div key={userId}>
                   {userId}
-                  {/* <button onClick={() => handleEditUser(userId)}>Edit</button> */}
-                  {/* <button onClick={() => handleDeleteUser(userId)}>
+                  <button onClick={() => handleEditUser(userId)}>Edit</button>
+                  <button onClick={() => handleDeleteUser(userId)}>
                     Delete
-                  </button> */}
+                  </button>
                 </div>
               ))}
             </div>

@@ -1,6 +1,7 @@
 //Authenticate.ts
 import {
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
@@ -32,10 +33,13 @@ export const handleSignUp = async (
       email,
       passwordInput
     );
-    console.log(
-      "User creation with Firebase Auth successful, userCredential:",
-      userCredential
-    );
+    sendEmailVerification(userCredential.user)
+    .then(() => {
+      console.log("Verification email sent.");
+    })
+    .catch((error) => {
+      console.error("Error sending verification email:", error);
+    });
 
     // Check if user is created successfully
     if (userCredential.user) {

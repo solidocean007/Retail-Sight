@@ -1,7 +1,7 @@
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 // import { auth, db } from "../utils/firebase";
 import {db} from '../utils/firebase';
-import { UserType } from "../utils/types";
+// import { UserType } from "../utils/types";
 // import { deleteUser } from "@firebase/auth";
 
 export const deleteCompany = async (companyId: string) => {
