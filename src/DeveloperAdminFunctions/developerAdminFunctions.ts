@@ -49,7 +49,7 @@ export const deleteCompany = async (companyId: string) => {
 //   await deleteFirestoreUser(userId);
 // };
 
-export const updateSelectedUser = async (userId:string, updatedUserData : { [key: string]: any }) => {
+export const updateSelectedUser = async (userId:string, updatedUserData : { [key: string]: any }) => { // should this be a usertype?
   try {
     await updateDoc(doc(db, "users", userId), updatedUserData);
     console.log("User updated successfully");

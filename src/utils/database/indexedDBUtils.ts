@@ -5,7 +5,6 @@ import { openDB } from "./indexedDBOpen";
 
 // export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
 export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
-  // this line mentions void, why?  becuase getPostsByTag may not return anyhting?
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");
   const store = transaction.objectStore("posts");
@@ -95,7 +94,7 @@ export async function removePostFromIndexedDB(postId: string): Promise<void> {
   });
 }
 
-// export async function getPostsFromIndexedDB(): Promise<PostType[]> {
+// get posts from indexedDB
 export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readonly");
@@ -103,7 +102,6 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
   const getAllRequest = store.getAll();
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
-      // console.log("Posts fetched from IndexedDB:", getAllRequest.result); // Log the fetched posts
       resolve(getAllRequest.result);
     };
     getAllRequest.onerror = () => {
@@ -168,8 +166,7 @@ export async function storeFilteredPostsInIndexedDB(
   });
 }
 
-// Add this new function to indexedDBUtils.ts
-
+// store latest posts in indexDB
 export async function storeLatestPostsInIndexedDB(
   posts: PostType[]
 ): Promise<void> {
@@ -206,8 +203,7 @@ export async function storeLatestPostsInIndexedDB(
   });
 }
 
-// Add this new function to indexedDBUtils.ts
-
+// get the latest posts from indexedDB
 export async function getLatestPostsFromIndexedDB(): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(["latestPosts"], "readonly");
@@ -221,6 +217,7 @@ export async function getLatestPostsFromIndexedDB(): Promise<PostWithID[]> {
   });
 }
 
+// store locations in indexedDB
 export async function storeLocationsInIndexedDB(locations: {
   [key: string]: string[];
 }): Promise<void> {
@@ -267,6 +264,7 @@ export async function storeLocationsInIndexedDB(locations: {
   });
 }
 
+// get locations from indexedDB
 export async function getLocationsFromIndexedDB(): Promise<{
   [key: string]: string[];
 } | null> {
@@ -312,6 +310,7 @@ export async function getLocationsFromIndexedDB(): Promise<{
   });
 }
 
+// add hashtag posts to indexedDB
 export async function addHashtagPostsToIndexedDB(
   posts: PostWithID[]
 ): Promise<void> {
@@ -340,6 +339,7 @@ export async function addHashtagPostsToIndexedDB(
   });
 }
 
+// get hashtag posts from indexedDB
 export async function getHashtagPostsFromIndexedDB(): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(["hashtagPosts"], "readonly");
@@ -360,6 +360,7 @@ export async function getHashtagPostsFromIndexedDB(): Promise<PostWithID[]> {
   });
 }
 
+// clear hashtag posts from indexedDB
 export async function clearHashtagPostsInIndexedDB(): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["hashtagPosts"], "readwrite");
@@ -381,6 +382,7 @@ export async function clearHashtagPostsInIndexedDB(): Promise<void> {
   });
 }
 
+// add user created posts in indexedDB
 export async function addUserCreatedPostsInIndexedDB(
   userPosts: PostWithID[]
 ): Promise<void> {

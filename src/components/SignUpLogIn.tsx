@@ -26,14 +26,13 @@ import { validateUserInputs } from "../utils/validation/validations";
 import "./signUpLogIn.css";
 
 // Import Snackbar related actions
-// import { showMessage, hideMessage } from "../Slices/snackbarSlice";  // hideMessage is defined but never used.  What is it for?
 import { showMessage } from "../Slices/snackbarSlice"; // hideMessage is defined but never used.  What is it for?
 import {
   createNewCompany,
   findMatchingCompany,
   normalizeCompanyInput,
 } from "../utils/companyLogic";
-import { updateSelectedUser as updateUsersCompany  }  from "../DeveloperAdminFunctions/developerAdminFunctions";
+import { updateSelectedUser as updateUsersCompany } from "../DeveloperAdminFunctions/developerAdminFunctions";
 // import { useStyles } from "../utils/PostLogic/makeStyles";
 
 export const SignUpLogin = () => {
@@ -138,11 +137,10 @@ export const SignUpLogin = () => {
           firstNameInput,
           lastNameInput,
           emailInput,
-          // companyData.companyName,
-          "",
+          "", // Company name will be set later
           phoneInput,
           passwordInput,
-          setSignUpError
+          setSignUpError,
         );
 
         if (authData?.uid) {
@@ -154,21 +152,25 @@ export const SignUpLogin = () => {
             normalizedCompanyInput
           );
           if (matchingCompany) {
-            companyData = { companyName: matchingCompany.companyName };
+            companyData = {
+              companyName: matchingCompany.companyName,
+              companyId: matchingCompany.id,
+            };
           } else {
             companyData = await createNewCompany(
-              // newCompanyData is assigned a value but never used
               normalizedCompanyInput,
               authData.uid
             );
-
-            // Now update the user's Firestore document with the company information
-            const updateData = {
-              company: companyData.companyName,
-              // any other user fields you want to update
-            };
-            await updateUsersCompany(authData.uid, updateData); // Function to update Firestore user document
           }
+
+          // Now update the user's Firestore document with the company information
+          const updateData = {
+            company: companyData?.companyName,
+            companyId: companyData?.companyId, //  Property 'companyId' does not exist on type '{ lastUpdated: string; companyName: string; altCompanyNames: string[]; adminsUsers: string[]; employeeUsers: never[]; statusPendingUsers: never[]; companyVerified: boolean; createdAt: string; id: string; }'
+            // any other user fields you want to update
+          };
+          await updateUsersCompany(authData.uid, updateData); // Function to update Firestore user document
+
           // Fetch user data from Firestore
           const fetchedUserData = (await fetchUserDocFromFirestore(
             authData.uid,
