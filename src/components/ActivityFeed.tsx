@@ -170,7 +170,6 @@ const ActivityFeed = () => {
     }
     const loadPosts = async () => {
       try {
-        // console.log("looking in indexDB");
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
           // console.log("getting posts from indexedDB");

@@ -1,11 +1,11 @@
 // companyLogic.ts
-import { serverTimestamp, collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { CompanyType } from "./types";
 
 export const normalizeCompanyInput = (input: string) => {
-  // Implement normalization logic (e.g., trim, convert to lowercase)
-  return input.toLowerCase().trim();
+  // Remove all spaces (including those in the middle of the string) and convert to lowercase
+  return input.replace(/\s+/g, '').toLowerCase();
 };
 
 export const findMatchingCompany = async (normalizedInput: string) => {
@@ -24,18 +24,24 @@ export const findMatchingCompany = async (normalizedInput: string) => {
 };
 
 export const createNewCompany = async (companyName: string, userId: string) => {
+  const timeNow = new Date().toISOString();
   const normalizedCompanyName = normalizeCompanyInput(companyName);
   const newCompanyData = {
+    lastUpdated: timeNow, // begin to track the last time it was updated
     companyName: companyName,
-    altCompanyNames: [normalizedCompanyName], // Initialize with the companyName
-    admins: [userId], // Set the creator as the first admin
-    employees: [],
-    statusPending: [],
-    createdAt: serverTimestamp(),
+    altCompanyNames: [normalizedCompanyName], // Initialize with the companyName lower case without spaces
+    adminsUsers: [userId], // Set the creator as the first admin
+    employeeUsers: [],
+    statusPendingUsers: [],
+    companyVerified: false,
+    createdAt: timeNow,
   };
 
-  const docRef = await addDoc(collection(db, "companies"), newCompanyData);
-  return { id: docRef.id, ...newCompanyData };
+  try {
+    const docRef = await addDoc(collection(db, "companies"), newCompanyData);
+    return { id: docRef.id, ...newCompanyData, companyId: docRef.id };
+  } catch (error) {
+    console.error("Error creating new company: ", error);
+    // Additional error handling as needed
+  }
 };
-
-

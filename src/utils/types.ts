@@ -8,9 +8,11 @@ export type CompanyType = {
   lastUpdated: string;
   companyName: string;
   altCompanyNames: string[];
-  admins: string[];
-  employees: string[];
-  statusPending: string[];
+  adminsUsers: string[];
+  employeeUsers: string[];
+  statusPendingUsers: string[];
+  companyVerified: boolean;
+  createdAt: string;
 }
 
 export type TUserInputType = {
@@ -42,6 +44,7 @@ export interface UserType {
   lastName: string | undefined; // from signup
   email: string | undefined; // from signup
   company: string | undefined; // from signup
+  companyId: string | undefined;
   phone: string | undefined; // from signup
 }
 

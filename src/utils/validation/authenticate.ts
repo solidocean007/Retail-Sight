@@ -24,7 +24,7 @@ export const handleSignUp = async (
   phoneInput: string,
   passwordInput: string,
   setSignUpError?: (error: string) => void,
-  role: "admin" | "employee" | "status-pending" | "developer" = "status-pending" // error says role is declared but never used
+  role: "admin" | "employee" | "status-pending" | "developer" = "admin" // error says role is declared but never used
 ): Promise<UserType | undefined> => {
   try {
     // Create user with email and password in Firebase Authentication
@@ -59,7 +59,8 @@ export const handleSignUp = async (
         email: email,
         company: companyInput,
         phone: phoneInput,
-        role: role
+        role: role,
+        companyId: "",
       };
 
       await setDoc(doc(collection(db, "users"), uid), {

@@ -1,3 +1,4 @@
+// fetchUserDocFromFirestore
 import { doc, getDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import { incrementRead } from '../../Slices/firestoreReadsSlice';
