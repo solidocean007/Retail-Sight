@@ -10,7 +10,7 @@
 
 @media (max-width: 1100px) {
   /* Your styles for tablets */
-  select {
+  .category-selector select {
     width: 400px;
   }
 }

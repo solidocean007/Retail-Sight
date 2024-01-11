@@ -1,5 +1,7 @@
 .new-section {
   display: flex;
+  justify-content: center;
+  align-items: center;
   border-radius: 5px;
   width: 100%;
   background-color: var(--form-background-color);

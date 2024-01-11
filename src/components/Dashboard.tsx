@@ -33,6 +33,8 @@ export const Dashboard = () => {
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
   const isAdmin = user?.role === "admin"; // This will be used once roles are implemented
+  const isDeveloper = user?.role === "developer"; // This will be used once roles are implemented
+  const isSuperAdmin = user?.role === "super-admin"; // Assuming you have a super-admin role
 
   useEffect(() => {
     const fetchAndStoreUsers = async () => {
@@ -65,6 +67,12 @@ export const Dashboard = () => {
   }
 
   const handleRoleChange = async (userId: string, newRole: string) => {
+    // Ensure only super-admin can change roles, and admins cannot change their own role
+    if (!isSuperAdmin || (isAdmin && user?.uid === userId)) {
+      console.error("You do not have permission to change this role.");
+      return;
+    }
+
     if (!isValidRole(newRole)) {
       console.error("Invalid role");
       return;
@@ -90,56 +98,75 @@ export const Dashboard = () => {
 
   console.log(localUsers, ": local users");
   return (
-    <div className="dashboard">
-      <h3>Dashboard</h3>
-      <div className="dashboard-user-details">
-        {`${user?.firstName} ${user?.lastName} `}
-        {`role: ${user?.role} `}
-      </div>
-      <div className="dashboard-add-user-button">
-        {isAdmin && <button>Add Users</button>}
-      </div>
-      <div className="dashboard-exit-button">
-        <button onClick={() => navigate("/")}>Home</button>
-      </div>
+    <div className="dashboard-container">
+      <aside className="dashboard-sidebar">
+        {/* Sidebar with navigation links */}
+        {/* ... */}
+      </aside>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone Number</th>
-            <th>Role</th>
-          </tr>
-        </thead>
-        <tbody>
-          {localUsers.map((localUser) => (
-            <tr key={localUser.uid}>
-              <td>{`${localUser.firstName} ${localUser.lastName}`}</td>
-              <td>{localUser.email}</td>
-              <td>{localUser.phone}</td>
-              <td>
-                {isAdmin ? (
-                  <select
-                    value={localUser.role}
-                    onChange={
-                      (e) => handleRoleChange(localUser.uid, e.target.value) // Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
-                      // Type 'undefined' is not assignable to type 'string'.ts(2345)
-                    }
-                  >
-                    {/* List all possible roles here */}
-                    <option value="admin">Admin</option>
-                    <option value="employee">Employee</option>
-                    {/* Other roles */}
-                  </select>
-                ) : (
-                  <span>{localUser.role}</span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <main className="dashboard-main">
+        <header className="dashboard-header">
+          {/* Top bar with user info and controls */}
+          <div className="dashboard-user-details">
+            <h3>Dashboard</h3>
+            <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
+
+            <p>Adding users here is under development</p>
+          </div>
+          <div className="dashboard-controls">
+            {(isSuperAdmin || isDeveloper || isAdmin) && (
+              <button className="add-user-btn">Add Users</button>
+            )}
+            <button className="home-btn" onClick={() => navigate("/")}>
+              Home
+            </button>
+          </div>
+        </header>
+
+        <section className="dashboard-content">
+          <div className="card role-management-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone Number</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {localUsers.map((localUser) => (
+                  <tr key={localUser.uid}>
+                    <td>{`${localUser.firstName} ${localUser.lastName}`}</td>
+                    <td>{localUser.email}</td>
+                    <td>{localUser.phone}</td>
+                    <td>
+                      {isSuperAdmin && localUser.uid !== user?.uid ? (
+                        <select
+                          title="role-select"
+                          value={localUser.role}
+                          onChange={(e) =>
+                            handleRoleChange(localUser.uid!, e.target.value)
+                          }
+                        >
+                          {/* List all possible roles here */}
+                          <option value="admin">Admin</option>
+                          <option value="employee">Employee</option>
+                          {/* Other roles */}
+                        </select>
+                      ) : (
+                        <span>{localUser.role}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Additional cards for other dashboard content */}
+        </section>
+      </main>
     </div>
   );
 };

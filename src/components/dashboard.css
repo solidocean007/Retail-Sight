@@ -13,7 +13,8 @@
 
 .dashboard-main {
   flex-grow: 1;
-  background-color: #ecf0f1;
+  /* background-color: #ecf0f1; */
+  background-color: var(--alt-menu-background-color);
   /* ... */
 }
 
@@ -25,16 +26,21 @@
 
 .dashboard-content {
   padding: 20px;
+  /* background-color: var(--alt-menu-background-color); */
   /* ... */
 }
 
 .card {
-  background-color: #fff;
+  /* background-color: var(--alt-menu-background-color); */
   margin: 10px;
   padding: 20px;
   border-radius: 6px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   /* ... */
 }
+
+/* .dashboard-content table {
+  background-color: var(--alt-menu-background-color);
+} */
 
 /* Add more styling as per your needs */

@@ -32,6 +32,7 @@
   --input-text-color: var(--ivory-black);
   --form-background-color: var(--sage-green);
   --menu-background-color: var(--apple-core);
+  --alt-menu-background-color: var(--stark);
 
   /* Common styles */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -57,6 +58,7 @@
   --input-text-color: var(--gold-leaf);
   --form-background-color: var(--charcoal-grey);
   --menu-background-color: var(--blueberry);
+  --alt-menu-background-color: var(--charcoal-grey);
 }
 
 /* Assuming the use of CSS custom properties defined in :root */

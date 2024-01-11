@@ -4,13 +4,29 @@ import { useDispatch } from "react-redux";
 import { setHashtagPosts } from "../Slices/postsSlice";
 import { addHashtagPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
+import { useState } from "react";
 
 interface PostDescriptionProps {
   description?: string;
-  getPostsByTag:(hashTag: string) => Promise<PostWithID[]>;
+  getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
 }
+
+const DescriptionModal = ({
+  description,
+  onClose,
+}: {
+  description: string | undefined;
+  onClose: () => void;
+}) => (
+  <div className={styles.modalBackdrop}>
+    <div className={styles.modalContent}>
+      <p>{description}</p>
+      <button onClick={onClose}>Close</button>
+    </div>
+  </div>
+);
 
 export const PostDescription: React.FC<PostDescriptionProps> = ({
   description,
@@ -19,19 +35,63 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   setCurrentHashtag,
 }) => {
   const dispatch = useDispatch();
-  const tags = description?.split(/\s+/);
+  // const tags = description?.split(/\s+/);
+  const [showModal, setShowModal] = useState(false);
+
+  const processDescription = (text: string) => {
+    return text.split(/\s+/).map((word, index) => {
+      if (word.startsWith("#")) {
+        return (
+          <a
+            key={index}
+            href="#"
+            onClick={(e) => handleHashtagClick(e, word)}
+            className={styles.hashtag}
+          >
+            {word}
+          </a>
+        );
+      }
+      return word + " ";
+    });
+  };
+
+  const toggleModal = () => {
+    setShowModal(!showModal);
+  };
+
+  const renderDescription = () => {
+    if (!description) return null;
+
+    const processedDescription = processDescription(description);
+    const truncatedDescription =
+      description.length > 25
+        ? processDescription(description.substring(0, 25))
+        : processedDescription;
+
+    return (
+      <p>
+        {truncatedDescription}
+        {description.length > 25 && (
+          <a href="#" onClick={toggleModal} className={styles.moreLink}>
+            more...
+          </a>
+        )}
+      </p>
+    );
+  };
 
   const handleHashtagClick = async (
     event: React.MouseEvent<HTMLAnchorElement>,
-    hashtag: string,
+    hashtag: string
   ) => {
     event.preventDefault(); // Prevents the default anchor behavior
     try {
       const hashtagPosts = await getPostsByTag(hashtag); // Argument of type 'string | null' is not assignable to parameter of type 'string'
 
-      setSearchResults(hashtagPosts); 
+      setSearchResults(hashtagPosts);
       setCurrentHashtag(hashtag); // Type 'string' is not assignable to type 'SetStateAction<null>'
-      dispatch(setHashtagPosts(hashtagPosts)); 
+      dispatch(setHashtagPosts(hashtagPosts));
       addHashtagPostsToIndexedDB(hashtagPosts);
     } catch (error) {
       console.error("Error fetching posts by hashtag:", error);
@@ -41,7 +101,11 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
 
   return (
     <>
-      {tags?.map((tag, index) => {
+      {renderDescription()}
+      {showModal && (
+        <DescriptionModal description={description} onClose={toggleModal} />
+      )}
+      {/* {tags?.map((tag, index) => {
         if (tag.startsWith("#")) {
           return (
             <span key={index} className={styles.hashtag}>
@@ -52,7 +116,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
           );
         }
         return tag + " ";
-      })}
+      })} */}
     </>
   );
 };

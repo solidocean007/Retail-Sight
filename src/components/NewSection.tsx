@@ -1,9 +1,9 @@
 // NewSection.tsx
-import { useNavigate } from 'react-router';
-import './NewSection.css'
-import { useDispatch, useSelector } from 'react-redux';
-import { selectUser } from '../Slices/userSlice';
-import { showMessage } from '../Slices/snackbarSlice';
+import { useNavigate } from "react-router";
+import "./NewSection.css";
+import { useDispatch, useSelector } from "react-redux";
+import { selectUser } from "../Slices/userSlice";
+import { showMessage } from "../Slices/snackbarSlice";
 
 const NewSection = () => {
   const currentUser = useSelector(selectUser);
@@ -12,14 +12,15 @@ const NewSection = () => {
 
   const handleDashboardClick = () => {
     switch (currentUser?.role) {
-      case 'developer':
-        navigate('/developer-dashboard');
+      case "developer":
+        navigate("/developer-dashboard");
         break;
-      case 'admin':
-      case 'employee':
-        navigate('/dashboard');
+      case "super-admin":
+      case "admin":
+      case "employee":
+        navigate("/dashboard");
         break;
-      case 'status-pending':
+      case "status-pending":
         dispatch(showMessage("Please contact an admin to verify"));
         break;
       default:
@@ -29,14 +30,15 @@ const NewSection = () => {
   };
 
   // Determine button text based on user role
-  const buttonText = currentUser?.role === 'status-pending'
-                      ? "Verification Pending"
-                      : currentUser?.company || "No Company";
+  const buttonText =
+    currentUser?.role === "status-pending"
+      ? "Verification Pending"
+      : currentUser?.company || "No Company";
 
   return (
     <div className="new-section">
       <button onClick={handleDashboardClick}>{buttonText}</button>
     </div>
-  )
-}
+  );
+};
 export default NewSection;
