@@ -1,22 +1,46 @@
 // upLoadImage.ts
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import Compressor from 'compressorjs';
+import { resizeImage } from "../../images/resizeImages";
 
-export const uploadImageToStorage = async (uid: string, selectedFile: File): Promise<string> => {
+
+export const uploadImageToStorage = (uid: string, selectedFile: File): Promise<string> => {
   return new Promise((resolve, reject) => {
-    // Compress the image
-    new Compressor(selectedFile, {
-      quality: 0.6, // Adjust as per your requirement
-      async success(result) {
-        await handleFirebaseUpload(uid, result as File, resolve, reject);
-      },
-      error(err) {
-        console.log(err.message);
-        reject(`Error compressing image. Please try again.`);
-      },
-    });
+    // Resize the image
+    resizeImage(selectedFile, 500, 600)
+      .then((resizedImage: Blob) => {
+        // Compress the resized image
+        new Compressor(resizedImage, {
+          quality: 0.6,
+          success(result: Blob) {
+            handleFirebaseUpload(uid, result as File, resolve, reject);
+          },
+          error(err: Error) {
+            reject(`Error compressing image: ${err.message}`);
+          },
+        });
+      })
+      .catch((err: Error) => {
+        reject(`Error resizing image: ${err.message}`);
+      });
   });
 };
+
+// export const uploadImageToStorage = async (uid: string, selectedFile: File): Promise<string> => {
+//   return new Promise((resolve, reject) => {
+//     // Compress the image
+//     new Compressor(selectedFile, {
+//       quality: 0.6, // Adjust as per your requirement
+//       async success(result) {
+//         await handleFirebaseUpload(uid, result as File, resolve, reject);
+//       },
+//       error(err) {
+//         console.log(err.message);
+//         reject(`Error compressing image. Please try again.`);
+//       },
+//     });
+//   });
+// };
 
 const handleFirebaseUpload = async (uid: string, file: File, resolve: (value: string) => void, reject: (reason: string) => void) => { //
   const currentDate = new Date();

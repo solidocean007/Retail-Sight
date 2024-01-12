@@ -135,25 +135,21 @@ const DeveloperDashboard = () => {
                 <h2>{company.companyName}</h2>
                 <UserList
                   users={company.superAdminDetails} // Property 'superAdminDetails' does not exist on type 'CompanyWithId'.
-                  role="super-admin"
                   onEdit={handleEditUser}
                   onDelete={handleDeleteUser}
                 />
                 <UserList
                   users={company.adminDetails} // Property 'adminDetails' does not exist on type 'CompanyWithId'.ts(2339)
-                  role="admin"
                   onEdit={handleEditUser}
                   onDelete={handleDeleteUser}
                 />
                 <UserList
                   users={company.employeeDetails} // Property 'employeeDetails' does not exist on type 'CompanyWithId'.ts(2339
-                  role="employee"
                   onEdit={handleEditUser}
                   onDelete={handleDeleteUser}
                 />
                 <UserList
                   users={company.pendingDetails} // Property 'pendingDetails' does not exist on type 'CompanyWithId'.ts(2339)
-                  role="status-pending"
                   onEdit={handleEditUser}
                   onDelete={handleDeleteUser}
                 />
