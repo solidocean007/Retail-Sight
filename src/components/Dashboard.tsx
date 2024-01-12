@@ -96,7 +96,6 @@ export const Dashboard = () => {
     }
   };
 
-  console.log(localUsers, ": local users");
   return (
     <div className="dashboard-container">
       <aside className="dashboard-sidebar">

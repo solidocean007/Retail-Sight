@@ -13,7 +13,7 @@ import { AppDispatch } from "../utils/store";
 import { useDispatch } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
 import HeaderBar from "./HeaderBar";
-// import LeftSideBar from "./LeftSideBar";
+import LeftSideBar from "./LeftSideBar";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
@@ -44,7 +44,7 @@ export const UserHomePage = () => {
       <div className="home-page-content">
         <div className="about-activity-feed-box">
           <div className="left-side-bar-container">
-            {/* <LeftSideBar /> */}
+            <LeftSideBar />
           </div>
           <div className="activity-feed-container">
             <ActivityFeed />

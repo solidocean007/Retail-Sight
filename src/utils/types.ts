@@ -8,6 +8,7 @@ export type CompanyType = {
   lastUpdated: string;
   companyName: string;
   altCompanyNames: string[];
+  superAdminsUsers: string[];
   adminsUsers: string[];
   employeeUsers: string[];
   statusPendingUsers: string[];

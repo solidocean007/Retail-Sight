@@ -1,0 +1,34 @@
+.developer-dashboard-container {
+  display: flex;
+  height: 100vh;
+}
+
+.developer-dashboard-sidebar {
+  /* Sidebar styles */
+}
+
+.developer-dashboard-main {
+  flex-grow: 1;
+  /* Main area styles */
+}
+
+.developer-dashboard-header {
+  /* Header styles */
+}
+
+.developer-dashboard-content {
+  padding: 20px;
+  /* Content area styles */
+}
+
+.developer-dashboard-cards .card {
+  /* Card styles */
+  margin: 10px;
+  padding: 20px;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  /* Other card styles */
+}
+
+/* Add more CSS as per your design */

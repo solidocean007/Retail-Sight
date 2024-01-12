@@ -1,3 +1,4 @@
+// usersThunks.ts
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { UserType } from '../utils/types';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -8,6 +9,7 @@ export const fetchCompanyUsersFromFirestore = async (companyId: string): Promise
   const querySnapshot = await getDocs(query(collection(db, 'users'), where('companyId', '==', companyId)));
   return querySnapshot.docs.map(doc => doc.data() as UserType);
 };
+
 
 
 // Async thunk for fetching company users

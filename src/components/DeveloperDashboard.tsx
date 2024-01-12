@@ -1,130 +1,170 @@
-// import { useEffect, useState } from "react";
-// import { getDocs, collection, onSnapshot, where, query } from "firebase/firestore";
-// import { db } from "../utils/firebase";
-// import { CompanyType, UserType } from "../utils/types";
-// import { CompanyType } from "../utils/types";
-// import { updateSelectedUser } from "../DeveloperAdminFunctions/developerAdminFunctions";
-// import { useSelector } from "react-redux";
-// import { selectUser } from "../Slices/userSlice";
+// DeveloperDashboard.tsx
+import { useEffect, useState } from "react";
+import {
+  getDocs,
+  collection,
+  onSnapshot,
+  where,
+  query,
+} from "firebase/firestore";
+import { db } from "../utils/firebase";
+import { CompanyType, UserType } from "../utils/types";
+import {
+  deleteUserAuthAndFirestore,
+  updateSelectedUser,
+} from "../DeveloperAdminFunctions/developerAdminFunctions";
+import { useSelector } from "react-redux";
+import { selectUser } from "../Slices/userSlice";
 // import { useAppDispatch } from "../utils/store";
-
-// import { deleteUser } from "@firebase/auth";
+import { useNavigate } from "react-router-dom";
+import "./developerDashboard.css";
+import UserList from "./UserList";
+import { fetchCompanyUsersFromFirestore } from "../thunks/usersThunks";
 
 // Define a type that includes both CompanyType and the document ID
-// type CompanyWithID = CompanyType & { id: string };
+type CompanyWithId = CompanyType & {
+  id: string;
+  users: UserType[]; // Assuming you need to keep all users together
+  superAdminDetails: UserType[];
+  adminDetails: UserType[];
+  employeeDetails: UserType[];
+  pendingDetails: UserType[];
+};
+
 
 const DeveloperDashboard = () => {
-  // const dashboardUser = useSelector(selectUser);
-  // const userHasAccess = dashboardUser?.role === "developer";
-  // const [companies, setCompanies] = useState<CompanyWithID[]>([]);
-  // const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
-  //   null
-  // );
-  // const dispatch = useAppDispatch();
-  // const [lastMountTime, setLastMountTime] = useState("");
+  const dashboardUser = useSelector(selectUser);
+  const userHasAccess = dashboardUser?.role === "developer";
+  const [companies, setCompanies] = useState<CompanyWithId[]>([]);
 
-  // listen for changes to the company firestore document and update the state of companies
-  // useEffect(() => {
-  //   // Store the mount time of the component
-  //   const mountTime = new Date().toISOString();
-  //   // setLastMountTime(mountTime);
+  const navigate = useNavigate();
 
-  //   const q = query(
-  //     collection(db, "companies"),
-  //     where("lastUpdated", ">", mountTime)
-  //   );
-
-  //   const unsubscribe = onSnapshot(q, (snapshot) => {
-  //     const updatedCompanies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as CompanyType }));
-  //     setCompanies(prevCompanies => [...prevCompanies, ...updatedCompanies]);
-  //   });
-
-  //   return () => {
-  //     unsubscribe();
-  //   };
-  // }, []);
+  // this function sets all companies
+  useEffect(() => {
+    const fetchCompaniesAndUsers = async () => {
+      if (userHasAccess) {
+        // Fetch all companies
+        const querySnapshot = await getDocs(collection(db, "companies"));
+        const companiesWithUsers: CompanyWithId[] = await Promise.all(
+          querySnapshot.docs.map(async (docSnapshot) => {
+            const company = { id: docSnapshot.id, ...(docSnapshot.data() as CompanyType) };
+            // Fetch all users for the company
+            const allUsers = await fetchCompanyUsersFromFirestore(company.id);
+            // Filter users based on their roles
+            const superAdminDetails = allUsers.filter(user => user.role === 'super-admin');
+            const adminDetails = allUsers.filter(user => user.role === 'admin');
+            const employeeDetails = allUsers.filter(user => user.role === 'employee');
+            const pendingDetails = allUsers.filter(user => user.role === 'status-pending');
+            return { 
+              ...company, 
+              users: allUsers,
+              superAdminDetails,
+              adminDetails, 
+              employeeDetails, 
+              pendingDetails 
+            };
+          })
+        );
+        setCompanies(companiesWithUsers); // Set companies with users separated by role
+      }
+    };
+    fetchCompaniesAndUsers();
+  }, [userHasAccess]);
   
 
-  // useEffect(() => {
-  //   const fetchCompanies = async () => {
-  //     const querySnapshot = await getDocs(collection(db, "companies"));
-  //     const companiesData = querySnapshot.docs.map((doc) => ({
-  //       id: doc.id,
-  //       ...(doc.data() as CompanyType),
-  //     }));
-  //     setCompanies(companiesData);
-  //   };
-  //   if (userHasAccess) {
-  //     fetchCompanies();
-  //   }
-  // }, [ userHasAccess ]);
+  // listen for changes to the company firestore document and update the state of companies
+  useEffect(() => {
+    // Store the mount time of the component
+    const mountTime = new Date().toISOString();
 
-  // const handleDeleteUser = async (userId) => {
-  //   // Call deleteUser function here
-  //   deleteUser
-  // };
+    const q = query(
+      collection(db, "companies"),
+      where("lastUpdated", ">", mountTime)
+    );
 
-  // const handleEditUser = async (adminId:string, user: UserType) => {
-  //   // Call updateUser function here
-  //   // updateSelectedUser(userId, user)
-  // };
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const updatedCompanies = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as CompanyType),
+      }));
+      setCompanies((prevCompanies) => [...prevCompanies, ...updatedCompanies]);
+    });
 
-  // return (
-  //   <div>
-  //     <h1>Companies</h1>
-  //     {companies.map((company) => (
-  //       <div key={company.id}>
-  //         <h2 onClick={() => setSelectedCompanyId(company.id)}>
-  //           {company.companyName}
-  //         </h2>
-  //         {selectedCompanyId === company.id && (
-  //           <div>
-  //             {/* Admins Table */}
-  //             <h3>Admins</h3>
-  //             {/* Replace with table or list component */}
-  //             {company.admins.map((adminId) => (
-  //               <div key={adminId}>
-  //                 {adminId}
-  //                 <button onClick={() => handleEditUser(adminId)}>Edit</button>
-  //                 <button onClick={() => handleDeleteUser(adminId)}>
-  //                   Delete
-  //                 </button>
-  //               </div>
-  //             ))}
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
-  //             {/* Employees Table */}
-  //             <h3>Employees</h3>
-  //             {/* Replace with table or list component */}
-  //             {company.employees.map((employeeId) => (
-  //               <div key={employeeId}>
-  //                 {employeeId}
-  //                 <button onClick={() => handleEditUser(employeeId)}>
-  //                   Edit
-  //                 </button>
-  //                  <button onClick={() => handleDeleteUser(employeeId)}>
-  //                    Delete
-  //                  </button>
-  //               </div>
-  //             ))}
+  const handleDeleteUser = async (userId: string) => {
+    // Call deleteUser function here
+    deleteUserAuthAndFirestore(userId);
+  };
 
-  //             {/* Status Pending Table */}
-  //             <h3>Status Pending</h3>
-  //             {/* Replace with table or list component */}
-  //             {company.statusPending.map((userId) => (
-  //               <div key={userId}>
-  //                 {userId}
-  //                 <button onClick={() => handleEditUser(userId)}>Edit</button>
-  //                 <button onClick={() => handleDeleteUser(userId)}>
-  //                   Delete
-  //                 </button>
-  //               </div>
-  //             ))}
-  //           </div>
-  //         )}
-  //       </div>
-  //     ))}
-  //   </div>
-  // );
+  const handleEditUser = async (adminId: string, user: UserType) => {
+    // Call updateUser function here
+    updateSelectedUser(adminId, user);
+  };
+  console.log(companies)
+  return (
+    <div className="developer-dashboard-container">
+      <aside className="developer-dashboard-sidebar">
+        {/* Sidebar with navigation links */}
+        {/* ... */}
+      </aside>
+
+      <main className="developer-dashboard-main">
+        <header className="developer-dashboard-header">
+          {/* Top bar with user info and controls */}
+          <div className="developer-dashboard-user-details">
+            <h3>Developer Dashboard</h3>
+            <p>{`${dashboardUser?.firstName} ${dashboardUser?.lastName} Role: ${dashboardUser?.role}`}</p>
+          </div>
+          <div className="dashboard-controls">
+            <button className="add-user-btn">Add Users</button>
+
+            <button className="home-btn" onClick={() => navigate("/")}>
+              Home
+            </button>
+          </div>
+        </header>
+
+        <section className="developer-dashboard-content">
+          <div className="developer-dashboard-cards">
+            {companies.map((company) => (
+              <div key={company.id} className="card">
+                <h2>{company.companyName}</h2>
+                <UserList
+                  users={company.superAdminDetails} // Property 'superAdminDetails' does not exist on type 'CompanyWithId'.
+                  role="super-admin"
+                  onEdit={handleEditUser}
+                  onDelete={handleDeleteUser}
+                />
+                <UserList
+                  users={company.adminDetails} // Property 'adminDetails' does not exist on type 'CompanyWithId'.ts(2339)
+                  role="admin"
+                  onEdit={handleEditUser}
+                  onDelete={handleDeleteUser}
+                />
+                <UserList
+                  users={company.employeeDetails} // Property 'employeeDetails' does not exist on type 'CompanyWithId'.ts(2339
+                  role="employee"
+                  onEdit={handleEditUser}
+                  onDelete={handleDeleteUser}
+                />
+                <UserList
+                  users={company.pendingDetails} // Property 'pendingDetails' does not exist on type 'CompanyWithId'.ts(2339)
+                  role="status-pending"
+                  onEdit={handleEditUser}
+                  onDelete={handleDeleteUser}
+                />
+                {/* Add UserList instances for other roles */}
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
 };
 
 export default DeveloperDashboard;
