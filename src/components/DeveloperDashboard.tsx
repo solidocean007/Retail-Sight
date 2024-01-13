@@ -87,7 +87,7 @@ const DeveloperDashboard = () => {
         id: doc.id,
         ...(doc.data() as CompanyType),
       }));
-      setCompanies((prevCompanies) => [...prevCompanies, ...updatedCompanies]);
+      setCompanies((prevCompanies) => [...prevCompanies, ...updatedCompanies]); // Type '{ lastUpdated: string; companyName: string; altCompanyNames: string[]; superAdminsUsers: string[]; adminsUsers: string[]; employeeUsers: string[]; statusPendingUsers: string[]; companyVerified: boolean; createdAt: string; id: string; }' is missing the following properties from type '{ id: string; users: UserType[]; superAdminDetails: UserType[]; adminDetails: UserType[]; employeeDetails: UserType[]; pendingDetails: UserType[]; }': users, superAdminDetails, adminDetails, employeeDetails, pendingDetailsts(2345)
     });
 
     return () => {

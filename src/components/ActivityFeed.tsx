@@ -56,7 +56,6 @@ const ActivityFeed = () => {
   useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  console.log(currentUser);
   const currentUserCompany = currentUser?.company;
 
   // State to store the window width
@@ -87,14 +86,12 @@ const ActivityFeed = () => {
   const getItemSize = (index: number) => {
     const gapSize = 0;
     // Determine if the current index is an ad
-    const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
-    if (isAdPosition && adsOn) {
-      // return getActivityItemHeight(windowWidth) - 200; // Use the responsive height but how about change the height as well?
-      return 200 + gapSize; // Use the responsive height but how about change the height as well?
-    } else if (isAdPosition && !adsOn) {
-      return 0;
+    const isAdPosition = adsOn && (index + 1) % AD_INTERVAL === 0;
+
+    if (isAdPosition) {
+      return adsOn ? 200 + gapSize : 0;
     }
-    return getActivityItemHeight(windowWidth) + gapSize; // Use the responsive height for regular post items as well
+    return getActivityItemHeight(windowWidth) + gapSize;
   };
 
   // Mount alert
@@ -253,10 +250,10 @@ const ActivityFeed = () => {
     };
   }, [currentUser?.company, dispatch]);
 
-  const numberOfAds = adsOn
-    ? Math.ceil(displayPosts.length / AD_INTERVAL) - 1
-    : 0;
+  const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   const itemCount = displayPosts.length + numberOfAds;
+  console.log("displayPosts: ", displayPosts.length);
+  console.log("itemcount: ", itemCount);
 
   const itemRenderer = ({
     index,
@@ -265,9 +262,13 @@ const ActivityFeed = () => {
     index: number;
     style: React.CSSProperties;
   }) => {
-    const adIndex = Math.floor((index + 1) / (AD_INTERVAL + 1));
-    const isAdPosition = (index + 1) % (AD_INTERVAL + 1) === 0;
-    const postIndex = index - adIndex;
+    let postIndex = index;
+    if (adsOn) {
+      const adSlotsBefore = Math.floor(index / AD_INTERVAL);
+      postIndex -= adSlotsBefore;
+    }
+
+    const isAdPosition = adsOn && index % AD_INTERVAL === 0;
 
     const modifiedStyle: React.CSSProperties = {
       ...style,
@@ -277,7 +278,7 @@ const ActivityFeed = () => {
     };
 
     if (isAdPosition) {
-      return <AdComponent key={`ad-${adIndex}`} style={style} adsOn={adsOn} />;
+      return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />;
     } else if (postIndex < displayPosts.length) {
       const postWithID = displayPosts[postIndex];
 

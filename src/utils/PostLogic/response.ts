@@ -1,16 +1,15 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useState, useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { PostType } from "../types";
 import { auth, db, storage } from "../firebase";
 import { getDownloadURL, ref as storageRef, uploadBytesResumable } from "firebase/storage";
 import { DocumentReference, deleteDoc, updateDoc } from "firebase/firestore";
-import { showMessage } from "../../Slices/snackbarSlice";
+import { showMessage, addNewPost } from "../../Slices/snackbarSlice";
 import { selectUser } from "../../Slices/userSlice";
 import { resizeImage } from "../../images/resizeImages";
 import { addPostToFirestore, updateCategoriesInFirestore, updateChannelsInFirestore } from "./updateFirestore";
 import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
 import { extractHashtags } from "../extractHashtags";
-import { addNewPost } from "../../Slices/postsSlice";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
@@ -103,8 +102,7 @@ export const useHandlePostSubmission = () => {
                   postUserCompany: userData.company,
                   postUserEmail: userData.email,
                 },
-                hashtags: extractHashtags(post.description ?? ""),
-
+                hashtags: extractHashtags(post.description),
                 commentCount: 0,
                 likes: [],
               };
@@ -117,14 +115,6 @@ export const useHandlePostSubmission = () => {
                 originalImageUrl,
                 resizedImageUrl
               });
-
-              const newPostWithID = {
-                ...postDataWithoutImage,
-                id: newDocRef.id,
-                originalImageUrl,
-                resizedImageUrl
-              };
-              
 
               // Dispatch action to add this new post to Redux state
               dispatch(addNewPost(newPostWithID));
@@ -145,15 +135,9 @@ export const useHandlePostSubmission = () => {
           );
         }
       );
-    }catch (error) {
-      if (error instanceof Error) {
-        console.error("Error adding post:", error.message);
-        showMessage(`Error adding post: ${error.message}`);
-      } else {
-        // Handle case when error is not an instance of Error
-        console.error("An unknown error occurred");
-        showMessage("An unknown error occurred");
-      }
+    } catch (error) {
+      console.error("Error adding post:", error);
+      showMessage(`Error adding post: ${error.message}`);
       setIsUploading(false);
     }
   };

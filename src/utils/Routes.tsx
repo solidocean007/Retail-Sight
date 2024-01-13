@@ -10,6 +10,9 @@ import DeveloperDashboard from '../components/DeveloperDashboard';
 export const AppRoutes = () => {
   return (
     <Routes>
+      {/* add a about page  */}
+      {/* add a contact page  */}
+      {/* add a privacy and security page  */}
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
       <Route path="/" element={<UserHomePage />} />
