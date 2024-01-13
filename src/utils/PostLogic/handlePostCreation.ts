@@ -2,12 +2,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { PostType } from "../types";
 import { auth, db, storage } from "../firebase";
-import { getDownloadURL, ref as storageRef, uploadBytesResumable } from "firebase/storage";
+import {
+  getDownloadURL,
+  ref as storageRef,
+  uploadBytesResumable,
+} from "firebase/storage";
 import { DocumentReference, deleteDoc, updateDoc } from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { selectUser } from "../../Slices/userSlice";
 import { resizeImage } from "../../images/resizeImages";
-import { addPostToFirestore, updateCategoriesInFirestore, updateChannelsInFirestore } from "./updateFirestore";
+import {
+  addPostToFirestore,
+  updateCategoriesInFirestore,
+  updateChannelsInFirestore,
+} from "./updateFirestore";
 import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
 import { extractHashtags } from "../extractHashtags";
 import { addNewPost } from "../../Slices/postsSlice";
@@ -24,13 +32,16 @@ export const useHandlePostSubmission = () => {
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>
   ) => {
+    console.log('new post creation logic')
     setIsUploading(true);
     const user = auth.currentUser;
     if (!user || !userData) return;
 
     // Create a unique folder for each post's images
     const currentDate = new Date();
-    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
+    const formattedDate = `${currentDate.getFullYear()}-${String(
+      currentDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
     const uniquePostFolder = `${formattedDate}/${user.uid}-${Date.now()}`;
 
     // Initialize states for individual upload progress
@@ -39,20 +50,30 @@ export const useHandlePostSubmission = () => {
 
     // Function to update overall progress
     const updateOverallProgress = () => {
-      const totalProgress = (originalUploadProgress + resizedUploadProgress) / 2;
+      const totalProgress =
+        (originalUploadProgress + resizedUploadProgress) / 2;
       setUploadProgress(totalProgress);
     };
 
+    const newDocRef: DocumentReference | null = null; // Initialize as null
+
     try {
       // Upload original image and track progress
+      // resizeOriginalImage first then...
+      const resizedOriginalBlob = await resizeImage(selectedFile, 800, 900);
       const originalImagePath = `images/${uniquePostFolder}/original.jpg`;
       const originalImageRef = storageRef(storage, originalImagePath);
-      const uploadOriginalTask = uploadBytesResumable(originalImageRef, selectedFile);
+      const uploadOriginalTask = uploadBytesResumable(
+        originalImageRef,
+        resizedOriginalBlob
+      );
 
       uploadOriginalTask.on(
         "state_changed",
         (snapshot) => {
-          originalUploadProgress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          originalUploadProgress = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
           updateOverallProgress();
         },
         (error) => {
@@ -60,18 +81,25 @@ export const useHandlePostSubmission = () => {
           setIsUploading(false);
         },
         async () => {
-          const originalImageUrl = await getDownloadURL(uploadOriginalTask.snapshot.ref);
+          // const originalImageUrl = await getDownloadURL( // not being used
+          //   uploadOriginalTask.snapshot.ref
+          // );
 
           // Resize and compress the image
           const resizedBlob = await resizeImage(selectedFile, 500, 600);
           const resizedImagePath = `images/${uniquePostFolder}/resized.jpg`;
           const resizedImageRef = storageRef(storage, resizedImagePath);
-          const uploadResizedTask = uploadBytesResumable(resizedImageRef, resizedBlob);
+          const uploadResizedTask = uploadBytesResumable(
+            resizedImageRef,
+            resizedBlob
+          );
 
           uploadResizedTask.on(
             "state_changed",
             (snapshot) => {
-              resizedUploadProgress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+              resizedUploadProgress = Math.round(
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+              );
               updateOverallProgress();
             },
             (error) => {
@@ -79,7 +107,9 @@ export const useHandlePostSubmission = () => {
               setIsUploading(false);
             },
             async () => {
-              const resizedImageUrl = await getDownloadURL(uploadResizedTask.snapshot.ref);
+              const resizedImageUrl = await getDownloadURL(
+                uploadResizedTask.snapshot.ref
+              );
 
               // Post data without images
               const postDataWithoutImage = {
@@ -110,34 +140,38 @@ export const useHandlePostSubmission = () => {
               };
 
               // Create the post in Firestore
-              const newDocRef = await addPostToFirestore(db, postDataWithoutImage);
+              const newDocRef = await addPostToFirestore(
+                db,
+                postDataWithoutImage
+              );
 
               // Update the post with image URLs
               await updateDoc(newDocRef, {
-                originalImageUrl,
-                resizedImageUrl
+                imageUrl: resizedImageUrl,
               });
 
               const newPostWithID = {
                 ...postDataWithoutImage,
                 id: newDocRef.id,
-                originalImageUrl,
-                resizedImageUrl
+                imageUrl: resizedImageUrl, 
               };
-              
 
               // Dispatch action to add this new post to Redux state
               dispatch(addNewPost(newPostWithID));
-        
+
               // Add the new post to IndexedDB
               await addNewlyCreatedPostToIndexedDB(newPostWithID);
-        
+
               // Update channels collection
               await updateChannelsInFirestore(db, post.channel, newDocRef.id);
-        
+
               // Update categories collection
-              await updateCategoriesInFirestore(db, post.category, newDocRef.id);
-        
+              await updateCategoriesInFirestore(
+                db,
+                post.category,
+                newDocRef.id
+              );
+
               dispatch(showMessage("Post added successfully!"));
               setIsUploading(false);
               navigate("/");
@@ -145,7 +179,7 @@ export const useHandlePostSubmission = () => {
           );
         }
       );
-    }catch (error) {
+    } catch (error) {
       if (error instanceof Error) {
         console.error("Error adding post:", error.message);
         showMessage(`Error adding post: ${error.message}`);
@@ -154,6 +188,15 @@ export const useHandlePostSubmission = () => {
         console.error("An unknown error occurred");
         showMessage("An unknown error occurred");
       }
+      // Clean up: Delete the Firestore document if it was created
+      if (newDocRef) {
+        try {
+          await deleteDoc(newDocRef);
+        } catch (deleteError) {
+          console.error("Error cleaning up Firestore document:", deleteError);
+        }
+      }
+
       setIsUploading(false);
     }
   };

@@ -1,7 +1,8 @@
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../utils/firebase";
-import { UserType } from "../utils/types";
-import { deleteUser } from "@firebase/auth";
+// import { auth, db } from "../utils/firebase";
+import { db } from "../utils/firebase";
+// import { UserType } from "../utils/types";
+// import { deleteUser } from "@firebase/auth";
 
 export const deleteCompany = async (companyId: string) => {
   try {
@@ -33,22 +34,23 @@ const deleteFirestoreUser = async (userId: string) => {
   }
 };
 
-const deleteSelectedUserAuth = async (userId: string) => { // this function is responsible for deleting a user document from firebase auth
-  try {
-    await deleteUser(userId); // Argument of type 'string' is not assignable to parameter of type 'User'.  it needs a user object
-    console.log("User auth record deleted successfully");
-  } catch (error) {
-    console.error("Error deleting user auth record:", error);
-  }
-};
+// this function may not belong here on the client side code.  i may have to wait to add this to functions once i get it setup
+// const deleteSelectedUserAuth = async (userId: string) => { // this function is responsible for deleting a user document from firebase auth
+//   try {
+//     await deleteUser(userId); // Argument of type 'string' is not assignable to parameter of type 'User'.  it needs a user object
+//     console.log("User auth record deleted successfully");
+//   } catch (error) {
+//     console.error("Error deleting user auth record:", error);
+//   }
+// };
 
 // Function to delete both auth and Firestore data
 export const deleteUserAuthAndFirestore = async (userId:string) => {
-  await deleteSelectedUserAuth(userId);
+  // await deleteSelectedUserAuth(userId);
   await deleteFirestoreUser(userId);
 };
 
-export const updateSelectedUser = async (userId:string, updatedUserData : { [key: string]: any }) => { // should this be a usertype?
+export const updateSelectedUser = async (userId:string, updatedUserData : { [key: string]: any }) => { // Unexpected any. Specify a different type. should this be a usertype?
   try {
     await updateDoc(doc(db, "users", userId), updatedUserData);
     console.log("User updated successfully");

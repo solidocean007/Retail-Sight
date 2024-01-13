@@ -39,7 +39,7 @@ const DeveloperDashboard = () => {
 
   const navigate = useNavigate();
 
-  // this function sets all companies
+  // this function sets all companies but transforms the regular CompanyType from a company with an array or user ids for each role to a type that has an array of user objects for each role.  I'm not sure about this behavior. feels like its doing too much.
   useEffect(() => {
     const fetchCompaniesAndUsers = async () => {
       if (userHasAccess) {

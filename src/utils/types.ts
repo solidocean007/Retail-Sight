@@ -40,7 +40,7 @@ export type TErrorsOfInputs = {
 
 export interface UserType {
   role: "admin" | "super-admin" | "employee" | "status-pending" | "developer";
-  uid: string | undefined; // from Firebase
+  uid: string; // from Firebase
   firstName: string | undefined; // from signup
   lastName: string | undefined; // from signup
   email: string | undefined; // from signup

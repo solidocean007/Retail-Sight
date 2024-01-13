@@ -38,14 +38,15 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
         <tbody>
           {users.map((user) => {
             // Use existing user details as defaults
-            const currentUserDetails = editedUsers[user.uid] || user;
+            const currentUserDetails = editedUsers[user.uid] ?? user; // Type 'undefined' cannot be used as an index type.
             return (
               <tr key={user.uid}>
                 <td>
                   <input
                     type="text"
                     defaultValue={user.firstName}
-                    onBlur={(e) => handleEditChange(user.uid, 'firstName', e.target.value)}
+                    onBlur={(e) => handleEditChange(user.uid, 'firstName', e.target.value)} 
+                    // Type 'undefined' is not assignable to type 'string'
                   />
                   <input
                     type="text"
