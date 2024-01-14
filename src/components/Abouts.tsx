@@ -12,7 +12,7 @@ const About = () => {
   return (
     <div className="about-container">
       <nav className="about-navigation">
-        <button className="nav-button" onClick={() => navigate('/')}>Home</button>
+        <button className="nav-button" onClick={() => navigate('/user-home-page')}>Home</button>
         <button className="cta-button" onClick={handleSignUpClick}>Sign Up</button>
       </nav>
       <div className="about-content">

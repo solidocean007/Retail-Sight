@@ -63,6 +63,30 @@ const ActivityFeed = () => {
 
   // console.log(posts, ' : posts')
   const loading = useSelector((state: RootState) => state.posts.loading);
+  // State to store the list height
+  const [listHeight, setListHeight] = useState(0);
+
+  // Function to calculate list height
+  const calculateListHeight = () => {
+    // Set list height to 70% of the viewport height
+    return window.innerHeight * 0.95;
+  };
+
+  // Effect to set initial and update list height on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setListHeight(calculateListHeight());
+    };
+
+    // Set initial height
+    handleResize();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   async function removeGhostPostFromIndexedDB(postId: string) {
     const db = await openDB(); // openDB is a function to open your IndexedDB
@@ -324,7 +348,7 @@ const ActivityFeed = () => {
       <List
         ref={listRef}
         className="list-card"
-        height={800}
+        height={listHeight} // this needs to be dynamically set depending on vh of screen i think the value should be roughly most of the screen height maybe 70%
         itemCount={itemCount}
         itemSize={getItemSize}
         width={getListWidth()}

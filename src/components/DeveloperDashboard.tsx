@@ -22,7 +22,7 @@ import UserList from "./UserList";
 import { fetchCompanyUsersFromFirestore } from "../thunks/usersThunks";
 
 // Define a type that includes both CompanyType and the document ID
-type CompanyWithId = CompanyType & {
+type CompanyWithUsersAndId = CompanyType & {
   id: string;
   users: UserType[]; // Assuming you need to keep all users together
   superAdminDetails: UserType[];
@@ -35,7 +35,7 @@ type CompanyWithId = CompanyType & {
 const DeveloperDashboard = () => {
   const dashboardUser = useSelector(selectUser);
   const userHasAccess = dashboardUser?.role === "developer";
-  const [companies, setCompanies] = useState<CompanyWithId[]>([]);
+  const [companies, setCompanies] = useState<CompanyWithUsersAndId[]>([]);
 
   const navigate = useNavigate();
 
@@ -45,7 +45,7 @@ const DeveloperDashboard = () => {
       if (userHasAccess) {
         // Fetch all companies
         const querySnapshot = await getDocs(collection(db, "companies"));
-        const companiesWithUsers: CompanyWithId[] = await Promise.all(
+        const companiesWithUsersAndId: CompanyWithUsersAndId[] = await Promise.all(
           querySnapshot.docs.map(async (docSnapshot) => {
             const company = { id: docSnapshot.id, ...(docSnapshot.data() as CompanyType) };
             // Fetch all users for the company
@@ -65,7 +65,7 @@ const DeveloperDashboard = () => {
             };
           })
         );
-        setCompanies(companiesWithUsers); // Set companies with users separated by role
+        setCompanies(companiesWithUsersAndId); // Set companies with users separated by role
       }
     };
     fetchCompaniesAndUsers();
@@ -76,24 +76,30 @@ const DeveloperDashboard = () => {
   useEffect(() => {
     // Store the mount time of the component
     const mountTime = new Date().toISOString();
-
+  
     const q = query(
       collection(db, "companies"),
       where("lastUpdated", ">", mountTime)
     );
-
+  
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const updatedCompanies = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as CompanyType),
-      }));
-      setCompanies((prevCompanies) => [...prevCompanies, ...updatedCompanies]); // Type '{ lastUpdated: string; companyName: string; altCompanyNames: string[]; superAdminsUsers: string[]; adminsUsers: string[]; employeeUsers: string[]; statusPendingUsers: string[]; companyVerified: boolean; createdAt: string; id: string; }' is missing the following properties from type '{ id: string; users: UserType[]; superAdminDetails: UserType[]; adminDetails: UserType[]; employeeDetails: UserType[]; pendingDetails: UserType[]; }': users, superAdminDetails, adminDetails, employeeDetails, pendingDetailsts(2345)
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "modified") {
+          setCompanies((prevCompanies) => 
+            prevCompanies.map(company => 
+              company.id === change.doc.id ? { ...company, ...change.doc.data() as CompanyType } : company
+            )
+          );
+        }
+        // Handle 'added' and 'removed' types if needed
+      });
     });
-
+  
     return () => {
       unsubscribe();
     };
   }, []);
+  
 
   const handleDeleteUser = async (userId: string) => {
     // Call deleteUser function here
@@ -104,6 +110,7 @@ const DeveloperDashboard = () => {
     // Call updateUser function here
     updateSelectedUser(adminId, user);
   };
+
   console.log(companies)
   return (
     <div className="developer-dashboard-container">

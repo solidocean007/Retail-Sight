@@ -174,7 +174,7 @@ export const useHandlePostSubmission = () => {
 
               dispatch(showMessage("Post added successfully!"));
               setIsUploading(false);
-              navigate("/");
+              navigate("/user-home-page");
             }
           );
         }

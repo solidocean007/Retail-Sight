@@ -17,7 +17,7 @@ export const UserProfilePage = () => {
   };
 
   const closeProfilePage = () => {
-    navigate('/');
+    navigate('/user-home-page');
   };
 
   return (

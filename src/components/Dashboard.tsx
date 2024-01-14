@@ -116,7 +116,7 @@ export const Dashboard = () => {
             {(isSuperAdmin || isDeveloper || isAdmin) && (
               <button className="add-user-btn">Add Users</button>
             )}
-            <button className="home-btn" onClick={() => navigate("/")}>
+            <button className="home-btn" onClick={() => navigate("/user-home-page")}>
               Home
             </button>
           </div>

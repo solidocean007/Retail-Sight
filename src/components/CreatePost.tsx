@@ -181,7 +181,7 @@ export const CreatePost = () => {
           <IconButton
             edge="start"
             color="default"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/user-home-page")}
           >
             <CloseIcon />
           </IconButton>

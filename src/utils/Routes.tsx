@@ -11,10 +11,12 @@ import ContactUs from "./ContactUs";
 import PrivacyPolicy from "./PrivacyPolicy";
 import TermsOfService from "./TermsService";
 import HelpSupport from "../components/HelpSupport";
+import SplashPage from "../components/SplashPage";
 
 export const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/" element={<SplashPage />}/>
       <Route path="/about" element={<About />} />
       <Route path="/contact-us" element={<ContactUs />}/>
       <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
@@ -22,7 +24,7 @@ export const AppRoutes = () => {
       <Route path="/help-support" element={<HelpSupport />}/>
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
-      <Route path="/" element={<UserHomePage />} />
+      <Route path="user-home-page" element={<UserHomePage />} />
       <Route path="/profile-page" element={<UserProfilePage />} />
       <Route path="/createPost" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />
