@@ -20,7 +20,6 @@ export const AppRoutes = () => {
       <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
       <Route path="/terms-service" element={<TermsOfService />}/>
       <Route path="/help-support" element={<HelpSupport />}/>
-      {/* add a privacy and security page  */}
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
       <Route path="/" element={<UserHomePage />} />
