@@ -13,7 +13,10 @@
 }
 
 .about-button {
-  display: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: .5rem;
 }
 
 .hamburger-menu-button {

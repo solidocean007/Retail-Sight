@@ -13,6 +13,7 @@ import UserModal from "./components/UserModal.tsx";
 import { AppRoutes } from "./utils/Routes.tsx";
 import { getTheme } from "./theme.ts";
 import { useEffect } from "react";
+import Footer from "./components/Footer.tsx";
 
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
         <ThemeToggle />
         <Router>
           <AppRoutes /> {/* Use your routes component here */}
+          <Footer />
         </Router>
         <Snackbar
           message={snackbar.message}

@@ -61,6 +61,12 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       </div>
 
       <div className="menu-buttons">
+      <button
+        className="about-button"
+        onClick={()=> navigate('/about')}
+        >
+        About
+        </button>
         <button
           className="create-post-btn button"
           onClick={handleCreatePostClick}
@@ -68,11 +74,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           <h3>CAPTURE</h3>
         </button>
 
-        {/* <button
-        className="about-button"
-        >
-        About
-        </button> */}
+       
 
         <button
           className="filter-menu-button"
