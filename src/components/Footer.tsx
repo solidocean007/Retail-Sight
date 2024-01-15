@@ -17,7 +17,7 @@ const FooterLink = ({ to, icon: Icon, children }: FooterLinkProps) => {
   return (
     <div className="footer-link" onClick={() => navigate(to)}>
       {Icon && <Icon className="footer-icon" />}
-      <span>{children}</span>
+      <p>{children}</p>
     </div>
   );
 };
