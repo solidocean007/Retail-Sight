@@ -83,6 +83,10 @@
   .filter-menu-button {
     display: block;
   }
+
+  .about-button {
+    display: none;
+  }
   
   .profile-btn h3 {
     font-size: .8rem;

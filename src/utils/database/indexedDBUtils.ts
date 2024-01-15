@@ -41,6 +41,37 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   });
 }
 
+// clear posts from indexedDB
+export async function clearPostsInIndexedDB(): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["posts"], "readwrite");
+  const store = transaction.objectStore("posts");
+
+  return new Promise<void>((resolve, reject) => {
+    const clearRequest = store.clear();
+
+    clearRequest.onsuccess = () => {
+      console.log("Posts cleared from IndexedDB successfully.");
+    };
+
+    clearRequest.onerror = () => {
+      console.error("Error clearing posts from IndexedDB:", clearRequest.error);
+      reject(clearRequest.error);
+    };
+
+    transaction.oncomplete = () => {
+      console.log("Transaction completed: All posts cleared from IndexedDB.");
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      console.error("Transaction not completed due to error: ", transaction.error);
+      reject(transaction.error);
+    };
+  });
+}
+
+
 // update post in indexedDB
 export async function updatePostInIndexedDB(post: PostWithID): Promise<void> {
   const db = await openDB();

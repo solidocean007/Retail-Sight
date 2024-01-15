@@ -1,21 +1,40 @@
-// import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './footer.css';
+import {  ContactPage, Gavel, Help, Info, PrivacyTip } from '@mui/icons-material';
+import './footer.css'
+import { SvgIconTypeMap } from '@mui/material';
+import { OverridableComponent } from '@mui/material/OverridableComponent';
+
+// Define a type for the props
+type FooterLinkProps = {
+  to: string;
+  icon: OverridableComponent<SvgIconTypeMap<object, "svg">> ;
+  children: React.ReactNode;
+};
+
+
+const FooterLink = ({ to, icon: Icon, children }: FooterLinkProps) => {
+  const navigate = useNavigate();
+  return (
+    <div className="footer-link" onClick={() => navigate(to)}>
+      {Icon && <Icon className="footer-icon" />}
+      <span>{children}</span>
+    </div>
+  );
+};
 
 const Footer = () => {
-  const navigate = useNavigate();
-
   return (
     <footer className="footer-container">
       <div className="footer-content">
-        <div onClick={() => navigate('/about')} className="footer-link">About Us</div>
-        <div onClick={() => navigate('/contact-us')} className="footer-link">Contact</div>
-        <div onClick={() => navigate('/privacy-policy')} className="footer-link">Privacy Policy</div>
-        <div onClick={() => navigate('/terms-service')} className="footer-link">Terms of Service</div>
-        <div onClick={() => navigate('/help-support')} className="footer-link">Help & Support</div>
+        <FooterLink to="/about" icon={Info}>About Us</FooterLink>
+        <FooterLink to="/contact-us" icon={ContactPage}>Contact</FooterLink>
+        <FooterLink to="/privacy-policy" icon={PrivacyTip}>Privacy Policy</FooterLink>
+        <FooterLink to="/terms-service" icon={Gavel}>Terms of Service</FooterLink>
+        <FooterLink to="/help-support" icon={Help}>Help & Support</FooterLink>
       </div>
     </footer>
   );
 };
 
 export default Footer;
+

@@ -1,0 +1,108 @@
+/* **css(splashPage.css): * * ```css @import
+  url("https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"); */
+
+.splash-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  padding-top: 20px;
+}
+
+.container-fluid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #002b45; /* Dark header background */
+  width: 100%;
+}
+
+.container-fluid ul {
+  display: flex;
+}
+
+.container-fluid li {
+  margin-right: 40px;
+}
+
+.container {
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Split into two columns */
+  gap: 2rem;
+}
+
+.hero {
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem; /* More padding for hero */
+  background-image: linear-gradient(
+    to bottom right,
+    #ffffff,
+    #e6e6e6
+  ); /* Subtle gradient */
+}
+
+.hero-content {
+  max-width: 600px; /* Limit content width */
+}
+
+.hero-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px; /* Rounded corners for the image */
+}
+
+.enter-site-btn {
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  color: #fff;
+  background-color: #007bff; /* Bootstrap primary color for the button */
+  border: None;
+  border-radius: 5 px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.enter-site-btn:hover {
+  background-color: #0056b3; /* Darken button on hover */
+}
+
+footer {
+  padding: 1rem 0;
+  font-size: 0.9em;
+  text-align: center;
+  background-color: #002b45; /* Match the header /
+  color: #ffffff; / Footer text color */
+}
+
+footer a {
+  text-decoration: none;
+  color: #ffffff; /* Links color */
+  transition: color 0.3s ease;
+}
+
+footer a:hover {
+  color: #ffd700; /* Highlight color on hover */
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr; /* Stack columns on mobile */
+  }
+
+  .enter-site-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .hero {
+    padding: 2rem 1rem; /* Less padding on mobile */
+  }
+}

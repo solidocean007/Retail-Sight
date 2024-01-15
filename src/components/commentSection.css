@@ -16,7 +16,7 @@
 }
 
 .comment-section-box input {
-  border: none;
+  border: 1px solid black;
   width: 100%;
   margin: 0px;
   padding: 0px;

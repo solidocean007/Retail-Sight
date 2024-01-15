@@ -12,6 +12,8 @@ import "./activityFeed.css";
 import { PostType, PostWithID } from "../utils/types";
 import {
   addPostsToIndexedDB,
+  clearHashtagPostsInIndexedDB,
+  clearPostsInIndexedDB,
   getPostsFromIndexedDB,
   removePostFromIndexedDB,
   updatePostInIndexedDB,
@@ -33,7 +35,6 @@ import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
 import NewSection from "./NewSection";
-import { openDB } from "../utils/database/indexedDBOpen";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
@@ -69,8 +70,86 @@ const ActivityFeed = () => {
   // Function to calculate list height
   const calculateListHeight = () => {
     // Set list height to 70% of the viewport height
-    return window.innerHeight * 0.95;
+    return window.innerHeight * 0.90;
   };
+
+  // temp useEffect to resync 
+  useEffect(() => {
+    const syncDataWithFirestore = async () => {
+      try {
+        // Clear local IndexedDB data
+        await clearPostsInIndexedDB();
+        await clearHashtagPostsInIndexedDB();
+  
+        // Refetch data from Firestore and update local state and IndexedDB
+        // (You can use a similar approach as in your existing useEffect for fetching posts)
+        // Example: await fetchAndStorePosts();
+        const noUserLoggedInFetch = async () => {
+          // need to check indexedDB before doing this in case this user has visited the site before.
+          const publicPostsQuery = query(
+            collection(db, "posts"),
+            where("visibility", "==", "public"),
+            orderBy("timestamp", "desc"),
+            limit(POSTS_BATCH_SIZE)
+          );
+          const querySnapshot = await getDocs(publicPostsQuery);
+    
+          const publicPosts: PostWithID[] = querySnapshot.docs
+            .map((doc) => {
+              const postData: PostType = doc.data() as PostType;
+              return {
+                ...postData,
+                id: doc.id,
+              };
+            })
+            .filter((post) => post.visibility === "public");
+          // id: doc.id, ...doc.data() as PostType }));
+          dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
+          addPostsToIndexedDB(publicPosts);
+        };
+    
+        if (currentUser === null) {
+          noUserLoggedInFetch().catch(console.error);
+          return;
+        }
+        const loadPosts = async () => {
+          try {
+            const cachedPosts = await getPostsFromIndexedDB();
+            if (cachedPosts && cachedPosts.length > 0) {
+              // console.log("getting posts from indexedDB");
+              dispatch(setPosts(cachedPosts));
+            } else if (currentUserCompany) {
+              // console.log("no posts in indexDB");
+              // Dispatch the thunk action; Redux handles the promise
+              dispatch(
+                fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
+              ).then((action) => {
+                if (fetchInitialPostsBatch.fulfilled.match(action)) {
+                  addPostsToIndexedDB(action.payload.posts);
+                }
+              });
+            }
+          } catch (error) {
+            // console.error("Error fetching posts from IndexedDB:", error);
+            if (currentUserCompany) {
+              // Dispatch the thunk action again in case of error.  Is this a safe action to do?
+              dispatch(
+                fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
+              );
+            }
+          }
+        };
+    
+        loadPosts();
+      } catch (error) {
+        console.error("Error during data sync:", error);
+        // Handle errors, maybe retry or show a message to the user
+      }
+    };
+  
+    // Run the sync function
+    syncDataWithFirestore();
+  }, [currentUser, currentUserCompany, dispatch]);
 
   // Effect to set initial and update list height on resize
   useEffect(() => {
@@ -87,14 +166,6 @@ const ActivityFeed = () => {
     // Cleanup
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  async function removeGhostPostFromIndexedDB(postId: string) {
-    const db = await openDB(); // openDB is a function to open your IndexedDB
-    const tx = db.transaction("latestPosts", "readwrite");
-    const store = tx.objectStore("latestPosts");
-
-    await store.delete(postId);
-  }
 
   const clearSearch = async () => {
     setCurrentHashtag(null);
@@ -118,19 +189,10 @@ const ActivityFeed = () => {
     return getActivityItemHeight(windowWidth) + gapSize;
   };
 
-  // Mount alert
-  useEffect(() => {
-    console.log("ActivityFeed mounts");
-    removeGhostPostFromIndexedDB("QCawXVw6IjP7mkogJqrE");
-    return () => {
-      console.log("ActivityFeed.tsx unmounted");
-    };
-  });
-
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 480) {
       // return 720;
-      return 550;
+      return 650;
     } else if (windowWidth <= 800) {
       return 700;
     } else if (windowWidth <= 900) {
@@ -161,64 +223,65 @@ const ActivityFeed = () => {
   };
 
   // load indexDB posts or fetch from firestore
-  useEffect(() => {
-    const noUserLoggedInFetch = async () => {
-      // need to check indexedDB before doing this in case this user has visited the site before.
-      const publicPostsQuery = query(
-        collection(db, "posts"),
-        where("visibility", "==", "public"),
-        orderBy("timestamp", "desc"),
-        limit(POSTS_BATCH_SIZE)
-      );
-      const querySnapshot = await getDocs(publicPostsQuery);
+  // useEffect(() => {
+  //   const noUserLoggedInFetch = async () => {
+  //     // need to check indexedDB before doing this in case this user has visited the site before.
+  //     const publicPostsQuery = query(
+  //       collection(db, "posts"),
+  //       where("visibility", "==", "public"),
+  //       orderBy("timestamp", "desc"),
+  //       limit(POSTS_BATCH_SIZE)
+  //     );
+  //     const querySnapshot = await getDocs(publicPostsQuery);
 
-      const publicPosts: PostWithID[] = querySnapshot.docs
-        .map((doc) => {
-          const postData: PostType = doc.data() as PostType;
-          return {
-            ...postData,
-            id: doc.id,
-          };
-        })
-        .filter((post) => post.visibility === "public");
-      // id: doc.id, ...doc.data() as PostType }));
-      dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
-      addPostsToIndexedDB(publicPosts);
-    };
-    if (currentUser === null) {
-      noUserLoggedInFetch().catch(console.error);
-      return;
-    }
-    const loadPosts = async () => {
-      try {
-        const cachedPosts = await getPostsFromIndexedDB();
-        if (cachedPosts && cachedPosts.length > 0) {
-          // console.log("getting posts from indexedDB");
-          dispatch(setPosts(cachedPosts));
-        } else if (currentUserCompany) {
-          // console.log("no posts in indexDB");
-          // Dispatch the thunk action; Redux handles the promise
-          dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-          ).then((action) => {
-            if (fetchInitialPostsBatch.fulfilled.match(action)) {
-              addPostsToIndexedDB(action.payload.posts);
-            }
-          });
-        }
-      } catch (error) {
-        // console.error("Error fetching posts from IndexedDB:", error);
-        if (currentUserCompany) {
-          // Dispatch the thunk action again in case of error.  Is this a safe action to do?
-          dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-          );
-        }
-      }
-    };
+  //     const publicPosts: PostWithID[] = querySnapshot.docs
+  //       .map((doc) => {
+  //         const postData: PostType = doc.data() as PostType;
+  //         return {
+  //           ...postData,
+  //           id: doc.id,
+  //         };
+  //       })
+  //       .filter((post) => post.visibility === "public");
+  //     // id: doc.id, ...doc.data() as PostType }));
+  //     dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
+  //     addPostsToIndexedDB(publicPosts);
+  //   };
 
-    loadPosts();
-  }, [currentUser, dispatch, currentUserCompany]);
+  //   if (currentUser === null) {
+  //     noUserLoggedInFetch().catch(console.error);
+  //     return;
+  //   }
+  //   const loadPosts = async () => {
+  //     try {
+  //       const cachedPosts = await getPostsFromIndexedDB();
+  //       if (cachedPosts && cachedPosts.length > 0) {
+  //         // console.log("getting posts from indexedDB");
+  //         dispatch(setPosts(cachedPosts));
+  //       } else if (currentUserCompany) {
+  //         // console.log("no posts in indexDB");
+  //         // Dispatch the thunk action; Redux handles the promise
+  //         dispatch(
+  //           fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
+  //         ).then((action) => {
+  //           if (fetchInitialPostsBatch.fulfilled.match(action)) {
+  //             addPostsToIndexedDB(action.payload.posts);
+  //           }
+  //         });
+  //       }
+  //     } catch (error) {
+  //       // console.error("Error fetching posts from IndexedDB:", error);
+  //       if (currentUserCompany) {
+  //         // Dispatch the thunk action again in case of error.  Is this a safe action to do?
+  //         dispatch(
+  //           fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
+  //         );
+  //       }
+  //     }
+  //   };
+
+  //   loadPosts();
+  // }, [currentUser, dispatch, currentUserCompany]);
 
   // listen for new or updated posts
   useEffect(() => {

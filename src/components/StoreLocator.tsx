@@ -40,10 +40,15 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
   const renderCountMap = useRef(0);
   const renderCountLoc = useRef(0);
 
-  // Function to handle store name input changes
-  const handleStoreNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onStoreNameChange(e.target.value);
-  };
+ // Function to handle store name input changes
+ const handleStoreNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const newName = e.target.value;
+  setSelectedPlace((prevSelectedPlace) => ({
+    ...prevSelectedPlace,
+    name: newName,
+  }));
+  onStoreNameChange(newName);
+};
 
   // Function to handle store number input changes
   const handleStoreNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {

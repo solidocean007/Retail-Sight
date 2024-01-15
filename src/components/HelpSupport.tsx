@@ -18,7 +18,7 @@ const HelpSupport = () => {
         </p>
         <ul>
           <li>Email: support@displaygram.com</li>
-          <li>Phone: +1 234 567 8901</li>
+          <li typeof='phone'>Phone: +1 910-583-6914</li>
           {/* Add other contact methods if available */}
         </ul>
       </section>
