@@ -114,7 +114,7 @@ const SplashPage = () => {
               <h3>Discover and share retail success.</h3>
             </hgroup>
             <p>
-              Your gateway to exploring retail insights, trends, and success
+              Your free gateway to exploring retail insights, trends, and success
               stories. Join our community and elevate your retail business.
             </p>
             <button
@@ -126,9 +126,11 @@ const SplashPage = () => {
           </section>
           <section className="hero-image">
             <img
-              src="https://images.unsplash.com/photo-1579548122080-c35fd6820ecb?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+              // src="https://images.unsplash.com/photo-1579548122080-c35fd6820ecb?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+              src='src\assets\bluebackground.jpg'
               alt="Dynamic workplace"
             />
+            <div className="hero-header"><h1>Join for Free!</h1></div>
           </section>
         </div>
       </main>

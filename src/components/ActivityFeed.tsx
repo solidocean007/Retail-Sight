@@ -14,6 +14,7 @@ import {
   addPostsToIndexedDB,
   clearHashtagPostsInIndexedDB,
   clearPostsInIndexedDB,
+  clearUserCreatedPostsInIndexedDB,
   getPostsFromIndexedDB,
   removePostFromIndexedDB,
   updatePostInIndexedDB,
@@ -80,6 +81,7 @@ const ActivityFeed = () => {
         // Clear local IndexedDB data
         await clearPostsInIndexedDB();
         await clearHashtagPostsInIndexedDB();
+        await clearUserCreatedPostsInIndexedDB();
   
         // Refetch data from Firestore and update local state and IndexedDB
         // (You can use a similar approach as in your existing useEffect for fetching posts)
