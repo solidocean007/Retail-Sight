@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import {  ContactPage, Gavel, Help, Info, PrivacyTip } from '@mui/icons-material';
 import './footer.css'
 import { SvgIconTypeMap } from '@mui/material';
@@ -13,14 +12,16 @@ type FooterLinkProps = {
 
 
 const FooterLink = ({ to, icon: Icon, children }: FooterLinkProps) => {
-  const navigate = useNavigate();
   return (
-    <div className="footer-link" onClick={() => navigate(to)}>
-      {Icon && <Icon className="footer-icon" />}
-      <p>{children}</p>
+    <div className="footer-link">
+      <a href={to} className="footer-anchor">
+        {Icon && <Icon className="footer-icon" />}
+        <p>{children}</p>
+      </a>
     </div>
   );
 };
+
 
 const Footer = () => {
   return (
