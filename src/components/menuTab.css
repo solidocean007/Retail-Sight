@@ -6,7 +6,7 @@
   right: -100%; /* Initially hidden */
   background-color: transparent;
   z-index: 10;
-  transition: left 0.5s ease-in-out;
+  transition: left 1s ease-in-out;
   border-bottom-left-radius: 10px;
   border-top-left-radius: 10px;
 }
@@ -20,10 +20,10 @@
   width: 100%;
   border-bottom: 1px solid #ccc;
   cursor: pointer;
-  background: var(--menu-background-color);
-  border-bottom-left-radius: 10px;
-  border-top-left-radius: 10px;
-  margin-bottom: 5px;
+  background: var(--ivory-black);
+  color: white;
+  /* border-bottom-left-radius: 30px; */
+  margin: 5px;
 }
 
 /* Add responsive styling if needed */

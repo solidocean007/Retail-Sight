@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../actions/themeActions";
 import Switch from "@mui/material/Switch";
 import Fab from "@mui/material/Fab";
-import SettingsIcon from "@mui/icons-material/Settings";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import { RootState } from "../utils/store";
 import { LightMode } from "@mui/icons-material";
@@ -31,6 +30,9 @@ export const ThemeToggle: React.FC = () => {
     setIsDrawerOpen(false);
   };
 
+  const drawerColor = isDarkMode ? 'var(--drawer-color-dark)' : 'var(--drawer-color-light)';
+
+
   return (
     <div
       style={{
@@ -41,7 +43,7 @@ export const ThemeToggle: React.FC = () => {
       }}
     >
       <Fab
-        color="primary"
+        color='info'
         aria-label="settings"
         onClick={handleToggleClick}
         sx={{
@@ -54,7 +56,7 @@ export const ThemeToggle: React.FC = () => {
           height: { xs: "40px", sm: "56px" }, // example sizes
           "& .MuiSvgIcon-root": {
             // targeting the icon inside the Fab
-            fontSize: { xs: "1.25rem", sm: "1.75rem" }, // smaller icon on xs screens
+            fontSize: { xs: "1.55rem", sm: "2rem" }, // smaller icon on xs screens
           },
         }}
       >
@@ -64,11 +66,11 @@ export const ThemeToggle: React.FC = () => {
       {isDrawerOpen && (
         <div
           style={{
-            backgroundColor: "{primary}", // this doesnt work
+            backgroundColor: drawerColor,
             position: "fixed",
             bottom: "1rem",
             right: "4rem",
-            background: "#fff",
+            // background: "#fff",
             padding: "1rem",
             borderRadius: "0.25rem",
             display: isDrawerOpen ? "block" : "none", // toggles display based on state
@@ -77,15 +79,6 @@ export const ThemeToggle: React.FC = () => {
           <Switch
             checked={isDarkMode}
             onChange={handleThemeChange}
-            // color="primary"
-            // sx={{
-            //   width: { xs: "40px", sm: "60px" }, // adjust width as needed
-            //   height: { xs: "20px", sm: "24px" }, // adjust height as needed
-            //   "& .MuiSwitch-switchBase": {
-            //     // targeting inner elements if needed
-            //     // other style adjustments here
-            //   },
-            // }}
           />
         </div>
       )}

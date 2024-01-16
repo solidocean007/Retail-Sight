@@ -12,9 +12,9 @@
   --apple-core: #dcc7aa;
   --blueberry: #6b7a8f;
   
+  
 
   /* Default theme (light) */
-
   --background-body: rgb(202,218,221);
   --background-body: linear-gradient(173deg, rgba(202,218,221,1) 25%, rgba(233,229,211,1) 88%);
   --background: rgb(107, 122, 143);
@@ -23,6 +23,8 @@
     rgba(107, 122, 143, 1) 0%,
     rgba(240, 238, 234, 1) 100%
   );
+  --drawer-color-light: var(--gold-leaf);
+  --drawer-color-dark: black;
   --post-card-background: whitesmoke;
   --text-color: var(--ivory-black);
   --header-title: var(--sage-green);

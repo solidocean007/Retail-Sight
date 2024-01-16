@@ -233,8 +233,8 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
             <h4>date: {formattedDate}</h4>
           </div>
-          <a href="#" onClick={(e) => e.preventDefault()}> 
-                {/* create a onCompanyNameClick */}
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            {/* create a onCompanyNameClick */}
             {post.user.postUserCompany}
           </a>
         </div>
@@ -249,6 +249,7 @@ const PostCard: React.FC<PostCardProps> = ({
               setCurrentHashtag={setCurrentHashtag} // string is not assignable to null
             />
           </div>
+
           {/* Display the post's image */}
           {post.imageUrl && (
             <img className="post-image" src={post.imageUrl} alt="Post image" />
