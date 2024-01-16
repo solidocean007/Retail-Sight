@@ -5,7 +5,9 @@ import { toggleTheme } from "../actions/themeActions";
 import Switch from "@mui/material/Switch";
 import Fab from "@mui/material/Fab";
 import SettingsIcon from "@mui/icons-material/Settings";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
 import { RootState } from "../utils/store";
+import { LightMode } from "@mui/icons-material";
 
 export const ThemeToggle: React.FC = () => {
   const dispatch = useDispatch();
@@ -56,13 +58,13 @@ export const ThemeToggle: React.FC = () => {
           },
         }}
       >
-        <SettingsIcon />
+        {isDarkMode ? <DarkModeIcon /> : <LightMode />}
       </Fab>
 
       {isDrawerOpen && (
-        <div 
+        <div
           style={{
-            backgroundColor: '{primary}', // this doesnt work
+            backgroundColor: "{primary}", // this doesnt work
             position: "fixed",
             bottom: "1rem",
             right: "4rem",
