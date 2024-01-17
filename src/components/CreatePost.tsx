@@ -69,7 +69,7 @@ export const CreatePost = () => {
     storeAddress: "",
     state: "",
     city: "",
-    visibility: "public",
+    visibility: "company",
     supplier: "",
     brands: [],
     displayDate: '',

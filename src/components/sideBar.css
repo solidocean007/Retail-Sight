@@ -1,5 +1,5 @@
 .side-bar-box {
-  width: 100%;
+  width: fit-content;
   padding: 20px 10px;
   border-radius: 5px;
   display: flex;
@@ -10,7 +10,6 @@
   /* background: rgb(4,12,32);
 background: linear-gradient(0deg, rgba(4,12,32,1) 11%, rgba(168,174,213,1) 75%);
   height: 100%; */
-  box-shadow: 0 5px 5px rgba(229, 229, 241, 0.5);
 }
 
 .location-filter-container {

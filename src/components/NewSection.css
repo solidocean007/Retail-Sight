@@ -6,4 +6,9 @@
   width: 100%;
   background-color: var(--form-background-color);
   margin: 5px;
+  height: fit-content;
+}
+
+.new-section button {
+  width: 100%;
 }

@@ -7,7 +7,7 @@
   padding-bottom: 1rem;
   padding-top: auto;
   margin: 0;
-  justify-content: space-between;
+  justify-content: space-around;
   /* border-radius: 5px; */
   /* border: 3px solid black; */
 }
@@ -67,6 +67,7 @@
 
 .header-bottom {
   display: flex;
+  flex-direction: column;
   width: 100%;
 }
 
@@ -135,9 +136,15 @@ h5 {
   width: 100%;
 }
 
+.details-date {
+  display: flex;
+  justify-content: space-between;
+}
+
 .store-details h5 {
   display: flex;
   justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .post-card img.post-image {

@@ -212,31 +212,35 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
           </div>
           <div className="header-bottom">
-            <div className="store-details">
-              <div className="store-name-number">
-                <h3>
-                  {post.selectedStore}
-                  <span> {post.storeNumber}</span>
-                </h3>
+            <div className="details-date">
+              <div className="store-details">
+                <div className="store-name-number">
+                  <h3>
+                    {post.selectedStore}
+                    <span> {post.storeNumber}</span>
+                  </h3>
+                </div>
+                <div className="store-address-box">
+                  <h5>{post.storeAddress}</h5>
+                </div>
               </div>
-
-              <h5>{post.storeAddress}</h5>
+              <h4>date: {formattedDate}</h4>
             </div>
-          </div>
-          <div className="post-user-details">
-            {/* <div onClick={handleOnUserNameClick}> */}
-            <div>
-              by:{"  "}
-              <a href="#" onClick={handleOnUserNameClick}>
-                {post.user.postUserName}
+
+            <div className="post-user-details">
+              {/* <div onClick={handleOnUserNameClick}> */}
+              <div>
+                by:{"  "}
+                <a href="#" onClick={handleOnUserNameClick}>
+                  {post.user.postUserName}
+                </a>
+              </div>
+              <a href="#" onClick={(e) => e.preventDefault()}>
+                {/* create a onCompanyNameClick */}
+                {post.user.postUserCompany}
               </a>
             </div>
-            <h4>date: {formattedDate}</h4>
           </div>
-          <a href="#" onClick={(e) => e.preventDefault()}>
-            {/* create a onCompanyNameClick */}
-            {post.user.postUserCompany}
-          </a>
         </div>
 
         <div className="image-new-comment-box">
