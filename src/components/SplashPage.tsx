@@ -114,7 +114,7 @@ const SplashPage = () => {
   return (
     <div className="splash-container">
       <nav className="top-nav">
-        <h1>Displaygram</h1>
+        {/* <h1>Displaygram</h1> */}
         <ul>
           <li>
             <a href="#about">About Our Service</a>
@@ -133,10 +133,36 @@ const SplashPage = () => {
             </a>
           </li>
         </ul>
+        <div className="splash-menu">
+        <ul>
+          <li>
+            <a href="#about">About Our Service</a>
+          </li>
+          <li>
+            <a href="#features">Features</a>
+          </li>
+          <li>
+            <a href="#pricing" role="button">
+              Pricing
+            </a>
+          </li>
+          <li>
+            <a href="#security" role="button">
+              Security
+            </a>
+          </li>
+        </ul>
+        </div>
+        <div className="splash-menu-button">
+          <button>Menu</button>
+        </div>
       </nav>
-      <main className="hero">
-        <section className="hero-content hero-full">
-          <img src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2FabstractImageinsert.png?alt=media&token=2951defe-f44f-425c-b9f9-4c6cd8edbd60" alt="" />
+      <main className="splash-main">
+        <section className="first-section hero-content hero-full-background">
+          <img
+            src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2FabstractImageinsert.png?alt=media&token=2951defe-f44f-425c-b9f9-4c6cd8edbd60"
+            alt=""
+          />
           <div className="hero-content-left hero-content-full first-block">
             <hgroup>
               <h2>Welcome to Displaygram</h2>
@@ -156,36 +182,32 @@ const SplashPage = () => {
               Start Now
             </button>
           </div>
-          <div className="hero-content-right">
-            <section>
-             
-              <div className="hero-header">
-              </div>
-            </section>
-          </div>
+          
         </section>
 
-        <section ref={sectionTwoRef} className="hero-content">
-          <div className="hero-content-left second-block">
-          <h2>About Our Service</h2>
+        <section ref={sectionTwoRef} className="second-block">
+          <div className="hero-content-left">
+            <h2>About Our Service</h2>
             <p>
-              Capture in-store displays. Upload images along with
-              critical details like product names and quantities. Share with your team in real-time. Opt for
-              company-exclusive visibility or share your success broadly with
-              unique hashtags. It’s your choice, your control.
+              Capture in-store displays. Upload images along with critical
+              details like product names and quantities. Share with your team in
+              real-time. Opt for company-exclusive visibility or share your
+              success broadly with unique hashtags. It’s your choice, your
+              control.
             </p>
             <button onClick={() => scrollToRef(sectionThreeRef)}>
               Learn More
             </button>
           </div>
           <div className="hero-content-right hero-image">
-          <img src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-line-drawing-edited.png?alt=media&token=eb411db4-50d2-4078-a6cd-118e84315715" alt="" />
-
-          
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-line-drawing-edited.png?alt=media&token=eb411db4-50d2-4078-a6cd-118e84315715"
+              alt=""
+            />
           </div>
         </section>
 
-        <section ref={sectionThreeRef} className="hero-content hero-full">
+        <section ref={sectionThreeRef} className="section-three hero-full-background">
           <img
             // src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
             src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-products.jpg?alt=media&token=67eb96e6-1a55-482d-92c3-5b3901ce4b3e"
@@ -199,7 +221,7 @@ const SplashPage = () => {
               Whatever you are looking for, find exactly what you need — from
               beer to bread and everything in between..
             </p>
-           
+
             {/* <button onClick={() => scrollToRef(sectionFourRef)}>
               See Our Features
             </button> */}
@@ -209,20 +231,21 @@ const SplashPage = () => {
           </div>
         </section>
 
-        <section ref={sectionFourRef} className="hero-content hero-full fourth-block">
-        
+        <section
+          ref={sectionFourRef}
+          className="hero-content hero-full fourth-block"
+        >
           <div className="hero-content-left fourth-insert">
             <h2>Pricing:</h2>
             <p>
-            Our platform is committed to
-              providing value at no cost to you. Premium features may become available in the future.
+              Our platform is committed to providing value at no cost to you.
+              Premium features may become available in the future.
             </p>
-           
+
             <button onClick={() => scrollToRef(sectionFiveRef)}>
               Join for free
             </button>
           </div>
-         
         </section>
 
         <section ref={sectionFiveRef} className="hero-content">
@@ -234,7 +257,7 @@ const SplashPage = () => {
               securely stored in Firestore, ensuring your data rests on
               reliable, world-class infrastructure.
             </p>
-           
+
             <button onClick={() => navigate("/signup")}>Sign Up Now</button>
           </div>
           <div className="hero-content-right hero-image">
@@ -247,15 +270,13 @@ const SplashPage = () => {
 
         <section ref={sectionFiveRef} className="last-block">
           <div className="last-block">
-            
             <h2>Start Now</h2>
             <p>
               Elevate your team’s performance, share your retail story today.
             </p>
-           
+
             <button onClick={() => navigate("/signup")}>Sign Up Now</button>
           </div>
-          
         </section>
       </main>
     </div>

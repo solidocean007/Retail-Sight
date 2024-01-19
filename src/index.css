@@ -23,6 +23,7 @@
     rgba(107, 122, 143, 1) 0%,
     rgba(240, 238, 234, 1) 100%
   );
+  --splash-nav-text: var(--stark);
   --drawer-color-light: var(--gold-leaf);
   --drawer-color-dark: black;
   --post-card-background: whitesmoke;
