@@ -186,17 +186,63 @@ footer a:hover {
   color: #ffd700; /* Highlight color on hover */
 }
 
+/* Responsive styles for screens less than or equal to 768px wide (tablets). */
 @media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr; /* Stack columns on mobile */
+  .hero-content {
+    flex-direction: column;
+    padding: 1rem;
   }
 
+  .hero-content-left, .hero-content-right {
+    max-width: 100%;
+  }
+
+  .hero-content-left, .hero-content-right, .hero-full {
+    position: relative; /* Reset position for smaller screens */
+    text-align: center; /* Center text for smaller screens */
+  }
+
+  .hero-full img {
+    width: 100%; /* Full width of the container */
+    height: auto; /* Keep image aspect ratio */
+    max-height: 300px; /* Limit the height of the image */
+  }
+
+  /* Hide overflow images */
+  .hero-content-right {
+    overflow: hidden;
+  }
+  
+  /* Adjust button sizes */
   .enter-site-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+    padding: 0.8rem 1.6rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Responsive styles for screens less than or equal to 500px wide (phones). */
+@media (max-width: 500px) {
+  .hero-content-full {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
-  .hero {
-    padding: 2rem 1rem; /* Less padding on mobile */
+  .hero-content-left, .hero-content-right {
+    padding: 0.5rem;
+  }
+
+  /* Ensure images don't overflow their containers */
+  .hero-content-right img, .hero-full img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .top-nav ul {
+    flex-direction: column;
+  }
+
+  .top-nav li {
+    margin: 5px 0; /* Reduce margin between nav items */
   }
 }
