@@ -37,8 +37,11 @@ const SplashPage = () => {
   const sectionFiveRef = useRef(null);
 
   // Function to scroll to a ref (section)
-  const scrollToRef = (ref: MutableRefObject<T>) =>
-    window.scrollTo(0, ref.current.offsetTop);
+  const scrollToRef = (ref: MutableRefObject<HTMLElement | null>) => {
+    if (ref.current) {
+      window.scrollTo(0, ref.current.offsetTop);
+    }
+  };
 
   // skip this page if a user is already logged in
   useEffect(() => {
@@ -111,6 +114,7 @@ const SplashPage = () => {
   return (
     <div className="splash-container">
       <nav className="top-nav">
+        <h1>Displaygram</h1>
         <ul>
           <li>
             <a href="#about">About Us</a>
@@ -126,8 +130,9 @@ const SplashPage = () => {
         </ul>
       </nav>
       <main className="hero">
-        <section className="hero-content">
-          <div className="hero-content-left">
+        <section className="hero-content hero-full">
+          <img src="src/assets/abstractImageinsert.png" alt="" />
+          <div className="hero-content-left hero-content-full first-block">
             <hgroup>
               <h2>Welcome to Displaygram</h2>
               <h3>Discover and share retail success.</h3>
@@ -147,48 +152,41 @@ const SplashPage = () => {
             </button>
           </div>
           <div className="hero-content-right">
-            <section className="hero-image">
-              <img
-                // src="https://images.unsplash.com/photo-1579548122080-c35fd6820ecb?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                src="src\assets\bluebackground.jpg"
-                alt="Dynamic workplace"
-              />
+            <section>
+             
               <div className="hero-header">
-                <h1>Join for Free!</h1>
               </div>
             </section>
           </div>
         </section>
 
         <section ref={sectionTwoRef} className="hero-content">
-          <div className="hero-content-left">
-            <h2>About Our Service</h2>
+          <div className="hero-content-left second-block">
+          <h2>About Our Service</h2>
             <p>
-              Capture in-store displays with ease. Upload images along with
-              critical details like product names and quantities. Watch as your
-              displays come to life for your team in real-time. Opt for
+              Capture in-store displays. Upload images along with
+              critical details like product names and quantities. Share with your team in real-time. Opt for
               company-exclusive visibility or share your success broadly with
-              unique hashtags. It’s your choice, your control
+              unique hashtags. It’s your choice, your control.
             </p>
-            <img src="path_to_your_unsplash_about_image" alt="About Image" />
             <button onClick={() => scrollToRef(sectionThreeRef)}>
               Learn More
             </button>
           </div>
           <div className="hero-content-right hero-image">
-            <img
-              src="https://images.unsplash.com/photo-1616596875678-9425439b2f1e?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt=""
-            />
+          <img src="src/assets/grocery-line-drawing-edited.png" alt="" />
+
+          
           </div>
         </section>
 
         <section ref={sectionThreeRef} className="hero-content hero-full">
           <img
-            src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            // src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            src="src/assets/grocery-products.jpg"
             alt=""
           />
-          <div className="hero-content-left hero-content-full">
+          <div className="hero-content-left hero-content-full third-block">
             <h2>Features</h2>
             <p>
               Find displays that matter to you. Our intuitive filters allow you
@@ -196,46 +194,34 @@ const SplashPage = () => {
               Whatever you are looking for, find exactly what you need — from
               beer to bread and everything in between..
             </p>
-            <img
-              src="path_to_your_unsplash_features_image"
-              alt="Features Image"
-            />
-            <button onClick={() => scrollToRef(sectionFourRef)}>
+           
+            {/* <button onClick={() => scrollToRef(sectionFourRef)}>
               See Our Features
-            </button>
+            </button> */}
           </div>
           <div className="hero-content-right">
-            <img src="" alt="" />
+            {/* <img src="" alt="" /> */}
           </div>
         </section>
 
-        <section ref={sectionFourRef} className="hero-content">
-          <div className="hero-content-left">
-            <h2> FAQs:</h2>
+        <section ref={sectionFourRef} className="hero-content hero-full fourth-block">
+        
+          <div className="hero-content-left fourth-insert">
+            <h2>Pricing:</h2>
             <p>
-              "Is the service free?" "Absolutely. Our platform is committed to
-              providing value at no cost to you." "What happens if I delete a
-              post?" "Once a post is deleted, it's removed from our platform to
-              maintain your display’s exclusivity."
+            Our platform is committed to
+              providing value at no cost to you. Premium features may become available in the future.
             </p>
-            <img
-              src="path_to_your_unsplash_testimonials_image"
-              alt="Faqs image"
-            />
+           
             <button onClick={() => scrollToRef(sectionFiveRef)}>
-              Our Community
+              Join for free
             </button>
           </div>
-          <div className="hero-content-right hero-image">
-            <img
-              src="https://images.unsplash.com/photo-1454117096348-e4abbeba002c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt=""
-            />
-          </div>
+         
         </section>
 
         <section ref={sectionFiveRef} className="hero-content">
-          <div className="hero-content-left">
+          <div className="hero-content-left fifth-insert">
             <h2>Security and Compliance</h2>
             <p>
               Your security is our priority. Passwords are protected by
@@ -243,40 +229,28 @@ const SplashPage = () => {
               securely stored in Firestore, ensuring your data rests on
               reliable, world-class infrastructure.
             </p>
-            <img
-              src="path_to_your_unsplash_cta_image"
-              alt="Call to Action Image"
-            />
+           
             <button onClick={() => navigate("/signup")}>Sign Up Now</button>
           </div>
           <div className="hero-content-right hero-image">
             <img
-              src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt=""
+              src="src/assets/earthdesign.png"
+              alt="secure earth"
             />
           </div>
         </section>
 
-        <section ref={sectionFiveRef} className="hero-content hero-full">
-          <div className="hero-content-left hero-content-full">
-            <img
-              src="https://images.unsplash.com/photo-1425342605259-25d80e320565?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt=""
-            />
+        <section ref={sectionFiveRef} className="last-block">
+          <div className="last-block">
+            
             <h2>Start Now</h2>
             <p>
-              Elevate your team’s performance, share your retail story, and join
-              a community of visual merchandising champions today.
+              Elevate your team’s performance, share your retail story today.
             </p>
-            <img
-              src="path_to_your_unsplash_cta_image"
-              alt="Call to Action Image"
-            />
+           
             <button onClick={() => navigate("/signup")}>Sign Up Now</button>
           </div>
-          <div className="hero-content-right">
-            
-          </div>
+          
         </section>
       </main>
     </div>
