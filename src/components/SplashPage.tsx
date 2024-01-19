@@ -136,7 +136,7 @@ const SplashPage = () => {
       </nav>
       <main className="hero">
         <section className="hero-content hero-full">
-          <img src="src/assets/abstractImageinsert.png" alt="" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2FabstractImageinsert.png?alt=media&token=2951defe-f44f-425c-b9f9-4c6cd8edbd60" alt="" />
           <div className="hero-content-left hero-content-full first-block">
             <hgroup>
               <h2>Welcome to Displaygram</h2>
@@ -179,7 +179,7 @@ const SplashPage = () => {
             </button>
           </div>
           <div className="hero-content-right hero-image">
-          <img src="src/assets/grocery-line-drawing-edited.png" alt="" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-line-drawing-edited.png?alt=media&token=eb411db4-50d2-4078-a6cd-118e84315715" alt="" />
 
           
           </div>
@@ -188,7 +188,7 @@ const SplashPage = () => {
         <section ref={sectionThreeRef} className="hero-content hero-full">
           <img
             // src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            src="src/assets/grocery-products.jpg"
+            src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-products.jpg?alt=media&token=67eb96e6-1a55-482d-92c3-5b3901ce4b3e"
             alt=""
           />
           <div className="hero-content-left hero-content-full third-block">
@@ -239,7 +239,7 @@ const SplashPage = () => {
           </div>
           <div className="hero-content-right hero-image">
             <img
-              src="src/assets/earthdesign.png"
+              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fearthdesign.png?alt=media&token=65c60866-6c35-4587-997b-a07042b900df"
               alt="secure earth"
             />
           </div>
