@@ -117,14 +117,19 @@ const SplashPage = () => {
         <h1>Displaygram</h1>
         <ul>
           <li>
-            <a href="#about">About Us</a>
+            <a href="#about">About Our Service</a>
           </li>
           <li>
-            <a href="#services">Services</a>
+            <a href="#features">Features</a>
           </li>
           <li>
-            <a href="#contact" role="button">
-              Contact
+            <a href="#pricing" role="button">
+              Pricing
+            </a>
+          </li>
+          <li>
+            <a href="#security" role="button">
+              Security
             </a>
           </li>
         </ul>
