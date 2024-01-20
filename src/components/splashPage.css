@@ -19,16 +19,29 @@
   width: 100%;
 }
 
-.splash-menu, .splash-menu-button {
-  display: none;
+/* Hamburger Menu Button */
+.splash-menu-button {
+  display: none; /* hide menu button on wide screens */
+  justify-content: flex-end; /* Align the button to the right */
+  align-items: center;
+  cursor: pointer;
+  z-index: 50;
 }
 
 .top-nav ul {
   display: flex;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  background-color: #002b45;
+  width: 100%;
+  transition: transform 0.3s ease-in-out;
 }
 
 .top-nav li {
-  margin-right: 40px;
+  margin-right: .5rem;
+  padding: 1rem;
+  width: 9rem;
 }
 
 .top-nav a {
@@ -245,6 +258,31 @@
   background-color: #0056b3; /* Darken button on hover */
 }
 
+.splash-menu ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  background-color: #002b45;
+}
+
+/* Display the menu when 'isMenuOpen' is true */
+.isMenuOpen {
+  transform: translateY(0); /* Show the menu */
+}
+
+.top-nav a {
+  color: var(--splash-nav-text);
+  /* display: block; */
+  width: 100%;
+  padding: 1rem 0;
+}
+
 footer {
   padding: 1rem 0;
   font-size: 0.9em;
@@ -286,19 +324,9 @@ footer a:hover {
     max-height: 200px;
   }
 
-
-  .top-nav ul {
-    display: none;
-  }
-
-  .top-nav .splash-menu-button {
+  .splash-menu-button {
     display: flex;
   }
-
-  .top-nav .splash-menu {
-    display: none;
-  }
-
 
 
   .hero-content, .second-block {
@@ -346,11 +374,37 @@ footer a:hover {
     padding: 0.8rem 1.6rem;
     font-size: 0.8rem;
   }
-}
 
-@media (max-width: 600px) {
-  .third-block {
-    
+  .top-nav {
+    position: relative;
+  }
+
+  .top-nav li {
+    width: 20rem;
+    margin: 0;
+  }
+
+  .top-nav .isMenuOpen {
+    transform: translateY(0); /* Bring the menu on screen */
+  }
+
+  /* Top navigation links - hidden by default on small screens */
+  .top-nav ul {
+    display: flex; /* Flex to stack items */
+    flex-direction: column; /* Stack items vertically */
+    align-items: center;
+    position: absolute;
+    top: 0rem; /* Directly below the nav bar */
+    left: 0;
+    transform: translateY(-100%); /* Hide the menu offscreen */
+    width: 100%;
+    z-index: 10;
+    transition: transform 0.3s ease-in-out;
+    background-color: #5c97bf;
+  }
+  .top-nav li:nth-child(even) {
+    background-color: #002b45;
+    width: 100%;
   }
 }
 

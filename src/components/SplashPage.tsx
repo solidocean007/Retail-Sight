@@ -1,7 +1,7 @@
 // SplashPage.tsx
 import { useNavigate } from "react-router-dom";
 import "./splashPage.css"; // Make sure this reflects the styles below
-import { MutableRefObject, useEffect } from "react";
+import { MutableRefObject, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import {
@@ -29,6 +29,11 @@ const SplashPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const POSTS_BATCH_SIZE = 10;
+  const [isMenuOpen, setMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setMenuOpen(!isMenuOpen);
+  };
 
   // Reference for scrolling into view
   const sectionTwoRef = useRef(null);
@@ -118,51 +123,44 @@ const SplashPage = () => {
 
   return (
     <div className="splash-container">
-      <nav className="top-nav">
-        {/* <h1>Displaygram</h1> */}
-        <ul>
+     <nav className="top-nav">
+        <ul className={isMenuOpen ? 'isMenuOpen' : ''}>
           <li>
-            <a onClick={() => scrollToRef(sectionTwoRef)}>
+            <a onClick={() => {
+              toggleMenu();
+              scrollToRef(sectionTwoRef);
+            }}>
               About Our Service
             </a>
           </li>
           <li>
-            <a onClick={() => scrollToRef(sectionThreeRef)}>
+            <a onClick={() => {
+              toggleMenu();
+              scrollToRef(sectionThreeRef);
+            }}>
               Features
             </a>
           </li>
           <li>
-            <a onClick={() => scrollToRef(sectionFourRef)}>Pricing</a>
+            <a onClick={() => {
+              toggleMenu();
+              scrollToRef(sectionFourRef);
+            }}>
+              Pricing
+            </a>
           </li>
           <li>
-            <a onClick={() => scrollToRef(sectionFiveRef)}>
+            <a onClick={() => {
+              toggleMenu();
+              scrollToRef(sectionFiveRef);
+            }}>
               Security
             </a>
           </li>
         </ul>
 
-        <div className="splash-menu">
-          <ul>
-            <li>
-              <a href="#about">About Our Service</a>
-            </li>
-            <li>
-              <a href="#features">Features</a>
-            </li>
-            <li>
-              <a href="#pricing" role="button">
-                Pricing
-              </a>
-            </li>
-            <li>
-              <a href="#security" role="button">
-                Security
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div className="splash-menu-button">
-          <button>Menu</button>
+        <div className="splash-menu-button" onClick={toggleMenu}>
+          <button>{isMenuOpen ? '✕' : '☰'}</button>
         </div>
       </nav>
       <main className="splash-main">
