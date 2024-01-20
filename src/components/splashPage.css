@@ -19,7 +19,7 @@
   width: 100%;
 }
 
-.splash-menu {
+.splash-menu, .splash-menu-button {
   display: none;
 }
 
@@ -44,6 +44,67 @@
   padding: 2rem 2rem;
 }
 
+.first-section, .fifth-section {
+  position: relative;
+  width: 100vw;
+}
+
+.first-image-box img, .fifth-image-box img {
+  width: 100%;
+  min-height: 400px; /* Adjust as needed */
+  height: auto;
+  max-height: 400px;
+  object-fit: cover; /* Ensures the image covers the area properly */
+}
+
+.first-content, .fifth-content {
+  display: flex;
+  flex-direction: column;
+  text-align: justify;
+  background-image: url('src/assets/bluebackground.jpg'); /* Adjust the path */
+  color: white;
+  background-size: cover; /* Ensure the background covers the entire container */
+  background-position: center; /* Center the background image */
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+  padding: 1rem;
+  z-index: 2; /* Make sure it's above the image */
+}
+
+.second-section {
+  color: white;
+  background-color: black;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%; /* Limit content width */
+  margin: 1rem 0rem;
+}
+
+.second-content {
+  display: flex;
+  flex-direction: column;
+  color: white;
+  width: 50%;
+}
+
+.second-image-box {
+  padding: 1rem;
+  width: 50%;
+}
+
+.second-image-box img {
+  width: 100%;
+  min-height: 400px; /* Adjust as needed */
+  height: auto;
+  object-fit: cover; /* Ensures the image covers the area properly */
+}
+
 .hero-content {
   display: flex;
   justify-content: center;
@@ -60,10 +121,9 @@
   position: relative;
 }
 
-.hero-full-background img {
+.first-section img, .fifth-section img {
   width: 100%;
-  height: 400px;
-  max-height: 500px;
+  height: fit-content;
 }
 
 .hero-content-full {
@@ -74,27 +134,56 @@
   padding: 1rem;
 }
 
-.first-block {
-  background-image: url('src/assets/bluebackground.jpg');
+.hero-content-left, .hero-content-right {
+  width: 50%;
+  padding: .5rem;
 }
 
-.second-block {
-  color: white;
-  background-color: black;
-  padding: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%; /* Limit content width */
-  margin: 1rem 0rem;
-}
 
-.second-block p {
+.second-content p {
  text-align: justify;
 }
 
-.third-block {
-  background: blue;
+.features-image-box img {
+  height: auto;
+  width: 100%;
+}
+
+.features-image-box {
+  position: relative;
+}
+
+.features-image-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.5); /* Black overlay with 20% opacity */
+  z-index: 3; /* Ensure the overlay is below the button text */
+}
+
+.features-button {
+  position: absolute;
+  top: 55%; /* Adjust this value to move the button lower than the middle */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  /* Add any additional styling you need for the button here */
+}
+
+.features-text-box {
+  background-color: #5c97bf; /* Darker blue background */
+  background-image: linear-gradient(45deg, rgba(255,255,255,.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.2) 50%, rgba(255,255,255,.2) 75%, transparent 75%, transparent);
+  background-size: 5px 5px; /* Adjust the size of the rectangles */
+  color: black;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-height: 400px;
+  width: 35%;
+  margin: auto;
   text-align: justify;
 }
 
@@ -114,11 +203,7 @@
 }
 
 .fourth-insert {
-  margin: 2rem;
-}
-
-.fifth-insert {
-  background-color: #0056b3;
+  margin: .5rem;
 }
 
 .last-block {
@@ -134,7 +219,7 @@
 
 .hero-image {
   position: relative;
-  height: 100%;
+  /* height: 100%; */
 }
 
 /* .hero-header {
@@ -144,11 +229,6 @@
   transform: translate(-50%, -50%);
   color: #e6e6e6;
 } */
-
-.hero-content-left {
-  max-width: 50%;
-  padding: 1rem;
-}
 
 .enter-site-btn {
   padding: 1rem 2rem;
@@ -184,10 +264,29 @@ footer a:hover {
 }
 
 /* Responsive styles for screens less than or equal to 768px wide (tablets). */
-@media (max-width: 768px) {
-  .splash-container img {
-    height: auto;
+@media (max-width: 750px) {
+  
+  .first-content, .fifth-content {
+    width: 100%; /* Full width on smaller screens */
+    position: static; /* Normal document flow */
+    padding: 1rem 2rem; /* Increase padding */
   }
+
+  .second-section {
+    flex-direction: column;
+  }
+
+  .second-content, .second-image-box  {
+    width: auto;
+  }
+  
+  .first-image-box img, .second-image-box img, .fifth-image-box img {
+    display: block; /* Ensure the image is a block element */
+    min-height: 100px; /* Adjust for smaller screens */
+    max-height: 200px;
+  }
+
+
   .top-nav ul {
     display: none;
   }
@@ -200,15 +299,16 @@ footer a:hover {
     display: none;
   }
 
+
+
   .hero-content, .second-block {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    height: 400px;
   }
 
   .hero-content-left, .hero-content-right {
-    max-width: 100%;
+    width: 100%;
   }
 
   .hero-content-left, .hero-content-right, .hero-full {
@@ -232,17 +332,25 @@ footer a:hover {
     overflow: hidden;
   }
 
-  .section-three .hero-content-full {
-    position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  .section-three {
+    flex-direction: column-reverse;
+  }
+
+  .third-block {
+    flex-direction: column;
+    width: 90%;
   }
   
   /* Adjust button sizes */
   .enter-site-btn {
     padding: 0.8rem 1.6rem;
     font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .third-block {
+    
   }
 }
 
