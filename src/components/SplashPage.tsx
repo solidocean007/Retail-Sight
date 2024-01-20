@@ -22,6 +22,7 @@ import {
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { useAppDispatch } from "../utils/store";
 import { useRef } from "react";
+import { Link } from "react-router-dom";
 
 const SplashPage = () => {
   const user = useSelector(selectUser);
@@ -174,8 +175,8 @@ const SplashPage = () => {
          
           <div className="first-content">
             <hgroup>
-              <h2>Welcome to Displaygram</h2>
-              <h3>Discover and share retail success.</h3>
+              <h1>Welcome to Displaygram</h1>
+              <h2>Discover and share retail success.</h2>
             </hgroup>
             <p>
               Our platform revolutionizes how retail teams, suppliers, and
@@ -184,12 +185,15 @@ const SplashPage = () => {
               store displays at no cost. Your digital portfolio for retail
               excellence – accessible anytime, by your whole team.
             </p>
-            <button
-              onClick={() => navigate("/user-home-page")}
+            <div className="content-button-box">
+            <Link
+              to='/user-home-page'
               className="enter-site-btn"
             >
               Start Now
-            </button>
+            </Link>
+            </div>
+           
           </div>
         </section>
 
@@ -203,13 +207,16 @@ const SplashPage = () => {
               success broadly with unique hashtags. It’s your choice, your
               control.
             </p>
-            <button onClick={() => navigate("/sign-up-login")}>
+            <div className="content-button-box">
+            <Link to='/about' className="enter-site-btn">
               Learn More
-            </button>
+            </Link>
+            </div>
+           
           </div>
           <div className="second-image-box">
             <img
-              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-line-drawing-edited.png?alt=media&token=eb411db4-50d2-4078-a6cd-118e84315715"
+              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-line-drawing-edited_200x200.png?alt=media&token=055681ef-0cd1-4049-9dd5-57d935e30b6b"
               alt=""
             />
           </div>
@@ -224,12 +231,12 @@ const SplashPage = () => {
               src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-products.jpg?alt=media&token=67eb96e6-1a55-482d-92c3-5b3901ce4b3e"
               alt=""
             />
-             <button
-              className="features-button"
-              onClick={() => scrollToRef(sectionFourRef)}
+             <Link
+             to='/about'
+              className="features-button enter-site-btn"
             >
               See Our Features
-            </button>
+            </Link>
             </div>
             
 
@@ -257,10 +264,12 @@ const SplashPage = () => {
               Our platform is committed to providing value at no cost to you.
               Premium features may become available in the future.
             </p>
-
-            <button onClick={() => navigate("/sign-up-login")}>
+            <div className="content-button-box">
+            <Link to='/sign-up-login' className="enter-site-btn">
               Join for free
-            </button>
+            </Link>
+            </div>
+           
           </div>
         </section>
 
@@ -276,10 +285,12 @@ const SplashPage = () => {
               securely stored in Firestore, ensuring your data rests on
               reliable, world-class infrastructure.
             </p>
-
-            <button onClick={() => navigate("/sign-up-login")}>
+            <div className="content-button-box">
+            <Link to='/sign-up-login' className="enter-site-btn">
               Sign Up Now
-            </button>
+            </Link>
+            </div>
+            
           </div>
           <div className="fifth-image-box">
             <img
@@ -295,10 +306,12 @@ const SplashPage = () => {
             <p>
               Elevate your team’s performance, share your retail story today.
             </p>
-
-            <button onClick={() => navigate("/sign-up-login")}>
+            <div className="content-button-box">
+            <Link to='/sign-up-login' className="enter-site-btn">
               Sign Up Now
-            </button>
+            </Link>
+            </div>
+            
           </div>
         </section>
       </main>

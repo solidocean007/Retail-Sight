@@ -88,6 +88,10 @@
   z-index: 2; /* Make sure it's above the image */
 }
 
+.fifth-content {
+  background: #4a535c;
+}
+
 .second-section {
   color: white;
   background-color: black;
@@ -108,12 +112,13 @@
 
 .second-image-box {
   padding: 1rem;
-  width: 50%;
+  width: 100%;
 }
 
 .second-image-box img {
-  width: 100%;
+  width: 50%;
   min-height: 400px; /* Adjust as needed */
+  max-height: 500px;
   height: auto;
   object-fit: cover; /* Ensures the image covers the area properly */
 }
@@ -235,15 +240,16 @@
   /* height: 100%; */
 }
 
-/* .hero-header {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  color: #e6e6e6;
-} */
+.content-button-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 .enter-site-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 1rem 2rem;
   font-size: 1rem;
   color: #fff;
@@ -252,6 +258,7 @@
   border-radius: 5 px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  width: 10rem;
 }
 
 .enter-site-btn:hover {
