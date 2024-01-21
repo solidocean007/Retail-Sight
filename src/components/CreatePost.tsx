@@ -82,6 +82,7 @@ export const CreatePost = () => {
     },
     likes: [],
     hashtags: [""],
+    starTags: [""],
     commentCount: 0,
   });
 
@@ -185,7 +186,7 @@ export const CreatePost = () => {
           >
             <CloseIcon />
           </IconButton>
-          <Typography variant="h5" style={{ flexGrow: 1 }}>
+          <Typography variant="h1" style={{ flexGrow: 1 }}>
             Capture Post
           </Typography>
         </Toolbar>

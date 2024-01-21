@@ -9,6 +9,7 @@ import { useState } from "react";
 interface PostDescriptionProps {
   description?: string;
   getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
+  getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -31,6 +32,7 @@ const DescriptionModal = ({
 export const PostDescription: React.FC<PostDescriptionProps> = ({
   description,
   getPostsByTag,
+  getPostsByStarTag,
   setSearchResults,
   setCurrentHashtag,
 }) => {
@@ -42,12 +44,13 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     return text.split(/\s+/).map((word, index) => {
       if (word.startsWith("#")) {
         return (
-          <a
-            key={index}
-            href="#"
-            onClick={(e) => handleHashtagClick(e, word)}
-            className={styles.hashtag}
-          >
+          <a key={index} href="#" onClick={(e) => handleHashtagClick(e, word)} className={styles.hashtag}>
+            {word}
+          </a>
+        );
+      } else if (word.startsWith("*")) {
+        return (
+          <a key={index} href="#" onClick={(e) => handleStarTagClick(e, word)} className={styles.starTag}>
             {word}
           </a>
         );
@@ -93,6 +96,24 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       setCurrentHashtag(hashtag); // Type 'string' is not assignable to type 'SetStateAction<null>'
       dispatch(setHashtagPosts(hashtagPosts));
       addHashtagPostsToIndexedDB(hashtagPosts);
+    } catch (error) {
+      console.error("Error fetching posts by hashtag:", error);
+      // Handle errors as needed (e.g., show a notification to the user)
+    }
+  };
+
+  const handleStarTagClick = async (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    starTag: string
+  ) => {
+    event.preventDefault(); // Prevents the default anchor behavior
+    try {
+      const starTagPosts = await getPostsByStarTag(starTag); // Argument of type 'string | null' is not assignable to parameter of type 'string'
+
+      setSearchResults(starTagPosts);
+      setCurrentHashtag(starTag); // Type 'string' is not assignable to type 'SetStateAction<null>'
+      dispatch(setStarTagPosts(starTagPosts));
+      addStarTagPostsToIndexedDB(starTagPostsPosts);
     } catch (error) {
       console.error("Error fetching posts by hashtag:", error);
       // Handle errors as needed (e.g., show a notification to the user)

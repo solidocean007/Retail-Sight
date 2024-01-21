@@ -6,7 +6,7 @@ import NoContentCard from "./NoContentCard";
 import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
-import getPostsByTag from "../utils/PostLogic/getPostsByTag";
+import { getPostsByStarTag, getPostsByTag } from "../utils/PostLogic/getPostsByTag";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import "./activityFeed.css";
 import { PostType, PostWithID } from "../utils/types";
@@ -341,8 +341,6 @@ const ActivityFeed = () => {
 
   const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   const itemCount = displayPosts.length + numberOfAds;
-  console.log("displayPosts: ", displayPosts.length);
-  console.log("itemcount: ", itemCount);
 
   const itemRenderer = ({
     index,
@@ -378,7 +376,7 @@ const ActivityFeed = () => {
           // index={postIndex}
           index={index}
           style={modifiedStyle}
-          data={{ post: postWithID, getPostsByTag }}
+          data={{ post: postWithID, getPostsByTag, getPostsByStarTag }}
           setSearchResults={setSearchResults}
           setCurrentHashtag={setCurrentHashtag}
         />
@@ -420,6 +418,7 @@ const ActivityFeed = () => {
         itemData={{
           posts: posts,
           getPostsByTag: getPostsByTag,
+          getPostsByStarTag: getPostsByStarTag,
         }}
       >
         {itemRenderer}

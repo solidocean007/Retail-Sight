@@ -10,6 +10,7 @@ interface PostCardRendererProps {
   data: {
     post: PostWithID;
     getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
+    getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   };
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
@@ -35,6 +36,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
       post={post} // Now using post.data
       style={style}
       getPostsByTag={getPostsByTag}
+      getPostsByStarTag={getPostsByStarTag}
       setSearchResults={setSearchResults}
       setCurrentHashtag={setCurrentHashtag}
     />

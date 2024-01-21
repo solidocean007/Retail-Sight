@@ -34,7 +34,8 @@ interface PostCardProps {
   id: string;
   currentUserUid: string;
   post: PostWithID;
-  getPostsByTag: (hashTag: string) => Promise<PostWithID[]>; // Updated return type
+  getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
+  getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   style?: React.CSSProperties;
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
@@ -44,6 +45,7 @@ const PostCard: React.FC<PostCardProps> = ({
   currentUserUid,
   post,
   getPostsByTag,
+  getPostsByStarTag,
   style,
   setSearchResults,
   setCurrentHashtag,
@@ -252,6 +254,7 @@ const PostCard: React.FC<PostCardProps> = ({
             <PostDescription
               description={post.description}
               getPostsByTag={getPostsByTag}
+              getPostsByStarTag={getPostsByStarTag}
               setSearchResults={setSearchResults}
               setCurrentHashtag={setCurrentHashtag} // string is not assignable to null
             />

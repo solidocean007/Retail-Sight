@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { PostType } from "../utils/types";
 import { updateLocationsCollection } from "../utils/PostLogic/updateLocationsCollection";
 import './storeSelector.css'
-// import store from "../utils/store";
 
 // Assuming you've refactored the GOOGLE_MAPS_KEY import using Vite
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -35,10 +34,6 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [selectedPlace, setSelectedPlace] =
     useState<google.maps.places.PlaceResult | null>(null);
-  
-
-  const renderCountMap = useRef(0);
-  const renderCountLoc = useRef(0);
 
  // Function to handle store name input changes
  const handleStoreNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,19 +50,9 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     onStoreNumberChange(e.target.value);
   };
 
- 
-  
-  useEffect(() => {
-    console.log("Component mounted!");
-    return () => {
-      console.log("Component unmounted!");
-    };
-  }, []);
 
   // Load Google Maps script
   useEffect(() => {
-    renderCountMap.current += 1;
-    console.log(`useEffect for map has run ${renderCountMap.current} times.`);
     // Check if Google Maps API is already available on window object
     if (!window.google) {
       const existingScript = document.getElementById("googleMapsScript");
@@ -116,10 +101,6 @@ const updateStoreDetails = (name: string, address: string, city: string, state: 
 };
 
     if (post.storeAddress !== previousStoreAddressRef.current) {
-      renderCountLoc.current += 1;
-      console.log(
-        `useEffect for user location has run ${renderCountLoc.current} times.`
-      );
       if (isMapLoaded && mapRef.current) {
         const map = new google.maps.Map(mapRef.current, {
           center: { lat: 34.0522, lng: -118.2437 },
