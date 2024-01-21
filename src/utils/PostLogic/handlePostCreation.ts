@@ -17,7 +17,7 @@ import {
   updateChannelsInFirestore,
 } from "./updateFirestore";
 import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
-import { extractHashtags } from "../extractHashtags";
+import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { addNewPost } from "../../Slices/postsSlice";
 // Other necessary imports...
 
@@ -134,7 +134,7 @@ export const useHandlePostSubmission = () => {
                   postUserEmail: userData.email,
                 },
                 hashtags: extractHashtags(post.description ?? ""),
-
+                starTags: extractStarTags(post.description ?? ""),
                 commentCount: 0,
                 likes: [],
               };

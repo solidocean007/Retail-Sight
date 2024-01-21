@@ -94,6 +94,7 @@ export interface PostType {
   brands: string[];
   likes?: string[];
   hashtags: string[];
+  starTags: string[];
   commentCount: number;
 }
 

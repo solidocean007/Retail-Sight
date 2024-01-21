@@ -124,82 +124,95 @@ const SplashPage = () => {
 
   return (
     <div className="splash-container">
-     <nav className="top-nav">
-        <ul className={isMenuOpen ? 'isMenuOpen' : ''}>
-          <li>
-            <a onClick={() => {
-              toggleMenu();
-              scrollToRef(sectionTwoRef);
-            }}>
-              About Our Service
-            </a>
-          </li>
-          <li>
-            <a onClick={() => {
-              toggleMenu();
-              scrollToRef(sectionThreeRef);
-            }}>
-              Features
-            </a>
-          </li>
-          <li>
-            <a onClick={() => {
-              toggleMenu();
-              scrollToRef(sectionFourRef);
-            }}>
-              Pricing
-            </a>
-          </li>
-          <li>
-            <a onClick={() => {
-              toggleMenu();
-              scrollToRef(sectionFiveRef);
-            }}>
-              Security
-            </a>
-          </li>
-        </ul>
+      <nav className="top-nav">
+        <div className="logo-box">
+          <img
+            src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
+            alt=""
+          />
+          <h1>Displaygram</h1>
+        </div>
+        <div className="navbar">
+          <ul className={isMenuOpen ? "isMenuOpen" : ""}>
+            <li>
+              <a
+                onClick={() => {
+                  toggleMenu();
+                  scrollToRef(sectionTwoRef);
+                }}
+              >
+                About Our Service
+              </a>
+            </li>
+            <li>
+              <a
+                onClick={() => {
+                  toggleMenu();
+                  scrollToRef(sectionThreeRef);
+                }}
+              >
+                Features
+              </a>
+            </li>
+            <li>
+              <a
+                onClick={() => {
+                  toggleMenu();
+                  scrollToRef(sectionFourRef);
+                }}
+              >
+                Pricing
+              </a>
+            </li>
+            <li>
+              <a
+                onClick={() => {
+                  toggleMenu();
+                  scrollToRef(sectionFiveRef);
+                }}
+              >
+                Security
+              </a>
+            </li>
+          </ul>
+        </div>
 
         <div className="splash-menu-button" onClick={toggleMenu}>
-          <button>{isMenuOpen ? '✕' : '☰'}</button>
+          <button>{isMenuOpen ? "✕" : "☰"}</button>
         </div>
       </nav>
       <main className="splash-main">
         <section className="first-section">
           <div className="first-image-box">
-          <img
-            src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2FabstractImageinsert.png?alt=media&token=2951defe-f44f-425c-b9f9-4c6cd8edbd60"
-            alt=""
-          />
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2FabstractImageinsert.png?alt=media&token=2951defe-f44f-425c-b9f9-4c6cd8edbd60"
+              alt=""
+            />
           </div>
-         
+
           <div className="first-content">
             <hgroup>
-              <h1>Welcome to Displaygram</h1>
-              <h2>Discover and share retail success.</h2>
+              <h2>Welcome to Displaygram</h2>
+              <h3>Discover and share retail success.</h3>
             </hgroup>
             <p>
               Our platform revolutionizes how retail teams, suppliers, and
-              networks exchange merchandising success. Skip the clutter
-              of texts and emails; quickly archive and replicate winning
-              store displays at no cost. Your digital portfolio for retail
-              excellence – accessible anytime, by your whole team.
+              networks exchange merchandising success. Skip the clutter of texts
+              and emails; quickly archive and replicate winning store displays
+              at no cost. Your digital portfolio for retail excellence –
+              accessible anytime, by your whole team.
             </p>
             <div className="content-button-box">
-            <Link
-              to='/user-home-page'
-              className="enter-site-btn"
-            >
-              Start Now
-            </Link>
+              <Link to="/user-home-page" className="enter-site-btn">
+                Start Now
+              </Link>
             </div>
-           
           </div>
         </section>
 
         <section ref={sectionTwoRef} className="second-section">
           <div className="second-content">
-            <h2>About Our Service</h2>
+            <h3>About Our Service</h3>
             <p>
               Capture in-store displays. Upload images along with critical
               details like product names and quantities. Share with your team in
@@ -208,11 +221,10 @@ const SplashPage = () => {
               control.
             </p>
             <div className="content-button-box">
-            <Link to='/about' className="enter-site-btn">
-              Learn More
-            </Link>
+              <Link to="/about" className="enter-site-btn">
+                Learn More
+              </Link>
             </div>
-           
           </div>
           <div className="second-image-box">
             <img
@@ -225,25 +237,19 @@ const SplashPage = () => {
         <section ref={sectionThreeRef} className="section-three">
           <div className="hero-content-left">
             <div className="features-image-box">
-            <img
-              className="features-image"
-              // src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-products.jpg?alt=media&token=67eb96e6-1a55-482d-92c3-5b3901ce4b3e"
-              alt=""
-            />
-             <Link
-             to='/about'
-              className="features-button enter-site-btn"
-            >
-              See Our Features
-            </Link>
+              <img
+                className="features-image"
+                // src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-products.jpg?alt=media&token=67eb96e6-1a55-482d-92c3-5b3901ce4b3e"
+                alt=""
+              />
+              <Link to="/about" className="features-button enter-site-btn">
+                See Our Features
+              </Link>
             </div>
-            
-
-           
           </div>
           <div className="hero-content-right features-text-box">
-            <h2>Features</h2>
+            <h3>Features</h3>
             <p>
               Find displays that matter to you. Our intuitive filters allow you
               to search by location, retail channel, or product category.
@@ -259,26 +265,22 @@ const SplashPage = () => {
           id="pricing"
         >
           <div className="hero-content-left fourth-insert">
-            <h2>Pricing:</h2>
+            <h3>Pricing:</h3>
             <p>
               Our platform is committed to providing value at no cost to you.
               Premium features may become available in the future.
             </p>
             <div className="content-button-box">
-            <Link to='/sign-up-login' className="enter-site-btn">
-              Join for free
-            </Link>
+              <Link to="/sign-up-login" className="enter-site-btn">
+                Join for free
+              </Link>
             </div>
-           
           </div>
         </section>
 
-        <section
-          ref={sectionFiveRef}
-          className="fifth-section"
-        >
+        <section ref={sectionFiveRef} className="fifth-section">
           <div className="fifth-content">
-            <h2>Security and Compliance</h2>
+            <h3>Security and Compliance</h3>
             <p>
               Your security is our priority. Passwords are protected by
               Firebase, Google's trusted authentication service. Images are
@@ -286,11 +288,10 @@ const SplashPage = () => {
               reliable, world-class infrastructure.
             </p>
             <div className="content-button-box">
-            <Link to='/sign-up-login' className="enter-site-btn">
-              Sign Up Now
-            </Link>
+              <Link to="/sign-up-login" className="enter-site-btn">
+                Sign Up Now
+              </Link>
             </div>
-            
           </div>
           <div className="fifth-image-box">
             <img
@@ -302,16 +303,15 @@ const SplashPage = () => {
 
         <section ref={sectionSixRef} className="last-block">
           <div className="last-block">
-            <h2>Start Now</h2>
+            <h3>Start Now</h3>
             <p>
               Elevate your team’s performance, share your retail story today.
             </p>
             <div className="content-button-box">
-            <Link to='/sign-up-login' className="enter-site-btn">
-              Sign Up Now
-            </Link>
+              <Link to="/sign-up-login" className="enter-site-btn">
+                Sign Up Now
+              </Link>
             </div>
-            
           </div>
         </section>
       </main>

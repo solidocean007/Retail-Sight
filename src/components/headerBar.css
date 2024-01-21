@@ -24,12 +24,22 @@
   color: whitesmoke;
 }
 
+.logo-title-box {
+  display: flex;
+  align-items: center;
+}
+
 .website-title {
   margin: 0rem 1rem;
   color: var(--text-color);
 }
 
-.website-title h1 {
+.website-title {
+  margin: 0;
+  font-size: smaller;
+}
+
+.website-title h1, .website-title h2 {
   margin: 0;
 }
 

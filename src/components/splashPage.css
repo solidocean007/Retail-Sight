@@ -19,6 +19,20 @@
   width: 100%;
 }
 
+.logo-box {
+  display: flex;
+  align-items: center;
+}
+
+.logo-box h1 {
+  margin: 0;
+}
+
+.logo-box img {
+  width: 3rem;
+  height: auto;
+}
+
 /* Hamburger Menu Button */
 .splash-menu-button {
   display: none; /* hide menu button on wide screens */
@@ -40,12 +54,13 @@
 
 .top-nav li {
   margin-right: .5rem;
-  padding: 1rem;
+  /* padding: 1rem; */
   width: 9rem;
 }
 
 .top-nav a {
   color: var(--splash-nav-text);
+  padding: 0;
 }
 
 .splash-main {

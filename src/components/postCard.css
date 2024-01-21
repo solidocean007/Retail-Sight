@@ -79,6 +79,11 @@
   width: 100%
 }
 
+.user-company-box {
+  display: flex;
+  align-items: center;
+}
+
 .share-button-container {
   position:absolute;
   left: 40%;

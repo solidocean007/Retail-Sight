@@ -6,8 +6,6 @@ import "./headerBar.css";
 import MenuTab from "./MenuTab";
 import { useState } from "react";
 
-
-
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
   const [showMenuTab, setShowMenuTab] = useState(false);
@@ -34,10 +32,18 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
 
   return (
     <div className="header-bar">
-      <div className="website-title">
-        <h1>Displaygram</h1>
-        <h4>instant retail</h4>
+      <div className="logo-title-box">
+      <div className="logo-box">
+        <img
+          src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
+          alt="displaygram logo"
+        />
       </div>
+      <div className="website-title">
+        <h1>Home page</h1>
+      </div>
+      </div>
+      
       <div className="user-bar">
         <div className="user-button">
           <button
@@ -61,11 +67,8 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       </div>
 
       <div className="menu-buttons">
-      <button
-        className="about-button"
-        onClick={()=> navigate('/about')}
-        >
-        About
+        <button className="about-button" onClick={() => navigate("/about")}>
+          About
         </button>
         <button
           className="create-post-btn button"
@@ -74,12 +77,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           <h3>CAPTURE</h3>
         </button>
 
-       
-
-        <button
-          className="filter-menu-button"
-          onClick={toggleFilterMenu}
-        >
+        <button className="filter-menu-button" onClick={toggleFilterMenu}>
           <h3>Filters</h3>
         </button>
       </div>

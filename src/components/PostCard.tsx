@@ -235,10 +235,13 @@ const PostCard: React.FC<PostCardProps> = ({
                   {post.user.postUserName}
                 </a>
               </div>
-              <a href="#" onClick={(e) => e.preventDefault()}>
-                {/* create a onCompanyNameClick */}
-                {post.user.postUserCompany}
-              </a>
+              <div className="user-company-box">
+                <p>company: </p>
+                <a href="#" onClick={(e) => e.preventDefault()}>
+                  {/* create a onCompanyNameClick */}
+                  {post.user.postUserCompany}
+                </a>
+              </div>
             </div>
           </div>
         </div>
