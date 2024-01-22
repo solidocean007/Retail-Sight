@@ -26,6 +26,7 @@ interface PostsState {
   error: string | null;
   lastVisible: CursorType | null;
   hashtagPosts: PostWithID[];
+  starTagPosts: PostWithID[];
 }
 
 const initialState: PostsState = {
@@ -36,6 +37,7 @@ const initialState: PostsState = {
   error: null,
   lastVisible: "",
   hashtagPosts: [],
+  starTagPosts: [],
 };
 
 const postsSlice = createSlice({
@@ -101,6 +103,9 @@ const postsSlice = createSlice({
     },
     setHashtagPosts(state, action) {
       state.hashtagPosts = action.payload;
+    },
+    setStarTagPosts(state, action) {
+      state.starTagPosts = action.payload;
     },
     
   },
@@ -211,5 +216,6 @@ export const {
   addNewPost,
   mergeAndSetPosts,
   setHashtagPosts,
+  setStarTagPosts,
 } = postsSlice.actions;
 export default postsSlice.reducer;

@@ -404,6 +404,7 @@ const ActivityFeed = () => {
         <HashTagSearchBar
           setSearchResults={setSearchResults}
           currentHashtag={currentHashtag}
+          setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
         />
       </div>

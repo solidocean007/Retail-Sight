@@ -400,6 +400,34 @@ export async function addHashtagPostsToIndexedDB(
   });
 }
 
+// add starTag posts to indexedDB
+export async function addStarTagPostsToIndexedDB(
+  posts: PostWithID[]
+): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["starTagPosts"], "readwrite");
+  const store = transaction.objectStore("starTagPosts");
+
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      resolve();
+    };
+
+    transaction.onerror = (event) => {
+      console.error("Transaction error:", (event.target as IDBRequest).error);
+      reject((event.target as IDBRequest).error);
+    };
+
+    posts.forEach((post) => {
+      const request = store.put(post);
+      request.onerror = () => {
+        console.error("Error adding star tag posts to IndexedDB:", request.error);
+        reject(request.error);
+      };
+    });
+  });
+}
+
 // get hashtag posts from indexedDB
 export async function getHashtagPostsFromIndexedDB(): Promise<PostWithID[]> {
   const db = await openDB();
@@ -421,6 +449,27 @@ export async function getHashtagPostsFromIndexedDB(): Promise<PostWithID[]> {
   });
 }
 
+// get starTag posts from indexedDB
+export async function getStarTagPostsFromIndexedDB(): Promise<PostWithID[]> {
+  const db = await openDB();
+  const transaction = db.transaction(["starTagPosts"], "readonly");
+  const store = transaction.objectStore("starTagPosts");
+  const getAllRequest = store.getAll();
+
+  return new Promise((resolve, reject) => {
+    getAllRequest.onsuccess = () => {
+      resolve(getAllRequest.result as PostWithID[]);
+    };
+    getAllRequest.onerror = () => {
+      console.error(
+        "Error getting star tag posts from IndexedDB:",
+        getAllRequest.error
+      );
+      reject(getAllRequest.error);
+    };
+  });
+}
+
 // clear hashtag posts from indexedDB
 export async function clearHashtagPostsInIndexedDB(): Promise<void> {
   const db = await openDB();
@@ -431,6 +480,27 @@ export async function clearHashtagPostsInIndexedDB(): Promise<void> {
     const clearRequest = store.clear();
     clearRequest.onsuccess = () => {
       console.log("Hashtag posts cleared from IndexedDB successfully.");
+      resolve();
+    };
+    clearRequest.onerror = () => {
+      console.error(
+        "Error clearing hashtag posts from IndexedDB:",
+        clearRequest.error
+      );
+      reject(clearRequest.error);
+    };
+  });
+}
+
+// clear star tag posts from indexedDB
+export async function clearStarTagPostsInIndexedDB(): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["starTagPosts"], "readwrite");
+  const store = transaction.objectStore("starTagPosts");
+
+  return new Promise<void>((resolve, reject) => {
+    const clearRequest = store.clear();
+    clearRequest.onsuccess = () => {
       resolve();
     };
     clearRequest.onerror = () => {

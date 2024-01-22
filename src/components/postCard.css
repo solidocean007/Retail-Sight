@@ -25,6 +25,10 @@
   justify-content: center;
 }
 
+.image-new-comment-box p {
+  margin-top: 0;
+}
+
 .image-new-comment-box .post-image {
   max-height: 500px;
   max-width: 95%;
@@ -82,6 +86,10 @@
 .user-company-box {
   display: flex;
   align-items: center;
+}
+
+.user-company-box p {
+  margin: 0;
 }
 
 .share-button-container {

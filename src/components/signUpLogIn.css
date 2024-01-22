@@ -8,12 +8,23 @@
   padding: 10px;
 }
 
+.sign-up-container button {
+  font-size: small;
+  font-family: 'Courier New', Courier, monospace;
+  width: 10rem;
+}
+
 .MuiFormControl-root {
   max-width: 100%;
 }
 
 .MuiInputBase-root {
   max-width: 100%;
+}
+
+.MuiInputBase-root button {
+  width: 30px;
+  height: 30px;
 }
 
 .title {
@@ -59,12 +70,6 @@
   right: -10px;
 }
 
-/* Input styles */
-
-button {
-  /* background-color: var(--button-background); */
-  background-color: pink;
-}
 
 /* Pulsing light effect */
 @keyframes pulseLight {

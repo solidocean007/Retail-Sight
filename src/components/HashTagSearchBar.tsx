@@ -1,7 +1,7 @@
 // HashTagSearchBar.tsx
 import { Input } from "@mui/material";
 import { showMessage } from "../Slices/snackbarSlice";
-import getPostsByTag from "../utils/PostLogic/getPostsByTag";
+import { getPostsByStarTag, getPostsByTag } from "../utils/PostLogic/getPostsByTag";
 import useProtectedAction from "../utils/useProtectedAction";
 import { useDispatch } from "react-redux";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
@@ -13,14 +13,14 @@ import "./hashTagSearchBar.css";
 interface HashTagSearchBarProps {
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   currentHashtag: string | null;
+  setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
   clearSearch: () => Promise<void>;
 }
-
-
 
 const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
   setSearchResults,
   currentHashtag,
+  setCurrentHashtag,
   clearSearch,
 }) => {
   const protectedAction = useProtectedAction();
@@ -31,36 +31,40 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
 
   // Effect to update searchTerm when currentHashtag changes
   useEffect(() => {
-    setSearchTerm(currentHashtag ?? "#");
+    setSearchTerm(currentHashtag ?? "");
   }, [currentHashtag]);
 
-  const hashtagSearch = async () => {
+  const tagSearch = async () => {
     try {
-      const hashtagPosts = await getPostsByTag(searchTerm);
-      if (hashtagPosts.length === 0) {
-        // Show snackbar message
+      let tagPosts;
+      if (searchTerm.startsWith("#")) {
+        tagPosts = await getPostsByTag(searchTerm);
+      } else if (searchTerm.startsWith("*")) {
+        tagPosts = await getPostsByStarTag(searchTerm);
+      } else {
+        dispatch(showMessage("Invalid tag format"));
+        return;
+      }
+
+      if (tagPosts.length === 0) {
         dispatch(showMessage("No posts for that search found"));
-        // Load posts from IndexedDB or fetch again
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
           dispatch(setPosts(cachedPosts));
-        } else {
-          // Fetch posts again from Firestore
-          // Your logic to fetch posts again
         }
       } else {
-        setSearchResults(hashtagPosts);
+        setSearchResults(tagPosts);
       }
     } catch (error) {
-      console.error("Error searching posts by hashtag:", error);
-      // Optionally show an error message to the user
+      console.error("Error searching posts by tag:", error);
     }
   };
 
-  const handleHashtagSearch = () => {
+  const handleTagSearch = () => {
     if (searchTerm !== "#" && searchTerm !== lastSearchedTerm) {
-      protectedAction(hashtagSearch);
+      protectedAction(tagSearch);
       setLastSearchedTerm(searchTerm);
+      setCurrentHashtag(searchTerm);
     }
   };
 
@@ -74,18 +78,18 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
     <div className="hashtag-search-box">
         {/* call the handleHashtagSearch on submit */}
         <Input
-          placeholder="Search by hashtag"
+          placeholder="Search by hashtag '#' or asterisk tag '*'"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              currentHashtag ? handleClearSearch() : handleHashtagSearch();
+              currentHashtag ? handleClearSearch() : handleTagSearch();
             }
           }}
         />
        <button
           className="search-button"
-          onClick={currentHashtag ? handleClearSearch : handleHashtagSearch}
+          onClick={currentHashtag ? handleClearSearch : handleTagSearch}
         >
           {currentHashtag ? "Clear" : "Search"}
         </button>

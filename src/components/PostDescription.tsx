@@ -1,8 +1,8 @@
 // PostDescription.tsx
 import styles from "./PostDescription.module.css";
 import { useDispatch } from "react-redux";
-import { setHashtagPosts } from "../Slices/postsSlice";
-import { addHashtagPostsToIndexedDB } from "../utils/database/indexedDBUtils";
+import { setHashtagPosts, setStarTagPosts } from "../Slices/postsSlice";
+import { addHashtagPostsToIndexedDB, addStarTagPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import { useState } from "react";
 
@@ -73,7 +73,8 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
         : processedDescription;
 
     return (
-      <p>
+      <div className="render-description-box">
+        <p>
         {truncatedDescription}
         {description.length > 25 && (
           <a href="#" onClick={toggleModal} className={styles.moreLink}>
@@ -81,6 +82,8 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
           </a>
         )}
       </p>
+      </div>
+      
     );
   };
 
@@ -113,7 +116,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       setSearchResults(starTagPosts);
       setCurrentHashtag(starTag); // Type 'string' is not assignable to type 'SetStateAction<null>'
       dispatch(setStarTagPosts(starTagPosts));
-      addStarTagPostsToIndexedDB(starTagPostsPosts);
+      addStarTagPostsToIndexedDB(starTagPosts);
     } catch (error) {
       console.error("Error fetching posts by hashtag:", error);
       // Handle errors as needed (e.g., show a notification to the user)

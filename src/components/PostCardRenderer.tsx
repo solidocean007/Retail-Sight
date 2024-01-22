@@ -20,7 +20,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   currentUserUid,
   index,
   style,
-  data: { post, getPostsByTag },
+  data: { post, getPostsByTag, getPostsByStarTag },
   setSearchResults,
   setCurrentHashtag,
 }) => {
