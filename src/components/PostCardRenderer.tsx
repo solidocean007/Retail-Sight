@@ -9,7 +9,7 @@ interface PostCardRendererProps {
   style: React.CSSProperties;
   data: {
     post: PostWithID;
-    getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
+    getPostsByTag: (hashTag: string, companyId?: string) => Promise<PostWithID[]>;
     getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   };
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;

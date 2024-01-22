@@ -131,6 +131,7 @@ export const useHandlePostSubmission = () => {
                   postUserName: user.displayName || "Unknown",
                   postUserId: user.uid,
                   postUserCompany: userData.company,
+                  postUserCompanyId: userData.companyId,
                   postUserEmail: userData.email,
                 },
                 hashtags: extractHashtags(post.description ?? ""),

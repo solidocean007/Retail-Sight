@@ -4,24 +4,41 @@ import { db } from "../firebase";
 import { PostType, PostWithID } from "../types";
 
 // Define the function to fetch posts by a hashtag
-export const getPostsByTag = async (hashTag: string, usersCompanyID: string): Promise<PostWithID[]> => {
+export const getPostsByTag = async (
+  hashTag: string,
+  usersCompanyID?: string,
+): Promise<PostWithID[]> => {
   try {
     const postsCollectionRef = collection(db, "posts");
-    const postsQuery = query(postsCollectionRef, where("hashtags", "array-contains", hashTag));
+    const postsQuery = query(
+      postsCollectionRef,
+      where("hashtags", "array-contains", hashTag)
+    );
     const snapshots = await getDocs(postsQuery);
 
-    // Use a variable to store the mapped results
-    const posts: PostWithID[] = snapshots.docs.map(doc => ({
+    const posts: PostWithID[] = snapshots.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data() as PostType
+      ...(doc.data() as PostType),
     }));
 
     // Filter posts based on company ID and visibility
-    const filteredPosts = posts.filter(post => {
-      return post.visibility === 'public' || post.companyId === usersCompanyID;
+    const filteredPosts = posts.filter((post) => {
+      // Return the post if it is public
+      if (post.visibility === "public") {
+        return true;
+      }
+
+      // If usersCompanyID is undefined, do not return non-public posts
+      if (usersCompanyID === undefined) {
+        return false;
+      }
+
+      // Check if postUserCompanyID matches the user's company ID
+      const postCompanyID = post.user.postUserCompanyId;
+      return postCompanyID === usersCompanyID;
     });
 
-    return filteredPosts; // Return the variable
+    return filteredPosts;
   } catch (error) {
     console.error("Error fetching posts by hashtag:", error);
     throw error;
@@ -29,16 +46,21 @@ export const getPostsByTag = async (hashTag: string, usersCompanyID: string): Pr
 };
 
 
-export const getPostsByStarTag = async (starTag: string): Promise<PostWithID[]> => {
+export const getPostsByStarTag = async (
+  starTag: string
+): Promise<PostWithID[]> => {
   try {
     const postsCollectionRef = collection(db, "posts");
-    const postsQuery = query(postsCollectionRef, where("starTags", "array-contains", starTag));
+    const postsQuery = query(
+      postsCollectionRef,
+      where("starTags", "array-contains", starTag)
+    );
     const snapshots = await getDocs(postsQuery);
 
     // Use a variable to store the mapped results
-    const posts: PostWithID[] = snapshots.docs.map(doc => ({
+    const posts: PostWithID[] = snapshots.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data() as PostType
+      ...(doc.data() as PostType),
     }));
 
     return posts; // Return the variable

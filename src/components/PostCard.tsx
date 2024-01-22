@@ -34,7 +34,7 @@ interface PostCardProps {
   id: string;
   currentUserUid: string;
   post: PostWithID;
-  getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
+  getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
   getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   style?: React.CSSProperties;
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;

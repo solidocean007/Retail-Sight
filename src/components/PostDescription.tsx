@@ -1,14 +1,15 @@
 // PostDescription.tsx
 import styles from "./PostDescription.module.css";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setHashtagPosts, setStarTagPosts } from "../Slices/postsSlice";
 import { addHashtagPostsToIndexedDB, addStarTagPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import { useState } from "react";
+import { RootState } from "../utils/store";
 
 interface PostDescriptionProps {
   description?: string;
-  getPostsByTag: (hashTag: string) => Promise<PostWithID[]>;
+  getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
   getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
@@ -39,6 +40,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   const dispatch = useDispatch();
   // const tags = description?.split(/\s+/);
   const [showModal, setShowModal] = useState(false);
+  const userCompanyID = useSelector((state: RootState) => state.user.currentUser?.companyId);
 
   const processDescription = (text: string) => {
     return text.split(/\s+/).map((word, index) => {
@@ -93,7 +95,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   ) => {
     event.preventDefault(); // Prevents the default anchor behavior
     try {
-      const hashtagPosts = await getPostsByTag(hashtag); // Argument of type 'string | null' is not assignable to parameter of type 'string'
+      const hashtagPosts = await getPostsByTag(hashtag, userCompanyID); // Argument of type 'string | null' is not assignable to parameter of type 'string'
 
       setSearchResults(hashtagPosts);
       setCurrentHashtag(hashtag); // Type 'string' is not assignable to type 'SetStateAction<null>'

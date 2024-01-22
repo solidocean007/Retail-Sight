@@ -39,27 +39,35 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
     try {
       let tagPosts;
       if (searchTerm.startsWith("#")) {
-        tagPosts = await getPostsByTag(searchTerm, userCompanyID);
+        if (typeof userCompanyID !== 'undefined') { // Correct way to check for undefined
+          tagPosts = await getPostsByTag(searchTerm, userCompanyID);
+        } else {
+          // Handle the case where userCompanyID is undefined
+          // Maybe show an error or a message
+          dispatch(showMessage("Your user company ID is undefined"));
+          return;
+        }
       } else if (searchTerm.startsWith("*")) {
         tagPosts = await getPostsByStarTag(searchTerm);
       } else {
         dispatch(showMessage("Invalid tag format"));
         return;
       }
-
-      if (tagPosts.length === 0) {
+  
+      if (tagPosts && tagPosts.length === 0) {
         dispatch(showMessage("No posts for that search found"));
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
           dispatch(setPosts(cachedPosts));
         }
-      } else {
+      } else if (tagPosts) {
         setSearchResults(tagPosts);
       }
     } catch (error) {
       console.error("Error searching posts by tag:", error);
     }
   };
+  
 
   const handleTagSearch = () => {
     if (searchTerm !== "#" && searchTerm !== lastSearchedTerm) {

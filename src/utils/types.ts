@@ -88,6 +88,7 @@ export interface PostType {
     postUserName: string | undefined;
     postUserId: string | undefined;
     postUserCompany: string | undefined;
+    postUserCompanyId: string | undefined;
     postUserEmail: string | undefined; // Added email
   };
   supplier?: string;
