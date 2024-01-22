@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import { PostType, PostWithID } from "../types";
 
 // Define the function to fetch posts by a hashtag
-export const getPostsByTag = async (hashTag: string): Promise<PostWithID[]> => {
+export const getPostsByTag = async (hashTag: string, usersCompanyID: string): Promise<PostWithID[]> => {
   try {
     const postsCollectionRef = collection(db, "posts");
     const postsQuery = query(postsCollectionRef, where("hashtags", "array-contains", hashTag));
@@ -16,7 +16,12 @@ export const getPostsByTag = async (hashTag: string): Promise<PostWithID[]> => {
       ...doc.data() as PostType
     }));
 
-    return posts; // Return the variable
+    // Filter posts based on company ID and visibility
+    const filteredPosts = posts.filter(post => {
+      return post.visibility === 'public' || post.companyId === usersCompanyID;
+    });
+
+    return filteredPosts; // Return the variable
   } catch (error) {
     console.error("Error fetching posts by hashtag:", error);
     throw error;

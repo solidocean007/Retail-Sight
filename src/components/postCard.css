@@ -133,6 +133,10 @@
   font-size: 10px;
 }
 
+.like-button button {
+  box-shadow: none;
+}
+
 h5 {
   margin: 0px;
 }

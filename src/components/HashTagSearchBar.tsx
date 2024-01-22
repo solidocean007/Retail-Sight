@@ -3,12 +3,13 @@ import { Input } from "@mui/material";
 import { showMessage } from "../Slices/snackbarSlice";
 import { getPostsByStarTag, getPostsByTag } from "../utils/PostLogic/getPostsByTag";
 import useProtectedAction from "../utils/useProtectedAction";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import React, { useEffect } from "react";
 import { setPosts } from "../Slices/postsSlice";
 import "./hashTagSearchBar.css";
+import { RootState } from "../utils/store";
 
 interface HashTagSearchBarProps {
   setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
@@ -26,7 +27,7 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
   const protectedAction = useProtectedAction();
   const [searchTerm, setSearchTerm] = React.useState("#");
   const [lastSearchedTerm, setLastSearchedTerm] = React.useState<string | null>(null);
-
+  const userCompanyID = useSelector((state: RootState) => state.user.currentUser?.companyId);
   const dispatch = useDispatch();
 
   // Effect to update searchTerm when currentHashtag changes
@@ -38,7 +39,7 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
     try {
       let tagPosts;
       if (searchTerm.startsWith("#")) {
-        tagPosts = await getPostsByTag(searchTerm);
+        tagPosts = await getPostsByTag(searchTerm, userCompanyID);
       } else if (searchTerm.startsWith("*")) {
         tagPosts = await getPostsByStarTag(searchTerm);
       } else {
