@@ -17,24 +17,21 @@ import { doc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./dashboard.css";
 
-// Assuming 'state.user.currentUser' has a 'role' property.
-// If not, you'll need to add this to your user reducer state.
 export const Dashboard = () => {
   const user = useSelector(selectUser);
   console.log("user: ", user);
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
-  console.log("companyId: ", companyId);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const companyUsers = useSelector(selectCompanyUsers);
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
-  const isAdmin = user?.role === "admin"; // This will be used once roles are implemented
-  const isDeveloper = user?.role === "developer"; // This will be used once roles are implemented
-  const isSuperAdmin = user?.role === "super-admin"; // Assuming you have a super-admin role
+  const isAdmin = user?.role === "admin";
+  const isDeveloper = user?.role === "developer";
+  const isSuperAdmin = user?.role === "super-admin";
 
   useEffect(() => {
     const fetchAndStoreUsers = async () => {
@@ -105,9 +102,18 @@ export const Dashboard = () => {
 
       <main className="dashboard-main">
         <header className="dashboard-header">
+          <div className="header-top">
+            <h1>Dashboard</h1>
+
+            <button
+              className="home-btn"
+              onClick={() => navigate("/user-home-page")}
+            >
+              Home
+            </button>
+          </div>
           {/* Top bar with user info and controls */}
           <div className="dashboard-user-details">
-            <h3>Dashboard</h3>
             <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
 
             <p>Adding users here is under development</p>
@@ -116,30 +122,27 @@ export const Dashboard = () => {
             {(isSuperAdmin || isDeveloper || isAdmin) && (
               <button className="add-user-btn">Add Users</button>
             )}
-            <button className="home-btn" onClick={() => navigate("/user-home-page")}>
-              Home
-            </button>
           </div>
         </header>
 
         <section className="dashboard-content">
           <div className="card role-management-card">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone Number</th>
-                  <th>Role</th>
-                </tr>
-              </thead>
-              <tbody>
+            <div className="header-and-all-info">
+              
+                <div className="table-header">
+                  <div className="user-detail">Name</div>
+                  <div className="user-detail">Email</div>
+                  <div className="user-detail">Phone Number</div>
+                  <div className="user-detail">Role</div>
+                </div>
+              
+              <div>
                 {localUsers.map((localUser) => (
-                  <tr key={localUser.uid}>
-                    <td>{`${localUser.firstName} ${localUser.lastName}`}</td>
-                    <td>{localUser.email}</td>
-                    <td>{localUser.phone}</td>
-                    <td>
+                  <div className="all-user-info" key={localUser.uid}>
+                    <div className="user-detail">{`${localUser.firstName} ${localUser.lastName}`}</div>
+                    <div className="user-detail">{localUser.email}</div>
+                    <div className="user-detail">{localUser.phone}</div>
+                    <div className="user-detail">
                       {isSuperAdmin && localUser.uid !== user?.uid ? (
                         <select
                           title="role-select"
@@ -156,11 +159,11 @@ export const Dashboard = () => {
                       ) : (
                         <span>{localUser.role}</span>
                       )}
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
 
           {/* Additional cards for other dashboard content */}
