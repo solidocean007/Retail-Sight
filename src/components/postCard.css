@@ -61,10 +61,11 @@
 .edit-block button {
   font-size: smaller;
 }
-.header-top {
+.post-header-top {
   position: relative;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
   font-size: 14px;
 }
@@ -164,6 +165,15 @@ h5 {
   align-items: flex-start;
 }
 
+.store-address-box {
+  text-align: justify;
+  text-wrap: nowrap;
+}
+
+.post-user-name, .user-company-box {
+  font-size: medium;
+}
+
 .post-card img.post-image {
   border-radius: 5px;
   margin-bottom: 3px;
@@ -215,6 +225,10 @@ h5 {
 @media (max-width: 670px) {
   .post-card img.post-image {
     max-height: 400px; 
+  }
+
+  .post-user-name, .user-company-box {
+    font-size: small;
   }
 }
 

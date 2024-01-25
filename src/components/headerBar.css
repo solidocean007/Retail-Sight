@@ -59,7 +59,7 @@
 
 
 
-.profile-btn, .create-post-btn, .log-out-btn, .filter-menu-button {
+.profile-btn, .create-post-btn, .filter-menu-button {
   margin-right: 30px;
   max-height: 2rem;
   display: flex;

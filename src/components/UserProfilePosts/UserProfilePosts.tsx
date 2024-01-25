@@ -84,6 +84,10 @@ export const UserProfilePosts = ({
   return (
     <Container>
       <div className="user-posts-container">
+        {userPosts.length === 0 && (
+           <h4>You have no posts yet</h4>
+           )
+        }
         {userPosts.map((post) => (
           <div key={post.id} className="post-row">
             <div className="post-image-container">

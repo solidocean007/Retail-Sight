@@ -6,7 +6,6 @@ import { selectUser } from "../Slices/userSlice";
 import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
 import { db } from "../utils/firebase";
 // import { useNavigate } from "react-router-dom";
-import LogOutButton from "./LogOutButton";
 import './profileEditPage.css'
 import { getAuth, updateProfile } from "@firebase/auth";
 
@@ -39,7 +38,6 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <LogOutButton />
       <TextField
         fullWidth
         margin="normal"

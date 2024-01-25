@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
 import { UserProfilePosts } from "./UserProfilePosts/UserProfilePosts";
 import { useNavigate } from "react-router-dom";
+import LogOutButton from "./LogOutButton";
 
 export const UserProfilePage = () => {
   const [openEdit, setOpenEdit] = useState(false);
@@ -23,6 +24,8 @@ export const UserProfilePage = () => {
   return (
     <Container>
       <div className="user-profile-page-header">
+      <LogOutButton />
+
         <div className="user-edit-section">
           <div className="user-name">
             {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Loading..."}

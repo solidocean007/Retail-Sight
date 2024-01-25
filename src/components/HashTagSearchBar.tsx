@@ -87,7 +87,7 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
     <div className="hashtag-search-box">
         {/* call the handleHashtagSearch on submit */}
         <Input
-          placeholder="Search by hashtag '#' or asterisk tag '*'"
+          placeholder="hashtag '#' or star '*'"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => {

@@ -173,7 +173,7 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="visibility">
             <div className="view-box">view: {post.visibility}</div>
           </div>
-          <div className="header-top">
+          <div className="post-header-top">
             <div className="likes-comments">
               {likesCount === 0 ? null : likesCount === 1 ? (
                 <h5>{likesCount} like</h5>
@@ -226,12 +226,12 @@ const PostCard: React.FC<PostCardProps> = ({
                   <h5>{post.storeAddress}</h5>
                 </div>
               </div>
-              <h4>date: {formattedDate}</h4>
+              <h5>date: {formattedDate}</h5>
             </div>
 
             <div className="post-user-details">
               {/* <div onClick={handleOnUserNameClick}> */}
-              <div>
+              <div className="post-user-name">
                 by:{"  "}
                 <a href="#" onClick={handleOnUserNameClick}>
                   {post.user.postUserName}

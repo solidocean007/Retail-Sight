@@ -4,6 +4,7 @@
   --prussian-blue: #0b3c5d;
   --sky-blue: #328cc1;
   --gold-leaf: #d9b310;
+  --orange: orange;
   --ivory-black: #1d2731;
   --coral: #ff6f61;
   --sage-green: #9cafb7;
@@ -31,7 +32,7 @@
   --post-card-background: whitesmoke;
   --text-color: var(--ivory-black);
   --header-title: var(--sage-green);
-  --button-background: var(--gold-leaf);
+  --button-background: var(--orange);
   --button-text-color: var(--prussian-blue);
   --border-color: var(--coral);
   --input-background: var(--sage-green);

@@ -19,6 +19,10 @@
   font-weight: bold;
 }
 
+.user-posts h3, .user-saved-stores h3 {
+  background: var(--form-background-color);
+}
+
 .user-edit-section button,
 .close-profile-page button {
   cursor: pointer;
