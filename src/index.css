@@ -140,7 +140,7 @@ h1 {
   line-height: 1.1;
 }
 
-/* button {
+button {
   border-radius: 5px;
   border: 1px solid transparent;
   padding: 0.4em 0.8em;
@@ -159,10 +159,10 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-} */
+}
 
 /* CSS */
-button {
+.button-blue {
   align-items: center;
   appearance: none;
   background-image: radial-gradient(100% 100% at 100% 0, #5adaff 0, #5468ff 100%);

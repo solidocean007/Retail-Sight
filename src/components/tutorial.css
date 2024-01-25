@@ -1,0 +1,59 @@
+/* Base Styles */
+.tutorial-container {
+  margin: 0 auto;
+  padding: 20px;
+  max-width: 800px; /* Adjust based on your design preference */
+  text-align: center;
+}
+
+h1, h2 {
+  color: #333; /* Adjust color based on your theme */
+}
+
+p {
+  color: #666; /* Adjust color based on your theme */
+  line-height: 1.6;
+}
+
+button {
+  background-color: #007bff; /* Example button color */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0056b3; /* Darker shade for hover effect */
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .tutorial-container {
+      padding: 10px;
+  }
+
+  h1 {
+      font-size: 24px; /* Smaller font size for smaller screens */
+  }
+
+  button {
+      padding: 8px 15px;
+      font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+      font-size: 20px; /* Even smaller font size for mobile screens */
+  }
+
+  button {
+      width: 100%; /* Full width buttons on smaller screens */
+      padding: 10px;
+      margin: 5px 0px;
+  }
+}

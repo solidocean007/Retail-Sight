@@ -31,16 +31,18 @@
 
 .website-title {
   margin: 0rem 1rem;
-  color: var(--text-color);
 }
 
 .website-title {
   margin: 0;
   font-size: smaller;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
 }
 
 .website-title h1, .website-title h2 {
-  margin: 0;
+  margin: 0 5px;
 }
 
 

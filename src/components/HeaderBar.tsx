@@ -41,6 +41,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       </div>
       <div className="website-title">
         <h1>Home page</h1>
+        <p>version 0.1.0</p>
       </div>
       </div>
       

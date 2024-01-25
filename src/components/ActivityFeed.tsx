@@ -35,7 +35,6 @@ import {
 import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
-import NewSection from "./NewSection";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
@@ -400,7 +399,6 @@ const ActivityFeed = () => {
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
-        <NewSection />
         <HashTagSearchBar
           setSearchResults={setSearchResults}
           currentHashtag={currentHashtag}

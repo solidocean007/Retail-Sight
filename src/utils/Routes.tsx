@@ -12,6 +12,8 @@ import PrivacyPolicy from "./PrivacyPolicy";
 import TermsOfService from "./TermsService";
 import HelpSupport from "../components/HelpSupport";
 import SplashPage from "../components/SplashPage";
+import TutorialPage from "../components/TutorialPage";
+
 
 export const AppRoutes = () => {
   return (
@@ -28,6 +30,7 @@ export const AppRoutes = () => {
       <Route path="/profile-page" element={<UserProfilePage />} />
       <Route path="/createPost" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/tutorial" element={<TutorialPage />} />
     </Routes>
   );
 };

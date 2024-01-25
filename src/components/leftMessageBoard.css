@@ -1,7 +1,7 @@
 .left-message-board {
   display: flex;
   flex-wrap: wrap;
-  background-color: whitesmoke;
+  background: var(--post-card-background);
   justify-content: flex-start;
   align-items: center;
   height: 100px;

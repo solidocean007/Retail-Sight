@@ -8,7 +8,6 @@ import {
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { db } from "../firebase";
-// import { TPhoneInputState } from "./types";
 import { setDoc, getDoc, doc, collection } from "firebase/firestore";
 import { UserType } from "../types";
 
@@ -24,7 +23,7 @@ export const handleSignUp = async (
   phoneInput: string,
   passwordInput: string,
   setSignUpError?: (error: string) => void,
-  role: "admin" | "super-admin" | "employee" | "status-pending" | "developer" = "super-admin" // error says role is declared but never used
+  role: "admin" | "super-admin" | "employee" | "status-pending" | "developer" = "employee" 
 ): Promise<UserType | undefined> => {
   try {
     // Create user with email and password in Firebase Authentication

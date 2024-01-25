@@ -10,7 +10,7 @@ export const normalizeCompanyInput = (input: string) => {
 
 export const findMatchingCompany = async (normalizedInput: string) => {
   const companiesRef = collection(db, "companies");
-  const q = query(companiesRef, where("altCompanyNames", "array-contains", normalizedInput));
+  const q = query(companiesRef, where("alt-company-names", "array-contains", normalizedInput));
 
   const querySnapshot = await getDocs(q);
   if (!querySnapshot.empty) {
