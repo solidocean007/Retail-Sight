@@ -35,6 +35,7 @@ import {
 import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
+import { useNavigate } from "react-router-dom";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
@@ -42,7 +43,7 @@ const AD_INTERVAL = 4;
 
 const ActivityFeed = () => {
   const [adsOn] = useState(false);
-
+  const navigate = useNavigate();
   const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
     null
   );
@@ -395,6 +396,10 @@ const ActivityFeed = () => {
     return <NoContentCard />;
   }
 
+  const handleTutorialClick = () => {
+    navigate('/tutorial')
+   }
+
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
@@ -405,6 +410,9 @@ const ActivityFeed = () => {
           setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
         />
+        <div onClick={handleTutorialClick} className="onboarding-tutorial-intro-box">
+        <h4>Click here for Tutorial</h4>
+      </div>
       </div>
 
       <List

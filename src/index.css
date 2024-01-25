@@ -40,6 +40,7 @@
   --menu-background-color: var(--sky-blue);
   --alt-menu-background-color: var(--stark);
   --footer-background-color: var(--sky-blue);
+  --tutorial-button-color: var(--sky-blue);
 
   /* Common styles */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;

@@ -46,6 +46,10 @@
   margin: 5px;
 }
 
+.top-of-activity-feed .onboarding-tutorial-intro-box {
+  display: none;
+}
+
 /* Full-screen overlay styles */
 .sidebar-fullscreen {
   display: none;
@@ -67,6 +71,10 @@
   /* Your styles for tablets */
   .home-page-content {
     flex-direction: column-reverse;
+  }
+
+  .top-of-activity-feed .onboarding-tutorial-intro-box {
+    display: block;
   }
 
   .side-bar-container {
