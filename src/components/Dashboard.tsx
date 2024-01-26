@@ -16,6 +16,7 @@ import { RootState, useAppDispatch } from "../utils/store";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./dashboard.css";
+import { DashboardHelmet } from "../utils/helmetConfigurations";
 
 export const Dashboard = () => {
   const user = useSelector(selectUser);
@@ -94,6 +95,8 @@ export const Dashboard = () => {
   };
 
   return (
+    <>
+    <DashboardHelmet />
     <div className="dashboard-container">
       <aside className="dashboard-sidebar">
         {/* Sidebar with navigation links */}
@@ -170,6 +173,7 @@ export const Dashboard = () => {
         </section>
       </main>
     </div>
+    </>
   );
 };
 

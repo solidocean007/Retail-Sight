@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
 import HeaderBar from "./HeaderBar";
 import LeftSideBar from "./LeftSideBar";
+import { UserHomePageHelmet } from "../utils/helmetConfigurations";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
@@ -37,7 +38,9 @@ export const UserHomePage = () => {
   }, [dispatch]);
 
   return (
-    <div className="container-user-home-page">
+    <>
+      <UserHomePageHelmet />
+      <div className="container-user-home-page">
       <div className="headerBar-container">
         <HeaderBar toggleFilterMenu={toggleFilterMenu} />
       </div>
@@ -60,5 +63,6 @@ export const UserHomePage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

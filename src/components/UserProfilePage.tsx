@@ -7,6 +7,7 @@ import { RootState } from "../utils/store";
 import { UserProfilePosts } from "./UserProfilePosts/UserProfilePosts";
 import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
+import { UserProfilePageHelmet } from "../utils/helmetConfigurations";
 
 export const UserProfilePage = () => {
   const [openEdit, setOpenEdit] = useState(false);
@@ -22,6 +23,8 @@ export const UserProfilePage = () => {
   };
 
   return (
+    <>
+    <UserProfilePageHelmet />
     <Container>
       <div className="user-profile-page-header">
       <LogOutButton />
@@ -46,5 +49,6 @@ export const UserProfilePage = () => {
         {/* Components or elements to display the user's saved stores */}
       </div>
     </Container>
+    </>
   );
 };

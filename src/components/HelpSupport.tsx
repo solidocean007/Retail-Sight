@@ -1,9 +1,12 @@
 // import React from 'react';
+import { HelpSupportHelmet } from '../utils/helmetConfigurations';
 import './helpSupport.css';
 
 const HelpSupport = () => {
   return (
-    <div className="help-support-container">
+   <>
+   <HelpSupportHelmet />
+     <div className="help-support-container">
       <h1>Help & Support</h1>
       <section>
         <h2>Frequently Asked Questions (FAQs)</h2>
@@ -33,6 +36,7 @@ const HelpSupport = () => {
         </ul>
       </section>
     </div>
+   </>
   );
 };
 

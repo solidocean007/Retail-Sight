@@ -23,7 +23,7 @@ import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { useAppDispatch } from "../utils/store";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { SplashPageHelmet } from "../utils/helmetConfigurations";
 
 const SplashPage = () => {
   const user = useSelector(selectUser);
@@ -112,46 +112,7 @@ const SplashPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Displaygram: Retail Display Management Simplified</title>
-        <meta
-          name="description"
-          content="Welcome to Displaygram - your gateway to effortless retail display management. Learn about our services, explore features, and join our community. Manage, archive, and share retail displays with innovation at your fingertips."
-        />
-        <meta
-          name="keywords"
-          content="Displaygram, retail management, display sharing, retail display, store management, visual merchandising"
-        />
-        <link rel="canonical" href="https://displaygram.com/splash" />
-        <meta
-          property="og:title"
-          content="Displaygram: Retail Display Management Simplified"
-        />
-        <meta
-          property="og:description"
-          content="Step into the world of Displaygram and transform your retail display management. Join us to streamline, share, and succeed in your retail endeavors."
-        />
-        <meta property="og:url" content="https://displaygram.com/splash" />
-        <meta property="og:type" content="website" />
-        <meta
-          property="og:image"
-          content="https://firebasestorage.googleapis.com/path-to-your-og-image.jpg"
-        />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta
-          name="twitter:title"
-          content="Displaygram: Retail Display Management Simplified"
-        />
-        <meta
-          name="twitter:description"
-          content="Discover the ease of managing retail displays with Displaygram. Share, manage, and innovate in your retail strategy."
-        />
-        <meta
-          name="twitter:image"
-          content="https://firebasestorage.googleapis.com/path-to-your-twitter-image.jpg"
-        />
-        <meta name="twitter:url" content="https://displaygram.com/splash" />
-      </Helmet>
+      <SplashPageHelmet />
 
       <div className="splash-container">
         <nav className="top-nav">

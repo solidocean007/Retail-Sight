@@ -1,7 +1,7 @@
 // import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet";
 import "./about.css";
+import { AboutPageHelmet } from "../utils/helmetConfigurations";
 
 const About = () => {
   const navigate = useNavigate();
@@ -12,13 +12,7 @@ const About = () => {
 
   return (
     <>
-      <Helmet>
-        <title>About Displaygram | Retail Display Management</title>
-        <meta
-          name="description"
-          content="Discover Displaygram, the innovative platform for retail professionals. Manage and archive retail displays with ease, utilize location tagging, and enhance posts with rich descriptions. Join our community and streamline your display management today."
-        />
-      </Helmet>
+      <AboutPageHelmet />
 
       <div className="about-container">
         <nav className="about-navigation">

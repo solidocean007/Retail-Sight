@@ -1,9 +1,12 @@
 // import React from 'react';
 import './ContactUs.css';
+import { ContactUsPageHelmet } from './helmetConfigurations';
 
 const ContactUs = () => {
   return (
-    <div className="contact-container">
+    <>
+    <ContactUsPageHelmet />
+     <div className="contact-container">
       <h1>Contact Us</h1>
       <p>If you have any questions or feedback, please feel free to reach out to us.</p>
       <form className="contact-form">
@@ -22,6 +25,8 @@ const ContactUs = () => {
         <button type="submit" className="submit-button">Send Message</button>
       </form>
     </div>
+    </>
+   
   );
 };
 

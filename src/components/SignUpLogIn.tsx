@@ -33,6 +33,7 @@ import {
   normalizeCompanyInput,
 } from "../utils/companyLogic";
 import { updateSelectedUser as updateUsersCompany } from "../DeveloperAdminFunctions/developerAdminFunctions";
+import { SignUpLoginHelmet } from "../utils/helmetConfigurations";
 // import { useStyles } from "../utils/PostLogic/makeStyles";
 
 export const SignUpLogin = () => {
@@ -216,6 +217,8 @@ export const SignUpLogin = () => {
   };
 
   return (
+    <>
+    <SignUpLoginHelmet />
     <div className="sign-up-body">
       <h2 className="title">Displaygram</h2>
       {/* <div className="outer-container"> */}
@@ -439,5 +442,7 @@ export const SignUpLogin = () => {
       </div>
       {/* </div> */}
     </div>
+    </>
+    
   );
 };

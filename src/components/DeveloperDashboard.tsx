@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import "./developerDashboard.css";
 import UserList from "./UserList";
 import { fetchCompanyUsersFromFirestore } from "../thunks/usersThunks";
+import { DeveloperDashboardHelmet } from "../utils/helmetConfigurations";
 
 // Define a type that includes both CompanyType and the document ID
 type CompanyWithUsersAndId = CompanyType & {
@@ -113,6 +114,8 @@ const DeveloperDashboard = () => {
 
   console.log(companies)
   return (
+    <>
+    <DeveloperDashboardHelmet />
     <div className="developer-dashboard-container">
       <aside className="developer-dashboard-sidebar">
         {/* Sidebar with navigation links */}
@@ -167,6 +170,7 @@ const DeveloperDashboard = () => {
         </section>
       </main>
     </div>
+    </>
   );
 };
 

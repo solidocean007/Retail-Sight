@@ -33,6 +33,7 @@ import { ChannelType } from "./ChannelSelector";
 // import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
 import LoadingIndicator from "./LoadingIndicator";
+import { CreatePostHelmet } from "../utils/helmetConfigurations";
 
 export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -171,6 +172,8 @@ export const CreatePost = () => {
   // };
 
   return (
+    <>
+    <CreatePostHelmet />
     <div className="create-post-container">
         {isUploading && (
         <div className="modal">
@@ -327,5 +330,7 @@ export const CreatePost = () => {
         </div>
       </div>
     </div>
+    </>
+    
   );
 };
