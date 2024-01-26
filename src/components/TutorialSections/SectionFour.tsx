@@ -10,7 +10,7 @@ const SectionFour = () => {
           (default: Beer).
         </li>
         <div className="section-one-image-box">
-          <img src="src/assets/section-four-image-top.jpg" alt="" />
+          <img src="/assets/section-four-image-top.jpg" alt="" />
         </div>
         <li>Fill out the display description.</li>
         <li>
@@ -18,7 +18,7 @@ const SectionFour = () => {
           '*healy24nasty').
         </li>
         <div className="section-one-image-box">
-          <img src="src/assets/section-four-image-bottom.jpg" alt="" />
+          <img src="/assets/section-four-image-bottom.jpg" alt="" />
         </div>
         <li>
           Optionally, add hashtags for personal categorization, avoiding

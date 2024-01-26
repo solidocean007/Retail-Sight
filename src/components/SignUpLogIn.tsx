@@ -8,7 +8,6 @@ import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFir
 
 // Import necessary Material-UI components
 import TextField from "@mui/material/TextField";
-import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 // import { makeStyles } from "@mui/material";
 // import items from Redux
@@ -141,7 +140,7 @@ export const SignUpLogin = () => {
           "", // Company name will be set later
           phoneInput,
           passwordInput,
-          setSignUpError,
+          setSignUpError
         );
 
         if (authData?.uid) {
@@ -218,27 +217,28 @@ export const SignUpLogin = () => {
 
   return (
     <>
-    <SignUpLoginHelmet />
-    <div className="sign-up-body">
-      <h2 className="title">Displaygram</h2>
-      {/* <div className="outer-container"> */}
-      <div className="sign-up-container">
-        <Typography variant="h5">{isSignUp ? "Sign Up" : "Log In"}</Typography>
-        <button onClick={setFormMode}>{formButtonMessage()}</button>
-        <form noValidate onSubmit={onSubmit}>
-          <div className="signUp-login-form">
-            {isSignUp ? (
-              <>
-                <Container>
+      <SignUpLoginHelmet />
+      <div className="sign-up-body">
+        <h1 className="title">Displaygram</h1>
+        <div className="sign-up-container">
+          <Typography variant="h2">
+            {isSignUp ? "Sign Up" : "Log In"}
+          </Typography>
+          <button onClick={setFormMode}>{formButtonMessage()}</button>
+          <form noValidate onSubmit={onSubmit}>
+            <div className="sign-up-login-form">
+              {isSignUp ? (
+                <div className="form-container">
+                  {/* Sign Up Fields */}
+                  {/* First Name */}
                   <TextField
-                    className="sign-up-text-field"
+                    style={{ marginBottom: '5px' }}
                     label="First Name"
                     name="firstNameInput"
                     value={userInputs.firstNameInput}
                     onChange={(e) =>
                       handleInputChange("firstNameInput", e.target.value)
                     }
-                    // InputProps={{ classes: { input: classes.input } }}
                   />
                   <ErrorMessage
                     message={errorsOfInputs.firstNameInputError}
@@ -249,7 +249,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
-                    className="sign-up-text-field"
+                    style={{ marginBottom: '5px' }}
                     label="Last Name"
                     name="lastNameInput"
                     value={userInputs.lastNameInput}
@@ -267,6 +267,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                  style={{ marginBottom: '5px' }}
                     label="Email"
                     name="emailInput"
                     value={userInputs.emailInput}
@@ -283,6 +284,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                  style={{ marginBottom: '5px' }}
                     label="Company"
                     name="companyInput"
                     value={userInputs.companyInput}
@@ -299,6 +301,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                  style={{ marginBottom: '5px' }}
                     label="Phone Number"
                     name="phoneInput"
                     value={userInputs.phoneInput}
@@ -315,6 +318,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                  style={{ marginBottom: '5px' }}
                     label="Password"
                     name="passwordInput"
                     value={userInputs.passwordInput}
@@ -347,7 +351,9 @@ export const SignUpLogin = () => {
                     }
                   />
 
+                  {/* Verify Password */}
                   <TextField
+                  style={{ marginBottom: '5px' }}
                     label="Verify Password"
                     name="verifyPasswordInput"
                     value={userInputs.verifyPasswordInput}
@@ -355,7 +361,6 @@ export const SignUpLogin = () => {
                     onChange={(e) =>
                       handleInputChange("verifyPasswordInput", e.target.value)
                     }
-                    // style={textFieldStyle}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -379,28 +384,30 @@ export const SignUpLogin = () => {
                       errorsOfInputs.verifyPasswordInputError.length > 0
                     }
                   />
-                </Container>
-              </>
-            ) : (
-              <>
-                <Container>
+                </div>
+              ) : (
+                <div className="form-container">
+                  {/* Log In Fields */}
+                  {/* Email */}
                   <TextField
+                    style={{ marginBottom: '5px' }}
                     label="Email"
                     name="emailInput"
                     value={userInputs.emailInput}
                     onChange={(e) =>
                       handleInputChange("emailInput", e.target.value)
                     }
-                    // style={textFieldStyle}
                   />
                   <ErrorMessage
                     message={errorsOfInputs.emailInputError}
                     show={
-                      triedSubmit &&
-                      errorsOfInputs.firstNameInputError.length > 0
+                      triedSubmit && errorsOfInputs.emailInputError.length > 0
                     }
                   />
+
+                  {/* Password */}
                   <TextField
+                  style={{ marginBottom: '5px' }}
                     label="Password"
                     name="passwordInput"
                     value={userInputs.passwordInput}
@@ -408,7 +415,6 @@ export const SignUpLogin = () => {
                     onChange={(e) =>
                       handleInputChange("passwordInput", e.target.value)
                     }
-                    // style={textFieldStyle}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -432,17 +438,14 @@ export const SignUpLogin = () => {
                       errorsOfInputs.passwordInputError.length > 0
                     }
                   />
-                </Container>
-              </>
-            )}
-          </div>
-          {signUpError && <div className="error">{signUpError}</div>}
-          <button type="submit">Submit</button>
-        </form>
+                </div>
+              )}
+              {signUpError && <div className="error">{signUpError}</div>}
+              <button type="submit">Submit</button>
+            </div>
+          </form>
+        </div>
       </div>
-      {/* </div> */}
-    </div>
     </>
-    
   );
 };

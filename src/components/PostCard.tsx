@@ -175,18 +175,17 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
           <div className="post-header-top">
             <div className="likes-comments">
-              {likesCount === 0 ? null : likesCount === 1 ? (
-                <h5>{likesCount} like</h5>
-              ) : (
-                <h5>{likesCount} likes</h5>
-              )}
-
               <button
                 className="like-button"
                 onClick={handleLikePostButtonClick}
               >
                 {likedByUser ? "❤️" : "🤍"}
               </button>
+              {likesCount === 0 ? null : likesCount === 1 ? (
+                <h5>{likesCount} like</h5>
+              ) : (
+                <h5>{likesCount} likes</h5>
+              )}
             </div>
             <div className="share-button-container">
               <SharePost

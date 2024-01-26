@@ -103,9 +103,10 @@ body,
   padding: 0;
   /* padding-bottom: 2rem; */
   overflow-x: hidden;
-  overflow-y: visible;
+  /* overflow-y: visible; */
   background: var(--background-body);
   color: var(--text-color);
+  overflow-y: scroll;
 }
 
 #root {

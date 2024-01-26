@@ -76,9 +76,9 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
 
   //  console.log(user, ' comment section user')
   return (
-    <div>
+    <div className="comment-section-box">
       <form
-        className="comment-section-box"
+        className="comment-form"
         onSubmit={(e) => {
           e.preventDefault();
           handleCommentSubmit();

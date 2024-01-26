@@ -8,6 +8,7 @@
 
 .top-of-activity-feed {
   display: flex;
+  margin-bottom: 10px;
   width: 100%;
 }
 

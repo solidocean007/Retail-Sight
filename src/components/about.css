@@ -57,7 +57,7 @@ ul li {
   margin-bottom: 0.5em;
 }
 
-h1 {
+.about-container h1 {
   /* color: var(--header-title); */
   margin-bottom: 0.5em;
 }

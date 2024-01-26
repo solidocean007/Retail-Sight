@@ -12,7 +12,7 @@ const SectionOne = () => {
       </ol>
       {/* Add more content, images, etc. */}
       <div className="section-one-image-box">
-        <img src="src/assets/section-one-image.jpg" alt="" />
+        <img src="/assets/section-one-image.jpg" alt="" />
       </div>
     </div>
   );
