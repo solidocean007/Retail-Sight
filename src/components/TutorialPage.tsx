@@ -36,7 +36,7 @@ const TutorialPage = () => {
 
   const renderFlipView = () => {
     return (
-      <div>
+      <div className="flip-section">
         {sections[currentSection]}
         <div>
           {currentSection > 0 && (

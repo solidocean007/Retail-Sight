@@ -18,6 +18,10 @@
   margin-top: 40px;
 }
 
+.create-post-container button {
+  width: auto;
+}
+
 .create-post-container h1 {
   font-size: 2rem;
 }

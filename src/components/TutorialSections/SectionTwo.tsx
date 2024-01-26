@@ -12,6 +12,9 @@ const SectionTwo = () => {
         </li>
       </ol>
       {/* Add more content, images, etc. */}
+      <div className="section-one-image-box">
+        <img src="src/assets/section-two-image.jpg" alt="" />
+      </div>
     </div>
   );
 };

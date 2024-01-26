@@ -1,5 +1,5 @@
 // SectionFour.jsx
-import './tutorial-section.css'
+import "./tutorial-section.css";
 const SectionFour = () => {
   return (
     <div className="tutorial-section">
@@ -9,11 +9,17 @@ const SectionFour = () => {
           Choose the type of account (default: Grocery) and the product type
           (default: Beer).
         </li>
+        <div className="section-one-image-box">
+          <img src="src/assets/section-four-image-top.jpg" alt="" />
+        </div>
         <li>Fill out the display description.</li>
         <li>
           Include the special tracking text starting with an asterisk '*' (e.g.,
-          '*healydisplays24').
+          '*healy24nasty').
         </li>
+        <div className="section-one-image-box">
+          <img src="src/assets/section-four-image-bottom.jpg" alt="" />
+        </div>
         <li>
           Optionally, add hashtags for personal categorization, avoiding
           redundant tags that match existing categories.

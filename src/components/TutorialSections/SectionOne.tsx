@@ -11,6 +11,9 @@ const SectionOne = () => {
         <li>On mobile, access the 'Capture' button via the three-line menu.</li>
       </ol>
       {/* Add more content, images, etc. */}
+      <div className="section-one-image-box">
+        <img src="src/assets/section-one-image.jpg" alt="" />
+      </div>
     </div>
   );
 };
