@@ -13,7 +13,7 @@
   width: 100%;
 }
 
-h1, h2 {
+.flip-section h1, .flip-section h2 {
   color: #333; /* Adjust color based on your theme */
 }
 
