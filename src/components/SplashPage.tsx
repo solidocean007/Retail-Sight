@@ -117,11 +117,14 @@ const SplashPage = () => {
       <div className="splash-container">
         <nav className="top-nav">
           <div className="logo-box">
+            <Link to='/'>
             <img
               src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
-              alt=""
+              alt="blue-background"
             />
             <h1>Displaygram</h1>
+            </Link>
+           
           </div>
           <div className="navbar">
             <ul className={isMenuOpen ? "isMenuOpen" : ""}>
@@ -132,7 +135,7 @@ const SplashPage = () => {
                     scrollToRef(sectionTwoRef);
                   }}
                 >
-                  About Our Service
+                  The Objective
                 </a>
               </li>
               <li>
@@ -203,12 +206,12 @@ const SplashPage = () => {
 
           <section ref={sectionTwoRef} className="second-section">
             <div className="second-content">
-              <h3>About Our Service</h3>
+              <h3>The Objective</h3>
               <p>
                 Capture in-store displays. Upload images along with critical
                 details like product names and quantities. Share with your team
                 in real-time. Opt for company-exclusive visibility or share your
-                success broadly with unique hashtags. It’s your choice, your
+                success broadly with unique star tags. It’s your choice, your
                 control.
               </p>
               <div className="content-button-box">

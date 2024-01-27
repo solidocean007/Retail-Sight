@@ -48,47 +48,94 @@ export const SplashPageHelmet = () => {
 export const AboutPageHelmet = () => {
   return (
     <Helmet>
-      <title>About Displaygram | Retail Display Management</title>
+      <title>About Displaygram | The Story Behind Our Retail Display Platform</title>
       <meta
         name="description"
-        content="Discover Displaygram, the innovative platform for retail professionals. Manage and archive retail displays with ease, utilize location tagging, and enhance posts with rich descriptions. Join our community and streamline your display management today."
+        content="Learn about the mission and vision of Displaygram, a platform dedicated to empowering retail professionals through efficient display management."
       />
       <meta
         name="keywords"
-        content="Displaygram, retail management, display sharing, retail display, store management, visual merchandising"
+        content="about Displaygram, our story, retail display innovation, our mission, platform vision, professional empowerment"
       />
       <link rel="canonical" href="https://displaygram.com/about" />
       <meta
         property="og:title"
-        content="Displaygram: Retail Display Management Simplified"
+        content="About Displaygram | Empowering Retail Professionals"
       />
       <meta
         property="og:description"
-        content="Step into the world of Displaygram and transform your retail display management. Join us to streamline, share, and succeed in your retail endeavors."
+        content="Dive into the story of Displaygram and how we're revolutionizing the management of retail displays across the industry."
       />
       <meta property="og:url" content="https://displaygram.com/about" />
       <meta property="og:type" content="website" />
       <meta
         property="og:image"
-        content="https://firebasestorage.googleapis.com/path-to-your-og-image.jpg"
+        content="https://firebasestorage.googleapis.com/path-to-your-about-page-og-image.jpg"
       />
       <meta name="twitter:card" content="summary_large_image" />
       <meta
         name="twitter:title"
-        content="Displaygram: Retail Display Management Simplified"
+        content="Learn About Displaygram | Our Story"
       />
       <meta
         name="twitter:description"
-        content="Discover the ease of managing retail displays with Displaygram. Share, manage, and innovate in your retail strategy."
+        content="Discover the origins of Displaygram and our commitment to enhancing retail display management."
       />
       <meta
         name="twitter:image"
-        content="https://firebasestorage.googleapis.com/path-to-your-twitter-image.jpg"
+        content="https://firebasestorage.googleapis.com/path-to-your-about-page-twitter-image.jpg"
       />
       <meta name="twitter:url" content="https://displaygram.com/about" />
     </Helmet>
   );
 };
+
+
+export const FeaturesPageHelmet = () => {
+  return (
+    <Helmet>
+      <title>Displaygram Features | Streamline Your Retail Displays</title>
+      <meta
+        name="description"
+        content="Explore the cutting-edge features of Displaygram that help you manage, track, and optimize your retail displays for maximum impact."
+      />
+      <meta
+        name="keywords"
+        content="Displaygram features, retail display management, tracking displays, display optimization, merchandising solutions, display analytics"
+      />
+      <link rel="canonical" href="https://displaygram.com/features" />
+      <meta
+        property="og:title"
+        content="Explore Features | Displaygram Display Management"
+      />
+      <meta
+        property="og:description"
+        content="Take a tour of Displaygram's features designed to streamline the creation, management, and analysis of your retail displays."
+      />
+      <meta property="og:url" content="https://displaygram.com/features" />
+      <meta property="og:type" content="website" />
+      <meta
+        property="og:image"
+        content="https://firebasestorage.googleapis.com/path-to-your-features-page-og-image.jpg"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta
+        name="twitter:title"
+        content="Displaygram's Feature Set | Optimize Your Displays"
+      />
+      <meta
+        name="twitter:description"
+        content="Unlock the full potential of your retail displays with Displaygram's comprehensive feature set."
+      />
+      <meta
+        name="twitter:image"
+        content="https://firebasestorage.googleapis.com/path-to-your-features-page-twitter-image.jpg"
+      />
+      <meta name="twitter:url" content="https://displaygram.com/features" />
+    </Helmet>
+  );
+};
+
 
 export const ContactUsPageHelmet = () => {
   return (

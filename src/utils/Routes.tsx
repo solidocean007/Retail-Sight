@@ -7,6 +7,7 @@ import { CreatePost } from "../components/CreatePost";
 import { Dashboard } from "../components/Dashboard";
 import DeveloperDashboard from "../components/DeveloperDashboard";
 import About from "../components/Abouts";
+import Features from "../components/Features";
 import ContactUs from "./ContactUs";
 import PrivacyPolicy from "../components/PrivacyPolicy";
 import TermsOfService from "../components/TermsService";
@@ -20,6 +21,7 @@ export const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<SplashPage />}/>
       <Route path="/about" element={<About />} />
+      <Route path="/features" element={<Features />} />
       <Route path="/contact-us" element={<ContactUs />}/>
       <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
       <Route path="/terms-service" element={<TermsOfService />}/>
