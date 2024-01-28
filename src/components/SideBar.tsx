@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@mui/material";
 // import FilterSection from "./FilterSection";
 import FilterLocation from "./FilterLocation";
-import { fetchLatestPosts, fetchFilteredPosts } from "../thunks/postsThunks";
+import { fetchFilteredPosts, fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { useDispatch } from "react-redux";
 import { ChannelType } from "./ChannelSelector";
 import { CategoryType } from "./CategorySelector";
@@ -25,7 +25,12 @@ interface FilterState {
   cities: string[];
 }
 
+const POSTS_BATCH_SIZE = 100;
+
 const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
+  const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const currentUserCompanyId = currentUser?.companyId;
+  const currentUserCompany = currentUser?.company;
   const protectedAction = useProtectedAction();
   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(
@@ -94,16 +99,18 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
         dispatch(setPosts(cachedPosts));
       } else {
         // Optionally, fetch from the server if IndexedDB is empty
-        dispatch(fetchLatestPosts());
+        if(currentUserCompany && currentUserCompanyId){
+          dispatch(fetchInitialPostsBatch({POSTS_BATCH_SIZE, currentUserCompanyId }));
+        }
       }
     } catch (error) {
       console.error('Error reloading posts from IndexedDB:', error);
       // Optionally, fetch from the server in case of an error
-      dispatch(fetchLatestPosts());
+        
     }
   };
   
-  const arraysEqual = <T extends any[]>(a: T, b: T): boolean => { // Unexpected any. Specify a different type
+  function arraysEqual<T>(a: T[], b: T[]): boolean {
     if (a === b) return true;
     if (a == null || b == null) return false;
     if (a.length !== b.length) return false;
@@ -116,7 +123,7 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       if (sortedA[i] !== sortedB[i]) return false;
     }
     return true;
-  };
+  }
   
   const handleApplyFiltersClick = () => {
     // Check if current filters are different from the last applied filters

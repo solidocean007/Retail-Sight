@@ -34,7 +34,7 @@ export const getPostsByTag = async (
       }
 
       // Check if postUserCompanyID matches the user's company ID
-      const postCompanyID = post.user.postUserCompanyId;
+      const postCompanyID = post.postUserCompanyId;
       return postCompanyID === usersCompanyID;
     });
 

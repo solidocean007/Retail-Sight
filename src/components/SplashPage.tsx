@@ -4,33 +4,13 @@ import "./splashPage.css"; // Make sure this reflects the styles below
 import { MutableRefObject, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
-import { db } from "../utils/firebase";
-import { PostType, PostWithID } from "../utils/types";
-import { setPosts } from "../Slices/postsSlice";
-import {
-  addPostsToIndexedDB,
-  getPostsFromIndexedDB,
-} from "../utils/database/indexedDBUtils";
-import { fetchInitialPostsBatch } from "../thunks/postsThunks";
-import { useAppDispatch } from "../utils/store";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { SplashPageHelmet } from "../utils/helmetConfigurations";
 
 const SplashPage = () => {
   const user = useSelector(selectUser);
-  const currentUserCompany = user?.company;
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const POSTS_BATCH_SIZE = 10;
   const [isMenuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -54,61 +34,6 @@ const SplashPage = () => {
       navigate("/user-home-page");
     }
   }, [user, navigate]);
-
-  // load indexDB posts or fetch from firestore
-  useEffect(() => {
-    const noUserLoggedInFetch = async () => {
-      // need to check indexedDB before doing this in case this user has visited the site before.
-      const publicPostsQuery = query(
-        collection(db, "posts"),
-        where("visibility", "==", "public"),
-        orderBy("timestamp", "desc"),
-        limit(POSTS_BATCH_SIZE)
-      );
-      const querySnapshot = await getDocs(publicPostsQuery);
-
-      const publicPosts: PostWithID[] = querySnapshot.docs
-        .map((doc) => {
-          const postData: PostType = doc.data() as PostType;
-          return {
-            ...postData,
-            id: doc.id,
-          };
-        })
-        .filter((post) => post.visibility === "public");
-      dispatch(setPosts(publicPosts as PostWithID[]));
-      addPostsToIndexedDB(publicPosts);
-    };
-
-    if (user === null) {
-      noUserLoggedInFetch().catch(console.error);
-      return;
-    }
-    const loadPosts = async () => {
-      try {
-        const cachedPosts = await getPostsFromIndexedDB();
-        if (cachedPosts && cachedPosts.length > 0) {
-          dispatch(setPosts(cachedPosts));
-        } else if (currentUserCompany) {
-          dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-          ).then((action) => {
-            if (fetchInitialPostsBatch.fulfilled.match(action)) {
-              addPostsToIndexedDB(action.payload.posts);
-            }
-          });
-        }
-      } catch (error) {
-        if (currentUserCompany) {
-          dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-          );
-        }
-      }
-    };
-
-    loadPosts();
-  }, [user, dispatch, currentUserCompany]);
 
   return (
     <>
@@ -237,7 +162,7 @@ const SplashPage = () => {
                   src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-products.jpg?alt=media&token=67eb96e6-1a55-482d-92c3-5b3901ce4b3e"
                   alt=""
                 />
-                <Link to="/about" className="features-button enter-site-btn">
+                <Link to="/features" className="features-button enter-site-btn">
                   See Our Features
                 </Link>
               </div>

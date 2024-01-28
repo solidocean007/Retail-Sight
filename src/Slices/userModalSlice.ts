@@ -1,29 +1,32 @@
 // userModalSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../utils/store';
-import { PostType } from '../utils/types';
 
 interface UserModalState {
   isUserModalOpen: boolean;
-  userData: PostType['user'] | null;
+  userName: string | null;
+  userEmail: string | null;
 }
 
 const initialState: UserModalState = {
   isUserModalOpen: false,
-  userData: null,
+  userName: null,
+  userEmail: null,
 };
 
 const userModalSlice = createSlice({
   name: 'userModal',
   initialState,
   reducers: {
-    openUserModal: (state, action: PayloadAction<PostType['user']>) => {
+    openUserModal: (state, action: PayloadAction<{ userName: string; userEmail: string }>) => {
       state.isUserModalOpen = true;
-      state.userData = action.payload; // Type '{ postUserName: string | undefined; postUserId: string | undefined; postUserCompany: string | undefined; postUserEmail: string | undefined; }' is missing the following properties from type 'WritableDraft<UserType>': uid, firstName, lastName, email, and 2 more.ts(2740)
+      state.userName = action.payload.userName;
+      state.userEmail = action.payload.userEmail; // Type '{ postUserName: string | undefined; postUserId: string | undefined; postUserCompany: string | undefined; postUserEmail: string | undefined; }' is missing the following properties from type 'WritableDraft<UserType>': uid, firstName, lastName, email, and 2 more.ts(2740)
     },
     closeUserModal: (state) => {
       state.isUserModalOpen = false;
-      state.userData = null;
+      state.userName = null;
+      state.userEmail = null;
     },
   },
 });
@@ -31,7 +34,8 @@ const userModalSlice = createSlice({
 export const { openUserModal, closeUserModal } = userModalSlice.actions;
 
 export const selectIsUserModalOpen = (state: RootState) => state.userModal.isUserModalOpen;
-export const selectUserData = (state: RootState) => state.userModal.userData;
+export const selectUserName = (state: RootState) => state.userModal.userName;
+export const selectUserEmail = (state: RootState) => state.userModal.userEmail;
 
 export default userModalSlice.reducer;
 

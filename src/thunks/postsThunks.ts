@@ -41,54 +41,46 @@ type FetchPostsArgs = {
 
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
-  currentUserCompany: string;
+  currentUserCompanyId: string;
 };
 
 // just noting this function fetches but doesn't store to redux or indexedDb
 export const fetchInitialPostsBatch = createAsyncThunk(
   "posts/fetchInitial",
   async (
-    { POSTS_BATCH_SIZE, currentUserCompany }: FetchInitialPostsArgs,
-    { dispatch, rejectWithValue }
+    { POSTS_BATCH_SIZE, currentUserCompanyId }: FetchInitialPostsArgs,
+    { rejectWithValue }
   ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
 
-      // Fetch all posts, sorting by timestamp
       const postsQuery = query(
         postsCollectionRef,
         orderBy("timestamp", "desc")
       );
       const querySnapshot = await getDocs(postsQuery);
 
-      // Filter posts based on visibility and company
+      console.log("Fetched posts:", querySnapshot.docs.length); // Log the total number of fetched posts
+
       const postsWithIds: PostWithID[] = querySnapshot.docs
         .map((doc) => {
           const postData: PostType = doc.data() as PostType;
+          console.log("Post data:", postData); // Log each post data
           return {
             ...postData,
             id: doc.id,
           };
         })
-        .filter(
-          (post) =>
-            post.visibility === "public" ||
-            (post.visibility === "company" &&
-              post.user.postUserCompany === currentUserCompany)
-        )
+        .filter((post) => {
+          const isPublic = post.visibility === "public";
+          const isCompanyPost = post.visibility === "company" && post.postUserCompanyId === currentUserCompanyId;
+          console.log(`Post ID: ${post.id}, isPublic: ${isPublic}, isCompanyPost: ${isCompanyPost}`); // Log the filtering result for each post
+          return isPublic || isCompanyPost;
+        })
         .slice(0, POSTS_BATCH_SIZE);
 
       const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
-      console.log(`Last visible post ID: ${lastVisible}`);
-
-      // Dispatch incrementRead action
-      dispatch(
-        incrementRead({
-          source: "fetchFInitialPostsBatch",
-          description: "Fetching initial posts",
-          timestamp: new Date().toISOString(), // ISO 8601 format timestamp
-        })
-      );
+      console.log(`Last visible post ID: ${lastVisible}, Number of posts after filter: ${postsWithIds.length}`);
 
       return { posts: postsWithIds, lastVisible };
     } catch (error) {
@@ -97,6 +89,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
     }
   }
 );
+
 
 // Define a type for the thunk argument
 type FetchMorePostsArgs = {

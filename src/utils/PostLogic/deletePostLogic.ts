@@ -5,7 +5,7 @@ import { PostWithID } from "../types";
 import { deletePost } from "../../Slices/postsSlice";
 import { AnyAction } from "redux";
 import { db } from "../firebase";
-import { removePostFromIndexedDB } from "../database/indexedDBUtils";
+import { deleteUserCreatedPostInIndexedDB, removePostFromIndexedDB } from "../database/indexedDBUtils";
 import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 
 interface userDeletePostProps {
@@ -31,6 +31,7 @@ export const userDeletePost = async ({
     await deleteDoc(postRef);
     // Remove from IndexedDB
     await removePostFromIndexedDB(post.id);
+    await deleteUserCreatedPostInIndexedDB(post.id)
 
     // Delete post's image from Firebase Storage
     const imageRef = ref(storage, post.imageUrl); // corrected to post.imageUrl

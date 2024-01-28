@@ -544,6 +544,27 @@ export async function addUserCreatedPostsInIndexedDB(
   });
 }
 
+// delete user created posts in indexedDB
+export async function deleteUserCreatedPostInIndexedDB(
+  postId: string
+): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["userCreatedPosts"], "readwrite");
+  const store = transaction.objectStore("userCreatedPosts");
+
+  return new Promise<void>((resolve, reject) => {
+    const request = store.delete(postId);
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
 export async function getUserCreatedPostsFromIndexedDB(): Promise<
   PostWithID[] | undefined
 > {

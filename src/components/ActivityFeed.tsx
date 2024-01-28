@@ -6,12 +6,20 @@ import NoContentCard from "./NoContentCard";
 import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
-import { getPostsByStarTag, getPostsByTag } from "../utils/PostLogic/getPostsByTag";
+import {
+  getPostsByStarTag,
+  getPostsByTag,
+} from "../utils/PostLogic/getPostsByTag";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import "./activityFeed.css";
 import { PostType, PostWithID } from "../utils/types";
 import {
   addPostsToIndexedDB,
+  clearHashtagPostsInIndexedDB,
+  clearPostsInIndexedDB,
+  clearStarTagPostsInIndexedDB,
+  clearUserCreatedPostsInIndexedDB,
+  deleteUserCreatedPostInIndexedDB,
   // clearHashtagPostsInIndexedDB,
   // clearPostsInIndexedDB,
   // clearUserCreatedPostsInIndexedDB,
@@ -42,6 +50,7 @@ const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
 const ActivityFeed = () => {
+  const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
   const navigate = useNavigate();
   const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
@@ -54,11 +63,14 @@ const ActivityFeed = () => {
 
   // Determine which posts to display - search results or all posts
   const displayPosts = searchResults ? searchResults : posts;
+
   const listRef = useRef<List>(null);
   useScrollToPost(listRef, displayPosts, AD_INTERVAL);
-  const dispatch = useAppDispatch();
+
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const currentUserCompany = currentUser?.company;
+  const currentUserCompanyId = currentUser?.companyId;
+  console.log("user company: ", currentUserCompanyId);
+  console.log("user : ", currentUser);
 
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -71,87 +83,15 @@ const ActivityFeed = () => {
   // Function to calculate list height
   const calculateListHeight = () => {
     // Set list height to 70% of the viewport height
-    return window.innerHeight * 0.90;
+    return window.innerHeight * 0.9;
   };
 
-  // temp useEffect to resync 
-  // useEffect(() => {
-  //   const syncDataWithFirestore = async () => {
-  //     try {
-  //       // Clear local IndexedDB data
-  //       await clearPostsInIndexedDB();
-  //       await clearHashtagPostsInIndexedDB();
-  //       await clearUserCreatedPostsInIndexedDB();
-  
-  //       // Refetch data from Firestore and update local state and IndexedDB
-  //       // (You can use a similar approach as in your existing useEffect for fetching posts)
-  //       // Example: await fetchAndStorePosts();
-  //       const noUserLoggedInFetch = async () => {
-  //         // need to check indexedDB before doing this in case this user has visited the site before.
-  //         const publicPostsQuery = query(
-  //           collection(db, "posts"),
-  //           where("visibility", "==", "public"),
-  //           orderBy("timestamp", "desc"),
-  //           limit(POSTS_BATCH_SIZE)
-  //         );
-  //         const querySnapshot = await getDocs(publicPostsQuery);
-    
-  //         const publicPosts: PostWithID[] = querySnapshot.docs
-  //           .map((doc) => {
-  //             const postData: PostType = doc.data() as PostType;
-  //             return {
-  //               ...postData,
-  //               id: doc.id,
-  //             };
-  //           })
-  //           .filter((post) => post.visibility === "public");
-  //         // id: doc.id, ...doc.data() as PostType }));
-  //         dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
-  //         addPostsToIndexedDB(publicPosts);
-  //       };
-    
-  //       if (currentUser === null) {
-  //         noUserLoggedInFetch().catch(console.error);
-  //         return;
-  //       }
-  //       const loadPosts = async () => {
-  //         try {
-  //           const cachedPosts = await getPostsFromIndexedDB();
-  //           if (cachedPosts && cachedPosts.length > 0) {
-  //             // console.log("getting posts from indexedDB");
-  //             dispatch(setPosts(cachedPosts));
-  //           } else if (currentUserCompany) {
-  //             // console.log("no posts in indexDB");
-  //             // Dispatch the thunk action; Redux handles the promise
-  //             dispatch(
-  //               fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-  //             ).then((action) => {
-  //               if (fetchInitialPostsBatch.fulfilled.match(action)) {
-  //                 addPostsToIndexedDB(action.payload.posts);
-  //               }
-  //             });
-  //           }
-  //         } catch (error) {
-  //           // console.error("Error fetching posts from IndexedDB:", error);
-  //           if (currentUserCompany) {
-  //             // Dispatch the thunk action again in case of error.  Is this a safe action to do?
-  //             dispatch(
-  //               fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-  //             );
-  //           }
-  //         }
-  //       };
-    
-  //       loadPosts();
-  //     } catch (error) {
-  //       console.error("Error during data sync:", error);
-  //       // Handle errors, maybe retry or show a message to the user
-  //     }
-  //   };
-  
-  //   // Run the sync function
-  //   syncDataWithFirestore();
-  // }, [currentUser, currentUserCompany, dispatch]);
+  const clearIndexedDB = async () => {
+    await clearPostsInIndexedDB();
+    await clearHashtagPostsInIndexedDB();
+    await clearUserCreatedPostsInIndexedDB();
+    await clearStarTagPostsInIndexedDB();
+  };
 
   // Effect to set initial and update list height on resize
   useEffect(() => {
@@ -226,15 +166,48 @@ const ActivityFeed = () => {
     return 650;
   };
 
+  // check local storage for version and clear indexedDb if its not up to date.
+  useEffect(() => {
+    const currentVersion = ".1.2"; // Consider importing this from a constants file
+    const storedVersion = localStorage.getItem("appVersion");
+
+    if (storedVersion !== currentVersion) {
+      // Clear IndexedDB
+      clearIndexedDB();
+
+      // Update version in localStorage
+      localStorage.setItem("appVersion", currentVersion);
+
+      // Refetch data based on the new structure
+      if (currentUser && currentUserCompanyId) {
+        dispatch(
+          fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
+        );
+      }
+    }
+  }, [currentUser, currentUserCompanyId, dispatch]);
+
   // load indexDB posts or fetch from firestore
   useEffect(() => {
-    const noUserLoggedInFetch = async () => {
+    const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
+      await clearIndexedDB();
+
+      dispatch(
+        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }) // Object literal may only specify known properties, and 'companyId' does not exist in type 'FetchInitialPostsArgs'
+      ).then((action) => {
+        if (fetchInitialPostsBatch.fulfilled.match(action)) {
+          addPostsToIndexedDB(action.payload.posts);
+        }
+      });
+    };
+
+    const fetchPublicPosts = async () => {
       // need to check indexedDB before doing this in case this user has visited the site before.
       const publicPostsQuery = query(
         collection(db, "posts"),
         where("visibility", "==", "public"),
         orderBy("timestamp", "desc"),
-        limit(POSTS_BATCH_SIZE)
+        limit(4)
       );
       const querySnapshot = await getDocs(publicPostsQuery);
 
@@ -253,45 +226,17 @@ const ActivityFeed = () => {
     };
 
     if (currentUser === null) {
-      noUserLoggedInFetch().catch(console.error);
-      return;
-    }
-    const loadPosts = async () => {
-      try {
-        const cachedPosts = await getPostsFromIndexedDB();
-        if (cachedPosts && cachedPosts.length > 0) {
-          // console.log("getting posts from indexedDB");
-          dispatch(setPosts(cachedPosts));
-        } else if (currentUserCompany) {
-          // console.log("no posts in indexDB");
-          // Dispatch the thunk action; Redux handles the promise
-          dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-          ).then((action) => {
-            if (fetchInitialPostsBatch.fulfilled.match(action)) {
-              addPostsToIndexedDB(action.payload.posts);
-            }
-          });
-        }
-      } catch (error) {
-        // console.error("Error fetching posts from IndexedDB:", error);
-        if (currentUserCompany) {
-          // Dispatch the thunk action again in case of error.  Is this a safe action to do?
-          dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompany })
-          );
-        }
-      }
-    };
-
-    loadPosts();
-  }, [currentUser, dispatch, currentUserCompany]);
+    fetchPublicPosts();
+  } else if (currentUserCompanyId){
+    fetchPostsForLoggedInUser(currentUserCompanyId);
+  }
+  }, [currentUser, dispatch, currentUserCompanyId]);
 
   // listen for new or updated posts
   useEffect(() => {
     // Capture the mount time in ISO format
     const mountTime = new Date().toISOString();
-    const userCompany = currentUser?.company;
+    const userCompanyID = currentUser?.companyId;
 
     // Function to process document changes
     const processDocChanges = (snapshot: QuerySnapshot) => {
@@ -309,6 +254,7 @@ const ActivityFeed = () => {
           dispatch(deletePost(change.doc.id));
           // Call a function to remove the post from IndexedDB
           removePostFromIndexedDB(change.doc.id);
+          deleteUserCreatedPostInIndexedDB(change.doc.id);
         }
       });
     };
@@ -324,10 +270,10 @@ const ActivityFeed = () => {
 
     // Subscribe to company-specific posts, if the user's company is known
     let unsubscribeCompany = () => {};
-    if (userCompany) {
+    if (userCompanyID) {
       const companyPostsQuery = query(
         collection(db, "posts"),
-        where("user.postUserCompany", "==", userCompany),
+        where("user.postUserCompanyID", "==", userCompanyID),
         where("timestamp", ">", mountTime),
         orderBy("timestamp", "desc")
       );
@@ -339,7 +285,7 @@ const ActivityFeed = () => {
       unsubscribePublic();
       unsubscribeCompany();
     };
-  }, [currentUser?.company, dispatch]);
+  }, [currentUser?.companyId, dispatch]);
 
   const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   const itemCount = displayPosts.length + numberOfAds;
@@ -399,8 +345,8 @@ const ActivityFeed = () => {
   }
 
   const handleTutorialClick = () => {
-    navigate('/tutorial')
-   }
+    navigate("/tutorial");
+  };
 
   // Render the list with the ad at the top followed by posts
   return (
@@ -412,9 +358,12 @@ const ActivityFeed = () => {
           setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
         />
-        <div onClick={handleTutorialClick} className="onboarding-tutorial-intro-box">
-        <h4>Click here for Tutorial</h4>
-      </div>
+        <div
+          onClick={handleTutorialClick}
+          className="onboarding-tutorial-intro-box"
+        >
+          <h4>Click here for Tutorial</h4>
+        </div>
       </div>
 
       <List

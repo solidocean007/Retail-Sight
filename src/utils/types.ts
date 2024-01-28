@@ -14,7 +14,7 @@ export type CompanyType = {
   statusPendingUsers: string[];
   companyVerified: boolean;
   createdAt: string;
-}
+};
 
 export type TUserInputType = {
   firstNameInput: string;
@@ -84,13 +84,11 @@ export interface PostType {
   visibility?: "public" | "company" | "supplier" | "private";
   displayDate: string;
   timestamp: string;
-  user: {
-    postUserName: string | undefined;
-    postUserId: string | undefined;
-    postUserCompany: string | undefined;
-    postUserCompanyId: string | undefined;
-    postUserEmail: string | undefined; // Added email
-  };
+  postUserName: string | undefined;
+  postUserId: string | undefined;
+  postUserCompany: string | undefined;
+  postUserCompanyId: string | undefined;
+  postUserEmail: string | undefined; // Added email
   supplier?: string;
   brands: string[];
   likes?: string[];

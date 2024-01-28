@@ -38,7 +38,7 @@ const CommentModal: React.FC<CommentModalProps> = ({
           <div key={comment.commentId} className="comment-item">
             <div className="comment-name-text">
             <a
-              onClick={() => onUserNameClick(post, dispatch)}
+              onClick={() => onUserNameClick(post, dispatch)} // what do i pass here?
               className="comment-user-name"
             >
               {comment.userName}:
