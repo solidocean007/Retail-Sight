@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions'; // Parsing error: Argument for '--moduleResolution' option must be: 'node', 'classic', 'node16', 'nodenext'.eslint
-import nodemailer from 'nodemailer'; // Module '"c:/Users/19105/OneDrive/Documents/retail-display-project/node_modules/@types/nodemailer/index"' has no default export.
+import * as nodemailer from 'nodemailer';
 
 const gmailEmail = functions.config().gmail.email;
 const gmailPassword = functions.config().gmail.password;
@@ -27,7 +27,7 @@ export const sendInvite = functions.https.onCall((data : any, context: any) => {
         .then(() => {
             return { success: true };
         })
-        .catch((error) => {
+        .catch((error : unknown) => {
             console.error('There was an error while sending the email:', error);
             return { success: false };
         });

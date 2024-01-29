@@ -17,7 +17,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
-import firebase from "firebase/compat/app";
+// import firebase from "firebase/compat/app";
 
 export const Dashboard = () => {
   const user = useSelector(selectUser);
@@ -35,41 +35,36 @@ export const Dashboard = () => {
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
 
-  const sendInvite = async (email: string, companyId: string) => {
-    try {
-      // Call a cloud function or your backend API to send the invite
-      const sendInviteFunction = firebase
-        .functions()
-        .httpsCallable("sendInvite");
-      await sendInviteFunction({ email, companyId });
-      console.log("Invite sent successfully");
-    } catch (error) {
-      console.error("Error sending invite:", error);
-      throw error; // Rethrow the error to be caught in the .catch() block
-    }
-  };
+  // const sendInvite = async (email: string, companyId: string) => {
+  //   try {
+  //     // Call a cloud function or your backend API to send the invite
+  //     const sendInviteFunction = firebase
+  //       .functions()
+  //       .httpsCallable("sendInvite");
+  //     await sendInviteFunction({ email, companyId });
+  //     console.log("Invite sent successfully");
+  //   } catch (error) {
+  //     console.error("Error sending invite:", error);
+  //     throw error; // Rethrow the error to be caught in the .catch() block
+  //   }
+  // };
 
-  const handleInviteSubmit = async (event : React.FormEvent<HTMLFormElement>) => {
+  const handleInviteSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
     if (user?.companyId) {
       try {
         await sendInvite(inviteEmail, user.companyId); // Use await here
-        console.log('Invite sent to', inviteEmail);
-        setInviteEmail(''); // Reset the input field
+        console.log("Invite sent to", inviteEmail);
+        setInviteEmail(""); // Reset the input field
       } catch (error) {
-        console.error('Error sending invite:', error);
+        console.error("Error sending invite:", error);
       }
     } else {
-      console.error('Company ID is undefined');
+      console.error("Company ID is undefined");
     }
   };
-  
-
-  useEffect(() => {
-    console.log("dashboard mounts");
-    return;
-    console.log("dashboard unmounts");
-  }, []);
 
   useEffect(() => {
     const fetchAndStoreUsers = async () => {
@@ -159,27 +154,26 @@ export const Dashboard = () => {
           </header>
 
           {/* Invite Form Section */}
-          {isAdmin ||
-            (isDeveloper && (
-              <section className="invite-section">
-                <form className="invite-form" onSubmit={handleInviteSubmit}>
-                  <label htmlFor="inviteEmail">Invite New Employee:</label>
-                  <input
-                    type="email"
-                    id="inviteEmail"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="Enter employee's email"
-                    required
-                  />
-                  <button type="submit">Send Invite</button>
-                </form>
+          {(isAdmin || isDeveloper) && (
+            <section className="invite-section">
+              <form className="invite-form" onSubmit={handleInviteSubmit}>
+                <label htmlFor="inviteEmail">Invite New Employee:</label>
+                <input
+                  type="email"
+                  id="inviteEmail"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="Enter employee's email"
+                  required
+                />
+                <button type="submit">Send Invite</button>
+              </form>
 
-                <div className="all-pending-invites">
-                  {/* add pending invites here with an option to cancel them */}
-                </div>
-              </section>
-            ))}
+              <div className="all-pending-invites">
+                {/* add pending invites here with an option to cancel them */}
+              </div>
+            </section>
+          )}
 
           <section className="dashboard-content">
             <div className="card role-management-card">
