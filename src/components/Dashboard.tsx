@@ -13,7 +13,7 @@ import {
 import { fetchCompanyUsers } from "../thunks/usersThunks";
 import { UserType } from "../utils/types";
 import { RootState, useAppDispatch } from "../utils/store";
-import { doc, setDoc } from "firebase/firestore";
+import { collection, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
@@ -36,19 +36,6 @@ export const Dashboard = () => {
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
 
-  // const sendInvite = async (email: string, companyId: string) => {
-  //   try {
-  //     // Call a cloud function or your backend API to send the invite
-  //     const sendInviteFunction = firebase
-  //       .functions()
-  //       .httpsCallable("sendInvite");
-  //     await sendInviteFunction({ email, companyId });
-  //     console.log("Invite sent successfully");
-  //   } catch (error) {
-  //     console.error("Error sending invite:", error);
-  //     throw error; // Rethrow the error to be caught in the .catch() block
-  //   }
-  // };
 
   const handleInviteSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -59,6 +46,15 @@ export const Dashboard = () => {
         const sendInviteFunction = httpsCallable(functions, 'sendInvite');
         
         await sendInviteFunction({ email: inviteEmail, companyId: user.companyId, inviter: user.email });
+
+        // Record the invite in Firestore
+      await setDoc(doc(db, "invites", inviteEmail), {
+        email: inviteEmail,
+        companyId: user.companyId,
+        status: 'pending',
+        inviter: user.email,
+        timestamp: serverTimestamp()
+      });
         
         console.log("Invite sent to", inviteEmail);
         setInviteEmail(""); // Reset the input field
@@ -69,6 +65,20 @@ export const Dashboard = () => {
       console.error("Company ID is undefined");
     }
   };
+
+  useEffect(() => {
+    const fetchInvites = async () => {
+      const querySnapshot = await getDocs(collection(db, "invites"));
+      const invites = [];
+      querySnapshot.forEach((doc) => {
+        invites.push(doc.data());
+      });
+      // Set state with the fetched invites
+    };
+  
+    fetchInvites();
+  }, []);
+  
   
 
   useEffect(() => {
