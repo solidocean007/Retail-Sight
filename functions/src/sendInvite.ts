@@ -1,3 +1,4 @@
+// sendInvite.ts
 import * as functions from 'firebase-functions'; // Parsing error: Argument for '--moduleResolution' option must be: 'node', 'classic', 'node16', 'nodenext'.eslint
 import * as nodemailer from 'nodemailer';
 

@@ -17,6 +17,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
+import { getFunctions, httpsCallable } from "@firebase/functions";
 // import firebase from "firebase/compat/app";
 
 export const Dashboard = () => {
@@ -49,13 +50,16 @@ export const Dashboard = () => {
   //   }
   // };
 
-  const handleInviteSubmit = async (
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleInviteSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+  
     if (user?.companyId) {
       try {
-        await sendInvite(inviteEmail, user.companyId); // Use await here
+        const functions = getFunctions(); // Initialize Firebase Functions
+        const sendInviteFunction = httpsCallable(functions, 'sendInvite');
+        
+        await sendInviteFunction({ email: inviteEmail, companyId: user.companyId, inviter: user.email });
+        
         console.log("Invite sent to", inviteEmail);
         setInviteEmail(""); // Reset the input field
       } catch (error) {
@@ -65,6 +69,7 @@ export const Dashboard = () => {
       console.error("Company ID is undefined");
     }
   };
+  
 
   useEffect(() => {
     const fetchAndStoreUsers = async () => {
