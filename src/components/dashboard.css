@@ -41,6 +41,12 @@
   padding: .5rem;
 }
 
+.invite-section {
+  display: flex;
+  justify-content: center;
+  margin: 10px;
+}
+
 .dashboard-content {
   padding: 20px;
   /* background-color: var(--alt-menu-background-color); */

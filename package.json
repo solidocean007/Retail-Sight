@@ -24,6 +24,7 @@
     "cors": "^2.8.5",
     "firebase": "^10.1.0",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^6.9.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet": "^6.1.0",
@@ -35,12 +36,13 @@
     "yup": "^1.2.0"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.14",
     "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.7",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-window": "^1.8.5",
-    "@typescript-eslint/eslint-plugin": "^6.4.0",
-    "@typescript-eslint/parser": "^6.4.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
     "@vitejs/plugin-react": "^4.0.3",
     "eslint": "^8.47.0",
     "eslint-plugin-react-hooks": "^4.6.0",

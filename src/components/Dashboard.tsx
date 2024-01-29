@@ -17,10 +17,11 @@ import { doc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
+import firebase from "firebase/compat/app";
 
 export const Dashboard = () => {
   const user = useSelector(selectUser);
-  console.log("user: ", user);
+  const [inviteEmail, setInviteEmail] = useState("");
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
@@ -33,6 +34,42 @@ export const Dashboard = () => {
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
+
+  const sendInvite = async (email: string, companyId: string) => {
+    try {
+      // Call a cloud function or your backend API to send the invite
+      const sendInviteFunction = firebase
+        .functions()
+        .httpsCallable("sendInvite");
+      await sendInviteFunction({ email, companyId });
+      console.log("Invite sent successfully");
+    } catch (error) {
+      console.error("Error sending invite:", error);
+      throw error; // Rethrow the error to be caught in the .catch() block
+    }
+  };
+
+  const handleInviteSubmit = async (event : React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (user?.companyId) {
+      try {
+        await sendInvite(inviteEmail, user.companyId); // Use await here
+        console.log('Invite sent to', inviteEmail);
+        setInviteEmail(''); // Reset the input field
+      } catch (error) {
+        console.error('Error sending invite:', error);
+      }
+    } else {
+      console.error('Company ID is undefined');
+    }
+  };
+  
+
+  useEffect(() => {
+    console.log("dashboard mounts");
+    return;
+    console.log("dashboard unmounts");
+  }, []);
 
   useEffect(() => {
     const fetchAndStoreUsers = async () => {
@@ -96,83 +133,98 @@ export const Dashboard = () => {
 
   return (
     <>
-    <DashboardHelmet />
-    <div className="dashboard-container">
-      <aside className="dashboard-sidebar">
-        {/* Sidebar with navigation links */}
-        {/* ... */}
-      </aside>
+      <DashboardHelmet />
+      <div className="dashboard-container">
+        <aside className="dashboard-sidebar">
+          {/* Sidebar with navigation links */}
+          {/* ... */}
+        </aside>
 
-      <main className="dashboard-main">
-        <header className="dashboard-header">
-          <div className="header-top">
-            <h1>Dashboard</h1>
+        <main className="dashboard-main">
+          <header className="dashboard-header">
+            <div className="header-top">
+              <h1>Dashboard</h1>
 
-            <button
-              className="home-btn"
-              onClick={() => navigate("/user-home-page")}
-            >
-              Home
-            </button>
-          </div>
-          {/* Top bar with user info and controls */}
-          <div className="dashboard-user-details">
-            <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
+              <button
+                className="home-btn"
+                onClick={() => navigate("/user-home-page")}
+              >
+                Home
+              </button>
+            </div>
+            {/* Top bar with user info and controls */}
+            <div className="dashboard-user-details">
+              <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
+            </div>
+          </header>
 
-            <p>Adding users here is under development</p>
-          </div>
-          <div className="dashboard-controls">
-            {(isSuperAdmin || isDeveloper || isAdmin) && (
-              <button className="add-user-btn">Add Users</button>
-            )}
-          </div>
-        </header>
+          {/* Invite Form Section */}
+          {isAdmin ||
+            (isDeveloper && (
+              <section className="invite-section">
+                <form className="invite-form" onSubmit={handleInviteSubmit}>
+                  <label htmlFor="inviteEmail">Invite New Employee:</label>
+                  <input
+                    type="email"
+                    id="inviteEmail"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="Enter employee's email"
+                    required
+                  />
+                  <button type="submit">Send Invite</button>
+                </form>
 
-        <section className="dashboard-content">
-          <div className="card role-management-card">
-            <div className="header-and-all-info">
-              
+                <div className="all-pending-invites">
+                  {/* add pending invites here with an option to cancel them */}
+                </div>
+              </section>
+            ))}
+
+          <section className="dashboard-content">
+            <div className="card role-management-card">
+              <div className="header-and-all-info">
                 <div className="table-header">
                   <div className="user-detail">Name</div>
                   <div className="user-detail">Email</div>
                   <div className="user-detail">Phone Number</div>
                   <div className="user-detail">Role</div>
                 </div>
-              
-              <div>
-                {localUsers.map((localUser) => (
-                  <div className="all-user-info" key={localUser.uid}>
-                    <div className="user-detail">{`${localUser.firstName} ${localUser.lastName}`}</div>
-                    <div className="user-detail">{localUser.email}</div>
-                    <div className="user-detail">{localUser.phone}</div>
-                    <div className="user-detail">
-                      {isSuperAdmin && localUser.uid !== user?.uid ? (
-                        <select
-                          title="role-select"
-                          value={localUser.role}
-                          onChange={(e) =>
-                            handleRoleChange(localUser.uid!, e.target.value)
-                          }
-                        >
-                          {/* List all possible roles here */}
-                          <option value="admin">Admin</option>
-                          <option value="employee">Employee</option>
-                          {/* Other roles */}
-                        </select>
-                      ) : (
-                        <span>{localUser.role}</span>
-                      )}
+
+                <div>
+                  {localUsers.map((localUser) => (
+                    <div className="all-user-info" key={localUser.uid}>
+                      <div className="user-detail">{`${localUser.firstName} ${localUser.lastName}`}</div>
+                      <div className="user-detail">{localUser.email}</div>
+                      <div className="user-detail">{localUser.phone}</div>
+                      <div className="user-detail">
+                        {isSuperAdmin && localUser.uid !== user?.uid ? (
+                          <select
+                            title="role-select"
+                            value={localUser.role}
+                            onChange={(e) =>
+                              handleRoleChange(localUser.uid!, e.target.value)
+                            }
+                          >
+                            {/* List all possible roles here */}
+                            <option value="admin">Admin</option>
+                            <option value="employee">Employee</option>
+                            {/* Other roles */}
+                          </select>
+                        ) : (
+                          <span>{localUser.role}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Additional cards for other dashboard content */}
-        </section>
-      </main>
-    </div>
+            {/* Additional cards for other dashboard content */}
+          </section>
+        </main>
+      </div>
     </>
   );
 };

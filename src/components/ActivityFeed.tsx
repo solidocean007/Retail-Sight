@@ -69,8 +69,6 @@ const ActivityFeed = () => {
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
-  console.log("user company: ", currentUserCompanyId);
-  console.log("user : ", currentUser);
 
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
