@@ -22,6 +22,7 @@
   z-index: 11;
   font-size: 30px;
   color: whitesmoke;
+  margin-right: 1rem;
 }
 
 .logo-title-box {
@@ -33,7 +34,13 @@
   margin: 0rem 1rem;
 }
 
+.website-title p {
+  margin: 0;
+}
+
 .website-title {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   font-size: smaller;
   color: var(--text-color);
