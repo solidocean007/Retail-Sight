@@ -14,5 +14,7 @@ module.exports = {
       'warn',
       { allowConstantExport: true },
     ],
+    "max-len": "off",
+    "linebreak-style": "off"
   },
 }
