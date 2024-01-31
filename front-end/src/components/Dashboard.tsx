@@ -35,26 +35,32 @@ export const Dashboard = () => {
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
+  const companyName = user?.company;
 
 
   const handleInviteSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   
-    if (user?.companyId) {
+    if (user?.companyId && companyName) { // Ensure both companyId and companyName are available
       try {
         const functions = getFunctions(); // Initialize Firebase Functions
         const sendInviteFunction = httpsCallable(functions, 'sendInvite');
         
-        await sendInviteFunction({ email: inviteEmail, companyId: user.companyId, inviter: user.email });
+        // Generate the invite link
+        const inviteLink = `https://displaygram.com/sign-up-login?companyName=${encodeURIComponent(companyName)}&email=${encodeURIComponent(inviteEmail)}`;
+
+        // Call the sendInvite Cloud Function
+        await sendInviteFunction({ email: inviteEmail, companyId: user.companyId, inviter: user.email, inviteLink });
 
         // Record the invite in Firestore
-      await setDoc(doc(db, "invites", inviteEmail), {
-        email: inviteEmail,
-        companyId: user.companyId,
-        status: 'pending',
-        inviter: user.email,
-        timestamp: serverTimestamp()
-      });
+        await setDoc(doc(db, "invites", inviteEmail), {
+          email: inviteEmail,
+          companyId: user.companyId,
+          status: 'pending',
+          inviter: user.email,
+          timestamp: serverTimestamp(),
+          link: inviteLink
+        });
         
         console.log("Invite sent to", inviteEmail);
         setInviteEmail(""); // Reset the input field
@@ -62,9 +68,10 @@ export const Dashboard = () => {
         console.error("Error sending invite:", error);
       }
     } else {
-      console.error("Company ID is undefined");
+      console.error("Company ID or Company Name is undefined");
     }
-  };
+};
+
 
   useEffect(() => {
     const fetchInvites = async () => {
@@ -172,7 +179,7 @@ export const Dashboard = () => {
           {(isAdmin || isDeveloper) && (
             <section className="invite-section">
               <form className="invite-form" onSubmit={handleInviteSubmit}>
-                <label htmlFor="inviteEmail">Invite New Employee:</label>
+                <label htmlFor="inviteEmail">Invite Employee:</label>
                 <input
                   type="email"
                   id="inviteEmail"

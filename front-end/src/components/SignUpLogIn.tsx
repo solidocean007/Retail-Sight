@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { TErrorsOfInputs, TUserInputType, UserType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { handleSignUp, handleLogin } from "../utils/validation/authenticate";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { fetchUserDocFromFirestore } from "../utils/userData/fetchUserDocFromFirestore";
 
 // Import necessary Material-UI components
@@ -36,12 +36,36 @@ import { SignUpLoginHelmet } from "../utils/helmetConfigurations";
 // import { useStyles } from "../utils/PostLogic/makeStyles";
 
 export const SignUpLogin = () => {
+  const [emailParam, setEmailParam] = useState('');
+  const [companyNameParam, setCompanyNameParam] = useState('');
+  
+  const [isEmailDisabled, setIsEmailDisabled] = useState(false);
+  const [isCompanyDisabled, setIsCompanyDisabled] = useState(false);
+  const location = useLocation();
+
   useEffect(() => {
-    console.log("SignUpLogin mounts");
-    return () => {
-      console.log("SignUpLogin unmounts");
-    };
-  }, []);
+    const searchParams = new URLSearchParams(location.search);
+    const email = searchParams.get('email') || '';
+    const companyName = searchParams.get('companyName') || '';
+
+    console.log("URL Email:", email);
+    console.log("URL Company Name:", companyName);
+
+    setEmailParam(email);
+    setCompanyNameParam(companyName);
+
+    if (email || companyName) {
+      setUserInputs(prevState => ({
+        ...prevState,
+        emailInput: decodeURIComponent(email),
+        companyInput: decodeURIComponent(companyName),
+      }));
+
+      setIsEmailDisabled(!!email);
+      setIsCompanyDisabled(!!companyName);
+    }
+  }, [location]);
+  
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -56,8 +80,8 @@ export const SignUpLogin = () => {
   const [userInputs, setUserInputs] = useState<TUserInputType>({
     firstNameInput: "",
     lastNameInput: "",
-    emailInput: "",
-    companyInput: "",
+    emailInput: decodeURIComponent(emailParam),
+  companyInput: decodeURIComponent(companyNameParam),
     phoneInput: "",
     passwordInput: "",
     verifyPasswordInput: "",
@@ -274,7 +298,7 @@ export const SignUpLogin = () => {
                     onChange={(e) =>
                       handleInputChange("emailInput", e.target.value)
                     }
-                    // style={textFieldStyle}
+                    disabled={!!emailParam}
                   />
                   <ErrorMessage
                     message={errorsOfInputs.emailInputError}
@@ -291,7 +315,7 @@ export const SignUpLogin = () => {
                     onChange={(e) =>
                       handleInputChange("companyInput", e.target.value)
                     }
-                    // style={textFieldStyle}
+                    disabled={!!companyNameParam}
                   />
                   <ErrorMessage
                     message={errorsOfInputs.companyInputError}
