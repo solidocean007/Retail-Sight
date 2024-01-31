@@ -298,7 +298,7 @@ export const SignUpLogin = () => {
                     onChange={(e) =>
                       handleInputChange("emailInput", e.target.value)
                     }
-                    disabled={!!emailParam}
+                    disabled={!!isEmailDisabled}
                   />
                   <ErrorMessage
                     message={errorsOfInputs.emailInputError}
@@ -315,7 +315,7 @@ export const SignUpLogin = () => {
                     onChange={(e) =>
                       handleInputChange("companyInput", e.target.value)
                     }
-                    disabled={!!companyNameParam}
+                    disabled={!!isCompanyDisabled}
                   />
                   <ErrorMessage
                     message={errorsOfInputs.companyInputError}
