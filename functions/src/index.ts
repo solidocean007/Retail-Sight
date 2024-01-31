@@ -17,5 +17,5 @@
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
-import { sendInvite } from "./sendInvite";
+import {sendInvite} from "./sendInvite";
 export {sendInvite};
