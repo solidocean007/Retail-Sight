@@ -33,15 +33,10 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   return (
     <div className="header-bar">
       <div className="logo-title-box">
-      <div className="logo-box">
-        <img
-          src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
-          alt="displaygram logo"
-        />
-      </div>
+     
       <div className="website-title">
         <h1>Home page</h1>
-        <p>version 0.1.2</p>
+        <p>version 0.1.3</p>
       </div>
       </div>
       
