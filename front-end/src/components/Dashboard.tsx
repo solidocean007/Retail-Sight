@@ -84,6 +84,7 @@ export const Dashboard = () => {
     };
   
     fetchInvites();
+    console.log("fetch Invites: ", fetchInvites); // this never as a promise.  not an array of invites.  i need a component to handle canceling any pending invites to place down in my jsx
   }, []);
   
   
@@ -193,6 +194,7 @@ export const Dashboard = () => {
 
               <div className="all-pending-invites">
                 {/* add pending invites here with an option to cancel them */}
+                {/* should this be  a component?  create one if so */}
               </div>
             </section>
           )}

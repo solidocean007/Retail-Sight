@@ -56,6 +56,18 @@ export const SignUpLogin = () => {
     !!initialCompanyNameParam
   );
 
+  // Log the initial values when the component mounts
+  useEffect(() => {
+    console.log("Initial email parameter:", emailParam);
+    console.log("Initial company name parameter:", companyNameParam);
+  }, []);
+
+  // Monitor changes to emailParam and companyNameParam
+  useEffect(() => {
+    console.log("Updated email parameter:", emailParam);
+    console.log("Updated company name parameter:", companyNameParam);
+  }, [emailParam, companyNameParam]);
+
   // useEffect to get parameters from url
   useEffect(() => {
     console.log("search params");
@@ -201,8 +213,7 @@ export const SignUpLogin = () => {
           // Now update the user's Firestore document with the company information
           const updateData = {
             company: companyData?.companyName,
-            companyId: companyData?.companyId, //  Property 'companyId' does not exist on type '{ lastUpdated: string; companyName: string; altCompanyNames: string[]; adminsUsers: string[]; employeeUsers: never[]; statusPendingUsers: never[]; companyVerified: boolean; createdAt: string; id: string; }'
-            // any other user fields you want to update
+            companyId: companyData?.companyId,
           };
           await updateUsersCompany(authData.uid, updateData); // Function to update Firestore user document
 
