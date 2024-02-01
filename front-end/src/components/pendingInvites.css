@@ -1,0 +1,59 @@
+/* PendingInvites.css */
+
+/* Base styles */
+.pending-invites-container {
+  max-width: 600px; /* Maximum width of the container */
+  margin: 0 auto; /* Center the container */
+  padding: 20px;
+}
+
+.pending-invites-list {
+  list-style: none;
+  padding: 0;
+}
+
+.pending-invite-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9f9f9;
+  border: 1px solid #e1e1e1;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.invite-info {
+  flex-grow: 1; /* Allow the invite info to fill the space */
+  margin-right: 20px; /* Space between info and button */
+}
+
+.cancel-invite-button {
+  padding: 5px 10px;
+  background-color: #ff6b6b;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-invite-button:hover {
+  background-color: #ff4c4c;
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .pending-invite-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .invite-info {
+    margin-bottom: 10px;
+    margin-right: 0;
+  }
+
+  .cancel-invite-button {
+    width: 100%; /* Full width on smaller screens */
+  }
+}

@@ -13,11 +13,12 @@ import {
 import { fetchCompanyUsers } from "../thunks/usersThunks";
 import { UserType } from "../utils/types";
 import { RootState, useAppDispatch } from "../utils/store";
-import { collection, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
 import { getFunctions, httpsCallable } from "@firebase/functions";
+import PendingInvites from "./PendingInvites";
 // import firebase from "firebase/compat/app";
 
 export const Dashboard = () => {
@@ -71,23 +72,6 @@ export const Dashboard = () => {
       console.error("Company ID or Company Name is undefined");
     }
 };
-
-
-  useEffect(() => {
-    const fetchInvites = async () => {
-      const querySnapshot = await getDocs(collection(db, "invites"));
-      const invites = [];
-      querySnapshot.forEach((doc) => {
-        invites.push(doc.data());
-      });
-      // Set state with the fetched invites
-    };
-  
-    fetchInvites();
-    console.log("fetch Invites: ", fetchInvites); // this never as a promise.  not an array of invites.  i need a component to handle canceling any pending invites to place down in my jsx
-  }, []);
-  
-  
 
   useEffect(() => {
     const fetchAndStoreUsers = async () => {
@@ -194,7 +178,7 @@ export const Dashboard = () => {
 
               <div className="all-pending-invites">
                 {/* add pending invites here with an option to cancel them */}
-                {/* should this be  a component?  create one if so */}
+                <PendingInvites />
               </div>
             </section>
           )}

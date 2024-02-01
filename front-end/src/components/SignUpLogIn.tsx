@@ -33,6 +33,8 @@ import {
 } from "../utils/companyLogic";
 import { updateSelectedUser as updateUsersCompany } from "../DeveloperAdminFunctions/developerAdminFunctions";
 import { SignUpLoginHelmet } from "../utils/helmetConfigurations";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
 // import { useStyles } from "../utils/PostLogic/makeStyles";
 
 export const SignUpLogin = () => {
@@ -42,6 +44,7 @@ export const SignUpLogin = () => {
 
   // Directly initialize emailParam and companyNameParam from URL
   const searchParams = new URLSearchParams(location.search);
+
   const initialEmailParam = searchParams.get("email") || "";
   const initialCompanyNameParam = searchParams.get("companyName") || "";
 
@@ -56,27 +59,11 @@ export const SignUpLogin = () => {
     !!initialCompanyNameParam
   );
 
-  // Log the initial values when the component mounts
-  useEffect(() => {
-    console.log("Initial email parameter:", emailParam);
-    console.log("Initial company name parameter:", companyNameParam);
-  }, []);
-
-  // Monitor changes to emailParam and companyNameParam
-  useEffect(() => {
-    console.log("Updated email parameter:", emailParam);
-    console.log("Updated company name parameter:", companyNameParam);
-  }, [emailParam, companyNameParam]);
-
   // useEffect to get parameters from url
   useEffect(() => {
-    console.log("search params");
     const searchParams = new URLSearchParams(location.search);
     const email = searchParams.get("email") || "";
     const companyName = searchParams.get("companyName") || "";
-
-    console.log("URL Email:", email);
-    console.log("URL Company Name:", companyName);
 
     setEmailParam(email);
     setCompanyNameParam(companyName);
@@ -173,7 +160,7 @@ export const SignUpLogin = () => {
       const firstError = Object.values(validationErrors).find(
         (error) => error !== ""
       );
-
+        
       if (firstError) {
         dispatch(showMessage(`Bad data input: ${firstError}`));
         return; // Stop the process if there's a validation error
@@ -203,6 +190,16 @@ export const SignUpLogin = () => {
               companyName: matchingCompany.companyName,
               companyId: matchingCompany.id,
             };
+
+            // If there was an emailParam, the user signed up through an invite link
+            if (initialEmailParam.length > 0) {
+              // Update the invite status to "fulfilled"
+              const inviteRef = doc(db, "invites", initialEmailParam);
+              await updateDoc(inviteRef, {
+                status: "fulfilled",
+                fulfilledAt: new Date(), // capture the time of signup
+              });
+            }
           } else {
             companyData = await createNewCompany(
               normalizedCompanyInput,
@@ -268,7 +265,7 @@ export const SignUpLogin = () => {
         <h1 className="title">Displaygram</h1>
         <div className="sign-up-container">
           <Typography variant="h2">
-            {isSignUp ? "Sign Up" : "Log In"}
+            {isSignUp ? "Sign Up!" : "Log In"}
           </Typography>
           <button onClick={setFormMode}>{formButtonMessage()}</button>
           <form noValidate onSubmit={onSubmit}>
@@ -354,7 +351,7 @@ export const SignUpLogin = () => {
                     onChange={(e) =>
                       handleInputChange("phoneInput", e.target.value)
                     }
-                    // style={textFieldStyle}
+                    autoComplete="tel"
                   />
                   <ErrorMessage
                     message={errorsOfInputs.phoneInputError}
