@@ -36,17 +36,32 @@ import { SignUpLoginHelmet } from "../utils/helmetConfigurations";
 // import { useStyles } from "../utils/PostLogic/makeStyles";
 
 export const SignUpLogin = () => {
-  const [emailParam, setEmailParam] = useState('');
-  const [companyNameParam, setCompanyNameParam] = useState('');
-  
-  const [isEmailDisabled, setIsEmailDisabled] = useState(false);
-  const [isCompanyDisabled, setIsCompanyDisabled] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const location = useLocation();
 
+  // Directly initialize emailParam and companyNameParam from URL
+  const searchParams = new URLSearchParams(location.search);
+  const initialEmailParam = searchParams.get("email") || "";
+  const initialCompanyNameParam = searchParams.get("companyName") || "";
+
+  const [emailParam, setEmailParam] = useState(
+    decodeURIComponent(initialEmailParam)
+  );
+  const [companyNameParam, setCompanyNameParam] = useState(
+    decodeURIComponent(initialCompanyNameParam)
+  );
+  const [isEmailDisabled, setIsEmailDisabled] = useState(!!initialEmailParam);
+  const [isCompanyDisabled, setIsCompanyDisabled] = useState(
+    !!initialCompanyNameParam
+  );
+
+  // useEffect to get parameters from url
   useEffect(() => {
+    console.log("search params");
     const searchParams = new URLSearchParams(location.search);
-    const email = searchParams.get('email') || '';
-    const companyName = searchParams.get('companyName') || '';
+    const email = searchParams.get("email") || "";
+    const companyName = searchParams.get("companyName") || "";
 
     console.log("URL Email:", email);
     console.log("URL Company Name:", companyName);
@@ -55,7 +70,7 @@ export const SignUpLogin = () => {
     setCompanyNameParam(companyName);
 
     if (email || companyName) {
-      setUserInputs(prevState => ({
+      setUserInputs((prevState) => ({
         ...prevState,
         emailInput: decodeURIComponent(email),
         companyInput: decodeURIComponent(companyName),
@@ -65,10 +80,6 @@ export const SignUpLogin = () => {
       setIsCompanyDisabled(!!companyName);
     }
   }, [location]);
-  
-
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
 
   const [signUpError, setSignUpError] = useState("");
   const [passwordVisibility, setPasswordVisibility] = useState({
@@ -80,8 +91,8 @@ export const SignUpLogin = () => {
   const [userInputs, setUserInputs] = useState<TUserInputType>({
     firstNameInput: "",
     lastNameInput: "",
-    emailInput: decodeURIComponent(emailParam),
-  companyInput: decodeURIComponent(companyNameParam),
+    emailInput: emailParam,
+    companyInput: companyNameParam,
     phoneInput: "",
     passwordInput: "",
     verifyPasswordInput: "",
@@ -256,7 +267,7 @@ export const SignUpLogin = () => {
                   {/* Sign Up Fields */}
                   {/* First Name */}
                   <TextField
-                    style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="First Name"
                     name="firstNameInput"
                     value={userInputs.firstNameInput}
@@ -273,7 +284,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
-                    style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="Last Name"
                     name="lastNameInput"
                     value={userInputs.lastNameInput}
@@ -291,7 +302,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
-                  style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="Email"
                     name="emailInput"
                     value={userInputs.emailInput}
@@ -308,7 +319,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
-                  style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="Company"
                     name="companyInput"
                     value={userInputs.companyInput}
@@ -325,7 +336,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
-                  style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="Phone Number"
                     name="phoneInput"
                     value={userInputs.phoneInput}
@@ -342,7 +353,7 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
-                  style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="Password"
                     name="passwordInput"
                     value={userInputs.passwordInput}
@@ -377,7 +388,7 @@ export const SignUpLogin = () => {
 
                   {/* Verify Password */}
                   <TextField
-                  style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="Verify Password"
                     name="verifyPasswordInput"
                     value={userInputs.verifyPasswordInput}
@@ -414,7 +425,7 @@ export const SignUpLogin = () => {
                   {/* Log In Fields */}
                   {/* Email */}
                   <TextField
-                    style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="Email"
                     name="emailInput"
                     value={userInputs.emailInput}
@@ -431,7 +442,7 @@ export const SignUpLogin = () => {
 
                   {/* Password */}
                   <TextField
-                  style={{ marginBottom: '5px' }}
+                    style={{ marginBottom: "5px" }}
                     label="Password"
                     name="passwordInput"
                     value={userInputs.passwordInput}
