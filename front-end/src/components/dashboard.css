@@ -1,5 +1,5 @@
- /* dashboard.css */
- .dashboard-container {
+/* dashboard.css */
+.dashboard-container {
   display: flex;
   width: 100%;
   height: 100vh;
@@ -29,22 +29,44 @@
 
 .header-top {
   display: flex;
-  padding: 1rem .5rem 0rem;
+  padding: 1rem 0.5rem 0rem;
 }
 
 .dashboard-header h1 {
-  margin: .5rem;
+  margin: 0.5rem;
 }
 
 .dashboard-user-details {
   text-align: justify;
-  padding: .5rem;
+  padding: 0.5rem;
+}
+
+.dashboard-user-details p {
+  color: whitesmoke;
+  padding-left: 1rem;
 }
 
 .invite-section {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   margin: 10px;
+}
+
+.invite-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.invite-input-box {
+  display: flex;
+}
+
+.invite-input-box input {
+  min-width: 300px;
+  max-width: 600px;
+  width: 30%;
+  padding-left: 1rem;
 }
 
 .dashboard-content {
@@ -58,13 +80,18 @@
   flex-direction: column;
 }
 
+.all-pending-invites {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
 .table-header {
   display: flex;
 }
 
 .all-user-info {
   display: flex;
-  
 }
 
 .user-detail {

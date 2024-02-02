@@ -2,9 +2,30 @@
 
 /* Base styles */
 .pending-invites-container {
+  display: flex;
+  flex-direction: column;
   max-width: 600px; /* Maximum width of the container */
-  margin: 0 auto; /* Center the container */
   padding: 20px;
+}
+
+.pending-invites-container button {
+  width: 120px;
+  height: 30px;
+}
+
+.pending-invites-container ol {
+  background-color: #f9f9f9;
+  margin: .5rem;
+}
+ 
+.pending-invites-container li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid black;
+  min-width: 400px;
+  text-align: justify;
+  width: 100%;
 }
 
 .pending-invites-list {

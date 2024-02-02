@@ -177,7 +177,7 @@ export const SignUpLogin = () => {
           setSignUpError
         );
 
-        if (authData?.uid) {
+        if (authData && authData?.uid) {
           // Assuming validation passed, proceed with company check
           const normalizedCompanyInput = normalizeCompanyInput(companyInput);
           let companyData;
@@ -194,11 +194,17 @@ export const SignUpLogin = () => {
             // If there was an emailParam, the user signed up through an invite link
             if (initialEmailParam.length > 0) {
               // Update the invite status to "fulfilled"
+              console.log('initialEmailParam: ', initialEmailParam)
               const inviteRef = doc(db, "invites", initialEmailParam);
-              await updateDoc(inviteRef, {
-                status: "fulfilled",
-                fulfilledAt: new Date(), // capture the time of signup
-              });
+              try {
+                await updateDoc(inviteRef, {
+                  status: "fulfilled",
+                  fulfilledAt: new Date(), // capture the time of signup
+                });
+              } catch (updateError) {
+                console.log("error updating invite", updateError)
+              }
+             
             }
           } else {
             companyData = await createNewCompany(
