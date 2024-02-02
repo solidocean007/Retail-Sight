@@ -58,6 +58,11 @@
   flex-direction: column;
 }
 
+.invite-title {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .invite-input-box {
   display: flex;
 }
