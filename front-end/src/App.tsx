@@ -12,22 +12,11 @@ import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 import UserModal from "./components/UserModal.tsx";
 import { AppRoutes } from "./utils/Routes.tsx";
 import { getTheme } from "./theme.ts";
-import { useEffect } from "react";
 import Footer from "./components/Footer.tsx";
-
 
 function App() {
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const { currentUser, initializing } = useFirebaseAuth();
-  
- 
-  useEffect(() => {
-    console.log('App.tsx mounts')
-    
-    return () => {
-      console.log('App.tsx unmounted');
-    };
-  }, []);
 
   const theme = getTheme(isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);

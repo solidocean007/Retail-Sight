@@ -8,11 +8,13 @@ export const getPostsByTag = async (
   hashTag: string,
   usersCompanyID?: string,
 ): Promise<PostWithID[]> => {
+
+  const lowerCaseHashTag = hashTag.toLowerCase();
   try {
     const postsCollectionRef = collection(db, "posts");
     const postsQuery = query(
       postsCollectionRef,
-      where("hashtags", "array-contains", hashTag)
+      where("hashtags", "array-contains", lowerCaseHashTag)
     );
     const snapshots = await getDocs(postsQuery);
 
