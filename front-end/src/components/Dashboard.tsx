@@ -13,7 +13,15 @@ import {
 import { fetchCompanyUsers } from "../thunks/usersThunks";
 import { UserType } from "../utils/types";
 import { RootState, useAppDispatch } from "../utils/store";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  setDoc,
+  where,
+} from "firebase/firestore";
 import { db } from "../utils/firebase";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
@@ -37,6 +45,8 @@ export const Dashboard = () => {
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
   const companyName = user?.company;
+
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const handleInviteSubmit = async (
     event: React.FormEvent<HTMLFormElement>
@@ -83,29 +93,50 @@ export const Dashboard = () => {
   };
 
   useEffect(() => {
-    const fetchAndStoreUsers = async () => {
-      if (companyId) {
-        const indexedDBUsers = await getCompanyUsersFromIndexedDB();
-        if (indexedDBUsers && indexedDBUsers.length > 0) {
-          setLocalUsers(indexedDBUsers);
-        } else {
-          dispatch(fetchCompanyUsers(companyId)).then((users) => {
-            if (Array.isArray(users.payload)) {
-              saveCompanyUsersToIndexedDB(users.payload);
-              setLocalUsers(users.payload);
-            }
-          });
-        }
+    const q = query(
+      collection(db, "users"),
+      where("companyId", "==", companyId)
+    );
+
+    // Firestore real-time subscription setup
+    const unsubscribe = onSnapshot(
+      q,
+      async (snapshot) => {
+        const usersFromFirestore = snapshot.docs.map(
+          (doc) =>
+            ({
+              ...doc.data(),
+              uid: doc.id,
+            } as UserType)
+        );
+
+        // Update state with users from Firestore
+        setLocalUsers(usersFromFirestore);
+
+        // Save the updated list to IndexedDB
+        await saveCompanyUsersToIndexedDB(usersFromFirestore);
+      },
+      (error) => {
+        console.error("Error fetching users:", error);
+      }
+    );
+
+    // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
+    return () => unsubscribe();
+  }, [companyId]);
+
+  // Separate useEffect to attempt to load from IndexedDB when component mounts
+  useEffect(() => {
+    const loadFromIndexedDB = async () => {
+      // Attempt to get users from IndexedDB
+      const indexedDBUsers = await getCompanyUsersFromIndexedDB();
+      if (indexedDBUsers && indexedDBUsers.length > 0) {
+        setLocalUsers(indexedDBUsers);
       }
     };
 
-    fetchAndStoreUsers();
-  }, [companyId, dispatch]);
-
-  useEffect(() => {
-    // Update localUsers whenever companyUsers in Redux changes
-    setLocalUsers(companyUsers);
-  }, [companyUsers]);
+    loadFromIndexedDB();
+  }, []);
 
   // Type guard function to check if a string is a valid role
   function isValidRole(role: string): role is UserType["role"] {
@@ -200,35 +231,39 @@ export const Dashboard = () => {
             <div className="card role-management-card">
               <div className="header-and-all-info">
                 <div className="table-header">
-                  <div className="user-detail">Name</div>
+                  <div className="user-name-detail">Name</div>
                   <div className="user-detail">Email</div>
-                  <div className="user-detail">Phone Number</div>
-                  <div className="user-detail">Role</div>
+                  <div className="user-phone-detail">Phone Number</div>
+                  <div className="user-role-detial">Role</div>
                 </div>
 
                 <div>
                   {localUsers.map((localUser) => (
                     <div className="all-user-info" key={localUser.uid}>
-                      <div className="user-detail">{`${localUser.firstName} ${localUser.lastName}`}</div>
-                      <div className="user-detail">{localUser.email}</div>
-                      <div className="user-detail">{localUser.phone}</div>
-                      <div className="user-detail">
-                        {isSuperAdmin && localUser.uid !== user?.uid ? (
-                          <select
-                            title="role-select"
-                            value={localUser.role}
-                            onChange={(e) =>
-                              handleRoleChange(localUser.uid!, e.target.value)
-                            }
-                          >
-                            {/* List all possible roles here */}
-                            <option value="admin">Admin</option>
-                            <option value="employee">Employee</option>
-                            {/* Other roles */}
-                          </select>
-                        ) : (
-                          <span>{localUser.role}</span>
-                        )}
+                      <div className="user-name-email">
+                        <div className="user-name-detail">{`${localUser.firstName} ${localUser.lastName}`}</div>
+                        <div className="user-detail">{localUser.email}</div>
+                      </div>
+                      <div className="user-phone-role">
+                        <div className="user-phone-detail">{localUser.phone}</div>
+                        <div className="user-role-detail">
+                          {isSuperAdmin && localUser.uid !== user?.uid ? (
+                            <select
+                              title="role-select"
+                              value={localUser.role}
+                              onChange={(e) =>
+                                handleRoleChange(localUser.uid!, e.target.value)
+                              }
+                            >
+                              {/* List all possible roles here */}
+                              <option value="admin">Admin</option>
+                              <option value="employee">Employee</option>
+                              {/* Other roles */}
+                            </select>
+                          ) : (
+                            <span>{localUser.role}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -42,8 +42,9 @@
 .image-and-details {
   display: flex;
   justify-content: space-around;
-  margin: 15px 0px;
-  width: 80%;
+  width: 100vw;
+  margin: 15px 5px;
+
 }
 
 .image-selection-box {
@@ -51,6 +52,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  margin: 2rem 0;
 }
 
 .image-box {
@@ -80,7 +82,7 @@ select {
 
 .property-zone {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   margin: 0;
 }
