@@ -1,49 +1,50 @@
-// AdComponents.tsx
-// import React, { useEffect } from "react";
+import React, { useEffect } from "react";
 import "./adComponent.css";
 
 interface AdComponentProps {
-  style: React.CSSProperties;
+  className?: string; // New prop for CSS class
+  adClient: string; // Your AdSense Client ID
+  adSlot: string; // Your AdSense Slot ID
+  adFormat?: string; // Optional prop for ad format
   adsOn: boolean;
+  placeholder?: JSX.Element; // Optional placeholder element
 }
 
-const AdComponent: React.FC<AdComponentProps> = ({ style, adsOn }) => {
+const AdComponent: React.FC<AdComponentProps> = ({
+  className,
+  adClient,
+  adSlot,
+  adFormat = "auto",
+  adsOn,
+  placeholder,
+}) => {
+  useEffect(() => {
+    if (adsOn) {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [adsOn]);
+
   if (!adsOn) {
-    return null;
+    return placeholder || <div className="ad-placeholder">Ad Placeholder</div>;
   }
-  // useEffect(() => {
-  //   try {
-  //     (window.adsbygoogle = window.adsbygoogle || []).push({});
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  // }, []);
 
   return (
-    <div
-      className="ad-block"
-      style={{
-        ...style,
-        textAlign: "center",
-        padding: "20px",
-        border: "1px dashed #ccc",
-      }}
-    >
+    <div className={`ad-block ${className || ""}`}>
       <ins
         className="adsbygoogle"
         style={{ display: "block" }}
-        data-ad-client="YOUR_ADSENSE_CLIENT_ID"
-        data-ad-slot="YOUR_ADSENSE_SLOT_ID"
-        data-ad-format="auto"
+        data-ad-client={adClient}
+        data-ad-slot={adSlot}
+        data-ad-format={adFormat}
         data-full-width-responsive="true"
       ></ins>
-      {/* <h1 style={{ margin: "20px", color: "gray", fontSize: "25px" }}> */}
-      <h2>
-        Ad space placeholder.
-      </h2>
-      {/* Always show placeholder */}
     </div>
   );
 };
 
 export default AdComponent;
+
