@@ -3,7 +3,7 @@
   flex-direction: column;
   align-items: center;
   margin-top: 0px;
-  max-width: 100vw;
+  max-width: 100%;
 }
 
 .top-of-activity-feed {

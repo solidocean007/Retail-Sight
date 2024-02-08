@@ -265,6 +265,127 @@ const ActivityFeed = () => {
     };
   }, [currentUser?.companyId, dispatch]);
 
+
+  // load indexDB posts or fetch from firestore
+  // useEffect(() => {
+  //   const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
+  //     await clearIndexedDB();
+
+  //     dispatch(
+  //       fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }) 
+  //     ).then((action) => {
+  //       if (fetchInitialPostsBatch.fulfilled.match(action)) {
+  //         addPostsToIndexedDB(action.payload.posts);
+  //       }
+  //     });
+  //   };
+
+  //   const fetchPublicPosts = async () => {
+  //     // need to check indexedDB before doing this in case this user has visited the site before.
+  //     const publicPostsQuery = query(
+  //       collection(db, "posts"),
+  //       where("visibility", "==", "public"),
+  //       orderBy("timestamp", "desc"),
+  //       limit(4)
+  //     );
+  //     const querySnapshot = await getDocs(publicPostsQuery);
+
+  //     const publicPosts: PostWithID[] = querySnapshot.docs
+  //       .map((doc) => {
+  //         const postData: PostType = doc.data() as PostType;
+  //         return {
+  //           ...postData,
+  //           id: doc.id,
+  //         };
+  //       })
+  //       .filter((post) => post.visibility === "public");
+  //     // id: doc.id, ...doc.data() as PostType }));
+  //     dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
+  //     addPostsToIndexedDB(publicPosts);
+  //   };
+
+  //   const loadPosts = async () => {
+  //     let postsLoaded = false;
+  
+  //     // Attempt to load posts from IndexedDB first
+  //     const cachedPosts = await getPostsFromIndexedDB();
+  //     if (cachedPosts && cachedPosts.length > 0) {
+  //       dispatch(setPosts(cachedPosts));
+  //       postsLoaded = true;
+  //     }
+  
+  //     // If posts are not loaded from IndexedDB, fetch from Firestore
+  //     if (!postsLoaded) {
+  //       if (currentUser === null) {
+  //         // Function to fetch public posts
+  //         await fetchPublicPosts();
+  //       } else if (currentUserCompanyId) {
+  //         // Function to fetch company-specific posts
+  //         await fetchPostsForLoggedInUser(currentUserCompanyId);
+  //       }
+  //     }
+  //   };
+  
+  //   loadPosts();
+  // }, [currentUser, dispatch, currentUserCompanyId]);
+
+
+  // listen for new or updated posts
+  useEffect(() => {
+    // Capture the mount time in ISO format
+    const mountTime = new Date().toISOString();
+    const userCompanyID = currentUser?.companyId;
+
+    // Function to process document changes
+    const processDocChanges = (snapshot: QuerySnapshot) => {
+      const changes = snapshot.docChanges();
+      changes.forEach((change: DocumentChange) => {
+        const postData = {
+          id: change.doc.id,
+          ...(change.doc.data() as PostType),
+        };
+        if (change.type === "added" || change.type === "modified") {
+          dispatch(mergeAndSetPosts([postData])); // I think this is the part that is failing and also lets add the update
+          updatePostInIndexedDB(postData);
+        } else if (change.type === "removed") {
+          // Dispatch an action to remove the post from Redux store
+          dispatch(deletePost(change.doc.id));
+          // Call a function to remove the post from IndexedDB
+          removePostFromIndexedDB(change.doc.id);
+          deleteUserCreatedPostInIndexedDB(change.doc.id);
+        }
+      });
+    };
+
+    // Subscribe to public posts
+    const publicPostsQuery = query(
+      collection(db, "posts"),
+      where("visibility", "==", "public"),
+      where("timestamp", ">", mountTime),
+      orderBy("timestamp", "desc")
+    );
+    const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
+
+    // Subscribe to company-specific posts, if the user's company is known
+    let unsubscribeCompany = () => {};
+    if (userCompanyID) {
+      const companyPostsQuery = query(
+        collection(db, "posts"),
+        where("user.postUserCompanyID", "==", userCompanyID),
+        where("timestamp", ">", mountTime),
+        orderBy("timestamp", "desc")
+      );
+      unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);
+    }
+
+    // Cleanup function
+    return () => {
+      unsubscribePublic();
+      unsubscribeCompany();
+    };
+  }, [currentUser?.companyId, dispatch]);
+
+
   const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   const itemCount = displayPosts.length + numberOfAds;
 
@@ -340,7 +461,7 @@ const ActivityFeed = () => {
           onClick={handleTutorialClick}
           className="onboarding-tutorial-intro-box"
         >
-          Click for Tutorial
+          Tutorial
         </button>
         <div className="header-right-side-box" onClick={handleCreateDisplayPostClick}>
           <button>Create display post</button>

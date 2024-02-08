@@ -98,8 +98,11 @@
 /* Styles for mobile devices */
 @media (max-width: 900px) {
   .top-of-activity-feed .onboarding-tutorial-intro-box {
-    display: block;
+    display: flex;
+    width: 10rem;
   }
+
+  
 
   .container-user-home-page {
     /* margin-top: 10px; */
