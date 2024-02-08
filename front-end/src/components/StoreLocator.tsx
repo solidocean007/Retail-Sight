@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PostType } from "../utils/types";
 import { updateLocationsCollection } from "../utils/PostLogic/updateLocationsCollection";
-import './storeSelector.css'
+import "./storeSelector.css";
 
 // Assuming you've refactored the GOOGLE_MAPS_KEY import using Vite
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -35,21 +35,22 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
   const [selectedPlace, setSelectedPlace] =
     useState<google.maps.places.PlaceResult | null>(null);
 
- // Function to handle store name input changes
- const handleStoreNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const newName = e.target.value;
-  setSelectedPlace((prevSelectedPlace) => ({
-    ...prevSelectedPlace,
-    name: newName,
-  }));
-  onStoreNameChange(newName);
-};
+  // Function to handle store name input changes
+  const handleStoreNameInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newName = e.target.value;
+    setSelectedPlace((prevSelectedPlace) => ({
+      ...prevSelectedPlace,
+      name: newName,
+    }));
+    onStoreNameChange(newName);
+  };
 
   // Function to handle store number input changes
   const handleStoreNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onStoreNumberChange(e.target.value);
   };
-
 
   // Load Google Maps script
   useEffect(() => {
@@ -89,16 +90,20 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
 
   // The updated useEffect hook
   useEffect(() => {
-
-  // Function to update store details when a store is selected on the map
-const updateStoreDetails = (name: string, address: string, city: string, state: string) => {
-  onStoreNameChange(name);
-  onStoreAddressChange(address);
-  onStoreCityChange(city);
-  onStoreStateChange(state);
-  // Reset the store number when a new store is selected
-  onStoreNumberChange('');
-};
+    // Function to update store details when a store is selected on the map
+    const updateStoreDetails = (
+      name: string,
+      address: string,
+      city: string,
+      state: string
+    ) => {
+      onStoreNameChange(name);
+      onStoreAddressChange(address);
+      onStoreCityChange(city);
+      onStoreStateChange(state);
+      // Reset the store number when a new store is selected
+      onStoreNumberChange("");
+    };
 
     if (post.storeAddress !== previousStoreAddressRef.current) {
       if (isMapLoaded && mapRef.current) {
@@ -142,7 +147,7 @@ const updateStoreDetails = (name: string, address: string, city: string, state: 
 
                   const city = cityComponent ? cityComponent.long_name : "";
                   const state = stateComponent ? stateComponent.short_name : "";
-                  console.log(state, city)
+                  console.log(state, city);
                   // Call the callback with the city and state
                   callback(state, city);
                 }
@@ -172,14 +177,16 @@ const updateStoreDetails = (name: string, address: string, city: string, state: 
 
                 // Retrieve city and state for the clicked place
                 if (firstResult.place_id) {
-                  fetchCityAndState(firstResult.place_id, (fetchedState, fetchedCity) => {
-                    // Use updateStoreDetails to update store information
-                    updateStoreDetails(
-                      firstResult.name || "",
-                      firstResult.vicinity || "",
-                      fetchedCity,
-                      fetchedState
-                    );
+                  fetchCityAndState(
+                    firstResult.place_id,
+                    (fetchedState, fetchedCity) => {
+                      // Use updateStoreDetails to update store information
+                      updateStoreDetails(
+                        firstResult.name || "",
+                        firstResult.vicinity || "",
+                        fetchedCity,
+                        fetchedState
+                      );
                       // Update Firestore with the new location data
                       updateLocationsCollection(fetchedState, fetchedCity);
                     }
@@ -195,14 +202,21 @@ const updateStoreDetails = (name: string, address: string, city: string, state: 
         previousStoreAddressRef.current = post.storeAddress;
       }
     }
-  }, [isMapLoaded, post.storeAddress, onStoreNumberChange, onStoreAddressChange, onStoreCityChange, onStoreNameChange, onStoreStateChange]);
-
-  
+  }, [
+    isMapLoaded,
+    post.storeAddress,
+    onStoreNumberChange,
+    onStoreAddressChange,
+    onStoreCityChange,
+    onStoreNameChange,
+    onStoreStateChange,
+  ]);
 
   return (
     <div className="map-container">
-      <div ref={mapRef} style={{ width: "300px", height: "200px" }}></div>
+      <div ref={mapRef} style={{ width: "320px", height: "220px" }}></div>
       <div className="store-input-box">
+        3. Verify store name after clicking store on map
         <div className="store-name-input-box">
           <p>Store name:</p>
           <input

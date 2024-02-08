@@ -99,5 +99,7 @@ background: linear-gradient(0deg, rgba(4,12,32,1) 11%, rgba(168,174,213,1) 75%);
   .side-bar-box {
     flex-direction: column;
     padding:  20px 10px;
+    height: 100%;
+    padding-top: 15%;
   }
 }

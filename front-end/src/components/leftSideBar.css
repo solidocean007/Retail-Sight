@@ -16,3 +16,7 @@
   margin: 5px 5px;
   background: var(--tutorial-button-color);
 }
+
+.left-side-bar button {
+  max-width: 100%;
+}

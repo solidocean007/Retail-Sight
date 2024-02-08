@@ -13,9 +13,10 @@
   background-color: var(--form-background-color);
   padding: 5px;
   border-radius: 5px;
-  height: 100vh;
+  height: 100%;
   width: 70%;
   margin-top: 40px;
+  overflow-y: scroll;
 }
 
 .create-post-container button {
@@ -42,8 +43,7 @@
 .image-and-details {
   display: flex;
   justify-content: space-around;
-  width: 100vw;
-  margin: 15px 5px;
+  margin: 15px auto;
 
 }
 
@@ -52,7 +52,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin: 2rem 0;
+  margin: 2rem 2rem;
 }
 
 .image-box {
@@ -89,6 +89,13 @@ select {
 
 .description-box {
   width: 300px;
+}
+
+.store-address-container {
+  display: flex;
+  flex-direction: column;
+  text-align: justify;
+  margin: 0px 5%;
 }
 
 @media (max-width: 900px) {

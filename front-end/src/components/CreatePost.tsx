@@ -73,7 +73,7 @@ export const CreatePost = () => {
     visibility: "company",
     supplier: "",
     brands: [],
-    displayDate: '',
+    displayDate: "",
     timestamp: "",
     postUserName: `${userData?.firstName} ${userData?.lastName}`,
     postUserId: userData?.uid,
@@ -120,23 +120,23 @@ export const CreatePost = () => {
 
   const handleStoreNameChange = useCallback((storeName: string) => {
     setPost((prev) => ({ ...prev, selectedStore: storeName }));
-  },[]);
+  }, []);
 
   const handleStoreNumberChange = useCallback((newStoreNumber: string) => {
     setPost((prev) => ({ ...prev, storeNumber: newStoreNumber }));
-  },[]);
+  }, []);
 
   const handleStoreAddressChange = useCallback((address: string) => {
     setPost((prev) => ({ ...prev, storeAddress: address }));
-  },[]);
+  }, []);
 
   const handleStoreCityChange = useCallback((city: string) => {
     setPost((prev) => ({ ...prev, city: city }));
-  },[]);
+  }, []);
 
   const handleStoreStateChange = useCallback((newStoreState: string) => {
-    setPost((prev) => ({ ...prev, state : newStoreState }));
-  },[]);
+    setPost((prev) => ({ ...prev, state: newStoreState }));
+  }, []);
 
   // Update this to handle all field changes generically, including channel and category
   const handleFieldChange = (
@@ -171,76 +171,78 @@ export const CreatePost = () => {
 
   return (
     <>
-    <CreatePostHelmet />
-    <div className="create-post-container">
+      <CreatePostHelmet />
+      <div className="create-post-container">
         {isUploading && (
-        <div className="modal">
-          <LoadingIndicator progress={uploadProgress} />
-        </div>
-      )}
-
-      <AppBar position="static" style={{ flexShrink: 0 }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="default"
-            onClick={() => navigate("/user-home-page")}
-          >
-            <CloseIcon />
-          </IconButton>
-          <Typography variant="h1" style={{ flexGrow: 1 }}>
-            Capture Post
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
-      <div className="image-and-details">
-        <div className="image-selection-box">
-          <Button
-            variant="contained"
-            component="label"
-            startIcon={<AddAPhotoIcon />}
-          >
-            {post.imageUrl ? "ChangeImage" : "Upload Image"}
-            <input
-              type="file"
-              hidden
-              onChange={handleImageChange}
-              accept="image/*"
-            />
-          </Button>
-          {post.imageUrl && (
-            <div className="image-box">
-              <img src={post.imageUrl} alt="Post" className="post-image" />
-            </div>
-          )}
-        </div>
-        <div className="post-detail-selection">
-          <StoreLocator
-            post={post}
-            onStoreNameChange={handleStoreNameChange}
-            onStoreNumberChange={handleStoreNumberChange}
-            onStoreAddressChange={handleStoreAddressChange}
-            onStoreCityChange={handleStoreCityChange}
-            onStoreStateChange={handleStoreStateChange}
-          />
-          <h4>Store: {post.selectedStore}</h4>
-          <h6>Address: {post.storeAddress}</h6>
-
-          <div className="property-zone">
-            <ChannelSelector
-              selectedChannel={selectedChannel}
-              onChannelChange={setSelectedChannel}
-            />
-
-            <CategorySelector
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
-            />
+          <div className="modal">
+            <LoadingIndicator progress={uploadProgress} />
           </div>
+        )}
 
-          <div className="supplier-brands-selector">
-            {/* <SupplierSelector
+        <AppBar position="static" style={{ flexShrink: 0 }}>
+          <Toolbar>
+            <IconButton
+              edge="start"
+              color="default"
+              onClick={() => navigate("/user-home-page")}
+            >
+              <CloseIcon />
+            </IconButton>
+            <Typography variant="h1" style={{ flexGrow: 1 }}>
+              Capture Post
+            </Typography>
+          </Toolbar>
+        </AppBar>
+
+        <div className="image-and-details">
+          <div className="image-selection-box">
+            1st add picture
+            <Button
+              variant="contained"
+              component="label"
+              startIcon={<AddAPhotoIcon />}
+            >
+              {post.imageUrl ? "ChangeImage" : "Upload Image"}
+              <input
+                type="file"
+                hidden
+                onChange={handleImageChange}
+                accept="image/*"
+              />
+            </Button>
+            {post.imageUrl && (
+              <div className="image-box">
+                <img src={post.imageUrl} alt="Post" className="post-image" />
+              </div>
+            )}
+          </div>{" "}
+          <div className="post-detail-selection">
+            2nd find store and click on map
+            <StoreLocator
+              post={post}
+              onStoreNameChange={handleStoreNameChange}
+              onStoreNumberChange={handleStoreNumberChange}
+              onStoreAddressChange={handleStoreAddressChange}
+              onStoreCityChange={handleStoreCityChange}
+              onStoreStateChange={handleStoreStateChange}
+            />
+            <div className="store-address-container">
+              <h4>Store: {post.selectedStore}</h4>
+              <h6>Address: {post.storeAddress}</h6>
+            </div>
+            <div className="property-zone">
+              <ChannelSelector
+                selectedChannel={selectedChannel}
+                onChannelChange={setSelectedChannel}
+              />
+
+              <CategorySelector
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+              />
+            </div>
+            <div className="supplier-brands-selector">
+              {/* <SupplierSelector
             selectedSupplier={selectedSupplier.id} // Pass the selected supplier ID
             suppliers={suppliers}
             onSupplierChange={handleSupplierChange}
@@ -250,85 +252,84 @@ export const CreatePost = () => {
           brands={brands}
           onBrandChange={handleBrandChange}
           /> */}
-          </div>
-
-          <Box mt={2}>
-            <TextField
-              className="description-box"
-              fullWidth
-              variant="outlined"
-              label="Description"
-              multiline
-              rows={2}
-              value={post.description}
-              onChange={(e) => handleFieldChange("description", e.target.value)}
-            />
-          </Box>
-
-          <Box mt={2}>
-            <Select
-              fullWidth
-              variant="outlined"
-              value={post.visibility}
-              onChange={(e) => handleFieldChange("visibility", e.target.value)}
-            >
-              <MenuItem value="public">Public</MenuItem>
-              <MenuItem value="company">Company only</MenuItem>
-              {/* <MenuItem disabled value="group">Supplier</MenuItem> */}
-              {/* <MenuItem value="group">Supplier & Company</MenuItem> */}
-            </Select>
-          </Box>
-
-          <Box mt={2}>
-            <Button
-              variant="contained"
-              color="primary"
-              type="submit"
-              fullWidth
-              onClick={() => {
-                if (selectedFile) {
-                  setIsUploading(true);
-                  // Pass the current post state directly
-                  handlePostSubmission(
-                    {
-                      ...post,
-                      category: selectedCategory,
-                      channel: selectedChannel,
-                      // supplier: selectedSupplier,
-                      // brands: selectedBrands,
-                    },
-                    selectedFile,
-                    setIsUploading,
-                    setUploadProgress,
-                  );
-                } else {
-                  // Handle the situation where selectedFile is null
+            </div>
+            <Box mt={2}>
+              <TextField
+                className="description-box"
+                fullWidth
+                variant="outlined"
+                label="Description"
+                multiline
+                rows={2}
+                value={post.description}
+                onChange={(e) =>
+                  handleFieldChange("description", e.target.value)
                 }
-              }}
-            >
-              Submit Post
-            </Button>
-          </Box>
-
-          <Snackbar
-            open={snackbarOpen}
-            autoHideDuration={4000} // Hide after 4 seconds
-            onClose={() => setSnackbarOpen(false)}
-            message={snackbarMessage}
-            action={
-              <IconButton
-                size="small"
-                color="inherit"
-                onClick={() => setSnackbarOpen(false)}
+              />
+            </Box>
+            <Box mt={2}>
+              <Select
+                fullWidth
+                variant="outlined"
+                value={post.visibility}
+                onChange={(e) =>
+                  handleFieldChange("visibility", e.target.value)
+                }
               >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            }
-          />
+                <MenuItem value="public">Public</MenuItem>
+                <MenuItem value="company">Company only</MenuItem>
+                {/* <MenuItem disabled value="group">Supplier</MenuItem> */}
+                {/* <MenuItem value="group">Supplier & Company</MenuItem> */}
+              </Select>
+            </Box>
+            <Box mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                type="submit"
+                fullWidth
+                onClick={() => {
+                  if (selectedFile) {
+                    setIsUploading(true);
+                    // Pass the current post state directly
+                    handlePostSubmission(
+                      {
+                        ...post,
+                        category: selectedCategory,
+                        channel: selectedChannel,
+                        // supplier: selectedSupplier,
+                        // brands: selectedBrands,
+                      },
+                      selectedFile,
+                      setIsUploading,
+                      setUploadProgress
+                    );
+                  } else {
+                    // Handle the situation where selectedFile is null
+                  }
+                }}
+              >
+                Submit Post
+              </Button>
+            </Box>
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={4000} // Hide after 4 seconds
+              onClose={() => setSnackbarOpen(false)}
+              message={snackbarMessage}
+              action={
+                <IconButton
+                  size="small"
+                  color="inherit"
+                  onClick={() => setSnackbarOpen(false)}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              }
+            />
+          </div>
         </div>
       </div>
-    </div>
     </>
-    
   );
 };
