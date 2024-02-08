@@ -164,27 +164,6 @@ const ActivityFeed = () => {
     return 650;
   };
 
-  // check local storage for version and clear indexedDb if its not up to date.
-  useEffect(() => {
-    const currentVersion = ".1.2"; // Consider importing this from a constants file
-    const storedVersion = localStorage.getItem("appVersion");
-
-    if (storedVersion !== currentVersion) {
-      // Clear IndexedDB
-      clearIndexedDB();
-
-      // Update version in localStorage
-      localStorage.setItem("appVersion", currentVersion);
-
-      // Refetch data based on the new structure
-      if (currentUser && currentUserCompanyId) {
-        dispatch(
-          fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
-        );
-      }
-    }
-  }, [currentUser, currentUserCompanyId, dispatch]);
-
   // load indexDB posts or fetch from firestore
   useEffect(() => {
     const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
@@ -226,6 +205,7 @@ const ActivityFeed = () => {
     if (currentUser === null) {
     fetchPublicPosts();
   } else if (currentUserCompanyId){
+    // i think there should be a try catch block to get posts from indexedDB before fetching.
     fetchPostsForLoggedInUser(currentUserCompanyId);
   }
   }, [currentUser, dispatch, currentUserCompanyId]);
@@ -311,7 +291,7 @@ const ActivityFeed = () => {
     };
 
     if (isAdPosition) {
-      return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />; // Property 'style' does not exist on type 'IntrinsicAttributes & AdComponentProps'
+      // return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />; // Property 'style' does not exist on type 'IntrinsicAttributes & AdComponentProps'
     } else if (postIndex < displayPosts.length) {
       const postWithID = displayPosts[postIndex];
 
@@ -378,7 +358,7 @@ const ActivityFeed = () => {
       <List
         ref={listRef}
         className="list-card"
-        height={listHeight} // this needs to be dynamically set depending on vh of screen i think the value should be roughly most of the screen height maybe 70%
+        height={listHeight} 
         itemCount={itemCount}
         itemSize={getItemSize}
         width={getListWidth()}
