@@ -8,8 +8,26 @@
 
 .top-of-activity-feed {
   display: flex;
+  text-align: center;
   margin-bottom: 10px;
   width: 100%;
+}
+
+.top-af-top {
+  display: flex;
+  justify-content: space-around;
+  height: 3rem;
+}
+
+.top-af-top button {
+  height: 2.5rem;
+  text-align: center;
+  display: flex;
+
+}
+
+.header-right-side-box {
+  display: none;
 }
 
 .list-card {
@@ -29,5 +47,9 @@
   /* Your styles for tablets */
   .top-of-activity-feed {
     flex-direction: column;
+  }
+
+  .header-right-side-box {
+    display: block;
   }
 }

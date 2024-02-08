@@ -25,13 +25,6 @@ export const UserHomePage = () => {
   };
 
   useEffect(() => {
-    console.log("UserHomePage mounts");
-    return () => {
-      console.log("UserHomePage unmounts");
-    };
-  }, []);
-
-  useEffect(() => {
     // Dispatch the action to fetch location options
     console.log("fetching?");
     dispatch(fetchLocationOptions());

@@ -191,7 +191,7 @@ const ActivityFeed = () => {
       await clearIndexedDB();
 
       dispatch(
-        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }) // Object literal may only specify known properties, and 'companyId' does not exist in type 'FetchInitialPostsArgs'
+        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }) 
       ).then((action) => {
         if (fetchInitialPostsBatch.fulfilled.match(action)) {
           addPostsToIndexedDB(action.payload.posts);
@@ -311,7 +311,7 @@ const ActivityFeed = () => {
     };
 
     if (isAdPosition) {
-      return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />;
+      return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />; // Property 'style' does not exist on type 'IntrinsicAttributes & AdComponentProps'
     } else if (postIndex < displayPosts.length) {
       const postWithID = displayPosts[postIndex];
 
@@ -346,22 +346,33 @@ const ActivityFeed = () => {
     navigate("/tutorial");
   };
 
+  const handleCreateDisplayPostClick = () => {
+    navigate("/createPost");
+  };
+
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
+       
+        <div className="top-af-top">
+        <button
+          onClick={handleTutorialClick}
+          className="onboarding-tutorial-intro-box"
+        >
+          Click for Tutorial
+        </button>
+        <div className="header-right-side-box" onClick={handleCreateDisplayPostClick}>
+          <button>Create display post</button>
+        </div>
+        </div>
         <HashTagSearchBar
           setSearchResults={setSearchResults}
           currentHashtag={currentHashtag}
           setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
         />
-        <div
-          onClick={handleTutorialClick}
-          className="onboarding-tutorial-intro-box"
-        >
-          <h4>Click here for Tutorial</h4>
-        </div>
+       
       </div>
 
       <List

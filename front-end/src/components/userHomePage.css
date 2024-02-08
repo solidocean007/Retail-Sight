@@ -46,8 +46,16 @@
   margin: 5px;
 }
 
+.onboarding-tutorial-intro-box {
+  display: flex;
+  align-items: center;
+  max-width: 30%;
+}
+
 .top-of-activity-feed .onboarding-tutorial-intro-box {
   display: none;
+  align-items: center;
+  text-align: center;
 }
 
 /* Full-screen overlay styles */
@@ -73,10 +81,6 @@
     flex-direction: column-reverse;
   }
 
-  .top-of-activity-feed .onboarding-tutorial-intro-box {
-    display: block;
-  }
-
   .side-bar-container {
    
     display: flex;
@@ -93,6 +97,10 @@
 
 /* Styles for mobile devices */
 @media (max-width: 900px) {
+  .top-of-activity-feed .onboarding-tutorial-intro-box {
+    display: block;
+  }
+
   .container-user-home-page {
     /* margin-top: 10px; */
     justify-content: center;
@@ -117,12 +125,15 @@
 
 
 
+@media (max-width: 750px) {
+  .top-of-activity-feed .onboarding-tutorial-intro-box {
+    font-size: smaller;
+  }
+}
+
 @media (min-width: 600px) {
   .sidebar-fullscreen {
     display: block;
   }
-
-  
- 
 }
 

@@ -16,10 +16,10 @@ const LeftSideBar = () => {
 
       <LeftMessageBoard />
       {/* I need a better class name for the container below */}
-      <div onClick={handleTutorialClick} className="onboarding-tutorial-intro-box">
-        <h4>Click here for</h4>
-        <h4>Onboarding Tutorial</h4>
-      </div>
+      <button onClick={handleTutorialClick} className="onboarding-tutorial-intro-box">
+        Click for
+        Onboarding Tutorial
+      </button>
     </div>
   );
 };

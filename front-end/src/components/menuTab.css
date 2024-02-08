@@ -1,11 +1,11 @@
 /* menuTab.css */
 .menu-tab {
   position: fixed;
-  width: 50%;
+  width: 80%;
   top: 0;
   right: -100%; /* Initially hidden */
   background-color: transparent;
-  z-index: 10;
+  z-index: 5;
   transition: left 1s ease-in-out;
   border-bottom-left-radius: 10px;
   border-top-left-radius: 10px;

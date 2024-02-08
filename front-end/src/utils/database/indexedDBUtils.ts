@@ -172,9 +172,7 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
 }
 
 // Create a utility function that retrieves filtered posts from IndexedDB
-export async function getFilteredPostsFromIndexedDB(
-  filters: FilterCriteria
-): Promise<PostWithID[]> {
+export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readonly");
   const store = transaction.objectStore("posts");
@@ -183,13 +181,17 @@ export async function getFilteredPostsFromIndexedDB(
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
       const allPosts = getAllRequest.result;
-      const filteredPosts = allPosts.filter(
-        (post) =>
-          (!filters.channels!.length ||
-            filters.channels!.includes(post.channel!)) &&
-          (!filters.categories!.length ||
-            filters.categories!.includes(post.category!))
-      );
+      // Assuming the date filter criteria includes a startDate and endDate
+      const filteredPosts = allPosts.filter(post => {
+        const matchesChannel = !filters.channels || filters.channels.length === 0 || filters.channels.includes(post.channel);
+        const matchesCategory = !filters.categories || filters.categories.length === 0 || filters.categories.includes(post.category);
+        const postDate = post.displayDate ? new Date(post.displayDate) : null;
+        const matchesDateRange = !filters.dateRange || 
+                                 (postDate && filters.dateRange.startDate && postDate >= filters.dateRange.startDate) &&
+                                 (postDate && filters.dateRange.endDate && postDate <= filters.dateRange.endDate);
+
+        return matchesChannel && matchesCategory && matchesDateRange;
+      });
 
       resolve(filteredPosts);
     };
@@ -198,6 +200,7 @@ export async function getFilteredPostsFromIndexedDB(
     };
   });
 }
+
 
 // Create a utility function that stores filtered posts in IndexedDB
 export async function storeFilteredPostsInIndexedDB(

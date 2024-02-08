@@ -8,6 +8,7 @@ interface AdComponentProps {
   adFormat?: string; // Optional prop for ad format
   adsOn: boolean;
   placeholder?: JSX.Element; // Optional placeholder element
+  style: React.CSSProperties;
 }
 
 const AdComponent: React.FC<AdComponentProps> = ({
@@ -17,6 +18,7 @@ const AdComponent: React.FC<AdComponentProps> = ({
   adFormat = "auto",
   adsOn,
   placeholder,
+  style, // do i need to add this here or not pass it?
 }) => {
   useEffect(() => {
     if (adsOn) {

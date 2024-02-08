@@ -1,15 +1,15 @@
 .new-section {
   display: flex;
   justify-content: center;
+  flex-direction: column;
   align-items: center;
   border-radius: 5px;
   width: 100%;
   background-color: var(--form-background-color);
-  margin: 5px;
+  margin-bottom: 5px;
   height: fit-content;
 }
 
 .new-section button {
-  width: 100%;
   font-size: medium;
 }

@@ -131,18 +131,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       {showModal && (
         <DescriptionModal description={description} onClose={toggleModal} />
       )}
-      {/* {tags?.map((tag, index) => {
-        if (tag.startsWith("#")) {
-          return (
-            <span key={index} className={styles.hashtag}>
-              <a href="" onClick={(event) => handleHashtagClick(event, tag)}>
-                {tag}
-              </a>
-            </span>
-          );
-        }
-        return tag + " ";
-      })} */}
+
     </>
   );
 };

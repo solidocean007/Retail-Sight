@@ -13,6 +13,10 @@ import { PostWithID } from "../utils/types";
 export type FilterCriteria = {
   channels?: string[];
   categories?: string[];
+  dateRange?: {
+    startDate: Date | null;
+    endDate: Date | null;
+  };
 };
 
 type CursorType = string;
@@ -115,18 +119,6 @@ const postsSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      // .addCase(
-      //   fetchFilteredPosts.fulfilled,
-      //   (state, action: PayloadAction<PostWithID[]>) => {
-      //     state.loading = false;
-      //     // Directly append PostWithID[] to the state.posts
-      //     state.posts = [...state.posts, ...action.payload];
-      //     state.lastVisible =
-      //       action.payload.length > 0
-      //         ? action.payload[action.payload.length - 1].id
-      //         : state.lastVisible;
-      //   }
-      // )
       .addCase(
         fetchFilteredPosts.fulfilled,
         (state, action: PayloadAction<PostWithID[]>) => {

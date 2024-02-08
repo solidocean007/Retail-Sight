@@ -60,12 +60,9 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       );
       const querySnapshot = await getDocs(postsQuery);
 
-      console.log("Fetched posts:", querySnapshot.docs.length); // Log the total number of fetched posts
-
       const postsWithIds: PostWithID[] = querySnapshot.docs
         .map((doc) => {
           const postData: PostType = doc.data() as PostType;
-          console.log("Post data:", postData); // Log each post data
           return {
             ...postData,
             id: doc.id,
@@ -74,7 +71,6 @@ export const fetchInitialPostsBatch = createAsyncThunk(
         .filter((post) => {
           const isPublic = post.visibility === "public";
           const isCompanyPost = post.visibility === "company" && post.postUserCompanyId === currentUserCompanyId;
-          console.log(`Post ID: ${post.id}, isPublic: ${isPublic}, isCompanyPost: ${isCompanyPost}`); // Log the filtering result for each post
           return isPublic || isCompanyPost;
         })
         .slice(0, POSTS_BATCH_SIZE);
@@ -158,7 +154,7 @@ export const fetchLatestPosts = createAsyncThunk<
   PostWithID[],
   void,
   { rejectValue: string }
->("posts/fetchLatest", async (_, { rejectWithValue, dispatch }) => {
+>("posts/fetchLatest", async (_, { rejectWithValue }) => {
   try {
     // First, try to get the latest posts from IndexedDB
     const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
@@ -210,22 +206,9 @@ export const fetchFilteredPosts = createAsyncThunk<
   PostWithID[],
   FetchPostsArgs,
   { rejectValue: string }
->("posts/fetchFiltered", async ({ filters }, { rejectWithValue, dispatch }) => {
+>("posts/fetchFiltered", async ({ filters }, { rejectWithValue }) => {
   try {
-    // First, try to get filtered posts from IndexedDB
-    // console.log("Attempting to fetch filtered posts from IndexedDB...");
-    // const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
-
-    // if (cachedPosts.length > 0) {
-    //   console.log(
-    //     `Found ${cachedPosts.length} cached posts in IndexedDB. Using cached data.`
-    //   );
-    //   return cachedPosts;
-    // } else {
-    //   // If there are no cached posts, fetch from Firestore
-    //   console.log(
-    //     "No suitable cached posts found in IndexedDB. Fetching from Firestore..."
-    //   );
+    
     let baseQuery: Query<DocumentData> = collection(db, "posts");
 
     // Apply channel filters if they are present
@@ -239,11 +222,9 @@ export const fetchFilteredPosts = createAsyncThunk<
 
     // Execute the query
     const queryToExecute = query(baseQuery);
-    console.log("fetchFilteredPosts read");
     const postSnapshot = await getDocs(queryToExecute);
 
     if (postSnapshot.empty) {
-      console.log("No documents found with the current filters in Firestore.");
       return [];
     }
 
@@ -254,19 +235,7 @@ export const fetchFilteredPosts = createAsyncThunk<
     }));
 
     // Store the fetched posts in IndexedDB
-    console.log(
-      `Fetched ${posts.length} posts from Firestore. Storing in IndexedDB.`
-    );
     await storeFilteredPostsInIndexedDB(posts, filters);
-
-    // Dispatch incrementRead action
-    dispatch(
-      incrementRead({
-        source: "fetchFilteredPosts",
-        description: "Fetching filtered posts",
-        timestamp: new Date().toISOString(), // ISO 8601 format timestamp
-      })
-    );
 
     // Return the fetched posts
     return posts;

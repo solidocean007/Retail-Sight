@@ -37,6 +37,7 @@ const NewSection = () => {
 
   return (
     <div className="new-section">
+      <h4>Dashboard</h4>
       <button onClick={handleDashboardClick}>{buttonText}</button>
     </div>
   );

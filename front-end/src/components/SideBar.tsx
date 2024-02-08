@@ -3,7 +3,10 @@ import { useState } from "react";
 import { Button } from "@mui/material";
 // import FilterSection from "./FilterSection";
 import FilterLocation from "./FilterLocation";
-import { fetchFilteredPosts, fetchInitialPostsBatch } from "../thunks/postsThunks";
+import {
+  // fetchFilteredPosts,
+  fetchInitialPostsBatch,
+} from "../thunks/postsThunks";
 import { useDispatch } from "react-redux";
 import { ChannelType } from "./ChannelSelector";
 import { CategoryType } from "./CategorySelector";
@@ -14,15 +17,22 @@ import { RootState } from "../utils/store";
 import { clearLocationFilters } from "../Slices/locationSlice";
 import "./sideBar.css";
 import CustomAccordion from "./CustomAccordion";
-import { getFilteredPostsFromIndexedDB, getPostsFromIndexedDB, storeFilteredPostsInIndexedDB } from "../utils/database/indexedDBUtils";
+import {
+  // getFilteredPostsFromIndexedDB,
+  getPostsFromIndexedDB,
+  // storeFilteredPostsInIndexedDB,
+} from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
 import { setFilteredPosts, setPosts } from "../Slices/postsSlice";
+import DateFilter from "./DateFilter";
+import { PostType } from "../utils/types";
 
 interface FilterState {
   channels: ChannelType[];
   categories: CategoryType[];
   states: string[]; // Assuming these are arrays of strings
   cities: string[];
+  dateRange: { startDate: Date | null; endDate: Date | null };
 }
 
 const POSTS_BATCH_SIZE = 100;
@@ -43,44 +53,76 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     (state: RootState) => state.locations.selectedCities
   );
 
-   // State to track the last applied filters
-   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState>({
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({ startDate: null, endDate: null });
+
+  const handleDateChange = (newDateRange: { startDate: Date | null, endDate: Date | null }) => {
+    setDateRange(newDateRange);
+  };
+
+  // State to track the last applied filters
+  const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState>({
     channels: [],
     categories: [],
     states: [],
-    cities: []
+    cities: [],
+    dateRange: { startDate: null, endDate: null }, // Type 'null' is not assignable to type 'Date'
   });
-  
-  const dispatch = useDispatch<AppDispatch>();
 
-  const applyFilters = async () => {
-    // Construct the filter object
-    const filters = {
+  const dispatch = useDispatch<AppDispatch>();
+  const allPosts = useSelector((state: RootState) => state.posts.posts);
+
+  const applyFilters = () => {
+    // Function to check if a post falls within the selected date range
+    const isWithinDateRange = (post: PostType) => {
+      // Parse the post's display date as a Date object
+      const postDate = new Date(post.displayDate);
+
+      // Convert the start and end dates to Date objects if they are not null
+      // For endDate, set the time to just before midnight to include the entire day
+      const startDate = dateRange.startDate
+        ? new Date(dateRange.startDate)
+        : null;
+      let endDate = dateRange.endDate ? new Date(dateRange.endDate) : null;
+      if (endDate) {
+        endDate.setHours(23, 59, 59, 999); // Set to the last millisecond of the day
+      }
+
+      // Check if the post's date falls within the start and end date range
+      return (
+        (!startDate || postDate >= startDate) &&
+        (!endDate || postDate <= endDate)
+      );
+    };
+
+    const filteredPosts = allPosts.filter((post) => {
+      const matchesChannel =
+        !selectedChannels.length ||
+        selectedChannels.includes(post.channel as ChannelType);
+      const matchesCategory =
+        !selectedCategories.length ||
+        selectedCategories.includes(post.category as CategoryType);
+      const matchesDateRange = isWithinDateRange(post);
+      return matchesChannel && matchesCategory && matchesDateRange;
+    });
+
+    dispatch(setFilteredPosts(filteredPosts));
+
+    // Update the last applied filters state
+    setLastAppliedFilters({
       channels: selectedChannels,
       categories: selectedCategories,
       states: selectedStates,
       cities: selectedCities,
-    };
-
-    // First, attempt to get filtered posts from IndexedDB
-    const cachedPosts = await getFilteredPostsFromIndexedDB(filters);
-    if (cachedPosts.length > 0) {
-      // If cached posts exist, use them and do not fetch from Firestore
-      console.log("Using cached posts from IndexedDB");
-      // You would dispatch an action to set these posts in your Redux store here
-      dispatch(setFilteredPosts(cachedPosts));
-      storeFilteredPostsInIndexedDB(cachedPosts, filters);
-    } else {
-      // If there are no cached posts, fetch from Firestore
-      console.log("Fetching filtered posts from Firestore");
-      dispatch(fetchFilteredPosts({ filters, lastVisible: null }));
-    }
-    // Update the last applied filters state
-    setLastAppliedFilters({
-      channels: selectedChannels, // Type 'string' is not assignable to type 'never'.
-      categories: selectedCategories, // Type 'string' is not assignable to type 'never'.
-      states: selectedStates, // Type 'string' is not assignable to type 'never'.
-      cities: selectedCities // Type 'string' is not assignable to type 'never'.
+      dateRange:
+        dateRange.startDate && dateRange.endDate
+          ? {
+              startDate: new Date(dateRange.startDate),
+              endDate: new Date(dateRange.endDate),
+            }
+          : { startDate: null, endDate: null },
     });
   };
 
@@ -88,10 +130,10 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     // Clear local states for channels and categories
     setSelectedChannels([]);
     setSelectedCategories([]);
-  
+    setDateRange({ startDate: null, endDate: null });
     // Dispatch actions to clear filters in Redux store
     dispatch(clearLocationFilters()); // This will reset both state and city filters in your Redux store
-  
+
     // Reload posts from IndexedDB and update Redux
     try {
       const cachedPosts = await getPostsFromIndexedDB();
@@ -99,51 +141,56 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
         dispatch(setPosts(cachedPosts));
       } else {
         // Optionally, fetch from the server if IndexedDB is empty
-        if(currentUserCompany && currentUserCompanyId){
-          dispatch(fetchInitialPostsBatch({POSTS_BATCH_SIZE, currentUserCompanyId }));
+        if (currentUserCompany && currentUserCompanyId) {
+          dispatch(
+            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
+          );
         }
       }
     } catch (error) {
-      console.error('Error reloading posts from IndexedDB:', error);
+      console.error("Error reloading posts from IndexedDB:", error);
       // Optionally, fetch from the server in case of an error
-        
     }
   };
-  
+
   function arraysEqual<T>(a: T[], b: T[]): boolean {
     if (a === b) return true;
     if (a == null || b == null) return false;
     if (a.length !== b.length) return false;
-  
+
     // Create copies of the arrays to sort, so the original arrays are not mutated
     const sortedA = [...a].sort();
     const sortedB = [...b].sort();
-  
+
     for (let i = 0; i < sortedA.length; i++) {
       if (sortedA[i] !== sortedB[i]) return false;
     }
     return true;
   }
-  
+
   const handleApplyFiltersClick = () => {
+    const dateRangeChanged =
+      lastAppliedFilters.dateRange.startDate !== dateRange.startDate ||
+      lastAppliedFilters.dateRange.endDate !== dateRange.endDate;
     // Check if current filters are different from the last applied filters
-    const filtersChanged = !arraysEqual(selectedChannels, lastAppliedFilters.channels) ||
-                           !arraysEqual(selectedCategories, lastAppliedFilters.categories) ||
-                           !arraysEqual(selectedStates, lastAppliedFilters.states) ||
-                           !arraysEqual(selectedCities, lastAppliedFilters.cities);
-  
+    const filtersChanged =
+      !arraysEqual(selectedChannels, lastAppliedFilters.channels) ||
+      !arraysEqual(selectedCategories, lastAppliedFilters.categories) ||
+      !arraysEqual(selectedStates, lastAppliedFilters.states) ||
+      !arraysEqual(selectedCities, lastAppliedFilters.cities) ||
+      dateRangeChanged;
+
     if (filtersChanged) {
       protectedAction(applyFilters);
-      if (window.innerWidth <= 900) { 
+      if (window.innerWidth <= 900) {
         toggleFilterMenu();
       }
     }
   };
-  
 
   const handleClearFiltersClick = () => {
     protectedAction(clearFilters);
-    if (window.innerWidth <= 900) { 
+    if (window.innerWidth <= 900) {
       toggleFilterMenu();
     }
   };
@@ -186,6 +233,12 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       <div className="location-filter-container">
         <FilterLocation />
       </div>
+      <div className="date-filter-container">
+        <DateFilter
+          dateRange={dateRange}
+          onDateChange={handleDateChange}
+        />
+      </div>
       <div className="clear-apply-button-box">
         <Button
           className="btn"
@@ -204,7 +257,8 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             selectedChannels.length === 0 &&
             selectedCategories.length === 0 &&
             selectedStates.length === 0 &&
-            selectedCities.length === 0 // Add this line to include city filter in the condition
+            selectedCities.length === 0 &&
+            dateRange.startDate === null // Add this line to enable button if startDate is selected
           }
         >
           Apply Now

@@ -106,7 +106,6 @@ body,
   /* overflow-y: visible; */
   background: var(--background-body);
   color: var(--text-color);
-  overflow-y: scroll;
 }
 
 #root {

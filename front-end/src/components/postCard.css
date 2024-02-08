@@ -27,6 +27,7 @@
 
 .image-new-comment-box p {
   margin-top: 0;
+  margin-bottom: 0;
 }
 
 .image-new-comment-box .post-image {
@@ -234,6 +235,6 @@ h5 {
 
 @media (max-width: 470px) {
   .post-card img.post-image {
-    max-height: 300px; 
+    max-height: 350px; 
   }
 }
