@@ -43,6 +43,7 @@ export const UserHomePage = () => {
             <LeftSideBar />
           </div>
           <div className="activity-feed-container">
+            
             <ActivityFeed />
           </div>
         </div>

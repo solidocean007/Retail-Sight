@@ -3,14 +3,16 @@
   flex-direction: column;
   align-items: center;
   margin-top: 0px;
-  max-width: 100%;
+  /* max-width: 100%; */
 }
 
 .top-of-activity-feed {
   display: flex;
   text-align: center;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 10px;
-  width: 100%;
+  /* width: 100%; */
 }
 
 .top-af-top {

@@ -1,13 +1,7 @@
-.theme-search-section {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-}
-
 .hashtag-search-box {
   background-color: var(--form-background-color);
   display: flex;
-  min-width: 20%;
+  width: 60%;
   border-radius: 5px;
   padding: 3px;
   margin: 5px;
