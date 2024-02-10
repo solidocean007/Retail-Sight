@@ -101,7 +101,6 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
-  /* padding-bottom: 2rem; */
   overflow-x: hidden;
   /* overflow-y: visible; */
   background: var(--background-body);
@@ -187,8 +186,8 @@ button:focus-visible {
   text-align: left;
   text-decoration: none;
   transition: box-shadow .15s,transform .15s;
-  user-select: none;
   -webkit-user-select: none;
+  user-select: none;
   touch-action: manipulation;
   white-space: nowrap;
   will-change: box-shadow,transform;
@@ -225,21 +224,47 @@ button:active {
   z-index: 2000;
 }
 
-/* Default styles for desktops and larger screens here */
-
-/* Styles for tablets */
-@media (max-width: 1200px) {
-  /* Your styles for tablets */
-}
-
 /* Styles for mobile devices */
 @media (max-width: 900px) {
   /* Your styles for mobile devices */
 
+  
+}
+
+/* Mobile devices */
+@media (max-width: 320px) {
+  /* Styles for small smartphones */
+}
+
+@media (min-width: 321px) and (max-width: 375px) {
+  /* Styles for medium smartphones */
+}
+
+@media (min-width: 376px) and (max-width: 414px) {
+  /* Styles for large smartphones */
+}
+
+/* Tablets */
+@media (min-width: 600px) and (max-width: 768px) {
+  /* Styles for small tablets in portrait */
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Styles for large tablets in portrait/landscape */
   .mobile-filter-button {
     display: block;
   }
 }
 
-@media screen and (min-width: 900px) {
+/* Laptops and Desktops */
+@media (min-width: 1024px) and (max-width: 1366px) {
+  /* Styles for small to medium screens */
+}
+
+@media (min-width: 1367px) and (max-width: 1920px) {
+  /* Styles for large screens */
+}
+
+@media (min-width: 1921px) {
+  /* Styles for extra-large screens */
 }

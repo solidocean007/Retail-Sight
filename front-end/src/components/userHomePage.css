@@ -1,20 +1,13 @@
 /*  userHomePage.css */
-.container-user-home-page {
+.user-home-page-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* width: 90vw; */
-  width: 100vw;
+  width: 100%;
 }
 
-.about-activity-feed-box {
-  display: flex;
-  justify-content: center;
-  /* width: 100%; */
-}
-
-.headerBar-container {
+.header-bar-container {
   display: flex;
   justify-content: center;
   width: 100%;
@@ -22,15 +15,13 @@
 
 .left-side-bar-container {
   display: flex;
-  width: 100%;
+  /* width: 100%; */
 }
 
 .home-page-content {
   display: flex;
   flex-direction: row;
   justify-content: space-around;
-  /* width: 90%; */
-  /* max-width: 100%; */
   padding-bottom: 5px;
 }
 
@@ -40,8 +31,7 @@
 }
 
 .side-bar-container {
-  width: 33%;
-  display: flex;
+  display: none;
   justify-content: center;
   margin: 5px;
 }
@@ -77,7 +67,7 @@
 /* Styles for tablets */
 @media (max-width: 1100px) {
   /* Your styles for tablets */
-  .home-page-content {
+  /* .home-page-content {
     flex-direction: column-reverse;
   }
 
@@ -92,51 +82,114 @@
 
   .post-content-filter {
     margin-right: 40px;
-  }
+  } */
 }
 
 /* Styles for mobile devices */
-@media (max-width: 900px) {
+/* @media (max-width: 900px) {
   .top-of-activity-feed .onboarding-tutorial-intro-box {
     display: flex;
     width: 10rem;
   }
 
-  
-
   .container-user-home-page {
     /* margin-top: 10px; */
-    justify-content: center;
-  }
+    /* justify-content: center; */
+  /* } */
 
-  .left-side-bar-container {
-    display: none;
-  }
+  /* .left-side-bar-container { */
+    /* display: none; */
+  /* } */
 
-  .side-bar-container {
-    display: none;
-  }
+  /* .side-bar-container { */
+    /* display: none; */
+  /* } */
 
+  /* .sidebar-fullscreen { */
+    /* display: block; */
+  /* } */
+
+  /* .activity-feed-container { */
+    /* margin-top: 0; */
+  /* } */
+/* } */ 
+
+
+
+/* @media (max-width: 750px) {
+  .top-of-activity-feed .onboarding-tutorial-intro-box {
+    font-size: smaller;
+  }
+} */
+
+/* @media (min-width: 600px) {
   .sidebar-fullscreen {
     display: block;
   }
+} */
 
-  .activity-feed-container {
-    margin-top: 0;
+/* Mobile devices */
+@media (max-width: 320px) {
+  /* Styles for small smartphones */
+  
+}
+
+@media (min-width: 321px) and (max-width: 375px) {
+  /* Styles for medium smartphones */
+}
+
+@media (min-width: 376px) and (max-width: 414px) {
+  /* Styles for large smartphones */
+}
+
+/* Filling the gap for devices between 414px and 600px */
+@media (min-width: 415px) and (max-width: 599px) {
+  /* Styles for devices in this range */
+  .sidebar-fullscreen {
+    display: block;
   }
 }
 
-
-
-@media (max-width: 750px) {
+/* Tablets */
+@media (min-width: 600px) and (max-width: 768px) {
+  /* Styles for small tablets in portrait */
   .top-of-activity-feed .onboarding-tutorial-intro-box {
     font-size: smaller;
   }
 }
 
-@media (min-width: 600px) {
-  .sidebar-fullscreen {
-    display: block;
+@media (min-width: 769px) and (max-width: 899px){
+  
+}
+
+@media (min-width: 900px) and (max-width: 1024px) {
+  /* Styles for large tablets in portrait/landscape */
+  .side-bar-container {
+    display: flex;
   }
+ 
+}
+
+/* Laptops and Desktops */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  /* Styles for small to medium screens */
+
+  .side-bar-container {
+    display: flex;
+    align-items: start;
+    justify-content: flex-start;
+  }
+
+  .post-content-filter {
+    margin-right: 40px;
+  }
+}
+
+@media (min-width: 1367px) and (max-width: 1920px) {
+  /* Styles for large screens */
+}
+
+@media (min-width: 1921px) {
+  /* Styles for extra-large screens */
 }
 

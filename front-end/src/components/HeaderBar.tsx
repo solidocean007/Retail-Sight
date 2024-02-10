@@ -48,7 +48,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             color="primary"
             onClick={currentUser ? openProfile : goToSignUpLogin}
           >
-            <h3>
+            <h2>
               {currentUser ? (
                 <>
                   <i className="fa-solid fa-user"></i>
@@ -57,7 +57,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
               ) : (
                 "Sign-up / Login"
               )}
-            </h3>
+            </h2>
           </button>
         </div>
       </div>
@@ -70,7 +70,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           className="create-post-btn button"
           onClick={handleCreatePostClick}
         >
-          <h3>CAPTURE</h3>
+          <h2>Create Post</h2>
         </button>
 
         <button className="filter-menu-button" onClick={toggleFilterMenu}>

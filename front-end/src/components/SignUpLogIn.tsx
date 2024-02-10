@@ -85,7 +85,7 @@ export const SignUpLogin = () => {
     password: false,
     passwordConfirm: false,
   });
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [triedSubmit, setTriedSubmit] = useState(false);
   const [userInputs, setUserInputs] = useState<TUserInputType>({
     firstNameInput: "",
@@ -135,7 +135,7 @@ export const SignUpLogin = () => {
   }
 
   function formButtonMessage() {
-    return isSignUp ? "switch to login" : "switch to sign-up";
+    return isSignUp ? "switch to login" : "No account? Sign-up Now";
   }
 
   const setFormMode = () => setIsSignUp((prevIsSignUp) => !prevIsSignUp);

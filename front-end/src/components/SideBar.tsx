@@ -26,6 +26,7 @@ import useProtectedAction from "../utils/useProtectedAction";
 import { setFilteredPosts, setPosts } from "../Slices/postsSlice";
 import DateFilter from "./DateFilter";
 import { PostType } from "../utils/types";
+import LeftSideBar from "./LeftSideBar";
 
 interface FilterState {
   channels: ChannelType[];
@@ -264,6 +265,9 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           Apply Now
         </Button>
       </div>
+      <div className="left-side-bar-container">
+            <LeftSideBar />
+          </div>
     </div>
   );
 };
