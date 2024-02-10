@@ -20,6 +20,11 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       navigate("/createPost");
     });
   };
+  const handleTutorialClick = () => {
+    protectedAction(() => {
+      navigate("/tutorial");
+    });
+  };
 
   const handleMenuOptionSelect = (option: string) => {
     setShowMenuTab(false); // Close the menu
@@ -27,6 +32,8 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       handleCreatePostClick();
     } else if (option === "filters") {
       toggleFilterMenu();
+    } else if (option === "tutorial") {
+      handleTutorialClick();
     }
   };
 
