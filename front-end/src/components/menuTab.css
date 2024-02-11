@@ -27,3 +27,50 @@
 }
 
 /* Add responsive styling if needed */
+/* Mobile devices */
+@media (max-width: 320px) {
+  /* Styles for small smartphones */
+}
+
+@media (min-width: 321px) and (max-width: 375px) {
+  /* Styles for medium smartphones */
+}
+
+@media (min-width: 376px) and (max-width: 414px) {
+  /* Styles for large smartphones */
+}
+
+/* Filling the gap for devices between 414px and 600px */
+@media (min-width: 415px) and (max-width: 599px) {
+  /* Styles for devices in this range */
+}
+
+/* Tablets */
+@media (min-width: 600px) and (max-width: 768px) {
+  /* Styles for small tablets in portrait */
+}
+
+@media (min-width: 769px) and (max-width: 899px){
+  
+}
+
+@media (min-width: 900px)  {
+  /* Styles for large tablets in portrait/landscape */
+  .filters-option {
+    display: none;
+  }
+ 
+}
+
+/* Laptops and Desktops */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  /* Styles for small to medium screens */
+}
+
+@media (min-width: 1367px) and (max-width: 1920px) {
+  /* Styles for large screens */
+}
+
+@media (min-width: 1921px) {
+  /* Styles for extra-large screens */
+}

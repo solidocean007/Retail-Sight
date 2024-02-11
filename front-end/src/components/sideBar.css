@@ -1,5 +1,5 @@
 .side-bar-box {
-  /* width: fit-content; */
+  width: 100%;
   padding: 20px 10px;
   border-radius: 5px;
   display: flex;
@@ -7,9 +7,13 @@
   align-items: center;
   justify-content: flex-start;
   background-color: var(--form-background-color);
-  /* background: rgb(4,12,32);
-background: linear-gradient(0deg, rgba(4,12,32,1) 11%, rgba(168,174,213,1) 75%);
-  height: 100%; */
+  /* background: rgb(4, 12, 32); */
+  /* background: linear-gradient(
+    0deg,
+    rgba(4, 12, 32, 1) 11%,
+    rgba(168, 174, 213, 1) 75%
+  ); */
+  height: 100%;
 }
 
 .location-filter-container {
@@ -46,11 +50,11 @@ background: linear-gradient(0deg, rgba(4,12,32,1) 11%, rgba(168,174,213,1) 75%);
 
 @media (max-width: 1100px) {
   /* Your styles for tablets */
-  
+
   .btn {
     height: 50px;
   }
- 
+
   .MuiGrid-root {
     width: 100%;
   }
@@ -65,7 +69,7 @@ background: linear-gradient(0deg, rgba(4,12,32,1) 11%, rgba(168,174,213,1) 75%);
 
 @media (max-width: 1100px) {
   .channel-category-box {
-  flex-direction: row;
+    flex-direction: row;
   }
 
   .location-filter-container {
@@ -73,23 +77,65 @@ background: linear-gradient(0deg, rgba(4,12,32,1) 11%, rgba(168,174,213,1) 75%);
   }
 
   .clear-apply-button-box {
-  flex-direction: row;
-  justify-content: space-around;
+    flex-direction: row;
+    justify-content: space-around;
   }
 }
 
 @media (min-width: 900px) {
-
-  .close-side-bar-button {
-  display: none;
-  }
 }
 
-@media (max-width: 900px) {
+/* @media (max-width: 900px) {
   .side-bar-box {
     flex-direction: column;
     padding:  20px 10px;
     height: 100%;
     padding-top: 15%;
   }
+} */
+
+/* Mobile devices */
+@media (max-width: 320px) {
+  /* Styles for small smartphones */
+}
+
+@media (min-width: 321px) and (max-width: 375px) {
+  /* Styles for medium smartphones */
+}
+
+@media (min-width: 376px) and (max-width: 414px) {
+  /* Styles for large smartphones */
+}
+
+/* Filling the gap for devices between 414px and 600px */
+@media (min-width: 415px) and (max-width: 599px) {
+  /* Styles for devices in this range */
+}
+
+/* Tablets */
+@media (min-width: 600px) and (max-width: 768px) {
+  /* Styles for small tablets in portrait */
+}
+
+@media (min-width: 769px) and (max-width: 899px) {
+}
+
+@media (min-width: 900px) {
+  /* Styles for large tablets in portrait/landscape */
+  .close-side-bar-button {
+    display: none;
+  }
+}
+
+/* Laptops and Desktops */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  /* Styles for small to medium screens */
+}
+
+@media (min-width: 1367px) and (max-width: 1920px) {
+  /* Styles for large screens */
+}
+
+@media (min-width: 1921px) {
+  /* Styles for extra-large screens */
 }

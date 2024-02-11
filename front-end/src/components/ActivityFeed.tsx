@@ -43,7 +43,6 @@ import {
 import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
-import { useNavigate } from "react-router-dom";
 
 const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
@@ -52,7 +51,6 @@ const AD_INTERVAL = 4;
 const ActivityFeed = () => {
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
-  const navigate = useNavigate();
   const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
     null
   );
@@ -158,8 +156,8 @@ const ActivityFeed = () => {
   const getListWidth = () => {
     if (windowWidth <= 480) {
       return windowWidth - 25; // Subtract some pixels for padding/margin
-    } else if (windowWidth <= 768) {
-      return Math.min(650, windowWidth - 25);
+    } else if (windowWidth <= 1150) {
+      return Math.min(550, windowWidth - 25);
     }
     return 650;
   };
@@ -170,7 +168,7 @@ const ActivityFeed = () => {
       await clearIndexedDB();
 
       dispatch(
-        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }) 
+        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
       ).then((action) => {
         if (fetchInitialPostsBatch.fulfilled.match(action)) {
           addPostsToIndexedDB(action.payload.posts);
@@ -203,11 +201,11 @@ const ActivityFeed = () => {
     };
 
     if (currentUser === null) {
-    fetchPublicPosts();
-  } else if (currentUserCompanyId){
-    // i think there should be a try catch block to get posts from indexedDB before fetching.
-    fetchPostsForLoggedInUser(currentUserCompanyId);
-  }
+      fetchPublicPosts();
+    } else if (currentUserCompanyId) {
+      // i think there should be a try catch block to get posts from indexedDB before fetching.
+      fetchPostsForLoggedInUser(currentUserCompanyId);
+    }
   }, [currentUser, dispatch, currentUserCompanyId]);
 
   // listen for new or updated posts
@@ -265,14 +263,13 @@ const ActivityFeed = () => {
     };
   }, [currentUser?.companyId, dispatch]);
 
-
   // load indexDB posts or fetch from firestore
   // useEffect(() => {
   //   const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
   //     await clearIndexedDB();
 
   //     dispatch(
-  //       fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }) 
+  //       fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
   //     ).then((action) => {
   //       if (fetchInitialPostsBatch.fulfilled.match(action)) {
   //         addPostsToIndexedDB(action.payload.posts);
@@ -306,14 +303,14 @@ const ActivityFeed = () => {
 
   //   const loadPosts = async () => {
   //     let postsLoaded = false;
-  
+
   //     // Attempt to load posts from IndexedDB first
   //     const cachedPosts = await getPostsFromIndexedDB();
   //     if (cachedPosts && cachedPosts.length > 0) {
   //       dispatch(setPosts(cachedPosts));
   //       postsLoaded = true;
   //     }
-  
+
   //     // If posts are not loaded from IndexedDB, fetch from Firestore
   //     if (!postsLoaded) {
   //       if (currentUser === null) {
@@ -325,10 +322,9 @@ const ActivityFeed = () => {
   //       }
   //     }
   //   };
-  
+
   //   loadPosts();
   // }, [currentUser, dispatch, currentUserCompanyId]);
-
 
   // listen for new or updated posts
   useEffect(() => {
@@ -384,7 +380,6 @@ const ActivityFeed = () => {
       unsubscribeCompany();
     };
   }, [currentUser?.companyId, dispatch]);
-
 
   const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   const itemCount = displayPosts.length + numberOfAds;
@@ -443,43 +438,22 @@ const ActivityFeed = () => {
     return <NoContentCard />;
   }
 
-  const handleTutorialClick = () => {
-    navigate("/tutorial");
-  };
-
-  const handleCreateDisplayPostClick = () => {
-    navigate("/createPost");
-  };
-
   // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
-       
-        <div className="top-af-top">
-        <button
-          onClick={handleTutorialClick}
-          className="onboarding-tutorial-intro-box"
-        >
-          Tutorial
-        </button>
-        <div className="header-right-side-box" onClick={handleCreateDisplayPostClick}>
-          <button>Create display post</button>
-        </div>
-        </div>
         <HashTagSearchBar
           setSearchResults={setSearchResults}
           currentHashtag={currentHashtag}
           setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
         />
-       
       </div>
 
       <List
         ref={listRef}
         className="list-card"
-        height={listHeight} 
+        height={listHeight}
         itemCount={itemCount}
         itemSize={getItemSize}
         width={getListWidth()}

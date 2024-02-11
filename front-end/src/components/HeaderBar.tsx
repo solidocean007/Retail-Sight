@@ -20,9 +20,16 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       navigate("/createPost");
     });
   };
+
   const handleTutorialClick = () => {
     protectedAction(() => {
       navigate("/tutorial");
+    });
+  };
+
+  const handleDashboardClick = () => {
+    protectedAction(() => {
+      navigate("/dashboard");
     });
   };
 
@@ -34,62 +41,47 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       toggleFilterMenu();
     } else if (option === "tutorial") {
       handleTutorialClick();
+    } else if (option === "dashboard") {
+      handleDashboardClick();
     }
   };
 
   return (
     <div className="header-bar">
-      <div className="logo-title-box">
-     
       <div className="website-title">
-        <h1>Home page</h1>
+        <h1>Displaygram</h1>
         <p>version 0.1.3</p>
       </div>
-      </div>
-      
-      <div className="user-bar">
-        <div className="user-button">
-          <button
-            className="profile-btn"
-            // variant="contained"
-            color="primary"
-            onClick={currentUser ? openProfile : goToSignUpLogin}
-          >
-            <h2>
-              {currentUser ? (
-                <>
-                  <i className="fa-solid fa-user"></i>
-                  {` ${currentUser.firstName} ${currentUser.lastName}`}
-                </>
-              ) : (
-                "Sign-up / Login"
-              )}
-            </h2>
-          </button>
+
+      <div className="header-details">
+        <button
+          className="profile-btn"
+          // variant="contained"
+          color="primary"
+          onClick={currentUser ? openProfile : goToSignUpLogin}
+        >
+          <h2>
+            {currentUser ? (
+              <>
+                <i className="fa-solid fa-user"></i>
+                {` ${currentUser.firstName} ${currentUser.lastName}`}
+              </>
+            ) : (
+              "Sign-up / Login"
+            )}
+          </h2>
+        </button>
+        <div className="capture-display-btn">
+          <button onClick={handleCreatePostClick}>Capture Display</button>
+        </div>
+        <div
+          className="hamburger-menu-button"
+          onClick={() => setShowMenuTab(!showMenuTab)}
+        >
+          ☰
         </div>
       </div>
 
-      <div className="menu-buttons">
-        {/* <button className="about-button" onClick={() => navigate("/about")}>
-          About
-        </button> */}
-        <button
-          className="create-post-btn button"
-          onClick={handleCreatePostClick}
-        >
-          <h2>Create Post</h2>
-        </button>
-
-        <button className="filter-menu-button" onClick={toggleFilterMenu}>
-          <h3>Filters</h3>
-        </button>
-      </div>
-      <div
-        className="hamburger-menu-button"
-        onClick={() => setShowMenuTab(!showMenuTab)}
-      >
-        ☰
-      </div>
       {showMenuTab && (
         <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab} />
       )}

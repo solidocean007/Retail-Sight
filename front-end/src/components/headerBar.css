@@ -1,6 +1,6 @@
 .header-bar {
   display: flex;
-  /* flex-wrap: wrap; */
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;
   width: 100%;
@@ -9,29 +9,24 @@
   padding: 0.2rem .5rem;
 }
 
-.about-button {
+.header-details {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-right: .5rem;
+  justify-content: space-between;
+  font-size: small;
+  width: 100%;
+}
+
+.capture-display-btn {
+  display: none;
 }
 
 .hamburger-menu-button {
-  display: none; /* Hidden by default */
+  display: flex;
   cursor: pointer;
   z-index: 11;
   font-size: 30px;
   color: whitesmoke;
   margin-right: 1rem;
-}
-
-.logo-title-box {
-  display: flex;
-  align-items: center;
-}
-
-.website-title {
-  margin: 0rem 1rem;
 }
 
 .website-title p {
@@ -40,23 +35,17 @@
 
 .website-title {
   display: flex;
-  flex-direction: column;
-  margin: 0;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0rem 1rem;
   font-size: smaller;
   color: var(--text-color);
   display: flex;
   align-items: center;
 }
 
-.website-title h1, .website-title h2 {
+.website-title h1 {
   margin: 0 5px;
-}
-
-
-.menu-buttons {
-  display: flex;
-  justify-content: space-around;
-  /* width: 50%; */
 }
 
 .profile-btn {
@@ -64,9 +53,7 @@
   font-size: smaller;
 }
 
-
-
-.profile-btn, .create-post-btn, .filter-menu-button {
+.profile-btn {
   margin-right: 30px;
   max-height: 2rem;
   display: flex;
@@ -74,50 +61,11 @@
   align-items: center;
 }
 
-.filter-menu-button {
-  display: none;
-  /* width: 100%; */
-}
-
-
-/* Styles for tablets */
-@media (max-width: 1200px) {
-  .header-bar h1 {
-    font-size: 2rem;
-  }
-  .header-bar h4 {
-    font-size: 1rem;
-  }
-
-  button h3 {
-    font-size: 1rem;
-  }
-}
-
-/* Styles for mobile devices */
-@media (max-width: 900px) {
-  /* Your styles for mobile devices */
-  .filter-menu-button {
-    display: block;
-  }
-
-  .about-button {
-    display: none;
-  }
-  
-  .profile-btn h3 {
-    font-size: .8rem;
-  }
-
-  button h3 {
-    font-size: .8rem;
-  }
-}
 
 /* Styles for mobile devices */
 @media (max-width: 780px) {
   /* Your styles for mobile devices */
-  .header-bar h1 {
+  /* .header-bar h1 {
     font-size: 1rem;
   }
   .header-bar h4 {
@@ -136,24 +84,70 @@
   .button {
     padding: .5rem;
     width: 5rem;
-  }
+  } */
 
 }
 /* Styles for mobile devices */
 @media (max-width: 670px) {
   /* Your styles for mobile devices */
-  .hamburger-menu-button {
-    display: block; /* Show hamburger menu button */
+  /* .hamburger-menu-button {
+    display: block;
   }
 
   .create-post-btn, .filter-menu-button {
-    display: none; /* Hide these buttons on small screens */
-  }
+    display: none;
+  } */
 }
 
 
-/* Styles for mobile devices */
-@media (max-width: 600px) {
-  /* Your styles for mobile devices */
+/* Mobile devices */
+@media (max-width: 320px) {
+  /* Styles for small smartphones */
+}
 
+@media (min-width: 321px) and (max-width: 375px) {
+  /* Styles for medium smartphones */
+}
+
+@media (min-width: 376px) and (max-width: 414px) {
+  /* Styles for large smartphones */
+}
+
+/* Filling the gap for devices between 414px and 600px */
+@media (min-width: 415px) and (max-width: 599px) {
+  /* Styles for devices in this range */
+}
+
+/* Tablets */
+@media (min-width: 600px) and (max-width: 768px) {
+  
+}
+
+@media (min-width: 769px) and (max-width: 899px) {
+  /* Styles for large tablets in portrait/landscape */
+}
+
+@media (min-width: 900px)  {
+  /* Styles for large tablets in portrait/landscape */
+  .hamburger-menu-button {
+    display: none;
+  }
+
+  .capture-display-btn {
+    display: flex;
+  }
+ 
+}
+
+/* Laptops and Desktops */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  /* Styles for small to medium screens */
+}
+
+@media (min-width: 1367px) and (max-width: 1920px) {
+  /* Styles for large screens */
+}
+
+@media (min-width: 1921px) {
+  /* Styles for extra-large screens */
 }

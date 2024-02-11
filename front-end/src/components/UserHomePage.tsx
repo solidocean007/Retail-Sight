@@ -34,25 +34,23 @@ export const UserHomePage = () => {
     <>
       <UserHomePageHelmet />
       <div className="user-home-page-container">
-      <div className="header-bar-container">
-        <HeaderBar toggleFilterMenu={toggleFilterMenu} />
-      </div>
-      <div className="home-page-content">
-      
+        <div className="header-bar-container">
+          <HeaderBar toggleFilterMenu={toggleFilterMenu} />
+        </div>
+        <div className="home-page-content">
           <div className="activity-feed-container">
-            
             <ActivityFeed />
           </div>
 
-        <div
-          className={`side-bar-container ${
-            isFilterMenuOpen ? "sidebar-fullscreen" : ""
-          }`}
-        >
-          <SideBar toggleFilterMenu={toggleFilterMenu} />
+          <div
+            className={`side-bar-container ${
+              isFilterMenuOpen ? "sidebar-fullscreen" : ""
+            }`}
+          >
+            <SideBar toggleFilterMenu={toggleFilterMenu} />
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };
