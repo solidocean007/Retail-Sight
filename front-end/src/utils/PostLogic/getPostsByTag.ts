@@ -37,9 +37,9 @@ export const getPostsByTag = async (
 
       // Check if postUserCompanyID matches the user's company ID
       const postCompanyID = post.postUserCompanyId;
-      return postCompanyID === usersCompanyID;
+      return postCompanyID === usersCompanyID; // what does this line do?  does it return a post that has a matching company id to the logged in user?
     });
-
+    console.log('filtered posts: ', filteredPosts)
     return filteredPosts;
   } catch (error) {
     console.error("Error fetching posts by hashtag:", error);
