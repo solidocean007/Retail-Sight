@@ -58,7 +58,7 @@ h3 {
 /* When accordion is active */
 .custom-accordion .accordion-details.open {
   display: flex;
-  width: 100%;
+  width: fit-content;
   flex-direction: column;
   align-items: start;
   justify-content: flex-start;
@@ -66,6 +66,12 @@ h3 {
   z-index: 2;
   max-height: 500px; 
   /* Additional styles for the active state */
+}
+
+.accordion-option {
+  width: 100%;
+  display: flex;
+  padding-right: 5px;
 }
 
 .close-button {

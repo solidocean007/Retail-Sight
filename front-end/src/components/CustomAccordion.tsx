@@ -48,7 +48,7 @@ const CustomAccordion = <T extends string>({
             </button>
           </div>
           {options.map((option: T) => (
-            <div key={option} onClick={() => toggleOption(option)}>
+            <div className="accordion-option" key={option} onClick={() => toggleOption(option)}>
               <Checkbox
                 checked={selected.includes(option)}
                 onChange={() => {}}
