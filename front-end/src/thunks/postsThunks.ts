@@ -26,7 +26,6 @@ import {
   getLatestPostsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { DocumentSnapshot } from "firebase/firestore";
-import { incrementRead } from "../Slices/firestoreReadsSlice";
 // import { showMessage } from "../Slices/snackbarSlice";
 
 type FetchPostsArgs = {
@@ -97,13 +96,12 @@ export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
     { lastVisible, limit: BatchSize }: FetchMorePostsArgs,
-    { rejectWithValue, dispatch }
+    { rejectWithValue }
   ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
       let postsQuery;
 
-      // If lastVisible is not null, convert it to a DocumentSnapshot
       if (lastVisible) {
         const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
         postsQuery = query(
@@ -125,30 +123,18 @@ export const fetchMorePostsBatch = createAsyncThunk(
         const data = doc.data() as PostType;
         return { id: doc.id, ...data };
       });
-      // Get the last visible document's ID for pagination
-      const newLastVisible =
-        snapshot.docs[snapshot.docs.length - 1]?.id || null;
 
-      // Dispatch incrementRead action
-      dispatch(
-        incrementRead({
-          source: "fetchMoreBatch",
-          description: "Fetching more posts",
-          timestamp: new Date().toISOString(), // ISO 8601 format timestamp
-        })
-      );
-
+      const newLastVisible = snapshot.docs[snapshot.docs.length - 1]?.id || null;
       return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
-      // Check if error is an instance of Error and has a message property
       if (error instanceof Error) {
         return rejectWithValue(error.message);
       }
-      // If it's not an Error instance or doesn't have a message, return a default message
       return rejectWithValue("An unknown error occurred");
     }
   }
 );
+
 
 export const fetchLatestPosts = createAsyncThunk<
   PostWithID[],
@@ -184,15 +170,6 @@ export const fetchLatestPosts = createAsyncThunk<
 
       // Optionally, store the fetched posts in IndexedDB
       await storeLatestPostsInIndexedDB(posts); // Assume this function exists
-
-      // Dispatch incrementRead action
-      dispatch(
-        incrementRead({
-          source: "fetchLatestPosts",
-          description: "Fetching latest posts",
-          timestamp: new Date().toISOString(), // ISO 8601 format timestamp
-        })
-      );
 
       return posts;
     }

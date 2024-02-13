@@ -6,7 +6,6 @@ import { AppDispatch } from '../store';
 
 export const fetchUserDocFromFirestore = async (uid: string, dispatch: AppDispatch) => {
   const userRef = doc(collection(db, 'users'), uid);
-  console.log('fetchUserDocFromFirestore from firestore read')
 
   // Log Firestore read with timestamp
   dispatch(incrementRead({ 

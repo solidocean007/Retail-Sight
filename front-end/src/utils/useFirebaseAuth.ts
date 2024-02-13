@@ -22,7 +22,6 @@ export const useFirebaseAuth = () => {
     // If user is logged in and the UID has changed, fetch user document
     if (user) {
       try {
-        console.log('handleUserChange in useFirebaseAuth read');
         const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid, dispatch) as UserType;
         if (userDataFromFirestore) {
           dispatch(setUser(userDataFromFirestore));
@@ -40,7 +39,6 @@ export const useFirebaseAuth = () => {
   }, [dispatch, currentUser]);
 
   useEffect(() => {
-    console.log('useFirebaseAuth.ts runs from App.tsx:');
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       handleUserChange(user);
@@ -49,7 +47,6 @@ export const useFirebaseAuth = () => {
 
     // Clean up the subscription
     return () => {
-      console.log('Unsubscribing from auth changes');
       unsubscribe();
     };
   }, [handleUserChange]);

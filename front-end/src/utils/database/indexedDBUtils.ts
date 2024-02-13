@@ -332,7 +332,6 @@ export async function storeLocationsInIndexedDB(locations: {
 export async function getLocationsFromIndexedDB(): Promise<{
   [key: string]: string[];
 } | null> {
-  console.log("Opening IndexedDB to fetch locations...");
   const db = await openDB();
   const transaction = db.transaction(["locations"], "readonly");
   const store = transaction.objectStore("locations");
@@ -341,10 +340,8 @@ export async function getLocationsFromIndexedDB(): Promise<{
   return new Promise((resolve, reject) => {
     getAllRequest.onsuccess = () => {
       const allLocations = getAllRequest.result;
-      console.log("Fetched locations from IndexedDB:", allLocations);
 
       if (!Array.isArray(allLocations) || allLocations.length === 0) {
-        console.log("No locations found in IndexedDB.");
         resolve(null); // Resolve with null if no data is found
         return;
       }
@@ -353,15 +350,12 @@ export async function getLocationsFromIndexedDB(): Promise<{
         // Assuming your keyPath is "state"
         const state = location.state;
         if (state && Array.isArray(location.cities)) {
-          console.log(`Processing location for state: ${state}`);
           acc[state] = location.cities;
         } else {
-          console.warn("Invalid location data encountered", location);
         }
         return acc;
       }, {});
 
-      console.log("Resolved locations from IndexedDB:", locations);
       resolve(locations);
     };
     getAllRequest.onerror = () => {
@@ -384,7 +378,6 @@ export async function addHashtagPostsToIndexedDB(
 
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
-      console.log("Hashtag posts added to IndexedDB successfully.");
       resolve();
     };
 
@@ -482,7 +475,6 @@ export async function clearHashtagPostsInIndexedDB(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const clearRequest = store.clear();
     clearRequest.onsuccess = () => {
-      console.log("Hashtag posts cleared from IndexedDB successfully.");
       resolve();
     };
     clearRequest.onerror = () => {

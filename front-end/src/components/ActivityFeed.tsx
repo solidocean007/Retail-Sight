@@ -3,14 +3,14 @@ import { VariableSizeList as List } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
 import NoContentCard from "./NoContentCard";
-import AdComponent from "./AdSense/AdComponent";
+// import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
 import {
   getPostsByStarTag,
   getPostsByTag,
 } from "../utils/PostLogic/getPostsByTag";
-import { fetchInitialPostsBatch } from "../thunks/postsThunks";
+import { fetchInitialPostsBatch, fetchMorePostsBatch } from "../thunks/postsThunks";
 import "./activityFeed.css";
 import { PostType, PostWithID } from "../utils/types";
 import {
@@ -44,7 +44,7 @@ import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
 
-const POSTS_BATCH_SIZE = 200; // ill reduce this later after i implement the batchMorePosts logic
+const POSTS_BATCH_SIZE = 5; // ill reduce this later after i implement the batchMorePosts logic
 const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
@@ -68,17 +68,19 @@ const ActivityFeed = () => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
 
+  const [lastVisible, setLastVisible] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // console.log(posts, ' : posts')
-  const loading = useSelector((state: RootState) => state.posts.loading);
+  // const loading = useSelector((state: RootState) => state.posts.loading);
   // State to store the list height
   const [listHeight, setListHeight] = useState(0);
 
   // Function to calculate list height
   const calculateListHeight = () => {
-    // Set list height to 70% of the viewport height
     return window.innerHeight * 0.9;
   };
 
@@ -141,16 +143,15 @@ const ActivityFeed = () => {
       return 820;
     }
   };
-
-  // Effect to update the window width on resize
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    // Effect to update the window width on resize
+    useEffect(() => {
+      const handleResize = () => {
+        setWindowWidth(window.innerWidth);
+      };
+  
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
   // Calculate the width for the FixedSizeList
   const getListWidth = () => {
@@ -162,169 +163,83 @@ const ActivityFeed = () => {
     return 650;
   };
 
+  const handleItemsRendered = ({
+  visibleStopIndex,
+}: {
+  visibleStopIndex: number;
+}) => {
+  const lastIndex = itemCount - 1;
+
+  // If the last visible index is the last item in the list
+  if (visibleStopIndex === lastIndex && !loadingMore && hasMore) {
+    setLoadingMore(true);
+    dispatch(fetchMorePostsBatch({ lastVisible, limit: POSTS_BATCH_SIZE }))
+      .then((action) => {
+        if (fetchMorePostsBatch.fulfilled.match(action)) {
+          const { posts, lastVisible: newLastVisible } = action.payload;
+          setLastVisible(newLastVisible);
+          if (posts.length === 0) {
+            setHasMore(false);
+          }
+          // Merge new posts with existing posts in Redux store
+          dispatch(mergeAndSetPosts(posts));
+        } else if (fetchMorePostsBatch.rejected.match(action)) {
+          // Handle error
+        }
+      })
+      .finally(() => {
+        setLoadingMore(false);
+      });
+  }
+};
+
+  
+
   // load indexDB posts or fetch from firestore
   useEffect(() => {
     const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
-      await clearIndexedDB();
-
-      dispatch(
-        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
-      ).then((action) => {
-        if (fetchInitialPostsBatch.fulfilled.match(action)) {
-          addPostsToIndexedDB(action.payload.posts);
+      try {
+        const indexedDBPosts = await getPostsFromIndexedDB();
+        if (indexedDBPosts.length > 0) {
+          dispatch(setPosts(indexedDBPosts)); // Update Redux store with posts from IndexedDB
+        } else {
+          const action = await dispatch(
+            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
+          );
+          if (fetchInitialPostsBatch.fulfilled.match(action)) {
+            const fetchedPosts = action.payload.posts;
+            addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
+          }
         }
-      });
+      } catch (error) {
+        console.error("Error fetching posts from IndexedDB:", error);
+      }
     };
 
     const fetchPublicPosts = async () => {
-      // need to check indexedDB before doing this in case this user has visited the site before.
-      const publicPostsQuery = query(
-        collection(db, "posts"),
-        where("visibility", "==", "public"),
-        orderBy("timestamp", "desc"),
-        limit(4)
-      );
-      const querySnapshot = await getDocs(publicPostsQuery);
-
-      const publicPosts: PostWithID[] = querySnapshot.docs
-        .map((doc) => {
-          const postData: PostType = doc.data() as PostType;
-          return {
-            ...postData,
-            id: doc.id,
-          };
-        })
-        .filter((post) => post.visibility === "public");
-      // id: doc.id, ...doc.data() as PostType }));
-      dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
-      addPostsToIndexedDB(publicPosts);
+      try {
+        const publicPostsQuery = query(
+          collection(db, "posts"),
+          where("visibility", "==", "public"),
+          orderBy("timestamp", "desc"),
+          limit(4)
+        );
+        const querySnapshot = await getDocs(publicPostsQuery);
+        const publicPosts: PostWithID[] = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() } as PostWithID))
+          .filter((post) => post.visibility === "public");
+        dispatch(setPosts(publicPosts)); // Update Redux store with fetched public posts
+      } catch (error) {
+        console.error("Error fetching public posts:", error);
+      }
     };
 
     if (currentUser === null) {
       fetchPublicPosts();
     } else if (currentUserCompanyId) {
-      // i think there should be a try catch block to get posts from indexedDB before fetching.
       fetchPostsForLoggedInUser(currentUserCompanyId);
     }
   }, [currentUser, dispatch, currentUserCompanyId]);
-
-  // listen for new or updated posts
-  useEffect(() => {
-    // Capture the mount time in ISO format
-    const mountTime = new Date().toISOString();
-    const userCompanyID = currentUser?.companyId;
-
-    // Function to process document changes
-    const processDocChanges = (snapshot: QuerySnapshot) => {
-      const changes = snapshot.docChanges();
-      changes.forEach((change: DocumentChange) => {
-        const postData = {
-          id: change.doc.id,
-          ...(change.doc.data() as PostType),
-        };
-        if (change.type === "added" || change.type === "modified") {
-          dispatch(mergeAndSetPosts([postData])); // I think this is the part that is failing and also lets add the update
-          updatePostInIndexedDB(postData);
-        } else if (change.type === "removed") {
-          // Dispatch an action to remove the post from Redux store
-          dispatch(deletePost(change.doc.id));
-          // Call a function to remove the post from IndexedDB
-          removePostFromIndexedDB(change.doc.id);
-          deleteUserCreatedPostInIndexedDB(change.doc.id);
-        }
-      });
-    };
-
-    // Subscribe to public posts
-    const publicPostsQuery = query(
-      collection(db, "posts"),
-      where("visibility", "==", "public"),
-      where("timestamp", ">", mountTime),
-      orderBy("timestamp", "desc")
-    );
-    const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
-
-    // Subscribe to company-specific posts, if the user's company is known
-    let unsubscribeCompany = () => {};
-    if (userCompanyID) {
-      const companyPostsQuery = query(
-        collection(db, "posts"),
-        where("user.postUserCompanyID", "==", userCompanyID),
-        where("timestamp", ">", mountTime),
-        orderBy("timestamp", "desc")
-      );
-      unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);
-    }
-
-    // Cleanup function
-    return () => {
-      unsubscribePublic();
-      unsubscribeCompany();
-    };
-  }, [currentUser?.companyId, dispatch]);
-
-  // load indexDB posts or fetch from firestore
-  // useEffect(() => {
-  //   const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
-  //     await clearIndexedDB();
-
-  //     dispatch(
-  //       fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
-  //     ).then((action) => {
-  //       if (fetchInitialPostsBatch.fulfilled.match(action)) {
-  //         addPostsToIndexedDB(action.payload.posts);
-  //       }
-  //     });
-  //   };
-
-  //   const fetchPublicPosts = async () => {
-  //     // need to check indexedDB before doing this in case this user has visited the site before.
-  //     const publicPostsQuery = query(
-  //       collection(db, "posts"),
-  //       where("visibility", "==", "public"),
-  //       orderBy("timestamp", "desc"),
-  //       limit(4)
-  //     );
-  //     const querySnapshot = await getDocs(publicPostsQuery);
-
-  //     const publicPosts: PostWithID[] = querySnapshot.docs
-  //       .map((doc) => {
-  //         const postData: PostType = doc.data() as PostType;
-  //         return {
-  //           ...postData,
-  //           id: doc.id,
-  //         };
-  //       })
-  //       .filter((post) => post.visibility === "public");
-  //     // id: doc.id, ...doc.data() as PostType }));
-  //     dispatch(setPosts(publicPosts as PostWithID[])); // Update your Redux store with the fetched posts
-  //     addPostsToIndexedDB(publicPosts);
-  //   };
-
-  //   const loadPosts = async () => {
-  //     let postsLoaded = false;
-
-  //     // Attempt to load posts from IndexedDB first
-  //     const cachedPosts = await getPostsFromIndexedDB();
-  //     if (cachedPosts && cachedPosts.length > 0) {
-  //       dispatch(setPosts(cachedPosts));
-  //       postsLoaded = true;
-  //     }
-
-  //     // If posts are not loaded from IndexedDB, fetch from Firestore
-  //     if (!postsLoaded) {
-  //       if (currentUser === null) {
-  //         // Function to fetch public posts
-  //         await fetchPublicPosts();
-  //       } else if (currentUserCompanyId) {
-  //         // Function to fetch company-specific posts
-  //         await fetchPostsForLoggedInUser(currentUserCompanyId);
-  //       }
-  //     }
-  //   };
-
-  //   loadPosts();
-  // }, [currentUser, dispatch, currentUserCompanyId]);
 
   // listen for new or updated posts
   useEffect(() => {
@@ -429,16 +344,14 @@ const ActivityFeed = () => {
   };
 
   // If loading, show a loading indicator
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  {loadingMore && <div>Loading more posts...</div>}
+
 
   // If there are no posts, show the no content card
   if (displayPosts.length === 0) {
     return <NoContentCard />;
   }
 
-  // Render the list with the ad at the top followed by posts
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
@@ -457,6 +370,7 @@ const ActivityFeed = () => {
         itemCount={itemCount}
         itemSize={getItemSize}
         width={getListWidth()}
+        onItemsRendered={handleItemsRendered}
         itemData={{
           posts: posts,
           getPostsByTag: getPostsByTag,

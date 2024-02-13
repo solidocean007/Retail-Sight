@@ -30,7 +30,7 @@ const db = getFirestore(app);
 
 setPersistence(auth, browserLocalPersistence)
   .then(() => {
-    console.log("Persistence set to local");
+    // console.log("Persistence set to local");
   })
   .catch((error) => {
     console.error("Error setting persistence", error);

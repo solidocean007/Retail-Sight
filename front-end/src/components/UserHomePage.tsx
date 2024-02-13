@@ -25,8 +25,7 @@ export const UserHomePage = () => {
   };
 
   useEffect(() => {
-    // Dispatch the action to fetch location options
-    console.log("fetching?");
+    // I need to check if location options are in indexedDb before doing this next line.
     dispatch(fetchLocationOptions());
   }, [dispatch]);
 

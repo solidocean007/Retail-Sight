@@ -5,33 +5,24 @@ import { RootState } from '../utils/store';
 import { db } from '../utils/firebase';
 import { LocationState } from '../utils/types';
 import { getLocationsFromIndexedDB, storeLocationsInIndexedDB } from '../utils/database/indexedDBUtils';
-import { incrementRead } from './firestoreReadsSlice';
 // Define a selector to get all posts (assuming it is defined elsewhere)
 // now that im storing posts in indexDB maybe I should store these locations there also?
 // can I cut down on firestore reads by doing this?
 export const selectAllPosts = (state: RootState) => state.posts.posts;
 
-
-
 export const fetchLocationOptions = createAsyncThunk(
   'locations/fetchOptions',
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      console.log('look in index for locations')
       const cachedLocations = await getLocationsFromIndexedDB();
       if(cachedLocations) {
-        console.log('returning locations from indexedDB', cachedLocations)
         return cachedLocations
       }
 
       // Data not in cache, fetch from Firestore
 
       const locationsCollectionRef = collection(db, "locations");
-      console.log('Fetching locations from Firestore');
       const querySnapshot = await getDocs(locationsCollectionRef);
-
-      // Log Firestore read
-      dispatch(incrementRead({ source: 'fetchLocationOptions', description: 'Fetching location options',  timestamp: new Date().toISOString() }));
 
       const locations: { [key: string]: string[] } = {};
       querySnapshot.forEach((doc) => {
@@ -47,7 +38,6 @@ export const fetchLocationOptions = createAsyncThunk(
 
       return locations;
     } catch (error) {
-      console.error('Error fetching locations:', error);
       return rejectWithValue('Error fetching locations');
     }
   }
