@@ -88,23 +88,25 @@ const postsSlice = createSlice({
     },
     mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
       const newPosts = action.payload;
-      // Explicitly type the accumulator as PostWithID[]
+      // Merge new posts with existing posts without duplicates
       const mergedPosts = [...state.posts, ...newPosts].reduce((acc: PostWithID[], post) => {
         if (!acc.find(p => p.id === post.id)) {
           acc.push(post);
         }
         return acc;
-      }, [] as PostWithID[]); // Initialize the accumulator as an empty array of PostWithID
+      }, [] as PostWithID[]);
     
-      // Sort posts if necessary
+      // Sort posts by displayDate, from newest to oldest
       mergedPosts.sort((a, b) => {
-        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-        return timeB - timeA;
+        // Convert displayDate to a timestamp for comparison
+        const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
+        const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
+        return dateB - dateA; // Sort in descending order
       });
     
       state.posts = mergedPosts;
     },
+    
     setHashtagPosts(state, action) {
       state.hashtagPosts = action.payload;
     },

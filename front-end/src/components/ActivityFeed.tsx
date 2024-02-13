@@ -10,7 +10,10 @@ import {
   getPostsByStarTag,
   getPostsByTag,
 } from "../utils/PostLogic/getPostsByTag";
-import { fetchInitialPostsBatch, fetchMorePostsBatch } from "../thunks/postsThunks";
+import {
+  fetchInitialPostsBatch,
+  fetchMorePostsBatch,
+} from "../thunks/postsThunks";
 import "./activityFeed.css";
 import { PostType, PostWithID } from "../utils/types";
 import {
@@ -143,15 +146,16 @@ const ActivityFeed = () => {
       return 820;
     }
   };
-    // Effect to update the window width on resize
-    useEffect(() => {
-      const handleResize = () => {
-        setWindowWidth(window.innerWidth);
-      };
-  
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }, []);
+
+  // Effect to update the window width on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Calculate the width for the FixedSizeList
   const getListWidth = () => {
@@ -164,36 +168,37 @@ const ActivityFeed = () => {
   };
 
   const handleItemsRendered = ({
-  visibleStopIndex,
-}: {
-  visibleStopIndex: number;
-}) => {
-  const lastIndex = itemCount - 1;
+    visibleStopIndex,
+  }: {
+    visibleStopIndex: number;
+  }) => {
+    const lastIndex = itemCount - 1;
 
-  // If the last visible index is the last item in the list
-  if (visibleStopIndex === lastIndex && !loadingMore && hasMore) {
-    setLoadingMore(true);
-    dispatch(fetchMorePostsBatch({ lastVisible, limit: POSTS_BATCH_SIZE }))
-      .then((action) => {
-        if (fetchMorePostsBatch.fulfilled.match(action)) {
-          const { posts, lastVisible: newLastVisible } = action.payload;
-          setLastVisible(newLastVisible);
-          if (posts.length === 0) {
-            setHasMore(false);
+    // If the last visible index is the last item in the list
+    if (visibleStopIndex === lastIndex && !loadingMore && hasMore) {
+      setLoadingMore(true);
+      dispatch(fetchMorePostsBatch({ lastVisible, limit: POSTS_BATCH_SIZE }))
+        .then((action) => {
+          if (fetchMorePostsBatch.fulfilled.match(action)) {
+            const { posts, lastVisible: newLastVisible } = action.payload;
+            setLastVisible(newLastVisible);
+            if (posts.length > 0) {
+              addPostsToIndexedDB(posts); // Ensure new posts are added to IndexedDB
+              setHasMore(true);
+            } else {
+              setHasMore(false);
+            }
+            // Merge new posts with existing posts in Redux store
+            dispatch(mergeAndSetPosts(posts));
+          } else if (fetchMorePostsBatch.rejected.match(action)) {
+            // Handle error
           }
-          // Merge new posts with existing posts in Redux store
-          dispatch(mergeAndSetPosts(posts));
-        } else if (fetchMorePostsBatch.rejected.match(action)) {
-          // Handle error
-        }
-      })
-      .finally(() => {
-        setLoadingMore(false);
-      });
-  }
-};
-
-  
+        })
+        .finally(() => {
+          setLoadingMore(false);
+        });
+    }
+  };
 
   // load indexDB posts or fetch from firestore
   useEffect(() => {
@@ -344,8 +349,9 @@ const ActivityFeed = () => {
   };
 
   // If loading, show a loading indicator
-  {loadingMore && <div>Loading more posts...</div>}
-
+  {
+    loadingMore && <div>Loading more posts...</div>;
+  }
 
   // If there are no posts, show the no content card
   if (displayPosts.length === 0) {
