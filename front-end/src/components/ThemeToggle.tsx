@@ -19,14 +19,15 @@ export const ThemeToggle: React.FC = () => {
 
   // ThemeToggle.tsx
   const handleThemeChange = () => {
+    const newIsDarkMode = !isDarkMode; // Determine the new theme value
     dispatch(toggleTheme());
-
+  
     // Update the body's data-theme attribute
-    if (isDarkMode) {
-      document.body.setAttribute("data-theme", "light");
-    } else {
-      document.body.setAttribute("data-theme", "dark");
-    }
+    document.body.setAttribute("data-theme", newIsDarkMode ? "dark" : "light");
+  
+    // Save the theme preference to localStorage
+    localStorage.setItem('theme', newIsDarkMode ? 'dark' : 'light');
+  
     setIsDrawerOpen(false);
   };
 

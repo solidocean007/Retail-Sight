@@ -84,8 +84,16 @@ a:hover {
 }
 
 /* Dark Mode */
+/* Explicitly apply the text color to text elements */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] p,
 [data-theme="dark"] a {
-  color: var(--gold-leaf); /* Gold Leaf for dark mode */
+  color: var(--text-color);
 }
 
 [data-theme="dark"] a:hover {

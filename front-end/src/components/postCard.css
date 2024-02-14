@@ -49,7 +49,11 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 5px;
+  padding: 0px 5px;
+}
+
+.post-header p {
+  margin: 0;
 }
 
 .edit-block {
@@ -172,6 +176,8 @@ h5 {
 }
 
 .post-user-name, .user-company-box {
+  display: flex;
+  align-items: center;
   font-size: medium;
 }
 

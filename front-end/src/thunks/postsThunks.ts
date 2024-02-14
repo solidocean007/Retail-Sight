@@ -40,7 +40,7 @@ type FetchPostsArgs = {
 
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
-  currentUserCompanyId: string;
+  currentUserCompanyId: string | undefined;
 };
 
 // just noting this function fetches but doesn't store to redux or indexedDb
@@ -90,12 +90,13 @@ export const fetchInitialPostsBatch = createAsyncThunk(
 type FetchMorePostsArgs = {
   lastVisible: string | null; // Use string to represent the last document ID
   limit: number;
+  currentUserCompanyId: string | undefined;
 };
 
 export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
-    { lastVisible, limit: BatchSize }: FetchMorePostsArgs,
+    { lastVisible, limit: BatchSize, currentUserCompanyId }: FetchMorePostsArgs,
     { rejectWithValue }
   ) => {
     try {
@@ -121,8 +122,10 @@ export const fetchMorePostsBatch = createAsyncThunk(
       const snapshot = await getDocs(postsQuery);
       const postsWithIds: PostWithID[] = snapshot.docs.map((doc) => {
         const data = doc.data() as PostType;
-        return { id: doc.id, ...data };
-      });
+        const isPublic = data.visibility === "public";
+        const isCompanyPost = data.visibility === "company" && data.postUserCompanyId === currentUserCompanyId;
+        return isPublic || isCompanyPost ? { id: doc.id, ...data } : null;
+      }).filter(post => post !== null) as PostWithID[];
 
       const newLastVisible = snapshot.docs[snapshot.docs.length - 1]?.id || null;
       return { posts: postsWithIds, lastVisible: newLastVisible };

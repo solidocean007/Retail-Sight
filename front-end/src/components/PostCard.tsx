@@ -171,7 +171,7 @@ const PostCard: React.FC<PostCardProps> = ({
       <div className="card-content">
         <div className="post-header">
           <div className="visibility">
-            <div className="view-box">view: {post.visibility}</div>
+            <div className="view-box"><p>view: {post.visibility}</p></div>
           </div>
           <div className="post-header-top">
             <div className="likes-comments">
@@ -231,7 +231,7 @@ const PostCard: React.FC<PostCardProps> = ({
             <div className="post-user-details">
               {/* <div onClick={handleOnUserNameClick}> */}
               <div className="post-user-name">
-                by:{"  "}
+                <p>by:</p>
                 <a href="#" onClick={handleOnUserNameClick}>
                   {post.postUserName}
                 </a>

@@ -28,7 +28,6 @@ const store = configureStore({
 export type AppDispatch = typeof store.dispatch;
 export const useAppDispatch = () => _useDispatch<AppDispatch>();
 
-// This is a type for thunks, if needed elsewhere:
 export type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
   RootState,

@@ -13,14 +13,30 @@ import UserModal from "./components/UserModal.tsx";
 import { AppRoutes } from "./utils/Routes.tsx";
 import { getTheme } from "./theme.ts";
 import Footer from "./components/Footer.tsx";
+import { useEffect } from "react";
+import { toggleTheme } from "./actions/themeActions.ts";
 
 function App() {
+  const dispatch = useDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
-  const { currentUser, initializing } = useFirebaseAuth();
+  const snackbar = useSelector((state: RootState) => state.snackbar);
+
+  const { currentUser, initializing } = useFirebaseAuth(); // should i use this or selectUser?
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme');
+    const prefersDarkMode = storedTheme === 'dark';
+
+     // Apply the theme from localStorage on initial load
+     if (prefersDarkMode !== isDarkMode) {
+      dispatch(toggleTheme()); // Make sure this action correctly updates the state
+    }
+
+   // Ensure that the body's data-theme attribute is set
+   document.body.setAttribute("data-theme", prefersDarkMode ? "dark" : "light");
+  }, [dispatch, isDarkMode]);
 
   const theme = getTheme(isDarkMode);
-  const snackbar = useSelector((state: RootState) => state.snackbar);
-  const dispatch = useDispatch();
 
   return (
     <>

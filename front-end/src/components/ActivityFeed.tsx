@@ -135,7 +135,7 @@ const ActivityFeed = () => {
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 500) {
       // return 720;
-      return 600;
+      return 620;
     } else if (windowWidth <= 700) {
       return 680;
     } else if (windowWidth <= 800) {
@@ -177,7 +177,7 @@ const ActivityFeed = () => {
     // If the last visible index is the last item in the list
     if (visibleStopIndex === lastIndex && !loadingMore && hasMore) {
       setLoadingMore(true);
-      dispatch(fetchMorePostsBatch({ lastVisible, limit: POSTS_BATCH_SIZE }))
+      dispatch(fetchMorePostsBatch({ lastVisible, limit: POSTS_BATCH_SIZE, currentUserCompanyId }))
         .then((action) => {
           if (fetchMorePostsBatch.fulfilled.match(action)) {
             const { posts, lastVisible: newLastVisible } = action.payload;
