@@ -1,7 +1,7 @@
 .date-filter-box {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  width: 50%;
 }
 
 .start-filter, .end-filter {
@@ -15,6 +15,7 @@
   .date-filter-box {
     flex-direction: row;
     justify-content: space-around;
+    width: 100%;
   }
 }
 

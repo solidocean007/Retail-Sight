@@ -24,28 +24,32 @@ type CursorType = string;
 // New state shape including loading and error states
 interface PostsState {
   posts: PostWithID[];
+  filteredPosts: PostWithID[];
   userPosts: PostWithID[];
   loading: boolean;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
   lastVisible: CursorType | null;
+  lastVisibleFiltered: CursorType | null;
   hashtagPosts: PostWithID[];
   starTagPosts: PostWithID[];
 }
 
 const initialState: PostsState = {
   posts: [],
+  filteredPosts: [],
   userPosts: [],
   loading: false,
   status: 'idle',
   error: null,
   lastVisible: "",
+  lastVisibleFiltered: "",
   hashtagPosts: [],
   starTagPosts: [],
 };
 
 const postsSlice = createSlice({
-  name: "posts",
+  name: "posts", // will this no be enough to store both posts and filtered posts?  Should I create another to handle filtered posts?
   initialState,
   reducers: {
     // Adjusted to the correct state.posts property
@@ -53,7 +57,7 @@ const postsSlice = createSlice({
       state.posts = action.payload;
     },
     setFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      state.posts = action.payload;
+      state.filteredPosts = action.payload;
     },
     // Add setUserPosts reducer function
     setUserPosts: (state, action: PayloadAction<PostWithID[]>) => {
@@ -82,6 +86,9 @@ const postsSlice = createSlice({
     // Instead of storing the whole DocumentSnapshot, you can store just the ID, or necessary data.
     setLastVisible: (state, action: PayloadAction<string | null>) => {
       state.lastVisible = action.payload;
+    },
+    setLastVisibleFiltered: (state, action: PayloadAction<string | null>) => {
+      state.lastVisibleFiltered = action.payload;
     },
     addNewPost: (state, action: PayloadAction<PostWithID>) => {
       state.posts.push(action.payload);
@@ -207,6 +214,7 @@ export const {
   setLoading,
   setError,
   setLastVisible,
+  setLastVisibleFiltered,
   addNewPost,
   mergeAndSetPosts,
   setHashtagPosts,

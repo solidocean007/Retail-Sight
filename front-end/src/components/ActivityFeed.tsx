@@ -30,7 +30,7 @@ import {
   removePostFromIndexedDB,
   updatePostInIndexedDB,
 } from "../utils/database/indexedDBUtils";
-import { deletePost, mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
+import { deletePost, mergeAndSetPosts } from "../Slices/postsSlice";
 import {
   DocumentChange,
   QuerySnapshot,
@@ -47,7 +47,7 @@ import { db } from "../utils/firebase";
 import HashTagSearchBar from "./HashTagSearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
 
-const POSTS_BATCH_SIZE = 5; // ill reduce this later after i implement the batchMorePosts logic
+const POSTS_BATCH_SIZE = 5; 
 const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
@@ -60,8 +60,10 @@ const ActivityFeed = () => {
   const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
     null
   );
-  const posts = useSelector((state: RootState) => state.posts.posts);
-
+  const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
+  //Should I add a useSelector for filtered posts now
+  // const filteredPosts = useSelector((state: RootState) => state.posts.filteredPosts);
+  
   // Determine which posts to display - search results or all posts
   const displayPosts = searchResults ? searchResults : posts;
 
@@ -235,7 +237,6 @@ const ActivityFeed = () => {
         const publicPosts = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() } as PostWithID))
           .filter((post) => post.visibility === "public");
-        // Use mergeAndSetPosts to sort and set public posts
         dispatch(mergeAndSetPosts(publicPosts));
       } catch (error) {
         console.error("Error fetching public posts:", error);
@@ -264,12 +265,10 @@ const ActivityFeed = () => {
           ...(change.doc.data() as PostType),
         };
         if (change.type === "added" || change.type === "modified") {
-          dispatch(mergeAndSetPosts([postData])); // I think this is the part that is failing and also lets add the update
+          dispatch(mergeAndSetPosts([postData])); 
           updatePostInIndexedDB(postData);
         } else if (change.type === "removed") {
-          // Dispatch an action to remove the post from Redux store
           dispatch(deletePost(change.doc.id));
-          // Call a function to remove the post from IndexedDB
           removePostFromIndexedDB(change.doc.id);
           deleteUserCreatedPostInIndexedDB(change.doc.id);
         }

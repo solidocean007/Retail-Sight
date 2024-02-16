@@ -23,7 +23,7 @@ import {
   // storeFilteredPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
-import { mergeAndSetPosts, setFilteredPosts, setPosts } from "../Slices/postsSlice";
+import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import DateFilter from "./DateFilter";
 import { PostType } from "../utils/types";
 import LeftSideBar from "./LeftSideBar";
@@ -69,11 +69,11 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     categories: [],
     states: [],
     cities: [],
-    dateRange: { startDate: null, endDate: null }, // Type 'null' is not assignable to type 'Date'
+    dateRange: { startDate: null, endDate: null },
   });
 
   const dispatch = useDispatch<AppDispatch>();
-  const allPosts = useSelector((state: RootState) => state.posts.posts);
+  const allPosts = useSelector((state: RootState) => state.posts.posts); // this probably doesnt hold the value of all posts of the company anymore after adding pagination.
 
   const applyFilters = () => {
     // Function to check if a post falls within the selected date range
