@@ -21,6 +21,12 @@
   width: 60%;
 }
 
+.date-filter-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .channel-category-box {
   display: flex;
   flex-direction: column;

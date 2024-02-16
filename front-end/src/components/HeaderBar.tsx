@@ -71,9 +71,15 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             )}
           </h2>
         </button>
-        <div className="capture-display-btn">
-          <button onClick={handleCreatePostClick}>Capture Display</button>
+        <div className="header-buttons">
+          <div className="menu-buttons">
+            <button onClick={handleDashboardClick}>Dashboard</button>
+          </div>
+          <div className="capture-display-btn">
+            <button onClick={handleCreatePostClick}>Capture Display</button>
+          </div>
         </div>
+
         <div
           className="hamburger-menu-button"
           onClick={() => setShowMenuTab(!showMenuTab)}

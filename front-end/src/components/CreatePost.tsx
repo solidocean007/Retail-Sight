@@ -38,12 +38,7 @@ import { CreatePostHelmet } from "../utils/helmetConfigurations";
 export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
-  useEffect(() => {
-    console.log("CreatePost mounts");
-    return () => {
-      console.log("CreatePost unmounts");
-    };
-  }, []);
+  
 
   const handlePostSubmission = useHandlePostSubmission();
   // State Management
@@ -189,14 +184,14 @@ export const CreatePost = () => {
               <CloseIcon />
             </IconButton>
             <Typography variant="h1" style={{ flexGrow: 1 }}>
-              Capture Post
+              Create Post
             </Typography>
           </Toolbar>
         </AppBar>
 
         <div className="image-and-details">
           <div className="image-selection-box">
-            1st add picture
+             <div className="step-one">1st add picture</div>
             <Button
               variant="contained"
               component="label"

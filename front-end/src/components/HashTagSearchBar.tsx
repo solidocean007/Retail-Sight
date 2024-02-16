@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import React, { useEffect } from "react";
-import { setPosts } from "../Slices/postsSlice";
+import { mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
 import "./hashTagSearchBar.css";
 import { RootState } from "../utils/store";
 
@@ -58,7 +58,7 @@ const HashTagSearchBar: React.FC<HashTagSearchBarProps> = ({
         dispatch(showMessage("No posts for that search found"));
         const cachedPosts = await getPostsFromIndexedDB();
         if (cachedPosts && cachedPosts.length > 0) {
-          dispatch(setPosts(cachedPosts));
+          dispatch(mergeAndSetPosts(cachedPosts));
         }
       } else if (tagPosts) {
         setSearchResults(tagPosts);

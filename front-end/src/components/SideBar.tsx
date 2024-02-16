@@ -23,7 +23,7 @@ import {
   // storeFilteredPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
-import { setFilteredPosts, setPosts } from "../Slices/postsSlice";
+import { mergeAndSetPosts, setFilteredPosts, setPosts } from "../Slices/postsSlice";
 import DateFilter from "./DateFilter";
 import { PostType } from "../utils/types";
 import LeftSideBar from "./LeftSideBar";
@@ -139,7 +139,7 @@ const SideBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     try {
       const cachedPosts = await getPostsFromIndexedDB();
       if (cachedPosts && cachedPosts.length > 0) {
-        dispatch(setPosts(cachedPosts));
+        dispatch(mergeAndSetPosts(cachedPosts));
       } else {
         // Optionally, fetch from the server if IndexedDB is empty
         if (currentUserCompany && currentUserCompanyId) {

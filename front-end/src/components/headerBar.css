@@ -16,6 +16,10 @@
   width: 100%;
 }
 
+.header-buttons {
+  display: flex;
+}
+
 .capture-display-btn {
   display: none;
 }
@@ -59,6 +63,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.menu-buttons {
+  display: none;
 }
 
 
@@ -131,6 +139,10 @@
   /* Styles for large tablets in portrait/landscape */
   .hamburger-menu-button {
     display: none;
+  }
+
+  .menu-buttons {
+    display: flex;
   }
 
   .capture-display-btn {

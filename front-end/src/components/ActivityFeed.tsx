@@ -116,7 +116,7 @@ const ActivityFeed = () => {
     // Reload posts from IndexedDB
     const cachedPosts = await getPostsFromIndexedDB();
     if (cachedPosts && cachedPosts.length > 0) {
-      dispatch(setPosts(cachedPosts));
+      dispatch(mergeAndSetPosts(cachedPosts));
     }
   };
 
@@ -206,13 +206,15 @@ const ActivityFeed = () => {
       try {
         const indexedDBPosts = await getPostsFromIndexedDB();
         if (indexedDBPosts.length > 0) {
-          dispatch(setPosts(indexedDBPosts)); // Update Redux store with posts from IndexedDB
+          dispatch(mergeAndSetPosts(indexedDBPosts)); // Update Redux store with posts from IndexedDB
         } else {
           const action = await dispatch(
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
           );
           if (fetchInitialPostsBatch.fulfilled.match(action)) {
+
             const fetchedPosts = action.payload.posts;
+            dispatch(mergeAndSetPosts(fetchedPosts));
             addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
           }
         }
@@ -230,10 +232,11 @@ const ActivityFeed = () => {
           limit(4)
         );
         const querySnapshot = await getDocs(publicPostsQuery);
-        const publicPosts: PostWithID[] = querySnapshot.docs
+        const publicPosts = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() } as PostWithID))
           .filter((post) => post.visibility === "public");
-        dispatch(setPosts(publicPosts)); // Update Redux store with fetched public posts
+        // Use mergeAndSetPosts to sort and set public posts
+        dispatch(mergeAndSetPosts(publicPosts));
       } catch (error) {
         console.error("Error fetching public posts:", error);
       }

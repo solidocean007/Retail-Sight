@@ -55,7 +55,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
 
       const postsQuery = query(
         postsCollectionRef,
-        orderBy("timestamp", "desc")
+        orderBy("displayDate", "desc")
       );
       const querySnapshot = await getDocs(postsQuery);
 
@@ -107,14 +107,14 @@ export const fetchMorePostsBatch = createAsyncThunk(
         const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
         postsQuery = query(
           postsCollectionRef,
-          orderBy("timestamp", "desc"),
+          orderBy("displayDate", "desc"),
           startAfter(lastVisibleSnapshot),
           limit(BatchSize)
         );
       } else {
         postsQuery = query(
           postsCollectionRef,
-          orderBy("timestamp", "desc"),
+          orderBy("displayDate", "desc"),
           limit(BatchSize)
         );
       }
