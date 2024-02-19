@@ -27,7 +27,7 @@ interface PostsState {
   filteredPosts: PostWithID[];
   userPosts: PostWithID[];
   loading: boolean;
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
   lastVisible: CursorType | null;
   lastVisibleFiltered: CursorType | null;
@@ -40,7 +40,7 @@ const initialState: PostsState = {
   filteredPosts: [],
   userPosts: [],
   loading: false,
-  status: 'idle',
+  status: "idle",
   error: null,
   lastVisible: "",
   lastVisibleFiltered: "",
@@ -96,13 +96,16 @@ const postsSlice = createSlice({
     mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
       const newPosts = action.payload;
       // Merge new posts with existing posts without duplicates
-      const mergedPosts = [...state.posts, ...newPosts].reduce((acc: PostWithID[], post) => {
-        if (!acc.find(p => p.id === post.id)) {
-          acc.push(post);
-        }
-        return acc;
-      }, [] as PostWithID[]);
-    
+      const mergedPosts = [...state.posts, ...newPosts].reduce(
+        (acc: PostWithID[], post) => {
+          if (!acc.find((p) => p.id === post.id)) {
+            acc.push(post);
+          }
+          return acc;
+        },
+        [] as PostWithID[]
+      );
+
       // Sort posts by displayDate, from newest to oldest
       mergedPosts.sort((a, b) => {
         // Convert displayDate to a timestamp for comparison
@@ -110,17 +113,37 @@ const postsSlice = createSlice({
         const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
         return dateB - dateA; // Sort in descending order
       });
-    
+
       state.posts = mergedPosts;
     },
-    
+    mergeAndSetFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
+      const newFilteredPosts = action.payload;
+      // Merge new filtered posts with existing filtered posts without duplicates
+      const mergedFilteredPosts = [
+        ...state.filteredPosts,
+        ...newFilteredPosts,
+      ].reduce((acc: PostWithID[], post) => {
+        if (!acc.find((p) => p.id === post.id)) {
+          acc.push(post);
+        }
+        return acc;
+      }, []);
+
+      // Sort filtered posts by displayDate, from newest to oldest
+      mergedFilteredPosts.sort((a, b) => {
+        const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
+        const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      state.filteredPosts = mergedFilteredPosts;
+    },
     setHashtagPosts(state, action) {
       state.hashtagPosts = action.payload;
     },
     setStarTagPosts(state, action) {
       state.starTagPosts = action.payload;
     },
-    
   },
   extraReducers: (builder) => {
     builder
@@ -131,17 +154,35 @@ const postsSlice = createSlice({
       .addCase(
         fetchFilteredPosts.fulfilled,
         (state, action: PayloadAction<PostWithID[]>) => {
+          // Merge and sort filtered posts directly here
+          const newFilteredPosts = action.payload;
+          const mergedFilteredPosts = [
+            ...state.filteredPosts,
+            ...newFilteredPosts,
+          ].reduce((acc: PostWithID[], post) => {
+            if (!acc.find((p) => p.id === post.id)) {
+              acc.push(post);
+            }
+            return acc;
+          }, []);
+
+          mergedFilteredPosts.sort((a, b) => {
+            const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
+            const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
+            return dateB - dateA;
+          });
+
+          state.filteredPosts = mergedFilteredPosts;
           state.loading = false;
-          // Replace existing posts with the new filtered posts
-          state.posts = action.payload;
-      
-          // Update the last visible post's ID for pagination purposes
-          state.lastVisible = action.payload.length > 0
-            ? action.payload[action.payload.length - 1].id
-            : null;
+
+          // Update the last visible filtered post's ID for pagination purposes
+          state.lastVisibleFiltered =
+            newFilteredPosts.length > 0
+              ? newFilteredPosts[newFilteredPosts.length - 1].id
+              : null;
         }
       )
-      
+
       .addCase(fetchFilteredPosts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Error fetching posts";
@@ -192,15 +233,18 @@ const postsSlice = createSlice({
         state.loading = false;
       })
       .addCase(fetchUserCreatedPosts.pending, (state) => {
-        state.status = 'loading';
+        state.status = "loading";
       })
       .addCase(fetchUserCreatedPosts.fulfilled, (state, action) => {
-        state.status = 'succeeded';
+        state.status = "succeeded";
         state.userPosts = action.payload;
       })
       .addCase(fetchUserCreatedPosts.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = typeof action.payload === 'string' ? action.payload : 'An error occurred';
+        state.status = "failed";
+        state.error =
+          typeof action.payload === "string"
+            ? action.payload
+            : "An error occurred";
       });
   },
 });
@@ -217,6 +261,7 @@ export const {
   setLastVisibleFiltered,
   addNewPost,
   mergeAndSetPosts,
+  mergeAndSetFilteredPosts,
   setHashtagPosts,
   setStarTagPosts,
 } = postsSlice.actions;

@@ -1,5 +1,5 @@
 // userHomePage.tsx
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 // import { useNavigate } from "react-router-dom";
 // import { AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
@@ -15,6 +15,9 @@ import { fetchLocationOptions } from "../Slices/locationSlice";
 import HeaderBar from "./HeaderBar";
 // import LeftSideBar from "./LeftSideBar";
 import { UserHomePageHelmet } from "../utils/helmetConfigurations";
+import { PostWithID } from "../utils/types";
+import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { mergeAndSetPosts } from "../Slices/postsSlice";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
@@ -22,6 +25,24 @@ export const UserHomePage = () => {
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
+  };
+  const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
+    null
+  );
+  // const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
+  //   null
+  // );
+  const [activePostSet, setActivePostSet] = useState("posts"); // 'posts', 'filtered', 'hashtag'
+
+  const clearSearch = async () => {
+    setCurrentHashtag(null);
+    // setSearchResults(null);
+    setActivePostSet("posts");
+    // Reload posts from IndexedDB
+    const cachedPosts = await getPostsFromIndexedDB();
+    if (cachedPosts && cachedPosts.length > 0) {
+      dispatch(mergeAndSetPosts(cachedPosts));
+    }
   };
 
   useEffect(() => {
@@ -38,7 +59,15 @@ export const UserHomePage = () => {
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
-            <ActivityFeed />
+            <ActivityFeed
+              // searchResults={searchResults}
+              // setSearchResults={setSearchResults}
+              currentHashtag={currentHashtag}
+              setCurrentHashtag={setCurrentHashtag}
+              clearSearch={clearSearch}
+              activePostSet={activePostSet}
+              setActivePostSet={setActivePostSet}
+            />
           </div>
 
           <div
@@ -46,7 +75,14 @@ export const UserHomePage = () => {
               isFilterMenuOpen ? "sidebar-fullscreen" : ""
             }`}
           >
-            <SideBar toggleFilterMenu={toggleFilterMenu} />
+            <SideBar
+              // setSearchResults={setSearchResults}
+              currentHashtag={currentHashtag}
+              setCurrentHashtag={setCurrentHashtag}
+              clearSearch={clearSearch}
+              toggleFilterMenu={toggleFilterMenu}
+              setActivePostSet={setActivePostSet}
+            />
           </div>
         </div>
       </div>

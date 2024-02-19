@@ -11,8 +11,8 @@ interface PostDescriptionProps {
   description?: string;
   getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
   getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
-  setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
+  setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const DescriptionModal = ({
@@ -34,8 +34,8 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   description,
   getPostsByTag,
   getPostsByStarTag,
-  setSearchResults,
   setCurrentHashtag,
+  setActivePostSet,
 }) => {
   const dispatch = useDispatch();
   // const tags = description?.split(/\s+/);
@@ -96,8 +96,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     event.preventDefault(); // Prevents the default anchor behavior
     try {
       const hashtagPosts = await getPostsByTag(hashtag, userCompanyID); // Argument of type 'string | null' is not assignable to parameter of type 'string'
-
-      setSearchResults(hashtagPosts);
+      setActivePostSet('hashtag')
       setCurrentHashtag(hashtag); // Type 'string' is not assignable to type 'SetStateAction<null>'
       dispatch(setHashtagPosts(hashtagPosts));
       addHashtagPostsToIndexedDB(hashtagPosts);
@@ -115,7 +114,6 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     try {
       const starTagPosts = await getPostsByStarTag(starTag); // Argument of type 'string | null' is not assignable to parameter of type 'string'
 
-      setSearchResults(starTagPosts);
       setCurrentHashtag(starTag); // Type 'string' is not assignable to type 'SetStateAction<null>'
       dispatch(setStarTagPosts(starTagPosts));
       addStarTagPostsToIndexedDB(starTagPosts);

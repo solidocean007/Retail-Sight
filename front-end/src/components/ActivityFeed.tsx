@@ -44,28 +44,58 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import HashTagSearchBar from "./HashTagSearchBar";
+import HashTagSearchBar from "./TagOnlySearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
+import TagOnlySearchBar from "./TagOnlySearchBar";
 
-const POSTS_BATCH_SIZE = 5; 
+const POSTS_BATCH_SIZE = 5;
 const AD_INTERVAL = 4;
 // const BASE_ITEM_HEIGHT = 900;
 
-const ActivityFeed = () => {
+interface ActivityFeedProps {
+  // searchResults: PostWithID[] | null;
+  // setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
+  currentHashtag: string | null;
+  setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
+  clearSearch: () => Promise<void>;
+  activePostSet: string;
+  setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const ActivityFeed: React.FC<ActivityFeedProps> = ({
+  // searchResults,
+  // setSearchResults,
+  currentHashtag,
+  setCurrentHashtag,
+  clearSearch,
+  activePostSet,
+  setActivePostSet,
+}) => {
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
-  const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
-    null
-  );
-  const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
-    null
-  );
+
   const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
-  //Should I add a useSelector for filtered posts now
-  // const filteredPosts = useSelector((state: RootState) => state.posts.filteredPosts);
-  
+  const filteredPosts = useSelector(
+    (state: RootState) => state.posts.filteredPosts
+  );
+
   // Determine which posts to display - search results or all posts
-  const displayPosts = searchResults ? searchResults : posts;
+  const hashtagPosts = useSelector(
+    (state: RootState) => state.posts.hashtagPosts
+  );
+
+  // Decide which posts to display
+  let displayPosts: PostWithID[];
+  switch (activePostSet) {
+    case "filtered":
+      displayPosts = filteredPosts;
+      break;
+    case "hashtag":
+      displayPosts = hashtagPosts;
+      break;
+    default:
+      displayPosts = posts;
+  }
 
   const listRef = useRef<List>(null);
   useScrollToPost(listRef, displayPosts, AD_INTERVAL);
@@ -111,16 +141,6 @@ const ActivityFeed = () => {
     // Cleanup
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const clearSearch = async () => {
-    setCurrentHashtag(null);
-    setSearchResults(null);
-    // Reload posts from IndexedDB
-    const cachedPosts = await getPostsFromIndexedDB();
-    if (cachedPosts && cachedPosts.length > 0) {
-      dispatch(mergeAndSetPosts(cachedPosts));
-    }
-  };
 
   // Function to get the dynamic height of each item
   const getItemSize = (index: number) => {
@@ -179,7 +199,13 @@ const ActivityFeed = () => {
     // If the last visible index is the last item in the list
     if (visibleStopIndex === lastIndex && !loadingMore && hasMore) {
       setLoadingMore(true);
-      dispatch(fetchMorePostsBatch({ lastVisible, limit: POSTS_BATCH_SIZE, currentUserCompanyId }))
+      dispatch(
+        fetchMorePostsBatch({
+          lastVisible,
+          limit: POSTS_BATCH_SIZE,
+          currentUserCompanyId,
+        })
+      )
         .then((action) => {
           if (fetchMorePostsBatch.fulfilled.match(action)) {
             const { posts, lastVisible: newLastVisible } = action.payload;
@@ -214,7 +240,6 @@ const ActivityFeed = () => {
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
           );
           if (fetchInitialPostsBatch.fulfilled.match(action)) {
-
             const fetchedPosts = action.payload.posts;
             dispatch(mergeAndSetPosts(fetchedPosts));
             addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
@@ -230,7 +255,7 @@ const ActivityFeed = () => {
         const publicPostsQuery = query(
           collection(db, "posts"),
           where("visibility", "==", "public"),
-          orderBy("timestamp", "desc"),
+          orderBy("displayDate", "desc"),
           limit(4)
         );
         const querySnapshot = await getDocs(publicPostsQuery);
@@ -265,7 +290,7 @@ const ActivityFeed = () => {
           ...(change.doc.data() as PostType),
         };
         if (change.type === "added" || change.type === "modified") {
-          dispatch(mergeAndSetPosts([postData])); 
+          dispatch(mergeAndSetPosts([postData]));
           updatePostInIndexedDB(postData);
         } else if (change.type === "removed") {
           dispatch(deletePost(change.doc.id));
@@ -282,7 +307,7 @@ const ActivityFeed = () => {
       where("timestamp", ">", mountTime),
       orderBy("timestamp", "desc")
     );
-    const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
+    const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges); // line 299
 
     // Subscribe to company-specific posts, if the user's company is known
     let unsubscribeCompany = () => {};
@@ -337,12 +362,11 @@ const ActivityFeed = () => {
         <PostCardRenderer
           key={postWithID.id}
           currentUserUid={currentUser?.uid}
-          // index={postIndex}
           index={index}
           style={modifiedStyle}
           data={{ post: postWithID, getPostsByTag, getPostsByStarTag }}
-          setSearchResults={setSearchResults}
           setCurrentHashtag={setCurrentHashtag}
+          setActivePostSet={setActivePostSet}
         />
       );
     } else {
@@ -356,18 +380,17 @@ const ActivityFeed = () => {
   }
 
   // If there are no posts, show the no content card
-  if (displayPosts.length === 0) {
-    return <NoContentCard />;
-  }
+  // if (displayPosts.length === 0) {
+  //   return <NoContentCard />;
+  // }
 
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
-        <HashTagSearchBar
-          setSearchResults={setSearchResults}
-          currentHashtag={currentHashtag}
+        <TagOnlySearchBar
           setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
+          setActivePostSet={setActivePostSet}
         />
       </div>
 

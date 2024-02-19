@@ -232,12 +232,6 @@ button:active {
   z-index: 2000;
 }
 
-/* Styles for mobile devices */
-@media (max-width: 900px) {
-  /* Your styles for mobile devices */
-
-  
-}
 
 /* Mobile devices */
 @media (max-width: 320px) {
@@ -255,6 +249,13 @@ button:active {
 /* Tablets */
 @media (min-width: 600px) and (max-width: 768px) {
   /* Styles for small tablets in portrait */
+}
+
+/* Styles for mobile devices */
+@media (max-width: 900px) {
+  /* Your styles for mobile devices */
+
+  
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {

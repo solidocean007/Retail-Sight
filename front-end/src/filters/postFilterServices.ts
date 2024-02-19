@@ -24,3 +24,36 @@ export const filterByCategories = (
   }
   return query(baseQuery, where("category", "in", categories));
 };
+
+export const filterByStates = (
+  states: string[],
+  baseQuery: Query<DocumentData>
+) => {
+  if (states.length === 0) {
+    return baseQuery;
+  }
+
+  return query(baseQuery, where("state", "in", states));
+};
+
+export const filterByCities = (
+  cities: string[],
+  baseQuery: Query<DocumentData>
+) => {
+  if (cities.length === 0) {
+    return baseQuery;
+  }
+
+  return query(baseQuery, where("city", "in", cities));
+};
+
+export const filterByHashtag = (
+  hashtag: string,
+  baseQuery: Query<DocumentData>
+) => {
+  if (hashtag.length === 0) {
+    return baseQuery;
+  }
+
+  return query(baseQuery, where("hashtags", "array-contains", hashtag));
+};

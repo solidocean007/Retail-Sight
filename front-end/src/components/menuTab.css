@@ -1,7 +1,7 @@
 /* menuTab.css */
 .menu-tab {
   position: fixed;
-  width: 80%;
+  width: 100%;
   top: 0;
   right: -100%; /* Initially hidden */
   background-color: transparent;

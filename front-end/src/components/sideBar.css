@@ -16,6 +16,16 @@
   height: 100%;
 }
 
+.top-of-side-bar button {
+  display: none;
+}
+
+.top-of-side-bar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .location-filter-container {
   display: flex;
   width: 60%;

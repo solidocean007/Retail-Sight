@@ -18,25 +18,17 @@ import {
 import {
   filterByCategories,
   filterByChannels,
-} from "../services/postsServices";
+  filterByCities,
+  filterByHashtag,
+  filterByStates,
+} from "../filters/postFilterServices";
 import {
   // getFilteredPostsFromIndexedDB,
-  storeFilteredPostsInIndexedDB,
   storeLatestPostsInIndexedDB,
   getLatestPostsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { DocumentSnapshot } from "firebase/firestore";
 // import { showMessage } from "../Slices/snackbarSlice";
-
-type FetchPostsArgs = {
-  filters: {
-    channels: string[];
-    categories: string[];
-    states: string[];
-    cities: string[];
-  };
-  lastVisible: DocumentSnapshot | null; // This should be the type for your lastVisible document snapshot
-};
 
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
@@ -69,13 +61,17 @@ export const fetchInitialPostsBatch = createAsyncThunk(
         })
         .filter((post) => {
           const isPublic = post.visibility === "public";
-          const isCompanyPost = post.visibility === "company" && post.postUserCompanyId === currentUserCompanyId;
+          const isCompanyPost =
+            post.visibility === "company" &&
+            post.postUserCompanyId === currentUserCompanyId;
           return isPublic || isCompanyPost;
         })
         .slice(0, POSTS_BATCH_SIZE);
 
       const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
-      console.log(`Last visible post ID: ${lastVisible}, Number of posts after filter: ${postsWithIds.length}`);
+      console.log(
+        `Last visible post ID: ${lastVisible}, Number of posts after filter: ${postsWithIds.length}`
+      );
 
       return { posts: postsWithIds, lastVisible };
     } catch (error) {
@@ -84,7 +80,6 @@ export const fetchInitialPostsBatch = createAsyncThunk(
     }
   }
 );
-
 
 // Define a type for the thunk argument
 type FetchMorePostsArgs = {
@@ -120,14 +115,19 @@ export const fetchMorePostsBatch = createAsyncThunk(
       }
 
       const snapshot = await getDocs(postsQuery);
-      const postsWithIds: PostWithID[] = snapshot.docs.map((doc) => {
-        const data = doc.data() as PostType;
-        const isPublic = data.visibility === "public";
-        const isCompanyPost = data.visibility === "company" && data.postUserCompanyId === currentUserCompanyId;
-        return isPublic || isCompanyPost ? { id: doc.id, ...data } : null;
-      }).filter(post => post !== null) as PostWithID[];
+      const postsWithIds: PostWithID[] = snapshot.docs
+        .map((doc) => {
+          const data = doc.data() as PostType;
+          const isPublic = data.visibility === "public";
+          const isCompanyPost =
+            data.visibility === "company" &&
+            data.postUserCompanyId === currentUserCompanyId;
+          return isPublic || isCompanyPost ? { id: doc.id, ...data } : null;
+        })
+        .filter((post) => post !== null) as PostWithID[];
 
-      const newLastVisible = snapshot.docs[snapshot.docs.length - 1]?.id || null;
+      const newLastVisible =
+        snapshot.docs[snapshot.docs.length - 1]?.id || null;
       return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
       if (error instanceof Error) {
@@ -138,6 +138,147 @@ export const fetchMorePostsBatch = createAsyncThunk(
   }
 );
 
+type FetchFilteredPostsArgs = {
+  filters: {
+    channels: string[];
+    categories: string[];
+    states: string[]; // not currently using this in my filtered fetching
+    cities: string[]; // not currently using this in my filtered fetching
+  };
+  currentHashtag: string | null;
+};
+
+export const fetchFilteredPosts = createAsyncThunk(
+  "posts/fetchFiltered",
+  async ({ filters, currentHashtag }: FetchFilteredPostsArgs, { rejectWithValue }) => {
+    try {
+      let queryToExecute: Query<DocumentData> = collection(db, "posts");
+
+      // Apply filters if they are present
+      if (filters.channels && filters.channels.length > 0) {
+        queryToExecute = filterByChannels(filters.channels, queryToExecute);
+      }
+      if (filters.categories && filters.categories.length > 0) {
+        queryToExecute = filterByCategories(filters.categories, queryToExecute);
+      }
+      if (filters.states && filters.states.length > 0) {
+        queryToExecute = filterByStates(filters.states, queryToExecute);
+      }
+      if (filters.cities && filters.cities.length > 0) {
+        queryToExecute = filterByCities(filters.cities, queryToExecute);
+      }
+      if (currentHashtag && currentHashtag.length > 0) {
+        queryToExecute = filterByHashtag(currentHashtag, queryToExecute);
+      }
+
+      // Execute the query
+      queryToExecute = query(queryToExecute, orderBy("displayDate", "desc"));
+      console.log(queryToExecute)
+      const postSnapshot = await getDocs(queryToExecute);
+      console.log(postSnapshot)
+
+      if (postSnapshot.empty) {
+        return [];
+      }
+
+      const fetchedFilteredPosts: PostWithID[] = postSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as PostType),
+      }));
+      console.log(fetchedFilteredPosts)
+      return fetchedFilteredPosts;
+    } catch (error) {
+      console.error("Error fetching filtered posts:", error);
+      return rejectWithValue("Error fetching filtered posts.");
+    }
+  }
+);
+
+
+// New function to fetch more filtered posts
+// export const fetchMoreFilteredPostsBatch = createAsyncThunk(
+//   "posts/fetchMoreFiltered",
+//   async (
+//     { filters, lastVisible }: FetchFilteredPostsArgs,
+//     { rejectWithValue }
+//   ) => {
+//     try {
+//       // Construct the query with filters and lastVisible for pagination
+//       let queryToExecute: Query<DocumentData> = collection(db, "posts");
+//       // ...apply filters...
+//       // Apply channel filters if they are present
+//       if (filters.channels && filters.channels.length > 0) {
+//         queryToExecute = filterByChannels(filters.channels, queryToExecute);
+//       }
+//       // Apply category filters if they are present
+//       if (filters.categories && filters.categories.length > 0) {
+//         queryToExecute = filterByCategories(filters.categories, queryToExecute);
+//       }
+
+//       if (lastVisible) {
+//         queryToExecute = query(
+//           queryToExecute,
+//           orderBy("displayDate", "desc"),
+//           startAfter(lastVisible),
+//           limit(5) // Set your desired batch size
+//         );
+//       } else {
+//         // If there's no lastVisible, it means it's the first fetch
+//         queryToExecute = query(
+//           queryToExecute,
+//           orderBy("displayDate", "desc"),
+//           limit(5)
+//         );
+//       }
+
+//       // Execute the query
+//       const postSnapshot = await getDocs(queryToExecute);
+
+//       if (postSnapshot.empty) {
+//         return { moreFilteredPosts: [], lastVisible: null };
+//       }
+
+//       // When mapping, create PostWithID objects
+//       const moreFilteredPosts: PostWithID[] = postSnapshot.docs.map((doc) => ({
+//         id: doc.id,
+//         ...(doc.data() as PostType),
+//       }));
+
+//       const newLastVisible = postSnapshot.docs[postSnapshot.docs.length - 1];
+
+//       return { moreFilteredPosts, lastVisible: newLastVisible.id };
+//     } catch (error) {
+//       console.error("Error fetching more filtered posts:", error);
+//       return rejectWithValue("Error fetching more filtered posts.");
+//     }
+//   }
+// );
+
+// Thunk for fetching user posts
+export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
+  "posts/fetchUserPosts",
+  async (userId, { rejectWithValue }) => {
+    try {
+      // Firestore query to fetch user posts
+      const q = query(
+        collection(db, "posts"),
+        where("user.postUserId", "==", userId)
+      );
+      const querySnapshot = await getDocs(q);
+      const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as PostType),
+      }));
+      // You would add your IndexedDB caching logic here or perhaps handle it when the function is called.
+      // add Post to redux?
+      // addUserPostsToIndexedDB
+      return userCreatedPosts;
+    } catch (error) {
+      // showMessage
+      return rejectWithValue("Error fetching user posts");
+    }
+  }
+);
 
 export const fetchLatestPosts = createAsyncThunk<
   PostWithID[],
@@ -181,69 +322,3 @@ export const fetchLatestPosts = createAsyncThunk<
     return rejectWithValue("Error fetching latest posts.");
   }
 });
-
-export const fetchFilteredPosts = createAsyncThunk<
-  PostWithID[],
-  FetchPostsArgs,
-  { rejectValue: string }
->("posts/fetchFiltered", async ({ filters }, { rejectWithValue }) => {
-  try {
-    
-    let baseQuery: Query<DocumentData> = collection(db, "posts");
-
-    // Apply channel filters if they are present
-    if (filters.channels && filters.channels.length > 0) {
-      baseQuery = filterByChannels(filters.channels, baseQuery);
-    }
-    // Apply category filters if they are present
-    if (filters.categories && filters.categories.length > 0) {
-      baseQuery = filterByCategories(filters.categories, baseQuery);
-    }
-
-    // Execute the query
-    const queryToExecute = query(baseQuery);
-    const postSnapshot = await getDocs(queryToExecute);
-
-    if (postSnapshot.empty) {
-      return [];
-    }
-
-    // When mapping, create PostWithID objects
-    const posts: PostWithID[] = postSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as PostType),
-    }));
-
-    // Store the fetched posts in IndexedDB
-    await storeFilteredPostsInIndexedDB(posts, filters);
-
-    // Return the fetched posts
-    return posts;
-  } catch (error) {
-    console.error("Error fetching filtered posts:", error);
-    return rejectWithValue("Error fetching filtered posts.");
-  }
-});
-
-// Thunk for fetching user posts
-export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
-  "posts/fetchUserPosts",
-  async (userId, { rejectWithValue }) => {
-    try {
-      // Firestore query to fetch user posts
-      const q = query(collection(db, "posts"), where("user.postUserId", "==", userId));
-      const querySnapshot = await getDocs(q);
-      const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as PostType),
-      }));
-      // You would add your IndexedDB caching logic here or perhaps handle it when the function is called.
-      // add Post to redux?
-      // addUserPostsToIndexedDB
-      return userCreatedPosts;
-    } catch (error) {
-      // showMessage
-      return rejectWithValue("Error fetching user posts");
-    }
-  }
-);

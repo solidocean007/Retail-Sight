@@ -10,9 +10,9 @@ import { getLocationsFromIndexedDB, storeLocationsInIndexedDB } from '../utils/d
 // can I cut down on firestore reads by doing this?
 export const selectAllPosts = (state: RootState) => state.posts.posts;
 
-export const fetchLocationOptions = createAsyncThunk(
+export const fetchLocationOptions = createAsyncThunk( // this does too much
   'locations/fetchOptions',
-  async (_, { dispatch, rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
       const cachedLocations = await getLocationsFromIndexedDB();
       if(cachedLocations) {
