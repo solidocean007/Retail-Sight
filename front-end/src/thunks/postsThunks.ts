@@ -258,13 +258,15 @@ export const fetchFilteredPosts = createAsyncThunk(
 export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
   "posts/fetchUserPosts",
   async (userId, { rejectWithValue }) => {
+    console.log(userId)
     try {
       // Firestore query to fetch user posts
       const q = query(
         collection(db, "posts"),
-        where("user.postUserId", "==", userId)
+        where("postUserId", "==", userId)
       );
       const querySnapshot = await getDocs(q);
+      console.log(querySnapshot)
       const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as PostType),
@@ -272,6 +274,7 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
       // You would add your IndexedDB caching logic here or perhaps handle it when the function is called.
       // add Post to redux?
       // addUserPostsToIndexedDB
+      console.log(userCreatedPosts)
       return userCreatedPosts;
     } catch (error) {
       // showMessage

@@ -21,12 +21,13 @@ export const UserProfilePosts = ({
 }) => {
   const dispatch = useAppDispatch();
   const userId = currentUser?.uid; // is this right?
+  console.log(userId)
   const userPosts = useSelector((state: RootState) => state.posts.userPosts);
 
   // const [isModalOpen, setIsModalOpen] = useState(false);
   // const [selectedPost, setSelectedPost] = useState<PostWithID | null>();
 
-  useEffect(() => {
+  useEffect(() => { // the console.logs in this use effect arent logging.
     async function fetchAndStorePosts() {
       if (!userId) {
         return; // Early return if userId is undefined or null
@@ -37,14 +38,17 @@ export const UserProfilePosts = ({
 
         if (userPostsInIndexedDB && userPostsInIndexedDB?.length > 0) {
           // If there are posts in IndexedDB, dispatch an action to set them in Redux
+          console.log('user posts found')
           dispatch(setUserPosts(userPostsInIndexedDB));
         } else {
           // If there are no posts in IndexedDB, fetch them from Firestore
+          console.log('try to fetch user posts')
           const fetchedUserPosts = await dispatch(
             fetchUserCreatedPosts(userId)
           ).unwrap();
           // After fetching, add these posts to IndexedDB
           await addUserCreatedPostsInIndexedDB(fetchedUserPosts);
+          console.log(fetchedUserPosts)
           // And set them in Redux
           dispatch(setUserPosts(fetchedUserPosts));
         }
@@ -87,7 +91,7 @@ export const UserProfilePosts = ({
         {userPosts.length === 0 && (
            <h4>You have no posts yet</h4>
            )
-        }
+        }{userPosts.length}
         {userPosts.map((post) => (
           <div key={post.id} className="post-row">
             <div className="post-image-container">
@@ -107,7 +111,7 @@ export const UserProfilePosts = ({
             <div className="post-hashtags">
               {post.hashtags.map((tag) => (
                 <span key={tag} className="hashtag">
-                  #{tag}
+                  {tag}{' '}
                 </span>
               ))}
             </div>

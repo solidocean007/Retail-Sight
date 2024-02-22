@@ -14,6 +14,7 @@ interface PostCardRendererProps {
   };
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
+  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const PostCardRenderer: React.FC<PostCardRendererProps> = ({
@@ -23,6 +24,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   data: { post, getPostsByTag, getPostsByStarTag },
   setCurrentHashtag,
   setActivePostSet,
+  setIsSearchActive,
 }) => {
   if (!post) {
     console.error('Post data is undefined at index:', index);
@@ -39,6 +41,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
       getPostsByStarTag={getPostsByStarTag}
       setCurrentHashtag={setCurrentHashtag}
       setActivePostSet={setActivePostSet}
+      setIsSearchActive={setIsSearchActive}
     />
   );
 }

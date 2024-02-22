@@ -44,7 +44,6 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import HashTagSearchBar from "./TagOnlySearchBar";
 import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 
@@ -60,16 +59,18 @@ interface ActivityFeedProps {
   clearSearch: () => Promise<void>;
   activePostSet: string;
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
+  isSearchActive: boolean;
+  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
-  // searchResults,
-  // setSearchResults,
   currentHashtag,
   setCurrentHashtag,
   clearSearch,
   activePostSet,
   setActivePostSet,
+  isSearchActive,
+  setIsSearchActive,
 }) => {
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
@@ -367,6 +368,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           data={{ post: postWithID, getPostsByTag, getPostsByStarTag }}
           setCurrentHashtag={setCurrentHashtag}
           setActivePostSet={setActivePostSet}
+          setIsSearchActive={setIsSearchActive}
         />
       );
     } else {
@@ -388,9 +390,12 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
         <TagOnlySearchBar
+          currentHashtag={currentHashtag}
           setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
           setActivePostSet={setActivePostSet}
+          isSearchActive={isSearchActive}
+          setIsSearchActive={setIsSearchActive}
         />
       </div>
 

@@ -39,6 +39,7 @@ interface PostCardProps {
   style?: React.CSSProperties;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
+  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -49,6 +50,7 @@ const PostCard: React.FC<PostCardProps> = ({
   style,
   setCurrentHashtag,
   setActivePostSet,
+  setIsSearchActive,
 }) => {
   const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
@@ -256,6 +258,7 @@ const PostCard: React.FC<PostCardProps> = ({
               getPostsByStarTag={getPostsByStarTag}
               setCurrentHashtag={setCurrentHashtag}
               setActivePostSet={setActivePostSet}
+              setIsSearchActive={setIsSearchActive}
             />
           </div>
 

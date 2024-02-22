@@ -15,24 +15,34 @@ import "./hashTagSearchBar.css";
 import { RootState } from "../utils/store";
 
 interface HashTagSearchBarProps {
+  currentHashtag: string | null;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
   clearSearch: () => Promise<void>;
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
+  isSearchActive:boolean;
+  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
+  currentHashtag,
   setCurrentHashtag,
   clearSearch,
   setActivePostSet,
+  isSearchActive,
+  setIsSearchActive,
 }) => {
   const protectedAction = useProtectedAction(); // i need to use this to protect from a unwanted search
   const [inputValue, setInputValue] = useState("");
-  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 
   const userCompanyID = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
   const dispatch = useDispatch();
+
+  // Update inputValue when currentHashtag changes externally
+  useEffect(() => {
+    setInputValue(currentHashtag ?? "");
+  }, [currentHashtag]);
 
   // const handleTagSearch = async () => {
 
@@ -106,6 +116,7 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
     clearSearch();
   };
 
+
   return (
     <div className="hashtag-search-box">
       <Input
@@ -124,26 +135,6 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
     </div>
   );
 
-  // return (
-  //   <div className="hashtag-search-box">
-  //     <Input
-  //       placeholder="hashtag '#' or star '*'"
-  //       value={currentHashtag ?? "#"}
-  //       onChange={handleInputChange}
-  //       onKeyDown={(e) => {
-  //         if (e.key === "Enter") {
-  //           handleTagSearch();
-  //         }
-  //       }}
-  //     />
-  //     <button
-  //       className="search-button"
-  //       onClick={handleTagSearch} // if this buttons message is 'clear' it should call the handleclearsearch instead
-  //     >
-  //       {currentHashtag && currentHashtag !== "#" ? "Clear" : "Search"}
-  //     </button>
-  //   </div>
-  // );
 };
 
 export default TagOnlySearchBar;

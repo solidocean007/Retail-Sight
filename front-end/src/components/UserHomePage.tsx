@@ -23,20 +23,19 @@ import { mergeAndSetPosts } from "../Slices/postsSlice";
 export const UserHomePage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
   };
   const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
     null
   );
-  // const [searchResults, setSearchResults] = React.useState<PostWithID[] | null>(
-  //   null
-  // );
+ 
   const [activePostSet, setActivePostSet] = useState("posts"); // 'posts', 'filtered', 'hashtag'
 
   const clearSearch = async () => {
     setCurrentHashtag(null);
-    // setSearchResults(null);
     setActivePostSet("posts");
     // Reload posts from IndexedDB
     const cachedPosts = await getPostsFromIndexedDB();
@@ -60,13 +59,13 @@ export const UserHomePage = () => {
         <div className="home-page-content">
           <div className="activity-feed-container">
             <ActivityFeed
-              // searchResults={searchResults}
-              // setSearchResults={setSearchResults}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               clearSearch={clearSearch}
               activePostSet={activePostSet}
               setActivePostSet={setActivePostSet}
+              isSearchActive={isSearchActive}
+              setIsSearchActive={setIsSearchActive}
             />
           </div>
 
