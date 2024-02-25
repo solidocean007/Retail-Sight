@@ -35,6 +35,7 @@ export const Dashboard = () => {
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
+  console.log(companyId)
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
@@ -97,6 +98,7 @@ export const Dashboard = () => {
       collection(db, "users"),
       where("companyId", "==", companyId)
     );
+    console.log(q)
 
     // Firestore real-time subscription setup
     const unsubscribe = onSnapshot(

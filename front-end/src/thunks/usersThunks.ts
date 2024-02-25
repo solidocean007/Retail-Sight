@@ -6,7 +6,9 @@ import { db } from '../utils/firebase';
 
 // Regular function for fetching company users
 export const fetchCompanyUsersFromFirestore = async (companyId: string): Promise<UserType[]> => {
-  const querySnapshot = await getDocs(query(collection(db, 'users'), where('companyId', '==', companyId)));
+  console.log(companyId)
+  const querySnapshot = await getDocs(query(collection(db, 'users'), where('postUserCompanyId', '==', companyId)));
+  console.log(querySnapshot)
   return querySnapshot.docs.map(doc => doc.data() as UserType);
 };
 
@@ -16,6 +18,7 @@ export const fetchCompanyUsersFromFirestore = async (companyId: string): Promise
 export const fetchCompanyUsers = createAsyncThunk<UserType[], string, { rejectValue: string }>(
   'user/fetchCompanyUsers',
   async (companyId, { rejectWithValue }) => {
+    console.log('try')
     try {
       const users = await fetchCompanyUsersFromFirestore(companyId);
       return users;

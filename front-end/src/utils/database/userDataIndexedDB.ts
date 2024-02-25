@@ -86,6 +86,7 @@ export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
 
   return new Promise<void>((resolve, reject) => {
     companyUsers.forEach((user) => {
+      console.log(user)
       const request = store.put(user); // Ensure that user has a property that matches the key path
       request.onerror = () => {
         console.error('Error putting user into IndexedDB:', request.error);
