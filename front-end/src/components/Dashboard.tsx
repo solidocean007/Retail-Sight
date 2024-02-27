@@ -35,7 +35,6 @@ export const Dashboard = () => {
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
-  console.log(companyId)
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
@@ -94,12 +93,17 @@ export const Dashboard = () => {
   };
 
   useEffect(() => {
+    if (!companyId) {
+      // If companyId is not defined, do not proceed with the query
+      console.log("companyId is undefined, skipping Firestore query.");
+      return;
+    }
+  
     const q = query(
       collection(db, "users"),
       where("companyId", "==", companyId)
     );
-    console.log(q)
-
+  
     // Firestore real-time subscription setup
     const unsubscribe = onSnapshot(
       q,
@@ -111,10 +115,10 @@ export const Dashboard = () => {
               uid: doc.id,
             } as UserType)
         );
-
+  
         // Update state with users from Firestore
         setLocalUsers(usersFromFirestore);
-
+  
         // Save the updated list to IndexedDB
         await saveCompanyUsersToIndexedDB(usersFromFirestore);
       },
@@ -122,10 +126,11 @@ export const Dashboard = () => {
         console.error("Error fetching users:", error);
       }
     );
-
+  
     // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
     return () => unsubscribe();
-  }, [companyId]);
+  }, [companyId]); // Dependency array includes companyId to re-run the effect when it changes
+  
 
   // Separate useEffect to attempt to load from IndexedDB when component mounts
   useEffect(() => {

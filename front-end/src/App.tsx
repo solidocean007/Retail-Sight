@@ -16,6 +16,7 @@ import Footer from "./components/Footer.tsx";
 import { useEffect } from "react";
 import { toggleTheme } from "./actions/themeActions.ts";
 
+
 function App() {
   const dispatch = useDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);

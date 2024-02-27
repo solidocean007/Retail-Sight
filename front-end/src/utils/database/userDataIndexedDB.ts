@@ -81,12 +81,11 @@ export const clearUserDataFromIndexedDB = async () => {
 
 export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
   const db = await openDB(); // Assuming openDB is a function that opens the IndexedDB connection
-  const transaction = db.transaction(['userCompanyEmployees'], 'readwrite');
-  const store = transaction.objectStore('userCompanyEmployees');
+  const transaction = db.transaction(['usersCompanyEmployees'], 'readwrite');
+  const store = transaction.objectStore('usersCompanyEmployees');
 
   return new Promise<void>((resolve, reject) => {
     companyUsers.forEach((user) => {
-      console.log(user)
       const request = store.put(user); // Ensure that user has a property that matches the key path
       request.onerror = () => {
         console.error('Error putting user into IndexedDB:', request.error);
@@ -95,7 +94,6 @@ export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
     });
 
     transaction.oncomplete = () => {
-      console.log('All users saved to IndexedDB');
       resolve();
     };
     transaction.onerror = () => {
@@ -108,7 +106,7 @@ export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
 export const getCompanyUsersFromIndexedDB = async (): Promise<UserType[]> => {
   const db = await openDB();
   const transaction = db.transaction([USERS_COMPANY_USERS], 'readonly');
-  const store = transaction.objectStore('userCompanyEmployees');
+  const store = transaction.objectStore('usersCompanyEmployees');
   const request = store.getAll();
 
   return new Promise((resolve, reject) => {

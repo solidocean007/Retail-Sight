@@ -55,8 +55,12 @@ export function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("userCreatedPosts")) {
         db.createObjectStore("userCreatedPosts", { keyPath: "id" });
       }
+      // Delete the incorrect object store
+      if (db.objectStoreNames.contains("userCompanyEmployees")) {
+        db.deleteObjectStore("userCompanyEmployees");
+      }
       if (!db.objectStoreNames.contains("usersCompanyEmployees")) {
-        db.createObjectStore("userCompanyEmployees", { keyPath: "uid" });
+        db.createObjectStore("usersCompanyEmployees", { keyPath: "uid" }); // Uncaught DOMException: Failed to execute 'createObjectStore' on 'IDBDatabase': An object store with the specified name already exists.
       }
     };
   });
