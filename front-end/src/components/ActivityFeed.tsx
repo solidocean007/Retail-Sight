@@ -80,7 +80,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     (state: RootState) => state.posts.filteredPosts
   );
 
-  // Determine which posts to display - search results or all posts
   const hashtagPosts = useSelector(
     (state: RootState) => state.posts.hashtagPosts
   );
@@ -189,7 +188,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
     return 650;
   };
-
+  console.log('mounting')
   const handleItemsRendered = ({
     visibleStopIndex,
   }: {
@@ -276,16 +275,21 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   }, [currentUser, dispatch, currentUserCompanyId]);
 
-  // listen for new or updated posts
+  // listen for new or updated posts.. not sure if this is working
   useEffect(() => {
+    console.log("Setting up Firestore listeners for new or updated posts"); // Initial log to confirm the effect runs
     // Capture the mount time in ISO format
     const mountTime = new Date().toISOString();
+    console.log(mountTime)
     const userCompanyID = currentUser?.companyId;
 
     // Function to process document changes
     const processDocChanges = (snapshot: QuerySnapshot) => {
+      console.log("Received document changes from Firestore");
       const changes = snapshot.docChanges();
+      console.log(`Number of changes: ${changes.length}`);
       changes.forEach((change: DocumentChange) => {
+        console.log(`Document change type: ${change.type}`, change.doc.data());
         const postData = {
           id: change.doc.id,
           ...(change.doc.data() as PostType),
@@ -308,7 +312,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       where("timestamp", ">", mountTime),
       orderBy("timestamp", "desc")
     );
-    const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges); // line 299
+    const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
 
     // Subscribe to company-specific posts, if the user's company is known
     let unsubscribeCompany = () => {};
@@ -317,13 +321,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         collection(db, "posts"),
         where("user.postUserCompanyID", "==", userCompanyID),
         where("timestamp", ">", mountTime),
-        orderBy("timestamp", "desc")
+        orderBy("displayDate", "desc")
       );
       unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);
     }
+    console.log(currentUser?.companyId, dispatch)
+
 
     // Cleanup function
     return () => {
+      console.log("Unsubscribing from Firestore listeners");
       unsubscribePublic();
       unsubscribeCompany();
     };

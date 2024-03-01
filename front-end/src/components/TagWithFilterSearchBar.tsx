@@ -38,6 +38,7 @@ export const TagWithFilterSearchBar: React.FC<TagWithFilterSearchBarProps> = ({
   return (
     <div className="hashtag-search-box">
       <Input
+        name="hashtag-with-filter-input"
         placeholder="Filter with '#' or '*'"
         value={inputValue}
         onChange={handleInputChange}
