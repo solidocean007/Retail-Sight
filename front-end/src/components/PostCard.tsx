@@ -29,6 +29,7 @@ import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 import useProtectedAction from "../utils/useProtectedAction";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 import { RootState } from "../utils/store";
+import ImageModal from "./ImageModal";
 
 interface PostCardProps {
   id: string;
@@ -60,6 +61,18 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const user = useSelector(selectUser);
+
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [fullSizeImageUrl, setFullSizeImageUrl] = useState("");
+
+  const handleImageClick = () => {
+    // Assuming post.imageUrl is available and contains the 'resized' keyword
+    if (post.imageUrl) {
+      const originalImageUrl = post.imageUrl.replace("resized", "original");
+      setFullSizeImageUrl(originalImageUrl);
+      setIsImageModalOpen(true);
+    }
+  };
 
   // Use the postId to fetch the latest post data from the Redux store
   const updatedPost = useSelector(
@@ -169,139 +182,153 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   return (
-    <Card className="post-card dynamic-height" style={{ ...style }}>
-      <div className="card-content">
-        <div className="post-header">
-          <div className="visibility">
-            <div className="view-box"><p>view: {post.visibility}</p></div>
-          </div>
-          <div className="post-header-top">
-            <div className="likes-comments">
-              <button
-                className="like-button"
-                onClick={handleLikePostButtonClick}
-              >
-                {likedByUser ? "❤️" : "🤍"}
-              </button>
-              {likesCount === 0 ? null : likesCount === 1 ? (
-                <h5>{likesCount} like</h5>
-              ) : (
-                <h5>{likesCount} likes</h5>
-              )}
+    <>
+      <Card className="post-card dynamic-height" style={{ ...style }}>
+        <div className="card-content">
+          <div className="post-header">
+            <div className="visibility">
+              <div className="view-box">
+                <p>view: {post.visibility}</p>
+              </div>
             </div>
-            <div className="share-button-container">
-              <SharePost
-                postLink={`https://displaygram.com/`}
-                postTitle="Check out this display!"
-                postId={post.id}
+            <div className="post-header-top">
+              <div className="likes-comments">
+                <button
+                  className="like-button"
+                  onClick={handleLikePostButtonClick}
+                >
+                  {likedByUser ? "❤️" : "🤍"}
+                </button>
+                {likesCount === 0 ? null : likesCount === 1 ? (
+                  <h5>{likesCount} like</h5>
+                ) : (
+                  <h5>{likesCount} likes</h5>
+                )}
+              </div>
+              <div className="share-button-container">
+                <SharePost
+                  postLink={`https://displaygram.com/`}
+                  postTitle="Check out this display!"
+                  postId={post.id}
+                />
+              </div>
+
+              <div className="visibility-edit-box">
+                {user?.uid === post?.postUserId && (
+                  <div className="edit-box">
+                    <div className="edit-block">
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleEditPost}
+                        className="edit-btn"
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="header-bottom">
+              <div className="details-date">
+                <div className="store-details">
+                  <div className="store-name-number">
+                    <h3>
+                      {post.selectedStore}
+                      <span> {post.storeNumber}</span>
+                    </h3>
+                  </div>
+                  <div className="store-address-box">
+                    <h5>{post.storeAddress}</h5>
+                  </div>
+                </div>
+                <h5>date: {formattedDate}</h5>
+              </div>
+
+              <div className="post-user-details">
+                {/* <div onClick={handleOnUserNameClick}> */}
+                <div className="post-user-name">
+                  <p>by:</p>
+                  <a href="#" onClick={handleOnUserNameClick}>
+                    {post.postUserName}
+                  </a>
+                </div>
+                <div className="user-company-box">
+                  <p>company: </p>
+                  <a href="#" onClick={(e) => e.preventDefault()}>
+                    {/* create a onCompanyNameClick */}
+                    {post.postUserCompany}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="image-new-comment-box">
+            <div className="hash-tag-container">
+              {/* Display hashtags above the image */}
+              <PostDescription
+                description={post.description}
+                getPostsByTag={getPostsByTag}
+                getPostsByStarTag={getPostsByStarTag}
+                setCurrentHashtag={setCurrentHashtag}
+                setActivePostSet={setActivePostSet}
+                setIsSearchActive={setIsSearchActive}
               />
             </div>
 
-            <div className="visibility-edit-box">
-              {user?.uid === post?.postUserId && (
-                <div className="edit-box">
-                  <div className="edit-block">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleEditPost}
-                      className="edit-btn"
-                    >
-                      Edit
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="header-bottom">
-            <div className="details-date">
-              <div className="store-details">
-                <div className="store-name-number">
-                  <h3>
-                    {post.selectedStore}
-                    <span> {post.storeNumber}</span>
-                  </h3>
-                </div>
-                <div className="store-address-box">
-                  <h5>{post.storeAddress}</h5>
-                </div>
+            {/* Display the post's image */}
+            {post.imageUrl && (
+              <img
+                className="post-image"
+                onClick={handleImageClick}
+                src={post.imageUrl}
+                alt="Post image"
+              />
+            )}
+            {commentCount > 0 && (
+              <div className="comment-button-container">
+                {commentCount > 0 && (
+                  <button onClick={openCommentModal}>
+                    {showAllComments
+                      ? "Hide Comments"
+                      : `${commentCount} Comments`}
+                  </button>
+                )}
               </div>
-              <h5>date: {formattedDate}</h5>
-            </div>
+            )}
 
-            <div className="post-user-details">
-              {/* <div onClick={handleOnUserNameClick}> */}
-              <div className="post-user-name">
-                <p>by:</p>
-                <a href="#" onClick={handleOnUserNameClick}>
-                  {post.postUserName}
-                </a>
-              </div>
-              <div className="user-company-box">
-                <p>company: </p>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  {/* create a onCompanyNameClick */}
-                  {post.postUserCompany}
-                </a>
-              </div>
-            </div>
+            <CommentSection post={post} />
           </div>
         </div>
-
-        <div className="image-new-comment-box">
-          <div className="hash-tag-container">
-            {/* Display hashtags above the image */}
-            <PostDescription
-              description={post.description}
-              getPostsByTag={getPostsByTag}
-              getPostsByStarTag={getPostsByStarTag}
-              setCurrentHashtag={setCurrentHashtag}
-              setActivePostSet={setActivePostSet}
-              setIsSearchActive={setIsSearchActive}
-            />
-          </div>
-
-          {/* Display the post's image */}
-          {post.imageUrl && (
-            <img className="post-image" src={post.imageUrl} alt="Post image" />
-          )}
-          {commentCount > 0 && (
-            <div className="comment-button-container">
-              {commentCount > 0 && (
-                <button onClick={openCommentModal}>
-                  {showAllComments
-                    ? "Hide Comments"
-                    : `${commentCount} Comments`}
-                </button>
-              )}
-            </div>
-          )}
-
-          <CommentSection post={post} />
-        </div>
-      </div>
-      {isEditModalOpen ? (
-        <EditPostModal
-          post={post}
-          isOpen={isEditModalOpen}
-          setIsEditModalOpen={setIsEditModalOpen}
-          // onClose={handleCloseEditModal}
-          // onSave={handleSavePost}
-        />
-      ) : null}
-      {isCommentModalOpen && comments.length > 0 && (
-        <CommentModal
-          isOpen={isCommentModalOpen}
-          onClose={() => setIsCommentModalOpen(false)}
-          post={post}
-          comments={comments}
-          onLikeComment={handleLikeComment}
-          onDeleteComment={handleDeleteComment}
-          likedByUser={likedByUser}
-        />
-      )}
-    </Card>
+        {isEditModalOpen ? (
+          <EditPostModal
+            post={post}
+            isOpen={isEditModalOpen}
+            setIsEditModalOpen={setIsEditModalOpen}
+            // onClose={handleCloseEditModal}
+            // onSave={handleSavePost}
+          />
+        ) : null}
+        {isCommentModalOpen && comments.length > 0 && (
+          <CommentModal
+            isOpen={isCommentModalOpen}
+            onClose={() => setIsCommentModalOpen(false)}
+            post={post}
+            comments={comments}
+            onLikeComment={handleLikeComment}
+            onDeleteComment={handleDeleteComment}
+            likedByUser={likedByUser}
+          />
+        )}
+      </Card>
+      <ImageModal
+        isOpen={isImageModalOpen}
+        src={fullSizeImageUrl}
+        onClose={() => setIsImageModalOpen(false)}
+      />
+    </>
   );
 };
 
