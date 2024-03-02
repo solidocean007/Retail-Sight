@@ -8,45 +8,40 @@ export const resizeImage = (file: File, maxWidth: number, maxHeight: number, qua
       let width = image.width;
       let height = image.height;
 
-      // Check if the image exceeds the "super large" dimensions.
-      const isSuperLarge = width > maxWidth || height > maxHeight;
+      // Determine whether the image should be resized
+      const aspectRatio = width / height;
+      let resizeNeeded = width > maxWidth || height > maxHeight;
 
-      // Calculate the new dimensions while maintaining the aspect ratio
-      if (isSuperLarge) {
-        const aspectRatio = width / height;
+      if (resizeNeeded) {
         if (aspectRatio > 1) {
           // Landscape
+          height = Math.round((maxHeight / maxWidth) * width);
           width = maxWidth;
-          height = Math.round(width / aspectRatio);
         } else {
           // Portrait
+          width = Math.round((maxWidth / maxHeight) * height);
           height = maxHeight;
-          width = Math.round(height * aspectRatio);
         }
       }
 
-      if (!isSuperLarge) {
-        // If the image is not super large, resolve with the original file blob.
-        resolve(file.slice());
-      } else {
-        // Resize the image using canvas
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Canvas Context 2D is not available'));
-          return;
-        }
-        ctx.drawImage(image, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Canvas toBlob returned null, image cannot be created'));
-          }
-        }, 'image/jpeg', quality);
+      const canvas = document.createElement('canvas');
+      canvas.width = resizeNeeded ? width : image.width;
+      canvas.height = resizeNeeded ? height : image.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas Context 2D is not available'));
+        return;
       }
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      // Output as PNG
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Canvas toBlob returned null, image cannot be created'));
+        }
+      }, 'image/png'); // PNG format
     };
     image.onerror = () => {
       reject(new Error('Image loading error'));
