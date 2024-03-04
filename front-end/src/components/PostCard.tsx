@@ -30,6 +30,7 @@ import useProtectedAction from "../utils/useProtectedAction";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 import { RootState } from "../utils/store";
 import ImageModal from "./ImageModal";
+import TotalCaseCount from "./TotalCaseCount";
 
 interface PostCardProps {
   id: string;
@@ -263,6 +264,11 @@ const PostCard: React.FC<PostCardProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+          <div>
+            {post.totalCaseCount > 1 ? (
+              <span>Quantity: {post.totalCaseCount}</span>
+            ) : null}
           </div>
 
           <div className="image-new-comment-box">

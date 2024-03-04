@@ -1,0 +1,17 @@
+.total-case-count-box {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.total-case-count-box input {
+  width: auto;
+  max-width: 80px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+}
+
+.total-case-count-box label {
+  margin-right: 5px;
+}

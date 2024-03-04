@@ -22,8 +22,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 90%;  /* Adjust the width as needed */
-  height: 90%; /* Adjust the height as needed */
+  /* width: 90%;  Adjust the width as needed */
+  /* height: 90%; Adjust the height as needed */
   max-width: 1200px; /* Set a max-width that works for your design */
   max-height: 800px; /* Set a max-height that works for your design */
 }

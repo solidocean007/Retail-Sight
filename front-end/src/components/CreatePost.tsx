@@ -34,11 +34,11 @@ import { ChannelType } from "./ChannelSelector";
 import "./createPost.css";
 import LoadingIndicator from "./LoadingIndicator";
 import { CreatePostHelmet } from "../utils/helmetConfigurations";
+import TotalCaseCount from "./TotalCaseCount";
 
 export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
-  
 
   const handlePostSubmission = useHandlePostSubmission();
   // State Management
@@ -70,6 +70,7 @@ export const CreatePost = () => {
     brands: [],
     displayDate: "",
     timestamp: "",
+    totalCaseCount: 0,
     postUserName: `${userData?.firstName} ${userData?.lastName}`,
     postUserId: userData?.uid,
     postUserCompany: userData?.company,
@@ -117,6 +118,10 @@ export const CreatePost = () => {
     setPost((prev) => ({ ...prev, selectedStore: storeName }));
   }, []);
 
+  // const handleTotalCaseCountChange = useCallback((caseCount: number) => {
+  //   setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
+  // }, []);
+
   const handleStoreNumberChange = useCallback((newStoreNumber: string) => {
     setPost((prev) => ({ ...prev, storeNumber: newStoreNumber }));
   }, []);
@@ -134,14 +139,15 @@ export const CreatePost = () => {
   }, []);
 
   // Update this to handle all field changes generically, including channel and category
-  const handleFieldChange = (
-    field: keyof PostType,
-    value: string | number | boolean | string[] // Add other types as needed
-  ) => {
-    // what type should value be?
-    // specify a different type other than any
-    setPost({ ...post, [field]: value });
-  };
+  const handleFieldChange = useCallback(
+    (field: keyof PostType, value: PostType[keyof PostType]) => {
+      setPost((prevPost) => ({
+        ...prevPost,
+        [field]: value,
+      }));
+    },
+    []
+  );
 
   // Add handlers for Supplier and Brand changes
   // const handleSupplierChange = (supplierId: string) => {
@@ -191,7 +197,7 @@ export const CreatePost = () => {
 
         <div className="image-and-details">
           <div className="image-selection-box">
-             <div className="step-one">1st add picture</div>
+            <div className="step-one">1st add picture</div>
             <Button
               variant="contained"
               component="label"
@@ -225,6 +231,11 @@ export const CreatePost = () => {
               <h4>Store: {post.selectedStore}</h4>
               <h6>Address: {post.storeAddress}</h6>
             </div>
+            <TotalCaseCount
+                handleTotalCaseCountChange={(value) =>
+                  handleFieldChange("totalCaseCount", value)
+                }
+              />
             <div className="property-zone">
               <ChannelSelector
                 selectedChannel={selectedChannel}
@@ -248,20 +259,17 @@ export const CreatePost = () => {
           onBrandChange={handleBrandChange}
           /> */}
             </div>
-            <Box mt={2}>
-              <TextField
+            <TextField
                 className="description-box"
                 fullWidth
                 variant="outlined"
                 label="Description"
-                multiline
-                rows={2}
+                minRows={4}
                 value={post.description}
                 onChange={(e) =>
                   handleFieldChange("description", e.target.value)
                 }
               />
-            </Box>
             <Box mt={2}>
               <Select
                 fullWidth

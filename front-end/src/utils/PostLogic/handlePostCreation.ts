@@ -127,6 +127,7 @@ export const useHandlePostSubmission = () => {
                 brands: post.brands,
                 displayDate: new Date().toISOString(),
                 timestamp: new Date().toISOString(),
+                totalCaseCount: post.totalCaseCount,
                 postUserName: user.displayName || "Unknown",
                 postUserId: user.uid,
                 postUserCompany: userData.company,

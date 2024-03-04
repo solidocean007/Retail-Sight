@@ -84,6 +84,7 @@ export interface PostType {
   visibility?: "public" | "company" | "supplier" | "private";
   displayDate: string;
   timestamp: string;
+  totalCaseCount: number;
   postUserName: string | undefined;
   postUserId: string | undefined;
   postUserCompany: string | undefined;

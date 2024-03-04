@@ -320,7 +320,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       const companyPostsQuery = query(
         collection(db, "posts"),
         where("user.postUserCompanyID", "==", userCompanyID),
-        where("timestamp", ">", mountTime),
+        where("displayDate", ">", mountTime),
         orderBy("displayDate", "desc")
       );
       unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);

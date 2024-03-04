@@ -7,20 +7,23 @@ export const resizeImage = (file: File, maxWidth: number, maxHeight: number, qua
       URL.revokeObjectURL(image.src);
       let width = image.width;
       let height = image.height;
-
-      // Determine whether the image should be resized
-      const aspectRatio = width / height;
       let resizeNeeded = width > maxWidth || height > maxHeight;
 
+      // Calculate the new dimensions while maintaining the aspect ratio
       if (resizeNeeded) {
-        if (aspectRatio > 1) {
+        const aspectRatio = width / height;
+        if (width > height) {
           // Landscape
-          height = Math.round((maxHeight / maxWidth) * width);
-          width = maxWidth;
+          if (width > maxWidth) {
+            height = Math.round(height * (maxWidth / width));
+            width = maxWidth;
+          }
         } else {
           // Portrait
-          width = Math.round((maxWidth / maxHeight) * height);
-          height = maxHeight;
+          if (height > maxHeight) {
+            width = Math.round(width * (maxHeight / height));
+            height = maxHeight;
+          }
         }
       }
 
@@ -41,10 +44,11 @@ export const resizeImage = (file: File, maxWidth: number, maxHeight: number, qua
         } else {
           reject(new Error('Canvas toBlob returned null, image cannot be created'));
         }
-      }, 'image/png'); // PNG format
+      }, 'image/png', quality); // PNG format
     };
     image.onerror = () => {
       reject(new Error('Image loading error'));
     };
   });
 };
+
