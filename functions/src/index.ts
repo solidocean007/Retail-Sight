@@ -18,4 +18,5 @@
 //   response.send("Hello from Firebase!");
 // });
 import {sendInvite} from "./sendInvite";
-export {sendInvite};
+import { generateShareLink } from "./generateShareLink";
+export {sendInvite, generateShareLink};

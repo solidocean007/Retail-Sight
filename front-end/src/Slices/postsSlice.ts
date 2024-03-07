@@ -144,6 +144,17 @@ const postsSlice = createSlice({
     setStarTagPosts(state, action) {
       state.starTagPosts = action.payload;
     },
+    // Reducer to clear post-related data
+    clearPostsData: (state) => {
+      state.posts = [];
+      state.filteredPosts = [];
+      state.userPosts = [];
+      state.lastVisible = null;
+      state.lastVisibleFiltered = null;
+      state.hashtagPosts = [];
+      state.starTagPosts = [];
+      // Any other state properties that should be reset can go here
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -264,5 +275,6 @@ export const {
   mergeAndSetFilteredPosts,
   setHashtagPosts,
   setStarTagPosts,
+  clearPostsData,
 } = postsSlice.actions;
 export default postsSlice.reducer;

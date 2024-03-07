@@ -15,9 +15,11 @@ import { getTheme } from "./theme.ts";
 import Footer from "./components/Footer.tsx";
 import { useEffect } from "react";
 import { toggleTheme } from "./actions/themeActions.ts";
+import useSchemaVersion from "./hooks/useSchemaVersion.ts";
 
 
 function App() {
+  useSchemaVersion();
   const dispatch = useDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);

@@ -215,7 +215,7 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
 
               <div className="visibility-edit-box">
-                {user?.uid === post?.postUserId && (
+                {user?.uid === post?.postUserId  && (
                   <div className="edit-box">
                     <div className="edit-block">
                       <Button
@@ -265,6 +265,7 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
+          {/* {post.id} */}
           <div>
             {post.totalCaseCount > 1 ? (
               <span>Quantity: {post.totalCaseCount}</span>

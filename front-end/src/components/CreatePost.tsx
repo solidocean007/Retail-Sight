@@ -190,7 +190,7 @@ export const CreatePost = () => {
               <CloseIcon />
             </IconButton>
             <Typography variant="h1" style={{ flexGrow: 1 }}>
-              Create Post
+              Capture Display
             </Typography>
           </Toolbar>
         </AppBar>

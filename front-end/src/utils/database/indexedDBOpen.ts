@@ -1,7 +1,6 @@
 // indexedDBOpen.ts
 const dbName = "myRetailAppDB";
-const dbVersion = 15; // Increment for each schema change
-
+const dbVersion = 16;
 export function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
@@ -60,7 +59,10 @@ export function openDB(): Promise<IDBDatabase> {
         db.deleteObjectStore("userCompanyEmployees");
       }
       if (!db.objectStoreNames.contains("usersCompanyEmployees")) {
-        db.createObjectStore("usersCompanyEmployees", { keyPath: "uid" }); // Uncaught DOMException: Failed to execute 'createObjectStore' on 'IDBDatabase': An object store with the specified name already exists.
+        db.createObjectStore("usersCompanyEmployees", { keyPath: "uid" }); 
+      }
+      if (!db.objectStoreNames.contains("localSchemaVersion")) {
+        db.createObjectStore("localSchemaVersion", { keyPath: "id" });
       }
     };
   });

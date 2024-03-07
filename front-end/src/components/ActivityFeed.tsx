@@ -34,6 +34,7 @@ import { deletePost, mergeAndSetPosts } from "../Slices/postsSlice";
 import {
   DocumentChange,
   QuerySnapshot,
+  Timestamp,
   collection,
   // doc,
   getDocs,
@@ -188,7 +189,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
     return 650;
   };
-  console.log('mounting')
   const handleItemsRendered = ({
     visibleStopIndex,
   }: {
@@ -275,21 +275,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   }, [currentUser, dispatch, currentUserCompanyId]);
 
-  // listen for new or updated posts.. not sure if this is working
+
   useEffect(() => {
-    console.log("Setting up Firestore listeners for new or updated posts"); // Initial log to confirm the effect runs
-    // Capture the mount time in ISO format
-    const mountTime = new Date().toISOString();
-    console.log(mountTime)
-    const userCompanyID = currentUser?.companyId;
+    // Assume that the server generates timestamps in UTC in ISO 8601 format
+    // const mountTime = new Date().toISOString();
+
 
     // Function to process document changes
     const processDocChanges = (snapshot: QuerySnapshot) => {
-      console.log("Received document changes from Firestore");
       const changes = snapshot.docChanges();
-      console.log(`Number of changes: ${changes.length}`);
       changes.forEach((change: DocumentChange) => {
-        console.log(`Document change type: ${change.type}`, change.doc.data());
         const postData = {
           id: change.doc.id,
           ...(change.doc.data() as PostType),
@@ -309,32 +304,35 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     const publicPostsQuery = query(
       collection(db, "posts"),
       where("visibility", "==", "public"),
-      where("timestamp", ">", mountTime),
-      orderBy("timestamp", "desc")
+      orderBy("timestamp", "desc"),
+      // where("timestamp", ">", mountTime)
     );
     const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
 
-    // Subscribe to company-specific posts, if the user's company is known
     let unsubscribeCompany = () => {};
-    if (userCompanyID) {
+
+    // If the user's company ID is available, set up an additional listener
+    if (currentUser?.companyId) {
+      console.log(currentUser.companyId, ' : current user id') // this line does log eventually
       const companyPostsQuery = query(
         collection(db, "posts"),
-        where("user.postUserCompanyID", "==", userCompanyID),
-        where("displayDate", ">", mountTime),
-        orderBy("displayDate", "desc")
+        where("postUserCompanyId", "==", currentUser.companyId),
+        orderBy("timestamp", "desc"),
+        // where("timestamp", ">", mountTime)
       );
       unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);
+    } else {
+      console.log(
+        "No companyId available, skipping setup for company posts listener"
+      ); // even though i'm logged in, this line logs.  this could be a clue to the problem.
     }
-    console.log(currentUser?.companyId, dispatch)
 
-
-    // Cleanup function
+    // Cleanup function to unsubscribe from both listeners
     return () => {
-      console.log("Unsubscribing from Firestore listeners");
       unsubscribePublic();
       unsubscribeCompany();
     };
-  }, [currentUser?.companyId, dispatch]);
+  }, [currentUser?.companyId]);
 
   const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   const itemCount = displayPosts.length + numberOfAds;
