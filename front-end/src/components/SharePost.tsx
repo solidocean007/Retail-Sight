@@ -21,20 +21,20 @@ const SharePost: React.FC<SharePostProps> = ({
   
 
     // Query Firestore to get the shortened URL
-    db.collection("sharePostLinks")
-      .doc(postId)
-      .get()
-      .then((doc) => {
-        if (doc.exists) {
-          const data = doc.data() as CollectionType;
-          setShortenedLink(data?.shortLink || postLink);
-        } else {
-          console.error("Shortened link not found in Firestore");
-        }
-      })
-      .catch((error) => {
-        console.error("Error getting shortened link from Firestore:", error);
-      });
+    // db.collection("sharePostLinks")
+    //   .doc(postId)
+    //   .get()
+    //   .then((doc) => {
+    //     if (doc.exists) {
+    //       const data = doc.data() as CollectionType;
+    //       setShortenedLink(data?.shortLink || postLink);
+    //     } else {
+    //       console.error("Shortened link not found in Firestore");
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error getting shortened link from Firestore:", error);
+    //   });
   }, [postId, postLink]);
 
   const createShareableLink = () => {

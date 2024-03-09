@@ -1,3 +1,4 @@
+// CollectionForm.tsx
 import React, { useState } from 'react';
 import { CollectionType, CollectionWithId } from '../utils/types';
 import { useSelector } from 'react-redux';

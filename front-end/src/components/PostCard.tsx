@@ -1,7 +1,7 @@
 // PostCard.tsx
 import React from "react";
 import { useState } from "react";
-import { Card, Button } from "@mui/material";
+import { Card, Button, IconButton, Menu, MenuItem, Dialog } from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import "./postCard.css";
 import CommentSection from "./CommentSection";
-import SharePost from "./SharePost";
+// import SharePost from "./SharePost";
 import { handleLikePost } from "../utils/PostLogic/handleLikePost";
 import { onUserNameClick } from "../utils/PostLogic/onUserNameClick";
 import CommentModal from "./CommentModal";
@@ -30,7 +30,10 @@ import useProtectedAction from "../utils/useProtectedAction";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 import { RootState } from "../utils/store";
 import ImageModal from "./ImageModal";
-import TotalCaseCount from "./TotalCaseCount";
+import { MoreVert } from "@mui/icons-material";
+import sharePost from "./sharePost";
+import AddPostToCollectionModal from "./AddPostsToCollectionModal";
+// import TotalCaseCount from "./TotalCaseCount";
 
 interface PostCardProps {
   id: string;
@@ -62,6 +65,12 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const user = useSelector(selectUser);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+
+  // New state for controlling the visibility of the SharePost component
+  const [isAddToCollectionModalOpen, setIsAddToCollectionModalOpen] =
+    useState(false);
 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [fullSizeImageUrl, setFullSizeImageUrl] = useState("");
@@ -182,6 +191,29 @@ const PostCard: React.FC<PostCardProps> = ({
     });
   };
 
+  const handleVertIconClick = (event) => { // what is the event type?  I never know what to do here.
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleShare = () => {
+    sharePost(post.id);
+    handleClose();
+  };
+
+  const handleEdit = () => {
+    setIsEditModalOpen(true);
+    handleClose();
+  };
+
+  const handleAddToCollection = () => {
+    setIsAddToCollectionModalOpen(true);
+    handleClose();
+  };
+
   return (
     <>
       <Card className="post-card dynamic-height" style={{ ...style }}>
@@ -190,6 +222,36 @@ const PostCard: React.FC<PostCardProps> = ({
             <div className="visibility">
               <div className="view-box">
                 <p>view: {post.visibility}</p>
+                <div className="dot-box">
+                  <IconButton
+                    aria-label="settings"
+                    aria-controls="post-card-menu"
+                    aria-haspopup="true"
+                    onClick={handleVertIconClick}
+                  >
+                    <MoreVert />
+                  </IconButton>
+                  <Menu
+          id="post-card-menu"
+          anchorEl={anchorEl}
+          keepMounted
+          open={open}
+          onClose={handleClose}
+        >
+          <MenuItem onClick={handleShare}>Share</MenuItem>
+          <MenuItem onClick={handleEdit}>Edit</MenuItem>
+          <MenuItem onClick={handleAddToCollection}>Add to Collection</MenuItem>
+        </Menu>
+        <Dialog
+          open={isAddToCollectionModalOpen}
+          onClose={() => setIsAddToCollectionModalOpen(false)}
+        >
+          <AddPostToCollectionModal
+            postId={post.id}
+            onClose={() => setIsAddToCollectionModalOpen(false)}
+          />
+        </Dialog>
+                </div>
               </div>
             </div>
             <div className="post-header-top">
@@ -206,16 +268,16 @@ const PostCard: React.FC<PostCardProps> = ({
                   <h5>{likesCount} likes</h5>
                 )}
               </div>
-              <div className="share-button-container">
+              {/* <div className="share-button-container">
                 <SharePost
                   postLink={`https://displaygram.com/`}
                   postTitle="Check out this display!"
                   postId={post.id}
                 />
-              </div>
+              </div> */}
 
               <div className="visibility-edit-box">
-                {user?.uid === post?.postUserId  && (
+                {user?.uid === post?.postUserId && (
                   <div className="edit-box">
                     <div className="edit-block">
                       <Button
