@@ -98,12 +98,12 @@ export const Dashboard = () => {
       console.log("companyId is undefined, skipping Firestore query.");
       return;
     }
-  
+
     const q = query(
       collection(db, "users"),
       where("companyId", "==", companyId)
     );
-  
+
     // Firestore real-time subscription setup
     const unsubscribe = onSnapshot(
       q,
@@ -115,10 +115,10 @@ export const Dashboard = () => {
               uid: doc.id,
             } as UserType)
         );
-  
+
         // Update state with users from Firestore
         setLocalUsers(usersFromFirestore);
-  
+
         // Save the updated list to IndexedDB
         await saveCompanyUsersToIndexedDB(usersFromFirestore);
       },
@@ -126,11 +126,10 @@ export const Dashboard = () => {
         console.error("Error fetching users:", error);
       }
     );
-  
+
     // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
     return () => unsubscribe();
   }, [companyId]); // Dependency array includes companyId to re-run the effect when it changes
-  
 
   // Separate useEffect to attempt to load from IndexedDB when component mounts
   useEffect(() => {
@@ -206,6 +205,11 @@ export const Dashboard = () => {
               <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
             </div>
           </header>
+          <div>
+            <button onClick={() => navigate("/collections")}>
+              Manage Collections
+            </button>
+          </div>
 
           {/* Invite Form Section */}
           {(isAdmin || isDeveloper) && (
@@ -233,7 +237,6 @@ export const Dashboard = () => {
               </div>
             </section>
           )}
-
           <section className="dashboard-content">
             <div className="card role-management-card">
               <div className="header-and-all-info">
@@ -252,7 +255,9 @@ export const Dashboard = () => {
                         <div className="user-detail">{localUser.email}</div>
                       </div>
                       <div className="user-phone-role">
-                        <div className="user-phone-detail">{localUser.phone}</div>
+                        <div className="user-phone-detail">
+                          {localUser.phone}
+                        </div>
                         <div className="user-role-detail">
                           {isSuperAdmin && localUser.uid !== user?.uid ? (
                             <select

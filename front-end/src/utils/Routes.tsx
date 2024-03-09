@@ -14,6 +14,7 @@ import TermsOfService from "../components/TermsService";
 import HelpSupport from "../components/HelpSupport";
 import SplashPage from "../components/SplashPage";
 import TutorialPage from "../components/TutorialPage";
+import CollectionsPage from "../components/CollectionsPage";
 
 
 export const AppRoutes = () => {
@@ -33,6 +34,7 @@ export const AppRoutes = () => {
       <Route path="/createPost" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/tutorial" element={<TutorialPage />} />
+      <Route path="/collections" element={<CollectionsPage />} />
     </Routes>
   );
 };

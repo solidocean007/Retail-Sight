@@ -17,6 +17,7 @@
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+import { shortenLink } from "./shortenLink";
 import {sendInvite} from "./sendInvite";
 import { generateShareLink } from "./generateShareLink";
-export {sendInvite, generateShareLink};
+export {sendInvite, generateShareLink, shortenLink};

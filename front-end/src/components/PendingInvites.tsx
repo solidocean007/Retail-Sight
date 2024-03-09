@@ -43,14 +43,14 @@ const PendingInvites = () => {
   return (
     <div className='pending-invites-container'>
       <h2>Pending Invites</h2>
-      <ol>
+      <ul>
         {invites.map(invite => (
           <li key={invite.id}>
             {invite.email}
             <button onClick={() => cancelInvite(invite.id)}>Cancel Invite</button>
           </li>
         ))}
-      </ol>
+      </ul>
     </div>
   );
 };

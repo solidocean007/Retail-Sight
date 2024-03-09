@@ -122,3 +122,15 @@ export interface LocationState {
   loading: boolean;
   error: string | null;
 }
+
+export interface CollectionType {
+  name: string;
+  description?: string;
+  ownerId: string;
+  posts: string[];
+  sharedWith: string[];
+  shareToken?: string;
+  isShareableOutsideCompany: boolean;
+}
+
+export type CollectionWithId = CollectionType & { id: string };

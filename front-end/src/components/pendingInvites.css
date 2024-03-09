@@ -4,7 +4,7 @@
 .pending-invites-container {
   display: flex;
   flex-direction: column;
-  max-width: 600px; /* Maximum width of the container */
+  max-width: 100%; /* Maximum width of the container */
   padding: 20px;
 }
 
@@ -13,9 +13,10 @@
   height: 30px;
 }
 
-.pending-invites-container ol {
+.pending-invites-container ul {
   background-color: #f9f9f9;
   margin: .5rem;
+  padding: .5rem;
 }
  
 .pending-invites-container li {
@@ -23,7 +24,7 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid black;
-  min-width: 400px;
+  min-width: 150px;
   text-align: justify;
   width: 100%;
 }
