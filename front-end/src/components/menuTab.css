@@ -4,7 +4,7 @@
   width: 100%;
   top: 0;
   right: -100%; /* Initially hidden */
-  background-color: transparent;
+  background-color: var(--menu-background-color);
   z-index: 5;
   transition: left 1s ease-in-out;
   border-bottom-left-radius: 10px;

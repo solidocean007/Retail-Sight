@@ -1,5 +1,5 @@
 // indexedDBUtils.ts
-import { PostType, PostWithID } from "../types";
+import { CollectionType, PostType, PostWithID } from "../types";
 import { FilterCriteria } from "../../Slices/postsSlice";
 import { openDB } from "./indexedDBOpen";
 
@@ -65,7 +65,10 @@ export async function clearPostsInIndexedDB(): Promise<void> {
     };
 
     transaction.onerror = () => {
-      console.error("Transaction not completed due to error: ", transaction.error);
+      console.error(
+        "Transaction not completed due to error: ",
+        transaction.error
+      );
       reject(transaction.error);
     };
   });
@@ -85,22 +88,29 @@ export async function clearUserCreatedPostsInIndexedDB(): Promise<void> {
     };
 
     clearRequest.onerror = () => {
-      console.error("Error clearing user created posts from IndexedDB:", clearRequest.error);
+      console.error(
+        "Error clearing user created posts from IndexedDB:",
+        clearRequest.error
+      );
       reject(clearRequest.error);
     };
 
     transaction.oncomplete = () => {
-      console.log("Transaction completed: All user created posts cleared from IndexedDB.");
+      console.log(
+        "Transaction completed: All user created posts cleared from IndexedDB."
+      );
       resolve();
     };
 
     transaction.onerror = () => {
-      console.error("Transaction not completed due to error: ", transaction.error);
+      console.error(
+        "Transaction not completed due to error: ",
+        transaction.error
+      );
       reject(transaction.error);
     };
   });
 }
-
 
 // update post in indexedDB
 export async function updatePostInIndexedDB(post: PostWithID): Promise<void> {
@@ -172,7 +182,9 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
 }
 
 // Create a utility function that retrieves filtered posts from IndexedDB
-export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Promise<PostWithID[]> {
+export async function getFilteredPostsFromIndexedDB(
+  filters: FilterCriteria
+): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readonly");
   const store = transaction.objectStore("posts");
@@ -182,13 +194,24 @@ export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Pr
     getAllRequest.onsuccess = () => {
       const allPosts = getAllRequest.result;
       // Assuming the date filter criteria includes a startDate and endDate
-      const filteredPosts = allPosts.filter(post => {
-        const matchesChannel = !filters.channels || filters.channels.length === 0 || filters.channels.includes(post.channel);
-        const matchesCategory = !filters.categories || filters.categories.length === 0 || filters.categories.includes(post.category);
+      const filteredPosts = allPosts.filter((post) => {
+        const matchesChannel =
+          !filters.channels ||
+          filters.channels.length === 0 ||
+          filters.channels.includes(post.channel);
+        const matchesCategory =
+          !filters.categories ||
+          filters.categories.length === 0 ||
+          filters.categories.includes(post.category);
         const postDate = post.displayDate ? new Date(post.displayDate) : null;
-        const matchesDateRange = !filters.dateRange || 
-                                 (postDate && filters.dateRange.startDate && postDate >= filters.dateRange.startDate) &&
-                                 (postDate && filters.dateRange.endDate && postDate <= filters.dateRange.endDate);
+        const matchesDateRange =
+          !filters.dateRange ||
+          (postDate &&
+            filters.dateRange.startDate &&
+            postDate >= filters.dateRange.startDate &&
+            postDate &&
+            filters.dateRange.endDate &&
+            postDate <= filters.dateRange.endDate);
 
         return matchesChannel && matchesCategory && matchesDateRange;
       });
@@ -200,7 +223,6 @@ export async function getFilteredPostsFromIndexedDB(filters: FilterCriteria): Pr
     };
   });
 }
-
 
 // Create a utility function that stores filtered posts in IndexedDB
 export async function storeFilteredPostsInIndexedDB(
@@ -417,7 +439,10 @@ export async function addStarTagPostsToIndexedDB(
     posts.forEach((post) => {
       const request = store.put(post);
       request.onerror = () => {
-        console.error("Error adding star tag posts to IndexedDB:", request.error);
+        console.error(
+          "Error adding star tag posts to IndexedDB:",
+          request.error
+        );
         reject(request.error);
       };
     });
@@ -582,4 +607,13 @@ export async function getUserCreatedPostsFromIndexedDB(): Promise<
       reject(request.error);
     };
   });
+}
+
+export async function addOrUpdateCollection(collection: CollectionType) {
+  const db = await openDB();
+  const tx = db.transaction("collections", "readwrite");
+  const store = tx.objectStore("collections");
+  await store.put(collection); // This will add or update a collection
+  await tx.oncomplete;
+  db.close();
 }

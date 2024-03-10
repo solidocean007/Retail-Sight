@@ -1,6 +1,6 @@
 // indexedDBOpen.ts
 const dbName = "myRetailAppDB";
-const dbVersion = 16;
+const dbVersion = 17;
 export function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
@@ -59,10 +59,18 @@ export function openDB(): Promise<IDBDatabase> {
         db.deleteObjectStore("userCompanyEmployees");
       }
       if (!db.objectStoreNames.contains("usersCompanyEmployees")) {
-        db.createObjectStore("usersCompanyEmployees", { keyPath: "uid" }); 
+        db.createObjectStore("usersCompanyEmployees", { keyPath: "uid" });
       }
       if (!db.objectStoreNames.contains("localSchemaVersion")) {
         db.createObjectStore("localSchemaVersion", { keyPath: "id" });
+      }
+      // Create or update 'collections' object store
+      if (!db.objectStoreNames.contains("collections")) {
+        const collectionsStore = db.createObjectStore("collections", {
+          keyPath: "id",
+        });
+        collectionsStore.createIndex("byUserId", "ownerId", { unique: false });
+        // Add more indexes as needed
       }
     };
   });

@@ -191,7 +191,7 @@ const PostCard: React.FC<PostCardProps> = ({
     });
   };
 
-  const handleVertIconClick = (event) => { // what is the event type?  I never know what to do here.
+  const handleVertIconClick = (event) => {// what is the event type?  I never know what to do here.
     setAnchorEl(event.currentTarget);
   };
 

@@ -205,11 +205,7 @@ export const Dashboard = () => {
               <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
             </div>
           </header>
-          <div>
-            <button onClick={() => navigate("/collections")}>
-              Manage Collections
-            </button>
-          </div>
+          
 
           {/* Invite Form Section */}
           {(isAdmin || isDeveloper) && (

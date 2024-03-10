@@ -33,6 +33,12 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     });
   };
 
+  const handleCollectionsClick = () => {
+    protectedAction(() => {
+      navigate("/collections");
+    });
+  };
+
   const handleMenuOptionSelect = (option: string) => {
     setShowMenuTab(false); // Close the menu
     if (option === "createPost") {
@@ -43,6 +49,8 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       handleTutorialClick();
     } else if (option === "dashboard") {
       handleDashboardClick();
+    } else if (option === "collections") {
+      handleCollectionsClick();
     }
   };
 
