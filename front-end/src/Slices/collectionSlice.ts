@@ -1,26 +1,47 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { CollectionType } from "../utils/types";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface CollectionsState {
-  collections: {[key: string]: CollectionType};
+interface CollectionType {
+  id: string;
+  name: string;
+  description?: string;
+  ownerId: string;
+  posts: string[]; // Array of post IDs
 }
 
-const initialState: CollectionsState = {
-  collections: {},
-};
+interface CollectionsState {
+  [id: string]: CollectionType;
+}
+
+const initialState: CollectionsState = {};
 
 const collectionsSlice = createSlice({
-  name: "collections",
+  name: 'collections',
   initialState,
   reducers: {
     addCollection: (state, action: PayloadAction<CollectionType>) => {
       const collection = action.payload;
-      state.collections[collection.id] = collection;
-      // Optionally, update IndexedDB here or call a separate function
+      state[collection.id] = collection;
     },
-    // Additional reducers for updating and deleting collections...
+    addPostToCollection: (state, action: PayloadAction<{ collectionId: string; postId: string }>) => {
+      const { collectionId, postId } = action.payload;
+      const collection = state[collectionId];
+      if (collection && !collection.posts.includes(postId)) {
+        collection.posts.push(postId);
+      }
+    },
+    removePostFromCollection: (state, action: PayloadAction<{ collectionId: string; postId: string }>) => {
+      const { collectionId, postId } = action.payload;
+      const collection = state[collectionId];
+      if (collection) {
+        const index = collection.posts.indexOf(postId);
+        if (index > -1) {
+          collection.posts.splice(index, 1);
+        }
+      }
+    },
   },
 });
 
-export const { addCollection } = collectionsSlice.actions;
+export const { addCollection, addPostToCollection, removePostFromCollection } = collectionsSlice.actions;
 export default collectionsSlice.reducer;
+

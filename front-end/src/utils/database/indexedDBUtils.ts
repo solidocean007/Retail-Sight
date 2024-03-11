@@ -1,5 +1,5 @@
 // indexedDBUtils.ts
-import { CollectionType, PostType, PostWithID } from "../types";
+import { CollectionType, CollectionWithId, PostType, PostWithID } from "../types";
 import { FilterCriteria } from "../../Slices/postsSlice";
 import { openDB } from "./indexedDBOpen";
 
@@ -613,7 +613,78 @@ export async function addOrUpdateCollection(collection: CollectionType) {
   const db = await openDB();
   const tx = db.transaction("collections", "readwrite");
   const store = tx.objectStore("collections");
-  await store.put(collection); // This will add or update a collection
-  await tx.oncomplete;
-  db.close();
+  store.put(collection); // This will add or update a collection
+  // Wait for the transaction to complete
+  await new Promise((resolve, reject) => {
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
 }
+
+export async function addPostToCollectionInDB(collectionId: string, postId: string) {
+  const db = await openDB();
+  const tx = db.transaction('collections', 'readwrite');
+  const store = tx.objectStore('collections');
+  
+  let collection = await new Promise<CollectionWithId | undefined>((resolve, reject) => {
+    const request = store.get(collectionId);
+    request.onsuccess = () => resolve(request.result as CollectionWithId);
+    request.onerror = () => reject(request.error);
+  });
+
+  if (collection && !collection.posts.includes(postId)) {
+    collection.posts.push(postId);
+    store.put(collection);
+  }
+
+  await new Promise((resolve, reject) => {
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function removePostFromCollectionInDB(collectionId: string, postId: string) {
+  const db = await openDB();
+  const tx = db.transaction('collections', 'readwrite');
+  const store = tx.objectStore('collections');
+  
+  let collection = await new Promise<CollectionWithId | undefined>((resolve, reject) => {
+    const request = store.get(collectionId);
+    request.onsuccess = () => resolve(request.result as CollectionWithId);
+    request.onerror = () => reject(request.error);
+  });
+
+  if (collection) {
+    const index = collection.posts.indexOf(postId);
+    if (index > -1) {
+      collection.posts.splice(index, 1);
+      store.put(collection);
+    }
+  }
+
+  await new Promise((resolve, reject) => {
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function getCollectionsFromIndexedDB(): Promise<CollectionWithId[]> {
+  const db = await openDB();
+  const transaction = db.transaction(["collections"], "readonly");
+  const store = transaction.objectStore("collections");
+
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      // Assuming the request.result is an array of CollectionWithId objects
+      resolve(request.result as CollectionWithId[]); // Type assertion here
+    };
+
+    request.onerror = () => {
+      console.error("Error fetching user collections from IndexedDB:", request.error);
+      reject(request.error);
+    };
+  });
+}
+

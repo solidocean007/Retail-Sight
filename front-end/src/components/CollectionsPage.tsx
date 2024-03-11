@@ -13,6 +13,7 @@ import { CollectionType, CollectionWithId } from "../utils/types";
 import { useNavigate } from "react-router-dom";
 import { Button, Dialog } from "@mui/material";
 import "./collectionsPage.css";
+import { getCollectionsFromIndexedDB } from "../utils/database/indexedDBUtils";
 
 const CollectionsPage = () => {
   const [collections, setCollections] = useState<CollectionWithId[]>([]);
@@ -43,8 +44,23 @@ const CollectionsPage = () => {
   };
 
   useEffect(() => {
-    fetchCollections();
+    const loadCollections = async () => {
+      setLoading(true);
+      // Attempt to load collections from IndexedDB
+      const indexedDbCollections = await getCollectionsFromIndexedDB();
+      if (indexedDbCollections.length > 0) {
+        // Found collections in IndexedDB, use these
+        setCollections(indexedDbCollections);
+        setLoading(false);
+      } else {
+        // No collections in IndexedDB, fetch from Firestore
+        fetchCollections();
+      }
+    };
+  
+    loadCollections();
   }, []);
+  
 
   const goBackHome = () => {
     navigate("/"); // or history.push('/') for React Router v5

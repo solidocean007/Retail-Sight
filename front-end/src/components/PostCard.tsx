@@ -1,7 +1,14 @@
 // PostCard.tsx
 import React from "react";
 import { useState } from "react";
-import { Card, Button, IconButton, Menu, MenuItem, Dialog } from "@mui/material";
+import {
+  Card,
+  Button,
+  IconButton,
+  Menu,
+  MenuItem,
+  Dialog,
+} from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
@@ -65,7 +72,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const user = useSelector(selectUser);
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
   const open = Boolean(anchorEl);
 
   // New state for controlling the visibility of the SharePost component
@@ -191,10 +199,10 @@ const PostCard: React.FC<PostCardProps> = ({
     });
   };
 
-  const handleVertIconClick = (event) => {// what is the event type?  I never know what to do here.
+  const handleVertIconClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-
+  
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -232,42 +240,31 @@ const PostCard: React.FC<PostCardProps> = ({
                     <MoreVert />
                   </IconButton>
                   <Menu
-          id="post-card-menu"
-          anchorEl={anchorEl}
-          keepMounted
-          open={open}
-          onClose={handleClose}
-        >
-          <MenuItem onClick={handleShare}>Share</MenuItem>
-          <MenuItem onClick={handleEdit}>Edit</MenuItem>
-          <MenuItem onClick={handleAddToCollection}>Add to Collection</MenuItem>
-        </Menu>
-        <Dialog
-          open={isAddToCollectionModalOpen}
-          onClose={() => setIsAddToCollectionModalOpen(false)}
-        >
-          <AddPostToCollectionModal
-            postId={post.id}
-            onClose={() => setIsAddToCollectionModalOpen(false)}
-          />
-        </Dialog>
+                    id="post-card-menu"
+                    anchorEl={anchorEl}
+                    keepMounted
+                    open={open}
+                    onClose={handleClose}
+                  >
+                    <MenuItem onClick={handleShare}>Share</MenuItem>
+                    <MenuItem onClick={handleEdit}>Edit</MenuItem>
+                    <MenuItem onClick={handleAddToCollection}>
+                      Add to Collection
+                    </MenuItem>
+                  </Menu>
+                  <Dialog
+                    open={isAddToCollectionModalOpen}
+                    onClose={() => setIsAddToCollectionModalOpen(false)}
+                  >
+                    <AddPostToCollectionModal
+                      postId={post.id}
+                      onClose={() => setIsAddToCollectionModalOpen(false)}
+                    />
+                  </Dialog>
                 </div>
               </div>
             </div>
             <div className="post-header-top">
-              <div className="likes-comments">
-                <button
-                  className="like-button"
-                  onClick={handleLikePostButtonClick}
-                >
-                  {likedByUser ? "❤️" : "🤍"}
-                </button>
-                {likesCount === 0 ? null : likesCount === 1 ? (
-                  <h5>{likesCount} like</h5>
-                ) : (
-                  <h5>{likesCount} likes</h5>
-                )}
-              </div>
               {/* <div className="share-button-container">
                 <SharePost
                   postLink={`https://displaygram.com/`}
@@ -279,7 +276,7 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="visibility-edit-box">
                 {user?.uid === post?.postUserId && (
                   <div className="edit-box">
-                    <div className="edit-block">
+                    {/* <div className="edit-block">
                       <Button
                         variant="contained"
                         color="primary"
@@ -288,7 +285,7 @@ const PostCard: React.FC<PostCardProps> = ({
                       >
                         Edit
                       </Button>
-                    </div>
+                    </div> */}
                   </div>
                 )}
               </div>
@@ -336,6 +333,19 @@ const PostCard: React.FC<PostCardProps> = ({
 
           <div className="image-new-comment-box">
             <div className="hash-tag-container">
+              <div className="likes-comments">
+                <button
+                  className="like-button"
+                  onClick={handleLikePostButtonClick}
+                >
+                  {likedByUser ? "❤️" : "🤍"}
+                </button>
+                {likesCount === 0 ? null : likesCount === 1 ? (
+                  <h5>{likesCount} like</h5>
+                ) : (
+                  <h5>{likesCount} likes</h5>
+                )}
+              </div>
               {/* Display hashtags above the image */}
               <PostDescription
                 description={post.description}
