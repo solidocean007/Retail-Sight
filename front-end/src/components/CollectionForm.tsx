@@ -6,11 +6,14 @@ import { selectUser } from '../Slices/userSlice';
 import './collectionForm.css'
 
 interface CollectionFormProps {
+  isOpen: boolean;
   onAddCollection: (newCollection: CollectionType) => Promise<void>
   onClose: () => void;
 }
 
-const CollectionForm: React.FC<CollectionFormProps> = ({ onAddCollection, onClose }) => {
+const CollectionForm: React.FC<CollectionFormProps> = ({ isOpen, onAddCollection, onClose }) => {
+  if (!isOpen) return null;
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const user = useSelector(selectUser);
@@ -43,7 +46,6 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ onAddCollection, onClos
   const handleCancel = () => {
     onClose(); // Call the onClose prop function
   };
-
   return (
     <form className='collection-form' onSubmit={handleSubmit}>
       <input
@@ -57,6 +59,7 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ onAddCollection, onClos
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Description"
+        // how can i let a user hit use the enter button like a submit button if there is also a value in the input above?
       />
       <button type="submit" className={!name.trim() ? 'disabled-button' : ''}>Add Collection</button>
       <button type="button" onClick={handleCancel}>Cancel</button>

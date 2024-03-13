@@ -195,65 +195,6 @@ export const fetchFilteredPosts = createAsyncThunk(
 );
 
 
-// New function to fetch more filtered posts
-// export const fetchMoreFilteredPostsBatch = createAsyncThunk(
-//   "posts/fetchMoreFiltered",
-//   async (
-//     { filters, lastVisible }: FetchFilteredPostsArgs,
-//     { rejectWithValue }
-//   ) => {
-//     try {
-//       // Construct the query with filters and lastVisible for pagination
-//       let queryToExecute: Query<DocumentData> = collection(db, "posts");
-//       // ...apply filters...
-//       // Apply channel filters if they are present
-//       if (filters.channels && filters.channels.length > 0) {
-//         queryToExecute = filterByChannels(filters.channels, queryToExecute);
-//       }
-//       // Apply category filters if they are present
-//       if (filters.categories && filters.categories.length > 0) {
-//         queryToExecute = filterByCategories(filters.categories, queryToExecute);
-//       }
-
-//       if (lastVisible) {
-//         queryToExecute = query(
-//           queryToExecute,
-//           orderBy("displayDate", "desc"),
-//           startAfter(lastVisible),
-//           limit(5) // Set your desired batch size
-//         );
-//       } else {
-//         // If there's no lastVisible, it means it's the first fetch
-//         queryToExecute = query(
-//           queryToExecute,
-//           orderBy("displayDate", "desc"),
-//           limit(5)
-//         );
-//       }
-
-//       // Execute the query
-//       const postSnapshot = await getDocs(queryToExecute);
-
-//       if (postSnapshot.empty) {
-//         return { moreFilteredPosts: [], lastVisible: null };
-//       }
-
-//       // When mapping, create PostWithID objects
-//       const moreFilteredPosts: PostWithID[] = postSnapshot.docs.map((doc) => ({
-//         id: doc.id,
-//         ...(doc.data() as PostType),
-//       }));
-
-//       const newLastVisible = postSnapshot.docs[postSnapshot.docs.length - 1];
-
-//       return { moreFilteredPosts, lastVisible: newLastVisible.id };
-//     } catch (error) {
-//       console.error("Error fetching more filtered posts:", error);
-//       return rejectWithValue("Error fetching more filtered posts.");
-//     }
-//   }
-// );
-
 // Thunk for fetching user posts
 export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
   "posts/fetchUserPosts",
@@ -325,3 +266,34 @@ export const fetchLatestPosts = createAsyncThunk<
     return rejectWithValue("Error fetching latest posts.");
   }
 });
+
+// Define a type for the thunk argument
+type FetchPostsByIdsArgs = {
+  postIds: string[];
+};
+
+export const fetchPostsByIds = createAsyncThunk<PostWithID[], FetchPostsByIdsArgs, { rejectValue: string }>(
+  'posts/fetchPostsByIds',
+  async ({ postIds }, { rejectWithValue }) => {
+    try {
+      const fetchPostPromises = postIds.map((postId) => 
+        getDoc(doc(db, 'posts', postId)).then((documentSnapshot) => {
+          if (documentSnapshot.exists()) {
+            return { id: documentSnapshot.id, ...(documentSnapshot.data() as PostType) }; 
+          } else {
+            return rejectWithValue(`Post with ID ${postId} not found.`);
+          }
+        })
+      );
+
+      const postsWithIds = await Promise.all(fetchPostPromises);
+
+      // Filter out any undefined values or errors (if you chose to handle errors differently above)
+      return postsWithIds.filter((post): post is PostWithID => post !== undefined);
+
+    } catch (error) {
+      console.error('Error fetching posts by IDs:', error);
+      return rejectWithValue('Error fetching posts by IDs.');
+    }
+  }
+);

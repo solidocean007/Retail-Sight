@@ -14,9 +14,9 @@ interface PostDescriptionProps {
   description?: string;
   getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
   getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
-  setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
-  setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
-  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
+  setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
+  setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const DescriptionModal = ({
@@ -113,9 +113,11 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     event.preventDefault(); // Prevents the default anchor behavior
     try {
       const hashtagPosts = await getPostsByTag(hashtag, userCompanyID);
-      setIsSearchActive(true);
-      setActivePostSet("hashtag");
-      setCurrentHashtag(hashtag);
+      setIsSearchActive?.(true);
+      setActivePostSet?.("hashtag");
+      if(setCurrentHashtag){
+        setCurrentHashtag(hashtag);
+      }
       dispatch(setHashtagPosts(hashtagPosts));
       addHashtagPostsToIndexedDB(hashtagPosts);
     } catch (error) {
@@ -131,7 +133,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     try {
       const starTagPosts = await getPostsByStarTag(starTag);
 
-      setCurrentHashtag(starTag);
+      setCurrentHashtag?.(starTag);
       dispatch(setStarTagPosts(starTagPosts));
       addStarTagPostsToIndexedDB(starTagPosts);
     } catch (error) {

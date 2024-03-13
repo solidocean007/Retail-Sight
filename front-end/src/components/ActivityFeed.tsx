@@ -1,3 +1,4 @@
+// ActivityFeed.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeList as List } from "react-window";
 import { useSelector } from "react-redux";
@@ -55,16 +56,18 @@ const AD_INTERVAL = 4;
 interface ActivityFeedProps {
   // searchResults: PostWithID[] | null;
   // setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
-  currentHashtag: string | null;
-  setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
-  clearSearch: () => Promise<void>;
-  activePostSet: string;
-  setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
-  isSearchActive: boolean;
-  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
+  posts: PostWithID[];
+  currentHashtag?: string | null;
+  setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  clearSearch?: () => Promise<void>;
+  activePostSet?: string;
+  setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
+  isSearchActive?: boolean;
+  setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
+  posts,
   currentHashtag,
   setCurrentHashtag,
   clearSearch,
@@ -76,30 +79,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
 
-  const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
-  const filteredPosts = useSelector(
-    (state: RootState) => state.posts.filteredPosts
-  );
-
-  const hashtagPosts = useSelector(
-    (state: RootState) => state.posts.hashtagPosts
-  );
-
-  // Decide which posts to display
-  let displayPosts: PostWithID[];
-  switch (activePostSet) {
-    case "filtered":
-      displayPosts = filteredPosts;
-      break;
-    case "hashtag":
-      displayPosts = hashtagPosts;
-      break;
-    default:
-      displayPosts = posts;
-  }
+ 
 
   const listRef = useRef<List>(null);
-  useScrollToPost(listRef, displayPosts, AD_INTERVAL);
+  useScrollToPost(listRef, posts, AD_INTERVAL);
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
@@ -228,114 +211,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   };
 
-  // load indexDB posts or fetch from firestore
-  useEffect(() => {
-    const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
-      try {
-        const indexedDBPosts = await getPostsFromIndexedDB();
-        if (indexedDBPosts.length > 0) {
-          dispatch(mergeAndSetPosts(indexedDBPosts)); // Update Redux store with posts from IndexedDB
-        } else {
-          const action = await dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
-          );
-          if (fetchInitialPostsBatch.fulfilled.match(action)) {
-            const fetchedPosts = action.payload.posts;
-            dispatch(mergeAndSetPosts(fetchedPosts));
-            addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching posts from IndexedDB:", error);
-      }
-    };
-
-    const fetchPublicPosts = async () => {
-      try {
-        const publicPostsQuery = query(
-          collection(db, "posts"),
-          where("visibility", "==", "public"),
-          orderBy("displayDate", "desc"),
-          limit(4)
-        );
-        const querySnapshot = await getDocs(publicPostsQuery);
-        const publicPosts = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() } as PostWithID))
-          .filter((post) => post.visibility === "public");
-        dispatch(mergeAndSetPosts(publicPosts));
-      } catch (error) {
-        console.error("Error fetching public posts:", error);
-      }
-    };
-
-    if (currentUser === null) {
-      fetchPublicPosts();
-    } else if (currentUserCompanyId) {
-      fetchPostsForLoggedInUser(currentUserCompanyId);
-    }
-  }, [currentUser, dispatch, currentUserCompanyId]);
-
-
-  useEffect(() => {
-    // Assume that the server generates timestamps in UTC in ISO 8601 format
-    // const mountTime = new Date().toISOString();
-
-
-    // Function to process document changes
-    const processDocChanges = (snapshot: QuerySnapshot) => {
-      const changes = snapshot.docChanges();
-      changes.forEach((change: DocumentChange) => {
-        const postData = {
-          id: change.doc.id,
-          ...(change.doc.data() as PostType),
-        };
-        if (change.type === "added" || change.type === "modified") {
-          dispatch(mergeAndSetPosts([postData]));
-          updatePostInIndexedDB(postData);
-        } else if (change.type === "removed") {
-          dispatch(deletePost(change.doc.id));
-          removePostFromIndexedDB(change.doc.id);
-          deleteUserCreatedPostInIndexedDB(change.doc.id);
-        }
-      });
-    };
-
-    // Subscribe to public posts
-    const publicPostsQuery = query(
-      collection(db, "posts"),
-      where("visibility", "==", "public"),
-      orderBy("timestamp", "desc"),
-      // where("timestamp", ">", mountTime)
-    );
-    const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
-
-    let unsubscribeCompany = () => {};
-
-    // If the user's company ID is available, set up an additional listener
-    if (currentUser?.companyId) {
-      console.log(currentUser.companyId, ' : current user id') // this line does log eventually
-      const companyPostsQuery = query(
-        collection(db, "posts"),
-        where("postUserCompanyId", "==", currentUser.companyId),
-        orderBy("timestamp", "desc"),
-        // where("timestamp", ">", mountTime)
-      );
-      unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);
-    } else {
-      console.log(
-        "No companyId available, skipping setup for company posts listener"
-      ); // even though i'm logged in, this line logs.  this could be a clue to the problem.
-    }
-
-    // Cleanup function to unsubscribe from both listeners
-    return () => {
-      unsubscribePublic();
-      unsubscribeCompany();
-    };
-  }, [currentUser?.companyId]);
-
-  const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
-  const itemCount = displayPosts.length + numberOfAds;
+  const numberOfAds = adsOn ? Math.floor(posts.length / AD_INTERVAL) : 0;
+  const itemCount = posts.length + numberOfAds;
 
   const itemRenderer = ({
     index,
@@ -361,8 +238,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     if (isAdPosition) {
       // return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />; // Property 'style' does not exist on type 'IntrinsicAttributes & AdComponentProps'
-    } else if (postIndex < displayPosts.length) {
-      const postWithID = displayPosts[postIndex];
+    } else if (postIndex < posts.length) {
+      const postWithID = posts[postIndex];
 
       return (
         <PostCardRenderer

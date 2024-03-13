@@ -15,12 +15,12 @@ import "./hashTagSearchBar.css";
 import { RootState } from "../utils/store";
 
 interface HashTagSearchBarProps {
-  currentHashtag: string | null;
-  setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
-  clearSearch: () => Promise<void>;
-  setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
-  isSearchActive:boolean;
-  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
+  currentHashtag?: string | null;
+  setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  clearSearch?: () => Promise<void>;
+  setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
+  isSearchActive?: boolean;
+  setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
@@ -44,47 +44,12 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
     setInputValue(currentHashtag ?? "");
   }, [currentHashtag]);
 
-  // const handleTagSearch = async () => {
-
-  //   if (
-  //     currentHashtag &&
-  //     currentHashtag !== "#" &&
-  //     (currentHashtag.startsWith("#") || currentHashtag.startsWith("*"))
-  //   ) {
-  //     let tagPosts;
-  //     try {
-  //       if (currentHashtag.startsWith("#")) {
-  //         if (userCompanyID) {
-  //           // Simplified undefined check
-  //           tagPosts = await getPostsByTag(currentHashtag, userCompanyID);
-  //         } else {
-  //           dispatch(showMessage("Your user company ID is undefined"));
-  //           return;
-  //         }
-  //       } else if (currentHashtag.startsWith("*")) {
-  //         tagPosts = await getPostsByStarTag(currentHashtag);
-  //       } else {
-  //         dispatch(showMessage("Invalid tag format"));
-  //         return;
-  //       }
-
-  //       if (tagPosts && tagPosts.length === 0) {
-  //         dispatch(showMessage("No posts for that search found"));
-  //         // Consider fetching cached posts only if necessary or in specific contexts
-  //       } else if (tagPosts) {
-  //         setSearchResults(tagPosts); // what does this do?
-  //         setActivePostSet("filtered");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error searching posts by tag:", error);
-  //     }
-  //   }
-  // };
-
   const handleSearch = async () => {
     // Process hashtag/star tag search directly
     if (!inputValue) return;
-    setIsSearchActive(true);
+    if (setIsSearchActive) {
+      setIsSearchActive(true);
+    }
     let result;
     try {
       if (inputValue.startsWith("#")) {
@@ -99,23 +64,34 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
       dispatch(setHashtagPosts(result)); // I need a setSortedHashtagPosts
       // I need to save sorted posts to indexedDB
       // storeHashtagSearchIndexedDb();
-      console.log('next step')
-      setActivePostSet("hashtag");
-      setCurrentHashtag(inputValue); // I dont know if I need to do this.
+      console.log("next step");
+      if (setActivePostSet) {
+        setActivePostSet("hashtag");
+      }
+      if (setCurrentHashtag) {
+        setCurrentHashtag(inputValue);
+      }
     } catch (error) {
       dispatch(showMessage("No posts for that search found"));
       // Handle error appropriately
       setInputValue(inputValue);
-      setActivePostSet("posts");
+      if (setActivePostSet) {
+        setActivePostSet("posts");
+      }
     }
   };
 
   const handleClearSearch = () => {
-    setActivePostSet("posts");
-    setCurrentHashtag("#");
-    clearSearch();
+    if (setActivePostSet) {
+      setActivePostSet("posts");
+    }
+    if (setCurrentHashtag) {
+      setCurrentHashtag("#");
+    }
+    if (clearSearch) {
+      clearSearch();
+    }
   };
-
 
   return (
     <div className="hashtag-search-box">
@@ -134,7 +110,6 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
       </button>
     </div>
   );
-
 };
 
 export default TagOnlySearchBar;

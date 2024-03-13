@@ -49,9 +49,9 @@ interface PostCardProps {
   getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
   getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   style?: React.CSSProperties;
-  setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
-  setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
-  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
+  setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
+  setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const PostCard: React.FC<PostCardProps> = ({

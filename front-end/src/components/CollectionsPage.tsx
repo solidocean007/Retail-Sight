@@ -1,7 +1,6 @@
-// CollectionsPage.tsx
 import React, { useState, useEffect } from "react";
 import {
-  collection,
+  collection as firestoreCollection,
   getDocs,
   addDoc,
   deleteDoc,
@@ -11,31 +10,32 @@ import { db } from "../utils/firebase";
 import CollectionForm from "./CollectionForm";
 import { CollectionType, CollectionWithId } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import { Button, Dialog } from "@mui/material";
+import { Button, dividerClasses } from "@mui/material";
 import "./collectionsPage.css";
 import { getCollectionsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import CustomConfirmation from "./CustomConfirmation";
+import { useDispatch } from "react-redux";
+import { showMessage } from "../Slices/snackbarSlice";
 
 const CollectionsPage = () => {
   const [collections, setCollections] = useState<CollectionWithId[]>([]);
-  const [showCreateCollection, setShowCreateCollection] = useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
+  const [showCreateCollectionDialog, setShowCreateCollectionDialog] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // Fetch collections from Firestore
   const fetchCollections = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, "collections"));
-      const collectionsData: CollectionWithId[] = querySnapshot.docs.map(
-        (doc) => {
-          const collectionData: CollectionType = doc.data() as CollectionType;
-          return {
-            ...collectionData,
-            id: doc.id,
-          };
-        }
-      );
-      setCollections(collectionsData);
+      const querySnapshot = await getDocs(firestoreCollection(db, "collections"));
+      const fetchedCollections = querySnapshot.docs.map(doc => ({
+        ...doc.data() as CollectionType,
+        id: doc.id,
+      }));
+      setCollections(fetchedCollections);
     } catch (error) {
       console.error("Error fetching collections: ", error);
     } finally {
@@ -43,105 +43,105 @@ const CollectionsPage = () => {
     }
   };
 
+  // Load collections either from IndexedDB or Firestore
   useEffect(() => {
     const loadCollections = async () => {
       setLoading(true);
-      // Attempt to load collections from IndexedDB
       const indexedDbCollections = await getCollectionsFromIndexedDB();
       if (indexedDbCollections.length > 0) {
-        // Found collections in IndexedDB, use these
         setCollections(indexedDbCollections);
-        setLoading(false);
       } else {
-        // No collections in IndexedDB, fetch from Firestore
-        fetchCollections();
+        await fetchCollections();
       }
+      setLoading(false);
     };
-  
+
     loadCollections();
   }, []);
-  
 
-  const goBackHome = () => {
-    navigate("/"); // or history.push('/') for React Router v5
-  };
-
-  // Handler to add a new collection
   const handleAddCollection = async (newCollection: CollectionType) => {
     try {
-      await addDoc(collection(db, "collections"), newCollection);
-      fetchCollections(); // Refresh the list after adding
+      await addDoc(firestoreCollection(db, "collections"), newCollection);
+      await fetchCollections();
     } catch (error) {
       console.error("Error adding collection: ", error);
     }
   };
 
-  // Handler to create a link for a collection
-  const handleCreateLink = (collectionId: string) => {
-    // Logic for creating a sharable link
-  };
-
-  // Handler for deleting a collection
-  const handleDeleteCollection = async (collectionId: string) => {
-    if (window.confirm("Are you sure you want to delete this collection?")) {
+  const handleDeleteCollectionConfirmed = async () => {
+    console.log('handleDelete')
+    console.log(collectionToDelete) // this isnt logging
+    if (collectionToDelete) {
       try {
-        await deleteDoc(doc(db, "collections", collectionId));
-        fetchCollections(); // Refresh the list after deletion
+        await deleteDoc(doc(db, "collections", collectionToDelete));
+        setCollectionToDelete(null);
+        await fetchCollections();
       } catch (error) {
         console.error("Error deleting collection: ", error);
       }
     }
+    setIsConfirmationOpen(false);
   };
 
-  const handleCreateCollectionClick = () => {
-    setShowCreateCollection(true);
+  const handleOpenCreateCollectionDialog = () => setShowCreateCollectionDialog(true);
+  const handleCloseCreateCollectionDialog = () => setShowCreateCollectionDialog(false);
+
+  const openConfirmDeletionDialog = (collectionId: string) => {
+    console.log(collectionId)
+    setCollectionToDelete(collectionId);
+    setIsConfirmationOpen(true);
   };
 
-  const handleCloseCreateCollection = () => {
-    setShowCreateCollection(false);
+  const handleLinkClick = (collection: CollectionWithId) => {
+    // check if the collection.posts.length has a length greater than 0
+    if (collection.posts.length > 0) {
+      navigate(`/view-collection/${collection.id}`);
+    } else {
+      dispatch(showMessage("No posts are in this collection yet."))
+    }
   };
+  
 
   return (
     <div className="collections-container">
       <div className="button-box">
-        <Button onClick={goBackHome}>Go Back Home</Button>
+        {/* <Button className="home-btn" onClick={() => navigate("/")}>Go Back Home</Button> */}
+        <button className="home-btn" onClick={() => navigate("/")}>Home</button>
       </div>
       <h2>Your Collections</h2>
-      <Button onClick={handleCreateCollectionClick}>Create collection</Button>
+      <button className="home-btn" onClick={handleOpenCreateCollectionDialog}>Create collection</button>
 
-      <Dialog
-        open={showCreateCollection}
-        onClose={() => setShowCreateCollection(false)}
-        sx={{
-          "& .MuiDialog-paper": { padding: "20px" },
-        }}
-      >
-        <div className="collection-form-container">
-          <CollectionForm
-            onAddCollection={handleAddCollection}
-            onClose={handleCloseCreateCollection}
-          />
-        </div>
-      </Dialog>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div className="collections-list">
-          <ul>
-            {collections.map((collection) => (
-              <li className="collection-list-item" key={collection.id}>
+      {collections.length === 0 && 
+        <div>No collections</div>
+      }
+      {loading ? <p>Loading...</p> : (
+        <ul className="collections-list">
+          {collections.map(collection => (
+            <li className="collection-list-item" key={collection.id}>
+              <span onClick={()=>handleLinkClick(collection)}>
                 {collection.name} - {collection.posts.length} Posts
-                <Button onClick={() => handleCreateLink(collection.id)}>
-                  Create Link
-                </Button>
-                <Button onClick={() => handleDeleteCollection(collection.id)}>
-                  Delete
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </div>
+              </span>
+              <Button onClick={() => {/* handleCreateLink logic here */}}>
+                Create Link
+              </Button>
+              <Button onClick={() => openConfirmDeletionDialog(collection.id)}>
+                Delete
+              </Button>
+            </li>
+          ))}
+        </ul>
       )}
+      <CollectionForm
+        isOpen={showCreateCollectionDialog}
+        onAddCollection={handleAddCollection}
+        onClose={handleCloseCreateCollectionDialog}
+      />
+      <CustomConfirmation
+        isOpen={isConfirmationOpen}
+        onClose={() => setIsConfirmationOpen(false)}
+        onConfirm={handleDeleteCollectionConfirmed}
+        message="Are you sure you want to delete this collection?"
+      />
     </div>
   );
 };

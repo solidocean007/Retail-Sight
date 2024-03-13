@@ -1,0 +1,95 @@
+.view-collection-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 5px;
+}
+
+.view-collection-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: #f0f0f0; /* Adjust the background as needed */
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.post-list-item {
+  display: flex;
+  align-items: flex-start; /* Align to top */
+  margin-top: 10px;
+  border-bottom: 1px solid #ccc; /* Optional divider */
+  padding: 10px 0;
+  justify-content: space-between; /* This spreads out the elements */
+  text-align: justify;
+}
+
+.list-item-image img {
+  width: 100px; /* Adjust width as needed */
+  height: auto;
+  margin-right: 15px; /* Space between image and details */
+}
+.list-item-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1; /* Make sure it takes up available space */
+  margin-left: 15px; /* Adjust the space between image and details */
+}
+
+
+.list-item-date-cases {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Align date and cases to opposite ends */
+  margin-bottom: 4px; /* Give some space below the date and cases */
+}
+
+.list-item-details > div {
+  flex-grow: 1;
+}
+
+.list-item-store {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 4px; /* Give some space below the store name */
+}
+
+
+.list-item-display-date {
+  font-size: 0.8rem;
+  margin-right: 15px; /* Add space between date and cases if needed */
+}
+
+.list-item-address {
+  font-size: 0.8rem;
+  margin-bottom: 4px; /* Give some space below the address */
+}
+
+.list-item-cases {
+  font-size: 0.8rem;
+}
+
+/* Adjust checkbox alignment */
+.list-item-checkbox {
+  align-self: center; /* Align checkbox vertically */
+  margin-left: 10px; /* Adjust the space between case count and checkbox */
+}
+
+/* Styles for the header actions */
+.view-collection-actions {
+  display: flex;
+}
+
+.view-collection-actions button {
+  margin-right: 10px;
+}
+
+/* Add new styles for the buttons */
+.view-collection-actions {
+  margin-top: 10px;
+  text-align: right;
+}
+
+.view-collection-actions button {
+  margin-left: 5px;
+}
