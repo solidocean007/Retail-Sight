@@ -668,7 +668,7 @@ export async function removePostFromCollectionInDB(collectionId: string, postId:
   });
 }
 
-export async function getCollectionsFromIndexedDB(): Promise<CollectionWithId[]> {
+export async function getCollectionsFromIndexedDB(): Promise<CollectionWithId[]> { // this gets all of a users collections
   const db = await openDB();
   const transaction = db.transaction(["collections"], "readonly");
   const store = transaction.objectStore("collections");
@@ -687,4 +687,25 @@ export async function getCollectionsFromIndexedDB(): Promise<CollectionWithId[]>
     };
   });
 }
+
+export async function getOneCollectionFromIndexedDB(collectionId: string): Promise<CollectionWithId> { // this needs to retrieve a specific collection
+  const db = await openDB();
+  const transaction = db.transaction(["collections"], "readonly");
+  const store = transaction.objectStore("collections");
+
+  return new Promise((resolve, reject) => {
+    const request = store.get(collectionId);
+
+    request.onsuccess = () => {
+      // Assuming the request.result is an array of CollectionWithId objects
+      resolve(request.result as CollectionWithId); // Type assertion here
+    };
+
+    request.onerror = () => {
+      console.error("Error fetching a specific collection from IndexedDB:", request.error);
+      reject(request.error);
+    };
+  });
+}
+
 

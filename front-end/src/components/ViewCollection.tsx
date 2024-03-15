@@ -1,138 +1,171 @@
-import { useParams } from "react-router-dom";
-import ActivityFeed from "./ActivityFeed";
-import { useEffect, useState } from "react";
-import { PostWithID } from "../utils/types";
-import { fetchPostsByIds } from "../thunks/postsThunks";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../utils/store";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
+import { saveAs } from "file-saver";
+import { fetchPostsByIds } from "../thunks/postsThunks";
+import { useAppDispatch } from "../utils/store";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { useFirebaseAuth } from "../utils/useFirebaseAuth"; // Adjust based on your auth hook
+import { PostWithID } from "../utils/types";
 import "./viewCollection.css";
 
 export const ViewCollection = () => {
-  const [viewMode, setViewMode] = useState("feed");
-  const { collectionId } = useParams(); // This is your route parameter
+  const { collectionId, token } = useParams<{
+    collectionId: string;
+    token?: string;
+  }>();
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { currentUser } = useFirebaseAuth(); // Adjust based on your auth hook
   const [posts, setPosts] = useState<PostWithID[]>([]);
-  const postsState = useSelector((state: RootState) => state.posts); // Accessing posts state from the Redux store.  What is this for?
-   // Use a map to keep track of selected posts for ease of handling individual post checkbox states
-   const [selectedPosts, setSelectedPosts] = useState<{ [key: string]: boolean }>({});
+  const [selectedPosts, setSelectedPosts] = useState<{ [id: string]: boolean }>(
+    {}
+  );
+  const [loading, setLoading] = useState(true);
+
+  interface TokenValidationResponse {
+    valid: boolean; // Assuming this is the correct shape
+  }
+
+  // Define the shape of the accumulator
+  interface SelectedPosts {
+    [key: string]: boolean;
+  }
 
   useEffect(() => {
-    const fetchCollectionAndPosts = async () => {
-      if (collectionId) {
-        // Fetch the collection document to get the posts array
-        const collectionRef = doc(db, "collections", collectionId);
-        const collectionSnap = await getDoc(collectionRef);
-
-        if (collectionSnap.exists()) {
-          const collectionData = collectionSnap.data();
-          const postIds = collectionData.posts; // Assuming this is an array of post IDs
-
-          // Dispatching the thunk to fetch posts by their IDs
-          dispatch(fetchPostsByIds({ postIds })).then((actionResult) => {
-            if (fetchPostsByIds.fulfilled.match(actionResult)) {
-              // If the action is fulfilled, use the payload to set the posts
-              setPosts(actionResult.payload);
-            } else {
-              // Handle any errors or rejections
-              console.error("Failed to fetch posts for collection");
-            }
+    const fetchCollection = async () => {
+      if (!collectionId) {
+        console.error("Collection ID is undefined.");
+        navigate("/page-not-found");
+        return;
+      }
+      setLoading(true);
+      try {
+        // Validate token for shared link access
+        if (token && collectionId) {
+          const functions = getFunctions();
+          const validateShareTokenFn = httpsCallable(
+            functions,
+            "validateShareToken"
+          );
+          const tokenValidationResponse = await validateShareTokenFn({
+            collectionId,
+            token,
           });
-        } else {
-          console.log("Collection document does not exist");
+          const isValidToken = (
+            tokenValidationResponse.data as TokenValidationResponse
+          ).valid;
+
+          if (!isValidToken) {
+            navigate("/access-denied");
+            return;
+          }
         }
+
+        // Fetch collection and posts logic
+        const collectionRef = doc(db, "collections", collectionId);
+        const docSnap = await getDoc(collectionRef);
+
+        if (docSnap.exists()) {
+          const collectionData = docSnap.data(); // Assume this contains the posts IDs
+
+          const actionResult = await dispatch(
+            fetchPostsByIds({ postIds: collectionData.posts })
+          ).unwrap();
+          setPosts(actionResult);
+
+          // Initialize all posts as selected (checked)
+          const allSelected = actionResult.reduce<SelectedPosts>(
+            (acc, post) => {
+              acc[post.id] = true; // Now TypeScript knows acc is an object with string keys and boolean values
+              return acc;
+            },
+            {}
+          );
+
+          setSelectedPosts(allSelected);
+        } else {
+          navigate("/page-not-found");
+        }
+      } catch (error) {
+        console.error("Error fetching collection or validating token:", error);
+        navigate("/access-denied");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchCollectionAndPosts();
-  }, [collectionId, dispatch]);
+    if (collectionId) {
+      fetchCollection();
+    }
+  }, [collectionId, token, dispatch, navigate]);
 
-  const handleCheck = (postId: string) => {
-    // Toggle the selected state for the post
-    setSelectedPosts((prevSelected) => ({
-      ...prevSelected,
-      [postId]: !prevSelected[postId],
+  // Handle checkbox change
+  const handleCheckboxChange = (postId: string) => {
+    setSelectedPosts((prevSelectedPosts) => ({
+      ...prevSelectedPosts,
+      [postId]: !prevSelectedPosts[postId],
     }));
   };
 
-  const handleRemoveChecked = () => {
-    if (window.confirm('Are you sure you want to remove the selected posts?')) {
-      // Remove the selected posts from the collection
-      // Update Firestore collection to remove selected post IDs
-      // Update the posts state to remove selected posts
-      setPosts((prevPosts) => prevPosts.filter((post) => !selectedPosts[post.id]));
-      // Reset the selected posts
-      setSelectedPosts({});
-      // Additional logic for Firestore update goes here...
+  const handleExportSelected = () => {
+    // Only allow export for signed-in users
+    if (!currentUser) {
+      navigate("/login"); // Redirect or prompt for login
+      return;
     }
+
+    const postsToExport = posts.filter((post) => selectedPosts[post.id]);
+    const blob = new Blob([JSON.stringify(postsToExport, null, 2)], {
+      type: "text/json;charset=utf-8",
+    });
+    saveAs(blob, "selected-posts.json");
   };
 
-  const handleExportChecked = () => {
-    // Logic to export checked posts
-    // this needs to export these posts into a folder.  zip maybe. that has a file for each post.  should this be a server function?
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="view-collection-container">
-      {/* Toggle View Mode */}
       <div className="view-collection-header">
-        <div>
-          <button onClick={() => setViewMode("feed")}>Feed View</button>
-          <button onClick={() => setViewMode("list")}>List View</button>
-        </div>
-        <div className="view-collection-actions">
-          <button onClick={handleRemoveChecked}>Remove Checked</button>
-          <button onClick={handleExportChecked}>Export Checked</button>
-        </div>
+        <h1>Collection:</h1>
+        {/* I need the collection name and other collection properties */}
+        <button onClick={handleExportSelected}>Export Selected</button>
       </div>
 
-      {/* Render posts based on selected view mode */}
-      {viewMode === "feed" ? (
-        <ActivityFeed
-          posts={posts}
-          clearSearch={() => Promise.resolve()} // Provide a no-op function if needed
-          activePostSet="feed"
-          setActivePostSet={() => {}} // Example no-op function
-          isSearchActive={false}
-          setIsSearchActive={() => {}}
-          // Omit props that are not applicable for this use case
-        />
-      ) : (
-        <div className="list-view">
-          {posts.map((post) => (
-            <div key={post.id} className="post-list-item">
-              <div className="list-item-image">
-                <img src={`${post.imageUrl}-200x200`} alt="Post" />
-              </div>
-              <div className="list-item-details">
-                <div className="list-item-store">
-                  {post.selectedStore} {post.storeNumber}
-                </div>
-                <div className="list-item-address">{post.storeAddress}</div>
-                <div className="list-item-date-cases">
-                  <div className="list-item-display-date">
-                    {new Date(post.displayDate).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </div>
-                  <div className="list-item-cases">
-                    Cases: {post.totalCaseCount}
-                  </div>
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                className="list-item-checkbox"
-                onChange={() => handleCheck(post.id)}
-                // Ensure to control "checked" state via React state if necessary
-              />
+      <div className="posts-list">
+        {posts.map((post) => (
+          <div key={post.id} className="post-list-item">
+            <div className="list-item-image">
+              <img src={`${post.imageUrl}_200x200`} alt="" />
             </div>
-          ))}
-        </div>
-      )}
+            <div className="list-item-details">
+              <h3>
+                {post.selectedStore} {post.storeNumber}{" "}
+              </h3>
+              <h4>
+                {post.description} {/* Display post details */}
+              </h4>
+              <h4>
+                {post.storeAddress} {post.state}
+              </h4>
+              <h4>
+                {post.totalCaseCount > 0
+                  ? `${post.totalCaseCount} : total cases`
+                  : "Total cases undefined"}
+              </h4>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={!!selectedPosts[post.id]}
+              onChange={() => handleCheckboxChange(post.id)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

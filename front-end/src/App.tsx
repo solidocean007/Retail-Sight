@@ -24,7 +24,7 @@ function App() {
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
 
-  const { currentUser, initializing } = useFirebaseAuth(); // should i use this or selectUser?
+  const { currentUser, initializing } = useFirebaseAuth();
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
