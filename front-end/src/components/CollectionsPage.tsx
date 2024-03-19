@@ -174,9 +174,9 @@ const CollectionsPage = () => {
         <ul className="collections-list">
           {collections.map((collection) => (
             <li className="collection-list-item" key={collection.id}>
-              <span onClick={() => handleCollectionClick(collection)}>
+              <button onClick={() => handleCollectionClick(collection)}>
                 {collection.name} - {collection.posts.length} Posts
-              </span>
+              </button>
               <Button onClick={() => handleCreateLinkClick(collection.id)}>
                 Create Link
               </Button>

@@ -202,7 +202,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const handleVertIconClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  
+
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -247,7 +247,9 @@ const PostCard: React.FC<PostCardProps> = ({
                     onClose={handleClose}
                   >
                     <MenuItem onClick={handleShare}>Share</MenuItem>
-                    <MenuItem onClick={handleEdit}>Edit</MenuItem>
+                    {user?.uid === post?.postUserId && (
+                      <MenuItem onClick={handleEdit}>Edit</MenuItem>
+                    )}
                     <MenuItem onClick={handleAddToCollection}>
                       Add to Collection
                     </MenuItem>
@@ -273,22 +275,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 />
               </div> */}
 
-              <div className="visibility-edit-box">
-                {user?.uid === post?.postUserId && (
-                  <div className="edit-box">
-                    {/* <div className="edit-block">
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleEditPost}
-                        className="edit-btn"
-                      >
-                        Edit
-                      </Button>
-                    </div> */}
-                  </div>
-                )}
-              </div>
+              
             </div>
             <div className="header-bottom">
               <div className="details-date">
@@ -327,7 +314,9 @@ const PostCard: React.FC<PostCardProps> = ({
           {/* {post.id} */}
           <div>
             {post.totalCaseCount > 1 ? (
-              <span>Quantity: {post.totalCaseCount}</span>
+              <span>
+                <h4>Quantity: {post.totalCaseCount}</h4>
+              </span>
             ) : null}
           </div>
 

@@ -17,6 +17,11 @@
   display: flex;
   justify-content: start;
 }
+
+/* .dot-box {
+  color: white;
+} */
+
 .hash-tag-container {
   display: flex;
   justify-content: center;
