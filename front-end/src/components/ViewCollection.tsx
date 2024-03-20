@@ -171,33 +171,6 @@ export const ViewCollection = () => {
     }
   };
 
-// ... (inside your component or module)
-// const handleExportDummyData = async () => {
-//   try {
-//     const functions = getFunctions();
-//     const exportDummyDataFn = httpsCallable<{}, ExportPostsResponse>(functions, 'exportDummyData');
-
-//     // Call the cloud function
-//     const result = await exportDummyDataFn({});
-//     if (result.data && result.data.url) {
-//       // Use the signed URL to download the zip file
-//       const a = document.createElement('a');
-//       a.href = result.data.url;
-//       a.download = 'exported_posts.zip';
-//       document.body.appendChild(a);
-//       a.click();
-//       document.body.removeChild(a);
-//     } else {
-//       console.log('No URL returned from the export function'); // this logs
-//     }
-//   } catch (error) {
-//     console.error('Error exporting dummy data:', error);
-//     alert('Error exporting dummy data. Please try again.');
-//   }
-// };
-
-  
-
   const handleExportSelected = async () => {
     console.log("Starting handleExportSelected");
     if (!currentUser) {
@@ -253,6 +226,10 @@ export const ViewCollection = () => {
     return <div>Loading...</div>;
   }
 
+  const handleBackButton = () => {
+    navigate('/collections')
+  }
+
   return (
     <div className="view-collection-container">
       <div className="view-collection-header">
@@ -261,6 +238,7 @@ export const ViewCollection = () => {
           {collectionDetails ? collectionDetails.name : "Loading..."}
         </h1>
         <button onClick={handleExportSelected}>Export Selected</button>
+        <button onClick={handleBackButton}>Back</button>
       </div>
 
       <div className="posts-list">

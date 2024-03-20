@@ -131,8 +131,10 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   ) => {
     event.preventDefault(); // Prevents the default anchor behavior
     try {
+      console.log('click')
       const starTagPosts = await getPostsByStarTag(starTag);
-
+      setIsSearchActive?.(true);
+      setActivePostSet?.("starTag");
       setCurrentHashtag?.(starTag);
       dispatch(setStarTagPosts(starTagPosts));
       addStarTagPostsToIndexedDB(starTagPosts);

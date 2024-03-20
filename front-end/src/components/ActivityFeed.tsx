@@ -1,6 +1,6 @@
 // ActivityFeed.tsx
-import React, { useEffect, useRef, useState } from "react";
-import { VariableSizeList as List } from "react-window";
+import React, { useEffect, useState } from "react";
+import { VariableSizeList as List, VariableSizeList } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
 import NoContentCard from "./NoContentCard";
@@ -12,7 +12,7 @@ import {
   getPostsByTag,
 } from "../utils/PostLogic/getPostsByTag";
 import {
-  fetchInitialPostsBatch,
+  // fetchInitialPostsBatch,
   fetchMorePostsBatch,
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
@@ -23,29 +23,29 @@ import {
   clearPostsInIndexedDB,
   clearStarTagPostsInIndexedDB,
   clearUserCreatedPostsInIndexedDB,
-  deleteUserCreatedPostInIndexedDB,
+  // deleteUserCreatedPostInIndexedDB,
   // clearHashtagPostsInIndexedDB,
   // clearPostsInIndexedDB,
   // clearUserCreatedPostsInIndexedDB,
-  getPostsFromIndexedDB,
-  removePostFromIndexedDB,
-  updatePostInIndexedDB,
+  // getPostsFromIndexedDB,
+  // removePostFromIndexedDB,
+  // updatePostInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { deletePost, mergeAndSetPosts } from "../Slices/postsSlice";
-import {
-  DocumentChange,
-  QuerySnapshot,
-  Timestamp,
-  collection,
-  // doc,
-  getDocs,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
-import { db } from "../utils/firebase";
+// import {
+//   DocumentChange,
+//   QuerySnapshot,
+//   Timestamp,
+//   collection,
+//   // doc,
+//   getDocs,
+//   limit,
+//   onSnapshot,
+//   orderBy,
+//   query,
+//   where,
+// } from "firebase/firestore";
+// import { db } from "../utils/firebase";
 import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 
@@ -56,6 +56,7 @@ const AD_INTERVAL = 4;
 interface ActivityFeedProps {
   // searchResults: PostWithID[] | null;
   // setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
+  listRef: React.RefObject<VariableSizeList>;
   posts: PostWithID[];
   currentHashtag?: string | null;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
@@ -67,6 +68,7 @@ interface ActivityFeedProps {
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
+  listRef,
   posts,
   currentHashtag,
   setCurrentHashtag,
@@ -81,7 +83,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
  
 
-  const listRef = useRef<List>(null);
+  // const listRef = useRef<List>(null);
   useScrollToPost(listRef, posts, AD_INTERVAL);
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -109,6 +111,12 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     await clearUserCreatedPostsInIndexedDB();
     await clearStarTagPostsInIndexedDB();
   };
+
+  useEffect(() => {
+    // Whenever activePostSet changes, scroll to the top of the list
+    listRef.current?.scrollTo(0);
+  }, [activePostSet, listRef]);
+  
 
   // Effect to set initial and update list height on resize
   useEffect(() => {

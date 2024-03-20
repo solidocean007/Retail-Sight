@@ -1,5 +1,5 @@
 // userHomePage.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 // import { useNavigate } from "react-router-dom";
 // import { AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
@@ -21,9 +21,12 @@ import { deletePost, mergeAndSetPosts } from "../Slices/postsSlice";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { DocumentChange, QuerySnapshot, collection, getDocs, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { db } from "../utils/firebase";
+import { VariableSizeList } from "react-window";
+import useScrollToTopOnChange from "../hooks/scrollToTopOnChjange";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
+  const listRef = useRef<VariableSizeList>(null);
   const dispatch = useDispatch<AppDispatch>();
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
@@ -33,7 +36,7 @@ export const UserHomePage = () => {
     null
   );
  
-  const [activePostSet, setActivePostSet] = useState("posts"); // 'posts', 'filtered', 'hashtag'
+  const [activePostSet, setActivePostSet] = useState("posts"); // 'posts', 'filtered', 'hashtag', 'starTag'
   const POSTS_BATCH_SIZE = 5;
   const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
   const filteredPosts = useSelector(
@@ -44,18 +47,28 @@ export const UserHomePage = () => {
     (state: RootState) => state.posts.hashtagPosts
   );
 
-  // Decide which posts to display
-  let displayPosts: PostWithID[];
-  switch (activePostSet) {
-    case "filtered":
-      displayPosts = filteredPosts;
-      break;
-    case "hashtag":
-      displayPosts = hashtagPosts;
-      break;
-    default:
-      displayPosts = posts;
-  }
+  const starTagPosts = useSelector(
+    (state: RootState) => state.posts.starTagPosts
+  );
+
+  useScrollToTopOnChange(listRef, activePostSet);
+
+ // Decide which posts to display based on the activePostSet state
+let displayPosts: PostWithID[];
+switch (activePostSet) {
+  case "filtered":
+    displayPosts = filteredPosts;
+    break;
+  case "hashtag":
+    displayPosts = hashtagPosts;
+    break;
+  case "starTag": 
+    displayPosts = starTagPosts;
+    break;
+  default:
+    displayPosts = posts; // Fallback to the default posts if none of the above conditions are met
+}
+
 
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
@@ -152,7 +165,6 @@ export const UserHomePage = () => {
   
       // If the user's company ID is available, set up an additional listener
       if (currentUser?.companyId) {
-        console.log(currentUser.companyId, ' : current user id') // this line does log eventually
         const companyPostsQuery = query(
           collection(db, "posts"),
           where("postUserCompanyId", "==", currentUser.companyId),
@@ -188,6 +200,7 @@ export const UserHomePage = () => {
         <div className="home-page-content">
           <div className="activity-feed-container">
             <ActivityFeed
+              listRef={listRef}
               posts={displayPosts}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}

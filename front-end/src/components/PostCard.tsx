@@ -275,7 +275,6 @@ const PostCard: React.FC<PostCardProps> = ({
                 />
               </div> */}
 
-              
             </div>
             <div className="header-bottom">
               <div className="details-date">

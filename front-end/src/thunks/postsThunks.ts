@@ -173,9 +173,7 @@ export const fetchFilteredPosts = createAsyncThunk(
 
       // Execute the query
       queryToExecute = query(queryToExecute, orderBy("displayDate", "desc"));
-      console.log(queryToExecute)
       const postSnapshot = await getDocs(queryToExecute);
-      console.log(postSnapshot)
 
       if (postSnapshot.empty) {
         return [];

@@ -1,5 +1,5 @@
 // getPostsByTag
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { PostType, PostWithID } from "../types";
 
@@ -14,7 +14,8 @@ export const getPostsByTag = async (
     const postsCollectionRef = collection(db, "posts");
     const postsQuery = query(
       postsCollectionRef,
-      where("hashtags", "array-contains", lowerCaseHashTag)
+      where("hashtags", "array-contains", lowerCaseHashTag),
+      orderBy("displayDate", "desc")
     );
     const snapshots = await getDocs(postsQuery);
 
@@ -55,17 +56,16 @@ export const getPostsByStarTag = async (
     const postsCollectionRef = collection(db, "posts");
     const postsQuery = query(
       postsCollectionRef,
-      where("starTags", "array-contains", starTag)
+      where("starTags", "array-contains", starTag),
+      orderBy("displayDate", "desc"),
     );
     const snapshots = await getDocs(postsQuery);
 
-    // Use a variable to store the mapped results
     const posts: PostWithID[] = snapshots.docs.map((doc) => ({
       id: doc.id,
       ...(doc.data() as PostType),
     }));
-
-    return posts; // Return the variable
+    return posts; 
   } catch (error) {
     console.error("Error fetching posts by hashtag:", error);
     throw error;

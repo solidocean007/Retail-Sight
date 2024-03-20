@@ -64,7 +64,6 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
       dispatch(setHashtagPosts(result)); // I need a setSortedHashtagPosts
       // I need to save sorted posts to indexedDB
       // storeHashtagSearchIndexedDb();
-      console.log("next step");
       if (setActivePostSet) {
         setActivePostSet("hashtag");
       }
