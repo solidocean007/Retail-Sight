@@ -183,7 +183,6 @@ export const fetchFilteredPosts = createAsyncThunk(
         id: doc.id,
         ...(doc.data() as PostType),
       }));
-      console.log(fetchedFilteredPosts)
       return fetchedFilteredPosts;
     } catch (error) {
       console.error("Error fetching filtered posts:", error);

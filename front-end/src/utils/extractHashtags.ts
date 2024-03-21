@@ -1,10 +1,12 @@
 export const extractHashtags = (description: string) => {
   const lowerCaseDescription = description.toLowerCase();
-  const hashtagPattern = /#\w+/g;
+  // Include dash in the pattern
+  const hashtagPattern = /#[\w-]+/g;
   return lowerCaseDescription.match(hashtagPattern) || [];
 };
 
 export const extractStarTags = (description: string) => {
-  const starTagPattern = /\*\w+/g;
+  // Include dash in the pattern
+  const starTagPattern = /\*[\w-]+/g;
   return description.match(starTagPattern) || [];
 };

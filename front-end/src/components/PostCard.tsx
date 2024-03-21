@@ -274,7 +274,6 @@ const PostCard: React.FC<PostCardProps> = ({
                   postId={post.id}
                 />
               </div> */}
-
             </div>
             <div className="header-bottom">
               <div className="details-date">
