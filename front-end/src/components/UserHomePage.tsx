@@ -1,28 +1,18 @@
 // userHomePage.tsx
 import React, { useEffect, useRef, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { AppBar, Toolbar } from "@mui/material";
 import ActivityFeed from "./ActivityFeed";
-// import { useSelector } from "react-redux";
 import "./userHomePage.css";
-// import { RootState } from "../utils/store";
 import SideBar from "./SideBar";
 import { AppDispatch, RootState } from "../utils/store";
-// import { ChannelType } from "./ChannelSelector";
-// import { CategoryType } from "./CategorySelector";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
 import HeaderBar from "./HeaderBar";
-// import LeftSideBar from "./LeftSideBar";
 import { UserHomePageHelmet } from "../utils/helmetConfigurations";
-import { PostType, PostWithID } from "../utils/types";
-import { addPostsToIndexedDB, deleteUserCreatedPostInIndexedDB, getPostsFromIndexedDB, removePostFromIndexedDB, updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
-import { deletePost, mergeAndSetPosts } from "../Slices/postsSlice";
-import { fetchInitialPostsBatch } from "../thunks/postsThunks";
-import { DocumentChange, QuerySnapshot, collection, getDocs, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { db } from "../utils/firebase";
+import {  getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { mergeAndSetPosts } from "../Slices/postsSlice";
 import { VariableSizeList } from "react-window";
 import useScrollToTopOnChange from "../hooks/scrollToTopOnChjange";
+import { PostWithID } from "../utils/types";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
@@ -30,14 +20,11 @@ export const UserHomePage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-  const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const currentUserCompanyId = currentUser?.companyId;
   const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
     null
   );
  
   const [activePostSet, setActivePostSet] = useState("posts"); // 'posts', 'filtered', 'hashtag', 'starTag'
-  const POSTS_BATCH_SIZE = 5;
   const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
@@ -83,107 +70,6 @@ switch (activePostSet) {
       dispatch(mergeAndSetPosts(cachedPosts));
     }
   };
-
-    // load indexDB posts or fetch from firestore
-    useEffect(() => {
-      const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
-        try {
-          const indexedDBPosts = await getPostsFromIndexedDB();
-          if (indexedDBPosts.length > 0) {
-            dispatch(mergeAndSetPosts(indexedDBPosts)); // Update Redux store with posts from IndexedDB
-          } else {
-            const action = await dispatch(
-              fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
-            );
-            if (fetchInitialPostsBatch.fulfilled.match(action)) {
-              const fetchedPosts = action.payload.posts;
-              dispatch(mergeAndSetPosts(fetchedPosts));
-              addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching posts from IndexedDB:", error);
-        }
-      };
-  
-      const fetchPublicPosts = async () => {
-        try {
-          const publicPostsQuery = query(
-            collection(db, "posts"),
-            where("visibility", "==", "public"),
-            orderBy("displayDate", "desc"),
-            limit(4)
-          );
-          const querySnapshot = await getDocs(publicPostsQuery);
-          const publicPosts = querySnapshot.docs
-            .map((doc) => ({ id: doc.id, ...doc.data() } as PostWithID))
-            .filter((post) => post.visibility === "public");
-          dispatch(mergeAndSetPosts(publicPosts));
-        } catch (error) {
-          console.error("Error fetching public posts:", error);
-        }
-      };
-  
-      if (currentUser === null) {
-        fetchPublicPosts();
-      } else if (currentUserCompanyId) {
-        fetchPostsForLoggedInUser(currentUserCompanyId);
-      }
-    }, [currentUser, dispatch, currentUserCompanyId]);
-  
-    // setup listener
-    useEffect(() => {
-      // Function to process document changes
-      const processDocChanges = (snapshot: QuerySnapshot) => {
-        const changes = snapshot.docChanges();
-        changes.forEach((change: DocumentChange) => {
-          const postData = {
-            id: change.doc.id,
-            ...(change.doc.data() as PostType),
-          };
-          if (change.type === "added" || change.type === "modified") {
-            dispatch(mergeAndSetPosts([postData]));
-            updatePostInIndexedDB(postData);
-          } else if (change.type === "removed") {
-            dispatch(deletePost(change.doc.id));
-            removePostFromIndexedDB(change.doc.id);
-            deleteUserCreatedPostInIndexedDB(change.doc.id);
-          }
-        });
-      };
-  
-      // Subscribe to public posts
-      const publicPostsQuery = query(
-        collection(db, "posts"),
-        where("visibility", "==", "public"),
-        orderBy("timestamp", "desc"),
-        // where("timestamp", ">", mountTime)
-      );
-      const unsubscribePublic = onSnapshot(publicPostsQuery, processDocChanges);
-  
-      let unsubscribeCompany = () => {};
-  
-      // If the user's company ID is available, set up an additional listener
-      if (currentUser?.companyId) {
-        const companyPostsQuery = query(
-          collection(db, "posts"),
-          where("postUserCompanyId", "==", currentUser.companyId),
-          orderBy("timestamp", "desc"),
-          // where("timestamp", ">", mountTime)
-        );
-        unsubscribeCompany = onSnapshot(companyPostsQuery, processDocChanges);
-      } else {
-        console.log(
-          "No companyId available, skipping setup for company posts listener"
-        ); // even though i'm logged in, this line logs.  this could be a clue to the problem.
-      }
-  
-      // Cleanup function to unsubscribe from both listeners
-      return () => {
-        unsubscribePublic();
-        unsubscribeCompany();
-      };
-    }, [currentUser?.companyId]);
 
   useEffect(() => {
     // I need to check if location options are in indexedDb before doing this next line.

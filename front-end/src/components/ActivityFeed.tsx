@@ -16,46 +16,23 @@ import {
   fetchMorePostsBatch,
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
-import { PostType, PostWithID } from "../utils/types";
+import { PostWithID } from "../utils/types";
 import {
   addPostsToIndexedDB,
   clearHashtagPostsInIndexedDB,
   clearPostsInIndexedDB,
   clearStarTagPostsInIndexedDB,
   clearUserCreatedPostsInIndexedDB,
-  // deleteUserCreatedPostInIndexedDB,
-  // clearHashtagPostsInIndexedDB,
-  // clearPostsInIndexedDB,
-  // clearUserCreatedPostsInIndexedDB,
-  // getPostsFromIndexedDB,
-  // removePostFromIndexedDB,
-  // updatePostInIndexedDB,
 } from "../utils/database/indexedDBUtils";
-import { deletePost, mergeAndSetPosts } from "../Slices/postsSlice";
-// import {
-//   DocumentChange,
-//   QuerySnapshot,
-//   Timestamp,
-//   collection,
-//   // doc,
-//   getDocs,
-//   limit,
-//   onSnapshot,
-//   orderBy,
-//   query,
-//   where,
-// } from "firebase/firestore";
-// import { db } from "../utils/firebase";
+import { mergeAndSetPosts } from "../Slices/postsSlice";
 import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
+import usePosts from "../hooks/usePosts";
 
-const POSTS_BATCH_SIZE = 5;
 const AD_INTERVAL = 4;
-// const BASE_ITEM_HEIGHT = 900;
+const POSTS_BATCH_SIZE = 5;
 
 interface ActivityFeedProps {
-  // searchResults: PostWithID[] | null;
-  // setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   listRef: React.RefObject<VariableSizeList>;
   posts: PostWithID[];
   currentHashtag?: string | null;
@@ -81,14 +58,12 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
 
- 
-
   // const listRef = useRef<List>(null);
   useScrollToPost(listRef, posts, AD_INTERVAL);
-
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
-
+  // hook to load posts
+  usePosts(currentUserCompanyId, POSTS_BATCH_SIZE);
   const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -116,7 +91,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     // Whenever activePostSet changes, scroll to the top of the list
     listRef.current?.scrollTo(0);
   }, [activePostSet, listRef]);
-  
 
   // Effect to set initial and update list height on resize
   useEffect(() => {

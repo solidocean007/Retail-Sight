@@ -1,6 +1,6 @@
 // indexedDBOpen.ts
 const dbName = "myRetailAppDB";
-const dbVersion = 17;
+const dbVersion = 18;
 export function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
@@ -71,6 +71,10 @@ export function openDB(): Promise<IDBDatabase> {
         });
         collectionsStore.createIndex("byUserId", "ownerId", { unique: false });
         // Add more indexes as needed
+      }
+      // Create 'lastSeenTimestamp' object store if it doesn't exist
+      if (!db.objectStoreNames.contains("lastSeenTimestamp")) {
+        db.createObjectStore("lastSeenTimestamp");
       }
     };
   });

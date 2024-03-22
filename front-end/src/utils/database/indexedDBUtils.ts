@@ -709,3 +709,38 @@ export async function getOneCollectionFromIndexedDB(collectionId: string): Promi
 }
 
 
+export async function getLastSeenTimestamp(): Promise<string | undefined> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('lastSeenTimestamp', 'readonly');
+    const store = transaction.objectStore('lastSeenTimestamp');
+    const request = store.get('timestamp');
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+  });
+}
+
+export async function setLastSeenTimestamp(timestamp: string): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('lastSeenTimestamp', 'readwrite');
+    const store = transaction.objectStore('lastSeenTimestamp');
+    const request = store.put(timestamp, 'timestamp');
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+
+    request.onsuccess = () => {
+      resolve();
+    };
+  });
+}
+
+
