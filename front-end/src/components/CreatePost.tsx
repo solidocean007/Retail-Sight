@@ -37,8 +37,15 @@ import { CreatePostHelmet } from "../utils/helmetConfigurations";
 import TotalCaseCount from "./TotalCaseCount";
 
 export const CreatePost = () => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
+
+  // Function to navigate to the next step
+  const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
+
+  // Function to navigate to the previous step
+  const goToPreviousStep = () => setCurrentStep((prevStep) => prevStep - 1);
 
   const handlePostSubmission = useHandlePostSubmission();
   // State Management
@@ -169,6 +176,35 @@ export const CreatePost = () => {
   //   // Update the post object
   //   setPost((prev) => ({ ...prev, brands: selectedBrands }));
   // };
+
+  // Render different content based on the current step
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        // add a picture.  need to make an upload image component
+        return <UploadImage onNext={goToNextStep} />;
+      case 2:
+        return (
+          // select store
+          <PickStore
+            onNext={goToNextStep}
+            onPrevious={goToPreviousStep}
+            optional
+          />
+        );
+      case 3:
+        return (
+          <SetStoreDetails onNext={goToNextStep} onPrevious={goToPreviousStep} />
+        );
+      case 4:
+        return (
+
+        )
+      // Additional cases for other steps
+      default:
+        return <ReviewAndSubmit onPrevious={goToPreviousStep} />;
+    }
+  };
 
   return (
     <>
