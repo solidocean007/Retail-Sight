@@ -22,7 +22,7 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
+
 
 import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
@@ -35,6 +35,9 @@ import "./createPost.css";
 import LoadingIndicator from "./LoadingIndicator";
 import { CreatePostHelmet } from "../utils/helmetConfigurations";
 import TotalCaseCount from "./TotalCaseCount";
+import { UploadImage } from "./UploadImage";
+import { PickStore } from "./PickStore";
+import { SetDisplayDetails } from "./SetDisplayDetails";
 
 export const CreatePost = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -182,19 +185,24 @@ export const CreatePost = () => {
     switch (currentStep) {
       case 1:
         // add a picture.  need to make an upload image component
-        return <UploadImage onNext={goToNextStep} />;
+        return <UploadImage onNext={goToNextStep} post={post} handleImageChange={handleImageChange} />;
       case 2:
         return (
           // select store
           <PickStore
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
-            optional
+            post={post}
+            onStoreNameChange={handleStoreNameChange}
+            onStoreNumberChange={handleStoreNumberChange}
+            onStoreAddressChange={handleStoreAddressChange}
+            onStoreCityChange={handleStoreCityChange}
+            onStoreStateChange={handleStoreStateChange}
           />
         );
       case 3:
         return (
-          <SetStoreDetails onNext={goToNextStep} onPrevious={goToPreviousStep} />
+          <SetDisplayDetails onNext={goToNextStep} onPrevious={goToPreviousStep} />
         );
       case 4:
         return (
@@ -232,57 +240,13 @@ export const CreatePost = () => {
         </AppBar>
 
         <div className="image-and-details">
-          <div className="image-selection-box">
-            <div className="step-one">1st add picture</div>
-            <Button
-              variant="contained"
-              component="label"
-              startIcon={<AddAPhotoIcon />}
-            >
-              {post.imageUrl ? "ChangeImage" : "Upload Image"}
-              <input
-                type="file"
-                hidden
-                onChange={handleImageChange}
-                accept="image/*"
-              />
-            </Button>
-            {post.imageUrl && (
-              <div className="image-box">
-                <img src={post.imageUrl} alt="Post" className="post-image" />
-              </div>
-            )}
-          </div>{" "}
+          {" "}
           <div className="post-detail-selection">
+            
             2nd find store and click on map
-            <StoreLocator
-              post={post}
-              onStoreNameChange={handleStoreNameChange}
-              onStoreNumberChange={handleStoreNumberChange}
-              onStoreAddressChange={handleStoreAddressChange}
-              onStoreCityChange={handleStoreCityChange}
-              onStoreStateChange={handleStoreStateChange}
-            />
-            <div className="store-address-container">
-              <h4>Store: {post.selectedStore}</h4>
-              <h6>Address: {post.storeAddress}</h6>
-            </div>
-            <TotalCaseCount
-                handleTotalCaseCountChange={(value) =>
-                  handleFieldChange("totalCaseCount", value)
-                }
-              />
-            <div className="property-zone">
-              <ChannelSelector
-                selectedChannel={selectedChannel}
-                onChannelChange={setSelectedChannel}
-              />
-
-              <CategorySelector
-                selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-              />
-            </div>
+            
+            
+            
             <div className="supplier-brands-selector">
               {/* <SupplierSelector
             selectedSupplier={selectedSupplier.id} // Pass the selected supplier ID
@@ -366,7 +330,7 @@ export const CreatePost = () => {
                 </IconButton>
               }
             />
-          </div>
+          </div>  
         </div>
       </div>
     </>
