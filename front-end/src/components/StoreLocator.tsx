@@ -109,7 +109,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       if (isMapLoaded && mapRef.current) {
         const map = new google.maps.Map(mapRef.current, {
           center: { lat: 34.0522, lng: -118.2437 },
-          zoom: 15,
+          zoom: 45,
         });
 
         // Set map to user's current location
@@ -214,12 +214,14 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
 
   return (
     <div className="map-container">
-      <div ref={mapRef} style={{ width: "320px", height: "220px" }}></div>
+      <div className="map-box" ref={mapRef} style={{ width: "350px", height: "300px" }}></div>
       <div className="store-input-box">
         3. Verify store name after clicking store on map
         <div className="store-name-input-box">
           <p>Store name:</p>
           <input
+            title="store-name"
+            placeholder="Store name"
             type="text"
             value={selectedPlace?.name || post.selectedStore}
             onChange={handleStoreNameInputChange}
@@ -228,8 +230,10 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
         <div className="store-number-input-box">
           <p>Store number:</p>
           <input
+            title="store-number"
             type="text"
             value={post.storeNumber}
+            placeholder="Number"
             onChange={handleStoreNumberChange}
           />
         </div>

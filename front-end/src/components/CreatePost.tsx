@@ -5,26 +5,25 @@ import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
 import { selectUser } from "../Slices/userSlice";
 
-import ChannelSelector from "./ChannelSelector";
-import CategorySelector from "./CategorySelector";
+// import ChannelSelector from "./ChannelSelector";
+// import CategorySelector from "./CategorySelector";
 import {
   AppBar,
-  Box,
-  Button,
+  // Box,
+  // Button,
   // Card,
   // CardMedia,
   IconButton,
-  MenuItem,
-  Select,
+  // MenuItem,
+  // Select,
   Snackbar,
-  TextField,
+  // TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
-
-import StoreLocator from "./StoreLocator";
+// import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
 import { PostType } from "../utils/types";
 import { CategoryType } from "./CategorySelector";
@@ -34,15 +33,16 @@ import { ChannelType } from "./ChannelSelector";
 import "./createPost.css";
 import LoadingIndicator from "./LoadingIndicator";
 import { CreatePostHelmet } from "../utils/helmetConfigurations";
-import TotalCaseCount from "./TotalCaseCount";
 import { UploadImage } from "./UploadImage";
 import { PickStore } from "./PickStore";
 import { SetDisplayDetails } from "./SetDisplayDetails";
+import { DisplayDescription } from "./DisplayDescription";
+import { ReviewAndSubmit } from "./ReviewAndSubmit";
 
 export const CreatePost = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0); // Track upload progress
+  const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
+  const [uploadProgress, setUploadProgress] = useState(0); // same question?
 
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
@@ -50,10 +50,10 @@ export const CreatePost = () => {
   // Function to navigate to the previous step
   const goToPreviousStep = () => setCurrentStep((prevStep) => prevStep - 1);
 
-  const handlePostSubmission = useHandlePostSubmission();
+  const handlePostSubmission = useHandlePostSubmission(); // should i pass this to Review and submit or move it there?
   // State Management
   const userData = useSelector(selectUser);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [selectedCategory, setSelectedCategory] =
@@ -133,6 +133,7 @@ export const CreatePost = () => {
   // }, []);
 
   const handleStoreNumberChange = useCallback((newStoreNumber: string) => {
+    // should i pass these to components or just use handleFieldChange?
     setPost((prev) => ({ ...prev, storeNumber: newStoreNumber }));
   }, []);
 
@@ -185,7 +186,13 @@ export const CreatePost = () => {
     switch (currentStep) {
       case 1:
         // add a picture.  need to make an upload image component
-        return <UploadImage onNext={goToNextStep} post={post} handleImageChange={handleImageChange} />;
+        return (
+          <UploadImage
+            onNext={goToNextStep}
+            post={post}
+            handleImageChange={handleImageChange}
+          />
+        );
       case 2:
         return (
           // select store
@@ -202,29 +209,48 @@ export const CreatePost = () => {
         );
       case 3:
         return (
-          <SetDisplayDetails onNext={goToNextStep} onPrevious={goToPreviousStep} />
+          <SetDisplayDetails
+            onNext={goToNextStep}
+            onPrevious={goToPreviousStep}
+            handleFieldChange={handleFieldChange}
+            selectedChannel={selectedChannel}
+            setSelectedChannel={setSelectedChannel}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
         );
       case 4:
         return (
-
-        )
+          <DisplayDescription
+            post={post}
+            onNext={goToNextStep}
+            onPrevious={goToPreviousStep}
+            handleFieldChange={handleFieldChange}
+          />
+        );
       // Additional cases for other steps
       default:
-        return <ReviewAndSubmit onPrevious={goToPreviousStep} />;
+        return (
+          <ReviewAndSubmit
+            post={post}
+            onPrevious={goToPreviousStep}
+            handleFieldChange={handleFieldChange}
+            setIsUploading={setIsUploading}
+            selectedFile={selectedFile}
+            setUploadProgress={setUploadProgress}
+            handlePostSubmission={handlePostSubmission}
+            selectedCategory={selectedCategory}
+            selectedChannel={selectedChannel}
+          />
+        );
     }
   };
-
   return (
     <>
       <CreatePostHelmet />
       <div className="create-post-container">
-        {isUploading && (
-          <div className="modal">
-            <LoadingIndicator progress={uploadProgress} />
-          </div>
-        )}
-
-        <AppBar position="static" style={{ flexShrink: 0 }}>
+        {isUploading && <LoadingIndicator progress={uploadProgress} />}
+        <AppBar position="static">
           <Toolbar>
             <IconButton
               edge="start"
@@ -233,105 +259,18 @@ export const CreatePost = () => {
             >
               <CloseIcon />
             </IconButton>
-            <Typography variant="h1" style={{ flexGrow: 1 }}>
-              Capture Display
+            <Typography variant="h6" style={{ flexGrow: 1 }}>
+              Create Post
             </Typography>
           </Toolbar>
         </AppBar>
-
-        <div className="image-and-details">
-          {" "}
-          <div className="post-detail-selection">
-            
-            2nd find store and click on map
-            
-            
-            
-            <div className="supplier-brands-selector">
-              {/* <SupplierSelector
-            selectedSupplier={selectedSupplier.id} // Pass the selected supplier ID
-            suppliers={suppliers}
-            onSupplierChange={handleSupplierChange}
-          />
-          <BrandsSelector
-          selectedBrands={selectedBrands} // Pass the selected brands array
-          brands={brands}
-          onBrandChange={handleBrandChange}
-          /> */}
-            </div>
-            <TextField
-                className="description-box"
-                fullWidth
-                variant="outlined"
-                label="Description"
-                minRows={4}
-                value={post.description}
-                onChange={(e) =>
-                  handleFieldChange("description", e.target.value)
-                }
-              />
-            <Box mt={2}>
-              <Select
-                fullWidth
-                variant="outlined"
-                value={post.visibility}
-                onChange={(e) =>
-                  handleFieldChange("visibility", e.target.value)
-                }
-              >
-                <MenuItem value="public">Public</MenuItem>
-                <MenuItem value="company">Company only</MenuItem>
-                {/* <MenuItem disabled value="group">Supplier</MenuItem> */}
-                {/* <MenuItem value="group">Supplier & Company</MenuItem> */}
-              </Select>
-            </Box>
-            <Box mt={2}>
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                fullWidth
-                onClick={() => {
-                  if (selectedFile) {
-                    setIsUploading(true);
-                    // Pass the current post state directly
-                    handlePostSubmission(
-                      {
-                        ...post,
-                        category: selectedCategory,
-                        channel: selectedChannel,
-                        // supplier: selectedSupplier,
-                        // brands: selectedBrands,
-                      },
-                      selectedFile,
-                      setIsUploading,
-                      setUploadProgress
-                    );
-                  } else {
-                    // Handle the situation where selectedFile is null
-                  }
-                }}
-              >
-                Submit Post
-              </Button>
-            </Box>
-            <Snackbar
-              open={snackbarOpen}
-              autoHideDuration={4000} // Hide after 4 seconds
-              onClose={() => setSnackbarOpen(false)}
-              message={snackbarMessage}
-              action={
-                <IconButton
-                  size="small"
-                  color="inherit"
-                  onClick={() => setSnackbarOpen(false)}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              }
-            />
-          </div>  
-        </div>
+        {renderStepContent()} {/* Correctly invoke the function */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={() => setSnackbarOpen(false)}
+          message={snackbarMessage}
+        />
       </div>
     </>
   );

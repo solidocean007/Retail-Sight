@@ -1,10 +1,10 @@
 import { Button } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
-import { PostWithID } from "../utils/types";
+import { PostType } from "../utils/types";
 
 interface UploadImageProps {
   onNext: () => void;
-  post: PostWithID;
+  post: PostType;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
