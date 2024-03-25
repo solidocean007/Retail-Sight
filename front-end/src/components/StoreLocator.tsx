@@ -109,7 +109,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       if (isMapLoaded && mapRef.current) {
         const map = new google.maps.Map(mapRef.current, {
           center: { lat: 34.0522, lng: -118.2437 },
-          zoom: 45,
+          zoom: 20,
         });
 
         // Set map to user's current location
