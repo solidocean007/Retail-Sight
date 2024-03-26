@@ -4,11 +4,15 @@ import CategorySelector, { CategoryType } from "./CategorySelector";
 import ChannelSelector, { ChannelType } from "./ChannelSelector";
 import TotalCaseCount from "./TotalCaseCount";
 import { Button } from "@mui/material";
+import "./setDisplayDetails.css";
 
 interface SetDisplayDetailsProps {
   onNext: () => void;
   onPrevious: () => void;
-  handleFieldChange: (field: keyof PostType, value: PostType[keyof PostType]) => void;
+  handleFieldChange: (
+    field: keyof PostType,
+    value: PostType[keyof PostType]
+  ) => void;
   selectedChannel: ChannelType;
   setSelectedChannel: React.Dispatch<React.SetStateAction<ChannelType>>;
   selectedCategory: CategoryType;
@@ -26,7 +30,9 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
 }) => {
   return (
     <div className="setDisplayDetails">
-      <Button onClick={onPrevious}>Back</Button>
+      <button className="create-post-btn" onClick={onPrevious}>
+        Back
+      </button>
       <TotalCaseCount
         handleTotalCaseCountChange={(value) =>
           handleFieldChange("totalCaseCount", value)
@@ -42,8 +48,10 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
         />
-        <Button onClick={onNext}>Next</Button>
       </div>
+      <button className="create-post-btn" onClick={onNext}>
+        Next
+      </button>
     </div>
   );
 };

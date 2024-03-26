@@ -1,13 +1,15 @@
 .map-container {
-  margin: 10px 0px;
   display: flex;
   align-items: center;
   flex-direction: column;
 }
 
+.map-box {
+  border-radius: 5px;
+}
+
 .store-input-box {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: space-around;
   width: 100%;
@@ -21,8 +23,15 @@
 .store-name-input-box, .store-number-input-box {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  width: 50%;
+  align-items: center;
+}
+
+#store-name {
+  width: 150px;
+}
+
+#store-number {
+  width: 80px;
 }
  
 input {
@@ -33,6 +42,6 @@ input {
 @media (max-width: 600px) {
   /* Your styles for tablets */
   .store-input-box {
-  flex-direction: column;
+  /* flex-direction: column; */
   }
 }

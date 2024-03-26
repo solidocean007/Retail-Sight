@@ -1,7 +1,7 @@
 import React from "react";
 import { PostType } from "../utils/types";
 import StoreLocator from "./StoreLocator";
-import { Button } from "@mui/material";
+import './pickstore.css'
 
 interface PickStoreProps {
   onNext: () => void;
@@ -26,9 +26,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
 }) => {
   return (
     <div className="pick-store">
-      <Button onClick={onPrevious}>
+      <button className="create-post-btn" onClick={onPrevious}>
         <h4>Back</h4>
-      </Button>
+      </button>
       <StoreLocator
         post={post}
         onStoreNameChange={onStoreNameChange}
@@ -38,12 +38,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
         onStoreStateChange={onStoreStateChange}
       />
       <div className="store-address-container">
-        <h4>Store: {post.selectedStore}</h4>
-        <h6>Address: {post.storeAddress}</h6>
+        {post.selectedStore && <h4>Store: {post.selectedStore}</h4>}
+        {post.storeAddress && <h6>Address: {post.storeAddress}</h6>}
       </div>
-      <Button onClick={onNext}>
+      <button className="create-post-btn" onClick={onNext}>
         <h4>Next</h4>
-      </Button>
+      </button>
     </div>
   );
 };

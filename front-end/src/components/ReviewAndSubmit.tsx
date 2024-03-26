@@ -3,6 +3,7 @@ import { PostType } from "../utils/types";
 import { Box, Button, MenuItem, Select } from "@mui/material";
 import { CategoryType } from "./CategorySelector";
 import { ChannelType } from "./ChannelSelector";
+import './reviewAndSubmit.css'
 
 interface ReviewAndSubmitProps {
   post: PostType;
@@ -32,9 +33,9 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   
   return (
     <div className="review-and-submit">
-      <Button onClick={onPrevious}>
+      <button className="create-post-btn" onClick={onPrevious}>
         <h4>Back</h4>
-      </Button>
+      </button>
       <Box mt={2}>
         <Select
           fullWidth
@@ -78,9 +79,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
           Submit Post
         </Button>
       </Box>
-      <Button>
-        <h4>Submit</h4>
-      </Button>
+      
     </div>
   );
 };

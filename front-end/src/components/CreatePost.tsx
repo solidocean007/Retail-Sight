@@ -250,19 +250,17 @@ export const CreatePost = () => {
       <CreatePostHelmet />
       <div className="create-post-container">
         {isUploading && <LoadingIndicator progress={uploadProgress} />}
-        <AppBar position="static">
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="default"
-              onClick={() => navigate("/user-home-page")}
-            >
-              <CloseIcon />
-            </IconButton>
-            <Typography variant="h6" style={{ flexGrow: 1 }}>
-              Create Post
-            </Typography>
-          </Toolbar>
+        <AppBar className="app-bar" position="static">
+          <div className="create-post-header">
+          <div
+            className="icon-button"
+            onClick={() => navigate("/user-home-page")}
+          >
+            X
+          </div>
+          <h1>Create Post</h1>
+          </div>
+          
         </AppBar>
         {renderStepContent()} {/* Correctly invoke the function */}
         <Snackbar

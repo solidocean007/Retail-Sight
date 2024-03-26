@@ -30,7 +30,7 @@ interface CategorySelectorProps {
 const CategorySelector: React.FC<CategorySelectorProps> = ({ selectedCategory, onCategoryChange }) => {
   return (
     <select 
-      className="category-selector"
+      className="channel-category-selector"
       title="title selector"
       value={selectedCategory}
       onChange={(e) => onCategoryChange(e.target.value as CategoryType)}

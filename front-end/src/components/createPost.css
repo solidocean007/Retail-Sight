@@ -4,7 +4,6 @@
   justify-content: space-around;
 }
 
-
 .create-post-container {
   display: flex;
   justify-content: flex-start;
@@ -14,7 +13,8 @@
   padding: 5px;
   border-radius: 5px;
   height: 100%;
-  width: 70%;
+  margin-bottom: 10px;
+  width: 100%;
   margin-top: 40px;
   overflow-y: scroll;
 }
@@ -25,8 +25,28 @@
   align-items: center;
 }
 
-.create-post-container button {
-  width: auto;
+.create-post-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-left: 10%;
+}
+
+.create-post-header .icon-button {
+  position: absolute;
+  font-size: 40px;
+  left: 3rem;
+}
+
+.create-post-btn {
+  width: 8rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 5px;
+  padding: 0;
 }
 
 .create-post-container h1 {
@@ -50,7 +70,6 @@
   display: flex;
   justify-content: space-around;
   margin: 15px auto;
-
 }
 
 .image-selection-box {
@@ -77,9 +96,10 @@
   /* max-width: 100%; Make sure the image is not wider than the container */
 }
 
-h4,
+.image-selection-box h4,
 h6 {
   margin: 3px;
+  font-weight: bold;
 }
 
 select {
@@ -91,8 +111,8 @@ select {
   justify-content: space-around;
   align-items: center;
   margin: 0;
+  flex-direction: column;
 }
-
 
 .store-address-container {
   display: flex;
@@ -104,9 +124,8 @@ select {
 @media (max-width: 900px) {
   /* Your styles for tablets */
   .create-post-container {
-  width: 100vw;
-  overflow-y: scroll;
-  width: auto;
+    width: 100vw;
+    overflow-y: scroll;
   }
 
   .image-and-details {

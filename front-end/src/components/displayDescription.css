@@ -1,0 +1,51 @@
+.display-description {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  height: 50%;
+}
+
+.text-area-container {
+  margin-top: 10px;
+  width: 100%;
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: border-color 0.3s;
+}
+
+.text-area-container label {
+  background: none;
+}
+
+.text-area-container.focused {
+  border-color: #3f51b5; /* Darker border for focus */
+}
+
+.description-text-area {
+  width: 100%;
+  padding: 18px 12px 6px 12px; /* Adjust padding to ensure text aligns with the animated label */
+  border: none;
+  outline: none;
+  resize: none; /* Optional: Disables resizing */
+  background-color: transparent;
+}
+
+.placeholder {
+  position: absolute;
+  top: 0;
+  left: 0px;
+  transition: all 0.3s;
+  color: #aaa;
+  pointer-events: none;
+}
+
+.placeholder.active {
+  transform: translateY(-50%) scale(0.75);
+  color: #3f51b5; /* Placeholder color change on focus */
+  background-color: var(--form-background-color);
+  padding: 0 9px; /* Avoids clipping */
+}
+

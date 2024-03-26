@@ -1,5 +1,6 @@
-.category-selector {
-  width: 45%;
+.channel-category-selector {
+  width: 8rem;
+  margin: 5px;
   height: 2rem;
   padding-left: 1rem;
   font-weight: 700;

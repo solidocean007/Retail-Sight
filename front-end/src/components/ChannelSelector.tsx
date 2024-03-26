@@ -21,7 +21,7 @@ interface ChannelSelectorProps {
 const ChannelSelector: React.FC<ChannelSelectorProps> = ({ selectedChannel, onChannelChange }) => {
   return (
     <select 
-      className='channel-selector'
+      className='channel-category-selector'
       title='channel selector'
       value={selectedChannel}
       onChange={(e) => onChannelChange(e.target.value as ChannelType)}
