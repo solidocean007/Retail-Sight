@@ -1,6 +1,6 @@
 import React from "react";
-import { PostType } from "../utils/types";
-import StoreLocator from "./StoreLocator";
+import { PostType } from "../../utils/types";
+import StoreLocator from "../StoreLocator";
 import './pickstore.css'
 
 interface PickStoreProps {

@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import React, { useEffect, useState } from "react";
-import { mergeAndSetPosts, setHashtagPosts } from "../Slices/postsSlice";
+import { setHashtagPosts } from "../Slices/postsSlice";
 import "./hashTagSearchBar.css";
 import { RootState } from "../utils/store";
 

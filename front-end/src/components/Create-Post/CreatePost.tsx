@@ -3,36 +3,25 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
-import { selectUser } from "../Slices/userSlice";
+import { selectUser } from "../../Slices/userSlice";
 
 // import ChannelSelector from "./ChannelSelector";
 // import CategorySelector from "./CategorySelector";
 import {
   AppBar,
-  // Box,
-  // Button,
-  // Card,
-  // CardMedia,
-  IconButton,
-  // MenuItem,
-  // Select,
   Snackbar,
-  // TextField,
-  Toolbar,
-  Typography,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 
 // import StoreLocator from "./StoreLocator";
-import { useHandlePostSubmission } from "../utils/PostLogic/handlePostCreation";
-import { PostType } from "../utils/types";
-import { CategoryType } from "./CategorySelector";
-import { ChannelType } from "./ChannelSelector";
+import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
+import { PostType } from "../../utils/types";
+import { CategoryType } from "../CategorySelector";
+import { ChannelType } from "../ChannelSelector";
 // import { SupplierType } from "./SupplierSelector";
 // import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
-import LoadingIndicator from "./LoadingIndicator";
-import { CreatePostHelmet } from "../utils/helmetConfigurations";
+import LoadingIndicator from "../LoadingIndicator";
+import { CreatePostHelmet } from "../../utils/helmetConfigurations";
 import { UploadImage } from "./UploadImage";
 import { PickStore } from "./PickStore";
 import { SetDisplayDetails } from "./SetDisplayDetails";
@@ -239,8 +228,8 @@ export const CreatePost = () => {
             selectedFile={selectedFile}
             setUploadProgress={setUploadProgress}
             handlePostSubmission={handlePostSubmission}
-            selectedCategory={selectedCategory}
-            selectedChannel={selectedChannel}
+            // selectedCategory={selectedCategory}
+            // selectedChannel={selectedChannel}
           />
         );
     }

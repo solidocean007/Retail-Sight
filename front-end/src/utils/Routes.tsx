@@ -3,7 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { SignUpLogin } from "../components/SignUpLogIn";
 import { UserHomePage } from "../components/UserHomePage";
 import { UserProfilePage } from "../components/UserProfilePage";
-import { CreatePost } from "../components/CreatePost";
+import { CreatePost } from "../components/Create-Post/CreatePost";
 import { Dashboard } from "../components/Dashboard";
 import DeveloperDashboard from "../components/DeveloperDashboard";
 import About from "../components/Abouts";

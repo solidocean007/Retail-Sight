@@ -1,8 +1,8 @@
-import React from "react";
-import { PostType } from "../utils/types";
+import React, { useState } from "react";
+import { PostType } from "../../utils/types";
 import { Box, Button, MenuItem, Select } from "@mui/material";
-import { CategoryType } from "./CategorySelector";
-import { ChannelType } from "./ChannelSelector";
+// import { CategoryType } from "../CategorySelector";
+// import { ChannelType } from "../ChannelSelector";
 import './reviewAndSubmit.css'
 
 interface ReviewAndSubmitProps {
@@ -12,9 +12,9 @@ interface ReviewAndSubmitProps {
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   selectedFile: File | null;
   setUploadProgress: React.Dispatch<React.SetStateAction<number>>;
-  handlePostSubmission: any;
-  selectedCategory: CategoryType;
-  selectedChannel: ChannelType; // correct type?
+  handlePostSubmission: any; // correct type?
+  // selectedCategory: CategoryType;
+  // selectedChannel: ChannelType; // correct type?
 
 }
 
@@ -26,11 +26,8 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   selectedFile,
   setUploadProgress,
   handlePostSubmission,
-  selectedCategory,
-  selectedChannel,
 }) => {
-
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   return (
     <div className="review-and-submit">
       <button className="create-post-btn" onClick={onPrevious}>
@@ -55,18 +52,14 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
           color="primary"
           type="submit"
           fullWidth
+          disabled={isSubmitting}
           onClick={() => {
-            if (selectedFile) {
+            if (selectedFile && !isSubmitting) {
+              setIsSubmitting(true);
               setIsUploading(true);
               // Pass the current post state directly
               handlePostSubmission(
-                {
-                  ...post,
-                  category: selectedCategory,
-                  channel: selectedChannel,
-                  // supplier: selectedSupplier,
-                  // brands: selectedBrands,
-                },
+                post,
                 selectedFile,
                 setIsUploading,
                 setUploadProgress
@@ -76,7 +69,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
             }
           }}
         >
-          Submit Post
+          {!isSubmitting ? 'Submit Post': 'Processing...'}
         </Button>
       </Box>
       

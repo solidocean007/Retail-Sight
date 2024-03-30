@@ -333,7 +333,7 @@ const PostCard: React.FC<PostCardProps> = ({
               />
             </div>
 
-            {/* Display the post's image */}
+            
             {post.imageUrl && (
               <img
                 className="post-image"

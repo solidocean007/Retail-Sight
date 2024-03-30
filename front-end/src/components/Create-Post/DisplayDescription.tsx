@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PostType } from "../utils/types";
+import { PostType } from "../../utils/types";
 import './displayDescription.css'
 
 interface DisplayDescriptionProps {

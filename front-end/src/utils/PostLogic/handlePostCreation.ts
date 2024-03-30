@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { PostType } from "../types";
 import { auth, db, storage } from "../firebase";
@@ -19,10 +19,11 @@ import {
 import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
 import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { addNewPost } from "../../Slices/postsSlice";
+import { useAppDispatch } from "../store";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const userData = useSelector(selectUser);
 
@@ -32,7 +33,7 @@ export const useHandlePostSubmission = () => {
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>
   ) => {
-    console.log('new post creation logic')
+    console.log("new post creation logic");
     setIsUploading(true);
     const user = auth.currentUser;
     if (!user || !userData) return;
@@ -117,6 +118,7 @@ export const useHandlePostSubmission = () => {
                 channel: post.channel,
                 description: post.description,
                 imageUrl: "", // Temporary placeholder
+                // imageUrl: post.imageUrl,
                 selectedStore: post.selectedStore,
                 storeNumber: post.storeNumber,
                 storeAddress: post.storeAddress,
@@ -148,19 +150,18 @@ export const useHandlePostSubmission = () => {
               // Update the post with image URLs
               await updateDoc(newDocRef, {
                 imageUrl: resizedImageUrl,
+                timestamp: new Date().toISOString(), // Update the timestamp as well
               });
 
               const newPostWithID = {
                 ...postDataWithoutImage,
                 id: newDocRef.id,
-                imageUrl: resizedImageUrl, 
+                imageUrl: resizedImageUrl,
               };
-
-              // Dispatch action to add this new post to Redux state
-              dispatch(addNewPost(newPostWithID));
-
               // Add the new post to IndexedDB
-              await addNewlyCreatedPostToIndexedDB(newPostWithID);
+              // await addNewlyCreatedPostToIndexedDB(newPostWithID); // indexedDb has the image url
+              // Dispatch action to add this new post to Redux state
+              // dispatch(addNewPost(newPostWithID)); // disable this to see how redux is affected
 
               // Update channels collection
               await updateChannelsInFirestore(db, post.channel, newDocRef.id);

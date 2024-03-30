@@ -1,6 +1,6 @@
 import { Button } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
-import { PostType } from "../utils/types";
+import { PostType } from "../../utils/types";
 import './uploadimage.css'
 
 interface UploadImageProps {
