@@ -4,7 +4,7 @@ import { openDB } from "./indexedDBOpen";
 
 const USER_DATA_STORE = 'users'; // Name of the IndexedDB store for user data
 const USER_DATA_KEY = 'currentUser'; // Assuming you use a single key for storing current user data
-const USERS_COMPANY_USERS = 'userCompanyEmployees'
+const USERS_COMPANY_USERS = 'usersCompanyEmployees'
 
 export const saveUserDataToIndexedDB = async (userData: UserType) => {
   const db = await openDB();

@@ -3,7 +3,6 @@ import React from "react";
 import { useState } from "react";
 import {
   Card,
-  Button,
   IconButton,
   Menu,
   MenuItem,
@@ -139,10 +138,6 @@ const PostCard: React.FC<PostCardProps> = ({
     protectedAction(onLikePostButtonClick);
   };
 
-  const handleEditPost = () => {
-    setIsEditModalOpen(true);
-  };
-
   let formattedDate = "N/A"; // default value
   if (post.displayDate) {
     const jsDate = new Date(post.displayDate); // Creating a Date object from ISO string
@@ -267,13 +262,7 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
             <div className="post-header-top">
-              {/* <div className="share-button-container">
-                <SharePost
-                  postLink={`https://displaygram.com/`}
-                  postTitle="Check out this display!"
-                  postId={post.id}
-                />
-              </div> */}
+             
             </div>
             <div className="header-bottom">
               <div className="details-date">

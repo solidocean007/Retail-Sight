@@ -13,7 +13,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { PostType, PostWithID } from "../utils/types";
+import { PostWithID } from "../utils/types";
 import { deletePost, mergeAndSetPosts } from "../Slices/postsSlice";
 import {
   addPostsToIndexedDB,
@@ -71,9 +71,8 @@ const usePosts = (
     
         // Handle the different types of changes
         if (change.type === "added" || change.type === "modified") {
-          dispatch(mergeAndSetPosts([postData])); // Type '{ id: string; }' is not assignable to type 'PostWithID'.
-          // Type '{ id: string; }' is missing the following properties from type 'PostType': category, channel, storeAddress, displayDate, and 11 more
-          updatePostInIndexedDB(postData); // Argument of type '{ id: string; }' is not assignable to parameter of type 'PostWithID'
+          dispatch(mergeAndSetPosts([postData])); 
+          updatePostInIndexedDB(postData);
         } else if (change.type === "removed") {
           dispatch(deletePost(change.doc.id));
           removePostFromIndexedDB(change.doc.id);

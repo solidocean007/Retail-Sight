@@ -120,6 +120,7 @@ export const Dashboard = () => {
         setLocalUsers(usersFromFirestore);
 
         // Save the updated list to IndexedDB
+        console.log('saving users to indexedDB')
         await saveCompanyUsersToIndexedDB(usersFromFirestore);
       },
       (error) => {

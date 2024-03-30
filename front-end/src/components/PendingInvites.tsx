@@ -1,8 +1,8 @@
-// PendingInvites.tsx
 import { useEffect, useState } from 'react';
-import { db } from '../utils/firebase'; // Import your firebase configuration
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import './pendingInvites.css'
+import { db } from '../utils/firebase';
+import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import './pendingInvites.css';
+import isUserEmailRegistered from '../utils/userData/isUserEmailRegistered';
 
 interface Invite {
   id: string;
@@ -14,27 +14,40 @@ const PendingInvites = () => {
   const [invites, setInvites] = useState<Invite[]>([]);
 
   useEffect(() => {
-    const fetchInvites = async () => {
+    const fetchUsersAndInvites = async () => {
       try {
-        const q = query(collection(db, 'invites'), where('status', '==', 'pending'));
-        const querySnapshot = await getDocs(q);
-        const fetchedInvites = querySnapshot.docs.map(doc => ({
+        // Fetch pending invites
+        const invitesQuery = query(collection(db, 'invites'), where('status', '==', 'pending'));
+        const invitesSnapshot = await getDocs(invitesQuery);
+        const fetchedInvites = invitesSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         })) as Invite[];
-        setInvites(fetchedInvites);
+
+        // Ideally, limit this to likely candidates based on the invites you've fetched
+        const usersQuery = query(collection(db, 'users'));
+        const usersSnapshot = await getDocs(usersQuery);
+        const users = usersSnapshot.docs.map(doc => doc.data());
+
+        // Filter invites against registered users
+        const filteredInvites = fetchedInvites.filter(invite => {
+          // Perform a case-insensitive check to see if the invite email matches any user email
+          return !users.some(user => user.email?.toLowerCase() === invite.email.toLowerCase());
+        });
+
+        setInvites(filteredInvites);
       } catch (error) {
-        console.error('Error fetching invites:', error);
+        console.error('Error fetching invites and users:', error);
       }
     };
 
-    fetchInvites();
+    fetchUsersAndInvites();
   }, []);
 
   const cancelInvite = async (inviteId: string) => {
     try {
       await deleteDoc(doc(db, 'invites', inviteId));
-      setInvites(invites.filter(invite => invite.id !== inviteId));
+      setInvites(prevInvites => prevInvites.filter(invite => invite.id !== inviteId));
     } catch (error) {
       console.error('Error cancelling invite:', error);
     }
@@ -46,8 +59,7 @@ const PendingInvites = () => {
       <ul>
         {invites.map(invite => (
           <li key={invite.id}>
-            {invite.email}
-            <button onClick={() => cancelInvite(invite.id)}>Cancel Invite</button>
+            {invite.email} <button onClick={() => cancelInvite(invite.id)}>Cancel Invite</button>
           </li>
         ))}
       </ul>

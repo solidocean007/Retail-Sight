@@ -55,7 +55,7 @@ export const handleSignUp = async (
         uid: userCredential.user.uid,
         firstName: firstNameInput,
         lastName: lastNameInput,
-        email: email,
+        email: email.toLowerCase(),
         company: companyInput,
         phone: phoneInput,
         role: role,
