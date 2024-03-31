@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   collection as firestoreCollection,
   getDocs,
@@ -10,7 +10,7 @@ import { db } from "../utils/firebase";
 import CollectionForm from "./CollectionForm";
 import { CollectionType, CollectionWithId } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import { Button, dividerClasses } from "@mui/material";
+import { Button } from "@mui/material";
 import "./collectionsPage.css";
 import { addOrUpdateCollection, getCollectionsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import CustomConfirmation from "./CustomConfirmation";
@@ -72,7 +72,7 @@ const CollectionsPage = () => {
         console.log("found collections");
         setCollections(indexedDbCollections);
       } else {
-        console.log("didnt find collections");
+        console.log("didn't find collections");
         await fetchCollections();
       }
       setLoading(false);
@@ -92,7 +92,7 @@ const CollectionsPage = () => {
 
   const handleDeleteCollectionConfirmed = async () => {
     console.log("handleDelete");
-    console.log(collectionToDelete); // this isnt logging
+    console.log(collectionToDelete); // this isn't logging
     if (collectionToDelete) {
       try {
         await deleteDoc(doc(db, "collections", collectionToDelete));
