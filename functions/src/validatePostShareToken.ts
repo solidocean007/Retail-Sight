@@ -7,29 +7,26 @@ if (admin.apps.length === 0) {
 }
 
 export const validatePostShareToken = functions.https.onCall(async (data) => {
-  const { postId, token } = data;
+  const {postId, token} = data;
   const postRef = admin.firestore().collection("posts").doc(postId);
 
   const doc = await postRef.get();
   if (!doc.exists) {
-    throw new functions.https.HttpsError(
-      "not-found",
-      "Post does not exist."
-    );
+    throw new functions.https.HttpsError("not-found", "Post does not exist.");
   }
 
   const post = doc.data();
-  if(!post){
+  if (!post) {
     throw new functions.https.HttpsError(
       "internal",
       "Failed to retrieve post data."
-    )
+    );
   }
-  const tokenExpiry = post.tokenExpiry ? new Date(post.tokenExpiry.toDate()) : null;
+  const tokenExpiry = post.tokenExpiry ?
+    new Date(post.tokenExpiry.toDate()) :
+    null;
   const isTokenValid =
-    token === post.shareToken &&
-    tokenExpiry &&
-    new Date() < tokenExpiry;
+    token === post.shareToken && tokenExpiry && new Date() < tokenExpiry;
 
-  return { valid: isTokenValid || false };
+  return {valid: isTokenValid || false};
 });
