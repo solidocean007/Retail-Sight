@@ -18,6 +18,7 @@ import CollectionsPage from "../components/CollectionsPage";
 import { ViewCollection } from "../components/ViewCollection";
 import { PageNotFound } from "../components/ErrorPages/PageNotFound";
 import { AccessDenied } from "../components/ErrorPages/AccessDenied";
+import { ViewSharedPost } from "../components/ViewSharedPost";
 
 
 export const AppRoutes = () => {
@@ -39,6 +40,7 @@ export const AppRoutes = () => {
       <Route path="/tutorial" element={<TutorialPage />} />
       <Route path="/collections" element={<CollectionsPage />} />
       <Route path="/view-collection/:collectionId" element={<ViewCollection />} />
+      <Route path="/view-shared-post" element={<ViewSharedPost />} />
       <Route path="/access-denied" element={<AccessDenied/>}/>
       <Route path="/page-not-found" element={<PageNotFound/>} />
     </Routes>

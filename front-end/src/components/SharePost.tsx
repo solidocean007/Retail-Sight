@@ -1,3 +1,4 @@
+// SharePost.tsx
 import React, { useState, useEffect } from "react";
 import "./shareButton.css";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -57,7 +58,7 @@ const SharePost: React.FC<SharePostProps> = ({
   };
 
   return (
-    <div>
+    <div className="share-post-container">
       <button className="share-button" onClick={handleShareClick}>Share It</button>
       {shortenedLink && <p>Shortened Link: <a href={shortenedLink} target="_blank" rel="noopener noreferrer">{shortenedLink}</a></p>}
     </div>

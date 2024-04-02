@@ -15,7 +15,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import "./postCard.css";
 import CommentSection from "./CommentSection";
-// import SharePost from "./SharePost";
 import { handleLikePost } from "../utils/PostLogic/handleLikePost";
 import { onUserNameClick } from "../utils/PostLogic/onUserNameClick";
 import CommentModal from "./CommentModal";
