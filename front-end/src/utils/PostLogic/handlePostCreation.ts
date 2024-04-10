@@ -17,6 +17,7 @@ import {
   updateChannelsInFirestore,
 } from "./updateFirestore";
 import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
+import { v4 as uuidv4 } from 'uuid';
 import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { addNewPost } from "../../Slices/postsSlice";
 import { useAppDispatch } from "../store";
@@ -112,6 +113,12 @@ export const useHandlePostSubmission = () => {
                 uploadResizedTask.snapshot.ref
               );
 
+              const sharedToken = uuidv4;
+              // Set the expiry to one week from now
+              const tokenExpiryDate = new Date();
+              tokenExpiryDate.setDate(tokenExpiryDate.getDate() + 7);
+              const tokenExpiry = tokenExpiryDate.toISOString();
+
               // Post data without images
               const postDataWithoutImage = {
                 category: post.category,
@@ -139,6 +146,10 @@ export const useHandlePostSubmission = () => {
                 starTags: extractStarTags(post.description ?? ""),
                 commentCount: 0,
                 likes: [],
+                token: {
+                  sharedToken: sharedToken,
+                  tokenExpiry: tokenExpiry
+                }, // i need to set a token and a token expiry here
               };
 
               // Create the post in Firestore

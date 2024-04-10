@@ -1,13 +1,7 @@
 // PostCard.tsx
 import React from "react";
 import { useState } from "react";
-import {
-  Card,
-  IconButton,
-  Menu,
-  MenuItem,
-  Dialog,
-} from "@mui/material";
+import { Card, IconButton, Menu, MenuItem, Dialog } from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
@@ -38,6 +32,8 @@ import ImageModal from "./ImageModal";
 import { MoreVert } from "@mui/icons-material";
 import sharePost from "./sharePost";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
+import { handlePostShare } from "../utils/handlePostShare";
+
 // import TotalCaseCount from "./TotalCaseCount";
 
 interface PostCardProps {
@@ -201,9 +197,10 @@ const PostCard: React.FC<PostCardProps> = ({
     setAnchorEl(null);
   };
 
-  const handleShare = () => {
-    sharePost(post.id);
-    handleClose();
+  const handleShare = async () => {
+    handlePostShare(post.id, post.token);
+    // updatePostWithNewTimestamp(post.id);
+    handleClose(); // Close the menu after sharing
   };
 
   const handleEdit = () => {
@@ -260,9 +257,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 </div>
               </div>
             </div>
-            <div className="post-header-top">
-             
-            </div>
+            <div className="post-header-top"></div>
             <div className="header-bottom">
               <div className="details-date">
                 <div className="store-details">
@@ -297,7 +292,12 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
-          {/* {post.id} */}
+          {/* <div className="token-box">
+           <h6>id: {post.id}</h6>
+           <h6>token: {post.token?.sharedToken}</h6>
+           <h6>token: {post.token?.tokenExpiry}</h6>
+          </div> */}
+
           <div>
             {post.totalCaseCount > 1 ? (
               <span>
@@ -332,7 +332,6 @@ const PostCard: React.FC<PostCardProps> = ({
               />
             </div>
 
-            
             {post.imageUrl && (
               <img
                 className="post-image"

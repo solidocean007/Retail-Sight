@@ -27,6 +27,7 @@ import { PickStore } from "./PickStore";
 import { SetDisplayDetails } from "./SetDisplayDetails";
 import { DisplayDescription } from "./DisplayDescription";
 import { ReviewAndSubmit } from "./ReviewAndSubmit";
+import { showMessage } from "../../Slices/snackbarSlice";
 
 export const CreatePost = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -43,8 +44,6 @@ export const CreatePost = () => {
   // State Management
   const userData = useSelector(selectUser);
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryType>("Beer");
   const [selectedChannel, setSelectedChannel] =
@@ -79,6 +78,7 @@ export const CreatePost = () => {
     hashtags: [""],
     starTags: [""],
     commentCount: 0,
+    token: {sharedToken: '', tokenExpiry: ''} // i need to populate these values with valid values
   });
 
   useEffect(() => {
@@ -105,10 +105,9 @@ export const CreatePost = () => {
         };
         reader.readAsDataURL(file);
       } else {
-        setSnackbarMessage(
+        showMessage(
           "Unsupported file type. Please upload a valid image."
         );
-        setSnackbarOpen(true);
       }
     }
   };
@@ -252,12 +251,6 @@ export const CreatePost = () => {
           
         </AppBar>
         {renderStepContent()} {/* Correctly invoke the function */}
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={4000}
-          onClose={() => setSnackbarOpen(false)}
-          message={snackbarMessage}
-        />
       </div>
     </>
   );

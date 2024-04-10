@@ -25,6 +25,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   setCurrentHashtag,
   setActivePostSet,
   setIsSearchActive,
+
 }) => {
   if (!post) {
     console.error('Post data is undefined at index:', index);

@@ -96,6 +96,7 @@ export interface PostType {
   hashtags: string[];
   starTags: string[];
   commentCount: number;
+  token: { sharedToken: string, tokenExpiry: string };
 }
 
 export type PostWithID = PostType & { id: string };
@@ -134,3 +135,8 @@ export interface CollectionType {
 }
 
 export type CollectionWithId = CollectionType & { id: string };
+
+export interface TokenData {
+  sharedToken: string;
+  tokenExpiry: string;
+}

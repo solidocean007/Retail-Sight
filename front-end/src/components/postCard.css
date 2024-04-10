@@ -12,6 +12,11 @@
   /* border: 3px solid black; */
 }
 
+.token-box {
+  display: flex;
+  flex-direction: column;
+}
+
 .visibility {
   width: 100%;
   display: flex;

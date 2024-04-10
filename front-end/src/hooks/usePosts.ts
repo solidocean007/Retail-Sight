@@ -42,43 +42,36 @@ const usePosts = (
   
       const processDocChanges = async (snapshot: QuerySnapshot) => {
         let mostRecentTimeStamp = new Date(lastSeenTimestamp);
-      
-        const changes = snapshot.docChanges();
-        changes.forEach((change: DocumentChange) => {
+        let postsToUpdate: PostWithID[] = []; // Collect posts to sort them by displayDate later
+  
+        snapshot.docChanges().forEach((change) => {
           const docData = change.doc.data();
           let docTimestamp = docData.timestamp;
-      
+  
           // Convert Firestore Timestamp to JavaScript Date
           if (docTimestamp?.toDate) {
             docTimestamp = docTimestamp.toDate();
           } else if (typeof docTimestamp === "string") {
             docTimestamp = new Date(docTimestamp);
           }
-      
+  
           // Skip processing if the document's timestamp is not newer than the lastSeenTimestamp
           if (docTimestamp <= new Date(lastSeenTimestamp)) {
             return;
           }
-      
+  
           // Update the most recent timestamp seen
           if (docTimestamp > mostRecentTimeStamp) {
             mostRecentTimeStamp = docTimestamp;
           }
-      
+  
           const postData = { id: change.doc.id, ...docData } as PostWithID;
-      
-          // Handle 'added' changes with imageUrl
-          if (change.type === "added" && docData.imageUrl) {
-            dispatch(mergeAndSetPosts([postData]));
-            updatePostInIndexedDB(postData);
+  
+          // Filter posts to those that have been added or modified with imageUrl
+          if ((change.type === "added" || change.type === "modified") && docData.imageUrl) {
+            postsToUpdate.push(postData); // Collect for sorting and updating
           }
-      
-          // Handle 'modified' changes
-          if (change.type === "modified") {
-            dispatch(mergeAndSetPosts([postData]));
-            updatePostInIndexedDB(postData);
-          }
-      
+  
           // Handle 'removed' changes
           if (change.type === "removed") {
             dispatch(deletePost(change.doc.id));
@@ -86,22 +79,29 @@ const usePosts = (
             deleteUserCreatedPostInIndexedDB(change.doc.id);
           }
         });
-      
-        // After processing changes, update lastSeenTimestamp in IndexedDB to the most recent one
+  
+        // Sort collected posts by displayDate
+        postsToUpdate.sort((a, b) => new Date(b.displayDate).getTime() - new Date(a.displayDate).getTime());
+  
+        // Dispatch sorted posts for state update and IndexedDB
+        dispatch(mergeAndSetPosts(postsToUpdate));
+        postsToUpdate.forEach(post => updatePostInIndexedDB(post));
+  
+        // Update lastSeenTimestamp with the most recent timestamp seen
         if (mostRecentTimeStamp > new Date(lastSeenTimestamp)) {
           await setLastSeenTimestamp(mostRecentTimeStamp.toISOString());
         }
       };
-      
   
-      // Define queries for public and company-specific posts
+      // Listening queries remain based on timestamp for catching updates
+      // No changes needed here since we handle displayDate sorting after fetching
+  
       const qPublic = query(
         collection(db, "posts"),
         where("timestamp", ">", lastSeenTimestamp),
         where("visibility", "==", "public"),
         orderBy("timestamp", "desc")
       );
-  
       const unsubscribePublic = onSnapshot(qPublic, processDocChanges);
   
       let unsubscribeCompany = () => {};
@@ -115,7 +115,7 @@ const usePosts = (
         unsubscribeCompany = onSnapshot(qCompany, processDocChanges);
       }
   
-      // Return a cleanup function to unsubscribe from listeners
+      // Cleanup function
       return () => {
         unsubscribePublic();
         unsubscribeCompany();
@@ -124,6 +124,7 @@ const usePosts = (
   
     setupListeners();
   }, [currentUserCompanyId, dispatch, currentUser]);
+  
   
 
   // load indexDB posts or fetch from firestore

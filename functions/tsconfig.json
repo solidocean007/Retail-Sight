@@ -10,6 +10,7 @@
     "moduleResolution": "node",
   },
   "include": [
-    "src/**/*.ts"
-, "src/exportDummyData.ts"  ],
+    "src/**/*.ts",
+    "functions/**/*.ts"
+,  ],
 }
