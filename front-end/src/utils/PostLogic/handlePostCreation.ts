@@ -113,7 +113,7 @@ export const useHandlePostSubmission = () => {
                 uploadResizedTask.snapshot.ref
               );
 
-              const sharedToken = uuidv4;
+              const sharedToken = uuidv4();
               // Set the expiry to one week from now
               const tokenExpiryDate = new Date();
               tokenExpiryDate.setDate(tokenExpiryDate.getDate() + 7);
@@ -149,13 +149,14 @@ export const useHandlePostSubmission = () => {
                 token: {
                   sharedToken: sharedToken,
                   tokenExpiry: tokenExpiry
-                }, // i need to set a token and a token expiry here
+                },
               };
 
               // Create the post in Firestore
               const newDocRef = await addPostToFirestore(
                 db,
-                postDataWithoutImage
+                postDataWithoutImage //  The types of 'token.sharedToken' are incompatible between these types.
+                // Type '() => string' is not assignable to type 'string'
               );
 
               // Update the post with image URLs
