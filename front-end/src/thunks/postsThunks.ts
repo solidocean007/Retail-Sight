@@ -265,18 +265,22 @@ export const fetchLatestPosts = createAsyncThunk<
 });
 
 // Define a type for the thunk argument
+
 type FetchPostsByIdsArgs = {
-  postIds: string[];
+  postIds: string[] | string;
 };
 
 export const fetchPostsByIds = createAsyncThunk<PostWithID[], FetchPostsByIdsArgs, { rejectValue: string }>(
   'posts/fetchPostsByIds',
   async ({ postIds }, { rejectWithValue }) => {
     try {
-      const fetchPostPromises = postIds.map((postId) => 
+      // Ensure postIds is always an array
+      const ids = Array.isArray(postIds) ? postIds : [postIds];
+
+      const fetchPostPromises = ids.map((postId) => 
         getDoc(doc(db, 'posts', postId)).then((documentSnapshot) => {
           if (documentSnapshot.exists()) {
-            return { id: documentSnapshot.id, ...(documentSnapshot.data() as PostType) }; 
+            return { id: documentSnapshot.id, ...(documentSnapshot.data() as PostType) };
           } else {
             return rejectWithValue(`Post with ID ${postId} not found.`);
           }

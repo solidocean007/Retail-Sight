@@ -295,7 +295,7 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="token-box">
            <h6>id: {post.id}</h6>
            <h6>token: {post.token?.sharedToken}</h6>
-           <h6>token: {post.token?.tokenExpiry}</h6>
+           {/* <h6>token: {post.token?.tokenExpiry}</h6> */}
           </div>
 
           <div>

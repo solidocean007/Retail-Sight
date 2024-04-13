@@ -39,7 +39,9 @@ const usePosts = (
       const lastSeen = await getLastSeenTimestamp();
       const lastSeenTimestamp = lastSeen || new Date(0).toISOString();
       console.log(
-        `Setup listeners - Last seen timestamp: ${lastSeenTimestamp}`
+        console.log(
+          `Setup listeners - Last seen timestamp: ${lastSeenTimestamp}, Type: ${typeof lastSeenTimestamp}`
+        )
       );
       if (!currentUser) return;
 
