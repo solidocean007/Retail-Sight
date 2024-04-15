@@ -66,7 +66,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
         return (
           <a
             key={index}
-            href="#"
+            href="*"
             onClick={(e) => handleStarTagClick(e, word)}
             className={styles.starTag}
           >
@@ -139,7 +139,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       dispatch(setStarTagPosts(starTagPosts));
       addStarTagPostsToIndexedDB(starTagPosts);
     } catch (error) {
-      console.error("Error fetching posts by hashtag:", error);
+      console.error("Error fetching posts by startag:", error);
     }
   };
 

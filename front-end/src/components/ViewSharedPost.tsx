@@ -5,6 +5,8 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { fetchPostsByIds } from '../thunks/postsThunks';
 import { useAppDispatch } from '../utils/store';
 import { PostWithID } from '../utils/types';
+import './viewSharedPost.css'
+import HeaderBar from './HeaderBar';
 
 interface ValidateTokenResponse {
   valid: boolean;
@@ -64,16 +66,69 @@ export const ViewSharedPost = () => {
     return <div>Error: {error}</div>;
   }
 
+  let formattedDate = "N/A"; // default value
+  if (post?.displayDate) {
+    const jsDate = new Date(post.displayDate); // Creating a Date object from ISO string
+    formattedDate = jsDate.toLocaleDateString();
+  }
+
+  const noFilter = () => {
+    return
+  }
+
   return (
-    <div>
+    <div >
+      <HeaderBar toggleFilterMenu={noFilter} />
+      <div className="list-card">
       {post ? (
-        <div>
-          <img src={post.imageUrl} alt="Shared post" />
+        <div className='post-card dynamic-height'>
+          <div className='card-content'>
+            <div className="post-header">
+              <h1>Check out this post from Displaygram.com</h1>
+            </div>
+            <div className="header-bottom">
+              <div className="details-date">
+                <div className="store-details">
+                  <div className="store-name-number">
+                    <h3>
+                      {post.selectedStore}
+                      <span> {post.storeNumber}</span>
+                    </h3>
+                  </div>
+                  <div className="store-address-box">
+                    <h5>{post.storeAddress}</h5>
+                  </div>
+                </div>
+                <h5>date: {formattedDate}</h5>
+              </div>
+
+              <div className="post-user-details">
+                {/* <div onClick={handleOnUserNameClick}> */}
+                <div className="post-user-name">
+                  <p>by:</p>
+                  <h4>
+                    {post.postUserName}
+                  </h4>
+                </div>
+                <div className="user-company-box">
+                  <p>company: </p>
+                  <a href="#" onClick={(e) => e.preventDefault()}>
+                    {/* create a onCompanyNameClick */}
+                    {post.postUserCompany}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
           <div>{post.description}</div>
+
+          <img src={post.imageUrl} alt="Shared post" />
         </div>
       ) : (
         <p>Post not found or access denied.</p>
       )}
+      </div>
+      
     </div>
   );
 };

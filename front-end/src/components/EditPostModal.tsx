@@ -24,7 +24,7 @@ import "./editPostModal.css";
 // import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
-import { extractHashtags } from "../utils/extractHashtags";
+import { extractHashtags, extractStarTags } from "../utils/extractHashtags";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -84,11 +84,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   const handleSave = () => {
     const extractedHashtags = extractHashtags(description);
+    const extractedStartags = extractStarTags(description);
     const updatedPost: PostWithID = {
       ...post,
       description,
       visibility: postVisibility,
       hashtags: extractedHashtags,
+      starTags: extractedStartags,
     };
     handleSavePost(updatedPost);
     dispatch(showMessage("Post edited successfully!"));
