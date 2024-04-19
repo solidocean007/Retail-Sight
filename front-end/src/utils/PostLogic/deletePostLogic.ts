@@ -10,19 +10,13 @@ import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 
 interface userDeletePostProps {
   post: PostWithID;
-  setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  dispatch: React.Dispatch<AnyAction>;
 }
 
 export const userDeletePost = async ({
-  post,
-  setIsEditModalOpen,
-  dispatch,
+  post
 }: userDeletePostProps) => {
   // update timestamp of post that is being changed.
   await updatePostWithNewTimestamp(post.id);
-  // Optimistically remove the post from the UI
-  dispatch(deletePost(post.id));
 
   const storage = getStorage();
   try {

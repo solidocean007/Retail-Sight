@@ -7,9 +7,9 @@ import { useDispatch } from "react-redux";
 import { showMessage } from "../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { updatePost } from "../Slices/postsSlice";
+import { deletePost, updatePost } from "../Slices/postsSlice";
 import { SelectChangeEvent } from "@mui/material";
-import './editPostModal.css'
+import "./editPostModal.css";
 
 import {
   Button,
@@ -22,7 +22,11 @@ import {
 
 import "./editPostModal.css";
 // import { useOutsideAlerter } from "../utils/useOutsideAlerter";
-import { updatePostInIndexedDB } from "../utils/database/indexedDBUtils";
+import {
+  deleteUserCreatedPostInIndexedDB,
+  removePostFromIndexedDB,
+  updatePostInIndexedDB,
+} from "../utils/database/indexedDBUtils";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 import { extractHashtags, extractStarTags } from "../utils/extractHashtags";
 
@@ -52,7 +56,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
-  const wrapperRef = useRef(null); 
+  const wrapperRef = useRef(null);
 
   // what is this useEffect for?
   useEffect(() => {
@@ -63,7 +67,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
     await updatePostWithNewTimestamp(post.id);
-    
+
     try {
       const updatedFields = {
         description: updatedPost.description,
@@ -94,6 +98,18 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     };
     handleSavePost(updatedPost);
     dispatch(showMessage("Post edited successfully!"));
+  };
+
+  const handleDeletePostClick = async () => {
+    try {
+      await userDeletePost({ post }); // Assume userDeletePost now only needs postId
+      dispatch(deletePost(post.id));
+      handleCloseEditModal();
+      dispatch(showMessage("Post deleted successfully!"));
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+      dispatch(showMessage("Error deleting post."));
+    }
   };
 
   return (
@@ -166,13 +182,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
             >
               Save Changes
             </Button>
-            <button
-              className="delete-btn"
-              onClick={() => {
-                userDeletePost({ post, setIsEditModalOpen, dispatch });
-                dispatch(showMessage("Post deleted successfully!"));
-              }}
-            >
+            <button className="delete-btn" onClick={handleDeletePostClick}>
               Delete Post
             </button>
           </div>

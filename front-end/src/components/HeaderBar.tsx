@@ -5,6 +5,7 @@ import useProtectedAction from "../utils/useProtectedAction";
 import "./headerBar.css";
 import MenuTab from "./MenuTab";
 import { useState } from "react";
+import { showMessage } from "../Slices/snackbarSlice";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
@@ -29,7 +30,13 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
 
   const handleDashboardClick = () => {
     protectedAction(() => {
-      navigate("/dashboard");
+      if(currentUser?.role != 'developer'){
+        navigate("/dashboard");
+      } else if (currentUser?.role == 'developer') {
+        navigate('/developer-dashboard')
+      } else {
+        showMessage("Not Logged in.")
+      }
     });
   };
 

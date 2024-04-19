@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import "./userProfilePosts.css";
 // import { PostWithID, UserType } from "../../utils/types";
-import { UserType } from "../../utils/types";
+import { PostWithID, UserType } from "../../utils/types";
 import { fetchUserCreatedPosts } from "../../thunks/postsThunks";
 import { RootState, useAppDispatch } from "../../utils/store";
 import {
@@ -13,6 +13,7 @@ import {
 } from "../../utils/database/indexedDBUtils";
 import { setUserPosts } from "../../Slices/postsSlice";
 import "./userProfilePosts.css";
+import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
 
 export const UserProfilePosts = ({
   currentUser,
@@ -21,7 +22,6 @@ export const UserProfilePosts = ({
 }) => {
   const dispatch = useAppDispatch();
   const userId = currentUser?.uid; // is this right?
-  console.log(userId)
   const userPosts = useSelector((state: RootState) => state.posts.userPosts);
 
   // const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,7 +38,6 @@ export const UserProfilePosts = ({
 
         if (userPostsInIndexedDB && userPostsInIndexedDB?.length > 0) {
           // If there are posts in IndexedDB, dispatch an action to set them in Redux
-          console.log('user posts found')
           dispatch(setUserPosts(userPostsInIndexedDB));
         } else {
           // If there are no posts in IndexedDB, fetch them from Firestore
@@ -80,10 +79,15 @@ export const UserProfilePosts = ({
   //   setSelectedPost(null);
   // };
 
-  const handleDeletePost = (postId: string) => {
-    // I want to ask the user if they are sure about this action before deleting
-    handleDeletePost(postId);
+  const handleDeletePost = (post: PostWithID) => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      // Proceed with the deletion logic here
+      userDeletePost({post});
+      console.log("Deleting post:", post.id);
+      // Dispatch an action or call a function to delete the post from state and/or backend
+    }
   };
+  
 
   return (
     <Container>
@@ -116,7 +120,7 @@ export const UserProfilePosts = ({
               ))}
             </div>
             <div className="post-actions">
-              <button onClick={() => handleDeletePost(post.id)}>Delete</button>
+              <button onClick={() => handleDeletePost(post)}>Delete</button>
             </div>
           </div>
         ))}

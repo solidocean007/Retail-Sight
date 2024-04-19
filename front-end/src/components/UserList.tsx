@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserType } from '../utils/types';
 import './userList.css';
+import { fetchUserFromFirebase } from '../utils/userData/fetchUserFromFirebase';
 
 interface UserListProps {
   users: UserType[];
@@ -9,10 +10,23 @@ interface UserListProps {
 }
 
 const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
-  // Local state to track changes to the users
   const [editedUsers, setEditedUsers] = useState<{ [key: string]: UserType }>({});
 
-  // Handler for when any user detail is edited
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const fetchedUsers = await Promise.all(
+        users.map(async user => {
+          const userDetails = await fetchUserFromFirebase(user.uid);
+          return { ...user, ...userDetails };
+        })
+      );
+      const usersMap = fetchedUsers.reduce((acc, user) => ({ ...acc, [user.uid]: user }), {});
+      setEditedUsers(usersMap);
+    };
+
+    fetchUsers();
+  }, [users]);
+
   const handleEditChange = (userId: string, field: keyof UserType, value: string) => {
     setEditedUsers(prev => ({
       ...prev,
@@ -36,56 +50,32 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => {
-            // Use existing user details as defaults
-            const currentUserDetails = editedUsers[user.uid] ?? user; // Type 'undefined' cannot be used as an index type.
-            return (
-              <tr key={user.uid}>
-                <td>
-                  <input
-                    type="text"
-                    defaultValue={user.firstName}
-                    onBlur={(e) => handleEditChange(user.uid, 'firstName', e.target.value)} 
-                    // Type 'undefined' is not assignable to type 'string'
-                  />
-                  <input
-                    type="text"
-                    defaultValue={user.lastName}
-                    onBlur={(e) => handleEditChange(user.uid, 'lastName', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="email"
-                    defaultValue={user.email}
-                    onBlur={(e) => handleEditChange(user.uid, 'email', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="tel"
-                    defaultValue={user.phone}
-                    onBlur={(e) => handleEditChange(user.uid, 'phone', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <select
-                    value={currentUserDetails.role}
-                    onChange={(e) => handleEditChange(user.uid, 'role', e.target.value)}
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="employee">Employee</option>
-                    <option value="super-admin">Super Admin</option>
-                    <option value="status-pending">Status Pending</option>
-                  </select>
-                </td>
-                <td>
-                  <button onClick={() => onEdit(user.uid, currentUserDetails)}>Save</button> 
-                  <button onClick={() => onDelete(user.uid)}>Delete</button>
-                </td>
-              </tr>
-            );
-          })}
+          {Object.values(editedUsers).map(user => (
+            <tr key={user.uid}>
+              <td>
+                <input type="text" value={user.firstName} onChange={e => handleEditChange(user.uid, 'firstName', e.target.value)} />
+                <input type="text" value={user.lastName} onChange={e => handleEditChange(user.uid, 'lastName', e.target.value)} />
+              </td>
+              <td>
+                <input type="email" value={user.email} onChange={e => handleEditChange(user.uid, 'email', e.target.value)} />
+              </td>
+              <td>
+                <input type="tel" value={user.phone ?? ''} onChange={e => handleEditChange(user.uid, 'phone', e.target.value)} />
+              </td>
+              <td>
+                <select value={user.role} onChange={e => handleEditChange(user.uid, 'role', e.target.value)}>
+                  <option value="admin">Admin</option>
+                  <option value="employee">Employee</option>
+                  <option value="super-admin">Super Admin</option>
+                  <option value="status-pending">Status Pending</option>
+                </select>
+              </td>
+              <td>
+                <button onClick={() => onEdit(user.uid, editedUsers[user.uid])}>Save</button>
+                <button onClick={() => onDelete(user.uid)}>Delete</button>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
@@ -93,6 +83,4 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
 };
 
 export default UserList;
-
-
 

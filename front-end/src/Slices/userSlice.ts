@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { UserType } from '../utils/types';
-import { fetchCompanyUsers } from '../thunks/usersThunks';
+import { fetchCompanyUsersFromFirestore } from '../thunks/usersThunks';
 import { RootState } from '../utils/store';
 
 interface UserState {
@@ -45,14 +45,14 @@ export const userSlice = createSlice({
   // extraReducers: (builder) => {
   extraReducers: (builder) => {
     builder
-    .addCase(fetchCompanyUsers.pending, (state) => {
+    .addCase(fetchCompanyUsersFromFirestore.pending, (state) => {
       state.loading = 'pending';
     })
-    .addCase(fetchCompanyUsers.fulfilled, (state, action) => {
+    .addCase(fetchCompanyUsersFromFirestore.fulfilled, (state, action) => {
       state.companyUsers = action.payload;
       state.loading = 'succeeded';
     })
-    .addCase(fetchCompanyUsers.rejected, (state, action) => {
+    .addCase(fetchCompanyUsersFromFirestore.rejected, (state, action) => {
       state.error = action.payload as string;
       state.loading = 'failed';
     });

@@ -48,20 +48,29 @@ const initialState: PostsState = {
   starTagPosts: [],
 };
 
+const sortPostsByDate = (posts: PostWithID[]) => {
+  return posts.sort((a, b) => {
+    const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
+    const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
+    return dateB - dateA; // Sort in descending order
+  });
+};
+
+
 const postsSlice = createSlice({
   name: "posts", // will this no be enough to store both posts and filtered posts?  Should I create another to handle filtered posts?
   initialState,
   reducers: {
     // Adjusted to the correct state.posts property
     setPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      state.posts = action.payload;
+      state.posts = sortPostsByDate(action.payload);
     },
     setFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      state.filteredPosts = action.payload;
+      state.filteredPosts = sortPostsByDate(action.payload);
     },
     // Add setUserPosts reducer function
     setUserPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      state.userPosts = action.payload;
+      state.userPosts = sortPostsByDate(action.payload);
     },
     // Adjusted to the correct state.posts property
     deletePost: (state, action) => {
@@ -106,15 +115,7 @@ const postsSlice = createSlice({
         [] as PostWithID[]
       );
 
-      // Sort posts by displayDate, from newest to oldest
-      mergedPosts.sort((a, b) => {
-        // Convert displayDate to a timestamp for comparison
-        const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
-        const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
-        return dateB - dateA; // Sort in descending order
-      });
-
-      state.posts = mergedPosts;
+      state.posts = sortPostsByDate(mergedPosts);
     },
     mergeAndSetFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
       const newFilteredPosts = action.payload;
@@ -139,10 +140,10 @@ const postsSlice = createSlice({
       state.filteredPosts = mergedFilteredPosts;
     },
     setHashtagPosts(state, action) {
-      state.hashtagPosts = action.payload;
+      state.hashtagPosts = sortPostsByDate(action.payload);
     },
     setStarTagPosts(state, action) {
-      state.starTagPosts = action.payload;
+      state.starTagPosts = sortPostsByDate(action.payload);
     },
     // Reducer to clear post-related data
     clearPostsData: (state) => {
