@@ -68,24 +68,16 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 };
 
 export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.SetStateAction<boolean>> }) => {
-  useEffect(()=>{
-    console.log('UserProfilePage mounts')
-    return ()=> {
-      console.log('UserProfilePage unmounts')
-    }
-  },[])
-
   const userData = useSelector(selectUser);
   const form = useForm<FormData>();
   const [updateMessage, setUpdateMessage] = useState("");
-
-  // const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState("");
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (userData?.uid) {
       const userDocRef = doc(db, "users", userData.uid);
       const auth = getAuth();
-      const fullName = `${data.firstName} ${data.lastName}`; // Concatenate first and last names
+      const fullName = `${data.firstName} ${data.lastName}`;
 
       try {
         await setDoc(userDocRef, { firstName: data.firstName, lastName: data.lastName }, { merge: true });
@@ -93,10 +85,21 @@ export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.
           await updateProfile(auth.currentUser, { displayName: fullName });
         }
         setUpdateMessage("Profile updated successfully!");
+        setErrorMessage(""); // Reset any previous error messages
       } catch (error) {
         console.error("Error updating user profile:", error);
+        setUpdateMessage(""); // Clear success message if any
+        setErrorMessage("Failed to update profile. Please try again.");
       }
     }
+  };
+
+  // Consider also resetting form and messages when closing
+  const handleClose = () => {
+    setOpenEdit(false);
+    setUpdateMessage("");
+    setErrorMessage("");
+    form.reset();
   };
 
   if (!userData) {
@@ -105,35 +108,38 @@ export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.
 
   return (
     <div className="user-modal-overlay">
-      {/* <div className="profile-edit-page" maxWidth="sm"> */}
       <div className="profile-edit-page">
-      <Button
-        variant="contained"
-        color="secondary"
-        // this button needs to close the profile edit component
-        onClick={()=> setOpenEdit(false)} 
-        style={{ marginTop: "16px", marginLeft: "8px" }}
-      >
-        Close
-      </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={handleClose}
+          style={{ marginTop: "16px", marginLeft: "8px" }}
+        >
+          Close
+        </Button>
 
-      <Typography variant="h5" gutterBottom>
-        Edit Profile
-      </Typography>
-      <UserProfileForm
-        onSubmit={onSubmit}
-        form={form} 
-        currentUserFirstName={userData.firstName}
-        currentUserLastName={userData.lastName}
-      />
-
-      {updateMessage && (
-        <Typography color="primary" style={{ marginTop: "16px" }}>
-          {updateMessage}
+        <Typography variant="h5" gutterBottom>
+          Edit Profile
         </Typography>
-      )}
+        <UserProfileForm
+          onSubmit={onSubmit}
+          form={form}
+          currentUserFirstName={userData.firstName}
+          currentUserLastName={userData.lastName}
+        />
+
+        {updateMessage && (
+          <Typography color="primary" style={{ marginTop: "16px" }}>
+            {updateMessage}
+          </Typography>
+        )}
+        {errorMessage && (
+          <Typography color="error" style={{ marginTop: "16px" }}>
+            {errorMessage}
+          </Typography>
+        )}
+      </div>
     </div>
-    </div>
-    
   );
 };
+
