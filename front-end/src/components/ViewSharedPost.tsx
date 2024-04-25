@@ -1,3 +1,4 @@
+// viewsharedpost.tsx
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { unwrapResult } from '@reduxjs/toolkit';
@@ -77,7 +78,7 @@ export const ViewSharedPost = () => {
   }
 
   return (
-    <div >
+    <div className='view-shared-post-container' >
       <HeaderBar toggleFilterMenu={noFilter} />
       <div className="list-card">
       {post ? (

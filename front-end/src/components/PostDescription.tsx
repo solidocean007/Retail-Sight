@@ -88,7 +88,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     const processedDescription = processDescription(description);
     const truncatedDescription =
       description.length > 25
-        ? processDescription(description.substring(0, 25))
+        ? processDescription(description.substring(0, 30))
         : processedDescription;
 
     return (

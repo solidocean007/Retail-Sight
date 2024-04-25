@@ -48,7 +48,7 @@
   list-style-type: none;
   margin: 0;
   padding: 0;
-  background-color: #002b45;
+  /* background-color: #002b45; */
   width: 100%;
   transition: transform 0.3s ease-in-out;
 }
@@ -60,7 +60,7 @@
 }
 
 .top-nav a {
-  color: var(--splash-nav-text);
+  /* color: var(--splash-nav-text); */
   padding: 0;
 }
 
@@ -304,7 +304,8 @@
   color: var(--splash-nav-text);
   /* display: block; */
   width: 100%;
-  padding: 1rem 0;
+  padding: 0;
+
 }
 
 footer {
@@ -405,7 +406,7 @@ footer a:hover {
 
   .top-nav li {
     width: 20rem;
-    margin: 0;
+    margin: 10px;
   }
 
   .top-nav .isMenuOpen {
@@ -424,12 +425,9 @@ footer a:hover {
     width: 100%;
     z-index: 10;
     transition: transform 0.3s ease-in-out;
-    background-color: #5c97bf;
-  }
-  .top-nav li:nth-child(even) {
     background-color: #002b45;
-    width: 100%;
   }
+  
 }
 
 /* Responsive styles for screens less than or equal to 500px wide (phones). */

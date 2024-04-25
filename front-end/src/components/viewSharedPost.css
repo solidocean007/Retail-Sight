@@ -1,0 +1,43 @@
+/* Add this within your viewSharedPost.css */
+.view-shared-post-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.view-shared-post-container .list-card {
+  width: 100%;
+
+}
+
+.view-shared-post-container .post-card img {
+  max-width: 600px;
+}
+
+.view-shared-post-container .card-content {
+  padding: 20px;
+}
+
+/* Assuming .post-card is the container for your image */
+.post-card img {
+  width: 100%; /* Make the image fill its container */
+  height: auto; /* Maintain aspect ratio */
+  max-width: 600px; /* Set a max-width if needed */
+  display: block; /* Remove any extra space below the image */
+  margin: 0 auto; /* Center the image within its container */
+}
+
+@media (min-width: 768px) { /* Adjust for tablets and desktop screens */
+  .post-card img {
+    max-width: 100%; /* On larger screens, allow the image to be as wide as its container */
+  }
+}
+
+/* If you want to ensure the image takes a certain amount of vertical space */
+@media (min-width: 1024px) {
+  .dynamic-height {
+    min-height: 500px; /* Adjust this value as needed */
+  }
+}

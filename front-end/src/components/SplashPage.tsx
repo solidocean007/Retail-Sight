@@ -12,20 +12,20 @@ const SplashPage = () => {
   const user = useSelector(selectUser);
   const navigate = useNavigate();
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const numberOfSections = 6;
+  const sectionRefs = Array.from({ length: numberOfSections }, () =>
+    useRef<HTMLElement | null>(null)
+  );
 
   const toggleMenu = () => {
     setMenuOpen(!isMenuOpen);
   };
 
-  // Reference for scrolling into view
-  const sectionTwoRef = useRef(null);
-  const sectionThreeRef = useRef(null);
-  const sectionFourRef = useRef(null);
-  const sectionFiveRef = useRef(null);
-  const sectionSixRef = useRef(null);
-
-  const scrollToRef = (ref: MutableRefObject<HTMLElement | null>) => {
-    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToRef = (index: number) => {
+    sectionRefs[index].current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   // skip this page if a user is already logged in
@@ -35,6 +35,10 @@ const SplashPage = () => {
     }
   }, [user, navigate]);
 
+  const handleLoginClick = () => {
+    console.log("login clicked");
+  };
+
   return (
     <>
       <SplashPageHelmet />
@@ -42,22 +46,32 @@ const SplashPage = () => {
       <div className="splash-container">
         <nav className="top-nav">
           <div className="logo-box">
-            <Link to='/'>
-            <img
-              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
-              alt="blue-background"
-            />
-            <h1>Displaygram</h1>
+            <Link to="/">
+              <img
+                src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
+                alt="blue-background"
+              />
+              <h1>Displaygram</h1>
             </Link>
-           
           </div>
           <div className="navbar">
             <ul className={isMenuOpen ? "isMenuOpen" : ""}>
               <li>
                 <a
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent the default anchor behavior
+                    handleLoginClick(); // Call your function
+                    navigate("/sign-up-login"); // Navigate
+                  }}
+                >
+                  Login
+                </a>
+              </li>
+              <li>
+                <a
                   onClick={() => {
                     toggleMenu();
-                    scrollToRef(sectionTwoRef);
+                    scrollToRef(1);
                   }}
                 >
                   The Objective
@@ -67,7 +81,7 @@ const SplashPage = () => {
                 <a
                   onClick={() => {
                     toggleMenu();
-                    scrollToRef(sectionThreeRef);
+                    scrollToRef(2);
                   }}
                 >
                   Features
@@ -77,7 +91,7 @@ const SplashPage = () => {
                 <a
                   onClick={() => {
                     toggleMenu();
-                    scrollToRef(sectionFourRef);
+                    scrollToRef(3);
                   }}
                 >
                   Pricing
@@ -87,7 +101,7 @@ const SplashPage = () => {
                 <a
                   onClick={() => {
                     toggleMenu();
-                    scrollToRef(sectionFiveRef);
+                    scrollToRef(4);
                   }}
                 >
                   Security
@@ -129,7 +143,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section ref={sectionTwoRef} className="second-section">
+          <section ref={sectionRefs[0]} className="second-section">
             <div className="second-content">
               <h3>The Objective</h3>
               <p>
@@ -153,7 +167,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section ref={sectionThreeRef} className="section-three">
+          <section ref={sectionRefs[2]} className="section-three">
             <div className="hero-content-left">
               <div className="features-image-box">
                 <img
@@ -179,7 +193,7 @@ const SplashPage = () => {
           </section>
 
           <section
-            ref={sectionFourRef}
+            ref={sectionRefs[3]}
             className="hero-content hero-full fourth-block"
             id="pricing"
           >
@@ -197,7 +211,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section ref={sectionFiveRef} className="fifth-section">
+          <section ref={sectionRefs[4]} className="fifth-section">
             <div className="fifth-content">
               <h3>Security and Compliance</h3>
               <p>
@@ -220,7 +234,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section ref={sectionSixRef} className="last-block">
+          <section ref={sectionRefs[5]} className="last-block">
             <div className="last-block">
               <h3>Start Now</h3>
               <p>
