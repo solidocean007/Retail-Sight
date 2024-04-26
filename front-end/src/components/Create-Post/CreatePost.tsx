@@ -28,8 +28,10 @@ import { SetDisplayDetails } from "./SetDisplayDetails";
 import { DisplayDescription } from "./DisplayDescription";
 import { ReviewAndSubmit } from "./ReviewAndSubmit";
 import { showMessage } from "../../Slices/snackbarSlice";
+import { useAppDispatch } from "../../utils/store";
 
 export const CreatePost = () => {
+  const dispatch = useAppDispatch();
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
@@ -103,12 +105,12 @@ export const CreatePost = () => {
         reader.onloadend = () => {
           setPost({ ...post, imageUrl: reader.result as string });
         };
-        showMessage('Image selected successfully!');
+        dispatch(showMessage('Image selected successfully!'));
         reader.readAsDataURL(file);
       } else {
-        showMessage(
+        dispatch(showMessage(
           "Unsupported file type. Please upload a valid image."
-        );
+        ));
       }
     }
   };
