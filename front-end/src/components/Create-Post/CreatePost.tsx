@@ -103,6 +103,7 @@ export const CreatePost = () => {
         reader.onloadend = () => {
           setPost({ ...post, imageUrl: reader.result as string });
         };
+        showMessage('Image selected successfully!');
         reader.readAsDataURL(file);
       } else {
         showMessage(

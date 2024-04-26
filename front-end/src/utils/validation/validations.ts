@@ -9,13 +9,10 @@ export function isEmailValid(emailAddress: string) {
 }
 
 export const isPhoneValid = (userPhoneInput: string) => {
-  // const phoneNumberString = userPhoneInput.join("");
-  if (userPhoneInput.length >= 10 && userPhoneInput.length <= 11) {
-    return true;
-  } else {
-    return /^\d{10}$/.test(userPhoneInput);
-  }
+  const cleanedInput = userPhoneInput.replace(/\D/g, '');
+  return /^\d{10}$/.test(cleanedInput);
 };
+
 // export const isPhoneValid = (userPhoneInput: TPhoneInputState) => {
 //   const phoneNumberString = userPhoneInput.join("");
 //   if (phoneNumberString.length >= 10 && phoneNumberString.length <= 11) {
