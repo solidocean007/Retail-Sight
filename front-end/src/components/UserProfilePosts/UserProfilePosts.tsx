@@ -11,7 +11,7 @@ import {
   addUserCreatedPostsInIndexedDB,
   getUserCreatedPostsFromIndexedDB,
 } from "../../utils/database/indexedDBUtils";
-import { setUserPosts } from "../../Slices/postsSlice";
+import { setUserPosts, sortPostsByDate } from "../../Slices/postsSlice";
 import "./userProfilePosts.css";
 import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
 
@@ -21,44 +21,38 @@ export const UserProfilePosts = ({
   currentUser: UserType | null;
 }) => {
   const dispatch = useAppDispatch();
-  const userId = currentUser?.uid; // is this right?
+  const userId = currentUser?.uid;
   const userPosts = useSelector((state: RootState) => state.posts.userPosts);
 
   // const [isModalOpen, setIsModalOpen] = useState(false);
   // const [selectedPost, setSelectedPost] = useState<PostWithID | null>();
 
-  useEffect(() => { // the console.logs in this use effect arent logging.
+  useEffect(() => { 
     async function fetchAndStorePosts() {
-      if (!userId) {
-        return; // Early return if userId is undefined or null
-      }
-
+      if (!userId) return; // Early return if userId is undefined or null
+  
       try {
-        const userPostsInIndexedDB = await getUserCreatedPostsFromIndexedDB();
-
-        if (userPostsInIndexedDB && userPostsInIndexedDB?.length > 0) {
-          // If there are posts in IndexedDB, dispatch an action to set them in Redux
-          dispatch(setUserPosts(userPostsInIndexedDB));
-        } else {
-          // If there are no posts in IndexedDB, fetch them from Firestore
-          console.log('try to fetch user posts')
-          const fetchedUserPosts = await dispatch(
-            fetchUserCreatedPosts(userId)
-          ).unwrap();
-          // After fetching, add these posts to IndexedDB
+        let posts = await getUserCreatedPostsFromIndexedDB();
+  
+        if (!posts || posts.length === 0) {
+          console.log('Fetching user posts from Firestore');
+          const fetchedUserPosts = await dispatch(fetchUserCreatedPosts(userId)).unwrap();
           await addUserCreatedPostsInIndexedDB(fetchedUserPosts);
-          console.log(fetchedUserPosts)
-          // And set them in Redux
-          dispatch(setUserPosts(fetchedUserPosts));
+          posts = fetchedUserPosts;
         }
+  
+        // Re-sort posts based on new sorting criteria before setting them to Redux
+        const sortedPosts = sortPostsByDate(posts);
+        dispatch(setUserPosts(sortedPosts));
       } catch (error) {
         console.error("Failed to fetch or store user posts:", error);
-        // Dispatch an error action or set error state as needed
+        // Optionally dispatch an error action or set error state as needed
       }
     }
-
+  
     fetchAndStorePosts();
   }, [userId, dispatch]);
+  
 
   // Function to construct thumbnail URL
   const getThumbnailUrl = (imageUrl: string) => {

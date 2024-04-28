@@ -209,10 +209,6 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
         id: doc.id,
         ...(doc.data() as PostType),
       }));
-      // You would add your IndexedDB caching logic here or perhaps handle it when the function is called.
-      // add Post to redux?
-      // addUserPostsToIndexedDB
-      console.log(userCreatedPosts)
       return userCreatedPosts;
     } catch (error) {
       // showMessage

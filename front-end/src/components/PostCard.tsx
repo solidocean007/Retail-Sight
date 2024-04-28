@@ -32,7 +32,7 @@ import ImageModal from "./ImageModal";
 import { MoreVert } from "@mui/icons-material";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
-import './viewSharedPost.css'
+import "./viewSharedPost.css";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -292,36 +292,37 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="token-box">
+          {/* <div className="token-box"> */}
             {/* {post.postUserId} */}
-            <h6>id: {post.id}</h6>
+            {/* <h6>id: {post.id}</h6> */}
             {/* <h6>token: {post.token?.sharedToken}</h6> */}
             {/* <h6>token: {post.token?.tokenExpiry}</h6> */}
-          </div>
+          {/* </div> */}
 
-          <div>
+          <div className="like-quantity-row">
+            <div className="likes-box">
+              <button
+                className="like-button"
+                onClick={handleLikePostButtonClick}
+              >
+                {likedByUser ? "❤️" : "🤍"}
+              </button>
+              {likesCount === 0 ? null : likesCount === 1 ? (
+                <h5>{likesCount} like</h5>
+              ) : (
+                <h5>{likesCount} likes</h5>
+              )}
+            </div>
+
             {post.totalCaseCount > 1 ? (
-              <span>
+              <div className="post-quantity">
                 <h4>Quantity: {post.totalCaseCount}</h4>
-              </span>
+              </div>
             ) : null}
           </div>
 
-          <div className="image-new-comment-box">
+          <div className="description-image">
             <div className="hash-tag-container">
-              <div className="likes-comments">
-                <button
-                  className="like-button"
-                  onClick={handleLikePostButtonClick}
-                >
-                  {likedByUser ? "❤️" : "🤍"}
-                </button>
-                {likesCount === 0 ? null : likesCount === 1 ? (
-                  <h5>{likesCount} like</h5>
-                ) : (
-                  <h5>{likesCount} likes</h5>
-                )}
-              </div>
               {/* Display hashtags above the image */}
               <PostDescription
                 description={post.description}
@@ -344,7 +345,7 @@ const PostCard: React.FC<PostCardProps> = ({
             {commentCount > 0 && (
               <div className="comment-button-container">
                 {commentCount > 0 && (
-                  <button onClick={openCommentModal}>
+                  <button className="view-comment-button" onClick={openCommentModal}>
                     {showAllComments
                       ? "Hide Comments"
                       : `${commentCount} Comments`}

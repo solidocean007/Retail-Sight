@@ -48,7 +48,7 @@ const initialState: PostsState = {
   starTagPosts: [],
 };
 
-const sortPostsByDate = (posts: PostWithID[]) => {
+ export const sortPostsByDate = (posts: PostWithID[]) => {
   return posts.sort((a, b) => {
     const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
     const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
