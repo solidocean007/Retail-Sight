@@ -1,5 +1,8 @@
 /* signUpLogin.css */
 .sign-up-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   border-radius: 5px;
   width: 100%;
   max-width: 100vw;
@@ -14,10 +17,14 @@ form {
   height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .form-container {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .sign-up-body h1, .sign-up-container h2 {

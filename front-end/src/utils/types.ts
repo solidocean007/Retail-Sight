@@ -140,3 +140,11 @@ export interface TokenData {
   sharedToken: string;
   tokenExpiry: string;
 }
+
+export interface CompanyTeamType {
+  teamName: string;
+  teamSupervisor: {uid: string; name: string;}[];
+  teamMembers: { uid: string; name: string; }[];
+}
+
+export type TeamWithID = CompanyTeamType & { id: string };

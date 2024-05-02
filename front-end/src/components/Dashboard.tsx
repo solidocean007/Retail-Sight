@@ -4,13 +4,17 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import { useEffect, useState } from "react";
-import { selectCompanyUsers, selectUser } from "../Slices/userSlice";
+import {
+  selectCompanyUsers,
+  selectUser,
+  setCompanyUsers,
+} from "../Slices/userSlice";
 import {
   getCompanyUsersFromIndexedDB,
   saveCompanyUsersToIndexedDB,
   updateUserRoleInIndexedDB,
 } from "../utils/database/userDataIndexedDB";
-import { fetchCompanyUsers } from "../thunks/usersThunks";
+// import { fetchCompanyUsers } from "../thunks/usersThunks";
 import { UserType } from "../utils/types";
 import { RootState, useAppDispatch } from "../utils/store";
 import {
@@ -27,9 +31,12 @@ import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
 import { getFunctions, httpsCallable } from "@firebase/functions";
 import PendingInvites from "./PendingInvites";
+import TeamsViewer from "./TeamsViewer";
 // import firebase from "firebase/compat/app";
 
 export const Dashboard = () => {
+  const [showPendingInvites, setShowPendingInvites] = useState(false);
+  const [showAllEmployees, setShowAllEmployees] = useState(false);
   const user = useSelector(selectUser);
   const [inviteEmail, setInviteEmail] = useState("");
   const companyId = useSelector(
@@ -38,7 +45,7 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
-  const companyUsers = useSelector(selectCompanyUsers);
+  const companyUsers = useSelector(selectCompanyUsers); // this is a selector to company users stored in state.  its not beign used right now
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
   const isAdmin = user?.role === "admin";
@@ -46,7 +53,14 @@ export const Dashboard = () => {
   const isSuperAdmin = user?.role === "super-admin";
   const companyName = user?.company;
 
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // not sure why i have this
+
+  function toggleInvites() {
+    setShowPendingInvites((prevState) => !prevState);
+  }
+  function toggleShowAllEmployees() {
+    setShowAllEmployees((prevState) => !prevState);
+  }
 
   const handleInviteSubmit = async (
     event: React.FormEvent<HTMLFormElement>
@@ -116,11 +130,11 @@ export const Dashboard = () => {
             } as UserType)
         );
 
-        // Update state with users from Firestore
-        setLocalUsers(usersFromFirestore);
+        dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
+        setLocalUsers(usersFromFirestore); // Update local state
 
         // Save the updated list to IndexedDB
-        console.log('saving users to indexedDB')
+        console.log("saving users to indexedDB");
         await saveCompanyUsersToIndexedDB(usersFromFirestore);
       },
       (error) => {
@@ -206,79 +220,91 @@ export const Dashboard = () => {
               <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
             </div>
           </header>
-          
-
+          <TeamsViewer />
           {/* Invite Form Section */}
-          {(isAdmin || isDeveloper) && (
-            <section className="invite-section">
-              <form className="invite-form" onSubmit={handleInviteSubmit}>
-                <div className="invite-title">
-                  <label htmlFor="inviteEmail">Invite Employee:</label>
-                </div>
-                <div className="invite-input-box">
-                  <input
-                    type="email"
-                    id="inviteEmail"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="Enter employee's email"
-                    required
-                  />
-                  <button type="submit">Send Invite</button>
-                </div>
-              </form>
 
-              <div className="all-pending-invites">
-                {/* add pending invites here with an option to cancel them */}
-                <PendingInvites />
-              </div>
+          {(isAdmin || isDeveloper || isSuperAdmin) && (
+            <section className="invite-section">
+              <button className="button-blue" onClick={toggleInvites}>
+                {showPendingInvites ? "Hide pending" : "Show Pending Invites"}
+              </button>
+
+              {showPendingInvites && (
+                <div className="all-pending-invites">
+                  <form className="invite-form" onSubmit={handleInviteSubmit}>
+                    <div className="invite-title">
+                      <label htmlFor="inviteEmail">Invite Employee:</label>
+                    </div>
+                    <div className="invite-input-box">
+                      <input
+                        type="email"
+                        id="inviteEmail"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="Enter employee's email"
+                        required
+                      />
+                      <button type="submit">Send Invite</button>
+                    </div>
+                  </form>
+                  <PendingInvites />
+                </div>
+              )}
             </section>
           )}
           <section className="dashboard-content">
-            <div className="card role-management-card">
-              <div className="header-and-all-info">
-                <div className="table-header">
-                  <div className="user-name-detail">Name</div>
-                  <div className="user-detail">Email</div>
-                  <div className="user-phone-detail">Phone Number</div>
-                  <div className="user-role-detial">Role</div>
-                </div>
+            <button className="button-blue" onClick={toggleShowAllEmployees}>
+              {showAllEmployees ? "Close employee list" : "Show Employees list"}
+            </button>
+            {showAllEmployees && (
+              <div className="card role-management-card">
+                <div className="header-and-all-info">
+                  <div className="table-header">
+                    <div className="user-name-detail">Name</div>
+                    <div className="user-detail">Email</div>
+                    <div className="user-phone-detail">Phone Number</div>
+                    <div className="user-role-detial">Role</div>
+                  </div>
 
-                <div>
-                  {localUsers.map((localUser) => (
-                    <div className="all-user-info" key={localUser.uid}>
-                      <div className="user-name-email">
-                        <div className="user-name-detail">{`${localUser.firstName} ${localUser.lastName}`}</div>
-                        <div className="user-detail">{localUser.email}</div>
-                      </div>
-                      <div className="user-phone-role">
-                        <div className="user-phone-detail">
-                          {localUser.phone}
+                  <div>
+                    {localUsers.map((localUser) => (
+                      <div className="all-user-info" key={localUser.uid}>
+                        <div className="user-name-email">
+                          <div className="user-name-detail">{`${localUser.firstName} ${localUser.lastName}`}</div>
+                          <div className="user-detail">{localUser.email}</div>
                         </div>
-                        <div className="user-role-detail">
-                          {isSuperAdmin && localUser.uid !== user?.uid ? (
-                            <select
-                              title="role-select"
-                              value={localUser.role}
-                              onChange={(e) =>
-                                handleRoleChange(localUser.uid!, e.target.value)
-                              }
-                            >
-                              {/* List all possible roles here */}
-                              <option value="admin">Admin</option>
-                              <option value="employee">Employee</option>
-                              {/* Other roles */}
-                            </select>
-                          ) : (
-                            <span>{localUser.role}</span>
-                          )}
+                        <div className="user-phone-role">
+                          <div className="user-phone-detail">
+                            {localUser.phone}
+                          </div>
+                          <div className="user-role-detail">
+                            {isSuperAdmin && localUser.uid !== user?.uid ? (
+                              <select
+                                title="role-select"
+                                value={localUser.role}
+                                onChange={(e) =>
+                                  handleRoleChange(
+                                    localUser.uid!,
+                                    e.target.value
+                                  )
+                                }
+                              >
+                                {/* List all possible roles here */}
+                                <option value="admin">Admin</option>
+                                <option value="employee">Employee</option>
+                                {/* Other roles */}
+                              </select>
+                            ) : (
+                              <span>{localUser.role}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Additional cards for other dashboard content */}
           </section>

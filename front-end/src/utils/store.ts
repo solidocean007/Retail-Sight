@@ -11,6 +11,7 @@ import userModalReducer from "../Slices/userModalSlice";
 
 
 import { useDispatch as _useDispatch } from 'react-redux';
+import teamsSlice from "../Slices/teamsSlice";
 
 const store = configureStore({
   reducer: {
@@ -21,6 +22,7 @@ const store = configureStore({
     theme: themeReducer,
     userModal: userModalReducer,
     locations: locationReducer,
+    CompanyTeam: teamsSlice,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

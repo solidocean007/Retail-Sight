@@ -147,6 +147,9 @@ h1 {
 }
 
 button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   border-radius: 5px;
   border: 1px solid transparent;
   padding: 0.4em 0.8em;
@@ -158,6 +161,8 @@ button {
   border-color: var(--border-color);
   cursor: pointer;
   transition: border-color 0.25s;
+  height: 2.5rem;
+  width: fit-content;
 }
 button:hover {
   border-color: #646cff;

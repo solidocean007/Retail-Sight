@@ -487,10 +487,11 @@ export const SignUpLogin = () => {
                       errorsOfInputs.passwordInputError.length > 0
                     }
                   />
+                   <button type="submit">Submit</button>
                 </div>
               )}
               {signUpError && <div className="error">{signUpError}</div>}
-              <button type="submit">Submit</button>
+             
             </div>
           </form>
         </div>

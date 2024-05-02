@@ -7,6 +7,7 @@ import {validatePostShareToken} from "./validatePostShareToken";
 import {exportPosts} from "./exportPosts";
 import {exportDummyData} from "./exportDummyData";
 import {updateUserProfile} from "./updateUserProfile";
+import {sendContactUsEmail} from "./sendContactUsEmail";
 
 export {
   sendInvite,
@@ -17,4 +18,5 @@ export {
   exportPosts,
   exportDummyData,
   updateUserProfile,
+  sendContactUsEmail,
 };
