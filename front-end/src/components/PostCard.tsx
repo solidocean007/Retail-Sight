@@ -82,6 +82,7 @@ const PostCard: React.FC<PostCardProps> = ({
     if (post.imageUrl) {
       const originalImageUrl = post.imageUrl.replace("resized", "original");
       setFullSizeImageUrl(originalImageUrl);
+      console.log('full-size-image: ',fullSizeImageUrl)
       setIsImageModalOpen(true);
     }
   };
