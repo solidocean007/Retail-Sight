@@ -14,6 +14,7 @@ import {
 import { setUserPosts, sortPostsByDate } from "../../Slices/postsSlice";
 import "./userProfilePosts.css";
 import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
+import { getAuth, onAuthStateChanged } from "@firebase/auth";
 
 export const UserProfilePosts = ({
   currentUser,
@@ -24,6 +25,19 @@ export const UserProfilePosts = ({
   const userId = currentUser?.uid;
   const userPosts = useSelector((state: RootState) => state.posts.userPosts);
 
+  const auth = getAuth();
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Authenticated User:", user); // User is signed in
+      } else {
+        console.log("No authenticated user."); // No user is signed in
+      }
+    });
+  
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
   // const [isModalOpen, setIsModalOpen] = useState(false);
   // const [selectedPost, setSelectedPost] = useState<PostWithID | null>();
 
