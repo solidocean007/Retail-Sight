@@ -74,10 +74,12 @@
 a {
   font-weight: 500;
   text-decoration: inherit;
+  color: blue;
 }
 
 a:hover {
-  color: darken(var(--stark), 10%); /* Slightly darker Sky Blue on hover */
+  /* color: darken(var(--stark), 10%); Slightly darker Sky Blue on hover */
+  color: white; /* Slightly darker Sky Blue on hover */
 }
 
 /* Dark Mode */
@@ -96,7 +98,7 @@ a:hover {
 [data-theme="dark"] a:hover {
   color: lighten(
     var(--gold-leaf),
-    10%
+  10%
   ); /* Slightly lighter Gold Leaf on hover */
 }
 

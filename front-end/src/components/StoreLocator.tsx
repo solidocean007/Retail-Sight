@@ -34,6 +34,11 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [selectedPlace, setSelectedPlace] =
     useState<google.maps.places.PlaceResult | null>(null);
+  const [manualStoreMode, setManualStoreMode] = useState(false);
+
+  const handleManualSelection = () => {
+    setManualStoreMode(true);
+  }
 
   // Function to handle store name input changes
   const handleStoreNameInputChange = (
@@ -211,12 +216,12 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     onStoreNameChange,
     onStoreStateChange,
   ]);
-
+  console.log(post)
   return (
     <div className="map-container">
       <div className="map-box" ref={mapRef} style={{ width: "350px", height: "300px" }}></div>
-      <h4>3. Click store then verify name and add number.</h4>
-      <div className="store-input-box">
+      <h4>3. Click store or <a onClick={handleManualSelection}>enter manually</a></h4>
+      {(post.selectedStore || manualStoreMode) && <div className="store-input-box">
         <div className="store-name-input-box">
           <p>Store name:</p>
           <input
@@ -239,7 +244,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
             onChange={handleStoreNumberChange}
           />
         </div>
-      </div>
+      </div>}
     </div>
   );
 };
