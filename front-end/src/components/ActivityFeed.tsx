@@ -146,14 +146,14 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   }, []);
 
   // Calculate the width for the FixedSizeList
-  const getListWidth = () => {
-    if (windowWidth <= 480) {
-      return windowWidth - 25; // Subtract some pixels for padding/margin
-    } else if (windowWidth <= 1150) {
-      return Math.min(550, windowWidth - 25);
-    }
-    return 650;
-  };
+  // const getListWidth = () => {
+  //   if (windowWidth <= 480) {
+  //     return windowWidth - 25; // Subtract some pixels for padding/margin
+  //   } else if (windowWidth <= 1150) {
+  //     return Math.min(550, windowWidth - 25);
+  //   }
+  //   return 650;
+  // };
   const handleItemsRendered = ({
     visibleStopIndex,
   }: {
@@ -269,7 +269,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         height={listHeight}
         itemCount={itemCount}
         itemSize={getItemSize}
-        width={getListWidth()}
+        // width={getListWidth()}
+        width='100%'
         onItemsRendered={handleItemsRendered}
         itemData={{
           posts: posts,

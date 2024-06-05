@@ -37,6 +37,8 @@ import TeamsViewer from "./TeamsViewer";
 export const Dashboard = () => {
   const [showPendingInvites, setShowPendingInvites] = useState(false);
   const [showAllEmployees, setShowAllEmployees] = useState(false);
+  const [showTeams, setShowTeams] = useState(false);
+
   const user = useSelector(selectUser);
   const [inviteEmail, setInviteEmail] = useState("");
   const companyId = useSelector(
@@ -60,6 +62,9 @@ export const Dashboard = () => {
   }
   function toggleShowAllEmployees() {
     setShowAllEmployees((prevState) => !prevState);
+  }
+  function toggleShowTeams() {
+    setShowTeams((prevState) => !prevState);
   }
 
   const handleInviteSubmit = async (
@@ -220,7 +225,10 @@ export const Dashboard = () => {
               <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
             </div>
           </header>
-          <TeamsViewer />
+          <button className="button-blue" onClick={toggleShowTeams}>
+            <h4>{!showTeams ? "Teams" : ' X '}</h4>
+          </button>
+          {showTeams && <TeamsViewer />}
           {/* Invite Form Section */}
 
           {(isAdmin || isDeveloper || isSuperAdmin) && (

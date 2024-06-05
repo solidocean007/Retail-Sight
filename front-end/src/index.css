@@ -7,7 +7,7 @@
   --orange: orange;
   --ivory-black: #1d2731;
   --coral: #ff6f61;
-  --sage-green: #9cafb7;
+  --some-blue-color: #8fbbe7;
   --charcoal-grey: #36454f;
   --stark: #e7dfdd;
   --apple-core: #dcc7aa;
@@ -34,7 +34,7 @@
   --border-color: var(--coral);
   --input-background: var(--sage-green);
   --input-text-color: var(--ivory-black);
-  --form-background-color: var(--sage-green);
+  --form-background-color: var(--some-blue-color);
   --menu-background-color: var(--sky-blue);
   --alt-menu-background-color: var(--stark);
   --footer-background-color: var(--sky-blue);

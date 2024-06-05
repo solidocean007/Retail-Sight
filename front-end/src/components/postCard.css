@@ -161,6 +161,7 @@
   cursor: pointer;
   color: rgba(0, 0, 0, 0.5); /* Muted color if not liked by user */
   font-size: 10px;
+  width: 40px;
 }
 
 .like-button button {

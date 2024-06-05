@@ -1,7 +1,7 @@
 .hashtag-search-box {
   background-color: var(--form-background-color);
   display: flex;
-  width: 80%;
+  width: 100%;
   border-radius: 5px;
   padding: 3px;
   margin: 5px;
