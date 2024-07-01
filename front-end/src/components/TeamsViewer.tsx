@@ -89,8 +89,9 @@ const TeamsViewer = () => {
         <button className="button-blue" onClick={toggleShowTeamsCreation}>
           Create new team
         </button>
+        <h1>Current Teams</h1>
+
         <div className="teams-viewer">
-          <h1>Current Teams</h1>
           {teamStatus === "loading" && <p>Loading...</p>}
           {teamStatus === "succeeded" && (
             <>

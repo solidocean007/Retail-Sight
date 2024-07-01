@@ -230,7 +230,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
             placeholder="Store name"
             type="text"
             value={selectedPlace?.name || post.selectedStore}
-            onChange={handleStoreNameInputChange}
+            onChange={handleStoreNameInputChange}       
           />
         </div>
         <div className="store-number-input-box">

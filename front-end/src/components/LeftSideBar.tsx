@@ -11,7 +11,6 @@ const LeftSideBar = () => {
 
   return (
     <div className="left-side-bar">
-      <LeftMessageBoard />
       {/* I need a better class name for the container below */}
       <button
         onClick={handleTutorialClick}

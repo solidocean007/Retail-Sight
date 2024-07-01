@@ -299,7 +299,7 @@ const SideBar: React.FC<SideBarProps> = ({
           Apply Now
         </Button>
       </div>
-      <div className="left-side-bar-container">
+      <div className="side-bar-container">
         <LeftSideBar />
       </div>
     </div>

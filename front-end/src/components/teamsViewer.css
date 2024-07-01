@@ -22,3 +22,73 @@
   width: 50%;
   min-width: 10rem;
 }
+
+
+/* Mobile devices */
+@media (max-width: 320px) {
+  /* Styles for small smartphones */
+  
+}
+
+@media (min-width: 321px) and (max-width: 375px) {
+  /* Styles for medium smartphones */
+}
+
+@media (min-width: 376px) and (max-width: 414px) {
+  /* Styles for large smartphones */
+}
+
+/* Filling the gap for devices between 414px and 600px */
+@media (min-width: 415px) {
+  /* Styles for devices in this range */
+  .teams-viewer {
+    flex-direction: row;
+    justify-content: space-around;
+  }
+}
+
+/* Tablets */
+@media (min-width: 600px) and (max-width: 768px) {
+  /* Styles for small tablets in portrait */
+  .top-of-activity-feed .onboarding-tutorial-intro-box {
+    font-size: smaller;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 899px){
+  
+}
+
+@media (min-width: 900px)  {
+  /* Styles for large tablets in portrait/landscape */
+  .side-bar-container {
+    display: flex;
+    align-items: start;
+    justify-content: flex-start;
+    max-width: 100%;
+  }
+  .activity-feed-container {
+    max-width: 45%;
+  }
+ 
+}
+
+/* Laptops and Desktops */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  /* Styles for small to medium screens */
+
+  
+
+  .post-content-filter {
+    margin-right: 40px;
+  }
+}
+
+@media (min-width: 1367px) and (max-width: 1920px) {
+  /* Styles for large screens */
+}
+
+@media (min-width: 1921px) {
+  /* Styles for extra-large screens */
+}
+
