@@ -15,35 +15,18 @@ interface ApiKeyResponse {
 
 const GenerateApiKeyComponent = ({ open, onClose } : { open: boolean, onClose : ()=> void}) => {
   const [apiKey, setApiKey] = useState('');
-  const [apiKeyFromClientCode, setApiKeyFromClientCode] = useState();
   const dashboardUser = useSelector(selectUser);
 
   if (!dashboardUser) {
     return null;
   }
 
-  const fetchApiKeyFromClientSide = async (companyId: string) => {
-    try {
-      const docRef = doc(db, "apiKeys", companyId);
-
-      const docSnap = await getDoc(docRef);
-      if(docSnap.exists()){
-        const apiKeyData = docSnap.data();
-        // console.log(apiKeyData)
-      setApiKeyFromClientCode(apiKeyData.apiKey);
-      }
-    } catch (error) {
-      console.error("Error:", error)
-    }
-  }
-
   const fetchApiKey = async () => {
     const functions = getFunctions();
     const getApiKey = httpsCallable(functions, 'getApiKey');
-    console.log("getApiKey: ", getApiKey)
     try {
       const result = await getApiKey({ companyId: dashboardUser.companyId });
-      console.log("result: ", result) // this doesnt log
+      console.log("result: ", result);
       setApiKey((result.data as ApiKeyResponse).apiKey);
     } catch (error) {
       console.error('Error fetching API key:', error);
@@ -54,7 +37,7 @@ const GenerateApiKeyComponent = ({ open, onClose } : { open: boolean, onClose : 
     const functions = getFunctions();
     const generateApiKey = httpsCallable(functions, 'generateApiKey');
     try {
-      const result = await generateApiKey({ companyId: dashboardUser.companyId });
+      const result = await generateApiKey({ companyId: dashboardUser.companyId, permissions: { canRead: true, canWrite: true } });
       setApiKey((result.data as ApiKeyResponse).apiKey);
     } catch (error) {
       console.error('Error generating API key:', error);
@@ -63,7 +46,6 @@ const GenerateApiKeyComponent = ({ open, onClose } : { open: boolean, onClose : 
 
   React.useEffect(() => {
     if (open) {
-      fetchApiKeyFromClientSide(dashboardUser.companyId); // okay this works
       fetchApiKey();
     }
   }, [open]);

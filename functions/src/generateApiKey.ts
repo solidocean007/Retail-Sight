@@ -16,8 +16,8 @@ export const generateApiKey = functions.https.onCall(async (data, context) => {
     );
   }
 
-  const {companyName, permissions} = data;
-  if (!companyName || !permissions) {
+  const {companyId, permissions} = data;
+  if (!companyId || !permissions) {
     throw new functions.https.HttpsError(
       "invalid-argument",
       "The function must be called with 'companyName' and 'permissions'."
@@ -27,10 +27,10 @@ export const generateApiKey = functions.https.onCall(async (data, context) => {
   const apiKey = uuidv4();
 
   try {
-    await admin.firestore().collection("apiKeys").doc(apiKey).set({
-      companyName: companyName,
-      permissions: permissions,
+    await admin.firestore().collection("apiKeys").doc(companyId).set({
+      apiKey: apiKey,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      permissions: permissions,
     });
 
     return {apiKey: apiKey};
