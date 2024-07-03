@@ -7,27 +7,40 @@ import './developerDashboard.css';
 import { DeveloperDashboardHelmet } from '../utils/helmetConfigurations';
 import { deleteUserAuthAndFirestore, updateSelectedUser } from '../DeveloperAdminFunctions/developerAdminFunctions';
 import { UserType } from '../utils/types';
+import { Button, Container } from '@mui/material';
+import { useState } from 'react';
+import GenerateApiKeyComponent from './GenerateApiKey/GenerateApiKeyComponent';
+// import GenerateApiKeyComponent from './GenerateApiKey/GenerateApiKeyComponent';
 
 const DeveloperDashboard = () => {
   const dashboardUser = useSelector(selectUser);
+  const isDeveloper = dashboardUser?.role === "developer";
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { companies, loading, error } = useFetchCompaniesWithUsers(dashboardUser?.role);
   const navigate = useNavigate();
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   const handleDeleteUser = async (userId: string) => {
-    // Call deleteUser function here
-    deleteUserAuthAndFirestore(userId);
+    await deleteUserAuthAndFirestore(userId);
   };
 
   const handleEditUser = async (adminId: string, user: UserType) => {
     // Call updateUser function here
-    updateSelectedUser(adminId, user);
+    await updateSelectedUser(adminId, user);
   };
 
   return (
-    <div className="developer-dashboard-container">
+    <Container className="developer-dashboard-container">
       <DeveloperDashboardHelmet />
       <aside className="developer-dashboard-sidebar">
         {/* Navigation links */}
@@ -42,6 +55,9 @@ const DeveloperDashboard = () => {
             <button className="add-user-btn">Add Users</button>
             <button className="home-btn" onClick={() => navigate("/")}>Home</button>
           </div>
+          { isDeveloper && (
+              <Button onClick={handleOpenModal} >Api key</Button>
+            )}
         </header>
         <section className="developer-dashboard-content">
           {companies.map(company => (
@@ -56,7 +72,9 @@ const DeveloperDashboard = () => {
           ))}
         </section>
       </main>
-    </div>
+      <GenerateApiKeyComponent open={isModalOpen} onClose={handleCloseModal} />
+
+    </Container>
   );
 };
 

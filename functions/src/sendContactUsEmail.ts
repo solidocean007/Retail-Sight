@@ -20,6 +20,12 @@ if (admin.apps.length === 0) {
 
 export const sendContactUsEmail = functions.https.onCall(
   (data: ContactData, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Authentication is required."
+      );
+    }
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -32,15 +38,16 @@ export const sendContactUsEmail = functions.https.onCall(
       from: data.email, // This sets the 'Reply-To' to the user's email
       to: gmailEmail, // Your Gmail where you want to receive the messages
       subject: `New Contact Message from ${data.name}`,
-      text: `Name: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone || 'Not provided'}\nMessage: ${data.message}`,
+      text: `Name: ${data.name}\nEmail: ${data.email}\n
+      Phone: ${data.phone || "Not provided"}\nMessage: ${data.message}`,
     };
 
     return transporter
       .sendMail(mailOptions)
-      .then(() => ({ success: true }))
+      .then(() => ({success: true}))
       .catch((error) => {
         console.error("Failed to send email:", error);
-        return { success: false };
+        return {success: false};
       });
   }
 );

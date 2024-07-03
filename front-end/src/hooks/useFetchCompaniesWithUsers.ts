@@ -35,7 +35,7 @@ const useFetchCompaniesWithUsers = (userRole: string | undefined) => {
               
               // Dispatch the thunk and wait for the result
               const allUsers = await dispatch(fetchCompanyUsersFromFirestore(company.id)).unwrap();
-              console.log(allUsers);
+              // console.log(allUsers);
 
               // Filter users based on their roles after you have fetched them
               const superAdminDetails = allUsers.filter(user => user.role === 'super-admin');

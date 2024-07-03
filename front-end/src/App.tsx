@@ -12,7 +12,7 @@ import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 import UserModal from "./components/UserModal.tsx";
 import { AppRoutes } from "./utils/Routes.tsx";
 import { getTheme } from "./theme.ts";
-import Footer from "./components/Footer.tsx";
+import Footer from "./components/Footer/Footer.tsx";
 import { useEffect } from "react";
 import { toggleTheme } from "./actions/themeActions.ts";
 import useSchemaVersion from "./hooks/useSchemaVersion.ts";

@@ -1,7 +1,7 @@
 // import React from 'react';
 import { useNavigate } from "react-router-dom";
 import "./about.css";
-import { AboutPageHelmet } from "../utils/helmetConfigurations";
+import { AboutPageHelmet } from "../../utils/helmetConfigurations";
 
 const About = () => {
   const navigate = useNavigate();

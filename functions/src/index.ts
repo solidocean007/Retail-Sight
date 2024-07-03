@@ -8,6 +8,7 @@ import {exportPosts} from "./exportPosts";
 import {exportDummyData} from "./exportDummyData";
 import {updateUserProfile} from "./updateUserProfile";
 import {sendContactUsEmail} from "./sendContactUsEmail";
+import {getApiKey} from "./getApiKey";
 
 export {
   sendInvite,
@@ -19,4 +20,5 @@ export {
   exportDummyData,
   updateUserProfile,
   sendContactUsEmail,
+  getApiKey,
 };

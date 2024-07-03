@@ -6,7 +6,7 @@ import { UserProfilePage } from "../components/UserProfilePage";
 import { CreatePost } from "../components/Create-Post/CreatePost";
 import { Dashboard } from "../components/Dashboard";
 import DeveloperDashboard from "../components/DeveloperDashboard";
-import About from "../components/About";
+import About from "../components/About/About";
 import Features from "../components/Features";
 import ContactUs from "../components/ContactUs";
 import PrivacyPolicy from "../components/PrivacyPolicy";

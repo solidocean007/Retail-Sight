@@ -148,3 +148,14 @@ export interface CompanyTeamType {
 }
 
 export type TeamWithID = CompanyTeamType & { id: string };
+
+export interface MissionType {
+  name: string;
+  description: string;
+  companyId: string;
+}
+
+export interface PermissionsType {
+  canRead: string[];
+  canWrite: string[];
+}

@@ -32,6 +32,7 @@ import { DashboardHelmet } from "../utils/helmetConfigurations";
 import { getFunctions, httpsCallable } from "@firebase/functions";
 import PendingInvites from "./PendingInvites";
 import TeamsViewer from "./TeamsViewer";
+import { Button } from "@mui/material";
 // import firebase from "firebase/compat/app";
 
 export const Dashboard = () => {
@@ -154,7 +155,8 @@ export const Dashboard = () => {
   // Separate useEffect to attempt to load from IndexedDB when component mounts
   useEffect(() => {
     const loadFromIndexedDB = async () => {
-      // Attempt to get users from IndexedDB
+      // Attempt to get users from IndexedDB 
+      // this shouldnt happen on often.  this needs to be revisited
       const indexedDBUsers = await getCompanyUsersFromIndexedDB();
       if (indexedDBUsers && indexedDBUsers.length > 0) {
         setLocalUsers(indexedDBUsers);
@@ -164,7 +166,7 @@ export const Dashboard = () => {
     loadFromIndexedDB();
   }, []);
 
-  // Type guard function to check if a string is a valid role
+  // Type guard function to check if a string is a valid role.  should this use a pipe() to simplify this?
   function isValidRole(role: string): role is UserType["role"] {
     return ["admin", "employee", "status-pending", "developer"].includes(role);
   }
@@ -224,6 +226,9 @@ export const Dashboard = () => {
             <div className="dashboard-user-details">
               <p>{`${user?.firstName} ${user?.lastName} Role: ${user?.role}`}</p>
             </div>
+            {isSuperAdmin || isDeveloper && (
+              <Button>Api key</Button>
+            )}
           </header>
           <button className="button-blue" onClick={toggleShowTeams}>
             <h4>{!showTeams ? "Teams" : ' X '}</h4>
