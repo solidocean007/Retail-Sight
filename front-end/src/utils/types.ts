@@ -155,7 +155,23 @@ export interface MissionType {
   companyId: string;
 }
 
+
 export interface PermissionsType {
-  canRead: string[];
-  canWrite: string[];
+  apiKey: string,
+  companyName: string,
+  createdAt: Timestamp,
+  permissions: {
+    missions: {
+      canRead: boolean,
+      canWrite: boolean
+    },
+    companyMissions: {
+      canRead: boolean,
+      canWrite: boolean
+    },
+    submittedMissions: {
+      canRead: boolean,
+      canWrite: boolean
+    }
+  }
 }

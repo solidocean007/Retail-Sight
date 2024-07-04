@@ -10,6 +10,8 @@ import {updateUserProfile} from "./updateUserProfile";
 import {sendContactUsEmail} from "./sendContactUsEmail";
 import {getApiKey} from "./getApiKey";
 import {generateApiKey} from "./generateApiKey";
+import {readData} from "./readData";
+import {writeData} from "./writeData";
 
 export {
   sendInvite,
@@ -23,4 +25,6 @@ export {
   sendContactUsEmail,
   getApiKey,
   generateApiKey,
+  readData,
+  writeData,
 };

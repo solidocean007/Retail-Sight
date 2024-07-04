@@ -1,6 +1,5 @@
 // GenerateApiKeyComponent.tsx
 import React, { useState } from "react";
-import firebase from "firebase/app";
 import "firebase/functions";
 import { Button, Card, Modal, Typography } from "@mui/material";
 import { getFunctions, httpsCallable } from "@firebase/functions";
@@ -8,13 +7,17 @@ import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../../utils/firebase";
+import { PermissionsType } from "../../utils/types";
 
 interface ApiKeyResponse {
   apiKey: string;
+  permissions: PermissionsType['permissions'];
 }
 
-const GenerateApiKeyComponent = ({ open, onClose } : { open: boolean, onClose : ()=> void}) => {
-  const [apiKey, setApiKey] = useState('');
+
+const GenerateApiKeyComponent = ({ open, onClose }: { open: boolean, onClose: () => void }) => {
+  const [apiKey, setApiKey] = useState<string>('');
+  const [permissions, setPermissions] = useState<PermissionsType['permissions'] | null>(null);
   const dashboardUser = useSelector(selectUser);
 
   if (!dashboardUser) {
@@ -26,8 +29,9 @@ const GenerateApiKeyComponent = ({ open, onClose } : { open: boolean, onClose : 
     const getApiKey = httpsCallable(functions, 'getApiKey');
     try {
       const result = await getApiKey({ companyId: dashboardUser.companyId });
-      console.log("result: ", result);
-      setApiKey((result.data as ApiKeyResponse).apiKey);
+      const { apiKey, permissions } = result.data as ApiKeyResponse;
+      setApiKey(apiKey);
+      setPermissions(permissions);
     } catch (error) {
       console.error('Error fetching API key:', error);
     }
@@ -37,8 +41,14 @@ const GenerateApiKeyComponent = ({ open, onClose } : { open: boolean, onClose : 
     const functions = getFunctions();
     const generateApiKey = httpsCallable(functions, 'generateApiKey');
     try {
-      const result = await generateApiKey({ companyId: dashboardUser.companyId, permissions: { canRead: true, canWrite: true } });
-      setApiKey((result.data as ApiKeyResponse).apiKey);
+      const permissions: PermissionsType['permissions'] = {
+        missions: { canRead: true, canWrite: false },
+        companyMissions: { canRead: true, canWrite: false },
+        submittedMissions: { canRead: true, canWrite: true },
+      };
+      const result = await generateApiKey({ companyId: dashboardUser.companyId, permissions });
+      console.log(result.data.apiKey);
+      setPermissions(permissions);
     } catch (error) {
       console.error('Error generating API key:', error);
     }
@@ -52,16 +62,19 @@ const GenerateApiKeyComponent = ({ open, onClose } : { open: boolean, onClose : 
 
   return (
     <Modal open={open} onClose={onClose}>
-      <div style={{ padding: 20, background: 'white', margin: 'auto', maxWidth: 400 }}>
+      <Card style={{ padding: 20, background: 'white', margin: 'auto', maxWidth: 400 }}>
         <Typography variant="h6">API Key for {dashboardUser.company}</Typography>
         {apiKey ? (
-          <Typography variant="body1">{apiKey}</Typography>
+          <>
+            <Typography variant="body1">{apiKey}</Typography>
+            <Typography variant="body2">Permissions: {JSON.stringify(permissions, null, 2)}</Typography>
+          </>
         ) : (
           <Typography variant="body1">No API key found</Typography>
         )}
         <Button onClick={handleGenerateNewApiKey}>Generate New API Key</Button>
         <Button onClick={onClose}>Close</Button>
-      </div>
+      </Card>
     </Modal>
   );
 };

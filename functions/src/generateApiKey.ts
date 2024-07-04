@@ -29,6 +29,7 @@ export const generateApiKey = functions.https.onCall(async (data, context) => {
   try {
     await admin.firestore().collection("apiKeys").doc(companyId).set({
       apiKey: apiKey,
+      companyName: context.auth.token.name,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       permissions: permissions,
     });
