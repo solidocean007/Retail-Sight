@@ -11,6 +11,7 @@ module.exports = {
     "plugin:import/typescript",
     "google",
     "plugin:@typescript-eslint/recommended",
+    "prettier",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -20,16 +21,15 @@ module.exports = {
   ignorePatterns: [
     "/lib/**/*", // Ignore built files.
   ],
-  plugins: [
-    "@typescript-eslint",
-    "import",
-  ],
+  plugins: ["@typescript-eslint", "import", "prettier"],
   rules: {
-    "quotes": ["error", "double"],
+    quotes: ["error", "double"],
     "import/no-unresolved": 0,
-    "indent": ["error", 2],
-    "linebreak-style": ["error", "windows"],
-    "max-len": ["error", {"code": 120}],
+    indent: ["error", 2],
+    "linebreak-style": ["error", "unix"],
+    "max-len": ["error", { code: 120 }],
+    "prettier/prettier": ["error"], // Add this line
+    curly: ["error", "all"], // Add this line for curly brace spacing
   },
   overrides: [
     {

@@ -5,7 +5,7 @@ import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import * as archiver from "archiver";
-import {Parser} from "json2csv";
+import { Parser } from "json2csv";
 
 export interface PostType {
   // category: CategoryType | "";
@@ -49,7 +49,7 @@ export const exportPosts = functions.https.onCall(async (data, context) => {
     );
   }
 
-  const {collectionId} = data;
+  const { collectionId } = data;
   if (!collectionId) {
     throw new functions.https.HttpsError(
       "invalid-argument",
@@ -63,7 +63,7 @@ export const exportPosts = functions.https.onCall(async (data, context) => {
   // Prepare the ZIP file
   const tempFilePath = path.join(os.tmpdir(), `${collectionId}.zip`);
   const output = fs.createWriteStream(tempFilePath);
-  const zip = archiver("zip", {zlib: {level: 9}});
+  const zip = archiver("zip", { zlib: { level: 9 } });
 
   zip.pipe(output);
 
@@ -75,14 +75,14 @@ export const exportPosts = functions.https.onCall(async (data, context) => {
     const postCSV = json2csvParser.parse(post);
 
     // Append CSV to the zip
-    zip.append(postCSV, {name: `${postDir}/data.csv`});
+    zip.append(postCSV, { name: `${postDir}/data.csv` });
 
     // Check if an image URL exists and fetch the image
     if (post.imageUrl) {
       try {
         const imageData = await fetchImageData(post.imageUrl);
         // Append the image data to the zip
-        zip.append(imageData.buffer, {name: `${postDir}/${imageData.name}`});
+        zip.append(imageData.buffer, { name: `${postDir}/${imageData.name}` });
       } catch (error) {
         // Handle the error (e.g., skip the image or log the error)
         console.error(`Failed to fetch image for post ${post.id}:`, error);
@@ -99,7 +99,7 @@ export const exportPosts = functions.https.onCall(async (data, context) => {
   // Upload ZIP to Firebase Storage
   const bucket = admin.storage().bucket();
   const zipFilePath = `exports/${collectionId}.zip`;
-  await bucket.upload(tempFilePath, {destination: zipFilePath});
+  await bucket.upload(tempFilePath, { destination: zipFilePath });
 
   // Generate a signed URL for the ZIP file
   const file = bucket.file(zipFilePath);
@@ -111,7 +111,7 @@ export const exportPosts = functions.https.onCall(async (data, context) => {
   // Clean up temporary file
   fs.unlinkSync(tempFilePath);
 
-  return {url};
+  return { url };
 });
 
 /**
@@ -187,7 +187,7 @@ async function fetchImageData(
     const buffer = await file.download();
     // Use just the filename for the ZIP
     const name = path.basename(filePath);
-    return {buffer: buffer[0], name};
+    return { buffer: buffer[0], name };
   } catch (error) {
     console.error(`Error fetching image for ${fileUrl}:`, error);
     throw new functions.https.HttpsError(

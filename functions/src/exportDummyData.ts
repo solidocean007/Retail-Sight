@@ -23,9 +23,9 @@ export const exportDummyData = functions.https.onCall((data, context) => {
 
   // Example data to be zipped
   const postsData = [
-    {id: "post1", content: "Content of post 1"},
-    {id: "post2", content: "Content of post 2"},
-    {id: "post3", content: "Content of post 3"},
+    { id: "post1", content: "Content of post 1" },
+    { id: "post2", content: "Content of post 2" },
+    { id: "post3", content: "Content of post 3" },
   ];
 
   console.log("Data to be zipped:", postsData);
@@ -35,7 +35,7 @@ export const exportDummyData = functions.https.onCall((data, context) => {
   console.log("Temporary file path:", tempFilePath);
 
   const output = fs.createWriteStream(tempFilePath);
-  const zip = archiver("zip", {zlib: {level: 9}});
+  const zip = archiver("zip", { zlib: { level: 9 } });
 
   // Stream the zip to the output file
   zip.pipe(output);
@@ -52,7 +52,7 @@ export const exportDummyData = functions.https.onCall((data, context) => {
       const fileName = `${post.id}.json`;
       const fileContent = JSON.stringify(post, null, 2);
       console.log(`Appending file: ${fileName}`);
-      zip.append(fileContent, {name: fileName});
+      zip.append(fileContent, { name: fileName });
     });
 
     // Finalize the archive (this will cause the output stream to end)
@@ -67,7 +67,7 @@ export const exportDummyData = functions.https.onCall((data, context) => {
       const zipFilePath = "exports/test_posts.zip";
 
       bucket
-        .upload(tempFilePath, {destination: zipFilePath})
+        .upload(tempFilePath, { destination: zipFilePath })
         .then(() => {
           console.log("Zip file uploaded successfully");
           return bucket.file(zipFilePath).getSignedUrl({
@@ -77,7 +77,7 @@ export const exportDummyData = functions.https.onCall((data, context) => {
         })
         .then(([url]) => {
           console.log("Signed URL generated:", url);
-          resolve({url});
+          resolve({ url });
         })
         .catch((error) => {
           console.error(

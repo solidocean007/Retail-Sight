@@ -42,8 +42,8 @@ const GenerateApiKeyComponent = ({ open, onClose }: { open: boolean, onClose: ()
     const generateApiKey = httpsCallable(functions, 'generateApiKey');
     try {
       const permissions: PermissionsType['permissions'] = {
-        missions: { canRead: true, canWrite: false },
-        companyMissions: { canRead: true, canWrite: false },
+        missions: { canRead: true, canWrite: true },
+        companyMissions: { canRead: true, canWrite: true },
         submittedMissions: { canRead: true, canWrite: true },
       };
       const result = await generateApiKey({ companyId: dashboardUser.companyId, permissions });

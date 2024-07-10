@@ -44,10 +44,10 @@ export const sendContactUsEmail = functions.https.onCall(
 
     return transporter
       .sendMail(mailOptions)
-      .then(() => ({success: true}))
+      .then(() => ({ success: true }))
       .catch((error) => {
         console.error("Failed to send email:", error);
-        return {success: false};
+        return { success: false };
       });
   }
 );

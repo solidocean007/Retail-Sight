@@ -1,7 +1,7 @@
 // generatePostShareToken.ts from the functions directory
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import {v4 as uuidv4} from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 if (admin.apps.length === 0) {
   admin.initializeApp();
@@ -20,7 +20,7 @@ export const generatePostShareToken = functions.https.onCall(
     if (!postId) {
       throw new functions.https.HttpsError(
         "invalid-argument",
-        "The function must be called with a valid \"postId\"."
+        "The function must be called with a valid 'postId'."
       );
     }
 
@@ -37,10 +37,10 @@ export const generatePostShareToken = functions.https.onCall(
       await admin.firestore().collection("posts").doc(postId).update({
         "token.sharedToken": shareToken,
         "token.tokenExpiry": tokenExpiryString,
-        "timestamp": currentISOTimeString,
+        timestamp: currentISOTimeString,
       });
 
-      return {shareToken, tokenExpiry: tokenExpiryString};
+      return { shareToken, tokenExpiry: tokenExpiryString };
     } catch (error) {
       console.error("Failed to generate post share token:", error);
       throw new functions.https.HttpsError(

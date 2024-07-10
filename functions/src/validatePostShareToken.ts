@@ -7,7 +7,7 @@ if (admin.apps.length === 0) {
 }
 
 export const validatePostShareToken = functions.https.onCall(async (data) => {
-  const {postId, token} = data;
+  const { postId, token } = data;
   const postRef = admin.firestore().collection("posts").doc(postId);
 
   const doc = await postRef.get();
@@ -26,9 +26,9 @@ export const validatePostShareToken = functions.https.onCall(async (data) => {
   }
 
   // Correcting the field accesses to account for the token object structure
-  const tokenExpiry = post.token?.tokenExpiry ?
-    new Date(post.token.tokenExpiry) :
-    null;
+  const tokenExpiry = post.token?.tokenExpiry
+    ? new Date(post.token.tokenExpiry)
+    : null;
   const sharedToken = post.token?.sharedToken;
 
   console.log(`Token expiry for post ID ${postId}: ${tokenExpiry}`);
@@ -41,5 +41,5 @@ export const validatePostShareToken = functions.https.onCall(async (data) => {
   console.log(`Is token valid: ${isTokenValid}`);
   console.log(`Current server time: ${currentDateTime}`);
 
-  return {valid: isTokenValid || false};
+  return { valid: isTokenValid || false };
 });

@@ -6,7 +6,6 @@ if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-
 export const updateUserProfile = functions.https.onCall(
   async (data, context) => {
     // Ensure the user is authenticated
@@ -30,7 +29,7 @@ export const updateUserProfile = functions.https.onCall(
       // in Firestore or another database
       // ...
 
-      return {result: "User profile updated successfully"};
+      return { result: "User profile updated successfully" };
     } catch (error) {
       console.error("Error updating user profile:", error);
       throw new functions.https.HttpsError(

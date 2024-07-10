@@ -18,7 +18,7 @@ export const getApiKey = functions.https.onCall(async (data, context) => {
   }
 
   const db = admin.firestore();
-  const {companyId} = data;
+  const { companyId } = data;
 
   if (!companyId) {
     console.error("Invalid argument: companyId is required");
@@ -50,10 +50,12 @@ export const getApiKey = functions.https.onCall(async (data, context) => {
     }
 
     console.log("API key retrieved successfully:", apiKey);
-    return {apiKey};
+    return { apiKey };
   } catch (error) {
     console.error("Error retrieving document:", error);
-    throw new functions.https.HttpsError("internal", "Error retrieving API key");
+    throw new functions.https.HttpsError(
+      "internal",
+      "Error retrieving API key"
+    );
   }
 });
-
