@@ -17,6 +17,7 @@
   width: 100%;
   margin-top: 40px;
   overflow-y: scroll;
+  position: relative;
 }
 
 .post-detail-selection {

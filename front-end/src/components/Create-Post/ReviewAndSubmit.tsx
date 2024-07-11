@@ -18,6 +18,7 @@ interface ReviewAndSubmitProps {
 
 }
 
+
 export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   post,
   onPrevious,
@@ -28,6 +29,8 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   handlePostSubmission,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  
   return (
     <div className="review-and-submit">
       <button className="create-post-btn" onClick={onPrevious}>
@@ -42,6 +45,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         >
           <MenuItem value="public">Public</MenuItem>
           <MenuItem value="company">Company only</MenuItem>
+          <MenuItem value="supplier">Objective</MenuItem>
           {/* <MenuItem disabled value="group">Supplier</MenuItem> */}
           {/* <MenuItem value="group">Supplier & Company</MenuItem> */}
         </Select>

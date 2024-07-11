@@ -29,12 +29,14 @@ import { DisplayDescription } from "./DisplayDescription";
 import { ReviewAndSubmit } from "./ReviewAndSubmit";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
+import { MissionSelection } from "../MissionSelection/MissionSelection";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
+  const [openMissionSelection, setOpenMissionSelection] = useState(false);
 
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
@@ -42,14 +44,14 @@ export const CreatePost = () => {
   // Function to navigate to the previous step
   const goToPreviousStep = () => setCurrentStep((prevStep) => prevStep - 1);
 
-  const handlePostSubmission = useHandlePostSubmission(); // should i pass this to Review and submit or move it there?
-  // State Management
+  const handlePostSubmission = useHandlePostSubmission();
+
   const userData = useSelector(selectUser);
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
   const [selectedCategory, setSelectedCategory] =
-    useState<CategoryType>("Beer");
+    useState<CategoryType>("Beer"); // I need to store the last value by the user in localstorage and try to use it again here
   const [selectedChannel, setSelectedChannel] =
-    useState<ChannelType>("Grocery");
+    useState<ChannelType>("Grocery");  // I need to store the last value by the user in localstorage and try to use it again here
   // const [selectedSupplier, setSelectedSupplier] = useState<SupplierType>({
   //   id: "",
   //   name: "",
@@ -84,11 +86,23 @@ export const CreatePost = () => {
   });
 
   useEffect(() => {
+    if (post.visibility === "supplier") {
+      setOpenMissionSelection(true);
+    } else {
+      setOpenMissionSelection(false);
+    }
+  }, [post.visibility]); 
+
+  useEffect(() => {
     // Fetch suppliers and brands logic here
   }, []);
 
   // Logic
   const navigate = useNavigate();
+
+  const onClose = () => {
+    setOpenMissionSelection(false)
+  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
@@ -150,6 +164,8 @@ export const CreatePost = () => {
     },
     []
   );
+
+  const supplierVisibility = post.visibility === "supplier";
 
   // Add handlers for Supplier and Brand changes
   // const handleSupplierChange = (supplierId: string) => {
@@ -253,7 +269,8 @@ export const CreatePost = () => {
           </div>
           
         </AppBar>
-        {renderStepContent()} {/* Correctly invoke the function */}
+        {renderStepContent()}
+        {supplierVisibility && <MissionSelection open={openMissionSelection} onClose={onClose} />}
       </div>
     </>
   );
