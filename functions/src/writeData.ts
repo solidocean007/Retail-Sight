@@ -31,14 +31,20 @@ export const writeData = functions.https.onRequest(
 
       const apiKeyData = apiKeyDoc.docs[0].data();
       const permissions = apiKeyData.permissions;
+      const companyId = apiKeyData.companyId;
 
       if (!permissions[collection] || !permissions[collection].canWrite) {
         res.status(403).send("Write permission denied.");
         return;
       }
 
+      const dataWithCompanyId = {
+        ...data,
+        companyId: companyId
+      };
+
       // Proceed with writing data
-      await admin.firestore().collection(collection).add(data);
+      await admin.firestore().collection(collection).add(dataWithCompanyId);
 
       res.status(200).send("Data written successfully.");
     } catch (error) {
