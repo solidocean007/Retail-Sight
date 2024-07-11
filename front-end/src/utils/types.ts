@@ -148,3 +148,25 @@ export interface CompanyTeamType {
 }
 
 export type TeamWithID = CompanyTeamType & { id: string };
+
+export interface MissionsType {
+  id?: string;
+  missionObjective: string;
+  missionDescription?: string;
+  createdByCompanyId: string;
+  missionCreated: Timestamp;
+}
+
+export interface CompanyMissionType {
+  id?: string;
+  missionId: string;
+  companyIdAssigned: string;
+  missionAssignedOn: Timestamp;
+  missionDueBy: Timestamp;
+}
+
+export interface SubmittedMissionType {
+  id?: string;
+  companyMissionId: string;
+  postIdForObjective: string;
+}
