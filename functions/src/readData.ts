@@ -38,7 +38,10 @@ export const readData = functions.https.onRequest(
 
       // Proceed with reading data
       const snapshot = await admin.firestore().collection(collection).get();
-      const data = snapshot.docs.map((doc) => doc.data());
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id, // Include the document ID
+        ...doc.data(),
+      }));
 
       res.status(200).send(data);
     } catch (error) {
