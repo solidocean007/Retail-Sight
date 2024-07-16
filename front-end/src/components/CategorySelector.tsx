@@ -12,20 +12,28 @@ export type CategoryType =
   | "Water"
   | "Wine"
   | "Beer"
+  | "Bread"
   | "Soda"
   | "Chips"
   | "Produce"
   | "Dairy"
   | "Meat"
-  | "Cookies_and_Pastries"
+  | "Cookies and Pastries"
 
 // Create an array of categories for mapping in the component
-const CATEGORIES: CategoryType[] = ['Water', 'Wine', 'Beer', 'Soda', 'Chips', 'Produce', 'Dairy', 'Meat', 'Cookies_and_Pastries'];
+const CATEGORIES: CategoryType[] = ['Water', 'Wine', 'Beer', 'Bread', 'Soda', 'Chips', 'Produce', 'Dairy', 'Meat', 'Cookies and Pastries'];
 
 interface CategorySelectorProps {
   selectedCategory?: CategoryType;
   onCategoryChange: (category: CategoryType) => void;
 }
+
+const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>, onCategoryChange: (category: CategoryType) => void) => {
+  const selectedCategory = e.target.value as CategoryType;
+  localStorage.setItem('postCategory', selectedCategory);
+  onCategoryChange(selectedCategory);
+}
+
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({ selectedCategory, onCategoryChange }) => {
   return (
@@ -33,7 +41,8 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({ selectedCategory, o
       className="channel-category-selector"
       title="title selector"
       value={selectedCategory}
-      onChange={(e) => onCategoryChange(e.target.value as CategoryType)}
+      // onChange={(e) => onCategoryChange(e.target.value as CategoryType)}
+      onChange={(e) => handleCategoryChange(e, onCategoryChange)}
     >
       {CATEGORIES.map(category => (
         <option key={category} value={category}>
