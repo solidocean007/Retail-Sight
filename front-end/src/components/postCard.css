@@ -158,8 +158,9 @@
   border: none;
   cursor: pointer;
   color: rgba(0, 0, 0, 0.5); /* Muted color if not liked by user */
-  font-size: 10px;
-  width: 40px;
+  font-size: 15px;
+  width: 25px;
+  height: 25px;
 }
 
 .like-button button {

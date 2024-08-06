@@ -313,6 +313,11 @@ const PostCard: React.FC<PostCardProps> = ({
 
           <div className="description-image">
             <div className="like-quantity-row">
+              {post.totalCaseCount > 1 ? (
+                <div className="post-quantity">
+                  <h4>Quantity: {post.totalCaseCount}</h4>
+                </div>
+              ) : null}
               <div className="likes-box">
                 <button
                   className="like-button"
@@ -326,12 +331,6 @@ const PostCard: React.FC<PostCardProps> = ({
                   <h5>{likesCount} likes</h5>
                 )}
               </div>
-
-              {post.totalCaseCount > 1 ? (
-                <div className="post-quantity">
-                  <h4>Quantity: {post.totalCaseCount}</h4>
-                </div>
-              ) : null}
             </div>
             <div className="hash-tag-container">
               {/* Display hashtags above the image */}
