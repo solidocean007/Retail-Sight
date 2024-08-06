@@ -38,20 +38,13 @@ const usePosts = (
     const setupListeners = async () => {
       const lastSeen = await getLastSeenTimestamp();
       const lastSeenTimestamp = lastSeen || new Date(0).toISOString();
-      console.log(
-        console.log(
-          `Setup listeners - Last seen timestamp: ${lastSeenTimestamp}, Type: ${typeof lastSeenTimestamp}`
-        )
-      );
+
       if (!currentUser) return;
 
       const processDocChanges = async (snapshot: QuerySnapshot) => {
         let mostRecentTimeStamp = new Date(lastSeenTimestamp);
         let postsToUpdate: PostWithID[] = []; // Collect posts to sort them by displayDate later
 
-        console.log(
-          `Received snapshot with ${snapshot.docChanges().length} changes`
-        );
         snapshot.docChanges().forEach((change) => {
           const docData = change.doc.data();
           let docTimestamp = docData.timestamp;
@@ -63,15 +56,8 @@ const usePosts = (
             docTimestamp = new Date(docTimestamp);
           }
 
-          console.log(
-            `Processing change for doc ID: ${change.doc.id}, Type: ${change.type}, Timestamp: ${docTimestamp}`
-          );
-
           // Skip processing if the document's timestamp is not newer than the lastSeenTimestamp
           if (docTimestamp <= new Date(lastSeenTimestamp)) {
-            console.log(
-              `Skipping doc ID: ${change.doc.id} - Timestamp not newer than lastSeenTimestamp`
-            );
             return;
           }
 
@@ -87,13 +73,11 @@ const usePosts = (
             (change.type === "added" || change.type === "modified") &&
             docData.imageUrl
           ) {
-            console.log(`Adding/Updating post with ID: ${change.doc.id}`);
             postsToUpdate.push(postData); // Collect for sorting and updating
           }
 
           // Handle 'removed' changes
           if (change.type === "removed") {
-            console.log(`Deleting post with ID: ${change.doc.id}`);
             dispatch(deletePost(change.doc.id));
             removePostFromIndexedDB(change.doc.id);
             deleteUserCreatedPostInIndexedDB(change.doc.id);
@@ -108,9 +92,6 @@ const usePosts = (
             new Date(a.displayDate).getTime()
         );
         if (postsToUpdate.length > 0) {
-          console.log(
-            `Dispatching mergeAndSetPosts with ${postsToUpdate.length} posts.`
-          );
           dispatch(mergeAndSetPosts(postsToUpdate));
           postsToUpdate.forEach((post) => updatePostInIndexedDB(post));
         }
@@ -159,7 +140,6 @@ const usePosts = (
       try {
         const indexedDBPosts = await getPostsFromIndexedDB();
         if (indexedDBPosts.length > 0) {
-          console.log("mergeandsetposts from indexedDb");
           dispatch(mergeAndSetPosts(indexedDBPosts)); // Update Redux store with posts from IndexedDB
         } else {
           const action = await dispatch(
@@ -167,7 +147,6 @@ const usePosts = (
           );
           if (fetchInitialPostsBatch.fulfilled.match(action)) {
             const fetchedPosts = action.payload.posts;
-            console.log("mergeandsetposts from firestore");
             dispatch(mergeAndSetPosts(fetchedPosts));
             addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
           }
@@ -183,13 +162,12 @@ const usePosts = (
           collection(db, "posts"),
           where("visibility", "==", "public"),
           orderBy("displayDate", "desc"),
-          limit(4)
+          // limit(4)
         );
         const querySnapshot = await getDocs(publicPostsQuery);
         const publicPosts = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() } as PostWithID))
           .filter((post) => post.visibility === "public");
-        console.log("merge and set public posts");
         dispatch(mergeAndSetPosts(publicPosts));
       } catch (error) {
         console.error("Error fetching public posts:", error);

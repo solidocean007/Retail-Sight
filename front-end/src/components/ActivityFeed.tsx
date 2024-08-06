@@ -77,7 +77,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   // Function to calculate list height
   const calculateListHeight = () => {
-    return window.innerHeight * 0.9;
+    return window.innerHeight * 0.95;
   };
 
   const clearIndexedDB = async () => {
@@ -123,7 +123,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 500) {
       // return 720;
-      return 620;
+      // return 620;
+      return 450;
     } else if (windowWidth <= 700) {
       return 680;
     } else if (windowWidth <= 800) {

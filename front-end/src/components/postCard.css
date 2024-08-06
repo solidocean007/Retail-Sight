@@ -7,15 +7,10 @@
   padding-bottom: 1rem;
   padding-top: auto;
   margin: 0;
-  justify-content: space-around;
+  justify-content: space-between;
   width: 100%;
   /* border-radius: 5px; */
   /* border: 3px solid black; */
-}
-
-.token-box {
-  display: flex;
-  flex-direction: column;
 }
 
 .visibility {
@@ -30,7 +25,7 @@
   align-items: center;
   width: 100%;
   padding: 0rem 1rem;
-  height: 1rem;
+  height: 100%;
 }
 
 .hash-tag-container {
@@ -40,10 +35,13 @@
 
 }
 .description-image {
-  display: flex; /* or just 'inline-block' if you prefer */
+  display: flex;
   flex-direction: column;
-  align-items: center; /* aligns items to the start of the flex container */
-  justify-content: center;
+  /* align-items: center; */
+  /* justify-content: center; */
+  position: relative;
+  /* height: 100%; */
+
 }
 
 .description-image p {
@@ -53,7 +51,7 @@
 
 .description-image .post-image {
   max-height: 500px;
-  max-width: 95%;
+  /* max-width: 95%; */
   width: auto; /* ensures the image scales with its height */
 }
 
@@ -105,8 +103,8 @@
 .post-user-details {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: start;
+  align-items: start;
   cursor: pointer;
   width: 100%
 }
@@ -259,13 +257,13 @@ h5 {
 
 @media (max-width: 1000px) {
   .image-new-comment-box .post-image {
-    max-height: 500px;
+    /* max-height: 500px; */
     width: auto; /* ensures the image scales with its height */
   }
 }
 @media (max-width: 670px) {
   .post-card img.post-image {
-    max-height: 400px; 
+    max-height: 450px; 
   }
 
   .post-user-name, .user-company-box {
@@ -275,6 +273,6 @@ h5 {
 
 @media (max-width: 470px) {
   .post-card img.post-image {
-    max-height: 350px; 
+    /* max-height: 350px;  */
   }
 }
