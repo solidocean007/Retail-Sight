@@ -3,7 +3,6 @@ import { PostType } from "../../utils/types";
 import CategorySelector, { CategoryType } from "../CategorySelector";
 import ChannelSelector, { ChannelType } from "../ChannelSelector";
 import TotalCaseCount from "../TotalCaseCount";
-import { Button } from "@mui/material";
 import "./setDisplayDetails.css";
 
 interface SetDisplayDetailsProps {

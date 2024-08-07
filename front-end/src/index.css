@@ -69,7 +69,6 @@
   --footer-background-color: var(--charcoal-grey);
 }
 
-/* Assuming the use of CSS custom properties defined in :root */
 /* Light Mode */
 a {
   font-weight: 500;
@@ -174,7 +173,6 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-/* CSS */
 .button-blue {
   align-items: center;
   appearance: none;
@@ -258,8 +256,6 @@ button:active {
 /* Styles for mobile devices */
 @media (max-width: 900px) {
   /* Your styles for mobile devices */
-
-  
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {

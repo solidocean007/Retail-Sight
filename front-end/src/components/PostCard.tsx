@@ -87,8 +87,8 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   // Use the postId to fetch the latest post data from the Redux store
-  const updatedPost = useSelector(
-    (state: RootState) => state.posts.posts.find((p) => p.id === post.id) // Parameter 'p' implicitly has an 'any' type. This error appeared out of nowhere.
+  const updatedPost = useSelector((state: RootState) =>
+    state.posts.posts.find((p) => p.id === post.id)
   );
 
   // Extract the likes count and likedByUser status from the updated post object
@@ -97,7 +97,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const openCommentModal = async () => {
     setIsCommentModalOpen(true);
-    await fetchCommentsForPost(post.id); // resolved type error
+    await fetchCommentsForPost(post.id);
   };
 
   const fetchCommentsForPost = async (postId: string) => {
@@ -277,51 +277,61 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="post-user-details">
                 {/* <div onClick={handleOnUserNameClick}> */}
                 <div className="post-user-name">
-                  <p>by:</p>
-                  <a href="#" onClick={handleOnUserNameClick}>
-                    {post.postUserName}
-                  </a>
+                  <p>
+                    by:{" "}
+                    <a
+                      href="#"
+                      onClick={handleOnUserNameClick}
+                      style={{ marginLeft: "4px" }}
+                    >
+                      {post.postUserName}
+                    </a>
+                  </p>
                 </div>
                 <div className="user-company-box">
-                  <p>company: </p>
-                  <a href="#" onClick={(e) => e.preventDefault()}>
-                    {/* create a onCompanyNameClick */}
-                    {post.postUserCompany}
-                  </a>
+                  <p>
+                    company:{" "}
+                    <a
+                      href="#"
+                      onClick={(e) => e.preventDefault()}
+                      style={{ marginLeft: "4px" }}
+                    >
+                      {/* create a onCompanyNameClick */}
+                      {post.postUserCompany}
+                    </a>
+                  </p>
                 </div>
               </div>
             </div>
           </div>
           {/* <div className="token-box"> */}
-            {/* {post.postUserId} */}
-            {/* <h6>id: {post.id}</h6> */}
-            {/* <h6>token: {post.token?.sharedToken}</h6> */}
-            {/* <h6>token: {post.token?.tokenExpiry}</h6> */}
+          {/* {post.postUserId} */}
+          {/* <h6>id: {post.id}</h6> */}
+          {/* <h6>token: {post.token?.sharedToken}</h6> */}
+          {/* <h6>token: {post.token?.tokenExpiry}</h6> */}
           {/* </div> */}
 
-          <div className="like-quantity-row">
-            <div className="likes-box">
-              <button
-                className="like-button"
-                onClick={handleLikePostButtonClick}
-              >
-                {likedByUser ? "❤️" : "🤍"}
-              </button>
-              {likesCount === 0 ? null : likesCount === 1 ? (
-                <h5>{likesCount} like</h5>
-              ) : (
-                <h5>{likesCount} likes</h5>
-              )}
-            </div>
-
-            {post.totalCaseCount > 1 ? (
-              <div className="post-quantity">
-                <h4>Quantity: {post.totalCaseCount}</h4>
-              </div>
-            ) : null}
-          </div>
-
           <div className="description-image">
+            <div className="like-quantity-row">
+              {post.totalCaseCount > 1 ? (
+                <div className="post-quantity">
+                  <h4>Quantity: {post.totalCaseCount}</h4>
+                </div>
+              ) : null}
+              <div className="likes-box">
+                <button
+                  className="like-button"
+                  onClick={handleLikePostButtonClick}
+                >
+                  {likedByUser ? "❤️" : "🤍"}
+                </button>
+                {likesCount === 0 ? null : likesCount === 1 ? (
+                  <h5>{likesCount} like</h5>
+                ) : (
+                  <h5>{likesCount} likes</h5>
+                )}
+              </div>
+            </div>
             <div className="hash-tag-container">
               {/* Display hashtags above the image */}
               <PostDescription
@@ -345,7 +355,10 @@ const PostCard: React.FC<PostCardProps> = ({
             {commentCount > 0 && (
               <div className="comment-button-container">
                 {commentCount > 0 && (
-                  <button className="view-comment-button" onClick={openCommentModal}>
+                  <button
+                    className="view-comment-button"
+                    onClick={openCommentModal}
+                  >
                     {showAllComments
                       ? "Hide Comments"
                       : `${commentCount} Comments`}

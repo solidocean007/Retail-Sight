@@ -86,6 +86,14 @@ export const CreatePost = () => {
   });
 
   useEffect(() => {
+    const storedCategory = localStorage.getItem('postCategory') as CategoryType | null;
+    if (storedCategory) {
+      setSelectedCategory(storedCategory);
+      setPost((prevPost) => ({ ...prevPost, category: storedCategory }));
+    }
+  }, []);
+
+  useEffect(() => {
     if (post.visibility === "supplier") {
       setOpenMissionSelection(true);
     } else {
