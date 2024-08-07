@@ -2,7 +2,7 @@
 import { Route, Routes } from "react-router-dom";
 import { SignUpLogin } from "../components/SignUpLogIn";
 import { UserHomePage } from "../components/UserHomePage";
-import { UserProfilePage } from "../components/UserProfilePage";
+// import { UserProfilePage } from "../components/UserProfileViewer";
 import { CreatePost } from "../components/Create-Post/CreatePost";
 import { Dashboard } from "../components/Dashboard";
 import DeveloperDashboard from "../components/DeveloperDashboard";
@@ -34,7 +34,7 @@ export const AppRoutes = () => {
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
       <Route path="user-home-page" element={<UserHomePage />} />
-      <Route path="/profile-page" element={<UserProfilePage />} />
+      {/* <Route path="/profile-page" element={<UserProfilePage />} /> */}
       <Route path="/createPost" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/tutorial" element={<TutorialPage />} />

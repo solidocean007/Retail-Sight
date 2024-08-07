@@ -8,19 +8,19 @@ const MenuTab = ({ onOptionSelect, show }: { onOptionSelect: (option: string) =>
   return (
     <div className={menuClass}>
       <div className="menu-option" onClick={() => onOptionSelect('createPost')}>
-        <span>Create Post</span>
+        <span>Create</span>
       </div>
       <div className="menu-option filters-option" onClick={() => onOptionSelect('filters')}>
-        <span>Post Filters</span>
+        <span>Filters</span>
       </div>
       <div className="menu-option" onClick={() => onOptionSelect('dashboard')}>
-        <span>Company Dashboard</span>
+        <span>Dashboard</span>
       </div>
       <div className="menu-option" onClick={() => onOptionSelect('collections')}>
         <span>Collections</span>
       </div>
       <div className="menu-option" onClick={() => onOptionSelect('tutorial')}>
-        <span>New User Tutorial</span>
+        <span>Tutorial</span>
       </div>
     </div>
   );

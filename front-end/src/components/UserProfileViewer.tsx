@@ -1,17 +1,19 @@
 import { Container } from "@mui/material";
 import { ProfileEditPage } from "./ProfileEditPage";
-import { useState } from "react";
+import React, { useState } from "react";
 import './userProfilePage.css';
-import { useSelector } from "react-redux";
-import { RootState } from "../utils/store";
 import { UserProfilePosts } from "./UserProfilePosts/UserProfilePosts";
 import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
-import { UserProfilePageHelmet } from "../utils/helmetConfigurations";
+import { UserType } from "../utils/types";
+// import { UserProfilePageHelmet } from "../utils/helmetConfigurations";
 
-export const UserProfilePage = () => {
+interface UserProfileViewerProps {
+  user: UserType | null;
+}
+
+const UserProfileViewer: React.FC<UserProfileViewerProps> = ({user}) => {
   const [openEdit, setOpenEdit] = useState(false);
-  const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const navigate = useNavigate();
 
   const openProfileEdit = () => {
@@ -24,14 +26,14 @@ export const UserProfilePage = () => {
 
   return (
     <>
-    <UserProfilePageHelmet />
+    {/* <UserProfilePageHelmet /> */}
     <Container>
       <div className="user-profile-page-header">
       <LogOutButton />
 
         <div className="user-edit-section">
           <div className="user-name">
-            {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Loading..."}
+            {user ? `${user.firstName} ${user.lastName}` : "Loading..."}
           </div>
           <button onClick={openProfileEdit}>Edit Profile</button>
           {openEdit && <ProfileEditPage setOpenEdit={setOpenEdit}/>}
@@ -42,7 +44,7 @@ export const UserProfilePage = () => {
       </div>
       <div className="user-posts">
         <h3>Your Posts</h3>
-        <UserProfilePosts currentUser={currentUser} />
+        <UserProfilePosts currentUser={user} />
       </div>
       <div className="user-saved-stores">
         <h3>Your Saved Stores</h3>
@@ -52,3 +54,5 @@ export const UserProfilePage = () => {
     </>
   );
 };
+
+export default UserProfileViewer;
