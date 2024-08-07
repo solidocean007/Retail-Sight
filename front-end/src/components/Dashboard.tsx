@@ -31,9 +31,10 @@ import { DashboardHelmet } from "../utils/helmetConfigurations";
 import { getFunctions, httpsCallable } from "@firebase/functions";
 import PendingInvites from "./PendingInvites";
 import TeamsViewer from "./TeamsViewer";
+import { Container } from "@mui/material";
 // import firebase from "firebase/compat/app";
 
-export const Dashboard = () => {
+const Dashboard = () => {
   const [showPendingInvites, setShowPendingInvites] = useState(false);
   const [showAllEmployees, setShowAllEmployees] = useState(false);
   const [showProfile, setShowShowProfile] = useState(false);
@@ -208,8 +209,8 @@ export const Dashboard = () => {
       }
     };
 
-  //   loadFromIndexedDB();
-  // }, []);
+    loadFromIndexedDB();
+  }, []);
 
   // Type guard function to check if a string is a valid role
   function isValidRole(role: string): role is UserType["role"] {
@@ -365,8 +366,9 @@ export const Dashboard = () => {
           </section>
         </main>
       </div>
-    </>
+    <Container />
   );
 };
+
 
 export default Dashboard;
