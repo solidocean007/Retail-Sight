@@ -331,24 +331,24 @@ export const UserHomePageHelmet = () => (
 );
 
 
-export const UserProfilePageHelmet = () => (
-  <Helmet>
-    <title>User Profile | Displaygram</title>
-    <meta name="description" content="View and customize your user profile on Displaygram. Manage your settings, preferences, and display your retail achievements." />
-    <meta name="keywords" content="Displaygram profile, user settings, profile customization, display achievements, account management" />
-    <link rel="canonical" href="https://displaygram.com/profile-page" />
-    <meta property="og:title" content="Personalize Your Profile | Displaygram" />
-    <meta property="og:description" content="Tailor your Displaygram profile to showcase your retail display achievements and preferences. Manage your account settings here." />
-    <meta property="og:url" content="https://displaygram.com/profile-page" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://firebasestorage.googleapis.com/path-to-your-profile-page-og-image.jpg" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Your Displaygram Profile" />
-    <meta name="twitter:description" content="Showcase your retail expertise and customize your presence on Displaygram in your user profile." />
-    <meta name="twitter:image" content="https://firebasestorage.googleapis.com/path-to-your-profile-page-twitter-image.jpg" />
-    <meta name="twitter:url" content="https://displaygram.com/profile-page" />
-  </Helmet>
-);
+// export const UserProfilePageHelmet = () => (
+//   <Helmet>
+//     <title>User Profile | Displaygram</title>
+//     <meta name="description" content="View and customize your user profile on Displaygram. Manage your settings, preferences, and display your retail achievements." />
+//     <meta name="keywords" content="Displaygram profile, user settings, profile customization, display achievements, account management" />
+//     <link rel="canonical" href="https://displaygram.com/profile-page" />
+//     <meta property="og:title" content="Personalize Your Profile | Displaygram" />
+//     <meta property="og:description" content="Tailor your Displaygram profile to showcase your retail display achievements and preferences. Manage your account settings here." />
+//     <meta property="og:url" content="https://displaygram.com/profile-page" />
+//     <meta property="og:type" content="website" />
+//     <meta property="og:image" content="https://firebasestorage.googleapis.com/path-to-your-profile-page-og-image.jpg" />
+//     <meta name="twitter:card" content="summary_large_image" />
+//     <meta name="twitter:title" content="Your Displaygram Profile" />
+//     <meta name="twitter:description" content="Showcase your retail expertise and customize your presence on Displaygram in your user profile." />
+//     <meta name="twitter:image" content="https://firebasestorage.googleapis.com/path-to-your-profile-page-twitter-image.jpg" />
+//     <meta name="twitter:url" content="https://displaygram.com/profile-page" />
+//   </Helmet>
+// );
 
 
 export const CreatePostHelmet = () => (
