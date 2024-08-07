@@ -49,13 +49,15 @@ import MenuIcon from "@mui/icons-material/Menu";
 import EmployeesViewer from "./EmployeesViewer";
 import UserProfileViewer from "./UserProfileViewer";
 import ApiViewer from "./ApiViewer";
+import { handleLogout } from "../utils/validation/authenticate";
+import LogOutButton from "./LogOutButton";
 
 export const Dashboard = () => {
   const [showPendingInvites, setShowPendingInvites] = useState(false);
   const [showAllEmployees, setShowAllEmployees] = useState(false);
   const [showProfile, setShowShowProfile] = useState(false);
   const [showTeams, setShowTeams] = useState(true);
-  const [showApiViewer, setShowApiViewer] = useState(true);
+  const [showApiViewer, setShowApiViewer] = useState(false);
 
   const user = useSelector(selectUser);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -70,10 +72,10 @@ export const Dashboard = () => {
   // const companyUsers = useSelector(selectCompanyUsers); // this is a selector to company users stored in state.  its not beign used right now
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
-  // const isAdmin = user?.role === "admin";
-  // const isDeveloper = user?.role === "developer";
-  // const isSuperAdmin = user?.role === "super-admin";
-  // const companyName = user?.company;
+  const isAdmin = user?.role === "admin";
+  const isDeveloper = user?.role === "developer";
+  const isSuperAdmin = user?.role === "super-admin";
+  const companyName = user?.company;
 
   // const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const handleHomeClick = () => {
@@ -288,7 +290,7 @@ export const Dashboard = () => {
       {showTeams && <TeamsViewer />}
       {showAllEmployees && <EmployeesViewer user={user} companyId={companyId} /> }
       {showProfile && <UserProfileViewer  user={user} />}
-      {showApiViewer && <ApiViewer />}
+      {(showApiViewer && user) && (<ApiViewer  />)}
 
       </Box>
 
@@ -310,8 +312,13 @@ export const Dashboard = () => {
           <ListItem onClick={handleApiClick}>
             <ListItemText primary="Api" />
           </ListItem>
+          <ListItem >
+            {/* <ListItemText primary="Logout" /> */}
+            <LogOutButton />
+          </ListItem>
         </List>
       </Drawer>
+      
     </Container>
   );
 };
