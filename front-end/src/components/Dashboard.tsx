@@ -48,12 +48,14 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import EmployeesViewer from "./EmployeesViewer";
 import UserProfileViewer from "./UserProfileViewer";
+import ApiViewer from "./ApiViewer";
 
 export const Dashboard = () => {
   const [showPendingInvites, setShowPendingInvites] = useState(false);
   const [showAllEmployees, setShowAllEmployees] = useState(false);
   const [showProfile, setShowShowProfile] = useState(false);
   const [showTeams, setShowTeams] = useState(true);
+  const [showApiViewer, setShowApiViewer] = useState(true);
 
   const user = useSelector(selectUser);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -104,6 +106,7 @@ export const Dashboard = () => {
     setShowTeams(false);
     setShowAllEmployees(false);
     setShowShowProfile(false);
+    setShowApiViewer(true);
   }
 
   const toggleDrawer =
@@ -285,6 +288,7 @@ export const Dashboard = () => {
       {showTeams && <TeamsViewer />}
       {showAllEmployees && <EmployeesViewer user={user} companyId={companyId} /> }
       {showProfile && <UserProfileViewer  user={user} />}
+      {showApiViewer && <ApiViewer />}
 
       </Box>
 
