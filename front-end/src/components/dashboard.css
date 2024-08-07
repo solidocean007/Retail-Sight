@@ -1,8 +1,10 @@
 /* dashboard.css */
-.dashboard-container {
+/* .dashboard-container {
   display: flex;
-  width: 100%;
-}
+  flex-direction: column;
+  align-items: start;
+  padding: 20px;
+} */
 
 .dashboard-sidebar {
   display: none;
