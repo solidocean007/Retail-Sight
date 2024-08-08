@@ -10,7 +10,7 @@ import { db } from "../utils/firebase";
 import CollectionForm from "./CollectionForm";
 import { CollectionType, CollectionWithId } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 import "./collectionsPage.css";
 import { addOrUpdateCollection, getCollectionsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import CustomConfirmation from "./CustomConfirmation";
@@ -169,7 +169,7 @@ const CollectionsPage = () => {
 
       {collections.length === 0 && <div>No collections</div>}
       {loading ? (
-        <p>Loading...</p>
+        <CircularProgress />
       ) : (
         <ul className="collections-list">
           {collections.map((collection) => (

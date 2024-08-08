@@ -16,6 +16,7 @@ import {
   AccordionSummary,
   Box,
   Button,
+  CircularProgress,
   Container,
   List,
   ListItem,
@@ -45,7 +46,6 @@ type OptionType = {
 
 const TeamsViewer = () => {
   const dispatch = useAppDispatch();
-  const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const teams = useSelector((state: RootState) => state.CompanyTeam.teams);
   const teamStatus = useSelector(
     (state: RootState) => state.CompanyTeam.status
@@ -179,7 +179,7 @@ const TeamsViewer = () => {
           Teams
         </Typography>
         <Button variant="contained" onClick={toggleShowTeamsCreation}>
-          Create new team
+         {!showTeamsCreation?  "Create new team" : "Close"}
         </Button>
       </Box>
       {showTeamsCreation && (
@@ -188,21 +188,24 @@ const TeamsViewer = () => {
         >
           <Box sx={{ display: "flex", flexDirection: "column", width: "100%", justifyContent: "start" }}>
             <Box
-              sx={{ display: "flex", width: "100%", justifyContent: "start" }}
+              sx={{ display: "flex", maxWidth: "300px", justifyContent: "space-between", margin: "1rem" }}
             >
               <label>Team Name:</label>
+              
               <input
                 type="text"
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
                 placeholder="Enter team name"
+                style={{marginLeft: "1rem", width: "10rem"}}
               />
             </Box>
-            <Box sx={{ display: "flex", width: "100%", justifyContent: "start" }}>
+            <Box sx={{ display: "flex", maxWidth: "300px", justifyContent: "space-between", margin: "1rem" }}>
               <label>Supervisor:</label>
               <select
                 value={supervisorId}
                 onChange={(e) => setSupervisorId(e.target.value)}
+                style={{marginLeft: "1rem", width: "10rem"}}
               >
                 {fellowEmployees.map((employee) => (
                   <option key={employee.uid} value={employee.uid}>
@@ -213,7 +216,7 @@ const TeamsViewer = () => {
             </Box>
           </Box>
 
-          <Box sx={{ width: "100%" }}>
+          <Box sx={{ maxWidth: "900px" }}>
             <label>Team Members:</label>
             <Select
               options={options}
@@ -230,7 +233,7 @@ const TeamsViewer = () => {
       {!showTeamsCreation && (
         <Box sx={{ paddingTop: "10px" }}>
           <div className="teams-viewer">
-            {teamStatus === "loading" && <p>Loading...</p>}
+            {teamStatus === "loading" && <CircularProgress />}
             {teamStatus === "succeeded" && (
               <>
                 {teams.map((team: TeamWithID) => (

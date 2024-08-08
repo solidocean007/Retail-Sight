@@ -7,7 +7,7 @@ import './developerDashboard.css';
 import { DeveloperDashboardHelmet } from '../utils/helmetConfigurations';
 import { deleteUserAuthAndFirestore, updateSelectedUser } from '../DeveloperAdminFunctions/developerAdminFunctions';
 import { UserType } from '../utils/types';
-import { Button, Container } from '@mui/material';
+import { Button, CircularProgress, Container } from '@mui/material';
 import { useState } from 'react';
 import GenerateApiKeyComponent from './GenerateApiKey/ApiKeyModal';
 
@@ -26,7 +26,7 @@ const DeveloperDashboard = () => {
     setIsModalOpen(false);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <CircularProgress />;
   if (error) return <div>Error: {error.message}</div>;
 
   const handleDeleteUser = async (userId: string) => {

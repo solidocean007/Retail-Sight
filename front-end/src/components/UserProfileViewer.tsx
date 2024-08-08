@@ -1,4 +1,4 @@
-import { Container } from "@mui/material";
+import { CircularProgress, Container } from "@mui/material";
 import { ProfileEditPage } from "./ProfileEditPage";
 import React, { useState } from "react";
 import './userProfilePage.css';
@@ -33,7 +33,7 @@ const UserProfileViewer: React.FC<UserProfileViewerProps> = ({user}) => {
 
         <div className="user-edit-section">
           <div className="user-name">
-            {user ? `${user.firstName} ${user.lastName}` : "Loading..."}
+            {user ? `${user.firstName} ${user.lastName}` : <CircularProgress />}
           </div>
           <button onClick={openProfileEdit}>Edit Profile</button>
           {openEdit && <ProfileEditPage setOpenEdit={setOpenEdit}/>}

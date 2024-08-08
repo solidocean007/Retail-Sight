@@ -8,6 +8,7 @@ import { useAppDispatch } from '../utils/store';
 import { PostWithID } from '../utils/types';
 import './viewSharedPost.css'
 import HeaderBar from './HeaderBar';
+import { CircularProgress } from '@mui/material';
 
 interface ValidateTokenResponse {
   valid: boolean;
@@ -60,7 +61,7 @@ export const ViewSharedPost = () => {
   }, [postId, token, dispatch, validateTheLink]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <CircularProgress />;
   }
 
   if (error) {

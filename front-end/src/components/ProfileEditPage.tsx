@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { Button, TextField, Typography } from "@mui/material";
+import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
@@ -103,7 +103,7 @@ export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.
   };
 
   if (!userData) {
-    return <div>Loading...</div>;
+    return <CircularProgress />;
   }
 
   return (

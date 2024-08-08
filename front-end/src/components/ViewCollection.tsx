@@ -9,6 +9,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { useFirebaseAuth } from "../utils/useFirebaseAuth"; // Adjust based on your auth hook
 import { CollectionType, PostWithID } from "../utils/types";
 import "./viewCollection.css";
+import { CircularProgress } from "@mui/material";
 
 interface SelectedPosts { // this isnt used
   [key: string]: boolean;
@@ -223,7 +224,7 @@ export const ViewCollection = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <CircularProgress />;
   }
 
   const handleBackButton = () => {
@@ -235,7 +236,7 @@ export const ViewCollection = () => {
       <div className="view-collection-header">
         <h1>
           Collection:{" "}
-          {collectionDetails ? collectionDetails.name : "Loading..."}
+          {collectionDetails ? collectionDetails.name : <CircularProgress />}
         </h1>
         <button onClick={handleExportSelected}>Export Selected</button>
         <button onClick={handleBackButton}>Back</button>
