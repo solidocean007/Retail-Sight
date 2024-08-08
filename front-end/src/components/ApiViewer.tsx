@@ -9,10 +9,10 @@ import {
   Typography,
 } from "@mui/material";
 import { UserType } from "../utils/types";
-import GenerateApiKeyComponent from "./GenerateApiKey/GenerateApiKeyComponent";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
+import ApiKeyModal from "./GenerateApiKey/ApiKeyModal";
 
 // const ApiViewer = (user: UserType) => {
 const ApiViewer = () => {
@@ -47,12 +47,9 @@ const ApiViewer = () => {
         <Box>
           <Typography variant="h4">API Management</Typography>
           <Button variant="contained" color="primary" onClick={handleOpenModal}>
-            Generate API Key
+            Show API Key
           </Button>
-          <GenerateApiKeyComponent
-            open={isModalOpen}
-            onClose={handleCloseModal}
-          />
+
           <Divider style={{ margin: "20px 0" }} />
           <Typography variant="h6">How to Use the API Key</Typography>
           <List>
@@ -62,13 +59,12 @@ const ApiViewer = () => {
                 secondary={
                   <>
                     <Typography>
-                      Use the <strong>/writeData</strong> endpoint to
-                      communicate new missions.
+                      Use the <strong>/writeData</strong> endpoint to communicate new missions.
                     </Typography>
                     <Typography>Example:</Typography>
-                    <pre>
+                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                       {`
-POST https://<region>-<project-id>.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=missions
+POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=missions
 
 Body:
 {
@@ -89,13 +85,12 @@ Body:
                 secondary={
                   <>
                     <Typography>
-                      Use the <strong>/readData</strong> endpoint to read
-                      submitted missions.
+                      Use the <strong>/readData</strong> endpoint to read submitted missions.
                     </Typography>
                     <Typography>Example:</Typography>
-                    <pre>
+                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                       {`
-GET https://<region>-<project-id>.cloudfunctions.net/readData?apiKey=YOUR_API_KEY&collection=submittedMissions
+GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API_KEY&collection=submittedMissions
                       `}
                     </pre>
                   </>
@@ -120,6 +115,7 @@ GET https://<region>-<project-id>.cloudfunctions.net/readData?apiKey=YOUR_API_KE
       ) : (
         <NoApiPermissionUser />
       )}
+      <ApiKeyModal open={isModalOpen} onClose={handleCloseModal} />
     </Container>
   );
 };

@@ -48,7 +48,7 @@ function App() {
         <ThemeToggle />
         <Router>
           <AppRoutes /> {/* Use your routes component here */}
-          <Footer />
+          {/* <Footer /> */}
         </Router>
         <Snackbar
           message={snackbar.message}

@@ -1,11 +1,41 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { selectCompanyUsers, selectUser } from "../Slices/userSlice";
+import {
+  selectCompanyUsers,
+  selectUser,
+  setCompanyUsers,
+} from "../Slices/userSlice";
 import Select, { ActionMeta, MultiValue } from "react-select";
 import "./teamsViewer.css";
 import { addTeam, fetchTeams } from "../thunks/teamsThunks";
-import { CompanyTeamType, TeamWithID } from "../utils/types";
+import { CompanyTeamType, TeamWithID, UserType } from "../utils/types";
 import { RootState, useAppDispatch } from "../utils/store";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  Container,
+  List,
+  ListItem,
+  Typography,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  setDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "../utils/firebase";
+import {
+  getCompanyUsersFromIndexedDB,
+  saveCompanyUsersToIndexedDB,
+} from "../utils/database/userDataIndexedDB";
 
 // Define the type for options
 type OptionType = {
@@ -15,6 +45,7 @@ type OptionType = {
 
 const TeamsViewer = () => {
   const dispatch = useAppDispatch();
+  const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const teams = useSelector((state: RootState) => state.CompanyTeam.teams);
   const teamStatus = useSelector(
     (state: RootState) => state.CompanyTeam.status
@@ -27,6 +58,62 @@ const TeamsViewer = () => {
 
   const fellowEmployees = useSelector(selectCompanyUsers);
   const user = useSelector(selectUser);
+  const companyId = useSelector(
+    (state: RootState) => state.user.currentUser?.companyId
+  );
+
+  useEffect(() => {
+    if (!companyId) {
+      // If companyId is not defined, do not proceed with the query
+      console.log("companyId is undefined, skipping Firestore query.");
+      return;
+    }
+
+    const q = query(
+      collection(db, "users"),
+      where("companyId", "==", companyId)
+    );
+
+    // Firestore real-time subscription setup
+    const unsubscribe = onSnapshot(
+      q,
+      async (onSnapshot) => {
+        const usersFromFirestore = onSnapshot.docs.map(
+          (doc) =>
+            ({
+              ...doc.data(),
+              uid: doc.id,
+            } as UserType)
+        );
+
+        dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
+        setLocalUsers(usersFromFirestore); // Update local state
+
+        // Save the updated list to IndexedDB
+        console.log("saving users to indexedDB");
+        await saveCompanyUsersToIndexedDB(usersFromFirestore);
+      },
+      (error) => {
+        console.error("Error fetching users:", error);
+      }
+    );
+
+    // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
+    return () => unsubscribe();
+  }, [companyId]);
+
+  // Separate useEffect to attempt to load from IndexedDB when component mounts
+  useEffect(() => {
+    const loadFromIndexedDB = async () => {
+      // Attempt to get users from IndexedDB
+      const indexedDBUsers = await getCompanyUsersFromIndexedDB();
+      if (indexedDBUsers && indexedDBUsers.length > 0) {
+        setLocalUsers(indexedDBUsers);
+      }
+    };
+
+    loadFromIndexedDB();
+  }, []);
 
   useEffect(() => {
     if (teamStatus === "idle") {
@@ -84,67 +171,49 @@ const TeamsViewer = () => {
   };
 
   return (
-    <>
-      <div className="team-container">
-        <button className="button-blue" onClick={toggleShowTeamsCreation}>
+    <Container sx={{ padding: "10px" }}>
+      <Box
+        sx={{ display: "flex", width: "100%", justifyContent: "space-between" }}
+      >
+        <Typography variant="h2" sx={{ fontSize: "2rem" }}>
+          Teams
+        </Typography>
+        <Button variant="contained" onClick={toggleShowTeamsCreation}>
           Create new team
-        </button>
-        <h1>Current Teams</h1>
-
-        <div className="teams-viewer">
-          {teamStatus === "loading" && <p>Loading...</p>}
-          {teamStatus === "succeeded" && (
-            <>
-              {teams.map((team: TeamWithID) => (
-                <div className="team" key={team.id}>
-                  <h3>{team.teamName}</h3>
-                  {/* Display the first supervisor's name, or list all if there are multiple */}
-                  <p>
-                    Supervisor:{" "}
-                    {team.teamSupervisor.map((sup) => sup.name).join(", ")}
-                  </p>
-                  {/* Map over teamMembers to extract names and then join them with a comma */}
-                  <div>
-                    Members:{" "}
-                    <ul>
-                      {team.teamMembers.map((member, index) => (
-                        <li key={index}>{member.name}</li> // Assuming each member has a unique 'id'
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-
-          {teamStatus === "failed" && <p>Error: {teamError}</p>}
-        </div>
-      </div>
+        </Button>
+      </Box>
       {showTeamsCreation && (
-        <div className="team-creation-container">
-          <div>
-            <label>Team Name:</label>
-            <input
-              type="text"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Enter team name"
-            />
-          </div>
-          <div>
-            <label>Supervisor:</label>
-            <select
-              value={supervisorId}
-              onChange={(e) => setSupervisorId(e.target.value)}
+        <Box
+          sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" } }}
+        >
+          <Box sx={{ display: "flex", flexDirection: "column", width: "100%", justifyContent: "start" }}>
+            <Box
+              sx={{ display: "flex", width: "100%", justifyContent: "start" }}
             >
-              {fellowEmployees.map((employee) => (
-                <option key={employee.uid} value={employee.uid}>
-                  {employee.firstName} {employee.lastName}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="team-members-selector">
+              <label>Team Name:</label>
+              <input
+                type="text"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="Enter team name"
+              />
+            </Box>
+            <Box sx={{ display: "flex", width: "100%", justifyContent: "start" }}>
+              <label>Supervisor:</label>
+              <select
+                value={supervisorId}
+                onChange={(e) => setSupervisorId(e.target.value)}
+              >
+                {fellowEmployees.map((employee) => (
+                  <option key={employee.uid} value={employee.uid}>
+                    {employee.firstName} {employee.lastName}
+                  </option>
+                ))}
+              </select>
+            </Box>
+          </Box>
+
+          <Box sx={{ width: "100%" }}>
             <label>Team Members:</label>
             <Select
               options={options}
@@ -153,11 +222,54 @@ const TeamsViewer = () => {
               className="basic-multi-select"
               classNamePrefix="select"
             />
-          </div>
+          </Box>
           <button onClick={handleCreateTeam}>Submit Team</button>
-        </div>
+        </Box>
       )}
-    </>
+
+      {!showTeamsCreation && (
+        <Box sx={{ paddingTop: "10px" }}>
+          <div className="teams-viewer">
+            {teamStatus === "loading" && <p>Loading...</p>}
+            {teamStatus === "succeeded" && (
+              <>
+                {teams.map((team: TeamWithID) => (
+                  <Accordion
+                    className="team"
+                    key={team.id}
+                    sx={{ width: { xs: "14rem" }, marginRight: "10px" }}
+                  >
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      aria-controls="panel1-content"
+                      id="panel1-header"
+                    >
+                      <Typography>{team.teamName}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography>
+                        Supervisor:{" "}
+                        {team.teamSupervisor.map((sup) => sup.name).join(", ")}
+                      </Typography>
+                      <Box>
+                        <Typography>Members: </Typography>
+                        <List>
+                          {team.teamMembers.map((member, index) => (
+                            <ListItem key={index}>{member.name}</ListItem> // Assuming each member has a unique 'id'
+                          ))}
+                        </List>
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </>
+            )}
+
+            {teamStatus === "failed" && <p>Error: {teamError}</p>}
+          </div>
+        </Box>
+      )}
+    </Container>
   );
 };
 

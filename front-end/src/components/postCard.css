@@ -4,7 +4,7 @@
   flex-direction: column;
   height: 100%;
   background: var(--post-card-background);
-  padding-bottom: 1rem;
+  /* padding-bottom: 1rem; */
   padding-top: auto;
   margin: 0;
   justify-content: space-between;

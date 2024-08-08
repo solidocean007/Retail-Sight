@@ -18,11 +18,6 @@
   border-radius: 5px;
 }
 
-.team-members-selector{
-  width: 50%;
-  min-width: 10rem;
-}
-
 
 /* Mobile devices */
 @media (max-width: 320px) {

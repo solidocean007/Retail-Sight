@@ -69,7 +69,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       </div>
 
       <div className="header-details">
-        <button
+        {/* <button
           className="profile-btn"
           // variant="contained"
           color="primary"
@@ -85,7 +85,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
               "Sign-up / Login"
             )}
           </h2>
-        </button>
+        </button> */}
         <div className="header-buttons">
           <div className="menu-buttons">
             <button onClick={handleCollectionsClick}>Collections</button>

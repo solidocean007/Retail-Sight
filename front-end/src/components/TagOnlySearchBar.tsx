@@ -99,6 +99,7 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+        sx={{margin: "0px"}}
       />
       {/* I want the button below to be search if its a string that begins with either '#' or '*' if its  */}
       <button

@@ -124,7 +124,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     if (windowWidth <= 500) {
       // return 720;
       // return 620;
-      return 725;
+      return 675;
     } else if (windowWidth <= 700) {
       return 800;
     } else if (windowWidth <= 800) {

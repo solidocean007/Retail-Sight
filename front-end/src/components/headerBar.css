@@ -1,6 +1,6 @@
 .header-bar {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   width: 100%;
@@ -45,11 +45,12 @@
   font-size: smaller;
   color: var(--text-color);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: start;
 }
 
-.website-title h1 {
-  margin: 0 5px;
+.website-title h1, .website-title p {
+  margin: 1px 0 0 5px;
 }
 
 .profile-btn {

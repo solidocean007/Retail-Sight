@@ -52,12 +52,19 @@ import ApiViewer from "./ApiViewer";
 import { handleLogout } from "../utils/validation/authenticate";
 import LogOutButton from "./LogOutButton";
 
+type DashboardModeType = "TeamMode" | "UsersMode" | "ProfileMode" | "ApiMode";
+
 export const Dashboard = () => {
   const [showPendingInvites, setShowPendingInvites] = useState(false);
-  const [showAllEmployees, setShowAllEmployees] = useState(false);
-  const [showProfile, setShowShowProfile] = useState(false);
-  const [showTeams, setShowTeams] = useState(true);
-  const [showApiViewer, setShowApiViewer] = useState(false);
+
+  // const [showAllEmployees, setShowAllEmployees] = useState(false);
+  // const [showProfile, setShowShowProfile] = useState(false);
+  // const [showTeams, setShowTeams] = useState(true);
+  // const [showApiViewer, setShowApiViewer] = useState(false);
+
+  // I need a better way to switch between showProfile, showTeams, showApiViewer and showAllEmployees
+  const [dashboardMode, setDashboardMode] =
+    useState<DashboardModeType>("TeamMode");
 
   const user = useSelector(selectUser);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -68,7 +75,7 @@ export const Dashboard = () => {
   const dispatch = useAppDispatch();
   const [drawerOpen, setDrawerOpen] = useState(false);
   // const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
+ 
   // const companyUsers = useSelector(selectCompanyUsers); // this is a selector to company users stored in state.  its not beign used right now
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
@@ -78,38 +85,10 @@ export const Dashboard = () => {
   const companyName = user?.company;
 
   // const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const handleHomeClick = () => {
-    toggleDrawer(false);
-    navigate("/user-home-page");
+  const handleMenuItemClick = (mode: DashboardModeType) => () => {
+    setDashboardMode(mode);
+    setDrawerOpen(false);
   };
-
-  const handleTeamsClick = () => {
-    toggleDrawer(false);
-    setShowTeams(true);
- 
-  }
-
-  const handleUsersClick = () => {
-    console.log('click')
-    toggleDrawer(false);
-    setShowTeams(false);
-    setShowAllEmployees(true);
-  }
-
-  const handleProfileClick = () => {
-    toggleDrawer(false);
-    setShowTeams(false);
-    setShowAllEmployees(false);
-    setShowShowProfile(true);
-  }
-
-  const handleApiClick = () => {
-    toggleDrawer(false);
-    setShowTeams(false);
-    setShowAllEmployees(false);
-    setShowShowProfile(false);
-    setShowApiViewer(true);
-  }
 
   const toggleDrawer =
     (open: boolean) => (event: React.MouseEvent | React.KeyboardEvent) => {
@@ -125,12 +104,6 @@ export const Dashboard = () => {
 
   // function toggleInvites() {
   //   setShowPendingInvites((prevState) => !prevState);
-  // }
-  // function toggleShowAllEmployees() {
-  //   setShowAllEmployees((prevState) => !prevState);
-  // }
-  // function toggleShowTeams() {
-  //   setShowTeams((prevState) => !prevState);
   // }
 
   // const handleInviteSubmit = async (
@@ -177,45 +150,7 @@ export const Dashboard = () => {
   //   }
   // };
 
-  // useEffect(() => {
-  //   if (!companyId) {
-  //     // If companyId is not defined, do not proceed with the query
-  //     console.log("companyId is undefined, skipping Firestore query.");
-  //     return;
-  //   }
-
-  //   const q = query(
-  //     collection(db, "users"),
-  //     where("companyId", "==", companyId)
-  //   );
-
-  //   // Firestore real-time subscription setup
-  //   const unsubscribe = onSnapshot(
-  //     q,
-  //     async (snapshot) => {
-  //       const usersFromFirestore = snapshot.docs.map(
-  //         (doc) =>
-  //           ({
-  //             ...doc.data(),
-  //             uid: doc.id,
-  //           } as UserType)
-  //       );
-
-  //       dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
-  //       setLocalUsers(usersFromFirestore); // Update local state
-
-  //       // Save the updated list to IndexedDB
-  //       console.log("saving users to indexedDB");
-  //       await saveCompanyUsersToIndexedDB(usersFromFirestore);
-  //     },
-  //     (error) => {
-  //       console.error("Error fetching users:", error);
-  //     }
-  //   );
-
-  //   // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
-  //   return () => unsubscribe();
-  // }, [companyId]);
+ 
 
   // Separate useEffect to attempt to load from IndexedDB when component mounts
   // useEffect(() => {
@@ -286,39 +221,37 @@ export const Dashboard = () => {
         </AppBar>
       </Box>
       <Box>
-
-      {showTeams && <TeamsViewer />}
-      {showAllEmployees && <EmployeesViewer user={user} companyId={companyId} /> }
-      {showProfile && <UserProfileViewer  user={user} />}
-      {(showApiViewer && user) && (<ApiViewer  />)}
-
+        {dashboardMode === "TeamMode" && <TeamsViewer />}
+        {dashboardMode === "UsersMode" && (
+          <EmployeesViewer user={user} companyId={companyId} />
+        )}
+        {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
+        {dashboardMode === "ApiMode" && <ApiViewer />}
       </Box>
-
 
       <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>
         <List>
-          <ListItem onClick={handleHomeClick}>
+          <ListItem onClick={() => navigate("/user-home-page")}>
             <ListItemText primary="Home" />
           </ListItem>
-          <ListItem onClick={handleTeamsClick}>
+          <ListItem onClick={handleMenuItemClick("TeamMode")}>
             <ListItemText primary="Teams" />
           </ListItem>
-          <ListItem onClick={handleUsersClick}>
+          <ListItem onClick={handleMenuItemClick("UsersMode")}>
             <ListItemText primary="Users" />
           </ListItem>
-          <ListItem onClick={handleProfileClick}>
+          <ListItem onClick={handleMenuItemClick("ProfileMode")}>
             <ListItemText primary="Profile" />
           </ListItem>
-          <ListItem onClick={handleApiClick}>
+          <ListItem onClick={handleMenuItemClick("ApiMode")}>
             <ListItemText primary="Api" />
           </ListItem>
-          <ListItem >
+          <ListItem>
             {/* <ListItemText primary="Logout" /> */}
             <LogOutButton />
           </ListItem>
         </List>
       </Drawer>
-      
     </Container>
   );
 };
