@@ -6,6 +6,7 @@ import "./headerBar.css";
 import MenuTab from "./MenuTab";
 import { useState } from "react";
 import { showMessage } from "../Slices/snackbarSlice";
+import CircleMenu from "./CircleMenu";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
@@ -108,6 +109,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
 
       {showMenuTab && (
         <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab} />
+        // <CircleMenu />
       )}
     </div>
   );

@@ -1,29 +1,64 @@
 /* menuTab.css */
 .menu-tab {
   position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   width: 100%;
-  top: 0;
+  top: 0%;
   right: -100%; /* Initially hidden */
-  background-color: var(--menu-background-color);
+  /* background-color: var(--menu-background-color); */
   z-index: 5;
   transition: left 1s ease-in-out;
   border-bottom-left-radius: 10px;
-  border-top-left-radius: 10px;
+  /* border-top-left-radius: 10px; */
 }
 
 .menu-tab.open {
-  right: 0; /* Slide in */
+  left: 60%;
+  border-radius: 50%; /* Slide in */
+  height: 35%;
+  background-color: blue;
+  top: -16%;
 }
 
 .menu-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 1rem;
-  width: 100%;
+  /* width: 100%; */
+  height: 80px;
+  width: 80px;
   border-bottom: 1px solid #ccc;
   cursor: pointer;
+  background: var(--ivory-black);
   background: var(--ivory-black);
   color: white;
   /* border-bottom-left-radius: 30px; */
   margin: 5px;
+  border-radius: 50%;
+}
+
+.create {
+  position: fixed;
+  width: 100px;
+  height: 100px;
+  left: 50%;
+  top: 12%;
+  background-color: greenyellow;
+  color: #000;
+}
+
+.bottom {
+  position: fixed;
+  left: 75%;
+  top: 15%
+}
+
+.option-top {
+  position: fixed;
+  top: 1%;
 }
 
 /* Add responsive styling if needed */
@@ -50,16 +85,14 @@
   /* Styles for small tablets in portrait */
 }
 
-@media (min-width: 769px) and (max-width: 899px){
-  
+@media (min-width: 769px) and (max-width: 899px) {
 }
 
-@media (min-width: 900px)  {
+@media (min-width: 900px) {
   /* Styles for large tablets in portrait/landscape */
   .filters-option {
     display: none;
   }
- 
 }
 
 /* Laptops and Desktops */
