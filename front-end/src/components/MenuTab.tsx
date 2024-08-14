@@ -16,12 +16,6 @@ const MenuTab = ({ onOptionSelect, show }: { onOptionSelect: (option: string) =>
       <div className="menu-option" onClick={() => onOptionSelect('dashboard')}>
         <span>Dashboard</span>
       </div>
-      {/* <div className="menu-option" onClick={() => onOptionSelect('collections')}>
-        <span>Collections</span>
-      </div> */}
-      <div className="menu-option" onClick={() => onOptionSelect('tutorial')}>
-        <span>Tutorial</span>
-      </div>
     </div>
   );
 };
