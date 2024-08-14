@@ -52,6 +52,7 @@ import ApiViewer from "./ApiViewer";
 import { handleLogout } from "../utils/validation/authenticate";
 import LogOutButton from "./LogOutButton";
 import CollectionsViewer from "./CollectionsViewer";
+import TutorialViewer from "./TutorialViewer";
 
 type DashboardModeType = "TeamMode" | "UsersMode" | "ProfileMode" | "ApiMode" | "CollectionsMode" | "TutorialMode";
 
@@ -138,7 +139,7 @@ export const Dashboard = () => {
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
         {dashboardMode === "ApiMode" && <ApiViewer />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
-        {dashboardMode === "ApiMode" && <ApiViewer />}
+        {dashboardMode === "TutorialMode" && <TutorialViewer/>}
       </Box>
 
       <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>

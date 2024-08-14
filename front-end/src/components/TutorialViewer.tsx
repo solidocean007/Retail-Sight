@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { TutorialPageHelmet } from "../utils/helmetConfigurations";
 // Import other sections
 
-const TutorialPage = () => {
+const TutorialViewer = () => {
   const [currentSection, setCurrentSection] = useState(0);
   const [viewMode, setViewMode] = useState("flip"); // 'flip' or 'scroll'
   const navigate = useNavigate();
@@ -65,12 +65,7 @@ const TutorialPage = () => {
       <TutorialPageHelmet />
       <div className="tutorial-container">
         <h1>Onboarding Tutorial</h1>
-        <button
-          className="nav-button"
-          onClick={() => navigate("/user-home-page")}
-        >
-          Home
-        </button>
+
         <button onClick={toggleViewMode}>
           Switch to {viewMode === "flip" ? "Scroll" : "Flip-Through"} View
         </button>
@@ -81,4 +76,4 @@ const TutorialPage = () => {
   );
 };
 
-export default TutorialPage;
+export default TutorialViewer;
