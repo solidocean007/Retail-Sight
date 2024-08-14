@@ -24,7 +24,7 @@ interface ShareTokenResponse {
   // Include other properties if your function returns more information
 }
 
-const CollectionsPage = () => {
+const CollectionsViewer = () => {
   const [collections, setCollections] = useState<CollectionWithId[]>([]);
   const [collectionToDelete, setCollectionToDelete] = useState<string | null>(
     null
@@ -156,12 +156,6 @@ const CollectionsPage = () => {
 
   return (
     <div className="collections-container">
-      <div className="button-box">
-        {/* <Button className="home-btn" onClick={() => navigate("/")}>Go Back Home</Button> */}
-        <button className="home-btn" onClick={() => navigate("/")}>
-          Home
-        </button>
-      </div>
       <h2>Your Collections</h2>
       <button className="home-btn" onClick={handleOpenCreateCollectionDialog}>
         Create collection
@@ -208,4 +202,4 @@ const CollectionsPage = () => {
   );
 };
 
-export default CollectionsPage;
+export default CollectionsViewer;

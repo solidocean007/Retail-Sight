@@ -11,7 +11,8 @@ import { CollectionType, PostWithID } from "../utils/types";
 import "./viewCollection.css";
 import { CircularProgress } from "@mui/material";
 
-interface SelectedPosts { // this isnt used
+interface SelectedPosts {
+  // this isnt used
   [key: string]: boolean;
 }
 
@@ -20,9 +21,8 @@ interface ExportDummyDataResponse {
   url: string;
 }
 
-
 export const ViewCollection = () => {
-  const [collectionDetails, setCollectionDetails] = // setcollectionsdetails isnt used
+  const [collectionDetails, setCollectionDetails] =
     useState<CollectionType | null>(null);
   const [exporting, setExporting] = useState(false); // exporting isnt used
   const { collectionId, token } = useParams<{
@@ -58,7 +58,7 @@ export const ViewCollection = () => {
 
   useEffect(() => {
     const fetchCollection = async () => {
-      console.log(collectionId)
+      console.log(collectionId);
       if (!collectionId) {
         console.error("Collection ID is undefined.");
         navigate("/page-not-found");
@@ -100,9 +100,9 @@ export const ViewCollection = () => {
             sharedWith: data.sharedWith,
             isShareableOutsideCompany: data.isShareableOutsideCompany,
           };
-        
+
           setCollectionDetails(collectionData);
-          
+
           if (data && Array.isArray(data.posts) && data.posts.length > 0) {
             const actionResult = await dispatch(
               fetchPostsByIds({ postIds: data.posts })
@@ -153,11 +153,11 @@ export const ViewCollection = () => {
   const downloadZipFile = async (url: string) => {
     console.log(`Starting to download zip file from: ${url}`);
     try {
-      console.log("begin download??") 
-      const response = await fetch(url); 
-      console.log('Received response from fetch');
+      console.log("begin download??");
+      const response = await fetch(url);
+      console.log("Received response from fetch");
       const data = await response.blob();
-      console.log('Converted response to blob');
+      console.log("Converted response to blob");
       const downloadUrl = window.URL.createObjectURL(data);
       console.log(`Generated download URL: ${downloadUrl}`);
       const link = document.createElement("a");
@@ -165,10 +165,10 @@ export const ViewCollection = () => {
       link.setAttribute("download", "exported_posts.zip");
       document.body.appendChild(link);
       link.click();
-      console.log('Link clicked for download');
+      console.log("Link clicked for download");
       link.remove(); // Clean up
     } catch (error) {
-      console.error("Failed to download the file:", error); 
+      console.error("Failed to download the file:", error);
     }
   };
 
@@ -187,7 +187,9 @@ export const ViewCollection = () => {
       alert("No posts selected for export.");
       return;
     }
-    console.log(`Filtered posts, total posts to export: ${postIdsToExport.length}`);
+    console.log(
+      `Filtered posts, total posts to export: ${postIdsToExport.length}`
+    );
 
     if (postIdsToExport.length === 0) {
       console.log("No posts selected for export, alerting user");
@@ -205,20 +207,25 @@ export const ViewCollection = () => {
       console.log("Cloud function call successful, result received"); // this logs
       setExporting(true);
 
-      const result = await exportPostsFn({ collectionId, postIds: postIdsToExport });
-      console.log(result)
-      setExporting(false); 
+      const result = await exportPostsFn({
+        collectionId,
+        postIds: postIdsToExport,
+      });
+      console.log(result);
+      setExporting(false);
 
       if (result.data.url) {
-        console.log(`Download URL received: ${result.data.url}, initiating download`); // this line logs the correct url to begin download
-        downloadZipFile(result.data.url); 
+        console.log(
+          `Download URL received: ${result.data.url}, initiating download`
+        ); // this line logs the correct url to begin download
+        downloadZipFile(result.data.url);
       } else {
         console.log("No URL received from cloud function, alerting user");
         alert("Failed to export posts. Please try again.");
       }
     } catch (error) {
       console.error("Error exporting posts:", error);
-      setExporting(false); 
+      setExporting(false);
       alert("Error exporting posts. Please try again."); // Error exporting posts. Please try again.
     }
   };
@@ -227,9 +234,9 @@ export const ViewCollection = () => {
     return <CircularProgress />;
   }
 
-  const handleBackButton = () => {
-    navigate('/collections')
-  }
+  // const handleBackButton = () => {
+  //   navigate('/collections')
+  // }
 
   return (
     <div className="view-collection-container">
@@ -239,7 +246,8 @@ export const ViewCollection = () => {
           {collectionDetails ? collectionDetails.name : <CircularProgress />}
         </h1>
         <button onClick={handleExportSelected}>Export Selected</button>
-        <button onClick={handleBackButton}>Back</button>
+        {/* <button onClick={handleBackButton}>Back</button> */}
+        <button onClick={()=> navigate('/dashboard')}>Back</button>
       </div>
 
       <div className="posts-list">

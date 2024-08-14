@@ -14,7 +14,6 @@ import TermsOfService from "../components/TermsService";
 import HelpSupport from "../components/HelpSupport";
 import SplashPage from "../components/SplashPage";
 import TutorialPage from "../components/TutorialPage";
-import CollectionsPage from "../components/CollectionsPage";
 import { ViewCollection } from "../components/ViewCollection";
 import { PageNotFound } from "../components/ErrorPages/PageNotFound";
 import { AccessDenied } from "../components/ErrorPages/AccessDenied";
@@ -38,7 +37,6 @@ export const AppRoutes = () => {
       <Route path="/createPost" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/tutorial" element={<TutorialPage />} />
-      <Route path="/collections" element={<CollectionsPage />} />
       <Route path="/view-collection/:collectionId" element={<ViewCollection />} />
       <Route path="/view-shared-post" element={<ViewSharedPost />} />
       <Route path="/access-denied" element={<AccessDenied/>}/>

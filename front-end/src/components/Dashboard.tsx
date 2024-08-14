@@ -51,8 +51,9 @@ import UserProfileViewer from "./UserProfileViewer";
 import ApiViewer from "./ApiViewer";
 import { handleLogout } from "../utils/validation/authenticate";
 import LogOutButton from "./LogOutButton";
+import CollectionsViewer from "./CollectionsViewer";
 
-type DashboardModeType = "TeamMode" | "UsersMode" | "ProfileMode" | "ApiMode";
+type DashboardModeType = "TeamMode" | "UsersMode" | "ProfileMode" | "ApiMode" | "CollectionsMode" | "TutorialMode";
 
 export const Dashboard = () => {
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
@@ -136,6 +137,8 @@ export const Dashboard = () => {
         )}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
         {dashboardMode === "ApiMode" && <ApiViewer />}
+        {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
+        {dashboardMode === "ApiMode" && <ApiViewer />}
       </Box>
 
       <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>
@@ -154,6 +157,12 @@ export const Dashboard = () => {
           </ListItem>
           <ListItem onClick={handleMenuItemClick("ApiMode")}>
             <ListItemText primary="Api" />
+          </ListItem>
+          <ListItem onClick={handleMenuItemClick("CollectionsMode")}>
+            <ListItemText primary="Collections" />
+          </ListItem>
+          <ListItem onClick={handleMenuItemClick("TutorialMode")}>
+            <ListItemText primary="Tutorial" />
           </ListItem>
           <ListItem>
             {/* <ListItemText primary="Logout" /> */}

@@ -40,12 +40,6 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     });
   };
 
-  const handleCollectionsClick = () => {
-    protectedAction(() => {
-      navigate("/collections");
-    });
-  };
-
   const handleMenuOptionSelect = (option: string) => {
     setShowMenuTab(false); // Close the menu
     if (option === "createPost") {
@@ -56,9 +50,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       handleTutorialClick();
     } else if (option === "dashboard") {
       handleDashboardClick();
-    } else if (option === "collections") {
-      handleCollectionsClick();
-    }
+    } 
   };
 
   return (
@@ -87,9 +79,9 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           </h2>
         </button> */}
         <div className="header-buttons">
-          <div className="menu-buttons">
+          {/* <div className="menu-buttons">
             <button onClick={handleCollectionsClick}>Collections</button>
-          </div>
+          </div> */}
           <div className="menu-buttons">
             <button onClick={handleDashboardClick}>Dashboard</button>
           </div>
