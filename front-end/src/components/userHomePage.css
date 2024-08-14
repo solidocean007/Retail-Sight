@@ -92,6 +92,7 @@
 @media (min-width: 900px)  {
   /* Styles for large tablets in portrait/landscape */
   .side-bar-container {
+    margin-top: 15px;
     display: flex;
     align-items: start;
     justify-content: flex-start;

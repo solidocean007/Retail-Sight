@@ -44,7 +44,13 @@ type OptionType = {
   label: string;
 };
 
-const TeamsViewer = () => {
+const TeamsViewer = ({
+  localUsers,
+  setLocalUsers,
+}: {
+  localUsers: UserType[];
+  setLocalUsers: React.Dispatch<React.SetStateAction<UserType[]>>;
+}) => {
   const dispatch = useAppDispatch();
   const teams = useSelector((state: RootState) => state.CompanyTeam.teams);
   const teamStatus = useSelector(
@@ -55,7 +61,6 @@ const TeamsViewer = () => {
   const [teamName, setTeamName] = useState("");
   const [supervisorId, setSupervisorId] = useState("");
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
-
   const fellowEmployees = useSelector(selectCompanyUsers);
   const user = useSelector(selectUser);
   const companyId = useSelector(
@@ -65,7 +70,7 @@ const TeamsViewer = () => {
   useEffect(() => {
     if (!companyId) {
       // If companyId is not defined, do not proceed with the query
-      console.log("companyId is undefined, skipping Firestore query.");
+      // console.log("companyId is undefined, skipping Firestore query.");
       return;
     }
 
@@ -90,7 +95,7 @@ const TeamsViewer = () => {
         setLocalUsers(usersFromFirestore); // Update local state
 
         // Save the updated list to IndexedDB
-        console.log("saving users to indexedDB");
+        // console.log("saving users to indexedDB");
         await saveCompanyUsersToIndexedDB(usersFromFirestore);
       },
       (error) => {
@@ -127,28 +132,28 @@ const TeamsViewer = () => {
 
   function handleCreateTeam() {
     if (teamName && supervisorId && teamMembers.length > 0) {
+      const supervisorUser = fellowEmployees.find(
+        (emp) => emp.uid === supervisorId
+      );
       const teamData: CompanyTeamType = {
         teamName: teamName,
         teamSupervisor: [
           {
             uid: supervisorId,
-            name:
-              fellowEmployees.find((emp) => emp.uid === supervisorId)
-                ?.firstName || "Unknown", // Fallback if name is undefined
+            name: `${supervisorUser?.firstName} ${supervisorUser?.lastName}`,
           },
         ],
         teamMembers: teamMembers.map((uid) => {
           const member = fellowEmployees.find((emp) => emp.uid === uid);
           return {
             uid,
-            name: member ? member.firstName || "Unknown" : "Unknown", // Provide a default for undefined names
+            name: `${member?.firstName} ${member?.lastName}`,
           };
         }),
       };
 
-      dispatch(addTeam(teamData)); // Dispatch the thunk to create the team
+      dispatch(addTeam(teamData));
 
-      // Reset form after submission
       setTeamName("");
       setSupervisorId("");
       setTeamMembers([]);
@@ -179,33 +184,52 @@ const TeamsViewer = () => {
           Teams
         </Typography>
         <Button variant="contained" onClick={toggleShowTeamsCreation}>
-         {!showTeamsCreation?  "Create new team" : "Close"}
+          {!showTeamsCreation ? "Create new team" : "Close"}
         </Button>
       </Box>
       {showTeamsCreation && (
         <Box
           sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" } }}
         >
-          <Box sx={{ display: "flex", flexDirection: "column", width: "100%", justifyContent: "start" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              justifyContent: "start",
+            }}
+          >
             <Box
-              sx={{ display: "flex", maxWidth: "300px", justifyContent: "space-between", margin: "1rem" }}
+              sx={{
+                display: "flex",
+                maxWidth: "300px",
+                justifyContent: "space-between",
+                margin: "1rem",
+              }}
             >
               <label>Team Name:</label>
-              
+
               <input
                 type="text"
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
                 placeholder="Enter team name"
-                style={{marginLeft: "1rem", width: "10rem"}}
+                style={{ marginLeft: "1rem", width: "10rem" }}
               />
             </Box>
-            <Box sx={{ display: "flex", maxWidth: "300px", justifyContent: "space-between", margin: "1rem" }}>
+            <Box
+              sx={{
+                display: "flex",
+                maxWidth: "300px",
+                justifyContent: "space-between",
+                margin: "1rem",
+              }}
+            >
               <label>Supervisor:</label>
               <select
                 value={supervisorId}
                 onChange={(e) => setSupervisorId(e.target.value)}
-                style={{marginLeft: "1rem", width: "10rem"}}
+                style={{ marginLeft: "1rem", width: "10rem" }}
               >
                 {fellowEmployees.map((employee) => (
                   <option key={employee.uid} value={employee.uid}>
@@ -231,45 +255,66 @@ const TeamsViewer = () => {
       )}
 
       {!showTeamsCreation && (
-        <Box sx={{ paddingTop: "10px" }}>
-          <div className="teams-viewer">
-            {teamStatus === "loading" && <CircularProgress />}
-            {teamStatus === "succeeded" && (
-              <>
-                {teams.map((team: TeamWithID) => (
-                  <Accordion
-                    className="team"
-                    key={team.id}
-                    sx={{ width: { xs: "14rem" }, marginRight: "10px" }}
+        <Box
+          sx={{
+            paddingTop: "10px",
+            display: "flex",
+            flexDirection: { sm: "column", md: "row" },
+            width: "100%",
+            flexWrap: "wrap",
+            height: "100%",
+          }}
+        >
+          {teamStatus === "loading" && <CircularProgress />}
+          {teamStatus === "succeeded" && (
+            <>
+              {teams.map((team: TeamWithID) => (
+                <Accordion
+                  className="team"
+                  key={team.id}
+                  sx={{
+                    width: "20rem",
+                    marginRight: "10px",
+                    marginBottom: "1rem",
+                    padding: "0px"
+                  }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1-content"
+                    id="panel1-header"
+                    sx={{marginBottom: "0rem"}}
                   >
-                    <AccordionSummary
-                      expandIcon={<ExpandMoreIcon />}
-                      aria-controls="panel1-content"
-                      id="panel1-header"
+                    <Typography sx={{marginBottom: "0rem"}}><h3>{team.teamName}</h3></Typography>
+                  </AccordionSummary>
+                  <AccordionDetails
+                    sx={{ display: "flex", flexDirection: "column", margin: "0" }}
+                  >
+                    <Typography
+                      sx={{ display: "flex", justifyContent: "start", alignItems: "center" }}
                     >
-                      <Typography>{team.teamName}</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Typography>
-                        Supervisor:{" "}
-                        {team.teamSupervisor.map((sup) => sup.name).join(", ")}
+                      <h4 style={{paddingRight: "1rem"}}>Supervisor:{"  "}</h4>
+                      {team.teamSupervisor.map((sup) => sup.name)}
+                    </Typography>
+                    <Box>
+                      <Typography
+                        sx={{ display: "flex", justifyContent: "start" }}
+                      >
+                        <h4>Members:{" "}</h4>
                       </Typography>
-                      <Box>
-                        <Typography>Members: </Typography>
-                        <List>
-                          {team.teamMembers.map((member, index) => (
-                            <ListItem key={index}>{member.name}</ListItem> // Assuming each member has a unique 'id'
-                          ))}
-                        </List>
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </>
-            )}
+                      <List>
+                        {team.teamMembers.map((member, index) => (
+                          <ListItem sx={{margin: "0"}} key={index}>{member.name}</ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </>
+          )}
 
-            {teamStatus === "failed" && <p>Error: {teamError}</p>}
-          </div>
+          {teamStatus === "failed" && <p>Error: {teamError}</p>}
         </Box>
       )}
     </Container>

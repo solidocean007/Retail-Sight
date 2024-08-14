@@ -94,17 +94,13 @@ export const Dashboard = () => {
       setDrawerOpen(open);
     };
 
-
-
-
-
- 
-
   // Separate useEffect to attempt to load from IndexedDB when component mounts
   useEffect(() => {
     const loadFromIndexedDB = async () => {
       // Attempt to get users from IndexedDB
       const indexedDBUsers = await getCompanyUsersFromIndexedDB();
+      console.log(indexedDBUsers);
+      setCompanyUsers(indexedDBUsers);
       if (indexedDBUsers && indexedDBUsers.length > 0) {
         setLocalUsers(indexedDBUsers);
       }
@@ -112,10 +108,6 @@ export const Dashboard = () => {
 
     loadFromIndexedDB();
   }, []);
-
- 
-
-
 
   return (
     <Container>
@@ -138,7 +130,7 @@ export const Dashboard = () => {
         </AppBar>
       </Box>
       <Box>
-        {dashboardMode === "TeamMode" && <TeamsViewer />}
+        {dashboardMode === "TeamMode" && <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "UsersMode" && (
           <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />
         )}
