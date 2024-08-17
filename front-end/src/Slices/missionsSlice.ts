@@ -1,26 +1,51 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { CompanyMissionType } from '../utils/types';
-import { fetchCompanyMissions } from '../thunks/missionsThunks';
+import { CompanyMissionType, MissionType } from '../utils/types';
+import { fetchCompanyMissions, fetchMissions } from '../thunks/missionsThunks';
 
-interface CompanyMissionsState {
-  [id: string]: CompanyMissionType;
+interface MissionState {
+  details: MissionType | null;
+  companyMission: CompanyMissionType;
 }
 
-const initialState: CompanyMissionsState = {};
+interface MissionsState {
+  [id: string]: MissionState;
+}
+
+const initialState: MissionsState = {};
 
 const missionsSlice = createSlice({
-  name: 'companyMissions',
+  name: 'missions',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(fetchCompanyMissions.fulfilled, (state, action: PayloadAction<CompanyMissionType[]>) => {
-      action.payload.forEach(companyMission => {
-        state[companyMission.id!] = companyMission;
+    builder
+      .addCase(fetchCompanyMissions.fulfilled, (state, action: PayloadAction<CompanyMissionType[]>) => {
+        action.payload.forEach(companyMission => {
+          if (!state[companyMission.id!]) {
+            state[companyMission.id!] = {
+              details: null,
+              companyMission,
+            };
+          } else {
+            state[companyMission.id!].companyMission = companyMission;
+          }
+        });
+      })
+      .addCase(fetchMissions.fulfilled, (state, action: PayloadAction<MissionType>) => {
+        const missionId = action.payload.id!;
+        if (state[missionId]) {
+          state[missionId].details = action.payload;
+        } else {
+          state[missionId] = {
+            details: action.payload,
+            companyMission: {} as CompanyMissionType, // Initialize an empty object if no company mission is fetched yet
+          };
+        }
       });
-    });
   },
 });
 
 export default missionsSlice.reducer;
+
 
 

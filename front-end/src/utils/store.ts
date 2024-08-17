@@ -24,7 +24,7 @@ const store = configureStore({
     userModal: userModalReducer,
     locations: locationReducer,
     CompanyTeam: teamsSlice,
-    companyMissions: missionsSlice,
+    missions: missionsSlice,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

@@ -7,14 +7,11 @@ import { selectUser } from "../../Slices/userSlice";
 
 // import ChannelSelector from "./ChannelSelector";
 // import CategorySelector from "./CategorySelector";
-import {
-  AppBar,
-  Snackbar,
-} from "@mui/material";
+import { AppBar, Container, Snackbar } from "@mui/material";
 
 // import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
-import { PostType } from "../../utils/types";
+import { CompanyMissionType, MissionType, PostType } from "../../utils/types";
 import { CategoryType } from "../CategorySelector";
 import { ChannelType } from "../ChannelSelector";
 // import { SupplierType } from "./SupplierSelector";
@@ -49,9 +46,9 @@ export const CreatePost = () => {
   const userData = useSelector(selectUser);
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
   const [selectedCategory, setSelectedCategory] =
-    useState<CategoryType>("Beer"); // I need to store the last value by the user in localstorage and try to use it again here
+    useState<CategoryType>("Beer"); // I need to store the last value by the user in local storage and try to use it again here
   const [selectedChannel, setSelectedChannel] =
-    useState<ChannelType>("Grocery");  // I need to store the last value by the user in localstorage and try to use it again here
+    useState<ChannelType>("Grocery"); // I need to store the last value by the user in local storage and try to use it again here
   // const [selectedSupplier, setSelectedSupplier] = useState<SupplierType>({
   //   id: "",
   //   name: "",
@@ -82,11 +79,19 @@ export const CreatePost = () => {
     hashtags: [""],
     starTags: [""],
     commentCount: 0,
-    token: {sharedToken: '', tokenExpiry: ''} // i need to populate these values with valid values
+    token: { sharedToken: "", tokenExpiry: "" }, // i need to populate these values with valid values
   });
 
+  const [selectedCompanyMission, setSelectedCompanyMission] =
+    useState<CompanyMissionType>();
+  const [selectedMission, setSelectedMission] = useState<MissionType | null>(
+    null
+  );
+
   useEffect(() => {
-    const storedCategory = localStorage.getItem('postCategory') as CategoryType | null;
+    const storedCategory = localStorage.getItem(
+      "postCategory"
+    ) as CategoryType | null;
     if (storedCategory) {
       setSelectedCategory(storedCategory);
       setPost((prevPost) => ({ ...prevPost, category: storedCategory }));
@@ -99,18 +104,13 @@ export const CreatePost = () => {
     } else {
       setOpenMissionSelection(false);
     }
-  }, [post.visibility]); 
+  }, [post.visibility]);
 
-  useEffect(() => {
-    // Fetch suppliers and brands logic here
-  }, []);
-
-  // Logic
   const navigate = useNavigate();
 
   const onClose = () => {
-    setOpenMissionSelection(false)
-  }
+    setOpenMissionSelection(false);
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
@@ -127,12 +127,12 @@ export const CreatePost = () => {
         reader.onloadend = () => {
           setPost({ ...post, imageUrl: reader.result as string });
         };
-        dispatch(showMessage('Image selected successfully!'));
+        dispatch(showMessage("Image selected successfully!"));
         reader.readAsDataURL(file);
       } else {
-        dispatch(showMessage(
-          "Unsupported file type. Please upload a valid image."
-        ));
+        dispatch(
+          showMessage("Unsupported file type. Please upload a valid image.")
+        );
       }
     }
   };
@@ -254,6 +254,8 @@ export const CreatePost = () => {
             selectedFile={selectedFile}
             setUploadProgress={setUploadProgress}
             handlePostSubmission={handlePostSubmission}
+            selectedCompanyMission={selectedCompanyMission}
+            selectedMission={selectedMission}
             // selectedCategory={selectedCategory}
             // selectedChannel={selectedChannel}
           />
@@ -263,23 +265,29 @@ export const CreatePost = () => {
   return (
     <>
       <CreatePostHelmet />
-      <div className="create-post-container">
+      <Container disableGutters className="create-post-container">
         {isUploading && <LoadingIndicator progress={uploadProgress} />}
-        <AppBar className="app-bar" position="static">
+        <AppBar className="app-bar" position="static" sx={{ width: "100%" }}>
           <div className="create-post-header">
-          <div
-            className="icon-button"
-            onClick={() => navigate("/user-home-page")}
-          >
-            X
+            <div
+              className="icon-button"
+              onClick={() => navigate("/user-home-page")}
+            >
+              X
+            </div>
+            <h1>Create Post</h1>
           </div>
-          <h1>Create Post</h1>
-          </div>
-          
         </AppBar>
         {renderStepContent()}
-        {supplierVisibility && <MissionSelection open={openMissionSelection} onClose={onClose} />}
-      </div>
+        {supplierVisibility && (
+          <MissionSelection
+            open={openMissionSelection}
+            onClose={onClose}
+            setSelectedCompanyMission={setSelectedCompanyMission}
+            setSelectedMission={setSelectedMission}
+          />
+        )}
+      </Container>
     </>
   );
 };

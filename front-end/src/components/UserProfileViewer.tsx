@@ -1,7 +1,7 @@
 import { CircularProgress, Container } from "@mui/material";
 import { ProfileEditPage } from "./ProfileEditPage";
 import React, { useState } from "react";
-import './userProfilePage.css';
+import './userProfileViewer.css';
 import { UserProfilePosts } from "./UserProfilePosts/UserProfilePosts";
 import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
@@ -29,18 +29,15 @@ const UserProfileViewer: React.FC<UserProfileViewerProps> = ({user}) => {
     {/* <UserProfilePageHelmet /> */}
     <Container>
       <div className="user-profile-page-header">
-      <LogOutButton />
 
         <div className="user-edit-section">
           <div className="user-name">
             {user ? `${user.firstName} ${user.lastName}` : <CircularProgress />}
           </div>
-          <button onClick={openProfileEdit}>Edit Profile</button>
+          <button onClick={openProfileEdit}>Edit Name</button>
           {openEdit && <ProfileEditPage setOpenEdit={setOpenEdit}/>}
         </div>
-        <div className="close-profile-page">
-          <button onClick={closeProfilePage}>Close Page</button>
-        </div>
+        
       </div>
       <div className="user-posts">
         <h3>Your Posts</h3>

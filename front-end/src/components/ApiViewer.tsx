@@ -55,11 +55,11 @@ const ApiViewer = () => {
           <List>
             <ListItem>
               <ListItemText
-                primary="1. Communicate Missions to the Sales Team"
+                primary="1. Create mission for your objective."
                 secondary={
                   <>
                     <Typography>
-                      Use the <strong>/writeData</strong> endpoint to communicate new missions.
+                      Use the <strong>writeData</strong> endpoint to communicate new missions to the missions endpoint.
                     </Typography>
                     <Typography>Example:</Typography>
                     <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
@@ -68,9 +68,34 @@ POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_A
 
 Body:
 {
-  "title": "New Mission Title",
-  "description": "Mission description",
-  "companyId": "COMPANY_ID"
+  "missionTitle": "New Mission Title",
+  "missionDescription": "Mission description",
+}
+                      `}
+                    </pre>
+                  </>
+                }
+              />
+            </ListItem>
+            <ListItem>
+              <ListItemText
+                primary="2. Communicate Missions to the Sales Team or Company you choose by supplying their unique company id."
+                secondary={
+                  <>
+                    <Typography>
+                      Use the <strong>writeData</strong> endpoint to communicate new missions to the companyMissions endpoint.
+                    </Typography>
+                    <Typography>Example:</Typography>
+                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {`
+POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=companyMissions
+
+Body:
+{
+  "missionId": {mission.id},
+  "companyIdAssigned": {company.id},
+  "missionStart": {Timestamp} Example: "2024-9-01T23:59:59Z"
+  "missionEnd": {Timestamp} Example: "2024-12-31T23:59:59Z"
 }
                       `}
                     </pre>

@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { PostType } from "../types";
+import { CompanyMissionType, PostType, SubmittedMissionType } from "../types";
 import { auth, db, storage } from "../firebase";
 import {
   getDownloadURL,
@@ -21,6 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { addNewPost } from "../../Slices/postsSlice";
 import { useAppDispatch } from "../store";
+import { createSubmittedMission } from "../../thunks/missionsThunks";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
@@ -32,7 +33,8 @@ export const useHandlePostSubmission = () => {
     post: PostType,
     selectedFile: File,
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
-    setUploadProgress: React.Dispatch<React.SetStateAction<number>>
+    setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
+    selectedCompanyMission: CompanyMissionType,
   ) => {
     console.log("new post creation logic");
     setIsUploading(true);
@@ -184,6 +186,15 @@ export const useHandlePostSubmission = () => {
                 post.category,
                 newDocRef.id
               );
+
+              if (newDocRef && selectedCompanyMission) {
+                const submittedMission: SubmittedMissionType = {
+                  companyMissionId: selectedCompanyMission.id!,
+                  postIdForObjective: newDocRef.id,
+                };
+            
+                await dispatch(createSubmittedMission(submittedMission));
+              }
 
               dispatch(showMessage("Post added successfully!"));
               setIsUploading(false);

@@ -149,13 +149,6 @@ export interface CompanyTeamType {
 
 export type TeamWithID = CompanyTeamType & { id: string };
 
-export interface MissionType {
-  name: string;
-  description: string;
-  companyId: string;
-}
-
-
 export interface PermissionsType {
   apiKey: string,
   companyName: string,
@@ -175,20 +168,18 @@ export interface PermissionsType {
     }
   }
 }
-export interface MissionsType {
+export interface MissionType {
   id?: string;
-  missionObjective: string;
+  missionTitle: string;
   missionDescription?: string;
-  createdByCompanyId: string;
-  missionCreated: Timestamp;
 }
 
 export interface CompanyMissionType {
   id?: string;
   missionId: string;
   companyIdAssigned: string;
-  missionAssignedOn: Timestamp;
-  missionDueBy: Timestamp;
+  missionStart: Timestamp;
+  missionEnd: Timestamp;
 }
 
 export interface SubmittedMissionType {

@@ -46,7 +46,7 @@ export const userDeletePost = async ({
         postIds: arrayRemove(post.id), // corrected to post.id
       });
     }
-    setIsEditModalOpen(false);
+    // setIsEditModalOpen(false);
   } catch (error) {
     console.error("Error deleting post:", error);
     throw error; // re-throwing error so that you can handle it in UI or retry if necessary

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { PostType } from "../../utils/types";
-import { Box, Button, MenuItem, Select } from "@mui/material";
+import { CompanyMissionType, MissionType, PostType } from "../../utils/types";
+import { Box, Button, MenuItem, Select, Typography } from "@mui/material";
 // import { CategoryType } from "../CategorySelector";
 // import { ChannelType } from "../ChannelSelector";
 import './reviewAndSubmit.css'
@@ -13,11 +13,12 @@ interface ReviewAndSubmitProps {
   selectedFile: File | null;
   setUploadProgress: React.Dispatch<React.SetStateAction<number>>;
   handlePostSubmission: any; // correct type?
+  selectedCompanyMission: CompanyMissionType | undefined;
+  selectedMission: MissionType | null;
   // selectedCategory: CategoryType;
   // selectedChannel: ChannelType; // correct type?
 
 }
-
 
 export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   post,
@@ -27,6 +28,8 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   selectedFile,
   setUploadProgress,
   handlePostSubmission,
+  selectedCompanyMission,
+  selectedMission,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,6 +39,14 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
       <button className="create-post-btn" onClick={onPrevious}>
         <h4>Back</h4>
       </button>
+       {/* Display selected mission information */}
+       {selectedMission && (
+        <Box mt={2}>
+          <Typography variant="h6">
+            Selected Mission: {selectedMission.missionTitle}
+          </Typography>
+        </Box>
+      )}
       <Box mt={2}>
         <Select
           fullWidth
@@ -66,7 +77,8 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
                 post,
                 selectedFile,
                 setIsUploading,
-                setUploadProgress
+                setUploadProgress,
+                selectedCompanyMission
               );
             } else {
               // Handle the situation where selectedFile is null
