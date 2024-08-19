@@ -11,8 +11,8 @@ import { UserHomePageHelmet } from "../utils/helmetConfigurations";
 import {  getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
 import { VariableSizeList } from "react-window";
-import useScrollToTopOnChange from "../hooks/scrollToTopOnChjange";
 import { PostWithID } from "../utils/types";
+import useScrollToTopOnChange from "../hooks/scrollToTopOnChange";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
@@ -55,7 +55,6 @@ switch (activePostSet) {
   default:
     displayPosts = posts; // Fallback to the default posts if none of the above conditions are met
 }
-
 
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);

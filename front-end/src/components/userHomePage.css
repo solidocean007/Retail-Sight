@@ -85,6 +85,16 @@
   }
 }
 
+@media (max-width: 768px) {
+  .side-bar-container {
+      display: none;
+  }
+  .activity-feed-container {
+      width: 100%;
+  }
+}
+
+
 @media (min-width: 769px) and (max-width: 899px){
   
 }
