@@ -8,19 +8,18 @@ export function isEmailValid(emailAddress: string) {
   return !!emailAddress.match(regex);
 }
 
-export const isPhoneValid = (userPhoneInput: string) => {
-  const cleanedInput = userPhoneInput.replace(/\D/g, '');
-  return /^\d{10}$/.test(cleanedInput);
-};
-
-// export const isPhoneValid = (userPhoneInput: TPhoneInputState) => {
-//   const phoneNumberString = userPhoneInput.join("");
-//   if (phoneNumberString.length >= 10 && phoneNumberString.length <= 11) {
-//     return true;
-//   } else {
-//     return /^\d{10}$/.test(phoneNumberString);
-//   }
+// export const isPhoneValid = (userPhoneInput: string) => {
+//   const cleanedInput = userPhoneInput.replace(/\D/g, '');
+//   return /^\d{10}$/.test(cleanedInput);
 // };
+
+export const isPhoneValid = (userPhoneInput: string) => {
+  if (userPhoneInput.length == 10 || userPhoneInput.length == 11) {
+    return true;
+  } else {
+    return /^\d{10}$/.test(userPhoneInput);
+  }
+};
 
 
 export const isPasswordGood = (password: string): boolean => {

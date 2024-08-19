@@ -2,13 +2,33 @@
 import React from "react";
 import { handleLogout } from "../utils/validation/authenticate";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch } from "../utils/store";
+import { clearUserData } from "../Slices/userSlice";
+import { clearCollections } from "../Slices/collectionSlice";
+import { clearLocationFilters, clearLocations } from "../Slices/locationSlice";
+import { clearMissions } from "../Slices/missionsSlice";
+import { clearPostsData } from "../Slices/postsSlice";
+import { clearIndexedDB } from "../utils/database/indexedDBUtils";
+import { clearTeams } from "../Slices/teamsSlice";
+import { clearUserModal } from "../Slices/userModalSlice";
 
 const LogOutButton: React.FC = () => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const onLogoutClick = async () => {
     try {
+      await clearIndexedDB();
       await handleLogout();
+      dispatch(clearUserData());
+      dispatch(clearCollections());
+      dispatch(clearLocationFilters());
+      dispatch(clearLocations());
+      dispatch(clearMissions());
+      dispatch(clearPostsData());
+      dispatch(clearTeams());
+      dispatch(clearUserModal());
+      
       navigate("/");
     } catch (error) {
       console.error("There was an error logging out", error);

@@ -3,7 +3,6 @@ import { configureStore, Action } from "@reduxjs/toolkit";
 import { ThunkAction } from "@reduxjs/toolkit";
 import snackbarReducer from "../Slices/snackbarSlice";
 import userSlice from "../Slices/userSlice";
-import firestoreReadsReducer from "../Slices/firestoreReadsSlice";
 import postsReducer from "../Slices/postsSlice";
 import locationReducer from '../Slices/locationSlice'
 import { themeReducer } from "../reducers/themeReducer";
@@ -18,7 +17,6 @@ const store = configureStore({
   reducer: {
     snackbar: snackbarReducer,
     user: userSlice,
-    firestoreReads: firestoreReadsReducer,
     posts: postsReducer,
     theme: themeReducer,
     userModal: userModalReducer,

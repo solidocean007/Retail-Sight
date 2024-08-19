@@ -9,7 +9,7 @@ interface CollectionType {
 }
 
 interface CollectionsState {
-  [id: string]: CollectionType;
+  [id: string]: CollectionType | null;
 }
 
 const initialState: CollectionsState = {};
@@ -39,9 +39,14 @@ const collectionsSlice = createSlice({
         }
       }
     },
+    clearCollections: (state) => {
+      Object.keys(state).forEach((key) => {
+        delete state[key];
+      });
+    },
   },
 });
 
-export const { addCollection, addPostToCollection, removePostFromCollection } = collectionsSlice.actions;
+export const { addCollection, addPostToCollection, removePostFromCollection, clearCollections } = collectionsSlice.actions;
 export default collectionsSlice.reducer;
 

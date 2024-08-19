@@ -22,7 +22,7 @@ export const useFirebaseAuth = () => {
     // If user is logged in and the UID has changed, fetch user document
     if (user) {
       try {
-        const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid, dispatch) as UserType;
+        const userDataFromFirestore = await fetchUserDocFromFirestore(user.uid) as UserType;
         if (userDataFromFirestore) {
           dispatch(setUser(userDataFromFirestore));
         } else {

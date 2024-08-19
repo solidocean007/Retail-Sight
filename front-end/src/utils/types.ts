@@ -165,6 +165,10 @@ export interface PermissionsType {
     submittedMissions: {
       canRead: boolean,
       canWrite: boolean
+    },
+    posts: {
+      canRead: boolean,
+      canWrite: boolean
     }
   }
 }

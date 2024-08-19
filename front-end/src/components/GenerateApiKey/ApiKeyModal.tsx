@@ -57,6 +57,7 @@ const ApiKeyModal = ({ open, onClose }: { open: boolean, onClose: () => void }) 
         missions: { canRead: true, canWrite: true },
         companyMissions: { canRead: true, canWrite: true },
         submittedMissions: { canRead: true, canWrite: true },
+        posts: { canRead: true, canWrite: true },
       };
       const result = await generateApiKey({ companyId: dashboardUser.companyId, permissions });
       const { apiKey } = result.data as ApiKeyResponse;

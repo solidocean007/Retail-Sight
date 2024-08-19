@@ -28,10 +28,14 @@ const userModalSlice = createSlice({
       state.userName = null;
       state.userEmail = null;
     },
+    clearUserModal: ((state)=> {
+      state.userEmail = null;
+      state.userName = null;
+    } )
   },
 });
 
-export const { openUserModal, closeUserModal } = userModalSlice.actions;
+export const { openUserModal, closeUserModal, clearUserModal } = userModalSlice.actions;
 
 export const selectIsUserModalOpen = (state: RootState) => state.userModal.isUserModalOpen;
 export const selectUserName = (state: RootState) => state.userModal.userName;

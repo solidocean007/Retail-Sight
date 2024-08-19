@@ -49,11 +49,11 @@ export const readData = functions.https.onRequest(
           return;
         }
 
-        data = doc.data();
+        data = { id: doc.id, ...doc.data() };
       } else {
         // Fetch the entire collection if no ID is provided
         const snapshot = await admin.firestore().collection(collection).get();
-        data = snapshot.docs.map((doc) => doc.data());
+        data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       }
 
       res.status(200).send(data);

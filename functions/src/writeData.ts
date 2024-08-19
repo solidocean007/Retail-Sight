@@ -40,7 +40,7 @@ export const writeData = functions.https.onRequest(
 
       const dataWithCompanyId = {
         ...data,
-        companyId: companyId
+        companyId: companyId,
       };
 
       // Proceed with writing data

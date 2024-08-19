@@ -20,7 +20,7 @@ export const fetchCompanyMissions = createAsyncThunk<
   'companyMissions/fetchCompanyMissions',
   async (companyId: string) => {
     const q = query(collection(db, 'companyMissions'), where('companyIdAssigned', '==', companyId));
-    const snapshot = await getDocs(q); // this is coming back empty
+    const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as CompanyMissionType }));
   }
 );

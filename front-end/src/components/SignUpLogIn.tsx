@@ -12,7 +12,6 @@ import Typography from "@mui/material/Typography";
 // import { makeStyles } from "@mui/material";
 // import items from Redux
 import { useAppDispatch } from "../utils/store";
-// import { incrementRead } from "../Slices/firestoreReadsSlice";
 import { setUser } from "../Slices/userSlice";
 //imports for password visibility
 import IconButton from "@mui/material/IconButton";
@@ -199,7 +198,7 @@ export const SignUpLogin = () => {
               try {
                 await updateDoc(inviteRef, {
                   status: "fulfilled",
-                  fulfilledAt: new Date(), // capture the time of signup
+                  fulfilledAt: new Date(),
                 });
               } catch (updateError) {
                 console.log("error updating invite", updateError)
@@ -222,9 +221,7 @@ export const SignUpLogin = () => {
 
           // Fetch user data from Firestore
           const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid,
-            dispatch
-          )) as UserType;
+            authData.uid )) as UserType;
           if (fetchedUserData) {
             // Assuming fetchedUserData is of UserType or you can map it to UserType
             dispatch(setUser(fetchedUserData)); // dispatch the full user object
@@ -246,9 +243,7 @@ export const SignUpLogin = () => {
         if (authData && authData.uid) {
           // Fetch user data from Firestore or Firebase auth as required
           const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid,
-            dispatch
-          )) as UserType;
+            authData.uid )) as UserType;
           if (fetchedUserData) {
             dispatch(setUser(fetchedUserData));
           }
@@ -433,6 +428,7 @@ export const SignUpLogin = () => {
                       errorsOfInputs.verifyPasswordInputError.length > 0
                     }
                   />
+                  <button type="submit">Submit</button>
                 </div>
               ) : (
                 <div className="form-container">

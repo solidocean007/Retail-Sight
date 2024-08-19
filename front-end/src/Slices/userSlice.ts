@@ -5,10 +5,10 @@ import { RootState } from '../utils/store';
 
 interface UserState {
   currentUser: UserType | null;
-  otherUsers: Record<string, UserType>;
+  otherUsers: Record<string, UserType> | null;
   loading: 'idle' | 'pending' | 'succeeded' | 'failed';
   error: string | null;  // Updated to string for simplification, adjust as needed
-  companyUsers: UserType[];
+  companyUsers: UserType[] | null;
 }
 
 const initialState: UserState = {
@@ -28,6 +28,12 @@ export const userSlice = createSlice({
       state.currentUser = action.payload;
       state.loading = 'idle';  // Optionally set loading state to 'idle'
       state.error = null;      // Optionally clear any previous error
+    },
+    clearUserData(state) {
+      state.currentUser = null;
+      state.otherUsers = null;
+      state.companyUsers = null;
+      // reset other relevant state...
     },
     // Add new reducer for setting company users
     setCompanyUsers: (state, action: PayloadAction<UserType[]>) => {
@@ -60,7 +66,7 @@ export const userSlice = createSlice({
 });
 
 // Export the action creators and selectors
-export const { setUser, setCompanyUsers, setLoading, setError } = userSlice.actions;
+export const { setUser, clearUserData, setCompanyUsers, setLoading, setError } = userSlice.actions;
 export const selectUser = (state: { user: UserState }) => state.user.currentUser;
 export const selectCompanyUsers = (state: RootState) => state.user.companyUsers;
 

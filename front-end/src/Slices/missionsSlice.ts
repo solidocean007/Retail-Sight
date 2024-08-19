@@ -16,7 +16,11 @@ const initialState: MissionsState = {};
 const missionsSlice = createSlice({
   name: 'missions',
   initialState,
-  reducers: {},
+  reducers: {
+    clearMissions: (_state) => {
+      return initialState;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCompanyMissions.fulfilled, (state, action: PayloadAction<CompanyMissionType[]>) => {
@@ -44,7 +48,7 @@ const missionsSlice = createSlice({
       });
   },
 });
-
+export const {clearMissions} = missionsSlice.actions;
 export default missionsSlice.reducer;
 
 

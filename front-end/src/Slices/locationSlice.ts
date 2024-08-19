@@ -66,6 +66,9 @@ const locationSlice = createSlice({
       state.selectedStates = [];
       state.selectedCities = [];
     },
+    clearLocations: (state) => {
+      state.locations = {}
+    }
   },
   extraReducers: (builder) => {
     builder.addCase(fetchLocationOptions.pending, (state) => {
@@ -82,6 +85,6 @@ const locationSlice = createSlice({
   }
 });
 
-export const { setStateFilter, setCityFilter, clearLocationFilters } = locationSlice.actions;
+export const { setStateFilter, setCityFilter, clearLocationFilters, clearLocations } = locationSlice.actions;
 
 export default locationSlice.reducer;
