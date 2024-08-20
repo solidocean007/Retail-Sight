@@ -34,11 +34,12 @@ export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
           name="description-box"
           id="description-box"
           rows={4}
-          placeholder={isFocused ? '' : 'Description'}
+          // placeholder={isFocused ? '' : 'Description'}
           value={post.description}
           onChange={(e) => handleFieldChange("description", e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          color="primary"
         ></textarea>
       </div>
       <button className="create-post-btn" onClick={onNext}>

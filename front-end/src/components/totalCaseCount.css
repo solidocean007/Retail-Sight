@@ -1,5 +1,6 @@
 .total-case-count-box {
   display: flex;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 10px;
 }
@@ -12,6 +13,6 @@
   padding: 0;
 }
 
-.total-case-count-box label {
+/* .total-case-count-box label {
   margin-right: 5px;
-}
+} */
