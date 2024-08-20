@@ -14,7 +14,8 @@ const FilterDisplay: React.FC<FilterDisplayProps> = ({ selectedChannels, selecte
     <div>
       {/* Only display sections if there are selected items */}
       {selectedChannels.length > 0 && (
-        <div>Channels: {formatDisplayText(selectedChannels)}</div>
+        // <div>Channels: {formatDisplayText(selectedChannels)}</div>
+        <div>Channel: {formatDisplayText(selectedChannels)}</div>
       )}
       {selectedCategories.length > 0 && (
         <div>Categories: {formatDisplayText(selectedCategories)}</div>

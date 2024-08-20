@@ -21,10 +21,10 @@ h3 {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: white;
+  /* background-color: white; */
   border-radius: 8px;
   padding: 5px 10px;
-  margin: 10px;
+  /* margin: 10px; */
   color: black;
   /* width: 500px; */
 }

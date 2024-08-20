@@ -27,6 +27,10 @@
   width: 100%;
 }
 
+.side-bar-container {
+  display: none;
+}
+
 .onboarding-tutorial-intro-box {
   display: flex;
   align-items: center;
@@ -86,9 +90,7 @@
 }
 
 @media (max-width: 768px) {
-  .side-bar-container {
-      display: none;
-  }
+  
   .activity-feed-container {
       width: 100%;
   }

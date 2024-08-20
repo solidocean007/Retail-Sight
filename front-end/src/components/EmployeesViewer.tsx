@@ -6,6 +6,7 @@ import {
   doc,
   onSnapshot,
   query,
+  serverTimestamp,
   setDoc,
   where,
 } from "firebase/firestore";
@@ -35,6 +36,7 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
+  const companyName = user?.company;
   const companyId = user?.companyId;
   const companyUsers = useSelector(selectCompanyUsers);
   const isAdmin = user?.role === "admin";

@@ -11,9 +11,10 @@
 
 .header-details {
   display: flex;
-  justify-content: space-between;
+  justify-content: end;
   font-size: small;
   width: 100%;
+  padding-right: 2rem;
 }
 
 .header-buttons {

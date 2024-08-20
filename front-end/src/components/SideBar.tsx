@@ -32,7 +32,6 @@ import {
 } from "../Slices/postsSlice";
 import DateFilter from "./DateFilter";
 import { PostType, PostWithID } from "../utils/types";
-import LeftSideBar from "./LeftSideBar";
 import HashTagSearchBar from "./TagOnlySearchBar";
 import { TagWithFilterSearchBar } from "./TagWithFilterSearchBar";
 
@@ -281,26 +280,21 @@ const SideBar: React.FC<SideBarProps> = ({
         <DateFilter dateRange={dateRange} onDateChange={handleDateChange} />
       </div>
       <div className="clear-apply-button-box">
-        <Button
+        <button
           className="btn"
-          variant="contained"
           color="secondary"
           onClick={handleClearFiltersClick}
         >
           Clear Filters
-        </Button>
-        <Button
+        </button>
+        <button
           className="btn"
-          variant="contained"
           color="primary"
           onClick={handleApplyFiltersClick}
           disabled={isApplyDisabled}
         >
           Apply Now
-        </Button>
-      </div>
-      <div className="side-bar-container">
-        <LeftSideBar />
+        </button>
       </div>
     </div>
   );

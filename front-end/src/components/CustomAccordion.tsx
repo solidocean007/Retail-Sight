@@ -28,9 +28,9 @@ const CustomAccordion = <T extends string>({
 
   return (
     <div className="custom-accordion" ref={wrapperRef}>
-      <div className="accordion-summary" onClick={toggleAccordion}>
+      <button className="accordion-summary" onClick={toggleAccordion}>
         <h3>{title}</h3>
-        {selected.length <= 2 ? (
+        {/* {selected.length <= 2 ? (
           selected.map((value: string, index: number) => (
             <span key={index}>{value} </span>
           ))
@@ -38,8 +38,8 @@ const CustomAccordion = <T extends string>({
           <span>
             {selected.slice(0, 2).join(", ")} and {selected.length - 2} more
           </span>
-        )}
-      </div>
+        )} */} <h4 style={{marginLeft: "1rem"}}>{selected.length > 0 ? (<h4>{selected.length} {title}</h4>) : null} </h4> 
+      </button>
       {isActive && (
         <div className={`accordion-details ${isActive ? "open" : ""}`}>
           <div className="button-box">
