@@ -288,6 +288,9 @@ const PostCard: React.FC<PostCardProps> = ({
                     </a>
                   </p>
                 </div>
+                {post.postCreatedBy && (
+                  <h5>Created by: {post.postCreatedBy}</h5>
+                )}
                 <div className="user-company-box">
                   <p>
                     company:{" "}
@@ -304,12 +307,6 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
-          {/* <div className="token-box"> */}
-          {/* {post.postUserId} */}
-          {/* <h6>id: {post.id}</h6> */}
-          {/* <h6>token: {post.token?.sharedToken}</h6> */}
-          {/* <h6>token: {post.token?.tokenExpiry}</h6> */}
-          {/* </div> */}
 
           <div className="description-image">
             <div className="like-quantity-row">

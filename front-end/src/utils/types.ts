@@ -97,6 +97,7 @@ export interface PostType {
   starTags: string[];
   commentCount: number;
   token: { sharedToken: string, tokenExpiry: string };
+  postCreatedBy: string;
 }
 
 export type PostWithID = PostType & { id: string };

@@ -23,7 +23,6 @@ export const updateLocationsCollection = async (
         }
       }
     });
-    console.log(`Location updated: ${stateName}, ${cityName}`);
     return true; // Indicates success
   } catch (error) {
     console.error(`Error updating location: ${error}`);

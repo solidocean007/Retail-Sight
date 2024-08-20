@@ -3,15 +3,27 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
-import { selectUser } from "../../Slices/userSlice";
+import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 
 // import ChannelSelector from "./ChannelSelector";
 // import CategorySelector from "./CategorySelector";
-import { AppBar, Container, Snackbar } from "@mui/material";
+import {
+  AppBar,
+  Container,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Snackbar,
+} from "@mui/material";
 
 // import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
-import { CompanyMissionType, MissionType, PostType } from "../../utils/types";
+import {
+  CompanyMissionType,
+  MissionType,
+  PostType,
+  UserType,
+} from "../../utils/types";
 import { CategoryType } from "../CategorySelector";
 import { ChannelType } from "../ChannelSelector";
 // import { SupplierType } from "./SupplierSelector";
@@ -27,6 +39,7 @@ import { ReviewAndSubmit } from "./ReviewAndSubmit";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
+import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
@@ -44,6 +57,7 @@ export const CreatePost = () => {
   const handlePostSubmission = useHandlePostSubmission();
 
   const userData = useSelector(selectUser);
+  const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryType>("Beer"); // I need to store the last value by the user in local storage and try to use it again here
@@ -54,6 +68,9 @@ export const CreatePost = () => {
   //   name: "",
   // });
   // const [selectedBrands, setSelectedBrands] = useState<BrandType[]>([]);
+
+  const postUser = onBehalf || userData;
+
   const [post, setPost] = useState<PostType>({
     category: selectedCategory,
     channel: selectedChannel,
@@ -70,16 +87,17 @@ export const CreatePost = () => {
     displayDate: "",
     timestamp: "",
     totalCaseCount: 0,
-    postUserName: `${userData?.firstName} ${userData?.lastName}`,
-    postUserId: userData?.uid,
-    postUserCompany: userData?.company,
-    postUserCompanyId: userData?.companyId,
-    postUserEmail: userData?.email,
+    postUserName: `${postUser?.firstName} ${postUser?.lastName}`,
+    postUserId: postUser?.uid,
+    postUserCompany: postUser?.company,
+    postUserCompanyId: postUser?.companyId,
+    postUserEmail: postUser?.email,
     likes: [],
     hashtags: [""],
     starTags: [""],
     commentCount: 0,
     token: { sharedToken: "", tokenExpiry: "" }, // i need to populate these values with valid values
+    postCreatedBy: `${userData?.firstName} ${userData?.lastName}`,
   });
 
   const [selectedCompanyMission, setSelectedCompanyMission] =
@@ -87,6 +105,34 @@ export const CreatePost = () => {
   const [selectedMission, setSelectedMission] = useState<MissionType | null>(
     null
   );
+
+  useEffect(() => {
+    console.log("onBehalf changed:", onBehalf);
+    if (onBehalf) {
+      setPost((prevPost) => ({
+        ...prevPost,
+        postUserName: `${onBehalf.firstName} ${onBehalf.lastName}`,
+        postUserId: onBehalf.uid,
+        postUserCompany: onBehalf.company,
+        postUserCompanyId: onBehalf.companyId,
+        postUserEmail: onBehalf.email,
+      }));
+    } else {
+      setPost((prevPost) => ({
+        ...prevPost,
+        postUserName: `${userData?.firstName} ${userData?.lastName}`,
+        postUserId: userData?.uid,
+        postUserCompany: userData?.company,
+        postUserCompanyId: userData?.companyId,
+        postUserEmail: userData?.email,
+      }));
+    }
+  }, [onBehalf, userData]);
+
+  useEffect(() => {
+    console.log("Post state updated:", post);
+  }, [post]);
+  
 
   useEffect(() => {
     const storedCategory = localStorage.getItem(
@@ -276,6 +322,14 @@ export const CreatePost = () => {
               X
             </div>
             <h1>Create Post</h1>
+            {(userData?.role === "admin" ||
+              userData?.role === "super-admin") && (
+              <CreatePostOnBehalfOfOtherUser 
+                onBehalf={onBehalf}
+                setOnBehalf={setOnBehalf}
+                setPost={setPost}
+              />
+            )}
           </div>
         </AppBar>
         {renderStepContent()}

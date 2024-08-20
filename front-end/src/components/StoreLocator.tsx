@@ -216,7 +216,6 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     onStoreNameChange,
     onStoreStateChange,
   ]);
-  console.log(post)
   return (
     <div className="map-container">
       <div className="map-box" ref={mapRef} style={{ width: "350px", height: "300px" }}></div>

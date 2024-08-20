@@ -36,7 +36,6 @@ export const useHandlePostSubmission = () => {
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     selectedCompanyMission: CompanyMissionType,
   ) => {
-    console.log("new post creation logic");
     setIsUploading(true);
     const user = auth.currentUser;
     if (!user || !userData) return;
@@ -139,11 +138,11 @@ export const useHandlePostSubmission = () => {
                 displayDate: new Date().toISOString(),
                 timestamp: new Date().toISOString(),
                 totalCaseCount: post.totalCaseCount,
-                postUserName: user.displayName || "Unknown",
-                postUserId: user.uid,
-                postUserCompany: userData.company,
-                postUserCompanyId: userData.companyId,
-                postUserEmail: userData.email,
+                postUserName: post.postUserName,  // Use the post data directly
+                postUserId: post.postUserId,      // Use the post data directly
+                postUserCompany: post.postUserCompany, // Use the post data directly
+                postUserCompanyId: post.postUserCompanyId, // Use the post data directly
+                postUserEmail: post.postUserEmail, // Use the post data directly
                 hashtags: extractHashtags(post.description ?? ""),
                 starTags: extractStarTags(post.description ?? ""),
                 commentCount: 0,
@@ -152,6 +151,7 @@ export const useHandlePostSubmission = () => {
                   sharedToken: sharedToken,
                   tokenExpiry: tokenExpiry
                 },
+                postCreatedBy: post.postCreatedBy,
               };
 
               // Create the post in Firestore

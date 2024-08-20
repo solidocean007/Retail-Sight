@@ -6,7 +6,6 @@ interface LoadingIndicatorProps {
 }
 
 const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ progress }) => {
-  console.log("Loading Indicator Rendered. Progress:", progress);
 
   return (
     <div className="loading-container">

@@ -13,6 +13,7 @@ import {
 import { db } from "../utils/firebase";
 import { RootState, useAppDispatch } from "../utils/store";
 import {
+  getCompanyUsersFromIndexedDB,
   saveCompanyUsersToIndexedDB,
   updateUserRoleInIndexedDB,
 } from "../utils/database/userDataIndexedDB";
@@ -38,54 +39,62 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({
   const user = useSelector(selectUser);
   const companyName = user?.company;
   const companyId = user?.companyId;
-  const companyUsers = useSelector(selectCompanyUsers);
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
   const [showPendingInvites, setShowPendingInvites] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
 
-
-
   useEffect(() => {
-    if (!companyId) {
-      // If companyId is not defined, do not proceed with the query
-      console.log("companyId is undefined, skipping Firestore query.");
-      return;
-    }
+    if (!companyId) return;
 
-    const q = query(
-      collection(db, "users"),
-      where("companyId", "==", companyId)
-    );
-
-    // Firestore real-time subscription setup
-    const unsubscribe = onSnapshot(
-      q,
-      async (snapshot) => {
-        const usersFromFirestore = snapshot.docs.map(
-          (doc) =>
-            ({
-              ...doc.data(),
-              uid: doc.id,
-            } as UserType)
-        );
-
-        dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
-        setLocalUsers(usersFromFirestore); // Update local state
-
-        // Save the updated list to IndexedDB
-        console.log("saving users to indexedDB");
-        await saveCompanyUsersToIndexedDB(usersFromFirestore);
-      },
-      (error) => {
-        console.error("Error fetching users:", error);
+    const fetchData = async () => {
+      // Check IndexedDB first
+      const cachedUsers = await getCompanyUsersFromIndexedDB();
+      if (cachedUsers) {
+        setLocalUsers(cachedUsers);
+        dispatch(setCompanyUsers(cachedUsers));
       }
-    );
 
-    // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
-    return () => unsubscribe();
-  }, [companyId]);
+      // Firestore real-time subscription setup
+      const q = query(
+        collection(db, "users"),
+        where("companyId", "==", companyId)
+      );
+
+      const unsubscribe = onSnapshot(
+        q,
+        async (snapshot) => {
+          const usersFromFirestore = snapshot.docs.map(
+            (doc) =>
+              ({
+                ...doc.data(),
+                uid: doc.id,
+              } as UserType)
+          );
+
+          // Compare with IndexedDB data to see if there are changes
+          const isDifferent = JSON.stringify(usersFromFirestore) !== JSON.stringify(cachedUsers);
+          if (isDifferent) {
+            dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
+            setLocalUsers(usersFromFirestore); // Update local state
+
+            // Save the updated list to IndexedDB
+            console.log("saving users to IndexedDB");
+            await saveCompanyUsersToIndexedDB(usersFromFirestore);
+          }
+        },
+        (error) => {
+          console.error("Error fetching users:", error);
+        }
+      );
+
+      // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
+      return () => unsubscribe();
+    };
+
+    fetchData();
+  }, [companyId, dispatch]);
 
   // Type guard function to check if a string is a valid role
   function isValidRole(role: string): role is UserType["role"] {
