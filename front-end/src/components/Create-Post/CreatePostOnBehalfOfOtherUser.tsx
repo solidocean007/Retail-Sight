@@ -1,9 +1,22 @@
-import { MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import {
+  Box,
+  MenuItem,
+  MenuList,
+  Select,
+  SelectChangeEvent,
+} from "@mui/material";
 import { useSelector } from "react-redux";
 import { PostType, UserType } from "../../utils/types";
-import { selectCompanyUsers, selectUser, setCompanyUsers } from "../../Slices/userSlice";
+import {
+  selectCompanyUsers,
+  selectUser,
+  setCompanyUsers,
+} from "../../Slices/userSlice";
 import { useEffect } from "react";
-import { getCompanyUsersFromIndexedDB, saveCompanyUsersToIndexedDB } from "../../utils/database/userDataIndexedDB";
+import {
+  getCompanyUsersFromIndexedDB,
+  saveCompanyUsersToIndexedDB,
+} from "../../utils/database/userDataIndexedDB";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { useAppDispatch } from "../../utils/store";
@@ -14,7 +27,11 @@ interface Props {
   setPost: React.Dispatch<React.SetStateAction<PostType>>;
 }
 
-const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({ onBehalf, setOnBehalf, setPost }) => {
+const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
+  onBehalf,
+  setOnBehalf,
+  setPost,
+}) => {
   const dispatch = useAppDispatch();
   const userData = useSelector(selectUser);
   const companyId = userData?.companyId;
@@ -49,7 +66,8 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({ onBehalf, setOnBehalf,
           );
 
           // Compare with IndexedDB data to see if there are changes
-          const isDifferent = JSON.stringify(usersFromFirestore) !== JSON.stringify(cachedUsers);
+          const isDifferent =
+            JSON.stringify(usersFromFirestore) !== JSON.stringify(cachedUsers);
           if (isDifferent) {
             dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
             // setLocalUsers(usersFromFirestore); // Update local state
@@ -70,7 +88,6 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({ onBehalf, setOnBehalf,
 
     fetchData();
   }, [companyId, dispatch]);
-
 
   // Handle user selection for posting on behalf
   const handleOnBehalfChange = (event: SelectChangeEvent<string>) => {
@@ -101,22 +118,25 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({ onBehalf, setOnBehalf,
   };
 
   return (
-    <div>
+    <Box sx={{display: "flex"}}>
+      <h2>For user: </h2>
       <Select
-      value={onBehalf?.uid || userData?.uid}
-      onChange={handleOnBehalfChange}
-    >
-      <MenuItem value={userData?.uid}>
-        {`${userData?.firstName} ${userData?.lastName} (You)`}
-      </MenuItem>
-      {companyUsers?.map((user) => (
-        <MenuItem key={user.uid} value={user.uid}>
-          {`${user.firstName} ${user.lastName}`}
+        value={onBehalf?.uid || userData?.uid}
+        onChange={handleOnBehalfChange}
+        sx={{backgroundColor: "whitesmoke", width: "20rem"}}
+      >
+        <MenuItem value={userData?.uid}>
+          {`${userData?.firstName} ${userData?.lastName} (You)`}
         </MenuItem>
-      ))}
-    </Select>
-    </div>
-    
+        <MenuList dense>
+          {companyUsers?.map((user) => (
+            <MenuItem key={user.uid} value={user.uid}>
+              {`${user.firstName} ${user.lastName}`}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Select>
+    </Box>
   );
 };
 

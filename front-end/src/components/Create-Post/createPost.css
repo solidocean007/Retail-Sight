@@ -27,18 +27,15 @@
 }
 
 .create-post-header {
-  position: relative;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding-left: 10%;
+  width: 100%;
+  /* padding-left: 10%; */
 }
 
-.create-post-header .icon-button {
-  position: absolute;
-  font-size: 40px;
-  left: 3rem;
-}
+
 
 .create-post-btn {
   width: 8rem;
@@ -124,6 +121,10 @@ select {
 
 @media (max-width: 900px) {
   /* Your styles for tablets */
+  /* .create-post-header {
+    flex-direction: row;
+  } */
+
   .create-post-container {
     width: 100vw;
     overflow-y: scroll;

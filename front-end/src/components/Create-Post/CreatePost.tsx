@@ -10,6 +10,7 @@ import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 import {
   AppBar,
   Container,
+  IconButton,
   MenuItem,
   Select,
   SelectChangeEvent,
@@ -40,6 +41,7 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
+import { CancelRounded } from "@mui/icons-material";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
@@ -132,7 +134,6 @@ export const CreatePost = () => {
   useEffect(() => {
     console.log("Post state updated:", post);
   }, [post]);
-  
 
   useEffect(() => {
     const storedCategory = localStorage.getItem(
@@ -308,23 +309,36 @@ export const CreatePost = () => {
         );
     }
   };
+
+  const authToCreateOnBehalf =
+    userData?.role === "admin" || userData?.role === "super-admin";
+
+  const appBarStyle = {
+    width: "100%",
+    display: "flex",
+    // justifyContent: "space-between",
+    flexDirection: { sm: "row", md: "row" },
+  };
+
   return (
     <>
       <CreatePostHelmet />
       <Container disableGutters className="create-post-container">
         {isUploading && <LoadingIndicator progress={uploadProgress} />}
-        <AppBar className="app-bar" position="static" sx={{ width: "100%" }}>
+        <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
-            <div
-              className="icon-button"
-              onClick={() => navigate("/user-home-page")}
-            >
-              X
+            <div style={{ display: "flex", width: "100%", justifyContent: "space-between" }}>
+              <h1 style={{marginLeft: "2rem"}}>Create Post</h1>
+              <IconButton
+                aria-label="close"
+                onClick={() => navigate("/user-home-page")}
+              >
+                <CancelRounded />
+              </IconButton>
             </div>
-            <h1>Create Post</h1>
-            {(userData?.role === "admin" ||
-              userData?.role === "super-admin") && (
-              <CreatePostOnBehalfOfOtherUser 
+
+            {authToCreateOnBehalf && (
+              <CreatePostOnBehalfOfOtherUser
                 onBehalf={onBehalf}
                 setOnBehalf={setOnBehalf}
                 setPost={setPost}
