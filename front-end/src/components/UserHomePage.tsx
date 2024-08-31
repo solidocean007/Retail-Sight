@@ -109,6 +109,8 @@ switch (activePostSet) {
               clearSearch={clearSearch}
               toggleFilterMenu={toggleFilterMenu}
               setActivePostSet={setActivePostSet}
+              isSearchActive={isSearchActive}
+              setIsSearchActive={setIsSearchActive}
             />
           </div>
         </div>

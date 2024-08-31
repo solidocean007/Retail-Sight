@@ -33,6 +33,7 @@ import {
 import DateFilter from "./DateFilter";
 import { PostType, PostWithID } from "../utils/types";
 import { TagWithFilterSearchBar } from "./TagWithFilterSearchBar";
+import TagOnlySearchBar from "./TagOnlySearchBar";
 
 interface FilterState {
   channels: ChannelType[];
@@ -51,6 +52,8 @@ interface SideBarProps {
   clearSearch: () => Promise<void>;
   toggleFilterMenu: () => void;
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
+  isSearchActive: boolean;
+  setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const SideBar: React.FC<SideBarProps> = ({
@@ -60,6 +63,8 @@ const SideBar: React.FC<SideBarProps> = ({
   clearSearch,
   toggleFilterMenu,
   setActivePostSet,
+  isSearchActive,
+  setIsSearchActive,
 }) => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
@@ -237,9 +242,13 @@ const SideBar: React.FC<SideBarProps> = ({
         Close filters
       </button>
       <div className="top-of-side-bar">
-        <TagWithFilterSearchBar
+        <TagOnlySearchBar
           currentHashtag={currentHashtag}
           setCurrentHashtag={setCurrentHashtag}
+          clearSearch={clearSearch}
+          setActivePostSet={setActivePostSet}
+          isSearchActive={ isSearchActive}
+          setIsSearchActive={setIsSearchActive}
         />
       </div>
       <div className="channel-category-box">

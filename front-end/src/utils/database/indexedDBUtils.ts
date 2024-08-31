@@ -743,26 +743,30 @@ export async function setLastSeenTimestamp(timestamp: string): Promise<void> {
   });
 }
 
-export async function clearIndexedDB(): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const request = indexedDB.deleteDatabase('myRetailAppDB');
+export async function closeAndDeleteIndexedDB(): Promise<void> {
+  const db = await openDB();
+  db.close(); // Close the connection before attempting to delete
 
-    request.onsuccess = () => {
+  return new Promise<void>((resolve, reject) => {
+    const dbRequest = indexedDB.deleteDatabase('myRetailAppDB');
+
+    dbRequest.onsuccess = () => {
       console.log('IndexedDB database deleted successfully.');
       resolve();
     };
 
-    request.onerror = (event) => {
+    dbRequest.onerror = (event) => {
       console.error('Error deleting IndexedDB database:', (event.target as IDBRequest).error);
       reject((event.target as IDBRequest).error);
     };
 
-    request.onblocked = () => {
+    dbRequest.onblocked = () => {
       console.warn('Deletion blocked. Close all tabs with this site open.');
       reject(new Error('Deletion blocked'));
     };
   });
 }
+
 
 
 

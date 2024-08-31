@@ -14,7 +14,7 @@ import { setHashtagPosts } from "../Slices/postsSlice";
 import "./hashTagSearchBar.css";
 import { RootState } from "../utils/store";
 
-interface HashTagSearchBarProps {
+interface TagOnlySearchBarProps {
   currentHashtag?: string | null;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   clearSearch?: () => Promise<void>;
@@ -23,7 +23,7 @@ interface HashTagSearchBarProps {
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
+const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   currentHashtag,
   setCurrentHashtag,
   clearSearch,
@@ -97,7 +97,7 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
   return (
     <div className="hashtag-search-box">
       <Input
-        placeholder="Search with '#' or '*'"
+        placeholder="Searching with '#' or '*'"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleSearch()}

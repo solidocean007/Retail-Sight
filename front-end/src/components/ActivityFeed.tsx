@@ -81,13 +81,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return window.innerHeight * 0.95;
   };
 
-  const clearIndexedDB = async () => {
-    await clearPostsInIndexedDB();
-    await clearHashtagPostsInIndexedDB();
-    await clearUserCreatedPostsInIndexedDB();
-    await clearStarTagPostsInIndexedDB();
-  };
-
   useEffect(() => {
     // Whenever activePostSet changes, scroll to the top of the list
     listRef.current?.scrollTo(0);

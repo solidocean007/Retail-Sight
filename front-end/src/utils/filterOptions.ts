@@ -10,7 +10,8 @@ export const CategoryOptions: CategoryType[] = [
   "Produce",
   "Dairy",
   "Meat",
-  "Cookies_and_Pastries",
+  "Cookies",
+  "Donuts"
 ];
 
 export const ChannelOptions: ChannelType[] = [
@@ -18,7 +19,7 @@ export const ChannelOptions: ChannelType[] = [
   "Convenience",
   "Restaurant",
   "Bar",
-  "Warehouse_club",
-  "Department_store",
-  "Drug_store",
+  "Warehouse club",
+  "Department store",
+  "Drug store",
 ];

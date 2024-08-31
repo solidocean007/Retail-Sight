@@ -38,11 +38,6 @@ const usePosts = (
     const setupListeners = async () => {
       const lastSeen = await getLastSeenTimestamp();
       const lastSeenTimestamp = lastSeen || new Date(0).toISOString();
-      // console.log(
-      //   console.log(
-      //     `Setup listeners - Last seen timestamp: ${lastSeenTimestamp}, Type: ${typeof lastSeenTimestamp}`
-      //   )
-      // );
       if (!currentUser) return;
 
       const processDocChanges = async (snapshot: QuerySnapshot) => {
