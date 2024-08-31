@@ -40,36 +40,6 @@
   margin-top: 20px;
 }
 
-ul {
-  list-style: none;
-  padding-left: 0;
-}
-
-ul li::before {
-  content: "•";
-  color: var(--gold-leaf);
-  display: inline-block;
-  width: 1em;
-  margin-left: -1em;
-}
-
-ul li {
-  margin-bottom: 0.5em;
-}
-
-.about-container h1 {
-  /* color: var(--header-title); */
-  margin-bottom: 0.5em;
-}
-
-h2 {
-  /* color: var(--blueberry); */
-  margin-bottom: 0.5em;
-}
-
-p {
-  margin-bottom: 1em;
-}
 
 @media (max-width: 768px) {
   .about-container {

@@ -28,6 +28,7 @@ import { mergeAndSetPosts } from "../Slices/postsSlice";
 import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
+import { CircularProgress } from "@mui/material";
 
 const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
@@ -155,6 +156,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   //   }
   //   return 650;
   // };
+
   const handleItemsRendered = ({
     visibleStopIndex,
   }: {
@@ -243,7 +245,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   // If loading, show a loading indicator
   {
-    loadingMore && <div>Loading more posts...</div>;
+    loadingMore && <CircularProgress />;
   }
 
   // If there are no posts, show the no content card

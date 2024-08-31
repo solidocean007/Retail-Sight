@@ -10,14 +10,21 @@ import { db } from "../utils/firebase";
 import CollectionForm from "./CollectionForm";
 import { CollectionType, CollectionWithId } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import { Button, CircularProgress } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, Link, Typography } from "@mui/material";
 import "./collectionsPage.css";
-import { addOrUpdateCollection, getCollectionsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import {
+  addOrUpdateCollection,
+  getCollectionsFromIndexedDB,
+} from "../utils/database/indexedDBUtils";
 import CustomConfirmation from "./CustomConfirmation";
 import { useDispatch } from "react-redux";
 import { showMessage } from "../Slices/snackbarSlice";
 import { getFunctions, httpsCallable } from "@firebase/functions";
 import LinkShareModal from "./LinkShareModal";
+import {
+  Delete,
+  LinkSharp,
+} from "@mui/icons-material";
 
 interface ShareTokenResponse {
   shareToken: string;
@@ -55,7 +62,6 @@ const CollectionsViewer = () => {
         await addOrUpdateCollection(collection);
       }
       setCollections(fetchedCollections);
-      
     } catch (error) {
       console.error("Error fetching collections: ", error);
     } finally {
@@ -69,10 +75,8 @@ const CollectionsViewer = () => {
       setLoading(true);
       const indexedDbCollections = await getCollectionsFromIndexedDB();
       if (indexedDbCollections.length > 0) {
-        console.log("found collections");
         setCollections(indexedDbCollections);
       } else {
-        console.log("didn't find collections");
         await fetchCollections();
       }
       setLoading(false);
@@ -156,30 +160,78 @@ const CollectionsViewer = () => {
 
   return (
     <div className="collections-container">
-      <h2>Your Collections</h2>
-      <button className="home-btn" onClick={handleOpenCreateCollectionDialog}>
-        Create collection
-      </button>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 2,
+        }}
+      >
+        <Typography variant="h4">Your Collections</Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleOpenCreateCollectionDialog}
+        >
+          Create collection
+        </Button>
+      </Box>
 
       {collections.length === 0 && <div>No collections</div>}
       {loading ? (
         <CircularProgress />
       ) : (
-        <ul className="collections-list">
+        <Box
+          component="ul"
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            gap: 2,
+            padding: 0,
+            listStyle: "none",
+          }}
+        >
           {collections.map((collection) => (
-            <li className="collection-list-item" key={collection.id}>
-              <button onClick={() => handleCollectionClick(collection)}>
-                {collection.name} - {collection.posts.length} Posts
-              </button>
-              <Button onClick={() => handleCreateLinkClick(collection.id)}>
-                Create Link
+            <Box
+              component="li"
+              key={collection.id}
+              sx={{
+                padding: 2,
+                borderRadius: 2,
+                boxShadow: 3,
+                backgroundColor: "background.paper",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "space-between",
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                {collection.name}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ marginBottom: 2 }}>
+                Posts: {collection.posts.length}
+              </Typography>
+              <Button
+                variant="outlined"
+                onClick={() => handleCollectionClick(collection)}
+                sx={{ marginBottom: 1 }}
+              >
+                View
               </Button>
-              <Button onClick={() => openConfirmDeletionDialog(collection.id)}>
-                Delete
-              </Button>
-            </li>
+              <Box>
+                <IconButton onClick={() => handleCreateLinkClick(collection.id)}>
+                  <LinkSharp />
+                </IconButton>
+                <IconButton onClick={() => openConfirmDeletionDialog(collection.id)}>
+                  <Delete />
+                </IconButton>
+              </Box>
+            </Box>
           ))}
-        </ul>
+        </Box>
       )}
       <CollectionForm
         isOpen={showCreateCollectionDialog}

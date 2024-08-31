@@ -61,23 +61,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       </div>
 
       <div className="header-details">
-        {/* <button
-          className="profile-btn"
-          // variant="contained"
-          color="primary"
-          onClick={currentUser ? openProfile : goToSignUpLogin}
-        >
-          <h2>
-            {currentUser ? (
-              <>
-                <i className="fa-solid fa-user"></i>
-                {` ${currentUser.firstName} ${currentUser.lastName}`}
-              </>
-            ) : (
-              "Sign-up / Login"
-            )}
-          </h2>
-        </button> */}
+        <h3>{currentUser?.company}</h3>
         <div className="header-buttons">
           {/* <div className="menu-buttons">
             <button onClick={handleCollectionsClick}>Collections</button>

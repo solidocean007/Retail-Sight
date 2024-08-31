@@ -54,7 +54,13 @@ import LogOutButton from "./LogOutButton";
 import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 
-type DashboardModeType = "TeamMode" | "UsersMode" | "ProfileMode" | "ApiMode" | "CollectionsMode" | "TutorialMode";
+type DashboardModeType =
+  | "TeamMode"
+  | "UsersMode"
+  | "ProfileMode"
+  | "ApiMode"
+  | "CollectionsMode"
+  | "TutorialMode";
 
 export const Dashboard = () => {
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
@@ -69,7 +75,7 @@ export const Dashboard = () => {
   const dispatch = useAppDispatch();
   const [drawerOpen, setDrawerOpen] = useState(false);
   // const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
- 
+
   // const companyUsers = useSelector(selectCompanyUsers); // this is a selector to company users stored in state.  its not being used right now
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
@@ -101,7 +107,6 @@ export const Dashboard = () => {
     const loadFromIndexedDB = async () => {
       // Attempt to get users from IndexedDB
       const indexedDBUsers = await getCompanyUsersFromIndexedDB();
-      console.log(indexedDBUsers);
       setCompanyUsers(indexedDBUsers);
       if (indexedDBUsers && indexedDBUsers.length > 0) {
         setLocalUsers(indexedDBUsers);
@@ -117,7 +122,11 @@ export const Dashboard = () => {
       <Box sx={{ flexGrow: 1 }}>
         <AppBar position="static">
           <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <Typography
+              variant="h1"
+              component="div"
+              sx={{ flexGrow: 1, fontSize: "40px" }}
+            >
               Dashboard
             </Typography>
             <IconButton
@@ -132,18 +141,27 @@ export const Dashboard = () => {
         </AppBar>
       </Box>
       <Box>
-        {dashboardMode === "TeamMode" && <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
+        {dashboardMode === "TeamMode" && (
+          <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />
+        )}
         {dashboardMode === "UsersMode" && (
-          <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />
+          <EmployeesViewer
+            localUsers={localUsers}
+            setLocalUsers={setLocalUsers}
+          />
         )}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
         {dashboardMode === "ApiMode" && <ApiViewer />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
-        {dashboardMode === "TutorialMode" && <TutorialViewer/>}
+        {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
 
       <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>
         <List>
+          <ListItem>
+            {/* <ListItemText primary="Logout" /> */}
+            <LogOutButton />
+          </ListItem>
           <ListItem onClick={() => navigate("/user-home-page")}>
             <ListItemText primary="Home" />
           </ListItem>
@@ -164,10 +182,6 @@ export const Dashboard = () => {
           </ListItem>
           <ListItem onClick={handleMenuItemClick("TutorialMode")}>
             <ListItemText primary="Tutorial" />
-          </ListItem>
-          <ListItem>
-            {/* <ListItemText primary="Logout" /> */}
-            <LogOutButton />
           </ListItem>
         </List>
       </Drawer>

@@ -33,7 +33,6 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
 }) => {
   const protectedAction = useProtectedAction(); // i need to use this to protect from a unwanted search
   const [inputValue, setInputValue] = useState("");
-
   const userCompanyID = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
@@ -53,8 +52,11 @@ const TagOnlySearchBar: React.FC<HashTagSearchBarProps> = ({
     let result;
     try {
       if (inputValue.startsWith("#")) {
+        console.log(inputValue, " is a hashtag")
+
         result = await getPostsByTag(inputValue, userCompanyID);
       } else if (inputValue.startsWith("*")) {
+        console.log(inputValue, ' is a startag')
         result = await getPostsByStarTag(inputValue);
       } else {
         dispatch(showMessage("Invalid tag format"));

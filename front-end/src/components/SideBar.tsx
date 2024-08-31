@@ -32,7 +32,6 @@ import {
 } from "../Slices/postsSlice";
 import DateFilter from "./DateFilter";
 import { PostType, PostWithID } from "../utils/types";
-import HashTagSearchBar from "./TagOnlySearchBar";
 import { TagWithFilterSearchBar } from "./TagWithFilterSearchBar";
 
 interface FilterState {

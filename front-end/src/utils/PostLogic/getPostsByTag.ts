@@ -8,7 +8,7 @@ export const getPostsByTag = async (
   hashTag: string,
   usersCompanyID?: string,
 ): Promise<PostWithID[]> => {
-
+  console.log('Searching for posts with hashTag:', hashTag);
   const lowerCaseHashTag = hashTag.toLowerCase();
   try {
     const postsCollectionRef = collection(db, "posts");
@@ -53,6 +53,7 @@ export const getPostsByStarTag = async (
   starTag: string
 ): Promise<PostWithID[]> => {
   try {
+    console.log('Searching for posts with starTag:', starTag);
     const postsCollectionRef = collection(db, "posts");
     const postsQuery = query(
       postsCollectionRef,
@@ -65,9 +66,13 @@ export const getPostsByStarTag = async (
       id: doc.id,
       ...(doc.data() as PostType),
     }));
+
+    console.log('Posts fetched:', posts);
+
     return posts; 
   } catch (error) {
-    console.error("Error fetching posts by hashtag:", error);
+    console.error("Error fetching posts by starTag:", error);
     throw error;
   }
 };
+
