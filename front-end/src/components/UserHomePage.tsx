@@ -24,19 +24,19 @@ export const UserHomePage = () => {
     null
   );
  
-  const [activePostSet, setActivePostSet] = useState("posts"); // 'posts', 'filtered', 'hashtag', 'starTag'
+  const [activePostSet, setActivePostSet] = useState("posts");
   const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
 
-  const hashtagPosts = useSelector(
-    (state: RootState) => state.posts.hashtagPosts
-  );
+  // const hashtagPosts = useSelector(
+  //   (state: RootState) => state.posts.hashtagPosts
+  // );
 
-  const starTagPosts = useSelector(
-    (state: RootState) => state.posts.starTagPosts
-  );
+  // const starTagPosts = useSelector(
+  //   (state: RootState) => state.posts.starTagPosts
+  // );
 
   useScrollToTopOnChange(listRef, activePostSet);
 

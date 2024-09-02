@@ -31,8 +31,8 @@ interface PostsState {
   error: string | null;
   lastVisible: CursorType | null;
   lastVisibleFiltered: CursorType | null;
-  hashtagPosts: PostWithID[];
-  starTagPosts: PostWithID[];
+  // hashtagPosts: PostWithID[];
+  // starTagPosts: PostWithID[];
 }
 
 const initialState: PostsState = {
@@ -44,8 +44,8 @@ const initialState: PostsState = {
   error: null,
   lastVisible: "",
   lastVisibleFiltered: "",
-  hashtagPosts: [],
-  starTagPosts: [],
+  // hashtagPosts: [],
+  // starTagPosts: [],
 };
 
  export const sortPostsByDate = (posts: PostWithID[]) => {
@@ -58,7 +58,7 @@ const initialState: PostsState = {
 
 
 const postsSlice = createSlice({
-  name: "posts", // will this no be enough to store both posts and filtered posts?  Should I create another to handle filtered posts?
+  name: "posts", 
   initialState,
   reducers: {
     // Adjusted to the correct state.posts property
@@ -139,12 +139,12 @@ const postsSlice = createSlice({
 
       state.filteredPosts = mergedFilteredPosts;
     },
-    setHashtagPosts(state, action) {
-      state.hashtagPosts = sortPostsByDate(action.payload);
-    },
-    setStarTagPosts(state, action) {
-      state.starTagPosts = sortPostsByDate(action.payload);
-    },
+    // setHashtagPosts(state, action) {
+    //   state.hashtagPosts = sortPostsByDate(action.payload);
+    // },
+    // setStarTagPosts(state, action) {
+    //   state.starTagPosts = sortPostsByDate(action.payload);
+    // },
     // Reducer to clear post-related data
     clearPostsData: (state) => {
       state.posts = [];
@@ -152,8 +152,8 @@ const postsSlice = createSlice({
       state.userPosts = [];
       state.lastVisible = null;
       state.lastVisibleFiltered = null;
-      state.hashtagPosts = [];
-      state.starTagPosts = [];
+      // state.hashtagPosts = [];
+      // state.starTagPosts = [];
       // Any other state properties that should be reset can go here
     },
   },
@@ -274,8 +274,8 @@ export const {
   addNewPost,
   mergeAndSetPosts,
   mergeAndSetFilteredPosts,
-  setHashtagPosts,
-  setStarTagPosts,
+  // setHashtagPosts,
+  // setStarTagPosts,
   clearPostsData,
 } = postsSlice.actions;
 export default postsSlice.reducer;

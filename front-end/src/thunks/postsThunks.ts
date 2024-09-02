@@ -146,6 +146,7 @@ type FetchFilteredPostsArgs = {
     cities: string[]; // not currently using this in my filtered fetching
   };
   currentHashtag: string | null;
+  // should i rename currentHashtag to currentTag or also define a currentStarTag?
 };
 
 export const fetchFilteredPosts = createAsyncThunk(
