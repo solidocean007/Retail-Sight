@@ -204,14 +204,18 @@ export async function getFilteredPostsFromIndexedDB(
           filters.categories.length === 0 ||
           filters.categories.includes(post.category);
         const postDate = post.displayDate ? new Date(post.displayDate) : null;
-        const matchesDateRange =
+
+         // Convert the string dates in the filters to Date objects for comparison
+         const startDate = filters.dateRange?.startDate ? new Date(filters.dateRange.startDate) : null;
+         const endDate = filters.dateRange?.endDate ? new Date(filters.dateRange.endDate) : null;
+
+         const matchesDateRange =
           !filters.dateRange ||
           (postDate &&
-            filters.dateRange.startDate &&
-            postDate >= filters.dateRange.startDate &&
-            postDate &&
-            filters.dateRange.endDate &&
-            postDate <= filters.dateRange.endDate);
+            startDate &&
+            postDate >= startDate &&
+            endDate &&
+            postDate <= endDate);
 
         return matchesChannel && matchesCategory && matchesDateRange;
       });
@@ -224,7 +228,7 @@ export async function getFilteredPostsFromIndexedDB(
   });
 }
 
-// Create a utility function that stores filtered posts in IndexedDB
+// Utility function to store filtered posts in IndexedDB
 export async function storeFilteredPostsInIndexedDB(
   posts: PostWithID[],
   filters: FilterCriteria
@@ -242,15 +246,26 @@ export async function storeFilteredPostsInIndexedDB(
     };
 
     posts.forEach((post) => {
+      // Since dateRange is already in string format, no need to convert
+      const serializableFilters = { ...filters };
+
       // Clone the post object and add filter criteria to it
-      const postWithFilters = { ...post, filters };
+      const postWithFilters = { ...post, filters: serializableFilters };
       const request = store.put(postWithFilters);
+
+      request.onsuccess = () => {
+        // console.log(`Post with ID ${post.id} stored successfully with filters.`);
+      };
+
       request.onerror = () => {
         reject(request.error);
       };
     });
   });
 }
+
+
+
 
 // store latest posts in indexDB
 export async function storeLatestPostsInIndexedDB(

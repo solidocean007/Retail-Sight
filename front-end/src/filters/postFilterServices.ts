@@ -57,3 +57,14 @@ export const filterByHashtag = (
 
   return query(baseQuery, where("hashtags", "array-contains", hashtag));
 };
+
+export const filterByStarTag = (
+  starTag: string,
+  baseQuery: Query<DocumentData>
+) => {
+  if (starTag.length === 0) {
+    return baseQuery;
+  }
+
+  return query(baseQuery, where("starTags", "array-contains", starTag));
+};

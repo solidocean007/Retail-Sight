@@ -10,11 +10,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import React, { useEffect, useState } from "react";
-import { setHashtagPosts } from "../Slices/postsSlice";
+import { mergeAndSetFilteredPosts, setHashtagPosts } from "../Slices/postsSlice";
 import "./hashTagSearchBar.css";
 import { RootState } from "../utils/store";
 
 interface TagOnlySearchBarProps {
+  currentStarTag: string | null;
+  setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
   currentHashtag?: string | null;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   clearSearch?: () => Promise<void>;
@@ -24,6 +26,8 @@ interface TagOnlySearchBarProps {
 }
 
 const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
+  currentStarTag,
+  setCurrentStarTag,
   currentHashtag,
   setCurrentHashtag,
   clearSearch,
@@ -38,60 +42,53 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   );
   const dispatch = useDispatch();
 
-  // Update inputValue when currentHashtag changes externally
   useEffect(() => {
-    setInputValue(currentHashtag ?? "");
-  }, [currentHashtag]);
+    if (currentHashtag) {
+      setInputValue(currentHashtag);
+    } else if (currentStarTag) {
+      setInputValue(currentStarTag);
+    } else {
+      setInputValue("");
+    }
+  }, [currentHashtag, currentStarTag]);
 
   const handleSearch = async () => {
-    // Process hashtag/star tag search directly
     if (!inputValue) return;
-    if (setIsSearchActive) {
-      setIsSearchActive(true);
+    if (setIsSearchActive) setIsSearchActive(true);
+
+    // if there is a space after # or * remove it
+    if(inputValue.startsWith('#') || inputValue.startsWith("*")){
+      inputValue[1] === " " ? inputValue.replace(' ', '') : inputValue;
     }
-    let result;
+
+    let result: PostWithID[] = [];
     try {
       if (inputValue.startsWith("#")) {
-        console.log(inputValue, " is a hashtag")
-
+        if (setCurrentHashtag) setCurrentHashtag(inputValue);
+        if (setCurrentStarTag) setCurrentStarTag(null);
         result = await getPostsByTag(inputValue, userCompanyID);
       } else if (inputValue.startsWith("*")) {
-        console.log(inputValue, ' is a startag')
+        if (setCurrentStarTag) setCurrentStarTag(inputValue);
+        if (setCurrentHashtag) setCurrentHashtag(null);
         result = await getPostsByStarTag(inputValue);
       } else {
         dispatch(showMessage("Invalid tag format"));
         return;
       }
-      // how about a function that just sorts posts? then proceeeds to set redux and indexedDB
-      dispatch(setHashtagPosts(result)); // I need a setSortedHashtagPosts
-      // I need to save sorted posts to indexedDB
-      // storeHashtagSearchIndexedDb();
-      if (setActivePostSet) {
-        setActivePostSet("hashtag");
-      }
-      if (setCurrentHashtag) {
-        setCurrentHashtag(inputValue);
-      }
+
+      dispatch(mergeAndSetFilteredPosts(result));
+      if (setActivePostSet) setActivePostSet("filtered");
     } catch (error) {
       dispatch(showMessage("No posts for that search found"));
-      // Handle error appropriately
-      setInputValue(inputValue);
-      if (setActivePostSet) {
-        setActivePostSet("posts");
-      }
+      clearSearch && clearSearch();
     }
   };
 
   const handleClearSearch = () => {
-    if (setActivePostSet) {
-      setActivePostSet("posts");
-    }
-    if (setCurrentHashtag) {
-      setCurrentHashtag("#");
-    }
-    if (clearSearch) {
-      clearSearch();
-    }
+    if (setActivePostSet) setActivePostSet("posts");
+    if (setCurrentHashtag) setCurrentHashtag(null);
+    if (setCurrentStarTag) setCurrentStarTag(null);
+    if (clearSearch) clearSearch();
   };
 
   return (

@@ -14,12 +14,14 @@ import {
   DocumentData,
   startAfter,
   where,
+  Timestamp,
 } from "firebase/firestore";
 import {
   filterByCategories,
   filterByChannels,
   filterByCities,
   filterByHashtag,
+  filterByStarTag,
   filterByStates,
 } from "../filters/postFilterServices";
 import {
@@ -64,14 +66,14 @@ export const fetchInitialPostsBatch = createAsyncThunk(
           const isCompanyPost =
             post.visibility === "company" &&
             post.postUserCompanyId === currentUserCompanyId;
-          return isPublic || isCompanyPost;
+          const isSupplier = // add the posts where visibility is "supplier"
+            post.visibility === "supplier" &&
+            post.postUserCompanyId === currentUserCompanyId;
+          return isPublic || isCompanyPost || isSupplier;
         })
         .slice(0, POSTS_BATCH_SIZE);
 
       const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
-      console.log(
-        `Last visible post ID: ${lastVisible}, Number of posts after filter: ${postsWithIds.length}`
-      );
 
       return { posts: postsWithIds, lastVisible };
     } catch (error) {
@@ -142,20 +144,21 @@ type FetchFilteredPostsArgs = {
   filters: {
     channels: string[];
     categories: string[];
-    states: string[]; // not currently using this in my filtered fetching
-    cities: string[]; // not currently using this in my filtered fetching
+    states: string[];
+    cities: string[];
+    dateRange: { startDate: string | null; endDate: string | null };
   };
   currentHashtag: string | null;
+  currentStarTag?: string | null;
   // should i rename currentHashtag to currentTag or also define a currentStarTag?
 };
 
 export const fetchFilteredPosts = createAsyncThunk(
   "posts/fetchFiltered",
-  async ({ filters, currentHashtag }: FetchFilteredPostsArgs, { rejectWithValue }) => {
+  async ({ filters, currentHashtag, currentStarTag }: FetchFilteredPostsArgs, { rejectWithValue }) => {
     try {
       let queryToExecute: Query<DocumentData> = collection(db, "posts");
 
-      // Apply filters if they are present
       if (filters.channels && filters.channels.length > 0) {
         queryToExecute = filterByChannels(filters.channels, queryToExecute);
       }
@@ -168,11 +171,21 @@ export const fetchFilteredPosts = createAsyncThunk(
       if (filters.cities && filters.cities.length > 0) {
         queryToExecute = filterByCities(filters.cities, queryToExecute);
       }
+      if (currentStarTag && currentStarTag.length > 0) {
+        queryToExecute = filterByStarTag(currentStarTag, queryToExecute);
+      }
       if (currentHashtag && currentHashtag.length > 0) {
         queryToExecute = filterByHashtag(currentHashtag, queryToExecute);
       }
+      // Apply date range filter using ISO strings
+      if (filters.dateRange.startDate && filters.dateRange.endDate) {
+        queryToExecute = query(
+          queryToExecute,
+          where("displayDate", ">=", filters.dateRange.startDate),
+          where("displayDate", "<=", filters.dateRange.endDate)
+        );
+      }
 
-      // Execute the query
       queryToExecute = query(queryToExecute, orderBy("displayDate", "desc"));
       const postSnapshot = await getDocs(queryToExecute);
 

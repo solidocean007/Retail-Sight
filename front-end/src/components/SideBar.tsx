@@ -38,17 +38,20 @@ import TagOnlySearchBar from "./TagOnlySearchBar";
 interface FilterState {
   channels: ChannelType[];
   categories: CategoryType[];
-  states: string[]; // Assuming these are arrays of strings
+  states: string[];
   cities: string[];
-  dateRange: { startDate: Date | null; endDate: Date | null };
+  dateRange: { startDate: string | null; endDate: string | null };
+  Hashtag: string | null;
+  StarTag: string | null;
 }
 
 const POSTS_BATCH_SIZE = 5;
 
 interface SideBarProps {
-  // setSearchResults: React.Dispatch<React.SetStateAction<PostWithID[] | null>>;
   currentHashtag: string | null;
   setCurrentHashtag: React.Dispatch<React.SetStateAction<string | null>>;
+  currentStarTag: string | null;
+  setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
   clearSearch: () => Promise<void>;
   toggleFilterMenu: () => void;
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
@@ -57,9 +60,10 @@ interface SideBarProps {
 }
 
 const SideBar: React.FC<SideBarProps> = ({
-  // setSearchResults,
   currentHashtag,
   setCurrentHashtag,
+  currentStarTag,
+  setCurrentStarTag,
   clearSearch,
   toggleFilterMenu,
   setActivePostSet,
@@ -68,7 +72,6 @@ const SideBar: React.FC<SideBarProps> = ({
 }) => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
-  const currentUserCompany = currentUser?.company;
   const protectedAction = useProtectedAction();
   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(
@@ -82,97 +85,111 @@ const SideBar: React.FC<SideBarProps> = ({
   );
 
   const [dateRange, setDateRange] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-  }>({ startDate: null, endDate: null });
+    startDate: string | null;
+    endDate: string | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
 
   const handleDateChange = (newDateRange: {
     startDate: Date | null;
     endDate: Date | null;
   }) => {
-    setDateRange(newDateRange);
+    setDateRange({
+      startDate: newDateRange.startDate
+        ? newDateRange.startDate.toISOString()
+        : null,
+      endDate: newDateRange.endDate ? newDateRange.endDate.toISOString() : null,
+    });
   };
 
-  // State to track the last applied filters
   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState>({
     channels: [],
     categories: [],
     states: [],
     cities: [],
     dateRange: { startDate: null, endDate: null },
+    Hashtag: "",
+    StarTag: "",
   });
 
   const dispatch = useDispatch<AppDispatch>();
 
   const applyFilters = async () => {
     dispatch(setFilteredPosts([]));
+
     const filters = {
       channels: selectedChannels,
       categories: selectedCategories,
       states: selectedStates,
       cities: selectedCities,
-      dateRange: dateRange, // provided here so that last applied filters can be set
+      dateRange: {
+        startDate: dateRange.startDate ? dateRange.startDate.toString() : null,
+        endDate: dateRange.endDate ? dateRange.endDate.toString() : null,
+      },
+      Hashtag: currentHashtag,
+      StarTag: currentStarTag,
     };
+
+    console.log("filters: ", filters);
 
     setLastAppliedFilters(filters);
 
-    // Call fetchFilteredPosts thunk with filters
-    // Note: Modify fetchFilteredPosts if it doesn't directly support all filters as shown
     try {
       const actionResult = await dispatch(
-        fetchFilteredPosts({ filters, currentHashtag })
+        fetchFilteredPosts({ filters, currentHashtag, currentStarTag })
       );
       let fetchedPosts: PostWithID[] = actionResult.payload as PostWithID[];
-
-      // Filter by currentHashtag if it's not null
+      
       if (currentHashtag) {
         fetchedPosts = fetchedPosts.filter(
           (post) => post.hashtags && post.hashtags.includes(currentHashtag)
         );
       }
 
-      // Optionally, handle date range filtering here if not handled by fetchFilteredPosts
+      if (currentStarTag) {
+        fetchedPosts = fetchedPosts.filter(
+          (post) => post.hashtags && post.starTags.includes(currentStarTag)
+        );
+      }
+
       const postsFilteredByDate = fetchedPosts.filter((post) => {
         const postDate = new Date(post.displayDate).getTime();
-        const startDate = dateRange.startDate
-          ? new Date(dateRange.startDate).getTime()
-          : null;
-        const endDate = dateRange.endDate
-          ? new Date(dateRange.endDate).getTime()
-          : null;
-
-        return (
-          (!startDate || postDate >= startDate) &&
-          (!endDate || postDate <= endDate)
-        );
+        const startDate = filters.dateRange.startDate ? new Date(filters.dateRange.startDate).getTime() : null;
+        const endDate = filters.dateRange.endDate ? new Date(filters.dateRange.endDate).getTime() : null;
+      
+        const matchesDateRange = (!startDate || postDate >= startDate) && (!endDate || postDate <= endDate);
+        console.log(`Post Date: ${postDate}, Start Date: ${startDate}, End Date: ${endDate}, Matches Date Range: ${matchesDateRange}`);
+        
+        return matchesDateRange;
       });
-      setActivePostSet("filtered"); // this is not a function error?
-      dispatch(mergeAndSetFilteredPosts(postsFilteredByDate)); // this function sorts and merges
-      storeFilteredPostsInIndexedDB(postsFilteredByDate, filters); // but does this one?
-      setCurrentHashtag(null); // Reset the current hashtag
+      
+
+      setActivePostSet("filtered");
+      dispatch(mergeAndSetFilteredPosts(postsFilteredByDate));
+      await storeFilteredPostsInIndexedDB(postsFilteredByDate, filters); //Type 'string | null' is not assignable to type 'Date | null'
+      setCurrentHashtag(null);
     } catch (error) {
       console.error("Error applying filters:", error);
-      // Handle error (e.g., show an error message)
     }
   };
 
   const clearFilters = async () => {
-    // Clear local states for channels and categories
     setActivePostSet("posts");
     setSelectedChannels([]);
     setSelectedCategories([]);
     setCurrentHashtag(null);
+    setCurrentStarTag(null);
     setDateRange({ startDate: null, endDate: null });
     dispatch(clearLocationFilters());
 
-    // Reload posts from IndexedDB and update Redux
     try {
       const cachedPosts = await getPostsFromIndexedDB();
       if (cachedPosts && cachedPosts.length > 0) {
         dispatch(mergeAndSetPosts(cachedPosts));
       } else {
-        // Optionally, fetch from the server if IndexedDB is empty
-        if (currentUserCompany && currentUserCompanyId) {
+        if (currentUserCompanyId && currentUserCompanyId) {
           dispatch(
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
           );
@@ -180,7 +197,6 @@ const SideBar: React.FC<SideBarProps> = ({
       }
     } catch (error) {
       console.error("Error reloading posts from IndexedDB:", error);
-      // Optionally, fetch from the server in case of an error
     }
   };
 
@@ -189,7 +205,6 @@ const SideBar: React.FC<SideBarProps> = ({
     if (a == null || b == null) return false;
     if (a.length !== b.length) return false;
 
-    // Create copies of the arrays to sort, so the original arrays are not mutated
     const sortedA = [...a].sort();
     const sortedB = [...b].sort();
 
@@ -203,14 +218,15 @@ const SideBar: React.FC<SideBarProps> = ({
     const dateRangeChanged =
       lastAppliedFilters.dateRange.startDate !== dateRange.startDate ||
       lastAppliedFilters.dateRange.endDate !== dateRange.endDate;
-    // Check if current filters are different from the last applied filters
+
     const filtersChanged =
       !arraysEqual(selectedChannels, lastAppliedFilters.channels) ||
       !arraysEqual(selectedCategories, lastAppliedFilters.categories) ||
       !arraysEqual(selectedStates, lastAppliedFilters.states) ||
       !arraysEqual(selectedCities, lastAppliedFilters.cities) ||
       dateRangeChanged ||
-      currentHashtag != null;
+      currentHashtag !== null ||
+      currentStarTag !== null;
 
     if (filtersChanged) {
       protectedAction(applyFilters);
@@ -222,7 +238,6 @@ const SideBar: React.FC<SideBarProps> = ({
 
   const handleClearFiltersClick = () => {
     protectedAction(clearFilters);
-    setCurrentHashtag(null);
     if (window.innerWidth <= 900) {
       toggleFilterMenu();
     }
@@ -234,7 +249,8 @@ const SideBar: React.FC<SideBarProps> = ({
     selectedStates.length === 0 &&
     selectedCities.length === 0 &&
     dateRange.startDate === null &&
-    currentHashtag === null;
+    currentHashtag === null &&
+    currentStarTag === null;
 
   return (
     <div className="side-bar-box">
@@ -243,35 +259,34 @@ const SideBar: React.FC<SideBarProps> = ({
       </button>
       <div className="top-of-side-bar">
         <TagOnlySearchBar
+          setCurrentStarTag={setCurrentStarTag}
+          currentStarTag={currentStarTag}
           currentHashtag={currentHashtag}
           setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
           setActivePostSet={setActivePostSet}
-          isSearchActive={ isSearchActive}
+          isSearchActive={isSearchActive}
           setIsSearchActive={setIsSearchActive}
         />
       </div>
       <div className="channel-category-box">
-        {/* <div className="filter-by-content"> */}
         <CustomAccordion<ChannelType>
           title="Channels"
           options={ChannelOptions}
           selected={selectedChannels}
           toggleOption={(option: ChannelType) => {
-            // 'option' is a string
             setSelectedChannels((prev) =>
               prev.includes(option)
                 ? prev.filter((c) => c !== option)
                 : [...prev, option]
             );
           }}
-        ></CustomAccordion>
+        />
         <CustomAccordion<CategoryType>
           title="Categories"
-          options={CategoryOptions} // This should be an array of strings
-          selected={selectedCategories} // This should be an array of strings representing selected categories
+          options={CategoryOptions}
+          selected={selectedCategories}
           toggleOption={(option: CategoryType) => {
-            // 'option' is a string
             setSelectedCategories((prev) =>
               prev.includes(option)
                 ? prev.filter((c) => c !== option)
@@ -279,13 +294,20 @@ const SideBar: React.FC<SideBarProps> = ({
             );
           }}
         />
-        {/* </div> */}
       </div>
       <div className="location-filter-container">
         <FilterLocation />
       </div>
       <div className="date-filter-container">
-        <DateFilter dateRange={dateRange} onDateChange={handleDateChange} />
+        <DateFilter
+          dateRange={{
+            startDate: dateRange.startDate
+              ? new Date(dateRange.startDate)
+              : null,
+            endDate: dateRange.endDate ? new Date(dateRange.endDate) : null,
+          }}
+          onDateChange={handleDateChange}
+        />
       </div>
       <div className="clear-apply-button-box">
         <button

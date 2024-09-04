@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
 import HeaderBar from "./HeaderBar";
 import { UserHomePageHelmet } from "../utils/helmetConfigurations";
-import {  getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
 import { VariableSizeList } from "react-window";
 import { PostWithID } from "../utils/types";
@@ -20,41 +20,23 @@ export const UserHomePage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-  const [currentHashtag, setCurrentHashtag] = React.useState<string | null>(
-    null
-  );
- 
+  const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
+  const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
   const [activePostSet, setActivePostSet] = useState("posts");
+
   const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
 
-  // const hashtagPosts = useSelector(
-  //   (state: RootState) => state.posts.hashtagPosts
-  // );
-
-  // const starTagPosts = useSelector(
-  //   (state: RootState) => state.posts.starTagPosts
-  // );
-
   useScrollToTopOnChange(listRef, activePostSet);
 
- // Decide which posts to display based on the activePostSet state
-let displayPosts: PostWithID[];
-switch (activePostSet) {
-  case "filtered":
+  let displayPosts: PostWithID[];
+  if (activePostSet === "filtered") {
     displayPosts = filteredPosts;
-    break;
-  case "hashtag":
-    displayPosts = hashtagPosts;
-    break;
-  case "starTag": 
-    displayPosts = starTagPosts;
-    break;
-  default:
-    displayPosts = posts; // Fallback to the default posts if none of the above conditions are met
-}
+  } else {
+    displayPosts = posts;
+  }
 
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
@@ -62,8 +44,8 @@ switch (activePostSet) {
 
   const clearSearch = async () => {
     setCurrentHashtag(null);
+    setCurrentStarTag(null);
     setActivePostSet("posts");
-    // Reload posts from IndexedDB
     const cachedPosts = await getPostsFromIndexedDB();
     if (cachedPosts && cachedPosts.length > 0) {
       dispatch(mergeAndSetPosts(cachedPosts));
@@ -89,6 +71,8 @@ switch (activePostSet) {
               posts={displayPosts}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
+              currentStarTag={currentStarTag}
+              setCurrentStarTag={setCurrentStarTag}
               clearSearch={clearSearch}
               activePostSet={activePostSet}
               setActivePostSet={setActivePostSet}
@@ -106,6 +90,8 @@ switch (activePostSet) {
               // setSearchResults={setSearchResults}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
+              setCurrentStarTag={setCurrentStarTag}
+              currentStarTag={currentStarTag}
               clearSearch={clearSearch}
               toggleFilterMenu={toggleFilterMenu}
               setActivePostSet={setActivePostSet}

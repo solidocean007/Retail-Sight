@@ -14,8 +14,8 @@ export type FilterCriteria = {
   channels?: string[];
   categories?: string[];
   dateRange?: {
-    startDate: Date | null;
-    endDate: Date | null;
+    startDate: string | null;
+    endDate: string | null;
   };
 };
 
@@ -31,8 +31,8 @@ interface PostsState {
   error: string | null;
   lastVisible: CursorType | null;
   lastVisibleFiltered: CursorType | null;
-  // hashtagPosts: PostWithID[];
-  // starTagPosts: PostWithID[];
+  hashtagPosts: PostWithID[];
+  starTagPosts: PostWithID[];
 }
 
 const initialState: PostsState = {
@@ -44,8 +44,8 @@ const initialState: PostsState = {
   error: null,
   lastVisible: "",
   lastVisibleFiltered: "",
-  // hashtagPosts: [],
-  // starTagPosts: [],
+  hashtagPosts: [],
+  starTagPosts: [],
 };
 
  export const sortPostsByDate = (posts: PostWithID[]) => {
@@ -139,12 +139,12 @@ const postsSlice = createSlice({
 
       state.filteredPosts = mergedFilteredPosts;
     },
-    // setHashtagPosts(state, action) {
-    //   state.hashtagPosts = sortPostsByDate(action.payload);
-    // },
-    // setStarTagPosts(state, action) {
-    //   state.starTagPosts = sortPostsByDate(action.payload);
-    // },
+    setHashtagPosts(state, action) {
+      state.hashtagPosts = sortPostsByDate(action.payload);
+    },
+    setStarTagPosts(state, action) {
+      state.starTagPosts = sortPostsByDate(action.payload);
+    },
     // Reducer to clear post-related data
     clearPostsData: (state) => {
       state.posts = [];
@@ -274,8 +274,8 @@ export const {
   addNewPost,
   mergeAndSetPosts,
   mergeAndSetFilteredPosts,
-  // setHashtagPosts,
-  // setStarTagPosts,
+  setHashtagPosts,
+  setStarTagPosts,
   clearPostsData,
 } = postsSlice.actions;
 export default postsSlice.reducer;

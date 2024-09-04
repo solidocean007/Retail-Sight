@@ -29,6 +29,7 @@ import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
+import NoResults from "./NoResults";
 
 const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
@@ -38,6 +39,8 @@ interface ActivityFeedProps {
   posts: PostWithID[];
   currentHashtag?: string | null;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  currentStarTag: string | null;
+  setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
   clearSearch?: () => Promise<void>;
   activePostSet?: string;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
@@ -50,6 +53,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   posts,
   currentHashtag,
   setCurrentHashtag,
+  currentStarTag,
+  setCurrentStarTag,
   clearSearch,
   activePostSet,
   setActivePostSet,
@@ -72,7 +77,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   // State to store the window width
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // const loading = useSelector((state: RootState) => state.posts.loading);
+  const loading = useSelector((state: RootState) => state.posts.loading);
   // State to store the list height
   const [listHeight, setListHeight] = useState(0);
 
@@ -236,20 +241,26 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   };
 
-  // If loading, show a loading indicator
-  {
-    loadingMore && <CircularProgress />;
+  // console.log('loading: ', loading)
+  
+  if(loading || loadingMore){
+    return (
+      <CircularProgress />
+    )
   }
 
-  // If there are no posts, show the no content card
-  // if (displayPosts.length === 0) {
-  //   return <NoContentCard />;
+  // if(posts.length === 0){
+  //   return (
+  //     <NoResults onClearFilters={clearSearch} />
+  //   )
   // }
 
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
         <TagOnlySearchBar
+          currentStarTag={currentStarTag}
+          setCurrentStarTag={setCurrentStarTag}
           currentHashtag={currentHashtag}
           setCurrentHashtag={setCurrentHashtag}
           clearSearch={clearSearch}
