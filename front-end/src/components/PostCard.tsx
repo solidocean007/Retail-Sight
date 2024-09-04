@@ -272,7 +272,6 @@ const PostCard: React.FC<PostCardProps> = ({
                   </div>
                 </div>
                 <h5>date: {formattedDate}</h5>
-                <h6>displayDate: {post.displayDate}</h6>
               </div>
 
               <div className="post-user-details">
