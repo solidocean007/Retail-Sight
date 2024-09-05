@@ -219,7 +219,8 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
   return (
     <div className="map-container">
       <div className="map-box" ref={mapRef} style={{ width: "350px", height: "300px" }}></div>
-      <h4>3. Click store or <button onClick={handleManualSelection}>enter manually</button></h4>
+      <h4>3. Click store or</h4>
+      <button onClick={handleManualSelection}>enter manually</button>
       {(post.selectedStore || manualStoreMode) && <div className="store-input-box">
         <div className="store-name-input-box">
           <p>Store name:</p>

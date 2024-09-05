@@ -1,7 +1,11 @@
 // PostDescription.tsx
 import styles from "./PostDescription.module.css";
 import { useDispatch, useSelector } from "react-redux";
-import { setHashtagPosts, setStarTagPosts } from "../Slices/postsSlice";
+import {
+  setFilteredPosts,
+  setHashtagPosts,
+  setStarTagPosts,
+} from "../Slices/postsSlice";
 import {
   addHashtagPostsToIndexedDB,
   addStarTagPostsToIndexedDB,
@@ -109,13 +113,15 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     event: React.MouseEvent<HTMLAnchorElement>,
     hashtag: string
   ) => {
-    console.log('click')
-    event.preventDefault(); // Prevents the default anchor behavior
+    console.log("click");
+    event.preventDefault();
+    setFilteredPosts([]);
+    // Prevents the default anchor behavior
     try {
       const hashtagPosts = await getPostsByTag(hashtag, userCompanyID);
       setIsSearchActive?.(true);
-      setActivePostSet?.("hashtag");
-      if(setCurrentHashtag){
+      setActivePostSet?.("filteredPosts");
+      if (setCurrentHashtag) {
         setCurrentHashtag(hashtag);
       }
       dispatch(setHashtagPosts(hashtagPosts));
@@ -130,11 +136,13 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     starTag: string
   ) => {
     event.preventDefault(); // Prevents the default anchor behavior
+    setFilteredPosts([]);
+
     try {
-      console.log('click')
+      console.log("click");
       const starTagPosts = await getPostsByStarTag(starTag);
       setIsSearchActive?.(true);
-      setActivePostSet?.("starTag");
+      setActivePostSet?.("filteredPosts");
       setCurrentHashtag?.(starTag);
       dispatch(setStarTagPosts(starTagPosts));
       addStarTagPostsToIndexedDB(starTagPosts);

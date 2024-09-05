@@ -213,6 +213,8 @@ const PostCard: React.FC<PostCardProps> = ({
     handleClose();
   };
 
+  const createdOnBehalf =  post.postCreatedBy != post.postUserName;
+  
   return (
     <>
       <Card className="post-card dynamic-height" style={{ ...style }}>
@@ -290,9 +292,10 @@ const PostCard: React.FC<PostCardProps> = ({
                   </p>
 
                 </div>
-                {post.postCreatedBy && (
+                {createdOnBehalf  && (
                   <h5>Created by: {post.postCreatedBy}</h5>
                 )}
+                {post.id}
                 <div className="user-company-box">
                   <p>
                     company:{" "}
@@ -309,12 +312,11 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
-
           <div className="description-image">
             <div className="like-quantity-row">
               {post.totalCaseCount > 1 ? (
                 <div className="post-quantity">
-                  <h4>Quantity: {post.totalCaseCount}{post.starTags[0]}</h4>
+                  <h4>Quantity: {post.totalCaseCount}</h4>
                 </div>
               ) : null}
               <div className="likes-box">

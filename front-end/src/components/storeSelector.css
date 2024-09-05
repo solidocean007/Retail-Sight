@@ -4,6 +4,10 @@
   flex-direction: column;
 }
 
+.map-container h4 {
+  margin: 5px;
+}
+
 .map-box {
   border-radius: 5px;
 }
