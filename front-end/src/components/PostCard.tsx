@@ -286,7 +286,9 @@ const PostCard: React.FC<PostCardProps> = ({
                     >
                       {post.postUserName}
                     </a>
+
                   </p>
+
                 </div>
                 {post.postCreatedBy && (
                   <h5>Created by: {post.postCreatedBy}</h5>
@@ -312,7 +314,7 @@ const PostCard: React.FC<PostCardProps> = ({
             <div className="like-quantity-row">
               {post.totalCaseCount > 1 ? (
                 <div className="post-quantity">
-                  <h4>Quantity: {post.totalCaseCount}</h4>
+                  <h4>Quantity: {post.totalCaseCount}{post.starTags[0]}</h4>
                 </div>
               ) : null}
               <div className="likes-box">

@@ -160,7 +160,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   }: {
     visibleStopIndex: number;
   }) => {
-    const lastIndex = itemCount - 1;
+    // const lastIndex = itemCount - 1;
+    const lastIndex = itemCount;
 
     // If the last visible index is the last item in the list
     if (visibleStopIndex === lastIndex && !loadingMore && hasMore) {

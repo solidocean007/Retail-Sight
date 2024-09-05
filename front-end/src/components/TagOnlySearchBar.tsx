@@ -23,6 +23,7 @@ interface TagOnlySearchBarProps {
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   isSearchActive?: boolean;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
+  handleApplyFiltersClick?: () => void;
 }
 
 const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
@@ -34,6 +35,8 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   setActivePostSet,
   isSearchActive,
   setIsSearchActive,
+  handleApplyFiltersClick,
+
 }) => {
   const protectedAction = useProtectedAction(); // i need to use this to protect from a unwanted search
   const [inputValue, setInputValue] = useState("");
@@ -56,10 +59,6 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
     if (!inputValue) return;
     if (setIsSearchActive) setIsSearchActive(true);
 
-    // if there is a space after # or * remove it
-    if(inputValue.startsWith('#') || inputValue.startsWith("*")){
-      inputValue[1] === " " ? inputValue.replace(' ', '') : inputValue;
-    }
 
     let result: PostWithID[] = [];
     try {
@@ -76,6 +75,10 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
         return;
       }
 
+      if(handleApplyFiltersClick){
+        handleApplyFiltersClick();
+      };
+
       dispatch(mergeAndSetFilteredPosts(result));
       if (setActivePostSet) setActivePostSet("filtered");
     } catch (error) {
@@ -85,11 +88,13 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   };
 
   const handleClearSearch = () => {
-    if (setActivePostSet) setActivePostSet("posts");
-    if (setCurrentHashtag) setCurrentHashtag(null);
-    if (setCurrentStarTag) setCurrentStarTag(null);
-    if (clearSearch) clearSearch();
-  };
+  if (setActivePostSet) setActivePostSet("posts");
+  if (setCurrentHashtag) setCurrentHashtag(null);
+  if (setCurrentStarTag) setCurrentStarTag(null);
+  dispatch(mergeAndSetFilteredPosts([]));  // Clear search results
+  if (clearSearch) clearSearch();
+};
+
 
   return (
     <div className="hashtag-search-box">

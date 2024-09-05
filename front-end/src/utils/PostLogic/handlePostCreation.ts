@@ -17,7 +17,7 @@ import {
   updateChannelsInFirestore,
 } from "./updateFirestore";
 import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { addNewPost } from "../../Slices/postsSlice";
 import { useAppDispatch } from "../store";
@@ -34,7 +34,7 @@ export const useHandlePostSubmission = () => {
     selectedFile: File,
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
-    selectedCompanyMission: CompanyMissionType,
+    selectedCompanyMission: CompanyMissionType
   ) => {
     setIsUploading(true);
     const user = auth.currentUser;
@@ -120,11 +120,19 @@ export const useHandlePostSubmission = () => {
               tokenExpiryDate.setDate(tokenExpiryDate.getDate() + 7);
               const tokenExpiry = tokenExpiryDate.toISOString();
 
+              // Extract hashtags and starTags directly from the description
+              const hashtags = extractHashtags(post.description ?? "");
+              const starTags = extractStarTags(post.description ?? "");
+
+              const cleanedDescription = post.description
+                ?.replace(/(#|[*])\s+/g, "$1") // Remove spaces after # or *
+                .trim(); // Trim any leading/trailing spaces
+
               // Post data without images
               const postDataWithoutImage = {
                 category: post.category,
                 channel: post.channel,
-                description: post.description,
+                description: cleanedDescription,
                 imageUrl: "", // Temporary placeholder
                 // imageUrl: post.imageUrl,
                 selectedStore: post.selectedStore,
@@ -138,18 +146,18 @@ export const useHandlePostSubmission = () => {
                 displayDate: new Date().toISOString(),
                 timestamp: new Date().toISOString(),
                 totalCaseCount: post.totalCaseCount,
-                postUserName: post.postUserName,  // Use the post data directly
-                postUserId: post.postUserId,      // Use the post data directly
+                postUserName: post.postUserName, // Use the post data directly
+                postUserId: post.postUserId, // Use the post data directly
                 postUserCompany: post.postUserCompany, // Use the post data directly
                 postUserCompanyId: post.postUserCompanyId, // Use the post data directly
                 postUserEmail: post.postUserEmail, // Use the post data directly
-                hashtags: extractHashtags(post.description ?? ""),
-                starTags: extractStarTags(post.description ?? ""),
+                hashtags: hashtags,
+                starTags: starTags,
                 commentCount: 0,
                 likes: [],
                 token: {
                   sharedToken: sharedToken,
-                  tokenExpiry: tokenExpiry
+                  tokenExpiry: tokenExpiry,
                 },
                 postCreatedBy: post.postCreatedBy,
               };
@@ -192,7 +200,7 @@ export const useHandlePostSubmission = () => {
                   companyMissionId: selectedCompanyMission.id!,
                   postIdForObjective: newDocRef.id,
                 };
-            
+
                 await dispatch(createSubmittedMission(submittedMission));
               }
 

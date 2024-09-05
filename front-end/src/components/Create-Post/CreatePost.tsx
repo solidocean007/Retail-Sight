@@ -132,10 +132,6 @@ export const CreatePost = () => {
   }, [onBehalf, userData]);
 
   useEffect(() => {
-    console.log("Post state updated:", post);
-  }, [post]);
-
-  useEffect(() => {
     const storedCategory = localStorage.getItem(
       "postCategory"
     ) as CategoryType | null;

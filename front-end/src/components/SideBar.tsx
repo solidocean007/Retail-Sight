@@ -132,8 +132,6 @@ const SideBar: React.FC<SideBarProps> = ({
       StarTag: currentStarTag,
     };
 
-    console.log("filters: ", filters);
-
     setLastAppliedFilters(filters);
 
     try {
@@ -141,7 +139,7 @@ const SideBar: React.FC<SideBarProps> = ({
         fetchFilteredPosts({ filters, currentHashtag, currentStarTag })
       );
       let fetchedPosts: PostWithID[] = actionResult.payload as PostWithID[];
-      
+
       if (currentHashtag) {
         fetchedPosts = fetchedPosts.filter(
           (post) => post.hashtags && post.hashtags.includes(currentHashtag)
@@ -156,20 +154,25 @@ const SideBar: React.FC<SideBarProps> = ({
 
       const postsFilteredByDate = fetchedPosts.filter((post) => {
         const postDate = new Date(post.displayDate).getTime();
-        const startDate = filters.dateRange.startDate ? new Date(filters.dateRange.startDate).getTime() : null;
-        const endDate = filters.dateRange.endDate ? new Date(filters.dateRange.endDate).getTime() : null;
-      
-        const matchesDateRange = (!startDate || postDate >= startDate) && (!endDate || postDate <= endDate);
-        console.log(`Post Date: ${postDate}, Start Date: ${startDate}, End Date: ${endDate}, Matches Date Range: ${matchesDateRange}`);
-        
+        const startDate = filters.dateRange.startDate
+          ? new Date(filters.dateRange.startDate).getTime()
+          : null;
+        const endDate = filters.dateRange.endDate
+          ? new Date(filters.dateRange.endDate).getTime()
+          : null;
+
+        const matchesDateRange =
+          (!startDate || postDate >= startDate) &&
+          (!endDate || postDate <= endDate);
+
         return matchesDateRange;
       });
-      
 
       setActivePostSet("filtered");
       dispatch(mergeAndSetFilteredPosts(postsFilteredByDate));
       await storeFilteredPostsInIndexedDB(postsFilteredByDate, filters); //Type 'string | null' is not assignable to type 'Date | null'
       setCurrentHashtag(null);
+      setCurrentStarTag(null);
     } catch (error) {
       console.error("Error applying filters:", error);
     }
@@ -267,6 +270,7 @@ const SideBar: React.FC<SideBarProps> = ({
           setActivePostSet={setActivePostSet}
           isSearchActive={isSearchActive}
           setIsSearchActive={setIsSearchActive}
+          handleApplyFiltersClick={handleApplyFiltersClick}
         />
       </div>
       <div className="channel-category-box">

@@ -66,39 +66,48 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
-    await updatePostWithNewTimestamp(post.id);
-
+  
     try {
       const updatedFields = {
         description: updatedPost.description,
         visibility: updatedPost.visibility,
-        hashtags: updatedPost.hashtags,
+        hashtags: updatedPost.hashtags || [],  // Ensure hashtags are being passed
+        starTags: updatedPost.starTags || [],  // Ensure starTags are being passed
         // add other fields you want to update here
       };
+  
+      // Update Firestore document
       await updateDoc(postRef, updatedFields);
+  
+      // Dispatch actions to update local state (Redux and IndexedDB)
       dispatch(updatePost(updatedPost));
       await updatePostInIndexedDB(updatedPost);
-      // console.log("postRef", postRef);
-      // console.log("Post updated successfully");
+  
+      // Close the modal and notify success
       handleCloseEditModal();
+      dispatch(showMessage("Post edited successfully!"));
     } catch (error) {
-      // console.error("Error updating post: ", error);
+      console.error("Error updating post: ", error);
+      dispatch(showMessage("Error updating post."));
     }
   };
-
+  
   const handleSave = () => {
     const extractedHashtags = extractHashtags(description);
-    const extractedStartags = extractStarTags(description);
+    const extractedStarTags = extractStarTags(description);
+  
     const updatedPost: PostWithID = {
       ...post,
       description,
       visibility: postVisibility,
-      hashtags: extractedHashtags,
-      starTags: extractedStartags,
+      hashtags: extractedHashtags,  // Assign extracted hashtags
+      starTags: extractedStarTags,  // Assign extracted starTags
     };
+  
     handleSavePost(updatedPost);
-    dispatch(showMessage("Post edited successfully!"));
   };
+  
+  
 
   const handleDeletePostClick = async () => {
     try {
