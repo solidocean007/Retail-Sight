@@ -306,6 +306,8 @@ export const CreatePost = () => {
     }
   };
 
+  console.log('onBehalf: ', onBehalf);
+
   const authToCreateOnBehalf =
     userData?.role === "admin" || userData?.role === "super-admin";
 
@@ -323,8 +325,8 @@ export const CreatePost = () => {
         {isUploading && <LoadingIndicator progress={uploadProgress} />}
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
-            <div style={{ display: "flex", width: "100%", justifyContent: "space-between" }}>
-              <h1 style={{marginLeft: "2rem"}}>Create Post</h1>
+            <div className="create-post-header-box" >
+              <h1>Create Post</h1>
               <IconButton
                 aria-label="close"
                 onClick={() => navigate("/user-home-page")}

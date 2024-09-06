@@ -35,6 +35,16 @@
   /* padding-left: 10%; */
 }
 
+.create-post-header-box {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.create-post-header-box h1 {
+  margin-left: 2rem;
+}
+
 
 
 .create-post-btn {

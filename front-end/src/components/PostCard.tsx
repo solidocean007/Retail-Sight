@@ -290,7 +290,6 @@ const PostCard: React.FC<PostCardProps> = ({
                     </a>
 
                   </p>
-
                 </div>
                 {createdOnBehalf  && (
                   <h5>Created by: {post.postCreatedBy}</h5>

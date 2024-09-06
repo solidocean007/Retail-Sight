@@ -44,7 +44,6 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
       // Check IndexedDB first
       const cachedUsers = await getCompanyUsersFromIndexedDB();
       if (cachedUsers) {
-        // setLocalUsers(cachedUsers);
         dispatch(setCompanyUsers(cachedUsers));
       }
 
@@ -70,10 +69,6 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
             JSON.stringify(usersFromFirestore) !== JSON.stringify(cachedUsers);
           if (isDifferent) {
             dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
-            // setLocalUsers(usersFromFirestore); // Update local state
-
-            // Save the updated list to IndexedDB
-            console.log("saving users to IndexedDB");
             await saveCompanyUsersToIndexedDB(usersFromFirestore);
           }
         },
@@ -94,6 +89,7 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
     const selectedUser = companyUsers?.find(
       (user) => user.uid === event.target.value
     );
+
     setOnBehalf(selectedUser || null);
 
     if (selectedUser) {
@@ -118,23 +114,21 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
   };
 
   return (
-    <Box sx={{display: "flex"}}>
+    <Box sx={{ display: "flex" }}>
       <h2>For user: </h2>
       <Select
         value={onBehalf?.uid || userData?.uid}
         onChange={handleOnBehalfChange}
-        sx={{backgroundColor: "whitesmoke", width: "20rem"}}
+        sx={{ backgroundColor: "whitesmoke", width: "20rem" }}
       >
         <MenuItem value={userData?.uid}>
           {`${userData?.firstName} ${userData?.lastName} (You)`}
         </MenuItem>
-        <MenuList dense>
-          {companyUsers?.map((user) => (
-            <MenuItem key={user.uid} value={user.uid}>
-              {`${user.firstName} ${user.lastName}`}
-            </MenuItem>
-          ))}
-        </MenuList>
+        {companyUsers?.map((user) => (
+          <MenuItem key={user.uid} value={user.uid}>
+            {`${user.firstName} ${user.lastName}`}
+          </MenuItem>
+        ))}
       </Select>
     </Box>
   );
