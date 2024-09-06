@@ -1,4 +1,4 @@
-// HashTagSearchBar.tsx
+// TagOnlySearchBar.tsx
 import { Input } from "@mui/material";
 import { showMessage } from "../Slices/snackbarSlice";
 import {
@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import React, { useEffect, useState } from "react";
-import { mergeAndSetFilteredPosts, setHashtagPosts } from "../Slices/postsSlice";
+import { mergeAndSetFilteredPosts, mergeAndSetPosts, setHashtagPosts } from "../Slices/postsSlice";
 import "./hashTagSearchBar.css";
 import { RootState } from "../utils/store";
 
@@ -24,6 +24,7 @@ interface TagOnlySearchBarProps {
   isSearchActive?: boolean;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   handleApplyFiltersClick?: () => void;
+  clearInput: boolean;
 }
 
 const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
@@ -36,6 +37,7 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   isSearchActive,
   setIsSearchActive,
   handleApplyFiltersClick,
+  clearInput,
 
 }) => {
   const protectedAction = useProtectedAction(); // i need to use this to protect from a unwanted search
@@ -46,6 +48,9 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   const dispatch = useDispatch();
 
   useEffect(() => {
+    if (clearInput) {
+      setInputValue("");
+    }
     if (currentHashtag) {
       setInputValue(currentHashtag);
     } else if (currentStarTag) {
@@ -53,7 +58,7 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
     } else {
       setInputValue("");
     }
-  }, [currentHashtag, currentStarTag]);
+  }, [currentHashtag, currentStarTag, clearInput]);
 
   const handleSearch = async () => {
     if (!inputValue) return;
@@ -87,13 +92,11 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
     }
   };
 
-  const handleClearSearch = () => {
-  if (setActivePostSet) setActivePostSet("posts");
-  if (setCurrentHashtag) setCurrentHashtag(null);
-  if (setCurrentStarTag) setCurrentStarTag(null);
-  dispatch(mergeAndSetFilteredPosts([]));  // Clear search results
-  if (clearSearch) clearSearch();
-};
+  const handleClearSearch = async () => {
+    if (clearSearch) {
+      await clearSearch(); // Call the passed-in function to clear filters and search
+    }
+  };
 
 
   return (

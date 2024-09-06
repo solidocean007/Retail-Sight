@@ -38,7 +38,6 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({ pos
       await updateDoc(collectionRef, {
         posts: arrayUnion(postId), // Assumes arrayUnion is imported from 'firebase/firestore'
       });
-      console.log("Post added to collection successfully.");
       onClose(); // Close the modal after adding
     } catch (error) {
       console.error("Error adding post to collection:", error);
@@ -52,7 +51,6 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({ pos
         posts: [postId], // Automatically include the current post in the new collection
       };
       await addDoc(collection(db, "collections"), newCollectionData);
-      console.log("New collection created and post added.");
       onClose(); // Close the modal after creation
     } catch (error) {
       console.error("Error creating new collection:", error);

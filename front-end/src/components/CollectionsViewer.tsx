@@ -95,8 +95,6 @@ const CollectionsViewer = () => {
   };
 
   const handleDeleteCollectionConfirmed = async () => {
-    console.log("handleDelete");
-    console.log(collectionToDelete); // this isn't logging
     if (collectionToDelete) {
       try {
         await deleteDoc(doc(db, "collections", collectionToDelete));
@@ -115,7 +113,6 @@ const CollectionsViewer = () => {
     setShowCreateCollectionDialog(false);
 
   const openConfirmDeletionDialog = (collectionId: string) => {
-    console.log(collectionId);
     setCollectionToDelete(collectionId);
     setIsConfirmationOpen(true);
   };
@@ -150,7 +147,6 @@ const CollectionsViewer = () => {
       setShowLinkModal(true);
 
       // Here you can copy the URL to the clipboard, display it to the user, or send it through email/text
-      console.log("shareableURl: ", shareableUrl); // For demonstration purposes
     } catch (error) {
       console.error("Error generating share token:", error);
       setLinkModalLoading(false);

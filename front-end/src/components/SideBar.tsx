@@ -57,6 +57,8 @@ interface SideBarProps {
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
   isSearchActive: boolean;
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
+  clearInput: boolean;
+  setClearInput: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const SideBar: React.FC<SideBarProps> = ({
@@ -69,6 +71,8 @@ const SideBar: React.FC<SideBarProps> = ({
   setActivePostSet,
   isSearchActive,
   setIsSearchActive,
+  clearInput,
+  setClearInput,
 }) => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
@@ -117,6 +121,7 @@ const SideBar: React.FC<SideBarProps> = ({
   const dispatch = useDispatch<AppDispatch>();
 
   const applyFilters = async () => {
+    console.log('applyFilters..')
     dispatch(setFilteredPosts([]));
 
     const filters = {
@@ -131,7 +136,7 @@ const SideBar: React.FC<SideBarProps> = ({
       Hashtag: currentHashtag,
       StarTag: currentStarTag,
     };
-
+    console.log(filters)
     setLastAppliedFilters(filters);
 
     try {
@@ -179,6 +184,8 @@ const SideBar: React.FC<SideBarProps> = ({
   };
 
   const clearFilters = async () => {
+    setClearInput(true); // Trigger input clearing
+    setTimeout(() => setClearInput(false), 0); // Reset clearInput immediately after
     setActivePostSet("posts");
     setSelectedChannels([]);
     setSelectedCategories([]);
@@ -218,6 +225,7 @@ const SideBar: React.FC<SideBarProps> = ({
   }
 
   const handleApplyFiltersClick = () => {
+    console.log('handleapplyfiltersclicked')
     const dateRangeChanged =
       lastAppliedFilters.dateRange.startDate !== dateRange.startDate ||
       lastAppliedFilters.dateRange.endDate !== dateRange.endDate;
@@ -255,6 +263,8 @@ const SideBar: React.FC<SideBarProps> = ({
     currentHashtag === null &&
     currentStarTag === null;
 
+  console.log('isApplyDisabled: ', isApplyDisabled)
+
   return (
     <div className="side-bar-box">
       <button className="close-side-bar-button" onClick={toggleFilterMenu}>
@@ -271,6 +281,7 @@ const SideBar: React.FC<SideBarProps> = ({
           isSearchActive={isSearchActive}
           setIsSearchActive={setIsSearchActive}
           handleApplyFiltersClick={handleApplyFiltersClick}
+          clearInput={clearInput}
         />
       </div>
       <div className="channel-category-box">

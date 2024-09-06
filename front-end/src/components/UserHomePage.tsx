@@ -9,7 +9,7 @@ import { fetchLocationOptions } from "../Slices/locationSlice";
 import HeaderBar from "./HeaderBar";
 import { UserHomePageHelmet } from "../utils/helmetConfigurations";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
-import { mergeAndSetPosts } from "../Slices/postsSlice";
+import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import { VariableSizeList } from "react-window";
 import { PostWithID } from "../utils/types";
 import useScrollToTopOnChange from "../hooks/scrollToTopOnChange";
@@ -23,12 +23,12 @@ export const UserHomePage = () => {
   const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
   const [activePostSet, setActivePostSet] = useState("posts");
+  const [clearInput, setClearInput] = useState(false);
 
   const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
-
   useScrollToTopOnChange(listRef, activePostSet);
 
   let displayPosts: PostWithID[];
@@ -38,6 +38,7 @@ export const UserHomePage = () => {
     displayPosts = posts;
   }
 
+
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
   };
@@ -46,6 +47,8 @@ export const UserHomePage = () => {
     setCurrentHashtag(null);
     setCurrentStarTag(null);
     setActivePostSet("posts");
+    // Clear filteredPosts in Redux
+    dispatch(setFilteredPosts([]));
     const cachedPosts = await getPostsFromIndexedDB();
     if (cachedPosts && cachedPosts.length > 0) {
       dispatch(mergeAndSetPosts(cachedPosts));
@@ -97,6 +100,8 @@ export const UserHomePage = () => {
               setActivePostSet={setActivePostSet}
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
+              clearInput={clearInput}
+              setClearInput={setClearInput}
             />
           </div>
         </div>

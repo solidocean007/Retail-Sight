@@ -242,7 +242,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   };
 
-  // console.log('loading: ', loading)
   
   if(loading || loadingMore){
     return (
@@ -268,6 +267,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           setActivePostSet={setActivePostSet}
           isSearchActive={isSearchActive}
           setIsSearchActive={setIsSearchActive}
+          clearInput={clearSearch}
         />
       </div>
 

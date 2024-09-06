@@ -28,7 +28,6 @@ const CommentModal: React.FC<CommentModalProps> = ({
 }) => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  console.log(comments, " : comments ");
 
   return (
     <Modal open={isOpen} onClose={onClose} className="comment-modal">

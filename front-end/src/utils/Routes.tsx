@@ -31,7 +31,7 @@ export const AppRoutes = () => {
       <Route path="/help-support" element={<HelpSupport />}/>
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
-      <Route path="user-home-page" element={<UserHomePage />} />
+      <Route path="/user-home-page" element={<UserHomePage />} />
       <Route path="/createPost" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/view-collection/:collectionId" element={<ViewCollection />} />

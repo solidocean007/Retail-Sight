@@ -295,7 +295,6 @@ const PostCard: React.FC<PostCardProps> = ({
                 {createdOnBehalf  && (
                   <h5>Created by: {post.postCreatedBy}</h5>
                 )}
-                {post.id}
                 <div className="user-company-box">
                   <p>
                     company:{" "}
