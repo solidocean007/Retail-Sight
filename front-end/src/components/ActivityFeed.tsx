@@ -1,9 +1,8 @@
 // ActivityFeed.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeList as List, VariableSizeList } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
-import NoContentCard from "./NoContentCard";
 // import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
@@ -19,17 +18,14 @@ import "./activityFeed.css";
 import { PostWithID } from "../utils/types";
 import {
   addPostsToIndexedDB,
-  clearHashtagPostsInIndexedDB,
-  clearPostsInIndexedDB,
-  clearStarTagPostsInIndexedDB,
-  clearUserCreatedPostsInIndexedDB,
+  // clearPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
 import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
-import NoResults from "./NoResults";
+// import NoResults from "./NoResults";
 
 const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
@@ -63,7 +59,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
-
+  const scrollOffsetRef = useRef<number>(0); // Store the current scroll offset
   // const listRef = useRef<List>(null);
   useScrollToPost(listRef, posts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -86,6 +82,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return window.innerHeight * 0.95;
   };
 
+  // const clearIndexedDb = async () => {
+  //   await clearPostsInIndexedDB();
+  // }
+  // clearIndexedDb();
   useEffect(() => {
     // Whenever activePostSet changes, scroll to the top of the list
     listRef.current?.scrollTo(0);
@@ -96,14 +96,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     const handleResize = () => {
       setListHeight(calculateListHeight());
     };
-
     // Set initial height
     handleResize();
-
-    // Add event listener for window resize
     window.addEventListener("resize", handleResize);
-
-    // Cleanup
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -121,8 +116,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 500) {
-      // return 720;
-      // return 620;
       return 675;
     } else if (windowWidth <= 700) {
       return 800;
@@ -155,45 +148,39 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   //   return 650;
   // };
 
-  const handleItemsRendered = ({
-    visibleStopIndex,
-  }: {
-    visibleStopIndex: number;
-  }) => {
-    // const lastIndex = itemCount - 1;
-    const lastIndex = itemCount;
-
-    // If the last visible index is the last item in the list
-    if (visibleStopIndex === lastIndex && !loadingMore && hasMore) {
+  const handleItemsRendered = ({ visibleStopIndex }: { visibleStopIndex: number }) => {
+    const lastIndex = posts.length - 1;
+    if (visibleStopIndex >= lastIndex && !loadingMore && hasMore) {
       setLoadingMore(true);
-      dispatch(
-        fetchMorePostsBatch({
-          lastVisible,
-          limit: POSTS_BATCH_SIZE,
-          currentUserCompanyId,
-        })
-      )
+
+      dispatch(fetchMorePostsBatch({ lastVisible, limit: POSTS_BATCH_SIZE, currentUserCompanyId }))
         .then((action) => {
           if (fetchMorePostsBatch.fulfilled.match(action)) {
-            const { posts, lastVisible: newLastVisible } = action.payload;
+            const { posts: newPosts, lastVisible: newLastVisible } = action.payload;
             setLastVisible(newLastVisible);
-            if (posts.length > 0) {
-              addPostsToIndexedDB(posts); // Ensure new posts are added to IndexedDB
-              setHasMore(true);
+            if (newPosts.length > 0) {
+              addPostsToIndexedDB(newPosts);
+              dispatch(mergeAndSetPosts(newPosts));
             } else {
               setHasMore(false);
             }
-            // Merge new posts with existing posts in Redux store
-            dispatch(mergeAndSetPosts(posts));
-          } else if (fetchMorePostsBatch.rejected.match(action)) {
-            // Handle error
           }
         })
         .finally(() => {
           setLoadingMore(false);
+          
+          // Restore scroll offset after new posts are added
+        if (listRef.current) {
+          listRef.current.scrollTo(scrollOffsetRef.current);
+        }
         });
     }
   };
+
+// Capture scroll position on each scroll event
+const handleScroll = ({ scrollOffset }: { scrollOffset: number }) => {
+  scrollOffsetRef.current = scrollOffset; // Store the scroll offset
+};
 
   const numberOfAds = adsOn ? Math.floor(posts.length / AD_INTERVAL) : 0;
   const itemCount = posts.length + numberOfAds;
@@ -221,10 +208,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     };
 
     if (isAdPosition) {
-      // return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />; // Property 'style' does not exist on type 'IntrinsicAttributes & AdComponentProps'
+      // Handle ad rendering if needed
     } else if (postIndex < posts.length) {
       const postWithID = posts[postIndex];
-
       return (
         <PostCardRenderer
           key={postWithID.id}
@@ -238,22 +224,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         />
       );
     } else {
-      return null; // For out of bounds index
+      return null; // Handle out-of-bounds index
     }
   };
 
-  
-  if(loading || loadingMore){
-    return (
-      <CircularProgress />
-    )
+  if (loading || loadingMore) {
+    return <CircularProgress />;
   }
-
-  // if(posts.length === 0){
-  //   return (
-  //     <NoResults onClearFilters={clearSearch} />
-  //   )
-  // }
 
   return (
     <div className="activity-feed-box">
@@ -277,14 +254,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         height={listHeight}
         itemCount={itemCount}
         itemSize={getItemSize}
-        // width={getListWidth()}
-        width='100%'
+        width="100%"
         onItemsRendered={handleItemsRendered}
-        itemData={{
-          posts: posts,
-          getPostsByTag: getPostsByTag,
-          getPostsByStarTag: getPostsByStarTag,
-        }}
+        onScroll={handleScroll} // Track scroll position
       >
         {itemRenderer}
       </List>

@@ -205,6 +205,10 @@ h5 {
   text-wrap: nowrap;
 }
 
+.post-user-name a {
+  margin-left: 4px;
+}
+
 .post-user-name, .user-company-box {
   display: flex;
   align-items: center;

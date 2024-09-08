@@ -38,7 +38,6 @@ export const UserHomePage = () => {
     displayPosts = posts;
   }
 
-
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
   };
@@ -90,7 +89,6 @@ export const UserHomePage = () => {
             }`}
           >
             <SideBar
-              // setSearchResults={setSearchResults}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               setCurrentStarTag={setCurrentStarTag}

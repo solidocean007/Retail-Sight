@@ -213,8 +213,8 @@ const PostCard: React.FC<PostCardProps> = ({
     handleClose();
   };
 
-  const createdOnBehalf =  post.postCreatedBy != post.postUserName;
-  
+  const createdOnBehalf = post.postCreatedBy != post.postUserName;
+
   return (
     <>
       <Card className="post-card dynamic-height" style={{ ...style }}>
@@ -279,21 +279,12 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="post-user-details">
                 {/* <div onClick={handleOnUserNameClick}> */}
                 <div className="post-user-name">
-                  <p>
-                    by:{" "}
-                    <a
-                      href="#"
-                      onClick={handleOnUserNameClick}
-                      style={{ marginLeft: "4px" }}
-                    >
-                      {post.postUserName}
-                    </a>
-
-                  </p>
+                  <p>by: </p>
+                  <a href="#" title="user" onClick={handleOnUserNameClick}>
+                    <h5>{post.postUserName}</h5>
+                  </a>
                 </div>
-                {createdOnBehalf  && (
-                  <h5>Created by: {post.postCreatedBy}</h5>
-                )}
+                {createdOnBehalf && <h6>Posted by: {post.postCreatedBy}</h6>}
                 <div className="user-company-box">
                   <p>
                     company:{" "}
