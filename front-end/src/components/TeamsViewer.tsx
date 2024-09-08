@@ -53,6 +53,7 @@ const TeamsViewer = ({
 }) => {
   const dispatch = useAppDispatch();
   const teams = useSelector((state: RootState) => state.CompanyTeam.teams);
+  console.log("teams: ", teams);
   const teamStatus = useSelector(
     (state: RootState) => state.CompanyTeam.status
   );
@@ -61,6 +62,7 @@ const TeamsViewer = ({
   const [teamName, setTeamName] = useState("");
   const [supervisorId, setSupervisorId] = useState("");
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
+  console.log("teamMembers: ", teamMembers); // this logs empty.. thats not correct
   const fellowEmployees = useSelector(selectCompanyUsers);
   const user = useSelector(selectUser);
   const companyId = useSelector(
@@ -132,7 +134,7 @@ const TeamsViewer = ({
 
   function handleCreateTeam() {
     if (teamName && supervisorId && teamMembers.length > 0) {
-      const supervisorUser = fellowEmployees.find(
+      const supervisorUser = fellowEmployees?.find(
         (emp) => emp.uid === supervisorId
       );
       const teamData: CompanyTeamType = {
@@ -144,7 +146,7 @@ const TeamsViewer = ({
           },
         ],
         teamMembers: teamMembers.map((uid) => {
-          const member = fellowEmployees.find((emp) => emp.uid === uid);
+          const member = fellowEmployees?.find((emp) => emp.uid === uid);
           return {
             uid,
             name: `${member?.firstName} ${member?.lastName}`,
@@ -162,10 +164,11 @@ const TeamsViewer = ({
     }
   }
 
-  const options: OptionType[] = fellowEmployees.map((employee) => ({
-    value: employee.uid,
-    label: `${employee.firstName} ${employee.lastName} ${employee.email}`,
-  }));
+  const options: OptionType[] =
+    fellowEmployees?.map((employee) => ({
+      value: employee.uid,
+      label: `${employee.firstName} ${employee.lastName} ${employee.email}`,
+    })) || [];
 
   const customHandleMemberSelection = (
     selectedOptions: MultiValue<OptionType>,
@@ -231,7 +234,7 @@ const TeamsViewer = ({
                 onChange={(e) => setSupervisorId(e.target.value)}
                 style={{ marginLeft: "1rem", width: "10rem" }}
               >
-                {fellowEmployees.map((employee) => (
+                {fellowEmployees?.map((employee) => (
                   <option key={employee.uid} value={employee.uid}>
                     {employee.firstName} {employee.lastName}
                   </option>
@@ -276,35 +279,48 @@ const TeamsViewer = ({
                     width: "20rem",
                     marginRight: "10px",
                     marginBottom: "1rem",
-                    padding: "0px"
+                    padding: "0px",
                   }}
                 >
                   <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel1-content"
                     id="panel1-header"
-                    sx={{marginBottom: "0rem"}}
+                    sx={{ marginBottom: "0rem" }}
                   >
-                    <Typography sx={{marginBottom: "0rem"}}><h3>{team.teamName}</h3></Typography>
+                    <Typography variant="h5" sx={{ marginBottom: "0rem" }}>
+                      {team.teamName}
+                    </Typography>
                   </AccordionSummary>
                   <AccordionDetails
-                    sx={{ display: "flex", flexDirection: "column", margin: "0" }}
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      margin: "0",
+                    }}
                   >
                     <Typography
-                      sx={{ display: "flex", justifyContent: "start", alignItems: "center" }}
+                      variant="h6"
+                      sx={{
+                        display: "flex",
+                        justifyContent: "start",
+                        alignItems: "center",
+                      }}
                     >
-                      <h4 style={{paddingRight: "1rem"}}>Supervisor:{"  "}</h4>
+                      Supervisor:{"  "}
                       {team.teamSupervisor.map((sup) => sup.name)}
                     </Typography>
                     <Box>
                       <Typography
                         sx={{ display: "flex", justifyContent: "start" }}
                       >
-                        <h4>Members:{" "}</h4>
+                        Members: 
                       </Typography>
                       <List>
                         {team.teamMembers.map((member, index) => (
-                          <ListItem sx={{margin: "0"}} key={index}>{member.name}</ListItem>
+                          <ListItem sx={{ margin: "0" }} key={index}>
+                            {member.name}
+                          </ListItem>
                         ))}
                       </List>
                     </Box>

@@ -263,8 +263,6 @@ const SideBar: React.FC<SideBarProps> = ({
     currentHashtag === null &&
     currentStarTag === null;
 
-  console.log('isApplyDisabled: ', isApplyDisabled)
-
   return (
     <div className="side-bar-box">
       <button className="close-side-bar-button" onClick={toggleFilterMenu}>

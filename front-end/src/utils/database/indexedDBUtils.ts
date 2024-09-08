@@ -759,28 +759,44 @@ export async function setLastSeenTimestamp(timestamp: string): Promise<void> {
 }
 
 export async function closeAndDeleteIndexedDB(): Promise<void> {
-  const db = await openDB();
-  db.close(); // Close the connection before attempting to delete
+  try {
+    const db = await openDB();
+    db.close(); // Close the connection before attempting to delete
 
-  return new Promise<void>((resolve, reject) => {
-    const dbRequest = indexedDB.deleteDatabase('myRetailAppDB');
+    return new Promise<void>((resolve, reject) => {
+      const dbRequest = indexedDB.deleteDatabase('myRetailAppDB');
 
-    dbRequest.onsuccess = () => {
-      console.log('IndexedDB database deleted successfully.');
-      resolve();
-    };
+      // Timeout in case deletion gets blocked or hangs
+      const timeout = setTimeout(() => {
+        console.warn("Timeout: Deletion is taking too long.");
+        resolve(); // Force resolve after timeout to prevent app hang
+      }, 5000); // 5 seconds
 
-    dbRequest.onerror = (event) => {
-      console.error('Error deleting IndexedDB database:', (event.target as IDBRequest).error);
-      reject((event.target as IDBRequest).error);
-    };
+      dbRequest.onsuccess = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
 
-    dbRequest.onblocked = () => {
-      console.warn('Deletion blocked. Close all tabs with this site open.');
-      reject(new Error('Deletion blocked'));
-    };
-  });
+      dbRequest.onerror = (event) => {
+        clearTimeout(timeout);
+        const error = (event.target as IDBRequest).error;
+        console.error('Error deleting IndexedDB database:', error);
+        reject(error);
+      };
+
+      dbRequest.onblocked = () => {
+        clearTimeout(timeout);
+        console.warn('Deletion blocked. Close all tabs with this site open.');
+        reject(new Error('Deletion blocked. Please close other tabs.'));
+      };
+    });
+  } catch (error) {
+    console.error('Failed to open or delete the database:', error);
+    throw new Error('Failed to delete the IndexedDB database.');
+  }
 }
+
+
 
 
 
