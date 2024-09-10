@@ -320,19 +320,18 @@ export const CreatePost = () => {
     <>
       <CreatePostHelmet />
       <Container disableGutters className="create-post-container">
-        {isUploading && <LoadingIndicator progress={uploadProgress} />}
+        {isUploading && (
+          <LoadingIndicator progress={uploadProgress} />
+        )}
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
             <div style={{ display: "flex", width: "100%", justifyContent: "space-between" }}>
-              <h1 style={{marginLeft: "2rem"}}>Create Post</h1>
-              <IconButton
-                aria-label="close"
-                onClick={() => navigate("/user-home-page")}
-              >
+              <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
+              <IconButton aria-label="close" onClick={() => navigate("/user-home-page")}>
                 <CancelRounded />
               </IconButton>
             </div>
-
+  
             {authToCreateOnBehalf && (
               <CreatePostOnBehalfOfOtherUser
                 onBehalf={onBehalf}
@@ -354,4 +353,5 @@ export const CreatePost = () => {
       </Container>
     </>
   );
+  
 };
