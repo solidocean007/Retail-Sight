@@ -26,7 +26,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 }) => {
   return (
     <div className="pick-store">
-      <div style={{display: "flex"}}>
+      <div style={{ display: "flex" }}>
         <button className="create-post-btn" onClick={onPrevious}>
           <h4>Back</h4>
         </button>
@@ -35,6 +35,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
             <h4>Next</h4>
           </button>
         )}
+      </div>
+      <div className="store-address-container">
+        {post.selectedStore && <h4>Store: {post.selectedStore}</h4>}
+        {post.storeAddress && <h6>Address: {post.storeAddress}</h6>}
       </div>
 
       <StoreLocator
@@ -45,10 +49,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
         onStoreCityChange={onStoreCityChange}
         onStoreStateChange={onStoreStateChange}
       />
-      <div className="store-address-container">
-        {post.selectedStore && <h4>Store: {post.selectedStore}</h4>}
-        {post.storeAddress && <h6>Address: {post.storeAddress}</h6>}
-      </div>
     </div>
   );
 };

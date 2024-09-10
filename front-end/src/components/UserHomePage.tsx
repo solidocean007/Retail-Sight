@@ -81,6 +81,7 @@ export const UserHomePage = () => {
               setActivePostSet={setActivePostSet}
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
+              clearInput={clearInput}
             />
           </div>
 

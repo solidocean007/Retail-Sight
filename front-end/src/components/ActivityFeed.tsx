@@ -46,6 +46,7 @@ interface ActivityFeedProps {
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   isSearchActive?: boolean;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
+  clearInput: boolean;
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
@@ -60,6 +61,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   setActivePostSet,
   isSearchActive,
   setIsSearchActive,
+  clearInput,
 }) => {
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
@@ -86,7 +88,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return window.innerHeight * 0.95;
   };
 
+  console.log(activePostSet, posts.length);
+
   useEffect(() => {
+    console.log('activePostSet: ', activePostSet)
     // Whenever activePostSet changes, scroll to the top of the list
     listRef.current?.scrollTo(0);
   }, [activePostSet, listRef]);
@@ -196,7 +201,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   };
 
   const numberOfAds = adsOn ? Math.floor(posts.length / AD_INTERVAL) : 0;
-  const itemCount = posts.length + numberOfAds;
+  const itemCount = posts.length + numberOfAds + 1;
 
   const itemRenderer = ({
     index,
@@ -267,7 +272,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           setActivePostSet={setActivePostSet}
           isSearchActive={isSearchActive}
           setIsSearchActive={setIsSearchActive}
-          clearInput={clearSearch}
+          clearInput={clearInput}
         />
       </div>
 

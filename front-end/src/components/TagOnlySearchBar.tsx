@@ -92,11 +92,21 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
     }
   };
 
+
   const handleClearSearch = async () => {
     if (clearSearch) {
       await clearSearch(); // Call the passed-in function to clear filters and search
     }
   };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    console.log("Key pressed: ", e.key); // For debugging
+    if (e.key === "Enter") {
+      e.preventDefault(); // Prevent default behavior
+      handleSearch();
+    }
+  };
+
 
 
   return (
@@ -105,7 +115,7 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
         placeholder="Searching with '#' or '*'"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+        onKeyDown={handleKeyPress}
         sx={{margin: "0px"}}
       />
       {/* I want the button below to be search if its a string that begins with either '#' or '*' if its  */}
