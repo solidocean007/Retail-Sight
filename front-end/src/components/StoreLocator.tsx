@@ -375,9 +375,15 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     placeId: string,
     callback: (city: string, state: string) => void
   ) => {
-    const service = new google.maps.places.PlacesService(
-      mapRef.current as google.maps.Map
-    );
+    // Ensure mapRef is not null and is a google.maps.Map instance
+    const map = mapRef.current as google.maps.Map | null;
+  
+    if (!map) {
+      console.error("Map is not initialized.");
+      return;
+    }
+  
+    const service = new google.maps.places.PlacesService(map);
     service.getDetails(
       { placeId, fields: ["address_components"] },
       (result, status) => {
@@ -397,6 +403,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       }
     );
   };
+  
 
   const updateStoreDetails = (
     name: string,
