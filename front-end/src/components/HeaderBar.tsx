@@ -55,7 +55,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
 
   return (
     <div className="header-bar">
-      <div className="website-title">
+      <div className="website-title" onClick={()=>navigate('/')}>
         <h1>Displaygram</h1>
         <p>version 0.1.4</p>
       </div>

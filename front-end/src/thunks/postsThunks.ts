@@ -30,6 +30,7 @@ import {
   getLatestPostsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { DocumentSnapshot } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "@firebase/functions";
 // import { showMessage } from "../Slices/snackbarSlice";
 
 type FetchInitialPostsArgs = {
@@ -276,35 +277,55 @@ export const fetchLatestPosts = createAsyncThunk<
 
 // Define a type for the thunk argument
 
+// Define the arguments for the fetchPostsByIds thunk
 type FetchPostsByIdsArgs = {
-  postIds: string[] | string;
+  postIds: string[] | string; // This allows either a single string or an array of strings
+  token: string;
 };
 
-export const fetchPostsByIds = createAsyncThunk<PostWithID[], FetchPostsByIdsArgs, { rejectValue: string }>(
-  'posts/fetchPostsByIds',
-  async ({ postIds }, { rejectWithValue }) => {
-    try {
-      // Ensure postIds is always an array
-      const ids = Array.isArray(postIds) ? postIds : [postIds];
+// Define the request payload type for the Firebase callable function
+interface ValidatePostShareTokenRequest {
+  postId: string;
+  token: string;
+}
 
-      const fetchPostPromises = ids.map((postId) => 
-        getDoc(doc(db, 'posts', postId)).then((documentSnapshot) => {
-          if (documentSnapshot.exists()) {
-            return { id: documentSnapshot.id, ...(documentSnapshot.data() as PostType) };
-          } else {
-            return rejectWithValue(`Post with ID ${postId} not found.`);
-          }
-        })
+// Define the response payload type for the callable function
+interface FetchPostWithTokenResponse {
+  post: PostWithID;
+}
+
+// The thunk to fetch posts by IDs after validating the token
+export const fetchPostsByIds = createAsyncThunk<PostWithID[], FetchPostsByIdsArgs, { rejectValue: string }>(
+  "posts/fetchPostsByIds",
+  async ({ postIds, token }, { rejectWithValue }) => {
+    try {
+      const functions = getFunctions();
+      // Define the callable function with input and output types
+      const validatePostShareToken = httpsCallable<ValidatePostShareTokenRequest, FetchPostWithTokenResponse>(
+        functions,
+        "validatePostShareToken"
       );
 
+      // Ensure postIds is an array (if it's a single string, convert it to an array)
+      const ids = Array.isArray(postIds) ? postIds : [postIds];
+
+      // Iterate over postIds and fetch each post with the token
+      const fetchPostPromises = ids.map(async (postId) => {
+        const result = await validatePostShareToken({ postId, token });
+
+        // Type assertion to indicate the response structure
+        const data = result.data as FetchPostWithTokenResponse;
+
+        const post = data.post; // This will now be properly typed
+        return post;
+      });
+
+      // Wait for all posts to be fetched
       const postsWithIds = await Promise.all(fetchPostPromises);
-
-      // Filter out any undefined values or errors (if you chose to handle errors differently above)
-      return postsWithIds.filter((post): post is PostWithID => post !== undefined);
-
+      return postsWithIds;
     } catch (error) {
-      console.error('Error fetching posts by IDs:', error);
-      return rejectWithValue('Error fetching posts by IDs.');
+      console.error("Error fetching posts by IDs:", error);
+      return rejectWithValue("Error fetching posts by IDs.");
     }
   }
 );

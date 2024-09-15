@@ -1,4 +1,3 @@
-// validatePostShareToken.ts
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
@@ -25,21 +24,22 @@ export const validatePostShareToken = functions.https.onCall(async (data) => {
     );
   }
 
-  // Correcting the field accesses to account for the token object structure
   const tokenExpiry = post.token?.tokenExpiry
     ? new Date(post.token.tokenExpiry)
     : null;
   const sharedToken = post.token?.sharedToken;
 
-  console.log(`Token expiry for post ID ${postId}: ${tokenExpiry}`);
-  console.log(`Shared token for post ID ${postId}: ${sharedToken}`);
-
-  const currentDateTime = new Date();
+  const currentDateTime = new Date(); // Use server time for comparison
   const isTokenValid =
     token === sharedToken && tokenExpiry && currentDateTime < tokenExpiry;
 
-  console.log(`Is token valid: ${isTokenValid}`);
-  console.log(`Current server time: ${currentDateTime}`);
+  if (!isTokenValid) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Invalid or expired token."
+    );
+  }
 
-  return { valid: isTokenValid || false };
+  // Return both the post and the token validation status
+  return { valid: isTokenValid, post: { id: doc.id, ...post } };
 });

@@ -88,7 +88,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return window.innerHeight * 0.95;
   };
 
-  console.log(activePostSet, posts.length);
 
   useEffect(() => {
     console.log('activePostSet: ', activePostSet)
