@@ -89,11 +89,16 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
     fetchData();
   }, [companyId, dispatch]);
 
-  // Handle user selection for posting on behalf
   const handleOnBehalfChange = (event: SelectChangeEvent<string>) => {
-    const selectedUser = companyUsers?.find(
-      (user) => user.uid === event.target.value
-    );
+    console.log(event);
+    console.log(companyUsers);
+    const selectedUid = event.target.value as string; // Explicitly cast to string
+    console.log(selectedUid); // This should log the correct user UID
+
+    const selectedUser = companyUsers?.find((user) => user.uid === selectedUid);
+
+    console.log(selectedUser, ": selectedUser"); // Log the selected user
+
     setOnBehalf(selectedUser || null);
 
     if (selectedUser) {
@@ -117,24 +122,52 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
     }
   };
 
+  // Handle user selection for posting on behalf
+  // const handleOnBehalfChange = (event: SelectChangeEvent<string>) => {
+  //   console.log(event.target.value) // this logs undefined
+  //   console.log(companyUsers) // this logs all the users correctly
+  //   const selectedUser = companyUsers?.find(
+  //     (user) => user.uid === event.target.value
+  //   );
+  //   setOnBehalf(selectedUser || null);
+  //   console.log(selectedUser, ': selectedUser') // this logs undefined
+  //   if (selectedUser) {
+  //     setPost((prevPost) => ({
+  //       ...prevPost,
+  //       postUserName: `${selectedUser.firstName} ${selectedUser.lastName}`,
+  //       postUserId: selectedUser.uid,
+  //       postUserCompany: selectedUser.company,
+  //       postUserCompanyId: selectedUser.companyId,
+  //       postUserEmail: selectedUser.email,
+  //     }));
+  //   } else {
+  //     setPost((prevPost) => ({
+  //       ...prevPost,
+  //       postUserName: `${userData?.firstName} ${userData?.lastName}`,
+  //       postUserId: userData?.uid,
+  //       postUserCompany: userData?.company,
+  //       postUserCompanyId: userData?.companyId,
+  //       postUserEmail: userData?.email,
+  //     }));
+  //   }
+  // };
+
   return (
-    <Box sx={{display: "flex"}}>
+    <Box sx={{ display: "flex" }}>
       <h2>For user: </h2>
       <Select
-        value={onBehalf?.uid || userData?.uid}
+        value={onBehalf?.uid || userData?.uid || ""}
         onChange={handleOnBehalfChange}
-        sx={{backgroundColor: "whitesmoke", width: "20rem"}}
+        sx={{ backgroundColor: onBehalf ? "whitesmoke" : "#f0f0f0", width: "20rem" }}
       >
         <MenuItem value={userData?.uid}>
           {`${userData?.firstName} ${userData?.lastName} (You)`}
         </MenuItem>
-        <MenuList dense>
-          {companyUsers?.map((user) => (
-            <MenuItem key={user.uid} value={user.uid}>
-              {`${user.firstName} ${user.lastName}`}
-            </MenuItem>
-          ))}
-        </MenuList>
+        {companyUsers?.map((user) => (
+          <MenuItem key={user.uid} value={user.uid}>
+            {`${user.firstName} ${user.lastName}`}
+          </MenuItem>
+        ))}
       </Select>
     </Box>
   );
