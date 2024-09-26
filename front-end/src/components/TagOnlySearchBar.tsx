@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { PostWithID } from "../utils/types";
 import React, { useEffect, useState } from "react";
-import { mergeAndSetFilteredPosts, mergeAndSetPosts, setHashtagPosts } from "../Slices/postsSlice";
+import { mergeAndSetFilteredPosts, mergeAndSetPosts, setFilteredPosts, setHashtagPosts } from "../Slices/postsSlice";
 import "./hashTagSearchBar.css";
 import { RootState } from "../utils/store";
 
@@ -84,8 +84,9 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
         handleApplyFiltersClick();
       };
 
-      dispatch(mergeAndSetFilteredPosts(result));
-      if (setActivePostSet) setActivePostSet("filtered");
+      // dispatch(mergeAndSetFilteredPosts(result));
+      dispatch(setFilteredPosts(result));
+      if (setActivePostSet) setActivePostSet("filteredPosts");
     } catch (error) {
       dispatch(showMessage("No posts for that search found"));
       clearSearch && clearSearch();

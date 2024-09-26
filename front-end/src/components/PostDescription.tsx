@@ -147,7 +147,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       setCurrentHashtag?.(starTag);
       // dispatch(setStarTagPosts(starTagPosts));
       dispatch(setFilteredPosts(starTagPosts));
-      addStarTagPostsToIndexedDB(starTagPosts);
+      addStarTagPostsToIndexedDB(starTagPosts); // why do this?  why not just add to filtered posts?
     } catch (error) {
       console.error("Error fetching posts by startag:", error);
     }

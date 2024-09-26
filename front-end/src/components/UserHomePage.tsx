@@ -25,14 +25,14 @@ export const UserHomePage = () => {
   const [activePostSet, setActivePostSet] = useState("posts");
   const [clearInput, setClearInput] = useState(false);
 
-  const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux store of posts
+  const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux state of posts
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
-  );
+  ); // this is the state of redux filtered posts
   useScrollToTopOnChange(listRef, activePostSet);
 
   let displayPosts: PostWithID[];
-  if (activePostSet === "filtered") {
+  if (activePostSet === "filteredPosts") {
     displayPosts = filteredPosts;
   } else {
     displayPosts = posts;

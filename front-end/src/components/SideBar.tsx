@@ -173,7 +173,7 @@ const SideBar: React.FC<SideBarProps> = ({
         return matchesDateRange;
       });
 
-      setActivePostSet("filtered");
+      setActivePostSet("filteredPosts");
       dispatch(mergeAndSetFilteredPosts(postsFilteredByDate));
       await storeFilteredPostsInIndexedDB(postsFilteredByDate, filters); //Type 'string | null' is not assignable to type 'Date | null'
       setCurrentHashtag(null);
