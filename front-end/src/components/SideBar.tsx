@@ -121,7 +121,6 @@ const SideBar: React.FC<SideBarProps> = ({
   const dispatch = useDispatch<AppDispatch>();
 
   const applyFilters = async () => {
-    console.log('applyFilters..')
     dispatch(setFilteredPosts([]));
 
     const filters = {
@@ -136,7 +135,6 @@ const SideBar: React.FC<SideBarProps> = ({
       Hashtag: currentHashtag,
       StarTag: currentStarTag,
     };
-    console.log(filters)
     setLastAppliedFilters(filters);
 
     try {
@@ -225,7 +223,6 @@ const SideBar: React.FC<SideBarProps> = ({
   }
 
   const handleApplyFiltersClick = () => {
-    console.log('handleapplyfiltersclicked')
     const dateRangeChanged =
       lastAppliedFilters.dateRange.startDate !== dateRange.startDate ||
       lastAppliedFilters.dateRange.endDate !== dateRange.endDate;

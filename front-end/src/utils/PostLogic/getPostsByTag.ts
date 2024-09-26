@@ -40,7 +40,6 @@ export const getPostsByTag = async (
       const postCompanyID = post.postUserCompanyId;
       return postCompanyID === usersCompanyID; // what does this line do?  does it return a post that has a matching company id to the logged in user?
     });
-    console.log('hashtag search: ', filteredPosts)
     return filteredPosts;
   } catch (error) {
     console.error("Error fetching posts by hashtag:", error);
@@ -54,7 +53,6 @@ export const getPostsByStarTag = async (
 ): Promise<PostWithID[]> => {
   try {
     starTag = starTag.toLowerCase();
-    console.log('Searching for posts with starTag:', starTag);
 
     const postsCollectionRef = collection(db, "posts");
     const postsQuery = query(
@@ -69,7 +67,6 @@ export const getPostsByStarTag = async (
       ...(doc.data() as PostType),
     }));
 
-    console.log('Posts fetched:', posts);
 
     return posts; 
   } catch (error) {

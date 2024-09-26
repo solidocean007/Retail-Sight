@@ -88,10 +88,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return window.innerHeight * 0.95;
   };
 
-  console.log('activePostSet: ', activePostSet)
 
   useEffect(() => {
-    console.log('activePostSet: ', activePostSet)
     // Whenever activePostSet changes, scroll to the top of the list
     listRef.current?.scrollTo(0);
   }, [activePostSet, listRef]);
