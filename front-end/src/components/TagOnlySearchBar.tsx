@@ -100,7 +100,6 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    console.log("Key pressed: ", e.key); // For debugging
     if (e.key === "Enter") {
       e.preventDefault(); // Prevent default behavior
       handleSearch();

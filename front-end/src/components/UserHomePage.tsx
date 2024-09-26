@@ -38,6 +38,7 @@ export const UserHomePage = () => {
     displayPosts = posts;
   }
 
+  
 
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);

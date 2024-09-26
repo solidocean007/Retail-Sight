@@ -124,7 +124,8 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       if (setCurrentHashtag) {
         setCurrentHashtag(hashtag);
       }
-      dispatch(setHashtagPosts(hashtagPosts));
+      // dispatch(setHashtagPosts(hashtagPosts));
+      dispatch(setFilteredPosts(hashtagPosts));
       addHashtagPostsToIndexedDB(hashtagPosts);
     } catch (error) {
       console.error("Error fetching posts by hashtag:", error);
@@ -144,7 +145,8 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       setIsSearchActive?.(true);
       setActivePostSet?.("filteredPosts");
       setCurrentHashtag?.(starTag);
-      dispatch(setStarTagPosts(starTagPosts));
+      // dispatch(setStarTagPosts(starTagPosts));
+      dispatch(setFilteredPosts(starTagPosts));
       addStarTagPostsToIndexedDB(starTagPosts);
     } catch (error) {
       console.error("Error fetching posts by startag:", error);

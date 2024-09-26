@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { VariableSizeList as List, VariableSizeList } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
-import NoContentCard from "./NoContentCard";
+// import NoContentCard from "./NoContentCard";
 // import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
@@ -19,17 +19,17 @@ import "./activityFeed.css";
 import { PostWithID } from "../utils/types";
 import {
   addPostsToIndexedDB,
-  clearHashtagPostsInIndexedDB,
-  clearPostsInIndexedDB,
-  clearStarTagPostsInIndexedDB,
-  clearUserCreatedPostsInIndexedDB,
+  // clearHashtagPostsInIndexedDB,
+  // clearPostsInIndexedDB,
+  // clearStarTagPostsInIndexedDB,
+  // clearUserCreatedPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
 import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
-import NoResults from "./NoResults";
+// import NoResults from "./NoResults";
 
 const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
@@ -88,6 +88,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return window.innerHeight * 0.95;
   };
 
+  console.log('activePostSet: ', activePostSet)
 
   useEffect(() => {
     console.log('activePostSet: ', activePostSet)
