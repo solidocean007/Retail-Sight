@@ -53,7 +53,6 @@ const TeamsViewer = ({
 }) => {
   const dispatch = useAppDispatch();
   const teams = useSelector((state: RootState) => state.CompanyTeam.teams);
-  console.log("teams: ", teams);
   const teamStatus = useSelector(
     (state: RootState) => state.CompanyTeam.status
   );
@@ -62,7 +61,6 @@ const TeamsViewer = ({
   const [teamName, setTeamName] = useState("");
   const [supervisorId, setSupervisorId] = useState("");
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
-  console.log("teamMembers: ", teamMembers); // this logs empty.. thats not correct
   const fellowEmployees = useSelector(selectCompanyUsers);
   const user = useSelector(selectUser);
   const companyId = useSelector(
