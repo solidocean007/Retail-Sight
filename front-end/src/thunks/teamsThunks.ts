@@ -14,7 +14,6 @@ import { CompanyTeamType } from "../utils/types";
 
 export const fetchTeams = createAsyncThunk('teams/fetchTeams', async () => {
   const snapshot = await getDocs(collection(db, 'teams'));
-  console.log('Firestore teams snapshot:', snapshot.docs.map(doc => doc.data())); // Log raw data
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as CompanyTeamType }));
 });
 

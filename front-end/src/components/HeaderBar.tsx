@@ -15,7 +15,11 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const protectedAction = useProtectedAction();
 
   const openProfile = () => navigate("/profile-page");
-  const goToSignUpLogin = () => navigate("/sign-up-login");
+
+  const goToSignUpLogin = () => {
+    navigate("/sign-up-login");
+  };
+  
   const handleCreatePostClick = () => {
     protectedAction(() => {
       navigate("/createPost");
@@ -30,12 +34,12 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
 
   const handleDashboardClick = () => {
     protectedAction(() => {
-      if(currentUser?.role != 'developer'){
+      if (currentUser?.role != "developer") {
         navigate("/dashboard");
-      } else if (currentUser?.role == 'developer') {
-        navigate('/developer-dashboard')
+      } else if (currentUser?.role == "developer") {
+        navigate("/developer-dashboard");
       } else {
-        showMessage("Not Logged in.")
+        showMessage("Not Logged in.");
       }
     });
   };
@@ -50,37 +54,41 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       handleTutorialClick();
     } else if (option === "dashboard") {
       handleDashboardClick();
-    } 
+    }
   };
 
   return (
     <div className="header-bar">
-      <div className="website-title" onClick={()=>navigate('/')}>
+      <div className="website-title" onClick={() => navigate("/")}>
         <h1>Displaygram</h1>
         <p>version 0.1.4</p>
       </div>
 
-      <div className="header-details">
-        <h3>{currentUser?.company}</h3>
-        <div className="header-buttons">
-          {/* <div className="menu-buttons">
+      {!currentUser ? (
+        <button onClick={goToSignUpLogin}>Login</button>
+      ) : (
+        <div className="header-details">
+          <h3>{currentUser?.company}</h3>
+          <div className="header-buttons">
+            {/* <div className="menu-buttons">
             <button onClick={handleCollectionsClick}>Collections</button>
           </div> */}
-          <div className="menu-buttons">
-            <button onClick={handleDashboardClick}>Dashboard</button>
+            <div className="menu-buttons">
+              <button onClick={handleDashboardClick}>Dashboard</button>
+            </div>
+            <div className="capture-display-btn">
+              <button onClick={handleCreatePostClick}>Capture Display</button>
+            </div>
           </div>
-          <div className="capture-display-btn">
-            <button onClick={handleCreatePostClick}>Capture Display</button>
-          </div>
-        </div>
 
-        <div
-          className="hamburger-menu-button"
-          onClick={() => setShowMenuTab(!showMenuTab)}
-        >
-          ☰
+          <div
+            className="hamburger-menu-button"
+            onClick={() => setShowMenuTab(!showMenuTab)}
+          >
+            ☰
+          </div>
         </div>
-      </div>
+      )}
 
       {showMenuTab && (
         <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab} />
