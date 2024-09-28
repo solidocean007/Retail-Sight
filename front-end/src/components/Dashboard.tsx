@@ -44,6 +44,8 @@ import {
   Menu,
   Toolbar,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import EmployeesViewer from "./EmployeesViewer";
@@ -63,6 +65,9 @@ type DashboardModeType =
   | "TutorialMode";
 
 export const Dashboard = () => {
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery("(min-width: 768px)");
+  const drawerWidth = 240;
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const [dashboardMode, setDashboardMode] =
     useState<DashboardModeType>("TeamMode");
@@ -73,7 +78,7 @@ export const Dashboard = () => {
   );
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
   // const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   // const companyUsers = useSelector(selectCompanyUsers); // this is a selector to company users stored in state.  its not being used right now
@@ -90,17 +95,21 @@ export const Dashboard = () => {
     setDrawerOpen(false);
   };
 
-  const toggleDrawer =
+  const toggleDrawer = // what does this function do?
     (open: boolean) => (event: React.MouseEvent | React.KeyboardEvent) => {
       if (
         event.type === "keydown" &&
-        ((event as React.KeyboardEvent).key === "Tab" ||
+        ((event as React.KeyboardEvent).key === "Tab" || // what does tab and shift have to do with this function
           (event as React.KeyboardEvent).key === "Shift")
       ) {
         return;
       }
       setDrawerOpen(open);
     };
+
+  useEffect(() => {
+    setDrawerOpen(isLargeScreen);
+  }, [isLargeScreen]);
 
   // Separate useEffect to attempt to load from IndexedDB when component mounts
   useEffect(() => {
@@ -116,50 +125,42 @@ export const Dashboard = () => {
     loadFromIndexedDB();
   }, []);
 
+  // should the button for toggleDrawer be hidden on screenwidths where the sidebar drawer is defaulted to open?
+  // should the api mode be renamed as integration? or create a new tab for that?
   return (
     <Container>
       <DashboardHelmet />
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{ flexGrow: 1, ml: isLargeScreen ? `${drawerWidth}px` : 0 }}>
         <AppBar position="static">
           <Toolbar>
-            <Typography
-              variant="h1"
-              component="div"
-              sx={{ flexGrow: 1, fontSize: "40px" }}
-            >
+            <Typography variant="h1" component="div" sx={{ flexGrow: 1, fontSize: "40px" }}>
               Dashboard
             </Typography>
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              onClick={toggleDrawer(true)}
-            >
-              <MenuIcon />
-            </IconButton>
+            {!isLargeScreen && (
+              <IconButton edge="start" color="inherit" aria-label="menu" onClick={toggleDrawer(true)}>
+                <MenuIcon />
+              </IconButton>
+            )}
           </Toolbar>
         </AppBar>
       </Box>
-      <Box>
-        {dashboardMode === "TeamMode" && (
-          <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />
-        )}
-        {dashboardMode === "UsersMode" && (
-          <EmployeesViewer
-            localUsers={localUsers}
-            setLocalUsers={setLocalUsers}
-          />
-        )}
-        {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
-        {dashboardMode === "ApiMode" && <ApiViewer />}
-        {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
-        {dashboardMode === "TutorialMode" && <TutorialViewer />}
-      </Box>
 
-      <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={toggleDrawer(false)}
+        variant={isLargeScreen ? "permanent" : "temporary"} // Toggle the variant based on screen size
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            boxSizing: "border-box",
+          },
+        }}
+      >
         <List>
           <ListItem>
-            {/* <ListItemText primary="Logout" /> */}
             <LogOutButton />
           </ListItem>
           <ListItem onClick={() => navigate("/user-home-page")}>
@@ -185,8 +186,23 @@ export const Dashboard = () => {
           </ListItem>
         </List>
       </Drawer>
+
+      <Box
+        sx={{
+          marginLeft: isLargeScreen ? `${drawerWidth}px` : 0,
+          padding: 3, // Add some padding for better spacing
+        }}
+      >
+        {dashboardMode === "TeamMode" && <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
+        {dashboardMode === "UsersMode" && <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
+        {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
+        {dashboardMode === "ApiMode" && <ApiViewer />}
+        {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
+        {dashboardMode === "TutorialMode" && <TutorialViewer />}
+      </Box>
     </Container>
   );
 };
+
 
 export default Dashboard;
