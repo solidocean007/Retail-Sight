@@ -50,17 +50,17 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import EmployeesViewer from "./EmployeesViewer";
 import UserProfileViewer from "./UserProfileViewer";
-import ApiViewer from "./ApiViewer";
 import { handleLogout } from "../utils/validation/authenticate";
 import LogOutButton from "./LogOutButton";
 import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
+import IntegrationView from "./IntegrationView.tsx";
 
 type DashboardModeType =
   | "TeamMode"
   | "UsersMode"
   | "ProfileMode"
-  | "ApiMode"
+  | "IntegrationMode"
   | "CollectionsMode"
   | "TutorialMode";
 
@@ -175,8 +175,8 @@ export const Dashboard = () => {
           <ListItem onClick={handleMenuItemClick("ProfileMode")}>
             <ListItemText primary="Profile" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("ApiMode")}>
-            <ListItemText primary="Api" />
+          <ListItem onClick={handleMenuItemClick("IntegrationMode")}>
+            <ListItemText primary="Integration" />
           </ListItem>
           <ListItem onClick={handleMenuItemClick("CollectionsMode")}>
             <ListItemText primary="Collections" />
@@ -196,7 +196,7 @@ export const Dashboard = () => {
         {dashboardMode === "TeamMode" && <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "UsersMode" && <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
-        {dashboardMode === "ApiMode" && <ApiViewer />}
+        {dashboardMode === "IntegrationMode" && <IntegrationView />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>

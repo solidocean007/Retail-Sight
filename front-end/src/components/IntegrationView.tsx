@@ -15,7 +15,7 @@ import { selectUser } from "../Slices/userSlice";
 import ApiKeyModal from "./GenerateApiKey/ApiKeyModal";
 
 // const ApiViewer = (user: UserType) => {
-const ApiViewer = () => {
+const IntegrationView = () => {
   const user = useSelector(selectUser);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const isAdmin = user?.role === "admin";
@@ -145,4 +145,4 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
   );
 };
 
-export default ApiViewer;
+export default IntegrationView;
