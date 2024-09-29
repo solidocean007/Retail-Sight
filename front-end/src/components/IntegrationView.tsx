@@ -1,148 +1,164 @@
-import {
-  Box,
-  Button,
-  Container,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Typography,
-} from "@mui/material";
-import { UserType } from "../utils/types";
-import { useState } from "react";
-import { useSelector } from "react-redux";
-import { selectUser } from "../Slices/userSlice";
-import ApiKeyModal from "./GenerateApiKey/ApiKeyModal";
+import { useState, useEffect } from 'react';
+import { Box, Button, Container, TextField, Typography, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
-// const ApiViewer = (user: UserType) => {
 const IntegrationView = () => {
-  const user = useSelector(selectUser);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const isAdmin = user?.role === "admin";
-  const isDeveloper = user?.role === "developer";
-  const isSuperAdmin = user?.role === "super-admin";
-  const companyName = user?.company;
+  const [baseUrl, setBaseUrl] = useState(localStorage.getItem('baseUrl') || 'https://');
+  const [apiKey, setApiKey] = useState('');
+  const [method, setMethod] = useState('GET'); // State to handle HTTP method
+  const [queryParams, setQueryParams] = useState([{ key: 'startDate', value: '' }]);
+  const [bodyData, setBodyData] = useState(''); // State for request body data (if needed)
+  const [fetchResponse, setFetchResponse] = useState(null);
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
+  // Update the baseUrl in localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('baseUrl', baseUrl);
+  }, [baseUrl]);
+
+  const handleAddQueryParam = () => {
+    setQueryParams([...queryParams, { key: '', value: '' }]);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleQueryParamChange = (index, keyOrValue, newValue) => {
+    const updatedParams = [...queryParams];
+    updatedParams[index][keyOrValue] = newValue;
+    setQueryParams(updatedParams);
   };
 
-  const NoApiPermissionUser = () => {
-    return (
-      <Box>
-        <Typography>
-          Administration permissions required for accessing api keys.
-        </Typography>
-      </Box>
-    );
+  const buildUrl = () => {
+    let url = baseUrl;
+    if (!url.endsWith('?') && !url.includes('?')) {
+      url += '?';
+    }
+
+    queryParams.forEach(param => {
+      if (param.key && param.value) {
+        url += `${param.key}=${encodeURIComponent(param.value)}&`;
+      }
+    });
+
+    return url.slice(0, -1); // Remove the trailing "&"
+  };
+
+  const handleFetchData = async () => {
+    const functions = getFunctions();
+    const fetchPrograms = httpsCallable(functions, 'fetchPrograms');
+
+    try {
+      const url = buildUrl();
+      
+      // Create request options based on the selected method
+      const requestOptions = {
+        url,
+        method, // Pass the selected method
+        headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+      };
+
+      // Include body data if the method is POST or PUT
+      if (method === 'POST' || method === 'PUT') {
+        requestOptions.data = JSON.parse(bodyData);
+      }
+
+      // Call Cloud Function with request options
+      const response = await fetchPrograms(requestOptions);
+      setFetchResponse(response.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   };
 
   return (
     <Container>
-      {isSuperAdmin || isAdmin ? (
-        <Box>
-          <Typography variant="h4">API Management</Typography>
-          <Button variant="contained" color="primary" onClick={handleOpenModal}>
-            Show API Key
-          </Button>
+      <Box>
+        <Typography variant="h4">Integration Management</Typography>
+        
+        {/* Base URL */}
+        <TextField
+          label="Base URL"
+          value={baseUrl}
+          onChange={(e) => setBaseUrl(e.target.value)}
+          fullWidth
+          margin="normal"
+          helperText="Edit the base URL for the API request."
+        />
 
-          <Divider style={{ margin: "20px 0" }} />
-          <Typography variant="h6">How to Use the API Key</Typography>
-          <List>
-            <ListItem>
-              <ListItemText
-                primary="1. Create mission for your objective."
-                secondary={
-                  <>
-                    <Typography>
-                      Use the <strong>writeData</strong> endpoint to communicate new missions to the missions endpoint.
-                    </Typography>
-                    <Typography>Example:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {`
-POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=missions
+        {/* Method Selector */}
+        <FormControl fullWidth margin="normal">
+          <InputLabel>HTTP Method</InputLabel>
+          <Select
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+          >
+            <MenuItem value="GET">GET</MenuItem>
+            <MenuItem value="POST">POST</MenuItem>
+            <MenuItem value="PUT">PUT</MenuItem>
+            <MenuItem value="DELETE">DELETE</MenuItem>
+          </Select>
+        </FormControl>
 
-Body:
-{
-  "missionTitle": "New Mission Title",
-  "missionDescription": "Mission description",
-}
-                      `}
-                    </pre>
-                  </>
-                }
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText
-                primary="2. Communicate Missions to the Sales Team or Company you choose by supplying their unique company id."
-                secondary={
-                  <>
-                    <Typography>
-                      Use the <strong>writeData</strong> endpoint to communicate new missions to the companyMissions endpoint.
-                    </Typography>
-                    <Typography>Example:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {`
-POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=companyMissions
+        {/* API Key */}
+        <TextField
+          label="API Key"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          fullWidth
+          margin="normal"
+        />
+        
+        {/* Query Parameters */}
+        {queryParams.map((param, index) => (
+          <Box key={index} display="flex">
+            <TextField
+              label="Key"
+              value={param.key}
+              onChange={(e) => handleQueryParamChange(index, 'key', e.target.value)}
+              margin="normal"
+            />
+            <TextField
+              label="Value"
+              value={param.value}
+              onChange={(e) => handleQueryParamChange(index, 'value', e.target.value)}
+              margin="normal"
+            />
+          </Box>
+        ))}
+        <Button onClick={handleAddQueryParam}>Add Query Parameter</Button>
 
-Body:
-{
-  "missionId": {mission.id},
-  "companyIdAssigned": {company.id},
-  "missionStart": {Timestamp} Example: "2024-9-01T23:59:59Z"
-  "missionEnd": {Timestamp} Example: "2024-12-31T23:59:59Z"
-}
-                      `}
-                    </pre>
-                  </>
-                }
-              />
-            </ListItem>
-            <Divider />
-            <ListItem>
-              <ListItemText
-                primary="2. Read Submissions"
-                secondary={
-                  <>
-                    <Typography>
-                      Use the <strong>/readData</strong> endpoint to read submitted missions.
-                    </Typography>
-                    <Typography>Example:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {`
-GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API_KEY&collection=submittedMissions
-                      `}
-                    </pre>
-                  </>
-                }
-              />
-            </ListItem>
-          </List>
-          <Divider style={{ margin: "20px 0" }} />
-          <Typography variant="h6">API Key Usage Guidelines</Typography>
-          <List>
-            <ListItem>
-              <ListItemText primary="Keep your API key secure and do not share it publicly." />
-            </ListItem>
-            <ListItem>
-              <ListItemText primary="Use the API key only for authorized operations." />
-            </ListItem>
-            <ListItem>
-              <ListItemText primary="Regularly rotate your API key for enhanced security." />
-            </ListItem>
-          </List>
-        </Box>
-      ) : (
-        <NoApiPermissionUser />
-      )}
-      <ApiKeyModal open={isModalOpen} onClose={handleCloseModal} />
+        {/* Body Data Input (only visible if POST or PUT is selected) */}
+        {(method === 'POST' || method === 'PUT') && (
+          <TextField
+            label="Request Body (JSON)"
+            value={bodyData}
+            onChange={(e) => setBodyData(e.target.value)}
+            fullWidth
+            margin="normal"
+            multiline
+            rows={4}
+            helperText="Enter the JSON data for the request body."
+          />
+        )}
+
+        {/* Fetch Button */}
+        <Button variant="contained" color="primary" onClick={handleFetchData} style={{ marginTop: '20px' }}>
+          Fetch Data
+        </Button>
+
+        {/* Display Fetch Response */}
+        {fetchResponse && (
+          <Box>
+            <Typography variant="h6">Fetch Response:</Typography>
+            <pre>{JSON.stringify(fetchResponse, null, 2)}</pre>
+          </Box>
+        )}
+      </Box>
     </Container>
   );
 };
 
 export default IntegrationView;
+
+
+

@@ -54,6 +54,7 @@ import { handleLogout } from "../utils/validation/authenticate";
 import LogOutButton from "./LogOutButton";
 import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
+import ApiView from "./ApiView.tsx";
 import IntegrationView from "./IntegrationView.tsx";
 
 type DashboardModeType =
@@ -61,6 +62,7 @@ type DashboardModeType =
   | "UsersMode"
   | "ProfileMode"
   | "IntegrationMode"
+  | "ApiMode"
   | "CollectionsMode"
   | "TutorialMode";
 
@@ -160,28 +162,31 @@ export const Dashboard = () => {
         }}
       >
         <List>
-          <ListItem>
+          <ListItem className="drawer-link">
             <LogOutButton />
           </ListItem>
-          <ListItem onClick={() => navigate("/user-home-page")}>
+          <ListItem className="drawer-link" onClick={() => navigate("/user-home-page")}>
             <ListItemText primary="Home" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("TeamMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("TeamMode")}>
             <ListItemText primary="Teams" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("UsersMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("UsersMode")}>
             <ListItemText primary="Users" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("ProfileMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("ProfileMode")}>
             <ListItemText primary="Profile" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("IntegrationMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("ApiMode")}>
+            <ListItemText primary="Api" />
+          </ListItem>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("IntegrationMode")}>
             <ListItemText primary="Integration" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("CollectionsMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("CollectionsMode")}>
             <ListItemText primary="Collections" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("TutorialMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("TutorialMode")}>
             <ListItemText primary="Tutorial" />
           </ListItem>
         </List>
@@ -196,6 +201,7 @@ export const Dashboard = () => {
         {dashboardMode === "TeamMode" && <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "UsersMode" && <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
+        {dashboardMode === "ApiMode" && <ApiView />}
         {dashboardMode === "IntegrationMode" && <IntegrationView />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
