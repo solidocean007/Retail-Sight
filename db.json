@@ -1,0 +1,40 @@
+{
+  "programs": [
+    {
+      "marketId": "1234",
+      "programId": "123456",
+      "displayDate": "2022-01-21",
+      "startDate": "2022-01-01",
+      "endDate": "2022-03-31",
+      "programTitle": "New Year Promotion",
+      "programDesc": "Special promotion for the new year.",
+      "priority": "1",
+      "salesType": "OFF SALE",
+      "programType": "Customer Development"
+    },
+    {
+      "marketId": "5678",
+      "programId": "789012",
+      "displayDate": "2022-02-15",
+      "startDate": "2022-02-01",
+      "endDate": "2022-04-30",
+      "programTitle": "Spring Sale",
+      "programDesc": "Spring sale with exclusive discounts.",
+      "priority": "2",
+      "salesType": "ON SALE",
+      "programType": "Local Incentive"
+    },
+    {
+      "marketId": "91011",
+      "programId": "345678",
+      "displayDate": "2022-03-01",
+      "startDate": "2022-02-15",
+      "endDate": "2022-06-30",
+      "programTitle": "Customer Loyalty Program",
+      "programDesc": "Rewards program for loyal customers.",
+      "priority": "3",
+      "salesType": "OFF SALE",
+      "programType": "National Incentive"
+    }
+  ]
+}

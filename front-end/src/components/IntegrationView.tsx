@@ -3,7 +3,7 @@ import { Box, Button, Container, TextField, Typography, MenuItem, Select, FormCo
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const IntegrationView = () => {
-  const [baseUrl, setBaseUrl] = useState(localStorage.getItem('baseUrl') || 'https://');
+  const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
   const [apiKey, setApiKey] = useState('');
   const [method, setMethod] = useState('GET'); // State to handle HTTP method
   const [queryParams, setQueryParams] = useState([{ key: 'startDate', value: '' }]);
@@ -41,34 +41,45 @@ const IntegrationView = () => {
   };
 
   const handleFetchData = async () => {
-    const functions = getFunctions();
-    const fetchPrograms = httpsCallable(functions, 'fetchPrograms');
-
     try {
-      const url = buildUrl();
-      
-      // Create request options based on the selected method
-      const requestOptions = {
-        url,
-        method, // Pass the selected method
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json',
-        },
-      };
-
-      // Include body data if the method is POST or PUT
-      if (method === 'POST' || method === 'PUT') {
-        requestOptions.data = JSON.parse(bodyData);
-      }
-
-      // Call Cloud Function with request options
-      const response = await fetchPrograms(requestOptions);
-      setFetchResponse(response.data);
+      const url = `${baseUrl}/programs`; // Fetch from the fake programs endpoint
+      const response = await fetch(url);
+      const data = await response.json();
+      setFetchResponse(data);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
+
+  // const handleFetchData = async () => {
+  //   const functions = getFunctions();
+  //   const fetchPrograms = httpsCallable(functions, 'fetchPrograms');
+
+  //   try {
+  //     const url = buildUrl();
+      
+  //     // Create request options based on the selected method
+  //     const requestOptions = {
+  //       url,
+  //       method, // Pass the selected method
+  //       headers: {
+  //         'x-api-key': apiKey,
+  //         'Content-Type': 'application/json',
+  //       },
+  //     };
+
+  //     // Include body data if the method is POST or PUT
+  //     if (method === 'POST' || method === 'PUT') {
+  //       requestOptions.data = JSON.parse(bodyData);
+  //     }
+
+  //     // Call Cloud Function with request options
+  //     const response = await fetchPrograms(requestOptions);
+  //     setFetchResponse(response.data);
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
 
   return (
     <Container>

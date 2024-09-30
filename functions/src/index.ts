@@ -12,6 +12,7 @@ import { getApiKey } from "./getApiKey";
 import { generateApiKey } from "./generateApiKey";
 import { readData } from "./readData";
 import { writeData } from "./writeData";
+import { fetchData } from "./fetchData";
 
 export {
   sendInvite,
@@ -27,4 +28,5 @@ export {
   generateApiKey,
   readData,
   writeData,
+  fetchData,
 };
