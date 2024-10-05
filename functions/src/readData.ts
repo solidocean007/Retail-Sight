@@ -30,9 +30,9 @@ export const readData = functions.https.onRequest(
       }
 
       const apiKeyData = apiKeyDoc.docs[0].data();
-      const permissions = apiKeyData.permissions;
+      const permissions = apiKeyData?.permissions;
 
-      if (!permissions[collection] || !permissions[collection].canRead) {
+      if (!permissions || !permissions[collection]?.canRead) {
         res.status(403).send("Read permission denied.");
         return;
       }
@@ -56,10 +56,10 @@ export const readData = functions.https.onRequest(
         data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       }
 
-      res.status(200).send(data);
+      res.status(200).json(data);
     } catch (error) {
       console.error("Error fetching data:", error);
-      res.status(500).send((error as Error).message);
+      res.status(500).send("An error occurred while fetching data.");
     }
   }
 );

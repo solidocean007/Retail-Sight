@@ -1,4 +1,3 @@
-// generatePostShareToken.ts from the functions directory
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { v4 as uuidv4 } from "uuid";
@@ -7,16 +6,24 @@ if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
+// Define the expected input type for the function
+interface GeneratePostShareTokenParams {
+  postId: string;
+}
+
 export const generatePostShareToken = functions.https.onCall(
-  async (data, context) => {
-    if (!context.auth) {
+  async (
+    request: functions.https.CallableRequest<GeneratePostShareTokenParams>
+  ) => {
+    // Ensure the user is authenticated
+    if (!request.auth) {
       throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called while authenticated."
       );
     }
 
-    const postId = data.postId;
+    const { postId } = request.data;
     if (!postId) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -25,7 +32,6 @@ export const generatePostShareToken = functions.https.onCall(
     }
 
     const shareToken = uuidv4();
-    // Use Firestore Timestamp to benefit from its methods
     const tokenExpiryTimestamp = admin.firestore.Timestamp.fromDate(
       new Date(Date.now() + 24 * 60 * 60 * 1000)
     );

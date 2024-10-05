@@ -40,79 +40,87 @@ if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-export const exportPosts = functions.https.onCall(async (data, context) => {
-  // Ensure the user is authenticated
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "Authentication is required."
-    );
-  }
+type ExportPostsParams = {
+  collectionId: string;
+};
 
-  const { collectionId } = data;
-  if (!collectionId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Collection ID is required."
-    );
-  }
+export const exportPosts = functions.https.onCall(
+  async (data: functions.https.CallableRequest<ExportPostsParams>) => {
+    // Ensure the user is authenticated
+    if (!data.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Authentication is required."
+      );
+    }
 
-  // Initialize the CSV parser
-  const json2csvParser = new Parser();
+    const { collectionId } = data.data;
+    if (!collectionId) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Collection ID is required."
+      );
+    }
 
-  // Prepare the ZIP file
-  const tempFilePath = path.join(os.tmpdir(), `${collectionId}.zip`);
-  const output = fs.createWriteStream(tempFilePath);
-  const zip = archiver("zip", { zlib: { level: 9 } });
+    // Initialize the CSV parser
+    const json2csvParser = new Parser();
 
-  zip.pipe(output);
+    // Prepare the ZIP file
+    const tempFilePath = path.join(os.tmpdir(), `${collectionId}.zip`);
+    const output = fs.createWriteStream(tempFilePath);
+    const zip = archiver("zip", { zlib: { level: 9 } });
 
-  // Fetch posts
-  const posts = await fetchPostsForCollection(collectionId);
+    zip.pipe(output);
 
-  for (const post of posts) {
-    const postDir = `${post.id}`;
-    const postCSV = json2csvParser.parse(post);
+    // Fetch posts
+    const posts = await fetchPostsForCollection(collectionId);
 
-    // Append CSV to the zip
-    zip.append(postCSV, { name: `${postDir}/data.csv` });
+    for (const post of posts) {
+      const postDir = `${post.id}`;
+      const postCSV = json2csvParser.parse(post);
 
-    // Check if an image URL exists and fetch the image
-    if (post.imageUrl) {
-      try {
-        const imageData = await fetchImageData(post.imageUrl);
-        // Append the image data to the zip
-        zip.append(imageData.buffer, { name: `${postDir}/${imageData.name}` });
-      } catch (error) {
-        // Handle the error (e.g., skip the image or log the error)
-        console.error(`Failed to fetch image for post ${post.id}:`, error);
+      // Append CSV to the zip
+      zip.append(postCSV, { name: `${postDir}/data.csv` });
+
+      // Check if an image URL exists and fetch the image
+      if (post.imageUrl) {
+        try {
+          const imageData = await fetchImageData(post.imageUrl);
+          // Append the image data to the zip
+          zip.append(imageData.buffer, {
+            name: `${postDir}/${imageData.name}`,
+          });
+        } catch (error) {
+          // Handle the error (e.g., skip the image or log the error)
+          console.error(`Failed to fetch image for post ${post.id}:`, error);
+        }
       }
     }
+
+    await new Promise((resolve, reject) => {
+      output.on("close", resolve);
+      zip.on("error", reject);
+      zip.finalize();
+    });
+
+    // Upload ZIP to Firebase Storage
+    const bucket = admin.storage().bucket();
+    const zipFilePath = `exports/${collectionId}.zip`;
+    await bucket.upload(tempFilePath, { destination: zipFilePath });
+
+    // Generate a signed URL for the ZIP file
+    const file = bucket.file(zipFilePath);
+    const [url] = await file.getSignedUrl({
+      action: "read",
+      expires: Date.now() + 1000 * 60 * 60, // URL valid for 1 hour
+    });
+
+    // Clean up temporary file
+    fs.unlinkSync(tempFilePath);
+
+    return { url };
   }
-
-  await new Promise((resolve, reject) => {
-    output.on("close", resolve);
-    zip.on("error", reject);
-    zip.finalize();
-  });
-
-  // Upload ZIP to Firebase Storage
-  const bucket = admin.storage().bucket();
-  const zipFilePath = `exports/${collectionId}.zip`;
-  await bucket.upload(tempFilePath, { destination: zipFilePath });
-
-  // Generate a signed URL for the ZIP file
-  const file = bucket.file(zipFilePath);
-  const [url] = await file.getSignedUrl({
-    action: "read",
-    expires: Date.now() + 1000 * 60 * 60, // URL valid for 1 hour
-  });
-
-  // Clean up temporary file
-  fs.unlinkSync(tempFilePath);
-
-  return { url };
-});
+);
 
 /**
  * Fetches posts associated with a given collection ID from Firestore.

@@ -1,22 +1,52 @@
-import { useState, useEffect } from 'react';
-import { Box, Button, Container, TextField, Typography, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Container,
+  TextField,
+  Typography,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  TableContainer,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  Checkbox,
+  TableHead,
+} from "@mui/material";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const IntegrationView = () => {
-  const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
-  const [apiKey, setApiKey] = useState('');
-  const [method, setMethod] = useState('GET'); // State to handle HTTP method
-  const [queryParams, setQueryParams] = useState([{ key: 'startDate', value: '' }]);
-  const [bodyData, setBodyData] = useState(''); // State for request body data (if needed)
+  const [baseUrl, setBaseUrl] = useState("http://localhost:3000");
+  const [apiKey, setApiKey] = useState("");
+  const [method, setMethod] = useState("GET"); // State to handle HTTP method
+  const [queryParams, setQueryParams] = useState([
+    { key: "startDate", value: "" },
+  ]);
+  const [bodyData, setBodyData] = useState(""); // State for request body data (if needed)
   const [fetchResponse, setFetchResponse] = useState(null);
+  const [selectedMissions, setSelectedMissions] = useState<string[]>([]);
+
+  const handleCheckboxChange = (missionId:string) => {
+    setSelectedMissions((prevSelected) => {
+      if(prevSelected.includes(missionId)) {
+        return prevSelected.filter((id) => id !== missionId);
+      }else {
+        return [...prevSelected, missionId];
+      }
+    })
+  }
 
   // Update the baseUrl in localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('baseUrl', baseUrl);
+    localStorage.setItem("baseUrl", baseUrl);
   }, [baseUrl]);
 
   const handleAddQueryParam = () => {
-    setQueryParams([...queryParams, { key: '', value: '' }]);
+    setQueryParams([...queryParams, { key: "", value: "" }]);
   };
 
   const handleQueryParamChange = (index, keyOrValue, newValue) => {
@@ -26,14 +56,14 @@ const IntegrationView = () => {
   };
 
   const buildUrl = () => {
-    let url = baseUrl;
-    if (!url.endsWith('?') && !url.includes('?')) {
-      url += '?';
-    }
+    let url =
+      baseUrl.endsWith("?") || baseUrl.includes("?") ? baseUrl : `${baseUrl}?`;
 
-    queryParams.forEach(param => {
-      if (param.key && param.value) {
-        url += `${param.key}=${encodeURIComponent(param.value)}&`;
+    queryParams.forEach((param) => {
+      if (param.key.trim() && param.value.trim()) {
+        url += `${encodeURIComponent(param.key)}=${encodeURIComponent(
+          param.value
+        )}&`;
       }
     });
 
@@ -42,14 +72,91 @@ const IntegrationView = () => {
 
   const handleFetchData = async () => {
     try {
-      const url = `${baseUrl}/programs`; // Fetch from the fake programs endpoint
-      const response = await fetch(url);
+      const url = buildUrl(); // Use dynamic URL construction
+      const requestOptions = {
+        method,
+        headers: {
+          "x-api-key": apiKey, // Include API key for authenticated requests
+          "Content-Type": "application/json",
+        },
+      };
+
+      // Include body data if the method is POST or PUT
+      if (method === "POST" || method === "PUT") {
+        requestOptions.body = bodyData; // Property 'body' does not exist on type '{ method: string; headers: { 'x-api-key': string; 'Content-Type': string; }; }'.
+      }
+
+      const response = await fetch(url, requestOptions);
       const data = await response.json();
+      console.log(data);
       setFetchResponse(data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
   };
+
+  // Recursive function to render JSON
+  const renderJsonTable = (data: unknown) => {
+    if (Array.isArray(data) && data.length > 0) {
+      const headers = Object.keys(data[0]); // Extract keys of the first object for table headers
+  
+      return (
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Select</TableCell>
+                {headers.map((header) => (
+                  <TableCell key={header}>{header}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.map((item, index) => (
+                // <TableRow key={item.id || item.uniqueKey}>
+                <TableRow key={index}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedMissions.includes(item.id)}
+                      onChange={() => handleCheckboxChange(item.id)}
+                    />
+                  </TableCell>
+                  {headers.map((header) => (
+                    <TableCell key={`${item.id}-${header}`}>
+                      {item[header]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      );
+    }
+    return <span>No data available</span>;
+  };
+  
+  // Use renderJsonTable to display the fetched data
+  {fetchResponse && (
+    <Box>
+      <Typography variant="h6">Fetch Response:</Typography>
+      {renderJsonTable(fetchResponse)}
+    </Box>
+  )}
+  
+
+  // const handleFetchData = async () => {
+  //   try {
+  //     const url = `${baseUrl}programs`; // for some reason i had to remove the forward slash between baseUrl and 'programs'  it was logging two slashes here
+  //     console.log(url)
+  //     const response = await fetch(url);
+  //     const data = await response.json();
+  //     console.log(data)
+  //     setFetchResponse(data);
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
 
   // const handleFetchData = async () => {
   //   const functions = getFunctions();
@@ -57,7 +164,7 @@ const IntegrationView = () => {
 
   //   try {
   //     const url = buildUrl();
-      
+
   //     // Create request options based on the selected method
   //     const requestOptions = {
   //       url,
@@ -85,7 +192,7 @@ const IntegrationView = () => {
     <Container>
       <Box>
         <Typography variant="h4">Integration Management</Typography>
-        
+
         {/* Base URL */}
         <TextField
           label="Base URL"
@@ -99,10 +206,7 @@ const IntegrationView = () => {
         {/* Method Selector */}
         <FormControl fullWidth margin="normal">
           <InputLabel>HTTP Method</InputLabel>
-          <Select
-            value={method}
-            onChange={(e) => setMethod(e.target.value)}
-          >
+          <Select value={method} onChange={(e) => setMethod(e.target.value)}>
             <MenuItem value="GET">GET</MenuItem>
             <MenuItem value="POST">POST</MenuItem>
             <MenuItem value="PUT">PUT</MenuItem>
@@ -118,20 +222,24 @@ const IntegrationView = () => {
           fullWidth
           margin="normal"
         />
-        
+
         {/* Query Parameters */}
         {queryParams.map((param, index) => (
           <Box key={index} display="flex">
             <TextField
               label="Key"
               value={param.key}
-              onChange={(e) => handleQueryParamChange(index, 'key', e.target.value)}
+              onChange={(e) =>
+                handleQueryParamChange(index, "key", e.target.value)
+              }
               margin="normal"
             />
             <TextField
               label="Value"
               value={param.value}
-              onChange={(e) => handleQueryParamChange(index, 'value', e.target.value)}
+              onChange={(e) =>
+                handleQueryParamChange(index, "value", e.target.value)
+              }
               margin="normal"
             />
           </Box>
@@ -139,7 +247,7 @@ const IntegrationView = () => {
         <Button onClick={handleAddQueryParam}>Add Query Parameter</Button>
 
         {/* Body Data Input (only visible if POST or PUT is selected) */}
-        {(method === 'POST' || method === 'PUT') && (
+        {(method === "POST" || method === "PUT") && (
           <TextField
             label="Request Body (JSON)"
             value={bodyData}
@@ -153,7 +261,12 @@ const IntegrationView = () => {
         )}
 
         {/* Fetch Button */}
-        <Button variant="contained" color="primary" onClick={handleFetchData} style={{ marginTop: '20px' }}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleFetchData}
+          style={{ marginTop: "20px" }}
+        >
           Fetch Data
         </Button>
 
@@ -161,7 +274,7 @@ const IntegrationView = () => {
         {fetchResponse && (
           <Box>
             <Typography variant="h6">Fetch Response:</Typography>
-            <pre>{JSON.stringify(fetchResponse, null, 2)}</pre>
+            {renderJsonTable(fetchResponse)}
           </Box>
         )}
       </Box>
@@ -170,6 +283,3 @@ const IntegrationView = () => {
 };
 
 export default IntegrationView;
-
-
-
