@@ -49,9 +49,10 @@ const IntegrationView = () => {
     setQueryParams([...queryParams, { key: "", value: "" }]);
   };
 
-  const handleQueryParamChange = (index, keyOrValue, newValue) => {
+  const handleQueryParamChange = (index : number, keyOrValue: string, newValue: string) => {
     const updatedParams = [...queryParams];
-    updatedParams[index][keyOrValue] = newValue;
+    updatedParams[index][keyOrValue] = newValue; // Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ key: string; value: string; }'.
+    // No index signature with a parameter of type 'string' was found on type '{ key: string; value: string; }'.ts(7
     setQueryParams(updatedParams);
   };
 
@@ -80,20 +81,24 @@ const IntegrationView = () => {
           "Content-Type": "application/json",
         },
       };
-
+  
       // Include body data if the method is POST or PUT
       if (method === "POST" || method === "PUT") {
-        requestOptions.body = bodyData; // Property 'body' does not exist on type '{ method: string; headers: { 'x-api-key': string; 'Content-Type': string; }; }'.
+        requestOptions.body = JSON.stringify(bodyData); // Property 'body' does not exist on type '{ method: string; headers: { "x-api-key": string; "Content-Type": string; }; }'.
       }
-
+  
+      console.log('Final URL:', url);
+      console.log('Request Options:', requestOptions);
+      
       const response = await fetch(url, requestOptions);
       const data = await response.json();
-      console.log(data);
+      console.log('Response Data:', data);
       setFetchResponse(data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
+  
 
   // Recursive function to render JSON
   const renderJsonTable = (data: unknown) => {
