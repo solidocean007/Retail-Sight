@@ -18,6 +18,7 @@ import {
   TableHead,
 } from "@mui/material";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { auth } from "../utils/firebase";
 
 const IntegrationView = () => {
   const [baseUrl, setBaseUrl] = useState("http://localhost:3000");
@@ -29,16 +30,17 @@ const IntegrationView = () => {
   const [bodyData, setBodyData] = useState(""); // State for request body data (if needed)
   const [fetchResponse, setFetchResponse] = useState(null);
   const [selectedMissions, setSelectedMissions] = useState<string[]>([]);
+  const functions = getFunctions();
 
-  const handleCheckboxChange = (missionId:string) => {
+  const handleCheckboxChange = (missionId: string) => {
     setSelectedMissions((prevSelected) => {
-      if(prevSelected.includes(missionId)) {
+      if (prevSelected.includes(missionId)) {
         return prevSelected.filter((id) => id !== missionId);
-      }else {
+      } else {
         return [...prevSelected, missionId];
       }
-    })
-  }
+    });
+  };
 
   // Update the baseUrl in localStorage whenever it changes
   useEffect(() => {
@@ -49,7 +51,11 @@ const IntegrationView = () => {
     setQueryParams([...queryParams, { key: "", value: "" }]);
   };
 
-  const handleQueryParamChange = (index : number, keyOrValue: string, newValue: string) => {
+  const handleQueryParamChange = (
+    index: number,
+    keyOrValue: string,
+    newValue: string
+  ) => {
     const updatedParams = [...queryParams];
     updatedParams[index][keyOrValue] = newValue; // Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ key: string; value: string; }'.
     // No index signature with a parameter of type 'string' was found on type '{ key: string; value: string; }'.ts(7
@@ -71,40 +77,45 @@ const IntegrationView = () => {
     return url.slice(0, -1); // Remove the trailing "&"
   };
 
+  // Use Firebase Cloud Function for fetching data
   const handleFetchData = async () => {
     try {
-      const url = buildUrl(); // Use dynamic URL construction
-      const requestOptions = {
-        method,
-        headers: {
-          "x-api-key": apiKey, // Include API key for authenticated requests
-          "Content-Type": "application/json",
-        },
-      };
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const idToken = await currentUser.getIdToken();
   
-      // Include body data if the method is POST or PUT
-      if (method === "POST" || method === "PUT") {
-        requestOptions.body = JSON.stringify(bodyData); // Property 'body' does not exist on type '{ method: string; headers: { "x-api-key": string; "Content-Type": string; }; }'.
+        const requestOptions = {
+          baseUrl, // baseUrl from state
+          method, // HTTP method from state (GET, POST, etc.)
+          headers: {
+            Authorization: `Bearer ${idToken}`, // Attach the ID token here
+            "x-api-key": apiKey, // API key from state
+            "Content-Type": "application/json",
+          },
+          queryParams, // Query parameters from state
+          body: method === "POST" || method === "PUT" ? JSON.parse(bodyData) : undefined, // Include body data only for POST/PUT requests
+        };
+  
+        console.log("Calling Cloud Function with requestOptions:", requestOptions);
+  
+        const fetchDataCallable = httpsCallable(functions, "fetchData");
+        const response = await fetchDataCallable(requestOptions);
+  
+        console.log("Fetch Data Response:", response.data);
+        setFetchResponse(response.data);
+      } else {
+        console.error("User is not authenticated.");
       }
-  
-      console.log('Final URL:', url);
-      console.log('Request Options:', requestOptions);
-      
-      const response = await fetch(url, requestOptions);
-      const data = await response.json();
-      console.log('Response Data:', data);
-      setFetchResponse(data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
-  
 
   // Recursive function to render JSON
   const renderJsonTable = (data: unknown) => {
     if (Array.isArray(data) && data.length > 0) {
       const headers = Object.keys(data[0]); // Extract keys of the first object for table headers
-  
+
       return (
         <TableContainer>
           <Table>
@@ -140,15 +151,16 @@ const IntegrationView = () => {
     }
     return <span>No data available</span>;
   };
-  
+
   // Use renderJsonTable to display the fetched data
-  {fetchResponse && (
-    <Box>
-      <Typography variant="h6">Fetch Response:</Typography>
-      {renderJsonTable(fetchResponse)}
-    </Box>
-  )}
-  
+  {
+    fetchResponse && (
+      <Box>
+        <Typography variant="h6">Fetch Response:</Typography>
+        {renderJsonTable(fetchResponse)}
+      </Box>
+    );
+  }
 
   // const handleFetchData = async () => {
   //   try {

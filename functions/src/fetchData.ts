@@ -4,6 +4,7 @@ import * as querystring from "querystring";
 import * as express from "express";
 import { Request, Response } from "express";
 import * as functions from "firebase-functions";
+import * as cors from "cors"; // Add CORS import
 
 // Initialize Firebase Admin if not already initialized
 if (admin.apps.length === 0) {
@@ -11,6 +12,7 @@ if (admin.apps.length === 0) {
 }
 
 const app = express();
+app.use(cors({ origin: true })); // Enable CORS for all origins
 app.use(express.json());
 
 // Define the QueryParam type
@@ -45,7 +47,10 @@ const constructUrl = (baseUrl: string, queryParams: QueryParam[]): string => {
   return url;
 };
 
+console.log(constructUrl, ": constructUrl");
+
 app.post("/fetchData", async (req: Request, res: Response): Promise<void> => {
+  console.log("fetchData request");
   const data: FetchDataParams = req.body;
 
   // Check authentication
@@ -55,6 +60,9 @@ app.post("/fetchData", async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
+  // Log incoming request data
+  console.log("Incoming request data:", JSON.stringify(data, null, 2));
+
   const {
     baseUrl,
     method = "GET",
@@ -63,12 +71,19 @@ app.post("/fetchData", async (req: Request, res: Response): Promise<void> => {
     body,
   } = data;
 
+  console.log("Base URL:", baseUrl);
+  console.log("Method:", method);
+  console.log("Headers:", headers);
+  console.log("Query Params:", queryParams);
+
   if (!baseUrl) {
+    console.error("Base URL is missing");
     res.status(400).send({ error: "Base URL is required." });
     return;
   }
 
   const url = constructUrl(baseUrl, queryParams);
+  console.log("Constructed URL:", url); // Log the constructed URL
   const urlObj = new URL(url);
 
   const options: https.RequestOptions = {
@@ -131,8 +146,10 @@ app.post("/fetchData", async (req: Request, res: Response): Promise<void> => {
       httpsRequest.end();
     });
 
+    console.log("Successful response:", result);
     res.status(200).send(result);
   } catch (error) {
+    console.error("Error in fetchData function:", error);
     res.status(500).send({ error: (error as Error).message });
   }
 });
