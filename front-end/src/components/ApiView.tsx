@@ -6,22 +6,29 @@ import {
   List,
   ListItem,
   ListItemText,
+  TextField,
   Typography,
 } from "@mui/material";
-// import { UserType } from "../utils/types";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import ApiKeyModal from "./GenerateApiKey/ApiKeyModal";
 
-// const ApiViewer = (user: UserType) => {
+type ExternalApiKey = {
+  name: string;
+  key: string;
+};
+
+
 const ApiView = () => {
   const user = useSelector(selectUser);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [externalApiKey, setExternalApiKey] = useState("");
+  const [externalApiName, setExternalApiName] = useState("");
+  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<ExternalApiKey[]>([]);
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
-  const companyName = user?.company;
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -29,6 +36,14 @@ const ApiView = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const handleExternalApiKeySubmit = () => {
+    // Add logic for storing the external API key
+    const newApiKey = { name: externalApiName, key: externalApiKey };
+    setStoredExternalApiKeys((prevKeys) => [...prevKeys, newApiKey]);
+    setExternalApiKey("");
+    setExternalApiName("");
   };
 
   const NoApiPermissionUser = () => {
@@ -47,13 +62,13 @@ const ApiView = () => {
         <Box>
           <Typography variant="h4">API Management</Typography>
           <Button variant="contained" color="primary" onClick={handleOpenModal}>
-            Show API Key
+            Show Internal API Key
           </Button>
 
           <Divider style={{ margin: "20px 0" }} />
           <Typography variant="h6">How to Use the API Key</Typography>
-          <List>
-            <ListItem>
+          {/* Existing API key usage examples here... */}
+          <ListItem>
               <ListItemText
                 primary="1. Create mission for your objective."
                 secondary={
@@ -135,6 +150,46 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
             <ListItem>
               <ListItemText primary="Regularly rotate your API key for enhanced security." />
             </ListItem>
+          <Divider style={{ margin: "20px 0" }} />
+
+          <Typography variant="h6">External API Key Management</Typography>
+          <Typography>
+            Store and manage external API keys for third-party services.
+          </Typography>
+          <TextField
+            label="API Key Name"
+            fullWidth
+            margin="normal"
+            value={externalApiName}
+            onChange={(e) => setExternalApiName(e.target.value)}
+          />
+          <TextField
+            label="External API Key"
+            fullWidth
+            margin="normal"
+            value={externalApiKey}
+            onChange={(e) => setExternalApiKey(e.target.value)}
+          />
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleExternalApiKeySubmit}
+            style={{ marginTop: "10px" }}
+          >
+            Save External API Key
+          </Button>
+
+          <Divider style={{ margin: "20px 0" }} />
+          <Typography variant="h6">Stored External API Keys</Typography>
+          <List>
+            {storedExternalApiKeys.map((externalApiKey, index) => (
+              <ListItem key={index}>
+                <ListItemText
+                  primary={externalApiKey.name} // Property 'name' does not exist on type 'never'
+                  secondary={externalApiKey.key} // Property 'key' does not exist on type 'never'
+                />
+              </ListItem>
+            ))}
           </List>
         </Box>
       ) : (
@@ -146,3 +201,4 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
 };
 
 export default ApiView;
+
