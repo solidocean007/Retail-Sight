@@ -19,13 +19,15 @@ import {
 } from "@mui/material";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { auth } from "../utils/firebase";
+import { getAuth } from "@firebase/auth";
 
 const IntegrationView = () => {
-  const [baseUrl, setBaseUrl] = useState("http://localhost:3000");
+  const [baseUrl, setBaseUrl] = useState("https://jsonplaceholder.typicode.com/todos/1");
   const [apiKey, setApiKey] = useState("");
   const [method, setMethod] = useState("GET"); // State to handle HTTP method
   const [queryParams, setQueryParams] = useState([
-    { key: "startDate", value: "" },
+    // { key: "startDate", value: "" },
+    { key: "", value: "" },
   ]);
   const [bodyData, setBodyData] = useState(""); // State for request body data (if needed)
   const [fetchResponse, setFetchResponse] = useState(null);
@@ -76,41 +78,128 @@ const IntegrationView = () => {
 
     return url.slice(0, -1); // Remove the trailing "&"
   };
+  
 
-  // Use Firebase Cloud Function for fetching data
-  const handleFetchData = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const idToken = await currentUser.getIdToken();
+ // Use Firebase Cloud Function for fetching data
+//  const handleFetchData = async () => {
+//   const functions = getFunctions();
+//   const fetchDataCallable = httpsCallable(functions, 'fetchData');
+
+//   try {
+//     // const auth = getAuth();
+//     // const currentUser = auth.currentUser;
+    
+//     // if (currentUser) {
+//     //   const idToken = await currentUser.getIdToken(); // Get the Firebase auth token
   
-        const requestOptions = {
-          baseUrl, // baseUrl from state
-          method, // HTTP method from state (GET, POST, etc.)
-          headers: {
-            Authorization: `Bearer ${idToken}`, // Attach the ID token here
-            "x-api-key": apiKey, // API key from state
-            "Content-Type": "application/json",
-          },
-          queryParams, // Query parameters from state
-          body: method === "POST" || method === "PUT" ? JSON.parse(bodyData) : undefined, // Include body data only for POST/PUT requests
-        };
+//       const requestOptions = {
+//         baseUrl: 'https://jsonplaceholder.typicode.com/todos/1', // Example URL
+//         method: 'GET'
+//         // headers: {
+//         //   Authorization: `Bearer ${idToken}`, // Attach Firebase auth token
+//         //   'Content-Type': 'application/json'
+//         // },
+//         // queryParams: []
+//       };
   
-        console.log("Calling Cloud Function with requestOptions:", requestOptions);
+//       console.log('Calling Cloud Function with requestOptions:', requestOptions);
+//       const response = await fetchDataCallable(requestOptions);
   
-        const fetchDataCallable = httpsCallable(functions, "fetchData");
-        const response = await fetchDataCallable(requestOptions);
-  
-        console.log("Fetch Data Response:", response.data);
-        setFetchResponse(response.data);
-      } else {
-        console.error("User is not authenticated.");
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
+//       console.log('Fetch Data Response:', response.data);
+//     // } else {
+//     //   console.error('User is not authenticated.');
+//     // }
+//   } catch (error) {
+//     console.error('Error fetching data:', error);
+//   }
+// };
+
+const handleFetchData = async () => {
+  const requestOptions = {
+    baseUrl: baseUrl.trim(), // Ensure there's no accidental whitespace
+    method: method, 
+    headers: apiKey ? { 'x-api-key': apiKey, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }, // Ensure correct headers
+    body: method !== 'GET' && bodyData ? JSON.parse(bodyData) : null, // Body only for POST/PUT
   };
 
+  console.log('Request options:', requestOptions); // Log the request options to check
+
+  try {
+    const response = await fetch('https://my-fetch-data-api.vercel.app/api/fetchData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json', // Ensure the header is set
+      },
+      body: JSON.stringify(requestOptions), // Stringify the request body
+    });
+
+    const data = await response.json();
+    console.log('data: ', data);
+    setFetchResponse(data);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
+
+
+
+  // Recursive function to render JSON
+  // const renderJsonTable = (data: unknown) => {
+  //   // Check if the data is an object (single response) or an array
+  //   if (Array.isArray(data)) {
+  //     const headers = Object.keys(data[0] || {}); // Safeguard against empty array
+  
+  //     return (
+  //       <TableContainer>
+  //         <Table>
+  //           <TableHead>
+  //             <TableRow>
+  //               {headers.map((header) => (
+  //                 <TableCell key={header}>{header}</TableCell>
+  //               ))}
+  //             </TableRow>
+  //           </TableHead>
+  //           <TableBody>
+  //             {data.map((item, index) => (
+  //               <TableRow key={index}>
+  //                 {headers.map((header) => (
+  //                   <TableCell key={header}>{item[header]}</TableCell>
+  //                 ))}
+  //               </TableRow>
+  //             ))}
+  //           </TableBody>
+  //         </Table>
+  //       </TableContainer>
+  //     );
+  //   } else if (data && typeof data === "object") {
+  //     // Render the object as a table
+  //     const headers = Object.keys(data);
+  
+  //     return (
+  //       <TableContainer>
+  //         <Table>
+  //           <TableHead>
+  //             <TableRow>
+  //               {headers.map((header) => (
+  //                 <TableCell key={header}>{header}</TableCell>
+  //               ))}
+  //             </TableRow>
+  //           </TableHead>
+  //           <TableBody>
+  //             <TableRow>
+  //               {headers.map((header) => (
+  //                 <TableCell key={header}>{data[header]}</TableCell>
+  //               ))}
+  //             </TableRow>
+  //           </TableBody>
+  //         </Table>
+  //       </TableContainer>
+  //     );
+  //   }
+  
+  //   return <span>No data available</span>;
+  // };
+  
   // Recursive function to render JSON
   const renderJsonTable = (data: unknown) => {
     if (Array.isArray(data) && data.length > 0) {
@@ -152,7 +241,7 @@ const IntegrationView = () => {
     return <span>No data available</span>;
   };
 
-  // Use renderJsonTable to display the fetched data
+
   {
     fetchResponse && (
       <Box>

@@ -14,7 +14,6 @@ import { readData } from "./readData";
 import { writeData } from "./writeData";
 import { fetchData } from "./fetchData";
 import { testFetchData } from "./testFetchData";
-import { helloWorld } from "./helloWorld";
 
 export {
   // sendInvite,
@@ -32,5 +31,4 @@ export {
   writeData,
   fetchData,
   testFetchData,
-  helloWorld,
 };
