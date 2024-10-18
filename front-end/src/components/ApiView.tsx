@@ -52,6 +52,8 @@ const ApiView = () => {
         body: JSON.stringify({companyId, externalApiName, externalApiKey }), // just added companyId
       });
 
+      console.log(response.body);
+
       const data = await response.json();
       if (response.ok) {
         setMessage("External API Key added successfully!");
