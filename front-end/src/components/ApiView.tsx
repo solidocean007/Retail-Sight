@@ -19,9 +19,20 @@ type ExternalApiKey = {
   key: string;
 };
 
+type ExternalApiKey = {
+  name: string;
+  key: string;
+};
+
 const ApiView = () => {
   const user = useSelector(selectUser);
+  const companyId = user?.companyId;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [externalApiKey, setExternalApiKey] = useState("");
+  const [externalApiName, setExternalApiName] = useState("");
+  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<
+    ExternalApiKey[]
+  >([]);
   const [externalApiKey, setExternalApiKey] = useState("");
   const [externalApiName, setExternalApiName] = useState("");
   const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<ExternalApiKey[]>([]); // Proper typing here
@@ -29,6 +40,7 @@ const ApiView = () => {
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
+  const companyName = user?.company;
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -36,6 +48,56 @@ const ApiView = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const handleSubmitNewExternalApiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("https://my-fetch-data-api.vercel.app/api/storeExternalApiKey", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({companyId, externalApiName, externalApiKey }), // just added companyId
+      });
+
+      console.log(response.body);
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessage("External API Key added successfully!");
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error submitting external API key:", error);
+      setMessage("Failed to add external API key.");
+    }
+  };
+
+  const handleSubmitNewExternalApiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("https://my-fetch-data-api.vercel.app/api/storeExternalApiKey", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({companyId, externalApiName, externalApiKey }), // just added companyId
+      });
+
+      console.log(response.body);
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessage("External API Key added successfully!");
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error submitting external API key:", error);
+      setMessage("Failed to add external API key.");
+    }
   };
 
   const handleExternalApiKeySubmit = () => {
@@ -60,6 +122,7 @@ const ApiView = () => {
           <Typography variant="h4">API Management</Typography>
           <Button variant="contained" color="primary" onClick={handleOpenModal}>
             Show Internal API Key
+            Show Internal API Key
           </Button>
 
           <Divider style={{ margin: "20px 0" }} />
@@ -72,9 +135,16 @@ const ApiView = () => {
                 secondary={
                   <>
                     <Typography>
-                      Use the <strong>writeData</strong> endpoint to communicate new missions to the missions endpoint.
+                      Use the <strong>writeData</strong> endpoint to communicate
+                      new missions to the missions endpoint.
                     </Typography>
-                    <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    <Typography>Example:</Typography>
+                    <pre
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                      }}
+                    >
                       {`
 POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=missions
 
@@ -83,7 +153,7 @@ Body:
   "missionTitle": "New Mission Title",
   "missionDescription": "Mission description",
 }
-                      `}
+            `}
                     </pre>
                   </>
                 }
@@ -96,9 +166,16 @@ Body:
                 secondary={
                   <>
                     <Typography>
-                      Use the <strong>writeData</strong> endpoint to communicate new missions to the companyMissions endpoint.
+                      Use the <strong>writeData</strong> endpoint to communicate
+                      new missions to the companyMissions endpoint.
                     </Typography>
-                    <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    <Typography>Example:</Typography>
+                    <pre
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                      }}
+                    >
                       {`
 POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=companyMissions
 
@@ -106,15 +183,17 @@ Body:
 {
   "missionId": {mission.id},
   "companyIdAssigned": {company.id},
-  "missionStart": "2024-9-01T23:59:59Z",
-  "missionEnd": "2024-12-31T23:59:59Z"
+  "missionStart": {Timestamp} Example: "2024-9-01T23:59:59Z",
+  "missionEnd": {Timestamp} Example: "2024-12-31T23:59:59Z"
 }
-                      `}
+            `}
                     </pre>
                   </>
                 }
               />
             </ListItem>
+
+            <Divider />
 
             <ListItem>
               <ListItemText
@@ -122,12 +201,19 @@ Body:
                 secondary={
                   <>
                     <Typography>
-                      Use the <strong>/readData</strong> endpoint to read submitted missions.
+                      Use the <strong>/readData</strong> endpoint to read
+                      submitted missions.
                     </Typography>
-                    <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    <Typography>Example:</Typography>
+                    <pre
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                      }}
+                    >
                       {`
 GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API_KEY&collection=submittedMissions
-                      `}
+            `}
                     </pre>
                   </>
                 }
@@ -150,36 +236,43 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
           </List>
 
           <Divider style={{ margin: "20px 0" }} />
+
           <Typography variant="h6">External API Key Management</Typography>
-          <TextField
-            label="API Key Name"
-            fullWidth
-            margin="normal"
-            value={externalApiName}
-            onChange={(e) => setExternalApiName(e.target.value)}
-          />
-          <TextField
-            label="External API Key"
-            fullWidth
-            margin="normal"
-            value={externalApiKey}
-            onChange={(e) => setExternalApiKey(e.target.value)}
-          />
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleExternalApiKeySubmit}
-            style={{ marginTop: "10px" }}
-          >
-            Save External API Key
-          </Button>
+          <Typography variant="h6">Add External API Key</Typography>
+          <form onSubmit={handleSubmitNewExternalApiKey}>
+            <TextField
+              label="API Key Name"
+              fullWidth
+              margin="normal"
+              value={externalApiName}
+              onChange={(e) => setExternalApiName(e.target.value)}
+            />
+            <TextField
+              label="External API Key"
+              fullWidth
+              margin="normal"
+              value={externalApiKey}
+              onChange={(e) => setExternalApiKey(e.target.value)}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="secondary"
+              style={{ marginTop: "10px" }}
+            >
+              Submit
+            </Button>
+          </form>
 
           <Divider style={{ margin: "20px 0" }} />
           <Typography variant="h6">Stored External API Keys</Typography>
           <List>
-            {storedExternalApiKeys.map((keyData, index) => (
+            {storedExternalApiKeys.map((externalApiKey, index) => (
               <ListItem key={index}>
-                <ListItemText primary={keyData.name} secondary={keyData.key} />
+                <ListItemText
+                  primary={externalApiKey.name} // Property 'name' does not exist on type 'never'
+                  secondary={externalApiKey.key} // Property 'key' does not exist on type 'never'
+                />
               </ListItem>
             ))}
           </List>
@@ -188,10 +281,14 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
         <NoApiPermissionUser />
       )}
       <ApiKeyModal open={isModalOpen} onClose={handleCloseModal} />
+      {message && (
+        <Typography variant="body1" style={{ marginTop: "10px" }}>
+          {message}
+        </Typography>
+      )}
     </Container>
   );
 };
 
 export default ApiView;
-
 
