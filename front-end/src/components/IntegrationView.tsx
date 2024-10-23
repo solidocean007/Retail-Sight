@@ -22,7 +22,7 @@ import { auth } from "../utils/firebase";
 import { getAuth } from "@firebase/auth";
 
 const IntegrationView = () => {
-  const [baseUrl, setBaseUrl] = useState("https://jsonplaceholder.typicode.com/todos/1");
+  const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [method, setMethod] = useState("GET"); // State to handle HTTP method
   const [queryParams, setQueryParams] = useState([
@@ -79,36 +79,40 @@ const IntegrationView = () => {
     return url.slice(0, -1); // Remove the trailing "&"
   };
   
+  // the url to the fetchData function is: https://fetchdata-484872165965.us-central1.run.app
+  // I dont know if i should call it directly or with the method below using httpsCallable
 
  // Use Firebase Cloud Function for fetching data
 //  const handleFetchData = async () => {
 //   const functions = getFunctions();
 //   const fetchDataCallable = httpsCallable(functions, 'fetchData');
+//   console.log('fetchDataCallable: ', fetchDataCallable);
 
 //   try {
-//     // const auth = getAuth();
-//     // const currentUser = auth.currentUser;
+//     const auth = getAuth();
+//     const currentUser = auth.currentUser;
     
-//     // if (currentUser) {
-//     //   const idToken = await currentUser.getIdToken(); // Get the Firebase auth token
+//     if (currentUser) {
+//       const idToken = await currentUser.getIdToken(); // Get the Firebase auth token
   
 //       const requestOptions = {
-//         baseUrl: 'https://jsonplaceholder.typicode.com/todos/1', // Example URL
-//         method: 'GET'
-//         // headers: {
-//         //   Authorization: `Bearer ${idToken}`, // Attach Firebase auth token
-//         //   'Content-Type': 'application/json'
-//         // },
-//         // queryParams: []
+//         // baseUrl: 'https://jsonplaceholder.typicode.com/todos/1', // Example URL
+//         baseUrl: 'https://httpbin.org/get', // Example URL
+//         method: 'GET',
+//         headers: {
+//           // Authorization: `Bearer ${idToken}`, // Attach Firebase auth token
+//           'Content-Type': 'application/json'
+//         },
+//         queryParams: []
 //       };
   
 //       console.log('Calling Cloud Function with requestOptions:', requestOptions);
 //       const response = await fetchDataCallable(requestOptions);
   
 //       console.log('Fetch Data Response:', response.data);
-//     // } else {
-//     //   console.error('User is not authenticated.');
-//     // }
+//     } else {
+//       console.error('User is not authenticated.');
+//     }
 //   } catch (error) {
 //     console.error('Error fetching data:', error);
 //   }

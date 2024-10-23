@@ -6,22 +6,29 @@ import {
   List,
   ListItem,
   ListItemText,
+  TextField,
   Typography,
 } from "@mui/material";
-// import { UserType } from "../utils/types";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import ApiKeyModal from "./GenerateApiKey/ApiKeyModal";
 
-// const ApiViewer = (user: UserType) => {
+type ExternalApiKey = {
+  name: string;
+  key: string;
+};
+
 const ApiView = () => {
   const user = useSelector(selectUser);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [externalApiKey, setExternalApiKey] = useState("");
+  const [externalApiName, setExternalApiName] = useState("");
+  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<ExternalApiKey[]>([]); // Proper typing here
+
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
-  const companyName = user?.company;
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -31,15 +38,20 @@ const ApiView = () => {
     setIsModalOpen(false);
   };
 
-  const NoApiPermissionUser = () => {
-    return (
-      <Box>
-        <Typography>
-          Administration permissions required for accessing api keys.
-        </Typography>
-      </Box>
-    );
+  const handleExternalApiKeySubmit = () => {
+    const newApiKey: ExternalApiKey = { name: externalApiName, key: externalApiKey };
+    setStoredExternalApiKeys((prevKeys) => [...prevKeys, newApiKey]);
+    setExternalApiKey("");
+    setExternalApiName("");
   };
+
+  const NoApiPermissionUser = () => (
+    <Box>
+      <Typography>
+        Administration permissions required for accessing API keys.
+      </Typography>
+    </Box>
+  );
 
   return (
     <Container>
@@ -47,11 +59,12 @@ const ApiView = () => {
         <Box>
           <Typography variant="h4">API Management</Typography>
           <Button variant="contained" color="primary" onClick={handleOpenModal}>
-            Show API Key
+            Show Internal API Key
           </Button>
 
           <Divider style={{ margin: "20px 0" }} />
           <Typography variant="h6">How to Use the API Key</Typography>
+
           <List>
             <ListItem>
               <ListItemText
@@ -61,8 +74,7 @@ const ApiView = () => {
                     <Typography>
                       Use the <strong>writeData</strong> endpoint to communicate new missions to the missions endpoint.
                     </Typography>
-                    <Typography>Example:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                       {`
 POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=missions
 
@@ -77,16 +89,16 @@ Body:
                 }
               />
             </ListItem>
+
             <ListItem>
               <ListItemText
-                primary="2. Communicate Missions to the Sales Team or Company you choose by supplying their unique company id."
+                primary="2. Communicate Missions to the Sales Team or Company"
                 secondary={
                   <>
                     <Typography>
                       Use the <strong>writeData</strong> endpoint to communicate new missions to the companyMissions endpoint.
                     </Typography>
-                    <Typography>Example:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                       {`
 POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=companyMissions
 
@@ -94,8 +106,8 @@ Body:
 {
   "missionId": {mission.id},
   "companyIdAssigned": {company.id},
-  "missionStart": {Timestamp} Example: "2024-9-01T23:59:59Z"
-  "missionEnd": {Timestamp} Example: "2024-12-31T23:59:59Z"
+  "missionStart": "2024-9-01T23:59:59Z",
+  "missionEnd": "2024-12-31T23:59:59Z"
 }
                       `}
                     </pre>
@@ -103,17 +115,16 @@ Body:
                 }
               />
             </ListItem>
-            <Divider />
+
             <ListItem>
               <ListItemText
-                primary="2. Read Submissions"
+                primary="3. Read Submissions"
                 secondary={
                   <>
                     <Typography>
                       Use the <strong>/readData</strong> endpoint to read submitted missions.
                     </Typography>
-                    <Typography>Example:</Typography>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                       {`
 GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API_KEY&collection=submittedMissions
                       `}
@@ -123,6 +134,7 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
               />
             </ListItem>
           </List>
+
           <Divider style={{ margin: "20px 0" }} />
           <Typography variant="h6">API Key Usage Guidelines</Typography>
           <List>
@@ -136,6 +148,41 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
               <ListItemText primary="Regularly rotate your API key for enhanced security." />
             </ListItem>
           </List>
+
+          <Divider style={{ margin: "20px 0" }} />
+          <Typography variant="h6">External API Key Management</Typography>
+          <TextField
+            label="API Key Name"
+            fullWidth
+            margin="normal"
+            value={externalApiName}
+            onChange={(e) => setExternalApiName(e.target.value)}
+          />
+          <TextField
+            label="External API Key"
+            fullWidth
+            margin="normal"
+            value={externalApiKey}
+            onChange={(e) => setExternalApiKey(e.target.value)}
+          />
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleExternalApiKeySubmit}
+            style={{ marginTop: "10px" }}
+          >
+            Save External API Key
+          </Button>
+
+          <Divider style={{ margin: "20px 0" }} />
+          <Typography variant="h6">Stored External API Keys</Typography>
+          <List>
+            {storedExternalApiKeys.map((keyData, index) => (
+              <ListItem key={index}>
+                <ListItemText primary={keyData.name} secondary={keyData.key} />
+              </ListItem>
+            ))}
+          </List>
         </Box>
       ) : (
         <NoApiPermissionUser />
@@ -146,3 +193,5 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
 };
 
 export default ApiView;
+
+
