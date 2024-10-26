@@ -1,3 +1,4 @@
+//ApiView.tsx
 import {
   Box,
   Button,
@@ -12,12 +13,8 @@ import {
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
-import ApiKeyModal from "./GenerateApiKey/ApiKeyModal";
-
-type ExternalApiKey = {
-  name: string;
-  key: string;
-};
+import ApiKeyModal from "./ApiKeyLogic/ApiKeyModal";
+import { handleSubmitNewExternalApiKey } from "./ApiKeyLogic/apiKeyService";
 
 type ExternalApiKey = {
   name: string;
@@ -30,12 +27,8 @@ const ApiView = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [externalApiKey, setExternalApiKey] = useState("");
   const [externalApiName, setExternalApiName] = useState("");
-  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<
-    ExternalApiKey[]
-  >([]);
-  const [externalApiKey, setExternalApiKey] = useState("");
-  const [externalApiName, setExternalApiName] = useState("");
-  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<ExternalApiKey[]>([]); // Proper typing here
+  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<ExternalApiKey[]>([]);
+  const [message, setMessage] = useState('');
 
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
@@ -50,62 +43,30 @@ const ApiView = () => {
     setIsModalOpen(false);
   };
 
-  const handleSubmitNewExternalApiKey = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("https://my-fetch-data-api.vercel.app/api/storeExternalApiKey", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({companyId, externalApiName, externalApiKey }), // just added companyId
-      });
+  // const handleSubmitNewExternalApiKey = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   try {
+  //     const response = await fetch("https://my-fetch-data-api.vercel.app/api/storeExternalApiKey", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({companyId, externalApiName, externalApiKey }), // just added companyId
+  //     });
 
-      console.log(response.body);
+  //     console.log(response.body);
 
-      const data = await response.json();
-      if (response.ok) {
-        setMessage("External API Key added successfully!");
-      } else {
-        setMessage(`Error: ${data.error}`);
-      }
-    } catch (error) {
-      console.error("Error submitting external API key:", error);
-      setMessage("Failed to add external API key.");
-    }
-  };
-
-  const handleSubmitNewExternalApiKey = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("https://my-fetch-data-api.vercel.app/api/storeExternalApiKey", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({companyId, externalApiName, externalApiKey }), // just added companyId
-      });
-
-      console.log(response.body);
-
-      const data = await response.json();
-      if (response.ok) {
-        setMessage("External API Key added successfully!");
-      } else {
-        setMessage(`Error: ${data.error}`);
-      }
-    } catch (error) {
-      console.error("Error submitting external API key:", error);
-      setMessage("Failed to add external API key.");
-    }
-  };
-
-  const handleExternalApiKeySubmit = () => {
-    const newApiKey: ExternalApiKey = { name: externalApiName, key: externalApiKey };
-    setStoredExternalApiKeys((prevKeys) => [...prevKeys, newApiKey]);
-    setExternalApiKey("");
-    setExternalApiName("");
-  };
+  //     const data = await response.json();
+  //     if (response.ok) {
+  //       setMessage("External API Key added successfully!");
+  //     } else {
+  //       setMessage(`Error: ${data.error}`);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error submitting external API key:", error);
+  //     setMessage("Failed to add external API key.");
+  //   }
+  // };
 
   const NoApiPermissionUser = () => (
     <Box>
@@ -121,7 +82,6 @@ const ApiView = () => {
         <Box>
           <Typography variant="h4">API Management</Typography>
           <Button variant="contained" color="primary" onClick={handleOpenModal}>
-            Show Internal API Key
             Show Internal API Key
           </Button>
 
@@ -239,7 +199,7 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
 
           <Typography variant="h6">External API Key Management</Typography>
           <Typography variant="h6">Add External API Key</Typography>
-          <form onSubmit={handleSubmitNewExternalApiKey}>
+          <form onSubmit={handleSubmitNewExternalApiKey(companyId)}>
             <TextField
               label="API Key Name"
               fullWidth

@@ -1,3 +1,4 @@
+//IntegrationView.tsx
 import { useState, useEffect } from "react";
 import {
   Box,
@@ -21,9 +22,16 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { auth } from "../utils/firebase";
 import { getAuth } from "@firebase/auth";
 
+type ExternalApiKey = {
+  name: string;
+  key: string;
+};
+
 const IntegrationView = () => {
   const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [externalApiName, setExternalApiName] = useState("");
+  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<ExternalApiKey[]>([]);
   const [method, setMethod] = useState("GET"); // State to handle HTTP method
   const [queryParams, setQueryParams] = useState([
     // { key: "startDate", value: "" },
@@ -78,81 +86,84 @@ const IntegrationView = () => {
 
     return url.slice(0, -1); // Remove the trailing "&"
   };
-  
+
   // the url to the fetchData function is: https://fetchdata-484872165965.us-central1.run.app
   // I dont know if i should call it directly or with the method below using httpsCallable
 
- // Use Firebase Cloud Function for fetching data
-//  const handleFetchData = async () => {
-//   const functions = getFunctions();
-//   const fetchDataCallable = httpsCallable(functions, 'fetchData');
-//   console.log('fetchDataCallable: ', fetchDataCallable);
+  // Use Firebase Cloud Function for fetching data
+  //  const handleFetchData = async () => {
+  //   const functions = getFunctions();
+  //   const fetchDataCallable = httpsCallable(functions, 'fetchData');
+  //   console.log('fetchDataCallable: ', fetchDataCallable);
 
-//   try {
-//     const auth = getAuth();
-//     const currentUser = auth.currentUser;
-    
-//     if (currentUser) {
-//       const idToken = await currentUser.getIdToken(); // Get the Firebase auth token
-  
-//       const requestOptions = {
-//         // baseUrl: 'https://jsonplaceholder.typicode.com/todos/1', // Example URL
-//         baseUrl: 'https://httpbin.org/get', // Example URL
-//         method: 'GET',
-//         headers: {
-//           // Authorization: `Bearer ${idToken}`, // Attach Firebase auth token
-//           'Content-Type': 'application/json'
-//         },
-//         queryParams: []
-//       };
-  
-//       console.log('Calling Cloud Function with requestOptions:', requestOptions);
-//       const response = await fetchDataCallable(requestOptions);
-  
-//       console.log('Fetch Data Response:', response.data);
-//     } else {
-//       console.error('User is not authenticated.');
-//     }
-//   } catch (error) {
-//     console.error('Error fetching data:', error);
-//   }
-// };
+  //   try {
+  //     const auth = getAuth();
+  //     const currentUser = auth.currentUser;
 
-const handleFetchData = async () => {
-  const requestOptions = {
-    baseUrl: baseUrl.trim(), // Ensure there's no accidental whitespace
-    method: method, 
-    headers: apiKey ? { 'x-api-key': apiKey, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }, // Ensure correct headers
-    body: method !== 'GET' && bodyData ? JSON.parse(bodyData) : null, // Body only for POST/PUT
+  //     if (currentUser) {
+  //       const idToken = await currentUser.getIdToken(); // Get the Firebase auth token
+
+  //       const requestOptions = {
+  //         // baseUrl: 'https://jsonplaceholder.typicode.com/todos/1', // Example URL
+  //         baseUrl: 'https://httpbin.org/get', // Example URL
+  //         method: 'GET',
+  //         headers: {
+  //           // Authorization: `Bearer ${idToken}`, // Attach Firebase auth token
+  //           'Content-Type': 'application/json'
+  //         },
+  //         queryParams: []
+  //       };
+
+  //       console.log('Calling Cloud Function with requestOptions:', requestOptions);
+  //       const response = await fetchDataCallable(requestOptions);
+
+  //       console.log('Fetch Data Response:', response.data);
+  //     } else {
+  //       console.error('User is not authenticated.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
+  const handleFetchData = async () => {
+    const requestOptions = {
+      baseUrl: baseUrl.trim(), // Ensure there's no accidental whitespace
+      method: method,
+      headers: apiKey
+        ? { "x-api-key": apiKey, "Content-Type": "application/json" }
+        : { "Content-Type": "application/json" }, // Ensure correct headers
+      body: method !== "GET" && bodyData ? JSON.parse(bodyData) : null, // Body only for POST/PUT
+    };
+
+    console.log("Request options:", requestOptions); // Log the request options to check
+
+    try {
+      const response = await fetch(
+        "https://my-fetch-data-api.vercel.app/api/fetchData",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json", // Ensure the header is set
+          },
+          body: JSON.stringify(requestOptions), // Stringify the request body
+        }
+      );
+
+      const data = await response.json();
+      console.log("data: ", data);
+      setFetchResponse(data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
-
-  console.log('Request options:', requestOptions); // Log the request options to check
-
-  try {
-    const response = await fetch('https://my-fetch-data-api.vercel.app/api/fetchData', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json', // Ensure the header is set
-      },
-      body: JSON.stringify(requestOptions), // Stringify the request body
-    });
-
-    const data = await response.json();
-    console.log('data: ', data);
-    setFetchResponse(data);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-  }
-};
-
-
 
   // Recursive function to render JSON
   // const renderJsonTable = (data: unknown) => {
   //   // Check if the data is an object (single response) or an array
   //   if (Array.isArray(data)) {
   //     const headers = Object.keys(data[0] || {}); // Safeguard against empty array
-  
+
   //     return (
   //       <TableContainer>
   //         <Table>
@@ -178,7 +189,7 @@ const handleFetchData = async () => {
   //   } else if (data && typeof data === "object") {
   //     // Render the object as a table
   //     const headers = Object.keys(data);
-  
+
   //     return (
   //       <TableContainer>
   //         <Table>
@@ -200,10 +211,10 @@ const handleFetchData = async () => {
   //       </TableContainer>
   //     );
   //   }
-  
+
   //   return <span>No data available</span>;
   // };
-  
+
   // Recursive function to render JSON
   const renderJsonTable = (data: unknown) => {
     if (Array.isArray(data) && data.length > 0) {
@@ -244,7 +255,6 @@ const handleFetchData = async () => {
     }
     return <span>No data available</span>;
   };
-
 
   {
     fetchResponse && (
@@ -301,9 +311,12 @@ const handleFetchData = async () => {
   return (
     <Container>
       <Box>
-        <Typography variant="h4">Integration Management</Typography>
-
+        <Typography variant="h4">Mission & Integration Management</Typography>
+        <Typography variant="h5">
+          Requesting information from external sources
+        </Typography>
         {/* Base URL */}
+        <h5>Select the url for the data you need.</h5>
         <TextField
           label="Base URL"
           value={baseUrl}
@@ -325,6 +338,19 @@ const handleFetchData = async () => {
         </FormControl>
 
         {/* API Key */}
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Select External API Key</InputLabel>
+          <Select value={apiKey} onChange={(e) => setApiKey(e.target.value)}>
+            {storedExternalApiKeys.map((api) => (
+              <MenuItem key={api.key} value={api.key}>
+                {api.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <h5>Enter the API key you need or select from your stored keys.</h5>
+        <Button>Add External Key</Button>
         <TextField
           label="API Key"
           value={apiKey}

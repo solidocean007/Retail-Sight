@@ -56,12 +56,15 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import ApiView from "./ApiView.tsx";
 import IntegrationView from "./IntegrationView.tsx";
+// import MissionIntegrationView from "./MissionIntegrationView.tsx";
+import MissionIntegrationViewDraft from "./MissionIntegrationView copy.tsx";
 
 type DashboardModeType =
   | "TeamMode"
   | "UsersMode"
   | "ProfileMode"
   | "IntegrationMode"
+  | "MissionIntegrationMode"
   | "ApiMode"
   | "CollectionsMode"
   | "TutorialMode";
@@ -180,6 +183,9 @@ export const Dashboard = () => {
           <ListItem className="drawer-link" onClick={handleMenuItemClick("ApiMode")}>
             <ListItemText primary="Api" />
           </ListItem>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("MissionIntegrationMode")}>
+            <ListItemText primary="Mission Integration" />
+          </ListItem>
           <ListItem className="drawer-link" onClick={handleMenuItemClick("IntegrationMode")}>
             <ListItemText primary="Integration" />
           </ListItem>
@@ -203,6 +209,7 @@ export const Dashboard = () => {
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
         {dashboardMode === "ApiMode" && <ApiView />}
         {dashboardMode === "IntegrationMode" && <IntegrationView />}
+        {dashboardMode === "MissionIntegrationMode" && <MissionIntegrationViewDraft />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
