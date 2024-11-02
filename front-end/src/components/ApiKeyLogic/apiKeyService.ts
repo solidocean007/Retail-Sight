@@ -1,5 +1,5 @@
 // apiKeyService.ts
-export const handleSubmitNewExternalApiKey = async (companyId,e: React.FormEvent) => {
+export const handleSubmitNewExternalApiKey = async (e: React.FormEvent, companyId: string | undefined) => {
   e.preventDefault();
   try {
     const response = await fetch("https://my-fetch-data-api.vercel.app/api/storeExternalApiKey", {

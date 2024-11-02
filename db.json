@@ -36,5 +36,163 @@
       "salesType": "OFF SALE",
       "programType": "National Incentive"
     }
+  ],
+  "goals": [
+    {
+      "marketId": "1234",
+      "programId": "123456",
+      "goalId": "345678",
+      "eligiblePosition": "Sales Rep",
+      "verification": "Photo",
+      "goal": "Martin Codax Albarino TPR",
+      "goalMetric": "Cases",
+      "goalValueMin": "2",
+      "goalVerification": "Total",
+      "goalBenchMetric": "Percent (%)",
+      "goalBenchValue": "100",
+      "incentiveMetric": "",
+      "incentiveValue": "0",
+      "incentiveAvailable": "",
+      "incentiveCap": "",
+      "incentiveCap2": "",
+      "incentiveCapValue": "0",
+      "standards": [
+        {
+          "performance": "Shelf"
+        }
+      ],
+      "products": [
+        {
+          "upc": "008500001592",
+          "brandName": "MARTIN CODAX",
+          "flavorName": "ALBARINO",
+          "sizeName": "750ML",
+          "appellCode": "RBX",
+          "flavorDescription": "Albarino"
+        }
+      ],
+      "noBuyStart": "2021-01-01",
+      "noBuyEnd": "2021-12-31",
+      "goalFiles": [
+        {
+          "fileName": "filename.jpg"
+        },
+        {
+          "fileName": "filename2.jpg"
+        }
+      ]
+    },
+    {
+      "marketId": "5678",
+      "programId": "789012",
+      "goalId": "456789",
+      "eligiblePosition": "Area Manager",
+      "verification": "On Delivery",
+      "goal": "Spring Sale Promotion",
+      "goalMetric": "Bottles",
+      "goalValueMin": "5",
+      "goalVerification": "Each Item",
+      "goalBenchMetric": "Value ($)",
+      "goalBenchValue": "200",
+      "incentiveMetric": "Bonus Points",
+      "incentiveValue": "50",
+      "incentiveAvailable": "Yes",
+      "incentiveCap": "Yes",
+      "incentiveCap2": "No",
+      "incentiveCapValue": "100",
+      "standards": [
+        {
+          "performance": "Endcap Display"
+        }
+      ],
+      "products": [
+        {
+          "upc": "008500001593",
+          "brandName": "GALLINA",
+          "flavorName": "ROSE",
+          "sizeName": "750ML",
+          "appellCode": "GRA",
+          "flavorDescription": "Rose"
+        }
+      ],
+      "noBuyStart": "2022-02-01",
+      "noBuyEnd": "2022-05-31",
+      "goalFiles": [
+        {
+          "fileName": "spring_sale.jpg"
+        }
+      ]
+    },
+    {
+      "marketId": "91011",
+      "programId": "345678",
+      "goalId": "567890",
+      "eligiblePosition": "District Manager",
+      "verification": "None",
+      "goal": "Loyalty Rewards Expansion",
+      "goalMetric": "Cases",
+      "goalValueMin": "10",
+      "goalVerification": "Total",
+      "goalBenchMetric": "Value ($)",
+      "goalBenchValue": "500",
+      "incentiveMetric": "Gift Card",
+      "incentiveValue": "100",
+      "incentiveAvailable": "Yes",
+      "incentiveCap": "No",
+      "incentiveCap2": "No",
+      "incentiveCapValue": "0",
+      "standards": [
+        {
+          "performance": "Floor Stack"
+        }
+      ],
+      "products": [
+        {
+          "upc": "008500001594",
+          "brandName": "VINARO",
+          "flavorName": "CHARDONNAY",
+          "sizeName": "1.5L",
+          "appellCode": "VNX",
+          "flavorDescription": "Chardonnay"
+        }
+      ],
+      "noBuyStart": "2022-04-01",
+      "noBuyEnd": "2022-09-30",
+      "goalFiles": [
+        {
+          "fileName": "loyalty_rewards.jpg"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "oppId": "np-234567-345678-98765430",
+      "marketId": "1234",
+      "goalId": "345678",
+      "distributorAcctId": "98763",
+      "tdlnxAcctId": "7331419",
+      "galloAcctId": "98765430",
+      "liquorStateAcctId": "BEV3908194"
+    },
+    {
+      "oppId": "np-789012-456789-12345678",
+      "marketId": "5678",
+      "goalId": "456789",
+      "distributorAcctId": "12345",
+      "tdlnxAcctId": "8910111",
+      "galloAcctId": "12345678",
+      "liquorStateAcctId": "BEV1234567"
+    },
+    {
+      "oppId": "np-910111-567890-11223344",
+      "marketId": "91011",
+      "goalId": "567890",
+      "distributorAcctId": "67890",
+      "tdlnxAcctId": "1122334",
+      "galloAcctId": "11223344",
+      "liquorStateAcctId": "BEV5678910"
+    }
   ]
 }
+

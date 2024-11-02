@@ -27,8 +27,10 @@ const ApiView = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [externalApiKey, setExternalApiKey] = useState("");
   const [externalApiName, setExternalApiName] = useState("");
-  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<ExternalApiKey[]>([]);
-  const [message, setMessage] = useState('');
+  const [storedExternalApiKeys, setStoredExternalApiKeys] = useState<
+    ExternalApiKey[]
+  >([]);
+  const [message, setMessage] = useState("");
 
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
@@ -94,18 +96,26 @@ const ApiView = () => {
                 primary="1. Create mission for your objective."
                 secondary={
                   <>
-                    <Typography>
+                    {/* Use Typography for inline text */}
+                    <Typography variant="body2" component="span">
                       Use the <strong>writeData</strong> endpoint to communicate
                       new missions to the missions endpoint.
                     </Typography>
-                    <Typography>Example:</Typography>
-                    <pre
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {`
+
+                    {/* Separate block-level elements in their own container */}
+                    <Box mt={1}>
+                      <Typography variant="body2" component="span">
+                        Example:
+                      </Typography>
+                      <Box
+                        component="pre"
+                        sx={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          mt: 1,
+                        }}
+                      >
+                        {`
 POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=missions
 
 Body:
@@ -113,8 +123,9 @@ Body:
   "missionTitle": "New Mission Title",
   "missionDescription": "Mission description",
 }
-            `}
-                    </pre>
+              `}
+                      </Box>
+                    </Box>
                   </>
                 }
               />
@@ -125,18 +136,26 @@ Body:
                 primary="2. Communicate Missions to the Sales Team or Company"
                 secondary={
                   <>
-                    <Typography>
+                    {/* Use Typography for inline text */}
+                    <Typography variant="body2" component="span">
                       Use the <strong>writeData</strong> endpoint to communicate
                       new missions to the companyMissions endpoint.
                     </Typography>
-                    <Typography>Example:</Typography>
-                    <pre
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {`
+
+                    {/* Separate block-level elements in their own container */}
+                    <Box mt={1}>
+                      <Typography variant="body2" component="span">
+                        Example:
+                      </Typography>
+                      <Box
+                        component="pre"
+                        sx={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          mt: 1,
+                        }}
+                      >
+                        {`
 POST https://us-central1-retail-sight.cloudfunctions.net/writeData?apiKey=YOUR_API_KEY&collection=companyMissions
 
 Body:
@@ -146,35 +165,43 @@ Body:
   "missionStart": {Timestamp} Example: "2024-9-01T23:59:59Z",
   "missionEnd": {Timestamp} Example: "2024-12-31T23:59:59Z"
 }
-            `}
-                    </pre>
+              `}
+                      </Box>
+                    </Box>
                   </>
                 }
               />
             </ListItem>
-
-            <Divider />
 
             <ListItem>
               <ListItemText
                 primary="3. Read Submissions"
                 secondary={
                   <>
-                    <Typography>
+                    {/* Use Typography for inline text */}
+                    <Typography variant="body2" component="span">
                       Use the <strong>/readData</strong> endpoint to read
                       submitted missions.
                     </Typography>
-                    <Typography>Example:</Typography>
-                    <pre
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {`
+
+                    {/* Separate block-level elements in their own container */}
+                    <Box mt={1}>
+                      <Typography variant="body2" component="span">
+                        Example:
+                      </Typography>
+                      <Box
+                        component="pre"
+                        sx={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          mt: 1,
+                        }}
+                      >
+                        {`
 GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API_KEY&collection=submittedMissions
-            `}
-                    </pre>
+              `}
+                      </Box>
+                    </Box>
                   </>
                 }
               />
@@ -199,7 +226,7 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
 
           <Typography variant="h6">External API Key Management</Typography>
           <Typography variant="h6">Add External API Key</Typography>
-          <form onSubmit={handleSubmitNewExternalApiKey(companyId)}>
+          <form onSubmit={(e) => handleSubmitNewExternalApiKey(e, companyId)}>
             <TextField
               label="API Key Name"
               fullWidth
@@ -251,4 +278,3 @@ GET https://us-central1-retail-sight.cloudfunctions.net/readData?apiKey=YOUR_API
 };
 
 export default ApiView;
-

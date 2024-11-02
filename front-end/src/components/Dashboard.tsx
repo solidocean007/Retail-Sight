@@ -57,7 +57,7 @@ import TutorialViewer from "./TutorialViewer";
 import ApiView from "./ApiView.tsx";
 import IntegrationView from "./IntegrationView.tsx";
 // import MissionIntegrationView from "./MissionIntegrationView.tsx";
-import MissionIntegrationViewDraft from "./MissionIntegrationView copy.tsx";
+import MissionIntegrationViewDraft from "./MissionIntegration.tsx";
 
 type DashboardModeType =
   | "TeamMode"
@@ -208,8 +208,8 @@ export const Dashboard = () => {
         {dashboardMode === "UsersMode" && <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
         {dashboardMode === "ApiMode" && <ApiView />}
-        {dashboardMode === "IntegrationMode" && <IntegrationView />}
         {dashboardMode === "MissionIntegrationMode" && <MissionIntegrationViewDraft />}
+        {dashboardMode === "IntegrationMode" && <IntegrationView />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>

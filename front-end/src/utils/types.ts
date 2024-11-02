@@ -192,3 +192,30 @@ export interface SubmittedMissionType {
   companyMissionId: string;
   postIdForObjective: string;
 }
+
+export type ProgramType = {
+  marketId: string;
+  programId: string;
+  displayDate: string;
+  startDate: string;
+  endDate: string;
+  programTitle: string;
+  programDesc: string;
+  priority: string;
+  salesType: string;
+  programType: string;
+};
+
+export type GoalType = {
+  marketId: string;
+  programId: string;
+  goalId: string;
+  eligiblePosition: string;
+  verification: string;
+  goal: string;
+  goalMetric: string;
+  goalValueMin: string;
+  goalVerification: string;
+  goalBenchMetric: string;
+  goalBenchValue: string;
+};

@@ -1,4 +1,4 @@
-// MissionIntegrationView.tsx
+// MissionIntegration.tsx
 import { useState, useEffect } from "react";
 import {
   Box,
@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import IntegrationView from "./IntegrationView";
 import ApiView from "./ApiView";
-import MissionIntegrationView from "./MissionIntegrationView"; // Import other components as needed
+import MissionIntegrationViewGallo from "./MissionIntegrationViewGallo"; // Import other components as needed
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -44,7 +44,7 @@ function a11yProps(index: number) {
   };
 }
 
-const MissionIntegrationViewDraft: React.FC = () => {
+const MissionIntegration: React.FC = () => {
   const [value, setValue] = useState(0);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -57,7 +57,7 @@ const MissionIntegrationViewDraft: React.FC = () => {
         <Tabs value={value} onChange={handleChange} aria-label="dashboard tabs">
           <Tab label="External Integration" {...a11yProps(0)} />
           <Tab label="Internal API Management" {...a11yProps(1)} />
-          <Tab label="Mission Associations" {...a11yProps(2)} />
+          <Tab label="Mission Creation" {...a11yProps(2)} />
           {/* Add more tabs as necessary */}
         </Tabs>
       </Box>
@@ -68,11 +68,11 @@ const MissionIntegrationViewDraft: React.FC = () => {
         <ApiView /> {/* Your ApiView component */}
       </TabPanel>
       <TabPanel value={value} index={2}>
-        <MissionIntegrationView /> {/* Your MissionIntegration component */}
+        <MissionIntegrationViewGallo /> Your MissionIntegration component
       </TabPanel>
       {/* Add more TabPanels as necessary */}
     </Container>
   );
 };
 
-export default MissionIntegrationViewDraft;
+export default MissionIntegration;

@@ -128,7 +128,7 @@ const IntegrationView = () => {
 
   const handleFetchData = async () => {
     const requestOptions = {
-      baseUrl: baseUrl.trim(), // Ensure there's no accidental whitespace
+      baseUrl: baseUrl.trim(), //https://6w7u156vcb.execute-api.us-west-2.amazonaws.com is the base url
       method: method,
       headers: apiKey
         ? { "x-api-key": apiKey, "Content-Type": "application/json" }
