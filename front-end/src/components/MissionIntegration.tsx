@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import IntegrationView from "./IntegrationView";
 import ApiView from "./ApiView";
-import MissionIntegrationViewGallo from "./MissionIntegrationViewGallo"; // Import other components as needed
+import MissionIntegrationViewGallo from "./missionIntegration/MissionIntegrationViewGallo"; // Import other components as needed
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -68,7 +68,7 @@ const MissionIntegration: React.FC = () => {
         <ApiView /> {/* Your ApiView component */}
       </TabPanel>
       <TabPanel value={value} index={2}>
-        <MissionIntegrationViewGallo /> Your MissionIntegration component
+        <MissionIntegrationViewGallo />
       </TabPanel>
       {/* Add more TabPanels as necessary */}
     </Container>
