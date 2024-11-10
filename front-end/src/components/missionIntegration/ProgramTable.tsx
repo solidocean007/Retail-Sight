@@ -14,21 +14,15 @@ import { ProgramType } from "../../utils/types";
 
 interface ProgramTableProps {
   programs: ProgramType[];
-  selectedPrograms: string[];
-  onSelectProgram: (programId: string) => void;
-  onFetchGoals: (type: "programs" | "goals", additionalParams?: { [key: string]: string }) => Promise<void>;
+  selectedProgram: ProgramType | null;
+  onSelectProgram: (program: ProgramType) => void;
 }
 
 const ProgramTable: React.FC<ProgramTableProps> = ({
   programs,
-  selectedPrograms,
+  selectedProgram,
   onSelectProgram,
-  onFetchGoals,
 }) => {
-  console.log(programs)
-  // there should probably be a button in this table to trigger the onFetchGoals for this program.  when a program is selected we should track the state of
-  // programId and marketId. those parameters should be passed to the onFetchGoals function to look like this:
-  // https://https://6w7u156vcb.execute-api.us-west-2.amazonaws.com/healy/goals?marketId={marketId}&programId={programId}
   return (
     <TableContainer>
       <Typography variant="h6">Programs</Typography>
@@ -42,12 +36,12 @@ const ProgramTable: React.FC<ProgramTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {programs.length > 0 && programs.map((program) => (
+          {programs.map((program) => (
             <TableRow key={program.programId}>
               <TableCell>
                 <Checkbox
-                  checked={selectedPrograms.includes(program.programId)}
-                  onChange={() => onSelectProgram(program.programId)}
+                  checked={selectedProgram?.programId === program.programId}
+                  onChange={() => onSelectProgram(program)}
                 />
               </TableCell>
               <TableCell>{program.programTitle}</TableCell>

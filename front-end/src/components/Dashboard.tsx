@@ -58,10 +58,12 @@ import ApiView from "./ApiView.tsx";
 import IntegrationView from "./IntegrationView.tsx";
 // import MissionIntegrationView from "./MissionIntegrationView.tsx";
 import MissionIntegrationViewDraft from "./MissionIntegration.tsx";
+import AccountManager from "./AccountsManager.tsx";
 
 type DashboardModeType =
   | "TeamMode"
   | "UsersMode"
+  | "AccountsMode"
   | "ProfileMode"
   | "IntegrationMode"
   | "MissionIntegrationMode"
@@ -174,6 +176,9 @@ export const Dashboard = () => {
           <ListItem className="drawer-link" onClick={handleMenuItemClick("TeamMode")}>
             <ListItemText primary="Teams" />
           </ListItem>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("AccountsMode")}>
+            <ListItemText primary="Accounts" />
+          </ListItem>
           <ListItem className="drawer-link" onClick={handleMenuItemClick("UsersMode")}>
             <ListItemText primary="Users" />
           </ListItem>
@@ -205,6 +210,7 @@ export const Dashboard = () => {
         }}
       >
         {dashboardMode === "TeamMode" && <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
+        {dashboardMode === "AccountsMode" && <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin}/>}
         {dashboardMode === "UsersMode" && <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
         {dashboardMode === "ApiMode" && <ApiView />}

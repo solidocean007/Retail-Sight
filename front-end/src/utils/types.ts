@@ -96,7 +96,7 @@ export interface PostType {
   hashtags: string[];
   starTags: string[];
   commentCount: number;
-  token: { sharedToken: string, tokenExpiry: string };
+  token: { sharedToken: string; tokenExpiry: string };
   postCreatedBy: string;
 }
 
@@ -144,34 +144,34 @@ export interface TokenData {
 
 export interface CompanyTeamType {
   teamName: string;
-  teamSupervisor: {uid: string; name: string;}[];
-  teamMembers: { uid: string; name: string; }[];
+  teamSupervisor: { uid: string; name: string }[];
+  teamMembers: { uid: string; name: string }[];
 }
 
 export type TeamWithID = CompanyTeamType & { id: string };
 
 export interface PermissionsType {
-  apiKey: string,
-  companyName: string,
-  createdAt: Timestamp,
+  apiKey: string;
+  companyName: string;
+  createdAt: Timestamp;
   permissions: {
     missions: {
-      canRead: boolean,
-      canWrite: boolean
-    },
+      canRead: boolean;
+      canWrite: boolean;
+    };
     companyMissions: {
-      canRead: boolean,
-      canWrite: boolean
-    },
+      canRead: boolean;
+      canWrite: boolean;
+    };
     submittedMissions: {
-      canRead: boolean,
-      canWrite: boolean
-    },
+      canRead: boolean;
+      canWrite: boolean;
+    };
     posts: {
-      canRead: boolean,
-      canWrite: boolean
-    }
-  }
+      canRead: boolean;
+      canWrite: boolean;
+    };
+  };
 }
 export interface MissionType {
   id?: string;
@@ -219,3 +219,20 @@ export type GoalType = {
   goalBenchMetric: string;
   goalBenchValue: string;
 };
+
+export type GalloAccountType = {
+  oppId: string;
+  marketId: string;
+  goalId: string;
+  distributorAcctId: string;
+  tdlnxAcctId: string;
+  galloAcctId: string;
+  liquorStateAcctId: string;
+};
+
+export type CompanyAccountType = {
+  accountNumber: string;
+  accountName: string;
+  accountAddress: string;
+  salesRouteNums: string[];
+}
