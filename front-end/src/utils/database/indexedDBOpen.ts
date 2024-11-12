@@ -1,6 +1,6 @@
 // indexedDBOpen.ts
 const dbName = "myRetailAppDB";
-const dbVersion = 18;
+const dbVersion = 22;
 export function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
@@ -21,6 +21,7 @@ export function openDB(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
       const db = (event.target as IDBOpenDBRequest).result;
+    
       if (!db.objectStoreNames.contains("posts")) {
         db.createObjectStore("posts", { keyPath: "id" });
       }
@@ -42,19 +43,15 @@ export function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("latestPosts")) {
         db.createObjectStore("latestPosts", { keyPath: "id" });
       }
-      // Create 'hashtagPosts' object store to store posts fetched based on hashtags
       if (!db.objectStoreNames.contains("hashtagPosts")) {
         db.createObjectStore("hashtagPosts", { keyPath: "id" });
       }
-      // Create 'starTagPosts' object store to store posts fetched based on hashtags
       if (!db.objectStoreNames.contains("starTagPosts")) {
         db.createObjectStore("starTagPosts", { keyPath: "id" });
       }
-      // Create 'user created posts' object store to store posts fetched based on hashtags
       if (!db.objectStoreNames.contains("userCreatedPosts")) {
         db.createObjectStore("userCreatedPosts", { keyPath: "id" });
       }
-      // Delete the incorrect object store
       if (db.objectStoreNames.contains("userCompanyEmployees")) {
         db.deleteObjectStore("userCompanyEmployees");
       }
@@ -64,18 +61,19 @@ export function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("localSchemaVersion")) {
         db.createObjectStore("localSchemaVersion", { keyPath: "id" });
       }
-      // Create or update 'collections' object store
       if (!db.objectStoreNames.contains("collections")) {
         const collectionsStore = db.createObjectStore("collections", {
           keyPath: "id",
         });
         collectionsStore.createIndex("byUserId", "ownerId", { unique: false });
-        // Add more indexes as needed
       }
-      // Create 'lastSeenTimestamp' object store if it doesn't exist
       if (!db.objectStoreNames.contains("lastSeenTimestamp")) {
         db.createObjectStore("lastSeenTimestamp");
       }
+      if (!db.objectStoreNames.contains("userAccounts_v2")) {
+        db.createObjectStore("userAccounts_v2", { keyPath: "accountNumber" });
+      }  
     };
+    
   });
 }

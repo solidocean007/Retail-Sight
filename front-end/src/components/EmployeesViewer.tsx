@@ -1,260 +1,193 @@
-import { Box, Container } from "@mui/material";
+import {
+  Box,
+  Container,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { UserType } from "../utils/types";
-import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-} from "firebase/firestore";
+import { collection, doc, onSnapshot, query, setDoc, where } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { RootState, useAppDispatch } from "../utils/store";
-import {
-  getCompanyUsersFromIndexedDB,
-  saveCompanyUsersToIndexedDB,
-  updateUserRoleInIndexedDB,
-} from "../utils/database/userDataIndexedDB";
-import {
-  selectCompanyUsers,
-  selectUser,
-  setCompanyUsers,
-} from "../Slices/userSlice";
 import { useSelector } from "react-redux";
-import PendingInvites from "./PendingInvites";
-import { getFunctions, httpsCallable } from "@firebase/functions";
+import { selectUser, setCompanyUsers } from "../Slices/userSlice";
+import { getCompanyUsersFromIndexedDB, saveCompanyUsersToIndexedDB, updateUserRoleInIndexedDB } from "../utils/database/userDataIndexedDB";
 
 interface EmployeesViewerProps {
   localUsers: UserType[];
   setLocalUsers: React.Dispatch<React.SetStateAction<UserType[]>>;
 }
 
-const EmployeesViewer: React.FC<EmployeesViewerProps> = ({
-  localUsers,
-  setLocalUsers,
-}) => {
-  const dispatch = useAppDispatch();
-  const user = useSelector(selectUser);
-  const companyName = user?.company;
-  const companyId = user?.companyId;
-  const isAdmin = user?.role === "admin";
-  const isDeveloper = user?.role === "developer";
-  const isSuperAdmin = user?.role === "super-admin";
-  const [showPendingInvites, setShowPendingInvites] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
+const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalUsers }) => {
+  const currentUser = useSelector(selectUser);
+  const companyId = currentUser?.companyId;
+  const isSuperAdmin = currentUser?.role === "super-admin";
+
+  const [editedUsers, setEditedUsers] = useState<{ [key: string]: UserType }>({});
+  const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     if (!companyId) return;
 
     const fetchData = async () => {
-      // Check IndexedDB first
       const cachedUsers = await getCompanyUsersFromIndexedDB();
       if (cachedUsers) {
         setLocalUsers(cachedUsers);
-        dispatch(setCompanyUsers(cachedUsers));
       }
 
-      // Firestore real-time subscription setup
-      const q = query(
-        collection(db, "users"),
-        where("companyId", "==", companyId)
-      );
+      const q = query(collection(db, "users"), where("companyId", "==", companyId));
+      const unsubscribe = onSnapshot(q, async (snapshot) => {
+        const usersFromFirestore = snapshot.docs.map(
+          (doc) => ({ ...doc.data(), uid: doc.id } as UserType)
+        );
+        setLocalUsers(usersFromFirestore);
+        await saveCompanyUsersToIndexedDB(usersFromFirestore);
+      });
 
-      const unsubscribe = onSnapshot(
-        q,
-        async (snapshot) => {
-          const usersFromFirestore = snapshot.docs.map(
-            (doc) =>
-              ({
-                ...doc.data(),
-                uid: doc.id,
-              } as UserType)
-          );
-
-          // Compare with IndexedDB data to see if there are changes
-          const isDifferent = JSON.stringify(usersFromFirestore) !== JSON.stringify(cachedUsers);
-          if (isDifferent) {
-            dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
-            setLocalUsers(usersFromFirestore); // Update local state
-
-            // Save the updated list to IndexedDB
-            await saveCompanyUsersToIndexedDB(usersFromFirestore);
-          }
-        },
-        (error) => {
-          console.error("Error fetching users:", error);
-        }
-      );
-
-      // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
       return () => unsubscribe();
     };
 
     fetchData();
-  }, [companyId, dispatch]);
+  }, [companyId]);
 
-  // Type guard function to check if a string is a valid role
-  function isValidRole(role: string): role is UserType["role"] {
-    return ["admin", "employee", "status-pending", "developer"].includes(role);
-  }
-
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    // Ensure only super-admin can change roles, and admins cannot change their own role
-    if (!isSuperAdmin || (isAdmin && user?.uid === userId)) {
-      console.error("You do not have permission to change this role.");
-      return;
-    }
-
-    if (!isValidRole(newRole)) {
-      console.error("Invalid role");
-      return;
-    }
-
-    try {
-      // Update Firestore
-      const userDocRef = doc(db, "users", userId);
-      await setDoc(userDocRef, { role: newRole }, { merge: true });
-
-      // Update local state
-      const updatedUsers = localUsers.map((user) =>
-        user.uid === userId ? { ...user, role: newRole } : user
-      );
-      setLocalUsers(updatedUsers);
-
-      // Update IndexedDB
-      updateUserRoleInIndexedDB(userId, newRole);
-    } catch (error) {
-      console.error("Error updating user role:", error);
+  const handleEditToggle = (userId: string) => {
+    setEditMode((prev) => ({ ...prev, [userId]: !prev[userId] }));
+    const userToEdit = localUsers.find((user) => user.uid === userId);
+    if (userToEdit) {
+      setEditedUsers((prev) => ({
+        ...prev,
+        [userId]: { ...userToEdit },
+      }));
     }
   };
 
-  function toggleInvites() {
-    setShowPendingInvites((prevState) => !prevState);
-  }
+  const handleEditChange = (userId: string, field: keyof UserType, value: string) => {
+    setEditedUsers((prev) => ({
+      ...prev,
+      [userId]: {
+        ...prev[userId],
+        [field]: value,
+      },
+    }));
+  };
 
-  const handleInviteSubmit = async (
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
+  const handleSubmitEdit = async (userId: string) => {
+    const updatedUser = editedUsers[userId];
+    if (!updatedUser) return;
 
-    if (user?.companyId && companyName) {
-      // Ensure both companyId and companyName are available
-      try {
-        const functions = getFunctions(); // Initialize Firebase Functions
-        const sendInviteFunction = httpsCallable(functions, "sendInvite");
+    try {
+      const userDocRef = doc(db, "users", userId);
+      await setDoc(userDocRef, { salesRouteNum: updatedUser.salesRouteNum, role: updatedUser.role }, { merge: true });
 
-        // Generate the invite link
-        const inviteLink = `https://displaygram.com/sign-up-login?companyName=${encodeURIComponent(
-          companyName
-        )}&email=${encodeURIComponent(inviteEmail)}`;
+      const updatedUsersList = localUsers.map((user) =>
+        user.uid === userId ? updatedUser : user
+      );
+      setLocalUsers(updatedUsersList);
+      await updateUserRoleInIndexedDB(userId, updatedUser.role);
 
-        // Call the sendInvite Cloud Function
-        await sendInviteFunction({
-          email: inviteEmail,
-          companyId: user.companyId,
-          inviter: user.email,
-          inviteLink,
-        });
-
-        // Record the invite in Firestore
-        await setDoc(doc(db, "invites", inviteEmail), {
-          email: inviteEmail,
-          companyId: user.companyId,
-          status: "pending",
-          inviter: user.email,
-          timestamp: serverTimestamp(),
-          link: inviteLink,
-        });
-
-        console.log("Invite sent to", inviteEmail);
-        setInviteEmail(""); // Reset the input field
-      } catch (error) {
-        console.error("Error sending invite:", error);
-      }
-    } else {
-      console.error("Company ID or Company Name is undefined");
+      handleEditToggle(userId);
+    } catch (error) {
+      console.error("Error updating user:", error);
     }
   };
 
   return (
-    <Container>
-      <Box>
-        {(isAdmin || isDeveloper || isSuperAdmin) && (
-          <section className="invite-section">
-            <button className="button-blue" onClick={toggleInvites}>
-              {showPendingInvites ? "Hide pending" : "Show Pending Invites"}
-            </button>
-
-            {showPendingInvites && (
-              <div className="all-pending-invites">
-                <form className="invite-form" onSubmit={handleInviteSubmit}>
-                  <div className="invite-title">
-                    <label htmlFor="inviteEmail">Invite Employee:</label>
-                  </div>
-                  <div className="invite-input-box">
-                    <input
-                      type="email"
-                      id="inviteEmail"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="Enter employee's email"
-                      required
+    <Container disableGutters>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Phone Number</TableCell>
+              <TableCell>Sales Route Number</TableCell>
+              <TableCell>Role</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {localUsers.map((user) => (
+              <TableRow key={user.uid}>
+                <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.phone}</TableCell>
+                <TableCell>
+                  {editMode[user.uid] ? (
+                    <TextField
+                      value={editedUsers[user.uid]?.salesRouteNum ?? ""}
+                      onChange={(e) =>
+                        handleEditChange(user.uid, "salesRouteNum", e.target.value)
+                      }
+                      sx={{ width: "150px" }} // Adjust width as necessary
                     />
-                    <button type="submit">Send Invite</button>
-                  </div>
-                </form>
-                <PendingInvites />
-              </div>
-            )}
-          </section>
-        )}
-      </Box>
-      <Box className="card role-management-card">
-        <div className="header-and-all-info">
-          <div className="table-header">
-            <div className="user-name-detail">Name</div>
-            <div className="user-detail">Email</div>
-            <div className="user-phone-detail">Phone Number</div>
-            <div className="user-role-detail">Role</div>
-          </div>
-
-          <div>
-            {localUsers.map((localUser) => (
-              <div className="all-user-info" key={localUser.uid}>
-                <div className="user-name-email">
-                  <div className="user-name-detail">{`${localUser.firstName} ${localUser.lastName}`}</div>
-                  <div className="user-detail">{localUser.email}</div>
-                </div>
-                <div className="user-phone-role">
-                  <div className="user-phone-detail">{localUser.phone}</div>
-                  <div className="user-role-detail">
-                    {isSuperAdmin && localUser.uid !== user?.uid ? (
-                      <select
-                        title="role-select"
-                        value={localUser.role}
-                        onChange={(e) =>
-                          handleRoleChange(localUser.uid!, e.target.value)
-                        }
+                  ) : (
+                    user.salesRouteNum ?? "N/A"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editMode[user.uid] && isSuperAdmin ? (
+                    <Select
+                      value={editedUsers[user.uid]?.role ?? ""}
+                      onChange={(e) =>
+                        handleEditChange(user.uid, "role", e.target.value)
+                      }
+                      sx={{ width: "150px" }} // Adjust width as necessary
+                    >
+                      <MenuItem value="admin">Admin</MenuItem>
+                      <MenuItem value="employee">Employee</MenuItem>
+                      <MenuItem value="super-admin">Super Admin</MenuItem>
+                      <MenuItem value="developer">Developer</MenuItem>
+                      <MenuItem value="status-pending">Status Pending</MenuItem>
+                    </Select>
+                  ) : (
+                    user.role
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editMode[user.uid] ? (
+                    <>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleSubmitEdit(user.uid)}
                       >
-                        {/* List all possible roles here */}
-                        <option value="admin">Admin</option>
-                        <option value="employee">Employee</option>
-                        {/* Other roles */}
-                      </select>
-                    ) : (
-                      <span>{localUser.role}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
+                        Submit
+                      </Button>
+                      <Button
+                        variant="text"
+                        color="secondary"
+                        onClick={() => handleEditToggle(user.uid)}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="text"
+                      color="primary"
+                      onClick={() => handleEditToggle(user.uid)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
             ))}
-          </div>
-        </div>
-      </Box>
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Container>
   );
 };
 
 export default EmployeesViewer;
+
+

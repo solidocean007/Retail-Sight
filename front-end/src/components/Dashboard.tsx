@@ -132,10 +132,8 @@ export const Dashboard = () => {
     loadFromIndexedDB();
   }, []);
 
-  // should the button for toggleDrawer be hidden on screenwidths where the sidebar drawer is defaulted to open?
-  // should the api mode be renamed as integration? or create a new tab for that?
   return (
-    <Container>
+    <Container disableGutters  maxWidth={false}>
       <DashboardHelmet />
       <Box sx={{ flexGrow: 1, ml: isLargeScreen ? `${drawerWidth}px` : 0 }}>
         <AppBar position="static">

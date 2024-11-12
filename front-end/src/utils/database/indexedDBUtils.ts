@@ -1,5 +1,5 @@
 // indexedDBUtils.ts
-import { CollectionType, CollectionWithId, PostType, PostWithID } from "../types";
+import { CollectionType, CollectionWithId, CompanyAccountType, PostType, PostWithID } from "../types";
 import { FilterCriteria } from "../../Slices/postsSlice";
 import { openDB } from "./indexedDBOpen";
 
@@ -795,6 +795,58 @@ export async function closeAndDeleteIndexedDB(): Promise<void> {
     throw new Error('Failed to delete the IndexedDB database.');
   }
 }
+
+export async function addAccountsToIndexedDB(accounts: CompanyAccountType[]): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["userAccounts_v2"], "readwrite");
+  const store = transaction.objectStore("userAccounts_v2");
+
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      console.log("Transaction complete: Accounts added to IndexedDB successfully.");
+      resolve();
+    };
+
+    transaction.onerror = (event) => {
+      console.error("Transaction error:", (event.target as IDBRequest).error);
+      reject((event.target as IDBRequest).error);
+    };
+
+    accounts.forEach((account, index) => {
+      if (!account.accountNumber) {
+        console.error("Missing accountNumber for account:", account);
+      } else {
+        const request = store.put(account); // Ensure account has `accountNumber` as the key
+        request.onsuccess = () => {
+          // console.log(`Account ${index} added to IndexedDB successfully:`, account);
+        };
+        request.onerror = () => {
+          console.error(`Error adding account ${index} to IndexedDB:`, request.error);
+          reject(request.error);
+        };
+      }
+    });
+  });
+}
+
+
+
+export async function getUserAccountsFromIndexedDB(): Promise<any[]> {
+  const db = await openDB();
+  const transaction = db.transaction(["userAccounts_v2"], "readonly");
+  const store = transaction.objectStore("userAccounts_v2");
+  const getAllRequest = store.getAll();
+
+  return new Promise((resolve, reject) => {
+    getAllRequest.onsuccess = () => {
+      resolve(getAllRequest.result);
+    };
+    getAllRequest.onerror = () => {
+      reject("Error getting user accounts from IndexedDB");
+    };
+  });
+}
+
 
 
 

@@ -99,6 +99,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
+    console.log(user?.companyId);
     if (!user?.companyId) {
       console.error("No companyId found for user");
       return;
@@ -119,47 +120,71 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     }
   };
 
+  console.log(user);
+
   const handleSubmitAccounts = async () => {
     if (!user?.companyId) {
       console.error("No companyId found for user");
       return;
     }
-
+  
     if (!fileData.length) {
       console.error("No file data available to submit");
       return;
     }
-
-    setIsSubmitting(true);
-
+  
     try {
-      const accountsDocRef = doc(db, "accounts", "b7V3PK4c...QRS0uNru");
-
-      // Ensure salesRouteNums is always an array when saving
-      await setDoc(accountsDocRef, {
-        accounts: fileData.map((account) => ({
-          accountNumber: account.accountNumber,
-          accountName: account.accountName,
-          accountAddress: account.accountAddress,
-          salesRouteNums: Array.isArray(account.salesRouteNums)
-            ? account.salesRouteNums
-            : [account.salesRouteNums].filter(Boolean), // Ensure it's an array
-        })),
+      const accountsCollectionRef = collection(db, "accounts");
+  
+      // Group accounts by `accountNumber` and aggregate `salesRouteNums` as an array
+      const accountMap: { [key: string]: CompanyAccountType } = {};
+  
+      fileData.forEach((account) => {
+        const { accountNumber, accountName, accountAddress, salesRouteNums } =
+          account;
+  
+        // Ensure salesRouteNums is an array
+        const routeNumsArray = Array.isArray(salesRouteNums)
+          ? salesRouteNums
+          : [salesRouteNums].filter(Boolean);
+  
+        if (accountMap[accountNumber]) {
+          // Append unique sales routes for existing account
+          accountMap[accountNumber].salesRouteNums = Array.from(
+            new Set([...accountMap[accountNumber].salesRouteNums, ...routeNumsArray])
+          );
+        } else {
+          // Initialize a new account in the map
+          accountMap[accountNumber] = {
+            accountNumber,
+            accountName,
+            accountAddress,
+            salesRouteNums: routeNumsArray,
+          };
+        }
       });
-
+  
+      // Convert the map to an array of accounts
+      const formattedAccounts = Object.values(accountMap);
+  
+      // Submit to Firestore and let Firestore generate a unique document ID
+      const accountsDocRef = await addDoc(accountsCollectionRef, {
+        accounts: formattedAccounts,
+      });
+  
+      // Update the company document with reference to this accounts document
       const companyDocRef = doc(db, "companies", user.companyId);
       await updateDoc(companyDocRef, {
         accountsId: accountsDocRef.id,
       });
-
-      setAccounts(fileData);
-      setFileData([]);
+  
+      console.log("Accounts successfully submitted to Firestore");
+  
     } catch (error) {
       console.error("Error submitting accounts to Firestore:", error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
+  
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -220,7 +245,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   return (
     <Box>
       <Typography variant="h2" gutterBottom>
-        Account Manager
+        Accounts Manager
       </Typography>
       {(isAdmin || isSuperAdmin) && (
         <>
@@ -246,7 +271,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
               <Button
                 variant="contained"
                 color="primary"
-                onClick={handleSubmitAccounts}
+                onClick={() => handleSubmitAccounts()} // Wrap in anonymous function
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -367,7 +392,11 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                   <TableCell>{account.accountNumber}</TableCell>
                   <TableCell>{account.accountName}</TableCell>
                   <TableCell>{account.accountAddress}</TableCell>
-                  <TableCell>{Array.isArray(account.salesRouteNums) ? account.salesRouteNums.join(' and ') : account.salesRouteNums}</TableCell>
+                  <TableCell>
+                    {Array.isArray(account.salesRouteNums)
+                      ? account.salesRouteNums.join(" and ")
+                      : account.salesRouteNums}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="text"

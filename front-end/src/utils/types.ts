@@ -14,6 +14,7 @@ export type CompanyType = {
   statusPendingUsers: string[];
   companyVerified: boolean;
   createdAt: string;
+  accountsId: string | null;
 };
 
 export type TUserInputType = {
@@ -44,8 +45,9 @@ export interface UserType {
   firstName: string | undefined; // from signup
   lastName: string | undefined; // from signup
   email: string | undefined; // from signup
-  company: string | undefined; // from signup
-  companyId: string | undefined;
+  company: string;
+  companyId: string;
+  salesRouteNum: string | undefined;
   phone: string | undefined; // from signup
 }
 

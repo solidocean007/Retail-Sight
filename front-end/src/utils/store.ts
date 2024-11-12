@@ -7,6 +7,7 @@ import postsReducer from "../Slices/postsSlice";
 import locationReducer from '../Slices/locationSlice'
 import { themeReducer } from "../reducers/themeReducer";
 import userModalReducer from "../Slices/userModalSlice";
+import userAccountsSlice from "../Slices/userAccountsSlice";
 
 
 import { useDispatch as _useDispatch } from 'react-redux';
@@ -23,6 +24,7 @@ const store = configureStore({
     locations: locationReducer,
     CompanyTeam: teamsSlice,
     missions: missionsSlice,
+    userAccounts: userAccountsSlice,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

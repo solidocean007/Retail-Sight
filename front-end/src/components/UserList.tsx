@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { UserType } from '../utils/types';
 import './userList.css';
 import { fetchUserFromFirebase } from '../utils/userData/fetchUserFromFirebase';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../Slices/userSlice';
 
 interface UserListProps {
   users: UserType[];
@@ -10,6 +12,7 @@ interface UserListProps {
 }
 
 const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
+  const currentUser = useSelector(selectUser);
   const [editedUsers, setEditedUsers] = useState<{ [key: string]: UserType }>({});
 
   useEffect(() => {
@@ -45,6 +48,7 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
             <th>Name</th>
             <th>Email</th>
             <th>Phone Number</th>
+            <th>Sales Route Number</th>
             <th>Role</th>
             <th>Actions</th>
           </tr>
@@ -61,6 +65,19 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
               </td>
               <td>
                 <input type="tel" value={user.phone ?? ''} onChange={e => handleEditChange(user.uid, 'phone', e.target.value)} />
+              </td>
+              <td>
+                {
+                  (currentUser?.role === 'admin' || currentUser?.role === 'super-admin' || currentUser?.role === 'developer') ? (
+                    <input
+                      type="number"
+                      value={user.salesRouteNum ?? ''}
+                      onChange={e => handleEditChange(user.uid, 'salesRouteNum', e.target.value)}
+                    />
+                  ) : (
+                    <span>{user.salesRouteNum ?? 'N/A'}</span>
+                  )
+                }
               </td>
               <td>
                 <select value={user.role} onChange={e => handleEditChange(user.uid, 'role', e.target.value)}>
