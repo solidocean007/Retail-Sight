@@ -28,6 +28,7 @@ import { CompanyAccountType } from "../utils/types";
 import { db } from "../utils/firebase";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
+import getCompanyAccountId from "../utils/helperFunctions/getCompanyAccountId";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -57,38 +58,30 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       console.error("No companyId found for user");
       return;
     }
-
+  
     try {
-      const companyDocRef = doc(db, "companies", user.companyId);
-      const companySnapshot = await getDoc(companyDocRef);
-
-      if (companySnapshot.exists()) {
-        const { accountsId } = companySnapshot.data();
-
-        if (accountsId) {
-          const accountsDocRef = doc(db, "accounts", accountsId);
-          const accountsSnapshot = await getDoc(accountsDocRef);
-
-          if (accountsSnapshot.exists()) {
-            const accountsData = accountsSnapshot.data();
-            setAccounts(
-              (accountsData.accounts as CompanyAccountType[]).map(
-                (account) => ({
-                  ...account,
-                  salesRouteNums: Array.isArray(account.salesRouteNums)
-                    ? account.salesRouteNums
-                    : [account.salesRouteNums].filter(Boolean), // Ensure it's an array
-                })
-              )
-            );
-          } else {
-            console.error("No accounts found in Firestore");
-          }
-        } else {
-          console.error("No accountsId found for company");
-        }
+      const accountsId = await getCompanyAccountId(user.companyId);
+  
+      if (!accountsId) {
+        console.error("No accountsId found for company");
+        return;
+      }
+  
+      const accountsDocRef = doc(db, "accounts", accountsId);
+      const accountsSnapshot = await getDoc(accountsDocRef);
+  
+      if (accountsSnapshot.exists()) {
+        const accountsData = accountsSnapshot.data();
+        const formattedAccounts = (accountsData.accounts as CompanyAccountType[]).map((account) => ({
+          ...account,
+          salesRouteNums: Array.isArray(account.salesRouteNums)
+            ? account.salesRouteNums
+            : [account.salesRouteNums].filter(Boolean), // Ensure it's an array
+        }));
+        
+        setAccounts(formattedAccounts);
       } else {
-        console.error("No company document found in Firestore");
+        console.error("No accounts found in Firestore");
       }
     } catch (error) {
       console.error("Error fetching accounts from Firestore:", error);
