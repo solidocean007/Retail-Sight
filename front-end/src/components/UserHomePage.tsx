@@ -31,7 +31,9 @@ export const UserHomePage = () => {
   const [clearInput, setClearInput] = useState(false);
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
-  const [usersAccounts, setUsersAccounts] = useState<CompanyAccountType[] | null>(null);
+  // const [usersAccounts, setUsersAccounts] = useState<CompanyAccountType[] | null>(null);
+  const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
+
 
   const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux state of posts
   const filteredPosts = useSelector(
@@ -51,12 +53,21 @@ export const UserHomePage = () => {
   
     async function fetchUserAccounts() {
       try {
+        console.log("Fetching user accounts from IndexedDB...");
         const userAccounts = await getUserAccountsFromIndexedDB();
+  
+        console.log("userAccounts from IndexedDB:", userAccounts);
+  
         // Only fetch from Firestore if IndexedDB is empty and salesRouteNum exists
         if ((!userAccounts || userAccounts.length === 0) && user?.salesRouteNum) {
+          console.log("Fetching accounts from Firestore...");
+          
           // Fetch from Firestore where salesRouteNums includes user’s salesRouteNum
-          const fetchedAccounts = await fetchUsersAccounts(companyId, user.salesRouteNum); // Type 'undefined' is not assignable to type 'string' for companyId
+          const fetchedAccounts = await fetchUsersAccounts(companyId, user.salesRouteNum);
+          
           if (fetchedAccounts.length > 0) {
+            console.log("Fetched accounts from Firestore:", fetchedAccounts);
+  
             // Cache fetched accounts in IndexedDB
             setUsersAccounts(fetchedAccounts);
             setReduxAccounts(fetchedAccounts);
@@ -64,6 +75,9 @@ export const UserHomePage = () => {
           }
         } else if (!user?.salesRouteNum) {
           console.warn("User does not have a salesRouteNum; skipping account fetch.");
+        } else {
+          setUsersAccounts(userAccounts); // Set accounts from IndexedDB directly
+          console.log("Accounts set from IndexedDB:", userAccounts);
         }
       } catch (error) {
         console.error("Error fetching user accounts:", error);
@@ -72,8 +86,8 @@ export const UserHomePage = () => {
   
     fetchUserAccounts();
   }, [user, companyId]);
+  
 
-  console.log(usersAccounts); // this logs null probably because setUsersAccounts is never called.  I want to add userAccounts to redux
 
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);

@@ -1,8 +1,12 @@
 // StoreLocator.tsx
 import { useEffect, useRef, useState } from "react";
-import { PostType } from "../utils/types";
+import { CompanyAccountType, PostType } from "../utils/types";
 import { updateLocationsCollection } from "../utils/PostLogic/updateLocationsCollection";
 import "./storeSelector.css";
+import { getUserAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { fetchUsersAccounts } from "../utils/userData/fetchUserAccounts";
+import { useSelector } from "react-redux";
+import { selectUser } from "../Slices/userSlice";
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -34,9 +38,24 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
   const [selectedPlace, setSelectedPlace] =
     useState<google.maps.places.PlaceResult | null>(null);
   const [manualStoreMode, setManualStoreMode] = useState(false);
+  const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
+  const [matchingAccount, setMatchingAccount] = useState<CompanyAccountType | null>(null);
+
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     loadGoogleMapsScript();
+    const setUserAccounts = async () => {
+      const accountsInIndexedDB = await getUserAccountsFromIndexedDB();
+      if (accountsInIndexedDB.length > 0) {
+        setAccounts(accountsInIndexedDB);
+      } else if (user?.companyId && user?.salesRouteNum) {
+        // i need to get the companyId and the users salesRouteNum from firestore
+        await fetchUsersAccounts(user.companyId, user.salesRouteNum);
+      }
+    };
+    setUserAccounts();
+    console.log(accounts)
   }, []);
 
   useEffect(() => {
@@ -54,30 +73,42 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       script.async = true;
       script.defer = true;
       script.id = "googleMapsScript";
-      window.initMap = () => setIsMapLoaded(true);
+      window.initMap = () => setIsMapLoaded(true); // Set map loaded to true once script loads
       document.body.appendChild(script);
-    } else {
-      setIsMapLoaded(true);
+    } else if (window.google) {
+      setIsMapLoaded(true); // Script already loaded, set map as loaded
     }
   };
-
+  
   const initializeMap = () => {
+    if (!window.google) {
+      console.error("Google Maps script is not loaded yet.");
+      return;
+    }
+  
     if (mapRef.current) {
       const map = new google.maps.Map(mapRef.current, {
         center: { lat: 34.0522, lng: -118.2437 },
         zoom: 18,
       });
-
+  
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(({ coords }) => {
           map.setCenter({ lat: coords.latitude, lng: coords.longitude });
         });
       }
-
+  
       map.addListener("click", (e) => handleMapClick(e.latLng, map));
       previousStoreAddressRef.current = post.storeAddress;
     }
   };
+  
+  useEffect(() => {
+    if (isMapLoaded && post.storeAddress !== previousStoreAddressRef.current) {
+      initializeMap();
+    }
+  }, [isMapLoaded, post.storeAddress]);
+  
 
   const handleMapClick = (
     location: google.maps.LatLng,
@@ -105,6 +136,12 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
                 state
               );
               updateLocationsCollection(state, city);
+
+              // Attempt to find the closest matching account in IndexedDB
+              matchAccountWithSelectedStore(
+                firstResult.name || "",
+                firstResult.vicinity || ""
+              );
             });
             setSelectedPlace(firstResult);
           }
@@ -119,12 +156,12 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
   ) => {
     // Ensure mapRef is not null and is a google.maps.Map instance
     const map = mapRef.current as google.maps.Map | null;
-  
+
     if (!map) {
       console.error("Map is not initialized.");
       return;
     }
-  
+
     const service = new google.maps.places.PlacesService(map);
     service.getDetails(
       { placeId, fields: ["address_components"] },
@@ -145,7 +182,6 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       }
     );
   };
-  
 
   const updateStoreDetails = (
     name: string,
@@ -158,7 +194,35 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     onStoreCityChange(city);
     onStoreStateChange(state);
     onStoreNumberChange(""); // Reset store number when a new store is selected
+    
   };
+
+  const matchAccountWithSelectedStore = (name: string, address: string) => {
+    const normalizedAddress = address.toLowerCase().replace(/\s/g, "").substring(0, 10);
+    const foundAccount = accounts.find(account => {
+      const normalizedAccountAddress = account.accountAddress.toLowerCase().replace(/\s/g, "").substring(0, 10);
+      return normalizedAccountAddress === normalizedAddress;
+    });
+
+    if (foundAccount) {
+      setMatchingAccount(foundAccount); // Set matched account in state
+      onStoreNameChange(foundAccount.accountName); // Set full account name
+      onStoreNumberChange(""); // Leave store number blank if a match is found
+    } else {
+      setMatchingAccount(null);
+      console.log("No matching account found in IndexedDB for this store.");
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedPlace(null);
+    setMatchingAccount(null);
+    onStoreNameChange(""); // Clear store name
+    onStoreAddressChange(""); // Clear store address
+    onStoreNumberChange(""); // Clear store number
+  };
+  
+  
 
   const handleManualModeToggle = () => setManualStoreMode(true);
 
@@ -168,16 +232,16 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       setter(e.target.value);
     };
 
-  return (
-    <div className="map-container">
-      {/* test */}
-      {!selectedPlace && (
+    return (
+      <div className="map-container">
         <div>
           <h4>3. Click store or</h4>
           <button onClick={handleManualModeToggle}>Enter manually</button>
+          {matchingAccount && (
+            <button onClick={clearSelection}>Clear Selection</button>
+          )}
         </div>
-      )}
-      {(post.selectedStore || manualStoreMode) && (
+        
         <div className="store-input-box">
           <div className="store-name-and-number">
             <div className="input-field">
@@ -185,23 +249,28 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
               <input
                 id="store-name"
                 type="text"
-                value={selectedPlace?.name || post.selectedStore}
+                value={matchingAccount ? matchingAccount.accountName : post.selectedStore || selectedPlace?.name}
                 onChange={handleInputChange(onStoreNameChange)}
                 placeholder="Store name"
+                readOnly={!!matchingAccount} // Make read-only if a match was found
               />
             </div>
-            <div className="input-field">
-              <label htmlFor="store-number">Store number:</label>
-              <input
-                id="store-number"
-                type="text"
-                value={post.storeNumber}
-                onChange={handleInputChange(onStoreNumberChange)}
-                placeholder="Store number"
-              />
-            </div>
+  
+            {/* Only show store number input if no matching account was found */}
+            {!matchingAccount && (
+              <div className="input-field">
+                <label htmlFor="store-number">Store number:</label>
+                <input
+                  id="store-number"
+                  type="text"
+                  value={post.storeNumber}
+                  onChange={handleInputChange(onStoreNumberChange)}
+                  placeholder="Store number"
+                />
+              </div>
+            )}
           </div>
-
+  
           <div className="store-address-input-box">
             <div className="input-field">
               <label htmlFor="store-address">Store address:</label>
@@ -215,14 +284,15 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
             </div>
           </div>
         </div>
-      )}
-      <div
-        className="map-box"
-        ref={mapRef}
-        style={{ width: "350px", height: "300px" }}
-      ></div>
-    </div>
-  );
+        
+        {/* Keep the map visible */}
+        <div
+          className="map-box"
+          ref={mapRef}
+          style={{ width: "350px", height: "300px" }}
+        ></div>
+      </div>
+    );
 };
 
 export default StoreLocator;

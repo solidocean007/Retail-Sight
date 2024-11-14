@@ -829,8 +829,6 @@ export async function addAccountsToIndexedDB(accounts: CompanyAccountType[]): Pr
   });
 }
 
-
-
 export async function getUserAccountsFromIndexedDB(): Promise<any[]> {
   const db = await openDB();
   const transaction = db.transaction(["userAccounts_v2"], "readonly");

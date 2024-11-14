@@ -131,12 +131,11 @@ const MissionIntegrationViewGallo = () => {
       // Extract distributorAcctIds to filter company accounts
       const galloAccountIds = galloAccounts.map(account => account.distributorAcctId);
   
-      // Step 2: Fetch matching company accounts from Firestore
-      console.log(galloAccountIds)
+      // Step 2: Fetch only matching company accounts from Firestore
       const companyAccounts = await fetchCompanyAccounts(companyId, galloAccountIds);
-      console.log("Fetched Company Accounts:", companyAccounts);
+      console.log("Filtered Company Accounts:", companyAccounts);
   
-      // Step 3: Enrich the Gallo accounts with company account details
+      // Step 3: Directly enrich the Gallo accounts with company account details without additional matching
       const enrichedAccounts = enrichAccounts(galloAccounts, companyAccounts);
       console.log("Enriched Accounts:", enrichedAccounts);
   
@@ -224,30 +223,29 @@ const MissionIntegrationViewGallo = () => {
 
 
 
-  const enrichAccounts = (
-    galloAccounts: GalloAccountType[],
-    companyAccounts: CompanyAccountType[]
-  ): EnrichedGalloAccountType[] => {
-    return galloAccounts.map(galloAccount => {
-      // Convert distributorAcctId to a number for comparison with accountNumber
-      const matchingCompanyAccount = companyAccounts.find(
-        companyAccount => Number(companyAccount.accountNumber) === Number(galloAccount.distributorAcctId)
-      );
-  
-      console.log("Processing Gallo Account:", galloAccount);
-      console.log("Matching Company Account:", matchingCompanyAccount);
-  
-      const enrichedAccount = {
-        ...galloAccount,
-        accountName: matchingCompanyAccount?.accountName || "N/A",
-        accountAddress: matchingCompanyAccount?.accountAddress || "N/A",
-        salesRouteNums: matchingCompanyAccount?.salesRouteNums || ["N/A"],
-      };
-      console.log("Enriched Account:", enrichedAccount);
-  
-      return enrichedAccount;
-    });
-  };
+  // Revised enrichAccounts function without additional filtering
+const enrichAccounts = (
+  galloAccounts: GalloAccountType[],
+  companyAccounts: CompanyAccountType[]
+): EnrichedGalloAccountType[] => {
+  // Map enriched accounts directly by merging the pre-filtered company accounts with galloAccounts
+  return galloAccounts.map(galloAccount => {
+    // Find the matching company account from the pre-filtered list
+    const matchingCompanyAccount = companyAccounts.find(
+      companyAccount => Number(companyAccount.accountNumber) === Number(galloAccount.distributorAcctId)
+    );
+
+    const enrichedAccount = {
+      ...galloAccount,
+      accountName: matchingCompanyAccount?.accountName || "N/A",
+      accountAddress: matchingCompanyAccount?.accountAddress || "N/A",
+      salesRouteNums: matchingCompanyAccount?.salesRouteNums || ["N/A"],
+    };
+    console.log("Enriched Account:", enrichedAccount);
+
+    return enrichedAccount;
+  });
+};
   
   
   
