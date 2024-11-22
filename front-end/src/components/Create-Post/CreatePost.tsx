@@ -42,6 +42,9 @@ import { useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
+import { getGoalsFromIndexedDB, saveGoalsToIndexedDB } from "../../utils/database/indexedDBUtils";
+import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
+import { setGoals } from "../../Slices/goalsSlice";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
@@ -107,6 +110,29 @@ export const CreatePost = () => {
   const [selectedMission, setSelectedMission] = useState<MissionType | null>(
     null
   );
+
+  useEffect(() => {
+    const loadGoalsForAccount = async () => {
+      if (post.accountNumber) {
+        const savedGoals = await getGoalsFromIndexedDB();
+        const accountGoals = savedGoals.filter(
+          (goal) => goal.accounts.some((acc) => acc.distributorAcctId === post.accountNumber)
+        );
+  
+        if (accountGoals.length > 0) {
+          dispatch(setGoals(accountGoals)); // Load goals for this account
+        } else {
+          const fetchedGoals = await fetchGoalsForAccount(post.accountNumber); // Fetch from Firestore
+          await saveGoalsToIndexedDB([...savedGoals, ...fetchedGoals]); // Type 'GalloGoalType | null' must have a '[Symbol.iterator]()' method that returns an iterator.
+          dispatch(setGoals(fetchedGoals));
+        }
+      }
+    };
+  
+    loadGoalsForAccount();
+  }, [dispatch, post.accountNumber]);
+  
+  
 
   useEffect(() => {
     console.log("onBehalf changed:", onBehalf);
@@ -258,6 +284,7 @@ export const CreatePost = () => {
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
             post={post}
+            setPost={setPost}
             onStoreNameChange={handleStoreNameChange}
             onStoreNumberChange={handleStoreNumberChange}
             onStoreAddressChange={handleStoreAddressChange}

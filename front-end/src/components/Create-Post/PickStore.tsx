@@ -7,6 +7,7 @@ interface PickStoreProps {
   onNext: () => void;
   onPrevious: () => void;
   post: PostType;
+  setPost: React.Dispatch<React.SetStateAction<PostType>>,
   onStoreNameChange: (storeName: string) => void;
   onStoreNumberChange: (newStoreNumber: string) => void;
   onStoreAddressChange: (address: string) => void;
@@ -16,6 +17,7 @@ interface PickStoreProps {
 
 export const PickStore: React.FC<PickStoreProps> = ({
   post,
+  setPost,
   onNext,
   onPrevious,
   onStoreNameChange,
@@ -43,6 +45,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
       <StoreLocator
         post={post}
+        setPost={setPost}
         onStoreNameChange={onStoreNameChange}
         onStoreNumberChange={onStoreNumberChange}
         onStoreAddressChange={onStoreAddressChange}

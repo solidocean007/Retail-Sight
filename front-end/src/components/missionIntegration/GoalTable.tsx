@@ -1,5 +1,4 @@
 // GoalTable.tsx
-// GoalTable.tsx
 import React from "react";
 import {
   TableContainer,
@@ -28,6 +27,7 @@ const GoalTable: React.FC<GoalTableProps> = ({ goals, selectedGoal, onSelectGoal
           <TableRow>
             <TableCell>Select</TableCell>
             <TableCell>Goal</TableCell>
+            <TableCell>Program #</TableCell>
             <TableCell>Goal Metric</TableCell>
             <TableCell>Goal Value Min</TableCell>
           </TableRow>
@@ -42,6 +42,7 @@ const GoalTable: React.FC<GoalTableProps> = ({ goals, selectedGoal, onSelectGoal
                 />
               </TableCell>
               <TableCell>{goal.goal}</TableCell>
+              <TableCell>{goal.programId}</TableCell>
               <TableCell>{goal.goalMetric}</TableCell>
               <TableCell>{goal.goalValueMin}</TableCell>
             </TableRow>

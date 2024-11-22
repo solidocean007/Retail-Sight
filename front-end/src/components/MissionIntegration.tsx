@@ -1,15 +1,10 @@
 // MissionIntegration.tsx
 import { useState, useEffect } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Tabs,
-  Tab,
-} from "@mui/material";
+import { Box, Container, Typography, Tabs, Tab } from "@mui/material";
 import IntegrationView from "./IntegrationView";
 import ApiView from "./ApiView";
-import MissionIntegrationViewGallo from "./missionIntegration/MissionIntegrationViewGallo"; // Import other components as needed
+import CreateGalloGoalView from "./missionIntegration/CreateGalloGoalView";
+import AllGoalsView from "./missionIntegration/AllGoalsView";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -28,11 +23,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -40,7 +31,7 @@ function TabPanel(props: TabPanelProps) {
 function a11yProps(index: number) {
   return {
     id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
   };
 }
 
@@ -53,23 +44,28 @@ const MissionIntegration: React.FC = () => {
 
   return (
     <Container>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={value} onChange={handleChange} aria-label="dashboard tabs">
-          <Tab label="External Integration" {...a11yProps(0)} />
-          <Tab label="Internal API Management" {...a11yProps(1)} />
-          <Tab label="Mission Creation" {...a11yProps(2)} />
+          <Tab label="Goal Manager" {...a11yProps(0)} />
+          <Tab label="New Goal Import" {...a11yProps(1)} />
+          <Tab label="External Integration" {...a11yProps(2)} />
+          <Tab label="Internal API Management" {...a11yProps(3)} />
           {/* Add more tabs as necessary */}
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
-        <IntegrationView /> {/* Your IntegrationView component */}
+        <AllGoalsView />
       </TabPanel>
       <TabPanel value={value} index={1}>
-        <ApiView /> {/* Your ApiView component */}
+        <CreateGalloGoalView />
       </TabPanel>
       <TabPanel value={value} index={2}>
-        <MissionIntegrationViewGallo />
+        <IntegrationView /> {/* Your IntegrationView component */}
       </TabPanel>
+      <TabPanel value={value} index={3}>
+        <ApiView /> {/* Your ApiView component */}
+      </TabPanel>
+
       {/* Add more TabPanels as necessary */}
     </Container>
   );

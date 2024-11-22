@@ -100,6 +100,12 @@ export interface PostType {
   commentCount: number;
   token: { sharedToken: string; tokenExpiry: string };
   postCreatedBy: string;
+  accountNumber?: string | null;
+  oppId?: string | null; // New key for the opportunity ID
+  closedBy?: string; // New key for who closed the goal
+  closedDate?: string; // New key for the date in DD-MM-YYYY format
+  closedUnits?: string | number; // New key for the closed units
+  photos?: { file: string }[]; // New key for the array of photos
 }
 
 export type PostWithID = PostType & { id: string };
@@ -195,6 +201,7 @@ export interface SubmittedMissionType {
   postIdForObjective: string;
 }
 
+// this is a program as defined by Gallo
 export type ProgramType = {
   marketId: string;
   programId: string;
@@ -208,6 +215,7 @@ export type ProgramType = {
   programType: string;
 };
 
+// this is a goal for a program as defined by Gallo
 export type GoalType = {
   marketId: string;
   programId: string;
@@ -222,6 +230,31 @@ export type GoalType = {
   goalBenchValue: string;
 };
 
+// this is a custom consolidation of program, goal and array of accounts
+export type GalloGoalType = {
+  companyId: string;
+  id: string; // Firestore document ID
+  programId: string;
+  programTitle: string;
+  programStartDate: string; // ISO string or Date type
+  programEndDate: string; // ISO string or Date type
+  goalDetails: {
+    goalId: string;
+    goal: string;
+    goalMetric: string;
+    goalValueMin: string;
+  };
+  accounts: {
+    distributorAcctId: string;
+    accountName: string;
+    accountAddress: string;
+    salesRouteNums: string[]; // Array of sales routes
+    oppId: string;
+    marketId: string;
+  }[];
+};
+
+// This is an account as defined by gallo
 export type GalloAccountType = {
   oppId: string;
   marketId: string;
@@ -243,5 +276,13 @@ export type EnrichedGalloAccountType = GalloAccountType & {
   accountName?: string;       // Optional, because not all Gallo accounts may have a Firestore match
   accountAddress?: string;
   salesRouteNums?: string[];   // Optional, same reason
+};
+
+export type AchievementPayloadType = {
+  oppId: string; // Opportunity ID
+  closedBy: string | undefined; // The person who closed the goal
+  closedDate: string; // Date in the format YYYY-MM-DD
+  closedUnits: string | number; // Units completed
+  photos: { file: string }[]; // Array of objects with a file property
 };
 

@@ -59,11 +59,13 @@ import IntegrationView from "./IntegrationView.tsx";
 // import MissionIntegrationView from "./MissionIntegrationView.tsx";
 import MissionIntegrationViewDraft from "./MissionIntegration.tsx";
 import AccountManager from "./AccountsManager.tsx";
+import MyGoals from "./MyGoals.tsx";
 
 type DashboardModeType =
   | "TeamMode"
   | "UsersMode"
   | "AccountsMode"
+  | "MyGoalsMode"
   | "ProfileMode"
   | "IntegrationMode"
   | "MissionIntegrationMode"
@@ -91,6 +93,7 @@ export const Dashboard = () => {
   // const companyUsers = useSelector(selectCompanyUsers); // this is a selector to company users stored in state.  its not being used right now
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
+  const isEmployee = user?.role === "employee";
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
@@ -174,8 +177,11 @@ export const Dashboard = () => {
           <ListItem className="drawer-link" onClick={handleMenuItemClick("TeamMode")}>
             <ListItemText primary="Teams" />
           </ListItem>
-          <ListItem className="drawer-link" onClick={handleMenuItemClick("AccountsMode")}>
+          {!isEmployee && <ListItem className="drawer-link" onClick={handleMenuItemClick("AccountsMode")}>
             <ListItemText primary="Accounts" />
+          </ListItem>}
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("MyGoalsMode")}>
+            <ListItemText primary="My Goals" />
           </ListItem>
           <ListItem className="drawer-link" onClick={handleMenuItemClick("UsersMode")}>
             <ListItemText primary="Users" />
@@ -183,15 +189,13 @@ export const Dashboard = () => {
           <ListItem className="drawer-link" onClick={handleMenuItemClick("ProfileMode")}>
             <ListItemText primary="Profile" />
           </ListItem>
-          <ListItem className="drawer-link" onClick={handleMenuItemClick("ApiMode")}>
+          {!isEmployee &&  <ListItem className="drawer-link" onClick={handleMenuItemClick("ApiMode")}>
             <ListItemText primary="Api" />
-          </ListItem>
-          <ListItem className="drawer-link" onClick={handleMenuItemClick("MissionIntegrationMode")}>
+          </ListItem>}
+          {!isEmployee && <ListItem className="drawer-link" onClick={handleMenuItemClick("MissionIntegrationMode")}>
             <ListItemText primary="Mission Integration" />
-          </ListItem>
-          <ListItem className="drawer-link" onClick={handleMenuItemClick("IntegrationMode")}>
-            <ListItemText primary="Integration" />
-          </ListItem>
+          </ListItem>}
+         
           <ListItem className="drawer-link" onClick={handleMenuItemClick("CollectionsMode")}>
             <ListItemText primary="Collections" />
           </ListItem>
@@ -209,11 +213,11 @@ export const Dashboard = () => {
       >
         {dashboardMode === "TeamMode" && <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "AccountsMode" && <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin}/>}
+        {dashboardMode === "MyGoalsMode" && <MyGoals/>}
         {dashboardMode === "UsersMode" && <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
         {dashboardMode === "ApiMode" && <ApiView />}
         {dashboardMode === "MissionIntegrationMode" && <MissionIntegrationViewDraft />}
-        {dashboardMode === "IntegrationMode" && <IntegrationView />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>

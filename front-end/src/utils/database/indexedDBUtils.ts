@@ -1,5 +1,5 @@
 // indexedDBUtils.ts
-import { CollectionType, CollectionWithId, CompanyAccountType, PostType, PostWithID } from "../types";
+import { CollectionType, CollectionWithId, CompanyAccountType, GalloGoalType, PostType, PostWithID } from "../types";
 import { FilterCriteria } from "../../Slices/postsSlice";
 import { openDB } from "./indexedDBOpen";
 
@@ -844,6 +844,132 @@ export async function getUserAccountsFromIndexedDB(): Promise<any[]> {
     };
   });
 }
+
+export const saveGoalsToIndexedDB = async (goals: GalloGoalType[]): Promise<void> => {
+  const db = await openDB();
+  const transaction = db.transaction(["goals"], "readwrite");
+  const store = transaction.objectStore("goals");
+
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      console.log("Goals saved to IndexedDB successfully.");
+      resolve();
+    };
+
+    transaction.onerror = (event) => {
+      console.error("Error saving goals to IndexedDB:", (event.target as IDBRequest).error);
+      reject((event.target as IDBRequest).error);
+    };
+
+    goals.forEach((goal) => {
+      const goalWithKey = { ...goal, goalId: goal.id }; // Map `id` to `goalId`
+      store.put(goalWithKey); // Add or update goal by `goalId`
+    });
+  });
+};
+
+export const saveAllCompanyGoalsToIndexedDB = async (goals: GalloGoalType[]): Promise<void> => {
+  const db = await openDB();
+  const transaction = db.transaction(["allCompanyGoals"], "readwrite");
+  const store = transaction.objectStore("allCompanyGoals");
+
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      console.log("All company goals saved to IndexedDB successfully.");
+      resolve();
+    };
+
+    transaction.onerror = (event) => {
+      console.error("Error saving all company goals to IndexedDB:", (event.target as IDBRequest).error);
+      reject((event.target as IDBRequest).error);
+    };
+
+    // Clear store before saving updated data
+    store.clear().onsuccess = () => {
+      goals.forEach((goal) => {
+        const goalWithKey = { ...goal, goalId: goal.id }; // Map `id` to `goalId`
+        store.put(goalWithKey); // Add or update goal by `goalId`
+      });
+    };
+  });
+};
+
+
+// Fetch goals from IndexedDB
+export const getGoalsFromIndexedDB = async (): Promise<GalloGoalType[]> => {
+  const db = await openDB();
+  const transaction = db.transaction(["goals"], "readonly");
+  const store = transaction.objectStore("goals");
+
+  return new Promise<GalloGoalType[]>((resolve, reject) => {
+    const getAllRequest = store.getAll();
+
+    getAllRequest.onsuccess = () => {
+      resolve(getAllRequest.result);
+    };
+
+    getAllRequest.onerror = () => {
+      reject("Error fetching goals from IndexedDB");
+    };
+  });
+};
+
+// Fetch goals from IndexedDB
+export const getAllCompanyGoalsFromIndexedDB = async (): Promise<GalloGoalType[]> => {
+  const db = await openDB();
+  const transaction = db.transaction(["allCompanyGoals"], "readonly");
+  const store = transaction.objectStore("allCompanyGoals");
+
+  return new Promise<GalloGoalType[]>((resolve, reject) => {
+    const getAllRequest = store.getAll();
+
+    getAllRequest.onsuccess = () => {
+      resolve(getAllRequest.result);
+    };
+
+    getAllRequest.onerror = () => {
+      reject("Error fetching all company goals from IndexedDB");
+    };
+  });
+};
+
+export const clearSomeCompanyGoalsFromIndexedDB = async (goalIds: string[]): Promise<void> => {
+  const db = await openDB();
+  const transaction = db.transaction(["allCompanyGoals"], "readwrite");
+  const store = transaction.objectStore("allCompanyGoals");
+
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      console.log("Selected company goals cleared from IndexedDB successfully.");
+      resolve();
+    };
+
+    transaction.onerror = (event) => {
+      console.error("Error clearing some company goals from IndexedDB:", (event.target as IDBRequest).error);
+      reject((event.target as IDBRequest).error);
+    };
+
+    goalIds.forEach((goalId) => {
+      store.delete(goalId);
+    });
+  });
+};
+
+
+// Clear goals from IndexedDB
+export const clearGoalsFromIndexedDB = async (): Promise<void> => {
+  const db = await openDB();
+  const transaction = db.transaction(["goals"], "readwrite");
+  const store = transaction.objectStore("goals");
+  await store.clear();
+  console.log("Cleared goals from IndexedDB.");
+};
+
+
+
+
+
+
 
 
 

@@ -12,6 +12,7 @@ const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 interface StoreLocatorProps {
   post: PostType;
+  setPost: React.Dispatch<React.SetStateAction<PostType>>,
   onStoreNameChange: (storeName: string) => void;
   onStoreNumberChange: (newStoreNumber: string) => void;
   onStoreAddressChange: (address: string) => void;
@@ -27,6 +28,7 @@ declare global {
 
 const StoreLocator: React.FC<StoreLocatorProps> = ({
   post,
+  setPost,
   onStoreNameChange,
   onStoreNumberChange,
   onStoreAddressChange,
@@ -39,23 +41,28 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     useState<google.maps.places.PlaceResult | null>(null);
   const [manualStoreMode, setManualStoreMode] = useState(false);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
-  const [matchingAccount, setMatchingAccount] = useState<CompanyAccountType | null>(null);
-
+  const [matchingAccount, setMatchingAccount] =
+    useState<CompanyAccountType | null>(null);
+  // console.log(matchingAccount?.accountNumber);
   const user = useSelector(selectUser);
+  console.log(accounts)
 
   useEffect(() => {
     loadGoogleMapsScript();
-    const setUserAccounts = async () => {
-      const accountsInIndexedDB = await getUserAccountsFromIndexedDB();
-      if (accountsInIndexedDB.length > 0) {
-        setAccounts(accountsInIndexedDB);
-      } else if (user?.companyId && user?.salesRouteNum) {
-        // i need to get the companyId and the users salesRouteNum from firestore
-        await fetchUsersAccounts(user.companyId, user.salesRouteNum);
-      }
-    };
+   const setUserAccounts = async () => {
+    console.log("Fetching accounts from IndexedDB...");
+    const accountsInIndexedDB = await getUserAccountsFromIndexedDB();
+
+    if (accountsInIndexedDB.length > 0) {
+      console.log("IndexedDB accounts loaded:", accountsInIndexedDB);
+      setAccounts(accountsInIndexedDB);
+    } else if (user?.companyId && user?.salesRouteNum) {
+      console.log("Fetching accounts from Firestore...");
+      await fetchUsersAccounts(user.companyId, user.salesRouteNum);
+    }
+  };
     setUserAccounts();
-    console.log(accounts)
+    console.log(accounts); // this logs empty for no good reason sometimes
   }, []);
 
   useEffect(() => {
@@ -79,36 +86,35 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       setIsMapLoaded(true); // Script already loaded, set map as loaded
     }
   };
-  
+
   const initializeMap = () => {
     if (!window.google) {
       console.error("Google Maps script is not loaded yet.");
       return;
     }
-  
+
     if (mapRef.current) {
       const map = new google.maps.Map(mapRef.current, {
         center: { lat: 34.0522, lng: -118.2437 },
         zoom: 18,
       });
-  
+
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(({ coords }) => {
           map.setCenter({ lat: coords.latitude, lng: coords.longitude });
         });
       }
-  
+
       map.addListener("click", (e) => handleMapClick(e.latLng, map));
       previousStoreAddressRef.current = post.storeAddress;
     }
   };
-  
+
   useEffect(() => {
     if (isMapLoaded && post.storeAddress !== previousStoreAddressRef.current) {
       initializeMap();
     }
   }, [isMapLoaded, post.storeAddress]);
-  
 
   const handleMapClick = (
     location: google.maps.LatLng,
@@ -194,25 +200,54 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     onStoreCityChange(city);
     onStoreStateChange(state);
     onStoreNumberChange(""); // Reset store number when a new store is selected
-    
   };
 
   const matchAccountWithSelectedStore = (name: string, address: string) => {
-    const normalizedAddress = address.toLowerCase().replace(/\s/g, "").substring(0, 10);
-    const foundAccount = accounts.find(account => {
-      const normalizedAccountAddress = account.accountAddress.toLowerCase().replace(/\s/g, "").substring(0, 10);
+    const normalizedAddress = address
+      .toLowerCase()
+      .replace(/\s/g, "")
+      .substring(0, 10);
+  
+    console.log("Matching address:", normalizedAddress);
+  
+    // Log all normalized addresses for comparison
+    accounts.forEach((account) => {
+      const normalizedAccountAddress = account.accountAddress
+        .toLowerCase()
+        .replace(/\s/g, "")
+        .substring(0, 10);
+  
+      console.log(`Comparing: ${normalizedAddress} === ${normalizedAccountAddress}`);
+    });
+  
+    const foundAccount = accounts.find((account) => {
+      const normalizedAccountAddress = account.accountAddress
+        .toLowerCase()
+        .replace(/\s/g, "")
+        .substring(0, 10);
       return normalizedAccountAddress === normalizedAddress;
     });
-
+  
     if (foundAccount) {
+      console.log("Match found:", foundAccount);
+  
       setMatchingAccount(foundAccount); // Set matched account in state
       onStoreNameChange(foundAccount.accountName); // Set full account name
-      onStoreNumberChange(""); // Leave store number blank if a match is found
+  
+      // Update the post with the matching accountNumber
+      setPost((prev) => ({
+        ...prev,
+        accountNumber: foundAccount.accountNumber.toString(),
+      }));
     } else {
+      console.log("No matching account found.");
       setMatchingAccount(null);
-      console.log("No matching account found in IndexedDB for this store.");
+  
+      // Reset accountNumber to null if no match is found
+      setPost((prev) => ({ ...prev, accountNumber: null }));
     }
   };
+  
 
   const clearSelection = () => {
     setSelectedPlace(null);
@@ -221,8 +256,6 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     onStoreAddressChange(""); // Clear store address
     onStoreNumberChange(""); // Clear store number
   };
-  
-  
 
   const handleManualModeToggle = () => setManualStoreMode(true);
 
@@ -232,67 +265,72 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
       setter(e.target.value);
     };
 
-    return (
-      <div className="map-container">
-        <div>
-          <h4>3. Click store or</h4>
-          <button onClick={handleManualModeToggle}>Enter manually</button>
-          {matchingAccount && (
-            <button onClick={clearSelection}>Clear Selection</button>
+  return (
+    <div className="map-container">
+      <div>
+        <h4>3. Click store or</h4>
+        <button onClick={handleManualModeToggle}>Enter manually</button>
+        {matchingAccount && (
+          <button onClick={clearSelection}>Clear Selection</button>
+        )}
+      </div>
+
+      <div className="store-input-box">
+        <div className="store-name-and-number">
+          <div className="input-field">
+            <label htmlFor="store-name">Store name:</label>
+            <input
+              id="store-name"
+              type="text"
+              value={
+                matchingAccount?.accountName ||
+                post.selectedStore ||
+                selectedPlace?.name ||
+                ""
+              }
+              onChange={handleInputChange(onStoreNameChange)}
+              placeholder="Store name"
+              readOnly={!!matchingAccount} // Make read-only if a match was found
+            />
+          </div>
+
+          {/* Only show store number input if no matching account was found */}
+          {!matchingAccount && (
+            <div className="input-field">
+              <label htmlFor="store-number">Store number:</label>
+              <input
+                id="store-number"
+                type="text"
+                value={post.storeNumber}
+                onChange={handleInputChange(onStoreNumberChange)}
+                placeholder="Store number"
+              />
+            </div>
           )}
         </div>
-        
-        <div className="store-input-box">
-          <div className="store-name-and-number">
-            <div className="input-field">
-              <label htmlFor="store-name">Store name:</label>
-              <input
-                id="store-name"
-                type="text"
-                value={matchingAccount ? matchingAccount.accountName : post.selectedStore || selectedPlace?.name}
-                onChange={handleInputChange(onStoreNameChange)}
-                placeholder="Store name"
-                readOnly={!!matchingAccount} // Make read-only if a match was found
-              />
-            </div>
-  
-            {/* Only show store number input if no matching account was found */}
-            {!matchingAccount && (
-              <div className="input-field">
-                <label htmlFor="store-number">Store number:</label>
-                <input
-                  id="store-number"
-                  type="text"
-                  value={post.storeNumber}
-                  onChange={handleInputChange(onStoreNumberChange)}
-                  placeholder="Store number"
-                />
-              </div>
-            )}
-          </div>
-  
-          <div className="store-address-input-box">
-            <div className="input-field">
-              <label htmlFor="store-address">Store address:</label>
-              <input
-                id="store-address"
-                type="text"
-                value={post.storeAddress}
-                onChange={handleInputChange(onStoreAddressChange)}
-                placeholder="Store address"
-              />
-            </div>
+
+        <div className="store-address-input-box">
+          <div className="input-field">
+            <label htmlFor="store-address">Store address:</label>
+            <input
+              id="store-address"
+              type="text"
+              value={post.storeAddress}
+              onChange={handleInputChange(onStoreAddressChange)}
+              placeholder="Store address"
+            />
           </div>
         </div>
-        
-        {/* Keep the map visible */}
-        <div
-          className="map-box"
-          ref={mapRef}
-          style={{ width: "350px", height: "300px" }}
-        ></div>
       </div>
-    );
+
+      {/* Keep the map visible */}
+      <div
+        className="map-box"
+        ref={mapRef}
+        style={{ width: "350px", height: "300px" }}
+      ></div>
+    </div>
+  );
 };
 
 export default StoreLocator;

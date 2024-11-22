@@ -53,17 +53,14 @@ export const UserHomePage = () => {
   
     async function fetchUserAccounts() {
       try {
-        console.log("Fetching user accounts from IndexedDB...");
         const userAccounts = await getUserAccountsFromIndexedDB();
-  
-        console.log("userAccounts from IndexedDB:", userAccounts);
   
         // Only fetch from Firestore if IndexedDB is empty and salesRouteNum exists
         if ((!userAccounts || userAccounts.length === 0) && user?.salesRouteNum) {
           console.log("Fetching accounts from Firestore...");
-          
           // Fetch from Firestore where salesRouteNums includes user’s salesRouteNum
-          const fetchedAccounts = await fetchUsersAccounts(companyId, user.salesRouteNum);
+          const fetchedAccounts = await fetchUsersAccounts(companyId, user.salesRouteNum); // Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+          // Type 'undefined' is not assignable to type 'string'.
           
           if (fetchedAccounts.length > 0) {
             console.log("Fetched accounts from Firestore:", fetchedAccounts);
@@ -77,7 +74,6 @@ export const UserHomePage = () => {
           console.warn("User does not have a salesRouteNum; skipping account fetch.");
         } else {
           setUsersAccounts(userAccounts); // Set accounts from IndexedDB directly
-          console.log("Accounts set from IndexedDB:", userAccounts);
         }
       } catch (error) {
         console.error("Error fetching user accounts:", error);

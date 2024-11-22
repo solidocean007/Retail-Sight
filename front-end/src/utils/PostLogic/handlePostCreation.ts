@@ -22,6 +22,7 @@ import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { addNewPost } from "../../Slices/postsSlice";
 import { useAppDispatch } from "../store";
 import { createSubmittedMission } from "../../thunks/missionsThunks";
+import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementToGalloAxis";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
@@ -34,7 +35,8 @@ export const useHandlePostSubmission = () => {
     selectedFile: File,
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
-    selectedCompanyMission: CompanyMissionType
+    selectedCompanyMission: CompanyMissionType,
+    apiKey: string
   ) => {
     setIsUploading(true);
     const user = auth.currentUser;
@@ -160,6 +162,11 @@ export const useHandlePostSubmission = () => {
                   tokenExpiry: tokenExpiry,
                 },
                 postCreatedBy: post.postCreatedBy,
+                oppId: post.oppId || null,
+                closedBy: post.closedBy || post.postUserName || "",
+                closedDate:
+                  post.closedDate || new Date().toISOString().split("T")[0],
+                closedUnits: post.closedUnits || 0,
               };
 
               // Create the post in Firestore
@@ -175,7 +182,22 @@ export const useHandlePostSubmission = () => {
                 timestamp: new Date().toISOString(), // Update the timestamp as well
               });
 
+              // Send Achievement to Gallo Axis if oppId exists
+              if (post.oppId) {
+                const achievementPayload = {
+                  oppId: post.oppId,
+                  closedBy: post.closedBy || post.postUserName,
+                  closedDate:
+                    post.closedDate || new Date().toISOString().split("T")[0],
+                  closedUnits: post.closedUnits || "0",
+                  photos: [{ file: resizedImageUrl }],
+                };
+
+                await sendAchievementToGalloAxis(achievementPayload, apiKey);
+              }
+
               const newPostWithID = {
+                // this isnt used.. not sure why i have it here
                 ...postDataWithoutImage,
                 id: newDocRef.id,
                 imageUrl: resizedImageUrl,
