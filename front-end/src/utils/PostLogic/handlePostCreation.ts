@@ -1,3 +1,4 @@
+// useHandlePostSubmission
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { CompanyMissionType, PostType, SubmittedMissionType } from "../types";
@@ -184,6 +185,7 @@ export const useHandlePostSubmission = () => {
 
               // Send Achievement to Gallo Axis if oppId exists
               if (post.oppId) {
+                console.log('building achievement payload')
                 const achievementPayload = {
                   oppId: post.oppId,
                   closedBy: post.closedBy || post.postUserName,

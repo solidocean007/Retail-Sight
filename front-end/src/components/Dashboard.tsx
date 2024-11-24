@@ -56,10 +56,10 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import ApiView from "./ApiView.tsx";
 import IntegrationView from "./IntegrationView.tsx";
-// import MissionIntegrationView from "./MissionIntegrationView.tsx";
-import MissionIntegrationViewDraft from "./MissionIntegration.tsx";
+import GoalIntegrationView from "./GoalntegrationLayout.tsx";
 import AccountManager from "./AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
+import GoalIntegrationLayout from "./GoalntegrationLayout.tsx";
 
 type DashboardModeType =
   | "TeamMode"
@@ -68,7 +68,7 @@ type DashboardModeType =
   | "MyGoalsMode"
   | "ProfileMode"
   | "IntegrationMode"
-  | "MissionIntegrationMode"
+  | "Goal Manager"
   | "ApiMode"
   | "CollectionsMode"
   | "TutorialMode";
@@ -192,8 +192,8 @@ export const Dashboard = () => {
           {!isEmployee &&  <ListItem className="drawer-link" onClick={handleMenuItemClick("ApiMode")}>
             <ListItemText primary="Api" />
           </ListItem>}
-          {!isEmployee && <ListItem className="drawer-link" onClick={handleMenuItemClick("MissionIntegrationMode")}>
-            <ListItemText primary="Mission Integration" />
+          {!isEmployee && <ListItem className="drawer-link" onClick={handleMenuItemClick("Goal Manager")}>
+            <ListItemText primary="Goal Manager" />
           </ListItem>}
          
           <ListItem className="drawer-link" onClick={handleMenuItemClick("CollectionsMode")}>
@@ -217,7 +217,7 @@ export const Dashboard = () => {
         {dashboardMode === "UsersMode" && <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
         {dashboardMode === "ApiMode" && <ApiView />}
-        {dashboardMode === "MissionIntegrationMode" && <MissionIntegrationViewDraft />}
+        {dashboardMode === "Goal Manager" && <GoalIntegrationLayout />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>

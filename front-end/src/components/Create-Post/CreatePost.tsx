@@ -62,6 +62,7 @@ export const CreatePost = () => {
   const handlePostSubmission = useHandlePostSubmission();
 
   const userData = useSelector(selectUser);
+  const companyId = userData?.companyId;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
   const [selectedCategory, setSelectedCategory] =
@@ -135,7 +136,6 @@ export const CreatePost = () => {
   
 
   useEffect(() => {
-    console.log("onBehalf changed:", onBehalf);
     if (onBehalf) {
       setPost((prevPost) => ({
         ...prevPost,
@@ -269,7 +269,6 @@ export const CreatePost = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        // add a picture.  need to make an upload image component
         return (
           <UploadImage
             onNext={goToNextStep}
@@ -279,12 +278,12 @@ export const CreatePost = () => {
         );
       case 2:
         return (
-          // select store
           <PickStore
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
             post={post}
             setPost={setPost}
+            handleFieldChange={handleFieldChange}
             onStoreNameChange={handleStoreNameChange}
             onStoreNumberChange={handleStoreNumberChange}
             onStoreAddressChange={handleStoreAddressChange}
@@ -297,7 +296,6 @@ export const CreatePost = () => {
           <SetDisplayDetails
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
-            handleFieldChange={handleFieldChange}
             selectedChannel={selectedChannel}
             setSelectedChannel={setSelectedChannel}
             selectedCategory={selectedCategory}
@@ -317,6 +315,7 @@ export const CreatePost = () => {
       default:
         return (
           <ReviewAndSubmit
+            companyId={companyId}
             post={post}
             onPrevious={goToPreviousStep}
             handleFieldChange={handleFieldChange}
@@ -326,8 +325,6 @@ export const CreatePost = () => {
             handlePostSubmission={handlePostSubmission}
             selectedCompanyMission={selectedCompanyMission}
             selectedMission={selectedMission}
-            // selectedCategory={selectedCategory}
-            // selectedChannel={selectedChannel}
           />
         );
     }
