@@ -10,12 +10,12 @@ import {
   Checkbox,
   Typography,
 } from "@mui/material";
-import { GoalType } from "../../utils/types";
+import {GalloGoalType } from "../../utils/types";
 
 interface GoalTableProps {
-  goals: GoalType[];
-  selectedGoal: GoalType | null;
-  onSelectGoal: (goal: GoalType) => void;
+  goals: GalloGoalType[];
+  selectedGoal: GalloGoalType | null;
+  onSelectGoal: (goal: GalloGoalType | null) => void;
 }
 
 const GoalTable: React.FC<GoalTableProps> = ({ goals, selectedGoal, onSelectGoal }) => {
@@ -38,7 +38,11 @@ const GoalTable: React.FC<GoalTableProps> = ({ goals, selectedGoal, onSelectGoal
               <TableCell>
                 <Checkbox
                   checked={selectedGoal?.goalId === goal.goalId}
-                  onChange={() => onSelectGoal(goal)}
+                  onChange={() => 
+                    selectedGoal?.goalId === goal.goalId
+                    ? onSelectGoal(null)
+                    : onSelectGoal(goal)
+                  }
                 />
               </TableCell>
               <TableCell>{goal.goal}</TableCell>

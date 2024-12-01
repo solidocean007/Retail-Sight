@@ -30,7 +30,7 @@ import { ChannelType } from "../ChannelSelector";
 // import { SupplierType } from "./SupplierSelector";
 // import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
-import LoadingIndicator from "../LoadingIndicator";
+import LoadingIndicator from "./LoadingIndicator";
 import { CreatePostHelmet } from "../../utils/helmetConfigurations";
 import { UploadImage } from "./UploadImage";
 import { PickStore } from "./PickStore";
@@ -42,9 +42,9 @@ import { useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
-import { getGoalsFromIndexedDB, saveGoalsToIndexedDB } from "../../utils/database/indexedDBUtils";
+import { getGoalsFromIndexedDB, getUserAccountsFromIndexedDB, saveGoalsToIndexedDB } from "../../utils/database/indexedDBUtils";
 import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
-import { setGoals } from "../../Slices/goalsSlice";
+import { fetchUserGalloGoals, selectGoals, setGoals } from "../../Slices/goalsSlice";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
@@ -52,7 +52,7 @@ export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
-
+  const goals = useSelector(selectGoals);
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 
@@ -78,6 +78,7 @@ export const CreatePost = () => {
   const postUser = onBehalf || userData;
 
   const [post, setPost] = useState<PostType>({
+    accountNumber: "",
     category: selectedCategory,
     channel: selectedChannel,
     description: "",
@@ -111,27 +112,50 @@ export const CreatePost = () => {
   const [selectedMission, setSelectedMission] = useState<MissionType | null>(
     null
   );
+  const navigate = useNavigate();
+ 
+  useEffect(() => {
+    if (uploadProgress === 100) {
+      // Short delay for better UX
+      setTimeout(() => {
+        navigate("/user-home-page");
+      }, 500);
+    }
+  }, [uploadProgress, navigate]);
 
+  // Load goals based on the selected accountNumber
   useEffect(() => {
     const loadGoalsForAccount = async () => {
-      if (post.accountNumber) {
-        const savedGoals = await getGoalsFromIndexedDB();
-        const accountGoals = savedGoals.filter(
-          (goal) => goal.accounts.some((acc) => acc.distributorAcctId === post.accountNumber)
-        );
+      if (!post.accountNumber) return;
   
-        if (accountGoals.length > 0) {
-          dispatch(setGoals(accountGoals)); // Load goals for this account
-        } else {
-          const fetchedGoals = await fetchGoalsForAccount(post.accountNumber); // Fetch from Firestore
-          await saveGoalsToIndexedDB([...savedGoals, ...fetchedGoals]); // Type 'GalloGoalType | null' must have a '[Symbol.iterator]()' method that returns an iterator.
-          dispatch(setGoals(fetchedGoals));
-        }
+      const savedGoals = await getGoalsFromIndexedDB();
+  
+      // Filter goals for the selected account
+      const accountGoals = savedGoals.filter((goal) =>
+        goal.accounts.some(
+          (account) => account.distributorAcctId === post.accountNumber
+        )
+      );
+  
+      if (accountGoals.length > 0) {
+        dispatch(setGoals(accountGoals)); // Load cached goals into Redux
+      } else if (companyId) {
+        // Fetch goals for the account and company
+        const fetchedGoals = await fetchGoalsForAccount(post.accountNumber, companyId);
+        dispatch(setGoals(fetchedGoals)); // Dispatch fetched goals to Redux
+  
+        // Save to IndexedDB for future use
+        const userAccounts = savedGoals.map((goal) =>
+          goal.accounts.map((acc) => acc.distributorAcctId)
+        );
+        const userAccountIds = userAccounts.flat();
+        await saveGoalsToIndexedDB(fetchedGoals, userAccountIds);
       }
     };
   
     loadGoalsForAccount();
-  }, [dispatch, post.accountNumber]);
+  }, [post.accountNumber, companyId, dispatch]);
+  
   
   
 
@@ -174,8 +198,6 @@ export const CreatePost = () => {
       setOpenMissionSelection(false);
     }
   }, [post.visibility]);
-
-  const navigate = useNavigate();
 
   const onClose = () => {
     setOpenMissionSelection(false);

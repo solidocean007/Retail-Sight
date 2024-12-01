@@ -1,3 +1,5 @@
+import { GalloGoalType } from "../types";
+
 export const getActiveGoalsForAccount = (
   accountNumber: string,
   goals: GalloGoalType[]

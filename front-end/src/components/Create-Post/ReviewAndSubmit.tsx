@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   CompanyMissionType,
-  GalloGoalType,
   MissionType,
   PostType,
 } from "../../utils/types";
@@ -13,18 +12,10 @@ import {
   Select,
   Typography,
 } from "@mui/material";
-// import { CategoryType } from "../CategorySelector";
-// import { ChannelType } from "../ChannelSelector";
-import "./reviewAndSubmit.css";
-import { RootState } from "../../utils/store";
-import { useSelector } from "react-redux";
-import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
-import {
-  getGoalsFromIndexedDB,
-  saveGoalsToIndexedDB,
-} from "../../utils/database/indexedDBUtils";
-import TotalCaseCount from "../TotalCaseCount";
+import { useAppDispatch } from "../../utils/store";
 import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { useNavigate } from "react-router-dom";
 
 interface ReviewAndSubmitProps {
   companyId: string | undefined;
@@ -37,11 +28,9 @@ interface ReviewAndSubmitProps {
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   selectedFile: File | null;
   setUploadProgress: React.Dispatch<React.SetStateAction<number>>;
-  handlePostSubmission: any; // correct type?
+  handlePostSubmission: any;
   selectedCompanyMission: CompanyMissionType | undefined;
   selectedMission: MissionType | null;
-  // selectedCategory: CategoryType;
-  // selectedChannel: ChannelType; // correct type?
 }
 
 export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
@@ -57,22 +46,63 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   selectedMission,
 }) => {
   const [apiKey, setApiKey] = useState<string>("");
-
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (companyId && apiKey === "") {
-      const getApiKey = async () => {
+      const fetchApiKey = async () => {
         try {
           const fetchedApiKey = await fetchExternalApiKey(companyId, "galloApiKey");
           setApiKey(fetchedApiKey);
         } catch (error) {
           console.error("Failed to fetch API key:", error);
+          dispatch(showMessage("Failed to fetch API key."));
         }
-      }
-     getApiKey();
+      };
+      fetchApiKey();
     }
-  },[])
+  }, [companyId, apiKey, dispatch]);
+
+  const handleSubmitClick = async () => {
+    if (!selectedFile || isSubmitting) return;
+  
+    setIsSubmitting(true);
+    setIsUploading(true);
+  
+    try {
+      await handlePostSubmission(
+        post,
+        selectedFile,
+        setIsUploading,
+        setUploadProgress,
+        selectedCompanyMission,
+        apiKey
+      );
+  
+      dispatch(showMessage("Post submitted successfully!"));
+    } catch (error: any) {
+      console.error("Error during post submission:", error);
+  
+      if (error.message === "Achievement already sent") {
+        // Specific handling for non-critical error
+        dispatch(showMessage("Achievement already sent!"));
+      } else {
+        dispatch(
+          showMessage(
+            error.message || "An unknown error occurred during post submission."
+          )
+        );
+      }
+  
+      setUploadProgress(0); // Reset progress
+    } finally {
+      setIsSubmitting(false);
+      setIsUploading(false);
+    }
+  };
+  
 
   return (
     <div className="review-and-submit">
@@ -80,7 +110,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         <h4>Back</h4>
       </button>
 
-      {/* Selected Mission Information */}
       {selectedMission && (
         <Box mt={2}>
           <Typography variant="h6">
@@ -89,9 +118,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         </Box>
       )}
 
-      {/* Visibility Selection */}
       <Box mt={2}>
-        {/* Visibility Section */}
         <Typography variant="h6">Post Visibility</Typography>
         <Select
           fullWidth
@@ -104,7 +131,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         </Select>
       </Box>
 
-      {/* Submit Button */}
       <Box mt={2}>
         <Button
           variant="contained"
@@ -112,24 +138,13 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
           type="submit"
           fullWidth
           disabled={isSubmitting}
-          onClick={() => {
-            if (selectedFile && !isSubmitting) {
-              setIsSubmitting(true);
-              setIsUploading(true);
-              handlePostSubmission(
-                post,
-                selectedFile,
-                setIsUploading,
-                setUploadProgress,
-                selectedCompanyMission,
-                apiKey
-              );
-            }
-          }}
+          onClick={handleSubmitClick}
         >
-          {!isSubmitting ? "Submit Post" : "Processing..."}
+          {!isSubmitting ? "Submit Post" : <CircularProgress size={24} />}
         </Button>
       </Box>
     </div>
   );
 };
+
+

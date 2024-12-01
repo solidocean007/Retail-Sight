@@ -14,7 +14,6 @@ const fetchExternalApiKey = async (companyId: string, externalApiKeyName: string
       const externalApiKey = data.externalApiKeys?.find((key: { name: string }) => key.name === externalApiKeyName);
       
       if (externalApiKey) {
-        console.log(externalApiKey);
         return externalApiKey.key; // Return the actual key value
       } else {
         console.error(`No external API key found with name: ${externalApiKeyName}`);

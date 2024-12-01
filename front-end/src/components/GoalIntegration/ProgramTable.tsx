@@ -10,12 +10,12 @@ import {
   Checkbox,
   Typography,
 } from "@mui/material";
-import { ProgramType } from "../../utils/types";
+import { GalloProgramType } from "../../utils/types";
 
 interface ProgramTableProps {
-  programs: ProgramType[];
-  selectedProgram: ProgramType | null;
-  onSelectProgram: (program: ProgramType) => void;
+  programs: GalloProgramType[];
+  selectedProgram: GalloProgramType | null;
+  onSelectProgram: (program: GalloProgramType | null) => void;
 }
 
 const ProgramTable: React.FC<ProgramTableProps> = ({
@@ -41,7 +41,11 @@ const ProgramTable: React.FC<ProgramTableProps> = ({
               <TableCell>
                 <Checkbox
                   checked={selectedProgram?.programId === program.programId}
-                  onChange={() => onSelectProgram(program)}
+                  onChange={() =>
+                    selectedProgram?.programId === program.programId
+                      ? onSelectProgram(null) // Deselect if already selected
+                      : onSelectProgram(program) // Select the clicked program
+                  }
                 />
               </TableCell>
               <TableCell>{program.programTitle}</TableCell>

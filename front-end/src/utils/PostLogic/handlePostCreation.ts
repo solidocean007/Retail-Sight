@@ -252,7 +252,6 @@ export const useHandlePostSubmission = () => {
           console.error("Error cleaning up Firestore document:", deleteError);
         }
       }
-
       setIsUploading(false);
     }
   };

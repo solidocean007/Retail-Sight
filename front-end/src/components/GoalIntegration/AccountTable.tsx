@@ -10,7 +10,7 @@ import {
   Checkbox,
   Button,
 } from "@mui/material";
-import { EnrichedGalloAccountType, GoalType, ProgramType } from "../../utils/types";
+import { EnrichedGalloAccountType, GalloGoalType, GalloProgramType } from "../../utils/types";
 import { doc, setDoc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
 import { useSelector } from "react-redux";
@@ -18,15 +18,18 @@ import { RootState } from "../../utils/store";
 
 interface AccountTableProps {
   accounts: EnrichedGalloAccountType[];
-  selectedGoal: GoalType | null; // Pass the selected goal from the parent
-  selectedProgram: ProgramType | null; // Pass the selected program from the parent
+  selectedGoal:GalloGoalType | null; // Pass the selected goal from the parent
+  selectedProgram: GalloProgramType | null; // Pass the selected program from the parent
+  onSaveComplete:  () => void;
 }
 
 const AccountTable: React.FC<AccountTableProps> = ({
   accounts,
   selectedGoal,
   selectedProgram,
+  onSaveComplete,
 }) => {
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedAccounts, setSelectedAccounts] = useState<EnrichedGalloAccountType[]>(accounts);
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
@@ -52,17 +55,20 @@ const AccountTable: React.FC<AccountTableProps> = ({
       console.error("Selected goal or program is missing.");
       return;
     }
-
+    setIsSaving(true);
     try {
       const goalDocRef = doc(db, "GalloGoals", selectedGoal.goalId);
       await setDoc(
         goalDocRef,
         {
           companyId: companyId,
-          programId: selectedProgram.programId,
-          programTitle: selectedProgram.programTitle,
-          programStartDate: selectedProgram.startDate,
-          programEndDate: selectedProgram.endDate,
+          programDetails: {
+            programId: selectedProgram.programId,
+            programTitle: selectedProgram.programTitle,
+            programStartDate: selectedProgram.startDate,
+            programEndDate: selectedProgram.endDate
+          }
+         ,
           goalDetails: {
             goalId: selectedGoal.goalId,
             goal: selectedGoal.goal,
@@ -81,11 +87,13 @@ const AccountTable: React.FC<AccountTableProps> = ({
         { merge: true }
       );
       console.log("Goal saved successfully for selected accounts!");
+      onSaveComplete();
     } catch (err) {
       console.error("Error saving goal for accounts:", err);
+    } finally {
+      setIsSaving(false);
     }
   };
-  console.log(selectedGoal) // this logs undefined
 
   return (
     <TableContainer>
@@ -96,9 +104,9 @@ const AccountTable: React.FC<AccountTableProps> = ({
         variant="contained"
         color="primary"
         onClick={saveGoalForAccounts}
-        disabled={selectedAccounts.length === 0}
+        disabled={isSaving || selectedAccounts.length === 0}
       >
-        Save Goal for Selected Accounts
+        {isSaving ? "Saving..." : "Save Goal for Selected Accounts"}
       </Button>
       <Table>
         <TableHead>

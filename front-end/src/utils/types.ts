@@ -202,7 +202,7 @@ export interface SubmittedMissionType {
 }
 
 // this is a program as defined by Gallo
-export type ProgramType = {
+export type GalloProgramType = {
   marketId: string;
   programId: string;
   displayDate: string;
@@ -216,7 +216,7 @@ export type ProgramType = {
 };
 
 // this is a goal for a program as defined by Gallo
-export type GoalType = {
+export type GalloGoalType = {
   marketId: string;
   programId: string;
   goalId: string;
@@ -230,30 +230,6 @@ export type GoalType = {
   goalBenchValue: string;
 };
 
-// this is a custom consolidation of program, goal and array of accounts
-export type GalloGoalType = {
-  companyId: string;
-  id: string; // Firestore document ID
-  programId: string;
-  programTitle: string;
-  programStartDate: string; // ISO string or Date type
-  programEndDate: string; // ISO string or Date type
-  goalDetails: {
-    goalId: string;
-    goal: string;
-    goalMetric: string;
-    goalValueMin: string;
-  };
-  accounts: {
-    distributorAcctId: string;
-    accountName: string;
-    accountAddress: string;
-    salesRouteNums: string[]; // Array of sales routes
-    oppId: string;
-    marketId: string;
-  }[];
-};
-
 // This is an account as defined by gallo
 export type GalloAccountType = {
   oppId: string;
@@ -264,6 +240,31 @@ export type GalloAccountType = {
   galloAcctId: string;
   liquorStateAcctId: string;
 };
+
+export interface FireStoreGalloGoalDocType {
+  companyId: string;
+  programDetails: {
+    programId: string;
+    programTitle: string;
+    programStartDate: string;
+    programEndDate: string;
+  };
+  goalDetails: {
+    goalId: string; // Firestore document ID
+    goal: string;
+    goalMetric: string;
+    goalValueMin: string;
+  };
+  accounts: Array<{
+    oppId: string;
+    distributorAcctId: string;
+    accountName: string;
+    accountAddress: string;
+    salesRouteNums?: string[];
+    marketId?: string;
+  }>;
+}
+
 
 export type CompanyAccountType = {
   accountNumber: string;

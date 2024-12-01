@@ -56,10 +56,10 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import ApiView from "./ApiView.tsx";
 import IntegrationView from "./IntegrationView.tsx";
-import GoalIntegrationView from "./GoalntegrationLayout.tsx";
+import GoalIntegrationView from "./GoalIntegration/GoalntegrationLayout.tsx";
 import AccountManager from "./AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
-import GoalIntegrationLayout from "./GoalntegrationLayout.tsx";
+import GoalIntegrationLayout from "./GoalIntegration/GoalntegrationLayout.tsx";
 
 type DashboardModeType =
   | "TeamMode"

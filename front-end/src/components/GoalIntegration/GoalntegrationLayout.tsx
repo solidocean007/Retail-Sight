@@ -1,12 +1,12 @@
 // GoalIntegrationLayout.tsx
 import { useState, useEffect } from "react";
 import { Box, Container, Typography, Tabs, Tab } from "@mui/material";
-import IntegrationView from "./IntegrationView";
-import ApiView from "./ApiView";
-import CreateGalloGoalView from "./GoalIntegration/CreateGalloGoalView";
-import AllGoalsView from "./GoalIntegration/AllGoalsView";
+import IntegrationView from "../IntegrationView";
+import ApiView from "../ApiView";
+import CreateGalloGoalView from "./CreateGalloGoalView";
+import AllGoalsView from "./AllGoalsView";
 import { useSelector } from "react-redux";
-import { selectUser } from "../Slices/userSlice";
+import { selectUser } from "../../Slices/userSlice";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -61,7 +61,7 @@ const GoalIntegrationLayout: React.FC = () => {
         <AllGoalsView companyId={companyId} />
       </TabPanel>
       <TabPanel value={value} index={1}>
-        <CreateGalloGoalView />
+        <CreateGalloGoalView setValue={setValue} />
       </TabPanel>
       <TabPanel value={value} index={2}>
         <IntegrationView /> {/* Your IntegrationView component */}

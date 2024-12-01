@@ -1,12 +1,12 @@
-// MissionIntegrationView.tsx
+// CreateGalloGoalView.tsx
 import { useState, useEffect } from "react";
 import { Box, Container, Typography, Button } from "@mui/material";
 import {
   CompanyAccountType,
   EnrichedGalloAccountType,
   GalloAccountType,
-  GoalType,
-  ProgramType,
+  GalloGoalType,
+  GalloProgramType,
 } from "../../utils/types";
 import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
 import { useSelector } from "react-redux";
@@ -24,16 +24,20 @@ import getCompanyAccountId from "../../utils/helperFunctions/getCompanyAccountId
 import { doc, getDoc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
 
-const CreateGalloGoalView = () => {
+interface CreateGalloGoalViewProps {
+  setValue: (newValue: number) => void; // Function to change tabs
+}
+
+const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) => {
   const dispatch = useAppDispatch();
   const [apiKey, setApiKey] = useState("");
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
-  const [programs, setPrograms] = useState<ProgramType[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<ProgramType | null>(
+  const [programs, setPrograms] = useState<GalloProgramType[]>([]);
+  const [selectedProgram, setSelectedProgram] = useState<GalloProgramType | null>(
     null
   );
-  const [goals, setGoals] = useState<GoalType[]>([]);
-  const [selectedGoal, setSelectedGoal] = useState<GoalType | null>(null); // Track selected goal
+  const [goals, setGoals] = useState<GalloGoalType[]>([]);
+  const [selectedGoal, setSelectedGoal] = useState<GalloGoalType | null>(null); // Track selected goal
   const [galloAccounts, setGalloAccounts] = useState<GalloAccountType[]>([]);
   const [enrichedAccounts, setEnrichedAccounts] = useState<GalloAccountType[]>(
     []
@@ -306,7 +310,7 @@ const CreateGalloGoalView = () => {
           variant="contained"
           color="primary"
           onClick={fetchAccounts}
-          disabled={!selectedProgram}
+          disabled={!selectedGoal}
         >
           Fetch Accounts
         </Button>
@@ -315,6 +319,7 @@ const CreateGalloGoalView = () => {
             accounts={enrichedAccounts}
             selectedGoal={selectedGoal} // Pass the selected goal from the parent
             selectedProgram={selectedProgram} // Pass the selected program from the parent
+            onSaveComplete={() => setValue(0)}
           />
         )}{" "}
         {/* Pass enriched data */}
