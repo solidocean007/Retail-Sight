@@ -846,8 +846,7 @@ export async function getUserAccountsFromIndexedDB(): Promise<any[]> {
 }
 
 export const saveGoalsToIndexedDB = async (
-  goals: FireStoreGalloGoalDocType[],
-  userAccountIds: string[]
+  goals: FireStoreGalloGoalDocType[]
 ): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(["goals"], "readwrite");
@@ -868,17 +867,12 @@ export const saveGoalsToIndexedDB = async (
     };
 
     goals.forEach((goal) => {
-      const filteredAccounts = goal.accounts.filter((account) =>
-        userAccountIds.includes(account.distributorAcctId)
-      );
-
-      const goalWithFilteredAccounts = {
+      const goalToSave = {
         ...goal,
-        goalId: goal.goalDetails.goalId,
-        accounts: filteredAccounts, // Only save user-specific accounts
+        id: goal.goalDetails.goalId,
       };
 
-      store.put(goalWithFilteredAccounts);
+      store.put(goalToSave); // Save the goal directly
     });
   });
 };

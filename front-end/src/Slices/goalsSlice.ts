@@ -2,9 +2,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
 import { FireStoreGalloGoalDocType, GalloGoalType } from "../utils/types";
-import { getUserAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { addAccountsToIndexedDB, getUserAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { RootState } from "../utils/store";
 import { collection, getDocs, query, where } from "@firebase/firestore";
+import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 
 export interface FireStoreGalloGoalWithId extends FireStoreGalloGoalDocType {
   id: string; // Add the `id` field
@@ -54,21 +55,41 @@ export const fetchAllCompanyGoals = createAsyncThunk<
 });
 
 
-
 export const fetchUserGalloGoals = createAsyncThunk<
   FireStoreGalloGoalDocType[], // Array of user-specific goals
-  { companyId: string },
+  { companyId: string, salesRouteNum: string | undefined }, // Add salesRouteNum for fallback
   { rejectValue: string }
->("goals/fetchUserGalloGoals", async ({ companyId }, { rejectWithValue }) => {
+>("goals/fetchUserGalloGoals", async ({ companyId, salesRouteNum }, { rejectWithValue }) => {
   try {
-    const accounts = await getUserAccountsFromIndexedDB();
-    const accountNumbers = accounts.map((acc) => acc.accountNumber.toString());
+    // Step 1: Try to load user accounts from IndexedDB
+    let userAccounts = await getUserAccountsFromIndexedDB();
 
-    if (!accountNumbers.length) {
-      console.warn("No user accounts found.");
-      return [];
+    if (!userAccounts.length) {
+      console.log("No user accounts in IndexedDB. Fetching from Firestore...");
+      // Step 2: Fallback to fetching accounts from Firestore
+      userAccounts = await fetchUsersAccounts(companyId, salesRouteNum);
+
+      if (userAccounts.length) {
+        console.log("Fetched user accounts from Firestore:", userAccounts);
+        // Save accounts to IndexedDB for future use
+        await addAccountsToIndexedDB(userAccounts);
+      } else {
+        console.warn("No accounts found for the user in Firestore.");
+        return []; // Exit early if no accounts
+      }
     }
 
+    console.log("Loaded user accounts:", userAccounts);
+
+    // Step 3: Extract user account numbers
+    const accountNumbers = userAccounts.map((account) => account.accountNumber.toString());
+
+    if (!accountNumbers.length) {
+      console.warn("User accounts are empty after processing.");
+      return []; // Exit early if no account numbers
+    }
+
+    // Step 4: Query Firestore for goals
     const goalsCollection = collection(db, "GalloGoals");
     const goalsQuery = query(goalsCollection, where("companyId", "==", companyId));
     const goalsSnapshot = await getDocs(goalsQuery);
@@ -77,7 +98,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
     goalsSnapshot.forEach((doc) => {
       const goalDoc = doc.data() as FireStoreGalloGoalDocType;
 
-      // Filter accounts to only include user's accounts
+      // Filter accounts in each goal to match user's accounts
       const matchingAccounts = goalDoc.accounts.filter((acc) =>
         accountNumbers.includes(acc.distributorAcctId.toString())
       );
@@ -85,7 +106,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
       if (matchingAccounts.length > 0) {
         matchingGoals.push({
           ...goalDoc,
-          accounts: matchingAccounts, // Only user's accounts
+          accounts: matchingAccounts, // Include only matching accounts
         });
       }
     });

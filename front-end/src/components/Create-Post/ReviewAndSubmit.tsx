@@ -26,6 +26,7 @@ interface ReviewAndSubmitProps {
     value: PostType[keyof PostType]
   ) => void;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
+  uploadProgress: number;
   selectedFile: File | null;
   setUploadProgress: React.Dispatch<React.SetStateAction<number>>;
   handlePostSubmission: any;
@@ -40,6 +41,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   handleFieldChange,
   setIsUploading,
   selectedFile,
+  uploadProgress,
   setUploadProgress,
   handlePostSubmission,
   selectedCompanyMission,
@@ -66,42 +68,50 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   }, [companyId, apiKey, dispatch]);
 
   const handleSubmitClick = async () => {
-    if (!selectedFile || isSubmitting) return;
-  
-    setIsSubmitting(true);
-    setIsUploading(true);
+    if (!selectedFile || isSubmitting) return; // Prevent multiple submissions
+    
+    setIsSubmitting(true); // Set submitting to true when submission starts
   
     try {
+      // Call the post submission logic
       await handlePostSubmission(
         post,
         selectedFile,
         setIsUploading,
         setUploadProgress,
         selectedCompanyMission,
-        apiKey
+        apiKey,
+        navigate
       );
   
-      dispatch(showMessage("Post submitted successfully!"));
+      if (uploadProgress === 100) {
+        // Ensure the upload has completed before proceeding
+        dispatch(showMessage("Post submitted successfully!"));
+      }
     } catch (error: any) {
       console.error("Error during post submission:", error);
-  
-      if (error.message === "Achievement already sent") {
-        // Specific handling for non-critical error
-        dispatch(showMessage("Achievement already sent!"));
-      } else {
-        dispatch(
-          showMessage(
-            error.message || "An unknown error occurred during post submission."
-          )
-        );
-      }
-  
-      setUploadProgress(0); // Reset progress
+      navigate("/user-home-page")
+      // Show appropriate error message
+      dispatch(
+        showMessage(
+          error.message || "An unknown error occurred during post submission."
+        )
+      );
     } finally {
-      setIsSubmitting(false);
-      setIsUploading(false);
+      setIsSubmitting(false); // Reset submitting state
+      if (uploadProgress === 100) {
+        setTimeout(() => {
+          setIsUploading(false); // Hide loading indicator after completion
+          navigate("/user-home-page")
+        }, 1000); // Short delay for smoother UX
+      } else {
+        console.warn("Upload progress did not reach 100%; resetting.");
+        setUploadProgress(0); // Reset progress only if not fully uploaded
+      }
     }
   };
+  
+  console.log(post)
   
 
   return (
@@ -140,7 +150,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
           disabled={isSubmitting}
           onClick={handleSubmitClick}
         >
-          {!isSubmitting ? "Submit Post" : <CircularProgress size={24} />}
+          {!isSubmitting ? "Submit Post" : <CircularProgress size={44} />}
         </Button>
       </Box>
     </div>

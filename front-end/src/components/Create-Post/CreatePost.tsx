@@ -42,9 +42,17 @@ import { useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
-import { getGoalsFromIndexedDB, getUserAccountsFromIndexedDB, saveGoalsToIndexedDB } from "../../utils/database/indexedDBUtils";
+import {
+  getGoalsFromIndexedDB,
+  getUserAccountsFromIndexedDB,
+  saveGoalsToIndexedDB,
+} from "../../utils/database/indexedDBUtils";
 import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
-import { fetchUserGalloGoals, selectGoals, setGoals } from "../../Slices/goalsSlice";
+import {
+  fetchUserGalloGoals,
+  selectGoals,
+  setGoals,
+} from "../../Slices/goalsSlice";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
@@ -53,6 +61,7 @@ export const CreatePost = () => {
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
   const goals = useSelector(selectGoals);
+  console.log(goals, ": goals from createPost");
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 
@@ -76,6 +85,7 @@ export const CreatePost = () => {
   // const [selectedBrands, setSelectedBrands] = useState<BrandType[]>([]);
 
   const postUser = onBehalf || userData;
+  const salesRouteNum = userData?.salesRouteNum;
 
   const [post, setPost] = useState<PostType>({
     accountNumber: "",
@@ -113,50 +123,40 @@ export const CreatePost = () => {
     null
   );
   const navigate = useNavigate();
- 
-  useEffect(() => {
-    if (uploadProgress === 100) {
-      // Short delay for better UX
-      setTimeout(() => {
-        navigate("/user-home-page");
-      }, 500);
-    }
-  }, [uploadProgress, navigate]);
 
-  // Load goals based on the selected accountNumber
   useEffect(() => {
-    const loadGoalsForAccount = async () => {
-      if (!post.accountNumber) return;
+    const loadInitialGoals = async () => {
+      if (!companyId) return;
   
-      const savedGoals = await getGoalsFromIndexedDB();
+      try {
+        const savedGoals = await getGoalsFromIndexedDB();
   
-      // Filter goals for the selected account
-      const accountGoals = savedGoals.filter((goal) =>
-        goal.accounts.some(
-          (account) => account.distributorAcctId === post.accountNumber
-        )
-      );
+        // If there are saved goals, dispatch them
+        if (savedGoals.length > 0) {
+          console.log("Loaded goals from IndexedDB:", savedGoals);
+          dispatch(setGoals(savedGoals));
+        } else {
+          // Otherwise, fetch from Firestore
+          console.log("Fetching goals from Firestore...");
+          const fetchedGoals = await dispatch(
+            fetchUserGalloGoals({
+              companyId,
+              salesRouteNum,
+            })
+          ).unwrap(); // Unwrap the result of the async thunk to get the data directly
   
-      if (accountGoals.length > 0) {
-        dispatch(setGoals(accountGoals)); // Load cached goals into Redux
-      } else if (companyId) {
-        // Fetch goals for the account and company
-        const fetchedGoals = await fetchGoalsForAccount(post.accountNumber, companyId);
-        dispatch(setGoals(fetchedGoals)); // Dispatch fetched goals to Redux
-  
-        // Save to IndexedDB for future use
-        const userAccounts = savedGoals.map((goal) =>
-          goal.accounts.map((acc) => acc.distributorAcctId)
-        );
-        const userAccountIds = userAccounts.flat();
-        await saveGoalsToIndexedDB(fetchedGoals, userAccountIds);
+          if (fetchedGoals.length > 0) {
+            dispatch(setGoals(fetchedGoals));
+            await saveGoalsToIndexedDB(fetchedGoals); // Save to IndexedDB
+          }
+        }
+      } catch (error) {
+        console.error("Error loading initial goals:", error);
       }
     };
   
-    loadGoalsForAccount();
-  }, [post.accountNumber, companyId, dispatch]);
-  
-  
+    loadInitialGoals();
+  }, [companyId, salesRouteNum, dispatch]);
   
 
   useEffect(() => {
@@ -305,6 +305,7 @@ export const CreatePost = () => {
             onPrevious={goToPreviousStep}
             post={post}
             setPost={setPost}
+            goals={goals}
             handleFieldChange={handleFieldChange}
             onStoreNameChange={handleStoreNameChange}
             onStoreNumberChange={handleStoreNumberChange}
@@ -342,6 +343,7 @@ export const CreatePost = () => {
             onPrevious={goToPreviousStep}
             handleFieldChange={handleFieldChange}
             setIsUploading={setIsUploading}
+            uploadProgress={uploadProgress}
             selectedFile={selectedFile}
             setUploadProgress={setUploadProgress}
             handlePostSubmission={handlePostSubmission}
@@ -361,23 +363,29 @@ export const CreatePost = () => {
     // justifyContent: "space-between",
     flexDirection: { sm: "row", md: "row" },
   };
-
   return (
     <>
       <CreatePostHelmet />
       <Container disableGutters className="create-post-container">
-        {isUploading && (
-          <LoadingIndicator progress={uploadProgress} />
-        )}
+        {isUploading && <LoadingIndicator progress={uploadProgress} />}
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
-            <div style={{ display: "flex", width: "100%", justifyContent: "space-between" }}>
+            <div
+              style={{
+                display: "flex",
+                width: "100%",
+                justifyContent: "space-between",
+              }}
+            >
               <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
-              <IconButton aria-label="close" onClick={() => navigate("/user-home-page")}>
+              <IconButton
+                aria-label="close"
+                onClick={() => navigate("/user-home-page")}
+              >
                 <CancelRounded />
               </IconButton>
             </div>
-  
+
             {authToCreateOnBehalf && (
               <CreatePostOnBehalfOfOtherUser
                 onBehalf={onBehalf}
@@ -399,5 +407,4 @@ export const CreatePost = () => {
       </Container>
     </>
   );
-  
 };

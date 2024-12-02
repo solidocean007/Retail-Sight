@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { CompanyAccountType, FireStoreGalloGoalDocType, PostType } from "../../utils/types";
+import {
+  CompanyAccountType,
+  FireStoreGalloGoalDocType,
+  GalloAccountType,
+  PostType,
+} from "../../utils/types";
 import StoreLocator from "./StoreLocator";
 import AccountDropdown from "./AccountDropDown";
 import { useSelector } from "react-redux";
@@ -25,10 +30,8 @@ import {
 } from "@mui/material";
 import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAcccountsFromFirestore";
 import getCompanyAccountId from "../../utils/helperFunctions/getCompanyAccountId";
-import {
-  fetchGoalsByCompanyId,
-} from "../../utils/helperFunctions/fetchGoalsByCompanyId";
-import { getActiveGoalsForAccount } from "../../utils/helperFunctions/getActiveGoalsForAccount";
+import { fetchGoalsByCompanyId } from "../../utils/helperFunctions/fetchGoalsByCompanyId";
+import { getActiveGoalsForAccount } from "../../utils/helperFunctions/getActiveGoalsForAccount"; // this function looks useful also
 import {
   getGoalsFromIndexedDB,
   saveGoalsToIndexedDB,
@@ -36,6 +39,8 @@ import {
 import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
 import { showMessage } from "../../Slices/snackbarSlice";
 import TotalCaseCount from "../TotalCaseCount";
+import { selectUser } from "../../Slices/userSlice";
+import { setGoals } from "../../Slices/goalsSlice";
 
 interface PickStoreProps {
   onNext: () => void;
@@ -46,6 +51,7 @@ interface PickStoreProps {
   ) => void;
   post: PostType;
   setPost: React.Dispatch<React.SetStateAction<PostType>>;
+  goals: FireStoreGalloGoalDocType[]; // Pass goals from Redux
   onStoreNameChange: (storeName: string) => void;
   onStoreNumberChange: (newStoreNumber: string) => void;
   onStoreAddressChange: (address: string) => void;
@@ -54,11 +60,14 @@ interface PickStoreProps {
 }
 
 export const PickStore: React.FC<PickStoreProps> = ({
+  // Type '({ onNext, onPrevious, handleFieldChange, post, setPost, goals, onStoreNameChange, onStoreNumberChange, onStoreAddressChange, onStoreCityChange, onStoreStateChange, }: PickStoreProps) => void' is not assignable to type 'FC<PickStoreProps>'.
+  // Type 'void' is not assignable to type 'ReactNode'.
   onNext,
   onPrevious,
   handleFieldChange,
   post,
   setPost,
+  goals,
   onStoreNameChange,
   onStoreNumberChange,
   onStoreAddressChange,
@@ -67,25 +76,63 @@ export const PickStore: React.FC<PickStoreProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [isMapMode, setIsMapMode] = useState(false); // Toggle between dropdown and map
-  const [goalForAccount, setGoalForAccount] = useState<FireStoreGalloGoalDocType | null>(
-    null
-  );
-
+  const [goalForAccount, setGoalForAccount] =
+    useState<FireStoreGalloGoalDocType | null>(null);
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [allAccounts, setAllAccounts] = useState<CompanyAccountType[]>([]);
+  const userRole = useSelector(selectUser)?.role;
+  const isAdmin = userRole === "admin" || userRole === "super-admin";
+  const isEmployee = userRole === "employee";
+  const [allAccounts, setAllAccounts] = useState<CompanyAccountType[]>([]); // i use setAllAccounts but why dont i use allAccounts??
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
-  const userRole = useSelector(
-    (state: RootState) => state.user.currentUser?.role
-  );
+
   const [closestMatches, setClosestMatches] = useState<CompanyAccountType[]>(
     []
   );
   const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
-  const [goalMetric, setGoalMetric] = useState("cases");
+  const [goalMetric, setGoalMetric] = useState<"cases" | "bottles">("cases"); // setGoalMetric should be used to define goalMetric as goals fetched might be cases or bottles
+  const activeGoals = getActiveGoalsForAccount(post.accountNumber, goals);
+  console.log(activeGoals); // this logs empty. it has to get set
+  console.log(goals);
+
+  // Fetch goals if not already loaded
+  useEffect(() => {
+    if (!goals.length && post.accountNumber) {
+      const fetchAndSetGoals = async () => {
+        try {
+          const savedGoals = await getGoalsFromIndexedDB();
+
+          // Check for saved goals in IndexedDB
+          const matchingGoals = savedGoals.filter((goal) =>
+            goal.accounts.some(
+              (acc) => acc.distributorAcctId === post.accountNumber
+            )
+          );
+
+          if (matchingGoals.length > 0) {
+            dispatch(setGoals(matchingGoals)); // Load from IndexedDB
+          } else if (companyId) {
+            // Fetch from Firestore
+            const fetchedGoals = await fetchGoalsForAccount(
+              post.accountNumber,
+              companyId
+            );
+            if (fetchedGoals.length > 0) {
+              dispatch(setGoals(fetchedGoals));
+              await saveGoalsToIndexedDB(fetchedGoals);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching and setting goals:", error);
+          dispatch(showMessage("Error loading goals for account."));
+        }
+      };
+
+      fetchAndSetGoals();
+    }
+  }, [goals, post.accountNumber, companyId, dispatch]);
 
   const handleFetchGoal = async () => {
     setIsFetchingGoal(true);
@@ -94,108 +141,75 @@ export const PickStore: React.FC<PickStoreProps> = ({
         console.warn("No accountNumber provided in the post.");
         return;
       }
-  
+
       const savedGoals = await getGoalsFromIndexedDB();
-      const matchingGoal = savedGoals.find((goal) =>
+
+      // Find matching goals from IndexedDB
+      const matchingGoals = savedGoals.filter((goal) =>
         goal.accounts.some(
-          (acc) => acc.distributorAcctId === post.accountNumber
+          (acc) =>
+            acc.distributorAcctId.toString() === post.accountNumber?.toString()
         )
       );
-  
-      if (matchingGoal) {
-        const matchedAccount = matchingGoal.accounts.find(
-          (account) => account.distributorAcctId === post.accountNumber
-        );
-  
-        if (matchedAccount) {
-          setGoalForAccount({
-            goalDetails: matchingGoal.goalDetails,
-            accounts: {
-              ...matchedAccount,
-              salesRouteNums: matchedAccount.salesRouteNums || [], // Object literal may only specify known properties, and 'salesRouteNums' does not exist in type '{ oppId: string; distributorAcctId: string; accountName: string; accountAddress: string; salesRouteNums?: string[] | undefined; marketId?: string | undefined; }[]'
-            },
-          });
-        }
-      } else {
+
+      console.log(matchingGoals); // Log all matching goals
+
+      if (matchingGoals.length > 0) {
+        // Set active goals from IndexedDB
+        setGoals(matchingGoals); // Cannot find name 'setActiveGoals'
+      } else if (companyId) {
+        // Fetch goals from Firestore if no matches in IndexedDB
         const fetchedGoals = await fetchGoalsForAccount(
-          post.accountNumber!,
-          companyId!
+          post.accountNumber,
+          companyId
         );
-  
-        if (fetchedGoals.length > 0) {
-          const refinedGoals = fetchedGoals.map((goal) => {
-            const matchedAccount = goal.accounts.find(
-              (account) => account.distributorAcctId === post.accountNumber
-            );
-  
-            return matchedAccount
-              ? {
-                  goalDetails: goal.goalDetails,
-                  matchedAccount: {
-                    ...matchedAccount,
-                    salesRouteNums: matchedAccount.salesRouteNums || [], // Default to an empty array
-                  },
-                }
-              : null;
-          }).filter(Boolean) as RefinedGoal[];
-  
-          setGoalForAccount(refinedGoals[0]);
-          await saveGoalsToIndexedDB(
-            refinedGoals.map((goal) => ({
-              goalDetails: goal.goalDetails,
-              accounts: [goal.matchedAccount],
-            })),
-            refinedGoals.flatMap((goal) =>
-              goal.matchedAccount.distributorAcctId
-            )
-          );
+
+        // Filter fetched goals for the current accountNumber
+        const filteredFetchedGoals = fetchedGoals.filter((goal) =>
+          goal.accounts.some(
+            (acc) =>
+              acc.distributorAcctId.toString() ===
+              post.accountNumber?.toString()
+          )
+        );
+
+        if (filteredFetchedGoals.length > 0) {
+          setGoals(filteredFetchedGoals); // Update active goals
+          await saveGoalsToIndexedDB(fetchedGoals); // Cannot find name 'setActiveGoals'
+        } else {
+          console.warn("No matching goals found for this account.");
         }
       }
     } catch (error) {
       console.error("Error fetching goals:", error);
+      dispatch(showMessage("An error occurred while fetching goals."));
     } finally {
       setIsFetchingGoal(false);
     }
   };
-  
-  // const handleFetchGoalForAnyAccount = async () => {
-  //   setIsFetchingGoal(true);
-  //   console.log("isAdmin: ", isAdmin); // Log for debugging
 
-  //   try {
-  //     if (isAdmin) {
-  //       if (!companyId) return;
-  //       console.log("Admin is fetching goals for all accounts.");
-  //       const accountsId = await getCompanyAccountId(companyId);
-  //       // Fetch all accounts from Firestore
-  //       const fetchedAllAccounts = await fetchAllAccountsFromFirestore(
-  //         accountsId || ""
-  //       );
-  //       if (!fetchedAllAccounts.length) {
-  //         console.warn("No accounts found for the company.");
-  //         dispatch(showMessage("No accounts found for this company."));
-  //         return;
-  //       }
-
-  //       console.log("Fetched all accounts for admin:", fetchedAllAccounts);
-  //       setAllAccounts(fetchedAllAccounts); // Save in state for admin matching
-
-  //       // Attempt to match against all accounts
-  //       matchAccountWithSelectedStoreForAdmin(fetchedAllAccounts);
-  //     } else {
-  //       console.warn("User is not an admin or no account number provided.");
-  //       dispatch(showMessage("Only admins can fetch goals for any account."));
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching goals for all accounts:", error);
-  //     dispatch(showMessage("An error occurred while fetching goals."));
-  //   } finally {
-  //     console.log("post: ", post);
-  //     setIsFetchingGoal(false);
-  //   }
-  // };
+  const handleFetchGoalForAnyAccount = async () => {
+    setIsFetchingGoal(true);
+    try {
+      if (isAdmin && companyId) {
+        const accounts = await fetchAllCompanyAccounts();
+        if (accounts && accounts.length > 0) {
+          matchAccountWithSelectedStoreForAdmin(accounts);
+        } else {
+          console.warn("No accounts found for the company.");
+          dispatch(showMessage("No accounts found for this company."));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching accounts or goals:", error);
+      dispatch(showMessage("Failed to fetch goals for the account."));
+    } finally {
+      setIsFetchingGoal(false);
+    }
+  };
 
   const matchAccountWithSelectedStoreForAdmin = (
+    // why isnt this used?  this looks like the logic for finding closest matches for an admin
     allAccountsList: CompanyAccountType[]
   ) => {
     // Sort accounts alphabetically by accountName
@@ -275,140 +289,46 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   useEffect(() => {
+    if (goals.length > 0) {
+      const activeGoals = getActiveGoalsForAccount(post.accountNumber, goals);
+      if (activeGoals.length > 0) {
+        const metric = activeGoals[0].goalDetails.goalMetric;
+        if (metric === "cases" || metric === "bottles") {
+          setGoalMetric(metric); // Only set if it matches the allowed types
+        } else {
+          setGoalMetric("cases"); // Fallback to a default value
+        }
+      }
+    }
+  }, [goals, post.accountNumber]);
+
+  useEffect(() => {
+    if (isAdmin && companyId) {
+      fetchAllCompanyAccounts();
+    }
+  }, [isAdmin, companyId]);
+
+  useEffect(() => {
+    // this might not be necessary because of what is on the CreatePost useEffect
     if (post.accountNumber) {
-      handleFetchGoal();
+      handleFetchGoal(); // this will trigger at the same time as the CreatePost useEffect.  is there any redundancies?
     }
   }, [post.accountNumber]);
 
   const fetchAllCompanyAccounts = async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      console.error("No company ID provided.");
+      return [];
+    }
+
     const accountsId = await getCompanyAccountId(companyId);
     if (!accountsId) {
       console.error("No accounts ID found for the company");
-      return;
+      return [];
     }
-    const accounts = await fetchAllAccountsFromFirestore(accountsId);
-    setAllAccounts(accounts);
-  };
 
-  const handleFetchGoal = async () => {
-    setIsFetchingGoal(true);
-    try {
-      if (!post.accountNumber) {
-        console.warn("No accountNumber provided in the post.");
-        return;
-      }
-  
-      if (isAdmin) {
-        const allGoals = await fetchGoalsByCompanyId(companyId || "");
-        const refinedGoals = allGoals
-          .map((goal) => {
-            const matchedAccount = goal.accounts.find(
-              (account) => // Parameter 'account' implicitly has an 'any' type.
-                account.distributorAcctId.toString() ===
-                post.accountNumber?.toString()
-            );
-  
-            if (matchedAccount) {
-              return {
-                goalDetails: goal.goalDetails,
-                matchedAccount,
-              };
-            }
-            return null;
-          })
-          .filter((result) => result !== null) as RefinedGoal[];
-  
-        console.log("Filtered goals for admin:", refinedGoals);
-  
-        if (refinedGoals.length > 0) {
-          setGoalForAccount(refinedGoals[0]);
-  
-          if (!isAdmin) {
-            // Map RefinedGoal[] back to GalloGoalType[]
-            const goalsToSave: GalloGoalType[] = refinedGoals.map((refinedGoal) => ({ // type mismatch
-              goalDetails: refinedGoal.goalDetails,
-              accounts: refinedGoal.matchedAccount
-                ? [refinedGoal.matchedAccount]
-                : [],
-            }));
-  
-            await saveGoalsToIndexedDB(goalsToSave); // expects 2 arguments only got one.. neeeds account ids
-          }
-        } else {
-          console.warn("No matching goals found for admin.");
-          setGoalForAccount(null);
-        }
-      } else {
-        const savedGoals = await getGoalsFromIndexedDB();
-        const matchingGoal = savedGoals.find((goal) =>
-          goal.accounts.some(
-            (acc) =>
-              acc.distributorAcctId.toString() === post.accountNumber?.toString()
-          )
-        );
-  
-        if (matchingGoal) {
-          const matchedAccount = matchingGoal.accounts.find(
-            (account) =>
-              account.distributorAcctId.toString() ===
-              post.accountNumber?.toString()
-          );
-  
-          if (matchedAccount) {
-            setGoalForAccount({
-              goalDetails: matchingGoal.goalDetails, // type mismatch
-              matchedAccount, // Types of property 'salesRouteNums' are incompatible.
-              Type 'string[] | undefined' is not assignable to type 'string[]'.
-                // Type 'undefined' is not assignable to type 'string[]'.ts
-            });
-          } else {
-            console.warn(
-              "No matched account found for the selected account number."
-            );
-            setGoalForAccount(null);
-          }
-        } else {
-          const fetchedGoals = await fetchGoalsForAccount(post.accountNumber); // expects 2 arg only got one
-          if (fetchedGoals.length > 0) {
-            const refinedFetchedGoals = fetchedGoals.map((goal) => {
-              const matchedAccount = goal.accounts.find( // type mismatch
-                (account) => // implicit any type
-                  account.distributorAcctId.toString() ===
-                  post.accountNumber?.toString()
-              );
-          
-              return matchedAccount
-                ? {
-                    goalDetails: goal.goalDetails, // type mismatch
-                    matchedAccount,
-                  }
-                : null; // Return null if no matchedAccount
-            }).filter((goal) => goal !== null) as RefinedGoal[]; // Filter out null results
-          
-            await saveGoalsToIndexedDB(refinedFetchedGoals.map((goal) => ({ // expects 2 args
-              goalDetails: goal.goalDetails,
-              accounts: [goal.matchedAccount], // Ensure proper structure for IndexedDB
-            })));
-          
-            if (refinedFetchedGoals.length > 0) {
-              setGoalForAccount(refinedFetchedGoals[0] || null);
-            } else {
-              console.warn("No valid goals to set.");
-              setGoalForAccount(null);
-            }
-          } else {
-            console.warn("No goals found for regular user.");
-            setGoalForAccount(null);
-          }
-          
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching goals:", error);
-    } finally {
-      setIsFetchingGoal(false);
-    }
+    const accounts = await fetchAllAccountsFromFirestore(accountsId);
+    return accounts;
   };
 
   const handleGoalSelection = (goalId: string) => {
@@ -416,17 +336,36 @@ export const PickStore: React.FC<PickStoreProps> = ({
       handleFieldChange("oppId", "");
       handleFieldChange("closedUnits", 0);
       handleFieldChange("closedDate", "");
-    } else if (goalForAccount) {
-      const matchingAccount = goalForAccount.matchedAccount;
-      if (matchingAccount) {
-        handleFieldChange("oppId", matchingAccount.oppId);
-        handleFieldChange("closedDate", new Date().toISOString().split("T")[0]);
+    } else {
+      const selectedGoal = goals.find(
+        (goal) => goal.goalDetails.goalId === goalId
+      );
+      console.log(selectedGoal, ": selectedGoal");
+      if (selectedGoal) {
+        const matchedAccount = selectedGoal.accounts.find(
+          (account) =>
+            account.distributorAcctId.toString() ===
+            post.accountNumber?.toString()
+        );
+        console.log(matchedAccount, ": matchedAccount");
+        if (matchedAccount) {
+          handleFieldChange("oppId", matchedAccount.oppId);
+          handleFieldChange(
+            "closedDate",
+            new Date().toISOString().split("T")[0]
+          );
+        } else {
+          console.warn("No matching account found for the selected goal.");
+        }
       }
     }
+
     setSelectedGoalId(goalId);
+    console.log(post);
   };
 
   const handleAccountSelect = (account: CompanyAccountType) => {
+    //declared but never read
     setPost((prev) => ({
       ...prev,
       selectedStore: account.accountName,
@@ -436,14 +375,19 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const handleTotalCaseCountChange = (count: number) => {
+    // declared but never read
     handleFieldChange("closedUnits", count); // Update the post state with the total case count
   };
-  
 
   return (
     <div className="pick-store">
       {/* Navigation Buttons */}
-      <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mt={2}
+      >
         <Button variant="contained" color="primary" onClick={onPrevious}>
           Back
         </Button>
@@ -465,7 +409,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
           Next
         </Button>
       </Box>
-  
+
+      {/* Display Store Name in Bold */}
+      {post.selectedStore && (
+        <Box mt={2}>
+          <Typography variant="h5" fontWeight="bold">
+            {post.selectedStore}
+          </Typography>
+        </Box>
+      )}
+
       {/* Store Selector */}
       <Box mt={3}>
         {isMapMode ? (
@@ -479,17 +432,29 @@ export const PickStore: React.FC<PickStoreProps> = ({
             onStoreStateChange={onStoreStateChange}
           />
         ) : (
-          <AccountDropdown onAccountSelect={handleAccountSelect} />
+          <AccountDropdown
+            onAccountSelect={(account) =>
+              setPost({
+                ...post,
+                selectedStore: account.accountName,
+                storeAddress: account.accountAddress,
+                accountNumber: account.accountNumber,
+              })
+            }
+          />
         )}
       </Box>
-  
+
       {/* Total Case Count */}
       <Typography variant="h6">{`Total ${goalMetric} count`}</Typography>
-      <TotalCaseCount handleTotalCaseCountChange={handleTotalCaseCountChange} />
-  
-      {/* Gallo Goal Selector */}
+      <TotalCaseCount
+        handleTotalCaseCountChange={(count) =>
+          handleFieldChange("closedUnits", count)
+        }
+      />
+
+      {/* Goal Selection */}
       <Box mt={3}>
-        <Typography variant="h6">Gallo Goal</Typography>
         {isFetchingGoal ? (
           <CircularProgress />
         ) : (
@@ -502,73 +467,33 @@ export const PickStore: React.FC<PickStoreProps> = ({
             <MenuItem value="no-goal">
               No goal selected for this display
             </MenuItem>
-            {goalForAccount && (
-              <MenuItem value={goalForAccount.goalDetails.goalId}>
-                {goalForAccount.goalDetails.goal} -{" "}
-                {goalForAccount.matchedAccount.accountName}
+            {activeGoals.map((goal) => (
+              <MenuItem
+                key={goal.goalDetails.goalId}
+                value={goal.goalDetails.goalId}
+              >
+                {/* {goal.goalDetails.goal} - {goal.programDetails.programTitle} */}
+                {goal.goalDetails.goal}
               </MenuItem>
-            )}
+            ))}
           </Select>
         )}
-        {!goalForAccount && (
+        {!isEmployee && (
           <Button
             variant="contained"
             color="primary"
-            onClick={handleFetchGoalForAnyAccount}
             sx={{ mt: 2 }}
+            onClick={handleFetchGoalForAnyAccount}
           >
-            Fetch Goal for store (Admin)
+            {/* this should render the goal.goal for the description */} 
+            {selectedGoalId
+              ? `Selected Goal: ${selectedGoalId}`  
+              : activeGoals.length > 0
+              ? `${activeGoals.length} Goals Available`
+              : "No Goals Available"}
           </Button>
         )}
       </Box>
-  
-      {/* Closest Matches Dialog */}
-      {isMatchSelectionOpen && (
-        <Dialog
-          open={isMatchSelectionOpen}
-          onClose={() => setIsMatchSelectionOpen(false)}
-        >
-          <DialogTitle>Select a Closest Match</DialogTitle>
-          <DialogContent>
-            <List>
-              {closestMatches.map((account, index) => (
-                <ListItem key={index} disablePadding>
-                  <ListItemButton
-                    onClick={() => {
-                      handleAccountSelect(account);
-                      setIsMatchSelectionOpen(false);
-                    }}
-                  >
-                    <ListItemIcon>
-                      <Checkbox
-                        edge="start"
-                        tabIndex={-1}
-                        disableRipple
-                        checked={
-                          post.accountNumber ===
-                          account.accountNumber.toString()
-                        }
-                      />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={`${account.accountName} - ${account.accountAddress}`}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => setIsMatchSelectionOpen(false)}
-              color="secondary"
-            >
-              Cancel
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
     </div>
   );
-  
 };

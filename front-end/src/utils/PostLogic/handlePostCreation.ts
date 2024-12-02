@@ -1,6 +1,6 @@
 // useHandlePostSubmission
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { NavigateFunction, useNavigate } from "react-router-dom";
 import { CompanyMissionType, PostType, SubmittedMissionType } from "../types";
 import { auth, db, storage } from "../firebase";
 import {
@@ -17,10 +17,8 @@ import {
   updateCategoriesInFirestore,
   updateChannelsInFirestore,
 } from "./updateFirestore";
-import { addNewlyCreatedPostToIndexedDB } from "../database/indexedDBUtils";
 import { v4 as uuidv4 } from "uuid";
 import { extractHashtags, extractStarTags } from "../extractHashtags";
-import { addNewPost } from "../../Slices/postsSlice";
 import { useAppDispatch } from "../store";
 import { createSubmittedMission } from "../../thunks/missionsThunks";
 import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementToGalloAxis";
@@ -37,7 +35,8 @@ export const useHandlePostSubmission = () => {
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     selectedCompanyMission: CompanyMissionType,
-    apiKey: string
+    apiKey: string,
+    navigate: NavigateFunction
   ) => {
     setIsUploading(true);
     const user = auth.currentUser;
@@ -185,7 +184,6 @@ export const useHandlePostSubmission = () => {
 
               // Send Achievement to Gallo Axis if oppId exists
               if (post.oppId) {
-                console.log('building achievement payload')
                 const achievementPayload = {
                   oppId: post.oppId,
                   closedBy: post.closedBy || post.postUserName,
@@ -195,7 +193,7 @@ export const useHandlePostSubmission = () => {
                   photos: [{ file: resizedImageUrl }],
                 };
 
-                await sendAchievementToGalloAxis(achievementPayload, apiKey);
+                await sendAchievementToGalloAxis(achievementPayload, apiKey, navigate);
               }
 
               const newPostWithID = {
@@ -253,6 +251,7 @@ export const useHandlePostSubmission = () => {
         }
       }
       setIsUploading(false);
+      navigate("/user-home-page");
     }
   };
 

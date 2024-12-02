@@ -1,16 +1,27 @@
-import { GalloGoalType } from "../types";
+// getActiveGoalsForAccounts.ts
+import { FireStoreGalloGoalDocType } from "../types";
 
 export const getActiveGoalsForAccount = (
-  accountNumber: string,
-  goals: GalloGoalType[]
+  accountNumber: string | null | undefined,
+  goals: FireStoreGalloGoalDocType[]
 ) => {
   const today = new Date();
-  return goals.filter(
-    (goal) =>
-      goal.accounts.some(
-        (account) => account.distributorAcctId === accountNumber
-      ) &&
-      new Date(goal.programStartDate) <= today &&
-      new Date(goal.programEndDate) >= today
-  );
+  return goals.filter((goal) => {
+    const isMatchingAccount = goal.accounts.some((account) => {
+      console.log(
+        "Comparing accountNumber:",
+        String(account.distributorAcctId),
+        "with",
+        String(accountNumber)
+      );
+      return String(account.distributorAcctId) === String(accountNumber);
+    });
+
+    return (
+      isMatchingAccount &&
+      new Date(goal.programDetails.programStartDate) <= today &&
+      new Date(goal.programDetails.programEndDate) >= today
+    );
+  });
 };
+

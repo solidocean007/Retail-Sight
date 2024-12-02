@@ -14,7 +14,7 @@ import { VariableSizeList } from "react-window";
 import { CompanyAccountType, PostWithID } from "../utils/types";
 import useScrollToTopOnChange from "../hooks/scrollToTopOnChange";
 import { selectUser } from "../Slices/userSlice";
-import { fetchUsersAccounts } from "../utils/userData/fetchUserAccounts";
+import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { collection, doc, getDocs, updateDoc } from "@firebase/firestore";
 import { db } from "../utils/firebase";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";

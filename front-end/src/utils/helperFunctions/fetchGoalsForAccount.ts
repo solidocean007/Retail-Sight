@@ -3,7 +3,7 @@ import { FireStoreGalloGoalDocType } from "../types";
 import { db } from "../firebase";
 
 export const fetchGoalsForAccount = async (
-  accountNumber: string,
+  accountNumber: string | null | undefined,
   companyId: string
 ): Promise<FireStoreGalloGoalDocType[]> => {
   try {
@@ -24,6 +24,7 @@ export const fetchGoalsForAccount = async (
 
       if (matchingAccounts.length > 0) {
         goals.push({
+          companyId: goalDoc.companyId,
           goalDetails: {
             goalId: goalDoc.goalDetails.goalId,
             goal: goalDoc.goalDetails.goal,

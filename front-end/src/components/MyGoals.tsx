@@ -49,37 +49,48 @@ interface GroupedProgram {
 const MyGoals = () => {
   const dispatch = useAppDispatch();
   const goals = useSelector((state: RootState) => state.goals.goals);
-  const loading = useSelector(selectGoalsLoading);
+  // const loading = useSelector(selectGoalsLoading);
   const lastUpdated = useSelector(selectLastUpdated);
   const user = useSelector(selectUser); // added this
   const companyId = user?.companyId; // added this
   const [expandedPrograms, setExpandedPrograms] = useState<string[]>([]);
   const [expandedGoals, setExpandedGoals] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const salesRouteNum = useSelector(selectUser)?.salesRouteNum;
 
   useEffect(() => {
     const loadGoals = async () => {
-      const savedGoals = await getGoalsFromIndexedDB();
+      try {
+        setLoading(true); // Start loading
+        const savedGoals = await getGoalsFromIndexedDB();
   
-      if (savedGoals.length > 0) {
-        console.log("Loaded goals from IndexedDB:", savedGoals);
-        dispatch(setGoals(savedGoals)); // Load from IndexedDB
-      } else if (companyId) {
-        const fetchedGoals = await dispatch(
-          fetchUserGalloGoals({ companyId })
-        ).unwrap();
+        if (savedGoals.length > 0) {
+          console.log("Loaded goals from IndexedDB:", savedGoals);
+          dispatch(setGoals(savedGoals)); // Load from IndexedDB
+        } else if (companyId) {
+          // Fetch goals from Firestore
+          console.log("No goals stored for user in IndexedDB. Fetching from Firestore...");
+          const fetchedGoals = await dispatch(
+            fetchUserGalloGoals({ companyId, salesRouteNum })
+          ).unwrap();
   
-        console.log("Fetched goals from Firestore:", fetchedGoals);
+          console.log("Fetched goals from Firestore:", fetchedGoals); // Already filtered goals
   
-        // Filter accounts for the user before saving to IndexedDB
-        const userAccounts = await getUserAccountsFromIndexedDB();
-        const userAccountIds = userAccounts.map((acc) => acc.accountNumber);
-  
-        await saveGoalsToIndexedDB(fetchedGoals, userAccountIds); // Pass user account IDs
+          // Save fetched goals to IndexedDB and Redux
+          await saveGoalsToIndexedDB(fetchedGoals); // Save directly without additional filtering
+          dispatch(setGoals(fetchedGoals)); // Store in Redux
+        }
+      } catch (error) {
+        console.error("Error loading goals:", error); // this logs MyGoals.tsx:84 Error loading goals: DOMException: Failed to execute 'put' on 'IDBObjectStore': Evaluating the object store's key path did not yield a value.
+      } finally {
+        setLoading(false); // End loading
       }
     };
   
     loadGoals();
   }, [dispatch, companyId]);
+  
+  
 
   const toggleProgramExpansion = (programTitle: string) => {
     setExpandedPrograms((prev) =>
@@ -98,16 +109,21 @@ const MyGoals = () => {
   };
 
   const groupedPrograms = goals.reduce<GroupedProgram[]>((acc, goal) => {
+    if (!goal.programDetails || !goal.programDetails.programTitle) {
+      console.warn("Skipping invalid goal:", goal);
+      return acc; // Skip invalid goal
+    }
+  
     const programIndex = acc.findIndex(
       (p) => p.programTitle === goal.programDetails.programTitle
     );
-
+  
     if (programIndex === -1) {
       // Add a new program with its first goal
       acc.push({
         programTitle: goal.programDetails.programTitle,
-        programStartDate: goal.programDetails.programStartDate,
-        programEndDate: goal.programDetails.programEndDate,
+        programStartDate: goal.programDetails.programStartDate || "Unknown",
+        programEndDate: goal.programDetails.programEndDate || "Unknown",
         goals: [
           {
             goalId: goal.goalDetails.goalId,
@@ -116,8 +132,8 @@ const MyGoals = () => {
             valueMin: goal.goalDetails.goalValueMin,
             accounts: goal.accounts.map((acc) => ({
               distributorAcctId: acc.distributorAcctId,
-              accountName: acc.accountName,
-              accountAddress: acc.accountAddress,
+              accountName: acc.accountName || "Unknown",
+              accountAddress: acc.accountAddress || "Unknown",
             })),
           },
         ],
@@ -131,17 +147,18 @@ const MyGoals = () => {
         valueMin: goal.goalDetails.goalValueMin,
         accounts: goal.accounts.map((acc) => ({
           distributorAcctId: acc.distributorAcctId,
-          accountName: acc.accountName,
-          accountAddress: acc.accountAddress,
+          accountName: acc.accountName || "Unknown",
+          accountAddress: acc.accountAddress || "Unknown",
         })),
       });
     }
-
+  
     return acc;
   }, []);
+  
 
   console.log(expandedGoals);
-  console.log(goals);
+  console.log(goals); // this logs the goal
 
   return (
     <div>
@@ -165,7 +182,6 @@ const MyGoals = () => {
             <TableBody>
               {groupedPrograms.map((program) => (
                 <React.Fragment key={program.programTitle}>
-                  {/* Program Row */}
                   <TableRow>
                     <TableCell>
                       <Button
@@ -180,7 +196,6 @@ const MyGoals = () => {
                     </TableCell>
                     <TableCell colSpan={6}>{program.programTitle}</TableCell>
                   </TableRow>
-                  {/* Nested Goals */}
                   {expandedPrograms.includes(program.programTitle) &&
                     program.goals.map((goal) => (
                       <React.Fragment key={goal.goalId}>
@@ -201,7 +216,6 @@ const MyGoals = () => {
                           <TableCell>{program.programStartDate}</TableCell>
                           <TableCell>{program.programEndDate}</TableCell>
                         </TableRow>
-                        {/* Nested Accounts */}
                         <TableRow>
                           <TableCell colSpan={7} style={{ padding: 0 }}>
                             <Collapse

@@ -30,6 +30,15 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const dispatch = useAppDispatch();
 
+  // Add a log to inspect the `goals` array.
+  useEffect(() => {
+    console.log("Current goals in state:", goals);
+    goals.forEach((goal, index) => {
+      console.log(`Goal ${index + 1}:`, goal);
+      console.log(`Program Title: ${goal.programDetails?.programTitle}`);
+    });
+  }, [goals]);
+
   useEffect(() => {
     const loadGoals = async () => {
       try {
@@ -118,64 +127,71 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {goals.map((goal) => (
-              <React.Fragment key={goal.goalDetails.goalId}>
-                {/* Parent Goal Row */}
-                <TableRow>
-                  <TableCell>
-                    <IconButton onClick={() => toggleExpand(goal.goalDetails.goalId)}>
-                      {expandedGoals.has(goal.goalDetails.goalId) ? (
-                        <ExpandLessIcon />
-                      ) : (
-                        <ExpandMoreIcon />
-                      )}
-                    </IconButton>
-                  </TableCell>
-                  <TableCell>{goal.goalDetails.goal}</TableCell>
-                  <TableCell>{goal.goalDetails.goalMetric}</TableCell>
-                  <TableCell>{goal.goalDetails.goalValueMin}</TableCell>
-                  <TableCell>{goal.programDetails.programTitle}</TableCell>
-                  <TableCell>{goal.programDetails.programStartDate}</TableCell>
-                  <TableCell>{goal.programDetails.programEndDate}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => handleDeleteGoal(goal.goalDetails.goalId)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
+            {goals.map((goal) => {
+              if (!goal.programDetails || !goal.programDetails.programTitle) {
+                console.warn("Invalid goal skipped:", goal);
+                return null; // Skip invalid goal
+              }
 
-                {/* Expandable Account Rows */}
-                <TableRow>
-                  <TableCell colSpan={8} style={{ padding: 0, border: "none" }}>
-                    <Collapse in={expandedGoals.has(goal.goalDetails.goalId)} timeout="auto" unmountOnExit>
-                      <Box margin={2}>
-                        <Typography variant="h6">Accounts</Typography>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Account Name</TableCell>
-                              <TableCell>Address</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {goal.accounts.map((account) => (
-                              <TableRow key={account.distributorAcctId}>
-                                <TableCell>{account.accountName}</TableCell>
-                                <TableCell>{account.accountAddress}</TableCell>
+              return (
+                <React.Fragment key={goal.goalDetails.goalId}>
+                  {/* Parent Goal Row */}
+                  <TableRow>
+                    <TableCell>
+                      <IconButton onClick={() => toggleExpand(goal.goalDetails.goalId)}>
+                        {expandedGoals.has(goal.goalDetails.goalId) ? (
+                          <ExpandLessIcon />
+                        ) : (
+                          <ExpandMoreIcon />
+                        )}
+                      </IconButton>
+                    </TableCell>
+                    <TableCell>{goal.goalDetails.goal}</TableCell>
+                    <TableCell>{goal.goalDetails.goalMetric}</TableCell>
+                    <TableCell>{goal.goalDetails.goalValueMin}</TableCell>
+                    <TableCell>{goal.programDetails.programTitle}</TableCell>
+                    <TableCell>{goal.programDetails.programStartDate || "N/A"}</TableCell>
+                    <TableCell>{goal.programDetails.programEndDate || "N/A"}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={() => handleDeleteGoal(goal.goalDetails.goalId)}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Expandable Account Rows */}
+                  <TableRow>
+                    <TableCell colSpan={8} style={{ padding: 0, border: "none" }}>
+                      <Collapse in={expandedGoals.has(goal.goalDetails.goalId)} timeout="auto" unmountOnExit>
+                        <Box margin={2}>
+                          <Typography variant="h6">Accounts</Typography>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Account Name</TableCell>
+                                <TableCell>Address</TableCell>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </Box>
-                    </Collapse>
-                  </TableCell>
-                </TableRow>
-              </React.Fragment>
-            ))}
+                            </TableHead>
+                            <TableBody>
+                              {goal.accounts.map((account) => (
+                                <TableRow key={account.distributorAcctId}>
+                                  <TableCell>{account.accountName}</TableCell>
+                                  <TableCell>{account.accountAddress}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       )}

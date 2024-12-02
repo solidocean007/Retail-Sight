@@ -1,9 +1,10 @@
+// StoreLocator.tsx
 import { useEffect, useRef, useState } from "react";
 import { CompanyAccountType, PostType } from "../../utils/types";
 import { updateLocationsCollection } from "../../utils/PostLogic/updateLocationsCollection";
 import "./storeSelector.css";
 import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
-import { fetchUsersAccounts } from "../../utils/userData/fetchUserAccounts";
+import { fetchUsersAccounts } from "../../utils/userData/fetchUsersAccounts";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 

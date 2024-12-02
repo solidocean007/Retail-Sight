@@ -2,7 +2,7 @@ import { db } from "../firebase";
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { CompanyAccountType, CompanyType } from "../types";
 
-export async function fetchUsersAccounts(companyId: string, salesRouteNum: string): Promise<CompanyAccountType[]> {
+export async function fetchUsersAccounts(companyId: string, salesRouteNum: string | undefined): Promise<CompanyAccountType[]> {
   const companyRef = doc(collection(db, 'companies'), companyId);
   console.log('fetching accounts')
   try {
