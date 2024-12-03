@@ -16,6 +16,7 @@ import {
   Collapse,
   Button,
   IconButton,
+  TableSortLabel,
 } from "@mui/material";
 import { useAppDispatch } from "../../utils/store";
 import { fetchAllCompanyGoals } from "../../Slices/goalsSlice";
@@ -23,47 +24,61 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { deleteGoalFromFirestore } from "../../utils/helperFunctions/deleteGoalFRomFirestore";
+import { getCompanyUsersFromIndexedDB } from "../../utils/database/userDataIndexedDB";
+import './allGoalsView.css'
+
+type SortOrder = "asc" | "desc";
 
 const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
   const [goals, setGoals] = useState<FireStoreGalloGoalDocType[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
+  const [sortColumn, setSortColumn] = useState<string>("accountName");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
   const dispatch = useAppDispatch();
 
-  // Add a log to inspect the `goals` array.
   useEffect(() => {
-    console.log("Current goals in state:", goals);
-    goals.forEach((goal, index) => {
-      console.log(`Goal ${index + 1}:`, goal);
-      console.log(`Program Title: ${goal.programDetails?.programTitle}`);
-    });
-  }, [goals]);
+    const loadEmployees = async () => {
+      const employees = await getCompanyUsersFromIndexedDB();
+      const employeeMap: Record<string, string> = {};
+      employees.forEach((employee) => {
+        if (employee.salesRouteNum) {
+          employeeMap[
+            employee.salesRouteNum
+          ] = `${employee.firstName} ${employee.lastName}`;
+        }
+      });
+      setEmployeeMap(employeeMap);
+    };
+
+    loadEmployees();
+  }, []);
 
   useEffect(() => {
     const loadGoals = async () => {
       try {
         if (!companyId) {
-          setLoading(false); // Stop loading if no companyId
+          setLoading(false);
           return;
         }
 
-        // Load from IndexedDB
         const savedGoals = await getAllCompanyGoalsFromIndexedDB();
         if (savedGoals.length > 0) {
-          console.log("Loaded goals from IndexedDB:", savedGoals);
-          setGoals(savedGoals); // Update state with goals from IndexedDB
-          setLoading(false);
+          setGoals(savedGoals);
         } else {
-          // Fetch from Firestore if no data in IndexedDB
-          const fetchedGoals = await dispatch(fetchAllCompanyGoals({ companyId })).unwrap();
-          console.log("Fetched goals from Firestore:", fetchedGoals);
-          setGoals(fetchedGoals); // Update state with goals from Firestore
-          await saveAllCompanyGoalsToIndexedDB(fetchedGoals); // Save to IndexedDB
-          setLoading(false);
+          const fetchedGoals = await dispatch(
+            fetchAllCompanyGoals({ companyId })
+          ).unwrap();
+          setGoals(fetchedGoals);
+          await saveAllCompanyGoalsToIndexedDB(fetchedGoals);
         }
       } catch (error) {
         console.error("Error loading company goals:", error);
-        dispatch(showMessage("Failed to load company goals. Please try again."));
+        dispatch(
+          showMessage("Failed to load company goals. Please try again.")
+        );
+      } finally {
         setLoading(false);
       }
     };
@@ -85,15 +100,100 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
 
   const handleDeleteGoal = async (goalId: string) => {
     try {
-      await deleteGoalFromFirestore(goalId); // Remove from Firestore
-      const updatedGoals = goals.filter((goal) => goal.goalDetails.goalId !== goalId);
-      setGoals(updatedGoals); // Update local state
-      await saveAllCompanyGoalsToIndexedDB(updatedGoals); // Update IndexedDB
+      await deleteGoalFromFirestore(goalId);
+      const updatedGoals = goals.filter(
+        (goal) => goal.goalDetails.goalId !== goalId
+      );
+      setGoals(updatedGoals);
+      await saveAllCompanyGoalsToIndexedDB(updatedGoals);
       dispatch(showMessage("Goal deleted successfully."));
     } catch (error) {
       console.error("Error deleting goal:", error);
       dispatch(showMessage("Failed to delete goal. Please try again."));
     }
+  };
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortOrder("asc");
+    }
+  };
+
+  // const sortData = (data: any[], column: string, order: SortOrder) => {
+  //   return [...data].sort((a, b) => {
+  //     let aValue: any;
+  //     let bValue: any;
+
+  //     switch (column) {
+  //       case "accountName":
+  //         aValue = a.accountName;
+  //         bValue = b.accountName;
+  //         break;
+  //       case "accountAddress":
+  //         aValue = a.accountAddress;
+  //         bValue = b.accountAddress;
+  //         break;
+  //       case "salesman":
+  //         aValue = employeeMap[a.salesRouteNums?.[0] || ""] || "Unknown";
+  //         bValue = employeeMap[b.salesRouteNums?.[0] || ""] || "Unknown";
+  //         break;
+  //       case "salesRouteNums":
+  //         aValue = a.salesRouteNums?.[0] || 0;
+  //         bValue = b.salesRouteNums?.[0] || 0;
+  //         break;
+  //       default:
+  //         aValue = "";
+  //         bValue = "";
+  //     }
+
+  //     if (typeof aValue === "number" && typeof bValue === "number") {
+  //       return order === "asc" ? aValue - bValue : bValue - aValue;
+  //     }
+
+  //     return order === "asc"
+  //       ? String(aValue).localeCompare(String(bValue))
+  //       : String(bValue).localeCompare(String(aValue));
+  //   });
+  // };
+
+  const sortData = (data: any[], column: string, order: SortOrder) => {
+    return [...data].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (column) {
+        case "accountName":
+          aValue = a.accountName;
+          bValue = b.accountName;
+          break;
+        case "accountAddress":
+          aValue = a.accountAddress;
+          bValue = b.accountAddress;
+          break;
+        case "salesman":
+          aValue = employeeMap[a.salesRouteNums?.[0] || ""] || "Unknown";
+          bValue = employeeMap[b.salesRouteNums?.[0] || ""] || "Unknown";
+          break;
+        case "salesRouteNums":
+          aValue = a.salesRouteNums?.[0] || 0; // Use only the first route number for sorting
+          bValue = b.salesRouteNums?.[0] || 0;
+          break;
+        default:
+          aValue = "";
+          bValue = "";
+      }
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return order === "asc" ? aValue - bValue : bValue - aValue;
+      }
+
+      return order === "asc"
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    });
   };
 
   if (loading) {
@@ -106,92 +206,219 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
   }
 
   return (
-    <Box>
+    <Box className="table-container">
       <Typography variant="h4" gutterBottom>
-        All Company Goals
+        Company Goals
       </Typography>
       {goals.length === 0 ? (
         <Typography>No goals found for this company.</Typography>
       ) : (
-        <Table>
+        <Table className="table">
           <TableHead>
             <TableRow>
-              <TableCell></TableCell>
-              <TableCell>Goal</TableCell>
-              <TableCell>Metric</TableCell>
-              <TableCell>Min Value</TableCell>
-              <TableCell>Program Title</TableCell>
-              <TableCell>Start Date</TableCell>
-              <TableCell>End Date</TableCell>
+              <TableCell className="sortable">
+                <TableSortLabel
+                  active={sortColumn === "accountName"}
+                  direction={sortOrder}
+                  onClick={() => handleSort("accountName")}
+                >
+                  Account Name
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortColumn === "accountAddress"}
+                  direction={sortOrder}
+                  onClick={() => handleSort("accountAddress")}
+                >
+                  Address
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortColumn === "salesRouteNums"}
+                  direction={sortOrder}
+                  onClick={() => handleSort("salesRouteNums")}
+                >
+                  Route Number
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortColumn === "salesman"}
+                  direction={sortOrder}
+                  onClick={() => handleSort("salesman")}
+                >
+                  Salesman
+                </TableSortLabel>
+              </TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {goals.map((goal) => {
-              if (!goal.programDetails || !goal.programDetails.programTitle) {
-                console.warn("Invalid goal skipped:", goal);
-                return null; // Skip invalid goal
-              }
+            {goals.map((goal) => (
+              <React.Fragment key={goal.goalDetails.goalId}>
+                {/* Parent Goal Row */}
+                <TableRow>
+                  <TableCell>
+                    <IconButton
+                      onClick={() => toggleExpand(goal.goalDetails.goalId)}
+                    >
+                      {expandedGoals.has(goal.goalDetails.goalId) ? (
+                        <ExpandLessIcon />
+                      ) : (
+                        <ExpandMoreIcon />
+                      )}
+                    </IconButton>
+                  </TableCell>
+                  <TableCell colSpan={3}>
+                    <Typography variant="h6">
+                      {goal.goalDetails.goal}
+                    </Typography>
+                    <Typography variant="body2">
+                      {goal.programDetails?.programTitle ||
+                        "No description available"}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => handleDeleteGoal(goal.goalDetails.goalId)}
+                    >
+                      Delete Goal
+                    </Button>
+                  </TableCell>
+                </TableRow>
 
-              return (
-                <React.Fragment key={goal.goalDetails.goalId}>
-                  {/* Parent Goal Row */}
+                {/* Expandable Account Rows */}
+                {expandedGoals.has(goal.goalDetails.goalId) && (
                   <TableRow>
-                    <TableCell>
-                      <IconButton onClick={() => toggleExpand(goal.goalDetails.goalId)}>
-                        {expandedGoals.has(goal.goalDetails.goalId) ? (
-                          <ExpandLessIcon />
-                        ) : (
-                          <ExpandMoreIcon />
-                        )}
-                      </IconButton>
-                    </TableCell>
-                    <TableCell>{goal.goalDetails.goal}</TableCell>
-                    <TableCell>{goal.goalDetails.goalMetric}</TableCell>
-                    <TableCell>{goal.goalDetails.goalValueMin}</TableCell>
-                    <TableCell>{goal.programDetails.programTitle}</TableCell>
-                    <TableCell>{goal.programDetails.programStartDate || "N/A"}</TableCell>
-                    <TableCell>{goal.programDetails.programEndDate || "N/A"}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => handleDeleteGoal(goal.goalDetails.goalId)}
+                    <TableCell
+                      colSpan={5}
+                      style={{ padding: 0, border: "none" }}
+                    >
+                      <Collapse
+                        in={expandedGoals.has(goal.goalDetails.goalId)}
+                        timeout="auto"
+                        unmountOnExit
                       >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-
-                  {/* Expandable Account Rows */}
-                  <TableRow>
-                    <TableCell colSpan={8} style={{ padding: 0, border: "none" }}>
-                      <Collapse in={expandedGoals.has(goal.goalDetails.goalId)} timeout="auto" unmountOnExit>
                         <Box margin={2}>
                           <Typography variant="h6">Accounts</Typography>
                           <Table size="small">
                             <TableHead>
                               <TableRow>
-                                <TableCell>Account Name</TableCell>
-                                <TableCell>Address</TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortColumn === "accountName"}
+                                    direction={sortOrder}
+                                    onClick={() => handleSort("accountName")}
+                                  >
+                                    Account Name
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortColumn === "accountAddress"}
+                                    direction={sortOrder}
+                                    onClick={() => handleSort("accountAddress")}
+                                  >
+                                    Address
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortColumn === "salesRouteNums"}
+                                    direction={sortOrder}
+                                    onClick={() => handleSort("salesRouteNums")}
+                                  >
+                                    Route Number
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortColumn === "salesman"}
+                                    direction={sortOrder}
+                                    onClick={() => handleSort("salesman")}
+                                  >
+                                    Salesman
+                                  </TableSortLabel>
+                                </TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
-                              {goal.accounts.map((account) => (
-                                <TableRow key={account.distributorAcctId}>
-                                  <TableCell>{account.accountName}</TableCell>
-                                  <TableCell>{account.accountAddress}</TableCell>
-                                </TableRow>
-                              ))}
+                              {sortData(
+                                goal.accounts,
+                                sortColumn,
+                                sortOrder
+                              ).flatMap((account) => {
+                                const rows = [];
+
+                                // Render a row for each sales route number
+                                if (
+                                  Array.isArray(account.salesRouteNums) &&
+                                  account.salesRouteNums.length > 1
+                                ) {
+                                  account.salesRouteNums.forEach(
+                                    (routeNum: string, index: number) => {
+                                      rows.push(
+                                        <TableRow
+                                          key={`${account.distributorAcctId}-${index}`}
+                                        >
+                                          <TableCell>
+                                            {index === 0
+                                              ? account.accountName
+                                              : ""}
+                                          </TableCell>
+                                          <TableCell>
+                                            {index === 0
+                                              ? account.accountAddress
+                                              : ""}
+                                          </TableCell>
+                                          <TableCell>{routeNum}</TableCell>
+                                          <TableCell>
+                                            {employeeMap[routeNum] || "Unknown"}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    }
+                                  );
+                                } else {
+                                  rows.push(
+                                    <TableRow key={account.distributorAcctId}>
+                                      <TableCell>
+                                        {account.accountName}
+                                      </TableCell>
+                                      <TableCell>
+                                        {account.accountAddress}
+                                      </TableCell>
+                                      <TableCell>
+                                        {Array.isArray(account.salesRouteNums)
+                                          ? account.salesRouteNums[0]
+                                          : account.salesRouteNums || "N/A"}
+                                      </TableCell>
+                                      <TableCell>
+                                        {employeeMap[
+                                          Array.isArray(account.salesRouteNums)
+                                            ? account.salesRouteNums[0]
+                                            : account.salesRouteNums || ""
+                                        ] || "Unknown"}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                }
+
+                                return rows;
+                              })}
                             </TableBody>
                           </Table>
                         </Box>
                       </Collapse>
                     </TableCell>
                   </TableRow>
-                </React.Fragment>
-              );
-            })}
+                )}
+              </React.Fragment>
+            ))}
           </TableBody>
         </Table>
       )}
@@ -200,7 +427,3 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
 };
 
 export default AllGoalsView;
-
-
-
-

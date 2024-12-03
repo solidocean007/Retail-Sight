@@ -12,57 +12,75 @@ interface Invite {
 
 const PendingInvites = () => {
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchUsersAndInvites = async () => {
+    const fetchPendingInvites = async () => {
       try {
         // Fetch pending invites
-        const invitesQuery = query(collection(db, 'invites'), where('status', '==', 'pending'));
+        const invitesQuery = query(collection(db, "invites"), where("status", "==", "pending"));
         const invitesSnapshot = await getDocs(invitesQuery);
-        const fetchedInvites = invitesSnapshot.docs.map(doc => ({
+
+        // Map fetched invites to state
+        const fetchedInvites = invitesSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         })) as Invite[];
 
-        // Ideally, limit this to likely candidates based on the invites you've fetched
-        const usersQuery = query(collection(db, 'users'));
-        const usersSnapshot = await getDocs(usersQuery);
-        const users = usersSnapshot.docs.map(doc => doc.data());
-
-        // Filter invites against registered users
-        const filteredInvites = fetchedInvites.filter(invite => {
-          // Perform a case-insensitive check to see if the invite email matches any user email
-          return !users.some(user => user.email?.toLowerCase() === invite.email.toLowerCase());
-        });
-
-        setInvites(filteredInvites);
+        setInvites(fetchedInvites);
       } catch (error) {
-        console.error('Error fetching invites and users:', error);
+        console.error("Error fetching pending invites:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUsersAndInvites();
+    fetchPendingInvites();
   }, []);
 
   const cancelInvite = async (inviteId: string) => {
     try {
-      await deleteDoc(doc(db, 'invites', inviteId));
-      setInvites(prevInvites => prevInvites.filter(invite => invite.id !== inviteId));
+      await deleteDoc(doc(db, "invites", inviteId));
+      setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== inviteId));
     } catch (error) {
-      console.error('Error cancelling invite:', error);
+      console.error("Error cancelling invite:", error);
     }
   };
 
   return (
-    <div className='pending-invites-container'>
-      <h2>Pending Invites</h2>
-      <ul>
-        {invites.map(invite => (
-          <li key={invite.id}>
-            {invite.email} <button onClick={() => cancelInvite(invite.id)}>Cancel Invite</button>
-          </li>
-        ))}
-      </ul>
+    <div className="pending-invites-container">
+      <h2 className="title">Pending Invites</h2>
+      {loading ? (
+        <p className="loading-message">Loading invites...</p>
+      ) : invites.length === 0 ? (
+        <p className="empty-message">No pending invites found.</p>
+      ) : (
+        <table className="invites-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Company</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invites.map((invite) => (
+              <tr key={invite.id}>
+                <td>{invite.email}</td>
+                <td>{invite.companyName || "N/A"}</td>
+                <td>
+                  <button
+                    className="cancel-button"
+                    onClick={() => cancelInvite(invite.id)}
+                  >
+                    Cancel Invite
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };

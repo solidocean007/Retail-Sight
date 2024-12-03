@@ -15,11 +15,14 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { UserType } from "../utils/types";
-import { collection, doc, onSnapshot, query, setDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, where } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useSelector } from "react-redux";
 import { selectUser, setCompanyUsers } from "../Slices/userSlice";
 import { getCompanyUsersFromIndexedDB, saveCompanyUsersToIndexedDB, updateUserRoleInIndexedDB } from "../utils/database/userDataIndexedDB";
+import PendingInvites from "./PendingInvites";
+import { getFunctions, httpsCallable } from "@firebase/functions";
+import { cleanUpDuplicateInvites } from "../../cleanUpDuplicateInvites";
 
 interface EmployeesViewerProps {
   localUsers: UserType[];
@@ -30,6 +33,13 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
   const currentUser = useSelector(selectUser);
   const companyId = currentUser?.companyId;
   const isSuperAdmin = currentUser?.role === "super-admin";
+  const isAdmin = currentUser?.role === "admin";
+  const isDeveloper = currentUser?.role === "developer";
+
+  const [inviteEmail, setInviteEmail] = useState<string>("");
+  const [inviteLink, setInviteLink] = useState<string>("");
+  const [showPendingInvites, setShowPendingInvites] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   const [editedUsers, setEditedUsers] = useState<{ [key: string]: UserType }>({});
   const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
@@ -58,6 +68,10 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
     fetchData();
   }, [companyId]);
 
+  const toggleInvites = () => {
+    setShowPendingInvites((prev) => !prev);
+  };
+
   const handleEditToggle = (userId: string) => {
     setEditMode((prev) => ({ ...prev, [userId]: !prev[userId] }));
     const userToEdit = localUsers.find((user) => user.uid === userId);
@@ -68,6 +82,49 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
       }));
     }
   };
+
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    if (!inviteEmail || !currentUser) {
+      setFeedbackMessage("Email is required, or you are not authenticated.");
+      return;
+    }
+    const functions = getFunctions();
+    const inviteFunction = httpsCallable(functions, "sendInvite");
+    const inviteDocRef = doc(collection(db, "invites")); // Generate a new document ID
+    const timestamp = new Date().toISOString();
+  
+    try {
+      const inviteLink = `${window.location.origin}/sign-up-login?companyName=${encodeURIComponent(
+        currentUser.company
+      )}&email=${encodeURIComponent(inviteEmail)}`;
+  
+      // Call the cloud function to send the email invite
+      await inviteFunction({
+        email: inviteEmail,
+        inviter: `${currentUser.firstName} ${currentUser.lastName}`,
+        inviteLink,
+      });
+  
+      // Write to Firestore to track the invite
+      await setDoc(inviteDocRef, {
+        companyId: currentUser.companyId,
+        email: inviteEmail,
+        inviter: `${currentUser.firstName} ${currentUser.lastName}`,
+        link: inviteLink,
+        status: "pending", // Initial status
+        timestamp,
+      });
+  
+      setFeedbackMessage("Invite sent and tracked successfully!");
+      setInviteEmail(""); // Reset the email field
+    } catch (error) {
+      console.error("Error sending or tracking invite:", error);
+      setFeedbackMessage("Failed to send or track the invite. Please try again.");
+    }
+  };
+  
 
   const handleEditChange = (userId: string, field: keyof UserType, value: string) => {
     setEditedUsers((prev) => ({
@@ -101,6 +158,37 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
 
   return (
     <Container disableGutters>
+      <Box>
+      {(isAdmin || isDeveloper || isSuperAdmin) && (
+          <section className="invite-section">
+            <button className="button-blue" onClick={toggleInvites}>
+              {showPendingInvites ? "Hide pending" : "Show Pending Invites"}
+            </button>
+
+            {showPendingInvites && (
+              <div className="all-pending-invites">
+                <form className="invite-form" onSubmit={handleInviteSubmit}>
+                  <div className="invite-title">
+                    <label htmlFor="inviteEmail">Invite Employee:</label>
+                  </div>
+                  <div className="invite-input-box">
+                    <input
+                      type="email"
+                      id="inviteEmail"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="Enter employee's email"
+                      required
+                    />
+                    <button type="submit">Send Invite</button>
+                  </div>
+                </form>
+                <PendingInvites />
+              </div>
+            )}
+          </section>
+        )}
+      </Box>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
