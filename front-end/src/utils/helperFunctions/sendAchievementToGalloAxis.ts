@@ -4,7 +4,7 @@ import { AchievementPayloadType } from "../types";
 
 // Import the Gallo base URL from environment variables
 // const galloBaseUrl = import.meta.env.REACT_APP_GALLO_BASE_URL;
-const galloBaseUrl ='https://6w7u156vcb.execute-api.us-west-2.amazonaws.com';
+const galloBaseUrl = "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
 
 export const sendAchievementToGalloAxis = async (
   payload: AchievementPayloadType,
@@ -13,7 +13,9 @@ export const sendAchievementToGalloAxis = async (
 ): Promise<void> => {
   try {
     if (!galloBaseUrl) {
-      throw new Error("Gallo base URL is not defined in environment variables.");
+      throw new Error(
+        "Gallo base URL is not defined in environment variables."
+      );
     }
 
     if (!payload.oppId || typeof payload.oppId !== "string") {
@@ -51,15 +53,31 @@ export const sendAchievementToGalloAxis = async (
       body: formattedPayload,
     };
 
-    const response = await fetch("https://my-fetch-data-api.vercel.app/api/fetchData", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(vercelPayload),
-    });
+    const response = await fetch(
+      "https://my-fetch-data-api.vercel.app/api/fetchData",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(vercelPayload),
+      }
+    );
+
+    let responseData;
+    try {
+      responseData = await response.json();
+    } catch (error) {
+      console.error("Failed to parse JSON response:", error);
+      const rawText = await response.text();
+      console.log("Raw response text:", rawText);
+      throw new Error("Unexpected response format from backend");
+    }
 
     if (!response.ok) {
       const errorDetails = await response.text();
-      if (response.status === 500 && errorDetails.includes("Achievement already sent")) {
+      if (
+        response.status === 500 &&
+        errorDetails.includes("Achievement already sent")
+      ) {
         // Non-critical error: Achievement already sent
         throw new Error("Achievement already sent");
       } else if (response.status === 500 || response.status === 400) {
@@ -82,10 +100,11 @@ export const sendAchievementToGalloAxis = async (
       throw new Error(error.message);
     } else {
       console.error("Critical error in sendAchievementToGalloAxis:", error);
-      throw new Error(error.message || "Critical failure: Unknown error occurred.");
+      throw new Error(
+        error.message || "Critical failure: Unknown error occurred."
+      );
     }
   } finally {
-    navigate("/user-home-page")
+    navigate("/user-home-page");
   }
 };
-
