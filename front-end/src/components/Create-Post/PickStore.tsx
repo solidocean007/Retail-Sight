@@ -94,7 +94,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
     state: string;
   } | null>(null);
 
-  const [selectedCompanyAccount, setSelectedCompanyAccount] = useState<CompanyAccountType | null>(null);
+  const [selectedCompanyAccount, setSelectedCompanyAccount] =
+    useState<CompanyAccountType | null>(null);
 
   const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
   const [goalMetric, setGoalMetric] = useState<"cases" | "bottles">("cases");
@@ -235,13 +236,15 @@ export const PickStore: React.FC<PickStoreProps> = ({
     if (selectedStoreByAddress && isAdmin) {
       console.log("Triggering account match for:", selectedStoreByAddress);
       if (allAccounts && allAccounts.length > 0) {
-        matchAccountWithSelectedStoreForAdmin(selectedStoreByAddress, allAccounts);
+        matchAccountWithSelectedStoreForAdmin(
+          selectedStoreByAddress,
+          allAccounts
+        );
       } else {
         console.warn("No company accounts found for matching.");
       }
     }
   }, [selectedStoreByAddress, isAdmin, allAccounts]);
-
 
   // this function should convert a selectedStore by address into a companyAccount
   const matchAccountWithSelectedStoreForAdmin = (
@@ -254,7 +257,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     accounts: CompanyAccountType[]
   ) => {
     console.log("Matching store to accounts:", selectedStoreByAddress);
-    
+
     // Normalize the selected store details
     const normalizedAddress = selectedStoreByAddress.address
       .toLowerCase()
@@ -264,10 +267,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
       .toLowerCase()
       .replace(/\s/g, "")
       .substring(0, 5);
-  
+
     console.log("Normalized Address:", normalizedAddress);
     console.log("Normalized Name:", normalizedName);
-  
+
     // Find a perfect match
     const perfectMatch = accounts.find((account) => {
       const normalizedAccountAddress = account.accountAddress
@@ -278,20 +281,20 @@ export const PickStore: React.FC<PickStoreProps> = ({
         .toLowerCase()
         .replace(/\s/g, "")
         .substring(0, 5);
-  
+
       console.log(
         `Comparing Account: ${account.accountName} | Address: ${account.accountAddress}`
       );
       console.log(
         `Normalized Account Address: ${normalizedAccountAddress} | Normalized Account Name: ${normalizedAccountName}`
       );
-  
+
       return (
         normalizedAccountAddress === normalizedAddress &&
         normalizedAccountName === normalizedName
       );
     });
-  
+
     if (perfectMatch) {
       console.log("Perfect match found:", perfectMatch);
       setPost((prev) => ({
@@ -302,7 +305,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       }));
     } else {
       console.warn("No perfect match found. Finding closest matches...");
-      
+
       // Find the closest matches
       const topClosestMatches = accounts
         .map((account) => {
@@ -312,18 +315,18 @@ export const PickStore: React.FC<PickStoreProps> = ({
             .substring(0, 10);
           const addressSimilarity =
             normalizedAccountAddress === normalizedAddress ? 1 : 0;
-  
+
           console.log(
             `Address Similarity for Account: ${account.accountName} | Address: ${account.accountAddress} = ${addressSimilarity}`
           );
-  
+
           return { account, addressSimilarity };
         })
         .filter(({ addressSimilarity }) => addressSimilarity > 0)
         .sort((a, b) => b.addressSimilarity - a.addressSimilarity)
         .slice(0, 3)
         .map(({ account }) => account);
-  
+
       if (topClosestMatches.length > 0) {
         console.log("Closest matches found:", topClosestMatches);
         setClosestMatches(topClosestMatches);
@@ -333,8 +336,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
       }
     }
   };
-  
-
 
   useEffect(() => {
     if (goals.length > 0) {
@@ -361,10 +362,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
         }
       }
     };
-  
+
     loadAllCompanyAccounts();
   }, [isAdmin, companyId]);
-  
 
   // once a regular user selects an account this would load or fetch goals
   useEffect(() => {
@@ -421,7 +421,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
-  const handleAccountSelect = (account: CompanyAccountType) => { // this isnt used
+  const handleAccountSelect = (account: CompanyAccountType) => {
+    // this isnt used
     //declared but never read
     setPost((prev) => ({
       ...prev,
@@ -446,13 +447,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
       selectedStore: account.accountName,
     }));
     setIsMatchSelectionOpen(false); // Close the modal
-  
+
     // Trigger goal search after updating the post state
     if (isAdmin) {
       searchGoalsForAccount(account.accountNumber);
     }
   };
-  
 
   const searchGoalsForAccount = async (accountNumber: string) => {
     setIsFetchingGoals(true);
@@ -507,10 +507,11 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
-  console.log(selectedStoreByAddress, ': selectedStore by address');
+  console.log(selectedStoreByAddress, ": selectedStore by address");
 
   return (
     <div className="pick-store">
+      {/* Header Controls */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -539,37 +540,76 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Button>
       </Box>
 
+      {/* Selected Store */}
       {post.selectedStore && (
         <Box mt={2}>
           <Typography variant="h5" fontWeight="bold">
             {post.selectedStore}
           </Typography>
+          {/* Render Selected Goal */}
+          {selectedGoalId && (
+            <Typography mt={1} variant="body1" color="textSecondary">
+              Selected Goal:{" "}
+              {activeGoals.find(
+                (goal) => goal.goalDetails.goalId === selectedGoalId
+              )?.goalDetails.goal || "N/A"}
+            </Typography>
+          )}
         </Box>
       )}
 
+      {/* Goals Dropdown */}
       <Box mt={3}>
-        {isFetchingGoals ? (
-          <CircularProgress />
-        ) : (
-          <Typography>
-            Goals for account will be dynamically displayed here.
-          </Typography>
+        {isFetchingGoals && <CircularProgress />}
+        {!isFetchingGoals && activeGoals.length > 0 && (
+          <Typography>{`${activeGoals.length} goals available for this account.`}</Typography>
         )}
       </Box>
 
       <Box mt={3}>
+        {isFetchingGoal ? (
+          <CircularProgress />
+        ) : (
+          <Select
+            fullWidth
+            variant="outlined"
+            value={selectedGoalId || "no-goal"}
+            onChange={(e) => handleGoalSelection(e.target.value)}
+          >
+            <MenuItem value="no-goal">No Gallo goals for this account</MenuItem>
+            {activeGoals.map((goal) => (
+              <MenuItem
+                key={goal.goalDetails.goalId}
+                value={goal.goalDetails.goalId}
+              >
+                {goal.goalDetails.goal}
+              </MenuItem>
+            ))}
+          </Select>
+        )}
+      </Box>
+
+      {/* Total Case Count */}
+      <Typography variant="h6" mt={3}>{`Total ${goalMetric} count`}</Typography>
+      <TotalCaseCount
+        handleTotalCaseCountChange={(count) =>
+          handleFieldChange("closedUnits", count)
+        }
+      />
+
+      {/* Map or Account Dropdown */}
+      <Box mt={3}>
         {isMapMode ? (
           <StoreLocator
-          onStoreSelect={(store) => {
-            setSelectedStoreByAddress({
-              name: store.name,
-              address: store.address,
-              city: store.city || "", // Default to empty strings if city or state are missing
-              state: store.state || "",
-            });
-          }}
-        />
-        
+            onStoreSelect={(store) => {
+              setSelectedStoreByAddress({
+                name: store.name,
+                address: store.address,
+                city: store.city || "",
+                state: store.state || "",
+              });
+            }}
+          />
         ) : (
           <AccountDropdown
             onAccountSelect={(account) => {
@@ -584,77 +624,35 @@ export const PickStore: React.FC<PickStoreProps> = ({
         )}
       </Box>
 
-      <Typography variant="h6">{`Total ${goalMetric} count`}</Typography>
-      <TotalCaseCount
-        handleTotalCaseCountChange={(count) =>
-          handleFieldChange("closedUnits", count)
-        }
-      />
-
-      <Box mt={3}>
-        {isFetchingGoal ? (
-          <CircularProgress />
-        ) : (
-          <Select
-            fullWidth
-            variant="outlined"
-            value={selectedGoalId || "no-goal"}
-            onChange={(e) => handleGoalSelection(e.target.value)}
-          >
-            <MenuItem value="no-goal">
-              No goal selected for this display
-            </MenuItem>
-            {activeGoals.map((goal) => (
-              <MenuItem
-                key={goal.goalDetails.goalId}
-                value={goal.goalDetails.goalId}
-              >
-                {goal.goalDetails.goal}
-              </MenuItem>
-            ))}
-          </Select>
-        )}
-        {/* {!isEmployee && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              if (selectedStore) {
-                handleFetchGoalForAnyAccount(selectedStore);
-              } else {
-                console.warn("No store selected.");
-              }
-            }}
-            disabled={!selectedStore} // Button is disabled if no store is selected
-          >
-            Fetch Goals
-          </Button>
-        )} */}
-      </Box>
+      {/* Match Selection Dialog */}
       <Dialog
-  open={isMatchSelectionOpen}
-  onClose={() => setIsMatchSelectionOpen(false)}
->
-  <DialogTitle>Select a company account that matches the address</DialogTitle>
-  <DialogContent>
-    <List>
-      {closestMatches.map((account) => (
-        <ListItem key={account.accountNumber} disablePadding>
-          <ListItemButton onClick={() => handleSelectClosestMatch(account)}>
-            <Checkbox />
-            <ListItemText
-              primary={account.accountName}
-              secondary={account.accountAddress}
-            />
-          </ListItemButton>
-        </ListItem>
-      ))}
-    </List>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setIsMatchSelectionOpen(false)}>Cancel</Button>
-  </DialogActions>
-</Dialog>
+        open={isMatchSelectionOpen}
+        onClose={() => setIsMatchSelectionOpen(false)}
+      >
+        <DialogTitle>
+          Select a company account that matches the address
+        </DialogTitle>
+        <DialogContent>
+          <List>
+            {closestMatches.map((account) => (
+              <ListItem key={account.accountNumber} disablePadding>
+                <ListItemButton
+                  onClick={() => handleSelectClosestMatch(account)}
+                >
+                  <Checkbox />
+                  <ListItemText
+                    primary={account.accountName}
+                    secondary={account.accountAddress}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsMatchSelectionOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
