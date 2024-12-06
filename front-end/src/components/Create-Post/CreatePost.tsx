@@ -30,7 +30,7 @@ import { ChannelType } from "../ChannelSelector";
 // import { SupplierType } from "./SupplierSelector";
 // import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
-import LoadingIndicator from "../LoadingIndicator";
+import LoadingIndicator from "./LoadingIndicator";
 import { CreatePostHelmet } from "../../utils/helmetConfigurations";
 import { UploadImage } from "./UploadImage";
 import { PickStore } from "./PickStore";
@@ -42,6 +42,17 @@ import { useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
+import {
+  getGoalsFromIndexedDB,
+  getUserAccountsFromIndexedDB,
+  saveGoalsToIndexedDB,
+} from "../../utils/database/indexedDBUtils";
+import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
+import {
+  fetchUserGalloGoals,
+  selectGoals,
+  setGoals,
+} from "../../Slices/goalsSlice";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
@@ -49,7 +60,7 @@ export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
-
+  const goals = useSelector(selectGoals);
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 
@@ -59,6 +70,7 @@ export const CreatePost = () => {
   const handlePostSubmission = useHandlePostSubmission();
 
   const userData = useSelector(selectUser);
+  const companyId = userData?.companyId;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
   const [selectedCategory, setSelectedCategory] =
@@ -72,8 +84,10 @@ export const CreatePost = () => {
   // const [selectedBrands, setSelectedBrands] = useState<BrandType[]>([]);
 
   const postUser = onBehalf || userData;
+  const salesRouteNum = userData?.salesRouteNum;
 
   const [post, setPost] = useState<PostType>({
+    accountNumber: "",
     category: selectedCategory,
     channel: selectedChannel,
     description: "",
@@ -107,9 +121,43 @@ export const CreatePost = () => {
   const [selectedMission, setSelectedMission] = useState<MissionType | null>(
     null
   );
+  const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("onBehalf changed:", onBehalf);
+    const loadInitialGoals = async () => {
+      if (!companyId) return;
+  
+      try {
+        const savedGoals = await getGoalsFromIndexedDB();
+  
+        // If there are saved goals, dispatch them
+        if (savedGoals.length > 0) {
+          dispatch(setGoals(savedGoals));
+        } else {
+          // Otherwise, fetch from Firestore
+          console.log("Fetching goals from Firestore...");
+          const fetchedGoals = await dispatch(
+            fetchUserGalloGoals({
+              companyId,
+              salesRouteNum,
+            })
+          ).unwrap(); // Unwrap the result of the async thunk to get the data directly
+  
+          if (fetchedGoals.length > 0) {
+            dispatch(setGoals(fetchedGoals));
+            await saveGoalsToIndexedDB(fetchedGoals); // Save to IndexedDB
+          }
+        }
+      } catch (error) {
+        console.error("Error loading initial goals:", error);
+      }
+    };
+  
+    loadInitialGoals();
+  }, [companyId, salesRouteNum, dispatch]);
+  
+
+  useEffect(() => {
     if (onBehalf) {
       setPost((prevPost) => ({
         ...prevPost,
@@ -148,8 +196,6 @@ export const CreatePost = () => {
       setOpenMissionSelection(false);
     }
   }, [post.visibility]);
-
-  const navigate = useNavigate();
 
   const onClose = () => {
     setOpenMissionSelection(false);
@@ -243,7 +289,6 @@ export const CreatePost = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        // add a picture.  need to make an upload image component
         return (
           <UploadImage
             onNext={goToNextStep}
@@ -253,11 +298,13 @@ export const CreatePost = () => {
         );
       case 2:
         return (
-          // select store
           <PickStore
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
             post={post}
+            setPost={setPost}
+            goals={goals}
+            handleFieldChange={handleFieldChange}
             onStoreNameChange={handleStoreNameChange}
             onStoreNumberChange={handleStoreNumberChange}
             onStoreAddressChange={handleStoreAddressChange}
@@ -270,7 +317,6 @@ export const CreatePost = () => {
           <SetDisplayDetails
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
-            handleFieldChange={handleFieldChange}
             selectedChannel={selectedChannel}
             setSelectedChannel={setSelectedChannel}
             selectedCategory={selectedCategory}
@@ -290,17 +336,17 @@ export const CreatePost = () => {
       default:
         return (
           <ReviewAndSubmit
+            companyId={companyId}
             post={post}
             onPrevious={goToPreviousStep}
             handleFieldChange={handleFieldChange}
             setIsUploading={setIsUploading}
+            uploadProgress={uploadProgress}
             selectedFile={selectedFile}
             setUploadProgress={setUploadProgress}
             handlePostSubmission={handlePostSubmission}
             selectedCompanyMission={selectedCompanyMission}
             selectedMission={selectedMission}
-            // selectedCategory={selectedCategory}
-            // selectedChannel={selectedChannel}
           />
         );
     }
@@ -315,23 +361,29 @@ export const CreatePost = () => {
     // justifyContent: "space-between",
     flexDirection: { sm: "row", md: "row" },
   };
-
   return (
     <>
       <CreatePostHelmet />
       <Container disableGutters className="create-post-container">
-        {isUploading && (
-          <LoadingIndicator progress={uploadProgress} />
-        )}
+        {isUploading && <LoadingIndicator progress={uploadProgress} />}
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
-            <div style={{ display: "flex", width: "100%", justifyContent: "space-between" }}>
+            <div
+              style={{
+                display: "flex",
+                width: "100%",
+                justifyContent: "space-between",
+              }}
+            >
               <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
-              <IconButton aria-label="close" onClick={() => navigate("/user-home-page")}>
+              <IconButton
+                aria-label="close"
+                onClick={() => navigate("/user-home-page")}
+              >
                 <CancelRounded />
               </IconButton>
             </div>
-  
+
             {authToCreateOnBehalf && (
               <CreatePostOnBehalfOfOtherUser
                 onBehalf={onBehalf}
@@ -353,5 +405,4 @@ export const CreatePost = () => {
       </Container>
     </>
   );
-  
 };

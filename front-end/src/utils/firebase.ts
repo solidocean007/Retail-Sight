@@ -20,7 +20,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Storage
-const storage = getStorage(app); // Add this line
+const storage = getStorage(app);
 
 // Get a reference to the auth service
 const auth = getAuth(app);

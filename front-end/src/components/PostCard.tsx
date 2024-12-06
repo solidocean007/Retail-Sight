@@ -275,7 +275,6 @@ const PostCard: React.FC<PostCardProps> = ({
                 </div>
                 <h5>date: {formattedDate}</h5>
               </div>
-
               <div className="post-user-details">
                 {/* <div onClick={handleOnUserNameClick}> */}
                 <div className="post-user-name">

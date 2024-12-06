@@ -44,25 +44,39 @@ import {
   Menu,
   Toolbar,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import EmployeesViewer from "./EmployeesViewer";
 import UserProfileViewer from "./UserProfileViewer";
-import ApiViewer from "./ApiViewer";
 import { handleLogout } from "../utils/validation/authenticate";
 import LogOutButton from "./LogOutButton";
 import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
+import ApiView from "./ApiView.tsx";
+import IntegrationView from "./IntegrationView.tsx";
+import GoalIntegrationView from "./GoalIntegration/GoalntegrationLayout.tsx";
+import AccountManager from "./AccountsManager.tsx";
+import MyGoals from "./MyGoals.tsx";
+import GoalIntegrationLayout from "./GoalIntegration/GoalntegrationLayout.tsx";
 
 type DashboardModeType =
   | "TeamMode"
   | "UsersMode"
+  | "AccountsMode"
+  | "MyGoalsMode"
   | "ProfileMode"
+  | "IntegrationMode"
+  | "Goal Manager"
   | "ApiMode"
   | "CollectionsMode"
   | "TutorialMode";
 
 export const Dashboard = () => {
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery("(min-width: 768px)");
+  const drawerWidth = 240;
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const [dashboardMode, setDashboardMode] =
     useState<DashboardModeType>("TeamMode");
@@ -73,12 +87,13 @@ export const Dashboard = () => {
   );
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
   // const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   // const companyUsers = useSelector(selectCompanyUsers); // this is a selector to company users stored in state.  its not being used right now
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
+  const isEmployee = user?.role === "employee";
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer";
   const isSuperAdmin = user?.role === "super-admin";
@@ -90,17 +105,21 @@ export const Dashboard = () => {
     setDrawerOpen(false);
   };
 
-  const toggleDrawer =
+  const toggleDrawer = // what does this function do?
     (open: boolean) => (event: React.MouseEvent | React.KeyboardEvent) => {
       if (
         event.type === "keydown" &&
-        ((event as React.KeyboardEvent).key === "Tab" ||
+        ((event as React.KeyboardEvent).key === "Tab" || // what does tab and shift have to do with this function
           (event as React.KeyboardEvent).key === "Shift")
       ) {
         return;
       }
       setDrawerOpen(open);
     };
+
+  useEffect(() => {
+    setDrawerOpen(isLargeScreen);
+  }, [isLargeScreen]);
 
   // Separate useEffect to attempt to load from IndexedDB when component mounts
   useEffect(() => {
@@ -117,76 +136,94 @@ export const Dashboard = () => {
   }, []);
 
   return (
-    <Container>
+    <Container disableGutters  maxWidth={false}>
       <DashboardHelmet />
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{ flexGrow: 1, ml: isLargeScreen ? `${drawerWidth}px` : 0 }}>
         <AppBar position="static">
           <Toolbar>
-            <Typography
-              variant="h1"
-              component="div"
-              sx={{ flexGrow: 1, fontSize: "40px" }}
-            >
+            <Typography variant="h1" component="div" sx={{ flexGrow: 1, fontSize: "40px" }}>
               Dashboard
             </Typography>
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              onClick={toggleDrawer(true)}
-            >
-              <MenuIcon />
-            </IconButton>
+            {!isLargeScreen && (
+              <IconButton edge="start" color="inherit" aria-label="menu" onClick={toggleDrawer(true)}>
+                <MenuIcon />
+              </IconButton>
+            )}
           </Toolbar>
         </AppBar>
       </Box>
-      <Box>
-        {dashboardMode === "TeamMode" && (
-          <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />
-        )}
-        {dashboardMode === "UsersMode" && (
-          <EmployeesViewer
-            localUsers={localUsers}
-            setLocalUsers={setLocalUsers}
-          />
-        )}
-        {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
-        {dashboardMode === "ApiMode" && <ApiViewer />}
-        {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
-        {dashboardMode === "TutorialMode" && <TutorialViewer />}
-      </Box>
 
-      <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={toggleDrawer(false)}
+        variant={isLargeScreen ? "permanent" : "temporary"} // Toggle the variant based on screen size
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            boxSizing: "border-box",
+          },
+        }}
+      >
         <List>
-          <ListItem>
-            {/* <ListItemText primary="Logout" /> */}
+          <ListItem className="drawer-link">
             <LogOutButton />
           </ListItem>
-          <ListItem onClick={() => navigate("/user-home-page")}>
+          <ListItem className="drawer-link" onClick={() => navigate("/user-home-page")}>
             <ListItemText primary="Home" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("TeamMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("TeamMode")}>
             <ListItemText primary="Teams" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("UsersMode")}>
+          {!isEmployee && <ListItem className="drawer-link" onClick={handleMenuItemClick("AccountsMode")}>
+            <ListItemText primary="Accounts" />
+          </ListItem>}
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("MyGoalsMode")}>
+            <ListItemText primary="My Goals" />
+          </ListItem>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("UsersMode")}>
             <ListItemText primary="Users" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("ProfileMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("ProfileMode")}>
             <ListItemText primary="Profile" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("ApiMode")}>
+          {!isEmployee &&  <ListItem className="drawer-link" onClick={handleMenuItemClick("ApiMode")}>
             <ListItemText primary="Api" />
-          </ListItem>
-          <ListItem onClick={handleMenuItemClick("CollectionsMode")}>
+          </ListItem>}
+          {!isEmployee && <ListItem className="drawer-link" onClick={handleMenuItemClick("Goal Manager")}>
+            <ListItemText primary="Goal Manager" />
+          </ListItem>}
+         
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("CollectionsMode")}>
             <ListItemText primary="Collections" />
           </ListItem>
-          <ListItem onClick={handleMenuItemClick("TutorialMode")}>
+          <ListItem className="drawer-link" onClick={handleMenuItemClick("TutorialMode")}>
             <ListItemText primary="Tutorial" />
           </ListItem>
         </List>
       </Drawer>
+
+      <Box
+        sx={{
+          marginLeft: isLargeScreen ? `${drawerWidth}px` : 0,
+          padding: 3, // Add some padding for better spacing
+        }}
+      >
+        {dashboardMode === "TeamMode" && <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
+        {dashboardMode === "AccountsMode" && <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin}/>}
+        {dashboardMode === "MyGoalsMode" && <MyGoals/>}
+        {dashboardMode === "UsersMode" && <EmployeesViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />}
+        {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
+        {dashboardMode === "ApiMode" && <ApiView />}
+        {dashboardMode === "Goal Manager" && <GoalIntegrationLayout />}
+        {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
+        {dashboardMode === "TutorialMode" && <TutorialViewer />}
+      </Box>
     </Container>
   );
 };
+
 
 export default Dashboard;

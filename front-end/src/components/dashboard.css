@@ -6,6 +6,10 @@
   padding: 20px;
 } */
 
+.drawer-link {
+  cursor: pointer;
+}
+
 .dashboard-sidebar {
   display: none;
   width: 250px;

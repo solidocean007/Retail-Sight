@@ -7,11 +7,12 @@ import postsReducer from "../Slices/postsSlice";
 import locationReducer from '../Slices/locationSlice'
 import { themeReducer } from "../reducers/themeReducer";
 import userModalReducer from "../Slices/userModalSlice";
-
-
+import userAccountsSlice from "../Slices/userAccountsSlice";
+import allAccountsSlice from "../Slices/allAccountsSlice";
 import { useDispatch as _useDispatch } from 'react-redux';
 import teamsSlice from "../Slices/teamsSlice";
 import missionsSlice from "../Slices/missionsSlice";
+import goalsSlice from "../Slices/goalsSlice";
 
 const store = configureStore({
   reducer: {
@@ -23,6 +24,9 @@ const store = configureStore({
     locations: locationReducer,
     CompanyTeam: teamsSlice,
     missions: missionsSlice,
+    userAccounts: userAccountsSlice,
+    allAccounts: allAccountsSlice,
+    goals: goalsSlice,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

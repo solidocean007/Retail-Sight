@@ -9,5 +9,5 @@
     "target": "es2017",
     "moduleResolution": "node"
   },
-  "include": ["src/**/*.ts", "functions/**/*.ts"]
+  "include": ["src/**/*.ts", "functions/**/*.ts", "src/fetchData.js"]
 }

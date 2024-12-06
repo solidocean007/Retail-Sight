@@ -14,6 +14,7 @@ export type CompanyType = {
   statusPendingUsers: string[];
   companyVerified: boolean;
   createdAt: string;
+  accountsId: string | null;
 };
 
 export type TUserInputType = {
@@ -44,8 +45,9 @@ export interface UserType {
   firstName: string | undefined; // from signup
   lastName: string | undefined; // from signup
   email: string | undefined; // from signup
-  company: string | undefined; // from signup
-  companyId: string | undefined;
+  company: string;
+  companyId: string;
+  salesRouteNum: string | undefined;
   phone: string | undefined; // from signup
 }
 
@@ -96,8 +98,14 @@ export interface PostType {
   hashtags: string[];
   starTags: string[];
   commentCount: number;
-  token: { sharedToken: string, tokenExpiry: string };
+  token: { sharedToken: string; tokenExpiry: string };
   postCreatedBy: string;
+  accountNumber?: string | null;
+  oppId?: string | null; // New key for the opportunity ID
+  closedBy?: string; // New key for who closed the goal
+  closedDate?: string; // New key for the date in DD-MM-YYYY format
+  closedUnits?: string | number; // New key for the closed units
+  photos?: { file: string }[]; // New key for the array of photos
 }
 
 export type PostWithID = PostType & { id: string };
@@ -144,34 +152,34 @@ export interface TokenData {
 
 export interface CompanyTeamType {
   teamName: string;
-  teamSupervisor: {uid: string; name: string;}[];
-  teamMembers: { uid: string; name: string; }[];
+  teamSupervisor: { uid: string; name: string }[];
+  teamMembers: { uid: string; name: string }[];
 }
 
 export type TeamWithID = CompanyTeamType & { id: string };
 
 export interface PermissionsType {
-  apiKey: string,
-  companyName: string,
-  createdAt: Timestamp,
+  apiKey: string;
+  companyName: string;
+  createdAt: Timestamp;
   permissions: {
     missions: {
-      canRead: boolean,
-      canWrite: boolean
-    },
+      canRead: boolean;
+      canWrite: boolean;
+    };
     companyMissions: {
-      canRead: boolean,
-      canWrite: boolean
-    },
+      canRead: boolean;
+      canWrite: boolean;
+    };
     submittedMissions: {
-      canRead: boolean,
-      canWrite: boolean
-    },
+      canRead: boolean;
+      canWrite: boolean;
+    };
     posts: {
-      canRead: boolean,
-      canWrite: boolean
-    }
-  }
+      canRead: boolean;
+      canWrite: boolean;
+    };
+  };
 }
 export interface MissionType {
   id?: string;
@@ -192,3 +200,90 @@ export interface SubmittedMissionType {
   companyMissionId: string;
   postIdForObjective: string;
 }
+
+// this is a program as defined by Gallo
+export type GalloProgramType = {
+  marketId: string;
+  programId: string;
+  displayDate: string;
+  startDate: string;
+  endDate: string;
+  programTitle: string;
+  programDesc: string;
+  priority: string;
+  salesType: string;
+  programType: string;
+};
+
+// this is a goal for a program as defined by Gallo
+export type GalloGoalType = {
+  marketId: string;
+  programId: string;
+  goalId: string;
+  eligiblePosition: string;
+  verification: string;
+  goal: string;
+  goalMetric: string;
+  goalValueMin: string;
+  goalVerification: string;
+  goalBenchMetric: string;
+  goalBenchValue: string;
+};
+
+// This is an account as defined by gallo
+export type GalloAccountType = {
+  oppId: string;
+  marketId: string;
+  goalId: string;
+  distributorAcctId: string;
+  tdlnxAcctId: string;
+  galloAcctId: string;
+  liquorStateAcctId: string;
+};
+
+export interface FireStoreGalloGoalDocType {
+  companyId: string;
+  programDetails: {
+    programId: string;
+    programTitle: string;
+    programStartDate: string;
+    programEndDate: string;
+  };
+  goalDetails: {
+    goalId: string; // Firestore document ID
+    goal: string;
+    goalMetric: string;
+    goalValueMin: string;
+  };
+  accounts: Array<{
+    oppId: string;
+    distributorAcctId: string;
+    accountName: string;
+    accountAddress: string;
+    salesRouteNums?: string[];
+    marketId?: string;
+  }>;
+}
+
+
+export type CompanyAccountType = {
+  accountNumber: string;
+  accountName: string;
+  accountAddress: string;
+  salesRouteNums: string[];
+}
+
+export type EnrichedGalloAccountType = GalloAccountType & {
+  accountName?: string;       // Optional, because not all Gallo accounts may have a Firestore match
+  accountAddress?: string;
+  salesRouteNums?: string[];   // Optional, same reason
+};
+
+export type AchievementPayloadType = {
+  oppId: string; // Opportunity ID
+  closedBy: string | undefined; // The person who closed the goal
+  closedDate: string; // Date in the format YYYY-MM-DD
+  closedUnits: string | number; // Units completed
+  photos: { file: string }[]; // Array of objects with a file property
+};
+

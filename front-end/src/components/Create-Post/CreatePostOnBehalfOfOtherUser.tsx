@@ -73,7 +73,6 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
             // setLocalUsers(usersFromFirestore); // Update local state
 
             // Save the updated list to IndexedDB
-            console.log("saving users to IndexedDB");
             await saveCompanyUsersToIndexedDB(usersFromFirestore);
           }
         },

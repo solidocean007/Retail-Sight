@@ -76,6 +76,19 @@ const ApiKeyModal = ({ open, onClose }: { open: boolean, onClose: () => void }) 
     }
   }, [open]);
 
+  const handleCopyToClipboard = () => {
+    if (apiKey) {
+      navigator.clipboard.writeText(apiKey).then(
+        () => {
+          console.log("API Key copied to clipboard successfully!");
+        },
+        (err) => {
+          console.error("Failed to copy API Key to clipboard: ", err);
+        }
+      );
+    }
+  };
+  
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={style}>
@@ -91,6 +104,7 @@ const ApiKeyModal = ({ open, onClose }: { open: boolean, onClose: () => void }) 
         ) : (
           <Typography variant="body1">No API key found</Typography>
         )}
+        <Button onClick={handleCopyToClipboard}>Copy to clipboard</Button>
         <Button onClick={handleGenerateNewApiKey}>Generate New API Key</Button>
         <Button onClick={onClose}>Close</Button>
       </Box>

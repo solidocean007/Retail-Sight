@@ -9,7 +9,7 @@ import { deleteUserAuthAndFirestore, updateSelectedUser } from '../DeveloperAdmi
 import { UserType } from '../utils/types';
 import { Button, CircularProgress, Container } from '@mui/material';
 import { useState } from 'react';
-import GenerateApiKeyComponent from './GenerateApiKey/ApiKeyModal';
+import GenerateApiKeyComponent from './ApiKeyLogic/ApiKeyModal';
 
 const DeveloperDashboard = () => {
   const dashboardUser = useSelector(selectUser);
