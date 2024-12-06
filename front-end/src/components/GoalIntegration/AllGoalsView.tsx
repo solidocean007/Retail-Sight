@@ -205,6 +205,8 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
     );
   }
 
+  console.log(goals)
+
   return (
     <Box className="table-container">
       <Typography variant="h4" gutterBottom>
@@ -328,6 +330,15 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
                                 </TableCell>
                                 <TableCell>
                                   <TableSortLabel
+                                    active={sortColumn === "accountNumber"}
+                                    direction={sortOrder}
+                                    // onClick={() => handleSort("accountAddress")}
+                                  >
+                                    Account Number
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
                                     active={sortColumn === "salesRouteNums"}
                                     direction={sortOrder}
                                     onClick={() => handleSort("salesRouteNums")}
@@ -375,6 +386,12 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
                                               ? account.accountAddress
                                               : ""}
                                           </TableCell>
+                                          <TableCell>
+                                            number
+                                            {index === 0
+                                              ? account.distributorAcctId
+                                              : ""}
+                                          </TableCell>
                                           <TableCell>{routeNum}</TableCell>
                                           <TableCell>
                                             {employeeMap[routeNum] || "Unknown"}
@@ -391,6 +408,9 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
                                       </TableCell>
                                       <TableCell>
                                         {account.accountAddress}
+                                      </TableCell>
+                                      <TableCell>
+                                        {account.distributorAcctId}
                                       </TableCell>
                                       <TableCell>
                                         {Array.isArray(account.salesRouteNums)

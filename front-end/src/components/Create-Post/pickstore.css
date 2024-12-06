@@ -1,7 +1,15 @@
-.pick-store {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+.goal-selector {
+  max-width: 100%; /* Prevents it from overflowing the container */
+  white-space: nowrap; /* Ensures text stays on one line */
+  overflow: hidden; /* Hides overflowing text */
+  text-overflow: ellipsis; /* Adds "..." for overflowing text */
 }
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem; /* Add spacing if needed */
+}
+
+

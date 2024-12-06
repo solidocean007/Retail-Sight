@@ -7,18 +7,10 @@ import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtil
 import { fetchUsersAccounts } from "../../utils/userData/fetchUsersAccounts";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemButton, ListItemText } from "@mui/material";
+import CheckBoxModal from "../CheckBoxModal";
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-interface StoreLocatorProps {
-  post: PostType;
-  setPost: React.Dispatch<React.SetStateAction<PostType>>;
-  onStoreNameChange: (storeName: string) => void;
-  onStoreNumberChange: (newStoreNumber: string) => void;
-  onStoreAddressChange: (address: string) => void;
-  onStoreCityChange: (city: string) => void;
-  onStoreStateChange: (newStoreState: string) => void;
-}
 
 declare global {
   interface Window {
@@ -26,42 +18,27 @@ declare global {
   }
 }
 
-const StoreLocator: React.FC<StoreLocatorProps> = ({
-  post,
-  setPost,
-  onStoreNameChange,
-  onStoreNumberChange,
-  onStoreAddressChange,
-  onStoreCityChange,
-  onStoreStateChange,
-}) => {
-  const [nearbyPlaces, setNearbyPlaces] = useState<
-    { name: string; vicinity: string; placeId: string }[]
-  >([]);
-  const [isPlaceSelectionOpen, setIsPlaceSelectionOpen] = useState(false);
+interface StoreLocatorProps {
+  onStoreSelect: (store: {
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    placeId: string;
+  }) => void;
+}
 
+const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
-
-  const user = useSelector(selectUser);
+  const [closestMatches, setClosestMatches] = useState<
+  { name: string; address: string; placeId: string }[]
+>([]);
+  const [isPlaceSelectionOpen, setIsPlaceSelectionOpen] = useState(false);
 
   useEffect(() => {
     loadGoogleMapsScript();
-
-    const setUserAccounts = async () => {
-      const accountsInIndexedDB = await getUserAccountsFromIndexedDB();
-
-      if (accountsInIndexedDB.length > 0) {
-        setAccounts(accountsInIndexedDB);
-      } else if (user?.companyId && user?.salesRouteNum) {
-        console.log("Fetching accounts from Firestore...");
-        await fetchUsersAccounts(user.companyId, user.salesRouteNum);
-      }
-    };
-
-    setUserAccounts();
   }, []);
 
   const loadGoogleMapsScript = () => {
@@ -101,7 +78,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     map: google.maps.Map
   ) => {
     const service = new google.maps.places.PlacesService(map);
-
+  
     service.nearbySearch(
       {
         location,
@@ -113,22 +90,24 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
           status === google.maps.places.PlacesServiceStatus.OK &&
           results.length > 0
         ) {
-          console.log("Nearby places fetched from Google Maps:", results);
-
           const validResults = results
-            .filter((place) => place.place_id && place.name && place.vicinity)
+          .filter((place) => place.place_id && place.name && place.vicinity)
+          .map((place) => ({
+            name: place.name!,
+            address: place.vicinity!, // Map vicinity to address
+            placeId: place.place_id!,
+          }))
+          .slice(0, 4); // Limit to the first 4 places
 
-            .map((place) => ({
-              name: place.name!,
-              vicinity: place.vicinity!,
-              placeId: place.place_id!,
-            }));
-
+          console.log("Closest matches:", validResults); // Log closest matches
+  
           if (validResults.length > 1) {
-            setNearbyPlaces(validResults);
+            setClosestMatches(validResults);
             setIsPlaceSelectionOpen(true); // Open the dialog for selection
           } else if (validResults.length === 1) {
-            processStoreSelection(validResults[0], map); // Process single result
+            processStoreSelection(validResults[0]); // Argument of type '{ name: string; address: string; placeId: string; }' is not assignable to parameter of type '{ name: string; vicinity: string; placeId: string; }'.
+            // Property 'vicinity' is missing in type '{ name: string; address: string; placeId: string; }' but required in type '{ name: string; vicinity: string; placeId: string; }'.ts(2345)
+          // StoreLocator.tsx(122, 5): 'vicinity' is declared here.
           } else {
             console.warn("No valid places found.");
           }
@@ -139,56 +118,29 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     );
   };
 
-  const processStoreSelection = (
-    place: { name: string; vicinity: string; placeId: string },
-    map: google.maps.Map
-  ) => {
-    console.log("Selected place:", place); // Inspect the selected place object
+  // useEffect(() => {
+  //   console.log("Selected store updated: ", selectedStore); // cannot find name selectedStore
+  // }, [selectedStore]);
 
-    if (!place.placeId) {
-      // Ensure the `placeId` is available
-      console.error("Missing placeId:", place); // Log an error if placeId is missing
-      return;
-    }
 
-    const service = new google.maps.places.PlacesService(map);
-
-    service.getDetails(
-      {
-        placeId: place.placeId, // Use `placeId` from the `place` object
-        fields: ["name", "vicinity", "address_components"],
-      },
-      (result, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && result) {
-          console.log("Result from getDetails:", result); // Debugging log
-
-          // Fallback to the original `placeId` if `result` does not contain `place_id`
-          const resolvedPlaceId = result.place_id || place.placeId;
-
-          fetchCityAndState(resolvedPlaceId, (city, state) => {
-            updateStoreDetails(
-              result.name || "",
-              result.vicinity || "",
-              city,
-              state
-            );
-            updateLocationsCollection(state, city);
-            matchAccountWithSelectedStore(
-              result.name || "",
-              result.vicinity || ""
-            );
-          });
-        } else {
-          console.error(
-            "getDetails failed with status:",
-            status,
-            "and result:",
-            result
-          );
-        }
-      }
-    );
+  const processStoreSelection = (place: {
+    name: string;
+    address: string; // Updated from vicinity to address
+    placeId: string;
+  }) => {
+    fetchCityAndState(place.placeId, (city, state) => {
+      console.log("Selected store data:", { ...place, city, state }); // Log store data
+      onStoreSelect({
+        name: place.name,
+        address: place.address, // Now matches the validResults mapping
+        city,
+        state, 
+        placeId: place.placeId,
+      });
+      updateLocationsCollection(state, city);
+    });
   };
+  
 
   const fetchCityAndState = (
     placeId: string,
@@ -219,102 +171,51 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({
     );
   };
 
-  const updateStoreDetails = (
-    name: string,
-    address: string,
-    city: string,
-    state: string
-  ) => {
-    onStoreNameChange(name);
-    onStoreAddressChange(address);
-    onStoreCityChange(city);
-    onStoreStateChange(state);
-    onStoreNumberChange("");
-  };
-
-  const matchAccountWithSelectedStore = (name: string, address: string) => {
-    const normalizedAddress = address
-      .toLowerCase()
-      .replace(/\s/g, "")
-      .substring(0, 10);
-    const normalizedName = name
-      .toLowerCase()
-      .replace(/\s/g, "")
-      .substring(0, 5);
-
-    console.log("Normalized selected address:", normalizedAddress);
-    console.log("Normalized selected name:", normalizedName);
-
-    accounts.forEach((account) => {
-      console.log(
-        `Account being checked: Address: "${account.accountAddress}", Name: "${account.accountName}"`
-      );
-
-      // const normalizedAccountAddress = account.accountAddress
-      //   .toLowerCase()
-      //   .replace(/\s/g, "")
-      //   .substring(0, 10);
-      // const normalizedAccountName = account.accountName
-      //   .toLowerCase()
-      //   .replace(/\s/g, "")
-      //   .substring(0, 5);
+  const handlePlaceSelection = (place: { name: string; address: string; placeId: string }) => {
+    setIsPlaceSelectionOpen(false);
+  
+    fetchCityAndState(place.placeId, (city, state) => {
+      onStoreSelect({
+        name: place.name,
+        address: place.address,
+        city,
+        state,
+        placeId: place.placeId,
+      });
     });
-
-    const foundAccount = accounts.find((account) => {
-      const normalizedAccountAddress = account.accountAddress
-        .toLowerCase()
-        .replace(/\s/g, "")
-        .substring(0, 10);
-      const normalizedAccountName = account.accountName
-        .toLowerCase()
-        .replace(/\s/g, "")
-        .substring(0, 5);
-
-      return (
-        normalizedAccountAddress === normalizedAddress &&
-        normalizedAccountName === normalizedName
-      );
-    });
-
-    if (foundAccount) {
-      console.log("Match found:", foundAccount);
-      setPost((prev) => ({
-        ...prev,
-        accountNumber: foundAccount.accountNumber.toString(),
-      }));
-      onStoreNameChange(foundAccount.accountName);
-    } else {
-      console.log("No matching account found.");
-      setPost((prev) => ({ ...prev, accountNumber: null }));
-    }
+    
   };
+  
 
   return (
     <div className="map-container">
       <div ref={mapRef} style={{ width: "100%", height: "400px" }}></div>
       {isPlaceSelectionOpen && (
-        <div className="place-selection-dialog">
-          <h3>Select a Store</h3>
-          <ul>
-            {nearbyPlaces.map((place, index) => (
-              <li key={index}>
-                <button
-                  onClick={() => {
-                    if (mapInstanceRef.current) {
-                      processStoreSelection(place, mapInstanceRef.current); // Use the map instance
-                      setIsPlaceSelectionOpen(false); // Close the dialog
-                    } else {
-                      console.error("Map instance is not available");
-                    }
-                  }}
-                >
-                  {place.name} - {place.vicinity}
-                </button>
-              </li>
+        <Dialog
+          open={isPlaceSelectionOpen}
+          onClose={() => setIsPlaceSelectionOpen(false)}
+        >
+          <DialogTitle>Store location by address</DialogTitle>
+          <DialogContent>
+            <List>
+            <List>
+            {closestMatches.map((place) => (
+              <ListItem key={place.placeId}>
+                <ListItemButton onClick={() => handlePlaceSelection(place)}>
+                  {/* <CheckBoxModal/> */}
+                  <ListItemText primary={place.name} secondary={place.address} />
+                </ListItemButton>
+              </ListItem>
             ))}
-          </ul>
-          <button onClick={() => setIsPlaceSelectionOpen(false)}>Cancel</button>
-        </div>
+          </List>
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsPlaceSelectionOpen(false)}>
+              Cancel
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
     </div>
   );

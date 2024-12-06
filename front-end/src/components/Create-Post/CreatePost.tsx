@@ -61,7 +61,6 @@ export const CreatePost = () => {
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
   const goals = useSelector(selectGoals);
-  console.log(goals, ": goals from createPost");
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 
@@ -133,7 +132,6 @@ export const CreatePost = () => {
   
         // If there are saved goals, dispatch them
         if (savedGoals.length > 0) {
-          console.log("Loaded goals from IndexedDB:", savedGoals);
           dispatch(setGoals(savedGoals));
         } else {
           // Otherwise, fetch from Firestore

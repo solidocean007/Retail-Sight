@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   CompanyAccountType,
   FireStoreGalloGoalDocType,
-  GalloAccountType,
   PostType,
 } from "../../utils/types";
 import StoreLocator from "./StoreLocator";
@@ -33,6 +32,7 @@ import getCompanyAccountId from "../../utils/helperFunctions/getCompanyAccountId
 import { fetchGoalsByCompanyId } from "../../utils/helperFunctions/fetchGoalsByCompanyId";
 import { getActiveGoalsForAccount } from "../../utils/helperFunctions/getActiveGoalsForAccount"; // this function looks useful also
 import {
+  getAllCompanyGoalsFromIndexedDB,
   getGoalsFromIndexedDB,
   saveGoalsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
@@ -60,19 +60,17 @@ interface PickStoreProps {
 }
 
 export const PickStore: React.FC<PickStoreProps> = ({
-  // Type '({ onNext, onPrevious, handleFieldChange, post, setPost, goals, onStoreNameChange, onStoreNumberChange, onStoreAddressChange, onStoreCityChange, onStoreStateChange, }: PickStoreProps) => void' is not assignable to type 'FC<PickStoreProps>'.
-  // Type 'void' is not assignable to type 'ReactNode'.
   onNext,
   onPrevious,
   handleFieldChange,
   post,
   setPost,
   goals,
-  onStoreNameChange,
-  onStoreNumberChange,
-  onStoreAddressChange,
-  onStoreCityChange,
-  onStoreStateChange,
+  onStoreNameChange, // not used now?
+  onStoreNumberChange, // not used now?
+  onStoreAddressChange, // not used now?
+  onStoreCityChange, // not used now?
+  onStoreStateChange, // not used now?
 }) => {
   const dispatch = useAppDispatch();
   const [isMapMode, setIsMapMode] = useState(false); // Toggle between dropdown and map
@@ -83,57 +81,102 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const userRole = useSelector(selectUser)?.role;
   const isAdmin = userRole === "admin" || userRole === "super-admin";
   const isEmployee = userRole === "employee";
-  const [allAccounts, setAllAccounts] = useState<CompanyAccountType[]>([]); // i use setAllAccounts but why dont i use allAccounts??
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
+  const [allCompanyGoals, setAllCompanyGoals] = useState<
+    FireStoreGalloGoalDocType[]
+  >([]);
+  const [selectedStoreByAddress, setSelectedStoreByAddress] = useState<{
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+  } | null>(null);
 
+  const [selectedCompanyAccount, setSelectedCompanyAccount] = useState<CompanyAccountType | null>(null);
+
+  const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
+  const [goalMetric, setGoalMetric] = useState<"cases" | "bottles">("cases");
+  const activeGoals = getActiveGoalsForAccount(post.accountNumber, goals);
+  const [isFetchingGoals, setIsFetchingGoals] = useState(false);
   const [closestMatches, setClosestMatches] = useState<CompanyAccountType[]>(
     []
   );
-  const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
-  const [goalMetric, setGoalMetric] = useState<"cases" | "bottles">("cases"); // setGoalMetric should be used to define goalMetric as goals fetched might be cases or bottles
-  const activeGoals = getActiveGoalsForAccount(post.accountNumber, goals);
-  console.log(activeGoals); // this logs empty. it has to get set
-  console.log(goals);
+  const [allAccounts, setAllAccounts] = useState<CompanyAccountType[]>();
 
-  // Fetch goals if not already loaded
+  // console.log(activeGoals); // this logs empty. it has to get set
+  // console.log(post);
+
+  // useEffect(() => {
+  //   if (selectedStore) {
+  //     setPost((prev) => ({
+  //       ...prev,
+  //       selectedStore: selectedStore.name,
+  //       storeAddress: selectedStore.address,
+  //       // storeCity: selectedStore.city,
+  //       // storeState: selectedStore.state,
+  //     }));
+  //   }
+  // }, [selectedStore, setPost]);
+
+  // this useEffect is for making sure the company goals are available for matching to a selected account
   useEffect(() => {
-    if (!goals.length && post.accountNumber) {
-      const fetchAndSetGoals = async () => {
+    if (isAdmin) {
+      const loadAllCompanyGoals = async () => {
+        try {
+          const savedGoals = await getAllCompanyGoalsFromIndexedDB();
+          if (savedGoals.length > 0) {
+            setAllCompanyGoals(savedGoals); // why are we saving these in state?  they are in indexedDB at least they should be.  we should check if they are in indexedDb first if not then fetch
+          } else if (companyId) {
+            const fetchedGoals = await fetchGoalsByCompanyId(companyId);
+            setAllCompanyGoals(fetchedGoals);
+          }
+        } catch (error) {
+          console.error("Error loading all company goals:", error);
+        }
+      };
+      loadAllCompanyGoals();
+    }
+  }, [isAdmin, companyId, dispatch]);
+
+  // i think this useEffect is responsible for making the relevant goals available for choosing to a selected account once accountId is
+  useEffect(() => {
+    const fetchAndSetGoals = async () => {
+      if (post.accountNumber) {
+        setIsFetchingGoals(true);
         try {
           const savedGoals = await getGoalsFromIndexedDB();
-
-          // Check for saved goals in IndexedDB
           const matchingGoals = savedGoals.filter((goal) =>
             goal.accounts.some(
-              (acc) => acc.distributorAcctId === post.accountNumber
+              (acc) =>
+                acc.distributorAcctId.toString() ===
+                post.accountNumber?.toString()
             )
           );
 
           if (matchingGoals.length > 0) {
-            dispatch(setGoals(matchingGoals)); // Load from IndexedDB
+            dispatch(setGoals(matchingGoals));
           } else if (companyId) {
-            // Fetch from Firestore
             const fetchedGoals = await fetchGoalsForAccount(
               post.accountNumber,
               companyId
             );
-            if (fetchedGoals.length > 0) {
-              dispatch(setGoals(fetchedGoals));
-              await saveGoalsToIndexedDB(fetchedGoals);
-            }
+            dispatch(setGoals(fetchedGoals));
+            await saveGoalsToIndexedDB(fetchedGoals);
           }
         } catch (error) {
-          console.error("Error fetching and setting goals:", error);
-          dispatch(showMessage("Error loading goals for account."));
+          console.error("Error fetching goals for account:", error);
+          dispatch(showMessage("Failed to load goals for this account."));
+        } finally {
+          setIsFetchingGoals(false);
         }
-      };
+      }
+    };
+    fetchAndSetGoals();
+  }, [post.accountNumber, companyId, dispatch]);
 
-      fetchAndSetGoals();
-    }
-  }, [goals, post.accountNumber, companyId, dispatch]);
-
+  // does this do the same thing as the useEffect above?
   const handleFetchGoal = async () => {
     setIsFetchingGoal(true);
     try {
@@ -152,11 +195,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
         )
       );
 
-      console.log(matchingGoals); // Log all matching goals
+      console.log(matchingGoals);
 
       if (matchingGoals.length > 0) {
-        // Set active goals from IndexedDB
-        setGoals(matchingGoals); // Cannot find name 'setActiveGoals'
+        setGoals(matchingGoals);
       } else if (companyId) {
         // Fetch goals from Firestore if no matches in IndexedDB
         const fetchedGoals = await fetchGoalsForAccount(
@@ -174,8 +216,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
         );
 
         if (filteredFetchedGoals.length > 0) {
-          setGoals(filteredFetchedGoals); // Update active goals
-          await saveGoalsToIndexedDB(fetchedGoals); // Cannot find name 'setActiveGoals'
+          setGoals(filteredFetchedGoals);
+          await saveGoalsToIndexedDB(fetchedGoals);
         } else {
           console.warn("No matching goals found for this account.");
         }
@@ -188,49 +230,46 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
-  const handleFetchGoalForAnyAccount = async () => {
-    setIsFetchingGoal(true);
-    try {
-      if (isAdmin && companyId) {
-        const accounts = await fetchAllCompanyAccounts();
-        if (accounts && accounts.length > 0) {
-          matchAccountWithSelectedStoreForAdmin(accounts);
-        } else {
-          console.warn("No accounts found for the company.");
-          dispatch(showMessage("No accounts found for this company."));
-        }
+  useEffect(() => {
+    // Trigger account matching when `selectedStoreByAddress` changes
+    if (selectedStoreByAddress && isAdmin) {
+      console.log("Triggering account match for:", selectedStoreByAddress);
+      if (allAccounts && allAccounts.length > 0) {
+        matchAccountWithSelectedStoreForAdmin(selectedStoreByAddress, allAccounts);
+      } else {
+        console.warn("No company accounts found for matching.");
       }
-    } catch (error) {
-      console.error("Error fetching accounts or goals:", error);
-      dispatch(showMessage("Failed to fetch goals for the account."));
-    } finally {
-      setIsFetchingGoal(false);
     }
-  };
+  }, [selectedStoreByAddress, isAdmin, allAccounts]);
 
+
+  // this function should convert a selectedStore by address into a companyAccount
   const matchAccountWithSelectedStoreForAdmin = (
-    // why isnt this used?  this looks like the logic for finding closest matches for an admin
-    allAccountsList: CompanyAccountType[]
+    selectedStoreByAddress: {
+      name: string;
+      address: string;
+      city: string;
+      state: string;
+    },
+    accounts: CompanyAccountType[]
   ) => {
-    // Sort accounts alphabetically by accountName
-    const sortedAccountsList = allAccountsList.sort((a, b) =>
-      a.accountName.localeCompare(b.accountName)
-    );
-
-    const normalizedAddress = post.storeAddress
+    console.log("Matching store to accounts:", selectedStoreByAddress);
+    
+    // Normalize the selected store details
+    const normalizedAddress = selectedStoreByAddress.address
       .toLowerCase()
       .replace(/\s/g, "")
       .substring(0, 10);
-    const normalizedName = post
-      .selectedStore!.toLowerCase()
+    const normalizedName = selectedStoreByAddress.name
+      .toLowerCase()
       .replace(/\s/g, "")
       .substring(0, 5);
-
-    console.log("Normalized admin matching address:", normalizedAddress);
-    console.log("Normalized admin matching name:", normalizedName);
-
-    // Attempt to find an exact match
-    const foundAccount = sortedAccountsList.find((account) => {
+  
+    console.log("Normalized Address:", normalizedAddress);
+    console.log("Normalized Name:", normalizedName);
+  
+    // Find a perfect match
+    const perfectMatch = accounts.find((account) => {
       const normalizedAccountAddress = account.accountAddress
         .toLowerCase()
         .replace(/\s/g, "")
@@ -239,54 +278,63 @@ export const PickStore: React.FC<PickStoreProps> = ({
         .toLowerCase()
         .replace(/\s/g, "")
         .substring(0, 5);
-
+  
       console.log(
-        `Admin Matching: Address "${normalizedAddress}" with "${normalizedAccountAddress}", Name "${normalizedName}" with "${normalizedAccountName}"`
+        `Comparing Account: ${account.accountName} | Address: ${account.accountAddress}`
       );
-
+      console.log(
+        `Normalized Account Address: ${normalizedAccountAddress} | Normalized Account Name: ${normalizedAccountName}`
+      );
+  
       return (
         normalizedAccountAddress === normalizedAddress &&
         normalizedAccountName === normalizedName
       );
     });
-
-    if (foundAccount) {
-      console.log("Admin match found:", foundAccount);
+  
+    if (perfectMatch) {
+      console.log("Perfect match found:", perfectMatch);
       setPost((prev) => ({
         ...prev,
-        accountNumber: foundAccount.accountNumber.toString(),
+        accountNumber: perfectMatch.accountNumber.toString(),
+        selectedStore: perfectMatch.accountName,
+        storeAddress: perfectMatch.accountAddress,
       }));
-      onStoreNameChange(foundAccount.accountName);
     } else {
-      console.log("No exact admin match found. Finding closest matches...");
-
-      // Find closest matches by address
-      const closestMatches = sortedAccountsList.filter((account) => {
-        const normalizedAccountAddress = account.accountAddress
-          .toLowerCase()
-          .replace(/\s/g, "")
-          .substring(0, 10);
-
-        return normalizedAccountAddress === normalizedAddress;
-      });
-
-      console.log("Closest matches by address:", closestMatches);
-
-      if (closestMatches.length > 0) {
-        // Render a list of closest matches
-        renderClosestMatches(closestMatches);
+      console.warn("No perfect match found. Finding closest matches...");
+      
+      // Find the closest matches
+      const topClosestMatches = accounts
+        .map((account) => {
+          const normalizedAccountAddress = account.accountAddress
+            .toLowerCase()
+            .replace(/\s/g, "")
+            .substring(0, 10);
+          const addressSimilarity =
+            normalizedAccountAddress === normalizedAddress ? 1 : 0;
+  
+          console.log(
+            `Address Similarity for Account: ${account.accountName} | Address: ${account.accountAddress} = ${addressSimilarity}`
+          );
+  
+          return { account, addressSimilarity };
+        })
+        .filter(({ addressSimilarity }) => addressSimilarity > 0)
+        .sort((a, b) => b.addressSimilarity - a.addressSimilarity)
+        .slice(0, 3)
+        .map(({ account }) => account);
+  
+      if (topClosestMatches.length > 0) {
+        console.log("Closest matches found:", topClosestMatches);
+        setClosestMatches(topClosestMatches);
+        setIsMatchSelectionOpen(true);
       } else {
-        console.log("No close matches found. Ask user to enter manually.");
-        // Logic to handle no matches
+        console.warn("No close matches found.");
       }
     }
   };
+  
 
-  // Helper function to render closest matches
-  const renderClosestMatches = (matches: CompanyAccountType[]) => {
-    setClosestMatches(matches); // Update state to display matches in the UI
-    setIsMatchSelectionOpen(true); // Open a dialog/modal for selection
-  };
 
   useEffect(() => {
     if (goals.length > 0) {
@@ -303,19 +351,32 @@ export const PickStore: React.FC<PickStoreProps> = ({
   }, [goals, post.accountNumber]);
 
   useEffect(() => {
-    if (isAdmin && companyId) {
-      fetchAllCompanyAccounts();
-    }
+    const loadAllCompanyAccounts = async () => {
+      if (isAdmin && companyId) {
+        try {
+          const accounts = await fetchAllCompanyAccounts();
+          setAllAccounts(accounts);
+        } catch (error) {
+          console.error("Error loading company accounts:", error);
+        }
+      }
+    };
+  
+    loadAllCompanyAccounts();
   }, [isAdmin, companyId]);
+  
 
+  // once a regular user selects an account this would load or fetch goals
   useEffect(() => {
-    // this might not be necessary because of what is on the CreatePost useEffect
+    // Fetch goals once `post.accountNumber` is updated
     if (post.accountNumber) {
-      handleFetchGoal(); // this will trigger at the same time as the CreatePost useEffect.  is there any redundancies?
+      console.log("Fetching goals for account:", post.accountNumber);
+      handleFetchGoal();
     }
   }, [post.accountNumber]);
 
   const fetchAllCompanyAccounts = async () => {
+    // this gets all of the users companys accounts
     if (!companyId) {
       console.error("No company ID provided.");
       return [];
@@ -332,39 +393,35 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const handleGoalSelection = (goalId: string) => {
-    if (goalId === "no-goal") {
-      handleFieldChange("oppId", "");
-      handleFieldChange("closedUnits", 0);
-      handleFieldChange("closedDate", "");
-    } else {
-      const selectedGoal = goals.find(
-        (goal) => goal.goalDetails.goalId === goalId
+    setSelectedGoalId(goalId);
+
+    // Find the selected goal by goalId
+    const selectedGoal = goals.find(
+      (goal) => goal.goalDetails.goalId === goalId
+    );
+
+    if (selectedGoal) {
+      console.log("selectedGoal: ", selectedGoal);
+
+      // Find the matched account within the selected goal's accounts
+      const matchedAccount = selectedGoal.accounts.find(
+        (account) =>
+          account.distributorAcctId.toString() ===
+          post.accountNumber?.toString()
       );
-      console.log(selectedGoal, ": selectedGoal");
-      if (selectedGoal) {
-        const matchedAccount = selectedGoal.accounts.find(
-          (account) =>
-            account.distributorAcctId.toString() ===
-            post.accountNumber?.toString()
+
+      if (matchedAccount) {
+        // Use the oppId from the matched account
+        handleFieldChange("oppId", matchedAccount.oppId);
+      } else {
+        console.warn(
+          "No matching account found in the selected goal's accounts."
         );
-        console.log(matchedAccount, ": matchedAccount");
-        if (matchedAccount) {
-          handleFieldChange("oppId", matchedAccount.oppId);
-          handleFieldChange(
-            "closedDate",
-            new Date().toISOString().split("T")[0]
-          );
-        } else {
-          console.warn("No matching account found for the selected goal.");
-        }
       }
     }
-
-    setSelectedGoalId(goalId);
-    console.log(post);
   };
 
-  const handleAccountSelect = (account: CompanyAccountType) => {
+  const handleAccountSelect = (account: CompanyAccountType) => { // this isnt used
     //declared but never read
     setPost((prev) => ({
       ...prev,
@@ -375,13 +432,85 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const handleTotalCaseCountChange = (count: number) => {
+    // unused?
+    // theres a warning here saying this function isnt used
     // declared but never read
     handleFieldChange("closedUnits", count); // Update the post state with the total case count
   };
 
+  const handleSelectClosestMatch = (account: CompanyAccountType) => {
+    setPost((prev) => ({
+      ...prev,
+      accountNumber: account.accountNumber,
+      storeAddress: account.accountAddress,
+      selectedStore: account.accountName,
+    }));
+    setIsMatchSelectionOpen(false); // Close the modal
+  
+    // Trigger goal search after updating the post state
+    if (isAdmin) {
+      searchGoalsForAccount(account.accountNumber);
+    }
+  };
+  
+
+  const searchGoalsForAccount = async (accountNumber: string) => {
+    setIsFetchingGoals(true);
+
+    try {
+      // Ensure accountNumber is provided
+      if (!accountNumber) {
+        console.warn("Account number is required for searching goals.");
+        return;
+      }
+
+      // Search for matching goals
+      const matchingGoals = allCompanyGoals.filter((goal) =>
+        goal.accounts.some(
+          (acc) => acc.distributorAcctId.toString() === accountNumber.toString()
+        )
+      );
+
+      if (matchingGoals.length > 0) {
+        console.log("Matching goals found:", matchingGoals);
+        dispatch(setGoals(matchingGoals));
+      } else {
+        console.warn(
+          "No matching goals found in allCompanyGoals. Attempting to fetch from Firestore..."
+        );
+        if (companyId) {
+          const fetchedGoals = await fetchGoalsByCompanyId(companyId);
+          setAllCompanyGoals(fetchedGoals); // Update local state and IndexedDB
+          const fallbackGoals = fetchedGoals.filter((goal) =>
+            goal.accounts.some(
+              (acc) =>
+                acc.distributorAcctId.toString() === accountNumber.toString()
+            )
+          );
+
+          if (fallbackGoals.length > 0) {
+            console.log("Fallback matching goals found:", fallbackGoals);
+            dispatch(setGoals(fallbackGoals));
+          } else {
+            console.warn("No goals found for the account in Firestore either.");
+          }
+        } else {
+          console.error(
+            "Company ID is missing. Cannot fetch goals from Firestore."
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error searching for goals for account:", error);
+    } finally {
+      setIsFetchingGoals(false);
+    }
+  };
+
+  console.log(selectedStoreByAddress, ': selectedStore by address');
+
   return (
     <div className="pick-store">
-      {/* Navigation Buttons */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -410,7 +539,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Button>
       </Box>
 
-      {/* Display Store Name in Bold */}
       {post.selectedStore && (
         <Box mt={2}>
           <Typography variant="h5" fontWeight="bold">
@@ -419,33 +547,43 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Box>
       )}
 
-      {/* Store Selector */}
+      <Box mt={3}>
+        {isFetchingGoals ? (
+          <CircularProgress />
+        ) : (
+          <Typography>
+            Goals for account will be dynamically displayed here.
+          </Typography>
+        )}
+      </Box>
+
       <Box mt={3}>
         {isMapMode ? (
           <StoreLocator
-            post={post}
-            setPost={setPost}
-            onStoreNameChange={onStoreNameChange}
-            onStoreNumberChange={onStoreNumberChange}
-            onStoreAddressChange={onStoreAddressChange}
-            onStoreCityChange={onStoreCityChange}
-            onStoreStateChange={onStoreStateChange}
-          />
+          onStoreSelect={(store) => {
+            setSelectedStoreByAddress({
+              name: store.name,
+              address: store.address,
+              city: store.city || "", // Default to empty strings if city or state are missing
+              state: store.state || "",
+            });
+          }}
+        />
+        
         ) : (
           <AccountDropdown
-            onAccountSelect={(account) =>
+            onAccountSelect={(account) => {
               setPost({
                 ...post,
                 selectedStore: account.accountName,
                 storeAddress: account.accountAddress,
                 accountNumber: account.accountNumber,
-              })
-            }
+              });
+            }}
           />
         )}
       </Box>
 
-      {/* Total Case Count */}
       <Typography variant="h6">{`Total ${goalMetric} count`}</Typography>
       <TotalCaseCount
         handleTotalCaseCountChange={(count) =>
@@ -453,7 +591,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
         }
       />
 
-      {/* Goal Selection */}
       <Box mt={3}>
         {isFetchingGoal ? (
           <CircularProgress />
@@ -472,28 +609,52 @@ export const PickStore: React.FC<PickStoreProps> = ({
                 key={goal.goalDetails.goalId}
                 value={goal.goalDetails.goalId}
               >
-                {/* {goal.goalDetails.goal} - {goal.programDetails.programTitle} */}
                 {goal.goalDetails.goal}
               </MenuItem>
             ))}
           </Select>
         )}
-        {!isEmployee && (
+        {/* {!isEmployee && (
           <Button
             variant="contained"
             color="primary"
-            sx={{ mt: 2 }}
-            onClick={handleFetchGoalForAnyAccount}
+            onClick={() => {
+              if (selectedStore) {
+                handleFetchGoalForAnyAccount(selectedStore);
+              } else {
+                console.warn("No store selected.");
+              }
+            }}
+            disabled={!selectedStore} // Button is disabled if no store is selected
           >
-            {/* this should render the goal.goal for the description */} 
-            {selectedGoalId
-              ? `Selected Goal: ${selectedGoalId}`  
-              : activeGoals.length > 0
-              ? `${activeGoals.length} Goals Available`
-              : "No Goals Available"}
+            Fetch Goals
           </Button>
-        )}
+        )} */}
       </Box>
+      <Dialog
+  open={isMatchSelectionOpen}
+  onClose={() => setIsMatchSelectionOpen(false)}
+>
+  <DialogTitle>Select a company account that matches the address</DialogTitle>
+  <DialogContent>
+    <List>
+      {closestMatches.map((account) => (
+        <ListItem key={account.accountNumber} disablePadding>
+          <ListItemButton onClick={() => handleSelectClosestMatch(account)}>
+            <Checkbox />
+            <ListItemText
+              primary={account.accountName}
+              secondary={account.accountAddress}
+            />
+          </ListItemButton>
+        </ListItem>
+      ))}
+    </List>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setIsMatchSelectionOpen(false)}>Cancel</Button>
+  </DialogActions>
+</Dialog>
     </div>
   );
 };

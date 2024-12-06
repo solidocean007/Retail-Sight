@@ -938,7 +938,6 @@ export const getGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType
 
     getAllRequest.onsuccess = () => {
       const goals = getAllRequest.result || [];
-      console.log("Fetched goals from IndexedDB:", goals);
       resolve(goals as FireStoreGalloGoalDocType[]);
     };
 

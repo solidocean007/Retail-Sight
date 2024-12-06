@@ -8,12 +8,12 @@ export const getActiveGoalsForAccount = (
   const today = new Date();
   return goals.filter((goal) => {
     const isMatchingAccount = goal.accounts.some((account) => {
-      console.log(
-        "Comparing accountNumber:",
-        String(account.distributorAcctId),
-        "with",
-        String(accountNumber)
-      );
+      // console.log(
+      //   "Comparing accountNumber:",
+      //   String(account.distributorAcctId),
+      //   "with",
+      //   String(accountNumber)
+      // );
       return String(account.distributorAcctId) === String(accountNumber);
     });
 

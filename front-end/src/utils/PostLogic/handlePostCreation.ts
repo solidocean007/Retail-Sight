@@ -193,7 +193,7 @@ export const useHandlePostSubmission = () => {
                   photos: [{ file: resizedImageUrl }],
                 };
 
-                await sendAchievementToGalloAxis(achievementPayload, apiKey, navigate);
+                await sendAchievementToGalloAxis(achievementPayload, apiKey, navigate, dispatch);
               }
 
               const newPostWithID = {
