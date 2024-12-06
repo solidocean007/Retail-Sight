@@ -539,66 +539,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
           Next
         </Button>
       </Box>
-
-      {/* Selected Store */}
-      {post.selectedStore && (
-        <Box mt={2}>
-          <Typography variant="h5" fontWeight="bold">
-            {post.selectedStore}
-          </Typography>
-          {/* Render Selected Goal */}
-          {selectedGoalId && (
-            <Typography mt={1} variant="body1" color="textSecondary">
-              Selected Goal:{" "}
-              {activeGoals.find(
-                (goal) => goal.goalDetails.goalId === selectedGoalId
-              )?.goalDetails.goal || "N/A"}
-            </Typography>
-          )}
-        </Box>
-      )}
-
-      {/* Goals Dropdown */}
-      <Box mt={3}>
-        {isFetchingGoals && <CircularProgress />}
-        {!isFetchingGoals && activeGoals.length > 0 && (
-          <Typography>{`${activeGoals.length} goals available for this account.`}</Typography>
-        )}
-      </Box>
-
-      <Box mt={3}>
-        {isFetchingGoal ? (
-          <CircularProgress />
-        ) : (
-          <Select
-            fullWidth
-            variant="outlined"
-            value={selectedGoalId || "no-goal"}
-            onChange={(e) => handleGoalSelection(e.target.value)}
-          >
-            <MenuItem value="no-goal">No Gallo goals for this account</MenuItem>
-            {activeGoals.map((goal) => (
-              <MenuItem
-                key={goal.goalDetails.goalId}
-                value={goal.goalDetails.goalId}
-              >
-                {goal.goalDetails.goal}
-              </MenuItem>
-            ))}
-          </Select>
-        )}
-      </Box>
-
-      {/* Total Case Count */}
-      <Typography variant="h6" mt={3}>{`Total ${goalMetric} count`}</Typography>
-      <TotalCaseCount
-        handleTotalCaseCountChange={(count) =>
-          handleFieldChange("closedUnits", count)
-        }
-      />
-
-      {/* Map or Account Dropdown */}
-      <Box mt={3}>
+  
+      {/* Account Dropdown */}
+      <Box mt={2}>
         {isMapMode ? (
           <StoreLocator
             onStoreSelect={(store) => {
@@ -623,7 +566,85 @@ export const PickStore: React.FC<PickStoreProps> = ({
           />
         )}
       </Box>
-
+  
+      {/* Selected Store and Goals */}
+      {post.selectedStore && (
+        <>
+          <Box mt={2}>
+            <Typography variant="h5" fontWeight="bold">
+              {post.selectedStore}
+            </Typography>
+            {/* Render Selected Goal */}
+            {selectedGoalId && (
+              <Typography mt={1} variant="body1" color="textSecondary">
+                Selected Goal:{" "}
+                {activeGoals.find(
+                  (goal) => goal.goalDetails.goalId === selectedGoalId
+                )?.goalDetails.goal || "N/A"}
+              </Typography>
+            )}
+          </Box>
+  
+          {/* Goals Dropdown */}
+          <Box mt={2}>
+            {isFetchingGoals && <CircularProgress />}
+            {!isFetchingGoals && activeGoals.length > 0 && (
+              <Typography>{`${activeGoals.length} goals available for this account.`}</Typography>
+            )}
+            {/* {!isFetchingGoals && activeGoals.length === 0 && (
+              <Typography>No Gallo goals for this account.</Typography>
+            )} */}
+          </Box>
+  
+          <Box mt={2}>
+            {isFetchingGoal ? (
+              <CircularProgress />
+            ) : (
+              <Select
+                fullWidth
+                variant="outlined"
+                value={selectedGoalId || "no-goal"}
+                onChange={(e) => handleGoalSelection(e.target.value)}
+              >
+                <MenuItem value="no-goal">No Gallo goals for this account</MenuItem>
+                {activeGoals.map((goal) => (
+                  <MenuItem
+                    key={goal.goalDetails.goalId}
+                    value={goal.goalDetails.goalId}
+                  >
+                    {goal.goalDetails.goal}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+          </Box>
+  
+          {/* Total Case Count */}
+          <Typography variant="h6" mt={3}>{`Total ${goalMetric} count`}</Typography>
+          <TotalCaseCount
+            handleTotalCaseCountChange={(count) =>
+              handleFieldChange("closedUnits", count)
+            }
+          />
+        </>
+      )}
+  
+      {/* Map */}
+      {/* <Box mt={3}>
+        {isMapMode && (
+          <StoreLocator
+            onStoreSelect={(store) => {
+              setSelectedStoreByAddress({
+                name: store.name,
+                address: store.address,
+                city: store.city || "",
+                state: store.state || "",
+              });
+            }}
+          />
+        )}
+      </Box> */}
+  
       {/* Match Selection Dialog */}
       <Dialog
         open={isMatchSelectionOpen}
@@ -655,4 +676,5 @@ export const PickStore: React.FC<PickStoreProps> = ({
       </Dialog>
     </div>
   );
+  
 };

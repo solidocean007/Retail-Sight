@@ -30,7 +30,7 @@ const AccountDropdown: React.FC<AccountDropdownProps> = ({ onAccountSelect }) =>
         if (value) onAccountSelect(value);
       }}
       renderInput={(params) => (
-        <TextField {...params} label="Search Accounts" variant="outlined" />
+        <TextField {...params} label="Select Account" variant="outlined" />
       )}
       sx={{
         width: "100%", // Make it take the full width of its container
