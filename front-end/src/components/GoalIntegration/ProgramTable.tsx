@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { GalloProgramType } from "../../utils/types";
 
+
 interface ProgramTableProps {
   programs: GalloProgramType[];
   selectedProgram: GalloProgramType | null;
@@ -36,7 +37,7 @@ const ProgramTable: React.FC<ProgramTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {programs.map((program) => (
+        {Array.isArray(programs) && programs.map((program) => (
             <TableRow key={program.programId}>
               <TableCell>
                 <Checkbox

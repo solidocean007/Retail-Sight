@@ -1,8 +1,9 @@
 .table-container {
-  background-color: #fdfcf8; /* Light paper-like background */
+  background-color: #fdfcf8;
   padding: 16px;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 16px;
 }
 
 .table {
@@ -13,32 +14,41 @@
 
 .table th,
 .table td {
-  border: 1px solid #dcdcdc; /* Light gray borders for gridlines */
+  border: 1px solid #dcdcdc;
   padding: 8px 12px;
   text-align: left;
 }
 
 .table th {
-  background-color: #f4f4f4; /* Slightly darker header for contrast */
+  background-color: #f4f4f4;
   font-weight: bold;
 }
 
 .table tr:nth-child(odd) {
-  background-color: #dae1e8; Slightly lighter background for alternate rows
+  background-color: #dae1e8;
 }
 
 .table tr:nth-child(even) {
-  background-color: #f8f8f8; /* Slightly darker alternate row */
+  background-color: #f8f8f8;
 }
 
 .table tr:hover {
-  background-color: #e9f6ff; /* Subtle highlight for hover effect */
+  background-color: #e9f6ff;
 }
 
-.table th.sortable {
-  cursor: pointer;
+button {
+  font-size: 0.875rem;
+  padding: 6px 12px;
 }
 
-.table th.sortable:hover {
-  background-color: #dcdcdc; /* Highlight headers on hover */
+.table-container h5 {
+  margin-top: 8px;
+  font-size: 1.2rem;
+}
+
+.collapse-container {
+  padding: 8px 16px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  background-color: #ffffff;
 }

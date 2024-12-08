@@ -47,7 +47,8 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
     (state: RootState) => state.user.currentUser?.companyId
   );
   const matchedAccounts = useSelector(selectMatchedAccounts);
-  const baseUrl = "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
+  // const baseUrl = "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
+  const baseUrl = "https://q2zgrnmnvl.execute-api.us-west-2.amazonaws.com";
 
   // New variables for controlling sample size
   const accountSampleSize = 3;
@@ -61,15 +62,20 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
     }
   }, [companyId]);
 
+  console.log(apiKey)
+
   const getUnixTimestamp = (date: Dayjs | null): string => {
     return date ? date.unix().toString() : "";
   };
 
   const fetchPrograms = async () => {
+    console.log(companyId, apiKey)
     if (!companyId || !apiKey) return;
 
     const startDateUnix = getUnixTimestamp(startDate);
     const url = `${baseUrl}/healy/programs?startDate=${startDateUnix}`;
+
+    console.log(url)
 
     const requestOptions = {
       method: "GET",
@@ -92,9 +98,10 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
       );
 
       const data = await response.json();
+      console.log(data);
       setPrograms(data); // Assuming data contains program list
     } catch (error) {
-      console.error("Error fetching programs:", error);
+      console.error("Error fetching programs:", error); // this never logs
     }
   };
 

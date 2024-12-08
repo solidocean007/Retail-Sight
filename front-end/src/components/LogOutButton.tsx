@@ -10,6 +10,7 @@ import { clearPostsData } from "../Slices/postsSlice";
 import { closeAndDeleteIndexedDB } from "../utils/database/indexedDBUtils";
 import { clearTeams } from "../Slices/teamsSlice";
 import { clearUserModal } from "../Slices/userModalSlice";
+import { Button } from "@mui/material";
 
 const LogOutButton: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -65,9 +66,9 @@ const LogOutButton: React.FC = () => {
   };
 
   return (
-    <button className="log-out-btn" onClick={onLogoutClick}>
+    <Button className="log-out-btn" onClick={onLogoutClick}>
       Log Out
-    </button>
+    </Button>
   );
 };
 

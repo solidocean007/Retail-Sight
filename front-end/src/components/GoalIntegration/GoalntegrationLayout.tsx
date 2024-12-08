@@ -4,7 +4,7 @@ import { Box, Container, Typography, Tabs, Tab } from "@mui/material";
 import IntegrationView from "../IntegrationView";
 import ApiView from "../ApiView";
 import CreateGalloGoalView from "./CreateGalloGoalView";
-import AllGoalsView from "./AllGoalsView";
+import AllGoalsView from "./AllProgramsView";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 
@@ -50,8 +50,8 @@ const GoalIntegrationLayout: React.FC = () => {
     <Container>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={value} onChange={handleChange} aria-label="dashboard tabs">
-          <Tab label="Goal Manager" {...a11yProps(0)} />
-          <Tab label="New Goal Import" {...a11yProps(1)} />
+          <Tab label="Program Manager" {...a11yProps(0)} />
+          <Tab label="Program Import" {...a11yProps(1)} />
           <Tab label="External Integration" {...a11yProps(2)} />
           <Tab label="Internal API Management" {...a11yProps(3)} />
           {/* Add more tabs as necessary */}

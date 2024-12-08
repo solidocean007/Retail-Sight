@@ -24,7 +24,7 @@ import {
   DialogActions,
   ListItemText,
   ListItemButton,
-  ListItemIcon,
+  // ListItemIcon,
   Checkbox,
 } from "@mui/material";
 import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAcccountsFromFirestore";
@@ -66,21 +66,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
   post,
   setPost,
   goals,
-  onStoreNameChange, // not used now?
-  onStoreNumberChange, // not used now?
-  onStoreAddressChange, // not used now?
-  onStoreCityChange, // not used now?
-  onStoreStateChange, // not used now?
 }) => {
   const dispatch = useAppDispatch();
   const [isMapMode, setIsMapMode] = useState(false); // Toggle between dropdown and map
-  const [goalForAccount, setGoalForAccount] =
-    useState<FireStoreGalloGoalDocType | null>(null);
+  // const [goalForAccount, setGoalForAccount] =
+  //   useState<FireStoreGalloGoalDocType | null>(null);
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const userRole = useSelector(selectUser)?.role;
   const isAdmin = userRole === "admin" || userRole === "super-admin";
-  const isEmployee = userRole === "employee";
+  // const isEmployee = userRole === "employee";
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
@@ -94,8 +89,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
     state: string;
   } | null>(null);
 
-  const [selectedCompanyAccount, setSelectedCompanyAccount] =
-    useState<CompanyAccountType | null>(null);
+  // const [selectedCompanyAccount, setSelectedCompanyAccount] =
+  //   useState<CompanyAccountType | null>(null);
 
   const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
   const [goalMetric, setGoalMetric] = useState<"cases" | "bottles">("cases");
@@ -421,23 +416,23 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
-  const handleAccountSelect = (account: CompanyAccountType) => {
-    // this isnt used
-    //declared but never read
-    setPost((prev) => ({
-      ...prev,
-      selectedStore: account.accountName,
-      storeAddress: account.accountAddress,
-      accountNumber: account.accountNumber,
-    }));
-  };
+  // const handleAccountSelect = (account: CompanyAccountType) => {
+  //   // this isnt used
+  //   //declared but never read
+  //   setPost((prev) => ({
+  //     ...prev,
+  //     selectedStore: account.accountName,
+  //     storeAddress: account.accountAddress,
+  //     accountNumber: account.accountNumber,
+  //   }));
+  // };
 
-  const handleTotalCaseCountChange = (count: number) => {
-    // unused?
-    // theres a warning here saying this function isnt used
-    // declared but never read
-    handleFieldChange("closedUnits", count); // Update the post state with the total case count
-  };
+  // const handleTotalCaseCountChange = (count: number) => {
+  //   // unused?
+  //   // theres a warning here saying this function isnt used
+  //   // declared but never read
+  //   handleFieldChange("closedUnits", count); // Update the post state with the total case count
+  // };
 
   const handleSelectClosestMatch = (account: CompanyAccountType) => {
     setPost((prev) => ({

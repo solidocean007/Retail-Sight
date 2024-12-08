@@ -906,9 +906,11 @@ export const saveAllCompanyGoalsToIndexedDB = async (
       goals.forEach((goal) => {
         const goalWithKey = {
           ...goal,
-          goalId: goal.goalDetails.goalId, // Ensure key is explicitly included
+          // goalId: goal.goalDetails.goalId, // Ensure key is explicitly included
+          id: goal.goalDetails.goalId, // Ensure key is explicitly included
         };
         console.log("Saving goal:", goalWithKey);
+        console.log(goalWithKey)
         store.put(goalWithKey);
       });
     };

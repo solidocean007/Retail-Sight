@@ -47,7 +47,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAccount, setSelectedAccount] =
     useState<CompanyAccountType | null>(null);
-  const itemsPerPage = 50;
+  const itemsPerPage = 25;
 
   useEffect(() => {
     fetchAccounts();
@@ -225,7 +225,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     }
   };
 
-  const paginatedAccounts = accounts.slice(
+  const paginatedAccounts = accounts.slice( // what is this for?
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -362,6 +362,12 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           </Button>
         </Box>
       )}
+       <Pagination
+        count={Math.ceil(filteredAccounts.length / itemsPerPage)}
+        page={currentPage}
+        onChange={(e, page) => setCurrentPage(page)}
+        sx={{ marginTop: 2 }}
+      />
 
       <TableContainer component={Paper} sx={{ marginTop: 3 }}>
         <Table>
@@ -404,12 +410,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
-      <Pagination
-        count={Math.ceil(filteredAccounts.length / itemsPerPage)}
-        page={currentPage}
-        onChange={(e, page) => setCurrentPage(page)}
-        sx={{ marginTop: 2 }}
-      />
+     
     </Box>
   );
 };

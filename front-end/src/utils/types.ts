@@ -248,6 +248,7 @@ export interface FireStoreGalloGoalDocType {
     programTitle: string;
     programStartDate: string;
     programEndDate: string;
+    programDisplayDate?: string;
   };
   goalDetails: {
     goalId: string; // Firestore document ID
