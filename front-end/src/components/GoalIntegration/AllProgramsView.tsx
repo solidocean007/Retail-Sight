@@ -294,13 +294,7 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
                   >
                     Delete Program
                   </Button>
-                  <IconButton onClick={() => toggleExpand(program.programId)}>
-                    {expandedGoals.has(program.programId) ? (
-                      <ExpandLessIcon />
-                    ) : (
-                      <ExpandMoreIcon />
-                    )}
-                  </IconButton>
+                 
                 </TableCell>
               </TableRow>
               <TableRow>
