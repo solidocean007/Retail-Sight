@@ -18,17 +18,20 @@ const AdComponent: React.FC<AdComponentProps> = ({
   adFormat = "auto",
   adsOn,
   placeholder,
-  style, // do i need to add this here or not pass it?
 }) => {
+  
   useEffect(() => {
-    if (adsOn) {
+    if (adsOn && window.adsbygoogle) {
       try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        if (!document.querySelector(`ins[data-ad-slot="${adSlot}"]`)) {
+          window.adsbygoogle.push({});
+        }
       } catch (e) {
         console.error(e);
       }
     }
-  }, [adsOn]);
+  }, [adsOn, adSlot]);
+  
 
   if (!adsOn) {
     return placeholder || <div className="ad-placeholder">Ad Placeholder</div>;

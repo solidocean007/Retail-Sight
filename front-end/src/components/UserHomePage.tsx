@@ -52,6 +52,7 @@ export const UserHomePage = () => {
     if (!user || !companyId) return; // Ensure both user and companyId are defined
   
     async function fetchUserAccounts() {
+      if(companyId)
       try {
         const userAccounts = await getUserAccountsFromIndexedDB();
   

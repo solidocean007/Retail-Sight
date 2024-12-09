@@ -29,6 +29,7 @@ import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
+import AdComponent from "./AdSense/AdComponent";
 // import NoResults from "./NoResults";
 
 const AD_INTERVAL = 4;
@@ -64,7 +65,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   clearInput,
 }) => {
   const dispatch = useAppDispatch();
-  const [adsOn] = useState(false);
+  const [adsOn] = useState(true);
 
   // const listRef = useRef<List>(null);
   useScrollToPost(listRef, posts, AD_INTERVAL);
@@ -112,15 +113,20 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   // Function to get the dynamic height of each item
   const getItemSize = (index: number) => {
-    const gapSize = 0;
-    // Determine if the current index is an ad
-    const isAdPosition = adsOn && (index + 1) % AD_INTERVAL === 0;
-
-    if (isAdPosition) {
-      return adsOn ? 200 + gapSize : 0;
-    }
-    return getActivityItemHeight(windowWidth) + gapSize;
+    const isAd = adsOn && index % AD_INTERVAL === 0;
+    return isAd ? 200 : 600; // Ad height 200px, Post height 600px
   };
+  
+  // const getItemSize = (index: number) => {
+  //   const gapSize = 0;
+  //   // Determine if the current index is an ad
+  //   const isAdPosition = adsOn && (index + 1) % AD_INTERVAL === 0 ? 200 : getActivityItemHeight(windowWidth);
+
+  //   if (isAdPosition) {
+  //     return adsOn ? 200 + gapSize : 0;
+  //   }
+  //   return getActivityItemHeight(windowWidth) + gapSize;
+  // };
 
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 500) {
@@ -199,7 +205,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   };
 
   const numberOfAds = adsOn ? Math.floor(posts.length / AD_INTERVAL) : 0;
-  const itemCount = posts.length + numberOfAds + 1;
+  
+  const itemCount = adsOn
+  ? posts.length + Math.floor(posts.length / AD_INTERVAL)
+  : posts.length;
 
   const itemRenderer = ({
     index,
@@ -224,7 +233,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     };
 
     if (isAdPosition) {
-      // return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />; // Property 'style' does not exist on type 'IntrinsicAttributes & AdComponentProps'
+      return (
+        <AdComponent
+          key={`ad-${index}`}
+          adClient="ca-pub-7211761290096043"
+          adSlot="6757708015"
+          adsOn={true}
+          style={{ display: "block" }}
+        />
+      );
     } else if (postIndex < posts.length) {
       const postWithID = posts[postIndex];
 
