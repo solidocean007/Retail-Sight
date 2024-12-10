@@ -26,16 +26,16 @@ const ProgramTable: React.FC<ProgramTableProps> = ({
 }) => {
   return (
     <TableContainer>
-      <Typography variant="h6">Programs</Typography>
+      {programs.length > 0 && <Typography variant="h6">Programs</Typography>}
       <Table>
-        <TableHead>
+        {programs.length > 0 && <TableHead>
           <TableRow>
             <TableCell>Select</TableCell>
             <TableCell>Program Title</TableCell>
             <TableCell>Start Date</TableCell>
             <TableCell>End Date</TableCell>
           </TableRow>
-        </TableHead>
+        </TableHead>}
         <TableBody>
         {Array.isArray(programs) && programs.map((program) => (
             <TableRow key={program.programId}>

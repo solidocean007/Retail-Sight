@@ -1,6 +1,12 @@
 // CreateGalloGoalView.tsx
 import { useState, useEffect } from "react";
-import { Box, Container, Typography, Button } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  CircularProgress,
+} from "@mui/material";
 import {
   CompanyAccountType,
   EnrichedGalloAccountType,
@@ -28,20 +34,22 @@ interface CreateGalloGoalViewProps {
   setValue: (newValue: number) => void; // Function to change tabs
 }
 
-const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) => {
-  const dispatch = useAppDispatch();
+const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
+  setValue,
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
   const [programs, setPrograms] = useState<GalloProgramType[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<GalloProgramType | null>(
-    null
-  );
+  const [selectedProgram, setSelectedProgram] =
+    useState<GalloProgramType | null>(null);
   const [goals, setGoals] = useState<GalloGoalType[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<GalloGoalType | null>(null); // Track selected goal
   const [galloAccounts, setGalloAccounts] = useState<GalloAccountType[]>([]);
   const [enrichedAccounts, setEnrichedAccounts] = useState<GalloAccountType[]>(
     []
   );
+  const [noProgramsMessage, setNoProgramsMessage] = useState("");
 
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
@@ -54,28 +62,34 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
   const accountSampleSize = 3;
   const isSampleMode = false;
 
+  const onDateChangeHandler = (newDate: Dayjs | null) => {
+    setStartDate(newDate);
+    setNoProgramsMessage(""); // Clear the no programs message
+  };
+  
+
   useEffect(() => {
     // Fetch API key only once
 
-    if (companyId && apiKey === "")  {
+    if (companyId && apiKey === "") {
       fetchExternalApiKey(companyId, "galloApiKey").then(setApiKey);
     }
   }, [companyId]);
 
-  console.log(apiKey)
+  console.log(apiKey);
 
   const getUnixTimestamp = (date: Dayjs | null): string => {
     return date ? date.unix().toString() : "";
   };
 
   const fetchPrograms = async () => {
-    console.log(companyId, apiKey)
+    setIsLoading(true);
+    setNoProgramsMessage(""); // Reset message
+
     if (!companyId || !apiKey) return;
 
     const startDateUnix = getUnixTimestamp(startDate);
     const url = `${baseUrl}/healy/programs?startDate=${startDateUnix}`;
-
-    console.log(url)
 
     const requestOptions = {
       method: "GET",
@@ -98,14 +112,19 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
       );
 
       const data = await response.json();
-      console.log(data);
+      if (data.length === 0) {
+        setNoProgramsMessage("No programs found for the selected start date.");
+      }
       setPrograms(data); // Assuming data contains program list
     } catch (error) {
       console.error("Error fetching programs:", error); // this never logs
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchGoals = async () => {
+    setIsLoading(true);
     if (!selectedProgram || !apiKey) return;
 
     const url = `${baseUrl}/healy/goals?programId=${selectedProgram.programId}&marketId=${selectedProgram.marketId}`;
@@ -134,10 +153,13 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
       setGoals(data); // Assuming data contains goals list
     } catch (error) {
       console.error("Error fetching goals:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchAccounts = async () => {
+    setIsLoading(true);
     if (!selectedProgram || !selectedGoal || !apiKey || !companyId) return;
 
     try {
@@ -166,6 +188,8 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
       setEnrichedAccounts(enrichedAccounts);
     } catch (error) {
       console.error("Error fetching or enriching accounts:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -210,15 +234,15 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
         console.error("No accountsId found for company");
         return [];
       }
-  
+
       const accountsDocRef = doc(db, "accounts", accountsId);
       const accountsSnapshot = await getDoc(accountsDocRef);
-  
+
       if (!accountsSnapshot.exists()) {
         console.error("No accounts found in Firestore");
         return [];
       }
-  
+
       const accountsData = accountsSnapshot.data();
       const allAccounts = (accountsData.accounts || []).map(
         (account: Partial<CompanyAccountType>) => ({
@@ -229,12 +253,12 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
           accountNumber: String(account.accountNumber), // Ensure accountNumber is a string
         })
       ) as CompanyAccountType[];
-  
+
       // Filter to only return accounts with matching accountNumbers in galloAccountIds
-      const filteredAccounts = allAccounts.filter((account) =>
-        galloAccountIds.includes(account.accountNumber) // Compare as strings
+      const filteredAccounts = allAccounts.filter(
+        (account) => galloAccountIds.includes(account.accountNumber) // Compare as strings
       );
-  
+
       // Return sample size if isSampleMode is enabled
       return isSampleMode
         ? filteredAccounts.slice(0, accountSampleSize)
@@ -244,7 +268,6 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
       return [];
     }
   };
-  
 
   // Revised enrichAccounts function without additional filtering
   const enrichAccounts = (
@@ -290,22 +313,30 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
       <Box>
         <DateSelector
           startDate={startDate}
-          onDateChange={setStartDate}
+          onDateChange={onDateChangeHandler}
           onFetchPrograms={fetchPrograms}
         />
-        <ProgramTable
-          programs={programs}
-          selectedProgram={selectedProgram}
-          onSelectProgram={setSelectedProgram}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={fetchGoals}
-          disabled={!selectedProgram}
-        >
-          Search Goals
-        </Button>
+        {noProgramsMessage ? (
+          <Typography color="error" variant="body1">
+            {noProgramsMessage}
+          </Typography>
+        ) : (
+          <ProgramTable
+            programs={programs}
+            selectedProgram={selectedProgram}
+            onSelectProgram={setSelectedProgram}
+          />
+        )}
+        {programs.length > 1 && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={fetchGoals}
+            disabled={!selectedProgram}
+          >
+            Search Goals
+          </Button>
+        )}
         {goals.length > 0 && (
           <GoalTable
             goals={goals}
@@ -313,14 +344,16 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
             onSelectGoal={setSelectedGoal}
           />
         )}
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={fetchAccounts}
-          disabled={!selectedGoal}
-        >
-          Fetch Accounts
-        </Button>
+        {goals.length > 0 && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={fetchAccounts}
+            disabled={!selectedGoal}
+          >
+            Fetch Accounts
+          </Button>
+        )}
         {enrichedAccounts.length > 0 && (
           <AccountTable
             accounts={enrichedAccounts}
@@ -331,6 +364,25 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({ setValue }) =
         )}{" "}
         {/* Pass enriched data */}
       </Box>
+      {/* Loading Overlay */}
+      {isLoading && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 9999,
+          }}
+        >
+          <CircularProgress color="inherit" />
+        </Box>
+      )}
     </Container>
   );
 };

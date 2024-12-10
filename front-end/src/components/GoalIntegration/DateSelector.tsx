@@ -17,23 +17,29 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   onFetchPrograms,
 }) => {
   return (
-    <Box>
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DatePicker
-          label="Start Date"
-          value={startDate}
-          onChange={onDateChange}
-          slotProps={{
-            textField: { fullWidth: false, margin: "normal" },
-          }}
-        />
-      </LocalizationProvider>
-      <Button variant="contained" color="primary" onClick={onFetchPrograms}>
-        Search Programs with Start Date
-      </Button>
-    </Box>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            label="Start Date"
+            value={startDate}
+            onChange={onDateChange}
+            sx={{ width: "20%" }}
+            slotProps={{
+              textField: { fullWidth: false, margin: "normal",
+
+                InputProps: {
+                  sx: { textAlign: "center", input: { textAlign: "center" } }, // Center input text
+                },
+               },
+              
+            }}
+          />
+        </LocalizationProvider>
+        <Button variant="contained" color="primary" onClick={onFetchPrograms}>
+          Search Programs
+        </Button>
+      </Box>
   );
 };
 
 export default DateSelector;
-
