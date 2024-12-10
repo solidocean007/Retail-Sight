@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
 import { selectUser, setCompanyUsers } from "../Slices/userSlice";
-import { getCompanyUsersFromIndexedDB } from "../utils/database/userDataIndexedDB";
+import { getCompanyUsersFromIndexedDB, saveCompanyUsersToIndexedDB } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
 import { UserType } from "../utils/types";
 import { RootState, useAppDispatch } from "../utils/store";
@@ -37,6 +37,8 @@ import ApiView from "./ApiView.tsx";
 import AccountManager from "./AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
 import GoalIntegrationLayout from "./GoalIntegration/GoalntegrationLayout.tsx";
+import { collection, onSnapshot, query, where } from "@firebase/firestore";
+import { db } from "../utils/firebase.ts";
 
 type DashboardModeType =
   | "TeamMode"
@@ -55,7 +57,7 @@ export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
-
+  const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
@@ -93,19 +95,48 @@ export const Dashboard = () => {
     setDrawerOpen(isLargeScreen);
   }, [isLargeScreen]);
 
-  // Separate useEffect to attempt to load from IndexedDB when component mounts
   useEffect(() => {
-    const loadFromIndexedDB = async () => {
-      // Attempt to get users from IndexedDB
-      const indexedDBUsers = await getCompanyUsersFromIndexedDB();
-      setCompanyUsers(indexedDBUsers);
-      if (indexedDBUsers && indexedDBUsers.length > 0) {
-        setLocalUsers(indexedDBUsers);
+    const syncCompanyUsers = async () => {
+      if (!user?.companyId) return;
+  
+      const companyId = user.companyId;
+  
+      // 1. Load cached users from IndexedDB
+      const cachedUsers = await getCompanyUsersFromIndexedDB();
+      if (cachedUsers && cachedUsers.length > 0) {
+        dispatch(setCompanyUsers(cachedUsers)); // Update Redux store
+        setLocalUsers(cachedUsers); // Update local state
       }
+  
+      // 2. Real-time Firestore listener
+      const q = query(collection(db, "users"), where("companyId", "==", companyId));
+      const unsubscribe = onSnapshot(
+        q,
+        async (snapshot) => {
+          const usersFromFirestore = snapshot.docs.map(
+            (doc) =>
+              ({
+                ...doc.data(),
+                uid: doc.id,
+              } as UserType)
+          );
+  
+          // 3. Update Redux store and IndexedDB if Firestore data changes
+          dispatch(setCompanyUsers(usersFromFirestore));
+          setLocalUsers(usersFromFirestore);
+          await saveCompanyUsersToIndexedDB(usersFromFirestore);
+        },
+        (error) => {
+          console.error("Error syncing company users:", error);
+        }
+      );
+  
+      return () => unsubscribe(); // Cleanup listener
     };
-
-    loadFromIndexedDB();
-  }, []);
+  
+    syncCompanyUsers();
+  }, [user?.companyId, dispatch]);
+  
 
   return (
     <Container disableGutters maxWidth={false}>

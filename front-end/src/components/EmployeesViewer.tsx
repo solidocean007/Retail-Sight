@@ -13,16 +13,15 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { UserType } from "../utils/types";
-import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, where } from "firebase/firestore";
+import { collection, doc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useSelector } from "react-redux";
-import { selectUser, setCompanyUsers } from "../Slices/userSlice";
-import { getCompanyUsersFromIndexedDB, saveCompanyUsersToIndexedDB, updateUserRoleInIndexedDB } from "../utils/database/userDataIndexedDB";
+import { selectUser, } from "../Slices/userSlice";
+import {  updateUserRoleInIndexedDB } from "../utils/database/userDataIndexedDB";
 import PendingInvites from "./PendingInvites";
 import { getFunctions, httpsCallable } from "@firebase/functions";
-import { cleanUpDuplicateInvites } from "../../cleanUpDuplicateInvites";
 
 interface EmployeesViewerProps {
   localUsers: UserType[];
@@ -43,31 +42,6 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
 
   const [editedUsers, setEditedUsers] = useState<{ [key: string]: UserType }>({});
   const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
-
-  useEffect(() => {
-    if (!companyId) return;
-
-    const fetchData = async () => {
-      const cachedUsers = await getCompanyUsersFromIndexedDB();
-      if (cachedUsers) {
-        setLocalUsers(cachedUsers);
-      }
-
-      const q = query(collection(db, "users"), where("companyId", "==", companyId));
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        const usersFromFirestore = snapshot.docs.map(
-          (doc) => ({ ...doc.data(), uid: doc.id } as UserType)
-        );
-        setLocalUsers(usersFromFirestore);
-        await saveCompanyUsersToIndexedDB(usersFromFirestore);
-      });
-
-      return () => unsubscribe();
-    };
-
-    fetchData();
-  }, [companyId]);
-
   const toggleInvites = () => {
     setShowPendingInvites((prev) => !prev);
   };

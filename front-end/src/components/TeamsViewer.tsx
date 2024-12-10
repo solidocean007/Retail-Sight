@@ -3,7 +3,6 @@ import { useSelector } from "react-redux";
 import {
   selectCompanyUsers,
   selectUser,
-  setCompanyUsers,
 } from "../Slices/userSlice";
 import Select, { ActionMeta, MultiValue } from "react-select";
 import "./teamsViewer.css";
@@ -24,18 +23,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-} from "firebase/firestore";
-import { db } from "../utils/firebase";
-import {
   getCompanyUsersFromIndexedDB,
-  saveCompanyUsersToIndexedDB,
 } from "../utils/database/userDataIndexedDB";
 
 // Define the type for options
@@ -66,46 +54,6 @@ const TeamsViewer = ({
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
-
-  useEffect(() => {
-    if (!companyId) {
-      // If companyId is not defined, do not proceed with the query
-      // console.log("companyId is undefined, skipping Firestore query.");
-      return;
-    }
-
-    const q = query(
-      collection(db, "users"),
-      where("companyId", "==", companyId)
-    );
-
-    // Firestore real-time subscription setup
-    const unsubscribe = onSnapshot(
-      q,
-      async (onSnapshot) => {
-        const usersFromFirestore = onSnapshot.docs.map(
-          (doc) =>
-            ({
-              ...doc.data(),
-              uid: doc.id,
-            } as UserType)
-        );
-
-        dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
-        setLocalUsers(usersFromFirestore); // Update local state
-
-        // Save the updated list to IndexedDB
-        // console.log("saving users to indexedDB");
-        await saveCompanyUsersToIndexedDB(usersFromFirestore);
-      },
-      (error) => {
-        console.error("Error fetching users:", error);
-      }
-    );
-
-    // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
-    return () => unsubscribe();
-  }, [companyId]);
 
   // Separate useEffect to attempt to load from IndexedDB when component mounts
   useEffect(() => {

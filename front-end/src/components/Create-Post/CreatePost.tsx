@@ -53,6 +53,7 @@ import {
   selectGoals,
   setGoals,
 } from "../../Slices/goalsSlice";
+import { setupUserGoalsListener } from "../../utils/listeners/setupGoalsListener";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
@@ -123,38 +124,36 @@ export const CreatePost = () => {
   );
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadInitialGoals = async () => {
-      if (!companyId) return;
-  
-      try {
-        const savedGoals = await getGoalsFromIndexedDB();
-  
-        // If there are saved goals, dispatch them
-        if (savedGoals.length > 0) {
-          dispatch(setGoals(savedGoals));
-        } else {
-          // Otherwise, fetch from Firestore
-          console.log("Fetching goals from Firestore...");
-          const fetchedGoals = await dispatch(
-            fetchUserGalloGoals({
-              companyId,
-              salesRouteNum,
-            })
-          ).unwrap(); // Unwrap the result of the async thunk to get the data directly
-  
-          if (fetchedGoals.length > 0) {
-            dispatch(setGoals(fetchedGoals));
-            await saveGoalsToIndexedDB(fetchedGoals); // Save to IndexedDB
-          }
-        }
-      } catch (error) {
-        console.error("Error loading initial goals:", error);
+// Fetch and listen for user goals
+useEffect(() => {
+  if (!companyId || !salesRouteNum) return;
+
+  const loadInitialGoals = async () => {
+    try {
+      const savedGoals = await getGoalsFromIndexedDB();
+      if (savedGoals.length > 0) {
+        console.log(savedGoals, ': savedGoals') // logs the old goal
+        dispatch(setGoals(savedGoals));
+      } else {
+        const fetchedGoals = await dispatch(
+          fetchUserGalloGoals({ companyId, salesRouteNum })
+        ).unwrap();
+        await saveGoalsToIndexedDB(fetchedGoals);
+        dispatch(setGoals(fetchedGoals));
+        console.log(goals, ': goals'); // this doesnt log
       }
-    };
-  
-    loadInitialGoals();
-  }, [companyId, salesRouteNum, dispatch]);
+    } catch (error) {
+      console.error("Error loading goals:", error);
+    }
+  };
+
+  loadInitialGoals();
+
+  // Set up the snapshot listener for real-time updates
+  const unsubscribe = dispatch(setupUserGoalsListener(companyId, salesRouteNum));
+
+  return () => unsubscribe(); // Clean up on unmount
+}, [dispatch, companyId, salesRouteNum]);
   
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   TableContainer,
   Table,
@@ -9,12 +9,14 @@ import {
   Typography,
   Checkbox,
   Button,
+  Paper,
 } from "@mui/material";
 import { EnrichedGalloAccountType, GalloGoalType, GalloProgramType } from "../../utils/types";
 import { doc, setDoc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
 import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
+import './accountTable.css';
 
 interface AccountTableProps {
   accounts: EnrichedGalloAccountType[];
@@ -31,9 +33,27 @@ const AccountTable: React.FC<AccountTableProps> = ({
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedAccounts, setSelectedAccounts] = useState<EnrichedGalloAccountType[]>(accounts);
+  const [isAllSelected, setIsAllSelected] = useState(false);
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
+
+  useEffect(() => {
+    if (accounts.length === selectedAccounts.length) {
+      setIsAllSelected(true);
+    } else {
+      setIsAllSelected(false);
+    }
+  }, [selectedAccounts, accounts]);
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedAccounts([]);
+    } else {
+      setSelectedAccounts(accounts);
+    }
+  };
+
   const handleCheckboxChange = (account: EnrichedGalloAccountType) => {
     const isSelected = selectedAccounts.some(
       (selected) => selected.distributorAcctId === account.distributorAcctId
@@ -96,18 +116,21 @@ const AccountTable: React.FC<AccountTableProps> = ({
   };
 
   return (
-    <TableContainer>
-      <Typography variant="h6">{`${selectedAccounts.length} `}Accounts</Typography>
-      <Typography variant="h6">{selectedGoal?.goal}</Typography>
-
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={saveGoalForAccounts}
-        disabled={isSaving || selectedAccounts.length === 0}
-      >
-        {isSaving ? "Saving..." : "Save Goal for Selected Accounts"}
-      </Button>
+    <TableContainer component={Paper} className="account-table">
+      <Typography variant="h6" className="account-title">{`${selectedAccounts.length} Accounts Selected`}</Typography>
+      <div className="account-actions">
+        <Button variant="contained" color="secondary" onClick={handleSelectAll}>
+          {isAllSelected ? "Deselect All" : "Select All"}
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={saveGoalForAccounts}
+          disabled={isSaving || selectedAccounts.length === 0}
+        >
+          {isSaving ? "Saving..." : "Save Goal"}
+        </Button>
+      </div>
       <Table>
         <TableHead>
           <TableRow>
@@ -116,10 +139,6 @@ const AccountTable: React.FC<AccountTableProps> = ({
             <TableCell>Account Address</TableCell>
             <TableCell>Sales Route #</TableCell>
             <TableCell>Opp ID</TableCell>
-            <TableCell>Market ID</TableCell>
-            <TableCell>Goal ID</TableCell>
-            <TableCell>Distributor Acct ID</TableCell>
-            <TableCell>Gallo Acct ID</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -142,15 +161,10 @@ const AccountTable: React.FC<AccountTableProps> = ({
                   : account.salesRouteNums || "N/A"}
               </TableCell>
               <TableCell>{account.oppId}</TableCell>
-              <TableCell>{account.marketId}</TableCell>
-              <TableCell>{account.goalId}</TableCell>
-              <TableCell>{account.distributorAcctId}</TableCell>
-              <TableCell>{account.galloAcctId}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-      
     </TableContainer>
   );
 };

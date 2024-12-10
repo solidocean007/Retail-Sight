@@ -26,7 +26,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { deleteGoalFromFirestore } from "../../utils/helperFunctions/deleteGoalFRomFirestore";
 import { getCompanyUsersFromIndexedDB } from "../../utils/database/userDataIndexedDB";
 import "./allGoalsView.css";
-import { collection, onSnapshot, query, where } from "@firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, query, where } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
 
 type SortOrder = "asc" | "desc";
@@ -59,19 +59,21 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
   useEffect(() => {
     const loadEmployees = async () => {
       const employees = await getCompanyUsersFromIndexedDB();
+      console.log(employees); // this logs empty
       const employeeMap: Record<string, string> = {};
       employees.forEach((employee) => {
         if (employee.salesRouteNum) {
-          employeeMap[
-            employee.salesRouteNum
-          ] = `${employee.firstName} ${employee.lastName}`;
+          employeeMap[employee.salesRouteNum] = `${employee.firstName} ${employee.lastName}`;
         }
       });
+      console.log("Employee Map:", employeeMap); // Verify the map content..this logs empty
       setEmployeeMap(employeeMap);
     };
-
+  
     loadEmployees();
   }, []);
+  
+  
 
   useEffect(() => {
     const loadGoals = async () => {
@@ -205,17 +207,44 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
 
   const handleDeleteProgram = async (programId: string) => {
     try {
-      // Add logic to remove program from database
+      // Find the Firestore doc that matches the programId
+      const programToDelete = goals.find(
+        (goal) => goal.programDetails.programId === programId
+      );
+  
+      if (!programToDelete) {
+        console.warn(`No program found with ID: ${programId}`);
+        return;
+      }
+  
+      const goalId = programToDelete.goalDetails.goalId; // Firestore document ID
+      const goalDocRef = doc(db, "GalloGoals", goalId);
+  
+      // Step 1: Delete the Firestore document
+      await deleteDoc(goalDocRef);
+      console.log(`Program and Goal with ID ${goalId} deleted.`);
+  
+      // Step 2: Update Local State
       const updatedPrograms = programs.filter(
         (program) => program.programId !== programId
       );
       setPrograms(updatedPrograms);
+  
+      const updatedGoals = goals.filter(
+        (goal) => goal.programDetails.programId !== programId
+      );
+      setGoals(updatedGoals);
+  
+      // Step 3: Update IndexedDB
+      await saveAllCompanyGoalsToIndexedDB(updatedGoals);
+  
       dispatch(showMessage("Program deleted successfully."));
     } catch (error) {
       console.error("Error deleting program:", error);
       dispatch(showMessage("Failed to delete program. Please try again."));
     }
   };
+  
 
   const sortData = (data: any[], column: string, order: SortOrder) => {
     return [...data].sort((a, b) => {
@@ -294,7 +323,6 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
                   >
                     Delete Program
                   </Button>
-                 
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -336,7 +364,7 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
                         <TableHead>
                           <TableRow>
                             <TableCell>Goal</TableCell>
-                            <TableCell>Actions</TableCell>
+                            {/* <TableCell>Actions</TableCell> */}
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -350,7 +378,7 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
                               <React.Fragment key={goal.goalDetails.goalId}>
                                 <TableRow>
                                   <TableCell>{goal.goalDetails.goal}</TableCell>
-                                  <TableCell>
+                                  {/* <TableCell>
                                     <Button
                                       variant="contained"
                                       color="secondary"
@@ -362,7 +390,7 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
                                     >
                                       Delete Goal
                                     </Button>
-                                  </TableCell>
+                                  </TableCell> */}
                                 </TableRow>
                                 <TableRow>
                                   <TableCell>
@@ -487,6 +515,7 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
                                                 <React.Fragment
                                                   key={`${account.distributorAcctId}-${index}`}
                                                 >
+                                                  {/* Primary Account Row */}
                                                   <TableRow>
                                                     <TableCell>
                                                       {account.accountName ||
@@ -506,15 +535,18 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
                                                           "N/A"}
                                                     </TableCell>
                                                     <TableCell>
-                                                      {employeeMap[
-                                                        Array.isArray(
-                                                          account.salesRouteNums
-                                                        )
-                                                          ? account
+                                                      {/* Fetch salesman name from employeeMap */}
+                                                      {Array.isArray(
+                                                        account.salesRouteNums
+                                                      )
+                                                        ? employeeMap[
+                                                            account
                                                               .salesRouteNums[0]
-                                                          : account.salesRouteNums ||
-                                                            ""
-                                                      ] || "Unknown"}
+                                                          ] || "Unknown"
+                                                        : employeeMap[
+                                                            account
+                                                              .salesRouteNums
+                                                          ] || "Unknown"}
                                                     </TableCell>
                                                   </TableRow>
 
@@ -524,28 +556,24 @@ const AllProgramsView = ({ companyId }: { companyId: string | undefined }) => {
                                                   ) &&
                                                     account.salesRouteNums
                                                       .slice(1)
-                                                      .map(
-                                                        (
-                                                          routeNum:
-                                                            | string
-                                                            | number
-                                                        ) => (
-                                                          <TableRow
-                                                            key={`${account.distributorAcctId}-${routeNum}`}
-                                                          >
-                                                            <TableCell />
-                                                            <TableCell />
-                                                            <TableCell>
-                                                              {routeNum}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                              {employeeMap[
-                                                                routeNum
-                                                              ] || "Unknown"}
-                                                            </TableCell>
-                                                          </TableRow>
-                                                        )
-                                                      )}
+                                                      .map((routeNum: number | string, idx: number) => (
+                                                        <TableRow
+                                                          key={`${account.distributorAcctId}-${routeNum}-${idx}`}
+                                                        >
+                                                          <TableCell />{" "}
+                                                          {/* Empty cell for indentation */}
+                                                          <TableCell />
+                                                          <TableCell>
+                                                            {routeNum}
+                                                          </TableCell>
+                                                          <TableCell>
+                                                            {/* Fetch salesman name for additional route number */}
+                                                            {employeeMap[
+                                                              routeNum
+                                                            ] || "Unknown"}
+                                                          </TableCell>
+                                                        </TableRow>
+                                                      ))}
                                                 </React.Fragment>
                                               ))}
                                             </TableBody>
