@@ -72,7 +72,7 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
     try {
       const inviteLink = `${window.location.origin}/sign-up-login?companyName=${encodeURIComponent(
         currentUser.company
-      )}&email=${encodeURIComponent(inviteEmail)}`;
+      )}&email=${encodeURIComponent(inviteEmail)}&mode=signup`;
   
       // Call the cloud function to send the email invite
       await inviteFunction({

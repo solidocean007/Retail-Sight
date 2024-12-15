@@ -1,42 +1,25 @@
-import React, { useState, useEffect } from "react";
+// AccountDropDown.tsx
 import { Autocomplete, TextField } from "@mui/material";
-import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
 import { CompanyAccountType } from "../../utils/types";
 
 interface AccountDropdownProps {
   onAccountSelect: (account: CompanyAccountType) => void;
+  accounts: CompanyAccountType[] | undefined; // Accept accounts as props
 }
 
-const AccountDropdown: React.FC<AccountDropdownProps> = ({ onAccountSelect }) => {
-  const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      const indexedDBAccounts = await getUserAccountsFromIndexedDB();
-      setAccounts(indexedDBAccounts);
-    };
-    fetchAccounts();
-  }, []);
-
+const AccountDropdown: React.FC<AccountDropdownProps> = ({ onAccountSelect, accounts }) => {
+  console.log('accountdropdown accounts: ', accounts)
   return (
     <Autocomplete
       options={accounts}
       getOptionLabel={(account) =>
         `${account.accountName} - ${account.accountAddress}`
       }
-      onInputChange={(e, value) => setSearchQuery(value)}
-      onChange={(e, value) => {
-        if (value) onAccountSelect(value);
-      }}
+      onChange={(e, value) => value && onAccountSelect(value)}
       renderInput={(params) => (
         <TextField {...params} label="Select Account" variant="outlined" />
       )}
-      sx={{
-        width: "100%", // Make it take the full width of its container
-        maxWidth: 400, // Optionally set a maximum width
-        margin: "0 auto", // Center the dropdown if needed
-      }}
+      sx={{ width: "100%", maxWidth: 400, margin: "0 auto" }}
     />
   );
 };

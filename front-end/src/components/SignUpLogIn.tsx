@@ -63,6 +63,7 @@ export const SignUpLogin = () => {
     const searchParams = new URLSearchParams(location.search);
     const email = searchParams.get("email") || "";
     const companyName = searchParams.get("companyName") || "";
+    const mode = searchParams.get("mode");
 
     setEmailParam(email);
     setCompanyNameParam(companyName);
@@ -77,6 +78,11 @@ export const SignUpLogin = () => {
       setIsEmailDisabled(!!email);
       setIsCompanyDisabled(!!companyName);
     }
+
+    // Default to sign-up mode if 'mode=signup' exists
+  if (mode === "signup") {
+    setIsSignUp(true);
+  }
   }, [location]);
 
   const [signUpError, setSignUpError] = useState("");
