@@ -23,7 +23,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
             label="Start Date"
             value={startDate}
             onChange={onDateChange}
-            sx={{ width: "20%" }}
+            // sx={{ width: "20%" }}
             slotProps={{
               textField: { fullWidth: false, margin: "normal",
 

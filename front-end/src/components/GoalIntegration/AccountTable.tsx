@@ -10,19 +10,29 @@ import {
   Checkbox,
   Button,
   Paper,
+  Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
-import { EnrichedGalloAccountType, GalloGoalType, GalloProgramType } from "../../utils/types";
+import {
+  EnrichedGalloAccountType,
+  GalloGoalType,
+  GalloProgramType,
+} from "../../utils/types";
 import { doc, setDoc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
 import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
-import './accountTable.css';
+import "./accountTable.css";
 
 interface AccountTableProps {
   accounts: EnrichedGalloAccountType[];
-  selectedGoal:GalloGoalType | null; // Pass the selected goal from the parent
+  selectedGoal: GalloGoalType | null; // Pass the selected goal from the parent
   selectedProgram: GalloProgramType | null; // Pass the selected program from the parent
-  onSaveComplete:  () => void;
+  onSaveComplete: () => void;
 }
 
 const AccountTable: React.FC<AccountTableProps> = ({
@@ -32,11 +42,47 @@ const AccountTable: React.FC<AccountTableProps> = ({
   onSaveComplete,
 }) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedAccounts, setSelectedAccounts] = useState<EnrichedGalloAccountType[]>(accounts);
+  const [selectedAccounts, setSelectedAccounts] =
+    useState<EnrichedGalloAccountType[]>(accounts);
   const [isAllSelected, setIsAllSelected] = useState(false);
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
+  const [searchAccounts, setSearchAccounts] = useState("");
+  const [searchRoute, setSearchRoute] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const handleSearchAccounts = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchAccounts(event.target.value);
+  };
+
+  // Handle sales route search
+  const handleSearchRoute = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchRoute(event.target.value);
+  };
+
+  const filteredAccounts = accounts.filter((account) => {
+    // Skip accounts without a name
+    if (!account.accountName) return false;
+
+    // Check if account name matches search input
+    const matchesAccountName = account.accountName
+      .toLowerCase()
+      .includes(searchAccounts.toLowerCase());
+
+    // Check if sales route number matches search input
+    const matchesRoute =
+      searchRoute === "" ||
+      (Array.isArray(account.salesRouteNums)
+        ? account.salesRouteNums.some((num) =>
+            (num as unknown as string)?.toString().includes(searchRoute)
+          )
+        : (
+            (account.salesRouteNums as unknown as string)?.toString() || ""
+          ).includes(searchRoute));
+
+    return matchesAccountName && matchesRoute;
+  });
 
   useEffect(() => {
     if (accounts.length === selectedAccounts.length) {
@@ -86,9 +132,8 @@ const AccountTable: React.FC<AccountTableProps> = ({
             programId: selectedProgram.programId,
             programTitle: selectedProgram.programTitle,
             programStartDate: selectedProgram.startDate,
-            programEndDate: selectedProgram.endDate
-          }
-         ,
+            programEndDate: selectedProgram.endDate,
+          },
           goalDetails: {
             goalId: selectedGoal.goalId,
             goal: selectedGoal.goal,
@@ -117,7 +162,10 @@ const AccountTable: React.FC<AccountTableProps> = ({
 
   return (
     <TableContainer component={Paper} className="account-table">
-      <Typography variant="h6" className="account-title">{`${selectedAccounts.length} Accounts Selected`}</Typography>
+      <Typography
+        variant="h6"
+        className="account-title"
+      >{`${selectedAccounts.length} Accounts Selected`}</Typography>
       <div className="account-actions">
         <Button variant="contained" color="secondary" onClick={handleSelectAll}>
           {isAllSelected ? "Deselect All" : "Select All"}
@@ -125,12 +173,29 @@ const AccountTable: React.FC<AccountTableProps> = ({
         <Button
           variant="contained"
           color="primary"
-          onClick={saveGoalForAccounts}
+          onClick={() => setShowConfirmDialog(true)} // Open confirmation dialog
           disabled={isSaving || selectedAccounts.length === 0}
         >
           {isSaving ? "Saving..." : "Save Goal"}
         </Button>
       </div>
+      <Box display="flex" gap={2} sx={{ marginY: 2 }}>
+        <TextField
+          label="Search Account Name"
+          variant="outlined"
+          fullWidth
+          value={searchAccounts}
+          onChange={handleSearchAccounts}
+        />
+        <TextField
+          label="Search Sales Route #"
+          variant="outlined"
+          fullWidth
+          value={searchRoute}
+          onChange={handleSearchRoute}
+        />
+      </Box>
+
       <Table>
         <TableHead>
           <TableRow>
@@ -142,7 +207,7 @@ const AccountTable: React.FC<AccountTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {accounts.map((account) => (
+          {filteredAccounts.map((account) => (
             <TableRow key={account.oppId}>
               <TableCell>
                 <Checkbox
@@ -165,9 +230,50 @@ const AccountTable: React.FC<AccountTableProps> = ({
           ))}
         </TableBody>
       </Table>
+      <Dialog
+        open={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        aria-labelledby="confirm-dialog-title"
+      >
+        <DialogTitle id="confirm-dialog-title">
+          Confirm Goal Creation
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to save the following goal?
+          </Typography>
+          <Typography>
+            <strong>Program:</strong> {selectedProgram?.programTitle || "N/A"}
+          </Typography>
+          <Typography>
+            <strong>Goal:</strong> {selectedGoal?.goal || "N/A"}
+          </Typography>
+          <Typography>
+            <strong>Accounts Selected:</strong> {selectedAccounts.length}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setShowConfirmDialog(false)}
+            color="secondary"
+            variant="contained"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setShowConfirmDialog(false); // Close dialog
+              saveGoalForAccounts(); // Call save function
+            }}
+            color="primary"
+            variant="contained"
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </TableContainer>
   );
 };
 
 export default AccountTable;
-

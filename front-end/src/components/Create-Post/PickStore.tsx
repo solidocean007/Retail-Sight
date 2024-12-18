@@ -1,3 +1,4 @@
+// PickStore.tsx
 import React, { useEffect, useState } from "react";
 import {
   CompanyAccountType,
@@ -34,6 +35,7 @@ import { getActiveGoalsForAccount } from "../../utils/helperFunctions/getActiveG
 import {
   getAllCompanyGoalsFromIndexedDB,
   getGoalsFromIndexedDB,
+  getUserAccountsFromIndexedDB,
   saveGoalsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
 import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
@@ -67,6 +69,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
   setPost,
   goals,
 }) => {
+  const [allAccountsForCompany, setAllAccountsForCompany] = useState<
+    CompanyAccountType[]
+  >([]);
+  const [myAccounts, setMyAccounts] = useState<CompanyAccountType[]>([]);
+  const [isAllStoresShown, setIsAllStoresShown] = useState(false); // Toggle State
+  const [loadingAccounts, setLoadingAccounts] = useState(true); // Tracks loading status
+
   const dispatch = useAppDispatch();
   const [isMapMode, setIsMapMode] = useState(false); // Toggle between dropdown and map
   // const [goalForAccount, setGoalForAccount] =
@@ -99,22 +108,73 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [closestMatches, setClosestMatches] = useState<CompanyAccountType[]>(
     []
   );
-  const [allAccounts, setAllAccounts] = useState<CompanyAccountType[]>();
+  const [accountsToSelect, setAccountsToSelect] =
+    useState<CompanyAccountType[]>();
 
-  // console.log(activeGoals); // this logs empty. it has to get set
-  // console.log(post);
+  // Fetch "My Stores"
+  // if this doesnt load any accounts from indexedDb it should fetch them
+  useEffect(() => {
+    const loadMyAccounts = async () => {
+      setLoadingAccounts(true); // Start loading
+      try {
+        // Fetch User-Specific Accounts (My Stores)
+        const userAccounts = await getUserAccountsFromIndexedDB();
+        if (userAccounts.length > 0) {
+          setMyAccounts(userAccounts);
+          console.log("My Stores fetched:", userAccounts);
+        } else {
+          // fetch this users accounts
+        }
+      } catch (error) {
+        console.error("Error loading users accounts:", error);
+      } finally {
+        setLoadingAccounts(false); // End loading
+      }
+    };
 
-  // useEffect(() => {
-  //   if (selectedStore) {
-  //     setPost((prev) => ({
-  //       ...prev,
-  //       selectedStore: selectedStore.name,
-  //       storeAddress: selectedStore.address,
-  //       // storeCity: selectedStore.city,
-  //       // storeState: selectedStore.state,
-  //     }));
-  //   }
-  // }, [selectedStore, setPost]);
+    loadMyAccounts();
+  }, [companyId]);
+
+  // Fetch All Company Accounts if toggled
+  useEffect(() => {
+    if (isAllStoresShown) {
+      const loadAllCompanyAccounts = async () => {
+        setLoadingAccounts(true);
+        try {
+          const accounts = await fetchAllCompanyAccounts();
+          setAllAccountsForCompany(accounts);
+          setAccountsToSelect(accounts); // Set accounts to select
+        } catch (error) {
+          console.error("Error fetching all company accounts:", error);
+        } finally {
+          setLoadingAccounts(false);
+        }
+      };
+
+      loadAllCompanyAccounts();
+    } else {
+      // If toggled back to "My Stores", reset accounts
+      setAccountsToSelect(myAccounts);
+    }
+  }, [isAllStoresShown, companyId, myAccounts]);
+
+  // this gets the all of the accounts for the users company
+  const fetchAllCompanyAccounts = async () => {
+    // this gets all of the users companys accounts
+    if (!companyId) {
+      console.error("No company ID provided.");
+      return [];
+    }
+
+    const accountsId = await getCompanyAccountId(companyId);
+    if (!accountsId) {
+      console.error("No accounts ID found for the company");
+      return [];
+    }
+
+    const accounts = await fetchAllAccountsFromFirestore(accountsId);
+    return accounts;
+  };
 
   // this useEffect is for making sure the company goals are available for matching to a selected account
   useEffect(() => {
@@ -230,107 +290,126 @@ export const PickStore: React.FC<PickStoreProps> = ({
     // Trigger account matching when `selectedStoreByAddress` changes
     if (selectedStoreByAddress && isAdmin) {
       console.log("Triggering account match for:", selectedStoreByAddress);
-      if (allAccounts && allAccounts.length > 0) {
+      if (accountsToSelect && accountsToSelect.length > 0) {
         matchAccountWithSelectedStoreForAdmin(
           selectedStoreByAddress,
-          allAccounts
+          accountsToSelect
         );
       } else {
         console.warn("No company accounts found for matching.");
       }
     }
-  }, [selectedStoreByAddress, isAdmin, allAccounts]);
+  }, [selectedStoreByAddress, isAdmin, accountsToSelect]);
 
   // this function should convert a selectedStore by address into a companyAccount
-  const matchAccountWithSelectedStoreForAdmin = (
-    selectedStoreByAddress: {
-      name: string;
-      address: string;
-      city: string;
-      state: string;
-    },
-    accounts: CompanyAccountType[]
-  ) => {
-    console.log("Matching store to accounts:", selectedStoreByAddress);
-
-    // Normalize the selected store details
-    const normalizedAddress = selectedStoreByAddress.address
+  const normalizeString = (str: string) =>
+    str
       .toLowerCase()
-      .replace(/\s/g, "")
-      .substring(0, 10);
-    const normalizedName = selectedStoreByAddress.name
-      .toLowerCase()
-      .replace(/\s/g, "")
-      .substring(0, 5);
-
-    console.log("Normalized Address:", normalizedAddress);
-    console.log("Normalized Name:", normalizedName);
-
-    // Find a perfect match
-    const perfectMatch = accounts.find((account) => {
-      const normalizedAccountAddress = account.accountAddress
-        .toLowerCase()
-        .replace(/\s/g, "")
-        .substring(0, 10);
-      const normalizedAccountName = account.accountName
-        .toLowerCase()
-        .replace(/\s/g, "")
-        .substring(0, 5);
-
-      console.log(
-        `Comparing Account: ${account.accountName} | Address: ${account.accountAddress}`
-      );
-      console.log(
-        `Normalized Account Address: ${normalizedAccountAddress} | Normalized Account Name: ${normalizedAccountName}`
-      );
-
-      return (
-        normalizedAccountAddress === normalizedAddress &&
-        normalizedAccountName === normalizedName
-      );
-    });
-
-    if (perfectMatch) {
-      console.log("Perfect match found:", perfectMatch);
-      setPost((prev) => ({
-        ...prev,
-        accountNumber: perfectMatch.accountNumber.toString(),
-        selectedStore: perfectMatch.accountName,
-        storeAddress: perfectMatch.accountAddress,
-      }));
-    } else {
-      console.warn("No perfect match found. Finding closest matches...");
-
-      // Find the closest matches
-      const topClosestMatches = accounts
-        .map((account) => {
-          const normalizedAccountAddress = account.accountAddress
-            .toLowerCase()
-            .replace(/\s/g, "")
-            .substring(0, 10);
-          const addressSimilarity =
-            normalizedAccountAddress === normalizedAddress ? 1 : 0;
-
-          console.log(
-            `Address Similarity for Account: ${account.accountName} | Address: ${account.accountAddress} = ${addressSimilarity}`
+      .replace(/[^a-z0-9\s]/g, "") // Remove non-alphanumeric characters
+      .replace(/\b(s|n|e|w)\b/g, (match) => {
+        const directions: { [key: string]: string } = {
+          s: "south",
+          n: "north",
+          e: "east",
+          w: "west",
+        };
+        return directions[match];
+      })
+      .replace(/\b(se|ne|nw|sw)\b/g, (match) => {
+        const expanded: { [key: string]: string } = {
+          se: "southeast",
+          ne: "northeast",
+          nw: "northwest",
+          sw: "southwest",
+        };
+        return expanded[match];
+      })
+      .replace(/\broad\b/g, "rd")
+      .replace(/\bstreet\b/g, "st")
+      .replace(/\bavenue\b/g, "ave")
+      .replace(/\bboulevard\b/g, "blvd")
+      .replace(/\bdrive\b/g, "dr")
+      .replace(/\blane\b/g, "ln")
+      .replace(/\bparkway\b/g, "pkwy")
+      .replace(/\bplace\b/g, "pl")
+      .replace(/\bcourt\b/g, "ct")
+      .replace(/\s+/g, ""); // Remove spaces
+  
+      const matchAccountWithSelectedStoreForAdmin = (
+        selectedStoreByAddress: {
+          name: string;
+          address: string;
+          city: string;
+          state: string;
+        },
+        accounts: CompanyAccountType[]
+      ) => {
+        console.log("Matching store to accounts:", selectedStoreByAddress);
+      
+        // Normalize and truncate the selected store details
+        const normalizedAddress = normalizeString(selectedStoreByAddress.address).substring(0, 10);
+        const normalizedName = normalizeString(selectedStoreByAddress.name).substring(0, 10);
+      
+        console.log("Normalized Address (10):", normalizedAddress);
+        console.log("Normalized Name (10):", normalizedName);
+      
+        // Find a perfect match
+        const perfectMatch = accounts.find((account) => {
+          const normalizedAccountAddress = normalizeString(account.accountAddress).substring(0, 10);
+          const normalizedAccountName = normalizeString(account.accountName).substring(0, 10);
+      
+          return (
+            normalizedAccountAddress === normalizedAddress &&
+            normalizedAccountName === normalizedName
           );
-
-          return { account, addressSimilarity };
-        })
-        .filter(({ addressSimilarity }) => addressSimilarity > 0)
-        .sort((a, b) => b.addressSimilarity - a.addressSimilarity)
-        .slice(0, 3)
-        .map(({ account }) => account);
-
-      if (topClosestMatches.length > 0) {
-        console.log("Closest matches found:", topClosestMatches);
-        setClosestMatches(topClosestMatches);
-        setIsMatchSelectionOpen(true);
-      } else {
-        console.warn("No close matches found.");
-      }
-    }
-  };
+        });
+      
+        if (perfectMatch) {
+          console.log("Perfect match found:", perfectMatch);
+          setPost((prev) => ({
+            ...prev,
+            accountNumber: perfectMatch.accountNumber.toString(),
+            selectedStore: perfectMatch.accountName,
+            storeAddress: perfectMatch.accountAddress,
+          }));
+          return; // Exit early since we found a perfect match
+        }
+      
+        console.warn("No perfect match found. Finding closest matches...");
+      
+        // Find the closest matches
+        const topClosestMatches = accounts
+          .map((account) => {
+            const normalizedAccountAddress = normalizeString(account.accountAddress).substring(0, 10);
+            const addressSimilarity =
+              normalizedAccountAddress === normalizedAddress ? 1 : 0;
+      
+            return { account, addressSimilarity };
+          })
+          .filter(({ addressSimilarity }) => addressSimilarity > 0)
+          .sort((a, b) => b.addressSimilarity - a.addressSimilarity)
+          .map(({ account }) => account);
+      
+        if (topClosestMatches.length === 1) {
+          // Auto-select the only closest match
+          const closestMatch = topClosestMatches[0];
+          console.log("Auto-selecting the only closest match:", closestMatch);
+          setPost((prev) => ({
+            ...prev,
+            accountNumber: closestMatch.accountNumber.toString(),
+            selectedStore: closestMatch.accountName,
+            storeAddress: closestMatch.accountAddress,
+          }));
+        } else if (topClosestMatches.length > 0) {
+          console.log("Multiple closest matches found:", topClosestMatches);
+          setClosestMatches(topClosestMatches);
+          setIsMatchSelectionOpen(true); // Open modal for user selection
+        } else {
+          console.warn("No close matches found.");
+          dispatch(showMessage("No match found in your accounts. Try toggling 'All Stores' to search all company accounts."));
+        }
+      };
+      
 
   useEffect(() => {
     if (goals.length > 0) {
@@ -346,21 +425,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   }, [goals, post.accountNumber]);
 
-  useEffect(() => {
-    const loadAllCompanyAccounts = async () => {
-      if (isAdmin && companyId) {
-        try {
-          const accounts = await fetchAllCompanyAccounts();
-          setAllAccounts(accounts);
-        } catch (error) {
-          console.error("Error loading company accounts:", error);
-        }
-      }
-    };
-
-    loadAllCompanyAccounts();
-  }, [isAdmin, companyId]);
-
   // once a regular user selects an account this would load or fetch goals
   useEffect(() => {
     // Fetch goals once `post.accountNumber` is updated
@@ -369,23 +433,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
       handleFetchGoal();
     }
   }, [post.accountNumber]);
-
-  const fetchAllCompanyAccounts = async () => {
-    // this gets all of the users companys accounts
-    if (!companyId) {
-      console.error("No company ID provided.");
-      return [];
-    }
-
-    const accountsId = await getCompanyAccountId(companyId);
-    if (!accountsId) {
-      console.error("No accounts ID found for the company");
-      return [];
-    }
-
-    const accounts = await fetchAllAccountsFromFirestore(accountsId);
-    return accounts;
-  };
 
   const handleGoalSelection = (goalId: string) => {
     setSelectedGoalId(goalId);
@@ -416,16 +463,15 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
-  // const handleAccountSelect = (account: CompanyAccountType) => {
-  //   // this isnt used
-  //   //declared but never read
-  //   setPost((prev) => ({
-  //     ...prev,
-  //     selectedStore: account.accountName,
-  //     storeAddress: account.accountAddress,
-  //     accountNumber: account.accountNumber,
-  //   }));
-  // };
+  // Handler for Account Selection
+  const handleAccountSelect = (account: CompanyAccountType) => {
+    setPost({
+      ...post,
+      selectedStore: account.accountName,
+      storeAddress: account.accountAddress,
+      accountNumber: account.accountNumber,
+    });
+  };
 
   // const handleTotalCaseCountChange = (count: number) => {
   //   // unused?
@@ -502,8 +548,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
-  console.log(selectedStoreByAddress, ": selectedStore by address");
-
   return (
     <div className="pick-store">
       {/* Header Controls */}
@@ -534,10 +578,45 @@ export const PickStore: React.FC<PickStoreProps> = ({
           Next
         </Button>
       </Box>
-  
+
+      <Box>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          flexDirection="column"
+          mb={2}
+        >
+          <Box display="flex" alignItems="center">
+            <Typography>My Stores</Typography>
+            <Switch
+              checked={isAllStoresShown}
+              onChange={() => setIsAllStoresShown(!isAllStoresShown)}
+              inputProps={{ "aria-label": "toggle all stores" }}
+            />
+            <Typography>All Stores</Typography>
+          </Box>
+        </Box>
+
+        {loadingAccounts ? (
+          <CircularProgress />
+        ) : (
+          <AccountDropdown
+            onAccountSelect={handleAccountSelect}
+            accounts={accountsToSelect} // Toggle Logic
+          />
+        )}
+      </Box>
+      <Typography variant="h5" fontWeight="bold">
+        {post.selectedStore}
+      </Typography>
+      <Typography variant="h6" fontWeight="bold">
+        {post.storeAddress}
+      </Typography>
+
       {/* Account Dropdown */}
       <Box mt={2}>
-        {isMapMode ? (
+        {isMapMode && (
           <StoreLocator
             onStoreSelect={(store) => {
               setSelectedStoreByAddress({
@@ -548,27 +627,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
               });
             }}
           />
-        ) : (
-          <AccountDropdown
-            onAccountSelect={(account) => {
-              setPost({
-                ...post,
-                selectedStore: account.accountName,
-                storeAddress: account.accountAddress,
-                accountNumber: account.accountNumber,
-              });
-            }}
-          />
         )}
       </Box>
-  
+
       {/* Selected Store and Goals */}
       {post.selectedStore && (
         <>
           <Box mt={2}>
-            <Typography variant="h5" fontWeight="bold">
-              {post.selectedStore}
-            </Typography>
             {/* Render Selected Goal */}
             {selectedGoalId && (
               <Typography mt={1} variant="body1" color="textSecondary">
@@ -579,7 +644,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
               </Typography>
             )}
           </Box>
-  
+
           {/* Goals Dropdown */}
           <Box mt={2}>
             {isFetchingGoals && <CircularProgress />}
@@ -590,7 +655,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
               <Typography>No Gallo goals for this account.</Typography>
             )} */}
           </Box>
-  
+
           <Box mt={2}>
             {isFetchingGoal ? (
               <CircularProgress />
@@ -601,7 +666,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
                 value={selectedGoalId || "no-goal"}
                 onChange={(e) => handleGoalSelection(e.target.value)}
               >
-                <MenuItem value="no-goal">No Gallo goals for this account</MenuItem>
+                <MenuItem value="no-goal">
+                  No Gallo goals for this account
+                </MenuItem>
                 {activeGoals.map((goal) => (
                   <MenuItem
                     key={goal.goalDetails.goalId}
@@ -613,9 +680,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
               </Select>
             )}
           </Box>
-  
+
           {/* Total Case Count */}
-          <Typography variant="h6" mt={3}>{`Total ${goalMetric} count`}</Typography>
+          <Typography
+            variant="h6"
+            mt={3}
+          >{`Total ${goalMetric} count`}</Typography>
           <TotalCaseCount
             handleTotalCaseCountChange={(count) =>
               handleFieldChange("closedUnits", count)
@@ -623,7 +693,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           />
         </>
       )}
-  
+
       {/* Map */}
       {/* <Box mt={3}>
         {isMapMode && (
@@ -639,7 +709,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           />
         )}
       </Box> */}
-  
+
       {/* Match Selection Dialog */}
       <Dialog
         open={isMatchSelectionOpen}
@@ -671,5 +741,4 @@ export const PickStore: React.FC<PickStoreProps> = ({
       </Dialog>
     </div>
   );
-  
 };

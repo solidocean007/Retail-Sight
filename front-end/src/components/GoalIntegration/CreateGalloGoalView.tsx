@@ -66,7 +66,6 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
     setStartDate(newDate);
     setNoProgramsMessage(""); // Clear the no programs message
   };
-  
 
   useEffect(() => {
     // Fetch API key only once
@@ -308,14 +307,32 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
     }
   }, [matchedAccounts, galloAccounts]);
 
+  const handleCancel = () => {
+    setSelectedProgram(null);
+    setSelectedGoal(null);
+    setEnrichedAccounts([]); // Clear enriched accounts
+    setValue(0); // Navigate back
+  };
+
   return (
     <Container>
       <Box>
-        <DateSelector
-          startDate={startDate}
-          onDateChange={onDateChangeHandler}
-          onFetchPrograms={fetchPrograms}
-        />
+        <Box sx={{ display: "flex", width:"90%", justifyContent: "space-between" }}>
+          <DateSelector
+            startDate={startDate}
+            onDateChange={onDateChangeHandler}
+            onFetchPrograms={fetchPrograms}
+          />
+          {programs.length > 0 && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleCancel}
+            >
+              Cancel
+            </Button>
+          )}
+        </Box>
         {noProgramsMessage ? (
           <Typography color="error" variant="body1">
             {noProgramsMessage}
@@ -327,7 +344,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
             onSelectProgram={setSelectedProgram}
           />
         )}
-        {programs.length > 1 && (
+        {programs.length > 0 && (
           <Button
             variant="contained"
             color="primary"
