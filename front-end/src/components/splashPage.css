@@ -1,5 +1,6 @@
 /* splashPage.css */
 
+
 .splash-container {
   display: flex;
   flex-direction: column;
@@ -55,9 +56,41 @@
 
 .top-nav li {
   margin-right: .5rem;
-  /* padding: 1rem; */
   width: 9rem;
+  color: whitesmoke;
 }
+
+/* List Items */
+.navbar ul li {
+  position: relative;
+  list-style: none;
+  margin: 10px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect for list items */
+.navbar ul li:hover {
+  color: #007bff; /* Change text color on hover */
+  transform: translateX(5px); /* Slight movement effect */
+}
+
+/* Arrow styling */
+.navbar ul li::after {
+  content: "→"; /* Arrow */
+  font-size: 1rem;
+  position: absolute;
+  right: -20px; /* Align arrow to the right */
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.3s, transform 0.3s ease;
+}
+
+/* Show arrow on hover */
+.navbar ul li:hover::after {
+  opacity: 1; /* Show arrow */
+  transform: translateX(5px); /* Move arrow slightly */
+}
+
 
 .top-nav a {
   /* color: var(--splash-nav-text); */
@@ -76,6 +109,7 @@
 .first-section, .fifth-section {
   position: relative;
   width: 100vw;
+  color: #ffffff;
 }
 
 .first-image-box img, .fifth-image-box img {
@@ -404,10 +438,7 @@ footer a:hover {
     position: relative;
   }
 
-  .top-nav li {
-    width: 20rem;
-    margin: 10px;
-  }
+  
 
   .top-nav .isMenuOpen {
     transform: translateY(0); /* Bring the menu on screen */

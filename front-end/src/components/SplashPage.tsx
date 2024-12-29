@@ -56,56 +56,45 @@ const SplashPage = () => {
           </div>
           <div className="navbar">
             <ul className={isMenuOpen ? "isMenuOpen" : ""}>
-              <li>
-                <a
-                  onClick={(e) => {
-                    e.preventDefault(); // Prevent the default anchor behavior
-                    handleLoginClick(); // Call your function
-                    navigate("/sign-up-login"); // Navigate
-                  }}
-                >
-                  Login
-                </a>
+              <li
+                onClick={() => {
+                  handleLoginClick();
+                  navigate("/sign-up-login");
+                }}
+              >
+                Login
               </li>
-              <li>
-                <a
-                  onClick={() => {
-                    toggleMenu();
-                    scrollToRef(1);
-                  }}
-                >
-                  The Objective
-                </a>
+              <li
+                onClick={() => {
+                  toggleMenu();
+                  scrollToRef(1);
+                }}
+              >
+                The Objective
               </li>
-              <li>
-                <a
-                  onClick={() => {
-                    toggleMenu();
-                    scrollToRef(2);
-                  }}
-                >
-                  Features
-                </a>
+              <li
+                onClick={() => {
+                  toggleMenu();
+                  scrollToRef(2);
+                }}
+              >
+                Features
               </li>
-              <li>
-                <a
-                  onClick={() => {
-                    toggleMenu();
-                    scrollToRef(3);
-                  }}
-                >
-                  Pricing
-                </a>
+              <li
+                onClick={() => {
+                  toggleMenu();
+                  scrollToRef(3);
+                }}
+              >
+                Pricing
               </li>
-              <li>
-                <a
-                  onClick={() => {
-                    toggleMenu();
-                    scrollToRef(4);
-                  }}
-                >
-                  Security
-                </a>
+              <li
+                onClick={() => {
+                  toggleMenu();
+                  scrollToRef(4);
+                }}
+              >
+                Security
               </li>
             </ul>
           </div>
@@ -143,7 +132,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section ref={sectionRefs[0]} className="second-section">
+          <section ref={sectionRefs[1]} className="second-section">
             <div className="second-content">
               <h3>The Objective</h3>
               <p>

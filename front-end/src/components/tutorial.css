@@ -17,10 +17,10 @@
   color: #333; /* Adjust color based on your theme */
 }
 
-p {
-  color: #666; /* Adjust color based on your theme */
+/* p {
+  color: #666; Adjust color based on your theme
   line-height: 1.6;
-}
+} */
 
 button {
   background-color: #007bff; /* Example button color */
