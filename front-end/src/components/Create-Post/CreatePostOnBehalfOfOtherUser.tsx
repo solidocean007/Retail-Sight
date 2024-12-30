@@ -1,9 +1,10 @@
 import {
   Box,
+  InputLabel,
   MenuItem,
-  MenuList,
   Select,
   SelectChangeEvent,
+  TextField,
 } from "@mui/material";
 import { useSelector } from "react-redux";
 import { PostType, UserType } from "../../utils/types";
@@ -20,6 +21,7 @@ import {
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { useAppDispatch } from "../../utils/store";
+import { MenuOutlined } from "@mui/icons-material";
 
 interface Props {
   onBehalf: UserType | null;
@@ -89,14 +91,8 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
   }, [companyId, dispatch]);
 
   const handleOnBehalfChange = (event: SelectChangeEvent<string>) => {
-    console.log(event);
-    console.log(companyUsers);
-    const selectedUid = event.target.value as string; // Explicitly cast to string
-    console.log(selectedUid); // This should log the correct user UID
-
+    const selectedUid = event.target.value; // Extract the selected value
     const selectedUser = companyUsers?.find((user) => user.uid === selectedUid);
-
-    console.log(selectedUser, ": selectedUser"); // Log the selected user
 
     setOnBehalf(selectedUser || null);
 
@@ -152,12 +148,13 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
   // };
 
   return (
-    <Box sx={{ display: "flex" }}>
-      <h2>For user: </h2>
+    <Box sx={{ display: "flex", fontSize: "15px", flexDirection: "column" }}>
+      <InputLabel htmlFor="onBehalf-select">For user:</InputLabel>
       <Select
+        id="onBehalf-select"
         value={onBehalf?.uid || userData?.uid || ""}
         onChange={handleOnBehalfChange}
-        sx={{ backgroundColor: onBehalf ? "whitesmoke" : "#f0f0f0", width: "20rem" }}
+        sx={{ width: "20rem", backgroundColor: "whitesmoke" }}
       >
         <MenuItem value={userData?.uid}>
           {`${userData?.firstName} ${userData?.lastName} (You)`}
