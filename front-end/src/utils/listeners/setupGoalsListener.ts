@@ -6,13 +6,13 @@ import {
   saveGoalsToIndexedDB,
   clearGoalsFromIndexedDB,
 } from "../database/indexedDBUtils";
-import { setGoals } from "../../Slices/goalsSlice";
+import { setGalloGoals } from "../../Slices/goalsSlice";
 import { FireStoreGalloGoalDocType } from "../types";
 
 export const setupUserGoalsListener =
   (companyId: string, salesRouteNum: string | undefined) =>
   (dispatch: any) => {
-    const q = query(collection(db, "GalloGoals"), where("companyId", "==", companyId));
+    const q = query(collection(db, "galloGoals"), where("companyId", "==", companyId));
 
     const unsubscribe = onSnapshot(
       q,
@@ -36,11 +36,11 @@ export const setupUserGoalsListener =
 
         // Clear old goals from IndexedDB and Redux
         await clearGoalsFromIndexedDB(); // Clear IndexedDB
-        dispatch(setGoals([])); // Clear Redux goals state
+        dispatch(setGalloGoals([])); // Clear Redux goals state
 
         // Save and dispatch new goals
         await saveGoalsToIndexedDB(userGoals); // Save updated goals to IndexedDB
-        dispatch(setGoals(userGoals)); // Update Redux store with new goals
+        dispatch(setGalloGoals(userGoals)); // Update Redux store with new goals
       },
       (error) => {
         console.error("Error in user goals listener:", error);

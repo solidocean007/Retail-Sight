@@ -72,13 +72,13 @@
 /* Hover effect for list items */
 .navbar ul li:hover {
   color: #007bff; /* Change text color on hover */
-  transform: translateX(5px); /* Slight movement effect */
+  transform: translateX(-10px); /* Slight movement effect */
 }
 
 /* Arrow styling */
 .navbar ul li::after {
   content: "→"; /* Arrow */
-  font-size: 1rem;
+  font-size: 3rem;
   position: absolute;
   right: -20px; /* Align arrow to the right */
   opacity: 0; /* Hidden by default */
@@ -88,7 +88,7 @@
 /* Show arrow on hover */
 .navbar ul li:hover::after {
   opacity: 1; /* Show arrow */
-  transform: translateX(5px); /* Move arrow slightly */
+  transform: translateX(-65px); /* Move arrow slightly */
 }
 
 

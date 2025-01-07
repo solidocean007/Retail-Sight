@@ -44,14 +44,12 @@ import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
 import {
   getGoalsFromIndexedDB,
-  getUserAccountsFromIndexedDB,
   saveGoalsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
-import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
 import {
   fetchUserGalloGoals,
-  selectGoals,
-  setGoals,
+  selectGalloGoals,
+  setGalloGoals,
 } from "../../Slices/goalsSlice";
 import { setupUserGoalsListener } from "../../utils/listeners/setupGoalsListener";
 
@@ -61,7 +59,7 @@ export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
-  const goals = useSelector(selectGoals);
+  const galloGoals = useSelector(selectGalloGoals);
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 
@@ -124,30 +122,30 @@ export const CreatePost = () => {
   );
   const navigate = useNavigate();
 
-// Fetch and listen for user goals
+// Fetch and listen for user goals.  i need to refactor this part to get company goals as well
 useEffect(() => {
   if (!companyId || !salesRouteNum) return;
 
-  const loadInitialGoals = async () => {
+  const loadInitialGalloGoals = async () => {
     try {
       const savedGoals = await getGoalsFromIndexedDB();
       if (savedGoals.length > 0) {
         console.log(savedGoals, ': savedGoals') // logs the old goal
-        dispatch(setGoals(savedGoals));
+        dispatch(setGalloGoals(savedGoals));
       } else {
         const fetchedGoals = await dispatch(
           fetchUserGalloGoals({ companyId, salesRouteNum })
         ).unwrap();
         await saveGoalsToIndexedDB(fetchedGoals);
-        dispatch(setGoals(fetchedGoals));
-        console.log(goals, ': goals'); // this doesnt log
+        dispatch(setGalloGoals(fetchedGoals));
+        console.log(galloGoals, ': goals'); // this doesnt log
       }
     } catch (error) {
       console.error("Error loading goals:", error);
     }
   };
 
-  loadInitialGoals();
+  loadInitialGalloGoals();
 
   // Set up the snapshot listener for real-time updates
   const unsubscribe = dispatch(setupUserGoalsListener(companyId, salesRouteNum));
@@ -302,7 +300,7 @@ useEffect(() => {
             onPrevious={goToPreviousStep}
             post={post}
             setPost={setPost}
-            goals={goals}
+            goals={galloGoals}
             handleFieldChange={handleFieldChange}
             onStoreNameChange={handleStoreNameChange}
             onStoreNumberChange={handleStoreNumberChange}

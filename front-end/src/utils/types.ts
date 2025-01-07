@@ -230,6 +230,17 @@ export type GalloGoalType = {
   goalBenchValue: string;
 };
 
+export type CompanyGoalType = {
+  id?: string;
+  companyId: string;
+  goalDescription: string;
+  goalMetric: string;
+  goalValueMin: number;
+  goalStartDate: string;
+  goalEndDate: string;
+  accounts: string | string[];
+}
+
 // This is an account as defined by gallo
 export type GalloAccountType = {
   oppId: string;
@@ -265,7 +276,6 @@ export interface FireStoreGalloGoalDocType {
     marketId?: string;
   }>;
 }
-
 
 export type CompanyAccountType = {
   accountNumber: string;

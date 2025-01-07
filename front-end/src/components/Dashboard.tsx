@@ -33,12 +33,11 @@ import UserProfileViewer from "./UserProfileViewer";
 import LogOutButton from "./LogOutButton";
 import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
-import ApiView from "./ApiView.tsx";
 import AccountManager from "./AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
-import GoalIntegrationLayout from "./GoalIntegration/GoalntegrationLayout.tsx";
 import { collection, onSnapshot, query, where } from "@firebase/firestore";
 import { db } from "../utils/firebase.ts";
+import GoalManager from "./GoalIntegration/GoalManager.tsx";
 
 type DashboardModeType =
   | "TeamMode"
@@ -264,8 +263,7 @@ export const Dashboard = () => {
           />
         )}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
-        {dashboardMode === "ApiMode" && <ApiView />}
-        {dashboardMode === "GoalManagerMode" && <GoalIntegrationLayout />}
+        {dashboardMode === "GoalManagerMode" && <GoalManager />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>

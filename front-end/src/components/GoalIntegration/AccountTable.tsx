@@ -27,6 +27,7 @@ import { db } from "../../utils/firebase";
 import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
 import "./accountTable.css";
+import { createGalloGoal } from "../../utils/helperFunctions/createGalloGoal";
 
 interface AccountTableProps {
   accounts: EnrichedGalloAccountType[];
@@ -116,49 +117,31 @@ const AccountTable: React.FC<AccountTableProps> = ({
     }
   };
 
-  const saveGoalForAccounts = async () => {
+  const handleCreateGalloGoal = async () => {
     if (!selectedGoal || !selectedProgram) {
-      console.error("Selected goal or program is missing.");
+      alert("Please select a goal and program before saving.");
       return;
     }
-    setIsSaving(true);
+  
+    setIsSaving(true); // Start saving
     try {
-      const goalDocRef = doc(db, "GalloGoals", selectedGoal.goalId);
-      await setDoc(
-        goalDocRef,
-        {
-          companyId: companyId,
-          programDetails: {
-            programId: selectedProgram.programId,
-            programTitle: selectedProgram.programTitle,
-            programStartDate: selectedProgram.startDate,
-            programEndDate: selectedProgram.endDate,
-          },
-          goalDetails: {
-            goalId: selectedGoal.goalId,
-            goal: selectedGoal.goal,
-            goalMetric: selectedGoal.goalMetric,
-            goalValueMin: selectedGoal.goalValueMin,
-          },
-          accounts: selectedAccounts.map((account) => ({
-            distributorAcctId: account.distributorAcctId,
-            accountName: account.accountName,
-            accountAddress: account.accountAddress,
-            salesRouteNums: account.salesRouteNums,
-            oppId: account.oppId,
-            marketId: account.marketId,
-          })),
-        },
-        { merge: true }
+      await createGalloGoal(
+        selectedGoal,
+        selectedProgram,
+        selectedAccounts,
+        companyId || ""
       );
-      console.log("Goal saved successfully for selected accounts!");
-      onSaveComplete();
+      alert("Goal saved successfully!");
+      onSaveComplete(); // Notify parent component
     } catch (err) {
-      console.error("Error saving goal for accounts:", err);
+      alert("Failed to save the goal. Please try again.");
     } finally {
-      setIsSaving(false);
+      setIsSaving(false); // End saving
     }
   };
+  
+
+ 
 
   return (
     <TableContainer component={Paper} className="account-table">
@@ -263,7 +246,7 @@ const AccountTable: React.FC<AccountTableProps> = ({
           <Button
             onClick={() => {
               setShowConfirmDialog(false); // Close dialog
-              saveGoalForAccounts(); // Call save function
+              handleCreateGalloGoal(); // Call save function
             }}
             color="primary"
             variant="contained"

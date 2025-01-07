@@ -17,15 +17,14 @@ import {
 } from "@mui/material";
 import {
   fetchUserGalloGoals,
-  selectGoals,
-  selectGoalsLoading,
+  selectGalloGoals,
+  selectGalloGoalsLoading,
   selectLastUpdated,
-  setGoals,
+  setGalloGoals,
 } from "../Slices/goalsSlice";
 import {
   getGoalsFromIndexedDB,
   getUserAccountsFromIndexedDB,
-  saveGoalsToIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { selectUser } from "../Slices/userSlice";
 import { setupUserGoalsListener } from "../utils/listeners/setupGoalsListener";
@@ -50,7 +49,7 @@ interface GroupedProgram {
 
 const MyGoals = () => {
   const dispatch = useAppDispatch();
-  const goals = useSelector((state: RootState) => state.goals.goals);
+  const galloGoals = useSelector((state: RootState) => state.goals.galloGoals);
   // const loading = useSelector(selectGoalsLoading);
   const lastUpdated = useSelector(selectLastUpdated);
   const user = useSelector(selectUser); // added this
@@ -61,7 +60,6 @@ const MyGoals = () => {
   const salesRouteNum = useSelector(selectUser)?.salesRouteNum;
   const [userAccounts, setUserAccounts] = useState<any[]>([]);
 
-  console.log("goals: ", goals); // this logs empty then it logs with the current goal but all accounts.  but no program/goal or accounts render
 
   useEffect(() => {
     if (!companyId) return;
@@ -106,9 +104,9 @@ const MyGoals = () => {
   };
 
   const groupedPrograms = React.useMemo(() => {
-    if (userAccounts.length === 0 || goals.length === 0) return [];
+    if (userAccounts.length === 0 || galloGoals.length === 0) return [];
 
-    return goals.reduce<GroupedProgram[]>((acc, goal) => {
+    return galloGoals.reduce<GroupedProgram[]>((acc, goal) => {
       if (!goal.programDetails || !goal.programDetails.programTitle) {
         console.warn("Skipping invalid goal:", goal);
         return acc; // Skip invalid goal
@@ -156,7 +154,7 @@ const MyGoals = () => {
 
       return acc;
     }, []);
-  }, [goals, userAccounts]);
+  }, [galloGoals, userAccounts]);
 
   return (
     <div className="my-goals-container">

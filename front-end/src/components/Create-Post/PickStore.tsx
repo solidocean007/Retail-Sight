@@ -30,15 +30,15 @@ import {
 } from "@mui/material";
 import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAcccountsFromFirestore";
 import getCompanyAccountId from "../../utils/helperFunctions/getCompanyAccountId";
-import { fetchGoalsByCompanyId } from "../../utils/helperFunctions/fetchGoalsByCompanyId";
-import { getActiveGoalsForAccount } from "../../utils/helperFunctions/getActiveGoalsForAccount"; // this function looks useful also
+import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGalloGoalsByCompanyId";
+import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
 import {
   getAllCompanyGoalsFromIndexedDB,
   getGoalsFromIndexedDB,
   getUserAccountsFromIndexedDB,
   saveGoalsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
-import { fetchGoalsForAccount } from "../../utils/helperFunctions/fetchGoalsForAccount";
+import { fetchGalloGoalsForAccount } from "../../utils/helperFunctions/fetchGalloGoalsForAccount";
 import { showMessage } from "../../Slices/snackbarSlice";
 import TotalCaseCount from "../TotalCaseCount";
 import { selectUser } from "../../Slices/userSlice";
@@ -103,7 +103,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
   const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
   const [goalMetric, setGoalMetric] = useState<"cases" | "bottles">("cases");
-  const activeGoals = getActiveGoalsForAccount(post.accountNumber, goals);
+  const activeGoals = getActiveGalloGoalsForAccount(post.accountNumber, goals);
   const [isFetchingGoals, setIsFetchingGoals] = useState(false);
   const [closestMatches, setClosestMatches] = useState<CompanyAccountType[]>(
     []
@@ -185,7 +185,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           if (savedGoals.length > 0) {
             setAllCompanyGoals(savedGoals); // why are we saving these in state?  they are in indexedDB at least they should be.  we should check if they are in indexedDb first if not then fetch
           } else if (companyId) {
-            const fetchedGoals = await fetchGoalsByCompanyId(companyId);
+            const fetchedGoals = await fetchGalloGoalsByCompanyId(companyId);
             setAllCompanyGoals(fetchedGoals);
           }
         } catch (error) {
@@ -214,7 +214,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           if (matchingGoals.length > 0) {
             dispatch(setGoals(matchingGoals));
           } else if (companyId) {
-            const fetchedGoals = await fetchGoalsForAccount(
+            const fetchedGoals = await fetchGalloGoalsForAccount(
               post.accountNumber,
               companyId
             );
@@ -257,7 +257,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         setGoals(matchingGoals);
       } else if (companyId) {
         // Fetch goals from Firestore if no matches in IndexedDB
-        const fetchedGoals = await fetchGoalsForAccount(
+        const fetchedGoals = await fetchGalloGoalsForAccount(
           post.accountNumber,
           companyId
         );
@@ -413,7 +413,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
   useEffect(() => {
     if (goals.length > 0) {
-      const activeGoals = getActiveGoalsForAccount(post.accountNumber, goals);
+      const activeGoals = getActiveGalloGoalsForAccount(post.accountNumber, goals);
       if (activeGoals.length > 0) {
         const metric = activeGoals[0].goalDetails.goalMetric;
         if (metric === "cases" || metric === "bottles") {
@@ -520,7 +520,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           "No matching goals found in allCompanyGoals. Attempting to fetch from Firestore..."
         );
         if (companyId) {
-          const fetchedGoals = await fetchGoalsByCompanyId(companyId);
+          const fetchedGoals = await fetchGalloGoalsByCompanyId(companyId);
           setAllCompanyGoals(fetchedGoals); // Update local state and IndexedDB
           const fallbackGoals = fetchedGoals.filter((goal) =>
             goal.accounts.some(

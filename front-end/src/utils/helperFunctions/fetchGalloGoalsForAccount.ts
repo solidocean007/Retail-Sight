@@ -2,12 +2,12 @@ import { collection, query, where, getDocs } from "@firebase/firestore";
 import { FireStoreGalloGoalDocType } from "../types";
 import { db } from "../firebase";
 
-export const fetchGoalsForAccount = async (
+export const fetchGalloGoalsForAccount = async (
   accountNumber: string | null | undefined,
   companyId: string
 ): Promise<FireStoreGalloGoalDocType[]> => {
   try {
-    const goalsCollection = collection(db, "GalloGoals");
+    const goalsCollection = collection(db, "galloGoals");
 
     // Query Firestore to get documents matching the companyId
     const goalsQuery = query(goalsCollection, where("companyId", "==", companyId));

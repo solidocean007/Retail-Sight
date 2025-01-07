@@ -1,12 +1,11 @@
 // GoalIntegrationLayout.tsx
-import { useState, useEffect } from "react";
-import { Box, Container, Typography, Tabs, Tab } from "@mui/material";
-import IntegrationView from "../IntegrationView";
-import ApiView from "../ApiView";
+import { useState } from "react";
+import { Box, Container, Tabs, Tab } from "@mui/material";
 import CreateGalloGoalView from "./CreateGalloGoalView";
-import AllGoalsView from "./AllProgramsView";
+import AllGoalsView from "./AllGoalsView";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
+import CreateCompanyGoalView from "./CreateCompanyGoalView";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -37,7 +36,7 @@ function a11yProps(index: number) {
   };
 }
 
-const GoalIntegrationLayout: React.FC = () => {
+const GoalManager: React.FC = () => {
   const [value, setValue] = useState(0);
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
@@ -50,10 +49,9 @@ const GoalIntegrationLayout: React.FC = () => {
     <Container>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={value} onChange={handleChange} aria-label="dashboard tabs">
-          <Tab label="Program Manager" {...a11yProps(0)} />
-          <Tab label="Program Import" {...a11yProps(1)} />
-          <Tab label="External Integration" {...a11yProps(2)} />
-          <Tab label="Internal API Management" {...a11yProps(3)} />
+          <Tab label="All Goals" {...a11yProps(0)} />
+          <Tab label="Gallo Program Import" {...a11yProps(1)} />
+          <Tab label="Company Goal Creation" {...a11yProps(2)} />
           {/* Add more tabs as necessary */}
         </Tabs>
       </Box>
@@ -64,10 +62,7 @@ const GoalIntegrationLayout: React.FC = () => {
         <CreateGalloGoalView setValue={setValue} />
       </TabPanel>
       <TabPanel value={value} index={2}>
-        <IntegrationView /> {/* Your IntegrationView component */}
-      </TabPanel>
-      <TabPanel value={value} index={3}>
-        <ApiView /> {/* Your ApiView component */}
+        <CreateCompanyGoalView />
       </TabPanel>
 
       {/* Add more TabPanels as necessary */}
@@ -75,4 +70,4 @@ const GoalIntegrationLayout: React.FC = () => {
   );
 };
 
-export default GoalIntegrationLayout;
+export default GoalManager;

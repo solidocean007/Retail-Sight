@@ -1,18 +1,18 @@
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import { FireStoreGalloGoalDocType } from "../types";
+import { CompanyGoalType } from "../types";
 
-export const fetchGoalsByCompanyId = async (
+export const fetchCompanyGoalsByCompanyId = async (
   companyId: string
-): Promise<FireStoreGalloGoalDocType[]> => {
-  const goalsCollectionRef = collection(db, "GalloGoals");
+): Promise<CompanyGoalType[]> => {
+  const goalsCollectionRef = collection(db, "companyGoals");
   const q = query(goalsCollectionRef, where("companyId", "==", companyId));
 
   try {
     const querySnapshot = await getDocs(q);
 
     // Explicitly map and validate the Firestore documents
-    const documents: FireStoreGalloGoalDocType[] = querySnapshot.docs.map((doc) => {
+    const documents: CompanyGoalType[] = querySnapshot.docs.map((doc) => {
       const data = doc.data();
       // Ensure the data matches the expected structure
       if (
@@ -22,22 +22,25 @@ export const fetchGoalsByCompanyId = async (
         Array.isArray(data.accounts)
       ) {
         return {
+          id: data.id,
           companyId: data.companyId,
-          programDetails: data.programDetails,
-          goalDetails: data.goalDetails,
+          goalDescription: data.goalDescription,
+          goalMetric: data.goalMetric,
+          goalValueMin: data.goalValueMin,
+          goalStartDate: data.goalStartDate,
+          goalEndDate: data.goalEndDate,
           accounts: data.accounts,
-        } as FireStoreGalloGoalDocType;
+        } as CompanyGoalType;
       } else {
-        console.warn("Invalid GalloGoal document structure:", data);
+        console.warn("Invalid CompanyGoal document structure:", data);
         throw new Error("Invalid document structure");
       }
     });
 
-    console.log("Fetched GalloGoals documents:", documents);
+    console.log("Fetched ComapnyGoals documents:", documents);
     return documents;
   } catch (error) {
-    console.error("Error fetching GalloGoals by companyId:", error);
+    console.error("Error fetching CompanyGoals by companyId:", error);
     return [];
   }
 };
-

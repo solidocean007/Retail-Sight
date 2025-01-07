@@ -1,11 +1,16 @@
 // goalsSlice
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
-import { FireStoreGalloGoalDocType, GalloGoalType } from "../utils/types";
+import { CompanyGoalType, FireStoreGalloGoalDocType, GalloGoalType } from "../utils/types";
 import { addAccountsToIndexedDB, getUserAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { RootState } from "../utils/store";
 import { collection, getDocs, query, where } from "@firebase/firestore";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
+
+// Add types for company goals
+interface FireStoreCompanyGoalWithId extends CompanyGoalType {
+  id: string; // Include the `id` field
+}
 
 export interface FireStoreGalloGoalWithId extends FireStoreGalloGoalDocType {
   id: string; // Add the `id` field
@@ -13,28 +18,32 @@ export interface FireStoreGalloGoalWithId extends FireStoreGalloGoalDocType {
 
 
 interface GoalsState {
-  goals: FireStoreGalloGoalDocType[];
-  loading: boolean;
-  currentAccountLoading: boolean;
+  galloGoals: FireStoreGalloGoalDocType[];
+  companyGoals: CompanyGoalType[];
+  galloGoalsIsLoading: boolean;
+  companyGoalsIsLoading: boolean;
+  galloGoalsError: string | null; // Separate error states
+  companyGoalsError: string | null; 
   lastUpdated: string | null;
-  error: string | null;
 }
 
 const initialState: GoalsState = {
-  goals: [],
-  loading: false,
-  currentAccountLoading: false,
+  galloGoals: [],
+  companyGoals: [],
+  galloGoalsIsLoading: false,
+  companyGoalsIsLoading: false,
+  galloGoalsError: null,
+  companyGoalsError: null,
   lastUpdated: null,
-  error: null,
 };
 
-export const fetchAllCompanyGoals = createAsyncThunk<
+export const fetchAllGalloGoals = createAsyncThunk<
   FireStoreGalloGoalWithId[], // Array of company goals with IDs
   { companyId: string },
   { rejectValue: string }
 >("goals/fetchAllCompanyGoals", async ({ companyId }, { rejectWithValue }) => {
   try {
-    const goalsCollection = collection(db, "GalloGoals");
+    const goalsCollection = collection(db, "galloGoals");
     const goalsQuery = query(goalsCollection, where("companyId", "==", companyId));
     const goalsSnapshot = await getDocs(goalsQuery);
 
@@ -45,6 +54,33 @@ export const fetchAllCompanyGoals = createAsyncThunk<
     });
 
     return allGoals; // Return all goals for the company
+  } catch (err) {
+    console.error("Error fetching all company goals:", err);
+    if (err instanceof Error) {
+      return rejectWithValue(err.message);
+    }
+    return rejectWithValue("An unknown error occurred while fetching company goals.");
+  }
+});
+
+// Async thunk for fetching all company goals
+export const fetchAllCompanyGoals = createAsyncThunk<
+  FireStoreCompanyGoalWithId[], // Return type
+  { companyId: string }, // Input type
+  { rejectValue: string } // Reject value type
+>("goals/fetchAllCompanyGoals", async ({ companyId }, { rejectWithValue }) => {
+  try {
+    const goalsCollection = collection(db, "companyGoals");
+    const goalsQuery = query(goalsCollection, where("companyId", "==", companyId));
+    const goalsSnapshot = await getDocs(goalsQuery);
+
+    const allCompanyGoals: FireStoreCompanyGoalWithId[] = [];
+    goalsSnapshot.forEach((doc) => {
+      const goalDoc = doc.data() as FireStoreCompanyGoalWithId;
+      allCompanyGoals.push({ ...goalDoc, id: doc.id }); // Include the `id` field
+    });
+
+    return allCompanyGoals; // Return all company goals for the company
   } catch (err) {
     console.error("Error fetching all company goals:", err);
     if (err instanceof Error) {
@@ -90,7 +126,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
     }
 
     // Step 4: Query Firestore for goals
-    const goalsCollection = collection(db, "GalloGoals");
+    const goalsCollection = collection(db, "galloGoals");
     const goalsQuery = query(goalsCollection, where("companyId", "==", companyId));
     const goalsSnapshot = await getDocs(goalsQuery);
 
@@ -126,48 +162,69 @@ const goalsSlice = createSlice({
   name: "goals",
   initialState,
   reducers: {
-    setGoals(state, action) {
-      state.goals = action.payload;
+    setGalloGoals(state, action) {
+      state.galloGoals = action.payload;
     },
-    addGoal(state, action) {
-      state.goals.push(action.payload);
+    addGalloGoal(state, action) {
+      state.galloGoals.push(action.payload);
+    },
+    setCompanyGoals(state, action) {
+      state.companyGoals = action.payload;
+    },
+    addCompanyGoal(state, action) {
+      state.companyGoals.push(action.payload);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchUserGalloGoals.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      // Gallo Goals
+      .addCase(fetchAllGalloGoals.pending, (state) => {
+        state.galloGoalsIsLoading = true;
+        state.galloGoalsError = null;
       })
-      .addCase(fetchUserGalloGoals.fulfilled, (state, action) => {
-        state.goals = action.payload;
-        state.loading = false;
+      .addCase(fetchAllGalloGoals.fulfilled, (state, action) => {
+        state.galloGoals = action.payload;
+        state.galloGoalsIsLoading = false;
         state.lastUpdated = new Date().toISOString();
       })
-      .addCase(fetchUserGalloGoals.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to fetch user goals.";
+      .addCase(fetchAllGalloGoals.rejected, (state, action) => {
+        state.galloGoalsIsLoading = false;
+        state.galloGoalsError = action.payload || "Failed to fetch Gallo goals.";
       })
+
+      // Company Goals
       .addCase(fetchAllCompanyGoals.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.companyGoalsIsLoading = true;
+        state.companyGoalsError = null;
       })
       .addCase(fetchAllCompanyGoals.fulfilled, (state, action) => {
-        state.goals = action.payload;
-        state.loading = false;
+        state.companyGoals = action.payload;
+        state.companyGoalsIsLoading = false;
         state.lastUpdated = new Date().toISOString();
       })
       .addCase(fetchAllCompanyGoals.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to fetch all company goals.";
+        state.companyGoalsIsLoading = false;
+        state.companyGoalsError = action.payload || "Failed to fetch Company goals.";
       });
   },
 });
 
-export const { setGoals, addGoal } = goalsSlice.actions;
-export const selectGoals = (state: RootState) => state.goals.goals;
-export const selectGoalsLoading = (state: RootState) => state.goals.loading;
+
+// Export actions
+export const {
+  setGalloGoals,
+  addGalloGoal,
+  setCompanyGoals,
+  addCompanyGoal,
+} = goalsSlice.actions;
+
+// Selectors
+export const selectGalloGoals = (state: RootState) => state.goals.galloGoals;
+export const selectCompanyGoals = (state: RootState) => state.goals.companyGoals;
+export const selectGalloGoalsLoading = (state: RootState) => state.goals.galloGoalsIsLoading;
+export const selectCompanyGoalsIsLoading = (state: RootState) => state.goals.companyGoalsIsLoading;
+export const selectGalloGoalsError = (state: RootState) => state.goals.galloGoalsError;
+export const selectCompanyGoalsError = (state: RootState) => state.goals.companyGoalsError;
 export const selectLastUpdated = (state: RootState) => state.goals.lastUpdated;
-export const selectGoalsError = (state: RootState) => state.goals.error;
 
 export default goalsSlice.reducer;
