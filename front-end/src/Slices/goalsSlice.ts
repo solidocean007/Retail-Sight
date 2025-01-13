@@ -1,7 +1,7 @@
 // goalsSlice
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
-import { CompanyGoalType, FireStoreGalloGoalDocType, GalloGoalType } from "../utils/types";
+import { CompanyGoalType, FireStoreGalloGoalDocType } from "../utils/types";
 import { addAccountsToIndexedDB, getUserAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { RootState } from "../utils/store";
 import { collection, getDocs, query, where } from "@firebase/firestore";
@@ -41,7 +41,7 @@ export const fetchAllGalloGoals = createAsyncThunk<
   FireStoreGalloGoalWithId[], // Array of company goals with IDs
   { companyId: string },
   { rejectValue: string }
->("goals/fetchAllCompanyGoals", async ({ companyId }, { rejectWithValue }) => {
+>("goals/fetchAllGalloGoals", async ({ companyId }, { rejectWithValue }) => {
   try {
     const goalsCollection = collection(db, "galloGoals");
     const goalsQuery = query(goalsCollection, where("companyId", "==", companyId));

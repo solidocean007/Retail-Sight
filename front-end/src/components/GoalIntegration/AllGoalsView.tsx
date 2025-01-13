@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { FireStoreGalloGoalDocType } from "../../utils/types";
+import { CompanyGoalType, FireStoreGalloGoalDocType } from "../../utils/types";
 import {
   getAllCompanyGoalsFromIndexedDB,
+  getGalloGoalsFromIndexedDB,
   saveAllGalloGoalsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
 import {
@@ -22,7 +23,7 @@ import {
   Tab,
 } from "@mui/material";
 import { useAppDispatch } from "../../utils/store";
-import { fetchAllCompanyGoals } from "../../Slices/goalsSlice";
+import { fetchAllCompanyGoals, fetchAllGalloGoals } from "../../Slices/goalsSlice";
 import { showMessage } from "../../Slices/snackbarSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -59,6 +60,7 @@ export interface MappedProgramType {
 const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
   const [value, setValue] = useState(0);
   const [galloGoals, setGalloGoals] = useState<FireStoreGalloGoalDocType[]>([]);
+  const [companyGoals, setCompanyGoals] = useState<CompanyGoalType[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [sortColumn, setSortColumn] = useState<string>("accountName");
@@ -104,7 +106,6 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
   useEffect(() => {
     const loadEmployees = async () => {
       const employees = await getCompanyUsersFromIndexedDB();
-      console.log(employees); // this logs empty
       const employeeMap: Record<string, string> = {};
       employees.forEach((employee) => {
         if (employee.salesRouteNum) {
@@ -113,7 +114,6 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
           ] = `${employee.firstName} ${employee.lastName}`;
         }
       });
-      console.log("Employee Map:", employeeMap); // Verify the map content..this logs empty
       setEmployeeMap(employeeMap);
     };
 
@@ -121,19 +121,19 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
   }, []);
 
   useEffect(() => {
-    const loadGoals = async () => {
+    const loadGalloGoals = async () => {
       try {
         if (!companyId) {
           setLoading(false);
           return;
         }
 
-        const savedGoals = await getAllCompanyGoalsFromIndexedDB();
+        const savedGoals = await getGalloGoalsFromIndexedDB();
         if (savedGoals.length > 0) {
           setGalloGoals(savedGoals);
         } else {
           const fetchedGoals = await dispatch(
-            fetchAllCompanyGoals({ companyId })
+            fetchAllGalloGoals({ companyId })
           ).unwrap();
           setGalloGoals(fetchedGoals);
           await saveAllGalloGoalsToIndexedDB(fetchedGoals);
@@ -164,7 +164,7 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
       }
     };
 
-    loadGoals();
+    loadGalloGoals();
   }, [companyId, dispatch]);
 
   const toggleExpand = (id: string) => {
@@ -350,7 +350,7 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
       </Box>
       <TabPanel value={value} index={0}>
         <Box className="table-container">
-          <CompanyGoalsView goals={galloGoals} />
+          <CompanyGoalsView goals={companyGoals} />
         </Box>
       </TabPanel>
       <TabPanel value={value} index={1}>

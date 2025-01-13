@@ -43,7 +43,7 @@ import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
 import {
-  getGoalsFromIndexedDB,
+  getGalloGoalsFromIndexedDB,
   saveGoalsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
 import {
@@ -128,7 +128,7 @@ useEffect(() => {
 
   const loadInitialGalloGoals = async () => {
     try {
-      const savedGoals = await getGoalsFromIndexedDB();
+      const savedGoals = await getGalloGoalsFromIndexedDB();
       if (savedGoals.length > 0) {
         console.log(savedGoals, ': savedGoals') // logs the old goal
         dispatch(setGalloGoals(savedGoals));

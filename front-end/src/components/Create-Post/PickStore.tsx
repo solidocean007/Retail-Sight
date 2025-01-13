@@ -34,7 +34,7 @@ import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGal
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
 import {
   getAllCompanyGoalsFromIndexedDB,
-  getGoalsFromIndexedDB,
+  getGalloGoalsFromIndexedDB,
   getUserAccountsFromIndexedDB,
   saveGoalsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
@@ -42,7 +42,7 @@ import { fetchGalloGoalsForAccount } from "../../utils/helperFunctions/fetchGall
 import { showMessage } from "../../Slices/snackbarSlice";
 import TotalCaseCount from "../TotalCaseCount";
 import { selectUser } from "../../Slices/userSlice";
-import { setGoals } from "../../Slices/goalsSlice";
+import { setGalloGoals } from "../../Slices/goalsSlice";
 
 interface PickStoreProps {
   onNext: () => void;
@@ -202,7 +202,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       if (post.accountNumber) {
         setIsFetchingGoals(true);
         try {
-          const savedGoals = await getGoalsFromIndexedDB();
+          const savedGoals = await getGalloGoalsFromIndexedDB();
           const matchingGoals = savedGoals.filter((goal) =>
             goal.accounts.some(
               (acc) =>
@@ -212,13 +212,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
           );
 
           if (matchingGoals.length > 0) {
-            dispatch(setGoals(matchingGoals));
+            dispatch(setGalloGoals(matchingGoals));
           } else if (companyId) {
             const fetchedGoals = await fetchGalloGoalsForAccount(
               post.accountNumber,
               companyId
             );
-            dispatch(setGoals(fetchedGoals));
+            dispatch(setGalloGoals(fetchedGoals));
             await saveGoalsToIndexedDB(fetchedGoals);
           }
         } catch (error) {
@@ -241,7 +241,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         return;
       }
 
-      const savedGoals = await getGoalsFromIndexedDB();
+      const savedGoals = await getGalloGoalsFromIndexedDB();
 
       // Find matching goals from IndexedDB
       const matchingGoals = savedGoals.filter((goal) =>
@@ -254,7 +254,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       console.log(matchingGoals);
 
       if (matchingGoals.length > 0) {
-        setGoals(matchingGoals);
+        setGalloGoals(matchingGoals);
       } else if (companyId) {
         // Fetch goals from Firestore if no matches in IndexedDB
         const fetchedGoals = await fetchGalloGoalsForAccount(
@@ -272,7 +272,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         );
 
         if (filteredFetchedGoals.length > 0) {
-          setGoals(filteredFetchedGoals);
+          setGalloGoals(filteredFetchedGoals);
           await saveGoalsToIndexedDB(fetchedGoals);
         } else {
           console.warn("No matching goals found for this account.");
@@ -514,7 +514,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
       if (matchingGoals.length > 0) {
         console.log("Matching goals found:", matchingGoals);
-        dispatch(setGoals(matchingGoals));
+        dispatch(setGalloGoals(matchingGoals));
       } else {
         console.warn(
           "No matching goals found in allCompanyGoals. Attempting to fetch from Firestore..."
@@ -531,7 +531,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
           if (fallbackGoals.length > 0) {
             console.log("Fallback matching goals found:", fallbackGoals);
-            dispatch(setGoals(fallbackGoals));
+            dispatch(setGalloGoals(fallbackGoals));
           } else {
             console.warn("No goals found for the account in Firestore either.");
           }

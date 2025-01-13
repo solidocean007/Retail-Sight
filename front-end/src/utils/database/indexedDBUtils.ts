@@ -886,11 +886,6 @@ export const saveGoalsToIndexedDB = async (
   });
 };
 
-
-
-
-
-
 export const saveAllGalloGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[]
 ): Promise<void> => {
@@ -937,11 +932,8 @@ export const saveAllGalloGoalsToIndexedDB = async (
 };
 
 
-
-
-
 // Fetch goals from IndexedDB
-export const getGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType[]> => {
+export const getGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType[]> => {
   const db = await openDB();
   const transaction = db.transaction(["goals"], "readonly");
   const store = transaction.objectStore("goals");

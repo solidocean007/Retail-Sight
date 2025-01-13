@@ -75,8 +75,6 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
     }
   }, [companyId]);
 
-  console.log(apiKey);
-
   const getUnixTimestamp = (date: Dayjs | null): string => {
     return date ? date.unix().toString() : "";
   };
