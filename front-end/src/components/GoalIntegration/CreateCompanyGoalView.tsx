@@ -34,9 +34,12 @@ const CreateCompanyGoalView = () => {
   const [filteredAccounts, setFilteredAccounts] = useState<
     CompanyAccountType[]
   >([]);
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
-  const [isGlobal, setIsGlobal] = useState(true);
+  const [selectedAccounts, setSelectedAccounts] = useState<
+    CompanyAccountType[]
+  >([]);
+  const [isGlobal, setIsGlobal] = useState(false);
   const [goalDescription, setGoalDescription] = useState("");
+  const [goalTitle, setGoalTitle] = useState("");
   const [goalMetric, setGoalMetric] = useState("");
   const [goalValueMin, setGoalValueMin] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,17 +55,16 @@ const CreateCompanyGoalView = () => {
 
   useEffect(() => {
     fetchAccounts();
-    console.log(paginatedAccounts);
   }, []);
 
   useEffect(() => {
     const filtered = accounts.filter(
       (account) =>
         account.accountName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.accountNumber?.toString().includes(searchTerm) // Convert to string before calling includes
+        account.accountNumber?.toString().includes(searchTerm)
     );
     setFilteredAccounts(filtered);
-    setCurrentPage(1); // Reset to the first page when search term changes
+    setCurrentPage(1);
   }, [searchTerm, accounts]);
 
   const fetchAccounts = async () => {
@@ -95,7 +97,7 @@ const CreateCompanyGoalView = () => {
             : [account.salesRouteNums].filter(Boolean),
         }));
         setAccounts(formattedAccounts);
-        setFilteredAccounts(formattedAccounts); // Ensure `filteredAccounts` is updated too
+        setFilteredAccounts(formattedAccounts);
       } else {
         console.error("No accounts found in Firestore");
       }
@@ -106,29 +108,30 @@ const CreateCompanyGoalView = () => {
     }
   };
 
-  const handleAccountSelection = (accountId: string) => {
-    setSelectedAccounts((prev) =>
-      prev.includes(accountId)
-        ? prev.filter((id) => id !== accountId)
-        : [...prev, accountId]
-    );
+  const handleAccountSelection = (account: CompanyAccountType) => {
+    setSelectedAccounts((prev) => {
+      const exists = prev.some(
+        (selected) => selected.accountNumber === account.accountNumber
+      );
+      if (exists) {
+        return prev.filter(
+          (selected) => selected.accountNumber !== account.accountNumber
+        );
+      } else {
+        return [...prev, account];
+      }
+    });
   };
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = event.target.value.toLowerCase();
-    setSearchTerm(searchTerm);
-
-    const filtered = accounts.filter((account) => {
-      const accountName = account.accountName?.toLowerCase() || ""; // Fallback to empty string
-      const accountNumber = account.accountNumber
-        ? account.accountNumber.toString()
-        : ""; // Ensure string
-      return (
-        accountName.includes(searchTerm) || accountNumber.includes(searchTerm)
-      );
-    });
-
-    setFilteredAccounts(filtered);
+  const handleSelectAllAccounts = () => {
+    const allSelected = selectedAccounts.length === filteredAccounts.length;
+    if (allSelected) {
+      // Deselect all accounts
+      setSelectedAccounts([]);
+    } else {
+      // Select all filtered accounts
+      setSelectedAccounts(filteredAccounts);
+    }
   };
 
   const handlePageChange = (
@@ -144,7 +147,7 @@ const CreateCompanyGoalView = () => {
   );
 
   const handleCreateGoal = async () => {
-    if (!goalDescription || !goalMetric || !goalValueMin) {
+    if (!goalDescription || !goalMetric || !goalValueMin || !goalTitle) {
       alert("Please fill out all fields.");
       return;
     }
@@ -153,6 +156,7 @@ const CreateCompanyGoalView = () => {
     try {
       const newGoal = {
         companyId: companyId || "",
+        goalTitle,
         goalDescription,
         goalMetric,
         goalValueMin: Number(goalValueMin),
@@ -165,10 +169,13 @@ const CreateCompanyGoalView = () => {
       await createCompanyGoal(newGoal);
 
       alert("Goal created successfully!");
+      setGoalTitle("");
       setGoalDescription("");
       setGoalMetric("");
       setGoalValueMin(1);
       setIsGlobal(true);
+      setGoalStartDate("");
+      setGoalEndDate("");
       setSelectedAccounts([]);
     } catch (error) {
       alert("Error creating goal. Please try again.");
@@ -180,118 +187,194 @@ const CreateCompanyGoalView = () => {
   return (
     <Container>
       <Box mb={4}>
-        <Typography variant="h5" align="justify" gutterBottom>
+        <Typography variant="h5" gutterBottom>
           Create a New Goal
         </Typography>
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems={"flex-start"}
-          gap={2}
-          mb={2}
-        >
+
+        <Box display="flex" flexDirection="column" gap={2} mb={4}>
+          {/* Goal Title and Description */}
+          <TextField
+            label="Goal Title"
+            value={goalTitle}
+            onChange={(e) => setGoalTitle(e.target.value)}
+          />
           <TextField
             label="Goal Description"
             value={goalDescription}
             onChange={(e) => setGoalDescription(e.target.value)}
-            // fullWidth
           />
 
           <Typography variant="h6" gutterBottom>
             Goal Dates
           </Typography>
-          <TextField
-            label="Start Date"
-            type="date"
-            value={goalStartDate}
-            onChange={(e) => setGoalStartDate(e.target.value)}
-            // fullWidth
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          <TextField
-            label="End Date"
-            type="date"
-            value={goalEndDate}
-            onChange={(e) => setGoalEndDate(e.target.value)}
-            // fullWidth
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
+          <Box sx={{ display: "flex" }}>
+            <TextField
+              label="Start Date"
+              type="date"
+              value={goalStartDate}
+              onChange={(e) => setGoalStartDate(e.target.value)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+            <TextField
+              label="End Date"
+              type="date"
+              value={goalEndDate}
+              onChange={(e) => setGoalEndDate(e.target.value)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Box>
 
-          <Typography variant="h6" gutterBottom>
-            Goal Metric
-          </Typography>
-          <ToggleButtonGroup
-            value={goalMetric}
-            exclusive
-            onChange={(event, value) => {
-              if (value) setGoalMetric(value);
-            }}
-            aria-label="Goal Metric"
-          >
-            <ToggleButton value="cases">Cases</ToggleButton>
-            <ToggleButton value="bottles">Bottles</ToggleButton>
-          </ToggleButtonGroup>
+          <Box sx={{ display: "flex", justifyContent: "space-around" }}>
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Goal Metric
+              </Typography>
+              <ToggleButtonGroup
+                value={goalMetric}
+                exclusive
+                onChange={(event, value) => {
+                  if (value) setGoalMetric(value);
+                }}
+                aria-label="Goal Metric"
+              >
+                <ToggleButton value="cases">Cases</ToggleButton>
+                <Typography variant="body1" sx={{ mx: 3 }}>
+                  or
+                </Typography>
+                <ToggleButton value="bottles">Bottles</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Minimum Value
+              </Typography>
+              <Box display="flex" alignItems="center">
+                <Button
+                  variant="outlined"
+                  onClick={() =>
+                    setGoalValueMin((prev) => Math.max(1, Number(prev) - 1))
+                  }
+                >
+                  -
+                </Button>
+                <TextField
+                  type="number"
+                  value={goalValueMin}
+                  onChange={(e) =>
+                    setGoalValueMin(Math.max(1, Number(e.target.value)))
+                  }
+                  size="small"
+                  sx={{ width: 60, textAlign: "center", mx: 1 }}
+                  inputProps={{ min: 1 }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => setGoalValueMin((prev) => Number(prev) + 1)}
+                >
+                  +
+                </Button>
+              </Box>
+            </Box>
+          </Box>
 
           <Box display="flex" alignItems="center">
-            <Typography>Global Goal:</Typography>
+            <Typography>Global Goal for all accounts?:</Typography>
             <Checkbox
               checked={isGlobal}
               onChange={() => setIsGlobal((prev) => !prev)}
             />
+            {isGlobal && (
+              <Typography>All accounts are available for this goal.</Typography>
+            )}
           </Box>
-          <Typography variant="h6" gutterBottom>
-            Minimum Value
-          </Typography>
-          <Box display="flex" alignItems="center">
-            <Button
-              variant="outlined"
-              onClick={() =>
-                setGoalValueMin((prev) => Math.max(1, Number(prev) - 1))
-              }
-            >
-              -
-            </Button>
-            <TextField
-              type="number"
-              value={goalValueMin}
-              onChange={(e) =>
-                setGoalValueMin(Math.max(1, Number(e.target.value)))
-              }
-              size="small"
-              sx={{ width: 60, textAlign: "center", mx: 1 }}
-              inputProps={{ min: 1 }}
-            />
-            <Button
-              variant="outlined"
-              onClick={() => setGoalValueMin((prev) => Number(prev) + 1)}
-            >
-              +
-            </Button>
-          </Box>
-        </Box>
 
-        {!isGlobal && (
-          <Box mb={4}>
-            <TextField
-              label="Search Account"
-              variant="outlined"
-              fullWidth
-              value={searchTerm}
-              onChange={handleSearch}
-              sx={{ marginBottom: 2 }}
-            />
-            {loading ? (
-              <CircularProgress />
-            ) : (
-              <>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCreateGoal}
+            disabled={!readyForCreation}
+          >
+            Create Goal
+          </Button>
+
+          {/* Selected Accounts */}
+          {!isGlobal && selectedAccounts.length > 0 && (
+            <Box mb={4}>
+              <Typography variant="h6">{`${selectedAccounts.length} Selected Accounts`}</Typography>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Select</TableCell>
+                    <TableCell>Account Name</TableCell>
+                    <TableCell>Account Address</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedAccounts.map((account) => (
+                    <TableRow key={account.accountNumber}>
+                      <TableCell>
+                        <Checkbox
+                          checked
+                          onChange={() => handleAccountSelection(account)}
+                        />
+                      </TableCell>
+                      <TableCell>{account.accountName}</TableCell>
+                      <TableCell>{account.accountAddress}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          )}
+
+          {/* Account Selection */}
+          {!isGlobal && (
+            <Box>
+              <TextField
+                label="Search Account"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                fullWidth
+                sx={{ mb: 2 }}
+              />
+
+              {loading ? (
+                <CircularProgress />
+              ) : (
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Select</TableCell>
+                      <TableCell>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          mb={2}
+                        >
+                          <Typography variant="h6">Select Accounts</Typography>
+                          <Checkbox
+                            indeterminate={
+                              selectedAccounts.length > 0 &&
+                              selectedAccounts.length < filteredAccounts.length
+                            }
+                            checked={
+                              selectedAccounts.length ===
+                              filteredAccounts.length
+                            }
+                            onChange={handleSelectAllAccounts}
+                          />
+                          <Typography>
+                            {selectedAccounts.length === filteredAccounts.length
+                              ? "Deselect All"
+                              : "Select All"}
+                          </Typography>
+                        </Box>
+                        Select
+                      </TableCell>
                       <TableCell>Account Name</TableCell>
                       <TableCell>Account Address</TableCell>
                     </TableRow>
@@ -301,12 +384,11 @@ const CreateCompanyGoalView = () => {
                       <TableRow key={account.accountNumber}>
                         <TableCell>
                           <Checkbox
-                            checked={selectedAccounts.includes(
-                              account.accountNumber
+                            checked={selectedAccounts.some(
+                              (selected) =>
+                                selected.accountNumber === account.accountNumber
                             )}
-                            onChange={() =>
-                              handleAccountSelection(account.accountNumber)
-                            }
+                            onChange={() => handleAccountSelection(account)}
                           />
                         </TableCell>
                         <TableCell>{account.accountName}</TableCell>
@@ -315,25 +397,16 @@ const CreateCompanyGoalView = () => {
                     ))}
                   </TableBody>
                 </Table>
-                <Pagination
-                  count={Math.ceil(filteredAccounts.length / itemsPerPage)}
-                  page={currentPage}
-                  onChange={handlePageChange}
-                  sx={{ marginTop: 2 }}
-                />
-              </>
-            )}
-          </Box>
-        )}
-
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleCreateGoal}
-          disabled={!readyForCreation}
-        >
-          Create Goal
-        </Button>
+              )}
+              <Pagination
+                count={Math.ceil(filteredAccounts.length / itemsPerPage)}
+                page={currentPage}
+                onChange={handlePageChange}
+                sx={{ mt: 2 }}
+              />
+            </Box>
+          )}
+        </Box>
       </Box>
     </Container>
   );

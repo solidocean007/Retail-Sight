@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { CompanyGoalType, FireStoreGalloGoalDocType } from "../../utils/types";
 import {
-  getAllCompanyGoalsFromIndexedDB,
-  getGalloGoalsFromIndexedDB,
+  getAllGalloGoalsFromIndexedDB,
+  // getAllCompanyGoalsFromIndexedDB,
+  // getGalloGoalsFromIndexedDB,
   saveAllGalloGoalsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
 import {
@@ -23,7 +24,7 @@ import {
   Tab,
 } from "@mui/material";
 import { useAppDispatch } from "../../utils/store";
-import { fetchAllCompanyGoals, fetchAllGalloGoals } from "../../Slices/goalsSlice";
+import { fetchAllCompanyGoals, fetchAllGalloGoals, selectAllCompanyGoals, selectAllGalloGoals, selectCompanyGoalsIsLoading, setCompanyGoals } from "../../Slices/goalsSlice";
 import { showMessage } from "../../Slices/snackbarSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -39,7 +40,9 @@ import {
   where,
 } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
-import CompanyGoalsView from "./CompanyGoalsView";
+import CompanyGoalsView from "./AllCompanyGoalsView";
+import { useSelector } from "react-redux";
+import { selectUser } from "../../Slices/userSlice";
 
 type SortOrder = "asc" | "desc";
 
@@ -57,51 +60,16 @@ export interface MappedProgramType {
   }>;
 }
 
-const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
-  const [value, setValue] = useState(0);
-  const [galloGoals, setGalloGoals] = useState<FireStoreGalloGoalDocType[]>([]);
-  const [companyGoals, setCompanyGoals] = useState<CompanyGoalType[]>([]);
-  const [loading, setLoading] = useState(true);
+const AllGalloGoalsView = () => {
+  const dispatch = useAppDispatch();
+  const companyId = useSelector(selectUser)?.companyId;
+  const galloGoals = useSelector(selectAllGalloGoals);
+  const isLoading = useSelector(selectCompanyGoalsIsLoading);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [sortColumn, setSortColumn] = useState<string>("accountName");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
   const [programs, setPrograms] = useState<MappedProgramType[]>([]);
-  // New state for programs
-  const dispatch = useAppDispatch();
-
-  interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-  }
-
-  function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
-
-    return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`simple-tabpanel-${index}`}
-        aria-labelledby={`simple-tab-${index}`}
-        {...other}
-      >
-        {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-      </div>
-    );
-  }
-
-  function a11yProps(index: number) {
-    return {
-      id: `simple-tab-${index}`,
-      "aria-controls": `simple-tabpanel-${index}`,
-    };
-  }
-
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
 
   useEffect(() => {
     const loadEmployees = async () => {
@@ -119,53 +87,6 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
 
     loadEmployees();
   }, []);
-
-  useEffect(() => {
-    const loadGalloGoals = async () => {
-      try {
-        if (!companyId) {
-          setLoading(false);
-          return;
-        }
-
-        const savedGoals = await getGalloGoalsFromIndexedDB();
-        if (savedGoals.length > 0) {
-          setGalloGoals(savedGoals);
-        } else {
-          const fetchedGoals = await dispatch(
-            fetchAllGalloGoals({ companyId })
-          ).unwrap();
-          setGalloGoals(fetchedGoals);
-          await saveAllGalloGoalsToIndexedDB(fetchedGoals);
-        }
-
-        // Step 3: Set up a listener to watch Firestore for changes
-        const q = query(
-          collection(db, "galloGoals"),
-          where("companyId", "==", companyId)
-        );
-        const unsubscribe = onSnapshot(q, async (snapshot) => {
-          const updatedGoals = snapshot.docs.map(
-            (doc) => doc.data() as FireStoreGalloGoalDocType
-          );
-          setGalloGoals(updatedGoals);
-          await saveAllGalloGoalsToIndexedDB(updatedGoals);
-        });
-
-        // Cleanup listener on component unmount
-        return () => unsubscribe();
-      } catch (error) {
-        console.error("Error loading company goals:", error);
-        dispatch(
-          showMessage("Failed to load company goals. Please try again.")
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadGalloGoals();
-  }, [companyId, dispatch]);
 
   const toggleExpand = (id: string) => {
     setExpandedGoals((prev) => {
@@ -224,20 +145,16 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
     updatePrograms();
   }, [galloGoals]);
 
-  const handleDeleteGoal = async (goalId: string) => {
+  const handleDeleteGalloGoal = async (goalId: string) => {
     try {
       await deleteGalloGoalFromFirestore(goalId);
-      const updatedGoals = galloGoals.filter(
-        (goal) => goal.goalDetails.goalId !== goalId
-      );
-      setGalloGoals(updatedGoals);
-      await saveAllGalloGoalsToIndexedDB(updatedGoals);
       dispatch(showMessage("Goal deleted successfully."));
     } catch (error) {
       console.error("Error deleting goal:", error);
       dispatch(showMessage("Failed to delete goal. Please try again."));
     }
   };
+  
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -252,43 +169,32 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
 
   const handleDeleteProgram = async (programId: string) => {
     try {
-      // Find the Firestore doc that matches the programId
-      const programToDelete = galloGoals.find(
+      // Step 1: Fetch all goals associated with the programId
+      const programGoals = galloGoals.filter(
         (goal) => goal.programDetails.programId === programId
       );
-
-      if (!programToDelete) {
-        console.warn(`No program found with ID: ${programId}`);
+  
+      if (!programGoals.length) {
+        console.warn(`No goals found for program ID: ${programId}`);
         return;
       }
-
-      const goalId = programToDelete.goalDetails.goalId; // Firestore document ID
-      const goalDocRef = doc(db, "galloGoals", goalId);
-
-      // Step 1: Delete the Firestore document
-      await deleteDoc(goalDocRef);
-      console.log(`Program and Goal with ID ${goalId} deleted.`);
-
-      // Step 2: Update Local State
-      const updatedPrograms = programs.filter(
-        (program) => program.programId !== programId
-      );
-      setPrograms(updatedPrograms);
-
-      const updatedGoals = galloGoals.filter(
-        (goal) => goal.programDetails.programId !== programId
-      );
-      setGalloGoals(updatedGoals);
-
-      // Step 3: Update IndexedDB
-      await saveAllGalloGoalsToIndexedDB(updatedGoals);
-
-      dispatch(showMessage("Program deleted successfully."));
+  
+      // Step 2: Delete each goal from Firestore
+      const deletePromises = programGoals.map((goal) => {
+        const goalDocRef = doc(db, "galloGoals", goal.goalDetails.goalId); // Firestore document reference
+        return deleteDoc(goalDocRef);
+      });
+  
+      await Promise.all(deletePromises); // Wait for all deletions to complete
+  
+      // Step 3: Notify the user
+      dispatch(showMessage("Program and its associated goals deleted successfully."));
     } catch (error) {
       console.error("Error deleting program:", error);
       dispatch(showMessage("Failed to delete program. Please try again."));
     }
   };
+  
 
   const sortData = (data: any[], column: string, order: SortOrder) => {
     return [...data].sort((a, b) => {
@@ -327,34 +233,18 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Box textAlign="center" mt={4}>
         <CircularProgress />
-        <Typography>Loading company goals...</Typography>
+        <Typography>Loading Gallo goals...</Typography>
       </Box>
     );
   }
 
   return (
     <Container>
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          aria-label="all-goals-view tabs"
-        >
-          <Tab label="Company Goals" {...a11yProps(0)} />
-          <Tab label="Gallo Programs & Goals" {...a11yProps(1)} />
-        </Tabs>
-      </Box>
-      <TabPanel value={value} index={0}>
-        <Box className="table-container">
-          <CompanyGoalsView goals={companyGoals} />
-        </Box>
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        <Box className="table-container">
+       <Box className="table-container">
           <Typography variant="h4" gutterBottom>
             Gallo Programs
           </Typography>
@@ -441,19 +331,19 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
                                       <TableCell>
                                         {goal.goalDetails.goal}
                                       </TableCell>
-                                      {/* <TableCell>
+                                      <TableCell>
                                     <Button
                                       variant="contained"
                                       color="secondary"
                                       onClick={() =>
-                                        handleDeleteGoal(
+                                        handleDeleteGalloGoal(
                                           goal.goalDetails.goalId
                                         )
                                       }
                                     >
                                       Delete Goal
                                     </Button>
-                                  </TableCell> */}
+                                  </TableCell>
                                     </TableRow>
                                     <TableRow>
                                       <TableCell>
@@ -676,9 +566,8 @@ const AllGoalsView = ({ companyId }: { companyId: string | undefined }) => {
             </TableBody>
           </Table>
         </Box>
-      </TabPanel>
     </Container>
   );
 };
 
-export default AllGoalsView;
+export default AllGalloGoalsView;

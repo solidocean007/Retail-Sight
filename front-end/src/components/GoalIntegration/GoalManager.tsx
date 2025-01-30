@@ -2,10 +2,10 @@
 import { useState } from "react";
 import { Box, Container, Tabs, Tab } from "@mui/material";
 import CreateGalloGoalView from "./CreateGalloGoalView";
-import AllGoalsView from "./AllGoalsView";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 import CreateCompanyGoalView from "./CreateCompanyGoalView";
+import AllGoalsLayout from "./AllGoalsLayout";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -38,8 +38,6 @@ function a11yProps(index: number) {
 
 const GoalManager: React.FC = () => {
   const [value, setValue] = useState(0);
-  const user = useSelector(selectUser);
-  const companyId = user?.companyId;
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -56,7 +54,7 @@ const GoalManager: React.FC = () => {
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
-        <AllGoalsView companyId={companyId} />
+        <AllGoalsLayout />
       </TabPanel>
       <TabPanel value={value} index={1}>
         <CreateGalloGoalView setValue={setValue} />

@@ -847,7 +847,7 @@ export async function getUserAccountsFromIndexedDB(): Promise<any[]> {
 
 export const saveGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[] | CompanyGoalType[],
-  goalType: "galloGoals" | "companyGoals" = "galloGoals"
+  goalType: "galloGoals" | "companyGoals" | "allGalloGoals" | "allCompanySpecificGoals"
 ): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(goalType, "readwrite");
@@ -860,48 +860,48 @@ export const saveGoalsToIndexedDB = async (
     };
 
     transaction.onerror = (event) => {
-      console.error(
-        `Error saving ${goalType} to IndexedDB:`,
-        (event.target as IDBRequest).error
-      );
+      console.error(`Error saving ${goalType} to IndexedDB:`, (event.target as IDBRequest).error);
       reject((event.target as IDBRequest).error);
     };
 
-    goals.forEach((goal) => {
-      const goalToSave =
-        goalType === "galloGoals"
-          ? {
-              ...goal,
-              id: (goal as FireStoreGalloGoalDocType).goalDetails.goalId, // Ensure correct type
-            }
-          : {
-              ...goal,
-              id:
-                (goal as CompanyGoalType & { id?: string }).id ||
-                crypto.randomUUID(), // Generate id if not present
-            };
-
-      store.put(goalToSave); // Save the goal directly
-    });
+    // Clear store before saving new goals (optional for `allGalloGoals` types)
+    if (goalType.startsWith("all")) {
+      store.clear().onsuccess = () => {
+        goals.forEach((goal) => {
+          store.put({
+            ...goal,
+            id: goal.goalDetails?.goalId || crypto.randomUUID(), // Property 'goalDetails' does not exist on type 'FireStoreGalloGoalDocType | CompanyGoalType'.
+            // Property 'goalDetails' does not exist on type 'CompanyGoalType'.ts(2339)
+          });
+        });
+      };
+    } else {
+      goals.forEach((goal) => {
+        store.put({
+          ...goal,
+          id: goal.goalDetails?.goalId || crypto.randomUUID(),
+        });
+      });
+    }
   });
 };
+
 
 export const saveAllGalloGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[]
 ): Promise<void> => {
   const db = await openDB();
-  const transaction = db.transaction(["allCompanyGoals"], "readwrite");
-  const store = transaction.objectStore("allCompanyGoals");
+  const transaction = db.transaction(["allGalloGoals"], "readwrite");
+  const store = transaction.objectStore("allGalloGoals");
 
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
-      console.log("All company goals saved to IndexedDB successfully.");
       resolve();
     };
 
     transaction.onerror = (event) => {
       console.error(
-        "Error saving all company goals to IndexedDB:",
+        "Error saving all Gallo goals to IndexedDB:",
         (event.target as IDBRequest).error
       );
       reject((event.target as IDBRequest).error);
@@ -923,7 +923,7 @@ export const saveAllGalloGoalsToIndexedDB = async (
 
     store.clear().onerror = (event) => {
       console.error(
-        "Error clearing allCompanyGoals store:",
+        "Error clearing allGalloGoals store:",
         (event.target as IDBRequest).error
       );
       reject((event.target as IDBRequest).error);
@@ -933,10 +933,10 @@ export const saveAllGalloGoalsToIndexedDB = async (
 
 
 // Fetch goals from IndexedDB
-export const getGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType[]> => {
+export const getUsersGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType[]> => {
   const db = await openDB();
-  const transaction = db.transaction(["goals"], "readonly");
-  const store = transaction.objectStore("goals");
+  const transaction = db.transaction(["galloGoals"], "readonly");
+  const store = transaction.objectStore("galloGoals");
 
   return new Promise<FireStoreGalloGoalDocType[]>((resolve, reject) => {
     const getAllRequest = store.getAll();
@@ -956,17 +956,16 @@ export const getGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDo
 
 
 // Fetch goals from IndexedDB
-export const getAllCompanyGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType[]> => {
+export const getAllGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType[]> => {
   const db = await openDB();
-  const transaction = db.transaction(["allCompanyGoals"], "readonly");
-  const store = transaction.objectStore("allCompanyGoals");
+  const transaction = db.transaction(["allGalloGoals"], "readonly");
+  const store = transaction.objectStore("allGalloGoals");
 
   return new Promise<FireStoreGalloGoalDocType[]>((resolve, reject) => {
     const getAllRequest = store.getAll();
 
     getAllRequest.onsuccess = () => {
       const goals = getAllRequest.result as FireStoreGalloGoalDocType[];
-      console.log("Fetched all company goals from IndexedDB:", goals);
       resolve(goals);
     };
 
@@ -979,10 +978,10 @@ export const getAllCompanyGoalsFromIndexedDB = async (): Promise<FireStoreGalloG
 
 
 
-export const clearSomeCompanyGoalsFromIndexedDB = async (goalIds: string[]): Promise<void> => {
+export const clearSomeGalloGoalsFromIndexedDB = async (goalIds: string[]): Promise<void> => {
   const db = await openDB();
-  const transaction = db.transaction(["allCompanyGoals"], "readwrite");
-  const store = transaction.objectStore("allCompanyGoals");
+  const transaction = db.transaction(["allGalloGoals"], "readwrite");
+  const store = transaction.objectStore("allGalloGoals");
 
   return new Promise<void>((resolve, reject) => {
     const retainedGoals: FireStoreGalloGoalDocType[] = [];
@@ -1001,7 +1000,7 @@ export const clearSomeCompanyGoalsFromIndexedDB = async (goalIds: string[]): Pro
       };
 
       store.clear().onerror = (event) => {
-        console.error("Error clearing allCompanyGoals store:", (event.target as IDBRequest).error);
+        console.error("Error clearing allGalloGoals store:", (event.target as IDBRequest).error);
         reject((event.target as IDBRequest).error);
       };
     };
@@ -1014,14 +1013,29 @@ export const clearSomeCompanyGoalsFromIndexedDB = async (goalIds: string[]): Pro
 };
 
 // Clear goals from IndexedDB
-export const clearGoalsFromIndexedDB = async (goalType: "galloGoals" | "companyGoals" = "galloGoals"): Promise<void> => {
-  const storeName = goalType === "galloGoals" ? "userGoals" : "companyGoals";
+export const clearGoalsFromIndexedDB = async (
+  goalType: "galloGoals" | "companyGoals" | "allGalloGoals" | "allCompanySpecificGoals" = "galloGoals"
+): Promise<void> => {
+  console.log(`Clearing goals from store: ${goalType}`);
   const db = await openDB();
-  const transaction = db.transaction(storeName, "readwrite");
-  const store = transaction.objectStore("goals");
-  await store.clear();
-  console.log("Cleared goals from IndexedDB.");
+
+  if (!db.objectStoreNames.contains(goalType)) {
+    console.error(`Store ${goalType} does not exist in IndexedDB.`);
+    return;
+  }
+
+  const transaction = db.transaction(goalType, "readwrite");
+  const store = transaction.objectStore(goalType);
+
+  try {
+    await store.clear();
+    console.log(`Cleared all entries from ${goalType} in IndexedDB.`);
+  } catch (error) {
+    console.error(`Error clearing ${goalType} from IndexedDB:`, error);
+    throw error; // Rethrow error for caller to handle
+  }
 };
+
 
 
 

@@ -1,7 +1,7 @@
 import { deleteDoc, doc } from "@firebase/firestore";
 import { db } from "../firebase";
 
-export const deleteGalloGoalFromFirestore = async (goalId: string): Promise<void> => {
+export const deleteCompanyGoalFromFirestore = async (goalId: string): Promise<void> => {
   try {
     const goalDocRef = doc(db, "companyGoals", goalId);
     await deleteDoc(goalDocRef);

@@ -22,8 +22,6 @@ import {
   GalloGoalType,
   GalloProgramType,
 } from "../../utils/types";
-import { doc, setDoc } from "@firebase/firestore";
-import { db } from "../../utils/firebase";
 import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
 import "./accountTable.css";

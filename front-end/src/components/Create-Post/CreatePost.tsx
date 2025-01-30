@@ -3,19 +3,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
-import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
+import { selectUser } from "../../Slices/userSlice";
 
 // import ChannelSelector from "./ChannelSelector";
 // import CategorySelector from "./CategorySelector";
-import {
-  AppBar,
-  Container,
-  IconButton,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  Snackbar,
-} from "@mui/material";
+import { AppBar, Container, IconButton } from "@mui/material";
 
 // import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
@@ -38,28 +30,31 @@ import { SetDisplayDetails } from "./SetDisplayDetails";
 import { DisplayDescription } from "./DisplayDescription";
 import { ReviewAndSubmit } from "./ReviewAndSubmit";
 import { showMessage } from "../../Slices/snackbarSlice";
-import { useAppDispatch } from "../../utils/store";
+import { RootState, useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
 import {
-  getGalloGoalsFromIndexedDB,
-  saveGoalsToIndexedDB,
-} from "../../utils/database/indexedDBUtils";
-import {
-  fetchUserGalloGoals,
-  selectGalloGoals,
-  setGalloGoals,
+  selectUsersCompanyGoals,
+  selectUsersGalloGoals,
 } from "../../Slices/goalsSlice";
-import { setupUserGoalsListener } from "../../utils/listeners/setupGoalsListener";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
+  const userData = useSelector(selectUser);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
-  const galloGoals = useSelector(selectGalloGoals);
+  const salesRouteNum = userData?.salesRouteNum;
+
+  const usersGalloGoals = useSelector((state: RootState) =>
+    selectUsersGalloGoals(state, salesRouteNum)
+  );
+  const usersCompanyGoals = useSelector((state: RootState) =>
+    selectUsersCompanyGoals(state, salesRouteNum)
+  );
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 
@@ -68,7 +63,6 @@ export const CreatePost = () => {
 
   const handlePostSubmission = useHandlePostSubmission();
 
-  const userData = useSelector(selectUser);
   const companyId = userData?.companyId;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
@@ -76,14 +70,7 @@ export const CreatePost = () => {
     useState<CategoryType>("Beer"); // I need to store the last value by the user in local storage and try to use it again here
   const [selectedChannel, setSelectedChannel] =
     useState<ChannelType>("Grocery"); // I need to store the last value by the user in local storage and try to use it again here
-  // const [selectedSupplier, setSelectedSupplier] = useState<SupplierType>({
-  //   id: "",
-  //   name: "",
-  // });
-  // const [selectedBrands, setSelectedBrands] = useState<BrandType[]>([]);
-
   const postUser = onBehalf || userData;
-  const salesRouteNum = userData?.salesRouteNum;
 
   const [post, setPost] = useState<PostType>({
     accountNumber: "",
@@ -121,39 +108,7 @@ export const CreatePost = () => {
     null
   );
   const navigate = useNavigate();
-
-// Fetch and listen for user goals.  i need to refactor this part to get company goals as well
-useEffect(() => {
-  if (!companyId || !salesRouteNum) return;
-
-  const loadInitialGalloGoals = async () => {
-    try {
-      const savedGoals = await getGalloGoalsFromIndexedDB();
-      if (savedGoals.length > 0) {
-        console.log(savedGoals, ': savedGoals') // logs the old goal
-        dispatch(setGalloGoals(savedGoals));
-      } else {
-        const fetchedGoals = await dispatch(
-          fetchUserGalloGoals({ companyId, salesRouteNum })
-        ).unwrap();
-        await saveGoalsToIndexedDB(fetchedGoals);
-        dispatch(setGalloGoals(fetchedGoals));
-        console.log(galloGoals, ': goals'); // this doesnt log
-      }
-    } catch (error) {
-      console.error("Error loading goals:", error);
-    }
-  };
-
-  loadInitialGalloGoals();
-
-  // Set up the snapshot listener for real-time updates
-  const unsubscribe = dispatch(setupUserGoalsListener(companyId, salesRouteNum));
-
-  return () => unsubscribe(); // Clean up on unmount
-}, [dispatch, companyId, salesRouteNum]);
-  
-
+  console.log('post: ', post)
   useEffect(() => {
     if (onBehalf) {
       setPost((prevPost) => ({
@@ -198,30 +153,7 @@ useEffect(() => {
     setOpenMissionSelection(false);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files![0];
-    setSelectedFile(file);
-    if (file) {
-      const validImageTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
-      if (validImageTypes.includes(file.type)) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPost({ ...post, imageUrl: reader.result as string });
-        };
-        dispatch(showMessage("Image selected successfully!"));
-        reader.readAsDataURL(file);
-      } else {
-        dispatch(
-          showMessage("Unsupported file type. Please upload a valid image.")
-        );
-      }
-    }
-  };
+
 
   const handleStoreNameChange = useCallback((storeName: string) => {
     setPost((prev) => ({ ...prev, selectedStore: storeName }));
@@ -288,9 +220,9 @@ useEffect(() => {
       case 1:
         return (
           <UploadImage
-            onNext={goToNextStep}
-            post={post}
-            handleImageChange={handleImageChange}
+          post={post}
+          setPost={setPost}
+          onNext={goToNextStep}
           />
         );
       case 2:
@@ -300,7 +232,8 @@ useEffect(() => {
             onPrevious={goToPreviousStep}
             post={post}
             setPost={setPost}
-            goals={galloGoals}
+            usersGalloGoals={usersGalloGoals}
+            usersCompanyGoals={usersCompanyGoals}
             handleFieldChange={handleFieldChange}
             onStoreNameChange={handleStoreNameChange}
             onStoreNumberChange={handleStoreNumberChange}

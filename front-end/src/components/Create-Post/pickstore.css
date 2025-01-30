@@ -1,15 +1,16 @@
+/* src/components/create-post/pickstore.css */
+.navigation-buttons {
+  margin-top: 16px;
+  padding: 0 24px; /* Adds space between the edges */
+  gap: 16px; /* Uniform spacing between items */
+  width: 100%
+}
+
 .goal-selector {
   max-width: 100%; /* Prevents it from overflowing the container */
   white-space: nowrap; /* Ensures text stays on one line */
   overflow: hidden; /* Hides overflowing text */
   text-overflow: ellipsis; /* Adds "..." for overflowing text */
-}
-
-.navigation-buttons {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem; /* Add spacing if needed */
 }
 
 

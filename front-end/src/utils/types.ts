@@ -101,7 +101,10 @@ export interface PostType {
   token: { sharedToken: string; tokenExpiry: string };
   postCreatedBy: string;
   accountNumber?: string | null;
+  companyGoalId?: string;
+  companyGoalDescription?: string;
   oppId?: string | null; // New key for the opportunity ID
+  galloGoalDescription?: string;
   closedBy?: string; // New key for who closed the goal
   closedDate?: string; // New key for the date in DD-MM-YYYY format
   closedUnits?: string | number; // New key for the closed units
@@ -231,14 +234,15 @@ export type GalloGoalType = {
 };
 
 export type CompanyGoalType = {
-  id?: string;
+  id: string;
   companyId: string;
+  goalTitle: string;
   goalDescription: string;
   goalMetric: string;
   goalValueMin: number;
   goalStartDate: string;
   goalEndDate: string;
-  accounts: string | string[];
+  accounts: string | CompanyAccountType[];
 }
 
 // This is an account as defined by gallo

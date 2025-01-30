@@ -29,6 +29,7 @@ import { db } from "../utils/firebase";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import getCompanyAccountId from "../utils/helperFunctions/getCompanyAccountId";
+import { getDocs } from "@firebase/firestore";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -61,7 +62,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   
     try {
       const accountsId = await getCompanyAccountId(user.companyId);
-  
       if (!accountsId) {
         console.error("No accountsId found for company");
         return;
@@ -75,10 +75,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         const formattedAccounts = (accountsData.accounts as CompanyAccountType[]).map((account) => ({
           ...account,
           salesRouteNums: Array.isArray(account.salesRouteNums)
-            ? account.salesRouteNums
-            : [account.salesRouteNums].filter(Boolean), // Ensure it's an array
+            ? account.salesRouteNums.map((num) => String(num)) // Convert to strings
+            : [],
         }));
-        
+  
         setAccounts(formattedAccounts);
       } else {
         console.error("No accounts found in Firestore");
@@ -87,31 +87,38 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       console.error("Error fetching accounts from Firestore:", error);
     }
   };
+  
 
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    console.log(user?.companyId);
+    if (!file) return;
+  
     if (!user?.companyId) {
       console.error("No companyId found for user");
       return;
     }
-
-    if (file && user.companyId) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const json = XLSX.utils.sheet_to_json<CompanyAccountType>(worksheet);
-
-        setFileData(json); // Store parsed data for review
-      };
-      reader.readAsArrayBuffer(file);
-    }
+  
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const json = XLSX.utils.sheet_to_json<CompanyAccountType>(worksheet);
+  
+      const formattedFileData = json.map((account) => ({
+        ...account,
+        salesRouteNums: Array.isArray(account.salesRouteNums)
+          ? account.salesRouteNums.map((num) => String(num)) // Ensure strings
+          : [],
+      }));
+  
+      setFileData(formattedFileData);
+    };
+  
+    reader.readAsArrayBuffer(file);
   };
+  
 
   console.log(user);
 

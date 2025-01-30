@@ -82,13 +82,13 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
       (results, status) => {
         if (
           status === google.maps.places.PlacesServiceStatus.OK &&
-          results.length > 0
+          results.length > 0 // results is possibly null
         ) {
-          const validResults = results
+          const validResults = results // results is possibly null
           .filter((place) => place.place_id && place.name && place.vicinity)
           .map((place) => ({
             name: place.name!,
-            address: place.vicinity!, // Map vicinity to address
+            address: place.vicinity!,
             placeId: place.place_id!,
           }))
           .slice(0, 4); // Limit to the first 4 places
@@ -99,9 +99,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
             setClosestMatches(validResults);
             setIsPlaceSelectionOpen(true); // Open the dialog for selection
           } else if (validResults.length === 1) {
-            processStoreSelection(validResults[0]); // Argument of type '{ name: string; address: string; placeId: string; }' is not assignable to parameter of type '{ name: string; vicinity: string; placeId: string; }'.
-            // Property 'vicinity' is missing in type '{ name: string; address: string; placeId: string; }' but required in type '{ name: string; vicinity: string; placeId: string; }'.ts(2345)
-          // StoreLocator.tsx(122, 5): 'vicinity' is declared here.
+            processStoreSelection(validResults[0]);
           } else {
             console.warn("No valid places found.");
           }
@@ -112,21 +110,16 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
     );
   };
 
-  // useEffect(() => {
-  //   console.log("Selected store updated: ", selectedStore); // cannot find name selectedStore
-  // }, [selectedStore]);
-
-
   const processStoreSelection = (place: {
     name: string;
-    address: string; // Updated from vicinity to address
+    address: string;
     placeId: string;
   }) => {
     fetchCityAndState(place.placeId, (city, state) => {
-      console.log("Selected store data:", { ...place, city, state }); // Log store data
+      console.log("Selected store data:", { ...place, city, state });
       onStoreSelect({
         name: place.name,
-        address: place.address, // Now matches the validResults mapping
+        address: place.address,
         city,
         state, 
         placeId: place.placeId,

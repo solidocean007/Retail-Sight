@@ -15,16 +15,19 @@ import { getTheme } from "./theme.ts";
 import { useEffect } from "react";
 import { toggleTheme } from "./actions/themeActions.ts";
 import useSchemaVersion from "./hooks/useSchemaVersion.ts";
+import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener.ts";
+import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener.ts";
 
 function App() {
   useSchemaVersion();
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
+  const user = useSelector((state: RootState) => state.user.currentUser);
+  const companyId = user?.companyId;
+  const salesRouteNum = user?.salesRouteNum;
  
   const { currentUser, initializing } = useFirebaseAuth();
-
-
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -38,6 +41,22 @@ function App() {
    // Ensure that the body's data-theme attribute is set
    document.body.setAttribute("data-theme", prefersDarkMode ? "dark" : "light");
   }, [dispatch, isDarkMode]);
+
+  useEffect(() => {
+    if (!companyId) return;
+
+    // Initialize the listeners
+    const unsubscribeCompanyGoals = dispatch(setupCompanyGoalsListener(companyId));
+    const unsubscribeGalloGoals = dispatch(
+      setupGalloGoalsListener(companyId, salesRouteNum)
+    );
+
+    return () => {
+      // Clean up the listeners
+      unsubscribeCompanyGoals();
+      unsubscribeGalloGoals();
+    };
+  }, [dispatch, companyId, salesRouteNum]);
 
   const theme = getTheme(isDarkMode);
 

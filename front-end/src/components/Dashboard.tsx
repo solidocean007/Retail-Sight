@@ -7,7 +7,7 @@ import { selectUser, setCompanyUsers } from "../Slices/userSlice";
 import { getCompanyUsersFromIndexedDB, saveCompanyUsersToIndexedDB } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
 import { UserType } from "../utils/types";
-import { RootState, useAppDispatch } from "../utils/store";
+import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
 import TeamsViewer from "./TeamsViewer";
@@ -255,7 +255,7 @@ export const Dashboard = () => {
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
-        {dashboardMode === "MyGoalsMode" && <MyGoals />}
+        {dashboardMode === "MyGoalsMode" && <MyGoals/>}
         {dashboardMode === "UsersMode" && (
           <EmployeesViewer
             localUsers={localUsers}

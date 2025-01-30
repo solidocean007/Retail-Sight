@@ -1,4 +1,4 @@
-import { collection, addDoc } from "@firebase/firestore";
+import { collection, addDoc, doc, updateDoc } from "@firebase/firestore";
 import { db } from "../firebase";
 import { CompanyGoalType } from "../types";
 
@@ -13,17 +13,19 @@ export const createCompanyGoal = async (
     const companyGoalCollectionRef = collection(db, "companyGoals"); // Reference to the "companyGoals" collection
     const docRef = await addDoc(companyGoalCollectionRef, newGoal); // Add the goal to Firestore
 
-    console.log("Company goal created successfully:", {
-      ...newGoal,
-      id: docRef.id,
-    });
+    const goalWithId = { ...newGoal, id: docRef.id }; // Include the Firestore-generated ID in the goal
 
-    return { ...newGoal, id: docRef.id }; // Return the goal with its Firestore-generated ID
+    // Update the Firestore document to include the ID field
+    const docWithIdRef = doc(db, "companyGoals", docRef.id);
+    await updateDoc(docWithIdRef, { id: docRef.id });
+
+    return goalWithId; // Return the goal with its Firestore-generated ID
   } catch (error) {
     console.error("Error creating company goal:", error);
     throw error; // Propagate the error for the caller to handle
   }
 };
+
 
 
 
