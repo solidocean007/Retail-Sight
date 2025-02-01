@@ -243,6 +243,7 @@ export type CompanyGoalType = {
   goalStartDate: string;
   goalEndDate: string;
   accounts: string | CompanyAccountType[];
+  submittedPostsIds?: string[];
 }
 
 // This is an account as defined by gallo
@@ -278,6 +279,7 @@ export interface FireStoreGalloGoalDocType {
     accountAddress: string;
     salesRouteNums?: string[];
     marketId?: string;
+    submittedPostId?: string;
   }>;
 }
 

@@ -6,6 +6,7 @@ import {
   Typography,
   Button,
   CircularProgress,
+  Switch,
 } from "@mui/material";
 import {
   CompanyAccountType,
@@ -38,7 +39,8 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   setValue,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState("");
+  const [isProduction, setIsProdution] = useState(true);
+  const [productionApiKey, setProductionApiKey] = useState("");
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
   const [programs, setPrograms] = useState<GalloProgramType[]>([]);
   const [selectedProgram, setSelectedProgram] =
@@ -56,7 +58,15 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   );
   const matchedAccounts = useSelector(selectMatchedAccounts);
   // const baseUrl = "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
-  const baseUrl = "https://q2zgrnmnvl.execute-api.us-west-2.amazonaws.com";
+  const baseUrlProduction =
+    "https://q2zgrnmnvl.execute-api.us-west-2.amazonaws.com";
+  const baseUrlDevelopment =
+    "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
+
+  const developmentApiKey = 'hFu935h2k71ONztCRr98Q69OkMJDbI9818Z7HRRj'; // temp get development programs
+
+  const baseUrl = isProduction ? baseUrlProduction : baseUrlDevelopment;
+  const apiKey = isProduction ? productionApiKey : developmentApiKey;
 
   // New variables for controlling sample size
   const accountSampleSize = 3;
@@ -71,7 +81,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
     // Fetch API key only once
 
     if (companyId && apiKey === "") {
-      fetchExternalApiKey(companyId, "galloApiKey").then(setApiKey);
+      fetchExternalApiKey(companyId, "galloApiKey").then(setProductionApiKey);
     }
   }, [companyId]);
 
@@ -315,7 +325,35 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   return (
     <Container>
       <Box>
-        <Box sx={{ display: "flex", width:"90%", justifyContent: "space-between" }}>
+        <Box>
+          <Typography
+            sx={{
+              fontWeight: isProduction ? "bold" : "normal",
+              fontSize: isProduction ? "1.5rem" : "1rem",
+            }}
+          >
+            Production
+          </Typography>
+          <Switch
+            checked={isProduction}
+            onChange={() => setIsProdution(!isProduction)}
+          />
+          <Typography
+            sx={{
+              fontWeight: !isProduction ? "bold" : "normal",
+              fontSize: !isProduction ? "1.5rem" : "1rem",
+            }}
+          >
+            Development
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            width: "90%",
+            justifyContent: "space-between",
+          }}
+        >
           <DateSelector
             startDate={startDate}
             onDateChange={onDateChangeHandler}
