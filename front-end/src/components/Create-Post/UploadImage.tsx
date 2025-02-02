@@ -23,13 +23,14 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     const dispatch = useAppDispatch();
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
+      const file = e.target.files?.[0] ?? null; // Ensure file is either File or null
       setSelectedFile(file);
+    
       if (!file) {
         dispatch(showMessage("No file selected. Please choose an image."));
         return;
       }
-  
+    
       const validImageTypes = [
         "image/jpeg",
         "image/png",
@@ -38,7 +39,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         "image/heic",
         "image/heif",
       ];
-  
+    
       if (validImageTypes.includes(file.type)) {
         if (file.type === "image/heic" || file.type === "image/heif") {
           try {
@@ -46,12 +47,11 @@ export const UploadImage: React.FC<UploadImageProps> = ({
               blob: file,
               toType: "image/jpeg",
             });
-  
-            // Handle the case where `heic2any` returns an array
+    
             const singleBlob = Array.isArray(convertedBlob)
               ? convertedBlob[0]
               : convertedBlob;
-  
+    
             const convertedFile = new File(
               [singleBlob],
               file.name.replace(/\.\w+$/, ".jpg"),
@@ -83,6 +83,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         );
       }
     };
+    
     
   return (
     <div className="image-selection-box">

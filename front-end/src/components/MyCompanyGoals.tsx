@@ -21,8 +21,10 @@ import {
   selectCompanyGoalsIsLoading,
   selectUsersCompanyGoals,
 } from "../Slices/goalsSlice";
-import { CompanyGoalType } from "../utils/types";
+import { CompanyGoalType, PostType } from "../utils/types";
 import { useNavigate } from "react-router-dom";
+import { db } from "../utils/firebase";
+import fetchPostsForGoal from "../utils/PostLogic/fetchPostsForGoal";
 
 const MyCompanyGoals = () => {
   const user = useSelector(selectUser);
@@ -31,17 +33,29 @@ const MyCompanyGoals = () => {
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
     {}
   );
+  const [postsByGoal, setPostsByGoal] = useState<Record<string, PostType[]>>(
+    {}
+  );
   const loading = useSelector(selectCompanyGoalsIsLoading);
 
   const userCompanyGoals = useSelector((state: RootState) =>
     selectUsersCompanyGoals(state, salesRouteNum)
   );
 
-  const toggleGoalExpansion = (goalId: string) => {
+  const toggleGoalExpansion = async (goalId: string) => {
     setExpandedGoals((prev) => ({
       ...prev,
       [goalId]: !prev[goalId], // Toggle the specific goal's expansion state
     }));
+
+    if (!postsByGoal[goalId]) {
+      try {
+        const posts = await fetchPostsForGoal(goalId, "companyGoals");
+        setPostsByGoal((prev) => ({ ...prev, [goalId]: posts })); // Type '{ id: string; }' is missing the following properties from type 'PostType': category, channel, storeAddress, displayDate, and 13 more.ts(2345)
+      } catch (error) {
+        console.error("Error fetching posts for goal:", error);
+      }
+    }
   };
 
   const usersAccountsForGoal = (goal: CompanyGoalType) => {
@@ -57,23 +71,17 @@ const MyCompanyGoals = () => {
           : account.salesRouteNums === salesRouteNum // Match directly if it's a single value
     );
   };
-
-  console.log(userCompanyGoals);
+  
 
   return (
     <div className="my-company-goals-container">
-      <Typography
-        variant="h3"
-        sx={{ flexGrow: 1, fontSize: "large" }}
-        className="my-goals-title"
-      >
+      <Typography variant="h3" sx={{ flexGrow: 1, fontSize: "large" }} className="my-goals-title">
         Company Goals
       </Typography>
       {loading ? (
         <CircularProgress />
       ) : (
         <TableContainer>
-          {/* Company Goals Table */}
           <Table className="company-goal-table">
             <TableHead>
               <TableRow>
@@ -84,13 +92,12 @@ const MyCompanyGoals = () => {
                 <TableCell>Start Date</TableCell>
                 <TableCell>End Date</TableCell>
                 <TableCell>Actions</TableCell>
-                <TableCell>Accounts</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {userCompanyGoals.length === 0 && !loading && (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={7} align="center">
                     No company goals available for your accounts at this time.
                   </TableCell>
                 </TableRow>
@@ -107,36 +114,16 @@ const MyCompanyGoals = () => {
                     <TableCell>{goal.goalEndDate}</TableCell>
                     <TableCell>
                       <Button
-                        variant="contained"
-                        color="primary"
-                        // onClick={() =>
-                        //   navigate(
-                        //     `/create-post?goalId=${goal.id}&accountId=${account.accountNumber}`
-                        //   )
-                        // }
+                        variant="outlined"
+                        onClick={() => toggleGoalExpansion(goal.id)}
                       >
-                        Create
+                        {expandedGoals[goal.id] ? "Hide" : "Show"}
                       </Button>
-                    </TableCell>
-                    <TableCell>
-                      {goal.accounts === "Global" ? (
-                        <Typography>Available for all accounts</Typography>
-                      ) : (
-                        <Button
-                          onClick={() => toggleGoalExpansion(goal.id)}
-                          variant="outlined"
-                          size="small"
-                        >
-                          {expandedGoals[goal.id]
-                            ? "Hide"
-                            : "Show"}
-                        </Button>
-                      )}
                     </TableCell>
                   </TableRow>
                   {expandedGoals[goal.id] && (
                     <TableRow>
-                      <TableCell colSpan={5}>
+                      <TableCell colSpan={7}>
                         <Collapse
                           in={expandedGoals[goal.id]}
                           timeout="auto"
@@ -150,27 +137,23 @@ const MyCompanyGoals = () => {
                                   <TableCell>Account Name</TableCell>
                                   <TableCell>Account Address</TableCell>
                                   <TableCell>Account Number</TableCell>
-                                  <TableCell>Post</TableCell>{" "}
-                                  {/* Merged Post Status and Actions */}
+                                  <TableCell>Post</TableCell>
                                 </TableRow>
                               </TableHead>
                               <TableBody>
                                 {usersAccountsForGoal(goal).length > 0 ? (
                                   usersAccountsForGoal(goal).map(
                                     (account, accIndex) => {
-                                      const isPostSubmitted = Array.isArray(
-                                        goal.submittedPostsIds
-                                      )
-                                        ? goal.submittedPostsIds.includes(
-                                            account.accountNumber
-                                          )
-                                        : false;
+                                      const postsForGoal = postsByGoal[goal.id] || [];
+                                      const postForAccount = postsForGoal.find(
+                                        (post) => post.accountNumber === account.accountNumber
+                                      );
 
                                       return (
                                         <TableRow
                                           key={accIndex}
                                           sx={
-                                            isPostSubmitted
+                                            postForAccount
                                               ? {
                                                   backgroundColor: "green",
                                                   color: "white",
@@ -178,44 +161,22 @@ const MyCompanyGoals = () => {
                                               : {}
                                           }
                                         >
+                                          <TableCell>{account.accountName || "N/A"}</TableCell>
+                                          <TableCell>{account.accountAddress || "N/A"}</TableCell>
+                                          <TableCell>{account.accountNumber || "N/A"}</TableCell>
                                           <TableCell>
-                                            {account.accountName || "N/A"}
-                                          </TableCell>
-                                          <TableCell>
-                                            {account.accountAddress || "N/A"}
-                                          </TableCell>
-                                          <TableCell>
-                                            {account.accountNumber || "N/A"}
-                                          </TableCell>
-                                          <TableCell>
-                                            {isPostSubmitted ? (
+                                            {postForAccount ? (
                                               <Button
                                                 variant="contained"
                                                 color="secondary"
-                                                size="small"
-                                                sx={{
-                                                  color: "white",
-                                                  backgroundColor: "darkgreen",
-                                                  "&:hover": {
-                                                    backgroundColor: "green",
-                                                  },
-                                                }}
-                                                // onClick={() =>
-                                                //   navigate(
-                                                //     `/user-home-page?postId=${goal.submittedPostsIds.find(
-                                                //       (postId) =>
-                                                //         postId ===
-                                                //         account.accountNumber.toString()
-                                                //     )}`
-                                                //   )
-                                                // }
+                                                onClick={() =>
+                                                  navigate(`/user-home-page?postId=${postForAccount.id}`)
+                                                }
                                               >
                                                 View Post
                                               </Button>
                                             ) : (
-                                              <Typography color="error">
-                                                None
-                                              </Typography>
+                                              <Typography color="error">None</Typography>
                                             )}
                                           </TableCell>
                                         </TableRow>
