@@ -220,6 +220,7 @@ export const CreatePost = () => {
       case 1:
         return (
           <UploadImage
+          setSelectedFile={setSelectedFile}
           post={post}
           setPost={setPost}
           onNext={goToNextStep}

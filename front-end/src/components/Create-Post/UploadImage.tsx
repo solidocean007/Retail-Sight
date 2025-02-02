@@ -8,12 +8,14 @@ import heic2any from "heic2any";
 
 
 interface UploadImageProps {
+  setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>
   post: PostType;
   setPost: React.Dispatch<React.SetStateAction<PostType>>;
   onNext: () => void;
 }
 
 export const UploadImage: React.FC<UploadImageProps> = ({
+  setSelectedFile,
   post,
   setPost,
   onNext,
@@ -22,7 +24,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-  
+      setSelectedFile(file);
       if (!file) {
         dispatch(showMessage("No file selected. Please choose an image."));
         return;
