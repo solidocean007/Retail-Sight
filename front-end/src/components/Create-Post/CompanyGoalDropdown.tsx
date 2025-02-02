@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, CircularProgress, MenuItem, Select, Typography } from "@mui/material";
+import { Box, CircularProgress, MenuItem, Select } from "@mui/material";
 import { CompanyGoalType } from "../../utils/types";
 
 interface CompanyGoalDropdownProps {
@@ -33,9 +33,9 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
         }}
         displayEmpty
       >
-        <MenuItem value="">
+        <MenuItem value="" disabled>
           {goals.length > 0
-            ? `${goals.length} ${label} available`
+            ? `Select a ${label}`
             : `No ${label.toLowerCase()} available`}
         </MenuItem>
         {goals.map((goal) => (
@@ -49,4 +49,5 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
 };
 
 export default CompanyGoalDropdown;
+
 

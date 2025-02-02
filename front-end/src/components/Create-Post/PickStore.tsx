@@ -86,9 +86,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
     null
   );
-  const [selectedCompanyGoal, setSelectedCompanyGoal] = useState<
-    CompanyGoalType
-  >();
+  const [selectedCompanyGoal, setSelectedCompanyGoal] =
+    useState<CompanyGoalType>();
   const userRole = useSelector(selectUser)?.role;
   const isAdmin = userRole === "admin" || userRole === "super-admin";
   // const isEmployee = userRole === "employee";
@@ -238,7 +237,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
       if (matchedAccount) {
         // Use the oppId from the matched account
         handleFieldChange("oppId", matchedAccount.oppId);
-        handleFieldChange("galloGoalDescription", selectedGoal.goalDetails.goal);
+        handleFieldChange(
+          "galloGoalDescription",
+          selectedGoal.goalDetails.goal
+        );
       } else {
         console.warn(
           "No matching account found in the selected goal's accounts."
@@ -252,13 +254,11 @@ export const PickStore: React.FC<PickStoreProps> = ({
       console.warn("No goal selected.");
       return;
     }
-  
+
     setSelectedCompanyGoal(goal); // Update state with the selected goal object
     handleFieldChange("companyGoalId", goal.id); // Set the goal ID
     handleFieldChange("companyGoalDescription", goal.goalDescription); // Set the goal description
   };
-  
-  
 
   // Handler for Account Selection
   const handleAccountSelect = (account: CompanyAccountType) => {
@@ -456,16 +456,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
               onAccountSelect={handleAccountSelect}
               accounts={accountsToSelect}
             />
-            {post.selectedStore && (
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={handleClearAccount}
-                sx={{ mt: 2 }}
-              >
-                Clear Selection
-              </Button>
-            )}
           </Box>
         )}
       </Box>
@@ -526,6 +516,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
               selectedGoal={selectedCompanyGoal}
             />
           </Box>
+          {post.selectedStore && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleClearAccount}
+              sx={{ mt: 2 }}
+            >
+              Clear Selection
+            </Button>
+          )}
         </Box>
       )}
 

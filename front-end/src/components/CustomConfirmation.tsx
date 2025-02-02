@@ -19,10 +19,15 @@ const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
   return (
     <div className="custom-confirmation-backdrop">
       <div className="custom-confirmation-modal">
+        <h3 className="custom-confirmation-title">Confirmation</h3>
         <p className="custom-confirmation-message">{message}</p>
         <div className="custom-confirmation-actions">
-          <button onClick={onClose}>Cancel</button>
-          <button onClick={onConfirm}>Confirm</button>
+          <button className="custom-confirmation-cancel" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="custom-confirmation-confirm" onClick={onConfirm}>
+            Confirm
+          </button>
         </div>
       </div>
     </div>
@@ -30,3 +35,4 @@ const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
 };
 
 export default CustomConfirmation;
+

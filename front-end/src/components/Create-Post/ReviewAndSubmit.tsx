@@ -53,7 +53,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (companyId && apiKey === "") {
+    if (post.oppId && companyId && apiKey === "") {
       const fetchApiKey = async () => {
         try {
           const fetchedApiKey = await fetchExternalApiKey(companyId, "galloApiKey");
@@ -110,9 +110,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
       }
     }
   };
-  
-  console.log(post)
-  
 
   return (
     <div className="review-and-submit">

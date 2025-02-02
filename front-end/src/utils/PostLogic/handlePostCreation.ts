@@ -22,11 +22,11 @@ import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { useAppDispatch } from "../store";
 import { createSubmittedMission } from "../../thunks/missionsThunks";
 import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementToGalloAxis";
+import { updateGoalWithPostId } from "../helperFunctions/updateGoalWithPostId";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const userData = useSelector(selectUser);
 
   const handlePostSubmission = async (
@@ -91,7 +91,7 @@ export const useHandlePostSubmission = () => {
           // );
 
           // Resize and compress the image
-          const resizedBlob = await resizeImage(selectedFile, 500, 600);
+          const resizedBlob = await resizeImage(selectedFile, 500, 600); // consider changing this
           const resizedImagePath = `images/${uniquePostFolder}/resized.jpg`;
           const resizedImageRef = storageRef(storage, resizedImagePath);
           const uploadResizedTask = uploadBytesResumable(
@@ -175,6 +175,11 @@ export const useHandlePostSubmission = () => {
                 postDataWithoutImage //  The types of 'token.sharedToken' are incompatible between these types.
                 // Type '() => string' is not assignable to type 'string'
               );
+
+              const postId = newDocRef.id;
+
+              // Update goal with the post ID
+              await updateGoalWithPostId(post, postId);
 
               // Update the post with image URLs
               await updateDoc(newDocRef, {

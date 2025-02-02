@@ -108,7 +108,7 @@ export const CreatePost = () => {
     null
   );
   const navigate = useNavigate();
-  console.log('post: ', post)
+  
   useEffect(() => {
     if (onBehalf) {
       setPost((prevPost) => ({

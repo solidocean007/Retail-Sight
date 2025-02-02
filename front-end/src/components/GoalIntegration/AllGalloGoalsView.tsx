@@ -20,29 +20,23 @@ import {
   IconButton,
   TableSortLabel,
   Container,
-  Tabs,
-  Tab,
 } from "@mui/material";
 import { useAppDispatch } from "../../utils/store";
-import { fetchAllCompanyGoals, fetchAllGalloGoals, selectAllCompanyGoals, selectAllGalloGoals, selectCompanyGoalsIsLoading, setCompanyGoals } from "../../Slices/goalsSlice";
+import {
+  selectAllGalloGoals,
+  selectCompanyGoalsIsLoading,
+} from "../../Slices/goalsSlice";
 import { showMessage } from "../../Slices/snackbarSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { deleteGalloGoalFromFirestore } from "../../utils/helperFunctions/deleteGalloGoalFromFirestore";
 import { getCompanyUsersFromIndexedDB } from "../../utils/database/userDataIndexedDB";
 import "./allGoalsView.css";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  where,
-} from "@firebase/firestore";
+import { deleteDoc, doc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
-import CompanyGoalsView from "./AllCompanyGoalsView";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
+import { useNavigate } from "react-router-dom";
 
 type SortOrder = "asc" | "desc";
 
@@ -63,6 +57,7 @@ export interface MappedProgramType {
 const AllGalloGoalsView = () => {
   const dispatch = useAppDispatch();
   const companyId = useSelector(selectUser)?.companyId;
+  const navigate = useNavigate();
   const galloGoals = useSelector(selectAllGalloGoals);
   const isLoading = useSelector(selectCompanyGoalsIsLoading);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
@@ -154,7 +149,6 @@ const AllGalloGoalsView = () => {
       dispatch(showMessage("Failed to delete goal. Please try again."));
     }
   };
-  
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -173,28 +167,29 @@ const AllGalloGoalsView = () => {
       const programGoals = galloGoals.filter(
         (goal) => goal.programDetails.programId === programId
       );
-  
+
       if (!programGoals.length) {
         console.warn(`No goals found for program ID: ${programId}`);
         return;
       }
-  
+
       // Step 2: Delete each goal from Firestore
       const deletePromises = programGoals.map((goal) => {
         const goalDocRef = doc(db, "galloGoals", goal.goalDetails.goalId); // Firestore document reference
         return deleteDoc(goalDocRef);
       });
-  
+
       await Promise.all(deletePromises); // Wait for all deletions to complete
-  
+
       // Step 3: Notify the user
-      dispatch(showMessage("Program and its associated goals deleted successfully."));
+      dispatch(
+        showMessage("Program and its associated goals deleted successfully.")
+      );
     } catch (error) {
       console.error("Error deleting program:", error);
       dispatch(showMessage("Failed to delete program. Please try again."));
     }
   };
-  
 
   const sortData = (data: any[], column: string, order: SortOrder) => {
     return [...data].sort((a, b) => {
@@ -244,236 +239,255 @@ const AllGalloGoalsView = () => {
 
   return (
     <Container>
-       <Box className="table-container">
-          <Typography variant="h4" gutterBottom>
-            Gallo Programs
-          </Typography>
-          <Table className="table">
-            <TableHead>
-              <TableRow>
-                <TableCell>Program Title</TableCell>
-                <TableCell>Display Date</TableCell>
-                <TableCell>Start Date</TableCell>
-                <TableCell>End Date</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {programs.map((program) => (
-                <React.Fragment key={program.programId}>
-                  <TableRow>
-                    <TableCell>{program.programTitle}</TableCell>
-                    <TableCell>{program.programDisplayDate || "N/A"}</TableCell>
-                    <TableCell>{program.programStartDate}</TableCell>
-                    <TableCell>{program.programEndDate}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => handleDeleteProgram(program.programId)}
-                      >
-                        Delete Program
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <IconButton
-                        sx={{
-                          marginRight: "1rem",
-                          border: "1px solid #dcdcdc",
-                          borderRadius: "4px",
-                          padding: "8px",
-                          "&:hover": {
-                            backgroundColor: "#e9f6ff",
-                            borderColor: "#b0b0b0",
-                          },
-                          transition: "all 0.2s ease-in-out",
-                        }}
-                        onClick={() => toggleExpand(program.programId)}
-                      >
-                        {expandedGoals.has(program.programId) ? (
-                          <ExpandLessIcon />
-                        ) : (
-                          <ExpandMoreIcon />
-                        )}
-                        {expandedGoals.has(program.programId)
-                          ? "Collapse Goals"
-                          : "Show Goals"}
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+      <Box className="table-container">
+        <Typography variant="h4" gutterBottom>
+          Gallo Programs
+        </Typography>
+        <Table className="table">
+          <TableHead>
+            <TableRow>
+              <TableCell>Program Title</TableCell>
+              <TableCell>Display Date</TableCell>
+              <TableCell>Start Date</TableCell>
+              <TableCell>End Date</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {programs.map((program) => (
+              <React.Fragment key={program.programId}>
+                <TableRow>
+                  <TableCell>{program.programTitle}</TableCell>
+                  <TableCell>{program.programDisplayDate || "N/A"}</TableCell>
+                  <TableCell>{program.programStartDate}</TableCell>
+                  <TableCell>{program.programEndDate}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => handleDeleteProgram(program.programId)}
+                    >
+                      Delete Program
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <IconButton
+                      sx={{
+                        marginRight: "1rem",
+                        border: "1px solid #dcdcdc",
+                        borderRadius: "4px",
+                        padding: "8px",
+                        "&:hover": {
+                          backgroundColor: "#e9f6ff",
+                          borderColor: "#b0b0b0",
+                        },
+                        transition: "all 0.2s ease-in-out",
+                      }}
+                      onClick={() => toggleExpand(program.programId)}
+                    >
+                      {expandedGoals.has(program.programId) ? (
+                        <ExpandLessIcon />
+                      ) : (
+                        <ExpandMoreIcon />
+                      )}
+                      {expandedGoals.has(program.programId)
+                        ? "Collapse Goals"
+                        : "Show Goals"}
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
 
-                  {expandedGoals.has(program.programId) && (
-                    <TableRow>
-                      <TableCell colSpan={5}>
-                        <Box className="table-container">
-                          <Typography variant="h5" gutterBottom>
-                            Goals for {program.programTitle}
-                          </Typography>
-                          <Table className="table">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Goal</TableCell>
-                                {/* <TableCell>Actions</TableCell> */}
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {galloGoals
-                                .filter(
-                                  (goal) =>
-                                    goal.programDetails.programId ===
-                                    program.programId
-                                )
-                                .map((goal) => (
-                                  <React.Fragment key={goal.goalDetails.goalId}>
-                                    <TableRow>
-                                      <TableCell>
-                                        {goal.goalDetails.goal}
-                                      </TableCell>
-                                      <TableCell>
-                                    <Button
-                                      variant="contained"
-                                      color="secondary"
-                                      onClick={() =>
-                                        handleDeleteGalloGoal(
-                                          goal.goalDetails.goalId
-                                        )
-                                      }
-                                    >
-                                      Delete Goal
-                                    </Button>
-                                  </TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                      <TableCell>
-                                        <IconButton
-                                          sx={{
-                                            marginRight: "1rem",
-                                            border: "1px solid #dcdcdc",
-                                            borderRadius: "4px",
-                                            padding: "8px",
-                                            "&:hover": {
-                                              backgroundColor: "#e9f6ff",
-                                              borderColor: "#b0b0b0",
-                                            },
-                                            transition: "all 0.2s ease-in-out",
-                                          }}
-                                          onClick={() =>
-                                            toggleExpandGoal(
-                                              goal.goalDetails.goalId
-                                            )
-                                          }
-                                        >
-                                          {expandedGoals.has(
-                                            goal.goalDetails.goalId
-                                          ) ? (
-                                            <ExpandLessIcon />
-                                          ) : (
-                                            <ExpandMoreIcon />
-                                          )}
-                                          {expandedGoals.has(
+                {expandedGoals.has(program.programId) && (
+                  <TableRow>
+                    <TableCell colSpan={5}>
+                      <Box className="table-container">
+                        <Typography variant="h5" gutterBottom>
+                          Goals for {program.programTitle}
+                        </Typography>
+                        <Table className="table">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Goal</TableCell>
+                              {/* <TableCell>Actions</TableCell> */}
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {galloGoals
+                              .filter(
+                                (goal) =>
+                                  goal.programDetails.programId ===
+                                  program.programId
+                              )
+                              .map((goal) => (
+                                <React.Fragment key={goal.goalDetails.goalId}>
+                                  <TableRow>
+                                    <TableCell>
+                                      {goal.goalDetails.goal}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        onClick={() =>
+                                          handleDeleteGalloGoal(
                                             goal.goalDetails.goalId
                                           )
-                                            ? "Collapse Accounts"
-                                            : "Show Accounts"}
-                                        </IconButton>
-                                      </TableCell>
-                                    </TableRow>
+                                        }
+                                      >
+                                        Delete Goal
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                  <TableRow>
+                                    <TableCell>
+                                      <IconButton
+                                        sx={{
+                                          marginRight: "1rem",
+                                          border: "1px solid #dcdcdc",
+                                          borderRadius: "4px",
+                                          padding: "8px",
+                                          "&:hover": {
+                                            backgroundColor: "#e9f6ff",
+                                            borderColor: "#b0b0b0",
+                                          },
+                                          transition: "all 0.2s ease-in-out",
+                                        }}
+                                        onClick={() =>
+                                          toggleExpandGoal(
+                                            goal.goalDetails.goalId
+                                          )
+                                        }
+                                      >
+                                        {expandedGoals.has(
+                                          goal.goalDetails.goalId
+                                        ) ? (
+                                          <ExpandLessIcon />
+                                        ) : (
+                                          <ExpandMoreIcon />
+                                        )}
+                                        {expandedGoals.has(
+                                          goal.goalDetails.goalId
+                                        )
+                                          ? "Collapse Accounts"
+                                          : "Show Accounts"}
+                                      </IconButton>
+                                    </TableCell>
+                                  </TableRow>
 
-                                    {expandedGoals.has(
-                                      goal.goalDetails.goalId
-                                    ) && (
-                                      <TableRow>
-                                        <TableCell colSpan={2}>
-                                          <Collapse
-                                            in={expandedGoals.has(
-                                              goal.goalDetails.goalId
-                                            )}
-                                            timeout="auto"
-                                            unmountOnExit
-                                          >
-                                            <Box margin={2}>
-                                              <Typography variant="h6">
-                                                Accounts
-                                              </Typography>
-                                              <Table size="small">
-                                                <TableHead>
-                                                  <TableRow>
-                                                    <TableCell
-                                                      onClick={() =>
-                                                        handleSort(
-                                                          "accountName"
-                                                        )
+                                  {expandedGoals.has(
+                                    goal.goalDetails.goalId
+                                  ) && (
+                                    <TableRow>
+                                      <TableCell colSpan={2}>
+                                        <Collapse
+                                          in={expandedGoals.has(
+                                            goal.goalDetails.goalId
+                                          )}
+                                          timeout="auto"
+                                          unmountOnExit
+                                        >
+                                          <Box margin={2}>
+                                            <Typography variant="h6">
+                                              Accounts
+                                            </Typography>
+                                            <Table size="small">
+                                              <TableHead>
+                                                <TableRow>
+                                                  <TableCell
+                                                    onClick={() =>
+                                                      handleSort("accountName")
+                                                    }
+                                                  >
+                                                    <TableSortLabel
+                                                      active={
+                                                        sortColumn ===
+                                                        "accountName"
                                                       }
+                                                      direction={sortOrder}
                                                     >
-                                                      <TableSortLabel
-                                                        active={
-                                                          sortColumn ===
-                                                          "accountName"
-                                                        }
-                                                        direction={sortOrder}
-                                                      >
-                                                        Account Name
-                                                      </TableSortLabel>
-                                                    </TableCell>
-                                                    <TableCell
-                                                      onClick={() =>
-                                                        handleSort(
-                                                          "accountAddress"
-                                                        )
+                                                      Account Name
+                                                    </TableSortLabel>
+                                                  </TableCell>
+                                                  <TableCell
+                                                    onClick={() =>
+                                                      handleSort(
+                                                        "accountAddress"
+                                                      )
+                                                    }
+                                                  >
+                                                    <TableSortLabel
+                                                      active={
+                                                        sortColumn ===
+                                                        "accountAddress"
                                                       }
+                                                      direction={sortOrder}
                                                     >
-                                                      <TableSortLabel
-                                                        active={
-                                                          sortColumn ===
-                                                          "accountAddress"
-                                                        }
-                                                        direction={sortOrder}
-                                                      >
-                                                        Address
-                                                      </TableSortLabel>
-                                                    </TableCell>
-                                                    <TableCell
-                                                      onClick={() =>
-                                                        handleSort(
-                                                          "salesRouteNums"
-                                                        )
+                                                      Address
+                                                    </TableSortLabel>
+                                                  </TableCell>
+                                                  <TableCell
+                                                    onClick={() =>
+                                                      handleSort(
+                                                        "salesRouteNums"
+                                                      )
+                                                    }
+                                                  >
+                                                    <TableSortLabel
+                                                      active={
+                                                        sortColumn ===
+                                                        "salesRouteNums"
                                                       }
+                                                      direction={sortOrder}
                                                     >
-                                                      <TableSortLabel
-                                                        active={
-                                                          sortColumn ===
-                                                          "salesRouteNums"
-                                                        }
-                                                        direction={sortOrder}
-                                                      >
-                                                        Route Number
-                                                      </TableSortLabel>
-                                                    </TableCell>
-                                                    <TableCell
-                                                      onClick={() =>
-                                                        handleSort("salesman")
+                                                      Route Number
+                                                    </TableSortLabel>
+                                                  </TableCell>
+                                                  <TableCell
+                                                    onClick={() =>
+                                                      handleSort("salesman")
+                                                    }
+                                                  >
+                                                    <TableSortLabel
+                                                      active={
+                                                        sortColumn ===
+                                                        "salesman"
                                                       }
+                                                      direction={sortOrder}
                                                     >
-                                                      <TableSortLabel
-                                                        active={
-                                                          sortColumn ===
-                                                          "salesman"
-                                                        }
-                                                        direction={sortOrder}
-                                                      >
-                                                        Salesman
-                                                      </TableSortLabel>
-                                                    </TableCell>
-                                                  </TableRow>
-                                                </TableHead>
-                                                <TableBody>
-                                                  {sortData(
-                                                    goal.accounts,
-                                                    sortColumn,
-                                                    sortOrder
-                                                  ).map((account, index) => (
+                                                      Salesman
+                                                    </TableSortLabel>
+                                                  </TableCell>
+                                                  <TableCell
+                                                    onClick={() =>
+                                                      handleSort("postStatus")
+                                                    }
+                                                  >
+                                                    <TableSortLabel
+                                                      active={
+                                                        sortColumn === "status"
+                                                      }
+                                                      direction={sortOrder}
+                                                    >
+                                                      Status
+                                                    </TableSortLabel>
+                                                  </TableCell>
+                                                  <TableCell>Actions</TableCell>
+                                                </TableRow>
+                                              </TableHead>
+                                              <TableBody>
+                                                {sortData(
+                                                  goal.accounts,
+                                                  sortColumn,
+                                                  sortOrder
+                                                ).map((account, index) => {
+                                                  const hasSubmittedPost =
+                                                    Boolean(
+                                                      account.submittedPostId
+                                                    ); // ✅ Check if post was submitted
+
+                                                  return (
                                                     <React.Fragment
                                                       key={`${account.distributorAcctId}-${index}`}
                                                     >
@@ -497,7 +511,6 @@ const AllGalloGoalsView = () => {
                                                               "N/A"}
                                                         </TableCell>
                                                         <TableCell>
-                                                          {/* Fetch salesman name from employeeMap */}
                                                           {Array.isArray(
                                                             account.salesRouteNums
                                                           )
@@ -510,6 +523,32 @@ const AllGalloGoalsView = () => {
                                                                   .salesRouteNums
                                                               ] || "Unknown"}
                                                         </TableCell>
+                                                        <TableCell>
+                                                          {hasSubmittedPost ? (
+                                                            <Typography color="primary">
+                                                              Post Submitted
+                                                            </Typography>
+                                                          ) : (
+                                                            <Typography color="error">
+                                                              Not Submitted
+                                                            </Typography>
+                                                          )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                          {hasSubmittedPost && (
+                                                            <Button
+                                                              variant="text"
+                                                              color="primary"
+                                                              onClick={() =>
+                                                                navigate(
+                                                                  `/user-home-page?postId=${account.submittedPostId}`
+                                                                )
+                                                              }
+                                                            >
+                                                              View Post
+                                                            </Button>
+                                                          )}
+                                                        </TableCell>
                                                       </TableRow>
 
                                                       {/* Nested Rows for Additional Route Numbers */}
@@ -519,12 +558,7 @@ const AllGalloGoalsView = () => {
                                                         account.salesRouteNums
                                                           .slice(1)
                                                           .map(
-                                                            (
-                                                              routeNum:
-                                                                | number
-                                                                | string,
-                                                              idx: number
-                                                            ) => (
+                                                            (routeNum: string, idx: string) => (
                                                               <TableRow
                                                                 key={`${account.distributorAcctId}-${routeNum}-${idx}`}
                                                               >
@@ -535,37 +569,39 @@ const AllGalloGoalsView = () => {
                                                                   {routeNum}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                  {/* Fetch salesman name for additional route number */}
                                                                   {employeeMap[
                                                                     routeNum
                                                                   ] ||
                                                                     "Unknown"}
                                                                 </TableCell>
+                                                                <TableCell />
+                                                                <TableCell />
                                                               </TableRow>
                                                             )
                                                           )}
                                                     </React.Fragment>
-                                                  ))}
-                                                </TableBody>
-                                              </Table>
-                                            </Box>
-                                          </Collapse>
-                                        </TableCell>
-                                      </TableRow>
-                                    )}
-                                  </React.Fragment>
-                                ))}
-                            </TableBody>
-                          </Table>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </React.Fragment>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
+                                                  );
+                                                })}
+                                              </TableBody>
+                                            </Table>
+                                          </Box>
+                                        </Collapse>
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                </React.Fragment>
+                              ))}
+                          </TableBody>
+                        </Table>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
+            ))}
+          </TableBody>
+        </Table>
+      </Box>
     </Container>
   );
 };

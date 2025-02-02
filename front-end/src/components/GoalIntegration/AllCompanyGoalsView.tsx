@@ -18,9 +18,11 @@ import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/dele
 import { useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
+import { useNavigate } from "react-router-dom";
 
-const AllCompanyGoalsView = () => {
+const AllCompanyGoalsView = (companyId: string) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [expandedGoals, setExpandedGoals] = useState<string[]>([]);
   const companyGoals = useSelector(selectAllCompanyGoals);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
@@ -32,8 +34,6 @@ const AllCompanyGoalsView = () => {
         : [...prevExpanded, goalId]
     );
   };
-
-  console.log('all company goals: ', companyGoals);
 
   const openConfirmationDialog = (programId: string) => {
     setSelectedGoalId(programId);
@@ -70,14 +70,12 @@ const AllCompanyGoalsView = () => {
           <TableBody>
             {companyGoals.map((goal, index) => (
               <React.Fragment key={index}>
-                {/* Goal Row */}
                 <TableRow className="goal-row">
                   <TableCell>{goal.goalTitle}</TableCell>
                   <TableCell>{goal.goalDescription}</TableCell>
                   <TableCell>{goal.goalMetric || "N/A"}</TableCell>
                   <TableCell>{goal.goalStartDate}</TableCell>
                   <TableCell>{goal.goalEndDate}</TableCell>
-
                   <TableCell>
                     {Array.isArray(goal.accounts) &&
                     goal.accounts.length > 0 ? (
@@ -105,10 +103,9 @@ const AllCompanyGoalsView = () => {
                   </TableCell>
                 </TableRow>
 
-                {/* Expandable Accounts Table */}
                 {expandedGoals.includes(goal.id) && (
                   <TableRow>
-                    <TableCell colSpan={3} className="accounts-table">
+                    <TableCell colSpan={7} className="accounts-table">
                       <Collapse
                         in={expandedGoals.includes(goal.id)}
                         timeout="auto"
@@ -125,23 +122,72 @@ const AllCompanyGoalsView = () => {
                                 <TableRow>
                                   <TableCell>Account Name</TableCell>
                                   <TableCell>Account Address</TableCell>
+                                  <TableCell>Post</TableCell>{" "}
+                                  {/* Merged "Post Status" & "Actions" */}
                                 </TableRow>
                               </TableHead>
                               <TableBody>
                                 {goal.accounts.map(
-                                  (account: CompanyAccountType) => (
-                                    <TableRow
-                                      key={account.accountNumber}
-                                      className="account-row"
-                                    >
-                                      <TableCell>
-                                        {account.accountName}
-                                      </TableCell>
-                                      <TableCell>
-                                        {account.accountAddress}
-                                      </TableCell>
-                                    </TableRow>
-                                  )
+                                  (account: CompanyAccountType) => {
+                                    const hasSubmittedPosts =
+                                      Array.isArray(goal.submittedPostsIds) &&
+                                      goal.submittedPostsIds.length > 0;
+
+                                    return (
+                                      <TableRow
+                                        key={account.accountNumber}
+                                        className="account-row"
+                                        sx={
+                                          hasSubmittedPosts
+                                            ? {
+                                                backgroundColor: "green",
+                                                color: "white",
+                                              }
+                                            : {}
+                                        }
+                                      >
+                                        <TableCell>
+                                          {account.accountName || "N/A"}
+                                        </TableCell>
+                                        <TableCell>
+                                          {account.accountAddress || "N/A"}
+                                        </TableCell>
+                                        <TableCell>
+                                          {hasSubmittedPosts ? (
+                                            goal.submittedPostsIds?.map(
+                                              (postId, index) => (
+                                                <Button
+                                                  key={postId}
+                                                  variant="contained"
+                                                  color="secondary"
+                                                  size="small"
+                                                  sx={{
+                                                    color: "white",
+                                                    backgroundColor:
+                                                      "darkgreen",
+                                                    "&:hover": {
+                                                      backgroundColor: "green",
+                                                    },
+                                                  }}
+                                                  onClick={() =>
+                                                    navigate(
+                                                      `/user-home-page?postId=${postId}`
+                                                    )
+                                                  }
+                                                >
+                                                  View Post {index + 1}
+                                                </Button>
+                                              )
+                                            )
+                                          ) : (
+                                            <Typography color="error">
+                                              None
+                                            </Typography>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  }
                                 )}
                               </TableBody>
                             </Table>
@@ -159,7 +205,7 @@ const AllCompanyGoalsView = () => {
       <CustomConfirmation
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}
-        onConfirm={() =>handleDeleteCompanyGoal(selectedGoalId)}
+        onConfirm={() => handleDeleteCompanyGoal(selectedGoalId)}
         message="Are you sure you want to delete this goal?"
       />
     </Box>

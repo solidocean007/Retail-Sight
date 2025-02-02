@@ -22,9 +22,11 @@ import {
   selectUsersCompanyGoals,
 } from "../Slices/goalsSlice";
 import { CompanyGoalType } from "../utils/types";
+import { useNavigate } from "react-router-dom";
 
 const MyCompanyGoals = () => {
   const user = useSelector(selectUser);
+  const navigate = useNavigate();
   const salesRouteNum = user?.salesRouteNum;
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
     {}
@@ -41,7 +43,6 @@ const MyCompanyGoals = () => {
       [goalId]: !prev[goalId], // Toggle the specific goal's expansion state
     }));
   };
-  
 
   const usersAccountsForGoal = (goal: CompanyGoalType) => {
     if (!Array.isArray(goal.accounts)) {
@@ -83,6 +84,7 @@ const MyCompanyGoals = () => {
                 <TableCell>Start Date</TableCell>
                 <TableCell>End Date</TableCell>
                 <TableCell>Actions</TableCell>
+                <TableCell>Accounts</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -104,6 +106,19 @@ const MyCompanyGoals = () => {
                     <TableCell>{goal.goalStartDate}</TableCell>
                     <TableCell>{goal.goalEndDate}</TableCell>
                     <TableCell>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        // onClick={() =>
+                        //   navigate(
+                        //     `/create-post?goalId=${goal.id}&accountId=${account.accountNumber}`
+                        //   )
+                        // }
+                      >
+                        Create
+                      </Button>
+                    </TableCell>
+                    <TableCell>
                       {goal.accounts === "Global" ? (
                         <Typography>Available for all accounts</Typography>
                       ) : (
@@ -113,8 +128,8 @@ const MyCompanyGoals = () => {
                           size="small"
                         >
                           {expandedGoals[goal.id]
-                            ? "Hide Accounts"
-                            : "Show Accounts"}
+                            ? "Hide"
+                            : "Show"}
                         </Button>
                       )}
                     </TableCell>
@@ -135,28 +150,81 @@ const MyCompanyGoals = () => {
                                   <TableCell>Account Name</TableCell>
                                   <TableCell>Account Address</TableCell>
                                   <TableCell>Account Number</TableCell>
+                                  <TableCell>Post</TableCell>{" "}
+                                  {/* Merged Post Status and Actions */}
                                 </TableRow>
                               </TableHead>
                               <TableBody>
                                 {usersAccountsForGoal(goal).length > 0 ? (
                                   usersAccountsForGoal(goal).map(
-                                    (account, accIndex) => (
-                                      <TableRow key={accIndex}>
-                                        <TableCell>
-                                          {account.accountName || "N/A"}
-                                        </TableCell>
-                                        <TableCell>
-                                          {account.accountAddress || "N/A"}
-                                        </TableCell>
-                                        <TableCell>
-                                          {account.accountNumber || "N/A"}
-                                        </TableCell>
-                                      </TableRow>
-                                    )
+                                    (account, accIndex) => {
+                                      const isPostSubmitted = Array.isArray(
+                                        goal.submittedPostsIds
+                                      )
+                                        ? goal.submittedPostsIds.includes(
+                                            account.accountNumber
+                                          )
+                                        : false;
+
+                                      return (
+                                        <TableRow
+                                          key={accIndex}
+                                          sx={
+                                            isPostSubmitted
+                                              ? {
+                                                  backgroundColor: "green",
+                                                  color: "white",
+                                                }
+                                              : {}
+                                          }
+                                        >
+                                          <TableCell>
+                                            {account.accountName || "N/A"}
+                                          </TableCell>
+                                          <TableCell>
+                                            {account.accountAddress || "N/A"}
+                                          </TableCell>
+                                          <TableCell>
+                                            {account.accountNumber || "N/A"}
+                                          </TableCell>
+                                          <TableCell>
+                                            {isPostSubmitted ? (
+                                              <Button
+                                                variant="contained"
+                                                color="secondary"
+                                                size="small"
+                                                sx={{
+                                                  color: "white",
+                                                  backgroundColor: "darkgreen",
+                                                  "&:hover": {
+                                                    backgroundColor: "green",
+                                                  },
+                                                }}
+                                                // onClick={() =>
+                                                //   navigate(
+                                                //     `/user-home-page?postId=${goal.submittedPostsIds.find(
+                                                //       (postId) =>
+                                                //         postId ===
+                                                //         account.accountNumber.toString()
+                                                //     )}`
+                                                //   )
+                                                // }
+                                              >
+                                                View Post
+                                              </Button>
+                                            ) : (
+                                              <Typography color="error">
+                                                None
+                                              </Typography>
+                                            )}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    }
                                   )
                                 ) : (
                                   <TableRow>
-                                    <TableCell colSpan={3} align="center">
+                                    <TableCell colSpan={4} align="center">
                                       No accounts match your sales route number.
                                     </TableCell>
                                   </TableRow>

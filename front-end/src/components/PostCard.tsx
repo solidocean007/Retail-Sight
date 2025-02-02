@@ -1,7 +1,7 @@
 // PostCard.tsx
 import React from "react";
 import { useState } from "react";
-import { Card, IconButton, Menu, MenuItem, Dialog } from "@mui/material";
+import { Card, IconButton, Menu, MenuItem, Dialog, Typography } from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
@@ -213,8 +213,8 @@ const PostCard: React.FC<PostCardProps> = ({
     handleClose();
   };
 
-  const createdOnBehalf =  post.postCreatedBy != post.postUserName;
-  
+  const createdOnBehalf = post.postCreatedBy != post.postUserName;
+
   return (
     <>
       <Card className="post-card dynamic-height" style={{ ...style }}>
@@ -287,13 +287,9 @@ const PostCard: React.FC<PostCardProps> = ({
                     >
                       {post.postUserName}
                     </a>
-
                   </p>
-
                 </div>
-                {createdOnBehalf  && (
-                  <h5>Created by: {post.postCreatedBy}</h5>
-                )}
+                {createdOnBehalf && <h5>Created by: {post.postCreatedBy}</h5>}
                 <div className="user-company-box">
                   <p>
                     company:{" "}
@@ -310,6 +306,14 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
+          <Typography>
+            {post.companyGoalId
+              ? `Post submitted for company goal: ${post.companyGoalDescription}`
+              : post.oppId
+              ? `Post submitted for Gallo goal: ${post.galloGoalDescription}`
+              : ""}
+          </Typography>
+
           <div className="description-image">
             <div className="like-quantity-row">
               {post.totalCaseCount > 1 ? (
