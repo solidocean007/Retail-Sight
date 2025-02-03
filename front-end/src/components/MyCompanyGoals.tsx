@@ -21,10 +21,8 @@ import {
   selectCompanyGoalsIsLoading,
   selectUsersCompanyGoals,
 } from "../Slices/goalsSlice";
-import { CompanyGoalType, PostType } from "../utils/types";
+import { CompanyGoalType, GoalSubmission } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import { db } from "../utils/firebase";
-import fetchPostsForGoal from "../utils/PostLogic/fetchPostsForGoal";
 
 const MyCompanyGoals = () => {
   const user = useSelector(selectUser);
@@ -33,29 +31,19 @@ const MyCompanyGoals = () => {
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
     {}
   );
-  const [postsByGoal, setPostsByGoal] = useState<Record<string, PostType[]>>(
-    {}
-  );
+  
   const loading = useSelector(selectCompanyGoalsIsLoading);
 
   const userCompanyGoals = useSelector((state: RootState) =>
     selectUsersCompanyGoals(state, salesRouteNum)
   );
 
-  const toggleGoalExpansion = async (goalId: string) => {
+   // ✅ Toggle expanded state for goals
+   const toggleGoalExpansion = (goalId: string) => {
     setExpandedGoals((prev) => ({
       ...prev,
-      [goalId]: !prev[goalId], // Toggle the specific goal's expansion state
+      [goalId]: !prev[goalId],
     }));
-
-    if (!postsByGoal[goalId]) {
-      try {
-        const posts = await fetchPostsForGoal(goalId, "companyGoals");
-        setPostsByGoal((prev) => ({ ...prev, [goalId]: posts })); // Type '{ id: string; }' is missing the following properties from type 'PostType': category, channel, storeAddress, displayDate, and 13 more.ts(2345)
-      } catch (error) {
-        console.error("Error fetching posts for goal:", error);
-      }
-    }
   };
 
   const usersAccountsForGoal = (goal: CompanyGoalType) => {
@@ -71,11 +59,14 @@ const MyCompanyGoals = () => {
           : account.salesRouteNums === salesRouteNum // Match directly if it's a single value
     );
   };
-  
 
   return (
     <div className="my-company-goals-container">
-      <Typography variant="h3" sx={{ flexGrow: 1, fontSize: "large" }} className="my-goals-title">
+      <Typography
+        variant="h3"
+        sx={{ flexGrow: 1, fontSize: "large" }}
+        className="my-goals-title"
+      >
         Company Goals
       </Typography>
       {loading ? (
@@ -142,47 +133,49 @@ const MyCompanyGoals = () => {
                               </TableHead>
                               <TableBody>
                                 {usersAccountsForGoal(goal).length > 0 ? (
-                                  usersAccountsForGoal(goal).map(
-                                    (account, accIndex) => {
-                                      const postsForGoal = postsByGoal[goal.id] || [];
-                                      const postForAccount = postsForGoal.find(
-                                        (post) => post.accountNumber === account.accountNumber
-                                      );
+                                  usersAccountsForGoal(goal).map((account, accIndex) => {
+                                    // ✅ Check if this account has a submitted post
+                                    const submittedPost = goal.submittedPosts?.find(
+                                      (submission: GoalSubmission) =>
+                                        submission.accountNumber === account.accountNumber
+                                    );
 
-                                      return (
-                                        <TableRow
-                                          key={accIndex}
-                                          sx={
-                                            postForAccount
-                                              ? {
-                                                  backgroundColor: "green",
-                                                  color: "white",
-                                                }
-                                              : {}
-                                          }
-                                        >
-                                          <TableCell>{account.accountName || "N/A"}</TableCell>
-                                          <TableCell>{account.accountAddress || "N/A"}</TableCell>
-                                          <TableCell>{account.accountNumber || "N/A"}</TableCell>
-                                          <TableCell>
-                                            {postForAccount ? (
-                                              <Button
-                                                variant="contained"
-                                                color="secondary"
-                                                onClick={() =>
-                                                  navigate(`/user-home-page?postId=${postForAccount.id}`)
-                                                }
-                                              >
-                                                View Post
-                                              </Button>
-                                            ) : (
-                                              <Typography color="error">None</Typography>
-                                            )}
-                                          </TableCell>
-                                        </TableRow>
-                                      );
-                                    }
-                                  )
+                                    return (
+                                      <TableRow
+                                        key={accIndex}
+                                        sx={
+                                          submittedPost
+                                            ? { backgroundColor: "green", color: "white" }
+                                            : {}
+                                        }
+                                      >
+                                        <TableCell>{account.accountName || "N/A"}</TableCell>
+                                        <TableCell>{account.accountAddress || "N/A"}</TableCell>
+                                        <TableCell>{account.accountNumber || "N/A"}</TableCell>
+                                        <TableCell>
+                                          {submittedPost ? (
+                                            <Button
+                                              variant="contained"
+                                              color="secondary"
+                                              size="small"
+                                              sx={{
+                                                color: "white",
+                                                backgroundColor: "darkgreen",
+                                                "&:hover": { backgroundColor: "green" },
+                                              }}
+                                              onClick={() =>
+                                                navigate(`/user-home-page?postId=${submittedPost.postId}`)
+                                              }
+                                            >
+                                              View
+                                            </Button>
+                                          ) : (
+                                            <Typography color="error">None</Typography>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })
                                 ) : (
                                   <TableRow>
                                     <TableCell colSpan={4} align="center">

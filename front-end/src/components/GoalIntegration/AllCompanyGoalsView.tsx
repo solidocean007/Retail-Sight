@@ -11,7 +11,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { CompanyAccountType } from "../../utils/types";
+import { CompanyAccountType, GoalSubmission } from "../../utils/types";
 import { selectAllCompanyGoals } from "../../Slices/goalsSlice";
 import { useSelector } from "react-redux";
 import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
@@ -123,22 +123,25 @@ const AllCompanyGoalsView = (companyId: string) => {
                                   <TableCell>Account Name</TableCell>
                                   <TableCell>Account Address</TableCell>
                                   <TableCell>Post</TableCell>{" "}
-                                  {/* Merged "Post Status" & "Actions" */}
                                 </TableRow>
                               </TableHead>
                               <TableBody>
                                 {goal.accounts.map(
                                   (account: CompanyAccountType) => {
-                                    const hasSubmittedPosts =
-                                      Array.isArray(goal.submittedPostsIds) &&
-                                      goal.submittedPostsIds.length > 0;
+                                    // ✅ Check if this account has a submitted post
+                                    const submittedPost =
+                                      goal.submittedPosts?.find(
+                                        (submission: GoalSubmission) =>
+                                          submission.accountNumber ===
+                                          account.accountNumber
+                                      );
 
                                     return (
                                       <TableRow
                                         key={account.accountNumber}
                                         className="account-row"
                                         sx={
-                                          hasSubmittedPosts
+                                          submittedPost
                                             ? {
                                                 backgroundColor: "green",
                                                 color: "white",
@@ -153,32 +156,26 @@ const AllCompanyGoalsView = (companyId: string) => {
                                           {account.accountAddress || "N/A"}
                                         </TableCell>
                                         <TableCell>
-                                          {hasSubmittedPosts ? (
-                                            goal.submittedPostsIds?.map(
-                                              (postId, index) => (
-                                                <Button
-                                                  key={postId}
-                                                  variant="contained"
-                                                  color="secondary"
-                                                  size="small"
-                                                  sx={{
-                                                    color: "white",
-                                                    backgroundColor:
-                                                      "darkgreen",
-                                                    "&:hover": {
-                                                      backgroundColor: "green",
-                                                    },
-                                                  }}
-                                                  onClick={() =>
-                                                    navigate(
-                                                      `/user-home-page?postId=${postId}`
-                                                    )
-                                                  }
-                                                >
-                                                  View Post {index + 1}
-                                                </Button>
-                                              )
-                                            )
+                                          {submittedPost ? (
+                                            <Button
+                                              variant="contained"
+                                              color="secondary"
+                                              size="small"
+                                              sx={{
+                                                color: "white",
+                                                backgroundColor: "darkgreen",
+                                                "&:hover": {
+                                                  backgroundColor: "green",
+                                                },
+                                              }}
+                                              onClick={() =>
+                                                navigate(
+                                                  `/user-home-page?postId=${submittedPost.postId}`
+                                                )
+                                              }
+                                            >
+                                              View
+                                            </Button>
                                           ) : (
                                             <Typography color="error">
                                               None

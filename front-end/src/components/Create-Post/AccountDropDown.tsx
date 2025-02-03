@@ -11,7 +11,7 @@ const AccountDropdown: React.FC<AccountDropdownProps> = ({ onAccountSelect, acco
   console.log('accountdropdown accounts: ', accounts)
   return (
     <Autocomplete
-      options={accounts}
+      options={accounts} // 
       getOptionLabel={(account) =>
         `${account.accountName} - ${account.accountAddress}`
       }

@@ -22,7 +22,7 @@ import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { useAppDispatch } from "../store";
 import { createSubmittedMission } from "../../thunks/missionsThunks";
 import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementToGalloAxis";
-import { updateGoalWithPostId } from "../helperFunctions/updateGoalWithPostId";
+import { updateGoalWithSubmission } from "../helperFunctions/updateGoalWithSubmission";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
@@ -148,11 +148,14 @@ export const useHandlePostSubmission = () => {
                 displayDate: new Date().toISOString(),
                 timestamp: new Date().toISOString(),
                 totalCaseCount: post.totalCaseCount,
-                postUserName: post.postUserName, // Use the post data directly
-                postUserId: post.postUserId, // Use the post data directly
-                postUserCompany: post.postUserCompany, // Use the post data directly
-                postUserCompanyId: post.postUserCompanyId, // Use the post data directly
-                postUserEmail: post.postUserEmail, // Use the post data directly
+                postUserName: post.postUserName,
+                postUserId: post.postUserId,
+                postUserCompany: post.postUserCompany,
+                postUserCompanyId: post.postUserCompanyId,
+                postUserEmail: post.postUserEmail,
+                companyGoalId: post.companyGoalId || null, // Ensures companyGoalId exists
+                companyGoalDescription: post.companyGoalDescription || null, // Ensures description exists
+                galloGoalDescription: post.galloGoalDescription || null, // Ensures galloGoalDescription exists
                 hashtags: hashtags,
                 starTags: starTags,
                 commentCount: 0,
@@ -179,7 +182,7 @@ export const useHandlePostSubmission = () => {
               const postId = newDocRef.id;
 
               // Update goal with the post ID
-              await updateGoalWithPostId(post, postId);
+              await updateGoalWithSubmission(post, postId);
 
               // Update the post with image URLs
               await updateDoc(newDocRef, {
@@ -198,7 +201,12 @@ export const useHandlePostSubmission = () => {
                   photos: [{ file: resizedImageUrl }],
                 };
 
-                await sendAchievementToGalloAxis(achievementPayload, apiKey, navigate, dispatch);
+                await sendAchievementToGalloAxis(
+                  achievementPayload,
+                  apiKey,
+                  navigate,
+                  dispatch
+                );
               }
 
               const newPostWithID = {
