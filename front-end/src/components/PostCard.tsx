@@ -307,7 +307,6 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
           </div>
           <Typography>
-            {post.id}
             {post.companyGoalId
               ? `Company goal: ${post.companyGoalDescription}`
               : post.oppId

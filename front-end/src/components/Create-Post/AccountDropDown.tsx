@@ -8,7 +8,6 @@ interface AccountDropdownProps {
 }
 
 const AccountDropdown: React.FC<AccountDropdownProps> = ({ onAccountSelect, accounts }) => {
-  console.log('accountdropdown accounts: ', accounts)
   return (
     <Autocomplete
       options={accounts} // 

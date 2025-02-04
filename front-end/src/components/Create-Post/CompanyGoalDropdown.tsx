@@ -33,12 +33,13 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
           onSelect(selected); // Pass the selected goal object
         }}
         displayEmpty
+        disabled={goals.length === 0}
       >
-        {/* <MenuItem value="" disabled>
+        <MenuItem value="" disabled>
           {goals.length > 0
-            ? `Select a ${label}`
+            ? `${goals.length} ${label} available`
             : `No ${label.toLowerCase()} available`}
-        </MenuItem> */}
+        </MenuItem>
         {goals.map((goal) => (
           <MenuItem key={goal.id} value={goal.id}>
             {goal.goalDescription}

@@ -61,14 +61,15 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     <div className="header-bar">
       <div className="website-title" onClick={() => navigate("/")}>
         <h1>Displaygram</h1>
-        <p>version 0.1.4</p>
+        <h5>{currentUser?.company}</h5>
+
+        {/* <p>version 0.2.4</p> */}
       </div>
 
       {!currentUser ? (
         <button onClick={goToSignUpLogin}>Login</button>
       ) : (
         <div className="header-details">
-          <h3>{currentUser?.company}</h3>
           <div className="header-buttons">
             {/* <div className="menu-buttons">
             <button onClick={handleCollectionsClick}>Collections</button>

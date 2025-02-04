@@ -35,6 +35,8 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
           variant="outlined"
           value={selectedGoal || "no-goal"}
           onChange={(e) => onSelect(e.target.value)}
+          displayEmpty
+          disabled={goals.length === 0}
         >
            <MenuItem value="no-goal">
                     {goals.length > 0

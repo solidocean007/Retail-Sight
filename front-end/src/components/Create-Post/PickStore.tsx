@@ -30,7 +30,6 @@ import {
 import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGalloGoalsByCompanyId";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
 import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
-import TotalCaseCount from "../TotalCaseCount";
 import { selectUser } from "../../Slices/userSlice";
 import {
   selectAllCompanyGoals,
@@ -42,6 +41,8 @@ import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/get
 import { matchAccountWithSelectedStoreForAdmin } from "../../utils/helperFunctions/accountHelpers";
 import GalloGoalDropdown from "./GalloGoalDropdown";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
+import "./pickstore.css";
+import { isMap } from "util/types";
 
 interface PickStoreProps {
   onNext: () => void;
@@ -167,7 +168,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     loadMyAccounts();
   }, [companyId]);
 
-  // load all companys accounts
+  // load all company accounts
   useEffect(() => {
     if (isAllStoresShown) {
       const loadAllCompanyAccounts = async () => {
@@ -293,7 +294,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       accountNumber: "",
     });
     setSelectedGalloGoalId(null);
-    setSelectedCompanyGoalId(null);
+    setSelectedCompanyGoal(undefined);
   };
 
   // this function is called when we find an account and its account number via the map process i believe
@@ -359,92 +360,86 @@ export const PickStore: React.FC<PickStoreProps> = ({
         justifyContent="space-between"
         alignItems="center"
         mt={2}
-        px={3} // Add padding to create space between the edges and the content
-        className="navigation-buttons"
+        px={3}
+        className="pick-store-navigation-buttons"
       >
-        {/* Back Button */}
         <Button
-          variant="outlined"
+          variant="contained"
           color="primary"
           onClick={onPrevious}
-          sx={{ minWidth: "80px" }} // Ensure consistent size
+          sx={{ minWidth: "80px" }}
         >
           Back
         </Button>
 
-        {/* Dropdown/Map Switch Section */}
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          flex="1" // Center-align in the available space
-          sx={{ gap: 2 }} // Add spacing between elements in the switch
-        >
-          <Typography
-            sx={{
-              fontWeight: isMapMode ? "normal" : "bold",
-              fontSize: isMapMode ? "1rem" : "1.2rem",
-            }}
+        {post.selectedStore && (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleClearAccount}
+            sx={{ minWidth: "80px" }}
           >
-            Dropdown
-          </Typography>
-          <Switch
-            checked={isMapMode}
-            onChange={() => setIsMapMode(!isMapMode)}
-            sx={{ mx: 1 }}
-          />
-          <Typography
-            sx={{
-              fontWeight: isMapMode ? "bold" : "normal",
-              fontSize: isMapMode ? "1.2rem" : "1rem",
-            }}
-          >
-            Map
-          </Typography>
-        </Box>
+            Clear
+          </Button>
+        )}
 
-        {/* Next Button */}
         <Button
           variant="contained"
           color="primary"
           onClick={onNext}
           disabled={!post.selectedStore}
-          sx={{ minWidth: "80px" }} // Ensure consistent size
+          sx={{ minWidth: "80px" }}
         >
           Next
         </Button>
       </Box>
 
-      {/* My Stores / All Stores Switch */}
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        gap={2}
-        mt={3}
-      >
-        <Typography
-          sx={{
-            fontWeight: isAllStoresShown ? "normal" : "bold",
-            fontSize: isAllStoresShown ? "1rem" : "1.2rem",
-          }}
-        >
-          My Stores
-        </Typography>
-        <Switch
+      {/* Toggle Section */}
+      {/* Dropdown / Map Toggle */}
+      {!post.accountNumber && (
+        <Box className="toggle-section" mt={3}>
+          <Box className="toggle-wrapper">
+            <Typography
+              className={`toggle-label ${!isMapMode ? "selected" : ""}`}
+              onClick={() => setIsMapMode(!isMapMode)}
+            >
+              Dropdown
+            </Typography>
+            {/* <Switch
+           checked={isMapMode}
+           onChange={() => setIsMapMode(!isMapMode)}
+           className="toggle-switch"
+         /> */}
+            <Typography
+              className={`toggle-label ${isMapMode ? "selected" : ""}`}
+              onClick={() => setIsMapMode(!isMapMode)}
+            >
+              Map
+            </Typography>
+          </Box>
+          <Box className="toggle-wrapper" mt={2}>
+            <Typography
+              className={`toggle-label ${!isAllStoresShown ? "selected" : ""}`}
+              onClick={() => setIsAllStoresShown(!isMapMode)}
+            >
+              My Stores
+            </Typography>
+            {/* <Switch
           checked={isAllStoresShown}
           onChange={() => setIsAllStoresShown(!isAllStoresShown)}
-          inputProps={{ "aria-label": "toggle all stores" }}
-        />
-        <Typography
-          sx={{
-            fontWeight: isAllStoresShown ? "bold" : "normal",
-            fontSize: isAllStoresShown ? "1.2rem" : "1rem",
-          }}
-        >
-          All Stores
-        </Typography>
-      </Box>
+          className="toggle-switch"
+        /> */}
+            <Typography
+              className={`toggle-label ${isAllStoresShown ? "selected" : ""}`}
+              onClick={() => setIsAllStoresShown(!isMapMode)}
+            >
+              All Stores
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
+      {/* My Stores / All Stores Toggle */}
 
       {/* Account Selection */}
       <Box mt={2}>
@@ -510,22 +505,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
           <Box mt={2}>
             <CompanyGoalDropdown
               goals={companyGoals}
-              label="Company Goals"
+              label="Company Goal"
               loading={isFetchingGoal}
               onSelect={handleCompanyGoalSelection}
               selectedGoal={selectedCompanyGoal}
             />
           </Box>
-          {post.selectedStore && (
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleClearAccount}
-              sx={{ mt: 2 }}
-            >
-              Clear Selection
-            </Button>
-          )}
         </Box>
       )}
 
