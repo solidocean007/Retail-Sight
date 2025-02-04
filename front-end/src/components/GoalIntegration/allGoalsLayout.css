@@ -1,0 +1,32 @@
+/* AllGoalsLayout.css */
+.all-goals-container {
+  padding: 1rem;
+}
+
+.tabs-container {
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 1rem;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.tab-content {
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.table-container {
+  overflow-x: auto; /* Ensures responsiveness */
+}

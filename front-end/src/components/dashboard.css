@@ -168,7 +168,21 @@
     font-size: small;
   }
 
+
+  .dashboard-header h1 {
+    font-size: 28px; /* Smaller font size for mobile */
+  }
+  
+  .dashboard-content {
+    padding: 10px;
+  }
+
+  .MuiTabs-root {
+    overflow-x: auto; /* Make tabs scrollable on mobile */
+  }
 }
+
+
 
 @media (max-width: 500px) {
   .all-user-info {

@@ -2,8 +2,9 @@ import { Box, Container, Tab, Tabs } from "@mui/material"
 import { useState } from "react";
 import AllCompanyGoalsView from "./AllCompanyGoalsView";
 import AllGalloGoalsView from "./AllGalloGoalsView";
+import './allGoalsLayout.css';
 
-const AllGoalsLayout = () => {
+const AllGoalsLayout = ({companyId}:{companyId: string}) => {
   const [value, setValue] = useState(0);
 
   interface TabPanelProps {
@@ -39,30 +40,31 @@ const AllGoalsLayout = () => {
       setValue(newValue);
     };
 
-  return (
-    <Container>
-       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          aria-label="all-goals-view tabs"
-        >
-          <Tab label="Company Goals" {...a11yProps(0)} />
-          <Tab label="Gallo Programs & Goals" {...a11yProps(1)} />
-        </Tabs>
-      </Box>
-      <TabPanel value={value} index={0}>
-        <Box className="table-container">
-          <AllCompanyGoalsView  /> 
+    return (
+      <Container className="all-goals-container">
+        <Box className="tabs-container">
+          <Tabs
+            value={value}
+            onChange={handleChange}
+            aria-label="All Goals View Tabs"
+            className="tabs"
+          >
+            <Tab label="Company Goals" {...a11yProps(0)} />
+            <Tab label="Gallo Programs & Goals" {...a11yProps(1)} />
+          </Tabs>
         </Box>
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        <Box className="table-container">
-          <AllGalloGoalsView  /> 
-        </Box>
-      </TabPanel>
-    </Container>
-  )
+        <TabPanel value={value} index={0}>
+          <div className="table-container">
+            <AllCompanyGoalsView companyId={companyId} />
+          </div>
+        </TabPanel>
+        <TabPanel value={value} index={1}>
+          <div className="table-container">
+            <AllGalloGoalsView />
+          </div>
+        </TabPanel>
+      </Container>
+    );
 }
 
 export default AllGoalsLayout;

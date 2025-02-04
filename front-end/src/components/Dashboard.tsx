@@ -58,6 +58,7 @@ export const Dashboard = () => {
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
+  const companyId = user?.companyId;
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
 
@@ -263,7 +264,7 @@ export const Dashboard = () => {
           />
         )}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
-        {dashboardMode === "GoalManagerMode" && <GoalManager />}
+        {dashboardMode === "GoalManagerMode" && <GoalManager companyId={companyId} />}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>

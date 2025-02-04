@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { Box, Container, Tabs, Tab } from "@mui/material";
 import CreateGalloGoalView from "./CreateGalloGoalView";
-import { useSelector } from "react-redux";
-import { selectUser } from "../../Slices/userSlice";
 import CreateCompanyGoalView from "./CreateCompanyGoalView";
 import AllGoalsLayout from "./AllGoalsLayout";
 
@@ -35,8 +33,11 @@ function a11yProps(index: number) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
+interface GoalManagerProps {
+  companyId: string;
+}
 
-const GoalManager: React.FC = () => {
+const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
   const [value, setValue] = useState(0);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -54,7 +55,7 @@ const GoalManager: React.FC = () => {
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
-        <AllGoalsLayout />
+        <AllGoalsLayout companyId={companyId}/>
       </TabPanel>
       <TabPanel value={value} index={1}>
         <CreateGalloGoalView setValue={setValue} />

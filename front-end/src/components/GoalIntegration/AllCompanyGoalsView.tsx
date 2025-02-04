@@ -20,7 +20,7 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
 import { useNavigate } from "react-router-dom";
 
-const AllCompanyGoalsView = (companyId: string) => {
+const AllCompanyGoalsView = ({companyId}:{companyId: string}) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [expandedGoals, setExpandedGoals] = useState<string[]>([]);
@@ -86,7 +86,7 @@ const AllCompanyGoalsView = (companyId: string) => {
                       >
                         {expandedGoals.includes(goal.id)
                           ? "Collapse"
-                          : "Show Accounts"}
+                          : "Show"}
                       </Button>
                     ) : (
                       <Typography>All Accounts</Typography>
@@ -126,7 +126,7 @@ const AllCompanyGoalsView = (companyId: string) => {
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {goal.accounts.map(
+                                {goal.accounts?.map(
                                   (account: CompanyAccountType) => {
                                     // ✅ Check if this account has a submitted post
                                     const submittedPost =
