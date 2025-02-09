@@ -1,9 +1,19 @@
-// GoalIntegrationLayout.tsx
-import { useState } from "react";
-import { Box, Container, Tabs, Tab } from "@mui/material";
+// GoalIntegrationLayout.tsximport { useState } from "react";
+import {
+  Box,
+  Container,
+  Tabs,
+  Tab,
+  Select,
+  MenuItem,
+  useMediaQuery,
+  useTheme,
+  Typography,
+} from "@mui/material";
 import CreateGalloGoalView from "./CreateGalloGoalView";
 import CreateCompanyGoalView from "./CreateCompanyGoalView";
 import AllGoalsLayout from "./AllGoalsLayout";
+import { useState } from "react";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -22,7 +32,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
     </div>
   );
 }
@@ -33,29 +43,55 @@ function a11yProps(index: number) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
+
 interface GoalManagerProps {
-  companyId: string;
+  companyId: string | undefined;
 }
 
 const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
   const [value, setValue] = useState(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
 
+  const handleSelectChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setValue(event.target.value as number);
+  };
+
   return (
-    <Container>
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs value={value} onChange={handleChange} aria-label="dashboard tabs">
-          <Tab label="All Goals" {...a11yProps(0)} />
-          <Tab label="Gallo Program Import" {...a11yProps(1)} />
-          <Tab label="Company Goal Creation" {...a11yProps(2)} />
-          {/* Add more tabs as necessary */}
-        </Tabs>
+    <div>
+      <Typography>All Goals Manager</Typography>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+        {isMobile ? (
+          <Select
+            value={value}
+            onChange={handleSelectChange}
+            fullWidth
+            displayEmpty
+          >
+            <MenuItem value={0}>All Goals</MenuItem>
+            <MenuItem value={1}>Gallo Program Import</MenuItem>
+            <MenuItem value={2}>Company Goal Creation</MenuItem>
+          </Select>
+        ) : (
+          <Tabs
+            value={value}
+            onChange={handleChange}
+            aria-label="dashboard tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            <Tab label="All Goals" {...a11yProps(0)} />
+            <Tab label="Gallo Program Import" {...a11yProps(1)} />
+            <Tab label="Company Goal Creation" {...a11yProps(2)} />
+          </Tabs>
+        )}
       </Box>
       <TabPanel value={value} index={0}>
-        <AllGoalsLayout companyId={companyId}/>
+        <AllGoalsLayout companyId={companyId} />
       </TabPanel>
       <TabPanel value={value} index={1}>
         <CreateGalloGoalView setValue={setValue} />
@@ -63,9 +99,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
       <TabPanel value={value} index={2}>
         <CreateCompanyGoalView />
       </TabPanel>
-
-      {/* Add more TabPanels as necessary */}
-    </Container>
+    </div>
   );
 };
 

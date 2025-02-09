@@ -1,7 +1,14 @@
 // PostCard.tsx
-import React from "react";
+import React, { useRef } from "react";
 import { useState } from "react";
-import { Card, IconButton, Menu, MenuItem, Dialog, Typography } from "@mui/material";
+import {
+  Card,
+  IconButton,
+  Menu,
+  MenuItem,
+  Dialog,
+  Typography,
+} from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./EditPostModal";
@@ -33,6 +40,7 @@ import { MoreVert } from "@mui/icons-material";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
+import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -69,6 +77,10 @@ const PostCard: React.FC<PostCardProps> = ({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const open = Boolean(anchorEl);
+
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useOutsideAlerter(menuRef, () => setAnchorEl(null));
 
   // New state for controlling the visibility of the SharePost component
   const [isAddToCollectionModalOpen, setIsAddToCollectionModalOpen] =
@@ -232,21 +244,27 @@ const PostCard: React.FC<PostCardProps> = ({
                   >
                     <MoreVert />
                   </IconButton>
-                  <Menu
-                    id="post-card-menu"
-                    anchorEl={anchorEl}
-                    keepMounted
-                    open={open}
-                    onClose={handleClose}
-                  >
-                    <MenuItem onClick={handleShare}>Share</MenuItem>
-                    {user?.uid === post?.postUserId && (
-                      <MenuItem onClick={handleEdit}>Edit</MenuItem>
-                    )}
-                    <MenuItem onClick={handleAddToCollection}>
-                      Add to Collection
-                    </MenuItem>
-                  </Menu>
+                  <div ref={menuRef}>
+                    <Menu
+                      id="post-card-menu"
+                      anchorEl={anchorEl}
+                      keepMounted
+                      open={open}
+                      onClose={() => setAnchorEl(null)}
+                    >
+                      <MenuItem onClick={() => handleShare()}>Share</MenuItem>
+                      {user?.uid === post?.postUserId && (
+                        <MenuItem onClick={() => setIsEditModalOpen(true)}>
+                          Edit
+                        </MenuItem>
+                      )}
+                      <MenuItem
+                        onClick={() => setIsAddToCollectionModalOpen(true)}
+                      >
+                        Add to Collection
+                      </MenuItem>
+                    </Menu>
+                  </div>
                   <Dialog
                     open={isAddToCollectionModalOpen}
                     onClose={() => setIsAddToCollectionModalOpen(false)}

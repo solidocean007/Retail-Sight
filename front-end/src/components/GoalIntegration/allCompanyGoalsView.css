@@ -1,0 +1,83 @@
+.all-company-goals-container {
+  padding: 1rem;
+  width: 100%;
+}
+
+.company-goals-header {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.goals-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.goal-box {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #f9f9f9;
+}
+
+.goal-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.goal-label {
+  font-weight: bold;
+}
+
+.goal-value {
+  margin-left: 1rem;
+  text-align: left;
+}
+
+.goal-box-mobile .goal-row {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+.goal-box-mobile .goal-label {
+  width: 50%;
+  text-align: left;
+}
+
+.goal-box-mobile .goal-value {
+  width: 50%;
+  text-align: right;
+}
+
+.expanded-details {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.expanded-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+
+@media (min-width: 600px) {
+  .goal-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .goal-label {
+    margin-bottom: 0.25rem;
+  }
+
+  .goal-value {
+    margin-left: 0;
+  }
+}
+

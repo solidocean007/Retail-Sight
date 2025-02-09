@@ -3,14 +3,10 @@ import {
   Box,
   Button,
   Collapse,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { CompanyAccountType, GoalSubmission } from "../../utils/types";
 import { selectAllCompanyGoals } from "../../Slices/goalsSlice";
 import { useSelector } from "react-redux";
@@ -19,14 +15,22 @@ import { useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
 import { useNavigate } from "react-router-dom";
+import "./allCompanyGoalsView.css";
 
-const AllCompanyGoalsView = ({companyId}:{companyId: string}) => {
+const AllCompanyGoalsView = ({
+  companyId,
+}: {
+  companyId: string | undefined;
+}) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [expandedGoals, setExpandedGoals] = useState<string[]>([]);
   const companyGoals = useSelector(selectAllCompanyGoals);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string>("");
+
   const toggleGoalExpansion = (goalId: string) => {
     setExpandedGoals((prevExpanded) =>
       prevExpanded.includes(goalId)
@@ -51,162 +55,100 @@ const AllCompanyGoalsView = ({companyId}:{companyId: string}) => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <div className="all-company-goals-container">
+      <Typography
+        variant={isMobile ? "h6" : "h4"}
+        gutterBottom
+        className="company-goals-header"
+      >
         Company Goals
       </Typography>
-      <TableContainer>
-        <Table className="table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Goal Title</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Metric</TableCell>
-              <TableCell>Start</TableCell>
-              <TableCell>End</TableCell>
-              <TableCell>Accounts</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {companyGoals.map((goal, index) => (
-              <React.Fragment key={index}>
-                <TableRow className="goal-row">
-                  <TableCell>{goal.goalTitle}</TableCell>
-                  <TableCell>{goal.goalDescription}</TableCell>
-                  <TableCell>{goal.goalMetric || "N/A"}</TableCell>
-                  <TableCell>{goal.goalStartDate}</TableCell>
-                  <TableCell>{goal.goalEndDate}</TableCell>
-                  <TableCell>
-                    {Array.isArray(goal.accounts) &&
-                    goal.accounts.length > 0 ? (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => toggleGoalExpansion(goal.id)}
-                      >
-                        {expandedGoals.includes(goal.id)
-                          ? "Collapse"
-                          : "Show"}
-                      </Button>
-                    ) : (
-                      <Typography>All Accounts</Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => openConfirmationDialog(goal.id)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-
-                {expandedGoals.includes(goal.id) && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="accounts-table">
-                      <Collapse
-                        in={expandedGoals.includes(goal.id)}
-                        timeout="auto"
-                        unmountOnExit
-                      >
-                        <Box margin={1}>
-                          {typeof goal.accounts === "string" ? (
-                            <Typography>
-                              Global: Available for all accounts
-                            </Typography>
-                          ) : (
-                            <Table size="small" className="spreadsheet-table">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>Account Name</TableCell>
-                                  <TableCell>Account Address</TableCell>
-                                  <TableCell>Post</TableCell>{" "}
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {goal.accounts?.map(
-                                  (account: CompanyAccountType) => {
-                                    // ✅ Check if this account has a submitted post
-                                    const submittedPost =
-                                      goal.submittedPosts?.find(
-                                        (submission: GoalSubmission) =>
-                                          submission.accountNumber ===
-                                          account.accountNumber
-                                      );
-
-                                    return (
-                                      <TableRow
-                                        key={account.accountNumber}
-                                        className="account-row"
-                                        sx={
-                                          submittedPost
-                                            ? {
-                                                backgroundColor: "green",
-                                                color: "white",
-                                              }
-                                            : {}
-                                        }
-                                      >
-                                        <TableCell>
-                                          {account.accountName || "N/A"}
-                                        </TableCell>
-                                        <TableCell>
-                                          {account.accountAddress || "N/A"}
-                                        </TableCell>
-                                        <TableCell>
-                                          {submittedPost ? (
-                                            <Button
-                                              variant="contained"
-                                              color="secondary"
-                                              size="small"
-                                              sx={{
-                                                color: "white",
-                                                backgroundColor: "darkgreen",
-                                                "&:hover": {
-                                                  backgroundColor: "green",
-                                                },
-                                              }}
-                                              onClick={() =>
-                                                navigate(
-                                                  `/user-home-page?postId=${submittedPost.postId}`
-                                                )
-                                              }
-                                            >
-                                              View
-                                            </Button>
-                                          ) : (
-                                            <Typography color="error">
-                                              None
-                                            </Typography>
-                                          )}
-                                        </TableCell>
-                                      </TableRow>
-                                    );
-                                  }
-                                )}
-                              </TableBody>
-                            </Table>
-                          )}
-                        </Box>
-                      </Collapse>
-                    </TableCell>
-                  </TableRow>
+      <Box className="goals-container">
+        {companyGoals.map((goal, index) => (
+          <Box
+            key={index}
+            className={`goal-box ${isMobile ? "goal-box-mobile" : ""}`}
+          >
+            <Box className="goal-row">
+              <Typography className="goal-label">Goal Title:</Typography>
+              <Typography className="goal-value">{goal.goalTitle}</Typography>
+            </Box>
+            <Box className="goal-row">
+              <Typography className="goal-label">Description:</Typography>
+              <Typography className="goal-value">
+                {goal.goalDescription}
+              </Typography>
+            </Box>
+            <Box className="goal-row">
+              <Typography className="goal-label">Metric:</Typography>
+              <Typography className="goal-value">
+                {goal.goalMetric || "N/A"}
+              </Typography>
+            </Box>
+            <Box className="goal-row">
+              <Typography className="goal-label">Start:</Typography>
+              <Typography className="goal-value">{goal.goalStartDate}</Typography>
+            </Box>
+            <Box className="goal-row">
+              <Typography className="goal-label">End:</Typography>
+              <Typography className="goal-value">{goal.goalEndDate}</Typography>
+            </Box>
+            <Box className="goal-row">
+              <Typography className="goal-label">Accounts:</Typography>
+              <Typography className="goal-value">
+                {Array.isArray(goal.accounts) && goal.accounts.length > 0 ? (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => toggleGoalExpansion(goal.id)}
+                  >
+                    {expandedGoals.includes(goal.id) ? "Collapse" : "Show"}
+                  </Button>
+                ) : (
+                  "All Accounts"
                 )}
-              </React.Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              </Typography>
+            </Box>
+            <Box className="goal-row">
+              <Typography className="goal-label">Actions:</Typography>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => openConfirmationDialog(goal.id)}
+                size={isMobile ? "small" : "medium"}
+              >
+                Delete
+              </Button>
+            </Box>
+
+            {expandedGoals.includes(goal.id) && (
+              <Collapse
+                in={expandedGoals.includes(goal.id)}
+                timeout="auto"
+                unmountOnExit
+              >
+                <Box margin={1} className="expanded-details">
+                  {goal.accounts?.map((account: CompanyAccountType) => (
+                    <Box key={account.accountNumber} className="expanded-row">
+                      <Typography>{account.accountName || "N/A"}</Typography>
+                      <Typography>{account.accountAddress || "N/A"}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Collapse>
+            )}
+          </Box>
+        ))}
+      </Box>
       <CustomConfirmation
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}
         onConfirm={() => handleDeleteCompanyGoal(selectedGoalId)}
         message="Are you sure you want to delete this goal?"
       />
-    </Box>
+    </div>
   );
 };
 
 export default AllCompanyGoalsView;
+

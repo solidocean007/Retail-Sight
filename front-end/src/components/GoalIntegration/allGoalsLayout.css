@@ -1,7 +1,4 @@
 /* AllGoalsLayout.css */
-.all-goals-container {
-  padding: 1rem;
-}
 
 .tabs-container {
   border-bottom: 2px solid #ccc;
@@ -11,6 +8,7 @@
 .tabs {
   display: flex;
   justify-content: center;
+  overflow-x: auto;
 }
 
 .tab-panel {
@@ -27,6 +25,16 @@
   border-radius: 4px;
 }
 
-.table-container {
+.all-company-goals-view-container {
   overflow-x: auto; /* Ensures responsiveness */
+}
+
+@media (max-width: 600px) {
+  .all-company-goals-view-container {
+    font-size: 0.875rem; /* Adjust font size for mobile */
+  }
+
+  .tabs {
+    justify-content: start;
+  }
 }

@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import useProtectedAction from "../utils/useProtectedAction";
 import "./headerBar.css";
 import MenuTab from "./MenuTab";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { showMessage } from "../Slices/snackbarSlice";
+import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
@@ -13,13 +14,14 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   // const [showAbout, setShowAbout] = useState(false);
   const navigate = useNavigate();
   const protectedAction = useProtectedAction();
+  const menuRef = useRef<HTMLDivElement | null>(null); // Reference to MenuTab
 
-  const openProfile = () => navigate("/profile-page");
+  useOutsideAlerter(menuRef, () => setShowMenuTab(false));
 
   const goToSignUpLogin = () => {
     navigate("/sign-up-login");
   };
-  
+
   const handleCreatePostClick = () => {
     protectedAction(() => {
       navigate("/createPost");
@@ -85,6 +87,9 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           <div
             className="hamburger-menu-button"
             onClick={() => setShowMenuTab(!showMenuTab)}
+            aria-haspopup="true"
+            aria-expanded={showMenuTab}
+            style={{ visibility: showMenuTab ? "hidden" : "visible" }}
           >
             ☰
           </div>
@@ -92,7 +97,9 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       )}
 
       {showMenuTab && (
-        <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab} />
+        <div ref={menuRef}>
+          <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab} />
+        </div>
       )}
     </div>
   );
