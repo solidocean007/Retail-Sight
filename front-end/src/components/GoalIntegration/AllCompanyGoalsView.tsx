@@ -16,6 +16,7 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
 import { useNavigate } from "react-router-dom";
 import "./allCompanyGoalsView.css";
+import CustomInfoRow from "./CustonInfoRow";
 
 const AllCompanyGoalsView = ({
   companyId,
@@ -63,6 +64,19 @@ const AllCompanyGoalsView = ({
       >
         Company Goals
       </Typography>
+      <CustomInfoRow
+        data={{
+          Title: "Sales Growth",
+          Description: "Increase sales by 10%",
+          Metric: "Revenue",
+          "Start Date": "Jan 1, 2025",
+          "End Date": "Dec 31, 2025",
+        }}
+        mobileVisibleCount={2}
+        columnsPerRow={3}
+        mobile={isMobile}
+      />
+
       <Box className="goals-container">
         {companyGoals.map((goal, index) => (
           <Box
@@ -87,7 +101,9 @@ const AllCompanyGoalsView = ({
             </Box>
             <Box className="goal-row">
               <Typography className="goal-label">Start:</Typography>
-              <Typography className="goal-value">{goal.goalStartDate}</Typography>
+              <Typography className="goal-value">
+                {goal.goalStartDate}
+              </Typography>
             </Box>
             <Box className="goal-row">
               <Typography className="goal-label">End:</Typography>
@@ -128,12 +144,15 @@ const AllCompanyGoalsView = ({
                 unmountOnExit
               >
                 <Box margin={1} className="expanded-details">
-                  {goal.accounts?.map((account: CompanyAccountType) => (
-                    <Box key={account.accountNumber} className="expanded-row">
-                      <Typography>{account.accountName || "N/A"}</Typography>
-                      <Typography>{account.accountAddress || "N/A"}</Typography>
-                    </Box>
-                  ))}
+                  {Array.isArray(goal.accounts) &&
+                    goal.accounts.map((account: CompanyAccountType) => (
+                      <Box key={account.accountNumber} className="expanded-row">
+                        <Typography>{account.accountName || "N/A"}</Typography>
+                        <Typography>
+                          {account.accountAddress || "N/A"}
+                        </Typography>
+                      </Box>
+                    ))}
                 </Box>
               </Collapse>
             )}
@@ -151,4 +170,3 @@ const AllCompanyGoalsView = ({
 };
 
 export default AllCompanyGoalsView;
-
