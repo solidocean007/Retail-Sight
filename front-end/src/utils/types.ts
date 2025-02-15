@@ -239,14 +239,15 @@ export type CompanyGoalType = {
   goalTitle: string;
   goalDescription: string;
   goalMetric: string;
+  goalMetricMinimum: number;
   goalValueMin: number;
   goalStartDate: string;
   goalEndDate: string;
   accounts: string | CompanyAccountType[];
-  submittedPosts?: GoalSubmission[];
+  submittedPosts?: GoalSubmissionType[];
 }
 
-export type GoalSubmission = {
+export type GoalSubmissionType = {
   postId: string;
   accountNumber: string;
   submittedBy: string | undefined;

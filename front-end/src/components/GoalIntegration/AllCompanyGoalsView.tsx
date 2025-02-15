@@ -55,15 +55,6 @@ const AllCompanyGoalsView = ({
     }
   };
 
-  const desktopFields = [
-    "Title",
-    "Description",
-    "Metric",
-    "StartDate",
-    "EndDate",
-    "accounts",
-  ];
-
   return (
     <div className="all-company-goals-container">
       <Typography
@@ -73,18 +64,6 @@ const AllCompanyGoalsView = ({
       >
         Company Goals
       </Typography>
-
-      {/* Fixed Header for Desktop */}
-      {!isMobile && (
-        <div className="fixed-header">
-          {desktopFields.map((field) => (
-            <div key={field} className="header-item">
-              {field}
-            </div>
-          ))}
-          <div className="header-item">Actions</div>
-        </div>
-      )}
 
       {/* List of Goals */}
       <div className="goals-list">

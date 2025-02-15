@@ -1,11 +1,61 @@
 /* 📌 General Styles */
-.custom-info-row {
+.info-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 10px;
   background: #f9f9f9;
   transition: all 0.3s ease-in-out;
+}
+
+.info-layout-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: .5rem;
+  width: 100%;
+}
+
+.info-metric-segment, .info-date-segment {
+  width: 45%;
+}
+
+.info-metric-segment {
+  display: flex;
+  text-align: left;
+}
+
+.info-metric {
+  width: 45%;
+}
+
+.info-date-segment {
+  text-align: right;
+}
+
+.info-item {
+  text-align: left;
+  padding: 6px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-weight: normal;
+  height: auto;
+}
+
+.info-accounts {
+  display: flex;
+  align-items: center;
+}
+
+.info-title {
+  width: 28%;
+}
+
+.info-description {
+  width: 68%;
 }
 
 /* 📌 Fixed Desktop Header - Row Layout */
@@ -23,23 +73,7 @@
   padding: 6px;
 }
 
-/* 📌 Desktop Data Grid - Aligns with Header */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr) auto;
-  gap: 8px;
-  padding: 8px 0;
-}
 
-.info-item {
-  text-align: center;
-  padding: 6px;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  font-weight: normal;
-  height: auto;
-}
 
 /* 📌 Expandable Table */
 .expanded-table {
@@ -59,7 +93,19 @@
 }
 
 /* 📌 Action Buttons */
-.expand-button,
+.expand-button {
+  width: 4.5rem;
+  height: 2rem;
+  padding: 0px 10px;
+  border: none;
+  background: #292ec6;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+/* 📌 Action Buttons */
 .delete-button {
   padding: 6px 10px;
   border: none;
@@ -67,10 +113,13 @@
   color: white;
   cursor: pointer;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 10px;
 }
 
-.expand-button:hover,
+.expand-button:hover {
+  background: #6973e2;
+}
+
 .delete-button:hover {
   background: #d9534f;
 }
@@ -140,7 +189,7 @@
 }
 
 /* 📌 General Styles */
-.info-row-company-goal {
+.info-box-company-goal {
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 12px;

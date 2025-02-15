@@ -3,6 +3,10 @@
   width: 100%;
 }
 
+.all-company-goals-container  h4 {
+  font-size: medium;
+}
+
 .company-goals-header {
   text-align: center;
   font-size: 1.5rem;
