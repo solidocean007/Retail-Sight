@@ -4,27 +4,36 @@
   flex-direction: column;
   width: 100%;
   border: 1px solid #ddd;
+  border-bottom: none;
   border-radius: 8px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
   padding: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
   background: #f9f9f9;
   transition: all 0.3s ease-in-out;
 }
 
-.info-layout-row {
+.info-layout-row, .info-header {
   display: flex;
-  justify-content: space-between;
+  /* justify-content: space-between; */
   margin-bottom: .5rem;
   width: 100%;
 }
 
-.info-metric-segment, .info-date-segment {
+.info-layout-row-bottom {
+  display: flex;
+  justify-content: space-between;
+}
+
+.info-segment, .info-date-segment {
   width: 45%;
 }
 
-.info-metric-segment {
+.info-segment {
   display: flex;
-  text-align: left;
+  margin-right: 1rem;
+  /* text-align: left; */
 }
 
 .info-metric {
@@ -47,15 +56,34 @@
 
 .info-accounts {
   display: flex;
+  width: 40%;
   align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  /* border-right: 1px solid #ccc; */
+  /* border-right: none; */
+  border-bottom: 1px solid #ccc;
+  position: relative;
+}
+
+.layout-bottom-middle {
+  width: 100%;
+  border-top: 2px solid #ccc;
 }
 
 .info-title {
   width: 28%;
+  font-weight: 900; /* no change */
+   font-size: larger;
 }
 
 .info-description {
-  width: 68%;
+  /* width: 68%; */
+  font-size: larger;
 }
 
 /* 📌 Fixed Desktop Header - Row Layout */
@@ -94,7 +122,7 @@
 
 /* 📌 Action Buttons */
 .expand-button {
-  width: 4.5rem;
+  width: 7.5rem;
   height: 2rem;
   padding: 0px 10px;
   border: none;

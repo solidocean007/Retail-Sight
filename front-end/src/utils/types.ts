@@ -239,7 +239,6 @@ export type CompanyGoalType = {
   goalTitle: string;
   goalDescription: string;
   goalMetric: string;
-  goalMetricMinimum: number;
   goalValueMin: number;
   goalStartDate: string;
   goalEndDate: string;
