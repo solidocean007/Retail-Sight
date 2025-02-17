@@ -76,7 +76,7 @@
 }
 
 .info-title {
-  width: 28%;
+  margin-right: 2rem;
   font-weight: 900; /* no change */
    font-size: larger;
 }
@@ -300,4 +300,10 @@
   background: #0056b3;
 }
 
+
+@media (max-width: 900px) {
+  .info-header {
+    flex-direction: column;
+  }
+}
 
