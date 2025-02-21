@@ -1,13 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
-  Box,
-  Button,
-  Collapse,
   Typography,
   useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { CompanyAccountType, GoalSubmission } from "../../utils/types";
 import { selectAllCompanyGoals } from "../../Slices/goalsSlice";
 import { useSelector } from "react-redux";
 import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
@@ -24,7 +20,6 @@ const AllCompanyGoalsView = ({
   companyId: string | undefined;
 }) => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [expandedGoals, setExpandedGoals] = useState<string[]>([]);
