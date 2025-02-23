@@ -7,10 +7,10 @@ interface AccountDropdownProps {
   accounts: CompanyAccountType[] | undefined; // Accept accounts as props
 }
 
-const AccountDropdown: React.FC<AccountDropdownProps> = ({ onAccountSelect, accounts }) => {
+const AccountDropdown: React.FC<AccountDropdownProps> = ({ onAccountSelect, accounts = [] }) => {
   return (
     <Autocomplete
-      options={accounts} // 
+      options={accounts} // Type 'undefined' is not assignable to type 'readonly CompanyAccountType[]'.
       getOptionLabel={(account) =>
         `${account.accountName} - ${account.accountAddress}`
       }

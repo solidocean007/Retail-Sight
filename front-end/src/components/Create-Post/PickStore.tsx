@@ -42,7 +42,6 @@ import { matchAccountWithSelectedStoreForAdmin } from "../../utils/helperFunctio
 import GalloGoalDropdown from "./GalloGoalDropdown";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import "./pickstore.css";
-import { isMap } from "util/types";
 
 interface PickStoreProps {
   onNext: () => void;
@@ -352,6 +351,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
+  console.log('map mode: ', isMapMode)
+
   return (
     <div className="pick-store">
       {/* Header Controls */}
@@ -417,10 +418,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
               Map
             </Typography>
           </Box>
+
+
+
           <Box className="toggle-wrapper" mt={2}>
             <Typography
               className={`toggle-label ${!isAllStoresShown ? "selected" : ""}`}
-              onClick={() => setIsAllStoresShown(!isMapMode)}
+              onClick={() => setIsAllStoresShown(!isAllStoresShown)}
             >
               My Stores
             </Typography>
@@ -431,11 +435,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
         /> */}
             <Typography
               className={`toggle-label ${isAllStoresShown ? "selected" : ""}`}
-              onClick={() => setIsAllStoresShown(!isMapMode)}
+              onClick={() => setIsAllStoresShown(!isAllStoresShown)}
             >
               All Stores
             </Typography>
           </Box>
+
+
+
+
+
         </Box>
       )}
 
@@ -492,7 +501,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Box>
       )}
 
-      {/* Goals Dropdowns */}
+      {/* Goals Dropdowns inside of PickStore.tsx*/}
       {post.selectedStore && (
         <Box mt={3}>
           <GalloGoalDropdown

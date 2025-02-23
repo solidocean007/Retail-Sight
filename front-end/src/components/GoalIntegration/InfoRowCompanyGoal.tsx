@@ -49,6 +49,8 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
     );
   };
 
+  const accountsToRender = filteredAccounts();
+
   return (
     <div
       key={key}
@@ -224,23 +226,16 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
             {expanded && (
               <div className="mobile-content">
                 <tbody>
-                  {Array.isArray(goal.accounts) &&
-                    filteredAccounts.map(
+                  {Array.isArray(accountsToRender) &&
+                    accountsToRender.map(
                       (account: CompanyAccountType, index: number) => {
                         const postId = getSubmittedPostId(
                           account.accountNumber
                         );
                         return (
                           <tr key={index}>
-                            <tr>
-                              {/* <td>{index + 1}</td> */}
-                              <td>{account.accountName}</td>
-                            </tr>
-                            <tr>
-                              <td>{account.accountAddress}</td>
-                            </tr>
-                            <tr></tr>
-
+                            <td>{account.accountName}</td>
+                            <td>{account.accountAddress}</td>
                             <td>
                               {postId ? (
                                 <button
