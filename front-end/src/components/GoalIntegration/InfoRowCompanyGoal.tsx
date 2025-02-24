@@ -222,6 +222,18 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
                 </>
               )}
             </div>
+            <div className="mobile-accounts-tab">
+              {Array.isArray(goal.accounts) ? (
+                <button
+                  className={`file-tab ${expanded ? "active-tab" : ""}`}
+                  onClick={() => setExpanded(!expanded)}
+                >
+                  {expanded ? "close view" : "show accounts"}
+                </button>
+              ) : (
+                <Typography>Any accounts</Typography>
+              )}
+            </div>
 
             {expanded && (
               <div className="mobile-content">
@@ -257,14 +269,6 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
                 </tbody>
               </div>
             )}
-          </div>
-          <div className="mobile-accounts-tab">
-            <button
-              className={`file-tab ${expanded ? "active-tab" : ""}`}
-              onClick={() => setExpanded(!expanded)}
-            >
-              Accounts
-            </button>
           </div>
         </div>
       )}
