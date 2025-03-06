@@ -8,7 +8,7 @@ import { showMessage } from "../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { deletePost, updatePost } from "../Slices/postsSlice";
-import { SelectChangeEvent } from "@mui/material";
+import { Input, InputAdornment, SelectChangeEvent } from "@mui/material";
 import "./editPostModal.css";
 
 import {
@@ -29,6 +29,7 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
 import { extractHashtags, extractStarTags } from "../utils/extractHashtags";
+import TotalCaseCount from "./TotalCaseCount";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -52,6 +53,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [postVisibility, setPostVisibility] = useState<
     "public" | "company" | "supplier" | "private" | undefined
   >("public");
+  const [updatedCaseCount, setUpdatedCaseCount] = useState(post.totalCaseCount.toString());
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
@@ -66,23 +68,24 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
-  
+
     try {
       const updatedFields = {
         description: updatedPost.description,
         visibility: updatedPost.visibility,
-        hashtags: updatedPost.hashtags || [],  // Ensure hashtags are being passed
-        starTags: updatedPost.starTags || [],  // Ensure starTags are being passed
+        totalCaseCount: updatedPost.totalCaseCount,
+        hashtags: updatedPost.hashtags || [], // Ensure hashtags are being passed
+        starTags: updatedPost.starTags || [], // Ensure starTags are being passed
         // add other fields you want to update here
       };
-  
+
       // Update Firestore document
       await updateDoc(postRef, updatedFields);
-  
+
       // Dispatch actions to update local state (Redux and IndexedDB)
       dispatch(updatePost(updatedPost));
       await updatePostInIndexedDB(updatedPost);
-  
+
       // Close the modal and notify success
       handleCloseEditModal();
       dispatch(showMessage("Post edited successfully!"));
@@ -91,23 +94,22 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       dispatch(showMessage("Error updating post."));
     }
   };
-  
+
   const handleSave = () => {
     const extractedHashtags = extractHashtags(description);
     const extractedStarTags = extractStarTags(description);
-  
+
     const updatedPost: PostWithID = {
       ...post,
       description,
       visibility: postVisibility,
-      hashtags: extractedHashtags,  // Assign extracted hashtags
-      starTags: extractedStarTags,  // Assign extracted starTags
+      totalCaseCount: updatedCaseCount,
+      hashtags: extractedHashtags, // Assign extracted hashtags
+      starTags: extractedStarTags, // Assign extracted starTags
     };
-  
+
     handleSavePost(updatedPost);
   };
-  
-  
 
   const handleDeletePostClick = async () => {
     try {
@@ -158,6 +160,16 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               className="description-input"
             />
+            <Input
+              type="number"
+              fullWidth={false}
+              value={updatedCaseCount}
+              onChange={(e) => setUpdatedCaseCount(Number(e.target.value))}
+              endAdornment={
+                <InputAdornment position="start">units </InputAdornment>
+              }
+            />
+
             <Select
               fullWidth
               variant="outlined"

@@ -159,9 +159,9 @@ export const CreatePost = () => {
     setPost((prev) => ({ ...prev, selectedStore: storeName }));
   }, []);
 
-  // const handleTotalCaseCountChange = useCallback((caseCount: number) => {
-  //   setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
-  // }, []);
+  const handleTotalCaseCountChange = useCallback((caseCount: number) => {
+    setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
+  }, []);
 
   const handleStoreNumberChange = useCallback((newStoreNumber: string) => {
     // should i pass these to components or just use handleFieldChange?
@@ -248,6 +248,7 @@ export const CreatePost = () => {
           <SetDisplayDetails
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
+            handleTotalCaseCountChange={handleTotalCaseCountChange}
             selectedChannel={selectedChannel}
             setSelectedChannel={setSelectedChannel}
             selectedCategory={selectedCategory}
