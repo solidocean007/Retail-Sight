@@ -227,7 +227,6 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const createdOnBehalf = post.postCreatedBy != post.postUserName;
 
-
   return (
     <>
       <Card className="post-card dynamic-height" style={{ ...style }}>
@@ -254,7 +253,7 @@ const PostCard: React.FC<PostCardProps> = ({
                       onClose={() => setAnchorEl(null)}
                     >
                       <MenuItem onClick={() => handleShare()}>Share</MenuItem>
-                      {user?.role === 'super-admin' && (
+                      {user?.uid === post.postUserId || user?.role === "admin" || user?.role === "super-admin" && (
                         <MenuItem onClick={() => setIsEditModalOpen(true)}>
                           Edit
                         </MenuItem>
