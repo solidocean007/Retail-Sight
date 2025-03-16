@@ -244,7 +244,7 @@ const PostCard: React.FC<PostCardProps> = ({
                       onClose={() => setAnchorEl(null)}
                     >
                       <MenuItem onClick={() => handleShare()}>Share</MenuItem>
-                      {user?.uid === post?.postUserId && (
+                      {user?.uid === post.postUserId || user?.role === "admin" || user?.role === "super-admin" && (
                         <MenuItem onClick={() => setIsEditModalOpen(true)}>
                           Edit
                         </MenuItem>

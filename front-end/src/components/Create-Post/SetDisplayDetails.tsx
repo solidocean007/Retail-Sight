@@ -2,10 +2,12 @@ import React from "react";
 import CategorySelector, { CategoryType } from "../CategorySelector";
 import ChannelSelector, { ChannelType } from "../ChannelSelector";
 import "./setDisplayDetails.css";
+import TotalCaseCount from "../TotalCaseCount";
 
 interface SetDisplayDetailsProps {
   onNext: () => void;
   onPrevious: () => void;
+  handleTotalCaseCountChange: (caseCount: number) => void;
   selectedChannel: ChannelType;
   setSelectedChannel: React.Dispatch<React.SetStateAction<ChannelType>>;
   selectedCategory: CategoryType;
@@ -15,6 +17,7 @@ interface SetDisplayDetailsProps {
 export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
   onNext,
   onPrevious,
+  handleTotalCaseCountChange,
   selectedChannel,
   setSelectedChannel,
   selectedCategory,
@@ -35,6 +38,7 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
         />
+        <TotalCaseCount handleTotalCaseCountChange={handleTotalCaseCountChange} />
       </div>
       <button className="create-post-btn" onClick={onNext}>
         Next
