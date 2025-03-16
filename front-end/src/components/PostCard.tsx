@@ -215,17 +215,8 @@ const PostCard: React.FC<PostCardProps> = ({
     handleClose(); // Close the menu after sharing
   };
 
-  const handleEdit = () => {
-    setIsEditModalOpen(true);
-    handleClose();
-  };
-
-  const handleAddToCollection = () => {
-    setIsAddToCollectionModalOpen(true);
-    handleClose();
-  };
-
   const createdOnBehalf = post.postCreatedBy != post.postUserName;
+
 
   return (
     <>
