@@ -1,5 +1,6 @@
 // SignUpLogin.tsx
 import { useEffect, useState } from "react";
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { TErrorsOfInputs, TUserInputType, UserType } from "../utils/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { handleSignUp, handleLogin } from "../utils/validation/authenticate";
@@ -80,9 +81,9 @@ export const SignUpLogin = () => {
     }
 
     // Default to sign-up mode if 'mode=signup' exists
-  if (mode === "signup") {
-    setIsSignUp(true);
-  }
+    if (mode === "signup") {
+      setIsSignUp(true);
+    }
   }, [location]);
 
   const [signUpError, setSignUpError] = useState("");
@@ -165,7 +166,7 @@ export const SignUpLogin = () => {
       const firstError = Object.values(validationErrors).find(
         (error) => error !== ""
       );
-        
+
       if (firstError) {
         dispatch(showMessage(`Bad data input: ${firstError}`));
         return; // Stop the process if there's a validation error
@@ -199,7 +200,7 @@ export const SignUpLogin = () => {
             // If there was an emailParam, the user signed up through an invite link
             if (initialEmailParam.length > 0) {
               // Update the invite status to "fulfilled"
-              console.log('initialEmailParam: ', initialEmailParam)
+              console.log("initialEmailParam: ", initialEmailParam);
               const inviteRef = doc(db, "invites", initialEmailParam);
               try {
                 await updateDoc(inviteRef, {
@@ -207,9 +208,8 @@ export const SignUpLogin = () => {
                   fulfilledAt: new Date(),
                 });
               } catch (updateError) {
-                console.log("error updating invite", updateError)
+                console.log("error updating invite", updateError);
               }
-             
             }
           } else {
             companyData = await createNewCompany(
@@ -227,7 +227,8 @@ export const SignUpLogin = () => {
 
           // Fetch user data from Firestore
           const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid )) as UserType;
+            authData.uid
+          )) as UserType;
           if (fetchedUserData) {
             // Assuming fetchedUserData is of UserType or you can map it to UserType
             dispatch(setUser(fetchedUserData)); // dispatch the full user object
@@ -249,7 +250,8 @@ export const SignUpLogin = () => {
         if (authData && authData.uid) {
           // Fetch user data from Firestore or Firebase auth as required
           const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid )) as UserType;
+            authData.uid
+          )) as UserType;
           if (fetchedUserData) {
             dispatch(setUser(fetchedUserData));
           }
@@ -263,6 +265,21 @@ export const SignUpLogin = () => {
     }
     console.log("Resetting form");
     resetForm();
+  };
+
+  const handleResetPassword = async () => {
+    if (!userInputs.emailInput) {
+      dispatch(showMessage("Please enter your email."));
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(getAuth(), userInputs.emailInput);
+      dispatch(showMessage("Password reset email sent! Check your inbox."));
+    } catch (error) {
+      dispatch(showMessage("Error sending password reset email."));
+      console.error("Password Reset Error:", error);
+    }
   };
 
   return (
@@ -482,18 +499,12 @@ export const SignUpLogin = () => {
                       ),
                     }}
                   />
-                  <ErrorMessage
-                    message={errorsOfInputs.passwordInputError}
-                    show={
-                      triedSubmit &&
-                      errorsOfInputs.passwordInputError.length > 0
-                    }
-                  />
-                   <button type="submit">Submit</button>
+                   <button onClick={handleResetPassword}>Forgot Password?</button>
+                  
+                  <button type="submit">Submit</button>
                 </div>
               )}
               {signUpError && <div className="error">{signUpError}</div>}
-             
             </div>
           </form>
         </div>
