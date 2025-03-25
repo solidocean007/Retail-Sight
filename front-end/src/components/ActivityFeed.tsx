@@ -42,7 +42,7 @@ interface ActivityFeedProps {
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   currentStarTag: string | null;
   setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
-  clearSearch?: () => Promise<void>;
+  clearSearch: () => Promise<void>;
   activePostSet?: string;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   isSearchActive?: boolean;
@@ -253,11 +253,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     )
   }
 
-  if(posts.length === 0){
-    return (
-      <NoResults onClearFilters={clearSearch} /> // Property 'onClearFilters' does not exist on type 'IntrinsicAttributes & (() => Promise<void>)'.
-    )
-  }
+  {posts.length === 0 && clearSearch && (
+    <NoResults onClearFilters={clearSearch} />
+  )}
+  
 
   return (
     <div className="activity-feed-box">

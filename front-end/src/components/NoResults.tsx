@@ -3,7 +3,7 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import React from "react";
 
 interface NoResultsProps {
-  onClearFilters: () => Promise<void>;
+  onClearFilters: () => Promise<void> | undefined;
 }
 
 const NoResults: React.FC<NoResultsProps> = ({ onClearFilters }) => {

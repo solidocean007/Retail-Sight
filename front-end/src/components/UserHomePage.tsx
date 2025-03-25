@@ -1,5 +1,5 @@
 // userHomePage.tsx
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ActivityFeed from "./ActivityFeed";
 import "./userHomePage.css";
 import SideBar from "./SideBar";
@@ -11,12 +11,10 @@ import { UserHomePageHelmet } from "../utils/helmetConfigurations";
 import { addAccountsToIndexedDB, getPostsFromIndexedDB, getUserAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import { VariableSizeList } from "react-window";
-import { CompanyAccountType, PostWithID } from "../utils/types";
+import { PostWithID } from "../utils/types";
 import useScrollToTopOnChange from "../hooks/scrollToTopOnChange";
 import { selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
-import { collection, doc, getDocs, updateDoc } from "@firebase/firestore";
-import { db } from "../utils/firebase";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
 // import CheckBoxModal from "./CheckBoxModal";
 
@@ -35,7 +33,7 @@ export const UserHomePage = () => {
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
 
 
-  const posts = useSelector((state: RootState) => state.posts.posts); // this is the current redux state of posts
+  const posts = useSelector((state: RootState) => state.posts.posts); 
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   ); // this is the state of redux filtered posts
@@ -49,41 +47,29 @@ export const UserHomePage = () => {
   }
 
   useEffect(() => {
-    if (!user || !companyId) return; // Ensure both user and companyId are defined
+    if (!user || !companyId) return;
   
-    async function fetchUserAccounts() {
+    const fetchUserAccounts = async (companyId: string) => {
       try {
         const userAccounts = await getUserAccountsFromIndexedDB();
   
-        // Only fetch from Firestore if IndexedDB is empty and salesRouteNum exists
-        if ((!userAccounts || userAccounts.length === 0) && user?.salesRouteNum) {
-          console.log("Fetching accounts from Firestore...");
-          // Fetch from Firestore where salesRouteNums includes user’s salesRouteNum
-          const fetchedAccounts = await fetchUsersAccounts(companyId, user.salesRouteNum); // Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
-          // Type 'undefined' is not assignable to type 'string'.
-          
+        if ((!userAccounts || userAccounts.length === 0) && user.salesRouteNum) {
+          const fetchedAccounts = await fetchUsersAccounts(companyId, user.salesRouteNum);
           if (fetchedAccounts.length > 0) {
-            console.log("Fetched accounts from Firestore:", fetchedAccounts);
-  
-            // Cache fetched accounts in IndexedDB
             setUsersAccounts(fetchedAccounts);
             setReduxAccounts(fetchedAccounts);
             await addAccountsToIndexedDB(fetchedAccounts);
           }
-        } else if (!user?.salesRouteNum) {
-          console.warn("User does not have a salesRouteNum; skipping account fetch.");
         } else {
-          setUsersAccounts(userAccounts); // Set accounts from IndexedDB directly
+          setUsersAccounts(userAccounts);
         }
       } catch (error) {
         console.error("Error fetching user accounts:", error);
       }
-    }
+    };
   
-    fetchUserAccounts();
+    fetchUserAccounts(companyId);
   }, [user, companyId]);
-  
-
 
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
