@@ -42,6 +42,7 @@ import { matchAccountWithSelectedStoreForAdmin } from "../../utils/helperFunctio
 import GalloGoalDropdown from "./GalloGoalDropdown";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import "./pickstore.css";
+import AccountModalSelector from "./AccountModalSelector";
 
 interface PickStoreProps {
   onNext: () => void;
@@ -98,7 +99,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   // these next two only need to be selected if a user is selecting all accounts and needs access to the entire company goal list or gallo goal list
   const allGalloGoals = useSelector(selectAllGalloGoals);
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
-  console.log("all company goals: ", allCompanyGoals);
+  const [openAccountModal, setOpenAccountModal] = useState(false);
 
   // this is used if a user is trying to select an account by address using the map
   const [selectedStoreByAddress, setSelectedStoreByAddress] = useState<{
@@ -351,7 +352,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
-  console.log('map mode: ', isMapMode)
+  console.log(post);
 
   return (
     <div className="pick-store">
@@ -394,9 +395,26 @@ export const PickStore: React.FC<PickStoreProps> = ({
           Next
         </Button>
       </Box>
+      <Box className="store-selection">
+        <Button
+          onClick={() => setOpenAccountModal(true)}
+          variant="outlined"
+          fullWidth
+          sx={{
+            textTransform: "none",
+            justifyContent: "flex-start",
+            maxWidth: 400,
+            mx: "auto",
+            my: 1,
+            color: "#000",
+            borderColor: "#ccc",
+            backgroundColor: "#fff",
+          }}
+        >
+          Select Account
+        </Button>
+      </Box>
 
-      {/* Toggle Section */}
-      {/* Dropdown / Map Toggle */}
       {!post.accountNumber && (
         <Box className="toggle-section" mt={3}>
           <Box className="toggle-wrapper">
@@ -419,8 +437,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
             </Typography>
           </Box>
 
-
-
           <Box className="toggle-wrapper" mt={2}>
             <Typography
               className={`toggle-label ${!isAllStoresShown ? "selected" : ""}`}
@@ -440,29 +456,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
               All Stores
             </Typography>
           </Box>
-
-
-
-
-
         </Box>
       )}
 
       {/* My Stores / All Stores Toggle */}
 
       {/* Account Selection */}
-      <Box mt={2}>
-        {loadingAccounts ? (
-          <CircularProgress />
-        ) : (
-          <Box>
-            <AccountDropdown
-              onAccountSelect={handleAccountSelect}
-              accounts={accountsToSelect}
-            />
-          </Box>
-        )}
-      </Box>
+      <Box mt={2}>{loadingAccounts ? <CircularProgress /> : <Box></Box>}</Box>
 
       {/* Display Selected Store */}
       {post.selectedStore && (
@@ -504,13 +504,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
       {/* Goals Dropdowns inside of PickStore.tsx*/}
       {post.selectedStore && (
         <Box mt={3}>
-          <GalloGoalDropdown
-            goals={galloGoals}
-            label="Gallo Goals"
-            loading={isFetchingGoal}
-            onSelect={handleGalloGoalSelection}
-            selectedGoal={selectedGalloGoalId}
-          />
           <Box mt={2}>
             <CompanyGoalDropdown
               goals={companyGoals}
@@ -518,6 +511,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
               loading={isFetchingGoal}
               onSelect={handleCompanyGoalSelection}
               selectedGoal={selectedCompanyGoal}
+            />
+          </Box>
+
+          <Box mt={2}>
+            <GalloGoalDropdown
+              goals={galloGoals}
+              label="Gallo Goals"
+              loading={isFetchingGoal}
+              onSelect={handleGalloGoalSelection}
+              selectedGoal={selectedGalloGoalId}
             />
           </Box>
         </Box>
@@ -552,6 +555,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
           <Button onClick={() => setIsMatchSelectionOpen(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>
+      <AccountModalSelector
+        open={openAccountModal}
+        onClose={() => setOpenAccountModal(false)}
+        accounts={accountsToSelect}
+        onAccountSelect={handleAccountSelect}
+      />
     </div>
   );
 };

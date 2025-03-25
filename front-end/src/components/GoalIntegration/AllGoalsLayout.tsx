@@ -7,17 +7,21 @@ import {
   MenuItem,
   useMediaQuery,
   SelectChangeEvent,
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { useState } from 'react';
-import AllCompanyGoalsView from './AllCompanyGoalsView';
-import AllGalloGoalsView from './AllGalloGoalsView';
-import './allGoalsLayout.css';
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { useState } from "react";
+import AllCompanyGoalsView from "./AllCompanyGoalsView";
+import AllGalloGoalsView from "./AllGalloGoalsView";
+import "./allGoalsLayout.css";
+import { useSelector } from "react-redux";
+import { selectAllGalloGoals } from "../../Slices/goalsSlice";
 
 const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   const [value, setValue] = useState(0);
   const theme = useTheme(); // Correct usage of `useTheme`
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Accessing breakpoints safely
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Accessing breakpoints safely
+
+  const galloGoals = useSelector(selectAllGalloGoals);
 
   interface TabPanelProps {
     children?: React.ReactNode;
@@ -44,7 +48,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   function a11yProps(index: number) {
     return {
       id: `simple-tab-${index}`,
-      'aria-controls': `simple-tabpanel-${index}`,
+      "aria-controls": `simple-tabpanel-${index}`,
     };
   }
 
@@ -90,7 +94,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
       )}
       {value === 1 && (
         <div className="table-container">
-          <AllGalloGoalsView />
+          <AllGalloGoalsView galloGoals={galloGoals}/>
         </div>
       )}
     </div>

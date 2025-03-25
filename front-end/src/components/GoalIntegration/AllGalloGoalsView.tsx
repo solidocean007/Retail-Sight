@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import { useAppDispatch } from "../../utils/store";
 import {
+  FireStoreGalloGoalWithId,
   selectAllGalloGoals,
   selectCompanyGoalsIsLoading,
 } from "../../Slices/goalsSlice";
@@ -54,11 +55,10 @@ export interface MappedProgramType {
   }>;
 }
 
-const AllGalloGoalsView = () => {
+const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
   const dispatch = useAppDispatch();
   const companyId = useSelector(selectUser)?.companyId;
   const navigate = useNavigate();
-  const galloGoals = useSelector(selectAllGalloGoals);
   const isLoading = useSelector(selectCompanyGoalsIsLoading);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [sortColumn, setSortColumn] = useState<string>("accountName");

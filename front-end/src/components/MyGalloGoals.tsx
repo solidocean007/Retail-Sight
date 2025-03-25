@@ -53,6 +53,8 @@ const MyGalloGoals = () => {
     }));
   };
 
+  if(usersGalloGoals.length === 0) return;
+
   return (
     <div className="my-gallo-goals-container">
       <Typography

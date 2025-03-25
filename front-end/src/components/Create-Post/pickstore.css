@@ -1,7 +1,7 @@
 /* src/components/create-post/pickstore.css */
 /* General Styles */
 .pick-store {
-  width: 100%;
+  width: 90%;
 }
 
 .pick-store-navigation-buttons {
@@ -32,7 +32,7 @@
   background-color: var(--toggle-bg, #f0f0f0);
   padding: 8px 16px;
   border-radius: 8px;
-  width: 80%;
+  width: 100%;
   position: relative;
 }
 
