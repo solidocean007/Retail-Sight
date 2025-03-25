@@ -122,7 +122,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       setIsSearchActive?.(true);
       setActivePostSet?.("filteredPosts");
       if (setCurrentHashtag) {
-        setCurrentHashtag(hashtag);
+        setCurrentHashtag(hashtag.trimEnd().toLowerCase());
       }
       // dispatch(setHashtagPosts(hashtagPosts));
       dispatch(setFilteredPosts(hashtagPosts));
@@ -144,7 +144,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
       const starTagPosts = await getPostsByStarTag(starTag);
       setIsSearchActive?.(true);
       setActivePostSet?.("filteredPosts");
-      setCurrentHashtag?.(starTag);
+      setCurrentHashtag?.(starTag.trimEnd().toLowerCase());
       // dispatch(setStarTagPosts(starTagPosts));
       dispatch(setFilteredPosts(starTagPosts));
       addStarTagPostsToIndexedDB(starTagPosts); // why do this?  why not just add to filtered posts?

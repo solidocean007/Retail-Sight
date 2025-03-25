@@ -26,7 +26,7 @@ export const TagWithFilterSearchBar: React.FC<TagWithFilterSearchBarProps> = ({
     setInputValue(newValue);
     // Update the currentHashtag as the user types
     if (newValue.startsWith('#') || newValue.startsWith('*')) {
-      setCurrentHashtag(newValue);
+      setCurrentHashtag(newValue.trimEnd());
     } else {
       // Optionally, reset currentHashtag if input doesn't start with '#' or '*'
       setCurrentHashtag(null);

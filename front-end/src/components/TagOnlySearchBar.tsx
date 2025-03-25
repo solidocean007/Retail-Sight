@@ -68,11 +68,11 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
     let result: PostWithID[] = [];
     try {
       if (inputValue.startsWith("#")) {
-        if (setCurrentHashtag) setCurrentHashtag(inputValue);
+        if (setCurrentHashtag) setCurrentHashtag(inputValue.trimEnd());
         if (setCurrentStarTag) setCurrentStarTag(null);
         result = await getPostsByTag(inputValue, userCompanyID);
       } else if (inputValue.startsWith("*")) {
-        if (setCurrentStarTag) setCurrentStarTag(inputValue);
+        if (setCurrentStarTag) setCurrentStarTag(inputValue.trimEnd());
         if (setCurrentHashtag) setCurrentHashtag(null);
         result = await getPostsByStarTag(inputValue);
       } else {
@@ -114,7 +114,7 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
       <Input
         placeholder="Searching with '#' or '*'"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e) => setInputValue(e.target.value.trimEnd())}
         onKeyDown={handleKeyPress}
         sx={{margin: "0px"}}
       />

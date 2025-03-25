@@ -29,6 +29,7 @@ import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
+import NoResults from "./NoResults";
 // import NoResults from "./NoResults";
 
 const AD_INTERVAL = 4;
@@ -252,11 +253,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     )
   }
 
-  // if(posts.length === 0){
-  //   return (
-  //     <NoResults onClearFilters={clearSearch} />
-  //   )
-  // }
+  if(posts.length === 0){
+    return (
+      <NoResults onClearFilters={clearSearch} /> // Property 'onClearFilters' does not exist on type 'IntrinsicAttributes & (() => Promise<void>)'.
+    )
+  }
 
   return (
     <div className="activity-feed-box">

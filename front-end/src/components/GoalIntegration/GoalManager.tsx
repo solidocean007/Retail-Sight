@@ -72,7 +72,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
             fullWidth
             displayEmpty
           >
-            <MenuItem value={0}>All Goals</MenuItem>
+            <MenuItem value={0}>View All Goals</MenuItem>
             <MenuItem value={1}>Gallo Program Import</MenuItem>
             <MenuItem value={2}>Company Goal Creation</MenuItem>
           </Select>

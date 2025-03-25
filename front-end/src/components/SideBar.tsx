@@ -31,8 +31,7 @@ import {
   setFilteredPosts,
 } from "../Slices/postsSlice";
 import DateFilter from "./DateFilter";
-import { PostType, PostWithID } from "../utils/types";
-import { TagWithFilterSearchBar } from "./TagWithFilterSearchBar";
+import { PostWithID } from "../utils/types";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 
 interface FilterState {
