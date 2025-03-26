@@ -499,9 +499,15 @@ export const SignUpLogin = () => {
                       ),
                     }}
                   />
-                   <button onClick={handleResetPassword}>Forgot Password?</button>
-                  
+
                   <button type="submit">Submit</button>
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={!userInputs.emailInput.trim()}
+                  >
+                    Forgot Password?
+                  </button>
                 </div>
               )}
               {signUpError && <div className="error">{signUpError}</div>}
