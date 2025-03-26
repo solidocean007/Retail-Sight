@@ -320,9 +320,9 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
           <Typography>
             {post.companyGoalId
-              ? `Company goal: ${post.companyGoalDescription}`
+              ? `Company goal: ${post.companyGoalTitle}`
               : post.oppId
-              ? `Gallo goal: ${post.galloGoalDescription}`
+              ? `Gallo goal: ${post.galloGoalTitle}`
               : ""}
           </Typography>
 

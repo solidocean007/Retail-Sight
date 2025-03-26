@@ -103,8 +103,10 @@ export interface PostType {
   accountNumber?: string | null;
   companyGoalId?: string | null;
   companyGoalDescription?: string | null;
+  companyGoalTitle?: string | null;
   oppId?: string | null; // New key for the opportunity ID
   galloGoalDescription?: string | null;
+  galloGoalTitle?: string | null;
   closedBy?: string; // New key for who closed the goal
   closedDate?: string; // New key for the date in DD-MM-YYYY format
   closedUnits?: string | number; // New key for the closed units

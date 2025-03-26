@@ -155,7 +155,9 @@ export const useHandlePostSubmission = () => {
                 postUserEmail: post.postUserEmail,
                 companyGoalId: post.companyGoalId || null, // Ensures companyGoalId exists
                 companyGoalDescription: post.companyGoalDescription || null, // Ensures description exists
+                companyGoalTitle: post.companyGoalTitle || null, // Ensures description exists
                 galloGoalDescription: post.galloGoalDescription || null, // Ensures galloGoalDescription exists
+                galloGoalTitle: post.galloGoalTitle || null, // Ensures galloGoalDescription exists
                 hashtags: hashtags,
                 starTags: starTags,
                 commentCount: 0,
