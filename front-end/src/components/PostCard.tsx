@@ -243,13 +243,14 @@ const PostCard: React.FC<PostCardProps> = ({
                       onClose={() => setAnchorEl(null)}
                     >
                       <MenuItem onClick={() => handleShare()}>Share</MenuItem>
-                      {user?.uid === post.postUserId ||
+                      {(user?.uid === post.postUserId ||
                         user?.role === "admin" ||
-                        (user?.role === "super-admin" && (
-                          <MenuItem onClick={() => setIsEditModalOpen(true)}>
-                            Edit
-                          </MenuItem>
-                        ))}
+                        user?.role === "super-admin") && (
+                        <MenuItem onClick={() => setIsEditModalOpen(true)}>
+                          Edit
+                        </MenuItem>
+                      )}
+
                       <MenuItem
                         onClick={() => setIsAddToCollectionModalOpen(true)}
                       >
@@ -278,7 +279,7 @@ const PostCard: React.FC<PostCardProps> = ({
                       {post.selectedStore}
                       <span> {post.storeNumber}</span>
                     </h3>
-                    
+
                     <h5>{formattedDate}</h5>
                   </div>
                   <div className="store-address-box">

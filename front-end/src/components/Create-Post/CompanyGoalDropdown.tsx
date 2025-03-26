@@ -42,7 +42,7 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
         </MenuItem>
         {goals.map((goal) => (
           <MenuItem key={goal.id} value={goal.id}>
-            {goal.goalDescription}
+            {goal.goalTitle}
           </MenuItem>
         ))}
       </Select>
