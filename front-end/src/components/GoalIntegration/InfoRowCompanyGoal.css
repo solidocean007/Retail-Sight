@@ -55,7 +55,7 @@
 
 .info-accounts {
   display: flex;
-  width: 40%;
+  width: 50%;
   align-items: center;
   justify-content: center;
   border-radius: 10px;
@@ -152,7 +152,7 @@
 .mobile-file-tabs {
   display: flex;
   justify-content: space-between;
-  background: #ddd;
+  /* background: #ddd; */
   border-radius: 8px;
   padding: 5px;
   gap: 5px;
@@ -241,6 +241,11 @@
 
 .post-link-button:hover {
   background: #0056b3;
+}
+
+.mobile-accounts-tab {
+  display: flex;
+  justify-content: start;
 }
 
 

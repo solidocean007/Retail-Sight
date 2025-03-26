@@ -72,23 +72,27 @@ const MyCompanyGoals = () => {
         sx={{ flexGrow: 1, fontSize: "large" }}
         className="my-goals-title"
       >
-        Company Goals
+        {`${user?.company} Goals`}
       </Typography>
       {loading ? (
         <CircularProgress />
       ) : (
         <div>
           <div>
-            {userCompanyGoals.map((goal: CompanyGoalType, index: number) => {
-              return (
+            {[...userCompanyGoals]
+              .sort(
+                (a, b) =>
+                  new Date(b.goalStartDate).getTime() -
+                  new Date(a.goalStartDate).getTime()
+              )
+              .map((goal: CompanyGoalType, index: number) => (
                 <InfoRowCompanyGoal
-                  key={index}
+                  key={goal.id || index}
                   goal={goal}
                   mobile={isMobile}
                   salesRouteNum={salesRouteNum}
                 />
-              );
-            })}
+              ))}
           </div>
         </div>
       )}

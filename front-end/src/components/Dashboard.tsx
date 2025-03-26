@@ -70,7 +70,7 @@ export const Dashboard = () => {
   const isSuperAdmin = user?.role === "super-admin";
 
   const [dashboardMode, setDashboardMode] = useState<DashboardModeType>(
-    isEmployee ? "ProfileMode" : "GoalManagerMode"
+    isEmployee ? "MyGoalsMode" : "GoalManagerMode"
   );
 
   // const [lastUpdated, setLastUpdated] = useState<Date | null>(null);

@@ -1,3 +1,4 @@
+// InfoRowCompanyGoals.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // For navigation
 import "./infoRowCompanyGoal.css";
@@ -9,7 +10,6 @@ import {
 import { Typography } from "@mui/material";
 
 interface InfoRowCompanyGoalProps {
-  key: number;
   goal: CompanyGoalType;
   mobile?: boolean;
   salesRouteNum?: string | "";
@@ -17,7 +17,6 @@ interface InfoRowCompanyGoalProps {
 }
 
 const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
-  key,
   goal,
   mobile = false,
   salesRouteNum,
@@ -28,6 +27,16 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
   const navigate = useNavigate(); // Hook to navigate
 
   const isExpandable = Array.isArray(goal.accounts) && goal.accounts.length > 0;
+
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   // 🔍 Function to find if an account has a submitted post
   const getSubmittedPostId = (accountNumber: string): string | null => {
@@ -53,7 +62,6 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
 
   return (
     <div
-      key={key}
       className={`info-box-company-goal ${mobile ? "mobile-layout" : ""}`}
     >
       {/* 📌 Desktop View */}
@@ -83,8 +91,12 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
                 <div className="info-metric">{`min number: ${goal.goalValueMin}`}</div>
               </div>
               <div className="info-item info-segment">
-                <div className="info-metric">{`Start: ${goal.goalStartDate}`}</div>
-                <div className="info-metric">{`End: ${goal.goalEndDate}`}</div>
+                <div className="info-metric">{`Start: ${formatDate(
+                  goal.goalStartDate
+                )}`}</div>
+                <div className="info-metric">{`End: ${formatDate(
+                  goal.goalEndDate
+                )}`}</div>
               </div>
             </div>
           </div>
@@ -204,10 +216,10 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
               {activeTab === 1 && (
                 <>
                   <div className="info-item">
-                    <strong>Start Date:</strong> {goal.goalStartDate}
+                    <strong>Start Date:</strong> {formatDate(goal.goalStartDate)}
                   </div>
                   <div className="info-item">
-                    <strong>End Date:</strong> {goal.goalEndDate}
+                    <strong>End Date:</strong> {formatDate(goal.goalEndDate)}
                   </div>
                 </>
               )}
@@ -231,7 +243,7 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
                   {expanded ? "close view" : "show accounts"}
                 </button>
               ) : (
-                <Typography>Any accounts</Typography>
+                <Typography>This goal is available for all accounts</Typography>
               )}
             </div>
 
