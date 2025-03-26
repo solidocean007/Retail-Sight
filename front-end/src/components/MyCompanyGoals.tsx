@@ -65,6 +65,29 @@ const MyCompanyGoals = () => {
     );
   };
 
+  const today = new Date();
+
+  // Separate and sort current vs upcoming
+  const currentGoals = [...userCompanyGoals]
+    .filter((goal) => {
+      const start = new Date(goal.goalStartDate);
+      const end = new Date(goal.goalEndDate);
+      return start <= today && end >= today; // Ongoing today
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.goalStartDate).getTime() -
+        new Date(a.goalStartDate).getTime()
+    );
+
+  const upcomingGoals = [...userCompanyGoals]
+    .filter((goal) => new Date(goal.goalStartDate) > today)
+    .sort(
+      (a, b) =>
+        new Date(a.goalStartDate).getTime() -
+        new Date(b.goalStartDate).getTime()
+    );
+
   return (
     <div className="my-company-goals-container">
       <Typography
@@ -78,14 +101,13 @@ const MyCompanyGoals = () => {
         <CircularProgress />
       ) : (
         <div>
-          <div>
-            {[...userCompanyGoals]
-              .sort(
-                (a, b) =>
-                  new Date(b.goalStartDate).getTime() -
-                  new Date(a.goalStartDate).getTime()
-              )
-              .map((goal: CompanyGoalType, index: number) => (
+          {/* CURRENT GOALS */}
+          {currentGoals.length > 0 && (
+            <div>
+              <Typography variant="h5" className="goals-section-header">
+                Current Goals
+              </Typography>
+              {currentGoals.map((goal, index) => (
                 <InfoRowCompanyGoal
                   key={goal.id || index}
                   goal={goal}
@@ -93,7 +115,25 @@ const MyCompanyGoals = () => {
                   salesRouteNum={salesRouteNum}
                 />
               ))}
-          </div>
+            </div>
+          )}
+
+          {/* UPCOMING GOALS */}
+          {upcomingGoals.length > 0 && (
+            <div style={{ marginTop: "2rem" }}>
+              <Typography variant="h5" className="goals-section-header">
+                Upcoming Goals
+              </Typography>
+              {upcomingGoals.map((goal, index) => (
+                <InfoRowCompanyGoal
+                  key={goal.id || index}
+                  goal={goal}
+                  mobile={isMobile}
+                  salesRouteNum={salesRouteNum}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

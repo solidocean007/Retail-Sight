@@ -7,7 +7,6 @@ import {
   PostType,
 } from "../../utils/types";
 import StoreLocator from "./StoreLocator";
-import AccountDropdown from "./AccountDropDown";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import {
@@ -71,6 +70,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   usersGalloGoals,
   usersCompanyGoals,
 }) => {
+  console.log(post);
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
@@ -144,6 +144,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const companyGoals = onlyUsersStores
     ? usersActiveCompanyGoals
     : allActiveCompanyGoals;
+
+  useEffect(() => {
+    if (!post.accountNumber) {
+      setOpenAccountModal(true);
+    }
+  }, [post.accountNumber]);
 
   // load users accounts
   useEffect(() => {
@@ -238,10 +244,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       if (matchedAccount) {
         // Use the oppId from the matched account
         handleFieldChange("oppId", matchedAccount.oppId);
-        handleFieldChange(
-          "galloGoalDescription",
-          selectedGoal.goalDetails.goal
-        );
+        handleFieldChange("galloGoalTitle", selectedGoal.goalDetails.goal);
       } else {
         console.warn(
           "No matching account found in the selected goal's accounts."
@@ -259,6 +262,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
     setSelectedCompanyGoal(goal); // Update state with the selected goal object
     handleFieldChange("companyGoalId", goal.id); // Set the goal ID
     handleFieldChange("companyGoalDescription", goal.goalDescription); // Set the goal description
+    handleFieldChange("companyGoalTitle", goal.goalTitle); // i just added this
+    console.log("new post data:", post);
   };
 
   // Handler for Account Selection
@@ -398,17 +403,20 @@ export const PickStore: React.FC<PickStoreProps> = ({
       <Box className="store-selection">
         <Button
           onClick={() => setOpenAccountModal(true)}
-          variant="outlined"
+          variant="contained"
+          size="large"
           fullWidth
           sx={{
-            textTransform: "none",
-            justifyContent: "flex-start",
             maxWidth: 400,
             mx: "auto",
             my: 1,
-            color: "#000",
-            borderColor: "#ccc",
-            backgroundColor: "#fff",
+            fontWeight: 600,
+            fontSize: "1rem",
+            backgroundColor: "#1976d2", // brighter blue
+            color: "#fff",
+            "&:hover": {
+              backgroundColor: "#1565c0",
+            },
           }}
         >
           Select Account
@@ -475,10 +483,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
           </Typography>
           {selectedCompanyGoal && (
             <Typography variant="body2" color="primary" mt={1}>
-              Selected Goal:{" "}
+              Goal:{" "}
               {
                 companyGoals.find((goal) => goal.id === selectedCompanyGoal.id)
-                  ?.goalDescription
+                  ?.goalTitle
               }
             </Typography>
           )}
@@ -560,6 +568,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
         onClose={() => setOpenAccountModal(false)}
         accounts={accountsToSelect}
         onAccountSelect={handleAccountSelect}
+        isAllStoresShown={isAllStoresShown}
+        setIsAllStoresShown={setIsAllStoresShown}
       />
     </div>
   );

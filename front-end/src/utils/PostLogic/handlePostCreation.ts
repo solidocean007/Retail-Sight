@@ -1,6 +1,6 @@
 // useHandlePostSubmission
 import { useSelector } from "react-redux";
-import { NavigateFunction, useNavigate } from "react-router-dom";
+import { NavigateFunction } from "react-router-dom";
 import { CompanyMissionType, PostType, SubmittedMissionType } from "../types";
 import { auth, db, storage } from "../firebase";
 import {
@@ -155,9 +155,9 @@ export const useHandlePostSubmission = () => {
                 postUserEmail: post.postUserEmail,
                 companyGoalId: post.companyGoalId || null, // Ensures companyGoalId exists
                 companyGoalDescription: post.companyGoalDescription || null, // Ensures description exists
-                companyGoalTitle: post.companyGoalTitle || null, // Ensures description exists
+                companyGoalTitle: post.companyGoalTitle || null, // Ensures title  exists
                 galloGoalDescription: post.galloGoalDescription || null, // Ensures galloGoalDescription exists
-                galloGoalTitle: post.galloGoalTitle || null, // Ensures galloGoalDescription exists
+                galloGoalTitle: post.galloGoalTitle || null, // Ensures galloGoal title exists
                 hashtags: hashtags,
                 starTags: starTags,
                 commentCount: 0,
