@@ -1,8 +1,5 @@
 import { useState } from "react";
-import {
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
+import { Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { selectAllCompanyGoals } from "../../Slices/goalsSlice";
 import { useSelector } from "react-redux";
@@ -44,6 +41,7 @@ const AllCompanyGoalsView = ({
     try {
       await deleteCompanyGoalFromFirestore(goalId);
       dispatch(showMessage("Goal deleted successfully."));
+      setIsConfirmationOpen(false);
     } catch (error) {
       console.error("Error deleting goal:", error);
       dispatch(showMessage("Failed to delete goal. Please try again."));

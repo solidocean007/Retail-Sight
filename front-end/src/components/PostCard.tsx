@@ -284,6 +284,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   </div>
                   <div className="store-address-box">
                     <h5>{post.storeAddress}</h5>
+                    <h5>{post.id}</h5>
                   </div>
                 </div>
               </div>
