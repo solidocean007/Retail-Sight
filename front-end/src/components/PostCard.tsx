@@ -284,7 +284,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   </div>
                   <div className="store-address-box">
                     <h5>{post.storeAddress}</h5>
-                    <h5>{post.id}</h5>
+                    {/* <h5>{post.id}</h5> */}
                   </div>
                 </div>
               </div>
@@ -293,11 +293,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 <div className="post-user-name">
                   <p>
                     by:{" "}
-                    <a
-                      href="#"
-                      onClick={handleOnUserNameClick}
-                      style={{ marginLeft: "4px" }}
-                    >
+                    <a href="#" onClick={handleOnUserNameClick}>
                       {post.postUserName}
                     </a>
                   </p>
@@ -306,11 +302,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 <div className="user-company-box">
                   <p>
                     company:{" "}
-                    <a
-                      href="#"
-                      onClick={(e) => e.preventDefault()}
-                      style={{ marginLeft: "4px" }}
-                    >
+                    <a href="#" onClick={(e) => e.preventDefault()}>
                       {/* create a onCompanyNameClick */}
                       {post.postUserCompany}
                     </a>
@@ -329,11 +321,11 @@ const PostCard: React.FC<PostCardProps> = ({
 
           <div className="description-image">
             <div className="like-quantity-row">
-              {post.totalCaseCount > 1 ? (
-                <div className="post-quantity">
-                  <h4>Quantity: {post.totalCaseCount}</h4>
-                </div>
-              ) : null}
+              <h4>
+                {post.category}
+                {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
+              </h4>
+
               <div className="likes-box">
                 <button
                   className="like-button"

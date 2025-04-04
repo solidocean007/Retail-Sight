@@ -14,8 +14,8 @@ import AllCompanyGoalsView from "./AllCompanyGoalsView";
 import AllGalloGoalsView from "./AllGalloGoalsView";
 import "./allGoalsLayout.css";
 import { useSelector } from "react-redux";
-import { selectAllGalloGoals } from "../../Slices/goalsSlice";
-import AdminGoalViewer from "../AdminGoalViewer";
+import { selectAllCompanyGoals, selectAllGalloGoals } from "../../Slices/goalsSlice";
+import AdminCompanyGoalsOverview from "../AdminCompanyGoalsOverview";
 
 const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   const [value, setValue] = useState(0);
@@ -23,6 +23,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Accessing breakpoints safely
 
   const galloGoals = useSelector(selectAllGalloGoals);
+  const companyGoals = useSelector(selectAllCompanyGoals);
 
   interface TabPanelProps {
     children?: React.ReactNode;
@@ -92,7 +93,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
       </Box>
       {value === 0 && (
         <div className="all-company-goals-view-container">
-          <AdminGoalViewer companyId={companyId} />
+          <AdminCompanyGoalsOverview goals={companyGoals} />
         </div>
       )}
       {value === 1 && (

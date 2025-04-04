@@ -1,0 +1,93 @@
+/* adminCompanyGoalsOverview.css */
+
+.admin-overview-wrapper {
+  padding: 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.admin-goal-summary-card {
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f9f9f9;
+}
+
+.summary-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-title {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.summary-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.summary-counts {
+  font-size: 1rem;
+  color: #555;
+}
+
+.summary-percentage {
+  font-weight: bold;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.summary-percentage.complete {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.summary-percentage.incomplete {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.expand-toggle {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.expand-toggle:hover {
+  background-color: #0056b3;
+}
+
+.expanded-admin-view {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+/* Mobile Styles */
+@media screen and (max-width: 600px) {
+  .summary-details {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .expand-toggle {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .summary-title {
+    font-size: 1rem;
+  }
+}
