@@ -24,7 +24,7 @@ import {
 } from "../Slices/goalsSlice";
 import { CompanyGoalType, GoalSubmissionType } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import InfoRowCompanyGoal from "./GoalIntegration/InfoRowCompanyGoal";
+import InfoRowCompanyGoal from "./GoalIntegration/CompanyGoalDetailsCard";
 import { useTheme } from "@mui/material/styles";
 
 const MyCompanyGoals = () => {

@@ -12,7 +12,7 @@ const AdminGoalViewer: React.FC<AdminGoalViewerProps> = ({ goal }) => {
   const navigate = useNavigate();
 
   const getAccountsWithStatus = () => {
-    return goal.accounts.map((account) => {
+    return goal.accounts.map((account) => { // Property 'map' does not exist on type 'string | CompanyAccountType[]'.
       const found = goal.submittedPosts?.find(
         (post: GoalSubmissionType) => post.accountNumber === account.accountNumber
       );

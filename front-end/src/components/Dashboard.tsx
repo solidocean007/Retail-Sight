@@ -79,11 +79,11 @@ export const Dashboard = () => {
     setDrawerOpen(false);
   };
 
-  const toggleDrawer = // what does this function do?
+  const toggleDrawer = 
     (open: boolean) => (event: React.MouseEvent | React.KeyboardEvent) => {
       if (
         event.type === "keydown" &&
-        ((event as React.KeyboardEvent).key === "Tab" || // what does tab and shift have to do with this function
+        ((event as React.KeyboardEvent).key === "Tab" ||
           (event as React.KeyboardEvent).key === "Shift")
       ) {
         return;

@@ -3,13 +3,18 @@ import React, { useState } from "react";
 import AdminGoalViewer from "./AdminGoalViewer";
 import "./adminCompanyGoalsOverview.css";
 import { CompanyGoalType } from "../utils/types";
-import './adminCompanyGoalsOverview.css';
+import "./adminCompanyGoalsOverview.css";
+import { Tooltip } from "@mui/material";
+import InfoIcon from '@mui/icons-material/Info';
 
-interface AdminCompanyGoalsOverviewProps {
+
+interface CompanyGoalsStatusSummaryProps {
   goals: CompanyGoalType[];
 }
 
-const AdminCompanyGoalsOverview: React.FC<AdminCompanyGoalsOverviewProps> = ({ goals }) => {
+const CompanyGoalsStatusSummary: React.FC<CompanyGoalsStatusSummaryProps> = ({
+  goals,
+}) => {
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
 
   const handleToggleExpand = (goalId: string) => {
@@ -39,10 +44,21 @@ const AdminCompanyGoalsOverview: React.FC<AdminCompanyGoalsOverviewProps> = ({ g
                 <span className="summary-counts">
                   {submitted} / {total} Submitted
                 </span>
-                <span className={`summary-percentage ${percentage === 100 ? "complete" : "incomplete"}`}>
+                <span
+                  className={`summary-percentage ${
+                    percentage === 100 ? "complete" : "incomplete"
+                  }`}
+                >
                   {percentage}%
+                  <Tooltip title={`${submitted} of ${total} submitted`}>
+                    <InfoIcon fontSize="small" />
+                  </Tooltip>
                 </span>
-                <button className="expand-toggle" onClick={() => handleToggleExpand(goal.id)}>
+
+                <button
+                  className="expand-toggle"
+                  onClick={() => handleToggleExpand(goal.id)}
+                >
                   {expandedGoalId === goal.id ? "Collapse" : "Expand"}
                 </button>
               </div>
@@ -60,4 +76,4 @@ const AdminCompanyGoalsOverview: React.FC<AdminCompanyGoalsOverviewProps> = ({ g
   );
 };
 
-export default AdminCompanyGoalsOverview;
+export default CompanyGoalsStatusSummary;

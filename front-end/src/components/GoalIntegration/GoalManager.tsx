@@ -1,7 +1,6 @@
-// GoalIntegrationLayout.tsximport { useState } from "react";
+// GoalIntegrationLayout.tsx
 import {
   Box,
-  Container,
   Tabs,
   Tab,
   Select,
@@ -12,7 +11,7 @@ import {
 } from "@mui/material";
 import CreateGalloGoalView from "./CreateGalloGoalView";
 import CreateCompanyGoalView from "./CreateCompanyGoalView";
-import AllGoalsLayout from "./AllGoalsLayout";
+import AllGoalsLayout from "./GoalTabsContainer";
 import { useState } from "react";
 
 interface TabPanelProps {
@@ -57,10 +56,6 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
     setValue(newValue);
   };
 
-  const handleSelectChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setValue(event.target.value as number);
-  };
-
   return (
     <div>
       <Typography>All Goals Manager</Typography>
@@ -68,7 +63,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
         {isMobile ? (
           <Select
             value={value}
-            onChange={handleSelectChange}
+            onChange={(e) => setValue(Number(e.target.value))} 
             fullWidth
             displayEmpty
           >

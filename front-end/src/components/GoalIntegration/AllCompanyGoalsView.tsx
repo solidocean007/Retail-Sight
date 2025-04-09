@@ -9,7 +9,7 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
 import { useNavigate } from "react-router-dom";
 import "./allCompanyGoalsView.css";
-import InfoRowCompanyGoal from "./InfoRowCompanyGoal";
+import InfoRowCompanyGoal from "./CompanyGoalDetailsCard";
 
 const AllCompanyGoalsView = ({
   companyId,

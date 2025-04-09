@@ -9,7 +9,7 @@ import {
 } from "../../utils/types";
 import { Typography } from "@mui/material";
 
-interface InfoRowCompanyGoalProps {
+interface CompanyRowDetailsCardProps {
   goal: CompanyGoalType;
   mobile?: boolean;
   salesRouteNum?: string | "";
@@ -25,7 +25,7 @@ type RowRenderType = {
   submittedAt?: string;
 };
 
-const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
+const CompanyGoalDetailsCard: React.FC<CompanyRowDetailsCardProps> = ({
   goal,
   mobile = false,
   salesRouteNum,
@@ -293,4 +293,4 @@ const InfoRowCompanyGoal: React.FC<InfoRowCompanyGoalProps> = ({
   );
 };
 
-export default InfoRowCompanyGoal;
+export default CompanyGoalDetailsCard;
