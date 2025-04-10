@@ -13,6 +13,7 @@ import CreateGalloGoalView from "./CreateGalloGoalView";
 import CreateCompanyGoalView from "./CreateCompanyGoalView";
 import AllGoalsLayout from "./GoalTabsContainer";
 import { useState } from "react";
+import NewCreateCompanyGoalView from "./NewCreateCompanyGoalView";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -82,6 +83,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
             <Tab label="All Goals" {...a11yProps(0)} />
             <Tab label="Gallo Program Import" {...a11yProps(1)} />
             <Tab label="Company Goal Creation" {...a11yProps(2)} />
+            <Tab label="New Company Goal Creation" {...a11yProps(3)} />
           </Tabs>
         )}
       </Box>
@@ -93,6 +95,9 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
       </TabPanel>
       <TabPanel value={value} index={2}>
         <CreateCompanyGoalView />
+      </TabPanel>
+      <TabPanel value={value} index={3}>
+        <NewCreateCompanyGoalView />
       </TabPanel>
     </div>
   );

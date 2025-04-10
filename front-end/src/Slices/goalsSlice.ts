@@ -13,7 +13,13 @@ import {
   saveGoalsToIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { RootState } from "../utils/store";
-import { collection, getDocs, onSnapshot, query, where } from "@firebase/firestore";
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "@firebase/firestore";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 
 export interface FireStoreGalloGoalWithId extends FireStoreGalloGoalDocType {
@@ -254,13 +260,14 @@ export const selectLastUpdated = (state: RootState) => state.goals.lastUpdated;
 export const selectUsersGalloGoals = createSelector(
   [
     selectAllGalloGoals,
-    (state: RootState, salesRouteNum: string | undefined) => salesRouteNum || "",
+    (state: RootState, salesRouteNum: string | undefined) =>
+      salesRouteNum || "",
   ],
   (galloGoals, salesRouteNum) =>
     galloGoals.filter((goal) =>
       goal.accounts.some((account) =>
         Array.isArray(account.salesRouteNums)
-          ? account.salesRouteNums.includes(salesRouteNum) 
+          ? account.salesRouteNums.includes(salesRouteNum)
           : account.salesRouteNums === salesRouteNum
       )
     )
@@ -275,7 +282,7 @@ export const selectUsersCompanyGoals = createSelector(
   (companyGoals, salesRouteNum) =>
     companyGoals.filter(
       (goal) =>
-        goal.accounts === "Global" ||
+        goal.appliesToAllAccounts || // future support
         (Array.isArray(goal.accounts) &&
           goal.accounts.some((account) =>
             Array.isArray(account.salesRouteNums)
@@ -284,5 +291,6 @@ export const selectUsersCompanyGoals = createSelector(
           ))
     )
 );
+
 
 export default goalsSlice.reducer;

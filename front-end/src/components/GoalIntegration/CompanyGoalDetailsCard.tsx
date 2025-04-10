@@ -144,7 +144,7 @@ const CompanyGoalDetailsCard: React.FC<CompanyRowDetailsCardProps> = ({
                 </thead>
                 <tbody>
                   {rowsToRender.map((row, index) => (
-                    <tr key={row.accountNumber || index}>
+                    <tr key={row.postId || index}>
                       <td>{index + 1}</td>
                       <td>{row.accountName}</td>
                       <td>{row.accountAddress}</td>
@@ -259,7 +259,7 @@ const CompanyGoalDetailsCard: React.FC<CompanyRowDetailsCardProps> = ({
                   </thead>
                   <tbody>
                     {rowsToRender.map((row, index) => (
-                      <tr key={row.accountNumber || index}>
+                      <tr key={row.postId || index}>
                         <td>{row.accountName}</td>
                         <td>{row.accountAddress}</td>
                         <td>{row.submittedBy || "—"}</td>

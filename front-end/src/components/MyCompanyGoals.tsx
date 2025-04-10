@@ -43,6 +43,8 @@ const MyCompanyGoals = () => {
     selectUsersCompanyGoals(state, salesRouteNum)
   );
 
+  console.log(userCompanyGoals)
+
   // ✅ Toggle expanded state for goals
   const toggleGoalExpansion = (goalId: string) => {
     setExpandedGoals((prev) => ({
@@ -53,7 +55,6 @@ const MyCompanyGoals = () => {
 
   const usersAccountsForGoal = (goal: CompanyGoalType) => {
     if (!Array.isArray(goal.accounts)) {
-      // If accounts are "Global", return an empty array as no filtering is needed.
       return [];
     }
     // Filter accounts that match the user's salesRouteNum

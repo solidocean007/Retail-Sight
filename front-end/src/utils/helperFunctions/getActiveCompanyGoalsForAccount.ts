@@ -5,28 +5,30 @@ export const getActiveCompanyGoalsForAccount = (
   accountNumber: string | null | undefined,
   goals: CompanyGoalType[]
 ): CompanyGoalType[] => {
-  if (!accountNumber) {
-    return [];
-  }
+  if (!accountNumber) return [];
 
   const today = new Date();
 
-  return goals.filter((goal) => {
-    const { accounts, goalStartDate, goalEndDate } = goal;
+  const parseDate = (date: any) => {
+    if (!date) return null;
+    if (typeof date === "string" || typeof date === "number") return new Date(date);
+    if (date.seconds) return new Date(date.seconds * 1000);
+    return null;
+  };
 
-    // Check if the goal applies globally or matches the account number
+  return goals.filter((goal) => {
+    const { accounts, appliesToAllAccounts, goalStartDate, goalEndDate } = goal;
+
     const isMatchingAccount =
-      accounts === "Global" ||
+      appliesToAllAccounts ||
       (Array.isArray(accounts) &&
-        accounts.some(
-          (account) =>
-            account.accountNumber &&
-            String(account.accountNumber) === String(accountNumber)
+        accounts.some((account) =>
+          String(account.accountNumber) === String(accountNumber)
         ));
 
-    // Check if the goal's date range includes today's date
-    const isWithinDateRange =
-      new Date(goalStartDate) <= today && new Date(goalEndDate) >= today;
+    const start = parseDate(goalStartDate);
+    const end = parseDate(goalEndDate);
+    const isWithinDateRange = start && end && start <= today && end >= today;
 
     return isMatchingAccount && isWithinDateRange;
   });
