@@ -796,6 +796,64 @@ export async function closeAndDeleteIndexedDB(): Promise<void> {
   }
 }
 
+export const saveAllCompanyAccountsToIndexedDB = async (
+  accounts: CompanyAccountType[]
+): Promise<void> => {
+  const db = await openDB();
+  const transaction = db.transaction(["allUsersCompanyAccounts"], "readwrite");
+  const store = transaction.objectStore("allUsersCompanyAccounts");
+
+  return new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => {
+      console.log("All company accounts saved to IndexedDB successfully.");
+      resolve();
+    };
+
+    transaction.onerror = (event) => {
+      console.error(
+        "Transaction error while saving all company accounts:",
+        (event.target as IDBRequest).error
+      );
+      reject((event.target as IDBRequest).error);
+    };
+
+    accounts.forEach((account, index) => {
+      if (!account.accountNumber) {
+        console.error("Missing accountNumber for account:", account);
+      } else {
+        const request = store.put(account);
+        request.onsuccess = () => {
+          // Optional: console.log(`Account ${index} saved`);
+        };
+        request.onerror = () => {
+          console.error(
+            `Error saving account ${index}:`,
+            request.error
+          );
+          reject(request.error);
+        };
+      }
+    });
+  });
+};
+
+export const getAllCompanyAccountsFromIndexedDB = async (): Promise<CompanyAccountType[]> => {
+  const db = await openDB();
+  const transaction = db.transaction(["allUsersCompanyAccounts"], "readonly");
+  const store = transaction.objectStore("allUsersCompanyAccounts");
+  const getAllRequest = store.getAll();
+
+  return new Promise((resolve, reject) => {
+    getAllRequest.onsuccess = () => {
+      resolve(getAllRequest.result as CompanyAccountType[]);
+    };
+    getAllRequest.onerror = () => {
+      reject("Error retrieving all company accounts from IndexedDB");
+    };
+  });
+};
+
+
 export async function addAccountsToIndexedDB(accounts: CompanyAccountType[]): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["userAccounts_v2"], "readwrite");
@@ -844,6 +902,9 @@ export async function getUserAccountsFromIndexedDB(): Promise<any[]> {
     };
   });
 }
+
+
+
 
 export const saveGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[] | CompanyGoalType[],

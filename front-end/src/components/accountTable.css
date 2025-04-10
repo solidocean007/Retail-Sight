@@ -1,0 +1,66 @@
+.account-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  max-width: 100%;
+}
+
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.account-table thead {
+  background-color: #f9fafb;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.account-table th,
+.account-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.account-table tr:hover {
+  background-color: #f1faff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.account-table tr.submitted {
+  background-color: #e6ffed;
+}
+
+.account-table tr.not-submitted {
+  background-color: #fff5f5;
+}
+
+.view-post-button {
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.view-post-button:hover {
+  background-color: #125aa3;
+}
+
+/* Optional: Responsive tweaks */
+@media (max-width: 768px) {
+  .account-table th,
+  .account-table td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .view-post-button {
+    font-size: 0.8rem;
+    padding: 4px 6px;
+  }
+}

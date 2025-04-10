@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import { selectUser, setCompanyUsers } from "../Slices/userSlice";
 import { getCompanyUsersFromIndexedDB, saveCompanyUsersToIndexedDB } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
-import { UserType } from "../utils/types";
+import { CompanyAccountType, UserType } from "../utils/types";
 import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
@@ -35,9 +35,13 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import AccountManager from "./AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
-import { collection, onSnapshot, query, where } from "@firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, where } from "@firebase/firestore";
 import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
+import getCompanyAccountId from "../utils/helperFunctions/getCompanyAccountId.ts";
+import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
+import { setAllAccounts } from "../Slices/allAccountsSlice.ts";
+import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
 
 type DashboardModeType =
   | "TeamMode"
@@ -136,6 +140,25 @@ export const Dashboard = () => {
   
     syncCompanyUsers();
   }, [user?.companyId, dispatch]);
+
+  useEffect(() => {
+    const loadAllCompanyAccounts = async () => {
+      if (!user?.companyId || user.role === "employee") return;
+  
+      const accounts = await fetchAllCompanyAccounts(user.companyId);
+      if (!accounts.length) return;
+  
+      dispatch(setAllAccounts(accounts)); // ⬅️ Save to Redux
+  
+      try {
+        await saveAllCompanyAccountsToIndexedDB(accounts); // ⬅️ Optional: Save for offline use
+      } catch (err) {
+        console.warn("Could not save accounts to IndexedDB", err);
+      }
+    };
+  
+    loadAllCompanyAccounts();
+  }, [user?.companyId, user?.role, dispatch]);
   
 
   return (

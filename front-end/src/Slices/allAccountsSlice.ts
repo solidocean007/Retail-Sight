@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { CompanyAccountType } from '../utils/types';
 import { RootState } from '../utils/store';
 import { fetchAllAccountsFromFirestore } from '../utils/helperFunctions/fetchAllAcccountsFromFirestore';
@@ -30,7 +30,12 @@ const initialState: AllAccountsState = {
 const allAccountsSlice = createSlice({
   name: 'accounts',
   initialState,
-  reducers: {},
+  reducers: {
+    setAllAccounts: (state, action: PayloadAction<CompanyAccountType[]>) => {
+      state.accounts = action.payload;
+    },
+    
+  },
   extraReducers: (builder) => {
     builder
       .addCase(loadMatchingAccounts.pending, (state) => {
@@ -49,5 +54,8 @@ const allAccountsSlice = createSlice({
 
 // Export the selector to access the matched accounts in components
 export const selectMatchedAccounts = (state: RootState) => state.allAccounts.accounts;
+export const { setAllAccounts } = allAccountsSlice.actions;
+export const selectAllCompanyAccounts = (state: RootState) => state.allAccounts.accounts;
+
 
 export default allAccountsSlice.reducer;

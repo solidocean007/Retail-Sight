@@ -1,6 +1,6 @@
 // indexedDBOpen.ts
 const dbName = "myRetailAppDB";
-const dbVersion = 26;
+const dbVersion = 27;
 export function openDB(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
@@ -73,6 +73,10 @@ export function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("userAccounts_v2")) {
         db.createObjectStore("userAccounts_v2", { keyPath: "accountNumber" });
       }
+      if (!db.objectStoreNames.contains("allUsersCompanyAccounts")) {
+        db.createObjectStore("allUsersCompanyAccounts", { keyPath: "accountNumber" });
+      }
+      
       if (!db.objectStoreNames.contains("galloGoals")) {
         db.createObjectStore("galloGoals", { keyPath: "id" });
       }

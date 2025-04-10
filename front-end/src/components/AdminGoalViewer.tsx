@@ -1,73 +1,78 @@
-// AdminGoalViewer.tsx
-import React from "react";
-// import "./adminGoalViewer.css";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { CompanyGoalType, GoalSubmissionType } from "../utils/types";
+import { CompanyGoalType, GoalSubmissionType, CompanyAccountType } from "../utils/types";
+import { selectAllCompanyAccounts, setAllAccounts } from "../Slices/allAccountsSlice";
+import { getAllCompanyAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import GoalViewerFilters from "./GoalViewerFilters";
+import AccountTable from "./AccountTable";
 
 interface AdminGoalViewerProps {
   goal: CompanyGoalType;
 }
 
 const AdminGoalViewer: React.FC<AdminGoalViewerProps> = ({ goal }) => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
+  const [localAccounts, setLocalAccounts] = useState<CompanyAccountType[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterSubmitted, setFilterSubmitted] = useState<"all" | "submitted" | "not-submitted">("all");
 
-  const getAccountsWithStatus = () => {
-    return goal.accounts.map((account) => { // Property 'map' does not exist on type 'string | CompanyAccountType[]'.
-      const found = goal.submittedPosts?.find(
-        (post: GoalSubmissionType) => post.accountNumber === account.accountNumber
-      );
-      return {
-        ...account,
-        submittedBy: found?.submittedBy || null,
-        submittedAt: found?.submittedAt || null,
-        postId: found?.postId || null,
-      };
-    });
-  };
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      if (!goal.appliesToAllAccounts) return;
+      if (allCompanyAccounts.length > 0) {
+        setLocalAccounts(allCompanyAccounts);
+      } else {
+        try {
+          const fallbackAccounts = await getAllCompanyAccountsFromIndexedDB();
+          setLocalAccounts(fallbackAccounts);
+          dispatch(setAllAccounts(fallbackAccounts));
+        } catch (error) {
+          console.error("Failed to load fallback accounts:", error);
+        }
+      }
+    };
+    fetchAccounts();
+  }, [goal.appliesToAllAccounts, allCompanyAccounts, dispatch]);
 
-  const accounts = getAccountsWithStatus();
+  const baseAccounts = goal.appliesToAllAccounts ? localAccounts : goal.accounts || [];
+
+  const accountsWithStatus = baseAccounts.map((account) => {
+    const found = goal.submittedPosts?.find(
+      (post: GoalSubmissionType) => post.accountNumber === account.accountNumber
+    );
+    return {
+      ...account,
+      submittedBy: found?.submittedBy || null,
+      submittedAt: found?.submittedAt || null,
+      postId: found?.postId || null,
+    };
+  });
+
+  const filteredAccounts = accountsWithStatus.filter((acc) => {
+    const matchesSearch = acc.accountName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSubmission =
+      filterSubmitted === "all" ||
+      (filterSubmitted === "submitted" && acc.postId) ||
+      (filterSubmitted === "not-submitted" && !acc.postId);
+    return matchesSearch && matchesSubmission;
+  });
 
   return (
     <div className="admin-goal-viewer">
       <h2>Goal: {goal.goalTitle}</h2>
       <p>{goal.goalDescription}</p>
-      <table className="admin-goal-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Account</th>
-            <th>Address</th>
-            <th>Status</th>
-            <th>Submitted By</th>
-            <th>Submitted At</th>
-            <th>Post</th>
-          </tr>
-        </thead>
-        <tbody>
-          {accounts.map((acc, i) => (
-            <tr key={acc.accountNumber} className={acc.postId ? "submitted" : "not-submitted"}>
-              <td>{i + 1}</td>
-              <td>{acc.accountName}</td>
-              <td>{acc.accountAddress}</td>
-              <td>{acc.postId ? "✅ Submitted" : "❌ Not Submitted"}</td>
-              <td>{acc.submittedBy || "—"}</td>
-              <td>{acc.submittedAt ? new Date(acc.submittedAt).toLocaleString() : "—"}</td>
-              <td>
-                {acc.postId ? (
-                  <button
-                    onClick={() => navigate(`/user-home-page?postId=${acc.postId}`)}
-                    className="view-post-button"
-                  >
-                    View Post
-                  </button>
-                ) : (
-                  "—"
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+
+      <GoalViewerFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filterSubmitted={filterSubmitted}
+        setFilterSubmitted={setFilterSubmitted}
+      />
+
+      <AccountTable accounts={filteredAccounts} navigate={navigate} />
     </div>
   );
 };
