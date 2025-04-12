@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { CommentType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
-import EditPostModal from "./EditPostModal";
+import EditPostModal from "./Create-Post/EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import "./postCard.css";

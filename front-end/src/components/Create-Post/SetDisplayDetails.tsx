@@ -1,6 +1,6 @@
 import React from "react";
-import CategorySelector, { CategoryType } from "../CategorySelector";
-import ChannelSelector, { ChannelType } from "../ChannelSelector";
+import CategorySelector, { CategoryType } from "./CategorySelector";
+import ChannelSelector, { ChannelType } from "./ChannelSelector";
 import "./setDisplayDetails.css";
 import TotalCaseCount from "../TotalCaseCount";
 

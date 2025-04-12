@@ -4,7 +4,7 @@ import React from "react";
 import './categorySelector.css'
 
 interface CategorySelectorProps {
-  selectedCategory?: CategoryType;
+  selectedCategory?: CategoryType | "";
   onCategoryChange: (category: CategoryType) => void;
 }
 
@@ -23,11 +23,6 @@ export type CategoryType =
 
 // Create an array of categories for mapping in the component
 const CATEGORIES: CategoryType[] = ['Water', 'Wine', 'Beer', 'Bread', 'Soda', 'Chips', 'Produce', 'Dairy', 'Meat', 'Cookies', 'Donuts'];
-
-interface CategorySelectorProps {
-  selectedCategory?: CategoryType;
-  onCategoryChange: (category: CategoryType) => void;
-}
 
 const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>, onCategoryChange: (category: CategoryType) => void) => {
   const selectedCategory = e.target.value as CategoryType;

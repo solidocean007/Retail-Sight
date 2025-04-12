@@ -17,8 +17,8 @@ import {
   PostType,
   UserType,
 } from "../../utils/types";
-import { CategoryType } from "../CategorySelector";
-import { ChannelType } from "../ChannelSelector";
+import { CategoryType } from "./CategorySelector";
+import { ChannelType } from "./ChannelSelector";
 // import { SupplierType } from "./SupplierSelector";
 // import { BrandType } from "./BrandsSelector";
 import "./createPost.css";

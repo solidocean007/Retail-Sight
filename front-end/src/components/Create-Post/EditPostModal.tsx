@@ -1,13 +1,13 @@
 //EditPostModal.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { userDeletePost } from "../utils/PostLogic/deletePostLogic";
+import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
 import Modal from "@mui/material/Modal";
-import { PostWithID } from "../utils/types";
+import { PostWithID } from "../../utils/types";
 import { useDispatch } from "react-redux";
-import { showMessage } from "../Slices/snackbarSlice";
+import { showMessage } from "../../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
-import { db } from "../utils/firebase";
-import { deletePost, updatePost } from "../Slices/postsSlice";
+import { db } from "../../utils/firebase";
+import { deletePost, updatePost } from "../../Slices/postsSlice";
 import { Input, InputAdornment, SelectChangeEvent } from "@mui/material";
 import "./editPostModal.css";
 
@@ -26,10 +26,15 @@ import {
   deleteUserCreatedPostInIndexedDB,
   removePostFromIndexedDB,
   updatePostInIndexedDB,
-} from "../utils/database/indexedDBUtils";
-import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNewTimestamp";
-import { extractHashtags, extractStarTags } from "../utils/extractHashtags";
-import TotalCaseCount from "./TotalCaseCount";
+} from "../../utils/database/indexedDBUtils";
+import { updatePostWithNewTimestamp } from "../../utils/PostLogic/updatePostWithNewTimestamp";
+import { extractHashtags, extractStarTags } from "../../utils/extractHashtags";
+import TotalCaseCount from "../TotalCaseCount";
+import CategorySelector, { CategoryType } from "./CategorySelector";
+import ChannelSelector, { ChannelType } from "./ChannelSelector";
+
+import { set } from "react-hook-form";
+import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -46,41 +51,62 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   // onClose,
   // onSave,
 }) => {
+  const wrapperRef = useRef(null);
   const dispatch = useDispatch();
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
+  const [category, setCategory] = useState<CategoryType | "">(
+    (post.category as CategoryType) || ""
+  );
+  const [channel, setChannel] = useState<ChannelType | "">(
+    (post.channel as ChannelType) || ""
+  );
+
   const [postVisibility, setPostVisibility] = useState<
     "public" | "company" | "supplier" | "private" | undefined
   >("public");
-  const [updatedCaseCount, setUpdatedCaseCount] = useState(post.totalCaseCount.toString());
+  const [updatedCaseCount, setUpdatedCaseCount] = useState(post.totalCaseCount);
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
-  const wrapperRef = useRef(null);
 
   // what is this useEffect for?
   useEffect(() => {
     setDescription(post?.description || "");
     setPostVisibility(post?.visibility || "public");
+    setCategory(post?.category || "");
+    setChannel(post?.channel || "");
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
+
+    if (!category) {
+      dispatch(showMessage("Please select a category"));
+      return;
+    }
+
+    if (!channel) {
+      dispatch(showMessage("Please select a channel"));
+      return;
+    }
 
     try {
       const updatedFields = {
         description: updatedPost.description,
         visibility: updatedPost.visibility,
         totalCaseCount: updatedPost.totalCaseCount,
-        hashtags: updatedPost.hashtags || [], // Ensure hashtags are being passed
-        starTags: updatedPost.starTags || [], // Ensure starTags are being passed
-        // add other fields you want to update here
+        hashtags: updatedPost.hashtags,
+        starTags: updatedPost.starTags,
+        category: updatedPost.category,
+        channel: updatedPost.channel,
       };
 
       // Update Firestore document
       await updateDoc(postRef, updatedFields);
+      await updatePostWithNewTimestamp(post.id);
 
       // Dispatch actions to update local state (Redux and IndexedDB)
       dispatch(updatePost(updatedPost));
@@ -104,8 +130,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       description,
       visibility: postVisibility,
       totalCaseCount: updatedCaseCount,
-      hashtags: extractedHashtags, // Assign extracted hashtags
-      starTags: extractedStarTags, // Assign extracted starTags
+      hashtags: extractedHashtags,
+      starTags: extractedStarTags,
+      category,
+      channel,
     };
 
     handleSavePost(updatedPost);
@@ -113,7 +141,9 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   const handleDeletePostClick = async () => {
     try {
-      await userDeletePost({ post }); // Assume userDeletePost now only needs postId
+      await userDeletePost({ post });
+      await removePostFromIndexedDB(post.id);
+      await deleteUserCreatedPostInIndexedDB(post.id);
       dispatch(deletePost(post.id));
       handleCloseEditModal();
       dispatch(showMessage("Post deleted successfully!"));
@@ -122,6 +152,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       dispatch(showMessage("Error deleting post."));
     }
   };
+
+  useOutsideAlerter(wrapperRef, handleCloseEditModal);
 
   return (
     <Modal open={isOpen}>
@@ -160,14 +192,19 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               className="description-input"
             />
-            <Input
-              type="number"
-              fullWidth={false}
-              value={updatedCaseCount}
-              onChange={(e) => setUpdatedCaseCount(Number(e.target.value))}
-              endAdornment={
-                <InputAdornment position="start">units </InputAdornment>
-              }
+            <CategorySelector
+              selectedCategory={category} 
+              onCategoryChange={setCategory}
+            />
+
+            <ChannelSelector
+              selectedChannel={channel}
+              onChannelChange={setChannel}
+            />
+
+            <TotalCaseCount
+              handleTotalCaseCountChange={setUpdatedCaseCount}
+              initialValue={post.totalCaseCount}
             />
 
             <Select

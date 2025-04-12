@@ -1,8 +1,8 @@
 // export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
 import { Timestamp } from "firebase/firestore";
-import { ChannelType } from "../components/ChannelSelector";
-import { CategoryType } from "../components/CategorySelector";
+import { ChannelType } from "../components/Create-Post/ChannelSelector";
+import { CategoryType } from "../components/Create-Post/CategorySelector";
 
 export type CompanyType = {
   lastUpdated: string;

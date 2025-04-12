@@ -1,5 +1,5 @@
-import { CategoryType } from "../components/CategorySelector";
-import { ChannelType } from "../components/ChannelSelector";
+import { CategoryType } from "../components/Create-Post/CategorySelector";
+import { ChannelType } from "../components/Create-Post/ChannelSelector";
 
 export const CategoryOptions: CategoryType[] = [
   "Water",

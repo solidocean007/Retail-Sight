@@ -9,8 +9,8 @@ import {
   fetchInitialPostsBatch,
 } from "../thunks/postsThunks";
 import { useDispatch } from "react-redux";
-import { ChannelType } from "./ChannelSelector";
-import { CategoryType } from "./CategorySelector";
+import { ChannelType } from "./Create-Post/ChannelSelector";
+import { CategoryType } from "./Create-Post/CategorySelector";
 import { ChannelOptions, CategoryOptions } from "../utils/filterOptions";
 import { useSelector } from "react-redux";
 import { AppDispatch } from "../utils/store";
