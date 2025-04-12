@@ -24,7 +24,7 @@ import {
 } from "../Slices/goalsSlice";
 import { CompanyGoalType, GoalSubmissionType } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import InfoRowCompanyGoal from "./GoalIntegration/CompanyGoalDetailsCard";
+import CompanyGoalDetailsCard from "./GoalIntegration/CompanyGoalDetailsCard";
 import { useTheme } from "@mui/material/styles";
 
 const MyCompanyGoals = () => {
@@ -109,7 +109,7 @@ const MyCompanyGoals = () => {
                 Current Goals
               </Typography>
               {currentGoals.map((goal, index) => (
-                <InfoRowCompanyGoal
+                <CompanyGoalDetailsCard
                   key={goal.id || index}
                   goal={goal}
                   mobile={isMobile}
@@ -126,7 +126,7 @@ const MyCompanyGoals = () => {
                 Upcoming Goals
               </Typography>
               {upcomingGoals.map((goal, index) => (
-                <InfoRowCompanyGoal
+                <CompanyGoalDetailsCard
                   key={goal.id || index}
                   goal={goal}
                   mobile={isMobile}

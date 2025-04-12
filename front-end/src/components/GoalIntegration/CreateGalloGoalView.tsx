@@ -22,7 +22,6 @@ import dayjs, { Dayjs } from "dayjs";
 import DateSelector from "./DateSelector";
 import ProgramTable from "./ProgramTable";
 import GoalTable from "./GoalTable";
-import AccountTable from "./AccountTable";
 import {
   loadMatchingAccounts,
   selectMatchedAccounts,
@@ -30,6 +29,7 @@ import {
 import getCompanyAccountId from "../../utils/helperFunctions/getCompanyAccountId";
 import { doc, getDoc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
+import GalloAccountImportTable from "./GalloAccountImportTable";
 
 interface CreateGalloGoalViewProps {
   setValue: (newValue: number) => void; // Function to change tabs
@@ -408,7 +408,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
           </Button>
         )}
         {enrichedAccounts.length > 0 && (
-          <AccountTable
+          <GalloAccountImportTable
             accounts={enrichedAccounts}
             selectedGoal={selectedGoal} // Pass the selected goal from the parent
             selectedProgram={selectedProgram} // Pass the selected program from the parent

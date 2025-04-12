@@ -1,7 +1,9 @@
+// AccountTable.tsx
 import React from "react";
+import { FixedSizeList as List } from "react-window";
 import { NavigateFunction } from "react-router-dom";
-import "./accountTable.css"; // optional: for styling
 import { CompanyAccountType } from "../utils/types";
+import "./accountTable.css";
 
 interface AccountWithStatus extends CompanyAccountType {
   submittedBy: string | null;
@@ -12,48 +14,75 @@ interface AccountWithStatus extends CompanyAccountType {
 interface AccountTableProps {
   accounts: AccountWithStatus[];
   navigate: NavigateFunction;
+  height?: number;
+  rowHeight?: number;
 }
 
-const AccountTable: React.FC<AccountTableProps> = ({ accounts, navigate }) => {
+const AccountTable: React.FC<AccountTableProps> = ({
+  accounts,
+  navigate,
+  height = 500,
+  rowHeight = 60,
+}) => {
+  const Row = ({
+    index,
+    style,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+  }) => {
+    const acc = accounts[index];
+    return (
+      <div
+        className={`account-row ${acc.postId ? "submitted" : "not-submitted"}`}
+        style={style}
+      >
+        <div className="account-small-cell"> {index + 1}</div>
+        <div className="account-cell name-cell"> {acc.accountName}</div>
+        <div className="account-cell address-cell"> {acc.accountAddress}</div>
+        <div className="account-small-cell">{acc.postId ? "✅" : "❌"}</div>
+
+        <div className="account-cell submitted-by-cell">
+          {acc.submittedBy || "—"}
+        </div>
+        <div className="account-cell submitted-at-cell">
+          {acc.submittedAt ? new Date(acc.submittedAt).toLocaleString() : "—"}
+        </div>
+        <div className="account-small-cell">
+          {acc.postId ? (
+            <button
+              className="view-post-button"
+              onClick={() => navigate(`/user-home-page?postId=${acc.postId}`)}
+            >
+              View Post
+            </button>
+          ) : (
+            "—"
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="account-table-wrapper">
-      <table className="account-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Account</th>
-            <th>Address</th>
-            <th>Status</th>
-            <th>Submitted By</th>
-            <th>Submitted At</th>
-            <th>Post</th>
-          </tr>
-        </thead>
-        <tbody>
-          {accounts.map((acc, index) => (
-            <tr key={acc.accountNumber} className={acc.postId ? "submitted" : "not-submitted"}>
-              <td>{index + 1}</td>
-              <td>{acc.accountName}</td>
-              <td>{acc.accountAddress}</td>
-              <td>{acc.postId ? "✅ Submitted" : "❌ Not Submitted"}</td>
-              <td>{acc.submittedBy || "—"}</td>
-              <td>{acc.submittedAt ? new Date(acc.submittedAt).toLocaleString() : "—"}</td>
-              <td>
-                {acc.postId ? (
-                  <button
-                    className="view-post-button"
-                    onClick={() => navigate(`/user-home-page?postId=${acc.postId}`)}
-                  >
-                    View Post
-                  </button>
-                ) : (
-                  "—"
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="account-list-wrapper">
+      <div className="account-table-header">
+        <div className="account-small-cell">#</div>
+        <div className="account-cell name-cell">Account</div>
+        <div className="account-cell address-cell">Address</div>
+        <div className="account-small-cell">Status</div>
+        <div className="account-cell submitted-by-cell">Submitted By</div>
+        <div className="account-cell submitted-at-cell">Submitted At</div>
+        <div className="account-small-cell">Post</div>
+      </div>
+      <List
+        height={Math.min(accounts.length * rowHeight, height)}
+        itemCount={accounts.length}
+        itemSize={rowHeight}
+        width="100%"
+      >
+        {Row}
+      </List>
     </div>
   );
 };
