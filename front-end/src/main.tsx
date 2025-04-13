@@ -4,6 +4,7 @@ import App from "./App.tsx";
 import { Provider } from "react-redux";
 import store from "./utils/store.ts";
 import "./index.css";
+import "./styles/theme.css"
 import "./utils/firebase.ts";
 import React from "react";
 import { HelmetProvider } from "react-helmet-async";

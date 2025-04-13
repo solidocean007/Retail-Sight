@@ -1,12 +1,27 @@
+/* headerBar.css — Refactored + Theme Consistent */
+
 .header-bar {
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  background: var(--header-title);
+  background: var(--header-background);
   box-shadow: 0 5px 5px rgba(229, 229, 241, 0.5);
-  padding: 0.2rem .5rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.website-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 0 1rem;
+  font-size: smaller;
+  color: var(--header-title);
+}
+
+.website-title h1,
+.website-title h5 {
+  margin: 1px 0 0;
 }
 
 .header-details {
@@ -20,8 +35,10 @@
 
 .header-buttons {
   display: flex;
+  gap: 1rem;
 }
 
+.menu-buttons,
 .capture-display-btn {
   display: none;
 }
@@ -31,138 +48,28 @@
   cursor: pointer;
   z-index: 11;
   font-size: 30px;
-  color: whitesmoke;
+  color: var(--button-text-color);
   margin-right: 1rem;
 }
 
-.website-title p {
-  margin: 0;
-}
+/* Responsive Breakpoints */
 
-.website-title {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin: 0rem 1rem;
-  font-size: smaller;
-  color: var(--text-color);
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-}
-
-.website-title h1, .website-title p {
-  margin: 1px 0px 0px;
-}
-
-.profile-btn {
-  width: 14rem;
-  font-size: smaller;
-}
-
-.profile-btn {
-  margin-right: 30px;
-  max-height: 2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.menu-buttons {
-  display: none;
-}
-
-
-/* Styles for mobile devices */
 @media (max-width: 780px) {
-  /* Your styles for mobile devices */
-  /* .header-bar h1 {
-    font-size: 1rem;
-  }
-  .header-bar h4 {
-    font-size: .8rem;
-  }
-
-  .profile-btn {
-    padding: .5rem;
-    width: 9rem;
-  }
-
-  .create-post-btn {
-    width: 7rem;
-  }
-
-  .button {
-    padding: .5rem;
-    width: 5rem;
-  } */
-
+  /* Future: collapse text sizes or button sizes if needed */
 }
-/* Styles for mobile devices */
+
 @media (max-width: 670px) {
-  /* Your styles for mobile devices */
-  /* .hamburger-menu-button {
-    display: block;
-  }
-
-  .create-post-btn, .filter-menu-button {
-    display: none;
-  } */
+  /* Hamburger button is already visible by default here */
 }
 
-
-/* Mobile devices */
-@media (max-width: 320px) {
-  /* Styles for small smartphones */
-}
-
-@media (min-width: 321px) and (max-width: 375px) {
-  /* Styles for medium smartphones */
-}
-
-@media (min-width: 376px) and (max-width: 414px) {
-  /* Styles for large smartphones */
-}
-
-/* Filling the gap for devices between 414px and 600px */
-@media (min-width: 415px) and (max-width: 599px) {
-  /* Styles for devices in this range */
-}
-
-/* Tablets */
-@media (min-width: 600px) and (max-width: 768px) {
-  
-}
-
-@media (min-width: 769px) and (max-width: 899px) {
-  /* Styles for large tablets in portrait/landscape */
-}
-
-@media (min-width: 900px)  {
-  /* Styles for large tablets in portrait/landscape */
+/* Large tablets and up */
+@media (min-width: 900px) {
   .hamburger-menu-button {
     display: none;
   }
 
-  .menu-buttons {
-    display: flex;
-  }
-
+  .menu-buttons,
   .capture-display-btn {
     display: flex;
   }
- 
-}
-
-/* Laptops and Desktops */
-@media (min-width: 1025px) and (max-width: 1366px) {
-  /* Styles for small to medium screens */
-}
-
-@media (min-width: 1367px) and (max-width: 1920px) {
-  /* Styles for large screens */
-}
-
-@media (min-width: 1921px) {
-  /* Styles for extra-large screens */
 }

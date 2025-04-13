@@ -7,11 +7,16 @@ import {
 } from "../utils/PostLogic/getPostsByTag";
 import useProtectedAction from "../utils/useProtectedAction";
 import { useDispatch, useSelector } from "react-redux";
-import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import { getPostsFromIndexedDB } from "../utils/database/indexedDBUtils"; // unused?
 import { PostWithID } from "../utils/types";
 import React, { useEffect, useState } from "react";
-import { mergeAndSetFilteredPosts, mergeAndSetPosts, setFilteredPosts, setHashtagPosts } from "../Slices/postsSlice";
-import "./hashTagSearchBar.css";
+import {
+  mergeAndSetFilteredPosts,
+  mergeAndSetPosts,
+  setFilteredPosts,
+  setHashtagPosts,
+} from "../Slices/postsSlice";
+import "./tagOnlySearchBar.css";
 import { RootState } from "../utils/store";
 
 interface TagOnlySearchBarProps {
@@ -38,7 +43,6 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   setIsSearchActive,
   handleApplyFiltersClick,
   clearInput,
-
 }) => {
   const protectedAction = useProtectedAction(); // i need to use this to protect from a unwanted search
   const [inputValue, setInputValue] = useState("");
@@ -64,7 +68,6 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
     if (!inputValue) return;
     if (setIsSearchActive) setIsSearchActive(true);
 
-
     let result: PostWithID[] = [];
     try {
       if (inputValue.startsWith("#")) {
@@ -80,9 +83,9 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
         return;
       }
 
-      if(handleApplyFiltersClick){
+      if (handleApplyFiltersClick) {
         handleApplyFiltersClick();
-      };
+      }
 
       // dispatch(mergeAndSetFilteredPosts(result));
       dispatch(setFilteredPosts(result));
@@ -92,7 +95,6 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
       clearSearch && clearSearch();
     }
   };
-
 
   const handleClearSearch = async () => {
     if (clearSearch) {
@@ -107,8 +109,6 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
     }
   };
 
-
-
   return (
     <div className="hashtag-search-box">
       <Input
@@ -116,8 +116,17 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value.trimEnd())}
         onKeyDown={handleKeyPress}
-        sx={{margin: "0px"}}
+        sx={{
+          backgroundColor: "var(--input-background)",
+          color: "var(--input-text-color)",
+          padding: "6px",
+          borderRadius: "4px",
+          fontSize: "1rem",
+          marginRight: "8px",
+          width: "100%",
+        }}
       />
+
       {/* I want the button below to be search if its a string that begins with either '#' or '*' if its  */}
       <button
         className="search-button"

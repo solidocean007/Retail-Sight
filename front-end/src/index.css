@@ -1,105 +1,4 @@
 /* index.css */
-:root {
-  /* Define color palette */
-  --prussian-blue: #0b3c5d;
-  --sky-blue: #328cc1;
-  --gold-leaf: #d9b310;
-  --orange: orange;
-  --ivory-black: #1d2731;
-  --coral: #ff6f61;
-  --some-blue-color: #8fbbe7;
-  --charcoal-grey: #36454f;
-  --stark: #e7dfdd;
-  --apple-core: #dcc7aa;
-  --blueberry: #6b7a8f;
-  
-  /* Default theme (light) */
-  --background-body: rgb(202,218,221);
-  --background-pop-out-body: rgb(202,218,221);
-  --background-body: linear-gradient(173deg, rgba(202,218,221,1) 25%, rgba(233,229,211,1) 88%);
-  --background: rgba(107, 122, 143, 0.375);
-  --background: linear-gradient(
-    141deg,
-    rgba(107, 122, 143, 1) 0%,
-    rgba(240, 238, 234, 1) 100%
-  );
-  --splash-nav-text: var(--stark);
-  --drawer-color-light: var(--gold-leaf);
-  --drawer-color-dark: black;
-  --post-card-background: whitesmoke;
-  --text-color: var(--ivory-black);
-  --header-title: var(--sage-green);
-  --button-background: var(--orange);
-  --button-text-color: var(--prussian-blue);
-  --border-color: var(--coral);
-  --input-background: var(--sage-green);
-  --input-text-color: var(--ivory-black);
-  --form-background-color: var(--some-blue-color);
-  --menu-background-color: var(--sky-blue);
-  --alt-menu-background-color: var(--stark);
-  --footer-background-color: var(--sky-blue);
-  --tutorial-button-color: var(--sky-blue);
-
-  /* Common styles */
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-}
-
-[data-theme="dark"] {
-  /* Dark theme overrides */
-  --background-body: var(--ivory-black);
-  --background-pop-out-body: var(--ivory-black);
-  --post-card-background:rgb(4,12,32);
-  --text-color: var(--gold-leaf);
-  --header-title: var(--charcoal-grey);
-  --button-background: var(--prussian-blue);
-  --button-text-color: var(--gold-leaf);
-  --border-color: var(--sky-blue);
-  --input-background: var(--ivory-black);
-  --input-text-color: var(--gold-leaf);
-  --form-background-color: var(--charcoal-grey);
-  --menu-background-color: var(--blueberry);
-  --alt-menu-background-color: var(--charcoal-grey);
-  --footer-background-color: var(--charcoal-grey);
-}
-
-/* Light Mode */
-a {
-  font-weight: 500;
-  text-decoration: inherit;
-  color: blue;
-}
-
-a:hover {
-  /* color: darken(var(--stark), 10%); Slightly darker Sky Blue on hover */
-  color: white; /* Slightly darker Sky Blue on hover */
-}
-
-/* Dark Mode */
-/* Explicitly apply the text color to text elements */
-[data-theme="dark"] h1,
-[data-theme="dark"] h2,
-[data-theme="dark"] h3,
-[data-theme="dark"] h4,
-[data-theme="dark"] h5,
-[data-theme="dark"] h6,
-[data-theme="dark"] p,
-[data-theme="dark"] a {
-  color: var(--text-color);
-}
-
-[data-theme="dark"] a:hover {
-  color: lighten(
-    var(--gold-leaf),
-  10%
-  ); /* Slightly lighter Gold Leaf on hover */
-}
 
 html,
 body,
@@ -108,32 +7,23 @@ body,
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  /* overflow-y: visible; */
   background: var(--background-body);
   color: var(--text-color);
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
-  /* max-width: 1800px; */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  margin: 0;
   text-align: center;
-  height: 100%;
   min-height: 100vh;
   width: 100vw;
-}
-
-body {
-  display: flex;
-  justify-content: center;
-  place-items: center;
-  width: 100%;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: black;
 }
 
 *,
@@ -142,102 +32,37 @@ body {
   box-sizing: border-box;
 }
 
+a {
+  font-weight: 500;
+  text-decoration: inherit;
+  color: blue;
+}
+
+[data-theme="dark"] a {
+  color: var(--text-color);
+}
+[data-theme="dark"] a:hover {
+  color: var(--button-text-color);
+}
+
 h1 {
-  /* font-size: 3.2em; */
   line-height: 1.1;
 }
 
-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 5px;
-  border: 1px solid transparent;
-  padding: 0.4em 0.8em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--button-background);
-  color: var(--button-text-color);
-  border-color: var(--border-color);
-  cursor: pointer;
-  transition: border-color 0.25s;
-  height: 2.5rem;
-  width: fit-content;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-.button-blue {
-  align-items: center;
-  appearance: none;
-  background-image: radial-gradient(100% 100% at 100% 0, #5adaff 0, #5468ff 100%);
-  border: 0;
-  border-radius: 6px;
-  box-shadow: rgba(45, 35, 66, .4) 0 2px 4px,rgba(45, 35, 66, .3) 0 7px 13px -3px,rgba(58, 65, 111, .5) 0 -3px 0 inset;
-  box-sizing: border-box;
-  color: #fff;
-  cursor: pointer;
-  display: inline-flex;
-  font-family: "JetBrains Mono",monospace;
-  height: 48px;
-  justify-content: center;
-  line-height: 1;
-  list-style: none;
-  overflow: hidden;
-  padding-left: 16px;
-  padding-right: 16px;
-  position: relative;
-  text-align: left;
-  text-decoration: none;
-  transition: box-shadow .15s,transform .15s;
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
-  white-space: nowrap;
-  will-change: box-shadow,transform;
-  font-size: 18px;
-}
-
-button:focus {
-  box-shadow: #3c4fe0 0 0 0 1.5px inset, rgba(45, 35, 66, .4) 0 2px 4px, rgba(45, 35, 66, .3) 0 7px 13px -3px, #3c4fe0 0 -3px 0 inset;
-}
-
-button:hover {
-  box-shadow: rgba(45, 35, 66, .4) 0 4px 8px, rgba(45, 35, 66, .3) 0 7px 13px -3px, #3c4fe0 0 -3px 0 inset;
-  transform: translateY(-2px);
-}
-
-button:active {
-  box-shadow: #3c4fe0 0 3px 7px inset;
-  transform: translateY(2px);
-}
-
-/* Overlay Style */
-.user-modal-overlay {
-  position: fixed;
-  width: 100vw;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background to focus on the modal */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.3s;
-  z-index: 2000;
-}
-
 ul, ol {
-  list-style-type: none;
-  padding-left: 0; /* Optional: Removes default padding */
-  margin: 0; /* Optional: Removes default margin */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] p {
+  color: var(--text-color);
 }
 
 

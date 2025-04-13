@@ -1,0 +1,65 @@
+/* front-end/src/styles/theme.css */
+:root {
+  --prussian-blue: #0b3c5d;
+  --sky-blue: #328cc1;
+  --gold-leaf: #d9b310;
+  --button-background: #ffa500; /* or a more brand-specific hex color */
+  --ivory-black: #1d2731;
+  --coral: #ff6f61;
+  --some-blue-color: #8fbbe7;
+  --charcoal-grey: #36454f;
+  --stark: #e7dfdd;
+  --apple-core: #dcc7aa;
+  --blueberry: #6b7a8f;
+
+  --card-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  --card-radius: 8px;
+
+  /* Light Theme Defaults */
+  --background-body: #e9e5d3; /* Instead of gradient for MUI compatibility */
+
+  --background-pop-out-body: rgba(202, 218, 221, 1);
+  --background: linear-gradient(
+    141deg,
+    rgba(107, 122, 143, 1) 0%,
+    rgba(240, 238, 234, 1) 100%
+  );
+  --post-card-background: whitesmoke;
+  --text-color: var(--ivory-black);
+  --header-background: var(--stark); /* Light gray or off-white background */
+  --header-title: var(--ivory-black); /* Dark text for light mode */
+  --button-background: #ff8c00;
+  --button-background-hover: #ff6f61; /* darker orange */
+  --button-text-color: var(--prussian-blue);
+  --border-color: var(--coral);
+  --input-background: var(--some-blue-color);
+  --input-text-color: var(--ivory-black);
+  --form-background-color: var(--some-blue-color);
+  --menu-background-color: var(--sky-blue);
+  --alt-menu-background-color: var(--stark);
+  --footer-background-color: var(--sky-blue);
+  --drawer-color-light: var(--gold-leaf);
+  --drawer-color-dark: black;
+  --tutorial-button-color: var(--sky-blue);
+  --sidebar-background-color: var(--form-background-color);
+}
+
+[data-theme="dark"] {
+  --background-body: var(--ivory-black);
+  --background-pop-out-body: var(--ivory-black);
+  --post-card-background: rgb(4, 12, 32);
+  --text-color: var(--gold-leaf);
+  --header-background: var(--charcoal-grey); /* Dark background */
+  --header-title: var(--gold-leaf); /* Bright/golden text for contrast */
+  --button-background: var(--prussian-blue);
+  --button-background-hover: #002b47; /* darker version of --prussian-blue */
+  --button-text-color: var(--gold-leaf);
+  --border-color: var(--sky-blue);
+  --input-background: var(--ivory-black);
+  --input-text-color: var(--gold-leaf);
+  --form-background-color: var(--charcoal-grey);
+  --sidebar-background-color: var(--charcoal-grey);
+  --menu-background-color: var(--blueberry);
+  --alt-menu-background-color: var(--charcoal-grey);
+  --footer-background-color: var(--charcoal-grey);
+}

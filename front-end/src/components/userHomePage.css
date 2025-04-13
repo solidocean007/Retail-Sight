@@ -1,4 +1,5 @@
-/*  userHomePage.css */
+/* userHomePage.css — Layout & Responsiveness */
+
 .user-home-page-container {
   display: flex;
   flex-direction: column;
@@ -23,27 +24,26 @@
 
 .activity-feed-container {
   margin-top: 15px;
-  padding: 0px 10px;
+  padding: 0 10px;
   width: 100%;
-}
-
-.side-bar-container {
-  display: none;
 }
 
 .onboarding-tutorial-intro-box {
   display: flex;
   align-items: center;
   max-width: 30%;
+  background-color: var(--form-background-color);
+  color: var(--text-color);
+  padding: 0.5rem;
+  border-radius: 4px;
 }
 
 .top-of-activity-feed .onboarding-tutorial-intro-box {
   display: none;
-  align-items: center;
   text-align: center;
 }
 
-/* Full-screen overlay styles */
+/* Fullscreen overlay (mobile sidebar) */
 .sidebar-fullscreen {
   display: none;
   position: fixed;
@@ -51,31 +51,14 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5); /* semi-transparent background */
-  z-index: 10; /* to ensure it's on top */
-  display: flex;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 10;
   justify-content: center;
   align-items: center;
 }
 
-
-/* Mobile devices */
-@media (max-width: 320px) {
-  /* Styles for small smartphones */
-  
-}
-
-@media (min-width: 321px) and (max-width: 375px) {
-  /* Styles for medium smartphones */
-}
-
-@media (min-width: 376px) and (max-width: 414px) {
-  /* Styles for large smartphones */
-}
-
-/* Filling the gap for devices between 414px and 600px */
+/* Devices showing the sidebar fullscreen */
 @media (min-width: 415px) and (max-width: 599px) {
-  /* Styles for devices in this range */
   .sidebar-fullscreen {
     display: block;
   }
@@ -83,55 +66,17 @@
 
 /* Tablets */
 @media (min-width: 600px) and (max-width: 768px) {
-  /* Styles for small tablets in portrait */
   .top-of-activity-feed .onboarding-tutorial-intro-box {
     font-size: smaller;
   }
-}
-
-@media (max-width: 768px) {
-  
   .activity-feed-container {
-      width: 100%;
+    width: 100%;
   }
 }
 
-
-@media (min-width: 769px) and (max-width: 899px){
-  
-}
-
-@media (min-width: 900px)  {
-  /* Styles for large tablets in portrait/landscape */
-  .side-bar-container {
-    margin-top: 15px;
-    display: flex;
-    align-items: start;
-    justify-content: flex-start;
-    max-width: 100%;
-  }
+/* Large tablets and desktops */
+@media (min-width: 900px) {
   .activity-feed-container {
     max-width: 45%;
   }
- 
 }
-
-/* Laptops and Desktops */
-@media (min-width: 1025px) and (max-width: 1366px) {
-  /* Styles for small to medium screens */
-
-  
-
-  .post-content-filter {
-    margin-right: 40px;
-  }
-}
-
-@media (min-width: 1367px) and (max-width: 1920px) {
-  /* Styles for large screens */
-}
-
-@media (min-width: 1921px) {
-  /* Styles for extra-large screens */
-}
-

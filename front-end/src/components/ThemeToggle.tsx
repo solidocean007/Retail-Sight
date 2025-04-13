@@ -1,4 +1,4 @@
-// ThemeToggle.tsx
+// front-end/src/components/ThemeToggle.tsx
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../actions/themeActions";

@@ -1,23 +1,16 @@
+/* sideBar.css — Responsive, Theme-Aware Sidebar */
+
 .side-bar-box {
   width: 100%;
   padding: 20px 10px;
-  border-radius: 5px;
-  display: flex;
+  border-radius: var(--card-radius, 5px);
+  background-color: var(--sidebar-background-color);
+  color: var(--text-color);
+  height: 100%;
+  display: none; /* hidden on mobile by default */
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background-color: var(--form-background-color);
-  /* background: rgb(4, 12, 32); */
-  /* background: linear-gradient(
-    0deg,
-    rgba(4, 12, 32, 1) 11%,
-    rgba(168, 174, 213, 1) 75%
-  ); */
-  height: 100%;
-}
-
-.top-of-side-bar button {
-  display: none;
 }
 
 .top-of-side-bar {
@@ -26,8 +19,9 @@
   justify-content: center;
 }
 
-.location-filter-container {
-  display: flex;
+.location-filter-container,
+.channel-category-box,
+.clear-apply-button-box {
   width: 60%;
 }
 
@@ -40,52 +34,41 @@
 .channel-category-box {
   display: flex;
   flex-direction: column;
-  width: 100%;
   justify-content: space-between;
-  width: 60%;
-}
-
-/* .filter-by-content {
-  display: flex;
-  justify-content: space-between;
-  width: 60%;
-} */
-
-.MuiButton-root {
-  margin-bottom: 20px;
 }
 
 .clear-apply-button-box {
   display: flex;
   align-items: center;
-  /* flex-direction: column; */
-  width: 60%;
   justify-content: space-between;
   padding: 1rem;
 }
 
-@media (max-width: 1100px) {
-  /* Your styles for tablets */
+/* Button styling */
+.btn {
+  padding: 8px 16px;
+  background-color: var(--button-background);
+  color: var(--button-text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
 
+.btn:hover {
+  background-color: var(--button-background-hover);
+}
+
+/* Mobile/tablet-specific layout adjustments */
+@media (max-width: 1100px) {
   .btn {
     height: 50px;
   }
 
-  .MuiGrid-root {
-    width: 100%;
-  }
-
-  .channel-category-box {
-    display: flex;
-    /* width: 100%; */
-    /* flex-direction: row; */
-    justify-content: center;
-  }
-}
-
-@media (max-width: 1100px) {
   .channel-category-box {
     flex-direction: row;
+    justify-content: center;
   }
 
   .location-filter-container {
@@ -98,60 +81,13 @@
   }
 }
 
+/* Show sidebar only on screens 900px and up */
 @media (min-width: 900px) {
-}
-
-/* @media (max-width: 900px) {
   .side-bar-box {
-    flex-direction: column;
-    padding:  20px 10px;
-    height: 100%;
-    padding-top: 15%;
+    display: flex;
   }
-} */
 
-/* Mobile devices */
-@media (max-width: 320px) {
-  /* Styles for small smartphones */
-}
-
-@media (min-width: 321px) and (max-width: 375px) {
-  /* Styles for medium smartphones */
-}
-
-@media (min-width: 376px) and (max-width: 414px) {
-  /* Styles for large smartphones */
-}
-
-/* Filling the gap for devices between 414px and 600px */
-@media (min-width: 415px) and (max-width: 599px) {
-  /* Styles for devices in this range */
-}
-
-/* Tablets */
-@media (min-width: 600px) and (max-width: 768px) {
-  /* Styles for small tablets in portrait */
-}
-
-@media (min-width: 769px) and (max-width: 899px) {
-}
-
-@media (min-width: 900px) {
-  /* Styles for large tablets in portrait/landscape */
   .close-side-bar-button {
     display: none;
   }
-}
-
-/* Laptops and Desktops */
-@media (min-width: 1025px) and (max-width: 1366px) {
-  /* Styles for small to medium screens */
-}
-
-@media (min-width: 1367px) and (max-width: 1920px) {
-  /* Styles for large screens */
-}
-
-@media (min-width: 1921px) {
-  /* Styles for extra-large screens */
 }

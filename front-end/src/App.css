@@ -1,26 +1,28 @@
- /* App.css */
+/* App.css — App-level Layout Styling */
 
-
-/* text fields */
 .MuiInputBase-root {
   margin: 8px;
   width: 50ch;
+  background-color: var(--input-background);
+  color: var(--input-text-color);
 }
 
-/* // CSS (pseudo code) */
+/* Sidebar Toggle Visibility */
 @media (max-width: 768px) {
+  .toggle-sidebar-button {
+    display: block;
+  }
+
   .sidebar {
     display: none;
-  }
-  .filter-button {
-    display: block;
   }
 }
 
 @media (min-width: 769px) {
-  .filter-button {
+  .toggle-sidebar-button {
     display: none;
   }
+
   .sidebar {
     display: flex;
     justify-content: space-between;

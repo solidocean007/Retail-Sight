@@ -35,11 +35,8 @@ function App() {
 
      // Apply the theme from localStorage on initial load
      if (prefersDarkMode !== isDarkMode) {
-      dispatch(toggleTheme()); // Make sure this action correctly updates the state
+      dispatch(toggleTheme());
     }
-
-   // Ensure that the body's data-theme attribute is set
-   document.body.setAttribute("data-theme", prefersDarkMode ? "dark" : "light");
   }, [dispatch, isDarkMode]);
 
   useEffect(() => {

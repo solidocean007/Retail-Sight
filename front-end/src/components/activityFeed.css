@@ -1,9 +1,11 @@
+/* activityFeed.css — Refactored + Themed */
+
+/* Activity Feed Layout */
 .activity-feed-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 0px;
-  /* max-width: 100%; */
+  margin-top: 0;
 }
 
 .top-of-activity-feed {
@@ -13,6 +15,10 @@
   justify-content: center;
   margin-bottom: 10px;
   width: 100%;
+  background-color: var(--menu-background-color);
+  color: var(--text-color);
+  padding: 0.5rem;
+  border-radius: var(--card-radius);
 }
 
 .top-af-top {
@@ -25,56 +31,53 @@
   height: 2.5rem;
   text-align: center;
   display: flex;
-
 }
 
+/* Optional utility box for future filters, user buttons, etc. */
 .header-right-side-box {
   display: none;
 }
 
+/* Cards */
 .list-card {
   width: 400px;
   margin-bottom: 20px;
   height: 900px;
+  background-color: var(--post-card-background);
+  color: var(--text-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
 }
 
+/* Responsive Breakpoints */
 
-/* Mobile devices */
-@media (max-width: 320px) {
-  /* Styles for small smartphones */
-}
-
-@media (min-width: 321px) and (max-width: 375px) {
-  /* Styles for medium smartphones */
-}
-
-@media (min-width: 376px) and (max-width: 414px) {
-  /* Styles for large smartphones */
-}
-
-/* Tablets */
-@media (min-width: 600px) and (max-width: 768px) {
-  /* Styles for small tablets in portrait */
-}
-
-/* Styles for mobile devices */
+/* Hide top activity feed header on wider screens */
 @media (min-width: 900px) {
-  /* Your styles for mobile devices */
   .top-of-activity-feed {
     display: none;
   }
-  
 }
 
+/* Basic mobile structure placeholders */
+@media (max-width: 414px) {
+  /* Small smartphones */
+}
+
+@media (min-width: 415px) and (max-width: 768px) {
+  /* Tablets in portrait */
+  .top-of-activity-feed {
+    flex-direction: column;
+  }
+}
+
+/* Medium to large tablets */
 @media (min-width: 769px) and (max-width: 1024px) {
-  /* Styles for large tablets in portrait/landscape */
- 
+  /* Add padding or layout tweaks here if needed */
 }
 
-/* Laptops and Desktops */
+/* Larger screens */
 @media (min-width: 1100px) {
-  /* Styles for small to medium screens */
-  
+  /* Reserved for desktops if necessary */
 }
 
 @media (min-width: 1367px) and (max-width: 1920px) {
@@ -82,5 +85,5 @@
 }
 
 @media (min-width: 1921px) {
-  /* Styles for extra-large screens */
+  /* Ultra wide screens */
 }
