@@ -315,3 +315,14 @@ export type AchievementPayloadType = {
   photos: { file: string }[]; // Array of objects with a file property
 };
 
+export type DashboardModeType =
+  | "TeamMode"
+  | "UsersMode"
+  | "AccountsMode"
+  | "MyGoalsMode"
+  | "ProfileMode"
+  | "IntegrationMode"
+  | "GoalManagerMode"
+  | "ApiMode"
+  | "CollectionsMode"
+  | "TutorialMode";

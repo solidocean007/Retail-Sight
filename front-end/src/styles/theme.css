@@ -31,17 +31,17 @@
   --button-background: #ff8c00;
   --button-background-hover: #ff6f61; /* darker orange */
   --button-text-color: var(--prussian-blue);
-  --border-color: var(--coral);
+  --border-color: var(--charcoal-grey);
   --input-background: var(--some-blue-color);
   --input-text-color: var(--ivory-black);
   --form-background-color: var(--some-blue-color);
   --menu-background-color: var(--sky-blue);
   --alt-menu-background-color: var(--stark);
   --footer-background-color: var(--sky-blue);
-  --drawer-color-light: var(--gold-leaf);
-  --drawer-color-dark: black;
   --tutorial-button-color: var(--sky-blue);
   --sidebar-background-color: var(--form-background-color);
+  --drawer-color-light: var(--apple-core);
+  --drawer-background: var(--drawer-color-light);
 }
 
 [data-theme="dark"] {
@@ -62,4 +62,6 @@
   --menu-background-color: var(--blueberry);
   --alt-menu-background-color: var(--charcoal-grey);
   --footer-background-color: var(--charcoal-grey);
+  --drawer-color-dark: black;
+  --drawer-background: var(--drawer-color-dark);
 }

@@ -1,0 +1,38 @@
+.account-manager-container {
+  background-color: var(--form-background-color);
+  color: var(--text-color);
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.account-manager h2 {
+  color: var(--header-title);
+}
+
+.account-upload-button,
+.account-submit-button,
+.account-edit-button {
+  background-color: var(--button-background);
+  color: var(--button-text-color);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.account-upload-button:hover,
+.account-submit-button:hover,
+.account-edit-button:hover {
+  background-color: var(--button-background-hover);
+}
+
+.account-table th,
+.account-table td {
+  background-color: var(--post-card-background);
+  color: var(--text-color);
+}
+
+.account-search-field {
+  background-color: var(--input-background);
+  color: var(--input-text-color);
+}

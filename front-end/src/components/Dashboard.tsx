@@ -4,9 +4,16 @@ import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
 import { selectUser, setCompanyUsers } from "../Slices/userSlice";
-import { getCompanyUsersFromIndexedDB, saveCompanyUsersToIndexedDB } from "../utils/database/userDataIndexedDB";
+import {
+  getCompanyUsersFromIndexedDB,
+  saveCompanyUsersToIndexedDB,
+} from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
-import { CompanyAccountType, UserType } from "../utils/types";
+import {
+  CompanyAccountType,
+  DashboardModeType,
+  UserType,
+} from "../utils/types";
 import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
@@ -35,25 +42,21 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import AccountManager from "./AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
-import { collection, doc, getDoc, onSnapshot, query, where } from "@firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  where,
+} from "@firebase/firestore";
 import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import getCompanyAccountId from "../utils/helperFunctions/getCompanyAccountId.ts";
 import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
 import { setAllAccounts } from "../Slices/allAccountsSlice.ts";
 import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
-
-type DashboardModeType =
-  | "TeamMode"
-  | "UsersMode"
-  | "AccountsMode"
-  | "MyGoalsMode"
-  | "ProfileMode"
-  | "IntegrationMode"
-  | "GoalManagerMode"
-  | "ApiMode"
-  | "CollectionsMode"
-  | "TutorialMode";
+import DashMenu from "./DashMenu.tsx";
 
 export const Dashboard = () => {
   const theme = useTheme(); // i should use this
@@ -77,13 +80,18 @@ export const Dashboard = () => {
     isEmployee ? "MyGoalsMode" : "GoalManagerMode"
   );
 
+  const [selectedMode, setSelectedMode] = useState<DashboardModeType>(
+    isEmployee ? "MyGoalsMode" : "GoalManagerMode"
+  );
+
   // const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const handleMenuItemClick = (mode: DashboardModeType) => () => {
-    setDashboardMode(mode);
+  const handleMenuClick = (mode: DashboardModeType) => {
+    setSelectedMode(mode);
+    setDashboardMode(mode); // ✅ now the render logic responds!
     setDrawerOpen(false);
   };
 
-  const toggleDrawer = 
+  const toggleDrawer =
     (open: boolean) => (event: React.MouseEvent | React.KeyboardEvent) => {
       if (
         event.type === "keydown" &&
@@ -102,18 +110,21 @@ export const Dashboard = () => {
   useEffect(() => {
     const syncCompanyUsers = async () => {
       if (!user?.companyId) return;
-  
+
       const companyId = user.companyId;
-  
+
       // 1. Load cached users from IndexedDB
       const cachedUsers = await getCompanyUsersFromIndexedDB();
       if (cachedUsers && cachedUsers.length > 0) {
         dispatch(setCompanyUsers(cachedUsers)); // Update Redux store
         setLocalUsers(cachedUsers); // Update local state
       }
-  
+
       // 2. Real-time Firestore listener
-      const q = query(collection(db, "users"), where("companyId", "==", companyId));
+      const q = query(
+        collection(db, "users"),
+        where("companyId", "==", companyId)
+      );
       const unsubscribe = onSnapshot(
         q,
         async (snapshot) => {
@@ -124,7 +135,7 @@ export const Dashboard = () => {
                 uid: doc.id,
               } as UserType)
           );
-  
+
           // 3. Update Redux store and IndexedDB if Firestore data changes
           dispatch(setCompanyUsers(usersFromFirestore));
           setLocalUsers(usersFromFirestore);
@@ -134,32 +145,31 @@ export const Dashboard = () => {
           console.error("Error syncing company users:", error);
         }
       );
-  
+
       return () => unsubscribe(); // Cleanup listener
     };
-  
+
     syncCompanyUsers();
   }, [user?.companyId, dispatch]);
 
   useEffect(() => {
     const loadAllCompanyAccounts = async () => {
       if (!user?.companyId || user.role === "employee") return;
-  
+
       const accounts = await fetchAllCompanyAccounts(user.companyId);
       if (!accounts.length) return;
-  
+
       dispatch(setAllAccounts(accounts)); // ⬅️ Save to Redux
-  
+
       try {
         await saveAllCompanyAccountsToIndexedDB(accounts); // ⬅️ Optional: Save for offline use
       } catch (err) {
         console.warn("Could not save accounts to IndexedDB", err);
       }
     };
-  
+
     loadAllCompanyAccounts();
   }, [user?.companyId, user?.role, dispatch]);
-  
 
   return (
     <Container disableGutters maxWidth={false}>
@@ -170,7 +180,12 @@ export const Dashboard = () => {
             <Typography
               variant="h1"
               component="div"
-              sx={{ flexGrow: 1, fontSize: "40px" }}
+              sx={{
+                flexGrow: 1,
+                fontSize: "40px",
+                backgroundColor: "var(--menu-background-color)", // ✅ THEMED
+                color: "var(--text-color)",
+              }}
             >
               Dashboard
             </Typography>
@@ -188,84 +203,14 @@ export const Dashboard = () => {
         </AppBar>
       </Box>
 
-      <Drawer
-        anchor="left"
+      <DashMenu
         open={drawerOpen}
-        onClose={toggleDrawer(false)}
-        variant={isLargeScreen ? "permanent" : "temporary"} // Toggle the variant based on screen size
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: drawerWidth,
-            boxSizing: "border-box",
-          },
-        }}
-      >
-        <List>
-          {/* General Items */}
-          <ListSubheader
-            sx={{ backgroundColor: "inherit", fontWeight: "bold" }}
-          >
-            General
-          </ListSubheader>
-          <ListItemButton onClick={() => navigate("/user-home-page")}>
-            <ListItemText primary="Home" />
-          </ListItemButton>
-          <ListItemButton onClick={handleMenuItemClick("MyGoalsMode")}>
-            <ListItemText primary="My Goals" />
-          </ListItemButton>
-          <ListItemButton onClick={handleMenuItemClick("ProfileMode")}>
-            <ListItemText primary="Profile" />
-          </ListItemButton>
-          <ListItemButton onClick={handleMenuItemClick("CollectionsMode")}>
-            <ListItemText primary="Collections" />
-          </ListItemButton>
-          <ListItemButton onClick={handleMenuItemClick("TutorialMode")}>
-            <ListItemText primary="Tutorial" />
-          </ListItemButton>
-
-          {/* Admin Items */}
-          <Box
-            sx={{
-              opacity: isEmployee ? 0.4 : 1, // Visually dim for employees
-              pointerEvents: isEmployee ? "none" : "auto", // Disable clicks for employees
-              backgroundColor: "lightblue",
-              paddingY: 1, // Add vertical padding for spacing
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontWeight: "bold",
-                color: "black",
-                paddingLeft: "16px", // Match ListItem padding
-                paddingBottom: "4px",
-              }}
-            >
-              Admin
-            </Typography>
-
-            <ListItemButton onClick={handleMenuItemClick("TeamMode")}>
-              <ListItemText primary="Teams" />
-            </ListItemButton>
-            <ListItemButton onClick={handleMenuItemClick("AccountsMode")}>
-              <ListItemText primary="Accounts" />
-            </ListItemButton>
-            <ListItemButton onClick={handleMenuItemClick("UsersMode")}>
-              <ListItemText primary="Users" />
-            </ListItemButton>
-            <ListItemButton onClick={handleMenuItemClick("GoalManagerMode")}>
-              <ListItemText primary="Goal Manager" />
-            </ListItemButton>
-          </Box>
-
-          {/* Logout */}
-          <ListItem>
-            <LogOutButton />
-          </ListItem>
-        </List>
-      </Drawer>
+        onClose={() => setDrawerOpen(false)}
+        variant={isLargeScreen ? "permanent" : "temporary"}
+        onMenuClick={handleMenuClick}
+        isEmployee={isEmployee}
+        selectedMode={selectedMode} // ✅ pass current selection
+      />
 
       <Box
         sx={{
@@ -279,7 +224,7 @@ export const Dashboard = () => {
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
-        {dashboardMode === "MyGoalsMode" && <MyGoals/>}
+        {dashboardMode === "MyGoalsMode" && <MyGoals />}
         {dashboardMode === "UsersMode" && (
           <EmployeesViewer
             localUsers={localUsers}
@@ -287,7 +232,9 @@ export const Dashboard = () => {
           />
         )}
         {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
-        {dashboardMode === "GoalManagerMode" && <GoalManager companyId={companyId} />}
+        {dashboardMode === "GoalManagerMode" && (
+          <GoalManager companyId={companyId} />
+        )}
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>

@@ -30,6 +30,7 @@ import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import getCompanyAccountId from "../utils/helperFunctions/getCompanyAccountId";
 import { getDocs } from "@firebase/firestore";
+import './accountsManager.css'
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -243,13 +244,14 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   );
 
   return (
-    <Box>
+    <Box className="account-manager-container account-manager">
       <Typography variant="h2" gutterBottom>
         Accounts Manager
       </Typography>
       {(isAdmin || isSuperAdmin) && (
         <>
           <Button
+            className="account-submit-button"
             variant="contained"
             component="label"
             sx={{ marginBottom: 2 }}
@@ -286,6 +288,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       )}
 
       <TextField
+        className="account-search-field"
         label="Search Account"
         variant="outlined"
         fullWidth
@@ -377,7 +380,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       />
 
       <TableContainer component={Paper} sx={{ marginTop: 3 }}>
-        <Table>
+        <Table className="account-table" aria-label="simple table">
           <TableHead>
             <TableRow>
               <TableCell>Account Number</TableCell>
@@ -405,6 +408,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                   </TableCell>
                   <TableCell>
                     <Button
+                      className="account-edit-button"
                       variant="text"
                       color="primary"
                       onClick={() => handleEditAccount(account)}

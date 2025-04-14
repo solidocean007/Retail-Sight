@@ -1,0 +1,20 @@
+
+.menu-section-admin {
+  padding: 8px;
+  background-color: var(--menu-background-color);
+}
+
+.menu-section-admin.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.Mui-selected {
+  background-color: var(--button-background-hover) !important;
+  color: var(--button-text-color);
+}
+
+.Mui-selected:hover {
+  background-color: var(--button-background) !important;
+}
+
