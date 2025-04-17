@@ -13,6 +13,9 @@ import {
   Box,
   TextField,
   Grid,
+  FormControl,
+  RadioGroup,
+  Radio,
 } from "@mui/material";
 import {
   CompanyGoalType,
@@ -21,6 +24,7 @@ import {
 } from "../../utils/types";
 import AccountMultiSelector from "./AccountMultiSelector";
 import UserMultiSelector from "./UserMultiSelector";
+import isEqual from "lodash.isequal";
 import "./editCompanyGoalModal.css";
 
 interface EditCompanyGoalModalProps {
@@ -28,7 +32,7 @@ interface EditCompanyGoalModalProps {
   onClose: () => void;
   goal: CompanyGoalType;
   allAccounts: CompanyAccountType[];
-  companyUsers: UserType[] | null;
+  companyUsers: UserType[];
   onSave: (updatedGoal: Partial<CompanyGoalType>) => void;
 }
 
@@ -40,9 +44,14 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   companyUsers,
   onSave,
 }) => {
-  const [appliesToAllAccounts, setAppliesToAllAccounts] = useState(
-    goal.appliesToAllAccounts
+
+  const [targetMode, setTargetMode] = useState<CompanyGoalType["targetMode"]>(
+    goal.targetMode ||
+      (goal.appliesToAllAccounts
+        ? "goalForAllAccounts"
+        : "goalForSelectedAccounts")
   );
+
   const [selectedAccounts, setSelectedAccounts] = useState<
     CompanyAccountType[]
   >(goal.accounts || []);
@@ -59,7 +68,6 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const hasSubmissions = false;
 
   useEffect(() => {
-    setAppliesToAllAccounts(goal.appliesToAllAccounts);
     setSelectedAccounts(goal.accounts || []);
     setSelectedUserIds(goal.usersIdsOfGoal || []);
   }, [goal]);
@@ -76,18 +84,66 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     [companyUsers]
   );
 
-  const handleSave = () => {
-    onSave({
-      appliesToAllAccounts,
-      accounts: appliesToAllAccounts ? [] : selectedAccounts,
-      usersIdsOfGoal: selectedUserIds,
+  const updatedGoal: Partial<CompanyGoalType> = useMemo(
+    () => ({
+      appliesToAllAccounts: targetMode === "goalForAllAccounts",
+      targetMode,
+      accounts:
+        targetMode === "goalForSelectedAccounts" ? selectedAccounts : [],
+      usersIdsOfGoal:
+        targetMode === "goalForSelectedUsers" ? selectedUserIds : [],
       goalTitle,
       goalDescription,
       goalMetric,
       goalValueMin,
       goalStartDate,
       goalEndDate,
-    });
+    }),
+    [
+      targetMode,
+      selectedAccounts,
+      selectedUserIds,
+      goalTitle,
+      goalDescription,
+      goalMetric,
+      goalValueMin,
+      goalStartDate,
+      goalEndDate,
+    ]
+  );
+
+  const currentGoalComparable = useMemo(
+    () => ({
+      appliesToAllAccounts: goal.appliesToAllAccounts,
+      targetMode:
+        goal.targetMode ||
+        (goal.appliesToAllAccounts
+          ? "goalForAllAccounts"
+          : "goalForSelectedAccounts"),
+      accounts: goal.accounts || [],
+      usersIdsOfGoal: goal.usersIdsOfGoal || [],
+      goalTitle: goal.goalTitle,
+      goalDescription: goal.goalDescription,
+      goalMetric: goal.goalMetric,
+      goalValueMin: goal.goalValueMin,
+      goalStartDate: goal.goalStartDate,
+      goalEndDate: goal.goalEndDate,
+    }),
+    [goal]
+  );
+
+  const isModified = useMemo(
+    () => !isEqual(updatedGoal, currentGoalComparable),
+    [updatedGoal, currentGoalComparable]
+  );
+
+  const handleSave = () => {
+    if (!isModified) {
+      alert("No changes detected.");
+      return;
+    }
+
+    onSave(updatedGoal);
     onClose();
   };
 
@@ -165,19 +221,43 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
           </Typography>
         )}
 
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => setAppliesToAllAccounts(!appliesToAllAccounts)}
-          disabled={hasSubmissions}
-          sx={{ mb: 2 }}
-        >
-          {appliesToAllAccounts
-            ? "Limit to Specific Accounts"
-            : "Apply to All Accounts"}
-        </Button>
+        <FormControl component="fieldset" sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            Target Audience
+          </Typography>
+          <RadioGroup
+            value={targetMode}
+            onChange={(e) =>
+              setTargetMode(e.target.value as CompanyGoalType["targetMode"])
+            }
+            row
+          >
+            <FormControlLabel
+              value="goalForAllAccounts"
+              control={<Radio />}
+              label="All Accounts"
+            />
+            <FormControlLabel
+              value="goalForSelectedAccounts"
+              control={<Radio />}
+              label="Selected Accounts"
+            />
+            <FormControlLabel
+              value="goalForSelectedUsers"
+              control={<Radio />}
+              label="Selected Users"
+            />
+          </RadioGroup>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            {targetMode === "goalForAllAccounts"
+              ? "This goal will apply to every account in the company."
+              : targetMode === "goalForSelectedAccounts"
+              ? "Choose specific accounts that this goal applies to."
+              : "Select which users are responsible for this goal."}
+          </Typography>
+        </FormControl>
 
-        {!appliesToAllAccounts && (
+        {targetMode === "goalForSelectedAccounts" && (
           <AccountMultiSelector
             allAccounts={allAccounts}
             selectedAccounts={selectedAccounts}
@@ -185,16 +265,23 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
           />
         )}
 
-        <UserMultiSelector
-          users={normalizedCompanyUsers}
-          selectedUserIds={selectedUserIds}
-          setSelectedUserIds={setSelectedUserIds}
-        />
+        {targetMode === "goalForSelectedUsers" && (
+          <UserMultiSelector
+            users={normalizedCompanyUsers}
+            selectedUserIds={selectedUserIds}
+            setSelectedUserIds={setSelectedUserIds}
+          />
+        )}
       </DialogContent>
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" color="primary">
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          color="primary"
+          disabled={!isModified}
+        >
           Save
         </Button>
       </DialogActions>

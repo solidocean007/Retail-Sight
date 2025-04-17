@@ -48,7 +48,7 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const companyUsers = useSelector(selectCompanyUsers);
+  const companyUsers = useSelector(selectCompanyUsers) || [];
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSubmitted, setFilterSubmitted] = useState<

@@ -90,6 +90,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalType>();
   const userRole = useSelector(selectUser)?.role;
+  const userId = useSelector(selectUser)?.uid;
   const isAdmin = userRole === "admin" || userRole === "super-admin";
   // const isEmployee = userRole === "employee";
   const companyId = useSelector(
@@ -122,7 +123,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
   const usersActiveCompanyGoals = getActiveCompanyGoalsForAccount(
     post.accountNumber,
-    usersCompanyGoals
+    usersCompanyGoals,
+    userId,
   );
   console.log(usersActiveCompanyGoals)
 

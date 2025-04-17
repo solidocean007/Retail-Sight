@@ -11,7 +11,10 @@ export function getEffectiveAccounts(
   goal: CompanyGoalType,
   allAccounts: CompanyAccountType[]
 ): CompanyAccountType[] {
-  switch (goal.targetMode) {
+  switch (
+    goal.targetMode ||
+    (goal.appliesToAllAccounts ? "goalForAllAccounts" : undefined)
+  ) {
     case "goalForAllAccounts":
       return allAccounts;
     case "goalForSelectedAccounts":

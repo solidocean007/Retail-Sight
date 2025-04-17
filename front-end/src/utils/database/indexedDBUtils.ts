@@ -805,7 +805,7 @@ export const saveAllCompanyAccountsToIndexedDB = async (
 
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
-      console.log("All company accounts saved to IndexedDB successfully.");
+      // console.log("All company accounts saved to IndexedDB successfully.");
       resolve();
     };
 
@@ -916,7 +916,7 @@ export const saveGoalsToIndexedDB = async (
 
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
-      console.log(`${goalType} saved to IndexedDB successfully.`);
+      // console.log(`${goalType} saved to IndexedDB successfully.`);
       resolve();
     };
 
@@ -1077,7 +1077,7 @@ export const clearSomeGalloGoalsFromIndexedDB = async (goalIds: string[]): Promi
 export const clearGoalsFromIndexedDB = async (
   goalType: "galloGoals" | "companyGoals" | "allGalloGoals" | "allCompanySpecificGoals" = "galloGoals"
 ): Promise<void> => {
-  console.log(`Clearing goals from store: ${goalType}`);
+  // console.log(`Clearing goals from store: ${goalType}`);
   const db = await openDB();
 
   if (!db.objectStoreNames.contains(goalType)) {
@@ -1090,7 +1090,7 @@ export const clearGoalsFromIndexedDB = async (
 
   try {
     await store.clear();
-    console.log(`Cleared all entries from ${goalType} in IndexedDB.`);
+    // console.log(`Cleared all entries from ${goalType} in IndexedDB.`);
   } catch (error) {
     console.error(`Error clearing ${goalType} from IndexedDB:`, error);
     throw error; // Rethrow error for caller to handle

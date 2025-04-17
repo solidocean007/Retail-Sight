@@ -294,23 +294,34 @@ export const selectUsersGalloGoals = createSelector(
 );
 
 // Memoized Selector for User-Specific Goals
-export const selectUsersCompanyGoals = createSelector(
-  [
-    selectAllCompanyGoals,
-    (state: RootState, salesRouteNum: string | undefined) => salesRouteNum || "",
-  ],
-  (companyGoals, salesRouteNum) =>
-    companyGoals.filter(
-      (goal) =>
-        goal.appliesToAllAccounts || // future support
-        (Array.isArray(goal.accounts) &&
-          goal.accounts.some((account) =>
-            Array.isArray(account.salesRouteNums)
-              ? account.salesRouteNums.includes(salesRouteNum)
-              : account.salesRouteNums === salesRouteNum
-          ))
-    )
-);
+export const selectUsersCompanyGoals = (state: RootState, salesRouteNum?: string) => {
+  const allGoals = state.goals.companyGoals;
+
+  const userId = state.user.currentUser?.uid;
+  if (!userId) return [];
+
+  return allGoals.filter((goal) => {
+    // Mode 1: Applies to all accounts
+    if (goal.appliesToAllAccounts) return true;
+
+    // Mode 2: Specific accounts match user's route
+    const matchesRoute =
+      goal.targetMode === "goalForSelectedAccounts" &&
+      Array.isArray(goal.accounts) &&
+      goal.accounts.some((acc) =>
+        acc.salesRouteNums?.includes(salesRouteNum || "")
+      );
+
+    // Mode 3: Specific user is listed
+    const matchesUser =
+      goal.targetMode === "goalForSelectedUsers" &&
+      Array.isArray(goal.usersIdsOfGoal) &&
+      goal.usersIdsOfGoal.includes(userId);
+
+    return matchesRoute || matchesUser;
+  });
+};
+
 
 
 export default goalsSlice.reducer;

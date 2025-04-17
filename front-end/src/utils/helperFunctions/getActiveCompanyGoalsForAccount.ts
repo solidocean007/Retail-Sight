@@ -3,7 +3,8 @@ import { CompanyGoalType } from "../types";
 
 export const getActiveCompanyGoalsForAccount = (
   accountNumber: string | null | undefined,
-  goals: CompanyGoalType[]
+  goals: CompanyGoalType[],
+  userId?: string
 ): CompanyGoalType[] => {
   if (!accountNumber) return [];
 
@@ -17,7 +18,7 @@ export const getActiveCompanyGoalsForAccount = (
   };
 
   return goals.filter((goal) => {
-    const { accounts, appliesToAllAccounts, goalStartDate, goalEndDate } = goal;
+    const { accounts, appliesToAllAccounts, goalStartDate, goalEndDate, targetMode, usersIdsOfGoal } = goal;
 
     const isMatchingAccount =
       appliesToAllAccounts ||
@@ -26,14 +27,16 @@ export const getActiveCompanyGoalsForAccount = (
           String(account.accountNumber) === String(accountNumber)
         ));
 
+    const isMatchingUser =
+      targetMode === "goalForSelectedUsers" &&
+      Array.isArray(usersIdsOfGoal) &&
+      usersIdsOfGoal.includes(userId || "");
+
     const start = parseDate(goalStartDate);
     const end = parseDate(goalEndDate);
     const isWithinDateRange = start && end && start <= today && end >= today;
 
-    return isMatchingAccount && isWithinDateRange;
+    return (isMatchingAccount || isMatchingUser) && isWithinDateRange;
   });
 };
-
-
-
 
