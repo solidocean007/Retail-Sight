@@ -166,7 +166,7 @@ const CreateCompanyGoalView = () => {
       };
 
       // Use the abstracted function
-      await createCompanyGoal(newGoal);
+      await createCompanyGoal(newGoal); // 'appliesToAllAccounts' is declared here.
 
       alert("Goal created successfully!");
       setGoalTitle("");

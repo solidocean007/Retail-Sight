@@ -1,4 +1,4 @@
-// GoalIntegrationLayout.tsx
+// GoalManager.tsx
 import {
   Box,
   Tabs,
@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import CreateGalloGoalView from "./CreateGalloGoalView";
 import CreateCompanyGoalView from "./CreateCompanyGoalView";
-import AllGoalsLayout from "./GoalTabsContainer";
+import AllGoalsLayout from "./AllGoalsLayout";
 import { useState } from "react";
 import NewCreateCompanyGoalView from "./NewCreateCompanyGoalView";
 

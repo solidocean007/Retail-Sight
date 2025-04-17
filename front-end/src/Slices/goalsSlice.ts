@@ -15,9 +15,11 @@ import {
 import { RootState } from "../utils/store";
 import {
   collection,
+  doc,
   getDocs,
   onSnapshot,
   query,
+  updateDoc,
   where,
 } from "@firebase/firestore";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
@@ -182,6 +184,24 @@ export const fetchAllCompanyGoals = createAsyncThunk<
     return rejectWithValue(
       "An unknown error occurred while fetching company goals."
     );
+  }
+});
+
+export const updateCompanyGoalInFirestore = createAsyncThunk<
+  void,
+  { goalId: string; updatedFields: Partial<CompanyGoalType> },
+  { rejectValue: string }
+>("goals/updateCompanyGoal", async ({ goalId, updatedFields }, { rejectWithValue }) => {
+  console.log("Updating company goal:", goalId, updatedFields);
+  try {
+    const goalRef = doc(db, "companyGoals", goalId);
+    await updateDoc(goalRef, updatedFields);
+  } catch (err) {
+    console.error("Error updating company goal:", err);
+    if (err instanceof Error) {
+      return rejectWithValue(err.message);
+    }
+    return rejectWithValue("Unknown error occurred while updating the goal.");
   }
 });
 

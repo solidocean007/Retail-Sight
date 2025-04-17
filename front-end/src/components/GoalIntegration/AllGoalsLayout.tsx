@@ -15,9 +15,9 @@ import AllGalloGoalsView from "./AllGalloGoalsView";
 import "./allGoalsLayout.css";
 import { useSelector } from "react-redux";
 import { selectAllCompanyGoals, selectAllGalloGoals } from "../../Slices/goalsSlice";
-import AdminCompanyGoalsOverview from "../CompanyGoalsStatusSummary";
+import AdminCompanyGoalsOverview from "../AdminCompanyGoalsOverview";
 
-const GoalTabsContainer = ({ companyId }: { companyId: string | undefined }) => {
+const AllGoalsLayout= ({ companyId }: { companyId: string | undefined }) => {
   const [value, setValue] = useState(0);
   const theme = useTheme(); // Correct usage of `useTheme`
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Accessing breakpoints safely
@@ -110,4 +110,4 @@ const GoalTabsContainer = ({ companyId }: { companyId: string | undefined }) => 
   );
 };
 
-export default GoalTabsContainer;
+export default AllGoalsLayout;

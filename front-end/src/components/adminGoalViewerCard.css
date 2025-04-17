@@ -1,0 +1,8 @@
+
+.admin-goal-viewer-card {
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: var(--card-background-color, #f9f9f9);
+}

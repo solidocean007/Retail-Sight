@@ -40,7 +40,7 @@ export type TErrorsOfInputs = {
 };
 
 export interface UserType {
-  role: "admin" | "super-admin" | "employee" | "status-pending" | "developer";
+  role: "admin" | "super-admin" | "employee" | "status-pending" | "developer" | "supervisor";
   uid: string; // from Firebase
   firstName: string | undefined; // from signup
   lastName: string | undefined; // from signup
@@ -235,6 +235,8 @@ export type GalloGoalType = {
   goalBenchValue: string;
 };
 
+export type GoalTargetMode = 'goalForAllAccounts' | 'goalForSelectedAccounts' | 'goalForSelectedUsers';
+
 export type CompanyGoalType = {
   id: string;
   companyId: string;
@@ -245,7 +247,9 @@ export type CompanyGoalType = {
   goalStartDate: string;
   goalEndDate: string;
   appliesToAllAccounts: boolean;
+  targetMode: GoalTargetMode;
   accounts: CompanyAccountType[];
+  usersIdsOfGoal?: string[];
   submittedPosts?: GoalSubmissionType[];
 }
 

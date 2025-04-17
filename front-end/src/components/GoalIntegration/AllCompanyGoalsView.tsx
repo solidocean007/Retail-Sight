@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { selectAllCompanyGoals } from "../../Slices/goalsSlice";
+import {
+  selectAllCompanyGoals,
+  updateCompanyGoalInFirestore,
+} from "../../Slices/goalsSlice";
 import { useSelector } from "react-redux";
 import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
 import { useAppDispatch } from "../../utils/store";
@@ -9,7 +12,8 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
 import { useNavigate } from "react-router-dom";
 import "./allCompanyGoalsView.css";
-import InfoRowCompanyGoal from "./CompanyGoalDetailsCard";
+import CompanyGoalDetailsCard from "./CompanyGoalDetailsCard";
+import { CompanyGoalType } from "../../utils/types";
 
 const AllCompanyGoalsView = ({
   companyId,
@@ -48,6 +52,21 @@ const AllCompanyGoalsView = ({
     }
   };
 
+  const handleEditCompanyGoal = async (
+    goalId: string,
+    updatedFields: Partial<CompanyGoalType>
+  ) => {
+    try {
+      await dispatch(
+        updateCompanyGoalInFirestore({ goalId, updatedFields })
+      ).unwrap();
+      dispatch(showMessage("Goal updated successfully."));
+    } catch (error) {
+      console.error("Error updating goal:", error);
+      dispatch(showMessage("Failed to update goal. Please try again."));
+    }
+  };
+
   return (
     <div className="all-company-goals-container">
       <Typography
@@ -64,11 +83,12 @@ const AllCompanyGoalsView = ({
           // Normalize accounts for rendering
 
           return (
-            <InfoRowCompanyGoal
-              key={index}
+            <CompanyGoalDetailsCard
+              key={goal.id}
               goal={goal}
               mobile={isMobile}
               onDelete={openConfirmationDialog}
+              onEdit={(goalId, updatedFields) => handleEditCompanyGoal(goalId, updatedFields)}
             />
           );
         })}

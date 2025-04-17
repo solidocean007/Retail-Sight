@@ -18,6 +18,7 @@ import useSchemaVersion from "./hooks/useSchemaVersion.ts";
 import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener.ts";
 import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener.ts";
 
+
 function App() {
   useSchemaVersion();
   const dispatch = useAppDispatch();

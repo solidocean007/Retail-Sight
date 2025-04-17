@@ -1,0 +1,118 @@
+/* editCompanyGoalModal.css */
+
+.MuiDialogContent-root {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.account-multi-selector {
+  margin-top: 1rem;
+}
+
+.search-input {
+  margin-bottom: 1rem;
+}
+
+.select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.account-table th,
+.account-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.pagination-control {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.account-selector-scroll-container {
+  max-height: 420px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.account-selector-summary {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .MuiDialogContent-root {
+    max-height: 60vh;
+  }
+
+  .MuiFormControl-root {
+    width: 100%;
+  }
+
+  .MuiGrid-item {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .account-table th,
+  .account-table td {
+    padding: 8px 10px;
+    font-size: 0.875rem;
+  }
+
+  .select-all-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-input input {
+    font-size: 0.9rem;
+  }
+
+  .pagination-control {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .account-selector-scroll-container {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-table th,
+  .account-table td {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+
+  .search-input input {
+    font-size: 0.8rem;
+  }
+}
+
+.MuiDialogContent-root::-webkit-scrollbar {
+  width: 6px;
+}
+
+.MuiDialogContent-root::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.MuiDialogContent-root::-webkit-scrollbar-track {
+  background-color: transparent;
+}
