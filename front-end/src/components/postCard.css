@@ -1,23 +1,47 @@
 .post-card {
-  background-color: var(--post-card-background); /* ✅ theme-based background */
-  color: var(--text-color); /* ✅ ensures dark mode legibility */
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  overflow: visible;
-  position: relative;
-}
-
-.card-content {
-  position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: inherit;
-  padding-top: auto;
-  margin: 0;
   justify-content: space-between;
+  align-items: flex-start;
+  background-color: var(--post-card-background);
+  height: 100%;
+  box-shadow: var(--card-shadow); /* ✅ shadow for depth */
   width: 100%;
+  color: var(--text-color); /* ✅ ensures dark mode legibility */
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius); /* ✅ rounded corners */
+  overflow: visible;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  padding-bottom: 1rem;
 }
+
+ @keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 55%;
+  }
+  50% {
+    background-position: 100% 25%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* .animated-post-card {
+  background: linear-gradient(
+    200deg,
+    rgba(168, 182, 227, 1) 0%,
+    rgba(184, 193, 207, 1) 30%,
+    rgba(195, 198, 224, 1) 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+} */
+
 
 .visibility {
   width: 100%;
@@ -31,7 +55,6 @@
   align-items: center;
   width: 100%;
   padding: 0rem 1rem;
-  height: 100%;
 }
 
 .post-type-quantity {
@@ -42,16 +65,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-
 }
 .description-image {
   display: flex;
   flex-direction: column;
-  /* align-items: center; */
-  /* justify-content: center; */
+  align-items: center;
+  justify-content: center;
   position: relative;
-  /* height: 100%; */
-
+  height: 100%;
+  width: 100%;
 }
 
 .description-image p {
@@ -65,13 +87,6 @@
   width: auto; /* ensures the image scales with its height */
 }
 
-.post-card {
-  border: 1px solid rgba(0, 0, 0, 0.125);
-  /* border-radius: 5px; */
-  overflow: visible;
-  position: relative;
-}
-
 .post-header {
   margin: 0px 2px;
   display: flex;
@@ -79,6 +94,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0px 5px;
+  width: 100%;
 }
 
 .post-header p {
@@ -140,7 +156,7 @@
 }
 
 .share-button-container {
-  position:absolute;
+  position: absolute;
   left: 40%;
 }
 
@@ -149,11 +165,10 @@
   align-items: center;
   justify-content: flex-end;
   height: 1rem;
-
 }
 
 .edit-box {
- max-height: 100%;
+  max-height: 100%;
 }
 
 .view-box {
@@ -233,12 +248,22 @@ h5 {
   margin-left: 4px;
 }
 
-.post-user-name, .user-company-box {
+.post-user-name,
+.user-company-box {
   display: flex;
   align-items: center;
   font-size: medium;
   overflow: hidden;
   /* text-wrap: nowrap; */
+}
+
+.activity-post-image-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 .post-card img.post-image {
@@ -295,10 +320,11 @@ h5 {
 }
 @media (max-width: 670px) {
   .post-card img.post-image {
-    max-height: 450px; 
+    max-height: 450px;
   }
 
-  .post-user-name, .user-company-box {
+  .post-user-name,
+  .user-company-box {
     font-size: small;
   }
 }

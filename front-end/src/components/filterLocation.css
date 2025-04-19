@@ -1,35 +1,16 @@
+/* filterLocation.css — minimal layout-only support */
+
 .location-selection-container {
   display: flex;
   flex-direction: column;
-  max-width: 100%;
-}
-
-.filter-box {
-  width: 100%; /* This sets the width of your form control to 100% of its parent */
-}
-
-#state-multiple-chip-label {
-  margin-right: 20px;
-}
-
-
-.close-box {
-  display: flex;
+  gap: 1rem;
   width: 100%;
-  justify-content: end;
-  padding: 5px;
-  cursor: pointer;
 }
 
 @media (max-width: 1100px) {
-  /* Your styles for tablets */
-  .btn {
-    height: 50px;
-  }
-
   .location-selection-container {
-    display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
- 
 }

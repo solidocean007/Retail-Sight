@@ -1,9 +1,9 @@
-/* sideBar.css — Responsive, Theme-Aware Sidebar */
+/* sideBar.css — Cleaned, Theme-Aware Sidebar Layout Only */
 
 .side-bar-box {
   width: 100%;
   padding: 20px 10px;
-  border-radius: var(--card-radius, 5px);
+  border-radius: var(--card-radius);
   background-color: var(--sidebar-background-color);
   color: var(--text-color);
   height: 100%;
@@ -19,22 +19,22 @@
   justify-content: center;
 }
 
-.location-filter-container,
 .channel-category-box,
+.location-filter-container,
 .clear-apply-button-box {
   width: 60%;
-}
-
-.date-filter-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
 }
 
 .channel-category-box {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.date-filter-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .clear-apply-button-box {
@@ -44,28 +44,8 @@
   padding: 1rem;
 }
 
-/* Button styling */
-.btn {
-  padding: 8px 16px;
-  background-color: var(--button-background);
-  color: var(--button-text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
-}
-
-.btn:hover {
-  background-color: var(--button-background-hover);
-}
-
 /* Mobile/tablet-specific layout adjustments */
 @media (max-width: 1100px) {
-  .btn {
-    height: 50px;
-  }
-
   .channel-category-box {
     flex-direction: row;
     justify-content: center;
@@ -91,3 +71,4 @@
     display: none;
   }
 }
+

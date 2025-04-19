@@ -18,6 +18,15 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
 
   useOutsideAlerter(menuRef, () => setShowMenuTab(false));
 
+  useEffect(() => {
+    const headerBg = getComputedStyle(document.documentElement)
+      .getPropertyValue("--header-background")
+      .trim();
+  
+    console.log("💡 Header background from CSS:", headerBg);
+  }, []);
+  
+
   const goToSignUpLogin = () => {
     navigate("/sign-up-login");
   };

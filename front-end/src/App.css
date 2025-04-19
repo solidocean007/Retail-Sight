@@ -1,10 +1,48 @@
-/* App.css — App-level Layout Styling */
+/* App.css — Global Layout & Button Styling */
 
 .MuiInputBase-root {
   margin: 8px;
   width: 50ch;
   background-color: var(--input-background);
   color: var(--input-text-color);
+}
+
+/* 🎯 Unified Button Styles */
+
+.btn {
+  padding: 10px 20px;
+  background-color: var(--primary-button-bg);
+  color: var(--button-text-color);
+  border: none;
+  border-radius: var(--card-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: var(--primary-button-hover);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--outlined-button-border);
+  color: var(--text-color);
+  border-radius: var(--card-radius);
+}
+
+.btn-outline:hover {
+  background-color: var(--outlined-button-hover);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-button-bg);
+  color: var(--text-color);
+  border-radius: var(--card-radius);
+}
+
+.btn-secondary:hover {
+  background-color: var(--secondary-button-hover);
 }
 
 /* Sidebar Toggle Visibility */
@@ -29,3 +67,4 @@
     height: 100%;
   }
 }
+

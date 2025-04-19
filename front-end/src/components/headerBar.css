@@ -6,8 +6,11 @@
   justify-content: space-between;
   width: 100%;
   background: var(--header-background);
-  box-shadow: 0 5px 5px rgba(229, 229, 241, 0.5);
+  backdrop-filter: blur(8px);
+  color: var(--header-title);
+  box-shadow: var(--card-shadow);
   padding: 0.2rem 0.5rem;
+  border-radius: var(--card-radius);
 }
 
 .website-title {

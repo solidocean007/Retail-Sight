@@ -59,14 +59,12 @@ import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUt
 import DashMenu from "./DashMenu.tsx";
 
 export const Dashboard = () => {
-  const theme = useTheme(); // i should use this
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
-  const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.

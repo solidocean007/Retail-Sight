@@ -7,7 +7,6 @@ body,
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  background: var(--background-body);
   color: var(--text-color);
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -35,14 +34,6 @@ body,
 a {
   font-weight: 500;
   text-decoration: inherit;
-  color: blue;
-}
-
-[data-theme="dark"] a {
-  color: var(--text-color);
-}
-[data-theme="dark"] a:hover {
-  color: var(--button-text-color);
 }
 
 h1 {
@@ -54,17 +45,6 @@ ul, ol {
   margin: 0;
   padding: 0;
 }
-
-[data-theme="dark"] h1,
-[data-theme="dark"] h2,
-[data-theme="dark"] h3,
-[data-theme="dark"] h4,
-[data-theme="dark"] h5,
-[data-theme="dark"] h6,
-[data-theme="dark"] p {
-  color: var(--text-color);
-}
-
 
 
 /* Mobile devices */

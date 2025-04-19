@@ -89,7 +89,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return window.innerHeight * 0.95;
   };
 
-
   useEffect(() => {
     // Whenever activePostSet changes, scroll to the top of the list
     listRef.current?.scrollTo(0);
@@ -112,28 +111,29 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   }, []);
 
   // Function to get the dynamic height of each item
-  const getItemSize = (index: number) => {
-    const gapSize = 0;
-    // Determine if the current index is an ad
-    const isAdPosition = adsOn && (index + 1) % AD_INTERVAL === 0;
+  const ITEM_GAP = 8;
 
-    if (isAdPosition) {
-      return adsOn ? 200 + gapSize : 0;
-    }
-    return getActivityItemHeight(windowWidth) + gapSize;
+  const getItemSize = (index: number) => {
+    // const baseHeight = getActivityItemHeight(windowWidth);
+    // const isAdPosition = adsOn && (index + 1) % AD_INTERVAL === 0;
+    // return isAdPosition ? 200 + ITEM_GAP : baseHeight + ITEM_GAP;
+    return getActivityItemHeight(windowWidth) + ITEM_GAP;
+
   };
 
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 500) {
       // return 720;
       // return 620;
-      return 675;
+      return 700;
+    } else if (windowWidth <= 600) {
+      return 750;
     } else if (windowWidth <= 700) {
-      return 800;
+      return 750;
     } else if (windowWidth <= 800) {
-      return 850;
+      return 800;
     } else if (windowWidth <= 900) {
-      return 925;
+      return 850;
     } else {
       return 900;
     }
@@ -217,46 +217,46 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     const isAdPosition = adsOn && index % AD_INTERVAL === 0;
 
-    const modifiedStyle: React.CSSProperties = {
+    // REMOVE any marginBottom/height here — it's not respected properly
+    const wrapperStyle: React.CSSProperties = {
       ...style,
-      marginBottom: "10px",
-      backgroundColor: "transparent",
-      borderRadius: "5px",
+      paddingBottom: `${ITEM_GAP}px`, // this space is within the fixed height
+      boxSizing: "border-box",
     };
 
     if (isAdPosition) {
-      // return <AdComponent key={`ad-${index}`} style={style} adsOn={adsOn} />; // Property 'style' does not exist on type 'IntrinsicAttributes & AdComponentProps'
+      return <div style={wrapperStyle}>{/* Your AdComponent here */}</div>;
     } else if (postIndex < posts.length) {
       const postWithID = posts[postIndex];
 
       return (
-        <PostCardRenderer
-          key={postWithID.id}
-          currentUserUid={currentUser?.uid}
-          index={index}
-          style={modifiedStyle}
-          data={{ post: postWithID, getPostsByTag, getPostsByStarTag }}
-          setCurrentHashtag={setCurrentHashtag}
-          setActivePostSet={setActivePostSet}
-          setIsSearchActive={setIsSearchActive}
-        />
+        <div style={wrapperStyle}>
+          <PostCardRenderer
+            key={postWithID.id}
+            currentUserUid={currentUser?.uid}
+            index={index}
+            style={{ height: "100%" }} // Make post take full height
+            data={{ post: postWithID, getPostsByTag, getPostsByStarTag }}
+            setCurrentHashtag={setCurrentHashtag}
+            setActivePostSet={setActivePostSet}
+            setIsSearchActive={setIsSearchActive}
+          />
+        </div>
       );
     } else {
-      return null; // For out of bounds index
+      return null;
     }
   };
 
-  
-  if(loading || loadingMore){
-    return (
-      <CircularProgress />
-    )
+  if (loading || loadingMore) {
+    return <CircularProgress />;
   }
 
-  {posts.length === 0 && clearSearch && (
-    <NoResults onClearFilters={clearSearch} />
-  )}
-  
+  {
+    posts.length === 0 && clearSearch && (
+      <NoResults onClearFilters={clearSearch} />
+    );
+  }
 
   return (
     <div className="activity-feed-box">
@@ -281,7 +281,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         itemCount={itemCount}
         itemSize={getItemSize}
         // width={getListWidth()}
-        width='100%'
+        width="100%"
         onItemsRendered={handleItemsRendered}
         itemData={{
           posts: posts,

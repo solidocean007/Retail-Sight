@@ -6,11 +6,14 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  padding: 1rem;
+  background-color: var(--background-body);
 }
 
 .header-bar-container {
   display: flex;
   justify-content: center;
+  /* margin: 0 1rem; */
   width: 100%;
 }
 
@@ -18,13 +21,18 @@
   display: flex;
   flex-direction: row;
   justify-content: space-around;
-  padding-bottom: 5px;
+  background-color: var(--background-body); /* Add this */
+  /* padding: 1rem; */
   width: 100%;
 }
 
 .activity-feed-container {
+  background-color: var(--post-card-background); /* Use post-card-style bg */
+  color: var(--text-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow); /* Optional for depth */
   margin-top: 15px;
-  padding: 0 10px;
+  /* padding: 0 10px; */
   width: 100%;
 }
 
@@ -51,7 +59,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.4); /* Consider token: var(--drawer-background) + opacity */
   z-index: 10;
   justify-content: center;
   align-items: center;
