@@ -230,7 +230,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       const postWithID = posts[postIndex];
 
       return (
-        <div style={wrapperStyle}>
+        <div  className="post-card-renderer-container"style={wrapperStyle}>
           <PostCardRenderer
             key={postWithID.id}
             currentUserUid={currentUser?.uid}

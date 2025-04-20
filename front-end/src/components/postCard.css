@@ -16,7 +16,7 @@
   padding-bottom: 1rem;
 }
 
- @keyframes gradientShift {
+@keyframes gradientShift {
   0% {
     background-position: 0% 50%;
   }
@@ -42,7 +42,6 @@
   animation: gradientShift 12s ease infinite;
 } */
 
-
 .visibility {
   width: 100%;
   display: flex;
@@ -66,6 +65,7 @@
   justify-content: center;
   align-items: center;
 }
+
 .description-image {
   display: flex;
   flex-direction: column;
@@ -149,11 +149,11 @@
   margin-left: 4px;
 }
 
-.user-company-box a,
+/* .user-company-box a,
 .post-user-name a {
   margin-left: 4px;
   color: var(--button-background); /* ✅ visually distinct clickable links */
-}
+} */
 
 .share-button-container {
   position: absolute;
@@ -180,15 +180,6 @@
   width: 100%;
 }
 
-/* .likes-box {
-  position: absolute;
-  left: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 5px;
-} */
-
 .like-button {
   background-color: transparent;
   border: none;
@@ -203,7 +194,10 @@
   box-shadow: none;
 }
 
-h5 {
+.store-address-box h5,
+.store-name-number h5,
+.created-On-Behalf h5,
+.likes-box h5 {
   margin: 0px;
 }
 

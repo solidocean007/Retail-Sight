@@ -320,15 +320,11 @@ const PostCard: React.FC<PostCardProps> = ({
                   </a>
                 </p>
               </div>
-              {createdOnBehalf && <h5>Created by: {post.postCreatedBy}</h5>}
+              <div className="created-On-Behalf">
+                {createdOnBehalf && <h5>Created by: {post.postCreatedBy}</h5>}
+              </div>
               <div className="user-company-box">
-                <p>
-                  company:{" "}
-                  <a href="#" onClick={(e) => e.preventDefault()}>
-                    {/* create a onCompanyNameClick */}
-                    {post.postUserCompany}
-                  </a>
-                </p>
+                <p>company: {post.postUserCompany}</p>
               </div>
             </div>
           </div>
