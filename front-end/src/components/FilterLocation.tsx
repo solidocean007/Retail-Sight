@@ -62,6 +62,7 @@ const FilterLocation = () => {
       <FormControl fullWidth>
         <InputLabel id="state-multiple-chip-label">State</InputLabel>
         <Select
+          className="btn-outline"
           open={stateSelectOpen}
           onOpen={() => setStateSelectOpen(true)}
           onClose={() => setStateSelectOpen(false)}

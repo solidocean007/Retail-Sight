@@ -39,13 +39,13 @@
 }
 
 /* Cards */
-.list-card {
+.list-container {
   width: 400px;
   margin-bottom: 20px;
   height: 900px;
   background-color: var(--post-card-background);
   color: var(--text-color);
-  border-radius: var(--card-radius);
+  /* border-radius: var(--card-radius); */
   box-shadow: var(--card-shadow);
 }
 

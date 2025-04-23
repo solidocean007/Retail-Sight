@@ -320,14 +320,14 @@ const SideBar: React.FC<SideBarProps> = ({
       </div>
       <div className="clear-apply-button-box">
         <button
-          className="btn"
+          className="btn-outline"
           color="secondary"
           onClick={handleClearFiltersClick}
         >
           Clear Filters
         </button>
         <button
-          className="btn"
+          className="btn-outline"
           color="primary"
           onClick={handleApplyFiltersClick}
           disabled={isApplyDisabled}

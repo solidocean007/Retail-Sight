@@ -28,17 +28,16 @@ const CustomAccordion = <T extends string>({
 
   return (
     <div className="custom-accordion" ref={wrapperRef}>
-      <button className="accordion-summary" onClick={toggleAccordion}>
+      <button className="accordion-summary btn-outline" onClick={toggleAccordion}>
+      {/* <button className="accordion-summary btn-outline" onClick={toggleAccordion}> */}
         <h3>{title}</h3>
-        {/* {selected.length <= 2 ? (
-          selected.map((value: string, index: number) => (
-            <span key={index}>{value} </span>
-          ))
-        ) : (
-          <span>
-            {selected.slice(0, 2).join(", ")} and {selected.length - 2} more
-          </span>
-        )} */} <h4 style={{marginLeft: "1rem"}}>{selected.length > 0 ? (<h4>{selected.length} {title}</h4>) : null} </h4> 
+        <h4 style={{ marginLeft: "1rem" }}>
+          {selected.length > 0 ? (
+            <h4>
+              {selected.length} {title}
+            </h4>
+          ) : null}{" "}
+        </h4>
       </button>
       {isActive && (
         <div className={`accordion-details ${isActive ? "open" : ""}`}>
@@ -48,7 +47,11 @@ const CustomAccordion = <T extends string>({
             </button>
           </div>
           {options.map((option: T) => (
-            <div className="accordion-option" key={option} onClick={() => toggleOption(option)}>
+            <div
+              className="accordion-option"
+              key={option}
+              onClick={() => toggleOption(option)}
+            >
               <Checkbox
                 checked={selected.includes(option)}
                 onChange={() => {}}

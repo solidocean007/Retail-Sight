@@ -10,11 +10,11 @@
 }
 
 .Mui-selected {
-  background-color: var(--button-background-hover) !important;
+  background-color: var(--button-background-hover);
   color: var(--button-text-color);
 }
 
 .Mui-selected:hover {
-  background-color: var(--button-background) !important;
+  background-color: var(--button-background);
 }
 

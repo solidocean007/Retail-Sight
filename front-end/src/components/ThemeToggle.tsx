@@ -1,38 +1,45 @@
 // front-end/src/components/ThemeToggle.tsx
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import "./themeToggle.css";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../actions/themeActions";
 import Switch from "@mui/material/Switch";
 import Fab from "@mui/material/Fab";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
-import { RootState } from "../utils/store";
 import { LightMode } from "@mui/icons-material";
+import { RootState } from "../utils/store";
 
 export const ThemeToggle: React.FC = () => {
   const dispatch = useDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
+
 
   const handleToggleClick = () => {
-    setIsDrawerOpen(!isDrawerOpen);
+    setIsDrawerOpen((prev) => !prev);
   };
 
-  // ThemeToggle.tsx
   const handleThemeChange = () => {
-    const newIsDarkMode = !isDarkMode; // Determine the new theme value
+    const newIsDarkMode = !isDarkMode;
     dispatch(toggleTheme());
-  
-    // Update the body's data-theme attribute
     document.body.setAttribute("data-theme", newIsDarkMode ? "dark" : "light");
-  
-    // Save the theme preference to localStorage
-    localStorage.setItem('theme', newIsDarkMode ? 'dark' : 'light');
-  
+    localStorage.setItem("theme", newIsDarkMode ? "dark" : "light");
     setIsDrawerOpen(false);
   };
 
-  const drawerColor = isDarkMode ? 'var(--drawer-color-dark)' : 'var(--drawer-color-light)';
+  // 🧠 UseMemo to re-read CSS variable after render based on isDarkMode
+  const drawerColor = useMemo(() => {
+    return getComputedStyle(document.body)
+      .getPropertyValue("--drawer-background")
+      .trim();
+  }, [isDarkMode]);
 
+  const switchColor = useMemo(() => {
+    return getComputedStyle(document.body)
+      .getPropertyValue("--switch-color")
+      .trim();
+  }, [isDarkMode]);
 
   return (
     <div
@@ -40,24 +47,22 @@ export const ThemeToggle: React.FC = () => {
         position: "fixed",
         bottom: "2rem",
         right: "1.5rem",
-        zIndex: "20",
+        zIndex: 20,
       }}
     >
       <Fab
-        color='info'
+        color="info"
         aria-label="settings"
         onClick={handleToggleClick}
         sx={{
           position: "fixed",
-          bottom: { xs: "1rem", sm: "2rem" }, // smaller on xs screens
-          right: { xs: "1rem", sm: "1.5rem" }, // smaller on xs screens
-          zIndex: "20",
-          // You can also adjust the size if needed:
-          width: { xs: "40px", sm: "56px" }, // example sizes
-          height: { xs: "40px", sm: "56px" }, // example sizes
+          bottom: { xs: "1rem", sm: "2rem" },
+          right: { xs: "1rem", sm: "1.5rem" },
+          zIndex: 20,
+          width: { xs: "40px", sm: "56px" },
+          height: { xs: "40px", sm: "56px" },
           "& .MuiSvgIcon-root": {
-            // targeting the icon inside the Fab
-            fontSize: { xs: "1.55rem", sm: "2rem" }, // smaller icon on xs screens
+            fontSize: { xs: "1.55rem", sm: "2rem" },
           },
         }}
       >
@@ -66,20 +71,39 @@ export const ThemeToggle: React.FC = () => {
 
       {isDrawerOpen && (
         <div
+          className={`theme-toggle-drawer ${fadeOut ? "fade-out" : ""}`}
           style={{
             backgroundColor: drawerColor,
             position: "fixed",
             bottom: "1rem",
             right: "4rem",
-            // background: "#fff",
             padding: "1rem",
             borderRadius: "0.25rem",
-            display: isDrawerOpen ? "block" : "none", // toggles display based on state
           }}
         >
           <Switch
             checked={isDarkMode}
-            onChange={handleThemeChange}
+            onChange={() => {
+              setFadeOut(true);
+              setTimeout(() => {
+                handleThemeChange();
+                setFadeOut(false);
+              }, 400); // matches fade-out duration
+            }}
+            sx={{
+              "& .MuiSwitch-switchBase": {
+                color: switchColor,
+              },
+              "& .MuiSwitch-track": {
+                backgroundColor: switchColor,
+              },
+              "& .MuiSwitch-switchBase.Mui-checked": {
+                color: switchColor,
+              },
+              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                backgroundColor: switchColor,
+              },
+            }}
           />
         </div>
       )}

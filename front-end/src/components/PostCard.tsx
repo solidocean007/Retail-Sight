@@ -82,6 +82,17 @@ const PostCard: React.FC<PostCardProps> = ({
 
   useOutsideAlerter(menuRef, () => setAnchorEl(null));
 
+  const getAnimatedPostCardGradient = () => {
+    const theme = document.body.getAttribute("data-theme");
+    return getComputedStyle(document.body)
+      .getPropertyValue(
+        theme === "dark"
+          ? "--post-card-animated-gradient-dark"
+          : "--post-card-animated-gradient-light"
+      )
+      .trim();
+  };
+
   // New state for controlling the visibility of the SharePost component
   const [isAddToCollectionModalOpen, setIsAddToCollectionModalOpen] =
     useState(false);
@@ -219,15 +230,16 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <>
-      {/* <Card
-        className="post-card dynamic-height animated-post-card"
+      <Card
+        className="post-card animated-post-card"
         style={{
           ...style,
-          height: "100%",
-          background: "var(--post-card-background)",
+          backgroundImage: getAnimatedPostCardGradient(),
+          backgroundSize: "500% 500%",
+          animation: "gradientShift 10s ease infinite",
         }}
-      > */}
-      <Card
+      >
+        {/* <Card
         className="post-card animated-post-card"
         style={{
           ...style,
@@ -242,7 +254,7 @@ const PostCard: React.FC<PostCardProps> = ({
           backgroundSize: "500% 500%",
           animation: "gradientShift 10s ease infinite",
         }}
-      >
+      > */}
         <div className="post-header">
           <div className="visibility">
             <div className="view-box">

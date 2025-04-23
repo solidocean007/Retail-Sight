@@ -11,20 +11,20 @@
   flex-direction: row;
   font-weight: bold;
   padding: 0.5rem;
-  background-color: #f4f4f4;
+  /* background-color: #f4f4f4; */
   border-bottom: 2px solid #ccc;
   min-width: 700px; /* match account-row */
   align-items: center;
 }
 
-.account-table {
+/* .account-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
-}
+} */
 
 .account-table thead {
-  background-color: #f9fafb;
+  /* background-color: #f9fafb; */
   text-align: left;
   border-bottom: 1px solid #ddd;
 }
@@ -37,16 +37,16 @@
 }
 
 .account-table tr:hover {
-  background-color: #f1faff;
+  /* background-color: #f1faff; */
   transition: background-color 0.2s ease-in-out;
 }
 
 .account-table tr.submitted {
-  background-color: #e6ffed;
+  /* background-color: #e6ffed; */
 }
 
 .account-table tr.not-submitted {
-  background-color: #fff5f5;
+  /* background-color: #fff5f5; */
 }
 
 .account-row {
@@ -55,7 +55,7 @@
   align-items: center;
   padding: 0.5rem;
   border-bottom: 1px solid #eee;
-  background-color: #fff;
+  /* background-color: #fff; */
   min-width: 700px;
 }
 

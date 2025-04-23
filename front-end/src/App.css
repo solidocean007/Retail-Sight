@@ -3,7 +3,7 @@
 .MuiInputBase-root {
   margin: 8px;
   width: 50ch;
-  background-color: var(--input-background);
+  /* background-color: var(--input-background); */
   color: var(--input-text-color);
 }
 
@@ -25,9 +25,10 @@
 }
 
 .btn-outline {
-  background: transparent;
+  background-color: var(--outlined-button-bg);
   border: 2px solid var(--outlined-button-border);
   color: var(--text-color);
+  padding: 1rem;
   border-radius: var(--card-radius);
 }
 
@@ -43,6 +44,32 @@
 
 .btn-secondary:hover {
   background-color: var(--secondary-button-hover);
+}
+
+table {
+  font-family: "Arial", sans-serif;
+  font-size: 14px;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f3f3f3;
+  font-weight: bold;
+}
+
+tr {
+  background-color: #fff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+tr:nth-child(even) {
+  background-color: #fafafa;
 }
 
 /* Sidebar Toggle Visibility */

@@ -22,21 +22,6 @@
   line-height: 1.6;
 } */
 
-button {
-  background-color: #007bff; /* Example button color */
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  margin: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-button:hover {
-  background-color: #0056b3; /* Darker shade for hover effect */
-}
-
 /* Responsive Styles */
 @media (max-width: 768px) {
   .tutorial-container {

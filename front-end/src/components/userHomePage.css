@@ -22,7 +22,7 @@
   flex-direction: row;
   justify-content: space-around;
   background-color: var(--background-body); /* Add this */
-  /* padding: 1rem; */
+  padding-top: 1rem;
   width: 100%;
 }
 
@@ -31,8 +31,6 @@
   color: var(--text-color);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow); /* Optional for depth */
-  margin-top: 15px;
-  /* padding: 0 10px; */
   width: 100%;
 }
 

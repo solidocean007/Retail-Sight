@@ -276,7 +276,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
       <List
         ref={listRef}
-        className="list-card"
+        className="list-container"
         height={listHeight}
         itemCount={itemCount}
         itemSize={getItemSize}

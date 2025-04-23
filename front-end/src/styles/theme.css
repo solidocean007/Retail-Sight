@@ -11,6 +11,8 @@
   --gray-900: #111827;
   --white: #ffffff;
   --black: #000000;
+  --bgColor-muted: #151b23;
+
 
   --primary-blue: #3b82f6;
   --primary-blue-dark: #2563eb;
@@ -51,23 +53,23 @@
   --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
 
   --background-body: var(--gray-300);
-}
 
-/* ============================
-     🌞 Light Theme Assignments
-     ============================ */
-[data-theme="light"] {
+  /* defaults */
   --background-body: var(--gray-300);
   --background-pop-out-body: var(--gray-50);
   --post-card-background: var(--light-blue-card-gradient);
   --header-background: var(--light-blue-card-gradient);
 
+  --dashboard-card: var(--gray-50);
+
   --text-color: var(--gray-900);
   --header-title: var(--gray-900);
 
-  --button-background: var(--primary-blue);
-  --button-background-hover: var(--primary-blue-dark);
+  /* --button-background: white; */
+  --button-background: hsl(255,255,255, 0.5);
+  --button-background-hover: var(--gray-100)
   --button-text-color: var(--white);
+  --outlined-button-border: var(--primary-blue);
 
   --input-background: var(--white);
   --input-text-color: var(--gray-900);
@@ -79,7 +81,89 @@
   --alt-menu-background-color: var(--gray-100);
   --footer-background-color: var(--gray-100);
   --sidebar-background-color: var(--gray-100);
-  --drawer-background: var(--white);
+  --drawer-background: #ffffff;
+  --switch-color: #111827; /* near-black */
+
+  --border-color: var(--gray-200);
+  --sidebar-active-item: var(--primary-blue);
+  --sidebar-hover-bg: #e0edff;
+
+
+  --post-card-animated-gradient-light: linear-gradient(
+    200deg,
+    hsl(226, 77.8%, 52.4%) 0%,
+    rgb(137, 210, 219) 20%,
+    rgb(102, 161, 238) 55%,
+    rgb(79, 90, 190) 70%,
+    rgb(151, 159, 224) 100%
+  );
+
+  --post-card-animated-gradient-dark: linear-gradient(
+    200deg,
+    #0f172a 0%,
+    #1e293b 20%,
+    #334155 55%,
+    #475569 70%,
+    #64748b 100%
+  );
+
+  table {
+    font-family: "Arial", sans-serif;
+    font-size: 14px;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    border: 1px solid var(--gray-300);
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f3f3f3;
+    font-weight: bold;
+  }
+  
+  tr {
+    background-color: #fff;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+}
+
+/* ============================
+     🌞 Light Theme Assignments
+     ============================ */
+[data-theme="light"] {
+  --background-body: var(--gray-300);
+  --background-pop-out-body: var(--gray-50);
+  --post-card-background: var(--light-blue-card-gradient);
+  --header-background: var(--light-blue-card-gradient);
+
+  --dashboard-card: var(--gray-200); 
+
+  --text-color: var(--gray-900);
+  --header-title: var(--gray-900);
+
+  --button-background: transparent;
+  --button-background-hover: var(--gray-800);
+  --button-text-color: var(--text-color);
+
+  --input-background: var(--white);
+  --input-text-color: var(--gray-900);
+  --input-border: var(--gray-200);
+
+  --form-background-color: var(--white);
+
+  --menu-background-color: var(--white);
+  --alt-menu-background-color: var(--gray-100);
+  --footer-background-color: var(--gray-100);
+  --sidebar-background-color: var(--gray-100);
+  --drawer-background: #ffffff;
+  --switch-color: #111827; /* near-black */
 
   --border-color: var(--gray-200);
   --sidebar-active-item: var(--primary-blue);
@@ -94,6 +178,8 @@
   --background-pop-out-body: var(--gray-900);
   --post-card-background: var(--dark-blue-card-gradient);
   --header-background: var(--dark-blue-card-gradient);
+
+  --dashboard-card: var(--bgColor-muted);
 
   --text-color: var(--gray-100);
   --header-title: var(--white);
@@ -112,7 +198,8 @@
   --alt-menu-background-color: var(--gray-900);
   --footer-background-color: var(--gray-800);
   --sidebar-background-color: var(--gray-800);
-  --drawer-background: var(--gray-800);
+  --drawer-background: #2c3148;
+  --switch-color: #facc15; /* yellow */
 
   --border-color: var(--gray-200);
   --sidebar-active-item: var(--primary-blue);

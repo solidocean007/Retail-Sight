@@ -1,0 +1,29 @@
+@keyframes drawerSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(80px, 0px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-10px, -10px);
+  }
+}
+
+@keyframes drawerFadeOut {
+  from {
+    opacity: 1;
+    transform: translate(-10px, -10px);
+  }
+  to {
+    opacity: 0;
+    transform: translate(80px, 0px);
+  }
+}
+
+.theme-toggle-drawer {
+  animation: drawerSlideIn 0.3s ease-out forwards;
+}
+
+.theme-toggle-drawer.fade-out {
+  animation: drawerFadeOut 0.4s ease-in forwards;
+}

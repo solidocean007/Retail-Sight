@@ -87,7 +87,7 @@ export const getTheme = (isDarkMode: boolean) => {
             fontWeight: 600,
           },
           containedPrimary: {
-            backgroundColor: getCssVar("--primary-button-bg", "#111"),
+            backgroundColor: getCssVar("--primary-button-bg", "#444"),
             color: themeVars.buttonTextColor,
             "&:hover": {
               backgroundColor: getCssVar("--primary-button-hover", "#222"),

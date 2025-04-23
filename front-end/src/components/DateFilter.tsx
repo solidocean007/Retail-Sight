@@ -26,6 +26,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ dateRange, onDateChange }) => {
       <div className="start-filter">
         Start Date:
         <input
+          className="btn-outline"
           type="date"
           value={startDateString}
           onChange={(e) =>
@@ -40,6 +41,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ dateRange, onDateChange }) => {
       <div className="end-filter">
         End Date:
         <input
+          className="btn-outline"
           type="date"
           value={endDateString}
           onChange={(e) =>

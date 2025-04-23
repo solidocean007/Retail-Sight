@@ -149,12 +149,6 @@
   margin-left: 4px;
 }
 
-/* .user-company-box a,
-.post-user-name a {
-  margin-left: 4px;
-  color: var(--button-background); /* ✅ visually distinct clickable links */
-} */
-
 .share-button-container {
   position: absolute;
   left: 40%;

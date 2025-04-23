@@ -16,7 +16,7 @@ const CHANNELS: ChannelType[] = ['Grocery', 'Convenience', 'Restaurant', 'Wareho
 const ChannelSelector: React.FC<ChannelSelectorProps> = ({ selectedChannel, onChannelChange }) => {
   return (
     <select 
-      className='channel-category-selector'
+      className='channel-selector'
       title='channel selector'
       value={selectedChannel}
       onChange={(e) => onChannelChange(e.target.value as ChannelType)}
