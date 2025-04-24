@@ -15,7 +15,11 @@ import { Tooltip } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { selectCompanyUsers } from "../Slices/userSlice";
 import UserTableForGoals from "./UserTableForGoals";
-import { calculateSubmissionStats, getEffectiveAccounts, mapAccountsWithStatus } from "./GoalIntegration/utils/goalModeUtils";
+import {
+  calculateSubmissionStats,
+  getEffectiveAccounts,
+  mapAccountsWithStatus,
+} from "./GoalIntegration/utils/goalModeUtils";
 
 interface AdminGoalViewerProps {
   goal: CompanyGoalType;
@@ -124,9 +128,10 @@ const AdminGoalViewerCard: React.FC<AdminGoalViewerProps> = ({
             <UserTableForGoals users={userBasedRows} />
           ) : (
             <AccountTable
-              accounts={accountsWithStatus} // Property 'accountAddress' is missing in type
+              accounts={accountsWithStatus}
               navigate={navigate}
-              // height={isMobileScreen ? 300 : 60}
+              height={500}
+              rowHeight={60}
             />
           )}
         </div>

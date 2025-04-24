@@ -2,19 +2,18 @@
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  background-color: #f9f9f9;
+  background-color: var(--dashboard-card);
   border-radius: 12px;
+  border: 1px solid var(--card-outline);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 1rem;
+  color: var(--text-color);
 }
 
 .info-layout {
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  /* background-color: #fff; */
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .info-layout-row {
@@ -68,13 +67,11 @@
 
 .description-text {
   font-size: 0.95rem;
-  color: #333;
   line-height: 1.4;
 }
 
 .expanded-submissions {
   padding: 1rem;
-  background-color: #fafafa;
   border-top: 1px solid #ccc;
   transition: all 0.3s ease-in-out;
 }
@@ -120,8 +117,6 @@
   flex-direction: row;
   justify-content: flex-start;
   padding: 0.5rem 0 0;
-  /* background-color: #f9f9f9; */
-  /* border-bottom: 1px solid #ddd; */
 }
 
 /* Improve card styling for mobile box */
@@ -142,7 +137,6 @@
 /* Make tab buttons look like tabs */
 .file-tab {
   background-color: #c6bdbd;
-  /* background-color: transparent; */
   margin-right: .5rem;
   border: none;
   padding: 0.5rem 1rem;
@@ -187,7 +181,6 @@
 .title-bold {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #1a237e; /* Rich blue */
   margin-bottom: 0.5rem;
   text-align: left;
   word-break: break-word;
@@ -197,14 +190,12 @@
 .description-label {
   font-weight: 600;
   margin-bottom: 0.25rem;
-  color: #424242;
   font-size: 0.95rem;
 }
 
 /* Description Text */
 .description-text {
   font-size: 1rem;
-  color: #333;
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -231,7 +222,7 @@
 }
 
 .delete-button svg {
-  color: #fff;
+  color: var(--text-color);
 }
 
 

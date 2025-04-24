@@ -12,33 +12,17 @@
 }
 
 .program-row {
-  background-color: #f0f4f8;
   font-weight: bold;
 }
 
-.goal-row {
-  background-color: #e8f5e9;
-}
 
 .goal-cell {
   padding: 1rem;
   border-top: 1px solid #ddd;
 }
 
-.accounts-table {
-  background-color: #f9f9f9;
-}
-
 .spreadsheet-table {
   width: 100%;
-}
-
-.account-row:nth-child(even) {
-  background-color: #f0f0f0;
-}
-
-.account-row td {
-  padding: 0.5rem;
 }
 
 button {

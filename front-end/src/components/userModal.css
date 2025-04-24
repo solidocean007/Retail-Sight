@@ -53,12 +53,7 @@
 }
 
 .user-email a {
-  color: #0077cc; /* Blue color for links */
   text-decoration: none; /* Remove underline */
   transition: color 0.2s ease;
-}
-
-.user-email a:hover {
-  color: #0055aa; /* Darker blue on hover */
 }
 

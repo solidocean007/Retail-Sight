@@ -16,31 +16,31 @@
   padding-bottom: 1rem;
 }
 
+.textured-background {
+  background-image: linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.03) 25%,
+      transparent 25%
+    ),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%);
+  background-size: 20px 20px;
+
+  width: 100%;
+}
+
 @keyframes gradientShift {
   0% {
     background-position: 0% 50%;
   }
   50% {
-    background-position: 100% 55%;
-  }
-  50% {
-    background-position: 100% 25%;
+    background-position: 100% 45%;
   }
   100% {
     background-position: 0% 50%;
   }
 }
-
-/* .animated-post-card {
-  background: linear-gradient(
-    200deg,
-    rgba(168, 182, 227, 1) 0%,
-    rgba(184, 193, 207, 1) 30%,
-    rgba(195, 198, 224, 1) 100%
-  );
-  background-size: 400% 400%;
-  animation: gradientShift 12s ease infinite;
-} */
 
 .visibility {
   width: 100%;

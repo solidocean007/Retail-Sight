@@ -46,6 +46,26 @@
   background-color: var(--secondary-button-hover);
 }
 
+input[type="text"],
+input[type="password"] {
+  background-color: var(--input-background);
+  box-sizing: border-box;
+  max-width: 100%;
+  width: 100%;
+  padding: 20px; /* Adjust as necessary */
+  /* border: 1px solid #ccc; */
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  /* border-color: #007bff; */
+  box-shadow: var(--card-shadow);
+}
+
+
+/* 
 table {
   font-family: "Arial", sans-serif;
   font-size: 14px;
@@ -70,7 +90,7 @@ tr {
 
 tr:nth-child(even) {
   background-color: #fafafa;
-}
+} */
 
 /* Sidebar Toggle Visibility */
 @media (max-width: 768px) {

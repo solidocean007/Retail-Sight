@@ -23,7 +23,8 @@ h3 {
   align-items: center;
   border-radius: 8px;
   padding: 5px 10px;
-  color: black;
+  color: var(--text-color);
+  width: 100%;
 }
 
 .close-button {
@@ -54,11 +55,11 @@ h3 {
 /* When accordion is active */
 .custom-accordion .accordion-details.open {
   display: flex;
-  width: fit-content;
+  width: 100%;
   flex-direction: column;
   align-items: start;
   justify-content: flex-start;
-  background-color: aliceblue;
+  background-color: var(--background-pop-out-body);
   z-index: 2;
   max-height: 500px; 
   /* Additional styles for the active state */

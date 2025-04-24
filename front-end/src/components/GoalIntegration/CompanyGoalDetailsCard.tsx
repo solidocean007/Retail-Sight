@@ -147,8 +147,8 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
       const uniqueSubmitters = new Set(
         goal.submittedPosts?.map((p) => p.submittedBy).filter(Boolean)
       );
-      const submittedCount = Array.from(uniqueSubmitters).filter((uid) =>
-        goal.usersIdsOfGoal!.includes(uid) // Type 'undefined' is not assignable to type 'string'
+      const submittedCount = Array.from(uniqueSubmitters).filter(
+        (uid) => goal.usersIdsOfGoal!.includes(uid) // Type 'undefined' is not assignable to type 'string'
       ).length;
       const totalCount = goal.usersIdsOfGoal.length;
       const percent =
@@ -204,12 +204,11 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
                 {onDelete && (
                   <div className="top-right-buttons">
                     <div className="goal-delete">
-                      <button
+                      <CloseIcon
                         className="delete-button"
                         onClick={() => onDelete(goal.id)}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </button>
+                        fontSize="small"
+                      />
                     </div>
                     <Button
                       variant="outlined"
@@ -320,12 +319,11 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
               {onDelete && (
                 <div className="top-right-buttons">
                   <div className="goal-delete">
-                    <button
+                    <CloseIcon
+                      fontSize="small"
                       className="delete-button"
                       onClick={() => onDelete(goal.id)}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </button>
+                    />
                   </div>
                   <Button
                     variant="outlined"
@@ -366,16 +364,16 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
               Filtering by route: <strong>{salesRouteNum}</strong>
             </Typography>
           )}
-           <span
-              className={`summary-percentage ${
-                percentage === 100 ? "complete" : "incomplete"
-              }`}
-            >
-              {percentage}%
-              <Tooltip title={`${submitted} of ${total} submitted`}>
-                <InfoIcon fontSize="small" />
-              </Tooltip>
-            </span>
+          <span
+            className={`summary-percentage ${
+              percentage === 100 ? "complete" : "incomplete"
+            }`}
+          >
+            {percentage}%
+            <Tooltip title={`${submitted} of ${total} submitted`}>
+              <InfoIcon fontSize="small" />
+            </Tooltip>
+          </span>
           {/* <Typography variant="body2">{`${percentSubmitted}% Submitted`}</Typography>
           <LinearProgress
             variant="determinate"

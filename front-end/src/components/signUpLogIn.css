@@ -81,25 +81,6 @@ form {
   /* padding-bottom: 20px; */
 }
 
-input[type="text"],
-input[type="password"] {
-  box-sizing: border-box;
-  max-width: 100%;
-  width: 100%;
-  padding: 30px; /* Adjust as necessary */
-  /* border: 1px solid #ccc; */
-  border-radius: 5px;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-input[type="text"]:focus,
-input[type="password"]:focus {
-  /* border-color: #007bff; */
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-}
-
-
 /* Responsive adjustments for smaller screens */
 @media (max-width: 600px) {
   .sign-up-body {
