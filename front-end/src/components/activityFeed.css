@@ -40,14 +40,17 @@
 
 /* Cards */
 .list-container {
-  width: 400px;
-  margin-bottom: 20px;
+  width: 100%;
+  max-width: 700px; /* Adjusted for better responsiveness */
+  margin: 0 auto 20px auto;
   height: 900px;
   background-color: var(--post-card-background);
   color: var(--text-color);
-  /* border-radius: var(--card-radius); */
+  border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
 }
+
+
 
 /* Responsive Breakpoints */
 

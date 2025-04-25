@@ -1,24 +1,21 @@
-// app.tsx
+// App.tsx
 import Snackbar from "@mui/material/Snackbar";
 import { useSelector } from "react-redux";
 import { hideMessage } from "./Slices/snackbarSlice";
 import "./App.css";
 import { BrowserRouter as Router } from "react-router-dom"; 
 import { RootState, useAppDispatch } from "./utils/store";
-import { ThemeToggle } from "./components/ThemeToggle.tsx";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
-
-import UserModal from "./components/UserModal.tsx";
-import { AppRoutes } from "./utils/Routes.tsx";
-import { getTheme } from "./theme.ts";
+import UserModal from "./components/UserModal";
+import { AppRoutes } from "./utils/Routes";
+import { getTheme } from "./theme";
 import { useEffect, useState } from "react";
-import { toggleTheme } from "./actions/themeActions.ts";
-import useSchemaVersion from "./hooks/useSchemaVersion.ts";
-import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener.ts";
-import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener.ts";
-import { ThemeDebug } from "./ThemeDebug.tsx";
-
+import { setDarkMode } from "./Slices/themeSlice"; // ✅ New, clean import
+import useSchemaVersion from "./hooks/useSchemaVersion";
+import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener";
+import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener";
 
 function App() {
   useSchemaVersion();
@@ -30,29 +27,27 @@ function App() {
   const salesRouteNum = user?.salesRouteNum;
   const { currentUser, initializing } = useFirebaseAuth();
 
-  const [theme, setTheme] = useState(() => getTheme(isDarkMode)); // initial fallback
+  const [theme, setTheme] = useState(() => getTheme(isDarkMode));
 
-  // 🌓 Theme toggling on load from localStorage
+  // 🌓 Set theme on first load based on localStorage
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
-    const prefersDarkMode = storedTheme === 'dark';
-
-    if (prefersDarkMode !== isDarkMode) {
-      dispatch(toggleTheme());
+    if (storedTheme) {
+      dispatch(setDarkMode(storedTheme === 'dark'));
     }
-  }, [dispatch, isDarkMode]);
+  }, [dispatch]);
 
-  // 🧠 Ensure theme reads correct CSS vars after CSS is applied
+  // 🧠 Rebuild MUI theme when Redux theme mode changes
   useEffect(() => {
     setTheme(getTheme(isDarkMode));
-  }, [isDarkMode]); // rerun when theme mode changes
+  }, [isDarkMode]);
 
   // 📡 Goal listeners
   useEffect(() => {
     if (!companyId) return;
     const unsubscribeCompanyGoals = dispatch(setupCompanyGoalsListener(companyId));
     const unsubscribeGalloGoals = dispatch(
-      setupGalloGoalsListener(companyId, salesRouteNum)
+      setupGalloGoalsListener(companyId)
     );
     return () => {
       unsubscribeCompanyGoals();
@@ -75,7 +70,6 @@ function App() {
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       />
       {!initializing && currentUser && <UserModal />}
-      {/* <ThemeDebug /> */}
     </ThemeProvider>
   );
 }

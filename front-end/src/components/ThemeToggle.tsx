@@ -2,12 +2,12 @@
 import React, { useMemo, useState } from "react";
 import "./themeToggle.css";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleTheme } from "../actions/themeActions";
 import Switch from "@mui/material/Switch";
 import Fab from "@mui/material/Fab";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import { LightMode } from "@mui/icons-material";
 import { RootState } from "../utils/store";
+import { toggleTheme } from "../Slices/themeSlice";
 
 export const ThemeToggle: React.FC = () => {
   const dispatch = useDispatch();
@@ -21,12 +21,10 @@ export const ThemeToggle: React.FC = () => {
   };
 
   const handleThemeChange = () => {
-    const newIsDarkMode = !isDarkMode;
     dispatch(toggleTheme());
-    document.body.setAttribute("data-theme", newIsDarkMode ? "dark" : "light");
-    localStorage.setItem("theme", newIsDarkMode ? "dark" : "light");
     setIsDrawerOpen(false);
   };
+  
 
   // 🧠 UseMemo to re-read CSS variable after render based on isDarkMode
   const drawerColor = useMemo(() => {

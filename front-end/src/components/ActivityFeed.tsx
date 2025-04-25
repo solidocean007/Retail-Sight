@@ -274,14 +274,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         />
       </div>
 
-      <List
+      <List 
         ref={listRef}
         className="list-container"
         height={listHeight}
         itemCount={itemCount}
+        width={"100%"}
         itemSize={getItemSize}
-        // width={getListWidth()}
-        width="100%"
         onItemsRendered={handleItemsRendered}
         itemData={{
           posts: posts,

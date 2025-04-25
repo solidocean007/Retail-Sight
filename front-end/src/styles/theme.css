@@ -162,6 +162,12 @@
        🧱 Global Themed Elements
      ============================ */
 
+  .mui-themed-table td,
+  .mui-themed-table th {
+    color: var(--text-color) !important;
+  }
+     
+
   a {
     color: var(--link-color);
   }

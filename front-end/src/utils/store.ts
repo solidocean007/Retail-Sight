@@ -4,8 +4,8 @@ import { ThunkAction } from "@reduxjs/toolkit";
 import snackbarReducer from "../Slices/snackbarSlice";
 import userSlice from "../Slices/userSlice";
 import postsReducer from "../Slices/postsSlice";
+import themeReducer from '../Slices/themeSlice';
 import locationReducer from '../Slices/locationSlice'
-import { themeReducer } from "../reducers/themeReducer";
 import userModalReducer from "../Slices/userModalSlice";
 import userAccountsSlice from "../Slices/userAccountsSlice";
 import allAccountsSlice from "../Slices/allAccountsSlice";

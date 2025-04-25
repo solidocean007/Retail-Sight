@@ -12,14 +12,15 @@ import {
   TextField,
   Select,
   MenuItem,
+  Typography,
 } from "@mui/material";
 import React, { useState } from "react";
 import { UserType } from "../utils/types";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useSelector } from "react-redux";
-import { selectUser, } from "../Slices/userSlice";
-import {  updateUserRoleInIndexedDB } from "../utils/database/userDataIndexedDB";
+import { selectUser } from "../Slices/userSlice";
+import { updateUserRoleInIndexedDB } from "../utils/database/userDataIndexedDB";
 import PendingInvites from "./PendingInvites";
 import { getFunctions, httpsCallable } from "@firebase/functions";
 
@@ -30,83 +31,63 @@ interface EmployeesViewerProps {
 
 const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalUsers }) => {
   const currentUser = useSelector(selectUser);
-  const companyId = currentUser?.companyId;
   const isSuperAdmin = currentUser?.role === "super-admin";
   const isAdmin = currentUser?.role === "admin";
   const isDeveloper = currentUser?.role === "developer";
 
   const [inviteEmail, setInviteEmail] = useState<string>("");
-  const [inviteLink, setInviteLink] = useState<string>("");
   const [showPendingInvites, setShowPendingInvites] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-
   const [editedUsers, setEditedUsers] = useState<{ [key: string]: UserType }>({});
   const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
-  const toggleInvites = () => {
-    setShowPendingInvites((prev) => !prev);
-  };
+
+  const sortedUsers = [...localUsers].sort((a, b) => {
+    const lastCompare = a.lastName.localeCompare(b.lastName);
+    return lastCompare !== 0 ? lastCompare : a.firstName.localeCompare(b.firstName);
+  });
+
+  const toggleInvites = () => setShowPendingInvites((prev) => !prev);
 
   const handleEditToggle = (userId: string) => {
     setEditMode((prev) => ({ ...prev, [userId]: !prev[userId] }));
     const userToEdit = localUsers.find((user) => user.uid === userId);
     if (userToEdit) {
-      setEditedUsers((prev) => ({
-        ...prev,
-        [userId]: { ...userToEdit },
-      }));
+      setEditedUsers((prev) => ({ ...prev, [userId]: { ...userToEdit } }));
     }
   };
 
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    if (!inviteEmail || !currentUser) {
-      setFeedbackMessage("Email is required, or you are not authenticated.");
-      return;
-    }
+    if (!inviteEmail || !currentUser) return setFeedbackMessage("Missing email or user context");
+
     const functions = getFunctions();
     const inviteFunction = httpsCallable(functions, "sendInvite");
-    const inviteDocRef = doc(collection(db, "invites")); // Generate a new document ID
+    const inviteDocRef = doc(collection(db, "invites"));
     const timestamp = new Date().toISOString();
-  
+    const inviteLink = `${window.location.origin}/sign-up-login?companyName=${encodeURIComponent(currentUser.company)}&email=${encodeURIComponent(inviteEmail)}&mode=signup`;
+
     try {
-      const inviteLink = `${window.location.origin}/sign-up-login?companyName=${encodeURIComponent(
-        currentUser.company
-      )}&email=${encodeURIComponent(inviteEmail)}&mode=signup`;
-  
-      // Call the cloud function to send the email invite
-      await inviteFunction({
-        email: inviteEmail,
-        inviter: `${currentUser.firstName} ${currentUser.lastName}`,
-        inviteLink,
-      });
-  
-      // Write to Firestore to track the invite
+      await inviteFunction({ email: inviteEmail, inviter: `${currentUser.firstName} ${currentUser.lastName}`, inviteLink });
       await setDoc(inviteDocRef, {
         companyId: currentUser.companyId,
         email: inviteEmail,
         inviter: `${currentUser.firstName} ${currentUser.lastName}`,
         link: inviteLink,
-        status: "pending", // Initial status
+        status: "pending",
         timestamp,
       });
-  
-      setFeedbackMessage("Invite sent and tracked successfully!");
-      setInviteEmail(""); // Reset the email field
+      setFeedbackMessage("Invite sent successfully!");
+      setInviteEmail("");
     } catch (error) {
-      console.error("Error sending or tracking invite:", error);
-      setFeedbackMessage("Failed to send or track the invite. Please try again.");
+      console.error("Invite error:", error);
+      setFeedbackMessage("Error sending invite.");
     }
   };
-  
 
   const handleEditChange = (userId: string, field: keyof UserType, value: string) => {
     setEditedUsers((prev) => ({
       ...prev,
-      [userId]: {
-        ...prev[userId],
-        [field]: value,
-      },
+      [userId]: { ...prev[userId], [field]: value },
     }));
   };
 
@@ -115,68 +96,63 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
     if (!updatedUser) return;
 
     try {
-      const userDocRef = doc(db, "users", userId);
-      await setDoc(userDocRef, { salesRouteNum: updatedUser.salesRouteNum, role: updatedUser.role }, { merge: true });
+      await setDoc(doc(db, "users", userId), {
+        salesRouteNum: updatedUser.salesRouteNum,
+        role: updatedUser.role,
+      }, { merge: true });
 
-      const updatedUsersList = localUsers.map((user) =>
-        user.uid === userId ? updatedUser : user
-      );
-      setLocalUsers(updatedUsersList);
+      const updatedUsers = localUsers.map((u) => u.uid === userId ? updatedUser : u);
+      setLocalUsers(updatedUsers);
       await updateUserRoleInIndexedDB(userId, updatedUser.role);
-
       handleEditToggle(userId);
-    } catch (error) {
-      console.error("Error updating user:", error);
+    } catch (err) {
+      console.error("Update failed:", err);
     }
   };
 
   return (
     <Container disableGutters>
-      <Box>
       {(isAdmin || isDeveloper || isSuperAdmin) && (
-          <section className="invite-section">
-            <button className="button-blue" onClick={toggleInvites}>
-              {showPendingInvites ? "Hide pending" : "Show Pending Invites"}
-            </button>
+        <Box my={2}>
+          <Button variant="contained" onClick={toggleInvites}>
+            {showPendingInvites ? "Hide Pending Invites" : "Show Pending Invites"}
+          </Button>
+          {showPendingInvites && (
+            <Box mt={2}>
+              <form onSubmit={handleInviteSubmit} style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                <TextField
+                  label="Employee Email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  required
+                  size="small"
+                />
+                <Button type="submit" variant="contained" color="primary">
+                  Send Invite
+                </Button>
+              </form>
+              {feedbackMessage && <Typography color="secondary" variant="body2">{feedbackMessage}</Typography>}
+              <PendingInvites />
+            </Box>
+          )}
+        </Box>
+      )}
 
-            {showPendingInvites && (
-              <div className="all-pending-invites">
-                <form className="invite-form" onSubmit={handleInviteSubmit}>
-                  <div className="invite-title">
-                    <label htmlFor="inviteEmail">Invite Employee:</label>
-                  </div>
-                  <div className="invite-input-box">
-                    <input
-                      type="email"
-                      id="inviteEmail"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="Enter employee's email"
-                      required
-                    />
-                    <button type="submit">Send Invite</button>
-                  </div>
-                </form>
-                <PendingInvites />
-              </div>
-            )}
-          </section>
-        )}
-      </Box>
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} sx={{ borderRadius: "var(--card-radius)", boxShadow: "var(--card-shadow)" }}>
+        <Table className="mui-themed-table">
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell>Phone Number</TableCell>
-              <TableCell>Sales Route Number</TableCell>
+              <TableCell>Phone</TableCell>
+              <TableCell>Sales Route #</TableCell>
               <TableCell>Role</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {localUsers.map((user) => (
+            {sortedUsers.map((user) => (
               <TableRow key={user.uid}>
                 <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -185,23 +161,21 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
                   {editMode[user.uid] ? (
                     <TextField
                       value={editedUsers[user.uid]?.salesRouteNum ?? ""}
-                      onChange={(e) =>
-                        handleEditChange(user.uid, "salesRouteNum", e.target.value)
-                      }
-                      sx={{ width: "150px" }} // Adjust width as necessary
+                      onChange={(e) => handleEditChange(user.uid, "salesRouteNum", e.target.value)}
+                      size="small"
+                      sx={{ width: "clamp(120px, 20vw, 200px)" }} // Or 100%, or a responsive value
                     />
                   ) : (
-                    user.salesRouteNum ?? "N/A"
+                    user.salesRouteNum || "N/A"
                   )}
                 </TableCell>
                 <TableCell>
                   {editMode[user.uid] && isSuperAdmin ? (
                     <Select
                       value={editedUsers[user.uid]?.role ?? ""}
-                      onChange={(e) =>
-                        handleEditChange(user.uid, "role", e.target.value)
-                      }
-                      sx={{ width: "150px" }} // Adjust width as necessary
+                      onChange={(e) => handleEditChange(user.uid, "role", e.target.value)}
+                      size="small"
+                      sx={{ width: "clamp(120px, 20vw, 200px)" }}
                     >
                       <MenuItem value="admin">Admin</MenuItem>
                       <MenuItem value="employee">Employee</MenuItem>
@@ -216,27 +190,15 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
                 <TableCell>
                   {editMode[user.uid] ? (
                     <>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => handleSubmitEdit(user.uid)}
-                      >
-                        Submit
+                      <Button variant="contained" size="small" onClick={() => handleSubmitEdit(user.uid)}>
+                        Save
                       </Button>
-                      <Button
-                        variant="text"
-                        color="secondary"
-                        onClick={() => handleEditToggle(user.uid)}
-                      >
+                      <Button variant="text" size="small" onClick={() => handleEditToggle(user.uid)}>
                         Cancel
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      variant="text"
-                      color="primary"
-                      onClick={() => handleEditToggle(user.uid)}
-                    >
+                    <Button variant="text" size="small" onClick={() => handleEditToggle(user.uid)}>
                       Edit
                     </Button>
                   )}
@@ -251,5 +213,3 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
 };
 
 export default EmployeesViewer;
-
-

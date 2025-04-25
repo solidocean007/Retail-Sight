@@ -123,7 +123,8 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
           borderRadius: "4px",
           fontSize: "1rem",
           marginRight: "8px",
-          width: "100%",
+          flexGrow: 2,
+          minWidth: 0, // key to prevent it from overflowing
         }}
       />
 
