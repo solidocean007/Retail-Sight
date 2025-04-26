@@ -86,3 +86,17 @@
     max-width: 45%;
   }
 }
+
+@media (min-width: 900px)  {
+  /* Styles for large tablets in portrait/landscape */
+  .side-bar-container {
+    display: flex;
+    align-items: start;
+    justify-content: flex-start;
+    max-width: 400px;
+  }
+  .activity-feed-container {
+    max-width: 45%;
+  }
+ 
+}

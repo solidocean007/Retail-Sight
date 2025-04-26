@@ -54,20 +54,6 @@
   
 }
 
-@media (min-width: 900px)  {
-  /* Styles for large tablets in portrait/landscape */
-  .side-bar-container {
-    display: flex;
-    align-items: start;
-    justify-content: flex-start;
-    max-width: 100%;
-  }
-  .activity-feed-container {
-    max-width: 45%;
-  }
- 
-}
-
 /* Laptops and Desktops */
 @media (min-width: 1025px) and (max-width: 1366px) {
   /* Styles for small to medium screens */

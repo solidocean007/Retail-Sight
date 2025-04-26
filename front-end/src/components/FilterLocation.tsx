@@ -77,7 +77,7 @@ const FilterLocation = () => {
           }
           MenuProps={MenuProps}
           sx={{
-            backgroundColor: "var(--input-background)",
+            // backgroundColor: "var(--input-background)",
             color: "var(--input-text-color)",
             borderRadius: "var(--card-radius)",
           }}
