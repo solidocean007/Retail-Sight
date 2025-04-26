@@ -231,15 +231,17 @@ const PostCard: React.FC<PostCardProps> = ({
   return (
     <>
       <Card
-        className="post-card"
+        className="post-card textured-background"
         style={{
+          // height: "70%", // 👈 important
+          // width: "95%", // optional slight side margin
+          // margin: "auto",
           ...style,
           backgroundImage: getAnimatedPostCardGradient(),
-          backgroundSize: "500% 500%",
+          backgroundSize: "600% 600%",
           animation: "gradientShift 10s ease infinite",
         }}
       >
-        <div className="textured-background">
           <div className="post-header">
             <div className="visibility">
               <div className="view-box">
@@ -395,7 +397,6 @@ const PostCard: React.FC<PostCardProps> = ({
 
             <CommentSection post={post} />
           </div>
-        </div>
       </Card>
       {isEditModalOpen ? (
         <EditPostModal

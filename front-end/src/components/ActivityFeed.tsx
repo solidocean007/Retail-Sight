@@ -97,17 +97,18 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   // Effect to set initial and update list height on resize
   useEffect(() => {
     const handleResize = () => {
-      setListHeight(calculateListHeight());
+      setWindowWidth(window.innerWidth);
+      setListHeight(window.visualViewport?.height ?? window.innerHeight);
+      listRef.current?.resetAfterIndex(0, true);
     };
 
-    // Set initial height
-    handleResize();
-
-    // Add event listener for window resize
     window.addEventListener("resize", handleResize);
+    window.visualViewport?.addEventListener("resize", handleResize); // listen to real viewport changes
 
-    // Cleanup
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.visualViewport?.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   // Function to get the dynamic height of each item
@@ -118,7 +119,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     // const isAdPosition = adsOn && (index + 1) % AD_INTERVAL === 0;
     // return isAdPosition ? 200 + ITEM_GAP : baseHeight + ITEM_GAP;
     return getActivityItemHeight(windowWidth) + ITEM_GAP;
-
   };
 
   const getActivityItemHeight = (windowWidth: number) => {
@@ -230,7 +230,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       const postWithID = posts[postIndex];
 
       return (
-        <div  className="post-card-renderer-container"style={wrapperStyle}>
+        <div className="post-card-renderer-container" style={wrapperStyle}>
           <PostCardRenderer
             key={postWithID.id}
             currentUserUid={currentUser?.uid}
@@ -274,7 +274,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         />
       </div>
 
-      <List 
+      <List
         ref={listRef}
         className="list-container"
         height={listHeight}
