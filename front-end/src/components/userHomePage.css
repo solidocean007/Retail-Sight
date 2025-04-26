@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 1rem;
+  padding: 5px;
   background-color: var(--background-body);
 }
 
@@ -22,7 +22,7 @@
   flex-direction: row;
   justify-content: space-around;
   background-color: var(--background-body); /* Add this */
-  padding-top: 1rem;
+  padding-top: 5px;
   width: 100%;
 }
 

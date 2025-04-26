@@ -168,7 +168,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     const lastIndex = itemCount;
 
     // If the last visible index is the last item in the list
-    if (visibleStopIndex === lastIndex && !loadingMore && hasMore) {
+    if (visibleStopIndex >= posts.length - 1 && !loadingMore && hasMore) {
       setLoadingMore(true);
       dispatch(
         fetchMorePostsBatch({
@@ -200,7 +200,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   };
 
   const numberOfAds = adsOn ? Math.floor(posts.length / AD_INTERVAL) : 0;
-  const itemCount = posts.length + numberOfAds + 1;
+  const itemCount = posts.length + numberOfAds;
 
   const itemRenderer = ({
     index,

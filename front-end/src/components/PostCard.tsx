@@ -242,161 +242,160 @@ const PostCard: React.FC<PostCardProps> = ({
           animation: "gradientShift 10s ease infinite",
         }}
       >
-          <div className="post-header">
-            <div className="visibility">
-              <div className="view-box">
-                <p>view: {post.visibility}</p>
-                <div className="dot-box">
-                  <IconButton
-                    aria-label="settings"
-                    aria-controls="post-card-menu"
-                    aria-haspopup="true"
-                    onClick={handleVertIconClick}
+        <div className="post-header">
+          <div className="visibility">
+            <div className="view-box">
+              <p>view: {post.visibility}</p>
+              <div className="dot-box">
+                <IconButton
+                  aria-label="settings"
+                  aria-controls="post-card-menu"
+                  aria-haspopup="true"
+                  onClick={handleVertIconClick}
+                >
+                  <MoreVert />
+                </IconButton>
+                <div ref={menuRef}>
+                  <Menu
+                    id="post-card-menu"
+                    anchorEl={anchorEl}
+                    keepMounted
+                    open={open}
+                    onClose={() => setAnchorEl(null)}
                   >
-                    <MoreVert />
-                  </IconButton>
-                  <div ref={menuRef}>
-                    <Menu
-                      id="post-card-menu"
-                      anchorEl={anchorEl}
-                      keepMounted
-                      open={open}
-                      onClose={() => setAnchorEl(null)}
-                    >
-                      <MenuItem onClick={() => handleShare()}>Share</MenuItem>
-                      {(user?.uid === post.postUserId ||
-                        user?.role === "admin" ||
-                        user?.role === "super-admin") && (
-                        <MenuItem onClick={() => setIsEditModalOpen(true)}>
-                          Edit
-                        </MenuItem>
-                      )}
-
-                      <MenuItem
-                        onClick={() => setIsAddToCollectionModalOpen(true)}
-                      >
-                        Add to Collection
+                    <MenuItem onClick={() => handleShare()}>Share</MenuItem>
+                    {(user?.uid === post.postUserId ||
+                      user?.role === "admin" ||
+                      user?.role === "super-admin") && (
+                      <MenuItem onClick={() => setIsEditModalOpen(true)}>
+                        Edit
                       </MenuItem>
-                    </Menu>
-                  </div>
-                  <Dialog
-                    open={isAddToCollectionModalOpen}
-                    onClose={() => setIsAddToCollectionModalOpen(false)}
-                  >
-                    <AddPostToCollectionModal
-                      postId={post.id}
-                      onClose={() => setIsAddToCollectionModalOpen(false)}
-                    />
-                  </Dialog>
-                </div>
-              </div>
-            </div>
-            <div className="post-header-top"></div>
-            <div className="header-bottom">
-              <div className="details-date">
-                <div className="store-details">
-                  <div className="store-name-number">
-                    <h3>
-                      {post.selectedStore}
-                      <span> {post.storeNumber}</span>
-                    </h3>
+                    )}
 
-                    <h5>{formattedDate}</h5>
-                  </div>
-                  <div className="store-address-box">
-                    <h5>{post.storeAddress}</h5>
-                    {/* <h5>{post.id}</h5> */}
-                  </div>
+                    <MenuItem
+                      onClick={() => setIsAddToCollectionModalOpen(true)}
+                    >
+                      Add to Collection
+                    </MenuItem>
+                  </Menu>
                 </div>
-              </div>
-              <div className="post-user-details">
-                {/* <div onClick={handleOnUserNameClick}> */}
-                <div className="post-user-name">
-                  <p>
-                    by:{" "}
-                    <a href="#" onClick={handleOnUserNameClick}>
-                      {post.postUserName}
-                    </a>
-                  </p>
-                </div>
-                <div className="created-On-Behalf">
-                  {createdOnBehalf && <h5>Created by: {post.postCreatedBy}</h5>}
-                </div>
-                <div className="user-company-box">
-                  <p>company: {post.postUserCompany}</p>
-                </div>
+                <Dialog
+                  open={isAddToCollectionModalOpen}
+                  onClose={() => setIsAddToCollectionModalOpen(false)}
+                >
+                  <AddPostToCollectionModal
+                    postId={post.id}
+                    onClose={() => setIsAddToCollectionModalOpen(false)}
+                  />
+                </Dialog>
               </div>
             </div>
           </div>
-          <Typography>
-            {post.companyGoalId
-              ? `Company goal: ${post.companyGoalTitle}` /* this renders null */
-              : post.oppId
-              ? `Gallo goal: ${post.galloGoalTitle}`
-              : ""}
-          </Typography>
+          <div className="post-header-top"></div>
+          <div className="header-bottom">
+            <div className="details-date">
+              <div className="store-details">
+                <div className="store-name-number">
+                  <h3>
+                    {post.selectedStore}
+                    <span> {post.storeNumber}</span>
+                  </h3>
 
-          <div className="description-image">
-            <div className="like-quantity-row">
-              <h4>
-                {post.category}
-                {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
-              </h4>
-
-              <div className="likes-box">
-                <button
-                  className="like-button"
-                  onClick={handleLikePostButtonClick}
-                >
-                  {likedByUser ? "❤️" : "🤍"}
-                </button>
-                {likesCount === 0 ? null : likesCount === 1 ? (
-                  <h5>{likesCount} like</h5>
-                ) : (
-                  <h5>{likesCount} likes</h5>
-                )}
+                  <h5>{formattedDate}</h5>
+                </div>
+                <div className="store-address-box">
+                  <h5>{post.storeAddress}</h5>
+                  {/* <h5>{post.id}</h5> */}
+                </div>
               </div>
             </div>
-            <div className="hash-tag-container">
-              {/* Display hashtags above the image */}
-              <PostDescription
-                description={post.description}
-                getPostsByTag={getPostsByTag}
-                getPostsByStarTag={getPostsByStarTag}
-                setCurrentHashtag={setCurrentHashtag}
-                setActivePostSet={setActivePostSet}
-                setIsSearchActive={setIsSearchActive}
-              />
+            <div className="post-user-details">
+              {/* <div onClick={handleOnUserNameClick}> */}
+              <div className="post-user-name">
+                <p>
+                  by:{" "}
+                  <a href="#" onClick={handleOnUserNameClick}>
+                    {post.postUserName}
+                  </a>
+                </p>
+              </div>
+              <div className="created-On-Behalf">
+                {createdOnBehalf && <h5>Created by: {post.postCreatedBy}</h5>}
+              </div>
+              <div className="user-company-box">
+                <p>company: {post.postUserCompany}</p>
+              </div>
             </div>
+          </div>
+        </div>
+        <Typography>
+          {post.companyGoalId
+            ? `Company goal: ${post.companyGoalTitle}` /* this renders null */
+            : post.oppId
+            ? `Gallo goal: ${post.galloGoalTitle}`
+            : ""}
+        </Typography>
 
-            <div className="activity-post-image-box">
-              {post.imageUrl && (
-                <img
-                  className="post-image"
-                  onClick={handleImageClick}
-                  src={post.imageUrl}
-                  alt="Post image"
-                />
+        <div className="description-image">
+          <div className="like-quantity-row">
+            <h4>
+              {post.category}
+              {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
+            </h4>
+
+            <div className="likes-box">
+              <button
+                className="like-button"
+                onClick={handleLikePostButtonClick}
+              >
+                {likedByUser ? "❤️" : "🤍"}
+              </button>
+              {likesCount === 0 ? null : likesCount === 1 ? (
+                <h5>{likesCount} like</h5>
+              ) : (
+                <h5>{likesCount} likes</h5>
               )}
             </div>
-
-            {commentCount > 0 && (
-              <div className="comment-button-container">
-                {commentCount > 0 && (
-                  <button
-                    className="view-comment-button"
-                    onClick={openCommentModal}
-                  >
-                    {showAllComments
-                      ? "Hide Comments"
-                      : `${commentCount} Comments`}
-                  </button>
-                )}
-              </div>
-            )}
-
-            <CommentSection post={post} />
           </div>
+          <div className="hash-tag-container">
+            {/* Display hashtags above the image */}
+            <PostDescription
+              description={post.description}
+              getPostsByTag={getPostsByTag}
+              getPostsByStarTag={getPostsByStarTag}
+              setCurrentHashtag={setCurrentHashtag}
+              setActivePostSet={setActivePostSet}
+              setIsSearchActive={setIsSearchActive}
+            />
+          </div>
+
+          <div className="activity-post-image-box">
+            {post.imageUrl && (
+              <img
+                className="post-image"
+                onClick={handleImageClick}
+                src={post.imageUrl}
+                alt="Post image"
+              />
+            )}
+          </div>
+
+          {commentCount > 0 && (
+            <div className="comment-button-container">
+              {commentCount > 0 && (
+                <button
+                  className="view-comment-button"
+                  onClick={openCommentModal}
+                >
+                  {showAllComments
+                    ? "Hide Comments"
+                    : `${commentCount} Comments`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        <CommentSection post={post} />
       </Card>
       {isEditModalOpen ? (
         <EditPostModal
