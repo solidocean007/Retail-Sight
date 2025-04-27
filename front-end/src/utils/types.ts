@@ -78,20 +78,16 @@ export interface PostType {
   channel: ChannelType | "";
   description?: string;
   imageUrl?: string;
-  selectedStore?: string;
+  account: CompanyAccountType | null;
   storeNumber?: string;
-  storeAddress: string;
   city?: string; // Added city
   state?: string; // Added state
   visibility?: "public" | "company" | "supplier" | "private";
   displayDate: string;
   timestamp: string;
   totalCaseCount: number;
-  postUserName: string | undefined;
-  postUserId: string | undefined;
-  postUserCompany: string | undefined;
-  postUserCompanyId: string | undefined;
-  postUserEmail: string | undefined; // Added email
+  createdBy: UserType;
+  postedFor?: UserType;
   supplier?: string;
   brands: string[];
   likes?: string[];
@@ -99,8 +95,6 @@ export interface PostType {
   starTags: string[];
   commentCount: number;
   token: { sharedToken: string; tokenExpiry: string };
-  postCreatedBy: string;
-  accountNumber?: string | null;
   companyGoalId?: string | null;
   companyGoalDescription?: string | null;
   companyGoalTitle?: string | null;
@@ -257,9 +251,17 @@ export type GoalSubmissionType = {
   postId: string;
   accountNumber: string;
   account: CompanyAccountType;
-  submittedBy: string | undefined;
+  submittedBy: UserType;
   submittedAt: string;
 }
+
+// export type GoalSubmissionType = {
+//   postId: string;
+//   accountNumber: string;
+//   account: CompanyAccountType;
+//   submittedBy: string | undefined;
+//   submittedAt: string;
+// }
 
 // This is an account as defined by gallo
 export type GalloAccountType = {

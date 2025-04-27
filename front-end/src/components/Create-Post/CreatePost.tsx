@@ -12,6 +12,7 @@ import { AppBar, Container, IconButton } from "@mui/material";
 // import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
 import {
+  CompanyAccountType,
   CompanyMissionType,
   MissionType,
   PostType,
@@ -63,9 +64,10 @@ export const CreatePost = () => {
   const goToPreviousStep = () => setCurrentStep((prevStep) => prevStep - 1);
 
   const handlePostSubmission = useHandlePostSubmission();
-
   const companyId = userData?.companyId;
+  
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryType>("Beer"); // I need to store the last value by the user in local storage and try to use it again here
@@ -73,15 +75,18 @@ export const CreatePost = () => {
     useState<ChannelType>("Grocery"); // I need to store the last value by the user in local storage and try to use it again here
   const postUser = onBehalf || userData;
 
+  const [selectedCompanyAccount, setSelectedCompanyAccount] =
+    useState<CompanyAccountType | null>(null);
+
   const [post, setPost] = useState<PostType>({
-    accountNumber: "",
+    // accountNumber: "",
     category: selectedCategory,
     channel: selectedChannel,
     description: "",
     imageUrl: "",
-    selectedStore: "",
+    account: null, // Type 'null' is not assignable to type 'CompanyAccountType'
+    // selectedStore: "",
     storeNumber: "",
-    storeAddress: "",
     state: "",
     city: "",
     visibility: "company",
@@ -90,17 +95,23 @@ export const CreatePost = () => {
     displayDate: "",
     timestamp: "",
     totalCaseCount: 0,
-    postUserName: `${postUser?.firstName} ${postUser?.lastName}`,
-    postUserId: postUser?.uid,
-    postUserCompany: postUser?.company,
-    postUserCompanyId: postUser?.companyId,
-    postUserEmail: postUser?.email,
+    createdBy: {
+      role: userData?.role || "employee",
+      uid: userData?.uid || "",
+      firstName: userData?.firstName || "",
+      lastName: userData?.lastName || "",
+      email: userData?.email || "",
+      company: userData?.company || "",
+      companyId: userData?.companyId || "",
+      salesRouteNum: userData?.salesRouteNum || "",
+      phone: userData?.phone || "",
+    },
+    postedFor: undefined,
     likes: [],
     hashtags: [""],
     starTags: [""],
     commentCount: 0,
-    token: { sharedToken: "", tokenExpiry: "" }, // i need to populate these values with valid values
-    postCreatedBy: `${userData?.firstName} ${userData?.lastName}`,
+    token: { sharedToken: "", tokenExpiry: "" }, 
   });
 
   const [selectedCompanyMission, setSelectedCompanyMission] =
@@ -111,26 +122,35 @@ export const CreatePost = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    if (onBehalf) {
-      setPost((prevPost) => ({
-        ...prevPost,
-        postUserName: `${onBehalf.firstName} ${onBehalf.lastName}`,
-        postUserId: onBehalf.uid,
-        postUserCompany: onBehalf.company,
-        postUserCompanyId: onBehalf.companyId,
-        postUserEmail: onBehalf.email,
-      }));
-    } else {
-      setPost((prevPost) => ({
-        ...prevPost,
-        postUserName: `${userData?.firstName} ${userData?.lastName}`,
-        postUserId: userData?.uid,
-        postUserCompany: userData?.company,
-        postUserCompanyId: userData?.companyId,
-        postUserEmail: userData?.email,
-      }));
-    }
+    setPost((prevPost) => ({
+      ...prevPost,
+      createdBy: {
+        role: userData?.role || "employee",
+        uid: userData?.uid || "",
+        firstName: userData?.firstName || "",
+        lastName: userData?.lastName || "",
+        email: userData?.email || "",
+        company: userData?.company || "",
+        companyId: userData?.companyId || "",
+        salesRouteNum: userData?.salesRouteNum || "",
+        phone: userData?.phone || "",
+      },
+      postedFor: onBehalf
+        ? {
+            role: onBehalf.role,
+            uid: onBehalf.uid,
+            firstName: onBehalf.firstName,
+            lastName: onBehalf.lastName,
+            email: onBehalf.email,
+            company: onBehalf.company,
+            companyId: onBehalf.companyId,
+            salesRouteNum: onBehalf.salesRouteNum,
+            phone: onBehalf.phone,
+          }
+        : undefined,
+    }));
   }, [onBehalf, userData]);
+  
 
   useEffect(() => {
     const storedCategory = localStorage.getItem(
@@ -154,32 +174,30 @@ export const CreatePost = () => {
     setOpenMissionSelection(false);
   };
 
-
-
-  const handleStoreNameChange = useCallback((storeName: string) => {
-    setPost((prev) => ({ ...prev, selectedStore: storeName }));
-  }, []);
-
   const handleTotalCaseCountChange = useCallback((caseCount: number) => {
     setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
   }, []);
 
-  const handleStoreNumberChange = useCallback((newStoreNumber: string) => {
-    // should i pass these to components or just use handleFieldChange?
-    setPost((prev) => ({ ...prev, storeNumber: newStoreNumber }));
-  }, []);
+  // const handleStoreNameChange = useCallback((storeName: string) => {
+  //   setPost((prev) => ({ ...prev, selectedStore: storeName }));
+  // }, []);
 
-  const handleStoreAddressChange = useCallback((address: string) => {
-    setPost((prev) => ({ ...prev, storeAddress: address }));
-  }, []);
+  // const handleStoreNumberChange = useCallback((newStoreNumber: string) => {
+  //   // should i pass these to components or just use handleFieldChange?
+  //   setPost((prev) => ({ ...prev, storeNumber: newStoreNumber }));
+  // }, []);
 
-  const handleStoreCityChange = useCallback((city: string) => {
-    setPost((prev) => ({ ...prev, city: city }));
-  }, []);
+  // const handleStoreAddressChange = useCallback((address: string) => {
+  //   setPost((prev) => ({ ...prev, storeAddress: address }));
+  // }, []);
 
-  const handleStoreStateChange = useCallback((newStoreState: string) => {
-    setPost((prev) => ({ ...prev, state: newStoreState }));
-  }, []);
+  // const handleStoreCityChange = useCallback((city: string) => {
+  //   setPost((prev) => ({ ...prev, city: city }));
+  // }, []);
+
+  // const handleStoreStateChange = useCallback((newStoreState: string) => {
+  //   setPost((prev) => ({ ...prev, state: newStoreState }));
+  // }, []);
 
   // Update this to handle all field changes generically, including channel and category
   const handleFieldChange = useCallback(
@@ -237,11 +255,12 @@ export const CreatePost = () => {
             usersGalloGoals={usersGalloGoals}
             usersCompanyGoals={usersCompanyGoals}
             handleFieldChange={handleFieldChange}
-            onStoreNameChange={handleStoreNameChange}
-            onStoreNumberChange={handleStoreNumberChange}
-            onStoreAddressChange={handleStoreAddressChange}
-            onStoreCityChange={handleStoreCityChange}
-            onStoreStateChange={handleStoreStateChange}
+            setSelectedCompanyAccount={setSelectedCompanyAccount}
+            // onStoreNameChange={handleStoreNameChange}
+            // onStoreNumberChange={handleStoreNumberChange}
+            // onStoreAddressChange={handleStoreAddressChange}
+            // onStoreCityChange={handleStoreCityChange}
+            // onStoreStateChange={handleStoreStateChange}
           />
         );
       case 3:

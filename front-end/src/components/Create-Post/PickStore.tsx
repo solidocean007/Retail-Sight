@@ -46,29 +46,28 @@ import AccountModalSelector from "./AccountModalSelector";
 interface PickStoreProps {
   onNext: () => void;
   onPrevious: () => void;
-  handleFieldChange: (
-    field: keyof PostType,
-    value: PostType[keyof PostType]
-  ) => void;
   post: PostType;
   setPost: React.Dispatch<React.SetStateAction<PostType>>;
   usersGalloGoals: FireStoreGalloGoalDocType[]; // Pass goals from Redux
   usersCompanyGoals: CompanyGoalType[]; // Pass goals from Redux
-  onStoreNameChange: (storeName: string) => void;
-  onStoreNumberChange: (newStoreNumber: string) => void;
-  onStoreAddressChange: (address: string) => void;
-  onStoreCityChange: (city: string) => void;
-  onStoreStateChange: (newStoreState: string) => void;
+  handleFieldChange: (field: keyof PostType, value: PostType[keyof PostType]) => void;
+  setSelectedCompanyAccount: (account: CompanyAccountType) => void; // Function to set selected company account
+  // onStoreNameChange: (storeName: string) => void;
+  // onStoreNumberChange: (newStoreNumber: string) => void;
+  // onStoreAddressChange: (address: string) => void;
+  // onStoreCityChange: (city: string) => void;
+  // onStoreStateChange: (newStoreState: string) => void;
 }
 
 export const PickStore: React.FC<PickStoreProps> = ({
   onNext,
   onPrevious,
-  handleFieldChange,
   post,
   setPost,
   usersGalloGoals,
   usersCompanyGoals,
+  handleFieldChange,
+  setSelectedCompanyAccount
 }) => {
   console.log(post);
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
@@ -80,7 +79,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [accountsToSelect, setAccountsToSelect] =
     useState<CompanyAccountType[]>();
   const dispatch = useAppDispatch();
-  const [isMapMode, setIsMapMode] = useState(false); // Toggle between dropdown and map
+  // const [isMapMode, setIsMapMode] = useState(false); // Toggle between dropdown and map
   // const [goalForAccount, setGoalForAccount] =
   //   useState<FireStoreGalloGoalDocType | null>(null);
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
@@ -103,37 +102,34 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [openAccountModal, setOpenAccountModal] = useState(false);
 
   // this is used if a user is trying to select an account by address using the map
-  const [selectedStoreByAddress, setSelectedStoreByAddress] = useState<{
-    name: string;
-    address: string;
-    city: string;
-    state: string;
-  } | null>(null);
-
-  // const [selectedCompanyAccount, setSelectedCompanyAccount] =
-  //   useState<CompanyAccountType | null>(null);
+  // const [selectedStoreByAddress, setSelectedStoreByAddress] = useState<{
+  //   name: string;
+  //   address: string;
+  //   city: string;
+  //   state: string;
+  // } | null>(null);
 
   const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
 
   // filtering by account number function:  these return current goals for selection.  a mode might be helpful for switching to the desired set.
   const usersActiveGalloGoals = getActiveGalloGoalsForAccount(
-    post.accountNumber,
+    post.account?.accountNumber,
     usersGalloGoals
   );
 
   const usersActiveCompanyGoals = getActiveCompanyGoalsForAccount(
-    post.accountNumber,
+    post.account?.accountNumber,
     usersCompanyGoals,
-    userId,
+    userId
   );
-  console.log(usersActiveCompanyGoals)
+  console.log(usersActiveCompanyGoals);
 
   const allActiveGalloGoals = getActiveGalloGoalsForAccount(
-    post.accountNumber,
+    post.account?.accountNumber,
     allGalloGoals
   );
   const allActiveCompanyGoals = getActiveCompanyGoalsForAccount(
-    post.accountNumber,
+    post.account?.accountNumber,
     allCompanyGoals
   );
 
@@ -151,10 +147,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
     : allActiveCompanyGoals;
 
   useEffect(() => {
-    if (!post.accountNumber) {
+    if (!post.account?.accountNumber) {
       setOpenAccountModal(true);
     }
-  }, [post.accountNumber]);
+  }, [post.account?.accountNumber]);
 
   // load users accounts
   useEffect(() => {
@@ -203,30 +199,30 @@ export const PickStore: React.FC<PickStoreProps> = ({
   }, [isAllStoresShown, companyId, myAccounts]);
 
   // this matches a selectedAddress from the map to an actual account from firestore i think
-  useEffect(() => {
-    // Trigger account matching when `selectedStoreByAddress` changes
-    if (selectedStoreByAddress) {
-      console.log("Triggering account match for:", selectedStoreByAddress);
-      if (accountsToSelect && accountsToSelect.length > 0) {
-        matchAccountWithSelectedStoreForAdmin(
-          selectedStoreByAddress,
-          accountsToSelect,
-          setPost,
-          setClosestMatches,
-          setIsMatchSelectionOpen,
-          dispatch
-        );
-      } else {
-        console.warn("No company accounts found for matching.");
-      }
-    }
-  }, [selectedStoreByAddress, accountsToSelect]);
+  // useEffect(() => {
+  //   // Trigger account matching when `selectedStoreByAddress` changes
+  //   if (selectedStoreByAddress) {
+  //     console.log("Triggering account match for:", selectedStoreByAddress);
+  //     if (accountsToSelect && accountsToSelect.length > 0) {
+  //       matchAccountWithSelectedStoreForAdmin(
+  //         selectedStoreByAddress,
+  //         accountsToSelect,
+  //         setPost,
+  //         setClosestMatches,
+  //         setIsMatchSelectionOpen,
+  //         dispatch
+  //       );
+  //     } else {
+  //       console.warn("No company accounts found for matching.");
+  //     }
+  //   }
+  // }, [selectedStoreByAddress, accountsToSelect]);
 
   // once a regular user selects an account this would load or fetch goals
   // gallo goals and company goals are already available though.  they just need to be filtered to the account number which i believe is covered in the filtering by account number functions
-  useEffect(() => {
-    // how will the application after getting an accountNumber find the correct goals for this account?  gallo goals and company goals?  is it already doing so?
-  }, [post.accountNumber]);
+  // useEffect(() => {
+  //   how will the application after getting an accountNumber find the correct goals for this account?  gallo goals and company goals?  is it already doing so?
+  // }, [post.account?.accountNumber]);
 
   const handleGalloGoalSelection = (goalId: string) => {
     setSelectedGalloGoalId(goalId);
@@ -243,7 +239,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       const matchedAccount = selectedGoal.accounts.find(
         (account) =>
           account.distributorAcctId.toString() ===
-          post.accountNumber?.toString()
+          post.account?.accountNumber?.toString()
       );
 
       if (matchedAccount) {
@@ -273,94 +269,98 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
   // Handler for Account Selection
   const handleAccountSelect = (account: CompanyAccountType) => {
-    setPost({
-      ...post,
-      selectedStore: account.accountName,
-      storeAddress: account.accountAddress,
+    setPost((prevPost) => ({
+      ...prevPost,
+      account,
       accountNumber: account.accountNumber,
-    });
-  };
-
-  const handleSelectClosestMatch = (account: CompanyAccountType) => {
-    setPost((prev) => ({
-      ...prev,
-      accountNumber: account.accountNumber,
-      storeAddress: account.accountAddress,
-      selectedStore: account.accountName,
+      address: account.accountAddress,
     }));
-    setIsMatchSelectionOpen(false); // Close the modal
-
-    // Trigger goal search after updating the post state
-    if (isAdmin) {
-      searchGalloGoalsForAccount(account.accountNumber);
-    }
+    setSelectedCompanyAccount(account); // ✅ still good
   };
+  
+
+  // const handleSelectClosestMatch = (account: CompanyAccountType) => {
+  //   setPost((prev) => ({
+  //     ...prev,
+  //     accountNumber: account.accountNumber,
+  //     storeAddress: account.accountAddress,
+  //     selectedStore: account.accountName,
+  //   }));
+  //   setIsMatchSelectionOpen(false); // Close the modal
+
+  //   // Trigger goal search after updating the post state
+  //   if (isAdmin) {
+  //     searchGalloGoalsForAccount(account.accountNumber);
+  //   }
+  // };
 
   const handleClearAccount = () => {
-    setPost({
-      ...post,
-      selectedStore: "",
-      storeAddress: "",
+    setPost((prevPost) => ({
+      ...prevPost,
+      account: null,
       accountNumber: "",
-    });
+      city: "",
+      state: "",
+    }));
     setSelectedGalloGoalId(null);
     setSelectedCompanyGoal(undefined);
   };
+  
 
   // this function is called when we find an account and its account number via the map process i believe
   // we have an account number and need to find it on the array of goals in the all gallo goals array
-  const searchGalloGoalsForAccount = async (accountNumber: string) => {
-    setIsFetchingGoal(true);
+  // const searchGalloGoalsForAccount = async (accountNumber: string) => {
+  //   setIsFetchingGoal(true);
 
-    try {
-      // Ensure accountNumber is provided
-      if (!accountNumber) {
-        console.warn("Account number is required for searching goals.");
-        return;
-      }
+  //   try {
+  //     // Ensure accountNumber is provided
+  //     if (!accountNumber) {
+  //       console.warn("Account number is required for searching goals.");
+  //       return;
+  //     }
 
-      // Search for matching goals
-      const matchingGalloGoals = allGalloGoals.filter((goal) =>
-        goal.accounts.some(
-          (acc) => acc.distributorAcctId.toString() === accountNumber.toString()
-        )
-      );
+  //     // Search for matching goals
+  //     const matchingGalloGoals = allGalloGoals.filter((goal) =>
+  //       goal.accounts.some(
+  //         (acc) => acc.distributorAcctId.toString() === accountNumber.toString()
+  //       )
+  //     );
 
-      if (matchingGalloGoals.length > 0) {
-        console.log("Matching goals found:", matchingGalloGoals);
-        dispatch(setGalloGoals(matchingGalloGoals));
-      } else {
-        console.warn(
-          "No matching goals found in allGalloGoals. Attempting to fetch from Firestore..."
-        );
-        if (companyId) {
-          const fetchedGalloGoals = await fetchGalloGoalsByCompanyId(companyId);
-          setGalloGoals(fetchedGalloGoals); // Update local state and IndexedDB
-          const fallbackGoals = fetchedGalloGoals.filter((goal) =>
-            goal.accounts.some(
-              (acc) =>
-                acc.distributorAcctId.toString() === accountNumber.toString()
-            )
-          );
+  //     if (matchingGalloGoals.length > 0) {
+  //       console.log("Matching goals found:", matchingGalloGoals);
+  //       dispatch(setGalloGoals(matchingGalloGoals));
+  //     } else {
+  //       console.warn(
+  //         "No matching goals found in allGalloGoals. Attempting to fetch from Firestore..."
+  //       );
+  //       if (companyId) {
+  //         const fetchedGalloGoals = await fetchGalloGoalsByCompanyId(companyId);
+  //         setGalloGoals(fetchedGalloGoals); // Update local state and IndexedDB
+  //         const fallbackGoals = fetchedGalloGoals.filter((goal) =>
+  //           goal.accounts.some(
+  //             (acc) =>
+  //               acc.distributorAcctId.toString() === accountNumber.toString()
+  //           )
+  //         );
 
-          if (fallbackGoals.length > 0) {
-            console.log("Fallback matching goals found:", fallbackGoals);
-            dispatch(setGalloGoals(fallbackGoals));
-          } else {
-            console.warn("No goals found for the account in Firestore either.");
-          }
-        } else {
-          console.error(
-            "Company ID is missing. Cannot fetch goals from Firestore."
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error searching for goals for account:", error);
-    } finally {
-      setIsFetchingGoal(false);
-    }
-  };
+  //         if (fallbackGoals.length > 0) {
+  //           console.log("Fallback matching goals found:", fallbackGoals);
+  //           dispatch(setGalloGoals(fallbackGoals));
+  //         } else {
+  //           console.warn("No goals found for the account in Firestore either.");
+  //         }
+  //       } else {
+  //         console.error(
+  //           "Company ID is missing. Cannot fetch goals from Firestore."
+  //         );
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error searching for goals for account:", error);
+  //   } finally {
+  //     setIsFetchingGoal(false);
+  //   }
+  // };
 
   console.log(post);
 
@@ -384,7 +384,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           Back
         </Button>
 
-        {post.selectedStore && (
+        {post.account && (
           <Button
             variant="contained"
             color="secondary"
@@ -399,7 +399,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           variant="contained"
           color="primary"
           onClick={onNext}
-          disabled={!post.selectedStore}
+          disabled={!post.account}
           sx={{ minWidth: "80px" }}
         >
           Next
@@ -428,27 +428,23 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Button>
       </Box>
 
-      {!post.accountNumber && (
+      {!post.account?.accountNumber && (
         <Box className="toggle-section" mt={3}>
-          <Box className="toggle-wrapper">
+          {/* <Box className="toggle-wrapper">
             <Typography
               className={`toggle-label ${!isMapMode ? "selected" : ""}`}
               onClick={() => setIsMapMode(!isMapMode)}
             >
               Dropdown
             </Typography>
-            {/* <Switch
-           checked={isMapMode}
-           onChange={() => setIsMapMode(!isMapMode)}
-           className="toggle-switch"
-         /> */}
+            
             <Typography
               className={`toggle-label ${isMapMode ? "selected" : ""}`}
               onClick={() => setIsMapMode(!isMapMode)}
             >
               Map
             </Typography>
-          </Box>
+          </Box> */}
 
           <Box className="toggle-wrapper" mt={2}>
             <Typography
@@ -457,11 +453,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
             >
               My Stores
             </Typography>
-            {/* <Switch
-          checked={isAllStoresShown}
-          onChange={() => setIsAllStoresShown(!isAllStoresShown)}
-          className="toggle-switch"
-        /> */}
+           
             <Typography
               className={`toggle-label ${isAllStoresShown ? "selected" : ""}`}
               onClick={() => setIsAllStoresShown(!isAllStoresShown)}
@@ -478,13 +470,15 @@ export const PickStore: React.FC<PickStoreProps> = ({
       <Box mt={2}>{loadingAccounts ? <CircularProgress /> : <Box></Box>}</Box>
 
       {/* Display Selected Store */}
-      {post.selectedStore && (
+      {/* {post.selectedStore && ( */}
+      {post.account && (
         <Box mt={3} p={2} sx={{ border: "1px solid #ccc", borderRadius: 2 }}>
           <Typography variant="h6" fontWeight="bold">
-            {post.selectedStore}
+            {/* {post.selectedStore} */}
+            {post.account?.accountName}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            {post.storeAddress}
+            {post.account.accountAddress}
           </Typography>
           {selectedCompanyGoal && (
             <Typography variant="body2" color="primary" mt={1}>
@@ -499,7 +493,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       )}
 
       {/* Map Mode */}
-      {isMapMode && (
+      {/* {isMapMode && (
         <Box mt={2}>
           <StoreLocator
             onStoreSelect={(store) => {
@@ -512,10 +506,11 @@ export const PickStore: React.FC<PickStoreProps> = ({
             }}
           />
         </Box>
-      )}
+      )} */}
 
       {/* Goals Dropdowns inside of PickStore.tsx*/}
-      {post.selectedStore && (
+      {/* {post.selectedStore && ( */}
+      {post.account && (
         <Box mt={3}>
           <Box mt={2}>
             <CompanyGoalDropdown
@@ -540,7 +535,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       )}
 
       {/* Match Selection Dialog */}
-      <Dialog
+      {/* <Dialog
         open={isMatchSelectionOpen}
         onClose={() => setIsMatchSelectionOpen(false)}
       >
@@ -567,7 +562,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         <DialogActions>
           <Button onClick={() => setIsMatchSelectionOpen(false)}>Cancel</Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
       <AccountModalSelector
         open={openAccountModal}
         onClose={() => setOpenAccountModal(false)}

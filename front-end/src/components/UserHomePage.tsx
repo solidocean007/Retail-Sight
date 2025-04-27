@@ -8,7 +8,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
 import HeaderBar from "./HeaderBar";
 import { UserHomePageHelmet } from "../utils/helmetConfigurations";
-import { addAccountsToIndexedDB, getPostsFromIndexedDB, getUserAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import {
+  addAccountsToIndexedDB,
+  getPostsFromIndexedDB,
+  getUserAccountsFromIndexedDB,
+} from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import { VariableSizeList } from "react-window";
 import { PostWithID } from "../utils/types";
@@ -16,6 +20,7 @@ import useScrollToTopOnChange from "../hooks/scrollToTopOnChange";
 import { selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
+import { Button } from "@mui/material";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
@@ -32,8 +37,7 @@ export const UserHomePage = () => {
   // const [usersAccounts, setUsersAccounts] = useState<CompanyAccountType[] | null>(null);
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
 
-
-  const posts = useSelector((state: RootState) => state.posts.posts); 
+  const posts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   ); // this is the state of redux filtered posts
@@ -48,13 +52,19 @@ export const UserHomePage = () => {
 
   useEffect(() => {
     if (!user || !companyId) return;
-  
+
     const fetchUserAccounts = async (companyId: string) => {
       try {
         const userAccounts = await getUserAccountsFromIndexedDB();
-  
-        if ((!userAccounts || userAccounts.length === 0) && user.salesRouteNum) {
-          const fetchedAccounts = await fetchUsersAccounts(companyId, user.salesRouteNum);
+
+        if (
+          (!userAccounts || userAccounts.length === 0) &&
+          user.salesRouteNum
+        ) {
+          const fetchedAccounts = await fetchUsersAccounts(
+            companyId,
+            user.salesRouteNum
+          );
           if (fetchedAccounts.length > 0) {
             setUsersAccounts(fetchedAccounts);
             setReduxAccounts(fetchedAccounts);
@@ -67,7 +77,7 @@ export const UserHomePage = () => {
         console.error("Error fetching user accounts:", error);
       }
     };
-  
+
     fetchUserAccounts(companyId);
   }, [user, companyId]);
 
@@ -92,12 +102,24 @@ export const UserHomePage = () => {
     dispatch(fetchLocationOptions());
   }, [dispatch]);
 
+  const scrollToNextMissingAccount = () => {
+    const firstMissingIndex = displayPosts.findIndex((post) => !post.account);
+    if (firstMissingIndex !== -1 && listRef.current) {
+      listRef.current.scrollToItem(firstMissingIndex, "start");
+    }
+  };
+
+  const postsMissingAccount = posts.filter((post: PostWithID) => !post.account);
+
   return (
     <>
       <UserHomePageHelmet />
       <div className="user-home-page-container">
         <div className="header-bar-container">
           <HeaderBar toggleFilterMenu={toggleFilterMenu} />
+          <Button onClick={scrollToNextMissingAccount}>
+            Next Missing Account
+          </Button>
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
@@ -116,6 +138,15 @@ export const UserHomePage = () => {
               clearInput={clearInput}
             />
           </div>
+
+          {/* 🔥 Show how many need fixing */}
+          {postsMissingAccount.length > 0 && (
+            <div
+              style={{ color: "red", fontWeight: "bold", marginBottom: "1rem" }}
+            >
+              {postsMissingAccount.length} posts still need an account selected!
+            </div>
+          )}
 
           <div
             className={`side-bar-container ${

@@ -41,6 +41,7 @@ import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
+import { set } from "react-hook-form";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -99,6 +100,9 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [fullSizeImageUrl, setFullSizeImageUrl] = useState("");
+
+  const [selectedCompanyAccount, setSelectedCompanyAccount] =
+    useState<CompanyAccountType | null>(null);
 
   const handleImageClick = () => {
     // Assuming post.imageUrl is available and contains the 'resized' keyword
@@ -226,8 +230,10 @@ const PostCard: React.FC<PostCardProps> = ({
     handleClose(); // Close the menu after sharing
   };
 
-  const createdOnBehalf = post.postCreatedBy != post.postUserName;
+  const createdOnBehalf = post.postCreatedBy != post.postUserName; // how do i fix this?  i think its a check for onbehalf
 
+
+  
   return (
     <>
       <Card
@@ -264,7 +270,8 @@ const PostCard: React.FC<PostCardProps> = ({
                     onClose={() => setAnchorEl(null)}
                   >
                     <MenuItem onClick={() => handleShare()}>Share</MenuItem>
-                    {(user?.uid === post.postUserId ||
+                    {/* this matches the saved post but not the future account object.  should it do either or both?*/}
+                    {(user?.uid === post.userId ||
                       user?.role === "admin" ||
                       user?.role === "super-admin") && (
                       <MenuItem onClick={() => setIsEditModalOpen(true)}>
@@ -297,14 +304,16 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="store-details">
                 <div className="store-name-number">
                   <h3>
-                    {post.selectedStore}
+                    {post.selectedStore}{" "}
+                    {/* this matches the saved post but not the future account object.  should it do either or both?*/}
                     <span> {post.storeNumber}</span>
                   </h3>
 
                   <h5>{formattedDate}</h5>
                 </div>
                 <div className="store-address-box">
-                  <h5>{post.storeAddress}</h5>
+                  <h5>{post.storeAddress}</h5>{" "}
+                  {/* this matches the saved post but not the future account object.  should it do either or both?*/}
                   {/* <h5>{post.id}</h5> */}
                 </div>
               </div>
@@ -315,19 +324,28 @@ const PostCard: React.FC<PostCardProps> = ({
                 <p>
                   by:{" "}
                   <a href="#" onClick={handleOnUserNameClick}>
-                    {post.postUserName}
+                    {post.postUserName}{" "}
+                    {/* this matches the saved post but not the future account object.  should it do either or both?*/}
                   </a>
                 </p>
               </div>
               <div className="created-On-Behalf">
-                {createdOnBehalf && <h5>Created by: {post.postCreatedBy}</h5>}
+                {createdOnBehalf && <h5>Created by: {post.postCreatedBy}</h5>}{" "}
+                {/* this matches the saved post but not the future account object.  should it do either or both?*/}
               </div>
               <div className="user-company-box">
-                <p>company: {post.postUserCompany}</p>
+                <p>company: {post.postUserCompany}</p>{" "}
+                {/* this matches the saved post but not the future account object.  should it do either or both?*/}
               </div>
             </div>
           </div>
         </div>
+        {!post.account && (
+          <div className="missing-account-banner">
+            🚨 Missing Account Info — Please Edit
+          </div>
+        )}
+
         <Typography>
           {post.companyGoalId
             ? `Company goal: ${post.companyGoalTitle}` /* this renders null */
@@ -342,7 +360,7 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.category}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
-
+            {post.id}
             <div className="likes-box">
               <button
                 className="like-button"
@@ -400,6 +418,8 @@ const PostCard: React.FC<PostCardProps> = ({
       {isEditModalOpen ? (
         <EditPostModal
           post={post}
+          // setPost={setPost}
+          setSelectedCompanyAccount={setSelectedCompanyAccount}
           isOpen={isEditModalOpen}
           setIsEditModalOpen={setIsEditModalOpen}
           // onClose={handleCloseEditModal}

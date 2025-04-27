@@ -1,6 +1,5 @@
 // Dashboard.tsx
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
 import { selectUser, setCompanyUsers } from "../Slices/userSlice";
@@ -12,6 +11,7 @@ import {
 import {
   CompanyAccountType,
   DashboardModeType,
+  PostType,
   UserType,
 } from "../utils/types";
 import { useAppDispatch } from "../utils/store";
@@ -22,22 +22,14 @@ import {
   AppBar,
   Box,
   Container,
-  Drawer,
   IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  ListSubheader,
   Toolbar,
   Typography,
   useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import EmployeesViewer from "./EmployeesViewer";
 import UserProfileViewer from "./UserProfileViewer";
-import LogOutButton from "./LogOutButton";
 import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import AccountManager from "./AccountsManager.tsx";
@@ -46,13 +38,15 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   query,
+  setDoc,
+  updateDoc,
   where,
 } from "@firebase/firestore";
 import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
-import getCompanyAccountId from "../utils/helperFunctions/getCompanyAccountId.ts";
 import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
 import { setAllAccounts } from "../Slices/allAccountsSlice.ts";
 import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
@@ -239,5 +233,50 @@ export const Dashboard = () => {
     </Container>
   );
 };
+
+// migratePostsFixCreatedBy.ts
+
+export const migratePostsFixCreatedBy = async () => {
+  try {
+    console.log("Starting post createdBy re-migration...");
+
+    const postsSnapshot = await getDocs(collection(db, "posts"));
+
+    let migratedCount = 0;
+
+    for (const postDoc of postsSnapshot.docs) {
+      const post = postDoc.data() as PostType;
+
+      // No skipping. Every post will attempt correction.
+      if (!post.postUserId) {
+        console.warn(`Post ${postDoc.id} is missing postUserId, skipping.`);
+        continue;
+      }
+
+      const userRef = doc(db, "users", post.postUserId);
+      const userSnapshot = await getDoc(userRef);
+
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data() as UserType;
+
+        // Simply assign the whole user object as createdBy
+        await updateDoc(postDoc.ref, {
+          createdBy: userData,
+        });
+
+        migratedCount++;
+        console.log(`✅ Migrated post ${postDoc.id}`);
+      } else {
+        console.warn(`⚠️ User not found for postUserId: ${post.postUserId}`);
+      }
+    }
+
+    console.log(`Migration complete! Total posts updated: ${migratedCount}`);
+  } catch (error) {
+    console.error("Error during post migration:", error);
+  }
+};
+
+// migratePostsFixCreatedBy();
 
 export default Dashboard;

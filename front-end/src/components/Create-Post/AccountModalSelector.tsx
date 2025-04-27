@@ -87,8 +87,11 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
           onChange={(e, value) => {
             if (value) {
               onAccountSelect(value);
-              onClose();
+              onClose(); // ✅ Only close after real selection
             }
+          }}
+          onInputChange={(e, value, reason) => {
+            // don't close modal while typing
           }}
           renderInput={(params) => (
             <TextField
@@ -98,7 +101,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
               sx={{
                 mt: 1,
                 "& .MuiInputLabel-root": {
-                  top: "4px", // ensures label doesn't get clipped
+                  top: "4px",
                 },
                 "& .MuiInputBase-root": {
                   paddingTop: "10px",

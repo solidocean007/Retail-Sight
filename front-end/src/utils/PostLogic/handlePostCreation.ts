@@ -63,9 +63,7 @@ export const useHandlePostSubmission = () => {
     const newDocRef: DocumentReference | null = null; // Initialize as null
 
     try {
-      // Upload original image and track progress
-      // resizeOriginalImage first then...
-      const resizedOriginalBlob = await resizeImage(selectedFile, 800, 900);
+      const resizedOriginalBlob = await resizeImage(selectedFile, 800, 900); // what does this do?
       const originalImagePath = `images/${uniquePostFolder}/original.jpg`;
       const originalImageRef = storageRef(storage, originalImagePath);
       const uploadOriginalTask = uploadBytesResumable(
@@ -91,7 +89,7 @@ export const useHandlePostSubmission = () => {
           // );
 
           // Resize and compress the image
-          const resizedBlob = await resizeImage(selectedFile, 500, 600); // consider changing this
+          const resizedBlob = await resizeImage(selectedFile, 500, 600); // what does this do as well?
           const resizedImagePath = `images/${uniquePostFolder}/resized.jpg`;
           const resizedImageRef = storageRef(storage, resizedImagePath);
           const uploadResizedTask = uploadBytesResumable(
@@ -136,23 +134,45 @@ export const useHandlePostSubmission = () => {
                 channel: post.channel,
                 description: cleanedDescription,
                 imageUrl: "", // Temporary placeholder
-                // imageUrl: post.imageUrl,
-                selectedStore: post.selectedStore,
+                account: post.account ? {
+                  accountNumber: post.account.accountNumber,
+                  accountName: post.account.accountName,
+                  accountAddress: post.account.accountAddress,
+                  salesRouteNums: post.account.salesRouteNums || [],
+                } : null,
                 storeNumber: post.storeNumber,
-                storeAddress: post.storeAddress,
                 city: post.city,
                 state: post.state,
                 visibility: post.visibility,
-                supplier: post.supplier,
-                brands: post.brands,
                 displayDate: new Date().toISOString(),
                 timestamp: new Date().toISOString(),
                 totalCaseCount: post.totalCaseCount,
-                postUserName: post.postUserName,
-                postUserId: post.postUserId,
-                postUserCompany: post.postUserCompany,
-                postUserCompanyId: post.postUserCompanyId,
-                postUserEmail: post.postUserEmail,
+                createdBy: {
+                  role: post.createdBy.role,
+                  uid: post.createdBy.uid,
+                  firstName: post.createdBy.firstName,
+                  lastName: post.createdBy.lastName,
+                  email: post.createdBy.email,
+                  company: post.createdBy.company,
+                  companyId: post.createdBy.companyId,
+                  salesRouteNum: post.createdBy.salesRouteNum,
+                  phone: post.createdBy.phone,
+                },
+                ...(post.postedFor && {
+                  postedFor: {
+                    role: post.postedFor.role,
+                    uid: post.postedFor.uid,
+                    firstName: post.postedFor.firstName,
+                    lastName: post.postedFor.lastName,
+                    email: post.postedFor.email,
+                    company: post.postedFor.company,
+                    companyId: post.postedFor.companyId,
+                    salesRouteNum: post.postedFor.salesRouteNum,
+                    phone: post.postedFor.phone,
+                  }
+                }),
+                supplier: post.supplier,
+                brands: post.brands,
                 companyGoalId: post.companyGoalId || null, // Ensures companyGoalId exists
                 companyGoalDescription: post.companyGoalDescription || null, // Ensures description exists
                 companyGoalTitle: post.companyGoalTitle || null, // Ensures title  exists
@@ -166,9 +186,8 @@ export const useHandlePostSubmission = () => {
                   sharedToken: sharedToken,
                   tokenExpiry: tokenExpiry,
                 },
-                postCreatedBy: post.postCreatedBy,
                 oppId: post.oppId || null,
-                closedBy: post.closedBy || post.postUserName || "",
+                closedBy: post.closedBy || user.displayName || "",
                 closedDate:
                   post.closedDate || new Date().toISOString().split("T")[0],
                 closedUnits: post.closedUnits || 0,
@@ -177,14 +196,13 @@ export const useHandlePostSubmission = () => {
               // Create the post in Firestore
               const newDocRef = await addPostToFirestore(
                 db,
-                postDataWithoutImage //  The types of 'token.sharedToken' are incompatible between these types.
-                // Type '() => string' is not assignable to type 'string'
+                postDataWithoutImage
               );
 
               const postId = newDocRef.id;
 
               // Update goal with the post ID
-              await updateGoalWithSubmission(post, postId);
+              await updateGoalWithSubmission(post, postId,);
 
               // Update the post with image URLs
               await updateDoc(newDocRef, {
@@ -196,7 +214,8 @@ export const useHandlePostSubmission = () => {
               if (post.oppId) {
                 const achievementPayload = {
                   oppId: post.oppId,
-                  closedBy: post.closedBy || post.postUserName,
+                  closedBy: post.closedBy ?? user.displayName ?? "",
+
                   closedDate:
                     post.closedDate || new Date().toISOString().split("T")[0],
                   closedUnits: post.closedUnits || "0",
@@ -211,17 +230,6 @@ export const useHandlePostSubmission = () => {
                 );
               }
 
-              const newPostWithID = {
-                // this isnt used.. not sure why i have it here
-                ...postDataWithoutImage,
-                id: newDocRef.id,
-                imageUrl: resizedImageUrl,
-              };
-              // Add the new post to IndexedDB
-              // await addNewlyCreatedPostToIndexedDB(newPostWithID); // indexedDb has the image url
-              // Dispatch action to add this new post to Redux state
-              // dispatch(addNewPost(newPostWithID)); // disable this to see how redux is affected
-
               // Update channels collection
               await updateChannelsInFirestore(db, post.channel, newDocRef.id);
 
@@ -231,6 +239,8 @@ export const useHandlePostSubmission = () => {
                 post.category,
                 newDocRef.id
               );
+
+              // i need to eventually update hashtags and startags in the firestore
 
               if (newDocRef && selectedCompanyMission) {
                 const submittedMission: SubmittedMissionType = {

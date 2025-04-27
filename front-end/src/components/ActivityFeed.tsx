@@ -201,7 +201,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const numberOfAds = adsOn ? Math.floor(posts.length / AD_INTERVAL) : 0;
   const itemCount = posts.length + numberOfAds;
-
   const itemRenderer = ({
     index,
     style,
