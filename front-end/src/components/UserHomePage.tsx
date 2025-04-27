@@ -103,11 +103,17 @@ export const UserHomePage = () => {
   }, [dispatch]);
 
   const scrollToNextMissingAccount = () => {
+    if (!listRef.current) {
+      console.warn("List not ready yet!");
+      return;
+    }
+  
     const firstMissingIndex = displayPosts.findIndex((post) => !post.account);
-    if (firstMissingIndex !== -1 && listRef.current) {
+    if (firstMissingIndex !== -1) {
       listRef.current.scrollToItem(firstMissingIndex, "start");
     }
   };
+  
 
   const postsMissingAccount = posts.filter((post: PostWithID) => !post.account);
 
