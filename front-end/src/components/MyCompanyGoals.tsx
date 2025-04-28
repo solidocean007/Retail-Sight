@@ -1,19 +1,10 @@
 // MyCompanyGoals.tsx
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../utils/store";
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../utils/store";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
   Typography,
   CircularProgress,
-  Collapse,
-  Box,
   useMediaQuery,
 } from "@mui/material";
 import { selectUser } from "../Slices/userSlice";
@@ -22,7 +13,7 @@ import {
   selectCompanyGoalsIsLoading,
   selectUsersCompanyGoals,
 } from "../Slices/goalsSlice";
-import { CompanyGoalType, GoalSubmissionType } from "../utils/types";
+import { CompanyGoalType } from "../utils/types";
 import { useNavigate } from "react-router-dom";
 import CompanyGoalDetailsCard from "./GoalIntegration/CompanyGoalDetailsCard";
 import { useTheme } from "@mui/material/styles";
@@ -39,19 +30,19 @@ const MyCompanyGoals = () => {
 
   const loading = useSelector(selectCompanyGoalsIsLoading);
 
-  const userCompanyGoals = useSelector((state: RootState) =>
+  const userCompanyGoals = useSelector((state: RootState) => // Selector unknown returned a different result when called with the same parameters. This can lead to unnecessary rerenders.Selectors that return a new reference (such as an object or an array) should be memoized:
     selectUsersCompanyGoals(state, salesRouteNum)
   );
 
   console.log(userCompanyGoals)
 
   // ✅ Toggle expanded state for goals
-  const toggleGoalExpansion = (goalId: string) => {
-    setExpandedGoals((prev) => ({
-      ...prev,
-      [goalId]: !prev[goalId],
-    }));
-  };
+  // const toggleGoalExpansion = (goalId: string) => {
+  //   setExpandedGoals((prev) => ({
+  //     ...prev,
+  //     [goalId]: !prev[goalId],
+  //   }));
+  // };
 
   const usersAccountsForGoal = (goal: CompanyGoalType) => {
     if (!Array.isArray(goal.accounts)) {

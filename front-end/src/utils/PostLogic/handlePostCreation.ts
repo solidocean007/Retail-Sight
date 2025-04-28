@@ -134,43 +134,16 @@ export const useHandlePostSubmission = () => {
                 channel: post.channel,
                 description: cleanedDescription,
                 imageUrl: "", // Temporary placeholder
-                account: post.account ? {
-                  accountNumber: post.account.accountNumber,
-                  accountName: post.account.accountName,
-                  accountAddress: post.account.accountAddress,
-                  salesRouteNums: post.account.salesRouteNums || [],
-                } : null,
-                storeNumber: post.storeNumber,
+                account: post.account ?? null,
+                // storeNumber: post.storeNumber,
                 city: post.city,
                 state: post.state,
                 visibility: post.visibility,
                 displayDate: new Date().toISOString(),
                 timestamp: new Date().toISOString(),
                 totalCaseCount: post.totalCaseCount,
-                createdBy: {
-                  role: post.createdBy.role,
-                  uid: post.createdBy.uid,
-                  firstName: post.createdBy.firstName,
-                  lastName: post.createdBy.lastName,
-                  email: post.createdBy.email,
-                  company: post.createdBy.company,
-                  companyId: post.createdBy.companyId,
-                  salesRouteNum: post.createdBy.salesRouteNum,
-                  phone: post.createdBy.phone,
-                },
-                ...(post.postedFor && {
-                  postedFor: {
-                    role: post.postedFor.role,
-                    uid: post.postedFor.uid,
-                    firstName: post.postedFor.firstName,
-                    lastName: post.postedFor.lastName,
-                    email: post.postedFor.email,
-                    company: post.postedFor.company,
-                    companyId: post.postedFor.companyId,
-                    salesRouteNum: post.postedFor.salesRouteNum,
-                    phone: post.postedFor.phone,
-                  }
-                }),
+                createdBy: userData ?? null, // ✅ Save whole current user object
+                ...(post.postedFor && { postedFor: post.postedFor }), // ✅ Save if creating on behalf
                 supplier: post.supplier,
                 brands: post.brands,
                 companyGoalId: post.companyGoalId || null, // Ensures companyGoalId exists

@@ -79,7 +79,7 @@ export interface PostType {
   description?: string;
   imageUrl?: string;
   account: CompanyAccountType | null;
-  storeNumber?: string;
+  // storeNumber?: string;
   city?: string; // Added city
   state?: string; // Added state
   visibility?: "public" | "company" | "supplier" | "private";
@@ -249,7 +249,7 @@ export type CompanyGoalType = {
 
 export type GoalSubmissionType = {
   postId: string;
-  accountNumber: string;
+  // accountNumber: string;
   account: CompanyAccountType;
   submittedBy: UserType;
   submittedAt: string;

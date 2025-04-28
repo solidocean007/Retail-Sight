@@ -22,10 +22,9 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     const headerBg = getComputedStyle(document.documentElement)
       .getPropertyValue("--header-background")
       .trim();
-  
+
     console.log("💡 Header background from CSS:", headerBg);
   }, []);
-  
 
   const goToSignUpLogin = () => {
     navigate("/sign-up-login");
@@ -69,48 +68,49 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   };
 
   return (
-    <div className="header-bar">
-      <div className="website-title" onClick={() => navigate("/")}>
-        <h1>Displaygram</h1>
-        <h5>{currentUser?.company}</h5>
+    <>
+      <div className="header-bar">
+        <div className="website-title" onClick={() => navigate("/")}>
+          <h1>Displaygram</h1>
+          <h5>{currentUser?.company}</h5>
 
-        {/* <p>version 0.2.4</p> */}
-      </div>
+          {/* <p>version 0.2.4</p> */}
+        </div>
 
-      {!currentUser ? (
-        <button onClick={goToSignUpLogin}>Login</button>
-      ) : (
-        <div className="header-details">
-          <div className="header-buttons">
-            {/* <div className="menu-buttons">
+        {!currentUser ? (
+          <button onClick={goToSignUpLogin}>Login</button>
+        ) : (
+          <div className="header-details">
+            <div className="header-buttons">
+              {/* <div className="menu-buttons">
             <button onClick={handleCollectionsClick}>Collections</button>
           </div> */}
-            <div className="menu-buttons">
-              <button onClick={handleDashboardClick}>Dashboard</button>
+              <div className="menu-buttons">
+                <button onClick={handleDashboardClick}>Dashboard</button>
+              </div>
+              <div className="capture-display-btn">
+                <button onClick={handleCreatePostClick}>Create Display</button>
+              </div>
             </div>
-            <div className="capture-display-btn">
-              <button onClick={handleCreatePostClick}>Create Display</button>
+
+            <div
+              className="hamburger-menu-button"
+              onClick={() => setShowMenuTab(!showMenuTab)}
+              aria-haspopup="true"
+              aria-expanded={showMenuTab}
+              style={{ visibility: showMenuTab ? "hidden" : "visible" }}
+            >
+              ☰
             </div>
           </div>
-
-          <div
-            className="hamburger-menu-button"
-            onClick={() => setShowMenuTab(!showMenuTab)}
-            aria-haspopup="true"
-            aria-expanded={showMenuTab}
-            style={{ visibility: showMenuTab ? "hidden" : "visible" }}
-          >
-            ☰
-          </div>
-        </div>
-      )}
-
+        )}
+      </div>
       {showMenuTab && (
         <div ref={menuRef}>
           <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab} />
         </div>
       )}
-    </div>
+    </>
   );
 };
 

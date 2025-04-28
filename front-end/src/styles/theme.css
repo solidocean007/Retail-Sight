@@ -75,6 +75,8 @@
   --background-pop-out-body: var(--gray-50);
   --post-card-background: var(--post-card-animated-gradient-light);
   --header-background: var(--post-card-animated-gradient-light);
+  --dashboard-header-background: var(--post-card-animated-gradient-light); /* doesnt work */
+  --dashboard-header-background: var(--gray-200); /* works */
 
   --dashboard-card: var(--gray-200);
   --card-outline: var(--gray-800);
@@ -119,6 +121,7 @@
   --background-pop-out-body: var(--gray-900);
   --post-card-background: var(--post-card-animated-gradient-dark);
   --header-background: var(--post-card-animated-gradient-dark);
+  --dashboard-header-background: var(--gray-800);
 
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);
