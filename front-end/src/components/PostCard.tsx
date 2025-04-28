@@ -9,7 +9,7 @@ import {
   Dialog,
   Typography,
 } from "@mui/material";
-import { CommentType, PostWithID } from "../utils/types";
+import { CommentType, CompanyAccountType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
 import EditPostModal from "./Create-Post/EditPostModal";
 import { useSelector, useDispatch } from "react-redux";
@@ -230,10 +230,9 @@ const PostCard: React.FC<PostCardProps> = ({
     handleClose(); // Close the menu after sharing
   };
 
-  const createdOnBehalf = post.postCreatedBy != post.postUserName; // how do i fix this?  i think its a check for onbehalf
+  const createdOnBehalf =
+    post.postedFor && post.createdBy?.uid !== post.postedFor.uid;
 
-
-  
   return (
     <>
       <Card
@@ -270,8 +269,8 @@ const PostCard: React.FC<PostCardProps> = ({
                     onClose={() => setAnchorEl(null)}
                   >
                     <MenuItem onClick={() => handleShare()}>Share</MenuItem>
-                    {/* this matches the saved post but not the future account object.  should it do either or both?*/}
-                    {(user?.uid === post.userId ||
+                    {(user?.uid === post.createdBy?.uid ||
+                      user?.uid === post.userId ||
                       user?.role === "admin" ||
                       user?.role === "super-admin") && (
                       <MenuItem onClick={() => setIsEditModalOpen(true)}>
@@ -304,15 +303,15 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="store-details">
                 <div className="store-name-number">
                   <h3>
-                    {post.selectedStore}{" "}
+                    {post.account?.accountName}{" "}
                     {/* this matches the saved post but not the future account object.  should it do either or both?*/}
-                    <span> {post.storeNumber}</span>
+                    {/* <span> {post.storeNumber}</span> */}
                   </h3>
 
                   <h5>{formattedDate}</h5>
                 </div>
                 <div className="store-address-box">
-                  <h5>{post.storeAddress}</h5>{" "}
+                  <h5>{post.account?.accountAddress}</h5>{" "}
                   {/* this matches the saved post but not the future account object.  should it do either or both?*/}
                   {/* <h5>{post.id}</h5> */}
                 </div>
@@ -324,17 +323,24 @@ const PostCard: React.FC<PostCardProps> = ({
                 <p>
                   by:{" "}
                   <a href="#" onClick={handleOnUserNameClick}>
-                    {post.postUserName}{" "}
-                    {/* this matches the saved post but not the future account object.  should it do either or both?*/}
+                    {post.createdBy?.firstName && post.createdBy?.lastName
+                      ? `${post.createdBy.firstName} ${post.createdBy.lastName}`
+                      : "Unknown User"}
                   </a>
                 </p>
               </div>
+
               <div className="created-On-Behalf">
-                {createdOnBehalf && <h5>Created by: {post.postCreatedBy}</h5>}{" "}
-                {/* this matches the saved post but not the future account object.  should it do either or both?*/}
+                {createdOnBehalf && (
+                  <h5>
+                    Created for: {post.postedFor?.firstName}{" "}
+                    {post.postedFor?.lastName}
+                  </h5>
+                )}
               </div>
+
               <div className="user-company-box">
-                <p>company: {post.postUserCompany}</p>{" "}
+                <p>company: {post.createdBy?.company}</p>{" "}
                 {/* this matches the saved post but not the future account object.  should it do either or both?*/}
               </div>
             </div>
@@ -360,7 +366,7 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.category}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
-            {post.id}
+            {/* {post.id} */}
             <div className="likes-box">
               <button
                 className="like-button"

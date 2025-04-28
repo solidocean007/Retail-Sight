@@ -102,23 +102,60 @@ export const UserHomePage = () => {
     dispatch(fetchLocationOptions());
   }, [dispatch]);
 
+  const getActivityItemHeight = (windowWidth: number) => {
+    if (windowWidth <= 500) {
+      // return 720;
+      // return 620;
+      return 700;
+    } else if (windowWidth <= 600) {
+      return 750;
+    } else if (windowWidth <= 700) {
+      return 750;
+    } else if (windowWidth <= 800) {
+      return 800;
+    } else if (windowWidth <= 900) {
+      return 850;
+    } else {
+      return 900;
+    }
+  };
+
   const scrollToNextMissingAccount = () => {
-    console.log('click'); // still log for now
+    console.log("click");
+
     if (!listRef.current) {
       console.warn("List not ready yet!");
       return;
     }
-  
+
     const firstMissingIndex = displayPosts.findIndex((post) => !post.account);
+
     if (firstMissingIndex !== -1) {
-      // 🛠 Fix: Delay the scroll slightly
+      console.log("Found missing at index:", firstMissingIndex);
+
+      listRef.current.resetAfterIndex(0, true);
+
       setTimeout(() => {
-        listRef.current?.scrollToItem(firstMissingIndex, "start");
-      }, 50); // 50ms is usually perfect
+        const itemSize = getActivityItemHeight(window.innerWidth) + 8; // 8 = your ITEM_GAP
+        const scrollPosition = firstMissingIndex * itemSize;
+        console.log("Scrolling to offset:", scrollPosition);
+
+        listRef.current?.scrollTo(scrollPosition);
+      }, 50);
+    } else {
+      console.log("No missing accounts found.");
     }
   };
-  
-  
+
+  const scrollToBottom = () => {
+    if (!listRef.current) return;
+
+    const totalItems = displayPosts.length;
+    const itemSize = getActivityItemHeight(window.innerWidth) + 8; // + ITEM_GAP
+    const totalHeight = totalItems * itemSize;
+
+    listRef.current.scrollTo(totalHeight);
+  };
 
   const postsMissingAccount = posts.filter((post: PostWithID) => !post.account);
 
@@ -128,15 +165,17 @@ export const UserHomePage = () => {
       <div className="user-home-page-container">
         <div className="header-bar-container">
           <HeaderBar toggleFilterMenu={toggleFilterMenu} />
-          <Button onClick={scrollToNextMissingAccount}>
+          {/* <Button onClick={scrollToNextMissingAccount}>
             Next Missing Account
           </Button>
+          <Button onClick={scrollToBottom}>Scroll to Bottom</Button> */}
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
             <ActivityFeed
               listRef={listRef}
-              posts={displayPosts}
+              // posts={displayPosts}
+              posts={[...displayPosts, ...Array(3).fill({ id: `filler-${Math.random()}` })]}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               currentStarTag={currentStarTag}

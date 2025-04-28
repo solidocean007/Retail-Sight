@@ -82,10 +82,39 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const loading = useSelector((state: RootState) => state.posts.loading);
   // State to store the list height
-  const [listHeight, setListHeight] = useState(0);
+  const [listHeight, setListHeight] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.visualViewport
+        ? window.visualViewport.height * 0.95
+        : window.innerHeight * 0.95;
+    }
+    return 800; // Fallback for SSR or very early load
+  });
+  
+
+  useEffect(() => {
+    if (!listRef.current) return;
+
+    // Reset the list when posts finish loading or screen size changes
+    const resetList = () => {
+      listRef.current?.resetAfterIndex(0, true);
+    };
+
+    resetList();
+
+    // Small delay in case visual viewport changes slightly after load
+    const timeout = setTimeout(() => {
+      resetList();
+    }, 200);
+
+    return () => clearTimeout(timeout);
+  }, [posts.length, windowWidth, listHeight]);
 
   // Function to calculate list height
   const calculateListHeight = () => {
+    if (window.visualViewport) {
+      return window.visualViewport.height * 0.95;
+    }
     return window.innerHeight * 0.95;
   };
 
@@ -143,6 +172,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
+      setListHeight(calculateListHeight());
     };
 
     window.addEventListener("resize", handleResize);
@@ -228,6 +258,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     } else if (postIndex < posts.length) {
       const postWithID = posts[postIndex];
 
+      if (!postWithID?.id || postWithID.id.startsWith("filler-")) {
+        return <div style={style}></div>; // empty div for filler
+      }
+
       return (
         <div className="post-card-renderer-container" style={wrapperStyle}>
           <PostCardRenderer
@@ -251,10 +285,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return <CircularProgress />;
   }
 
-  {
-    posts.length === 0 && clearSearch && (
-      <NoResults onClearFilters={clearSearch} />
-    );
+  if (posts.length === 0) {
+    return <NoResults onClearFilters={clearSearch} />;
   }
 
   return (

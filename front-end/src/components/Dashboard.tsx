@@ -236,47 +236,131 @@ export const Dashboard = () => {
 
 // migratePostsFixCreatedBy.ts
 
-export const migratePostsFixCreatedBy = async () => {
-  try {
-    console.log("Starting post createdBy re-migration...");
+// export const migratePostsFixCreatedBy = async (specificPostId?: string) => {
+//   try {
+//     console.log("Starting post createdBy re-migration...");
 
-    const postsSnapshot = await getDocs(collection(db, "posts"));
+//     if (specificPostId) {
+//       // ✅ Only fix one post
+//       const postDoc = await getDoc(doc(db, "posts", specificPostId));
 
-    let migratedCount = 0;
+//       if (!postDoc.exists()) {
+//         console.warn(`❌ Post with ID ${specificPostId} not found.`);
+//         return;
+//       }
 
-    for (const postDoc of postsSnapshot.docs) {
-      const post = postDoc.data() as PostType;
+//       const post = postDoc.data() as PostType;
 
-      // No skipping. Every post will attempt correction.
-      if (!post.postUserId) {
-        console.warn(`Post ${postDoc.id} is missing postUserId, skipping.`);
-        continue;
-      }
+//       if (!post.postUserId) {
+//         console.warn(`❌ Post ${specificPostId} is missing postUserId, skipping.`);
+//         return;
+//       }
 
-      const userRef = doc(db, "users", post.postUserId);
-      const userSnapshot = await getDoc(userRef);
+//       const userRef = doc(db, "users", post.postUserId);
+//       const userSnapshot = await getDoc(userRef);
 
-      if (userSnapshot.exists()) {
-        const userData = userSnapshot.data() as UserType;
+//       if (userSnapshot.exists()) {
+//         const userData = userSnapshot.data() as UserType;
 
-        // Simply assign the whole user object as createdBy
-        await updateDoc(postDoc.ref, {
-          createdBy: userData,
-        });
+//         await updateDoc(postDoc.ref, {
+//           createdBy: userData,
+//         });
 
-        migratedCount++;
-        console.log(`✅ Migrated post ${postDoc.id}`);
-      } else {
-        console.warn(`⚠️ User not found for postUserId: ${post.postUserId}`);
-      }
-    }
+//         console.log(`✅ Fixed single post: ${specificPostId}`);
+//       } else {
+//         console.warn(`⚠️ User not found for postUserId: ${post.postUserId}`);
+//       }
 
-    console.log(`Migration complete! Total posts updated: ${migratedCount}`);
-  } catch (error) {
-    console.error("Error during post migration:", error);
-  }
-};
+//     } else {
+//       // ✅ Original full loop if no specific ID given
+//       const postsSnapshot = await getDocs(collection(db, "posts"));
+//       let migratedCount = 0;
 
-// migratePostsFixCreatedBy();
+//       for (const postDoc of postsSnapshot.docs) {
+//         const post = postDoc.data() as PostType;
+
+//         if (!post.postUserId) {
+//           console.warn(`Post ${postDoc.id} is missing postUserId, skipping.`);
+//           continue;
+//         }
+
+//         const userRef = doc(db, "users", post.postUserId);
+//         const userSnapshot = await getDoc(userRef);
+
+//         if (userSnapshot.exists()) {
+//           const userData = userSnapshot.data() as UserType;
+
+//           await updateDoc(postDoc.ref, {
+//             createdBy: userData,
+//           });
+
+//           migratedCount++;
+//           console.log(`✅ Migrated post ${postDoc.id}`);
+//         } else {
+//           console.warn(`⚠️ User not found for postUserId: ${post.postUserId}`);
+//         }
+//       }
+
+//       console.log(`Migration complete! Total posts updated: ${migratedCount}`);
+//     }
+//   } catch (error) {
+//     console.error("Error during post migration:", error);
+//   }
+// };
+
+// migratePostsFixCreatedBy('DQVAbNVIlWdFEvq4fSF4');
+
+
+// export const findPostsMissingCreatedBy = async () => {
+//   try {
+//     const postsSnapshot = await getDocs(collection(db, "posts"));
+//     const missingCreatedByPosts: string[] = [];
+
+//     for (const postDoc of postsSnapshot.docs) {
+//       const post = postDoc.data() as PostType;
+
+//       if (!post.createdBy || !post.createdBy.uid) {
+//         missingCreatedByPosts.push(postDoc.id);
+//       }
+//     }
+
+//     console.log(`Posts missing createdBy:`, missingCreatedByPosts);
+
+//     if (missingCreatedByPosts.length === 0) {
+//       console.log("✅ All posts have a createdBy field!");
+//     } else {
+//       console.warn(`⚠️ Total posts missing createdBy: ${missingCreatedByPosts.length}`);
+//     }
+//   } catch (error) {
+//     console.error("Error checking posts:", error);
+//   }
+// };
+
+// await findPostsMissingCreatedBy();
+
+// export const findPostsWithBadCreatedBy = async () => {
+//   const postsSnapshot = await getDocs(collection(db, "posts"));
+
+//   const badPosts: string[] = [];
+
+//   postsSnapshot.forEach((docSnap) => {
+//     const post = docSnap.data() as PostType;
+
+//     if (
+//       !post.createdBy || // missing completely
+//       !post.createdBy.uid || // missing uid
+//       typeof post.createdBy.uid !== "string" || // wrong type
+//       post.createdBy.uid.trim().length < 5 // too short or blank
+//     ) {
+//       badPosts.push(docSnap.id);
+//     }
+//   });
+
+//   console.log("🚨 Posts with bad or missing createdBy:", badPosts);
+//   console.log(`🔎 Found ${badPosts.length} bad posts total`);
+// };
+
+// await findPostsWithBadCreatedBy();
+
 
 export default Dashboard;

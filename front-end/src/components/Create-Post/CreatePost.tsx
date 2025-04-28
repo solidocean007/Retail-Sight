@@ -56,7 +56,7 @@ export const CreatePost = () => {
   const usersCompanyGoals = useSelector((state: RootState) =>
     selectUsersCompanyGoals(state, salesRouteNum)
   );
-  console.log(usersCompanyGoals)
+  // console.log(usersCompanyGoals)
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 

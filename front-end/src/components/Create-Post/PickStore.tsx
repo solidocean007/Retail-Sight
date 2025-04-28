@@ -99,7 +99,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   // these next two only need to be selected if a user is selecting all accounts and needs access to the entire company goal list or gallo goal list
   const allGalloGoals = useSelector(selectAllGalloGoals); // delete this or from the parent
   const allCompanyGoals = useSelector(selectAllCompanyGoals); // i probqably need to delete this from the parent or here
-  const [openAccountModal, setOpenAccountModal] = useState(false);
+  const [openAccountModal, setOpenAccountModal] = useState(true);
 
   // this is used if a user is trying to select an account by address using the map
   // const [selectedStoreByAddress, setSelectedStoreByAddress] = useState<{
