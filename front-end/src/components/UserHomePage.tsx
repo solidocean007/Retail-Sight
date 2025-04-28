@@ -103,6 +103,7 @@ export const UserHomePage = () => {
   }, [dispatch]);
 
   const scrollToNextMissingAccount = () => {
+    console.log('click'); // still log for now
     if (!listRef.current) {
       console.warn("List not ready yet!");
       return;
@@ -110,9 +111,13 @@ export const UserHomePage = () => {
   
     const firstMissingIndex = displayPosts.findIndex((post) => !post.account);
     if (firstMissingIndex !== -1) {
-      listRef.current.scrollToItem(firstMissingIndex, "start");
+      // 🛠 Fix: Delay the scroll slightly
+      setTimeout(() => {
+        listRef.current?.scrollToItem(firstMissingIndex, "start");
+      }, 50); // 50ms is usually perfect
     }
   };
+  
   
 
   const postsMissingAccount = posts.filter((post: PostWithID) => !post.account);
