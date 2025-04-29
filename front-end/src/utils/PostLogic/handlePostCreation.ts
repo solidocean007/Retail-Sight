@@ -183,6 +183,16 @@ export const useHandlePostSubmission = () => {
                 timestamp: new Date().toISOString(), // Update the timestamp as well
               });
 
+              const newPostWithID = {
+                ...postDataWithoutImage,
+                id: newDocRef.id,
+                imageUrl: resizedImageUrl,
+              };
+              
+              await addPostToIndexedDB(newPostWithID);
+              dispatch(addNewPost(newPostWithID));
+              
+
               // Send Achievement to Gallo Axis if oppId exists
               if (post.oppId) {
                 const achievementPayload = {
