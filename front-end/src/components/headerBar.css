@@ -55,6 +55,19 @@
   margin-right: 1rem;
 }
 
+.title-and-version {
+  display: flex;
+  align-items: baseline; /* aligns version text nicely with h1 baseline */
+  gap: 0.5rem;
+}
+
+.version-number {
+  font-size: 0.9rem;
+  margin: 0;
+  color: var(--text-color);
+}
+
+
 /* Responsive Breakpoints */
 
 @media (max-width: 780px) {

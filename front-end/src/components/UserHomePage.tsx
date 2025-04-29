@@ -36,6 +36,7 @@ export const UserHomePage = () => {
   const companyId = user?.companyId;
   // const [usersAccounts, setUsersAccounts] = useState<CompanyAccountType[] | null>(null);
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
+  const [isClosing, setIsClosing] = useState(false);
 
   const posts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
@@ -50,8 +51,8 @@ export const UserHomePage = () => {
     displayPosts = posts;
   }
 
-// this looks like a top level tool to make sure a users accounts are stored.  im doing this again in a child component but
-// i shouldnt have to if this was working.. need to look into this a later.  preferably move it to a hook or something
+  // this looks like a top level tool to make sure a users accounts are stored.  im doing this again in a child component but
+  // i shouldnt have to if this was working.. need to look into this a later.  preferably move it to a hook or something
   useEffect(() => {
     if (!user || !companyId) return;
 
@@ -84,7 +85,15 @@ export const UserHomePage = () => {
   }, [user, companyId]);
 
   const toggleFilterMenu = () => {
-    setIsFilterMenuOpen(!isFilterMenuOpen);
+    if (isFilterMenuOpen) {
+      setIsClosing(true);
+      setTimeout(() => {
+        setIsFilterMenuOpen(false);
+        setIsClosing(false);
+      }, 400); // match animation time
+    } else {
+      setIsFilterMenuOpen(true);
+    }
   };
 
   const clearSearch = async () => {
@@ -110,14 +119,16 @@ export const UserHomePage = () => {
       <div className="user-home-page-container">
         <div className="header-bar-container">
           <HeaderBar toggleFilterMenu={toggleFilterMenu} />
-          
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
             <ActivityFeed
               listRef={listRef}
               // posts={displayPosts}
-              posts={[...displayPosts, ...Array(3).fill({ id: `filler-${Math.random()}` })]}
+              posts={[
+                ...displayPosts,
+                ...Array(3).fill({ id: `filler-${Math.random()}` }),
+              ]}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               currentStarTag={currentStarTag}
@@ -129,12 +140,12 @@ export const UserHomePage = () => {
               setIsSearchActive={setIsSearchActive}
               clearInput={clearInput}
             />
-          </div>      
+          </div>
 
           <div
             className={`side-bar-container ${
               isFilterMenuOpen ? "sidebar-fullscreen" : ""
-            }`}
+            } ${isClosing ? "sidebar-closing" : ""}`}
           >
             <SideBar
               // setSearchResults={setSearchResults}

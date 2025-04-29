@@ -44,7 +44,6 @@
   padding: 1rem;
 }
 
-/* Make Sidebar fullscreen on mobile when Filters is selected */
 .sidebar-fullscreen .side-bar-box {
   display: flex;
   position: fixed;
@@ -56,7 +55,36 @@
   z-index: 20;
   flex-direction: column;
   overflow-y: scroll;
+  
+  /* 🎯 NEW SLIDE-IN ANIMATION */
+  transform: translateX(100%);
+  animation: slideInFromRight 0.4s forwards;
 }
+
+/* 🎯 Define keyframes for sliding */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.sidebar-closing .side-bar-box {
+  animation: slideOutToRight 0.4s forwards;
+}
+
+/* 🎯 Exit Animation Keyframes */
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 
 
 /* Mobile/tablet-specific layout adjustments */

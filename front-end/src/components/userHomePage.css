@@ -51,7 +51,7 @@
 
 /* Fullscreen overlay (mobile sidebar) */
 .sidebar-fullscreen {
-  display: none;
+  /* display: none; */
   position: fixed;
   top: 0;
   left: 0;

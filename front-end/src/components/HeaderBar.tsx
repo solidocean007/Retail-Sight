@@ -54,21 +54,20 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       if (option === "createPost") handleCreatePostClick();
       else if (option === "tutorial") handleTutorialClick();
       else if (option === "dashboard") handleDashboardClick();
-  
+
       setShowMenuTab(false);
     }
   };
-  
-  
 
   return (
     <>
       <div className="header-bar">
         <div className="website-title" onClick={() => navigate("/")}>
-          <h1>Displaygram</h1>
+          <div className="title-and-version">
+            <h1>Displaygram</h1>
+            <p className="version-number">0.1.6</p>
+          </div>
           <h5>{currentUser?.company}</h5>
-
-          {/* <p>version 0.2.4</p> */}
         </div>
 
         {!currentUser ? (
