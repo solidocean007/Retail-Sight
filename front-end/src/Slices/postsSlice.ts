@@ -48,7 +48,7 @@ const initialState: PostsState = {
   starTagPosts: [],
 };
 
- export const sortPostsByDate = (posts: PostWithID[]) => {
+export const sortPostsByDate = (posts: PostWithID[]) => {
   return posts.sort((a, b) => {
     const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
     const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
@@ -56,9 +56,8 @@ const initialState: PostsState = {
   });
 };
 
-
 const postsSlice = createSlice({
-  name: "posts", 
+  name: "posts",
   initialState,
   reducers: {
     // Adjusted to the correct state.posts property
@@ -73,10 +72,22 @@ const postsSlice = createSlice({
       state.userPosts = sortPostsByDate(action.payload);
     },
     // Adjusted to the correct state.posts property
-    deletePost: (state, action) => {
-      state.posts = state.posts.filter((post) => post.id !== action.payload);
-      // i need to delete images and comments as well
+    deletePost: (state, action: PayloadAction<string>) => {
+      const postIdToDelete = action.payload;
+
+      const keysToClean = [
+        "posts",
+        "filteredPosts",
+        "userPosts",
+        "hashtagPosts",
+        "starTagPosts",
+      ] as const;
+
+      keysToClean.forEach((key) => {
+        state[key] = state[key].filter((post) => post.id !== postIdToDelete);
+      });
     },
+
     appendPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.posts = [...state.posts, ...action.payload];
     },

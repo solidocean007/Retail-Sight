@@ -23,6 +23,8 @@ import { useAppDispatch } from "../store";
 import { createSubmittedMission } from "../../thunks/missionsThunks";
 import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementToGalloAxis";
 import { updateGoalWithSubmission } from "../helperFunctions/updateGoalWithSubmission";
+import { addPostsToIndexedDB } from "../database/indexedDBUtils";
+import { addNewPost } from "../../Slices/postsSlice";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
@@ -175,7 +177,7 @@ export const useHandlePostSubmission = () => {
               const postId = newDocRef.id;
 
               // Update goal with the post ID
-              await updateGoalWithSubmission(post, postId,);
+              await updateGoalWithSubmission(post, postId);
 
               // Update the post with image URLs
               await updateDoc(newDocRef, {
@@ -188,10 +190,9 @@ export const useHandlePostSubmission = () => {
                 id: newDocRef.id,
                 imageUrl: resizedImageUrl,
               };
-              
-              await addPostToIndexedDB(newPostWithID);
+
               dispatch(addNewPost(newPostWithID));
-              
+              await addPostsToIndexedDB([newPostWithID]);
 
               // Send Achievement to Gallo Axis if oppId exists
               if (post.oppId) {
@@ -222,8 +223,6 @@ export const useHandlePostSubmission = () => {
                 post.category,
                 newDocRef.id
               );
-
-              // i need to eventually update hashtags and startags in the firestore
 
               if (newDocRef && selectedCompanyMission) {
                 const submittedMission: SubmittedMissionType = {

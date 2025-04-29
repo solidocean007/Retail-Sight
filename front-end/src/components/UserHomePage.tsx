@@ -50,40 +50,6 @@ export const UserHomePage = () => {
     displayPosts = posts;
   }
 
-  useEffect(() => {
-    console.log(`🎯 activePostSet: ${activePostSet}`);
-    console.log(`📦 Total posts loaded: ${posts.length}`);
-    console.log(`📦 Total filteredPosts loaded: ${filteredPosts.length}`);
-  
-    if (posts.length > 0) {
-      console.log("First Post:", {
-        id: posts[0].id,
-        timestamp: posts[0].timestamp,
-        description: posts[0].description?.slice(0, 50) || "",
-      });
-      // console.log("Last Post:", {
-      //   id: posts[posts.length - 1].id,
-      //   timestamp: posts[posts.length - 1].timestamp,
-      //   description: posts[posts.length - 1].description?.slice(0, 50) || "",
-      // });
-    }
-  
-    if (filteredPosts.length > 0) {
-      console.log("First FilteredPost:", {
-        id: filteredPosts[0].id,
-        timestamp: filteredPosts[0].timestamp,
-        description: filteredPosts[0].description?.slice(0, 50) || "",
-      });
-      console.log("Last FilteredPost:", {
-        id: filteredPosts[filteredPosts.length - 1].id,
-        timestamp: filteredPosts[filteredPosts.length - 1].timestamp,
-        description: filteredPosts[filteredPosts.length - 1].description?.slice(0, 50) || "",
-      });
-    }
-  }, [posts, filteredPosts, activePostSet]);
-  
-
-
 // this looks like a top level tool to make sure a users accounts are stored.  im doing this again in a child component but
 // i shouldnt have to if this was working.. need to look into this a later.  preferably move it to a hook or something
   useEffect(() => {

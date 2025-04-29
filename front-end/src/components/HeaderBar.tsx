@@ -47,17 +47,19 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   };
 
   const handleMenuOptionSelect = (option: string) => {
-    setShowMenuTab(false); // Close the menu
-    if (option === "createPost") {
-      handleCreatePostClick();
-    } else if (option === "filters") {
+    if (option === "filters") {
       toggleFilterMenu();
-    } else if (option === "tutorial") {
-      handleTutorialClick();
-    } else if (option === "dashboard") {
-      handleDashboardClick();
+      setTimeout(() => setShowMenuTab(false), 200);
+    } else {
+      if (option === "createPost") handleCreatePostClick();
+      else if (option === "tutorial") handleTutorialClick();
+      else if (option === "dashboard") handleDashboardClick();
+  
+      setShowMenuTab(false);
     }
   };
+  
+  
 
   return (
     <>

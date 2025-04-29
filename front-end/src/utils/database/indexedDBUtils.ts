@@ -264,9 +264,6 @@ export async function storeFilteredPostsInIndexedDB(
   });
 }
 
-
-
-
 // store latest posts in indexDB
 export async function storeLatestPostsInIndexedDB(
   posts: PostType[]

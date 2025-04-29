@@ -223,26 +223,51 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     handleSavePost(updatedPost);
   };
 
+  // const handleDeletePostClick = async () => {
+  //   try {
+  //     await userDeletePost({ post });
+  //     await removePostFromIndexedDB(post.id);
+  //     await deleteUserCreatedPostInIndexedDB(post.id);
+  //     dispatch(deletePost(post.id));
+  //     handleCloseEditModal();
+  //     dispatch(showMessage("Post deleted successfully!"));
+  //   } catch (error) {
+  //     console.error("Failed to delete post:", error);
+  //     dispatch(showMessage("Error deleting post."));
+  //   }
+  // };
+
   const handleDeletePostClick = async () => {
     try {
+      console.log("🗑️ Starting delete for post:", {
+        id: post.id,
+        description: post.description,
+        from: "EditPostModal",
+      });
+  
       await userDeletePost({ post });
+      console.log("✅ Finished Firestore + Storage deletion for:", post.id);
+  
       await removePostFromIndexedDB(post.id);
       await deleteUserCreatedPostInIndexedDB(post.id);
+  
       dispatch(deletePost(post.id));
+      console.log("🧹 Dispatched Redux delete for:", post.id);
+  
       handleCloseEditModal();
       dispatch(showMessage("Post deleted successfully!"));
     } catch (error) {
-      console.error("Failed to delete post:", error);
+      console.error("❌ Failed to delete post:", error);
       dispatch(showMessage("Error deleting post."));
     }
   };
+  
 
   useOutsideAlerter(wrapperRef, () => {
     if (!openAccountModal) {
       handleCloseEditModal();
     }
   });
-  
 
   return (
     <>
