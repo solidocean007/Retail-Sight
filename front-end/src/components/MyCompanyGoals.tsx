@@ -17,10 +17,12 @@ import { CompanyGoalType } from "../utils/types";
 import { useNavigate } from "react-router-dom";
 import CompanyGoalDetailsCard from "./GoalIntegration/CompanyGoalDetailsCard";
 import { useTheme } from "@mui/material/styles";
+import UserGoalCard from "./GoalIntegration/UserGoalCard";
 
 const MyCompanyGoals = () => {
   const theme = useTheme();
   const user = useSelector(selectUser);
+  const userAccounts = useSelector()
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const salesRouteNum = user?.salesRouteNum;
@@ -33,8 +35,8 @@ const MyCompanyGoals = () => {
   const userCompanyGoals = useSelector((state: RootState) => // Selector unknown returned a different result when called with the same parameters. This can lead to unnecessary rerenders.Selectors that return a new reference (such as an object or an array) should be memoized:
     selectUsersCompanyGoals(state, salesRouteNum)
   );
-
-  console.log(userCompanyGoals)
+  // console.log(userCompanyGoals[0].id)
+  // console.log(userCompanyGoals[0].submittedPosts[30])
 
   // ✅ Toggle expanded state for goals
   // const toggleGoalExpansion = (goalId: string) => {
@@ -100,12 +102,17 @@ const MyCompanyGoals = () => {
                 Current Goals
               </Typography>
               {currentGoals.map((goal, index) => (
-                <CompanyGoalDetailsCard
+                <UserGoalCard
                   key={goal.id || index}
                   goal={goal}
-                  mobile={isMobile}
-                  salesRouteNum={salesRouteNum}
+                  userId={user?.uid}
                 />
+                // <CompanyGoalDetailsCard
+                //   key={goal.id || index}
+                //   goal={goal}
+                //   mobile={isMobile}
+                //   salesRouteNum={salesRouteNum}
+                // />
               ))}
             </div>
           )}

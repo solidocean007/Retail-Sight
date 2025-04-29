@@ -1,5 +1,5 @@
-import React from "react";
-import "./goalViewerFilters.css"; // optional: if you want styles
+import React, { useCallback } from "react";
+import "./goalViewerFilters.css";
 
 interface GoalViewerFiltersProps {
   searchTerm: string;
@@ -14,20 +14,33 @@ const GoalViewerFilters: React.FC<GoalViewerFiltersProps> = ({
   filterSubmitted,
   setFilterSubmitted,
 }) => {
+  // Optional: debounce typing if needed
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, [setSearchTerm]);
+
+  const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterSubmitted(e.target.value as "all" | "submitted" | "not-submitted");
+  }, [setFilterSubmitted]);
+
   return (
     <div className="goal-viewer-filters">
+      <label htmlFor="goal-search" className="sr-only">Search Accounts</label>
       <input
+        id="goal-search"
         type="text"
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={handleSearchChange}
         placeholder="Search by account name..."
         className="goal-filter-input"
       />
+
+      <label htmlFor="goal-submission-filter" className="sr-only">Filter Submissions</label>
       <select
+        id="goal-submission-filter"
         value={filterSubmitted}
-        onChange={(e) =>
-          setFilterSubmitted(e.target.value as "all" | "submitted" | "not-submitted")
-        }
+        onChange={handleFilterChange}
+        title="Filter Submissions" // ✅ Accessible name
         className="goal-filter-select"
       >
         <option value="all">All</option>
@@ -39,3 +52,4 @@ const GoalViewerFilters: React.FC<GoalViewerFiltersProps> = ({
 };
 
 export default GoalViewerFilters;
+
