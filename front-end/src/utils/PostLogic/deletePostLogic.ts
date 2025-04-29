@@ -1,9 +1,6 @@
-// deletePostLogic.ts
-import { deleteDoc, doc, updateDoc, arrayRemove } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc, arrayRemove, getDoc } from "firebase/firestore";
 import { ref, deleteObject, getStorage } from "firebase/storage";
 import { PostWithID } from "../types";
-import { deletePost } from "../../Slices/postsSlice";
-import { AnyAction } from "redux";
 import { db } from "../firebase";
 import { deleteUserCreatedPostInIndexedDB, removePostFromIndexedDB } from "../database/indexedDBUtils";
 import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
@@ -12,43 +9,65 @@ interface userDeletePostProps {
   post: PostWithID;
 }
 
-export const userDeletePost = async ({
-  post
-}: userDeletePostProps) => {
-  // update timestamp of post that is being changed.
-  await updatePostWithNewTimestamp(post.id);
-
+export const userDeletePost = async ({ post }: userDeletePostProps) => {
   const storage = getStorage();
+  
   try {
-    // Delete post from 'posts' collection
+    // ✅ Update timestamp of post that is being changed
+    await updatePostWithNewTimestamp(post.id);
+
+    // ✅ Delete post document from 'posts' collection
     const postRef = doc(db, "posts", post.id);
     await deleteDoc(postRef);
-    // Remove from IndexedDB
+
+    // ✅ Remove from IndexedDB
     await removePostFromIndexedDB(post.id);
-    await deleteUserCreatedPostInIndexedDB(post.id)
+    await deleteUserCreatedPostInIndexedDB(post.id);
 
-    // Delete post's image from Firebase Storage
-    const imageRef = ref(storage, post.imageUrl); // corrected to post.imageUrl
-    await deleteObject(imageRef);
+    // ✅ Delete post's image from Firebase Storage
+    if (post.imageUrl) {
+      const imageRef = ref(storage, post.imageUrl);
+      await deleteObject(imageRef);
+    }
 
-    // Remove post ID from 'channels' collection
+    // ✅ Remove post ID from 'channels' collection
     if (post.channel) {
       const channelRef = doc(db, "channels", post.channel);
       await updateDoc(channelRef, {
-        postIds: arrayRemove(post.id), // corrected to post.id
+        postIds: arrayRemove(post.id),
       });
     }
 
-    // Remove post ID from 'categories' collection
+    // ✅ Remove post ID from 'categories' collection
     if (post.category) {
       const categoryRef = doc(db, "categories", post.category);
       await updateDoc(categoryRef, {
-        postIds: arrayRemove(post.id), // corrected to post.id
+        postIds: arrayRemove(post.id),
       });
     }
-    // setIsEditModalOpen(false);
+
+    // ✅ 🔥 Now clean up from goal's submittedPosts if applicable
+    if (post.companyGoalId) {
+      const goalRef = doc(db, "companyGoals", post.companyGoalId);
+      const goalSnap = await getDoc(goalRef);
+
+      if (goalSnap.exists()) {
+        const goalData = goalSnap.data();
+        const updatedSubmittedPosts = (goalData.submittedPosts || []).filter(
+          (submission: any) => submission.postId !== post.id
+        );
+
+        await updateDoc(goalRef, {
+          submittedPosts: updatedSubmittedPosts,
+        });
+
+        console.log(`✅ Removed post ${post.id} from company goal ${post.companyGoalId}`);
+      } else {
+        console.warn(`⚠️ Goal ${post.companyGoalId} not found while cleaning submittedPosts`);
+      }
+    }
   } catch (error) {
-    console.error("Error deleting post:", error);
-    throw error; // re-throwing error so that you can handle it in UI or retry if necessary
+    console.error("❌ Error deleting post:", error);
+    throw error; // Rethrow to handle in UI or retry
   }
 };

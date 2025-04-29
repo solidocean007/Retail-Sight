@@ -13,7 +13,7 @@
 .info-layout {
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  /* padding: 1rem; */
 }
 
 .info-layout-row {
@@ -21,7 +21,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0;
+  /* padding: 0.5rem 0; */
 }
 
 .info-header {
@@ -30,7 +30,7 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: 0.5rem 0;
+  /* padding: 0.5rem 0; */
 }
 
 .info-title-row, .info-description {

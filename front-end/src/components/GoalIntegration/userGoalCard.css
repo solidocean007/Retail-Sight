@@ -1,0 +1,88 @@
+.user-account-table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.user-account-table-header,
+.user-account-table-row {
+  display: grid;
+  grid-template-columns: 30px 2fr 2fr 80px 1fr 1fr 80px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.user-account-table-header {
+  font-weight: bold;
+  background: #f3f4f6;
+}
+
+.user-account-table-row {
+  background: white;
+}
+
+.view-post-button {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  border: none;
+  cursor: pointer;
+}
+
+.submission-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.submission-card {
+  border: 1px solid var(--card-outline);
+  border-radius: 10px;
+  padding: 1rem;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.submission-card-top {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.submission-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.submission-line {
+  font-size: 0.92rem;
+  color: #444;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.submission-card-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+@media (max-width: 600px) {
+  .user-account-table-header,
+  .user-account-table-row {
+    grid-template-columns: 20px 1.5fr 1.5fr 50px 1fr 1fr 50px;
+    font-size: 0.75rem;
+  }
+}

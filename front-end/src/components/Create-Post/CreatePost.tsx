@@ -70,12 +70,11 @@ export const CreatePost = () => {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
   const [selectedCategory, setSelectedCategory] =
-    useState<CategoryType>("Beer"); // I need to store the last value by the user in local storage and try to use it again here
+    useState<CategoryType>("Beer");
   const [selectedChannel, setSelectedChannel] =
-    useState<ChannelType>("Grocery"); // I need to store the last value by the user in local storage and try to use it again here
-  const postUser = onBehalf || userData;
+    useState<ChannelType>("Grocery");
 
-  const [selectedCompanyAccount, setSelectedCompanyAccount] =
+  const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
     useState<CompanyAccountType | null>(null);
 
   const [post, setPost] = useState<PostType>({
@@ -84,9 +83,9 @@ export const CreatePost = () => {
     channel: selectedChannel,
     description: "",
     imageUrl: "",
-    account: null, // Type 'null' is not assignable to type 'CompanyAccountType'
+    account: null,
     // selectedStore: "",
-    storeNumber: "",
+    // storeNumber: "", // this was stil in the object but i just now commented it out
     state: "",
     city: "",
     visibility: "company",
@@ -121,7 +120,7 @@ export const CreatePost = () => {
   );
   const navigate = useNavigate();
   
-  useEffect(() => {
+  useEffect(() => { // i think i don't need to destructure these items below.. simply use userData?.role and so on
     setPost((prevPost) => ({
       ...prevPost,
       createdBy: {
@@ -178,27 +177,6 @@ export const CreatePost = () => {
     setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
   }, []);
 
-  // const handleStoreNameChange = useCallback((storeName: string) => {
-  //   setPost((prev) => ({ ...prev, selectedStore: storeName }));
-  // }, []);
-
-  // const handleStoreNumberChange = useCallback((newStoreNumber: string) => {
-  //   // should i pass these to components or just use handleFieldChange?
-  //   setPost((prev) => ({ ...prev, storeNumber: newStoreNumber }));
-  // }, []);
-
-  // const handleStoreAddressChange = useCallback((address: string) => {
-  //   setPost((prev) => ({ ...prev, storeAddress: address }));
-  // }, []);
-
-  // const handleStoreCityChange = useCallback((city: string) => {
-  //   setPost((prev) => ({ ...prev, city: city }));
-  // }, []);
-
-  // const handleStoreStateChange = useCallback((newStoreState: string) => {
-  //   setPost((prev) => ({ ...prev, state: newStoreState }));
-  // }, []);
-
   // Update this to handle all field changes generically, including channel and category
   const handleFieldChange = useCallback(
     (field: keyof PostType, value: PostType[keyof PostType]) => {
@@ -212,6 +190,7 @@ export const CreatePost = () => {
 
   const supplierVisibility = post.visibility === "supplier";
 
+  // ill use this logic or something similiar below later
   // Add handlers for Supplier and Brand changes
   // const handleSupplierChange = (supplierId: string) => {
   //   setSelectedSupplier(supplierId);
@@ -256,11 +235,7 @@ export const CreatePost = () => {
             usersCompanyGoals={usersCompanyGoals}
             handleFieldChange={handleFieldChange}
             setSelectedCompanyAccount={setSelectedCompanyAccount}
-            // onStoreNameChange={handleStoreNameChange}
-            // onStoreNumberChange={handleStoreNumberChange}
-            // onStoreAddressChange={handleStoreAddressChange}
-            // onStoreCityChange={handleStoreCityChange}
-            // onStoreStateChange={handleStoreStateChange}
+           
           />
         );
       case 3:

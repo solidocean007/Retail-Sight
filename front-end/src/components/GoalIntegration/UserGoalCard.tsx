@@ -1,59 +1,89 @@
-// UserGoalCard.tsx
-import React, { useMemo, useState } from "react";
-import { CompanyAccountType, CompanyGoalType, GoalSubmissionType } from "../../utils/types";
-import { Typography, Collapse, Box, Tooltip, useMediaQuery } from "@mui/material";
+import React, { useMemo, useState, useEffect } from "react";
+import {
+  CompanyGoalType,
+  CompanyAccountType,
+  GoalSubmissionType,
+} from "../../utils/types";
+import {
+  Typography,
+  Collapse,
+  Box,
+  Tooltip,
+  useMediaQuery,
+} from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import GoalViewerFilters from "../GoalViewerFilters";
 import AccountTable from "../AccountTable";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { useNavigate } from "react-router-dom";
-import "./companyGoalDetailsCard.css"; // reuse your existing CSS
+import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils"; // 🔥 Import this
+import "./companyGoalDetailsCard.css";
+import "./userGoalCard.css";
 
 interface UserGoalCardProps {
   goal: CompanyGoalType;
-  userId: string | undefined;
-  yourAccountsAssigned: CompanyAccountType[];
+  userUid: string | undefined; // 🔥 Change to userUid
 }
 
-const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userId, yourAccountsAssigned }) => {
+const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userUid }) => {
   const navigate = useNavigate();
   const isMobileScreen = useMediaQuery("(max-width: 600px)");
+
+  const [userAccounts, setUserAccounts] = useState<CompanyAccountType[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterSubmitted, setFilterSubmitted] = useState<"all" | "submitted" | "not-submitted">("submitted");
+  const [filterSubmitted, setFilterSubmitted] = useState<
+    "all" | "submitted" | "not-submitted"
+  >("submitted");
+
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
+
+  // 🔥 Load user's assigned accounts from IndexedDB when component mounts
+  useEffect(() => {
+    const loadUserAccounts = async () => {
+      try {
+        const accounts = await getUserAccountsFromIndexedDB();
+        setUserAccounts(accounts);
+      } catch (error) {
+        console.error("Failed to load user accounts from IndexedDB:", error);
+      }
+    };
+    loadUserAccounts();
+  }, []);
 
   const formatDate = (dateStr: string): string => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
-  console.log('userId: ', userId)
-  // Pull only this user's submissions
+
   const userSubmissions = useMemo(() => {
     return (goal.submittedPosts || []).filter(
-      (post: GoalSubmissionType) => post.submittedBy?.uid === userId
+      (post: GoalSubmissionType) => post.submittedBy?.uid === userUid
     );
-  }, [goal.submittedPosts, userId]);
-  console.log(userSubmissions)
+  }, [goal.submittedPosts, userUid]);
 
-  // goalmode is 
   const total = useMemo(() => {
     if (goal.targetMode === "goalForAllAccounts") {
-      return yourAccountsAssigned.length; // Accounts tied to this user
+      return userAccounts.length;
     }
-  
     if (goal.targetMode === "goalForSelectedAccounts") {
-      return selectedAccountsAssigned.length; // Only the selected ones tied to this user
+      return userAccounts.filter((acc) =>
+        goal.accounts?.some(
+          (goalAcc) => goalAcc.accountNumber === acc.accountNumber
+        )
+      ).length;
     }
-  
     if (goal.targetMode === "goalForSelectedUsers") {
-      return 1; // 🔥 For now, 1 submission expected per user
+      return 1; // 🔥 For now, always 1
     }
-  
     return 0;
-  }, [goal, yourAccountsAssigned, selectedAccountsAssigned]);
-  
+  }, [goal, userAccounts]);
+
   const submitted = userSubmissions.length;
   const percentage = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
@@ -66,7 +96,9 @@ const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userId, yourAccountsA
   }));
 
   const filteredRows = rowsToRender.filter((row) => {
-    const matchesSearch = row.accountName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+    const matchesSearch = row.accountName
+      ?.toLowerCase()
+      .includes(debouncedSearchTerm.toLowerCase());
     const matchesFilter =
       filterSubmitted === "all" ||
       (filterSubmitted === "submitted" && row.postId) ||
@@ -80,7 +112,9 @@ const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userId, yourAccountsA
         <div className="info-layout-row">
           <div className="info-header">
             <div className="info-title">Title: {goal.goalTitle}</div>
-            <div className="info-description">Description: {goal.goalDescription}</div>
+            <div className="info-description">
+              Description: {goal.goalDescription}
+            </div>
           </div>
         </div>
 
@@ -90,15 +124,27 @@ const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userId, yourAccountsA
             <div className="info-metric">Min Number: {goal.goalValueMin}</div>
           </div>
           <div className="info-item info-segment">
-            <div className="info-metric">Start: {formatDate(goal.goalStartDate)}</div>
-            <div className="info-metric">End: {formatDate(goal.goalEndDate)}</div>
+            <div className="info-metric">
+              Start: {formatDate(goal.goalStartDate)}
+            </div>
+            <div className="info-metric">
+              End: {formatDate(goal.goalEndDate)}
+            </div>
           </div>
         </div>
 
         <Box px={2} pb={1}>
-          <Typography variant="caption" color="textSecondary">My Goal Progress</Typography>
-          <span className="summary-counts">{submitted} / {total} Submitted</span>
-          <span className={`summary-percentage ${percentage === 100 ? "complete" : "incomplete"}`}>
+          <Typography variant="caption" color="textSecondary">
+            My Goal Progress
+          </Typography>
+          <span className="summary-counts">
+            {submitted} / {total} Submitted
+          </span>
+          <span
+            className={`summary-percentage ${
+              percentage === 100 ? "complete" : "incomplete"
+            }`}
+          >
             {percentage}%
             <Tooltip title={`${submitted} of ${total} submitted`}>
               <InfoIcon fontSize="small" />
@@ -107,23 +153,84 @@ const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userId, yourAccountsA
         </Box>
 
         <div className="info-layout-row-bottom">
-          <button className="tab-submissions" onClick={() => setExpanded(!expanded)}>
+          <button
+            className="tab-submissions"
+            onClick={() => setExpanded(!expanded)}
+          >
             {expanded
-              ? `Hide My Submissions (${filteredRows.length})`
+              ? `Close (${filteredRows.length})`
               : filteredRows.length > 0
-              ? `View My Submissions (${filteredRows.length})`
+              ? `Open (${filteredRows.length})`
               : "No Submissions"}
           </button>
         </div>
 
-        <Collapse in={expanded} timeout="auto" unmountOnExit className="expanded-submissions">
-          <GoalViewerFilters
+        <Collapse
+          in={expanded}
+          timeout="auto"
+          unmountOnExit
+          className="expanded-submissions"
+        >
+          {/* <GoalViewerFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             filterSubmitted={filterSubmitted}
             setFilterSubmitted={setFilterSubmitted}
-          />
-          <AccountTable accounts={filteredRows} navigate={navigate} height={500} rowHeight={60} />
+          /> */}
+          <div className="submission-card-list">
+            {filteredRows.length === 0 ? (
+              <div style={{ padding: "0.5rem" }}>No submissions found.</div>
+            ) : (
+              filteredRows.map((row, index) => (
+                <div key={index} className="submission-card">
+                  <div className="submission-card-top">
+                    <strong>#{index + 1}</strong> — {row.accountName}
+                  </div>
+                  <div className="submission-card-body">
+                    <div className="submission-line">
+                      <strong>Address:</strong> {row.accountAddress}
+                    </div>
+                    <div className="submission-line">
+                      <strong>Status:</strong>{" "}
+                      {row.postId ? "✅ Submitted" : "❌ Not Submitted"}
+                    </div>
+                    <div className="submission-line">
+                      <strong>Submitted By:</strong> {row.submittedBy ?? "—"}
+                    </div>
+                    <div className="submission-line">
+                      <strong>Submitted At:</strong>{" "}
+                      {row.submittedAt
+                        ? new Date(row.submittedAt).toLocaleString()
+                        : "—"}
+                    </div>
+                  </div>
+                  <div className="submission-card-footer">
+                    {row.postId ? (
+                      <button
+                        className="view-post-button"
+                        onClick={() =>
+                          navigate(`/user-home-page?postId=${row.postId}`)
+                        }
+                      >
+                        View Post
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: "0.85rem", color: "#888" }}>
+                        No post yet
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* <AccountTable
+            accounts={filteredRows}
+            navigate={navigate}
+            height={500}
+            rowHeight={60}
+          /> */}
         </Collapse>
       </div>
     </div>

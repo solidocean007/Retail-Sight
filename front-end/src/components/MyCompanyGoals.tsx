@@ -22,7 +22,6 @@ import UserGoalCard from "./GoalIntegration/UserGoalCard";
 const MyCompanyGoals = () => {
   const theme = useTheme();
   const user = useSelector(selectUser);
-  const userAccounts = useSelector()
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const salesRouteNum = user?.salesRouteNum;
@@ -89,7 +88,7 @@ const MyCompanyGoals = () => {
         sx={{ flexGrow: 1, fontSize: "large" }}
         className="my-goals-title"
       >
-        {`${user?.company} Goals`}
+        {/* {`${user?.company} Goals`} */}
       </Typography>
       {loading ? (
         <CircularProgress />
@@ -105,7 +104,7 @@ const MyCompanyGoals = () => {
                 <UserGoalCard
                   key={goal.id || index}
                   goal={goal}
-                  userId={user?.uid}
+                  userUid={user?.uid}
                 />
                 // <CompanyGoalDetailsCard
                 //   key={goal.id || index}

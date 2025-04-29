@@ -76,6 +76,14 @@ export const Dashboard = () => {
     isEmployee ? "MyGoalsMode" : "GoalManagerMode"
   );
 
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setScreenWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const handleMenuClick = (mode: DashboardModeType) => {
     setSelectedMode(mode);
@@ -191,6 +199,10 @@ export const Dashboard = () => {
             >
               Dashboard
             </Typography>
+            {/* <Typography variant="caption" color="textSecondary">
+              Screen Width: {screenWidth}px
+            </Typography> */}
+
             {!isLargeScreen && (
               <IconButton
                 edge="start"
@@ -243,5 +255,55 @@ export const Dashboard = () => {
     </Container>
   );
 };
+
+// export const fixSubmittedByUser = async () => {
+//   const goalId = "hWXopstr1FDJTr33ToRG"; // The goal you want to fix
+//   const developerUid = "n0dSVcfakMhwCByREdD3bmMv8tl1"; // 🔥 replace with your real developer user id
+//   const adminUserObject = {
+//     uid: "TbL2z246iBbshTSIMskByZNa2bQ2",
+//     firstName: "Clinton",
+//     lastName: "Williams",
+//     company: "Healy wholesale Inc",
+//     companyId: "3WOAwgj3l3bnvHqE4IV3",
+//     email: "cwilliams@healywholesale.com",
+//     role: "admin",
+//     salesRouteNum: "85" || "", // optional
+//     phone: "9105836914" || "", // optional
+//   };
+
+//   try {
+//     const goalRef = doc(db, "companyGoals", goalId);
+//     const goalSnap = await getDoc(goalRef);
+
+//     if (!goalSnap.exists()) {
+//       console.error(`❌ Goal ${goalId} not found.`);
+//       return;
+//     }
+
+//     const goalData = goalSnap.data();
+//     const submittedPosts = goalData.submittedPosts || [];
+
+//     const updatedSubmittedPosts = submittedPosts.map((submission: any) => {
+//       if (submission.submittedBy?.uid === developerUid) {
+//         console.log(`✅ Fixing submission for postId: ${submission.postId}`);
+//         return {
+//           ...submission,
+//           submittedBy: adminUserObject,
+//         };
+//       }
+//       return submission;
+//     });
+
+//     await updateDoc(goalRef, {
+//       submittedPosts: updatedSubmittedPosts,
+//     });
+
+//     console.log("🎯 Successfully updated submittedBy user.");
+//   } catch (error) {
+//     console.error("❌ Failed to update submittedBy:", error);
+//   }
+// };
+
+// fixSubmittedByUser(); // 🔥 Call this function to fix the submittedBy user
 
 export default Dashboard;

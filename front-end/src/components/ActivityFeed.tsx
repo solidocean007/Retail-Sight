@@ -179,23 +179,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Calculate the width for the FixedSizeList
-  // const getListWidth = () => {
-  //   if (windowWidth <= 480) {
-  //     return windowWidth - 25; // Subtract some pixels for padding/margin
-  //   } else if (windowWidth <= 1150) {
-  //     return Math.min(550, windowWidth - 25);
-  //   }
-  //   return 650;
-  // };
-
   const handleItemsRendered = ({
     visibleStopIndex,
   }: {
     visibleStopIndex: number;
   }) => {
     // const lastIndex = itemCount - 1;
-    const lastIndex = itemCount;
+    const lastIndex = itemCount; // last index is declared but never read
 
     // If the last visible index is the last item in the list
     if (visibleStopIndex >= posts.length - 1 && !loadingMore && hasMore) {

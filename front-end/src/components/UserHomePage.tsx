@@ -51,6 +51,42 @@ export const UserHomePage = () => {
   }
 
   useEffect(() => {
+    console.log(`🎯 activePostSet: ${activePostSet}`);
+    console.log(`📦 Total posts loaded: ${posts.length}`);
+    console.log(`📦 Total filteredPosts loaded: ${filteredPosts.length}`);
+  
+    if (posts.length > 0) {
+      console.log("First Post:", {
+        id: posts[0].id,
+        timestamp: posts[0].timestamp,
+        description: posts[0].description?.slice(0, 50) || "",
+      });
+      // console.log("Last Post:", {
+      //   id: posts[posts.length - 1].id,
+      //   timestamp: posts[posts.length - 1].timestamp,
+      //   description: posts[posts.length - 1].description?.slice(0, 50) || "",
+      // });
+    }
+  
+    if (filteredPosts.length > 0) {
+      console.log("First FilteredPost:", {
+        id: filteredPosts[0].id,
+        timestamp: filteredPosts[0].timestamp,
+        description: filteredPosts[0].description?.slice(0, 50) || "",
+      });
+      console.log("Last FilteredPost:", {
+        id: filteredPosts[filteredPosts.length - 1].id,
+        timestamp: filteredPosts[filteredPosts.length - 1].timestamp,
+        description: filteredPosts[filteredPosts.length - 1].description?.slice(0, 50) || "",
+      });
+    }
+  }, [posts, filteredPosts, activePostSet]);
+  
+
+
+// this looks like a top level tool to make sure a users accounts are stored.  im doing this again in a child component but
+// i shouldnt have to if this was working.. need to look into this a later.  preferably move it to a hook or something
+  useEffect(() => {
     if (!user || !companyId) return;
 
     const fetchUserAccounts = async (companyId: string) => {
@@ -102,73 +138,13 @@ export const UserHomePage = () => {
     dispatch(fetchLocationOptions());
   }, [dispatch]);
 
-  const getActivityItemHeight = (windowWidth: number) => {
-    if (windowWidth <= 500) {
-      // return 720;
-      // return 620;
-      return 700;
-    } else if (windowWidth <= 600) {
-      return 750;
-    } else if (windowWidth <= 700) {
-      return 750;
-    } else if (windowWidth <= 800) {
-      return 800;
-    } else if (windowWidth <= 900) {
-      return 850;
-    } else {
-      return 900;
-    }
-  };
-
-  const scrollToNextMissingAccount = () => {
-    console.log("click");
-
-    if (!listRef.current) {
-      console.warn("List not ready yet!");
-      return;
-    }
-
-    const firstMissingIndex = displayPosts.findIndex((post) => !post.account);
-
-    if (firstMissingIndex !== -1) {
-      console.log("Found missing at index:", firstMissingIndex);
-
-      listRef.current.resetAfterIndex(0, true);
-
-      setTimeout(() => {
-        const itemSize = getActivityItemHeight(window.innerWidth) + 8; // 8 = your ITEM_GAP
-        const scrollPosition = firstMissingIndex * itemSize;
-        console.log("Scrolling to offset:", scrollPosition);
-
-        listRef.current?.scrollTo(scrollPosition);
-      }, 50);
-    } else {
-      console.log("No missing accounts found.");
-    }
-  };
-
-  const scrollToBottom = () => {
-    if (!listRef.current) return;
-
-    const totalItems = displayPosts.length;
-    const itemSize = getActivityItemHeight(window.innerWidth) + 8; // + ITEM_GAP
-    const totalHeight = totalItems * itemSize;
-
-    listRef.current.scrollTo(totalHeight);
-  };
-
-  const postsMissingAccount = posts.filter((post: PostWithID) => !post.account);
-
   return (
     <>
       <UserHomePageHelmet />
       <div className="user-home-page-container">
         <div className="header-bar-container">
           <HeaderBar toggleFilterMenu={toggleFilterMenu} />
-          {/* <Button onClick={scrollToNextMissingAccount}>
-            Next Missing Account
-          </Button>
-          <Button onClick={scrollToBottom}>Scroll to Bottom</Button> */}
+          
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
@@ -187,16 +163,7 @@ export const UserHomePage = () => {
               setIsSearchActive={setIsSearchActive}
               clearInput={clearInput}
             />
-          </div>
-
-          {/* 🔥 Show how many need fixing */}
-          {postsMissingAccount.length > 0 && (
-            <div
-              style={{ color: "red", fontWeight: "bold", marginBottom: "1rem" }}
-            >
-              {postsMissingAccount.length} posts still need an account selected!
-            </div>
-          )}
+          </div>      
 
           <div
             className={`side-bar-container ${
