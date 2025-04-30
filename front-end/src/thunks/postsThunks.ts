@@ -94,45 +94,64 @@ type FetchMorePostsArgs = {
 export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
-    { lastVisible, limit: BatchSize, currentUserCompanyId }: FetchMorePostsArgs,
+    { lastVisible, limit: batchSize, currentUserCompanyId }: FetchMorePostsArgs,
     { rejectWithValue }
   ) => {
     try {
+      if (!currentUserCompanyId) {
+        console.warn("⚠️ fetchMorePostsBatch called without a valid companyId.");
+        return { posts: [], lastVisible: null };
+      }
+
       const postsCollectionRef = collection(db, "posts");
       let postsQuery;
 
       if (lastVisible) {
         const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
+        if (!lastVisibleSnapshot.exists()) {
+          console.warn("⚠️ lastVisible document not found:", lastVisible);
+        }
+
         postsQuery = query(
           postsCollectionRef,
           orderBy("displayDate", "desc"),
           startAfter(lastVisibleSnapshot),
-          limit(BatchSize)
+          limit(batchSize)
         );
       } else {
         postsQuery = query(
           postsCollectionRef,
           orderBy("displayDate", "desc"),
-          limit(BatchSize)
+          limit(batchSize)
         );
       }
 
       const snapshot = await getDocs(postsQuery);
+
       const postsWithIds: PostWithID[] = snapshot.docs
         .map((doc) => {
           const data = doc.data() as PostType;
+
           const isPublic = data.visibility === "public";
           const isCompanyPost =
             data.visibility === "company" &&
-            data.postUserCompanyId === currentUserCompanyId;
-          return isPublic || isCompanyPost ? { id: doc.id, ...data } : null;
+            data.createdBy?.companyId === currentUserCompanyId;
+          const isSupplierPost =
+            data.visibility === "supplier" &&
+            data.createdBy?.companyId === currentUserCompanyId;
+
+          const include = isPublic || isCompanyPost || isSupplierPost;
+
+          return include ? { id: doc.id, ...data } : null;
         })
-        .filter((post) => post !== null) as PostWithID[];
+        .filter((post): post is PostWithID => post !== null);
 
       const newLastVisible =
         snapshot.docs[snapshot.docs.length - 1]?.id || null;
+
       return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
+      console.error("❌ Error in fetchMorePostsBatch:", error);
       if (error instanceof Error) {
         return rejectWithValue(error.message);
       }

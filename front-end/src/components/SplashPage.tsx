@@ -35,10 +35,6 @@ const SplashPage = () => {
     }
   }, [user, navigate]);
 
-  const handleLoginClick = () => {
-    console.log("login clicked");
-  };
-
   return (
     <>
       <SplashPageHelmet />

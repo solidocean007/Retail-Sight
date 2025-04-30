@@ -19,6 +19,7 @@ import { clearLocationFilters } from "../Slices/locationSlice";
 import "./sideBar.css";
 import CustomAccordion from "./CustomAccordion";
 import {
+  addPostsToIndexedDB,
   // getFilteredPostsFromIndexedDB,
   getPostsFromIndexedDB,
   storeFilteredPostsInIndexedDB,
@@ -29,6 +30,7 @@ import {
   mergeAndSetFilteredPosts,
   mergeAndSetPosts,
   setFilteredPosts,
+  setPosts,
 } from "../Slices/postsSlice";
 import DateFilter from "./DateFilter";
 import { PostWithID } from "../utils/types";
@@ -197,9 +199,14 @@ const SideBar: React.FC<SideBarProps> = ({
         dispatch(mergeAndSetPosts(cachedPosts));
       } else {
         if (currentUserCompanyId && currentUserCompanyId) {
-          dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
-          );
+          dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })).then((action) => {
+            if (fetchInitialPostsBatch.fulfilled.match(action)) {
+              const { posts } = action.payload;
+              dispatch(setPosts(posts));
+              addPostsToIndexedDB(posts);
+            }
+          });
+          
         }
       }
     } catch (error) {

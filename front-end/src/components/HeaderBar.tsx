@@ -7,11 +7,13 @@ import MenuTab from "./MenuTab";
 import { useEffect, useRef, useState } from "react";
 import { showMessage } from "../Slices/snackbarSlice";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
+import { openDB } from "../utils/database/indexedDBOpen";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
   const [showMenuTab, setShowMenuTab] = useState(false);
-  // const [showAbout, setShowAbout] = useState(false);
+  const [localVersion, setLocalVersion] = useState<string | null>(null);
+
   const navigate = useNavigate();
   const protectedAction = useProtectedAction();
   const menuRef = useRef<HTMLDivElement | null>(null); // Reference to MenuTab
@@ -59,13 +61,43 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     }
   };
 
+  useEffect(() => {
+    const getLocalSchemaVersion = async () => {
+      try {
+        const db = await openDB();
+        const transaction = db.transaction("localSchemaVersion", "readonly");
+        const store = transaction.objectStore("localSchemaVersion");
+        const request = store.get("schemaVersion");
+
+        request.onsuccess = () => {
+          const result = request.result;
+          if (result?.version) {
+            setLocalVersion(result.version);
+          }
+        };
+
+        request.onerror = () => {
+          console.error("Failed to load schema version:", request.error);
+        };
+      } catch (err) {
+        console.error("Error opening IndexedDB:", err);
+      }
+    };
+
+    getLocalSchemaVersion();
+  }, []);
+
   return (
     <>
       <div className="header-bar">
         <div className="website-title" onClick={() => navigate("/")}>
           <div className="title-and-version">
             <h1>Displaygram</h1>
-            <p className="version-number">0.1.6</p>
+            {localVersion ? (
+              <p className="version-number">{localVersion}</p>
+            ) : (
+              <p className="version-number">loading…</p>
+            )}
           </div>
           <h5>{currentUser?.company}</h5>
         </div>

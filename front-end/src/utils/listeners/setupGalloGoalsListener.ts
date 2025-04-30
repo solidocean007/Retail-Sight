@@ -16,14 +16,12 @@ export const setupGalloGoalsListener =
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-        console.log("Gallo goals listener triggered...");
 
         const allGalloGoals = snapshot.docs.map((doc) => ({
           ...(doc.data() as FireStoreGalloGoalDocType),
           id: doc.id,
         }));
 
-        console.log("Fetched ALL Gallo Goals:", allGalloGoals);
 
         // Clear old goals from IndexedDB and Redux
         await clearGoalsFromIndexedDB("galloGoals"); // Clear IndexedDB

@@ -19,14 +19,12 @@ export const setupCompanyGoalsListener =
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-        console.log("Company goals listener triggered...");
 
         // Map the snapshot to company goals
         const allCompanyGoals = snapshot.docs.map((doc) => ({
           ...(doc.data() as CompanyGoalType),
         }));
 
-        console.log("Fetched ALL Company Goals:", allCompanyGoals);
 
         // Save all company goals to IndexedDB and Redux
         await clearGoalsFromIndexedDB("companyGoals"); // Clear IndexedDB
