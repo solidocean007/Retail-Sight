@@ -54,7 +54,7 @@ const SplashPage = () => {
             <ul className={isMenuOpen ? "isMenuOpen" : ""}>
               <li
                 onClick={() => {
-                  handleLoginClick();
+                  // handleLoginClick();
                   navigate("/sign-up-login");
                 }}
               >

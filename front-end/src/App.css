@@ -2,7 +2,7 @@
 
 .MuiInputBase-root {
   margin: 8px;
-  width: 50ch;
+  /* width: 50ch; */
   /* background-color: var(--input-background); */
   color: var(--input-text-color);
 }

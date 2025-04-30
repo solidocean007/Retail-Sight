@@ -288,9 +288,9 @@ export const SignUpLogin = () => {
       <div className="sign-up-body">
         <h1 className="title">Displaygram</h1>
         <div className="sign-up-container">
-          <Typography variant="h2">
-            {isSignUp ? "Sign Up!" : "Log In"}
-          </Typography>
+          <div className="form-heading">
+            <p>{isSignUp ? "Sign Up!" : "Log In"}</p>
+          </div>
           <button onClick={setFormMode}>{formButtonMessage()}</button>
           <form noValidate onSubmit={onSubmit}>
             <div className="sign-up-login-form">
@@ -300,12 +300,23 @@ export const SignUpLogin = () => {
                   {/* First Name */}
                   <TextField
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="First Name"
                     name="firstNameInput"
                     value={userInputs.firstNameInput}
                     onChange={(e) =>
                       handleInputChange("firstNameInput", e.target.value)
                     }
+                    sx={{
+                      input: {
+                        fontSize: "16px",
+                        padding: "12px",
+                        overflowX: "auto",
+                        whiteSpace: "nowrap",
+                      },
+                      height: "56px", // apply to container
+                      width: "100%", // full width in parent
+                    }}
                   />
                   <ErrorMessage
                     message={errorsOfInputs.firstNameInputError}
@@ -316,7 +327,9 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                    className="signup-textfield"
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="Last Name"
                     name="lastNameInput"
                     value={userInputs.lastNameInput}
@@ -334,7 +347,9 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                    className="signup-textfield"
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="Email"
                     name="emailInput"
                     value={userInputs.emailInput}
@@ -351,7 +366,9 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                    className="signup-textfield"
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="Company"
                     name="companyInput"
                     value={userInputs.companyInput}
@@ -368,7 +385,9 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                    className="signup-textfield"
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="Phone Number"
                     name="phoneInput"
                     value={userInputs.phoneInput}
@@ -385,7 +404,9 @@ export const SignUpLogin = () => {
                   />
 
                   <TextField
+                    className="signup-textfield"
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="Password"
                     name="passwordInput"
                     value={userInputs.passwordInput}
@@ -420,7 +441,9 @@ export const SignUpLogin = () => {
 
                   {/* Verify Password */}
                   <TextField
+                    className="signup-textfield"
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="Verify Password"
                     name="verifyPasswordInput"
                     value={userInputs.verifyPasswordInput}
@@ -458,7 +481,9 @@ export const SignUpLogin = () => {
                   {/* Log In Fields */}
                   {/* Email */}
                   <TextField
+                    className="signup-textfield"
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="Email"
                     name="emailInput"
                     value={userInputs.emailInput}
@@ -475,7 +500,9 @@ export const SignUpLogin = () => {
 
                   {/* Password */}
                   <TextField
+                    className="signup-textfield"
                     style={{ marginBottom: "5px" }}
+                    size="small"
                     label="Password"
                     name="passwordInput"
                     value={userInputs.passwordInput}
