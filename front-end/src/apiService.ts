@@ -1,11 +1,11 @@
 // apiService.ts
-import { GalloAccountType, GoalType, ProgramType, CompanyAccountType } from "./utils/types";
+import { GalloAccountType, GalloGoalType, GalloProgramType, CompanyAccountType } from "./utils/types";
 import { doc, getDoc } from "@firebase/firestore";
 import { db } from "./utils/firebase";
 
 const baseUrl = import.meta.env.REACT_APP_GALLO_BASE_URL;
 
-export const fetchPrograms = async (apiKey: string, startDateUnix: string): Promise<ProgramType[]> => {
+export const fetchPrograms = async (apiKey: string, startDateUnix: string): Promise<GalloProgramType[]> => {
   const url = `${baseUrl}/healy/programs?startDate=${startDateUnix}`;
   const requestOptions = {
     method: "GET",
@@ -22,7 +22,7 @@ export const fetchPrograms = async (apiKey: string, startDateUnix: string): Prom
   return response.json();
 };
 
-export const fetchGoals = async (apiKey: string, program: ProgramType): Promise<GoalType[]> => {
+export const fetchGoals = async (apiKey: string, program: GalloProgramType): Promise<GalloGoalType[]> => {
   const url = `${baseUrl}/healy/goals?programId=${program.programId}&marketId=${program.marketId}`;
   const requestOptions = {
     method: "GET",

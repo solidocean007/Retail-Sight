@@ -117,8 +117,8 @@ export const UserProfilePosts = ({
               )}
             </div>
             <div className="post-store-info">
-              <div className="post-store-name">{post.selectedStore}</div>
-              <div className="post-store-address">{post.storeAddress}</div>
+              <div className="post-store-name">{post.account?.accountName}</div>
+              <div className="post-store-address">{post.account?.accountAddress}</div>
             </div>
             <div className="post-hashtags">
               {post.hashtags.map((tag) => (

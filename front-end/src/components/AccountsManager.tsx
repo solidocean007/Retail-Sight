@@ -21,7 +21,6 @@ import {
   collection,
   doc,
   getDoc,
-  setDoc,
   updateDoc,
 } from "@firebase/firestore";
 import { CompanyAccountType } from "../utils/types";
@@ -29,7 +28,6 @@ import { db } from "../utils/firebase";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import getCompanyAccountId from "../utils/helperFunctions/getCompanyAccountId";
-import { getDocs } from "@firebase/firestore";
 import './accountsManager.css'
 
 interface AccountManagerProps {
@@ -54,6 +52,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   useEffect(() => {
     fetchAccounts();
   }, []);
+
+  console.log("user", user);
 
   const fetchAccounts = async () => {
     if (!user?.companyId) {
@@ -120,9 +120,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     reader.readAsArrayBuffer(file);
   };
   
-
-  console.log(user);
-
   const handleSubmitAccounts = async () => {
     if (!user?.companyId) {
       console.error("No companyId found for user");

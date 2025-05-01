@@ -20,7 +20,6 @@ import useScrollToTopOnChange from "../hooks/scrollToTopOnChange";
 import { selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
-import { Button } from "@mui/material";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
@@ -52,7 +51,7 @@ export const UserHomePage = () => {
   }
 
   // this looks like a top level tool to make sure a users accounts are stored.  im doing this again in a child component but
-  // i shouldnt have to if this was working.. need to look into this a later.  preferably move it to a hook or something
+  // i shouldn't have to if this was working.. need to look into this a later.  preferably move it to a hook or something
   useEffect(() => {
     if (!user || !companyId) return;
 

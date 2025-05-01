@@ -9,8 +9,6 @@ import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { deletePost, updatePost } from "../../Slices/postsSlice";
 import {
-  Input,
-  InputAdornment,
   SelectChangeEvent,
   Typography,
 } from "@mui/material";
@@ -21,8 +19,6 @@ import {
   TextField,
   Select,
   MenuItem,
-  Card,
-  CardMedia,
 } from "@mui/material";
 
 import "./editPostModal.css";
@@ -57,9 +53,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   // setPost,
   isOpen,
   setIsEditModalOpen,
-  setSelectedCompanyAccount,
-  // onClose,
-  // onSave,
 }) => {
   const wrapperRef = useRef(null);
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
