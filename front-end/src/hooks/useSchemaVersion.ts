@@ -50,11 +50,15 @@ const useSchemaVersion = () => {
     };
 
     const setLocalSchemaVersion = async (version: string) => {
-      const db = await openDB();
-      const transaction = db.transaction("localSchemaVersion", "readwrite");
-      const store = transaction.objectStore("localSchemaVersion");
-      await store.put({ id: "schemaVersion", version });
-      console.log("✅ Updated local schema version to:", version);
+      try {
+        const db = await openDB();
+        const tx = db.transaction("localSchemaVersion", "readwrite");
+        const store = tx.objectStore("localSchemaVersion");
+        await store.put({ id: "schemaVersion", version });
+        console.log("✅ Updated local schema version to:", version);
+      } catch (err) {
+        console.error("❌ Failed to update local schema version:", err);
+      }
     };
 
     const checkAndMigrateData = async () => {
@@ -62,19 +66,22 @@ const useSchemaVersion = () => {
       const appConfigRef = collection(firestore, "appConfig");
 
       try {
+        console.log("🚀 Starting schema version check...");
         const appConfigSnapshot = await getDocs(appConfigRef);
         let remoteVersion: string | null = null;
 
         appConfigSnapshot.forEach((doc) => {
           if (doc.exists()) {
             remoteVersion = doc.data().schemaVersion;
+            console.log(
+              "🌐 Remote schemaVersion from Firestore:",
+              remoteVersion
+            );
           }
         });
 
         const localVersion = await getLocalSchemaVersion();
-
-        console.log("🔍 Local version:", localVersion);
-        console.log("🌐 Remote version:", remoteVersion);
+        console.log("💾 Local schemaVersion in IndexedDB:", localVersion);
 
         if (!remoteVersion) {
           console.warn("⚠️ Remote schemaVersion is undefined or null.");
@@ -86,35 +93,37 @@ const useSchemaVersion = () => {
             "🛠️ Version mismatch or missing. Performing migration..."
           );
           await migrateLocalData();
-          await setLocalSchemaVersion(remoteVersion);
 
-          // ✅ Re-fetch posts after schema reset
-          // const user = JSON.parse(localStorage.getItem("user") || "{}");
-          const companyId = user?.companyId;
-
-          if (companyId) {
+          try {
             console.log("📦 Fetching fresh posts after schema reset...");
+            const companyId = user?.companyId;
 
-            store
-              .dispatch(
+            if (!companyId) {
+              console.warn("⚠️ No companyId found — cannot re-fetch posts.");
+            } else {
+              const action = await store.dispatch(
                 fetchInitialPostsBatch({
                   POSTS_BATCH_SIZE,
                   currentUserCompanyId: companyId,
                 })
-              )
-              .then((action) => {
-                if (fetchInitialPostsBatch.fulfilled.match(action)) {
-                  const { posts } = action.payload;
-                  store.dispatch(setPosts(posts));
-                  addPostsToIndexedDB(posts);
-                  console.log("✅ Saved fetched posts to Redux and IndexedDB");
-                } else {
-                  console.error("❌ Failed to fetch posts after migration.");
-                }
-              });
-          } else {
-            console.warn("⚠️ No companyId found — cannot re-fetch posts.");
+              );
+
+              if (fetchInitialPostsBatch.fulfilled.match(action)) {
+                const { posts } = action.payload;
+                console.log(`✅ Fetched ${posts.length} posts`);
+                store.dispatch(setPosts(posts));
+                await addPostsToIndexedDB(posts);
+                console.log("💾 Posts saved to Redux and IndexedDB");
+              } else {
+                console.error("❌ Failed to fetch posts after migration.");
+              }
+            }
+          } catch (fetchError) {
+            console.error("❌ Unexpected error during post fetch:", fetchError);
           }
+
+          // ✅ Set version regardless of fetch result
+          await setLocalSchemaVersion(remoteVersion);
         } else {
           console.log("✅ Schema version is up-to-date. No migration needed.");
         }
