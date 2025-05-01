@@ -115,7 +115,7 @@ const FilterLocation = () => {
             sx={{
               backgroundColor: "var(--input-background)",
               color: "var(--input-text-color)",
-              borderRadius: "var(--card-radius)",
+              // borderRadius: "var(--card-radius)",
             }}
           >
             <Box sx={{ display: "flex", justifyContent: "flex-end", px: 1, py: 0.5 }}>

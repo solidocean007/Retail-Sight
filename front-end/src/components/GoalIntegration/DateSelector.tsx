@@ -1,7 +1,6 @@
 // DateSelector.tsx
 import React from "react";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers";
 import { Dayjs } from "dayjs";
 import { Button, Box } from "@mui/material";
 
@@ -18,8 +17,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
 }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
+         <DatePicker
             label="Start Date"
             value={startDate}
             onChange={onDateChange}
@@ -34,7 +32,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({
               
             }}
           />
-        </LocalizationProvider>
         <Button variant="contained" color="primary" onClick={onFetchPrograms}>
           Search Programs
         </Button>

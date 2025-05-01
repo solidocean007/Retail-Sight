@@ -3,7 +3,7 @@ import Snackbar from "@mui/material/Snackbar";
 import { useSelector } from "react-redux";
 import { hideMessage } from "./Slices/snackbarSlice";
 import "./App.css";
-import { BrowserRouter as Router } from "react-router-dom"; 
+import { BrowserRouter as Router } from "react-router-dom";
 import { RootState, useAppDispatch } from "./utils/store";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { ThemeProvider, CssBaseline } from "@mui/material";
@@ -16,6 +16,8 @@ import { setDarkMode } from "./Slices/themeSlice"; // ✅ New, clean import
 import useSchemaVersion from "./hooks/useSchemaVersion";
 import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener";
 import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 function App() {
   useSchemaVersion();
@@ -31,9 +33,9 @@ function App() {
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {
-    const storedTheme = localStorage.getItem('theme');
+    const storedTheme = localStorage.getItem("theme");
     if (storedTheme) {
-      dispatch(setDarkMode(storedTheme === 'dark'));
+      dispatch(setDarkMode(storedTheme === "dark"));
     }
   }, [dispatch]);
 
@@ -45,10 +47,10 @@ function App() {
   // 📡 Goal listeners
   useEffect(() => {
     if (!companyId) return;
-    const unsubscribeCompanyGoals = dispatch(setupCompanyGoalsListener(companyId));
-    const unsubscribeGalloGoals = dispatch(
-      setupGalloGoalsListener(companyId)
+    const unsubscribeCompanyGoals = dispatch(
+      setupCompanyGoalsListener(companyId)
     );
+    const unsubscribeGalloGoals = dispatch(setupGalloGoalsListener(companyId));
     return () => {
       unsubscribeCompanyGoals();
       unsubscribeGalloGoals();
@@ -56,23 +58,24 @@ function App() {
   }, [dispatch, companyId, salesRouteNum]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <ThemeToggle />
-      <Router>
-        <AppRoutes />
-      </Router>
-      <Snackbar
-        message={snackbar.message}
-        open={snackbar.open}
-        onClose={() => dispatch(hideMessage())}
-        autoHideDuration={3000}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      />
-      {!initializing && currentUser && <UserModal />}
-    </ThemeProvider>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <ThemeToggle />
+        <Router>
+          <AppRoutes />
+        </Router>
+        <Snackbar
+          message={snackbar.message}
+          open={snackbar.open}
+          onClose={() => dispatch(hideMessage())}
+          autoHideDuration={3000}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        />
+        {!initializing && currentUser && <UserModal />}
+      </ThemeProvider>
+    </LocalizationProvider>
   );
 }
 
 export default App;
-

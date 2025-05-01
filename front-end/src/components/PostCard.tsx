@@ -352,13 +352,13 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
         )}
 
-        <Typography>
+        <div className={post.companyGoalId ? "company-goal-box" : ""}>
           {post.companyGoalId
             ? `Company goal: ${post.companyGoalTitle}` /* this renders null */
             : post.oppId
             ? `Gallo goal: ${post.galloGoalTitle}`
             : ""}
-        </Typography>
+        </div>
 
         <div className="description-image">
           <div className="like-quantity-row">
@@ -366,7 +366,7 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.category}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
-            {post.id}
+            {/* {post.id} */}
             <div className="likes-box">
               <button
                 className="like-button"

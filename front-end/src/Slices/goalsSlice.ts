@@ -17,7 +17,6 @@ import {
   collection,
   doc,
   getDocs,
-  onSnapshot,
   query,
   updateDoc,
   where,

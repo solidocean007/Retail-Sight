@@ -1,0 +1,27 @@
+/* filterSummaryBanner.css */
+.filter-summary-banner {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 15;
+  background-color: var(--menu-background-color);
+  color: var(--text-color);
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+}
+
+.clear-filter-btn {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.75rem;
+}
+
+@media (min-width: 900px) {
+  .filter-summary-banner {
+    display: none;
+  }
+}

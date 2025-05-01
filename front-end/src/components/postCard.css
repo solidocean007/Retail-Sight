@@ -20,6 +20,16 @@
   background-color: red;
 }
 
+.company-goal-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem;
+  background-color: var(--gold);
+  color: var(--company-goal-text-color); /* ✅ ensures dark mode contrast */
+}
+
 .textured-background {
   background-image: linear-gradient(
       45deg,

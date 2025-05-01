@@ -82,6 +82,7 @@
   --card-outline: var(--gray-800);
 
   --text-color: var(--gray-900);
+  --company-goal-text-color: var(--gray-900);
   --header-title: var(--gray-900);
 
   --link-color: #228b22; /* Forest green */
@@ -127,6 +128,7 @@
   --card-outline: var(--gray-200);
 
   --text-color: var(--gray-100);
+  --company-goal-text-color: var(--gray-900);
   --header-title: var(--white);
   --link-color: #93c5fd; /* Light-blue-300 (Tailwind-ish) */
   --link-hover-color: #60a5fa; /* Slightly brighter */
@@ -156,6 +158,37 @@
   --sidebar-active-item: var(--primary-blue);
   --sidebar-hover-bg: #2f3c55;
 }
+
+/* 🎨 Light Theme Scrollbar */
+[data-theme="light"] ::-webkit-scrollbar {
+  width: 12px;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--gray-100);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background-color: var(--primary-blue);
+  border-radius: 10px;
+  border: 2px solid var(--gray-100);
+}
+
+/* 🌙 Dark Theme Scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 12px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--gray-900);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background-color: var(--primary-blue-dark);
+  border-radius: 10px;
+  border: 2px solid var(--gray-900);
+}
+
 
 /* ============================
        🧱 Global Themed Elements

@@ -1,5 +1,5 @@
 // Sidebar
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { Button } from "@mui/material";
 // import FilterSection from "./FilterSection";
 import FilterLocation from "./FilterLocation";
@@ -36,7 +36,8 @@ import DateFilter from "./DateFilter";
 import { PostWithID } from "../utils/types";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 
-interface FilterState {
+
+export interface FilterState {
   channels: ChannelType[];
   categories: CategoryType[];
   states: string[];
@@ -55,26 +56,39 @@ interface SideBarProps {
   setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
   clearSearch: () => Promise<void>;
   toggleFilterMenu: () => void;
+  activePostSet: string;
+  filteredPosts: PostWithID[];
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
   isSearchActive: boolean;
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
   clearInput: boolean;
   setClearInput: React.Dispatch<React.SetStateAction<boolean>>;
+  onFiltersApplied?: (filters: FilterState) => void;
 }
 
-const SideBar: React.FC<SideBarProps> = ({
-  currentHashtag,
-  setCurrentHashtag,
-  currentStarTag,
-  setCurrentStarTag,
-  clearSearch,
-  toggleFilterMenu,
-  setActivePostSet,
-  isSearchActive,
-  setIsSearchActive,
-  clearInput,
-  setClearInput,
-}) => {
+export type SideBarHandle = {
+  clearAllFilters: () => void;
+};
+
+
+const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
+  const {
+    currentHashtag,
+    setCurrentHashtag,
+    currentStarTag,
+    setCurrentStarTag,
+    clearSearch,
+    toggleFilterMenu,
+    activePostSet,
+    filteredPosts,
+    setActivePostSet,
+    isSearchActive,
+    setIsSearchActive,
+    clearInput,
+    setClearInput,
+    onFiltersApplied,
+  } = props;
+
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
   const protectedAction = useProtectedAction();
@@ -89,6 +103,12 @@ const SideBar: React.FC<SideBarProps> = ({
     (state: RootState) => state.locations.selectedCities
   );
 
+   // ✅ Expose a public method for parent
+   useImperativeHandle(ref, () => ({
+    clearAllFilters: clearFilters,
+  }));
+  
+
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
@@ -96,6 +116,16 @@ const SideBar: React.FC<SideBarProps> = ({
     startDate: null,
     endDate: null,
   });
+
+  const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState>({
+      channels: [],
+      categories: [],
+      states: [],
+      cities: [],
+      dateRange: { startDate: null, endDate: null },
+      Hashtag: "",
+      StarTag: "",
+    });
 
   const handleDateChange = (newDateRange: {
     startDate: Date | null;
@@ -109,16 +139,7 @@ const SideBar: React.FC<SideBarProps> = ({
     });
   };
 
-  const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState>({
-    channels: [],
-    categories: [],
-    states: [],
-    cities: [],
-    dateRange: { startDate: null, endDate: null },
-    Hashtag: "",
-    StarTag: "",
-  });
-
+  
   const dispatch = useDispatch<AppDispatch>();
 
   const applyFilters = async () => {
@@ -137,6 +158,8 @@ const SideBar: React.FC<SideBarProps> = ({
       StarTag: currentStarTag,
     };
     setLastAppliedFilters(filters);
+    onFiltersApplied?.(filters);
+
 
     try {
       const actionResult = await dispatch(
@@ -158,11 +181,15 @@ const SideBar: React.FC<SideBarProps> = ({
 
       const postsFilteredByDate = fetchedPosts.filter((post) => {
         const postDate = new Date(post.displayDate).getTime();
+
         const startDate = filters.dateRange.startDate
           ? new Date(filters.dateRange.startDate).getTime()
           : null;
+
         const endDate = filters.dateRange.endDate
-          ? new Date(filters.dateRange.endDate).getTime()
+          ? new Date(
+              new Date(filters.dateRange.endDate).setHours(23, 59, 59, 999)
+            ).getTime()
           : null;
 
         const matchesDateRange =
@@ -199,14 +226,15 @@ const SideBar: React.FC<SideBarProps> = ({
         dispatch(mergeAndSetPosts(cachedPosts));
       } else {
         if (currentUserCompanyId && currentUserCompanyId) {
-          dispatch(fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })).then((action) => {
+          dispatch(
+            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
+          ).then((action) => {
             if (fetchInitialPostsBatch.fulfilled.match(action)) {
               const { posts } = action.payload;
               dispatch(setPosts(posts));
               addPostsToIndexedDB(posts);
             }
           });
-          
         }
       }
     } catch (error) {
@@ -248,6 +276,44 @@ const SideBar: React.FC<SideBarProps> = ({
         toggleFilterMenu();
       }
     }
+  };
+
+  const getFilterSummaryText = () => {
+    const {
+      channels,
+      categories,
+      states,
+      cities,
+      dateRange,
+      Hashtag,
+      StarTag,
+    } = lastAppliedFilters;
+
+    const parts: string[] = [];
+
+    if (Hashtag) parts.push(`#${Hashtag}`);
+    if (StarTag) parts.push(`⭐ ${StarTag}`);
+    if (channels.length) parts.push(`Channels: ${channels.join(", ")}`);
+    if (categories.length) parts.push(`Categories: ${categories.join(", ")}`);
+    if (states.length) parts.push(`States: ${states.join(", ")}`);
+    if (cities.length) parts.push(`Cities: ${cities.join(", ")}`);
+
+    if (dateRange.startDate || dateRange.endDate) {
+      const start = dateRange.startDate
+        ? new Date(dateRange.startDate).toLocaleDateString()
+        : "";
+      const end = dateRange.endDate
+        ? new Date(dateRange.endDate).toLocaleDateString()
+        : "";
+
+      if (start && end && start === end) {
+        parts.push(`Date: ${start}`);
+      } else {
+        parts.push(`From ${start || "start"} to ${end || "end"}`);
+      }
+    }
+
+    return parts.join(" • ");
   };
 
   const handleClearFiltersClick = () => {
@@ -342,8 +408,27 @@ const SideBar: React.FC<SideBarProps> = ({
           Apply Now
         </button>
       </div>
+      {activePostSet === "filteredPosts" && (
+        <div className="filter-summary-box">
+          {activePostSet === "filteredPosts" && (
+            <div className="filter-summary">
+              {filteredPosts.length > 0 ? (
+                <div className="filter-summary">
+                  <p>
+                    Showing {filteredPosts.length} filtered post
+                    {filteredPosts.length > 1 ? "s" : ""} •{" "}
+                  </p>
+                  <p>{getFilterSummaryText()}</p>
+                </div>
+              ) : (
+                <p>No posts match the current filters.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
-};
+}; // ) expected
 
 export default SideBar;

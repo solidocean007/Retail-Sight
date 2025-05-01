@@ -117,7 +117,7 @@ const usePosts = (
         const qCompany = query(
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTimestamp),
-          where("postUserCompanyId", "==", currentUserCompanyId),
+          where("createdBy.companyId", "==", currentUserCompanyId),
           orderBy("timestamp", "desc")
         );
         unsubscribeCompany = onSnapshot(qCompany, processDocChanges);

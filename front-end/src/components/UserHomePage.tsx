@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import ActivityFeed from "./ActivityFeed";
 import "./userHomePage.css";
-import SideBar from "./SideBar";
+import SideBar, { FilterState, SideBarHandle } from "./SideBar";
 import { AppDispatch, RootState } from "../utils/store";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
@@ -20,9 +20,11 @@ import useScrollToTopOnChange from "../hooks/scrollToTopOnChange";
 import { selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
+import FilterSummaryBanner from "./FilterSummaryBanner";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
+  const sideBarRef = useRef<SideBarHandle>(null);
   const listRef = useRef<VariableSizeList>(null);
   const dispatch = useDispatch<AppDispatch>();
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -36,12 +38,32 @@ export const UserHomePage = () => {
   // const [usersAccounts, setUsersAccounts] = useState<CompanyAccountType[] | null>(null);
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
   const [isClosing, setIsClosing] = useState(false);
-
+  const [lastFilters, setLastFilters] = useState<FilterState | null>(null);
   const posts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   ); // this is the state of redux filtered posts
   useScrollToTopOnChange(listRef, activePostSet);
+
+  const getFilterSummaryText = (filters: FilterState) => {
+    const parts: string[] = [];
+    if (filters.Hashtag) parts.push(`#${filters.Hashtag}`);
+    if (filters.StarTag) parts.push(`⭐ ${filters.StarTag}`);
+    if (filters.channels.length)
+      parts.push(`Channels: ${filters.channels.join(", ")}`);
+    if (filters.categories.length)
+      parts.push(`Categories: ${filters.categories.join(", ")}`);
+    if (filters.dateRange.startDate || filters.dateRange.endDate) {
+      const start = filters.dateRange.startDate
+        ? new Date(filters.dateRange.startDate).toLocaleDateString()
+        : "";
+      const end = filters.dateRange.endDate
+        ? new Date(filters.dateRange.endDate).toLocaleDateString()
+        : "";
+      parts.push(start === end ? `Date: ${start}` : `From ${start} to ${end}`);
+    }
+    return parts.join(" • ");
+  };
 
   let displayPosts: PostWithID[];
   if (activePostSet === "filteredPosts") {
@@ -99,13 +121,18 @@ export const UserHomePage = () => {
     setCurrentHashtag(null);
     setCurrentStarTag(null);
     setActivePostSet("posts");
-    // Clear filteredPosts in Redux
     dispatch(setFilteredPosts([]));
+    setLastFilters(null); // ✅ hides FilterSummaryBanner
+
+    // ✅ Clear filters inside SideBar
+    sideBarRef.current?.clearAllFilters();
+  
     const cachedPosts = await getPostsFromIndexedDB();
-    if (cachedPosts && cachedPosts.length > 0) {
+    if (cachedPosts?.length > 0) {
       dispatch(mergeAndSetPosts(cachedPosts));
     }
   };
+  
 
   useEffect(() => {
     // I need to check if location options are in indexedDb before doing this next line.
@@ -121,6 +148,14 @@ export const UserHomePage = () => {
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
+            {activePostSet === "filteredPosts" && lastFilters && (
+              <FilterSummaryBanner
+                filteredCount={filteredPosts.length}
+                filterText={getFilterSummaryText(lastFilters)} // ✅ use correct state
+                onClear={clearSearch}
+              />
+            )}
+
             <ActivityFeed
               listRef={listRef}
               // posts={displayPosts}
@@ -148,17 +183,21 @@ export const UserHomePage = () => {
           >
             <SideBar
               // setSearchResults={setSearchResults}
+              // ref={sideBarRef}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               setCurrentStarTag={setCurrentStarTag}
               currentStarTag={currentStarTag}
               clearSearch={clearSearch}
               toggleFilterMenu={toggleFilterMenu}
+              activePostSet={activePostSet}
+              filteredPosts={filteredPosts}
               setActivePostSet={setActivePostSet}
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
               clearInput={clearInput}
               setClearInput={setClearInput}
+              onFiltersApplied={setLastFilters}
             />
           </div>
         </div>

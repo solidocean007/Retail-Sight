@@ -6,6 +6,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  max-width: 2000px;
   padding: 5px;
   background-color: var(--background-body);
 }
@@ -93,7 +94,7 @@
     display: flex;
     align-items: start;
     justify-content: flex-start;
-    max-width: 400px;
+    max-width: 600px;
   }
   .activity-feed-container {
     max-width: 45%;

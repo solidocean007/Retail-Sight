@@ -1,6 +1,7 @@
-// DateFilter.tsx
 import React from "react";
-import "./dateFilter.css";
+import { DatePicker } from "@mui/x-date-pickers";
+import dayjs, { Dayjs } from "dayjs";
+import "./dateFilter.css"; // Import your CSS file
 
 interface DateFilterProps {
   dateRange: {
@@ -14,42 +15,47 @@ interface DateFilterProps {
 }
 
 const DateFilter: React.FC<DateFilterProps> = ({ dateRange, onDateChange }) => {
-  const startDateString = dateRange.startDate
-    ? dateRange.startDate.toISOString().split("T")[0]
-    : "";
-  const endDateString = dateRange.endDate
-    ? dateRange.endDate.toISOString().split("T")[0]
-    : "";
-
   return (
     <div className="date-filter-box">
       <div className="start-filter">
-        Start Date:
-        <input
-          className="btn-outline"
-          type="date"
-          value={startDateString}
-          onChange={(e) =>
+        <DatePicker
+          label="Start Date"
+          value={dateRange.startDate ? dayjs(dateRange.startDate) : null}
+          onChange={(newValue: Dayjs | null) =>
             onDateChange({
               ...dateRange,
-              startDate: e.target.value ? new Date(e.target.value) : null,
+              startDate: newValue ? newValue.toDate() : null,
             })
           }
+          slotProps={{
+            textField: {
+              fullWidth: true,
+              variant: "standard", // Avoid default outlined borders
+              InputProps: { disableUnderline: true },
+              className: "date-picker-input",
+            },
+          }}
         />
       </div>
 
       <div className="end-filter">
-        End Date:
-        <input
-          className="btn-outline"
-          type="date"
-          value={endDateString}
-          onChange={(e) =>
+        <DatePicker
+          label="End Date"
+          value={dateRange.endDate ? dayjs(dateRange.endDate) : null}
+          onChange={(newValue: Dayjs | null) =>
             onDateChange({
               ...dateRange,
-              endDate: e.target.value ? new Date(e.target.value) : null,
+              endDate: newValue ? newValue.toDate() : null,
             })
           }
+          slotProps={{
+            textField: {
+              fullWidth: true,
+              variant: "standard", // Avoid default outlined borders
+              InputProps: { disableUnderline: true },
+              className: "date-picker-input"
+            }
+          }}
         />
       </div>
     </div>
