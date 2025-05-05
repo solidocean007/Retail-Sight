@@ -1,8 +1,10 @@
+/* front-end/src/components/AccountManagement/styles/accountsManager.css */
 .account-manager-container {
   background-color: var(--form-background-color);
   color: var(--text-color);
   padding: 2rem;
   border-radius: 8px;
+  position: relative; 
 }
 
 .account-manager h2 {

@@ -1,5 +1,14 @@
 // indexedDBUtils.ts
-import { CollectionType, CollectionWithId, CompanyAccountType, CompanyGoalType, FireStoreGalloGoalDocType, GalloGoalType, PostType, PostWithID } from "../types";
+import {
+  CollectionType,
+  CollectionWithId,
+  CompanyAccountType,
+  CompanyGoalType,
+  FireStoreGalloGoalDocType,
+  GalloGoalType,
+  PostType,
+  PostWithID,
+} from "../types";
 import { FilterCriteria } from "../../Slices/postsSlice";
 import { openDB } from "./indexedDBOpen";
 
@@ -205,11 +214,15 @@ export async function getFilteredPostsFromIndexedDB(
           filters.categories.includes(post.category);
         const postDate = post.displayDate ? new Date(post.displayDate) : null;
 
-         // Convert the string dates in the filters to Date objects for comparison
-         const startDate = filters.dateRange?.startDate ? new Date(filters.dateRange.startDate) : null;
-         const endDate = filters.dateRange?.endDate ? new Date(filters.dateRange.endDate) : null;
+        // Convert the string dates in the filters to Date objects for comparison
+        const startDate = filters.dateRange?.startDate
+          ? new Date(filters.dateRange.startDate)
+          : null;
+        const endDate = filters.dateRange?.endDate
+          ? new Date(filters.dateRange.endDate)
+          : null;
 
-         const matchesDateRange =
+        const matchesDateRange =
           !filters.dateRange ||
           (postDate &&
             startDate &&
@@ -633,16 +646,21 @@ export async function addOrUpdateCollection(collection: CollectionType) {
   });
 }
 
-export async function addPostToCollectionInDB(collectionId: string, postId: string) {
+export async function addPostToCollectionInDB(
+  collectionId: string,
+  postId: string
+) {
   const db = await openDB();
-  const tx = db.transaction('collections', 'readwrite');
-  const store = tx.objectStore('collections');
-  
-  let collection = await new Promise<CollectionWithId | undefined>((resolve, reject) => {
-    const request = store.get(collectionId);
-    request.onsuccess = () => resolve(request.result as CollectionWithId);
-    request.onerror = () => reject(request.error);
-  });
+  const tx = db.transaction("collections", "readwrite");
+  const store = tx.objectStore("collections");
+
+  let collection = await new Promise<CollectionWithId | undefined>(
+    (resolve, reject) => {
+      const request = store.get(collectionId);
+      request.onsuccess = () => resolve(request.result as CollectionWithId);
+      request.onerror = () => reject(request.error);
+    }
+  );
 
   if (collection && !collection.posts.includes(postId)) {
     collection.posts.push(postId);
@@ -655,16 +673,21 @@ export async function addPostToCollectionInDB(collectionId: string, postId: stri
   });
 }
 
-export async function removePostFromCollectionInDB(collectionId: string, postId: string) {
+export async function removePostFromCollectionInDB(
+  collectionId: string,
+  postId: string
+) {
   const db = await openDB();
-  const tx = db.transaction('collections', 'readwrite');
-  const store = tx.objectStore('collections');
-  
-  let collection = await new Promise<CollectionWithId | undefined>((resolve, reject) => {
-    const request = store.get(collectionId);
-    request.onsuccess = () => resolve(request.result as CollectionWithId);
-    request.onerror = () => reject(request.error);
-  });
+  const tx = db.transaction("collections", "readwrite");
+  const store = tx.objectStore("collections");
+
+  let collection = await new Promise<CollectionWithId | undefined>(
+    (resolve, reject) => {
+      const request = store.get(collectionId);
+      request.onsuccess = () => resolve(request.result as CollectionWithId);
+      request.onerror = () => reject(request.error);
+    }
+  );
 
   if (collection) {
     const index = collection.posts.indexOf(postId);
@@ -680,7 +703,10 @@ export async function removePostFromCollectionInDB(collectionId: string, postId:
   });
 }
 
-export async function getCollectionsFromIndexedDB(): Promise<CollectionWithId[]> { // this gets all of a users collections
+export async function getCollectionsFromIndexedDB(): Promise<
+  CollectionWithId[]
+> {
+  // this gets all of a users collections
   const db = await openDB();
   const transaction = db.transaction(["collections"], "readonly");
   const store = transaction.objectStore("collections");
@@ -694,13 +720,19 @@ export async function getCollectionsFromIndexedDB(): Promise<CollectionWithId[]>
     };
 
     request.onerror = () => {
-      console.error("Error fetching user collections from IndexedDB:", request.error);
+      console.error(
+        "Error fetching user collections from IndexedDB:",
+        request.error
+      );
       reject(request.error);
     };
   });
 }
 
-export async function getOneCollectionFromIndexedDB(collectionId: string): Promise<CollectionWithId> { // this needs to retrieve a specific collection
+export async function getOneCollectionFromIndexedDB(
+  collectionId: string
+): Promise<CollectionWithId> {
+  // this needs to retrieve a specific collection
   const db = await openDB();
   const transaction = db.transaction(["collections"], "readonly");
   const store = transaction.objectStore("collections");
@@ -714,19 +746,21 @@ export async function getOneCollectionFromIndexedDB(collectionId: string): Promi
     };
 
     request.onerror = () => {
-      console.error("Error fetching a specific collection from IndexedDB:", request.error);
+      console.error(
+        "Error fetching a specific collection from IndexedDB:",
+        request.error
+      );
       reject(request.error);
     };
   });
 }
 
-
 export async function getLastSeenTimestamp(): Promise<string | undefined> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction('lastSeenTimestamp', 'readonly');
-    const store = transaction.objectStore('lastSeenTimestamp');
-    const request = store.get('timestamp');
+    const transaction = db.transaction("lastSeenTimestamp", "readonly");
+    const store = transaction.objectStore("lastSeenTimestamp");
+    const request = store.get("timestamp");
 
     request.onerror = () => {
       reject(request.error);
@@ -741,9 +775,9 @@ export async function getLastSeenTimestamp(): Promise<string | undefined> {
 export async function setLastSeenTimestamp(timestamp: string): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction('lastSeenTimestamp', 'readwrite');
-    const store = transaction.objectStore('lastSeenTimestamp');
-    const request = store.put(timestamp, 'timestamp');
+    const transaction = db.transaction("lastSeenTimestamp", "readwrite");
+    const store = transaction.objectStore("lastSeenTimestamp");
+    const request = store.put(timestamp, "timestamp");
 
     request.onerror = () => {
       reject(request.error);
@@ -761,7 +795,7 @@ export async function closeAndDeleteIndexedDB(): Promise<void> {
     db.close(); // Close the connection before attempting to delete
 
     return new Promise<void>((resolve, reject) => {
-      const dbRequest = indexedDB.deleteDatabase('myRetailAppDB');
+      const dbRequest = indexedDB.deleteDatabase("myRetailAppDB");
 
       // Timeout in case deletion gets blocked or hangs
       const timeout = setTimeout(() => {
@@ -777,19 +811,19 @@ export async function closeAndDeleteIndexedDB(): Promise<void> {
       dbRequest.onerror = (event) => {
         clearTimeout(timeout);
         const error = (event.target as IDBRequest).error;
-        console.error('Error deleting IndexedDB database:', error);
+        console.error("Error deleting IndexedDB database:", error);
         reject(error);
       };
 
       dbRequest.onblocked = () => {
         clearTimeout(timeout);
-        console.warn('Deletion blocked. Close all tabs with this site open.');
-        reject(new Error('Deletion blocked. Please close other tabs.'));
+        console.warn("Deletion blocked. Close all tabs with this site open.");
+        reject(new Error("Deletion blocked. Please close other tabs."));
       };
     });
   } catch (error) {
-    console.error('Failed to open or delete the database:', error);
-    throw new Error('Failed to delete the IndexedDB database.');
+    console.error("Failed to open or delete the database:", error);
+    throw new Error("Failed to delete the IndexedDB database.");
   }
 }
 
@@ -823,10 +857,7 @@ export const saveAllCompanyAccountsToIndexedDB = async (
           // Optional: console.log(`Account ${index} saved`);
         };
         request.onerror = () => {
-          console.error(
-            `Error saving account ${index}:`,
-            request.error
-          );
+          console.error(`Error saving account ${index}:`, request.error);
           reject(request.error);
         };
       }
@@ -834,7 +865,9 @@ export const saveAllCompanyAccountsToIndexedDB = async (
   });
 };
 
-export const getAllCompanyAccountsFromIndexedDB = async (): Promise<CompanyAccountType[]> => {
+export const getAllCompanyAccountsFromIndexedDB = async (): Promise<
+  CompanyAccountType[]
+> => {
   const db = await openDB();
   const transaction = db.transaction(["allUsersCompanyAccounts"], "readonly");
   const store = transaction.objectStore("allUsersCompanyAccounts");
@@ -850,15 +883,18 @@ export const getAllCompanyAccountsFromIndexedDB = async (): Promise<CompanyAccou
   });
 };
 
-
-export async function addAccountsToIndexedDB(accounts: CompanyAccountType[]): Promise<void> {
+export async function addAccountsToIndexedDB(
+  accounts: CompanyAccountType[]
+): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["userAccounts_v2"], "readwrite");
   const store = transaction.objectStore("userAccounts_v2");
 
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
-      console.log("Transaction complete: Accounts added to IndexedDB successfully.");
+      console.log(
+        "Transaction complete: Accounts added to IndexedDB successfully."
+      );
       resolve();
     };
 
@@ -876,7 +912,10 @@ export async function addAccountsToIndexedDB(accounts: CompanyAccountType[]): Pr
           // console.log(`Account ${index} added to IndexedDB successfully:`, account);
         };
         request.onerror = () => {
-          console.error(`Error adding account ${index} to IndexedDB:`, request.error);
+          console.error(
+            `Error adding account ${index} to IndexedDB:`,
+            request.error
+          );
           reject(request.error);
         };
       }
@@ -900,12 +939,33 @@ export async function getUserAccountsFromIndexedDB(): Promise<any[]> {
   });
 }
 
+export const deleteAccountFromIndexedDB = async (accountNumber: string) => {
+  const db = await openDB();
+  const transaction = db.transaction("userAccounts", "readwrite");
+  const store = transaction.objectStore("userAccounts");
 
+  return new Promise<void>((resolve, reject) => {
+    const request = store.delete(accountNumber);
 
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      console.error("Error deleting account from IndexedDB:", request.error);
+      reject(request.error);
+    };
+  });
+};
+  
 
 export const saveGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[] | CompanyGoalType[],
-  goalType: "galloGoals" | "companyGoals" | "allGalloGoals" | "allCompanySpecificGoals"
+  goalType:
+    | "galloGoals"
+    | "companyGoals"
+    | "allGalloGoals"
+    | "allCompanySpecificGoals"
 ): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(goalType, "readwrite");
@@ -918,7 +978,10 @@ export const saveGoalsToIndexedDB = async (
     };
 
     transaction.onerror = (event) => {
-      console.error(`Error saving ${goalType} to IndexedDB:`, (event.target as IDBRequest).error);
+      console.error(
+        `Error saving ${goalType} to IndexedDB:`,
+        (event.target as IDBRequest).error
+      );
       reject((event.target as IDBRequest).error);
     };
 
@@ -943,7 +1006,6 @@ export const saveGoalsToIndexedDB = async (
     }
   });
 };
-
 
 export const saveAllGalloGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[]
@@ -974,7 +1036,7 @@ export const saveAllGalloGoalsToIndexedDB = async (
           id: goal.goalDetails.goalId, // Ensure key is explicitly included
         };
         console.log("Saving goal:", goalWithKey);
-        console.log(goalWithKey)
+        console.log(goalWithKey);
         store.put(goalWithKey);
       });
     };
@@ -989,9 +1051,10 @@ export const saveAllGalloGoalsToIndexedDB = async (
   });
 };
 
-
 // Fetch goals from IndexedDB
-export const getUsersGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType[]> => {
+export const getUsersGalloGoalsFromIndexedDB = async (): Promise<
+  FireStoreGalloGoalDocType[]
+> => {
   const db = await openDB();
   const transaction = db.transaction(["galloGoals"], "readonly");
   const store = transaction.objectStore("galloGoals");
@@ -1011,10 +1074,10 @@ export const getUsersGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloG
   });
 };
 
-
-
 // Fetch goals from IndexedDB
-export const getAllGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoalDocType[]> => {
+export const getAllGalloGoalsFromIndexedDB = async (): Promise<
+  FireStoreGalloGoalDocType[]
+> => {
   const db = await openDB();
   const transaction = db.transaction(["allGalloGoals"], "readonly");
   const store = transaction.objectStore("allGalloGoals");
@@ -1034,9 +1097,9 @@ export const getAllGalloGoalsFromIndexedDB = async (): Promise<FireStoreGalloGoa
   });
 };
 
-
-
-export const clearSomeGalloGoalsFromIndexedDB = async (goalIds: string[]): Promise<void> => {
+export const clearSomeGalloGoalsFromIndexedDB = async (
+  goalIds: string[]
+): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(["allGalloGoals"], "readwrite");
   const store = transaction.objectStore("allGalloGoals");
@@ -1047,7 +1110,9 @@ export const clearSomeGalloGoalsFromIndexedDB = async (goalIds: string[]): Promi
 
     request.onsuccess = () => {
       const allGoals = request.result as FireStoreGalloGoalDocType[];
-      retainedGoals.push(...allGoals.filter((goal) => !goalIds.includes(goal.goalDetails.goalId)));
+      retainedGoals.push(
+        ...allGoals.filter((goal) => !goalIds.includes(goal.goalDetails.goalId))
+      );
 
       // Clear all and repopulate retained goals
       store.clear().onsuccess = () => {
@@ -1058,13 +1123,19 @@ export const clearSomeGalloGoalsFromIndexedDB = async (goalIds: string[]): Promi
       };
 
       store.clear().onerror = (event) => {
-        console.error("Error clearing allGalloGoals store:", (event.target as IDBRequest).error);
+        console.error(
+          "Error clearing allGalloGoals store:",
+          (event.target as IDBRequest).error
+        );
         reject((event.target as IDBRequest).error);
       };
     };
 
     request.onerror = (event) => {
-      console.error("Error retrieving goals for batch clear:", (event.target as IDBRequest).error);
+      console.error(
+        "Error retrieving goals for batch clear:",
+        (event.target as IDBRequest).error
+      );
       reject((event.target as IDBRequest).error);
     };
   });
@@ -1072,7 +1143,11 @@ export const clearSomeGalloGoalsFromIndexedDB = async (goalIds: string[]): Promi
 
 // Clear goals from IndexedDB
 export const clearGoalsFromIndexedDB = async (
-  goalType: "galloGoals" | "companyGoals" | "allGalloGoals" | "allCompanySpecificGoals" = "galloGoals"
+  goalType:
+    | "galloGoals"
+    | "companyGoals"
+    | "allGalloGoals"
+    | "allCompanySpecificGoals" = "galloGoals"
 ): Promise<void> => {
   // console.log(`Clearing goals from store: ${goalType}`);
   const db = await openDB();
@@ -1093,17 +1168,3 @@ export const clearGoalsFromIndexedDB = async (
     throw error; // Rethrow error for caller to handle
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-

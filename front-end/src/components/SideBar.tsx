@@ -429,6 +429,6 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
       )}
     </div>
   );
-}; // ) expected
+}); // ) expected
 
 export default SideBar;

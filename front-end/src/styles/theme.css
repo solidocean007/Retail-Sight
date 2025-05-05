@@ -65,7 +65,11 @@
     #475569 70%,
     #64748b 100%
   );
+
+  --divider-color: #ccc; /* Light gray for light mode */
 }
+
+
 
 /* ============================
        🌞 Light Theme
@@ -75,7 +79,7 @@
   --background-pop-out-body: var(--gray-50);
   --post-card-background: var(--post-card-animated-gradient-light);
   --header-background: var(--post-card-animated-gradient-light);
-  --dashboard-header-background: var(--post-card-animated-gradient-light); /* doesnt work */
+  --dashboard-header-background: var(--post-card-animated-gradient-light); /* doesn't work */
   --dashboard-header-background: var(--gray-200); /* works */
 
   --dashboard-card: var(--gray-200);
@@ -100,7 +104,7 @@
   --input-text-color: var(--gray-900);
   --input-border: var(--gray-200);
 
-  --form-background-color: var(--white);
+  --form-background-color: var(--gray-200);
 
   --menu-background-color: var(--white);
   --alt-menu-background-color: var(--gray-100);
@@ -157,6 +161,8 @@
   --border-color: var(--gray-300);
   --sidebar-active-item: var(--primary-blue);
   --sidebar-hover-bg: #2f3c55;
+
+  --divider-color: #444; /* Darker gray for dark mode */
 }
 
 /* 🎨 Light Theme Scrollbar */

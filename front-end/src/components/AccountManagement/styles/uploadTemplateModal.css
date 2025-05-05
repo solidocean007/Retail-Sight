@@ -1,0 +1,67 @@
+/* front-end/src/components/accountManagement/styles/uploadtemplatemodal.css */
+.upload-template-modal {
+  background-color: var(--form-background-color, #fff);
+  border-radius: var(--card-radius, 10px);
+  box-shadow: var(--card-shadow, 0 4px 20px rgba(0, 0, 0, 0.2));
+  padding: 2rem;
+  max-width: 1200px;
+  width: 100%;
+  color: var(--text-color, #222);
+  overflow-y: auto;
+}
+
+.upload-template-modal p {
+  text-align: left;
+}
+
+.upload-template-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.close-text-button {
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  color: var(--text-color, #007bff);
+  cursor: pointer;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.close-text-button:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+
+.upload-template-modal p {
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  color: var(--text-color, #444);
+}
+
+.upload-template-modal .close-button {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+
+.upload-template-modal .close-button button {
+  padding: 0.5rem 1.2rem;
+  border: 2px solid var(--outlined-button-border, #007bff);
+  background: transparent;
+  color: var(--text-color, #007bff);
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-template-modal .close-button button:hover {
+  background-color: var(--button-background, #007bff);
+  color: var(--button-text-color, #fff);
+}
+

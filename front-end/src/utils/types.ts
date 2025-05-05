@@ -40,7 +40,13 @@ export type TErrorsOfInputs = {
 };
 
 export interface UserType {
-  role: "admin" | "super-admin" | "employee" | "status-pending" | "developer" | "supervisor";
+  role:
+    | "admin"
+    | "super-admin"
+    | "employee"
+    | "status-pending"
+    | "developer"
+    | "supervisor";
   uid: string; // from Firebase
   firstName: string | undefined; // from signup
   lastName: string | undefined; // from signup
@@ -229,7 +235,10 @@ export type GalloGoalType = {
   goalBenchValue: string;
 };
 
-export type GoalTargetMode = 'goalForAllAccounts' | 'goalForSelectedAccounts' | 'goalForSelectedUsers';
+export type GoalTargetMode =
+  | "goalForAllAccounts"
+  | "goalForSelectedAccounts"
+  | "goalForSelectedUsers";
 
 export type CompanyGoalType = {
   id: string;
@@ -245,7 +254,7 @@ export type CompanyGoalType = {
   accounts: CompanyAccountType[];
   usersIdsOfGoal?: string[];
   submittedPosts?: GoalSubmissionType[];
-}
+};
 
 export type GoalSubmissionType = {
   postId: string;
@@ -253,7 +262,7 @@ export type GoalSubmissionType = {
   account: CompanyAccountType;
   submittedBy: UserType;
   submittedAt: string;
-}
+};
 
 // export type GoalSubmissionType = {
 //   postId: string;
@@ -300,17 +309,43 @@ export interface FireStoreGalloGoalDocType {
   }>;
 }
 
+export type customerType =
+  | "Supermarket"
+  | "Convenience"
+  | "Military On prem"
+  | "Other on prem"
+  | "Restaurants"
+  | "Warehouse Club"
+  | "Department Store"
+  | "Drug Store"
+  | "Bars"
+  | "Private Club"
+  | "Concession"
+  | "Drug"
+  | "Music/Dance Club"
+  | "Hotel/Motel"
+  | "Bowling"
+  | "Adult Entertainment"
+  | "Golf/Country club"
+  | "Retail"
+  | "Other";
+
 export type CompanyAccountType = {
   accountNumber: string;
   accountName: string;
   accountAddress: string;
   salesRouteNums: string[];
-}
+  // city?: string;
+  // zipCode?: string;
+  typeOfAccount?: customerType;
+  chain?: string; // e.g., "Food Lion" or "Walmart" or "Target"
+  chainType?: "chain" | "independent"; // e.g., "Chain" or "Independent"
+};
 
 export type EnrichedGalloAccountType = GalloAccountType & {
-  accountName?: string;       // Optional, because not all Gallo accounts may have a Firestore match
+  accountName?: string; // Optional, because not all Gallo accounts may have a Firestore match
   accountAddress?: string;
-  salesRouteNums?: string[];   // Optional, same reason
+  salesRouteNums?: string[]; // Optional, same reason
 };
 
 export type AchievementPayloadType = {

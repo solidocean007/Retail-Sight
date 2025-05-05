@@ -9,9 +9,7 @@ import {
 } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
 import {
-  CompanyAccountType,
   DashboardModeType,
-  PostType,
   UserType,
 } from "../utils/types";
 import { useAppDispatch } from "../utils/store";
@@ -32,17 +30,12 @@ import EmployeesViewer from "./EmployeesViewer";
 import UserProfileViewer from "./UserProfileViewer";
 import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
-import AccountManager from "./AccountsManager.tsx";
+import AccountManager from "./AccountManagement/AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
 import {
   collection,
-  doc,
-  getDoc,
-  getDocs,
   onSnapshot,
   query,
-  setDoc,
-  updateDoc,
   where,
 } from "@firebase/firestore";
 import { db } from "../utils/firebase.ts";
