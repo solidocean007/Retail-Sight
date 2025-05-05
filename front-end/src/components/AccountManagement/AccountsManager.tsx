@@ -108,7 +108,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   ) => {
     const map = new Map<string, CompanyAccountType>();
     existingAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
-
+    console.log("Saving to Firestore...", uploadedAccounts.length);
     for (const newAcc of uploadedAccounts) {
       const existing = map.get(newAcc.accountNumber);
       if (mode === "initial" || !existing) {
@@ -152,45 +152,56 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const handleFileUpload = (file: File) => {
-    mergeAccountsFromFileUpload(file, accounts, (uploadedAccounts) => {
-      const mode = getUploadMode();
-      setPendingUpdates(uploadedAccounts);
-      setConfirmMessage(
-        mode === "initial"
-          ? `Upload ${uploadedAccounts.length} new accounts?`
-          : `Merge ${uploadedAccounts.length} into existing accounts?`
-      );
-      setShowConfirm(true);
-    });
+    mergeAccountsFromFileUpload(
+      file,
+      accounts,
+      ({ mergedAccounts, changedAccounts }) => {
+        const mode = getUploadMode();
+        setFileData(mergedAccounts); // Save full result for uploading
+        setPendingUpdates(changedAccounts); // Preview only the changes
+        setConfirmMessage(
+          mode === "initial"
+            ? `Upload ${changedAccounts.length} new account(s)?`
+            : `Merge ${changedAccounts.length} account(s)?`
+        );
+        setShowConfirm(true);
+      },
+      (errMessage) => dispatch(showMessage(errMessage))
+    );
   };
 
   const confirmUpdates = async () => {
     const mode = getUploadMode();
-  
-    if (
-      pendingUpdates &&
-      pendingUpdates.length === 1 &&
-      confirmMessage.toLowerCase().includes("delete")
-    ) {
-      const accountNumberToDelete = pendingUpdates[0].accountNumber;
-      await handleDeleteAccount(accountNumberToDelete);
-      dispatch(showMessage("Account deleted successfully"));
+    setIsSubmitting(true);
 
-    } else if (pendingUpdates) {
-      await handleAccountsUpload(pendingUpdates, accounts, mode);
-  
-      const message =
-        mode === "initial"
-          ? `${pendingUpdates.length} account(s) added.`
-          : `${pendingUpdates.length} account(s) updated.`;
-  
-      dispatch(showMessage(message));
+    try {
+      if (
+        pendingUpdates &&
+        pendingUpdates.length === 1 &&
+        confirmMessage.toLowerCase().includes("delete")
+      ) {
+        const accountNumberToDelete = pendingUpdates[0].accountNumber;
+        await handleDeleteAccount(accountNumberToDelete);
+        dispatch(showMessage("Account deleted successfully"));
+      } else if (pendingUpdates) {
+        await handleAccountsUpload(pendingUpdates, accounts, mode);
+
+        const message =
+          mode === "initial"
+            ? `${pendingUpdates.length} account(s) added.`
+            : `${pendingUpdates.length} account(s) updated.`;
+
+        dispatch(showMessage(message));
+      }
+    } catch (err) {
+      console.error("Error confirming updates:", err);
+      dispatch(showMessage("Failed to update accounts."));
+    } finally {
+      setIsSubmitting(false);
+      setPendingUpdates(null);
+      setShowConfirm(false);
     }
-  
-    setPendingUpdates(null);
-    setShowConfirm(false);
   };
-  
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -291,11 +302,13 @@ const AccountManager: React.FC<AccountManagerProps> = ({
               {accounts.length > 0 ? "Update Accounts" : "Upload Accounts"}
               <input
                 type="file"
-                accept=".csv, .xlsx"
+                accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
                 hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file);
+                  if (!file) return;
+
+                  handleFileUpload(file); // trust CustomConfirmation will pop after merging
                 }}
               />
             </Button>
@@ -339,7 +352,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             setShowConfirm(true);
             setSelectedAccount(null); // Optional: could delay until confirm
           }}
-          
           onCancel={() => setSelectedAccount(null)}
         />
       )}
@@ -347,7 +359,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       <Pagination
         count={Math.ceil(filteredAccounts.length / itemsPerPage)}
         page={currentPage}
-        onChange={(e, page) => setCurrentPage(page)}
+        onChange={(_e, page) => setCurrentPage(page)}
         sx={{ marginY: 2 }}
       />
 
@@ -434,7 +446,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         onClose={() => setShowConfirm(false)}
         onConfirm={confirmUpdates}
         message={confirmMessage}
+        loading={isSubmitting}
       />
+
       <UploadTemplateModal
         open={showTemplateModal}
         onClose={() => setShowTemplateModal(false)}

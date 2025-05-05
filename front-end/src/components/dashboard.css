@@ -1,4 +1,15 @@
 /* dashboard.css */
+
+.dashboard-container {
+  /* display: flex;
+  flex-direction: column; */
+  background-color: var(--dashboard-background-color);
+  color: var(--text-color);
+  min-height: 100vh;
+  width: 100%;
+  max-width: 1600px;
+}
+
 .header-toolbar {
   display: flex;
   justify-content: space-between;

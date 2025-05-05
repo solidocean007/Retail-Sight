@@ -17,10 +17,15 @@ const REQUIRED_HEADERS = [
   "chainType",
 ];
 
+interface MergeResult {
+  mergedAccounts: CompanyAccountType[];
+  changedAccounts: CompanyAccountType[];
+}
+
 export const mergeAccountsFromFileUpload = (
   file: File,
   existingAccounts: CompanyAccountType[],
-  onFinish: (merged: CompanyAccountType[]) => void,
+  onFinish: (result: MergeResult) => void,
   onError?: (error: string) => void
 ) => {
   const reader = new FileReader();
@@ -73,34 +78,56 @@ export const mergeAccountsFromFileUpload = (
         updatesMap.set(accountNumber, { ...current, ...newUpdate });
       });
 
-      const mergedAccounts = existingAccounts.map((acc) => {
-        const update = updatesMap.get(acc.accountNumber);
-        if (!update) return acc;
-        return {
-          ...acc,
-          ...update,
-          salesRouteNums: Array.from(
-            new Set([...(acc.salesRouteNums || []), ...(update.salesRouteNums || [])])
-          ),
-        };
-      });
+      const changedAccounts: CompanyAccountType[] = [];
+      const mergedAccounts: CompanyAccountType[] = [];
 
-      // Add new accounts if accountNumber not in existingAccounts
-      updatesMap.forEach((update, accNum) => {
-        if (!existingAccounts.find((a) => a.accountNumber === accNum)) {
-          mergedAccounts.push({
-            accountNumber: accNum,
-            accountName: update.accountName || "",
-            accountAddress: update.accountAddress || "",
-            salesRouteNums: update.salesRouteNums || [],
-            typeOfAccount: update.typeOfAccount,
-            chain: update.chain || "",
-            chainType: update.chainType || "independent",
-          });
+      const existingMap = new Map(existingAccounts.map((acc) => [acc.accountNumber, acc]));
+
+      existingAccounts.forEach((acc) => {
+        const update = updatesMap.get(acc.accountNumber);
+        if (!update) {
+          mergedAccounts.push(acc);
+        } else {
+          const updated: CompanyAccountType = {
+            ...acc,
+            ...update,
+            salesRouteNums: Array.from(
+              new Set([...(acc.salesRouteNums || []), ...(update.salesRouteNums || [])])
+            ),
+          };
+
+          mergedAccounts.push(updated);
+
+          // Compare with original to detect change
+          const changed =
+            JSON.stringify(acc) !== JSON.stringify(updated);
+          if (changed) changedAccounts.push(updated);
         }
       });
 
-      onFinish(mergedAccounts);
+      // Add new accounts
+      updatesMap.forEach((update, accNum) => {
+        if (!existingMap.has(accNum)) {
+          const newAccount: CompanyAccountType = {
+            accountNumber: accNum,
+            accountName: update.accountName ?? "",
+            accountAddress: update.accountAddress ?? "",
+            salesRouteNums: (update.salesRouteNums || []).map(String),
+            typeOfAccount: update.typeOfAccount ?? "", // Type '""' is not assignable to type 'customerType | undefined'.
+            chain: update.chain ?? "",
+            chainType: update.chainType ?? "independent",
+          };
+          
+          
+          mergedAccounts.push(newAccount);
+          changedAccounts.push(newAccount);
+        }
+      });
+
+      onFinish({
+        mergedAccounts,
+        changedAccounts,
+      });
     } catch (err: any) {
       console.error("Error processing file:", err);
       if (onError) {

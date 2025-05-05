@@ -8,10 +8,7 @@ import {
   saveCompanyUsersToIndexedDB,
 } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
-import {
-  DashboardModeType,
-  UserType,
-} from "../utils/types";
+import { DashboardModeType, UserType } from "../utils/types";
 import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
@@ -32,12 +29,7 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import AccountManager from "./AccountManagement/AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "@firebase/firestore";
+import { collection, onSnapshot, query, where } from "@firebase/firestore";
 import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
@@ -165,7 +157,7 @@ export const Dashboard = () => {
   }, [user?.companyId, user?.role, dispatch]);
 
   return (
-    <Container disableGutters maxWidth={false}>
+    <div className="dashboard-container">
       <DashboardHelmet />
       <Box sx={{ flexGrow: 1, ml: isLargeScreen ? `${drawerWidth}px` : 0 }}>
         <AppBar position="static">
@@ -245,7 +237,10 @@ export const Dashboard = () => {
         {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
-    </Container>
+    </div>
+    // <Container disableGutters maxWidth={false}>
+
+    // </Container>
   );
 };
 

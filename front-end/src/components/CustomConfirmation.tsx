@@ -1,38 +1,57 @@
 import React from "react";
-import "./customConfirmation.css";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+  CircularProgress,
+} from "@mui/material";
+// import './customConfirmation.css'
 
 interface CustomConfirmationProps {
   isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => Promise<void>;
   message: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  loading?: boolean;
 }
 
 const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
   isOpen,
-  onClose,
-  onConfirm,
   message,
+  onConfirm,
+  onClose,
+  loading = false,
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="custom-confirmation-backdrop">
-      <div className="custom-confirmation-modal">
-        <h3 className="custom-confirmation-title">Confirmation</h3>
-        <p className="custom-confirmation-message">{message}</p>
-        <div className="custom-confirmation-actions">
-          <button className="custom-confirmation-cancel" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="custom-confirmation-confirm" onClick={onConfirm}>
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
+    <Dialog open={isOpen} onClose={loading ? undefined : onClose}>
+      <DialogTitle>Confirm Action</DialogTitle>
+      <DialogContent>
+        <DialogContentText>{message}</DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={loading}>
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          disabled={loading}
+          variant="contained"
+          color="primary"
+        >
+          {loading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            "Confirm"
+          )}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
 export default CustomConfirmation;
+
 
