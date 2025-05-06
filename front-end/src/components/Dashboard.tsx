@@ -8,7 +8,7 @@ import {
   saveCompanyUsersToIndexedDB,
 } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
-import { DashboardModeType, UserType } from "../utils/types";
+import { CompanyAccountType, DashboardModeType, UserType } from "../utils/types";
 import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
@@ -29,13 +29,14 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import AccountManager from "./AccountManagement/AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
-import { collection, onSnapshot, query, where } from "@firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from "@firebase/firestore";
 import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
 import { setAllAccounts } from "../Slices/allAccountsSlice.ts";
 import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
 import DashMenu from "./DashMenu.tsx";
+import getCompanyAccountId from "../utils/helperFunctions/getCompanyAccountId.ts";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -156,6 +157,35 @@ export const Dashboard = () => {
     loadAllCompanyAccounts();
   }, [user?.companyId, user?.role, dispatch]);
 
+  // useEffect(() => {
+  //   const migrateIfReady = async () => {
+  //     if (!companyId) return;
+  //     try {
+  //       const accountsId = await getCompanyAccountId(companyId);
+  //       const accountsDocRef = doc(db, "accounts", accountsId);
+  //       const snapshot = await getDoc(accountsDocRef);
+  //       if (!snapshot.exists()) return;
+  
+  //       const oldAccounts = snapshot.data().accounts as CompanyAccountType[];
+  //       const migrated = oldAccounts.map((acc) => ({
+  //         ...acc,
+  //         typeOfAccount: acc.typeOfAccount || "",
+  //         chain: acc.chain || "",
+  //         chainType: acc.chainType || "independent",
+  //       }));
+  
+  //       await updateDoc(accountsDocRef, { accounts: migrated });
+  //       console.log("Migration complete.");
+  //     } catch (error) {
+  //       console.error("Migration error:", error);
+  //     }
+  //   };
+  
+  //   migrateIfReady();
+  // }, [companyId]);
+  
+
+
   return (
     <div className="dashboard-container">
       <DashboardHelmet />
@@ -242,56 +272,8 @@ export const Dashboard = () => {
 
     // </Container>
   );
+
+  
 };
-
-// export const fixSubmittedByUser = async () => {
-//   const goalId = "hWXopstr1FDJTr33ToRG"; // The goal you want to fix
-//   const developerUid = "n0dSVcfakMhwCByREdD3bmMv8tl1"; // 🔥 replace with your real developer user id
-//   const adminUserObject = {
-//     uid: "TbL2z246iBbshTSIMskByZNa2bQ2",
-//     firstName: "Clinton",
-//     lastName: "Williams",
-//     company: "Healy wholesale Inc",
-//     companyId: "3WOAwgj3l3bnvHqE4IV3",
-//     email: "cwilliams@healywholesale.com",
-//     role: "admin",
-//     salesRouteNum: "85" || "", // optional
-//     phone: "9105836914" || "", // optional
-//   };
-
-//   try {
-//     const goalRef = doc(db, "companyGoals", goalId);
-//     const goalSnap = await getDoc(goalRef);
-
-//     if (!goalSnap.exists()) {
-//       console.error(`❌ Goal ${goalId} not found.`);
-//       return;
-//     }
-
-//     const goalData = goalSnap.data();
-//     const submittedPosts = goalData.submittedPosts || [];
-
-//     const updatedSubmittedPosts = submittedPosts.map((submission: any) => {
-//       if (submission.submittedBy?.uid === developerUid) {
-//         console.log(`✅ Fixing submission for postId: ${submission.postId}`);
-//         return {
-//           ...submission,
-//           submittedBy: adminUserObject,
-//         };
-//       }
-//       return submission;
-//     });
-
-//     await updateDoc(goalRef, {
-//       submittedPosts: updatedSubmittedPosts,
-//     });
-
-//     console.log("🎯 Successfully updated submittedBy user.");
-//   } catch (error) {
-//     console.error("❌ Failed to update submittedBy:", error);
-//   }
-// };
-
-// fixSubmittedByUser(); // 🔥 Call this function to fix the submittedBy user
 
 export default Dashboard;

@@ -12,8 +12,6 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
-import GoalViewerFilters from "../GoalViewerFilters";
-import AccountTable from "../AccountTable";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { useNavigate } from "react-router-dom";
 import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils"; // 🔥 Import this

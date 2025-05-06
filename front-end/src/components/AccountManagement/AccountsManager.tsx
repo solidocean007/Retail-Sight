@@ -11,13 +11,13 @@ import {
   TableRow,
   Paper,
   Pagination,
-  CircularProgress,
+  // CircularProgress,
   TextField,
   Tooltip,
 } from "@mui/material";
 import {
-  addDoc,
-  collection,
+  // addDoc,
+  // collection,
   doc,
   getDoc,
   updateDoc,
@@ -39,6 +39,7 @@ import {
   saveAllCompanyAccountsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
 import { showMessage } from "../../Slices/snackbarSlice";
+import { useDebouncedValue } from "../../hooks/useDebounce";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -68,7 +69,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const [showConfirm, setShowConfirm] = useState(false);
   const [openAddAccountModal, setOpenAddAccountModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const itemsPerPage = 15;
 
   useEffect(() => {
@@ -106,49 +107,64 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     existingAccounts: CompanyAccountType[],
     mode: UploadMode
   ) => {
-    const map = new Map<string, CompanyAccountType>();
-    existingAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
-    console.log("Saving to Firestore...", uploadedAccounts.length);
-    for (const newAcc of uploadedAccounts) {
-      const existing = map.get(newAcc.accountNumber);
-      if (mode === "initial" || !existing) {
-        map.set(newAcc.accountNumber, newAcc);
-      } else {
-        map.set(newAcc.accountNumber, {
-          ...existing,
-          ...newAcc,
-          salesRouteNums: Array.from(
-            new Set([
-              ...(existing.salesRouteNums || []),
-              ...(newAcc.salesRouteNums || []),
-            ])
-          ),
-        });
-      }
+    if (!user?.companyId) return;
+    if (mode === "initial" && existingAccounts.length > 0) {
+      throw new Error(
+        "Cannot perform initial upload when accounts already exist."
+      );
     }
 
-    const mergedAccounts = Array.from(map.values());
-
-    if (user?.companyId) {
+    try {
       const companyDocRef = doc(db, "companies", user.companyId);
       const companySnap = await getDoc(companyDocRef);
+      if (!companySnap.exists()) throw new Error("Company doc not found.");
 
-      if (companySnap.exists()) {
-        const { accountsId } = companySnap.data();
-        if (accountsId) {
-          const accountsDocRef = doc(db, "accounts", accountsId);
-          await updateDoc(accountsDocRef, { accounts: mergedAccounts });
-        } else {
-          const newDocRef = await addDoc(collection(db, "accounts"), {
-            accounts: mergedAccounts,
+      const { accountsId } = companySnap.data();
+      if (!accountsId) throw new Error("No accountsId on company doc.");
+
+      const accountsDocRef = doc(db, "accounts", accountsId);
+
+      // Use existingAccounts passed in
+      const map = new Map<number, CompanyAccountType>();
+      existingAccounts.forEach((acc) =>
+        map.set(acc.accountNumber, {
+          ...acc,
+          salesRouteNums: (acc.salesRouteNums || []).map(String),
+        })
+      );
+
+      for (const updated of uploadedAccounts) {
+        const existing = map.get(updated.accountNumber);
+
+        if (!existing || mode === "initial") {
+          map.set(updated.accountNumber, {
+            ...updated,
+            salesRouteNums: (updated.salesRouteNums || []).map(String),
           });
-          await updateDoc(companyDocRef, { accountsId: newDocRef.id });
+        } else {
+          map.set(updated.accountNumber, {
+            ...existing,
+            ...updated,
+            salesRouteNums: Array.from(
+              new Set([
+                ...(existing.salesRouteNums || []),
+                ...(updated.salesRouteNums || []),
+              ])
+            ).map(String),
+          });
         }
       }
+
+      const mergedAccounts = Array.from(map.values());
+      await updateDoc(accountsDocRef, { accounts: mergedAccounts });
+
+      setAccounts(mergedAccounts);
+      dispatch(setAllAccounts(mergedAccounts));
+      await saveAllCompanyAccountsToIndexedDB(mergedAccounts);
+    } catch (err: any) {
+      console.error("Error in handleAccountsUpload:", err.message || err);
+      dispatch(showMessage(err.message || "Account update failed."));
     }
-    setAccounts(mergedAccounts);
-    dispatch(setAllAccounts(mergedAccounts));
-    await saveAllCompanyAccountsToIndexedDB(mergedAccounts); // wrap your IndexedDB logic here
   };
 
   const handleFileUpload = (file: File) => {
@@ -156,9 +172,14 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       file,
       accounts,
       ({ mergedAccounts, changedAccounts }) => {
+        if (changedAccounts.length === 0) {
+          dispatch(showMessage("No changes found in uploaded file."));
+          return;
+        }
+
         const mode = getUploadMode();
-        setFileData(mergedAccounts); // Save full result for uploading
-        setPendingUpdates(changedAccounts); // Preview only the changes
+        setFileData(mergedAccounts); // Full merged dataset
+        setPendingUpdates(changedAccounts); // Just the changes
         setConfirmMessage(
           mode === "initial"
             ? `Upload ${changedAccounts.length} new account(s)?`
@@ -172,35 +193,64 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const confirmUpdates = async () => {
     const mode = getUploadMode();
-    setIsSubmitting(true);
 
-    try {
-      if (
-        pendingUpdates &&
-        pendingUpdates.length === 1 &&
-        confirmMessage.toLowerCase().includes("delete")
-      ) {
-        const accountNumberToDelete = pendingUpdates[0].accountNumber;
-        await handleDeleteAccount(accountNumberToDelete);
-        dispatch(showMessage("Account deleted successfully"));
-      } else if (pendingUpdates) {
-        await handleAccountsUpload(pendingUpdates, accounts, mode);
+    if (!user?.companyId || !pendingUpdates) return;
 
-        const message =
-          mode === "initial"
-            ? `${pendingUpdates.length} account(s) added.`
-            : `${pendingUpdates.length} account(s) updated.`;
+    const accountsId = await getCompanyAccountId(user.companyId);
+    if (!accountsId) return;
 
-        dispatch(showMessage(message));
-      }
-    } catch (err) {
-      console.error("Error confirming updates:", err);
-      dispatch(showMessage("Failed to update accounts."));
-    } finally {
-      setIsSubmitting(false);
-      setPendingUpdates(null);
-      setShowConfirm(false);
+    const accountsDocRef = doc(db, "accounts", accountsId);
+
+    // 🟢 Handle manual deletion
+    if (
+      pendingUpdates.length === 1 &&
+      confirmMessage.toLowerCase().includes("delete")
+    ) {
+      const accountNumberToDelete = pendingUpdates[0].accountNumber;
+      const updatedAccounts = accounts.filter(
+        (acc) => acc.accountNumber !== accountNumberToDelete
+      );
+
+      await updateDoc(accountsDocRef, { accounts: updatedAccounts });
+      dispatch(setAllAccounts(updatedAccounts));
+      await deleteAccountFromIndexedDB(accountNumberToDelete);
+      setAccounts(updatedAccounts);
+      dispatch(showMessage("Account deleted successfully."));
     }
+
+    // 🟢 Handle single manual edit (Edit button — not from file)
+    else if (pendingUpdates.length === 1 && fileData.length === 0) {
+      const updatedAccount = pendingUpdates[0];
+      const updatedAccounts = accounts.map((acc) =>
+        acc.accountNumber === updatedAccount.accountNumber
+          ? updatedAccount
+          : acc
+      );
+
+      await updateDoc(accountsDocRef, { accounts: updatedAccounts });
+      dispatch(setAllAccounts(updatedAccounts));
+      await saveAllCompanyAccountsToIndexedDB(updatedAccounts);
+      setAccounts(updatedAccounts);
+      dispatch(showMessage("Account updated successfully."));
+    }
+
+    // 🟢 Handle file upload merge (multiple or full dataset)
+    else if (fileData.length > 0) {
+      setIsSubmitting(true);
+      await handleAccountsUpload(fileData, accounts, mode);
+      setIsSubmitting(false);
+
+      const message =
+        mode === "initial"
+          ? `${pendingUpdates.length} account(s) added.`
+          : `${pendingUpdates.length} account(s) updated.`;
+      dispatch(showMessage(message));
+    }
+
+    // 🧹 Clean up
+    setPendingUpdates(null);
+    setShowConfirm(false);
+    setFileData([]);
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,7 +261,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setSelectedAccount(account);
   };
 
-  const handleDeleteAccount = async (accountNumberToDelete: string) => {
+  const handleDeleteAccount = async (accountNumberToDelete: number) => {
+    // why isnt this being used now?
     if (!user?.companyId) return;
 
     const accountsId = await getCompanyAccountId(user.companyId);
@@ -242,7 +293,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const handleAddAccount = () => {
     setNewAccount({
-      accountNumber: "",
+      accountNumber: 0,
       accountName: "",
       accountAddress: "",
       salesRouteNums: [],
@@ -255,8 +306,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const filteredAccounts = accounts.filter(
     (account) =>
-      account.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      account.accountNumber.toString().includes(searchTerm)
+      account.accountName
+        .toLowerCase()
+        .includes(debouncedSearchTerm.toLowerCase()) || // ← use this instead of searchTerm
+      account.accountNumber.toString().includes(debouncedSearchTerm)
   );
 
   const getUploadMode = (): UploadMode =>
@@ -270,20 +323,22 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
       {(isAdmin || isSuperAdmin) && (
         <>
-          <Typography paragraph>
+          <Typography>
             You can upload a <strong>CSV or Excel</strong> file to add or update
             accounts.
-            <ul>
-              <li>
-                If the file contains accounts that match existing account
-                numbers, only new fields will be added.
-              </li>
-              <li>
-                To replace existing fields, delete the account first or edit it
-                below.
-              </li>
-            </ul>
           </Typography>
+
+          <Box component="ul" sx={{ pl: 3, mt: 1 }}>
+            <Box component="li">
+              If the file contains accounts that match existing account numbers,
+              only new fields will be added.
+            </Box>
+            <Box component="li">
+              To replace existing fields, delete the account first or edit it
+              below.
+            </Box>
+          </Box>
+
           <Button
             variant="outlined"
             onClick={() => setShowTemplateModal(true)}
@@ -314,7 +369,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             </Button>
           </Tooltip>
 
-          <Typography paragraph>
+          <Typography>
             Want to add one account manually? Click below to fill out a form —
             it will be added and saved automatically.
           </Typography>
@@ -347,7 +402,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           initialData={selectedAccount}
           editMode
           onSubmit={(data) => {
-            setConfirmMessage(`Save changes to ${data.accountName}?`);
+            setConfirmMessage(
+              `Save changes to account #${data.accountNumber} (${data.accountName})?`
+            );
+
             setPendingUpdates([data]);
             setShowConfirm(true);
             setSelectedAccount(null); // Optional: could delay until confirm
@@ -385,8 +443,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                 (currentPage - 1) * itemsPerPage,
                 currentPage * itemsPerPage
               )
-              .map((account, index) => (
-                <TableRow key={index}>
+              .map((account) => (
+                <TableRow key={account.accountNumber}>
                   <TableCell>{account.accountNumber}</TableCell>
                   <TableCell>{account.accountName}</TableCell>
                   <TableCell>{account.accountAddress}</TableCell>

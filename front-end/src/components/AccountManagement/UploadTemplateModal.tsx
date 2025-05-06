@@ -9,6 +9,7 @@ import {
   TableCell,
   TableBody,
 } from "@mui/material";
+import "./styles/uploadTemplateModal.css"
 
 interface UploadTemplateModalProps {
   open: boolean;
@@ -57,59 +58,75 @@ const mockAccounts = [
 const UploadTemplateModal: React.FC<UploadTemplateModalProps> = ({
   open,
   onClose,
-}) => (
-  <Dialog open={open} onClose={onClose} maxWidth="lg">
-    <DialogTitle>
-      <div className="upload-template-modal-header">
-        <span>Example File Template</span>
-        <button className="close-text-button" onClick={onClose}>
-          Close
-        </button>
-      </div>
-    </DialogTitle>
+}) => {
+  const handleClose = () => {
+    // Blur the focused element to avoid ARIA warning
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    // Defer onClose to ensure focus is cleared before unmount
+    setTimeout(() => onClose(), 0);
+  };
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="lg"
+      disableEnforceFocus
+      disableAutoFocus
+    >
+      <DialogTitle>
+        <div className="upload-template-modal-header">
+          <span>Example File Template</span>
+          <button className="close-text-button" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </DialogTitle>
 
-    <DialogContent className="upload-template-modal">
-      <p>
-        Upload your file as a <strong>CSV or Excel</strong> format. The first
-        row must contain headers exactly as shown below. Each row represents
-        data for a single account.
-      </p>
-      <p>
-        <strong>Required:</strong> <code>accountNumber</code>
-        <br />
-        <strong>Optional:</strong> <code>accountName</code>,{" "}
-        <code>accountAddress</code>, <code>salesRouteNums</code>,{" "}
-        <code>typeOfAccount</code>, <code>chain</code>, <code>chainType</code>
-      </p>
-      <p>
-        If an account has multiple sales routes, submit multiple rows with the
-        same <code>accountNumber</code> and different{" "}
-        <code>salesRouteNums</code>. Only fields present will be updated —
-        missing fields will not overwrite existing values.
-      </p>
+      <DialogContent className="upload-template-modal">
+        <p>
+          Upload your file as a <strong>CSV or Excel</strong> format. The first
+          row must contain headers exactly as shown below. Each row represents
+          data for a single account.
+        </p>
+        <p>
+          <strong>Required:</strong> <code>accountNumber</code>
+          <br />
+          <strong>Optional:</strong> <code>accountName</code>,{" "}
+          <code>accountAddress</code>, <code>salesRouteNums</code>,{" "}
+          <code>typeOfAccount</code>, <code>chain</code>, <code>chainType</code>
+        </p>
+        <p>
+          If an account has multiple sales routes, submit multiple rows with the
+          same <code>accountNumber</code> and different{" "}
+          <code>salesRouteNums</code>. Only fields present will be updated —
+          missing fields will not overwrite existing values.
+        </p>
 
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            {Object.keys(mockAccounts[0]).map((key) => (
-              <TableCell key={key}>{key}</TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {mockAccounts.map((acc, i) => (
-            <TableRow key={i}>
-              {Object.values(acc).map((val, j) => (
-                <TableCell key={j}>
-                  {Array.isArray(val) ? val.join(", ") : val}
-                </TableCell>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {Object.keys(mockAccounts[0]).map((key) => (
+                <TableCell key={key}>{key}</TableCell>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </DialogContent>
-  </Dialog>
-);
+          </TableHead>
+          <TableBody>
+            {mockAccounts.map((acc, i) => (
+              <TableRow key={i}>
+                {Object.values(acc).map((val, j) => (
+                  <TableCell key={j}>
+                    {Array.isArray(val) ? val.join(", ") : val}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export default UploadTemplateModal;

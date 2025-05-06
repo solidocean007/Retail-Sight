@@ -103,9 +103,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
         ) : (
           <div className="header-details">
             <div className="header-buttons">
-              {/* <div className="menu-buttons">
-            <button onClick={handleCollectionsClick}>Collections</button>
-          </div> */}
+              
               <div className="menu-buttons">
                 <button onClick={handleDashboardClick}>Dashboard</button>
               </div>
@@ -114,7 +112,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
               </div>
             </div>
 
-            <div
+            <div // ARIA attributes must conform to valid values: Invalid ARIA attribute value: aria-expanded="{expression}"
               className="hamburger-menu-button"
               onClick={() => setShowMenuTab(!showMenuTab)}
               aria-haspopup="true"
