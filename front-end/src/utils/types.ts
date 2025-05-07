@@ -309,27 +309,6 @@ export interface FireStoreGalloGoalDocType {
   }>;
 }
 
-export type customerType =
-  | "Supermarket"
-  | "Convenience"
-  | "Military On prem"
-  | "Other on prem"
-  | "Restaurants"
-  | "Warehouse Club"
-  | "Department Store"
-  | "Drug Store"
-  | "Bars"
-  | "Private Club"
-  | "Concession"
-  | "Drug"
-  | "Music/Dance Club"
-  | "Hotel/Motel"
-  | "Bowling"
-  | "Adult Entertainment"
-  | "Golf/Country club"
-  | "Retail"
-  | "Other";
-
 export type CompanyAccountType = {
   accountNumber: string;
   accountName: string;
@@ -337,7 +316,7 @@ export type CompanyAccountType = {
   salesRouteNums: string[];
   // city?: string;
   // zipCode?: string;
-  typeOfAccount?: customerType;
+  typeOfAccount?: string;
   chain?: string; // e.g., "Food Lion" or "Walmart" or "Target"
   chainType?: "chain" | "independent"; // e.g., "Chain" or "Independent"
 };

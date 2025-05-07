@@ -15,7 +15,6 @@ const prefersDark = savedTheme === 'dark';
 // Apply theme attribute to body early
 document.body.setAttribute("data-theme", prefersDark ? "dark" : "light");
 
-
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HelmetProvider>

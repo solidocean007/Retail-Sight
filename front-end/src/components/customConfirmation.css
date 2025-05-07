@@ -69,6 +69,23 @@
   background-color: #388e3c;
 }
 
+.custom-spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-top: 3px solid #4caf50;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
 @keyframes scaleIn {
   from {
     transform: scale(0.8);

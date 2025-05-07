@@ -29,13 +29,23 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import AccountManager from "./AccountManagement/AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
-import { collection, onSnapshot, query, where } from "@firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from "@firebase/firestore";
 import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
-import { setAllAccounts } from "../Slices/allAccountsSlice.ts";
+import { selectAllCompanyAccounts, setAllAccounts } from "../Slices/allAccountsSlice.ts";
 import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
 import DashMenu from "./DashMenu.tsx";
+import { updatePostsWithFreshAccounts } from "../script.ts";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -52,6 +62,15 @@ export const Dashboard = () => {
   const isAdmin = user?.role === "admin";
   const isDeveloper = user?.role === "developer"; // this needs to be used also
   const isSuperAdmin = user?.role === "super-admin";
+  const allAccounts = useSelector(selectAllCompanyAccounts);
+
+  const handleUpdatePosts = async () => {
+    console.log("Starting post updates with fresh accounts...");
+    await updatePostsWithFreshAccounts(allAccounts);
+    console.log("✅ Done updating posts.");
+  };
+
+  // handleUpdatePosts();
 
   const [dashboardMode, setDashboardMode] = useState<DashboardModeType>(
     isEmployee ? "MyGoalsMode" : "GoalManagerMode"
@@ -156,6 +175,25 @@ export const Dashboard = () => {
     loadAllCompanyAccounts();
   }, [user?.companyId, user?.role, dispatch]);
 
+
+// const backupAccounts = async () => {
+//   const originalDocRef = doc(db, "accounts", "ItrfDhvSl15y2IObOdop"); // your current ID
+//   const backupDocRef = doc(db, "accounts_backup", "backup_2025_05_06");
+
+//   const snapshot = await getDoc(originalDocRef);
+//   if (!snapshot.exists()) {
+//     console.error("Original document does not exist");
+//     return;
+//   }
+
+//   const data = snapshot.data();
+//   await setDoc(backupDocRef, data);
+//   console.log("Backup created successfully ✅");
+// };
+
+// backupAccounts();
+
+
   return (
     <div className="dashboard-container">
       <DashboardHelmet />
@@ -238,60 +276,7 @@ export const Dashboard = () => {
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
     </div>
-    // <Container disableGutters maxWidth={false}>
-
-    // </Container>
   );
 };
-
-// export const fixSubmittedByUser = async () => {
-//   const goalId = "hWXopstr1FDJTr33ToRG"; // The goal you want to fix
-//   const developerUid = "n0dSVcfakMhwCByREdD3bmMv8tl1"; // 🔥 replace with your real developer user id
-//   const adminUserObject = {
-//     uid: "TbL2z246iBbshTSIMskByZNa2bQ2",
-//     firstName: "Clinton",
-//     lastName: "Williams",
-//     company: "Healy wholesale Inc",
-//     companyId: "3WOAwgj3l3bnvHqE4IV3",
-//     email: "cwilliams@healywholesale.com",
-//     role: "admin",
-//     salesRouteNum: "85" || "", // optional
-//     phone: "9105836914" || "", // optional
-//   };
-
-//   try {
-//     const goalRef = doc(db, "companyGoals", goalId);
-//     const goalSnap = await getDoc(goalRef);
-
-//     if (!goalSnap.exists()) {
-//       console.error(`❌ Goal ${goalId} not found.`);
-//       return;
-//     }
-
-//     const goalData = goalSnap.data();
-//     const submittedPosts = goalData.submittedPosts || [];
-
-//     const updatedSubmittedPosts = submittedPosts.map((submission: any) => {
-//       if (submission.submittedBy?.uid === developerUid) {
-//         console.log(`✅ Fixing submission for postId: ${submission.postId}`);
-//         return {
-//           ...submission,
-//           submittedBy: adminUserObject,
-//         };
-//       }
-//       return submission;
-//     });
-
-//     await updateDoc(goalRef, {
-//       submittedPosts: updatedSubmittedPosts,
-//     });
-
-//     console.log("🎯 Successfully updated submittedBy user.");
-//   } catch (error) {
-//     console.error("❌ Failed to update submittedBy:", error);
-//   }
-// };
-
-// fixSubmittedByUser(); // 🔥 Call this function to fix the submittedBy user
 
 export default Dashboard;

@@ -1,6 +1,5 @@
 import * as XLSX from "xlsx";
-import { CompanyAccountType, customerType } from "../../../utils/types";
-import { normalizeCustomerType } from "./accountsHelper";
+import { CompanyAccountType } from "../../../utils/types";
 
 export const handleAccountsFileUpload = (
   file: File,
@@ -15,58 +14,58 @@ export const handleAccountsFileUpload = (
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
-    const rows: (string | number)[][] = XLSX.utils.sheet_to_json(worksheet, {
-      header: 1,
+    const rows = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet, {
       defval: "",
     });
 
     const accounts: CompanyAccountType[] = [];
-    let currentAccount: CompanyAccountType | null = null;
+    let currentAccount: CompanyAccountType | null = null; // ✅ key fix here
 
     rows.forEach((row) => {
-      const [
-        customerNumRaw,
-        customerName,
-        addressRaw,
-        customerTypeRaw,
-        chain,
-        chainType
-      ] = row;
-
-      const customerNum = String(customerNumRaw).trim();
+      const customerNum = String(
+        row["accountNumber"] || row["customerNumber"]
+      ).trim();
+      const customerName = row["accountName"]?.trim();
+      const accountAddress = row["accountAddress"]?.trim();
+      const typeOfAccount = row["typeOfAccount"]?.trim();
+      const chain = row["chain"]?.trim();
+      const chainType = row["chainType"]?.trim();
+      const route = row["salesRouteNum"]?.trim();
 
       if (customerName) {
-        // Store the previous account if valid
         if (currentAccount && currentAccount.salesRouteNums.length > 0) {
           accounts.push(currentAccount);
         }
 
-        // Start a new account
         currentAccount = {
           accountNumber: customerNum,
-          accountName: String(customerName).trim(),
-          accountAddress: String(addressRaw).trim(),
+          accountName: customerName,
+          accountAddress,
           salesRouteNums: [],
-          typeOfAccount: normalizeCustomerType(String(customerTypeRaw)),
-          chain: String(chain).trim() || undefined,
-          chainType: String(chainType).toLowerCase().trim() === "independent"
-            ? "independent"
-            : "chain"
+          typeOfAccount,
+          chain: chain || undefined,
+          chainType:
+            chainType?.toLowerCase() === "independent"
+              ? "independent"
+              : "chain",
         };
-      } else if (
+      }
+
+      if (
         currentAccount &&
-        !isNaN(Number(customerNum)) &&
-        Number(customerNum) > 0
+        route &&
+        /^\d+$/.test(route) &&
+        !currentAccount.salesRouteNums.includes(route)
       ) {
-        const route = String(customerNum);
-        if (!currentAccount.salesRouteNums.includes(route)) {
-          currentAccount.salesRouteNums.push(route);
-        }
+        currentAccount.salesRouteNums.push(route);
       }
     });
 
-    // Push the final account
-    if (currentAccount && currentAccount.salesRouteNums.length > 0) { // Property 'salesRouteNums' does not exist on type 'never'.
+    if (
+      currentAccount &&
+      (currentAccount as CompanyAccountType).salesRouteNums &&
+      (currentAccount as CompanyAccountType).salesRouteNums.length > 0
+    ) {
       accounts.push(currentAccount);
     }
 

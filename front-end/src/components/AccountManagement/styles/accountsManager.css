@@ -11,6 +11,23 @@
   color: var(--header-title);
 }
 
+.account-header-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.account-instructions {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: var(--text-color);
+}
+
+.account-instructions strong {
+  color: var(--primary-blue);
+}
+
+
 .account-upload-button,
 .account-submit-button,
 .account-edit-button {

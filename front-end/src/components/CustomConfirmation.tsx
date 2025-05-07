@@ -1,14 +1,6 @@
+// CustomConfirmation.tsx
 import React from "react";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Button,
-  CircularProgress,
-} from "@mui/material";
-// import './customConfirmation.css'
+import "./customConfirmation.css";
 
 interface CustomConfirmationProps {
   isOpen: boolean;
@@ -25,33 +17,32 @@ const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
   onClose,
   loading = false,
 }) => {
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onClose={loading ? undefined : onClose}>
-      <DialogTitle>Confirm Action</DialogTitle>
-      <DialogContent>
-        <DialogContentText>{message}</DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          disabled={loading}
-          variant="contained"
-          color="primary"
-        >
-          {loading ? (
-            <CircularProgress size={24} color="inherit" />
-          ) : (
-            "Confirm"
-          )}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <div className="custom-confirmation-backdrop">
+      <div className="custom-confirmation-modal">
+        <div className="custom-confirmation-title">Confirm Action</div>
+        <div className="custom-confirmation-message">{message}</div>
+        <div className="custom-confirmation-actions">
+          <button
+            className="custom-confirmation-cancel"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            className="custom-confirmation-confirm"
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading ? <div className="custom-spinner" /> : "Confirm"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
 export default CustomConfirmation;
-
-
