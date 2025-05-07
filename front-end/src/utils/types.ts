@@ -310,7 +310,7 @@ export interface FireStoreGalloGoalDocType {
 }
 
 export type CompanyAccountType = {
-  accountNumber: string;
+  accountNumber: number;
   accountName: string;
   accountAddress: string;
   salesRouteNums: string[];

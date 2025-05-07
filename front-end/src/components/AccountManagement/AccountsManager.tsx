@@ -17,6 +17,8 @@ import {
 import {
   addDoc,
   collection,
+  // addDoc,
+  // collection,
   doc,
   getDoc,
   updateDoc,
@@ -41,6 +43,7 @@ import CustomConfirmation from "../CustomConfirmation";
 import AccountForm from "./AccountForm";
 import UploadTemplateModal from "./UploadTemplateModal";
 import "./styles/uploadTemplateModal.css";
+import { useDebouncedValue } from "../../hooks/useDebounce";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -71,7 +74,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const [selectedAccount, setSelectedAccount] =
     useState<CompanyAccountType | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const itemsPerPage = 15;
 
   useEffect(() => {
@@ -112,6 +115,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     try {
       const companyDocRef = doc(db, "companies", user.companyId);
       const companySnap = await getDoc(companyDocRef);
+      if (!companySnap.exists()) throw new Error("Company doc not found.");
 
       if (companySnap.exists()) {
         const { accountsId } = companySnap.data();
@@ -221,6 +225,21 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       a.accountNumber.toString().includes(searchTerm)
   );
 
+  const handleManualSubmit = (data: CompanyAccountType) => {
+    const map = new Map(accounts.map((a) => [a.accountNumber, a]));
+    map.set(data.accountNumber, data);
+    setPendingUpdates([data]);
+    setFileData(Array.from(map.values()));
+    setConfirmMessage(`Save new account "${data.accountName}"?`);
+    setShowConfirm(true);
+  };
+
+  const filteredAccounts = accounts.filter(
+    (a) =>
+      a.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.accountNumber.toString().includes(searchTerm)
+  );
+
   return (
     <Box className="account-manager-container account-manager">
       <Typography variant="h5" gutterBottom>
@@ -244,6 +263,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
       {(isAdmin || isSuperAdmin) && (
         <>
+          <Typography>
           <Typography>
             You can upload a <strong>CSV or Excel</strong> file to add or update
             accounts.

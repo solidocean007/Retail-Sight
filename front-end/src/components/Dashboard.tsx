@@ -8,7 +8,7 @@ import {
   saveCompanyUsersToIndexedDB,
 } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
-import { DashboardModeType, UserType } from "../utils/types";
+import { CompanyAccountType, DashboardModeType, UserType } from "../utils/types";
 import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
