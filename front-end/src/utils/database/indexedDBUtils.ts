@@ -939,7 +939,7 @@ export async function getUserAccountsFromIndexedDB(): Promise<any[]> {
   });
 }
 
-export const deleteAccountFromIndexedDB = async (accountNumber: number) => {
+export const deleteAccountFromIndexedDB = async (accountNumber: string) => {
   const db = await openDB();
   const transaction = db.transaction("userAccounts", "readwrite");
   const store = transaction.objectStore("userAccounts");

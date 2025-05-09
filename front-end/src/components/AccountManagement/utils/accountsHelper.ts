@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, getDoc, updateDoc } from "@firebase/firestore";
+import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "@firebase/firestore";
 import { CompanyAccountType } from "../../../utils/types";
 import { db } from "../../../utils/firebase";
 
@@ -73,4 +73,25 @@ export const writeAccountsToFirestore = async (companyId: string, accounts: Comp
     }
   }
 };
+
+export const writeCustomerTypesToCompany = async (
+  companyId: string,
+  accounts: CompanyAccountType[]
+) => {
+  const customerTypes = Array.from(
+    new Set(accounts.map((a) => a.typeOfAccount).filter(Boolean))
+  );
+
+  const chains = Array.from(
+    new Set(accounts.map((a) => a.chain?.trim().toUpperCase()).filter(Boolean))
+  );
+
+  const companyRef = doc(db, "companies", companyId);
+  await setDoc(
+    companyRef,
+    { customerTypes, chains }, // ✅ Store both
+    { merge: true }
+  );
+};
+
 

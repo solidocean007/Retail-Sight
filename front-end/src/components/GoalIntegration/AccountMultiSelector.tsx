@@ -1,5 +1,6 @@
 // AccountMultiSelector.tsx
-import React, { useEffect, useState } from "react";
+// AccountMultiSelector.tsx
+import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -18,9 +19,7 @@ import "./accountMultiSelector.css";
 interface AccountMultiSelectorProps {
   allAccounts: CompanyAccountType[];
   selectedAccounts: CompanyAccountType[];
-  setSelectedAccounts: React.Dispatch<
-    React.SetStateAction<CompanyAccountType[]>
-  >;
+  setSelectedAccounts: React.Dispatch<React.SetStateAction<CompanyAccountType[]>>;
   itemsPerPage?: number;
 }
 
@@ -68,13 +67,11 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
     }
   };
 
-  // should the tsx be in a form that is disabled?
   return (
     <Box className="account-multi-selector">
       {selectedAccounts.length > 0 && (
         <Typography variant="body2" sx={{ mb: 1 }}>
-          {selectedAccounts.length} account
-          {selectedAccounts.length > 1 ? "s" : ""} selected
+          {selectedAccounts.length} account{selectedAccounts.length > 1 ? "s" : ""} selected
         </Typography>
       )}
 
@@ -108,8 +105,11 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
             <TableRow>
               <TableCell>Select</TableCell>
               <TableCell>Account Name</TableCell>
-              <TableCell>Account Address</TableCell>
-              <TableCell>Sale Route Number</TableCell>
+              <TableCell>Address</TableCell>
+              <TableCell>Route #</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Chain</TableCell>
+              <TableCell>Chain Type</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -123,9 +123,12 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
                     onChange={() => handleAccountSelection(account)}
                   />
                 </TableCell>
-                <TableCell>{account.accountName}</TableCell>
-                <TableCell>{account.accountAddress}</TableCell>
-                <TableCell>{account.salesRouteNums}</TableCell>
+                <TableCell>{account.accountName || "-"}</TableCell>
+                <TableCell>{account.accountAddress || "-"}</TableCell>
+                <TableCell>{(account.salesRouteNums || []).join(", ")}</TableCell>
+                <TableCell>{account.typeOfAccount || "-"}</TableCell>
+                <TableCell>{account.chain || "-"}</TableCell>
+                <TableCell>{account.chainType || "-"}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -143,3 +146,4 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
 };
 
 export default AccountMultiSelector;
+

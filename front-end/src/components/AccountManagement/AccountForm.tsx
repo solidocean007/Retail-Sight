@@ -13,6 +13,7 @@ interface AccountFormProps {
 
 const customerTypes: customerType[] = [
   "Supermarket",
+  "Supercenter",
   "Convenience",
   "Military On prem",
   "Other on prem",

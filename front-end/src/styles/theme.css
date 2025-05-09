@@ -131,6 +131,7 @@
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);
 
+  /* --text-color: var(--gray-100); */
   --text-color: var(--gray-100);
   --company-goal-text-color: var(--gray-900);
   --header-title: var(--white);

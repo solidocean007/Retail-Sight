@@ -1,0 +1,6 @@
+.chains-container,
+.chain-type-container,
+.types-of-account-container,
+.sales-people-container {
+  display: flex;
+}

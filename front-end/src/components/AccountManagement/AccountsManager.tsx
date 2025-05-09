@@ -17,10 +17,9 @@ import {
 import {
   addDoc,
   collection,
-  // addDoc,
-  // collection,
   doc,
   getDoc,
+  setDoc,
   updateDoc,
 } from "@firebase/firestore";
 import { CompanyAccountType } from "../../utils/types";
@@ -42,8 +41,8 @@ import {
 import CustomConfirmation from "../CustomConfirmation";
 import AccountForm from "./AccountForm";
 import UploadTemplateModal from "./UploadTemplateModal";
-import "./styles/uploadTemplateModal.css";
-import { useDebouncedValue } from "../../hooks/useDebounce";
+import "./styles/accountsManager.css";
+import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -74,7 +73,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const [selectedAccount, setSelectedAccount] =
     useState<CompanyAccountType | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
+
   const itemsPerPage = 15;
 
   useEffect(() => {
@@ -115,7 +114,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     try {
       const companyDocRef = doc(db, "companies", user.companyId);
       const companySnap = await getDoc(companyDocRef);
-      if (!companySnap.exists()) throw new Error("Company doc not found.");
 
       if (companySnap.exists()) {
         const { accountsId } = companySnap.data();
@@ -148,48 +146,85 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const confirmUpdates = async () => {
     setIsSubmitting(true);
-    const minDelay = new Promise((res) => setTimeout(res, 500)); // force delay
-
+  
     try {
       if (
         pendingUpdates &&
         pendingUpdates.length === 1 &&
         confirmMessage.toLowerCase().includes("delete")
       ) {
-        const accountNumberToDelete = pendingUpdates[0].accountNumber;
-        await Promise.all([
-          handleDeleteAccount(accountNumberToDelete),
-          minDelay,
-        ]);
+        await handleDeleteAccount(pendingUpdates[0].accountNumber);
         dispatch(showMessage("Account deleted successfully"));
-      } else if (fileData.length > 0 && user?.companyId) {
-        await Promise.all([saveAccountsToFirestore(fileData), minDelay]);
-
-        const message =
-          getUploadMode() === "initial"
-            ? `${pendingUpdates?.length || 0} account(s) added.`
-            : `${pendingUpdates?.length || 0} account(s) updated.`;
-
-        dispatch(showMessage(message));
+      } else if (fileData.length && user?.companyId) {
+        const map = new Map(accounts.map((a) => [a.accountNumber, a]));
+        fileData.forEach((acc) => map.set(acc.accountNumber, acc));
+        const merged = Array.from(map.values());
+  
+        await saveAccountsToFirestore(merged); // ✅ Primary write
+  
+        try {
+          await writeCustomerTypesToCompany(user.companyId, merged); // ✅ Secondary write
+        } catch (configErr) {
+          console.warn("Accounts saved, but failed to update customer types:", configErr);
+          dispatch(showMessage("Accounts saved, but failed to update customer types."));
+        }
+  
+        const mode = getUploadMode();
+        dispatch(
+          showMessage(
+            `${pendingUpdates?.length || 0} account(s) ${mode === "initial" ? "added" : "updated"}.`
+          )
+        );
       }
     } catch (err) {
       console.error("Error confirming updates:", err);
       dispatch(showMessage("Failed to update accounts."));
     } finally {
       setIsSubmitting(false);
-      setPendingUpdates(null);
       setShowConfirm(false);
+      setPendingUpdates(null);
       setFileData([]);
     }
   };
+  
 
   const handleDeleteAccount = async (accNum: string) => {
     const updated = accounts.filter((a) => a.accountNumber !== accNum);
+  
     await saveAccountsToFirestore(updated);
     await deleteAccountFromIndexedDB(accNum);
+  
+    // 🧠 Check if any accounts still use the deleted type
+    const deletedAccount = accounts.find((a) => a.accountNumber === accNum);
+    const deletedType = deletedAccount?.typeOfAccount;
+  
+    if (user?.companyId && deletedType) {
+      const stillUsed = updated.some((a) => a.typeOfAccount === deletedType);
+  
+      if (!stillUsed) {
+        try {
+          const configRef = doc(db, "companies", user.companyId, "config", "general");
+          const configSnap = await getDoc(configRef);
+  
+          if (configSnap.exists()) {
+            const configData = configSnap.data();
+            const customerTypes: string[] = configData.customerTypes || [];
+  
+            const updatedTypes = customerTypes.filter((t) => t !== deletedType);
+            await setDoc(configRef, { customerTypes: updatedTypes }, { merge: true });
+  
+            console.log(`Removed unused customer type: ${deletedType}`);
+          }
+        } catch (err) {
+          console.warn("Failed to update customerTypes after deletion:", err);
+        }
+      }
+    }
   };
+  
 
   const handleAddAccounts = async (file: File) => {
+    if(!user) return;
     const newAccounts = await getAccountsForAdd(file);
     setPendingUpdates(newAccounts);
     setFileData([...accounts, ...newAccounts]);
@@ -198,6 +233,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const handleUpdateAccounts = async (file: File) => {
+    if(!user) return;
     const updatedAccounts = await getAccountsForUpdate(file, accounts);
     const map = new Map(accounts.map((a) => [a.accountNumber, a]));
     updatedAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
@@ -225,117 +261,105 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       a.accountNumber.toString().includes(searchTerm)
   );
 
-  const handleManualSubmit = (data: CompanyAccountType) => {
-    const map = new Map(accounts.map((a) => [a.accountNumber, a]));
-    map.set(data.accountNumber, data);
-    setPendingUpdates([data]);
-    setFileData(Array.from(map.values()));
-    setConfirmMessage(`Save new account "${data.accountName}"?`);
-    setShowConfirm(true);
-  };
-
-  const filteredAccounts = accounts.filter(
-    (a) =>
-      a.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.accountNumber.toString().includes(searchTerm)
-  );
-
   return (
     <Box className="account-manager-container account-manager">
-      <Typography variant="h5" gutterBottom>
-        Manage Your Company’s Retail Accounts
+      <Typography variant="h2" gutterBottom>
+        Accounts Manager
       </Typography>
-      <Box sx={{ marginBottom: 2 }}>
-        <Typography variant="body1">
-          <strong>To add accounts</strong>: Upload a CSV or Excel file with new
-          accounts. You can also use the "Quickly Add Single Account" button to
-          manually input one.
-        </Typography>
-        <Typography variant="body1">
-          <strong>To update existing accounts</strong>: Upload a file that
-          includes the same account numbers you'd like to update.
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Account number, name, and at least one route number are required. Use
-          commas to separate multiple route numbers.
-        </Typography>
-      </Box>
 
       {(isAdmin || isSuperAdmin) && (
         <>
-          <Typography>
-          <Typography>
-            You can upload a <strong>CSV or Excel</strong> file to add or update
-            accounts.
-          </Typography>
-
-          <Button
-            variant="outlined"
-            onClick={() => setShowTemplateModal(true)}
-            sx={{ marginBottom: 2 }}
+          <Box
+            className="account-instructions"
+            sx={{ textAlign: "left", mb: 2 }}
           >
-            View Upload File Template
-          </Button>
+            <Typography variant="body1" gutterBottom>
+              <strong>Instructions:</strong>
+            </Typography>
+            <Typography variant="body2">
+              <strong>1.</strong> Upload a <code>.csv</code> or{" "}
+              <code>.xlsx</code> file to add accounts in bulk.
+            </Typography>
+            <Typography variant="body2">
+              <strong>2.</strong> Click <strong>"Add more Accounts"</strong> to
+              append new accounts without overwriting.
+            </Typography>
+            <Typography variant="body2">
+              <strong>3.</strong> Use <strong>"Update Accounts"</strong> to
+              update existing accounts by account number.
+            </Typography>
+            <Typography variant="body2">
+              <strong>4.</strong> Use{" "}
+              <strong>"Quickly Add Single Account"</strong> to manually add one
+              account.
+            </Typography>
+          </Box>
+          <div className="account-management-buttons">
+           
+            <Button variant="contained" sx={{ marginBottom: 2 }}>
+              View Upload File Template
+            </Button>
 
-          <Tooltip title="Upload CSV or Excel to create accounts">
+            <Tooltip title="Upload CSV or Excel to create accounts">
+              <Button
+                variant="contained"
+                component="label"
+                sx={{ marginBottom: 2 }}
+              >
+                {accounts.length
+                  ? "Add more Accounts"
+                  : "Upload Initial Accounts"}
+                <input
+                  hidden
+                  type="file"
+                  accept=".csv, .xlsx, .xls"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleAddAccounts(file);
+                  }}
+                />
+              </Button>
+            </Tooltip>
+
+            <Tooltip title="Upload CSV or Excel to update existing accounts">
+              <Button
+                variant="contained"
+                component="label"
+                sx={{ marginBottom: 2 }}
+                disabled={accounts.length === 0}
+              >
+                Update Accounts
+                <input
+                  hidden
+                  type="file"
+                  accept=".csv, .xlsx, .xls"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpdateAccounts(file);
+                  }}
+                />
+              </Button>
+            </Tooltip>
+
             <Button
               variant="contained"
-              component="label"
+              onClick={() => {
+                setNewAccount({
+                  accountNumber: "",
+                  accountName: "",
+                  accountAddress: "",
+                  salesRouteNums: [],
+                  typeOfAccount: undefined,
+                  chain: "",
+                  chainType: "independent",
+                });
+                setOpenAddAccountModal(true);
+              }}
               sx={{ marginBottom: 2 }}
             >
-              {accounts.length
-                ? "Add more Accounts"
-                : "Upload Initial Accounts"}
-              <input
-                hidden
-                type="file"
-                accept=".csv, .xlsx, .xls"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleAddAccounts(file);
-                }}
-              />
+              Quickly Add Single Account
             </Button>
-          </Tooltip>
-
-          <Tooltip title="Upload CSV or Excel to update existing accounts">
-            <Button
-              variant="contained"
-              component="label"
-              sx={{ marginBottom: 2 }}
-              disabled={accounts.length === 0}
-            >
-              Update Accounts
-              <input
-                hidden
-                type="file"
-                accept=".csv, .xlsx, .xls"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleUpdateAccounts(file);
-                }}
-              />
-            </Button>
-          </Tooltip>
-
-          <Button
-            variant="outlined"
-            onClick={() => {
-              setNewAccount({
-                accountNumber: "",
-                accountName: "",
-                accountAddress: "",
-                salesRouteNums: [],
-                typeOfAccount: undefined,
-                chain: "",
-                chainType: "independent",
-              });
-              setOpenAddAccountModal(true);
-            }}
-            sx={{ marginBottom: 2 }}
-          >
-            Quickly Add Single Account
-          </Button>
+          </div>
         </>
       )}
 
@@ -384,22 +408,29 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                   <TableCell>{a.chainType || "-"}</TableCell>
                   <TableCell>{(a.salesRouteNums || []).join(", ")}</TableCell>
                   <TableCell>
-                    <Button size="small" onClick={() => setSelectedAccount(a)}>
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={() => {
-                        setPendingUpdates([a]);
-                        setConfirmMessage(
-                          `Are you sure you want to delete "${a.accountName}"?`
-                        );
-                        setShowConfirm(true);
-                      }}
-                    >
-                      Delete
-                    </Button>
+                    <Tooltip title="Edit this account">
+                      <Button
+                        size="small"
+                        onClick={() => setSelectedAccount(a)}
+                      >
+                        Edit
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Delete this account">
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={() => {
+                          setPendingUpdates([a]);
+                          setConfirmMessage(
+                            `Are you sure you want to delete "${a.accountName}"?`
+                          );
+                          setShowConfirm(true);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
