@@ -44,19 +44,18 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   companyUsers,
   onSave,
 }) => {
-
   const [targetMode, setTargetMode] = useState<CompanyGoalType["targetMode"]>(
     goal.targetMode ||
       (goal.appliesToAllAccounts
         ? "goalForAllAccounts"
-        : "goalForSelectedAccounts")
+        : "goalForSelectedAccounts"),
   );
 
   const [selectedAccounts, setSelectedAccounts] = useState<
     CompanyAccountType[]
   >(goal.accounts || []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
-    goal.usersIdsOfGoal || []
+    goal.usersIdsOfGoal || [],
   );
   const [goalTitle, setGoalTitle] = useState(goal.goalTitle);
   const [goalDescription, setGoalDescription] = useState(goal.goalDescription);
@@ -81,7 +80,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
         email: user.email || "",
         role: user.role || "",
       })),
-    [companyUsers]
+    [companyUsers],
   );
 
   const updatedGoal: Partial<CompanyGoalType> = useMemo(
@@ -109,7 +108,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalValueMin,
       goalStartDate,
       goalEndDate,
-    ]
+    ],
   );
 
   const currentGoalComparable = useMemo(
@@ -129,12 +128,12 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalStartDate: goal.goalStartDate,
       goalEndDate: goal.goalEndDate,
     }),
-    [goal]
+    [goal],
   );
 
   const isModified = useMemo(
     () => !isEqual(updatedGoal, currentGoalComparable),
-    [updatedGoal, currentGoalComparable]
+    [updatedGoal, currentGoalComparable],
   );
 
   const handleSave = () => {
@@ -252,8 +251,8 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
             {targetMode === "goalForAllAccounts"
               ? "This goal will apply to every account in the company."
               : targetMode === "goalForSelectedAccounts"
-              ? "Choose specific accounts that this goal applies to."
-              : "Select which users are responsible for this goal."}
+                ? "Choose specific accounts that this goal applies to."
+                : "Select which users are responsible for this goal."}
           </Typography>
         </FormControl>
 

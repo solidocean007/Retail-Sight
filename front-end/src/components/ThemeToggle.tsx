@@ -15,7 +15,6 @@ export const ThemeToggle: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
 
-
   const handleToggleClick = () => {
     setIsDrawerOpen((prev) => !prev);
   };
@@ -24,7 +23,6 @@ export const ThemeToggle: React.FC = () => {
     dispatch(toggleTheme());
     setIsDrawerOpen(false);
   };
-  
 
   // 🧠 UseMemo to re-read CSS variable after render based on isDarkMode
   const drawerColor = useMemo(() => {

@@ -13,9 +13,8 @@ export const TagWithFilterSearchBar: React.FC<TagWithFilterSearchBarProps> = ({
   currentHashtag,
   setCurrentHashtag,
 }) => {
-
   const [inputValue, setInputValue] = useState("");
-  
+
   // Update inputValue when currentHashtag changes externally
   useEffect(() => {
     setInputValue(currentHashtag ?? "");
@@ -25,15 +24,13 @@ export const TagWithFilterSearchBar: React.FC<TagWithFilterSearchBarProps> = ({
     const newValue = event.target.value;
     setInputValue(newValue);
     // Update the currentHashtag as the user types
-    if (newValue.startsWith('#') || newValue.startsWith('*')) {
+    if (newValue.startsWith("#") || newValue.startsWith("*")) {
       setCurrentHashtag(newValue.trimEnd());
     } else {
       // Optionally, reset currentHashtag if input doesn't start with '#' or '*'
       setCurrentHashtag(null);
     }
   };
-
-
 
   return (
     <div className="hashtag-search-box">

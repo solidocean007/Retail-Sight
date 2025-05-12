@@ -23,7 +23,9 @@ const UserTableForGoals = ({ users }: { users: any[] }) => {
           <tr key={u.uid}>
             <td>{idx + 1}</td>
             <td>{u.displayName}</td>
-            <td>{u.submittedAt ? new Date(u.submittedAt).toLocaleString() : "—"}</td>
+            <td>
+              {u.submittedAt ? new Date(u.submittedAt).toLocaleString() : "—"}
+            </td>
             <td>
               {u.postId ? (
                 <button onClick={() => handleViewPost(u.postId)}>View</button>

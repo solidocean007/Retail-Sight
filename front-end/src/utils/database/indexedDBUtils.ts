@@ -22,7 +22,7 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
     // Handle the successful completion of the transaction
     transaction.oncomplete = () => {
       console.log(
-        "Transaction complete: Data added to IndexedDB successfully."
+        "Transaction complete: Data added to IndexedDB successfully.",
       );
       resolve();
     };
@@ -42,7 +42,7 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
       request.onerror = () => {
         console.error(
           `Error adding post ${index} to IndexedDB:`,
-          request.error
+          request.error,
         );
         reject(request.error);
       };
@@ -76,7 +76,7 @@ export async function clearPostsInIndexedDB(): Promise<void> {
     transaction.onerror = () => {
       console.error(
         "Transaction not completed due to error: ",
-        transaction.error
+        transaction.error,
       );
       reject(transaction.error);
     };
@@ -99,14 +99,14 @@ export async function clearUserCreatedPostsInIndexedDB(): Promise<void> {
     clearRequest.onerror = () => {
       console.error(
         "Error clearing user created posts from IndexedDB:",
-        clearRequest.error
+        clearRequest.error,
       );
       reject(clearRequest.error);
     };
 
     transaction.oncomplete = () => {
       console.log(
-        "Transaction completed: All user created posts cleared from IndexedDB."
+        "Transaction completed: All user created posts cleared from IndexedDB.",
       );
       resolve();
     };
@@ -114,7 +114,7 @@ export async function clearUserCreatedPostsInIndexedDB(): Promise<void> {
     transaction.onerror = () => {
       console.error(
         "Transaction not completed due to error: ",
-        transaction.error
+        transaction.error,
       );
       reject(transaction.error);
     };
@@ -136,7 +136,7 @@ export async function updatePostInIndexedDB(post: PostWithID): Promise<void> {
 
 // Add a single post to IndexedDB
 export async function addNewlyCreatedPostToIndexedDB(
-  post: PostWithID
+  post: PostWithID,
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");
@@ -192,7 +192,7 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
 
 // Create a utility function that retrieves filtered posts from IndexedDB
 export async function getFilteredPostsFromIndexedDB(
-  filters: FilterCriteria
+  filters: FilterCriteria,
 ): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readonly");
@@ -244,7 +244,7 @@ export async function getFilteredPostsFromIndexedDB(
 // Utility function to store filtered posts in IndexedDB
 export async function storeFilteredPostsInIndexedDB(
   posts: PostWithID[],
-  filters: FilterCriteria
+  filters: FilterCriteria,
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");
@@ -279,7 +279,7 @@ export async function storeFilteredPostsInIndexedDB(
 
 // store latest posts in indexDB
 export async function storeLatestPostsInIndexedDB(
-  posts: PostType[]
+  posts: PostType[],
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["latestPosts"], "readwrite"); // Consider using a separate object store for latest posts
@@ -408,7 +408,7 @@ export async function getLocationsFromIndexedDB(): Promise<{
     getAllRequest.onerror = () => {
       console.error(
         "Error fetching locations from IndexedDB:",
-        getAllRequest.error
+        getAllRequest.error,
       );
       reject(getAllRequest.error);
     };
@@ -417,7 +417,7 @@ export async function getLocationsFromIndexedDB(): Promise<{
 
 // add hashtag posts to indexedDB
 export async function addHashtagPostsToIndexedDB(
-  posts: PostWithID[]
+  posts: PostWithID[],
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["hashtagPosts"], "readwrite");
@@ -445,7 +445,7 @@ export async function addHashtagPostsToIndexedDB(
 
 // add starTag posts to indexedDB
 export async function addStarTagPostsToIndexedDB(
-  posts: PostWithID[]
+  posts: PostWithID[],
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["starTagPosts"], "readwrite");
@@ -466,7 +466,7 @@ export async function addStarTagPostsToIndexedDB(
       request.onerror = () => {
         console.error(
           "Error adding star tag posts to IndexedDB:",
-          request.error
+          request.error,
         );
         reject(request.error);
       };
@@ -488,7 +488,7 @@ export async function getHashtagPostsFromIndexedDB(): Promise<PostWithID[]> {
     getAllRequest.onerror = () => {
       console.error(
         "Error getting hashtag posts from IndexedDB:",
-        getAllRequest.error
+        getAllRequest.error,
       );
       reject(getAllRequest.error);
     };
@@ -509,7 +509,7 @@ export async function getStarTagPostsFromIndexedDB(): Promise<PostWithID[]> {
     getAllRequest.onerror = () => {
       console.error(
         "Error getting star tag posts from IndexedDB:",
-        getAllRequest.error
+        getAllRequest.error,
       );
       reject(getAllRequest.error);
     };
@@ -530,7 +530,7 @@ export async function clearHashtagPostsInIndexedDB(): Promise<void> {
     clearRequest.onerror = () => {
       console.error(
         "Error clearing hashtag posts from IndexedDB:",
-        clearRequest.error
+        clearRequest.error,
       );
       reject(clearRequest.error);
     };
@@ -551,7 +551,7 @@ export async function clearStarTagPostsInIndexedDB(): Promise<void> {
     clearRequest.onerror = () => {
       console.error(
         "Error clearing hashtag posts from IndexedDB:",
-        clearRequest.error
+        clearRequest.error,
       );
       reject(clearRequest.error);
     };
@@ -560,7 +560,7 @@ export async function clearStarTagPostsInIndexedDB(): Promise<void> {
 
 // add user created posts in indexedDB
 export async function addUserCreatedPostsInIndexedDB(
-  userPosts: PostWithID[]
+  userPosts: PostWithID[],
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["userCreatedPosts"], "readwrite");
@@ -581,7 +581,7 @@ export async function addUserCreatedPostsInIndexedDB(
       request.onerror = () => {
         console.error(
           "Error adding user created post to IndexedDB:",
-          request.error
+          request.error,
         );
         reject(request.error);
       };
@@ -591,7 +591,7 @@ export async function addUserCreatedPostsInIndexedDB(
 
 // delete user created posts in indexedDB
 export async function deleteUserCreatedPostInIndexedDB(
-  postId: string
+  postId: string,
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["userCreatedPosts"], "readwrite");
@@ -627,7 +627,7 @@ export async function getUserCreatedPostsFromIndexedDB(): Promise<
     request.onerror = () => {
       console.error(
         "Error fetching user created posts from IndexedDB:",
-        request.error
+        request.error,
       );
       reject(request.error);
     };
@@ -648,7 +648,7 @@ export async function addOrUpdateCollection(collection: CollectionType) {
 
 export async function addPostToCollectionInDB(
   collectionId: string,
-  postId: string
+  postId: string,
 ) {
   const db = await openDB();
   const tx = db.transaction("collections", "readwrite");
@@ -659,7 +659,7 @@ export async function addPostToCollectionInDB(
       const request = store.get(collectionId);
       request.onsuccess = () => resolve(request.result as CollectionWithId);
       request.onerror = () => reject(request.error);
-    }
+    },
   );
 
   if (collection && !collection.posts.includes(postId)) {
@@ -675,7 +675,7 @@ export async function addPostToCollectionInDB(
 
 export async function removePostFromCollectionInDB(
   collectionId: string,
-  postId: string
+  postId: string,
 ) {
   const db = await openDB();
   const tx = db.transaction("collections", "readwrite");
@@ -686,7 +686,7 @@ export async function removePostFromCollectionInDB(
       const request = store.get(collectionId);
       request.onsuccess = () => resolve(request.result as CollectionWithId);
       request.onerror = () => reject(request.error);
-    }
+    },
   );
 
   if (collection) {
@@ -722,15 +722,36 @@ export async function getCollectionsFromIndexedDB(): Promise<
     request.onerror = () => {
       console.error(
         "Error fetching user collections from IndexedDB:",
-        request.error
+        request.error,
       );
       reject(request.error);
     };
   });
 }
 
+// delete user created posts in indexedDB
+export async function deleteUserCreatedCollectionFromIndexedDB(
+  collectionId: string,
+): Promise<void> {
+  const db = await openDB();
+  const transaction = db.transaction(["collections"], "readwrite");
+  const store = transaction.objectStore("collections");
+
+  return new Promise<void>((resolve, reject) => {
+    const request = store.delete(collectionId);
+
+    request.onsuccess = () => {
+      resolve();
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
 export async function getOneCollectionFromIndexedDB(
-  collectionId: string
+  collectionId: string,
 ): Promise<CollectionWithId> {
   // this needs to retrieve a specific collection
   const db = await openDB();
@@ -748,7 +769,7 @@ export async function getOneCollectionFromIndexedDB(
     request.onerror = () => {
       console.error(
         "Error fetching a specific collection from IndexedDB:",
-        request.error
+        request.error,
       );
       reject(request.error);
     };
@@ -828,7 +849,7 @@ export async function closeAndDeleteIndexedDB(): Promise<void> {
 }
 
 export const saveAllCompanyAccountsToIndexedDB = async (
-  accounts: CompanyAccountType[]
+  accounts: CompanyAccountType[],
 ): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(["allUsersCompanyAccounts"], "readwrite");
@@ -843,7 +864,7 @@ export const saveAllCompanyAccountsToIndexedDB = async (
     transaction.onerror = (event) => {
       console.error(
         "Transaction error while saving all company accounts:",
-        (event.target as IDBRequest).error
+        (event.target as IDBRequest).error,
       );
       reject((event.target as IDBRequest).error);
     };
@@ -884,7 +905,7 @@ export const getAllCompanyAccountsFromIndexedDB = async (): Promise<
 };
 
 export async function addAccountsToIndexedDB(
-  accounts: CompanyAccountType[]
+  accounts: CompanyAccountType[],
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["userAccounts_v2"], "readwrite");
@@ -893,7 +914,7 @@ export async function addAccountsToIndexedDB(
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
       console.log(
-        "Transaction complete: Accounts added to IndexedDB successfully."
+        "Transaction complete: Accounts added to IndexedDB successfully.",
       );
       resolve();
     };
@@ -914,7 +935,7 @@ export async function addAccountsToIndexedDB(
         request.onerror = () => {
           console.error(
             `Error adding account ${index} to IndexedDB:`,
-            request.error
+            request.error,
           );
           reject(request.error);
         };
@@ -957,7 +978,6 @@ export const deleteAccountFromIndexedDB = async (accountNumber: string) => {
     };
   });
 };
-  
 
 export const saveGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[] | CompanyGoalType[],
@@ -965,7 +985,7 @@ export const saveGoalsToIndexedDB = async (
     | "galloGoals"
     | "companyGoals"
     | "allGalloGoals"
-    | "allCompanySpecificGoals"
+    | "allCompanySpecificGoals",
 ): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(goalType, "readwrite");
@@ -980,7 +1000,7 @@ export const saveGoalsToIndexedDB = async (
     transaction.onerror = (event) => {
       console.error(
         `Error saving ${goalType} to IndexedDB:`,
-        (event.target as IDBRequest).error
+        (event.target as IDBRequest).error,
       );
       reject((event.target as IDBRequest).error);
     };
@@ -1008,7 +1028,7 @@ export const saveGoalsToIndexedDB = async (
 };
 
 export const saveAllGalloGoalsToIndexedDB = async (
-  goals: FireStoreGalloGoalDocType[]
+  goals: FireStoreGalloGoalDocType[],
 ): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(["allGalloGoals"], "readwrite");
@@ -1022,7 +1042,7 @@ export const saveAllGalloGoalsToIndexedDB = async (
     transaction.onerror = (event) => {
       console.error(
         "Error saving all Gallo goals to IndexedDB:",
-        (event.target as IDBRequest).error
+        (event.target as IDBRequest).error,
       );
       reject((event.target as IDBRequest).error);
     };
@@ -1044,7 +1064,7 @@ export const saveAllGalloGoalsToIndexedDB = async (
     store.clear().onerror = (event) => {
       console.error(
         "Error clearing allGalloGoals store:",
-        (event.target as IDBRequest).error
+        (event.target as IDBRequest).error,
       );
       reject((event.target as IDBRequest).error);
     };
@@ -1098,7 +1118,7 @@ export const getAllGalloGoalsFromIndexedDB = async (): Promise<
 };
 
 export const clearSomeGalloGoalsFromIndexedDB = async (
-  goalIds: string[]
+  goalIds: string[],
 ): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(["allGalloGoals"], "readwrite");
@@ -1111,7 +1131,9 @@ export const clearSomeGalloGoalsFromIndexedDB = async (
     request.onsuccess = () => {
       const allGoals = request.result as FireStoreGalloGoalDocType[];
       retainedGoals.push(
-        ...allGoals.filter((goal) => !goalIds.includes(goal.goalDetails.goalId))
+        ...allGoals.filter(
+          (goal) => !goalIds.includes(goal.goalDetails.goalId),
+        ),
       );
 
       // Clear all and repopulate retained goals
@@ -1125,7 +1147,7 @@ export const clearSomeGalloGoalsFromIndexedDB = async (
       store.clear().onerror = (event) => {
         console.error(
           "Error clearing allGalloGoals store:",
-          (event.target as IDBRequest).error
+          (event.target as IDBRequest).error,
         );
         reject((event.target as IDBRequest).error);
       };
@@ -1134,7 +1156,7 @@ export const clearSomeGalloGoalsFromIndexedDB = async (
     request.onerror = (event) => {
       console.error(
         "Error retrieving goals for batch clear:",
-        (event.target as IDBRequest).error
+        (event.target as IDBRequest).error,
       );
       reject((event.target as IDBRequest).error);
     };
@@ -1147,7 +1169,7 @@ export const clearGoalsFromIndexedDB = async (
     | "galloGoals"
     | "companyGoals"
     | "allGalloGoals"
-    | "allCompanySpecificGoals" = "galloGoals"
+    | "allCompanySpecificGoals" = "galloGoals",
 ): Promise<void> => {
   // console.log(`Clearing goals from store: ${goalType}`);
   const db = await openDB();

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import Dialog from '@mui/material/Dialog';
-import { DialogActions } from '@mui/material';
-import DialogTitle from '@mui/material/DialogTitle';
+import React, { useState } from "react";
+import Dialog from "@mui/material/Dialog";
+import { DialogActions } from "@mui/material";
+import DialogTitle from "@mui/material/DialogTitle";
 // import FormControlLabel from '@mui/material/FormControlLabel';
 // import Checkbox from '@mui/material/Checkbox';
 // import FilterSection from './FilterSection';
-import Button from '@mui/material/Button';
-import './checkBoxModal.css'
+import Button from "@mui/material/Button";
+import "./checkBoxModal.css";
 
 // Assuming these types are exported from the 'options' file.
 // import { ChannelOptions, CategoryOptions } from '../utils/filterOptions';
@@ -19,10 +19,17 @@ import './checkBoxModal.css'
 interface CheckboxModalProps {
   open: boolean;
   handleClose: () => void;
-  applyFilters: (selectedChannels: string[], selectedCategories: string[]) => void;
+  applyFilters: (
+    selectedChannels: string[],
+    selectedCategories: string[],
+  ) => void;
 }
 
-const CheckBoxModal: React.FC<CheckboxModalProps> = ({ open, handleClose, applyFilters }) => {
+const CheckBoxModal: React.FC<CheckboxModalProps> = ({
+  open,
+  handleClose,
+  applyFilters,
+}) => {
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -55,22 +62,24 @@ const CheckBoxModal: React.FC<CheckboxModalProps> = ({ open, handleClose, applyF
 
   return (
     <Dialog onClose={handleCloseModal} open={open} className="modal-container">
-      <DialogTitle className="dialog-title">Select Channels and Categories</DialogTitle>
-     {/* Reuse FilterSection for Channels and Categories */}
-     {/* <FilterSection
+      <DialogTitle className="dialog-title">
+        Select Channels and Categories
+      </DialogTitle>
+      {/* Reuse FilterSection for Channels and Categories */}
+      {/* <FilterSection
         title="Channels"
         options={ChannelOptions}
         selected={selectedChannels}
         toggleOption={toggleChannel}
       /> */}
-      
+
       {/* <FilterSection
         title="Categories"
         options={CategoryOptions}
         selected={selectedCategories}
         toggleOption={toggleCategory}
       /> */}
-      
+
       {/* Add other sections for Location and Time Frame here */}
       <DialogActions className="dialog-actions">
         <Button onClick={handleCloseModal}>Close</Button>

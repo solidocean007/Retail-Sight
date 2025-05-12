@@ -7,7 +7,7 @@ import { runTransaction } from "firebase/firestore";
 
 export const updateLocationsCollection = async (
   stateName: string,
-  cityName: string
+  cityName: string,
 ) => {
   const stateDocRef = doc(db, "locations", stateName);
 

@@ -38,7 +38,10 @@
 
 .toggle-label {
   cursor: pointer;
-  transition: font-size 0.3s, font-weight 0.3s, color 0.3s;
+  transition:
+    font-size 0.3s,
+    font-weight 0.3s,
+    color 0.3s;
   flex: 1;
   text-align: center;
 }
@@ -63,6 +66,3 @@
   border-radius: 8px;
   padding: 16px;
 }
-
-
-

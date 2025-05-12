@@ -1,9 +1,13 @@
 // firebase.ts
 import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence, updateProfile } from "firebase/auth";
-import { getFirestore} from "firebase/firestore";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  updateProfile,
+} from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-
 
 // Firebase configuration
 const firebaseConfig = {
@@ -13,7 +17,7 @@ const firebaseConfig = {
   storageBucket: "retail-sight.appspot.com",
   messagingSenderId: "484872165965",
   appId: "1:484872165965:web:feb232cfe100a4b9105a04",
-  measurementId: "G-XSXPNG7BCB"
+  measurementId: "G-XSXPNG7BCB",
 };
 
 // Initialize Firebase with the config
@@ -26,7 +30,7 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 // Get a reference to the Firestore service
-const db = getFirestore(app); 
+const db = getFirestore(app);
 
 setPersistence(auth, browserLocalPersistence)
   .then(() => {

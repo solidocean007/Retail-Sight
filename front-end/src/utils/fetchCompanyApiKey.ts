@@ -1,3 +1,1 @@
-export const fetchCompanyApiKey = () => {
-  
-}
+export const fetchCompanyApiKey = () => {};

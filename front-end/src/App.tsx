@@ -48,7 +48,7 @@ function App() {
   useEffect(() => {
     if (!companyId) return;
     const unsubscribeCompanyGoals = dispatch(
-      setupCompanyGoalsListener(companyId)
+      setupCompanyGoalsListener(companyId),
     );
     const unsubscribeGalloGoals = dispatch(setupGalloGoalsListener(companyId));
     return () => {

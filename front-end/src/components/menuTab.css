@@ -14,7 +14,6 @@
   justify-content: center;
 }
 
-
 .menu-tab.open {
   right: 0; /* Slide in */
 }
@@ -54,16 +53,14 @@
   /* Styles for small tablets in portrait */
 }
 
-@media (min-width: 769px) and (max-width: 899px){
-  
+@media (min-width: 769px) and (max-width: 899px) {
 }
 
-@media (min-width: 900px)  {
+@media (min-width: 900px) {
   /* Styles for large tablets in portrait/landscape */
   .filters-option {
     display: none;
   }
- 
 }
 
 /* Laptops and Desktops */

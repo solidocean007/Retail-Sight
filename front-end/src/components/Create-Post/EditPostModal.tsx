@@ -8,18 +8,10 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { deletePost, updatePost } from "../../Slices/postsSlice";
-import {
-  SelectChangeEvent,
-  Typography,
-} from "@mui/material";
+import { SelectChangeEvent, Typography } from "@mui/material";
 import "./editPostModal.css";
 
-import {
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { Button, TextField, Select, MenuItem } from "@mui/material";
 
 import "./editPostModal.css";
 // import { useOutsideAlerter } from "../utils/useOutsideAlerter";
@@ -60,13 +52,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   >([]);
   const dispatch = useDispatch();
   const [description, setDescription] = useState<string>(
-    post.description || ""
+    post.description || "",
   );
   const [category, setCategory] = useState<CategoryType | "">(
-    (post.category as CategoryType) || ""
+    (post.category as CategoryType) || "",
   );
   const [channel, setChannel] = useState<ChannelType | "">(
-    (post.channel as ChannelType) || ""
+    (post.channel as ChannelType) || "",
   );
 
   const [postVisibility, setPostVisibility] = useState<
@@ -80,7 +72,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [openAccountModal, setOpenAccountModal] = useState(true);
 
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
 
   useEffect(() => {
@@ -127,7 +119,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
             accountAddress: account.accountAddress,
             salesRouteNums: account.salesRouteNums || [],
           },
-        })
+        }),
       );
 
       await updatePostInIndexedDB({
@@ -237,16 +229,16 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         description: post.description,
         from: "EditPostModal",
       });
-  
+
       await userDeletePost({ post });
       console.log("✅ Finished Firestore + Storage deletion for:", post.id);
-  
+
       await removePostFromIndexedDB(post.id);
       await deleteUserCreatedPostInIndexedDB(post.id);
-  
+
       dispatch(deletePost(post.id));
       console.log("🧹 Dispatched Redux delete for:", post.id);
-  
+
       handleCloseEditModal();
       dispatch(showMessage("Post deleted successfully!"));
     } catch (error) {
@@ -254,7 +246,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       dispatch(showMessage("Error deleting post."));
     }
   };
-  
 
   useOutsideAlerter(wrapperRef, () => {
     if (!openAccountModal) {
@@ -328,14 +319,14 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 onChange={(
                   e: SelectChangeEvent<
                     "public" | "company" | "supplier" | "private" | undefined
-                  >
+                  >,
                 ) => {
                   setPostVisibility(
                     e.target.value as
                       | "public"
                       | "company"
                       | "supplier"
-                      | "private"
+                      | "private",
                   );
                 }}
                 className="select-input"

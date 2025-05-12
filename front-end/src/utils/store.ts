@@ -4,12 +4,12 @@ import { ThunkAction } from "@reduxjs/toolkit";
 import snackbarReducer from "../Slices/snackbarSlice";
 import userSlice from "../Slices/userSlice";
 import postsReducer from "../Slices/postsSlice";
-import themeReducer from '../Slices/themeSlice';
-import locationReducer from '../Slices/locationSlice'
+import themeReducer from "../Slices/themeSlice";
+import locationReducer from "../Slices/locationSlice";
 import userModalReducer from "../Slices/userModalSlice";
 import userAccountsSlice from "../Slices/userAccountsSlice";
 import allAccountsSlice from "../Slices/allAccountsSlice";
-import { useDispatch as _useDispatch } from 'react-redux';
+import { useDispatch as _useDispatch } from "react-redux";
 import teamsSlice from "../Slices/teamsSlice";
 import missionsSlice from "../Slices/missionsSlice";
 import goalsSlice from "../Slices/goalsSlice";
@@ -28,7 +28,7 @@ const store = configureStore({
     allAccounts: allAccountsSlice,
     goals: goalsSlice,
   },
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: process.env.NODE_ENV !== "production",
 });
 
 export type AppDispatch = typeof store.dispatch;

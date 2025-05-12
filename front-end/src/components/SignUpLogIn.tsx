@@ -49,14 +49,14 @@ export const SignUpLogin = () => {
   const initialCompanyNameParam = searchParams.get("companyName") || "";
 
   const [emailParam, setEmailParam] = useState(
-    decodeURIComponent(initialEmailParam)
+    decodeURIComponent(initialEmailParam),
   );
   const [companyNameParam, setCompanyNameParam] = useState(
-    decodeURIComponent(initialCompanyNameParam)
+    decodeURIComponent(initialCompanyNameParam),
   );
   const [isEmailDisabled, setIsEmailDisabled] = useState(!!initialEmailParam);
   const [isCompanyDisabled, setIsCompanyDisabled] = useState(
-    !!initialCompanyNameParam
+    !!initialCompanyNameParam,
   );
 
   // useEffect to get parameters from url
@@ -164,7 +164,7 @@ export const SignUpLogin = () => {
       const validationErrors = validateUserInputs(userInputs);
       setErrorsOfInputs(validationErrors);
       const firstError = Object.values(validationErrors).find(
-        (error) => error !== ""
+        (error) => error !== "",
       );
 
       if (firstError) {
@@ -180,7 +180,7 @@ export const SignUpLogin = () => {
           "", // Company name will be set later
           phoneInput,
           passwordInput,
-          setSignUpError
+          setSignUpError,
         );
 
         if (authData && authData?.uid) {
@@ -189,7 +189,7 @@ export const SignUpLogin = () => {
           let companyData;
 
           const matchingCompany = await findMatchingCompany(
-            normalizedCompanyInput
+            normalizedCompanyInput,
           );
           if (matchingCompany) {
             companyData = {
@@ -214,7 +214,7 @@ export const SignUpLogin = () => {
           } else {
             companyData = await createNewCompany(
               normalizedCompanyInput,
-              authData.uid
+              authData.uid,
             );
           }
 
@@ -227,7 +227,7 @@ export const SignUpLogin = () => {
 
           // Fetch user data from Firestore
           const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid
+            authData.uid,
           )) as UserType;
           if (fetchedUserData) {
             // Assuming fetchedUserData is of UserType or you can map it to UserType
@@ -250,7 +250,7 @@ export const SignUpLogin = () => {
         if (authData && authData.uid) {
           // Fetch user data from Firestore or Firebase auth as required
           const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid
+            authData.uid,
           )) as UserType;
           if (fetchedUserData) {
             dispatch(setUser(fetchedUserData));

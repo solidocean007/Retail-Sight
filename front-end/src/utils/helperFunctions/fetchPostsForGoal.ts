@@ -4,7 +4,7 @@ import { GoalSubmission } from "../types"; // Ensure you import your GoalSubmiss
 
 export const fetchPostsForGoal = async (
   goalId: string,
-  goalType: "companyGoals" | "galloGoals"
+  goalType: "companyGoals" | "galloGoals",
 ): Promise<GoalSubmission[]> => {
   try {
     // ✅ Correct Firestore reference
@@ -14,7 +14,7 @@ export const fetchPostsForGoal = async (
     if (!goalDoc.exists()) return [];
 
     const goalData = goalDoc.data();
-    
+
     return (goalData?.submittedPosts || []) as GoalSubmission[]; // ✅ Ensure correct type casting
   } catch (error) {
     console.error("Error fetching posts for goal:", error);

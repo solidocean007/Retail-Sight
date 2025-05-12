@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { db } from '../utils/firebase';
-import { CompanyType, UserType } from '../utils/types';
-import { fetchCompanyUsersFromFirestore } from '../thunks/usersThunks';
-import { collection, getDocs } from 'firebase/firestore';
-import { useAppDispatch } from '../utils/store';
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { db } from "../utils/firebase";
+import { CompanyType, UserType } from "../utils/types";
+import { fetchCompanyUsersFromFirestore } from "../thunks/usersThunks";
+import { collection, getDocs } from "firebase/firestore";
+import { useAppDispatch } from "../utils/store";
 
 interface CompanyWithUsersAndId extends CompanyType {
   id: string;
@@ -23,7 +23,7 @@ const useFetchCompaniesWithUsers = (userRole: string | undefined) => {
 
   useEffect(() => {
     const fetchCompaniesAndUsers = async () => {
-      if (userRole === 'developer') {
+      if (userRole === "developer") {
         setLoading(true);
         setError(null);
         try {
@@ -31,27 +31,40 @@ const useFetchCompaniesWithUsers = (userRole: string | undefined) => {
           const querySnapshot = await getDocs(collection(db, "companies"));
           const companiesData = await Promise.all(
             querySnapshot.docs.map(async (docSnapshot) => {
-              const company = { id: docSnapshot.id, ...(docSnapshot.data() as CompanyType) };
-              
+              const company = {
+                id: docSnapshot.id,
+                ...(docSnapshot.data() as CompanyType),
+              };
+
               // Dispatch the thunk and wait for the result
-              const allUsers = await dispatch(fetchCompanyUsersFromFirestore(company.id)).unwrap();
+              const allUsers = await dispatch(
+                fetchCompanyUsersFromFirestore(company.id),
+              ).unwrap();
               // console.log(allUsers);
 
               // Filter users based on their roles after you have fetched them
-              const superAdminDetails = allUsers.filter(user => user.role === 'super-admin');
-              const adminDetails = allUsers.filter(user => user.role === 'admin');
-              const employeeDetails = allUsers.filter(user => user.role === 'employee');
-              const pendingDetails = allUsers.filter(user => user.role === 'status-pending');
+              const superAdminDetails = allUsers.filter(
+                (user) => user.role === "super-admin",
+              );
+              const adminDetails = allUsers.filter(
+                (user) => user.role === "admin",
+              );
+              const employeeDetails = allUsers.filter(
+                (user) => user.role === "employee",
+              );
+              const pendingDetails = allUsers.filter(
+                (user) => user.role === "status-pending",
+              );
 
-              return { 
-                ...company, 
+              return {
+                ...company,
                 users: allUsers,
                 superAdminDetails,
-                adminDetails, 
-                employeeDetails, 
-                pendingDetails 
+                adminDetails,
+                employeeDetails,
+                pendingDetails,
               };
-            })
+            }),
           );
           setCompanies(companiesData);
         } catch (error) {
@@ -69,4 +82,3 @@ const useFetchCompaniesWithUsers = (userRole: string | undefined) => {
 };
 
 export default useFetchCompaniesWithUsers;
-

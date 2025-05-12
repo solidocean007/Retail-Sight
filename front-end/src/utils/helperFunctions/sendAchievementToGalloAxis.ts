@@ -112,11 +112,13 @@ export const sendAchievementToGalloAxis = async (
   payload: AchievementPayloadType,
   apiKey: string,
   navigate: NavigateFunction,
-  dispatch: (action: any) => void
+  dispatch: (action: any) => void,
 ): Promise<void> => {
   try {
     if (!galloBaseUrl) {
-      throw new Error("Gallo base URL is not defined in environment variables.");
+      throw new Error(
+        "Gallo base URL is not defined in environment variables.",
+      );
     }
 
     if (!payload.oppId || typeof payload.oppId !== "string") {
@@ -160,7 +162,7 @@ export const sendAchievementToGalloAxis = async (
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(vercelPayload),
-      }
+      },
     );
 
     const rawResponse = await response.text(); // Always read the response once
@@ -177,8 +179,14 @@ export const sendAchievementToGalloAxis = async (
       }
     } else {
       // Handle error responses
-      console.error(`Failed to send achievement: ${response.status} - ${rawResponse}`);
-      dispatch(showMessage(`Failed to send achievement: ${response.status} - ${rawResponse}`));
+      console.error(
+        `Failed to send achievement: ${response.status} - ${rawResponse}`,
+      );
+      dispatch(
+        showMessage(
+          `Failed to send achievement: ${response.status} - ${rawResponse}`,
+        ),
+      );
       throw new Error(rawResponse);
     }
   } catch (error: unknown) {
@@ -187,7 +195,9 @@ export const sendAchievementToGalloAxis = async (
       dispatch(showMessage(`Error: ${error.message}`)); // Inform user of critical failure
     } else {
       console.error("An unknown error occurred:", error);
-      dispatch(showMessage("An unknown error occurred while sending the achievement."));
+      dispatch(
+        showMessage("An unknown error occurred while sending the achievement."),
+      );
     }
     throw error; // Re-throw to allow upstream handling
   } finally {
@@ -196,5 +206,3 @@ export const sendAchievementToGalloAxis = async (
     }, 1000);
   }
 };
-
-

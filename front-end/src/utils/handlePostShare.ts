@@ -10,9 +10,15 @@ interface GeneratePostShareTokenResponse {
   tokenExpiry: string;
 }
 
-export const handlePostShare = async (postId: string, tokenParam: TokenData) => {
+export const handlePostShare = async (
+  postId: string,
+  tokenParam: TokenData,
+) => {
   const functions = getFunctions();
-  const getSharePostTokenFunction = httpsCallable(functions, "generatePostShareToken");
+  const getSharePostTokenFunction = httpsCallable(
+    functions,
+    "generatePostShareToken",
+  );
   let token = { ...tokenParam };
 
   try {
@@ -26,7 +32,7 @@ export const handlePostShare = async (postId: string, tokenParam: TokenData) => 
 
         await updatePostToken({ postId, token });
       } else {
-       showMessage("Failed to generate a valid share token."); // when a token has expired this throws
+        showMessage("Failed to generate a valid share token."); // when a token has expired this throws
       }
     }
 
@@ -35,9 +41,6 @@ export const handlePostShare = async (postId: string, tokenParam: TokenData) => 
     console.log("Post shared successfully.");
   } catch (error) {
     console.error("Error sharing the post:", error);
-    showMessage(`Error sharing the post. Please try again.", ${error}`); 
+    showMessage(`Error sharing the post. Please try again.", ${error}`);
   }
 };
-   
-
-

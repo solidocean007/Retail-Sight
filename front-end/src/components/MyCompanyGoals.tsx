@@ -2,11 +2,7 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
-import {
-  Typography,
-  CircularProgress,
-  useMediaQuery,
-} from "@mui/material";
+import { Typography, CircularProgress, useMediaQuery } from "@mui/material";
 import { selectUser } from "../Slices/userSlice";
 import "./myCompanyGoals.css";
 import {
@@ -26,13 +22,15 @@ const MyCompanyGoals = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const salesRouteNum = user?.salesRouteNum;
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
 
   const loading = useSelector(selectCompanyGoalsIsLoading);
 
-  const userCompanyGoals = useSelector((state: RootState) => // Selector unknown returned a different result when called with the same parameters. This can lead to unnecessary rerenders.Selectors that return a new reference (such as an object or an array) should be memoized:
-    selectUsersCompanyGoals(state, salesRouteNum)
+  const userCompanyGoals = useSelector(
+    (
+      state: RootState, // Selector unknown returned a different result when called with the same parameters. This can lead to unnecessary rerenders.Selectors that return a new reference (such as an object or an array) should be memoized:
+    ) => selectUsersCompanyGoals(state, salesRouteNum),
   );
   // console.log(userCompanyGoals[0].id)
   // console.log(userCompanyGoals[0].submittedPosts[30])
@@ -54,7 +52,7 @@ const MyCompanyGoals = () => {
       (account) =>
         Array.isArray(account.salesRouteNums)
           ? account.salesRouteNums.includes(salesRouteNum || "") // Match salesRouteNum if it's an array
-          : account.salesRouteNums === salesRouteNum // Match directly if it's a single value
+          : account.salesRouteNums === salesRouteNum, // Match directly if it's a single value
     );
   };
 
@@ -70,7 +68,7 @@ const MyCompanyGoals = () => {
     .sort(
       (a, b) =>
         new Date(b.goalStartDate).getTime() -
-        new Date(a.goalStartDate).getTime()
+        new Date(a.goalStartDate).getTime(),
     );
 
   const upcomingGoals = [...userCompanyGoals]
@@ -78,7 +76,7 @@ const MyCompanyGoals = () => {
     .sort(
       (a, b) =>
         new Date(a.goalStartDate).getTime() -
-        new Date(b.goalStartDate).getTime()
+        new Date(b.goalStartDate).getTime(),
     );
 
   return (

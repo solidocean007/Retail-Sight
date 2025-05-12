@@ -4,7 +4,7 @@ import { query, where, Query, DocumentData } from "firebase/firestore";
 // Update the filter functions to handle an array of strings
 export const filterByChannels = (
   channels: string[],
-  baseQuery: Query<DocumentData>
+  baseQuery: Query<DocumentData>,
 ) => {
   if (channels.length === 0) {
     return baseQuery;
@@ -17,7 +17,7 @@ export const filterByChannels = (
 
 export const filterByCategories = (
   categories: string[],
-  baseQuery: Query<DocumentData>
+  baseQuery: Query<DocumentData>,
 ) => {
   if (categories.length === 0) {
     return baseQuery;
@@ -27,7 +27,7 @@ export const filterByCategories = (
 
 export const filterByStates = (
   states: string[],
-  baseQuery: Query<DocumentData>
+  baseQuery: Query<DocumentData>,
 ) => {
   if (states.length === 0) {
     return baseQuery;
@@ -38,7 +38,7 @@ export const filterByStates = (
 
 export const filterByCities = (
   cities: string[],
-  baseQuery: Query<DocumentData>
+  baseQuery: Query<DocumentData>,
 ) => {
   if (cities.length === 0) {
     return baseQuery;
@@ -49,7 +49,7 @@ export const filterByCities = (
 
 export const filterByHashtag = (
   hashtag: string,
-  baseQuery: Query<DocumentData>
+  baseQuery: Query<DocumentData>,
 ) => {
   if (hashtag.length === 0) {
     return baseQuery;
@@ -60,7 +60,7 @@ export const filterByHashtag = (
 
 export const filterByStarTag = (
   starTag: string,
-  baseQuery: Query<DocumentData>
+  baseQuery: Query<DocumentData>,
 ) => {
   if (starTag.length === 0) {
     return baseQuery;

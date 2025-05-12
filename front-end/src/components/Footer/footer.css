@@ -1,6 +1,6 @@
 .footer-container {
   background: var(--footer-background-color);
-  padding: .5rem 0;
+  padding: 0.5rem 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -25,7 +25,7 @@
 }
 
 .footer-link p {
-  margin: 0 .5rem;
+  margin: 0 0.5rem;
 }
 
 .footer-link:hover {
@@ -38,10 +38,9 @@
     grid-template-columns: 1fr;
     gap: 0.25rem;
   }
-  
+
   .footer-link {
     font-size: 0.8rem;
     padding: 0.2rem 0;
   }
 }
-

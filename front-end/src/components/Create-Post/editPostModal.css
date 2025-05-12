@@ -25,7 +25,8 @@
   width: 100%;
 }
 
-.store-title, .store-address {
+.store-title,
+.store-address {
   width: 100%;
   text-align: center;
   margin: 5px;
@@ -48,7 +49,8 @@
   padding: 1.5rem;
 }
 
-.description-input, .select-input {
+.description-input,
+.select-input {
   margin-top: 1.5rem;
 }
 
@@ -77,11 +79,13 @@
     padding: 15px;
   }
 
-  .description-input, .select-input {
+  .description-input,
+  .select-input {
     font-size: 14px;
   }
 
-  .save-btn, .delete-btn {
+  .save-btn,
+  .delete-btn {
     height: 35px;
   }
 }

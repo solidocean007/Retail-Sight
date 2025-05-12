@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import './totalCaseCount.css';
+import React, { useEffect, useState } from "react";
+import "./totalCaseCount.css";
 
 interface TotalCaseCountProps {
   handleTotalCaseCountChange: (caseCount: number) => void;
@@ -44,4 +44,3 @@ const TotalCaseCount: React.FC<TotalCaseCountProps> = ({
 };
 
 export default TotalCaseCount;
-

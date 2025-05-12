@@ -6,7 +6,7 @@ import { selectUser } from "../Slices/userSlice";
 import { doc, setDoc } from "firebase/firestore"; // needed for saving updates
 import { db } from "../utils/firebase";
 // import { useNavigate } from "react-router-dom";
-import './profileEditPage.css'
+import "./profileEditPage.css";
 import { getAuth, updateProfile } from "@firebase/auth";
 
 type FormData = {
@@ -67,7 +67,11 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
   );
 };
 
-export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.SetStateAction<boolean>> }) => {
+export const ProfileEditPage = ({
+  setOpenEdit,
+}: {
+  setOpenEdit: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
   const userData = useSelector(selectUser);
   const form = useForm<FormData>();
   const [updateMessage, setUpdateMessage] = useState("");
@@ -80,7 +84,11 @@ export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.
       const fullName = `${data.firstName} ${data.lastName}`;
 
       try {
-        await setDoc(userDocRef, { firstName: data.firstName, lastName: data.lastName }, { merge: true });
+        await setDoc(
+          userDocRef,
+          { firstName: data.firstName, lastName: data.lastName },
+          { merge: true },
+        );
         if (auth.currentUser) {
           await updateProfile(auth.currentUser, { displayName: fullName });
         }
@@ -142,4 +150,3 @@ export const ProfileEditPage = ({setOpenEdit}:{setOpenEdit:React.Dispatch<React.
     </div>
   );
 };
-

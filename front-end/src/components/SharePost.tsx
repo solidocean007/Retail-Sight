@@ -24,7 +24,10 @@ const SharePost: React.FC<SharePostProps> = ({
   // This function will be updated to handle token generation
   const handleShareClick = async () => {
     const functions = getFunctions(); // Initialize Firebase Functions
-    const generatePostShareToken = httpsCallable(functions, "generatePostShareToken");
+    const generatePostShareToken = httpsCallable(
+      functions,
+      "generatePostShareToken",
+    );
 
     try {
       // Call the function and wait for the token
@@ -44,7 +47,8 @@ const SharePost: React.FC<SharePostProps> = ({
         });
         console.log("Post shared successfully.");
       } else {
-        navigator.clipboard.writeText(shareableLink)
+        navigator.clipboard
+          .writeText(shareableLink)
           .then(() => {
             console.log("Link copied to clipboard.");
           })
@@ -59,8 +63,17 @@ const SharePost: React.FC<SharePostProps> = ({
 
   return (
     <div className="share-post-container">
-      <button className="share-button" onClick={handleShareClick}>Share It</button>
-      {shortenedLink && <p>Shortened Link: <a href={shortenedLink} target="_blank" rel="noopener noreferrer">{shortenedLink}</a></p>}
+      <button className="share-button" onClick={handleShareClick}>
+        Share It
+      </button>
+      {shortenedLink && (
+        <p>
+          Shortened Link:{" "}
+          <a href={shortenedLink} target="_blank" rel="noopener noreferrer">
+            {shortenedLink}
+          </a>
+        </p>
+      )}
     </div>
   );
 };

@@ -1,9 +1,10 @@
-.collection-form input, .collection-form textarea{
+.collection-form input,
+.collection-form textarea {
   margin-bottom: 15px;
 }
 
 .disabled-button {
   pointer-events: none;
-  opacity: 0.5;  
+  opacity: 0.5;
   cursor: default;
 }

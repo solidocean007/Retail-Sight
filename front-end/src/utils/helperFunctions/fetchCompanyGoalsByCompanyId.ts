@@ -3,7 +3,7 @@ import { db } from "../firebase";
 import { CompanyGoalType } from "../types";
 
 export const fetchCompanyGoalsByCompanyId = async (
-  companyId: string
+  companyId: string,
 ): Promise<CompanyGoalType[]> => {
   const goalsCollectionRef = collection(db, "companyGoals");
   const q = query(goalsCollectionRef, where("companyId", "==", companyId));

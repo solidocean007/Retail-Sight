@@ -64,7 +64,9 @@
   text-overflow: ellipsis;
 }
 
-.address-cell, .submitted-at-cell, .submitted-by-cell {
+.address-cell,
+.submitted-at-cell,
+.submitted-by-cell {
   font-size: smaller;
   min-width: 10rem;
 }
@@ -79,7 +81,7 @@
 
 .account-small-cell {
   display: flex;
-  flex: .25;
+  flex: 0.25;
   min-width: 10rem;
   flex-direction: column;
   justify-content: center;

@@ -41,7 +41,7 @@ export const UserHomePage = () => {
   const [lastFilters, setLastFilters] = useState<FilterState | null>(null);
   const posts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
-    (state: RootState) => state.posts.filteredPosts
+    (state: RootState) => state.posts.filteredPosts,
   ); // this is the state of redux filtered posts
   useScrollToTopOnChange(listRef, activePostSet);
 
@@ -87,7 +87,7 @@ export const UserHomePage = () => {
         ) {
           const fetchedAccounts = await fetchUsersAccounts(
             companyId,
-            user.salesRouteNum
+            user.salesRouteNum,
           );
           if (fetchedAccounts.length > 0) {
             setUsersAccounts(fetchedAccounts);
@@ -126,13 +126,12 @@ export const UserHomePage = () => {
 
     // ✅ Clear filters inside SideBar
     sideBarRef.current?.clearAllFilters();
-  
+
     const cachedPosts = await getPostsFromIndexedDB();
     if (cachedPosts?.length > 0) {
       dispatch(mergeAndSetPosts(cachedPosts));
     }
   };
-  
 
   useEffect(() => {
     // I need to check if location options are in indexedDb before doing this next line.

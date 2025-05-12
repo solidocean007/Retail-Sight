@@ -10,10 +10,18 @@ import { db } from "../utils/firebase";
 import CollectionForm from "./CollectionForm";
 import { CollectionType, CollectionWithId } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, CircularProgress, IconButton, Link, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  Link,
+  Typography,
+} from "@mui/material";
 import "./collectionsPage.css";
 import {
   addOrUpdateCollection,
+  deleteUserCreatedCollectionFromIndexedDB,
   getCollectionsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import CustomConfirmation from "./CustomConfirmation";
@@ -21,10 +29,7 @@ import { useDispatch } from "react-redux";
 import { showMessage } from "../Slices/snackbarSlice";
 import { getFunctions, httpsCallable } from "@firebase/functions";
 import LinkShareModal from "./LinkShareModal";
-import {
-  Delete,
-  LinkSharp,
-} from "@mui/icons-material";
+import { Delete, LinkSharp } from "@mui/icons-material";
 
 interface ShareTokenResponse {
   shareToken: string;
@@ -34,7 +39,7 @@ interface ShareTokenResponse {
 const CollectionsViewer = () => {
   const [collections, setCollections] = useState<CollectionWithId[]>([]);
   const [collectionToDelete, setCollectionToDelete] = useState<string | null>(
-    null
+    null,
   );
   const [linkModalLoading, setLinkModalLoading] = useState(false);
   const [showCreateCollectionDialog, setShowCreateCollectionDialog] =
@@ -51,7 +56,7 @@ const CollectionsViewer = () => {
     setLoading(true);
     try {
       const querySnapshot = await getDocs(
-        firestoreCollection(db, "collections")
+        firestoreCollection(db, "collections"),
       );
       const fetchedCollections = querySnapshot.docs.map((doc) => ({
         ...(doc.data() as CollectionType),
@@ -98,8 +103,11 @@ const CollectionsViewer = () => {
     if (collectionToDelete) {
       try {
         await deleteDoc(doc(db, "collections", collectionToDelete));
+        await deleteUserCreatedCollectionFromIndexedDB(collectionToDelete);
+        setCollections((prev) =>
+          prev.filter((c) => c.id !== collectionToDelete),
+        );
         setCollectionToDelete(null);
-        await fetchCollections();
       } catch (error) {
         console.error("Error deleting collection: ", error);
       }
@@ -131,7 +139,7 @@ const CollectionsViewer = () => {
     const functions = getFunctions(); // Initialize Firebase Functions
     const generateShareTokenFunction = httpsCallable(
       functions,
-      "generateShareToken"
+      "generateShareToken",
     );
     let shareableUrl = ""; // Declare shareableUrl outside of the try-catch block to widen its scope
 
@@ -218,10 +226,14 @@ const CollectionsViewer = () => {
                 View
               </Button>
               <Box>
-                <IconButton onClick={() => handleCreateLinkClick(collection.id)}>
+                <IconButton
+                  onClick={() => handleCreateLinkClick(collection.id)}
+                >
                   <LinkSharp />
                 </IconButton>
-                <IconButton onClick={() => openConfirmDeletionDialog(collection.id)}>
+                <IconButton
+                  onClick={() => openConfirmDeletionDialog(collection.id)}
+                >
                   <Delete />
                 </IconButton>
               </Box>

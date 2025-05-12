@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { GalloProgramType } from "../../utils/types";
 
-
 interface ProgramTableProps {
   programs: GalloProgramType[];
   selectedProgram: GalloProgramType | null;
@@ -28,32 +27,36 @@ const ProgramTable: React.FC<ProgramTableProps> = ({
     <TableContainer>
       {programs.length > 0 && <Typography variant="h6">Programs</Typography>}
       <Table>
-        {programs.length > 0 && <TableHead>
-          <TableRow>
-            <TableCell>Select</TableCell>
-            <TableCell>Program Title</TableCell>
-            <TableCell>Start Date</TableCell>
-            <TableCell>End Date</TableCell>
-          </TableRow>
-        </TableHead>}
-        <TableBody>
-        {Array.isArray(programs) && programs.map((program) => (
-            <TableRow key={program.programId}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedProgram?.programId === program.programId}
-                  onChange={() =>
-                    selectedProgram?.programId === program.programId
-                      ? onSelectProgram(null) // Deselect if already selected
-                      : onSelectProgram(program) // Select the clicked program
-                  }
-                />
-              </TableCell>
-              <TableCell>{program.programTitle}</TableCell>
-              <TableCell>{program.startDate}</TableCell>
-              <TableCell>{program.endDate}</TableCell>
+        {programs.length > 0 && (
+          <TableHead>
+            <TableRow>
+              <TableCell>Select</TableCell>
+              <TableCell>Program Title</TableCell>
+              <TableCell>Start Date</TableCell>
+              <TableCell>End Date</TableCell>
             </TableRow>
-          ))}
+          </TableHead>
+        )}
+        <TableBody>
+          {Array.isArray(programs) &&
+            programs.map((program) => (
+              <TableRow key={program.programId}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedProgram?.programId === program.programId}
+                    onChange={
+                      () =>
+                        selectedProgram?.programId === program.programId
+                          ? onSelectProgram(null) // Deselect if already selected
+                          : onSelectProgram(program) // Select the clicked program
+                    }
+                  />
+                </TableCell>
+                <TableCell>{program.programTitle}</TableCell>
+                <TableCell>{program.startDate}</TableCell>
+                <TableCell>{program.endDate}</TableCell>
+              </TableRow>
+            ))}
         </TableBody>
       </Table>
     </TableContainer>
@@ -61,4 +64,3 @@ const ProgramTable: React.FC<ProgramTableProps> = ({
 };
 
 export default ProgramTable;
-

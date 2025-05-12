@@ -78,7 +78,6 @@
   justify-content: flex-end;
 }
 
-
 @media (max-width: 600px) {
   .user-account-table-header,
   .user-account-table-row {

@@ -43,14 +43,14 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   "posts/fetchInitial",
   async (
     { POSTS_BATCH_SIZE, currentUserCompanyId }: FetchInitialPostsArgs,
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
 
       const postsQuery = query(
         postsCollectionRef,
-        orderBy("displayDate", "desc")
+        orderBy("displayDate", "desc"),
       );
       const querySnapshot = await getDocs(postsQuery);
 
@@ -66,10 +66,10 @@ export const fetchInitialPostsBatch = createAsyncThunk(
           const isPublic = post.visibility === "public";
           const isCompanyPost =
             post.visibility === "company" &&
-            post.postUserCompanyId === currentUserCompanyId;
+            post.createdBy.companyId === currentUserCompanyId;
           const isSupplier = // add the posts where visibility is "supplier"
             post.visibility === "supplier" &&
-            post.postUserCompanyId === currentUserCompanyId;
+            post.createdBy.companyId === currentUserCompanyId;
           return isPublic || isCompanyPost || isSupplier;
         })
         .slice(0, POSTS_BATCH_SIZE);
@@ -81,7 +81,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       console.error("Error fetching initial posts:", error);
       return rejectWithValue(error instanceof Error ? error.message : error);
     }
-  }
+  },
 );
 
 // Define a type for the thunk argument
@@ -95,11 +95,13 @@ export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
     { lastVisible, limit: batchSize, currentUserCompanyId }: FetchMorePostsArgs,
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       if (!currentUserCompanyId) {
-        console.warn("⚠️ fetchMorePostsBatch called without a valid companyId.");
+        console.warn(
+          "⚠️ fetchMorePostsBatch called without a valid companyId.",
+        );
         return { posts: [], lastVisible: null };
       }
 
@@ -116,13 +118,13 @@ export const fetchMorePostsBatch = createAsyncThunk(
           postsCollectionRef,
           orderBy("displayDate", "desc"),
           startAfter(lastVisibleSnapshot),
-          limit(batchSize)
+          limit(batchSize),
         );
       } else {
         postsQuery = query(
           postsCollectionRef,
           orderBy("displayDate", "desc"),
-          limit(batchSize)
+          limit(batchSize),
         );
       }
 
@@ -157,7 +159,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
       }
       return rejectWithValue("An unknown error occurred");
     }
-  }
+  },
 );
 
 type FetchFilteredPostsArgs = {
@@ -175,7 +177,10 @@ type FetchFilteredPostsArgs = {
 
 export const fetchFilteredPosts = createAsyncThunk(
   "posts/fetchFiltered",
-  async ({ filters, currentHashtag, currentStarTag }: FetchFilteredPostsArgs, { rejectWithValue }) => {
+  async (
+    { filters, currentHashtag, currentStarTag }: FetchFilteredPostsArgs,
+    { rejectWithValue },
+  ) => {
     try {
       let queryToExecute: Query<DocumentData> = collection(db, "posts");
 
@@ -202,7 +207,7 @@ export const fetchFilteredPosts = createAsyncThunk(
         queryToExecute = query(
           queryToExecute,
           where("displayDate", ">=", filters.dateRange.startDate),
-          where("displayDate", "<=", filters.dateRange.endDate)
+          where("displayDate", "<=", filters.dateRange.endDate),
         );
       }
 
@@ -213,32 +218,33 @@ export const fetchFilteredPosts = createAsyncThunk(
         return [];
       }
 
-      const fetchedFilteredPosts: PostWithID[] = postSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as PostType),
-      }));
+      const fetchedFilteredPosts: PostWithID[] = postSnapshot.docs.map(
+        (doc) => ({
+          id: doc.id,
+          ...(doc.data() as PostType),
+        }),
+      );
       return fetchedFilteredPosts;
     } catch (error) {
       console.error("Error fetching filtered posts:", error);
       return rejectWithValue("Error fetching filtered posts.");
     }
-  }
+  },
 );
-
 
 // Thunk for fetching user posts
 export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
   "posts/fetchUserPosts",
   async (userId, { rejectWithValue }) => {
-    console.log(userId)
+    console.log(userId);
     try {
       // Firestore query to fetch user posts
       const q = query(
         collection(db, "posts"),
-        where("postUserId", "==", userId)
+        where("postUserId", "==", userId),
       );
       const querySnapshot = await getDocs(q);
-      console.log(querySnapshot)
+      console.log(querySnapshot);
       const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as PostType),
@@ -248,7 +254,7 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
       // showMessage
       return rejectWithValue("Error fetching user posts");
     }
-  }
+  },
 );
 
 export const fetchLatestPosts = createAsyncThunk<
@@ -268,7 +274,7 @@ export const fetchLatestPosts = createAsyncThunk<
       const baseQuery = query(
         postsCollectionRef,
         orderBy("timestamp", "desc"),
-        limit(10)
+        limit(10),
       );
 
       console.log("fetchLatestPosts read");
@@ -299,7 +305,7 @@ export const fetchLatestPosts = createAsyncThunk<
 // Define the arguments for the fetchPostsByIds thunk
 type FetchPostsByIdsArgs = {
   postIds: string[] | string; // This allows either a single string or an array of strings
-  token: string;
+  token?: string;
 };
 
 // Define the request payload type for the Firebase callable function
@@ -314,37 +320,38 @@ interface FetchPostWithTokenResponse {
 }
 
 // The thunk to fetch posts by IDs after validating the token
-export const fetchPostsByIds = createAsyncThunk<PostWithID[], FetchPostsByIdsArgs, { rejectValue: string }>(
-  "posts/fetchPostsByIds",
-  async ({ postIds, token }, { rejectWithValue }) => {
-    try {
-      const functions = getFunctions();
-      // Define the callable function with input and output types
-      const validatePostShareToken = httpsCallable<ValidatePostShareTokenRequest, FetchPostWithTokenResponse>(
-        functions,
-        "validatePostShareToken"
-      );
+export const fetchPostsByIds = createAsyncThunk<
+  PostWithID[],
+  FetchPostsByIdsArgs,
+  { rejectValue: string }
+>("posts/fetchPostsByIds", async ({ postIds, token }, { rejectWithValue }) => {
+  try {
+    const functions = getFunctions();
+    // Define the callable function with input and output types
+    const validatePostShareToken = httpsCallable<
+      ValidatePostShareTokenRequest,
+      FetchPostWithTokenResponse
+    >(functions, "validatePostShareToken");
 
-      // Ensure postIds is an array (if it's a single string, convert it to an array)
-      const ids = Array.isArray(postIds) ? postIds : [postIds];
+    // Ensure postIds is an array (if it's a single string, convert it to an array)
+    const ids = Array.isArray(postIds) ? postIds : [postIds];
 
-      // Iterate over postIds and fetch each post with the token
-      const fetchPostPromises = ids.map(async (postId) => {
-        const result = await validatePostShareToken({ postId, token });
-
-        // Type assertion to indicate the response structure
-        const data = result.data as FetchPostWithTokenResponse;
-
-        const post = data.post; // This will now be properly typed
-        return post;
+    // Iterate over postIds and fetch each post with the token
+    const fetchPostPromises = ids.map(async (postId) => {
+      const result = await validatePostShareToken({
+        postId,
+        token: token || "",
       });
 
-      // Wait for all posts to be fetched
-      const postsWithIds = await Promise.all(fetchPostPromises);
-      return postsWithIds;
-    } catch (error) {
-      console.error("Error fetching posts by IDs:", error);
-      return rejectWithValue("Error fetching posts by IDs.");
-    }
+      const data = result.data as FetchPostWithTokenResponse;
+      return data.post;
+    });
+
+    // Wait for all posts to be fetched
+    const postsWithIds = await Promise.all(fetchPostPromises);
+    return postsWithIds;
+  } catch (error) {
+    console.error("Error fetching posts by IDs:", error);
+    return rejectWithValue("Error fetching posts by IDs.");
   }
-);
+});

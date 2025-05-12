@@ -58,7 +58,12 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4); /* Consider token: var(--drawer-background) + opacity */
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.4
+  ); /* Consider token: var(--drawer-background) + opacity */
   z-index: 10;
   justify-content: center;
   align-items: center;
@@ -88,7 +93,7 @@
   }
 }
 
-@media (min-width: 900px)  {
+@media (min-width: 900px) {
   /* Styles for large tablets in portrait/landscape */
   .side-bar-container {
     display: flex;
@@ -99,5 +104,4 @@
   .activity-feed-container {
     max-width: 45%;
   }
- 
 }

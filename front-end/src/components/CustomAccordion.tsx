@@ -28,8 +28,11 @@ const CustomAccordion = <T extends string>({
 
   return (
     <div className="custom-accordion" ref={wrapperRef}>
-      <button className="accordion-summary btn-outline" onClick={toggleAccordion}>
-      {/* <button className="accordion-summary btn-outline" onClick={toggleAccordion}> */}
+      <button
+        className="accordion-summary btn-outline"
+        onClick={toggleAccordion}
+      >
+        {/* <button className="accordion-summary btn-outline" onClick={toggleAccordion}> */}
         <h3>{title}</h3>
         <h4 style={{ marginLeft: "1rem" }}>
           {selected.length > 0 ? (

@@ -15,9 +15,16 @@ interface ShareTokenResponse {
   // Include other properties if your function returns more information
 }
 
-export const generateShareTokenAndGetLink = async (postId: string, postTitle: string, postLink: string): Promise<string> => {
+export const generateShareTokenAndGetLink = async (
+  postId: string,
+  postTitle: string,
+  postLink: string,
+): Promise<string> => {
   const functions = getFunctions(); // Initialize Firebase Functions
-  const generatePostShareToken = httpsCallable(functions, "generatePostShareToken");
+  const generatePostShareToken = httpsCallable(
+    functions,
+    "generatePostShareToken",
+  );
 
   try {
     // Call the function and wait for the token
@@ -26,7 +33,8 @@ export const generateShareTokenAndGetLink = async (postId: string, postTitle: st
 
     // Construct the shareable link with the token
     const encodedTitle = encodeURIComponent(postTitle);
-    const linkToShare = postLink || `https://displaygram.com/view-shared-post/${postId}`; // postId is here
+    const linkToShare =
+      postLink || `https://displaygram.com/view-shared-post/${postId}`; // postId is here
     const shareableLink = `${linkToShare}?postId=${postId}&token=${token}&title=${encodedTitle}`; // postId is also here??
 
     return shareableLink;

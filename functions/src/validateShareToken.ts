@@ -43,16 +43,9 @@ export const validateShareToken = functions.https.onCall(
           "Failed to retrieve collection data."
         );
       }
+      const isTokenValid = token === collection.shareToken;
 
-      const tokenExpiry = collection.tokenExpiry
-        ? new Date(collection.tokenExpiry.toDate())
-        : null;
-      const isTokenValid =
-        token === collection.shareToken &&
-        tokenExpiry &&
-        new Date() < tokenExpiry;
-
-      return { valid: isTokenValid || false };
+      return { valid: isTokenValid };
     } catch (error) {
       console.error("Error validating share token:", error);
       throw new functions.https.HttpsError(

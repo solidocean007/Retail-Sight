@@ -1,5 +1,10 @@
 // resizeImages.ts
-export const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality = 0.95): Promise<Blob> => {
+export const resizeImage = (
+  file: File,
+  maxWidth: number,
+  maxHeight: number,
+  quality = 0.95,
+): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.src = URL.createObjectURL(file);
@@ -27,28 +32,33 @@ export const resizeImage = (file: File, maxWidth: number, maxHeight: number, qua
         }
       }
 
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       canvas.width = resizeNeeded ? width : image.width;
       canvas.height = resizeNeeded ? height : image.height;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       if (!ctx) {
-        reject(new Error('Canvas Context 2D is not available'));
+        reject(new Error("Canvas Context 2D is not available"));
         return;
       }
       ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
       // Output as PNG
-      canvas.toBlob((blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error('Canvas toBlob returned null, image cannot be created'));
-        }
-      }, 'image/png', quality); // PNG format
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(
+              new Error("Canvas toBlob returned null, image cannot be created"),
+            );
+          }
+        },
+        "image/png",
+        quality,
+      ); // PNG format
     };
     image.onerror = () => {
-      reject(new Error('Image loading error'));
+      reject(new Error("Image loading error"));
     };
   });
 };
-

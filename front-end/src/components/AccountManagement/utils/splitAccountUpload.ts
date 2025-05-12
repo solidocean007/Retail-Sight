@@ -16,7 +16,9 @@ export type AccountUpdateFields = Partial<
   >
 >;
 
-const parseAccountsFromFile = (file: File): Promise<Record<string, AccountUpdateFields>> => {
+const parseAccountsFromFile = (
+  file: File,
+): Promise<Record<string, AccountUpdateFields>> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -41,16 +43,16 @@ const parseAccountsFromFile = (file: File): Promise<Record<string, AccountUpdate
             accountName: row.accountName?.trim() || undefined,
             accountAddress: row.accountAddress?.trim() || undefined,
             typeOfAccount: row.typeOfAccount
-              // ? normalizeCustomerType(row.typeOfAccount)
-              ? row.typeOfAccount
+              ? // ? normalizeCustomerType(row.typeOfAccount)
+                row.typeOfAccount
               : undefined,
             chain: row.chain?.trim() || undefined,
             chainType:
               row.chainType?.toLowerCase() === "independent"
                 ? "independent"
                 : row.chainType
-                ? "chain"
-                : undefined,
+                  ? "chain"
+                  : undefined,
             salesRouteNums: row.salesRouteNums
               ? String(row.salesRouteNums)
                   .split(",")
@@ -72,7 +74,9 @@ const parseAccountsFromFile = (file: File): Promise<Record<string, AccountUpdate
   });
 };
 
-export const getAccountsForAdd = async (file: File): Promise<CompanyAccountType[]> => {
+export const getAccountsForAdd = async (
+  file: File,
+): Promise<CompanyAccountType[]> => {
   const raw = await parseAccountsFromFile(file);
   return Object.entries(raw).map(([accNum, fields]) => ({
     accountNumber: accNum,
@@ -87,7 +91,7 @@ export const getAccountsForAdd = async (file: File): Promise<CompanyAccountType[
 
 export const getAccountsForUpdate = async (
   file: File,
-  existingAccounts: CompanyAccountType[]
+  existingAccounts: CompanyAccountType[],
 ): Promise<CompanyAccountType[]> => {
   const raw = await parseAccountsFromFile(file);
   const map = new Map(existingAccounts.map((a) => [a.accountNumber, a]));
@@ -100,10 +104,13 @@ export const getAccountsForUpdate = async (
     updates.push({
       ...existing,
       ...Object.fromEntries(
-        Object.entries(fields).filter(([, v]) => v !== undefined)
+        Object.entries(fields).filter(([, v]) => v !== undefined),
       ),
       salesRouteNums: Array.from(
-        new Set([...(existing.salesRouteNums || []), ...(fields.salesRouteNums || [])])
+        new Set([
+          ...(existing.salesRouteNums || []),
+          ...(fields.salesRouteNums || []),
+        ]),
       ),
     });
   }

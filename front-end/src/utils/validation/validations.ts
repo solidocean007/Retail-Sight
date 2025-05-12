@@ -21,15 +21,13 @@ export const isPhoneValid = (userPhoneInput: string) => {
   }
 };
 
-
 export const isPasswordGood = (password: string): boolean => {
   const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
   return passwordRegex.test(password);
-}
-
+};
 
 export const validateUserInputs = (
-  userInputs: TUserInputType
+  userInputs: TUserInputType,
 ): TErrorsOfInputs => {
   const errors: TErrorsOfInputs = {
     firstNameInputError: "",
@@ -53,10 +51,7 @@ export const validateUserInputs = (
     errors.lastNameInputError = "Last name must be at least 2 characters long";
   }
 
-  if (
-    !isEmailValid(userInputs.emailInput) ||
-    userInputs.emailInput === ""
-  ) {
+  if (!isEmailValid(userInputs.emailInput) || userInputs.emailInput === "") {
     errors.emailInputError = "Email is Invalid";
   }
 
@@ -64,12 +59,14 @@ export const validateUserInputs = (
     errors.phoneInputError = "Phone Number is Invalid";
   }
 
-  if(!isPasswordGood(userInputs.passwordInput)){
-    errors.passwordInputError = "Password must contain at least 8 characters, including at least one letter and one number"
+  if (!isPasswordGood(userInputs.passwordInput)) {
+    errors.passwordInputError =
+      "Password must contain at least 8 characters, including at least one letter and one number";
   }
 
-  if(!isPasswordGood(userInputs.verifyPasswordInput)){
-    errors.verifyPasswordInputError = "Password must contain at least 8 characters, including at least one letter and one number"
+  if (!isPasswordGood(userInputs.verifyPasswordInput)) {
+    errors.verifyPasswordInputError =
+      "Password must contain at least 8 characters, including at least one letter and one number";
   }
 
   if (userInputs.passwordInput !== userInputs.verifyPasswordInput) {

@@ -1,18 +1,13 @@
-import {
-  getDocs,
-  collection,
-  doc,
-  writeBatch,
-} from "firebase/firestore";
+import { getDocs, collection, doc, writeBatch } from "firebase/firestore";
 import { db } from "./utils/firebase";
 import { CompanyAccountType } from "./utils/types";
 
 export const updatePostsWithFreshAccounts = async (
-  updatedAccounts: CompanyAccountType[]
+  updatedAccounts: CompanyAccountType[],
 ) => {
   const postsSnap = await getDocs(collection(db, "posts"));
   const accountMap = new Map(
-    updatedAccounts.map((acc) => [String(acc.accountNumber), acc])
+    updatedAccounts.map((acc) => [String(acc.accountNumber), acc]),
   );
 
   let batch = writeBatch(db); // ✅ initialize batch

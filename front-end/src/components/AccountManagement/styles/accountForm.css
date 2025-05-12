@@ -94,7 +94,6 @@
   padding-top: 1rem;
 }
 
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .account-form {
@@ -105,4 +104,3 @@
     padding: 0.5rem;
   }
 }
-

@@ -103,7 +103,6 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
         ) : (
           <div className="header-details">
             <div className="header-buttons">
-              
               <div className="menu-buttons">
                 <button onClick={handleDashboardClick}>Dashboard</button>
               </div>

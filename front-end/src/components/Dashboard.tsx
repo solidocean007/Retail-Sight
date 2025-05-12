@@ -8,7 +8,11 @@ import {
   saveCompanyUsersToIndexedDB,
 } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
-import { CompanyAccountType, DashboardModeType, UserType } from "../utils/types";
+import {
+  CompanyAccountType,
+  DashboardModeType,
+  UserType,
+} from "../utils/types";
 import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
@@ -33,6 +37,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   query,
   setDoc,
@@ -42,7 +47,10 @@ import {
 import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
-import { selectAllCompanyAccounts, setAllAccounts } from "../Slices/allAccountsSlice.ts";
+import {
+  selectAllCompanyAccounts,
+  setAllAccounts,
+} from "../Slices/allAccountsSlice.ts";
 import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
 import DashMenu from "./DashMenu.tsx";
 import { updatePostsWithFreshAccounts } from "../script.ts";
@@ -73,11 +81,11 @@ export const Dashboard = () => {
   // handleUpdatePosts();
 
   const [dashboardMode, setDashboardMode] = useState<DashboardModeType>(
-    isEmployee ? "MyGoalsMode" : "GoalManagerMode"
+    isEmployee ? "MyGoalsMode" : "GoalManagerMode",
   );
 
   const [selectedMode, setSelectedMode] = useState<DashboardModeType>(
-    isEmployee ? "MyGoalsMode" : "GoalManagerMode"
+    isEmployee ? "MyGoalsMode" : "GoalManagerMode",
   );
 
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
@@ -127,7 +135,7 @@ export const Dashboard = () => {
       // 2. Real-time Firestore listener
       const q = query(
         collection(db, "users"),
-        where("companyId", "==", companyId)
+        where("companyId", "==", companyId),
       );
       const unsubscribe = onSnapshot(
         q,
@@ -137,7 +145,7 @@ export const Dashboard = () => {
               ({
                 ...doc.data(),
                 uid: doc.id,
-              } as UserType)
+              }) as UserType,
           );
 
           // 3. Update Redux store and IndexedDB if Firestore data changes
@@ -147,7 +155,7 @@ export const Dashboard = () => {
         },
         (error) => {
           console.error("Error syncing company users:", error);
-        }
+        },
       );
 
       return () => unsubscribe(); // Cleanup listener
@@ -175,24 +183,22 @@ export const Dashboard = () => {
     loadAllCompanyAccounts();
   }, [user?.companyId, user?.role, dispatch]);
 
+  // const backupAccounts = async () => {
+  //   const originalDocRef = doc(db, "accounts", "ItrfDhvSl15y2IObOdop"); // your current ID
+  //   const backupDocRef = doc(db, "accounts_backup", "backup_2025_05_06");
 
-// const backupAccounts = async () => {
-//   const originalDocRef = doc(db, "accounts", "ItrfDhvSl15y2IObOdop"); // your current ID
-//   const backupDocRef = doc(db, "accounts_backup", "backup_2025_05_06");
+  //   const snapshot = await getDoc(originalDocRef);
+  //   if (!snapshot.exists()) {
+  //     console.error("Original document does not exist");
+  //     return;
+  //   }
 
-//   const snapshot = await getDoc(originalDocRef);
-//   if (!snapshot.exists()) {
-//     console.error("Original document does not exist");
-//     return;
-//   }
+  //   const data = snapshot.data();
+  //   await setDoc(backupDocRef, data);
+  //   console.log("Backup created successfully ✅");
+  // };
 
-//   const data = snapshot.data();
-//   await setDoc(backupDocRef, data);
-//   console.log("Backup created successfully ✅");
-// };
-
-// backupAccounts();
-
+  // backupAccounts();
 
   return (
     <div className="dashboard-container">
@@ -278,5 +284,30 @@ export const Dashboard = () => {
     </div>
   );
 };
+
+// async function removeTokenExpiryFromAllPosts() {
+//   const postsSnapshot = await getDocs(collection(db, "posts"));
+//   const batchUpdates: Promise<void>[] = [];
+
+//   postsSnapshot.forEach((postDoc) => {
+//     const data = postDoc.data();
+//     if (data.token && data.token.tokenExpiry) {
+//       const postRef = doc(db, "posts", postDoc.id);
+//       batchUpdates.push(
+//         updateDoc(postRef, {
+//           "token.tokenExpiry": deleteField()  // Firebase deleteField utility
+//         })
+//       );
+//     }
+//   });
+
+//   await Promise.all(batchUpdates);
+//   console.log("All tokenExpiry fields have been removed.");
+// }
+
+// import { deleteField } from "firebase/firestore";
+
+// // Call the function when ready
+// removeTokenExpiryFromAllPosts();
 
 export default Dashboard;

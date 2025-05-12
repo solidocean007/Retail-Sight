@@ -37,7 +37,6 @@
   background-color: rgba(0, 123, 255, 0.1);
 }
 
-
 .upload-template-modal p {
   font-size: 0.95rem;
   margin-bottom: 1rem;
@@ -64,4 +63,3 @@
   background-color: var(--button-background, #007bff);
   color: var(--button-text-color, #fff);
 }
-

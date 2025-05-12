@@ -1,6 +1,5 @@
 /* splashPage.css */
 
-
 .splash-container {
   display: flex;
   flex-direction: column;
@@ -55,7 +54,7 @@
 }
 
 .top-nav li {
-  margin-right: .5rem;
+  margin-right: 0.5rem;
   width: 9rem;
   color: whitesmoke;
 }
@@ -82,7 +81,9 @@
   position: absolute;
   right: -20px; /* Align arrow to the right */
   opacity: 0; /* Hidden by default */
-  transition: opacity 0.3s, transform 0.3s ease;
+  transition:
+    opacity 0.3s,
+    transform 0.3s ease;
 }
 
 /* Show arrow on hover */
@@ -90,7 +91,6 @@
   opacity: 1; /* Show arrow */
   transform: translateX(-65px); /* Move arrow slightly */
 }
-
 
 .top-nav a {
   /* color: var(--splash-nav-text); */
@@ -106,13 +106,15 @@
   padding: 2rem 2rem;
 }
 
-.first-section, .fifth-section {
+.first-section,
+.fifth-section {
   position: relative;
   width: 100vw;
   color: #ffffff;
 }
 
-.first-image-box img, .fifth-image-box img {
+.first-image-box img,
+.fifth-image-box img {
   width: 100%;
   min-height: 400px; /* Adjust as needed */
   height: auto;
@@ -120,11 +122,12 @@
   object-fit: cover; /* Ensures the image covers the area properly */
 }
 
-.first-content, .fifth-content {
+.first-content,
+.fifth-content {
   display: flex;
   flex-direction: column;
   text-align: justify;
-  background-image: url('https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fbluebackground.jpg?alt=media&token=74ab3fe5-ab33-4148-9337-14c869c1dfd7'); /* Adjust the path */
+  background-image: url("https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fbluebackground.jpg?alt=media&token=74ab3fe5-ab33-4148-9337-14c869c1dfd7"); /* Adjust the path */
   color: white;
   background-size: cover; /* Ensure the background covers the entire container */
   background-position: center; /* Center the background image */
@@ -189,7 +192,8 @@
   position: relative;
 }
 
-.first-section img, .fifth-section img {
+.first-section img,
+.fifth-section img {
   width: 100%;
   height: fit-content;
 }
@@ -197,19 +201,19 @@
 .hero-content-full {
   position: absolute;
   color: white;
-  top:1rem;
+  top: 1rem;
   left: 3rem;
   padding: 1rem;
 }
 
-.hero-content-left, .hero-content-right {
+.hero-content-left,
+.hero-content-right {
   width: 50%;
-  padding: .5rem;
+  padding: 0.5rem;
 }
 
-
 .second-content p {
- text-align: justify;
+  text-align: justify;
 }
 
 .features-image-box img {
@@ -222,7 +226,7 @@
 }
 
 .features-image-box::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -243,7 +247,16 @@
 
 .features-text-box {
   background-color: #5c97bf; /* Darker blue background */
-  background-image: linear-gradient(45deg, rgba(255,255,255,.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.2) 50%, rgba(255,255,255,.2) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
   background-size: 5px 5px; /* Adjust the size of the rectangles */
   color: black;
   padding: 1rem;
@@ -271,16 +284,14 @@
 }
 
 .fourth-insert {
-  margin: .5rem;
+  margin: 0.5rem;
 }
 
 .last-block {
   display: flex;
   flex-direction: column;
   color: var(--text-color);
-
 }
-
 
 .hero-image img {
   max-width: 100%;
@@ -339,7 +350,6 @@
   /* display: block; */
   width: 100%;
   padding: 0;
-
 }
 
 footer {
@@ -362,8 +372,8 @@ footer a:hover {
 
 /* Responsive styles for screens less than or equal to 768px wide (tablets). */
 @media (max-width: 750px) {
-  
-  .first-content, .fifth-content {
+  .first-content,
+  .fifth-content {
     width: 100%; /* Full width on smaller screens */
     position: static; /* Normal document flow */
     padding: 1rem 2rem; /* Increase padding */
@@ -373,11 +383,14 @@ footer a:hover {
     flex-direction: column;
   }
 
-  .second-content, .second-image-box  {
+  .second-content,
+  .second-image-box {
     width: auto;
   }
-  
-  .first-image-box img, .second-image-box img, .fifth-image-box img {
+
+  .first-image-box img,
+  .second-image-box img,
+  .fifth-image-box img {
     display: block; /* Ensure the image is a block element */
     min-height: 100px; /* Adjust for smaller screens */
     max-height: 200px;
@@ -387,18 +400,21 @@ footer a:hover {
     display: flex;
   }
 
-
-  .hero-content, .second-block {
+  .hero-content,
+  .second-block {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
   }
 
-  .hero-content-left, .hero-content-right {
+  .hero-content-left,
+  .hero-content-right {
     width: 100%;
   }
 
-  .hero-content-left, .hero-content-right, .hero-full {
+  .hero-content-left,
+  .hero-content-right,
+  .hero-full {
     position: relative; /* Reset position for smaller screens */
     text-align: center; /* Center text for smaller screens */
   }
@@ -407,7 +423,6 @@ footer a:hover {
     top: 0;
     left: 0;
   }
-
 
   .hero-full img {
     width: 100%; /* Full width of the container */
@@ -427,7 +442,7 @@ footer a:hover {
     flex-direction: column;
     width: 90%;
   }
-  
+
   /* Adjust button sizes */
   .enter-site-btn {
     padding: 0.8rem 1.6rem;
@@ -437,8 +452,6 @@ footer a:hover {
   .top-nav {
     position: relative;
   }
-
-  
 
   .top-nav .isMenuOpen {
     transform: translateY(0); /* Bring the menu on screen */
@@ -458,7 +471,6 @@ footer a:hover {
     transition: transform 0.3s ease-in-out;
     background-color: #002b45;
   }
-  
 }
 
 /* Responsive styles for screens less than or equal to 500px wide (phones). */
@@ -481,12 +493,14 @@ footer a:hover {
     width: 90%;
   }
 
-  .hero-content-left, .hero-content-right {
+  .hero-content-left,
+  .hero-content-right {
     padding-bottom: 0.5rem;
   }
 
   /* Ensure images don't overflow their containers */
-  .hero-content-right img, .hero-full img {
+  .hero-content-right img,
+  .hero-full img {
     max-width: 100%;
     height: auto;
   }

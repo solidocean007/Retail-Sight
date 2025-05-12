@@ -3,7 +3,7 @@ import { CompanyAccountType } from "../../../utils/types";
 
 export const handleAccountsFileUpload = (
   file: File,
-  onFinish: (parsedAccounts: CompanyAccountType[]) => void
+  onFinish: (parsedAccounts: CompanyAccountType[]) => void,
 ) => {
   const reader = new FileReader();
 
@@ -23,7 +23,7 @@ export const handleAccountsFileUpload = (
 
     rows.forEach((row) => {
       const customerNum = String(
-        row["accountNumber"] || row["customerNumber"]
+        row["accountNumber"] || row["customerNumber"],
       ).trim();
       const customerName = row["accountName"]?.trim();
       const accountAddress = row["accountAddress"]?.trim();

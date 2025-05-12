@@ -51,10 +51,10 @@ export const CreatePost = () => {
   const salesRouteNum = userData?.salesRouteNum;
 
   const usersGalloGoals = useSelector((state: RootState) =>
-    selectUsersGalloGoals(state, salesRouteNum)
+    selectUsersGalloGoals(state, salesRouteNum),
   );
   const usersCompanyGoals = useSelector((state: RootState) =>
-    selectUsersCompanyGoals(state, salesRouteNum)
+    selectUsersCompanyGoals(state, salesRouteNum),
   );
   // console.log(usersCompanyGoals)
   // Function to navigate to the next step
@@ -65,7 +65,7 @@ export const CreatePost = () => {
 
   const handlePostSubmission = useHandlePostSubmission();
   const companyId = userData?.companyId;
-  
+
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
@@ -110,17 +110,18 @@ export const CreatePost = () => {
     hashtags: [""],
     starTags: [""],
     commentCount: 0,
-    token: { sharedToken: "", tokenExpiry: "" }, 
+    token: { sharedToken: "", tokenExpiry: "" },
   });
 
   const [selectedCompanyMission, setSelectedCompanyMission] =
     useState<CompanyMissionType>();
   const [selectedMission, setSelectedMission] = useState<MissionType | null>(
-    null
+    null,
   );
   const navigate = useNavigate();
-  
-  useEffect(() => { // i think i don't need to destructure these items below.. simply use userData?.role and so on
+
+  useEffect(() => {
+    // i think i don't need to destructure these items below.. simply use userData?.role and so on
     setPost((prevPost) => ({
       ...prevPost,
       createdBy: {
@@ -149,11 +150,10 @@ export const CreatePost = () => {
         : undefined,
     }));
   }, [onBehalf, userData]);
-  
 
   useEffect(() => {
     const storedCategory = localStorage.getItem(
-      "postCategory"
+      "postCategory",
     ) as CategoryType | null;
     if (storedCategory) {
       setSelectedCategory(storedCategory);
@@ -185,7 +185,7 @@ export const CreatePost = () => {
         [field]: value,
       }));
     },
-    []
+    [],
   );
 
   const supplierVisibility = post.visibility === "supplier";
@@ -218,10 +218,10 @@ export const CreatePost = () => {
       case 1:
         return (
           <UploadImage
-          setSelectedFile={setSelectedFile}
-          post={post}
-          setPost={setPost}
-          onNext={goToNextStep}
+            setSelectedFile={setSelectedFile}
+            post={post}
+            setPost={setPost}
+            onNext={goToNextStep}
           />
         );
       case 2:
@@ -235,7 +235,6 @@ export const CreatePost = () => {
             usersCompanyGoals={usersCompanyGoals}
             handleFieldChange={handleFieldChange}
             setSelectedCompanyAccount={setSelectedCompanyAccount}
-           
           />
         );
       case 3:

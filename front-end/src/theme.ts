@@ -94,4 +94,3 @@ export const getTheme = (isDarkMode: boolean) => {
     },
   });
 };
-

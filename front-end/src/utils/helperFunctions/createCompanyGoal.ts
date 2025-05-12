@@ -3,9 +3,13 @@ import { db } from "../firebase";
 import { CompanyGoalType } from "../types";
 
 export const createCompanyGoal = async (
-  newGoal: Omit<CompanyGoalType, "id">
+  newGoal: Omit<CompanyGoalType, "id">,
 ): Promise<CompanyGoalType> => {
-  if (!newGoal.goalDescription || !newGoal.goalMetric || !newGoal.goalValueMin) {
+  if (
+    !newGoal.goalDescription ||
+    !newGoal.goalMetric ||
+    !newGoal.goalValueMin
+  ) {
     throw new Error("Missing required fields for creating a goal.");
   }
 
@@ -25,7 +29,3 @@ export const createCompanyGoal = async (
     throw error; // Propagate the error for the caller to handle
   }
 };
-
-
-
-

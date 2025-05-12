@@ -21,7 +21,7 @@ export function openDB(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
       const db = (event.target as IDBOpenDBRequest).result;
-    
+
       if (!db.objectStoreNames.contains("posts")) {
         db.createObjectStore("posts", { keyPath: "id" });
       }
@@ -74,9 +74,11 @@ export function openDB(): Promise<IDBDatabase> {
         db.createObjectStore("userAccounts_v2", { keyPath: "accountNumber" });
       }
       if (!db.objectStoreNames.contains("allUsersCompanyAccounts")) {
-        db.createObjectStore("allUsersCompanyAccounts", { keyPath: "accountNumber" });
+        db.createObjectStore("allUsersCompanyAccounts", {
+          keyPath: "accountNumber",
+        });
       }
-      
+
       if (!db.objectStoreNames.contains("galloGoals")) {
         db.createObjectStore("galloGoals", { keyPath: "id" });
       }
@@ -90,6 +92,5 @@ export function openDB(): Promise<IDBDatabase> {
         db.createObjectStore("allCompanySpecificGoals", { keyPath: "id" });
       }
     };
-    
   });
 }

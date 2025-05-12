@@ -38,11 +38,11 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
           displayEmpty
           disabled={goals.length === 0}
         >
-           <MenuItem value="no-goal">
-                    {goals.length > 0
-                      ? `${goals.length} ${label} available`
-                      : `No ${label.toLowerCase()} available`}
-                  </MenuItem>
+          <MenuItem value="no-goal">
+            {goals.length > 0
+              ? `${goals.length} ${label} available`
+              : `No ${label.toLowerCase()} available`}
+          </MenuItem>
           {goals.map((goal) => (
             <MenuItem
               key={goal.goalDetails.goalId}
@@ -58,4 +58,3 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
 };
 
 export default GalloGoalDropdown;
-

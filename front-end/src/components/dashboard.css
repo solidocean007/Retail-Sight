@@ -117,17 +117,17 @@
 
 .all-user-info {
   display: flex;
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
 }
 
-.user-name-email, .user-phone-role {
+.user-name-email,
+.user-phone-role {
   display: flex;
 }
 
 .user-detail {
   display: flex;
   width: 15rem;
-
 }
 
 .user-name-detail {
@@ -171,7 +171,8 @@
     display: none;
   }
 
-  .user-name-email, .user-phone-role {
+  .user-name-email,
+  .user-phone-role {
     flex-direction: column;
   }
 }
@@ -181,11 +182,10 @@
     font-size: small;
   }
 
-
   .dashboard-header h1 {
     font-size: 28px; /* Smaller font size for mobile */
   }
-  
+
   .dashboard-content {
     padding: 5px;
   }
@@ -194,8 +194,6 @@
     overflow-x: auto; /* Make tabs scrollable on mobile */
   }
 }
-
-
 
 @media (max-width: 500px) {
   .all-user-info {

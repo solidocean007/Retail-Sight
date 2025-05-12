@@ -53,11 +53,11 @@ const AccountForm: React.FC<AccountFormProps> = ({
       typeOfAccount: undefined,
       chain: "",
       chainType: "independent",
-    }
+    },
   );
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -82,7 +82,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
       !formData.salesRouteNums.length
     ) {
       alert(
-        "Account number, name, and at least one route number are required."
+        "Account number, name, and at least one route number are required.",
       );
       return;
     }

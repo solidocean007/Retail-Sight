@@ -10,7 +10,7 @@ export const createGalloGoal = async (
   selectedGoal: GalloGoalType | null,
   selectedProgram: GalloProgramType | null,
   selectedAccounts: EnrichedGalloAccountType[],
-  companyId: string
+  companyId: string,
 ): Promise<void> => {
   if (!selectedGoal || !selectedProgram) {
     throw new Error("Selected goal or program is missing.");
@@ -43,7 +43,7 @@ export const createGalloGoal = async (
           marketId: account.marketId,
         })),
       },
-      { merge: true }
+      { merge: true },
     );
     console.log("Goal saved successfully for selected accounts!");
   } catch (err) {
@@ -51,4 +51,3 @@ export const createGalloGoal = async (
     throw err;
   }
 };
-

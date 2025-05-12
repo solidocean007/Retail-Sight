@@ -21,7 +21,7 @@ const LogOutButton: React.FC = () => {
       console.log("Logout initiated");
 
       // Perform additional logout operations
-      await handleLogout();  // Clear auth state here first
+      await handleLogout(); // Clear auth state here first
 
       // Clear IndexedDB
       console.log("Attempting to delete IndexedDB...");

@@ -4,7 +4,8 @@ h3 {
   margin: 0px;
 }
 
-.channel-category-box, .clear-apply-button-box {
+.channel-category-box,
+.clear-apply-button-box {
   width: 100%;
 }
 
@@ -61,7 +62,7 @@ h3 {
   justify-content: flex-start;
   background-color: var(--background-pop-out-body);
   z-index: 2;
-  max-height: 500px; 
+  max-height: 500px;
   /* Additional styles for the active state */
 }
 
@@ -85,7 +86,8 @@ h3 {
 
 /* Media query for mobile screens */
 @media (max-width: 768px) {
-  .custom-accordion, .accordion-details.open {
+  .custom-accordion,
+  .accordion-details.open {
     width: calc(100% - 20px); /* Full width minus margin */
     box-sizing: border-box; /* Include padding and border in the element's width */
   }

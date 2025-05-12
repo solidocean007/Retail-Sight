@@ -1,22 +1,36 @@
 // StateSelector.tsx
-import React from 'react';
+import React from "react";
 
-export type StateType = 'New York' | 'California' | 'Illinois' | 'Texas' | 'Arizona'; // Add more states as needed
+export type StateType =
+  | "New York"
+  | "California"
+  | "Illinois"
+  | "Texas"
+  | "Arizona"; // Add more states as needed
 
-const STATES: StateType[] = ['New York', 'California', 'Illinois', 'Texas', 'Arizona'];
+const STATES: StateType[] = [
+  "New York",
+  "California",
+  "Illinois",
+  "Texas",
+  "Arizona",
+];
 
 interface StateSelectorProps {
   selectedState?: StateType;
   onStateChange: (state: StateType) => void;
 }
 
-const StateSelector: React.FC<StateSelectorProps> = ({ selectedState, onStateChange }) => {
+const StateSelector: React.FC<StateSelectorProps> = ({
+  selectedState,
+  onStateChange,
+}) => {
   return (
-    <select 
+    <select
       value={selectedState}
       onChange={(e) => onStateChange(e.target.value as StateType)}
     >
-      {STATES.map(state => (
+      {STATES.map((state) => (
         <option key={state} value={state}>
           {state}
         </option>

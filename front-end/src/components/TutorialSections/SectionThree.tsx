@@ -1,5 +1,5 @@
 // SectionThree.jsx
-import './tutorial-section.css'
+import "./tutorial-section.css";
 const SectionThree = () => {
   return (
     <div className="tutorial-section">

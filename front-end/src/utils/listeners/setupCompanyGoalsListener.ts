@@ -9,22 +9,19 @@ import {
 } from "../database/indexedDBUtils";
 
 export const setupCompanyGoalsListener =
-  (companyId: string) => 
-    (dispatch: any) => {
+  (companyId: string) => (dispatch: any) => {
     const q = query(
       collection(db, "companyGoals"),
-      where("companyId", "==", companyId)
+      where("companyId", "==", companyId),
     );
 
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-
         // Map the snapshot to company goals
         const allCompanyGoals = snapshot.docs.map((doc) => ({
           ...(doc.data() as CompanyGoalType),
         }));
-
 
         // Save all company goals to IndexedDB and Redux
         await clearGoalsFromIndexedDB("companyGoals"); // Clear IndexedDB
@@ -35,9 +32,8 @@ export const setupCompanyGoalsListener =
       },
       (error) => {
         console.error("Error in company goals listener:", error);
-      }
+      },
     );
 
     return () => unsubscribe();
   };
-

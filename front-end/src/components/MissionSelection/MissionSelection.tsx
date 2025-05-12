@@ -13,7 +13,9 @@ import { selectUser } from "../../Slices/userSlice";
 interface MissionSelectionProps {
   open: boolean;
   onClose: () => void;
-  setSelectedCompanyMission: React.Dispatch<React.SetStateAction<CompanyMissionType | undefined>>;
+  setSelectedCompanyMission: React.Dispatch<
+    React.SetStateAction<CompanyMissionType | undefined>
+  >;
   setSelectedMission: React.Dispatch<React.SetStateAction<MissionType | null>>;
 }
 
@@ -39,25 +41,30 @@ export const MissionSelection: React.FC<MissionSelectionProps> = ({
   const dispatch = useAppDispatch();
   const userData = useSelector(selectUser);
   const [companyMissions, setCompanyMissions] = useState<CompanyMissionType[]>(
-    []
+    [],
   );
   const [missions, setMissions] = useState<MissionType[]>([]);
-  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const fetchMissionsData = async () => {
       if (userData?.companyId) {
-        const companyMissionsAction = await dispatch(fetchCompanyMissions(userData.companyId));
-        const companyMissionsPayload = companyMissionsAction.payload as CompanyMissionType[];
+        const companyMissionsAction = await dispatch(
+          fetchCompanyMissions(userData.companyId),
+        );
+        const companyMissionsPayload =
+          companyMissionsAction.payload as CompanyMissionType[];
 
         setCompanyMissions(companyMissionsPayload);
 
         const missionPromises = companyMissionsPayload.map((companyMission) =>
-          dispatch(fetchMissions(companyMission.missionId))
+          dispatch(fetchMissions(companyMission.missionId)),
         );
         const missionResults = await Promise.all(missionPromises);
         const missionData = missionResults.map(
-          (result) => result.payload as MissionType
+          (result) => result.payload as MissionType,
         );
 
         setMissions(missionData);
@@ -68,7 +75,7 @@ export const MissionSelection: React.FC<MissionSelectionProps> = ({
   }, [dispatch, userData?.companyId]);
 
   const handleMissionSelect = (companyMission: CompanyMissionType) => {
-    const mission = missions.find(m => m.id === companyMission.missionId);
+    const mission = missions.find((m) => m.id === companyMission.missionId);
     setSelectedMission(mission || null); // Set the corresponding MissionType
     setSelectedMissionId(companyMission.missionId);
     setSelectedCompanyMission(companyMission);
@@ -84,9 +91,14 @@ export const MissionSelection: React.FC<MissionSelectionProps> = ({
         <h2>Select a Mission</h2>
         <ul>
           {companyMissions.map((companyMission: CompanyMissionType) => {
-            const mission = missions.find(m => m.id === companyMission.missionId);
+            const mission = missions.find(
+              (m) => m.id === companyMission.missionId,
+            );
             return (
-              <li key={companyMission.id} onClick={() => handleMissionSelect(companyMission)}>
+              <li
+                key={companyMission.id}
+                onClick={() => handleMissionSelect(companyMission)}
+              >
                 <Checkbox
                   checked={selectedMissionId === companyMission.missionId}
                 />
@@ -104,4 +116,3 @@ export const MissionSelection: React.FC<MissionSelectionProps> = ({
     </Modal>
   );
 };
-

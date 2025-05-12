@@ -14,7 +14,7 @@ const SplashPage = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const numberOfSections = 6;
   const sectionRefs = Array.from({ length: numberOfSections }, () =>
-    useRef<HTMLElement | null>(null)
+    useRef<HTMLElement | null>(null),
   );
 
   const toggleMenu = () => {

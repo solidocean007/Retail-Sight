@@ -49,12 +49,12 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   const [selectedGoal, setSelectedGoal] = useState<GalloGoalType | null>(null); // Track selected goal
   const [galloAccounts, setGalloAccounts] = useState<GalloAccountType[]>([]);
   const [enrichedAccounts, setEnrichedAccounts] = useState<GalloAccountType[]>(
-    []
+    [],
   );
   const [noProgramsMessage, setNoProgramsMessage] = useState("");
 
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
   const matchedAccounts = useSelector(selectMatchedAccounts);
   // const baseUrl = "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
@@ -63,7 +63,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   const baseUrlDevelopment =
     "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
 
-  const developmentApiKey = 'hFu935h2k71ONztCRr98Q69OkMJDbI9818Z7HRRj'; // temp get development programs
+  const developmentApiKey = "hFu935h2k71ONztCRr98Q69OkMJDbI9818Z7HRRj"; // temp get development programs
 
   const baseUrl = isProduction ? baseUrlProduction : baseUrlDevelopment;
   const apiKey = isProduction ? productionApiKey : developmentApiKey;
@@ -115,7 +115,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ ...requestOptions, baseUrl: url }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -152,7 +152,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ ...requestOptions, baseUrl: url }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -174,18 +174,18 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
       const galloAccounts = await fetchGalloAccounts(
         apiKey,
         selectedProgram.marketId,
-        selectedGoal.goalId
+        selectedGoal.goalId,
       );
 
       // Extract distributorAcctIds to filter company accounts
       const galloAccountIds = galloAccounts.map(
-        (account) => account.distributorAcctId
+        (account) => account.distributorAcctId,
       );
 
       // Step 2: Fetch only matching company accounts from Firestore
       const companyAccounts = await fetchCompanyAccounts(
         companyId,
-        galloAccountIds
+        galloAccountIds,
       );
 
       // Step 3: Directly enrich the Gallo accounts with company account details without additional matching
@@ -203,7 +203,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   const fetchGalloAccounts = async (
     apiKey: string,
     marketId: string,
-    goalId: string
+    goalId: string,
   ): Promise<GalloAccountType[]> => {
     const url = `${baseUrl}/healy/accounts?marketId=${marketId}&goalId=${goalId}`;
     const requestOptions = {
@@ -221,7 +221,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...requestOptions, baseUrl: url }),
-        }
+        },
       );
       const data = await response.json();
       return isSampleMode ? data.slice(0, accountSampleSize) : data;
@@ -233,7 +233,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
 
   const fetchCompanyAccounts = async (
     companyId: string,
-    galloAccountIds: string[]
+    galloAccountIds: string[],
   ): Promise<CompanyAccountType[]> => {
     try {
       const accountsId = await getCompanyAccountId(companyId); // Ensure this function returns a valid string or null
@@ -258,12 +258,12 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
             ? account.salesRouteNums
             : [account.salesRouteNums].filter(Boolean),
           accountNumber: String(account.accountNumber), // Ensure accountNumber is a string
-        })
+        }),
       ) as CompanyAccountType[];
 
       // Filter to only return accounts with matching accountNumbers in galloAccountIds
       const filteredAccounts = allAccounts.filter(
-        (account) => galloAccountIds.includes(account.accountNumber) // Compare as strings
+        (account) => galloAccountIds.includes(account.accountNumber), // Compare as strings
       );
 
       // Return sample size if isSampleMode is enabled
@@ -279,7 +279,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   // Revised enrichAccounts function without additional filtering
   const enrichAccounts = (
     galloAccounts: GalloAccountType[],
-    companyAccounts: CompanyAccountType[]
+    companyAccounts: CompanyAccountType[],
   ): EnrichedGalloAccountType[] => {
     // Map enriched accounts directly by merging the pre-filtered company accounts with galloAccounts
     return galloAccounts.map((galloAccount) => {
@@ -287,7 +287,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
       const matchingCompanyAccount = companyAccounts.find(
         (companyAccount) =>
           Number(companyAccount.accountNumber) ===
-          Number(galloAccount.distributorAcctId)
+          Number(galloAccount.distributorAcctId),
       );
 
       const enrichedAccount = {
@@ -305,7 +305,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
     if (matchedAccounts && galloAccounts) {
       const enriched = galloAccounts.map((galloAccount) => {
         const firestoreAccount = matchedAccounts.find(
-          (acc) => acc.accountNumber === galloAccount.distributorAcctId
+          (acc) => acc.accountNumber === galloAccount.distributorAcctId,
         );
         return firestoreAccount
           ? { ...galloAccount, ...firestoreAccount } // Merge Gallo and Firestore data

@@ -53,7 +53,7 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
       // Firestore real-time subscription setup
       const q = query(
         collection(db, "users"),
-        where("companyId", "==", companyId)
+        where("companyId", "==", companyId),
       );
 
       const unsubscribe = onSnapshot(
@@ -64,7 +64,7 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
               ({
                 ...doc.data(),
                 uid: doc.id,
-              } as UserType)
+              }) as UserType,
           );
 
           // Compare with IndexedDB data to see if there are changes
@@ -80,7 +80,7 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
         },
         (error) => {
           console.error("Error fetching users:", error);
-        }
+        },
       );
 
       // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts

@@ -17,25 +17,26 @@ const DateSelector: React.FC<DateSelectorProps> = ({
 }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
-         <DatePicker
-            label="Start Date"
-            value={startDate}
-            onChange={onDateChange}
-            // sx={{ width: "20%" }}
-            slotProps={{
-              textField: { fullWidth: false, margin: "normal",
+      <DatePicker
+        label="Start Date"
+        value={startDate}
+        onChange={onDateChange}
+        // sx={{ width: "20%" }}
+        slotProps={{
+          textField: {
+            fullWidth: false,
+            margin: "normal",
 
-                InputProps: {
-                  sx: { textAlign: "center", input: { textAlign: "center" } }, // Center input text
-                },
-               },
-              
-            }}
-          />
-        <Button variant="contained" color="primary" onClick={onFetchPrograms}>
-          Search Programs
-        </Button>
-      </Box>
+            InputProps: {
+              sx: { textAlign: "center", input: { textAlign: "center" } }, // Center input text
+            },
+          },
+        }}
+      />
+      <Button variant="contained" color="primary" onClick={onFetchPrograms}>
+        Search Programs
+      </Button>
+    </Box>
   );
 };
 

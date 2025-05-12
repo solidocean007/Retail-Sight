@@ -13,7 +13,8 @@
   width: 100%;
 }
 
-.flip-section h1, .flip-section h2 {
+.flip-section h1,
+.flip-section h2 {
   color: #333; /* Adjust color based on your theme */
 }
 
@@ -25,27 +26,27 @@
 /* Responsive Styles */
 @media (max-width: 768px) {
   .tutorial-container {
-      padding: 10px;
+    padding: 10px;
   }
 
   h1 {
-      font-size: 24px; /* Smaller font size for smaller screens */
+    font-size: 24px; /* Smaller font size for smaller screens */
   }
 
   button {
-      padding: 8px 15px;
-      font-size: 14px;
+    padding: 8px 15px;
+    font-size: 14px;
   }
 }
 
 @media (max-width: 480px) {
   h1 {
-      font-size: 20px; /* Even smaller font size for mobile screens */
+    font-size: 20px; /* Even smaller font size for mobile screens */
   }
 
   button {
-      width: 100%; /* Full width buttons on smaller screens */
-      padding: 10px;
-      margin: 5px 0px;
+    width: 100%; /* Full width buttons on smaller screens */
+    padding: 10px;
+    margin: 5px 0px;
   }
 }

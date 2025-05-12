@@ -72,9 +72,8 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
       const employeeMap: Record<string, string> = {};
       employees.forEach((employee) => {
         if (employee.salesRouteNum) {
-          employeeMap[
-            employee.salesRouteNum
-          ] = `${employee.firstName} ${employee.lastName}`;
+          employeeMap[employee.salesRouteNum] =
+            `${employee.firstName} ${employee.lastName}`;
         }
       });
       setEmployeeMap(employeeMap);
@@ -131,7 +130,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
 
           return map;
         },
-        {}
+        {},
       );
 
       setPrograms(Object.values(programsMap));
@@ -165,7 +164,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
     try {
       // Step 1: Fetch all goals associated with the programId
       const programGoals = galloGoals.filter(
-        (goal) => goal.programDetails.programId === programId
+        (goal) => goal.programDetails.programId === programId,
       );
 
       if (!programGoals.length) {
@@ -183,7 +182,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
 
       // Step 3: Notify the user
       dispatch(
-        showMessage("Program and its associated goals deleted successfully.")
+        showMessage("Program and its associated goals deleted successfully."),
       );
     } catch (error) {
       console.error("Error deleting program:", error);
@@ -318,7 +317,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                               .filter(
                                 (goal) =>
                                   goal.programDetails.programId ===
-                                  program.programId
+                                  program.programId,
                               )
                               .map((goal) => (
                                 <React.Fragment key={goal.goalDetails.goalId}>
@@ -332,7 +331,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                         color="secondary"
                                         onClick={() =>
                                           handleDeleteGalloGoal(
-                                            goal.goalDetails.goalId
+                                            goal.goalDetails.goalId,
                                           )
                                         }
                                       >
@@ -356,19 +355,19 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                         }}
                                         onClick={() =>
                                           toggleExpandGoal(
-                                            goal.goalDetails.goalId
+                                            goal.goalDetails.goalId,
                                           )
                                         }
                                       >
                                         {expandedGoals.has(
-                                          goal.goalDetails.goalId
+                                          goal.goalDetails.goalId,
                                         ) ? (
                                           <ExpandLessIcon />
                                         ) : (
                                           <ExpandMoreIcon />
                                         )}
                                         {expandedGoals.has(
-                                          goal.goalDetails.goalId
+                                          goal.goalDetails.goalId,
                                         )
                                           ? "Collapse Accounts"
                                           : "Show Accounts"}
@@ -377,13 +376,13 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                   </TableRow>
 
                                   {expandedGoals.has(
-                                    goal.goalDetails.goalId
+                                    goal.goalDetails.goalId,
                                   ) && (
                                     <TableRow>
                                       <TableCell colSpan={2}>
                                         <Collapse
                                           in={expandedGoals.has(
-                                            goal.goalDetails.goalId
+                                            goal.goalDetails.goalId,
                                           )}
                                           timeout="auto"
                                           unmountOnExit
@@ -413,7 +412,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                                   <TableCell
                                                     onClick={() =>
                                                       handleSort(
-                                                        "accountAddress"
+                                                        "accountAddress",
                                                       )
                                                     }
                                                   >
@@ -430,7 +429,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                                   <TableCell
                                                     onClick={() =>
                                                       handleSort(
-                                                        "salesRouteNums"
+                                                        "salesRouteNums",
                                                       )
                                                     }
                                                   >
@@ -480,11 +479,11 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                                 {sortData(
                                                   goal.accounts,
                                                   sortColumn,
-                                                  sortOrder
+                                                  sortOrder,
                                                 ).map((account, index) => {
                                                   const hasSubmittedPost =
                                                     Boolean(
-                                                      account.submittedPostId
+                                                      account.submittedPostId,
                                                     ); // ✅ Check if post was submitted
 
                                                   return (
@@ -503,7 +502,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                                         </TableCell>
                                                         <TableCell>
                                                           {Array.isArray(
-                                                            account.salesRouteNums
+                                                            account.salesRouteNums,
                                                           )
                                                             ? account
                                                                 .salesRouteNums[0]
@@ -512,7 +511,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                                         </TableCell>
                                                         <TableCell>
                                                           {Array.isArray(
-                                                            account.salesRouteNums
+                                                            account.salesRouteNums,
                                                           )
                                                             ? employeeMap[
                                                                 account
@@ -541,7 +540,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                                               color="primary"
                                                               onClick={() =>
                                                                 navigate(
-                                                                  `/user-home-page?postId=${account.submittedPostId}`
+                                                                  `/user-home-page?postId=${account.submittedPostId}`,
                                                                 )
                                                               }
                                                             >
@@ -553,12 +552,15 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
 
                                                       {/* Nested Rows for Additional Route Numbers */}
                                                       {Array.isArray(
-                                                        account.salesRouteNums
+                                                        account.salesRouteNums,
                                                       ) &&
                                                         account.salesRouteNums
                                                           .slice(1)
                                                           .map(
-                                                            (routeNum: string, idx: string) => (
+                                                            (
+                                                              routeNum: string,
+                                                              idx: string,
+                                                            ) => (
                                                               <TableRow
                                                                 key={`${account.distributorAcctId}-${routeNum}-${idx}`}
                                                               >
@@ -577,7 +579,7 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
                                                                 <TableCell />
                                                                 <TableCell />
                                                               </TableRow>
-                                                            )
+                                                            ),
                                                           )}
                                                     </React.Fragment>
                                                   );

@@ -1,6 +1,6 @@
-import React from 'react';
-import './LoadingIndicator.css';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import React from "react";
+import "./LoadingIndicator.css";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 interface LoadingIndicatorProps {
   progress: number; // Progress in percentage
@@ -24,10 +24,11 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ progress }) => {
       }}
     >
       <CircularProgress size={80} />
-      <Typography sx={{ mt: 2, color: "#fff" }}>{`Uploading... ${progress}%`}</Typography>
+      <Typography
+        sx={{ mt: 2, color: "#fff" }}
+      >{`Uploading... ${progress}%`}</Typography>
     </Box>
   );
 };
 
 export default LoadingIndicator;
-

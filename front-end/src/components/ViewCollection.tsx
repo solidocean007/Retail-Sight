@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { saveAs } from "file-saver";
@@ -12,12 +12,14 @@ import "./viewCollection.css";
 import { CircularProgress } from "@mui/material";
 
 interface SelectedPosts {
+  // unused
   // this isnt used
   [key: string]: boolean;
 }
 
 // Define a type for your function's response
 interface ExportDummyDataResponse {
+  // unused
   url: string;
 }
 
@@ -25,16 +27,18 @@ export const ViewCollection = () => {
   const [collectionDetails, setCollectionDetails] =
     useState<CollectionType | null>(null);
   const [exporting, setExporting] = useState(false); // exporting isnt used
-  const { collectionId, token } = useParams<{
-    collectionId: string;
-    token?: string;
-  }>();
+
+  const { collectionId } = useParams<{ collectionId: string }>();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token");
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { currentUser } = useFirebaseAuth(); // Adjust based on your auth hook
   const [posts, setPosts] = useState<PostWithID[]>([]);
   const [selectedPosts, setSelectedPosts] = useState<{ [id: string]: boolean }>(
-    {}
+    {},
   );
   const [loading, setLoading] = useState(true);
 
@@ -58,7 +62,7 @@ export const ViewCollection = () => {
 
   useEffect(() => {
     const fetchCollection = async () => {
-      console.log(collectionId);
+      console.log(collectionId); // NVpuDB79jE2gfxMqIM1k
       if (!collectionId) {
         console.error("Collection ID is undefined.");
         navigate("/page-not-found");
@@ -71,17 +75,23 @@ export const ViewCollection = () => {
           const functions = getFunctions();
           const validateShareTokenFn = httpsCallable(
             functions,
-            "validateShareToken"
+            "validateShareToken",
           );
           const tokenValidationResponse = await validateShareTokenFn({
             collectionId,
             token,
           });
+          console.log("Token Validation Response:", tokenValidationResponse);
+
           const isValidToken = (
             tokenValidationResponse.data as TokenValidationResponse
           ).valid;
+          console.log("Is token valid?", isValidToken);
 
           if (!isValidToken) {
+            console.log(
+              "Navigating to /access-denied because token is invalid.",
+            );
             navigate("/access-denied");
             return;
           }
@@ -92,6 +102,11 @@ export const ViewCollection = () => {
         const docSnap = await getDoc(collectionRef);
 
         if (docSnap.exists()) {
+          console.log(
+            "Fetched document snapshot:",
+            docSnap.exists() ? docSnap.data() : "No document found.",
+          );
+
           const data = docSnap.data();
           const collectionData: CollectionType = {
             name: data.name,
@@ -105,23 +120,22 @@ export const ViewCollection = () => {
 
           if (data && Array.isArray(data.posts) && data.posts.length > 0) {
             const actionResult = await dispatch(
-              fetchPostsByIds({ postIds: data.posts })
+              fetchPostsByIds({ postIds: data.posts, token: token || "" }),
             ).unwrap();
             setPosts(actionResult);
 
-            // Assuming actionResult is an array of posts and each post has an 'id' property
-            const allSelected = actionResult.reduce<SelectedPosts>(
+            const allSelected = actionResult.reduce<{ [key: string]: boolean }>(
               (acc, post) => {
                 acc[post.id] = true;
                 return acc;
               },
-              {}
+              {},
             );
 
             setSelectedPosts(allSelected);
           } else {
             console.log(
-              "Document has no posts or posts are not in expected format."
+              "Document has no posts or posts are not in expected format.",
             );
             // Handle the case where posts are missing or malformed, possibly set an error state or message
           }
@@ -188,7 +202,7 @@ export const ViewCollection = () => {
       return;
     }
     console.log(
-      `Filtered posts, total posts to export: ${postIdsToExport.length}`
+      `Filtered posts, total posts to export: ${postIdsToExport.length}`,
     );
 
     if (postIdsToExport.length === 0) {
@@ -216,7 +230,7 @@ export const ViewCollection = () => {
 
       if (result.data.url) {
         console.log(
-          `Download URL received: ${result.data.url}, initiating download`
+          `Download URL received: ${result.data.url}, initiating download`,
         ); // this line logs the correct url to begin download
         downloadZipFile(result.data.url);
       } else {
@@ -247,7 +261,7 @@ export const ViewCollection = () => {
         </h1>
         <button onClick={handleExportSelected}>Export Selected</button>
         {/* <button onClick={handleBackButton}>Back</button> */}
-        <button onClick={()=> navigate('/dashboard')}>Back</button>
+        <button onClick={() => navigate("/dashboard")}>Back</button>
       </div>
 
       <div className="posts-list">
@@ -257,14 +271,12 @@ export const ViewCollection = () => {
               <img src={`${post.imageUrl}_200x200`} alt="" />
             </div>
             <div className="list-item-details">
-              <h3>
-                {post.selectedStore} {post.storeNumber}{" "}
-              </h3>
+              <h3>{post.account?.accountName}</h3>
               <h4>
                 {post.description} {/* Display post details */}
               </h4>
               <h4>
-                {post.storeAddress} {post.state}
+                {post.account?.accountAddress} {post.state || ""}
               </h4>
               <h4>
                 {post.totalCaseCount > 0

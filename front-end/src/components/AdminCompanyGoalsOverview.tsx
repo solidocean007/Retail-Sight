@@ -10,7 +10,9 @@ interface CompanyGoalsStatusSummaryProps {
   goals: CompanyGoalType[];
 }
 
-const AdminCompanyGoalsOverview: React.FC<CompanyGoalsStatusSummaryProps> = ({ goals }) => {
+const AdminCompanyGoalsOverview: React.FC<CompanyGoalsStatusSummaryProps> = ({
+  goals,
+}) => {
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
 
@@ -37,4 +39,3 @@ const AdminCompanyGoalsOverview: React.FC<CompanyGoalsStatusSummaryProps> = ({ g
 };
 
 export default AdminCompanyGoalsOverview;
-

@@ -38,7 +38,9 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
         />
-        <TotalCaseCount handleTotalCaseCountChange={handleTotalCaseCountChange} />
+        <TotalCaseCount
+          handleTotalCaseCountChange={handleTotalCaseCountChange}
+        />
       </div>
       <button className="create-post-btn" onClick={onNext}>
         Next

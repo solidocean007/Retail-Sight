@@ -29,7 +29,7 @@ import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 
 const usePosts = (
   currentUserCompanyId: string | undefined,
-  POSTS_BATCH_SIZE: number
+  POSTS_BATCH_SIZE: number,
 ) => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -88,7 +88,7 @@ const usePosts = (
         postsToUpdate.sort(
           (a, b) =>
             new Date(b.displayDate).getTime() -
-            new Date(a.displayDate).getTime()
+            new Date(a.displayDate).getTime(),
         );
         if (postsToUpdate.length > 0) {
           dispatch(mergeAndSetPosts(postsToUpdate));
@@ -108,7 +108,7 @@ const usePosts = (
         collection(db, "posts"),
         where("timestamp", ">", lastSeenTimestamp),
         where("visibility", "==", "public"),
-        orderBy("timestamp", "desc")
+        orderBy("timestamp", "desc"),
       );
       const unsubscribePublic = onSnapshot(qPublic, processDocChanges);
 
@@ -118,7 +118,7 @@ const usePosts = (
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTimestamp),
           where("createdBy.companyId", "==", currentUserCompanyId),
-          orderBy("timestamp", "desc")
+          orderBy("timestamp", "desc"),
         );
         unsubscribeCompany = onSnapshot(qCompany, processDocChanges);
       }
@@ -142,7 +142,7 @@ const usePosts = (
           dispatch(mergeAndSetPosts(indexedDBPosts)); // Update Redux store with posts from IndexedDB
         } else {
           const action = await dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
+            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }),
           );
           if (fetchInitialPostsBatch.fulfilled.match(action)) {
             const fetchedPosts = action.payload.posts;
@@ -165,7 +165,7 @@ const usePosts = (
         );
         const querySnapshot = await getDocs(publicPostsQuery);
         const publicPosts = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() } as PostWithID))
+          .map((doc) => ({ id: doc.id, ...doc.data() }) as PostWithID)
           .filter((post) => post.visibility === "public");
         dispatch(mergeAndSetPosts(publicPosts));
       } catch (error) {

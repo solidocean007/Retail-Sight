@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 // Define prop types for better type checking
 interface FilterDisplayProps {
@@ -6,9 +6,13 @@ interface FilterDisplayProps {
   selectedCategories: string[];
 }
 
-const FilterDisplay: React.FC<FilterDisplayProps> = ({ selectedChannels, selectedCategories }) => {
+const FilterDisplay: React.FC<FilterDisplayProps> = ({
+  selectedChannels,
+  selectedCategories,
+}) => {
   // Helper function to format the display text
-  const formatDisplayText = (filters: string[]) => (filters.length > 0 ? filters.join(', ') : 'None');
+  const formatDisplayText = (filters: string[]) =>
+    filters.length > 0 ? filters.join(", ") : "None";
 
   return (
     <div>
@@ -29,4 +33,3 @@ const FilterDisplay: React.FC<FilterDisplayProps> = ({ selectedChannels, selecte
 };
 
 export default FilterDisplay;
-

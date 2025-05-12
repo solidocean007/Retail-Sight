@@ -6,7 +6,9 @@ import MyGalloGoals from "./MyGalloGoals";
 const MyGoals = () => {
   return (
     <Container>
-      <Typography variant="h2" sx={{ flexGrow: 1, fontSize: "large" }} >My Goals</Typography>
+      <Typography variant="h2" sx={{ flexGrow: 1, fontSize: "large" }}>
+        My Goals
+      </Typography>
       <MyCompanyGoals />
       <MyGalloGoals />
     </Container>

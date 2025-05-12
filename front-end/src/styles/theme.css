@@ -69,8 +69,6 @@
   --divider-color: #ccc; /* Light gray for light mode */
 }
 
-
-
 /* ============================
        🌞 Light Theme
      ============================ */
@@ -79,7 +77,9 @@
   --background-pop-out-body: var(--gray-50);
   --post-card-background: var(--post-card-animated-gradient-light);
   --header-background: var(--post-card-animated-gradient-light);
-  --dashboard-header-background: var(--post-card-animated-gradient-light); /* doesn't work */
+  --dashboard-header-background: var(
+    --post-card-animated-gradient-light
+  ); /* doesn't work */
   --dashboard-header-background: var(--gray-200); /* works */
 
   --dashboard-card: var(--gray-200);
@@ -195,7 +195,6 @@
   border-radius: 10px;
   border: 2px solid var(--gray-900);
 }
-
 
 /* ============================
        🧱 Global Themed Elements

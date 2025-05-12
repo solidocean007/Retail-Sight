@@ -1,4 +1,11 @@
-import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from "@firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from "@firebase/firestore";
 import { CompanyAccountType } from "../../../utils/types";
 import { db } from "../../../utils/firebase";
 
@@ -32,7 +39,7 @@ import { db } from "../../../utils/firebase";
 
 export function mergeAccountsByNumber(
   existing: CompanyAccountType[],
-  incoming: CompanyAccountType[]
+  incoming: CompanyAccountType[],
 ): CompanyAccountType[] {
   const accountMap: { [key: string]: CompanyAccountType } = {};
 
@@ -49,7 +56,7 @@ export function mergeAccountsByNumber(
         ...accountMap[accountNumber],
         ...acc,
         salesRouteNums: Array.from(
-          new Set([...currentRoutes, ...salesRouteNums.map(String)])
+          new Set([...currentRoutes, ...salesRouteNums.map(String)]),
         ),
       };
     }
@@ -58,7 +65,10 @@ export function mergeAccountsByNumber(
   return Object.values(accountMap);
 }
 
-export const writeAccountsToFirestore = async (companyId: string, accounts: CompanyAccountType[]) => {
+export const writeAccountsToFirestore = async (
+  companyId: string,
+  accounts: CompanyAccountType[],
+) => {
   const companyDocRef = doc(db, "companies", companyId);
   const companySnap = await getDoc(companyDocRef);
 
@@ -76,22 +86,20 @@ export const writeAccountsToFirestore = async (companyId: string, accounts: Comp
 
 export const writeCustomerTypesToCompany = async (
   companyId: string,
-  accounts: CompanyAccountType[]
+  accounts: CompanyAccountType[],
 ) => {
   const customerTypes = Array.from(
-    new Set(accounts.map((a) => a.typeOfAccount).filter(Boolean))
+    new Set(accounts.map((a) => a.typeOfAccount).filter(Boolean)),
   );
 
   const chains = Array.from(
-    new Set(accounts.map((a) => a.chain?.trim().toUpperCase()).filter(Boolean))
+    new Set(accounts.map((a) => a.chain?.trim().toUpperCase()).filter(Boolean)),
   );
 
   const companyRef = doc(db, "companies", companyId);
   await setDoc(
     companyRef,
     { customerTypes, chains }, // ✅ Store both
-    { merge: true }
+    { merge: true },
   );
 };
-
-

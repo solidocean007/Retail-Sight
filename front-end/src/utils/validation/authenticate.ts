@@ -23,22 +23,27 @@ export const handleSignUp = async (
   phoneInput: string,
   passwordInput: string,
   setSignUpError?: (error: string) => void,
-  role: "admin" | "super-admin" | "employee" | "status-pending" | "developer" = "employee" 
+  role:
+    | "admin"
+    | "super-admin"
+    | "employee"
+    | "status-pending"
+    | "developer" = "employee",
 ): Promise<UserType | undefined> => {
   try {
     // Create user with email and password in Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
-      passwordInput
+      passwordInput,
     );
     sendEmailVerification(userCredential.user)
-    .then(() => {
-      console.log("Verification email sent.");
-    })
-    .catch((error) => {
-      console.error("Error sending verification email:", error);
-    });
+      .then(() => {
+        console.log("Verification email sent.");
+      })
+      .catch((error) => {
+        console.error("Error sending verification email:", error);
+      });
 
     // Check if user is created successfully
     if (userCredential.user) {
@@ -78,18 +83,18 @@ export const handleSignUp = async (
     console.error(
       "Error encountered during sign-up process:",
       errorCode,
-      errorMessage
+      errorMessage,
     );
 
     if (setSignUpError) {
       // Check if setSignUpError is defined
       if (errorCode === "auth/email-already-in-use") {
         setSignUpError(
-          "The email address is already in use by another account."
+          "The email address is already in use by another account.",
         );
       } else {
         setSignUpError(
-          errorMessage || "An error occurred during the sign-up process."
+          errorMessage || "An error occurred during the sign-up process.",
         );
       }
     }
@@ -100,13 +105,13 @@ export const handleSignUp = async (
 
 export const handleLogin = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<UserType | null> => {
   try {
     const userCredential = await signInWithEmailAndPassword(
       auth,
       email,
-      password
+      password,
     );
     const user = userCredential.user;
     if (user) {

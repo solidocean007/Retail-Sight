@@ -10,7 +10,7 @@ import {
   Checkbox,
   Typography,
 } from "@mui/material";
-import {GalloGoalType } from "../../utils/types";
+import { GalloGoalType } from "../../utils/types";
 
 interface GoalTableProps {
   goals: GalloGoalType[];
@@ -18,7 +18,11 @@ interface GoalTableProps {
   onSelectGoal: (goal: GalloGoalType | null) => void;
 }
 
-const GoalTable: React.FC<GoalTableProps> = ({ goals, selectedGoal, onSelectGoal }) => {
+const GoalTable: React.FC<GoalTableProps> = ({
+  goals,
+  selectedGoal,
+  onSelectGoal,
+}) => {
   return (
     <TableContainer>
       <Typography variant="h6">Goals for Selected Program</Typography>
@@ -38,10 +42,10 @@ const GoalTable: React.FC<GoalTableProps> = ({ goals, selectedGoal, onSelectGoal
               <TableCell>
                 <Checkbox
                   checked={selectedGoal?.goalId === goal.goalId}
-                  onChange={() => 
+                  onChange={() =>
                     selectedGoal?.goalId === goal.goalId
-                    ? onSelectGoal(null)
-                    : onSelectGoal(goal)
+                      ? onSelectGoal(null)
+                      : onSelectGoal(goal)
                   }
                 />
               </TableCell>
@@ -58,4 +62,3 @@ const GoalTable: React.FC<GoalTableProps> = ({ goals, selectedGoal, onSelectGoal
 };
 
 export default GoalTable;
-

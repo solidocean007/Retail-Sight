@@ -11,42 +11,51 @@ import {
   where,
   // updateDoc
 } from "firebase/firestore";
-import { CompanyMissionType, MissionType, SubmittedMissionType } from "../utils/types";
+import {
+  CompanyMissionType,
+  MissionType,
+  SubmittedMissionType,
+} from "../utils/types";
 
 export const fetchCompanyMissions = createAsyncThunk<
   CompanyMissionType[], // Return type
   string // Argument type
->(
-  'companyMissions/fetchCompanyMissions',
-  async (companyId: string) => {
-    const q = query(collection(db, 'companyMissions'), where('companyIdAssigned', '==', companyId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as CompanyMissionType }));
-  }
-);
-
+>("companyMissions/fetchCompanyMissions", async (companyId: string) => {
+  const q = query(
+    collection(db, "companyMissions"),
+    where("companyIdAssigned", "==", companyId),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as CompanyMissionType),
+  }));
+});
 
 export const fetchMissions = createAsyncThunk(
-  'missions/fetchMissions',
+  "missions/fetchMissions",
   async (missionId: string) => {
     // Reference the document directly by its ID
-    const missionRef = doc(db, 'missions', missionId);
+    const missionRef = doc(db, "missions", missionId);
     const snapshot = await getDoc(missionRef);
 
     if (snapshot.exists()) {
-      return { id: snapshot.id, ...snapshot.data() as MissionType };
+      return { id: snapshot.id, ...(snapshot.data() as MissionType) };
     } else {
       throw new Error("Mission not found");
     }
-  }
+  },
 );
 
 export const createSubmittedMission = createAsyncThunk(
-  'submittedMissions/createSubmittedMission',
+  "submittedMissions/createSubmittedMission",
   async (submittedMission: SubmittedMissionType) => {
-    const submittedMissionRef = await addDoc(collection(db, 'submittedMissions'), submittedMission);
+    const submittedMissionRef = await addDoc(
+      collection(db, "submittedMissions"),
+      submittedMission,
+    );
     return { id: submittedMissionRef.id, ...submittedMission };
-  }
+  },
 );
 
 // export const addMission = createAsyncThunk('missions/addMissions', async (newMission: MissionsType) => {
@@ -70,7 +79,6 @@ export const createSubmittedMission = createAsyncThunk(
 //     return rejectWithValue('Failed to update team');
 //   }
 // });
-
 
 // export const deleteTeam = createAsyncThunk('teams/deleteTeam', async (id: string) => {
 //   await deleteDoc(doc(db, 'teams', id));

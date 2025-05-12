@@ -1,8 +1,16 @@
-import { useEffect, useState } from 'react';
-import { db } from '../utils/firebase';
-import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import './pendingInvites.css';
-import isUserEmailRegistered from '../utils/userData/isUserEmailRegistered';
+import { useEffect, useState } from "react";
+import { db } from "../utils/firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import "./pendingInvites.css";
+import isUserEmailRegistered from "../utils/userData/isUserEmailRegistered";
 
 interface Invite {
   id: string;
@@ -18,7 +26,10 @@ const PendingInvites = () => {
     const fetchPendingInvites = async () => {
       try {
         // Fetch pending invites
-        const invitesQuery = query(collection(db, "invites"), where("status", "==", "pending"));
+        const invitesQuery = query(
+          collection(db, "invites"),
+          where("status", "==", "pending"),
+        );
         const invitesSnapshot = await getDocs(invitesQuery);
 
         // Map fetched invites to state
@@ -41,7 +52,9 @@ const PendingInvites = () => {
   const cancelInvite = async (inviteId: string) => {
     try {
       await deleteDoc(doc(db, "invites", inviteId));
-      setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== inviteId));
+      setInvites((prevInvites) =>
+        prevInvites.filter((invite) => invite.id !== inviteId),
+      );
     } catch (error) {
       console.error("Error cancelling invite:", error);
     }

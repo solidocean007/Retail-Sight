@@ -53,7 +53,7 @@ const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
 
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const handleSelectAll = () => {
@@ -67,7 +67,7 @@ const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
 
   const toggleUserSelection = (uid: string) => {
     setSelectedUserIds((prev) =>
-      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
+      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid],
     );
   };
 

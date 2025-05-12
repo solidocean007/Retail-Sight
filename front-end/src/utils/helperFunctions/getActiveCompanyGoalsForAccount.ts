@@ -4,7 +4,7 @@ import { CompanyGoalType } from "../types";
 export const getActiveCompanyGoalsForAccount = (
   accountNumber: string | null | undefined,
   goals: CompanyGoalType[],
-  userId?: string
+  userId?: string,
 ): CompanyGoalType[] => {
   if (!accountNumber) return [];
 
@@ -12,19 +12,27 @@ export const getActiveCompanyGoalsForAccount = (
 
   const parseDate = (date: any) => {
     if (!date) return null;
-    if (typeof date === "string" || typeof date === "number") return new Date(date);
+    if (typeof date === "string" || typeof date === "number")
+      return new Date(date);
     if (date.seconds) return new Date(date.seconds * 1000);
     return null;
   };
 
   return goals.filter((goal) => {
-    const { accounts, appliesToAllAccounts, goalStartDate, goalEndDate, targetMode, usersIdsOfGoal } = goal;
+    const {
+      accounts,
+      appliesToAllAccounts,
+      goalStartDate,
+      goalEndDate,
+      targetMode,
+      usersIdsOfGoal,
+    } = goal;
 
     const isMatchingAccount =
       appliesToAllAccounts ||
       (Array.isArray(accounts) &&
-        accounts.some((account) =>
-          String(account.accountNumber) === String(accountNumber)
+        accounts.some(
+          (account) => String(account.accountNumber) === String(accountNumber),
         ));
 
     const isMatchingUser =
@@ -39,4 +47,3 @@ export const getActiveCompanyGoalsForAccount = (
     return (isMatchingAccount || isMatchingUser) && isWithinDateRange;
   });
 };
-

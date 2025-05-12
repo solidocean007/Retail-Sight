@@ -11,7 +11,7 @@ export const CategoryOptions: CategoryType[] = [
   "Dairy",
   "Meat",
   "Cookies",
-  "Donuts"
+  "Donuts",
 ];
 
 export const ChannelOptions: ChannelType[] = [

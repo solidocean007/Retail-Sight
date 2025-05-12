@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../utils/store";
-import {
-  setStateFilter,
-  setCityFilter,
-} from "../Slices/locationSlice";
+import { setStateFilter, setCityFilter } from "../Slices/locationSlice";
 import {
   Select,
   MenuItem,
@@ -33,22 +30,28 @@ const FilterLocation = () => {
   const [stateSelectOpen, setStateSelectOpen] = useState(false);
   const [citySelectOpen, setCitySelectOpen] = useState(false);
   const { locations, selectedStates, selectedCities } = useSelector(
-    (state: RootState) => state.locations
+    (state: RootState) => state.locations,
   );
   const dispatch = useDispatch<AppDispatch>();
 
-  const handleStateChange = (event: SelectChangeEvent<typeof selectedStates>) => {
+  const handleStateChange = (
+    event: SelectChangeEvent<typeof selectedStates>,
+  ) => {
     dispatch(setStateFilter(event.target.value as string[]));
   };
 
-  const handleCityChange = (event: SelectChangeEvent<typeof selectedCities>) => {
+  const handleCityChange = (
+    event: SelectChangeEvent<typeof selectedCities>,
+  ) => {
     dispatch(setCityFilter(event.target.value as string[]));
   };
 
-  const closeDropdown = (setOpen: (v: boolean) => void) => (event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    setOpen(false);
-  };
+  const closeDropdown =
+    (setOpen: (v: boolean) => void) =>
+    (event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+      setOpen(false);
+    };
 
   return (
     <Box
@@ -73,7 +76,9 @@ const FilterLocation = () => {
           onChange={handleStateChange}
           input={<OutlinedInput label="State" />}
           renderValue={(selected) =>
-            selected.map((value) => <Chip key={value} label={value} sx={{ mr: 0.5 }} />)
+            selected.map((value) => (
+              <Chip key={value} label={value} sx={{ mr: 0.5 }} />
+            ))
           }
           MenuProps={MenuProps}
           sx={{
@@ -82,8 +87,13 @@ const FilterLocation = () => {
             borderRadius: "var(--card-radius)",
           }}
         >
-          <Box sx={{ display: "flex", justifyContent: "flex-end", px: 1, py: 0.5 }}>
-            <IconButton size="small" onClick={closeDropdown(setStateSelectOpen)}>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", px: 1, py: 0.5 }}
+          >
+            <IconButton
+              size="small"
+              onClick={closeDropdown(setStateSelectOpen)}
+            >
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -109,7 +119,9 @@ const FilterLocation = () => {
             onChange={handleCityChange}
             input={<OutlinedInput label="City" />}
             renderValue={(selected) =>
-              selected.map((value) => <Chip key={value} label={value} sx={{ mr: 0.5 }} />)
+              selected.map((value) => (
+                <Chip key={value} label={value} sx={{ mr: 0.5 }} />
+              ))
             }
             MenuProps={MenuProps}
             sx={{
@@ -118,8 +130,18 @@ const FilterLocation = () => {
               // borderRadius: "var(--card-radius)",
             }}
           >
-            <Box sx={{ display: "flex", justifyContent: "flex-end", px: 1, py: 0.5 }}>
-              <IconButton size="small" onClick={closeDropdown(setCitySelectOpen)}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                px: 1,
+                py: 0.5,
+              }}
+            >
+              <IconButton
+                size="small"
+                onClick={closeDropdown(setCitySelectOpen)}
+              >
                 <CloseIcon fontSize="small" />
               </IconButton>
             </Box>
@@ -128,7 +150,7 @@ const FilterLocation = () => {
                 <MenuItem key={city} value={city}>
                   {city}
                 </MenuItem>
-              ))
+              )),
             )}
           </Select>
         </FormControl>
@@ -138,4 +160,3 @@ const FilterLocation = () => {
 };
 
 export default FilterLocation;
-

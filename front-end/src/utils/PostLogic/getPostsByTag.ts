@@ -8,14 +8,14 @@ export const getPostsByTag = async (
   hashTag: string,
   usersCompanyID?: string,
 ): Promise<PostWithID[]> => {
-  console.log('Searching for posts with hashTag:', hashTag);
+  console.log("Searching for posts with hashTag:", hashTag);
   hashTag = hashTag.toLowerCase();
   try {
     const postsCollectionRef = collection(db, "posts");
     const postsQuery = query(
       postsCollectionRef,
       where("hashtags", "array-contains", hashTag),
-      orderBy("displayDate", "desc")
+      orderBy("displayDate", "desc"),
     );
     const snapshots = await getDocs(postsQuery);
 
@@ -47,9 +47,8 @@ export const getPostsByTag = async (
   }
 };
 
-
 export const getPostsByStarTag = async (
-  starTag: string
+  starTag: string,
 ): Promise<PostWithID[]> => {
   try {
     starTag = starTag.toLowerCase();
@@ -67,11 +66,9 @@ export const getPostsByStarTag = async (
       ...(doc.data() as PostType),
     }));
 
-
-    return posts; 
+    return posts;
   } catch (error) {
     console.error("Error fetching posts by starTag:", error);
     throw error;
   }
 };
-

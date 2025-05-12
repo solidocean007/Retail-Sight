@@ -14,10 +14,13 @@ import AllCompanyGoalsView from "./AllCompanyGoalsView";
 import AllGalloGoalsView from "./AllGalloGoalsView";
 import "./allGoalsLayout.css";
 import { useSelector } from "react-redux";
-import { selectAllCompanyGoals, selectAllGalloGoals } from "../../Slices/goalsSlice";
+import {
+  selectAllCompanyGoals,
+  selectAllGalloGoals,
+} from "../../Slices/goalsSlice";
 import AdminCompanyGoalsOverview from "../AdminCompanyGoalsOverview";
 
-const AllGoalsLayout= ({ companyId }: { companyId: string | undefined }) => {
+const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   const [value, setValue] = useState(0);
   const theme = useTheme(); // Correct usage of `useTheme`
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Accessing breakpoints safely
@@ -103,7 +106,7 @@ const AllGoalsLayout= ({ companyId }: { companyId: string | undefined }) => {
       )}
       {value === 2 && (
         <div className="table-container">
-          <AllGalloGoalsView galloGoals={galloGoals}/>
+          <AllGalloGoalsView galloGoals={galloGoals} />
         </div>
       )}
     </div>

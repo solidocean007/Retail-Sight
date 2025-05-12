@@ -2,13 +2,13 @@
 import { UserType } from "../types";
 import { openDB } from "./indexedDBOpen";
 
-const USER_DATA_STORE = 'users'; // Name of the IndexedDB store for user data
-const USER_DATA_KEY = 'currentUser'; // Assuming you use a single key for storing current user data
-const USERS_COMPANY_USERS = 'usersCompanyEmployees'
+const USER_DATA_STORE = "users"; // Name of the IndexedDB store for user data
+const USER_DATA_KEY = "currentUser"; // Assuming you use a single key for storing current user data
+const USERS_COMPANY_USERS = "usersCompanyEmployees";
 
 export const saveUserDataToIndexedDB = async (userData: UserType) => {
   const db = await openDB();
-  const transaction = db.transaction([USER_DATA_STORE], 'readwrite');
+  const transaction = db.transaction([USER_DATA_STORE], "readwrite");
   const store = transaction.objectStore(USER_DATA_STORE);
   const request = store.put(userData, USER_DATA_KEY); // Use put if you want to update existing entries, add if not
   return new Promise((resolve, reject) => {
@@ -17,9 +17,12 @@ export const saveUserDataToIndexedDB = async (userData: UserType) => {
   });
 };
 
-export const updateUserRoleInIndexedDB = async (userId: string, newRole: string) => {
+export const updateUserRoleInIndexedDB = async (
+  userId: string,
+  newRole: string,
+) => {
   const db = await openDB();
-  const transaction = db.transaction([USERS_COMPANY_USERS], 'readwrite');
+  const transaction = db.transaction([USERS_COMPANY_USERS], "readwrite");
   const store = transaction.objectStore(USERS_COMPANY_USERS);
 
   // First, get the user by their ID
@@ -37,7 +40,7 @@ export const updateUserRoleInIndexedDB = async (userId: string, newRole: string)
         updateRequest.onsuccess = () => resolve();
         updateRequest.onerror = () => reject(updateRequest.error);
       } else {
-        reject(new Error('User not found'));
+        reject(new Error("User not found"));
       }
     };
 
@@ -52,10 +55,10 @@ export const updateUserRoleInIndexedDB = async (userId: string, newRole: string)
 
 export const getUserDataFromIndexedDB = async (): Promise<UserType | null> => {
   const db = await openDB();
-  const transaction = db.transaction([USER_DATA_STORE], 'readonly');
+  const transaction = db.transaction([USER_DATA_STORE], "readonly");
   const store = transaction.objectStore(USER_DATA_STORE);
   const request = store.get(USER_DATA_KEY);
-  
+
   return new Promise((resolve, reject) => {
     request.onsuccess = () => {
       if (request.result) {
@@ -70,7 +73,7 @@ export const getUserDataFromIndexedDB = async (): Promise<UserType | null> => {
 
 export const clearUserDataFromIndexedDB = async () => {
   const db = await openDB();
-  const transaction = db.transaction([USER_DATA_STORE], 'readwrite');
+  const transaction = db.transaction([USER_DATA_STORE], "readwrite");
   const store = transaction.objectStore(USER_DATA_STORE);
   const request = store.delete(USER_DATA_KEY);
   return new Promise((resolve, reject) => {
@@ -81,14 +84,14 @@ export const clearUserDataFromIndexedDB = async () => {
 
 export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
   const db = await openDB(); // Assuming openDB is a function that opens the IndexedDB connection
-  const transaction = db.transaction(['usersCompanyEmployees'], 'readwrite');
-  const store = transaction.objectStore('usersCompanyEmployees');
+  const transaction = db.transaction(["usersCompanyEmployees"], "readwrite");
+  const store = transaction.objectStore("usersCompanyEmployees");
 
   return new Promise<void>((resolve, reject) => {
     companyUsers.forEach((user) => {
       const request = store.put(user); // Ensure that user has a property that matches the key path
       request.onerror = () => {
-        console.error('Error putting user into IndexedDB:', request.error);
+        console.error("Error putting user into IndexedDB:", request.error);
         reject(request.error);
       };
     });
@@ -97,7 +100,7 @@ export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
       resolve();
     };
     transaction.onerror = () => {
-      console.error('Transaction error in IndexedDB:', transaction.error);
+      console.error("Transaction error in IndexedDB:", transaction.error);
       reject(transaction.error);
     };
   });
@@ -105,8 +108,8 @@ export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
 
 export const getCompanyUsersFromIndexedDB = async (): Promise<UserType[]> => {
   const db = await openDB();
-  const transaction = db.transaction([USERS_COMPANY_USERS], 'readonly');
-  const store = transaction.objectStore('usersCompanyEmployees');
+  const transaction = db.transaction([USERS_COMPANY_USERS], "readonly");
+  const store = transaction.objectStore("usersCompanyEmployees");
   const request = store.getAll();
 
   return new Promise((resolve, reject) => {

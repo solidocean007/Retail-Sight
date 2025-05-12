@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 // Define your Supplier type
 export type SupplierType = {
@@ -13,11 +13,14 @@ interface SupplierSelectorProps {
 }
 
 // const SupplierSelector: React.FC<SupplierSelectorProps> = ({ selectedSupplier, suppliers, onSupplierChange }) => {
-const SupplierSelector: React.FC<SupplierSelectorProps> = ({ selectedSupplier, onSupplierChange }) => {
+const SupplierSelector: React.FC<SupplierSelectorProps> = ({
+  selectedSupplier,
+  onSupplierChange,
+}) => {
   return (
-    <select 
+    <select
       disabled
-      title='supplier selector'
+      title="supplier selector"
       value={selectedSupplier}
       onChange={(e) => onSupplierChange(e.target.value)}
     >

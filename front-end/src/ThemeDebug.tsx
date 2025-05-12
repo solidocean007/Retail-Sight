@@ -48,7 +48,8 @@ export const ThemeDebug = () => {
       <ul style={{ padding: 0, margin: 0 }}>
         {Object.entries(vars).map(([key, value]) => (
           <li key={key}>
-            <code>{key}</code>: <span style={{ fontWeight: "bold" }}>{value}</span>
+            <code>{key}</code>:{" "}
+            <span style={{ fontWeight: "bold" }}>{value}</span>
           </li>
         ))}
       </ul>

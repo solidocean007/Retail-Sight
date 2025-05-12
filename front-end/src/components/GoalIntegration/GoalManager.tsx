@@ -64,7 +64,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
         {isMobile ? (
           <Select
             value={value}
-            onChange={(e) => setValue(Number(e.target.value))} 
+            onChange={(e) => setValue(Number(e.target.value))}
             fullWidth
             displayEmpty
           >

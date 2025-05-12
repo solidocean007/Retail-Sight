@@ -1,5 +1,4 @@
-
-export  const clearSearch = async () => {
+export const clearSearch = async () => {
   setCurrentHashtag(null);
   setCurrentStarTag(null);
   setActivePostSet("posts");

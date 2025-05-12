@@ -16,6 +16,7 @@ import {
   Chip,
   Select,
   InputLabel,
+  Checkbox,
 } from "@mui/material";
 import {
   CompanyAccountType,
@@ -46,7 +47,8 @@ const CreateCompanyGoalView = () => {
   const companyUsers = useSelector(selectCompanyUsers);
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
-
+  const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
+  const [perUserQuota, setPerUserQuota] = useState<number | string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
   const [selectedAccounts, setSelectedAccounts] = useState<
@@ -73,8 +75,6 @@ const CreateCompanyGoalView = () => {
     userIds: [] as string[],
   });
 
-  console.log(filters);
-
   type SavedFilterSet = typeof filters;
 
   const normalizedCompanyUsers = useMemo(() => {
@@ -90,13 +90,13 @@ const CreateCompanyGoalView = () => {
 
   const getUserIdForAccount = (
     account: CompanyAccountType,
-    users: { uid: string; salesRouteNum?: string }[]
+    users: { uid: string; salesRouteNum?: string }[],
   ): string | null => {
     if (!account.salesRouteNums || !account.salesRouteNums.length) return null;
 
     for (const routeNum of account.salesRouteNums) {
       const match = users.find(
-        (u) => u.salesRouteNum && u.salesRouteNum === routeNum
+        (u) => u.salesRouteNum && u.salesRouteNum === routeNum,
       );
       if (match) return match.uid;
     }
@@ -113,10 +113,17 @@ const CreateCompanyGoalView = () => {
           filters.typeOfAccounts.includes(a.typeOfAccount || "")) &&
         (!filters.userIds.length ||
           filters.userIds.includes(
-            getUserIdForAccount(a, normalizedCompanyUsers) || ""
-          ))
+            getUserIdForAccount(a, normalizedCompanyUsers) || "",
+          )),
     );
   }, [accounts, filters]);
+
+  useEffect(() => {
+    // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
+    if (goalTargetMode === "goalForSelectedAccounts") {
+      setSelectedAccounts(filteredAccounts);
+    }
+  }, [filteredAccounts, goalTargetMode]);
 
   const readyForCreation: boolean =
     goalTitle.trim().length > 0 &&
@@ -178,7 +185,7 @@ const CreateCompanyGoalView = () => {
               salesRouteNums: Array.isArray(account.salesRouteNums)
                 ? account.salesRouteNums
                 : [account.salesRouteNums].filter(Boolean),
-            })
+            }),
           );
           setAccounts(formatted);
         }
@@ -198,9 +205,9 @@ const CreateCompanyGoalView = () => {
           (user) =>
             user.uid === uid &&
             user.salesRouteNum &&
-            account.salesRouteNums?.includes(user.salesRouteNum)
-        )
-      )
+            account.salesRouteNums?.includes(user.salesRouteNum),
+        ),
+      ),
     );
   }, [accounts, selectedUserIds, normalizedCompanyUsers]);
 
@@ -224,6 +231,13 @@ const CreateCompanyGoalView = () => {
       return;
     }
 
+    if (enforcePerUserQuota && (!perUserQuota || Number(perUserQuota) < 1)) {
+      alert(
+        "Specify a valid number greater than 0 for per user submission requirement.",
+      );
+      return;
+    }
+
     setIsSaving(true);
     try {
       const newGoal = {
@@ -240,6 +254,7 @@ const CreateCompanyGoalView = () => {
           goalTargetMode === "goalForSelectedAccounts" ? selectedAccounts : [],
         usersIdsOfGoal:
           goalTargetMode === "goalForSelectedUsers" ? selectedUserIds : [],
+        perUserQuota: enforcePerUserQuota ? Number(perUserQuota) : undefined,
       };
 
       await createCompanyGoal(newGoal);
@@ -294,7 +309,7 @@ const CreateCompanyGoalView = () => {
               type="date"
               value={goalEndDate}
               onChange={(e) => setGoalEndDate(e.target.value)}
-              // InputLabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }}
               fullWidth
             />
           </Box>
@@ -341,6 +356,36 @@ const CreateCompanyGoalView = () => {
                 </Button>
               </Box>
             </Box>
+          </Box>
+          <Box>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={enforcePerUserQuota}
+                  onChange={(e) => setEnforcePerUserQuota(e.target.checked)}
+                />
+              }
+              label="Require a minimum number of submissions per user"
+            />
+
+            {enforcePerUserQuota && (
+              <TextField
+                label="Per User Quota"
+                type="number"
+                value={perUserQuota}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "") {
+                    setPerUserQuota(""); // Allow blank state
+                  } else {
+                    const numericValue = Number(value);
+                    setPerUserQuota(isNaN(numericValue) ? 0 : numericValue);
+                  }
+                }}
+                helperText="Example: Require 3 submissions per user"
+                sx={{ mt: 1 }}
+              />
+            )}
           </Box>
 
           <FormControl component="fieldset">
@@ -516,7 +561,7 @@ const CreateCompanyGoalView = () => {
                           setFilters({
                             ...filters,
                             typeOfAccounts: filters.typeOfAccounts.filter(
-                              (x) => x !== t
+                              (x) => x !== t,
                             ),
                           })
                         }
@@ -526,7 +571,7 @@ const CreateCompanyGoalView = () => {
                   <div className="sales-people-container">
                     {filters.userIds.map((uid) => {
                       const user = normalizedCompanyUsers.find(
-                        (u) => u.uid === uid
+                        (u) => u.uid === uid,
                       );
                       const name = user
                         ? `${user.firstName} ${user.lastName}`
@@ -540,7 +585,7 @@ const CreateCompanyGoalView = () => {
                             setFilters({
                               ...filters,
                               userIds: filters.userIds.filter(
-                                (id) => id !== uid
+                                (id) => id !== uid,
                               ),
                             })
                           }
@@ -548,8 +593,6 @@ const CreateCompanyGoalView = () => {
                       );
                     })}
                   </div>
-
-                  
                 </Box>
               )}
 
@@ -580,7 +623,7 @@ const CreateCompanyGoalView = () => {
                           setSavedFilterSets(updated);
                           localStorage.setItem(
                             "displaygram_filter_sets",
-                            JSON.stringify(updated)
+                            JSON.stringify(updated),
                           );
                         }}
                       />
@@ -590,6 +633,36 @@ const CreateCompanyGoalView = () => {
               )}
             </>
           )}
+          <Box mt={2} p={2} border="1px solid #ccc" borderRadius="8px">
+            <Typography variant="subtitle1">Summary:</Typography>
+            <Typography variant="body2" mt={1}>
+              You are assigning this goal to{" "}
+              <strong>
+                {goalTargetMode === "goalForAllAccounts"
+                  ? "all accounts"
+                  : goalTargetMode === "goalForSelectedAccounts"
+                    ? `${selectedAccounts.length} selected account(s)`
+                    : `${selectedUserIds.length} selected user(s)`}
+              </strong>
+              .
+            </Typography>
+            {enforcePerUserQuota && (
+              <Typography variant="body2" mt={1}>
+                Each selected user must submit at least{" "}
+                <strong>{perUserQuota}</strong> submission
+                {Number(perUserQuota) > 1 ? "s" : ""}
+              </Typography>
+            )}
+          </Box>
+
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCreateGoal}
+            disabled={!readyForCreation || isSaving}
+          >
+            {isSaving ? "Creating..." : "Create Goal"}
+          </Button>
           {goalTargetMode === "goalForSelectedAccounts" && (
             <>
               <Typography variant="body2" sx={{ mt: 1 }}>
@@ -621,15 +694,6 @@ const CreateCompanyGoalView = () => {
               />
             </>
           )}
-
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleCreateGoal}
-            disabled={!readyForCreation || isSaving}
-          >
-            {isSaving ? "Creating..." : "Create Goal"}
-          </Button>
         </Box>
       </Box>
     </Container>

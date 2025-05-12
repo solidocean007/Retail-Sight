@@ -61,7 +61,7 @@ const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userUid }) => {
 
   const userSubmissions = useMemo(() => {
     return (goal.submittedPosts || []).filter(
-      (post: GoalSubmissionType) => post.submittedBy?.uid === userUid
+      (post: GoalSubmissionType) => post.submittedBy?.uid === userUid,
     );
   }, [goal.submittedPosts, userUid]);
 
@@ -72,8 +72,8 @@ const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userUid }) => {
     if (goal.targetMode === "goalForSelectedAccounts") {
       return userAccounts.filter((acc) =>
         goal.accounts?.some(
-          (goalAcc) => goalAcc.accountNumber === acc.accountNumber
-        )
+          (goalAcc) => goalAcc.accountNumber === acc.accountNumber,
+        ),
       ).length;
     }
     if (goal.targetMode === "goalForSelectedUsers") {
@@ -158,8 +158,8 @@ const UserGoalCard: React.FC<UserGoalCardProps> = ({ goal, userUid }) => {
             {expanded
               ? `Close (${filteredRows.length})`
               : filteredRows.length > 0
-              ? `Open (${filteredRows.length})`
-              : "No Submissions"}
+                ? `Open (${filteredRows.length})`
+                : "No Submissions"}
           </button>
         </div>
 

@@ -29,7 +29,10 @@ interface EmployeesViewerProps {
   setLocalUsers: React.Dispatch<React.SetStateAction<UserType[]>>;
 }
 
-const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalUsers }) => {
+const EmployeesViewer: React.FC<EmployeesViewerProps> = ({
+  localUsers,
+  setLocalUsers,
+}) => {
   const currentUser = useSelector(selectUser);
   const isSuperAdmin = currentUser?.role === "super-admin";
   const isAdmin = currentUser?.role === "admin";
@@ -38,12 +41,16 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
   const [inviteEmail, setInviteEmail] = useState<string>("");
   const [showPendingInvites, setShowPendingInvites] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [editedUsers, setEditedUsers] = useState<{ [key: string]: UserType }>({});
+  const [editedUsers, setEditedUsers] = useState<{ [key: string]: UserType }>(
+    {},
+  );
   const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
 
   const sortedUsers = [...localUsers].sort((a, b) => {
     const lastCompare = a.lastName.localeCompare(b.lastName);
-    return lastCompare !== 0 ? lastCompare : a.firstName.localeCompare(b.firstName);
+    return lastCompare !== 0
+      ? lastCompare
+      : a.firstName.localeCompare(b.firstName);
   });
 
   const toggleInvites = () => setShowPendingInvites((prev) => !prev);
@@ -58,7 +65,8 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
 
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail || !currentUser) return setFeedbackMessage("Missing email or user context");
+    if (!inviteEmail || !currentUser)
+      return setFeedbackMessage("Missing email or user context");
 
     const functions = getFunctions();
     const inviteFunction = httpsCallable(functions, "sendInvite");
@@ -67,7 +75,11 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
     const inviteLink = `${window.location.origin}/sign-up-login?companyName=${encodeURIComponent(currentUser.company)}&email=${encodeURIComponent(inviteEmail)}&mode=signup`;
 
     try {
-      await inviteFunction({ email: inviteEmail, inviter: `${currentUser.firstName} ${currentUser.lastName}`, inviteLink });
+      await inviteFunction({
+        email: inviteEmail,
+        inviter: `${currentUser.firstName} ${currentUser.lastName}`,
+        inviteLink,
+      });
       await setDoc(inviteDocRef, {
         companyId: currentUser.companyId,
         email: inviteEmail,
@@ -84,7 +96,11 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
     }
   };
 
-  const handleEditChange = (userId: string, field: keyof UserType, value: string) => {
+  const handleEditChange = (
+    userId: string,
+    field: keyof UserType,
+    value: string,
+  ) => {
     setEditedUsers((prev) => ({
       ...prev,
       [userId]: { ...prev[userId], [field]: value },
@@ -96,12 +112,18 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
     if (!updatedUser) return;
 
     try {
-      await setDoc(doc(db, "users", userId), {
-        salesRouteNum: updatedUser.salesRouteNum,
-        role: updatedUser.role,
-      }, { merge: true });
+      await setDoc(
+        doc(db, "users", userId),
+        {
+          salesRouteNum: updatedUser.salesRouteNum,
+          role: updatedUser.role,
+        },
+        { merge: true },
+      );
 
-      const updatedUsers = localUsers.map((u) => u.uid === userId ? updatedUser : u);
+      const updatedUsers = localUsers.map((u) =>
+        u.uid === userId ? updatedUser : u,
+      );
       setLocalUsers(updatedUsers);
       await updateUserRoleInIndexedDB(userId, updatedUser.role);
       handleEditToggle(userId);
@@ -115,11 +137,16 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
       {(isAdmin || isDeveloper || isSuperAdmin) && (
         <Box my={2}>
           <Button variant="contained" onClick={toggleInvites}>
-            {showPendingInvites ? "Hide Pending Invites" : "Show Pending Invites"}
+            {showPendingInvites
+              ? "Hide Pending Invites"
+              : "Show Pending Invites"}
           </Button>
           {showPendingInvites && (
             <Box mt={2}>
-              <form onSubmit={handleInviteSubmit} style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+              <form
+                onSubmit={handleInviteSubmit}
+                style={{ display: "flex", gap: "1rem", alignItems: "center" }}
+              >
                 <TextField
                   label="Employee Email"
                   type="email"
@@ -132,14 +159,24 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
                   Send Invite
                 </Button>
               </form>
-              {feedbackMessage && <Typography color="secondary" variant="body2">{feedbackMessage}</Typography>}
+              {feedbackMessage && (
+                <Typography color="secondary" variant="body2">
+                  {feedbackMessage}
+                </Typography>
+              )}
               <PendingInvites />
             </Box>
           )}
         </Box>
       )}
 
-      <TableContainer component={Paper} sx={{ borderRadius: "var(--card-radius)", boxShadow: "var(--card-shadow)" }}>
+      <TableContainer
+        component={Paper}
+        sx={{
+          borderRadius: "var(--card-radius)",
+          boxShadow: "var(--card-shadow)",
+        }}
+      >
         <Table className="mui-themed-table">
           <TableHead>
             <TableRow>
@@ -161,7 +198,13 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
                   {editMode[user.uid] ? (
                     <TextField
                       value={editedUsers[user.uid]?.salesRouteNum ?? ""}
-                      onChange={(e) => handleEditChange(user.uid, "salesRouteNum", e.target.value)}
+                      onChange={(e) =>
+                        handleEditChange(
+                          user.uid,
+                          "salesRouteNum",
+                          e.target.value,
+                        )
+                      }
                       size="small"
                       sx={{ width: "clamp(120px, 20vw, 200px)" }} // Or 100%, or a responsive value
                     />
@@ -173,7 +216,9 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
                   {editMode[user.uid] && isSuperAdmin ? (
                     <Select
                       value={editedUsers[user.uid]?.role ?? ""}
-                      onChange={(e) => handleEditChange(user.uid, "role", e.target.value)}
+                      onChange={(e) =>
+                        handleEditChange(user.uid, "role", e.target.value)
+                      }
                       size="small"
                       sx={{ width: "clamp(120px, 20vw, 200px)" }}
                     >
@@ -190,15 +235,27 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({ localUsers, setLocalU
                 <TableCell>
                   {editMode[user.uid] ? (
                     <>
-                      <Button variant="contained" size="small" onClick={() => handleSubmitEdit(user.uid)}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleSubmitEdit(user.uid)}
+                      >
                         Save
                       </Button>
-                      <Button variant="text" size="small" onClick={() => handleEditToggle(user.uid)}>
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => handleEditToggle(user.uid)}
+                      >
                         Cancel
                       </Button>
                     </>
                   ) : (
-                    <Button variant="text" size="small" onClick={() => handleEditToggle(user.uid)}>
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => handleEditToggle(user.uid)}
+                    >
                       Edit
                     </Button>
                   )}

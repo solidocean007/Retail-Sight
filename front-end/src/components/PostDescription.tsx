@@ -50,7 +50,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   // const tags = description?.split(/\s+/);
   const [showModal, setShowModal] = useState(false);
   const userCompanyID = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
 
   const processDescription = (text: string) => {
@@ -111,7 +111,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
 
   const handleHashtagClick = async (
     event: React.MouseEvent<HTMLAnchorElement>,
-    hashtag: string
+    hashtag: string,
   ) => {
     console.log("click");
     event.preventDefault();
@@ -134,7 +134,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
 
   const handleStarTagClick = async (
     event: React.MouseEvent<HTMLAnchorElement>,
-    starTag: string
+    starTag: string,
   ) => {
     event.preventDefault(); // Prevents the default anchor behavior
     setFilteredPosts([]);

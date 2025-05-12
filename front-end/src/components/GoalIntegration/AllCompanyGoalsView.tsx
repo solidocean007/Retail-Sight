@@ -32,7 +32,7 @@ const AllCompanyGoalsView = ({
     setExpandedGoals((prevExpanded) =>
       prevExpanded.includes(goalId)
         ? prevExpanded.filter((id) => id !== goalId)
-        : [...prevExpanded, goalId]
+        : [...prevExpanded, goalId],
     );
   };
 
@@ -54,11 +54,11 @@ const AllCompanyGoalsView = ({
 
   const handleEditCompanyGoal = async (
     goalId: string,
-    updatedFields: Partial<CompanyGoalType>
+    updatedFields: Partial<CompanyGoalType>,
   ) => {
     try {
       await dispatch(
-        updateCompanyGoalInFirestore({ goalId, updatedFields })
+        updateCompanyGoalInFirestore({ goalId, updatedFields }),
       ).unwrap();
       dispatch(showMessage("Goal updated successfully."));
     } catch (error) {
@@ -88,7 +88,9 @@ const AllCompanyGoalsView = ({
               goal={goal}
               mobile={isMobile}
               onDelete={openConfirmationDialog}
-              onEdit={(goalId, updatedFields) => handleEditCompanyGoal(goalId, updatedFields)}
+              onEdit={(goalId, updatedFields) =>
+                handleEditCompanyGoal(goalId, updatedFields)
+              }
             />
           );
         })}

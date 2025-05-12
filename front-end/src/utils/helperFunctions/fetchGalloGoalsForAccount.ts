@@ -4,13 +4,16 @@ import { db } from "../firebase";
 
 export const fetchGalloGoalsForAccount = async (
   accountNumber: string | null | undefined,
-  companyId: string
+  companyId: string,
 ): Promise<FireStoreGalloGoalDocType[]> => {
   try {
     const goalsCollection = collection(db, "galloGoals");
 
     // Query Firestore to get documents matching the companyId
-    const goalsQuery = query(goalsCollection, where("companyId", "==", companyId));
+    const goalsQuery = query(
+      goalsCollection,
+      where("companyId", "==", companyId),
+    );
     const goalsSnapshot = await getDocs(goalsQuery);
 
     const goals: FireStoreGalloGoalDocType[] = [];
@@ -19,7 +22,7 @@ export const fetchGalloGoalsForAccount = async (
 
       // Filter accounts by distributorAcctId
       const matchingAccounts = goalDoc.accounts.filter(
-        (acc) => acc.distributorAcctId.toString() === accountNumber
+        (acc) => acc.distributorAcctId.toString() === accountNumber,
       );
 
       if (matchingAccounts.length > 0) {
@@ -36,8 +39,6 @@ export const fetchGalloGoalsForAccount = async (
             programStartDate: goalDoc.programDetails.programStartDate,
             programEndDate: goalDoc.programDetails.programEndDate,
             programTitle: goalDoc.programDetails.programTitle,
-      
-           
           },
           accounts: matchingAccounts.map((account) => ({
             distributorAcctId: account.distributorAcctId,
@@ -57,6 +58,3 @@ export const fetchGalloGoalsForAccount = async (
     return [];
   }
 };
-
-
-

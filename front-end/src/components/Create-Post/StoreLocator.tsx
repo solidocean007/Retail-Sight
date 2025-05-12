@@ -2,7 +2,17 @@
 import { useEffect, useRef, useState } from "react";
 import { updateLocationsCollection } from "../../utils/PostLogic/updateLocationsCollection";
 import "./storeSelector.css";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemButton, ListItemText } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+} from "@mui/material";
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -27,8 +37,8 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [closestMatches, setClosestMatches] = useState<
-  { name: string; address: string; placeId: string }[]
->([]);
+    { name: string; address: string; placeId: string }[]
+  >([]);
   const [isPlaceSelectionOpen, setIsPlaceSelectionOpen] = useState(false);
 
   useEffect(() => {
@@ -69,10 +79,10 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
 
   const handleMapClick = (
     location: google.maps.LatLng,
-    map: google.maps.Map
+    map: google.maps.Map,
   ) => {
     const service = new google.maps.places.PlacesService(map);
-  
+
     service.nearbySearch(
       {
         location,
@@ -85,16 +95,16 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
           results.length > 0 // results is possibly null
         ) {
           const validResults = results // results is possibly null
-          .filter((place) => place.place_id && place.name && place.vicinity)
-          .map((place) => ({
-            name: place.name!,
-            address: place.vicinity!,
-            placeId: place.place_id!,
-          }))
-          .slice(0, 4); // Limit to the first 4 places
+            .filter((place) => place.place_id && place.name && place.vicinity)
+            .map((place) => ({
+              name: place.name!,
+              address: place.vicinity!,
+              placeId: place.place_id!,
+            }))
+            .slice(0, 4); // Limit to the first 4 places
 
           console.log("Closest matches:", validResults); // Log closest matches
-  
+
           if (validResults.length > 1) {
             setClosestMatches(validResults);
             setIsPlaceSelectionOpen(true); // Open the dialog for selection
@@ -106,7 +116,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
         } else {
           console.error("Nearby search failed with status:", status);
         }
-      }
+      },
     );
   };
 
@@ -121,22 +131,21 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
         name: place.name,
         address: place.address,
         city,
-        state, 
+        state,
         placeId: place.placeId,
       });
       updateLocationsCollection(state, city);
     });
   };
-  
 
   const fetchCityAndState = (
     placeId: string,
-    callback: (city: string, state: string) => void
+    callback: (city: string, state: string) => void,
   ) => {
     if (!mapInstanceRef.current) return;
 
     const service = new google.maps.places.PlacesService(
-      mapInstanceRef.current
+      mapInstanceRef.current,
     );
     service.getDetails(
       { placeId, fields: ["address_components"] },
@@ -150,17 +159,21 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
               ?.long_name || "";
           const state =
             result.address_components.find((s) =>
-              s.types.includes("administrative_area_level_1")
+              s.types.includes("administrative_area_level_1"),
             )?.short_name || "";
           callback(city, state);
         }
-      }
+      },
     );
   };
 
-  const handlePlaceSelection = (place: { name: string; address: string; placeId: string }) => {
+  const handlePlaceSelection = (place: {
+    name: string;
+    address: string;
+    placeId: string;
+  }) => {
     setIsPlaceSelectionOpen(false);
-  
+
     fetchCityAndState(place.placeId, (city, state) => {
       onStoreSelect({
         name: place.name,
@@ -170,9 +183,7 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
         placeId: place.placeId,
       });
     });
-    
   };
-  
 
   return (
     <div className="map-container">
@@ -185,16 +196,19 @@ const StoreLocator: React.FC<StoreLocatorProps> = ({ onStoreSelect }) => {
           <DialogTitle>Store location by address</DialogTitle>
           <DialogContent>
             <List>
-            <List>
-            {closestMatches.map((place) => (
-              <ListItem key={place.placeId}>
-                <ListItemButton onClick={() => handlePlaceSelection(place)}>
-                  {/* <CheckBoxModal/> */}
-                  <ListItemText primary={place.name} secondary={place.address} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
+              <List>
+                {closestMatches.map((place) => (
+                  <ListItem key={place.placeId}>
+                    <ListItemButton onClick={() => handlePlaceSelection(place)}>
+                      {/* <CheckBoxModal/> */}
+                      <ListItemText
+                        primary={place.name}
+                        secondary={place.address}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
             </List>
           </DialogContent>
           <DialogActions>

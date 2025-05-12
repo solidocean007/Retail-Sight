@@ -51,5 +51,3 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
 };
 
 export default CompanyGoalDropdown;
-
-

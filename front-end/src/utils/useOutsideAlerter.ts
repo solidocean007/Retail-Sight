@@ -1,8 +1,8 @@
 // useOutsideAlerter.ts
 import { RefObject, useEffect } from "react";
 export const useOutsideAlerter = (
-  ref: RefObject<HTMLElement>, 
-  onClose: () => void
+  ref: RefObject<HTMLElement>,
+  onClose: () => void,
 ) => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

@@ -1,6 +1,6 @@
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import { TokenData } from './types';
+import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { db } from "./firebase";
+import { TokenData } from "./types";
 
 interface UpdatePostTokenProps {
   postId: string;
@@ -8,7 +8,10 @@ interface UpdatePostTokenProps {
 }
 
 // Your updated function using modular Firebase SDK syntax
-export const updatePostToken = async ({ postId, token }: UpdatePostTokenProps) => {
+export const updatePostToken = async ({
+  postId,
+  token,
+}: UpdatePostTokenProps) => {
   try {
     // Reference to the document in the 'posts' collection
     const postRef = doc(db, "posts", postId);

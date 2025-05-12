@@ -21,8 +21,6 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   selected,
   toggleOption,
 }) => {
-  
-
   return (
     <div className="accordion-container">
       <Accordion>

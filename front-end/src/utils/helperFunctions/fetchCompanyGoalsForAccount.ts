@@ -4,13 +4,16 @@ import { CompanyGoalType } from "../types";
 
 export const fetchCompanyGoalsForAccount = async (
   accountNumber: string | null | undefined,
-  companyId: string
+  companyId: string,
 ): Promise<CompanyGoalType[]> => {
   try {
     const goalsCollection = collection(db, "companyGoals");
 
     // Query Firestore to get documents matching the companyId
-    const goalsQuery = query(goalsCollection, where("companyId", "==", companyId));
+    const goalsQuery = query(
+      goalsCollection,
+      where("companyId", "==", companyId),
+    );
     const goalsSnapshot = await getDocs(goalsQuery);
 
     const companyGoals: CompanyGoalType[] = [];

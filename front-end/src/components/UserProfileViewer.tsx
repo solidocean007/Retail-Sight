@@ -1,7 +1,7 @@
 import { CircularProgress, Container } from "@mui/material";
 import { ProfileEditPage } from "./ProfileEditPage";
 import React, { useState } from "react";
-import './userProfileViewer.css';
+import "./userProfileViewer.css";
 import { UserProfilePosts } from "./UserProfilePosts/UserProfilePosts";
 import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
@@ -12,7 +12,7 @@ interface UserProfileViewerProps {
   user: UserType | null;
 }
 
-const UserProfileViewer: React.FC<UserProfileViewerProps> = ({user}) => {
+const UserProfileViewer: React.FC<UserProfileViewerProps> = ({ user }) => {
   const [openEdit, setOpenEdit] = useState(false);
   const navigate = useNavigate();
 
@@ -21,33 +21,35 @@ const UserProfileViewer: React.FC<UserProfileViewerProps> = ({user}) => {
   };
 
   const closeProfilePage = () => {
-    navigate('/user-home-page');
+    navigate("/user-home-page");
   };
 
   return (
     <>
-    {/* <UserProfilePageHelmet /> */}
-    <Container>
-      <div className="user-profile-page-header">
-
-        <div className="user-edit-section">
-          <div className="user-name">
-            {user ? `${user.firstName} ${user.lastName}` : <CircularProgress />}
+      {/* <UserProfilePageHelmet /> */}
+      <Container>
+        <div className="user-profile-page-header">
+          <div className="user-edit-section">
+            <div className="user-name">
+              {user ? (
+                `${user.firstName} ${user.lastName}`
+              ) : (
+                <CircularProgress />
+              )}
+            </div>
+            <button onClick={openProfileEdit}>Edit Name</button>
+            {openEdit && <ProfileEditPage setOpenEdit={setOpenEdit} />}
           </div>
-          <button onClick={openProfileEdit}>Edit Name</button>
-          {openEdit && <ProfileEditPage setOpenEdit={setOpenEdit}/>}
         </div>
-        
-      </div>
-      <div className="user-posts">
-        <h3>Your Posts</h3>
-        <UserProfilePosts currentUser={user} />
-      </div>
-      <div className="user-saved-stores">
-        <h3>Your Saved Stores</h3>
-        {/* Components or elements to display the user's saved stores */}
-      </div>
-    </Container>
+        <div className="user-posts">
+          <h3>Your Posts</h3>
+          <UserProfilePosts currentUser={user} />
+        </div>
+        <div className="user-saved-stores">
+          <h3>Your Saved Stores</h3>
+          {/* Components or elements to display the user's saved stores */}
+        </div>
+      </Container>
     </>
   );
 };

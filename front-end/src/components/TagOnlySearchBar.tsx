@@ -47,7 +47,7 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   const protectedAction = useProtectedAction(); // i need to use this to protect from a unwanted search
   const [inputValue, setInputValue] = useState("");
   const userCompanyID = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
   const dispatch = useDispatch();
 

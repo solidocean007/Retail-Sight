@@ -40,7 +40,6 @@
   margin-top: 20px;
 }
 
-
 @media (max-width: 768px) {
   .about-container {
     width: auto;
@@ -56,4 +55,3 @@
     margin-bottom: 10px;
   }
 }
-

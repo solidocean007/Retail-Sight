@@ -50,7 +50,10 @@ interface PickStoreProps {
   setPost: React.Dispatch<React.SetStateAction<PostType>>;
   usersGalloGoals: FireStoreGalloGoalDocType[]; // Pass goals from Redux
   usersCompanyGoals: CompanyGoalType[]; // Pass goals from Redux
-  handleFieldChange: (field: keyof PostType, value: PostType[keyof PostType]) => void;
+  handleFieldChange: (
+    field: keyof PostType,
+    value: PostType[keyof PostType],
+  ) => void;
   setSelectedCompanyAccount: (account: CompanyAccountType) => void; // Function to set selected company account
   // onStoreNameChange: (storeName: string) => void;
   // onStoreNumberChange: (newStoreNumber: string) => void;
@@ -67,7 +70,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   usersGalloGoals,
   usersCompanyGoals,
   handleFieldChange,
-  setSelectedCompanyAccount
+  setSelectedCompanyAccount,
 }) => {
   console.log(post);
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
@@ -84,7 +87,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   //   useState<FireStoreGalloGoalDocType | null>(null);
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
-    null
+    null,
   );
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalType>();
@@ -93,7 +96,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const isAdmin = userRole === "admin" || userRole === "super-admin";
   // const isEmployee = userRole === "employee";
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
 
   // these next two only need to be selected if a user is selecting all accounts and needs access to the entire company goal list or gallo goal list
@@ -114,27 +117,27 @@ export const PickStore: React.FC<PickStoreProps> = ({
   // filtering by account number function:  these return current goals for selection.  a mode might be helpful for switching to the desired set.
   const usersActiveGalloGoals = getActiveGalloGoalsForAccount(
     post.account?.accountNumber,
-    usersGalloGoals
+    usersGalloGoals,
   );
 
   const usersActiveCompanyGoals = getActiveCompanyGoalsForAccount(
     post.account?.accountNumber,
     usersCompanyGoals,
-    userId
+    userId,
   );
   console.log(usersActiveCompanyGoals);
 
   const allActiveGalloGoals = getActiveGalloGoalsForAccount(
     post.account?.accountNumber,
-    allGalloGoals
+    allGalloGoals,
   );
   const allActiveCompanyGoals = getActiveCompanyGoalsForAccount(
     post.account?.accountNumber,
-    allCompanyGoals
+    allCompanyGoals,
   );
 
   const [closestMatches, setClosestMatches] = useState<CompanyAccountType[]>(
-    []
+    [],
   );
 
   const onlyUsersStores = !isAllStoresShown;
@@ -229,7 +232,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
     // Find the selected goal by goalId
     const selectedGoal = galloGoals.find(
-      (goal) => goal.goalDetails.goalId === goalId
+      (goal) => goal.goalDetails.goalId === goalId,
     );
 
     if (selectedGoal) {
@@ -239,7 +242,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       const matchedAccount = selectedGoal.accounts.find(
         (account) =>
           account.distributorAcctId.toString() ===
-          post.account?.accountNumber?.toString()
+          post.account?.accountNumber?.toString(),
       );
 
       if (matchedAccount) {
@@ -248,7 +251,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         handleFieldChange("galloGoalTitle", selectedGoal.goalDetails.goal);
       } else {
         console.warn(
-          "No matching account found in the selected goal's accounts."
+          "No matching account found in the selected goal's accounts.",
         );
       }
     }
@@ -277,7 +280,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }));
     setSelectedCompanyAccount(account); // ✅ still good
   };
-  
 
   // const handleSelectClosestMatch = (account: CompanyAccountType) => {
   //   setPost((prev) => ({
@@ -305,7 +307,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
     setSelectedGalloGoalId(null);
     setSelectedCompanyGoal(undefined);
   };
-  
 
   // this function is called when we find an account and its account number via the map process i believe
   // we have an account number and need to find it on the array of goals in the all gallo goals array
@@ -453,7 +454,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
             >
               My Stores
             </Typography>
-           
+
             <Typography
               className={`toggle-label ${isAllStoresShown ? "selected" : ""}`}
               onClick={() => setIsAllStoresShown(!isAllStoresShown)}

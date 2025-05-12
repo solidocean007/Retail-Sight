@@ -3,7 +3,7 @@ import { FireStoreGalloGoalDocType } from "../types";
 
 export const getActiveGalloGoalsForAccount = (
   accountNumber: string | null | undefined,
-  goals: FireStoreGalloGoalDocType[]
+  goals: FireStoreGalloGoalDocType[],
 ) => {
   const today = new Date();
   return goals.filter((goal) => {
@@ -18,4 +18,3 @@ export const getActiveGalloGoalsForAccount = (
     );
   });
 };
-

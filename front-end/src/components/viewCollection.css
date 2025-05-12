@@ -36,7 +36,6 @@
   margin-left: 15px; /* Adjust the space between image and details */
 }
 
-
 .list-item-date-cases {
   display: flex;
   flex-direction: column;
@@ -53,7 +52,6 @@
   font-weight: bold;
   margin-bottom: 4px; /* Give some space below the store name */
 }
-
 
 .list-item-display-date {
   font-size: 0.8rem;

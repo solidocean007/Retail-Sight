@@ -8,13 +8,13 @@ export const fetchUserFromFirebase = async (uid: string) => {
     const userDocSnapshot = await getDoc(userDocRef);
 
     if (!userDocSnapshot.exists()) {
-      console.log('User not found');
+      console.log("User not found");
       return null;
     }
 
     return userDocSnapshot.data();
   } catch (error) {
-    console.error('Error fetching user from Firebase:', error);
+    console.error("Error fetching user from Firebase:", error);
     return null;
   }
 };

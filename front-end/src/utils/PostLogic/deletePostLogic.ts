@@ -1,8 +1,17 @@
-import { deleteDoc, doc, updateDoc, arrayRemove, getDoc } from "firebase/firestore";
+import {
+  deleteDoc,
+  doc,
+  updateDoc,
+  arrayRemove,
+  getDoc,
+} from "firebase/firestore";
 import { ref, deleteObject, getStorage } from "firebase/storage";
 import { PostWithID } from "../types";
 import { db } from "../firebase";
-import { deleteUserCreatedPostInIndexedDB, removePostFromIndexedDB } from "../database/indexedDBUtils";
+import {
+  deleteUserCreatedPostInIndexedDB,
+  removePostFromIndexedDB,
+} from "../database/indexedDBUtils";
 import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 
 interface userDeletePostProps {
@@ -11,7 +20,7 @@ interface userDeletePostProps {
 
 export const userDeletePost = async ({ post }: userDeletePostProps) => {
   const storage = getStorage();
-  
+
   try {
     // ✅ Update timestamp of post that is being changed
     await updatePostWithNewTimestamp(post.id);
@@ -54,16 +63,20 @@ export const userDeletePost = async ({ post }: userDeletePostProps) => {
       if (goalSnap.exists()) {
         const goalData = goalSnap.data();
         const updatedSubmittedPosts = (goalData.submittedPosts || []).filter(
-          (submission: any) => submission.postId !== post.id
+          (submission: any) => submission.postId !== post.id,
         );
 
         await updateDoc(goalRef, {
           submittedPosts: updatedSubmittedPosts,
         });
 
-        console.log(`✅ Removed post ${post.id} from company goal ${post.companyGoalId}`);
+        console.log(
+          `✅ Removed post ${post.id} from company goal ${post.companyGoalId}`,
+        );
       } else {
-        console.warn(`⚠️ Goal ${post.companyGoalId} not found while cleaning submittedPosts`);
+        console.warn(
+          `⚠️ Goal ${post.companyGoalId} not found while cleaning submittedPosts`,
+        );
       }
     }
   } catch (error) {

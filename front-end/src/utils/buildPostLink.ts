@@ -1,7 +1,7 @@
 // Assuming postToken is an object { sharedToken: string; tokenExpiry: string }
 // Inside buildPostLink.ts
 const buildPostLink = (postId: string, sharedToken?: string) => {
-  console.log(sharedToken)
+  console.log(sharedToken);
   if (!sharedToken) {
     throw new Error("Shared token is undefined.");
   }

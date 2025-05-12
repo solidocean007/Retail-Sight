@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { PostType } from "../../utils/types";
-import './displayDescription.css';
+import "./displayDescription.css";
 
 interface DisplayDescriptionProps {
   post: PostType;
@@ -8,7 +8,7 @@ interface DisplayDescriptionProps {
   onPrevious: () => void;
   handleFieldChange: (
     field: keyof PostType,
-    value: PostType[keyof PostType]
+    value: PostType[keyof PostType],
   ) => void;
 }
 
@@ -31,7 +31,7 @@ export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if(!description) return;
+    if (!description) return;
     const lastChar = description[description.length - 1];
     // Disable space if the last character is # or *
     if ((lastChar === "#" || lastChar === "*") && e.key === " ") {
@@ -44,8 +44,11 @@ export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
       <button className="create-post-btn" onClick={onPrevious}>
         Back
       </button>
-      <div className={`text-area-container ${isFocused ? 'focused' : ''}`}>
-        <label htmlFor="description-box" className={`placeholder ${isFocused ? 'active' : ''}`}>
+      <div className={`text-area-container ${isFocused ? "focused" : ""}`}>
+        <label
+          htmlFor="description-box"
+          className={`placeholder ${isFocused ? "active" : ""}`}
+        >
           Description
         </label>
         <textarea
@@ -67,4 +70,3 @@ export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
     </div>
   );
 };
-

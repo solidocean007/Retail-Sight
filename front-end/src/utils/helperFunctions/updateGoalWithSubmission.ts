@@ -19,9 +19,6 @@ export const updateGoalWithSubmission = async (
         salesRouteNums: [],
       }, // ✅ If somehow missing, fallback to empty
     };
-    
-    
-    
 
     if (post.companyGoalId) {
       // ✅ **Update Company Goal**
@@ -40,7 +37,7 @@ export const updateGoalWithSubmission = async (
         const updatedAccounts = goalData.accounts.map((account: any) =>
           account.oppId === post.oppId
             ? { ...account, submittedPost: submission } // Add `submittedPost` to the matching account
-            : account
+            : account,
         );
 
         await updateDoc(galloGoalsRef, { accounts: updatedAccounts });

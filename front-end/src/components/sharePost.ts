@@ -2,11 +2,15 @@
 import { generateShareTokenAndGetLink } from "../utils/generateShareTokenAndGetLink";
 
 // sharePost.ts
-const sharePost= async (postId: string, postToken) => {
+const sharePost = async (postId: string, postToken) => {
   try {
     const postLink = ""; // If you have a predefined way to generate the direct link to a post, use it here
-    const shareableLink = await generateShareTokenAndGetLink(postId, postTitle, postLink);
-    
+    const shareableLink = await generateShareTokenAndGetLink(
+      postId,
+      postTitle,
+      postLink,
+    );
+
     // Use Web Share API if available
     if (navigator.share) {
       await navigator.share({

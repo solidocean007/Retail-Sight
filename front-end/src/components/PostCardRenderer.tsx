@@ -11,7 +11,7 @@ interface PostCardRendererProps {
     post: PostWithID;
     getPostsByTag: (
       hashTag: string,
-      companyId?: string
+      companyId?: string,
     ) => Promise<PostWithID[]>;
     getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   };

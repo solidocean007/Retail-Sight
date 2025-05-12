@@ -45,7 +45,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     useState<EnrichedGalloAccountType[]>(accounts);
   const [isAllSelected, setIsAllSelected] = useState(false);
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
   const [searchAccounts, setSearchAccounts] = useState("");
   const [searchRoute, setSearchRoute] = useState("");
@@ -74,7 +74,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       searchRoute === "" ||
       (Array.isArray(account.salesRouteNums)
         ? account.salesRouteNums.some((num) =>
-            (num as unknown as string)?.toString().includes(searchRoute)
+            (num as unknown as string)?.toString().includes(searchRoute),
           )
         : (
             (account.salesRouteNums as unknown as string)?.toString() || ""
@@ -101,14 +101,15 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
 
   const handleCheckboxChange = (account: EnrichedGalloAccountType) => {
     const isSelected = selectedAccounts.some(
-      (selected) => selected.distributorAcctId === account.distributorAcctId
+      (selected) => selected.distributorAcctId === account.distributorAcctId,
     );
 
     if (isSelected) {
       setSelectedAccounts(
         selectedAccounts.filter(
-          (selected) => selected.distributorAcctId !== account.distributorAcctId
-        )
+          (selected) =>
+            selected.distributorAcctId !== account.distributorAcctId,
+        ),
       );
     } else {
       setSelectedAccounts([...selectedAccounts, account]);
@@ -120,14 +121,14 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       alert("Please select a goal and program before saving.");
       return;
     }
-  
+
     setIsSaving(true); // Start saving
     try {
       await createGalloGoal(
         selectedGoal,
         selectedProgram,
         selectedAccounts,
-        companyId || ""
+        companyId || "",
       );
       alert("Goal saved successfully!");
       onSaveComplete(); // Notify parent component
@@ -137,9 +138,6 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       setIsSaving(false); // End saving
     }
   };
-  
-
- 
 
   return (
     <TableContainer component={Paper} className="account-table">
@@ -194,7 +192,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                 <Checkbox
                   checked={selectedAccounts.some(
                     (selected) =>
-                      selected.distributorAcctId === account.distributorAcctId
+                      selected.distributorAcctId === account.distributorAcctId,
                   )}
                   onChange={() => handleCheckboxChange(account)}
                 />

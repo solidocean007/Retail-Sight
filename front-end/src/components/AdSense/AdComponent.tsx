@@ -49,4 +49,3 @@ const AdComponent: React.FC<AdComponentProps> = ({
 };
 
 export default AdComponent;
-

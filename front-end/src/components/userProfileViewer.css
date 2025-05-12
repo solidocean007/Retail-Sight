@@ -19,7 +19,8 @@
   font-weight: bold;
 }
 
-.user-posts h3, .user-saved-stores h3 {
+.user-posts h3,
+.user-saved-stores h3 {
   background: var(--form-background-color);
 }
 

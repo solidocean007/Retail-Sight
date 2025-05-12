@@ -9,7 +9,6 @@
 
 .view-shared-post-container .list-container {
   width: 100%;
-
 }
 
 .view-shared-post-container .post-card img {
@@ -29,7 +28,8 @@
   margin: 0 auto; /* Center the image within its container */
 }
 
-@media (min-width: 768px) { /* Adjust for tablets and desktop screens */
+@media (min-width: 768px) {
+  /* Adjust for tablets and desktop screens */
   .post-card img {
     max-width: 100%; /* On larger screens, allow the image to be as wide as its container */
   }

@@ -75,7 +75,7 @@ const useSchemaVersion = () => {
             remoteVersion = doc.data().schemaVersion;
             console.log(
               "🌐 Remote schemaVersion from Firestore:",
-              remoteVersion
+              remoteVersion,
             );
           }
         });
@@ -90,7 +90,7 @@ const useSchemaVersion = () => {
 
         if (!localVersion || localVersion !== remoteVersion) {
           console.warn(
-            "🛠️ Version mismatch or missing. Performing migration..."
+            "🛠️ Version mismatch or missing. Performing migration...",
           );
           await migrateLocalData();
 
@@ -105,7 +105,7 @@ const useSchemaVersion = () => {
                 fetchInitialPostsBatch({
                   POSTS_BATCH_SIZE,
                   currentUserCompanyId: companyId,
-                })
+                }),
               );
 
               if (fetchInitialPostsBatch.fulfilled.match(action)) {

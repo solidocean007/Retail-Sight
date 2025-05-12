@@ -1,14 +1,20 @@
 // apiKeyService.ts
-export const handleSubmitNewExternalApiKey = async (e: React.FormEvent, companyId: string | undefined) => {
+export const handleSubmitNewExternalApiKey = async (
+  e: React.FormEvent,
+  companyId: string | undefined,
+) => {
   e.preventDefault();
   try {
-    const response = await fetch("https://my-fetch-data-api.vercel.app/api/storeExternalApiKey", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      "https://my-fetch-data-api.vercel.app/api/storeExternalApiKey",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ companyId, externalApiName, externalApiKey }), // just added companyId
       },
-      body: JSON.stringify({companyId, externalApiName, externalApiKey }), // just added companyId
-    });
+    );
 
     console.log(response.body);
 
@@ -24,7 +30,10 @@ export const handleSubmitNewExternalApiKey = async (e: React.FormEvent, companyI
   }
 };
 
-export const getStoredApiKeys = async (companyId: string, externalCompanyName: string) => {
+export const getStoredApiKeys = async (
+  companyId: string,
+  externalCompanyName: string,
+) => {
   // const response = await fetch(`/api/getExternalApiKeys?companyId=${companyId}`); I dont have a function to handle this method yet.  I'll need one similiar to the above vercel function
   return response.json();
 };

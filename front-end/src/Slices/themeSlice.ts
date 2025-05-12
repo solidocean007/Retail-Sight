@@ -1,5 +1,5 @@
 // src/Slices/themeSlice.ts
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 interface ThemeState {
   isDarkMode: boolean;
@@ -10,22 +10,28 @@ const initialState: ThemeState = {
 };
 
 const themeSlice = createSlice({
-  name: 'theme',
+  name: "theme",
   initialState,
   reducers: {
     setDarkMode(state, action) {
       state.isDarkMode = action.payload;
 
       // Immediately sync body attribute and localStorage
-      document.body.setAttribute("data-theme", action.payload ? "dark" : "light");
-      localStorage.setItem('theme', action.payload ? "dark" : "light");
+      document.body.setAttribute(
+        "data-theme",
+        action.payload ? "dark" : "light",
+      );
+      localStorage.setItem("theme", action.payload ? "dark" : "light");
     },
     toggleTheme(state) {
       state.isDarkMode = !state.isDarkMode;
 
       // Immediately sync body attribute and localStorage
-      document.body.setAttribute("data-theme", state.isDarkMode ? "dark" : "light");
-      localStorage.setItem('theme', state.isDarkMode ? "dark" : "light");
+      document.body.setAttribute(
+        "data-theme",
+        state.isDarkMode ? "dark" : "light",
+      );
+      localStorage.setItem("theme", state.isDarkMode ? "dark" : "light");
     },
   },
 });

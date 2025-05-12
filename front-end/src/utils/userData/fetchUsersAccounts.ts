@@ -4,7 +4,7 @@ import { CompanyAccountType, CompanyType } from "../types";
 
 export async function fetchUsersAccounts(
   companyId: string,
-  salesRouteNum: string | undefined
+  salesRouteNum: string | undefined,
 ): Promise<CompanyAccountType[]> {
   const companyRef = doc(collection(db, "companies"), companyId);
   try {
@@ -39,7 +39,7 @@ export async function fetchUsersAccounts(
         salesRouteNums: Array.isArray(account.salesRouteNums)
           ? account.salesRouteNums
           : [account.salesRouteNums].filter(Boolean), // Wrap as array if single value and filter out falsy values
-      })
+      }),
     ) as CompanyAccountType[];
 
     const filteredAccounts = accountData.filter((account) => {
@@ -53,8 +53,8 @@ export async function fetchUsersAccounts(
 
     const uniqueAccounts = Array.from(
       new Map(
-        filteredAccounts.map((account) => [account.accountNumber, account])
-      ).values()
+        filteredAccounts.map((account) => [account.accountNumber, account]),
+      ).values(),
     );
 
     return uniqueAccounts;

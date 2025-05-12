@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import {
-  selectCompanyUsers,
-  selectUser,
-} from "../Slices/userSlice";
+import { selectCompanyUsers, selectUser } from "../Slices/userSlice";
 import Select, { ActionMeta, MultiValue } from "react-select";
 import "./teamsViewer.css";
 import { addTeam, fetchTeams } from "../thunks/teamsThunks";
@@ -22,9 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  getCompanyUsersFromIndexedDB,
-} from "../utils/database/userDataIndexedDB";
+import { getCompanyUsersFromIndexedDB } from "../utils/database/userDataIndexedDB";
 
 // Define the type for options
 type OptionType = {
@@ -42,7 +37,7 @@ const TeamsViewer = ({
   const dispatch = useAppDispatch();
   const teams = useSelector((state: RootState) => state.CompanyTeam.teams);
   const teamStatus = useSelector(
-    (state: RootState) => state.CompanyTeam.status
+    (state: RootState) => state.CompanyTeam.status,
   );
   const teamError = useSelector((state: RootState) => state.CompanyTeam.error);
   const [showTeamsCreation, setShowTeamsCreation] = useState(false);
@@ -52,7 +47,7 @@ const TeamsViewer = ({
   const fellowEmployees = useSelector(selectCompanyUsers);
   const user = useSelector(selectUser);
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
 
   // Separate useEffect to attempt to load from IndexedDB when component mounts
@@ -81,7 +76,7 @@ const TeamsViewer = ({
   function handleCreateTeam() {
     if (teamName && supervisorId && teamMembers.length > 0) {
       const supervisorUser = fellowEmployees?.find(
-        (emp) => emp.uid === supervisorId
+        (emp) => emp.uid === supervisorId,
       );
       const teamData: CompanyTeamType = {
         teamName: teamName,
@@ -118,7 +113,7 @@ const TeamsViewer = ({
 
   const customHandleMemberSelection = (
     selectedOptions: MultiValue<OptionType>,
-    actionMeta: ActionMeta<OptionType>
+    actionMeta: ActionMeta<OptionType>,
   ) => {
     const selectedMembers = selectedOptions.map((option) => option.value);
     setTeamMembers(selectedMembers);
@@ -260,7 +255,7 @@ const TeamsViewer = ({
                       <Typography
                         sx={{ display: "flex", justifyContent: "start" }}
                       >
-                        Members: 
+                        Members:
                       </Typography>
                       <List>
                         {team.teamMembers.map((member, index) => (

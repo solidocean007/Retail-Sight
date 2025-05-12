@@ -94,7 +94,7 @@ const postsSlice = createSlice({
     // Adjusted to the correct state.posts property
     updatePost: (state, action: PayloadAction<PostWithID>) => {
       state.posts = state.posts.map((post) =>
-        post.id === action.payload.id ? action.payload : post
+        post.id === action.payload.id ? action.payload : post,
       );
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
@@ -123,7 +123,7 @@ const postsSlice = createSlice({
           }
           return acc;
         },
-        [] as PostWithID[]
+        [] as PostWithID[],
       );
 
       state.posts = sortPostsByDate(mergedPosts);
@@ -203,7 +203,7 @@ const postsSlice = createSlice({
             newFilteredPosts.length > 0
               ? newFilteredPosts[newFilteredPosts.length - 1].id
               : null;
-        }
+        },
       )
 
       .addCase(fetchFilteredPosts.rejected, (state, action) => {
@@ -224,7 +224,7 @@ const postsSlice = createSlice({
             action.payload.length > 0
               ? action.payload[action.payload.length - 1].id
               : state.lastVisible;
-        }
+        },
       )
       .addCase(fetchLatestPosts.rejected, (state, action) => {
         // Handle any errors if the fetch fails

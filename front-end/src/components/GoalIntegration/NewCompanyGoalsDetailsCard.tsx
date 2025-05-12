@@ -76,12 +76,13 @@ const NewCompanyGoalDetailsCard: React.FC<NewCompanyGoalDetailsCardProps> = ({
   const baseAccounts = (
     goal.appliesToAllAccounts ? localAccounts : goal.accounts || []
   ).filter((acc) =>
-    salesRouteNum ? acc.salesRouteNums?.includes(salesRouteNum) : true
+    salesRouteNum ? acc.salesRouteNums?.includes(salesRouteNum) : true,
   );
 
   const rowsToRender = baseAccounts.map((account) => {
     const foundPost = goal.submittedPosts?.find(
-      (post: GoalSubmissionType) => post.accountNumber === account.accountNumber
+      (post: GoalSubmissionType) =>
+        post.accountNumber === account.accountNumber,
     );
     return {
       ...account,
@@ -133,7 +134,11 @@ const NewCompanyGoalDetailsCard: React.FC<NewCompanyGoalDetailsCardProps> = ({
 
         <Box px={2} pb={1}>
           <Typography variant="body2">{`${percentSubmitted}% Submitted`}</Typography>
-          <LinearProgress variant="determinate" value={percentSubmitted} color="success" />
+          <LinearProgress
+            variant="determinate"
+            value={percentSubmitted}
+            color="success"
+          />
         </Box>
       </div>
 
@@ -146,8 +151,8 @@ const NewCompanyGoalDetailsCard: React.FC<NewCompanyGoalDetailsCardProps> = ({
             {expanded
               ? `Hide Submissions (${rowsToRender.length})`
               : rowsToRender.length > 0
-              ? `View Submissions (${rowsToRender.length})`
-              : "No Submissions"}
+                ? `View Submissions (${rowsToRender.length})`
+                : "No Submissions"}
           </button>
 
           <Button

@@ -9,10 +9,10 @@ import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 
 // handleLikePost.ts
 export const handleLikePost = async (
-  post: PostWithID, 
-  userId: string, 
-  liked: boolean, 
-  dispatch: AppDispatch
+  post: PostWithID,
+  userId: string,
+  liked: boolean,
+  dispatch: AppDispatch,
 ) => {
   try {
     // Update the timestamp of the post
@@ -23,11 +23,11 @@ export const handleLikePost = async (
     await updateDoc(doc(db, "posts", post.id), { likes: updatedLikes });
 
     // Prepare the updated post object for Redux and IndexedDB
-    const updatedPost = { 
-      ...post, 
-      likes: liked 
+    const updatedPost = {
+      ...post,
+      likes: liked
         ? [...(post.likes || []), userId]
-        : (post.likes || []).filter(uid => uid !== userId)
+        : (post.likes || []).filter((uid) => uid !== userId),
       // Assume the timestamp update was successful
     };
 
@@ -36,7 +36,6 @@ export const handleLikePost = async (
 
     // Update in IndexedDB
     await updatePostInIndexedDB(updatedPost);
-    
   } catch (error) {
     console.error("Error updating likes:", error);
   }

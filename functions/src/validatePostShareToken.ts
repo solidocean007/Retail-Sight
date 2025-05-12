@@ -26,10 +26,10 @@ export const validatePostShareToken = functions.https.onCall(
   ): Promise<{ valid: boolean; post: PostData }> => {
     const { postId, token } = request.data;
 
-    if (!postId || !token) {
+    if (!postId) {
       throw new functions.https.HttpsError(
         "invalid-argument",
-        "The function must be called with 'postId' and 'token'."
+        "The function must be called with 'postId'."
       );
     }
 
@@ -54,19 +54,13 @@ export const validatePostShareToken = functions.https.onCall(
         );
       }
 
-      const tokenExpiry = post.token?.tokenExpiry
-        ? new Date(post.token.tokenExpiry)
-        : null;
       const sharedToken = post.token?.sharedToken;
-
-      const currentDateTime = new Date(); // Use server time for comparison
-      const isTokenValid =
-        token === sharedToken && tokenExpiry && currentDateTime < tokenExpiry;
+      const isTokenValid = token === sharedToken;
 
       if (!isTokenValid) {
         throw new functions.https.HttpsError(
           "permission-denied",
-          "Invalid or expired token."
+          "Invalid token."
         );
       }
 

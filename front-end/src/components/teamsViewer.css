@@ -18,11 +18,9 @@
   border-radius: 5px;
 }
 
-
 /* Mobile devices */
 @media (max-width: 320px) {
   /* Styles for small smartphones */
-  
 }
 
 @media (min-width: 321px) and (max-width: 375px) {
@@ -50,15 +48,12 @@
   }
 }
 
-@media (min-width: 769px) and (max-width: 899px){
-  
+@media (min-width: 769px) and (max-width: 899px) {
 }
 
 /* Laptops and Desktops */
 @media (min-width: 1025px) and (max-width: 1366px) {
   /* Styles for small to medium screens */
-
-  
 
   .post-content-filter {
     margin-right: 40px;
@@ -72,4 +67,3 @@
 @media (min-width: 1921px) {
   /* Styles for extra-large screens */
 }
-

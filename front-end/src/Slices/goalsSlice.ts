@@ -56,7 +56,7 @@ export const fetchAllGalloGoals = createAsyncThunk<
     const goalsCollection = collection(db, "galloGoals");
     const goalsQuery = query(
       goalsCollection,
-      where("companyId", "==", companyId)
+      where("companyId", "==", companyId),
     );
     const goalsSnapshot = await getDocs(goalsQuery);
 
@@ -73,7 +73,7 @@ export const fetchAllGalloGoals = createAsyncThunk<
       return rejectWithValue(err.message);
     }
     return rejectWithValue(
-      "An unknown error occurred while fetching company goals."
+      "An unknown error occurred while fetching company goals.",
     );
   }
 });
@@ -91,7 +91,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
 
       if (!userAccounts.length) {
         console.log(
-          "No user accounts in IndexedDB. Fetching from Firestore..."
+          "No user accounts in IndexedDB. Fetching from Firestore...",
         );
         // Step 2: Fallback to fetching accounts from Firestore
         userAccounts = await fetchUsersAccounts(companyId, salesRouteNum);
@@ -110,7 +110,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
 
       // Step 3: Extract user account numbers
       const accountNumbers = userAccounts.map((account) =>
-        account.accountNumber.toString()
+        account.accountNumber.toString(),
       );
 
       if (!accountNumbers.length) {
@@ -122,7 +122,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
       const goalsCollection = collection(db, "galloGoals");
       const goalsQuery = query(
         goalsCollection,
-        where("companyId", "==", companyId)
+        where("companyId", "==", companyId),
       );
       const goalsSnapshot = await getDocs(goalsQuery);
 
@@ -132,7 +132,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
 
         // Filter accounts in each goal to match user's accounts
         const matchingAccounts = goalDoc.accounts.filter((acc) =>
-          accountNumbers.includes(acc.distributorAcctId.toString())
+          accountNumbers.includes(acc.distributorAcctId.toString()),
         );
 
         if (matchingAccounts.length > 0) {
@@ -151,7 +151,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
       }
       return rejectWithValue("An unknown error occurred while fetching goals.");
     }
-  }
+  },
 );
 
 // Async thunk for fetching all company goals
@@ -164,7 +164,7 @@ export const fetchAllCompanyGoals = createAsyncThunk<
     const goalsCollection = collection(db, "companyGoals");
     const goalsQuery = query(
       goalsCollection,
-      where("companyId", "==", companyId)
+      where("companyId", "==", companyId),
     );
     const goalsSnapshot = await getDocs(goalsQuery);
 
@@ -181,7 +181,7 @@ export const fetchAllCompanyGoals = createAsyncThunk<
       return rejectWithValue(err.message);
     }
     return rejectWithValue(
-      "An unknown error occurred while fetching company goals."
+      "An unknown error occurred while fetching company goals.",
     );
   }
 });
@@ -190,19 +190,22 @@ export const updateCompanyGoalInFirestore = createAsyncThunk<
   void,
   { goalId: string; updatedFields: Partial<CompanyGoalType> },
   { rejectValue: string }
->("goals/updateCompanyGoal", async ({ goalId, updatedFields }, { rejectWithValue }) => {
-  console.log("Updating company goal:", goalId, updatedFields);
-  try {
-    const goalRef = doc(db, "companyGoals", goalId);
-    await updateDoc(goalRef, updatedFields);
-  } catch (err) {
-    console.error("Error updating company goal:", err);
-    if (err instanceof Error) {
-      return rejectWithValue(err.message);
+>(
+  "goals/updateCompanyGoal",
+  async ({ goalId, updatedFields }, { rejectWithValue }) => {
+    console.log("Updating company goal:", goalId, updatedFields);
+    try {
+      const goalRef = doc(db, "companyGoals", goalId);
+      await updateDoc(goalRef, updatedFields);
+    } catch (err) {
+      console.error("Error updating company goal:", err);
+      if (err instanceof Error) {
+        return rejectWithValue(err.message);
+      }
+      return rejectWithValue("Unknown error occurred while updating the goal.");
     }
-    return rejectWithValue("Unknown error occurred while updating the goal.");
-  }
-});
+  },
+);
 
 const goalsSlice = createSlice({
   name: "goals",
@@ -287,9 +290,9 @@ export const selectUsersGalloGoals = createSelector(
       goal.accounts.some((account) =>
         Array.isArray(account.salesRouteNums)
           ? account.salesRouteNums.includes(salesRouteNum)
-          : account.salesRouteNums === salesRouteNum
-      )
-    )
+          : account.salesRouteNums === salesRouteNum,
+      ),
+    ),
 );
 
 export const selectUsersCompanyGoals = createSelector(
@@ -308,7 +311,7 @@ export const selectUsersCompanyGoals = createSelector(
         goal.targetMode === "goalForSelectedAccounts" &&
         Array.isArray(goal.accounts) &&
         goal.accounts.some((acc) =>
-          acc.salesRouteNums?.includes(salesRouteNum || "")
+          acc.salesRouteNums?.includes(salesRouteNum || ""),
         );
 
       const matchesUser =
@@ -318,7 +321,7 @@ export const selectUsersCompanyGoals = createSelector(
 
       return matchesRoute || matchesUser;
     });
-  }
+  },
 );
 
 export default goalsSlice.reducer;

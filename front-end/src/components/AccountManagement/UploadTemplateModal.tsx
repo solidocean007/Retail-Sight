@@ -9,7 +9,7 @@ import {
   TableCell,
   TableBody,
 } from "@mui/material";
-import "./styles/uploadTemplateModal.css"
+import "./styles/uploadTemplateModal.css";
 
 interface UploadTemplateModalProps {
   open: boolean;

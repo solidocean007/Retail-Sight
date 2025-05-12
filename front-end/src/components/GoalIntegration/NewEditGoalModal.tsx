@@ -51,10 +51,14 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const hasSubmissions = goal.submittedPosts && goal.submittedPosts.length > 0;
 
   const [targetMode, setTargetMode] = useState<GoalTargetMode>(
-    goal.targetMode || fallbackTargetMode(goal)
+    goal.targetMode || fallbackTargetMode(goal),
   );
-  const [selectedAccounts, setSelectedAccounts] = useState<CompanyAccountType[]>(goal.accounts || []);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(goal.usersIdsOfGoal || []);
+  const [selectedAccounts, setSelectedAccounts] = useState<
+    CompanyAccountType[]
+  >(goal.accounts || []);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
+    goal.usersIdsOfGoal || [],
+  );
 
   const [goalTitle, setGoalTitle] = useState(goal.goalTitle);
   const [goalDescription, setGoalDescription] = useState(goal.goalDescription);
@@ -78,15 +82,17 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
         email: user.email || "",
         role: user.role || "",
       })),
-    [companyUsers]
+    [companyUsers],
   );
 
   const handleSave = () => {
     onSave({
       targetMode,
       appliesToAllAccounts: targetMode === "goalForAllAccounts", // why does this hard code at goalForAllAccounts?
-      accounts: targetMode === "goalForSelectedAccounts" ? selectedAccounts : [], // what about the conditional of all accounts mode?  why not put them all in here?
-      usersIdsOfGoal: targetMode === "goalForSelectedUsers" ? selectedUserIds : [],
+      accounts:
+        targetMode === "goalForSelectedAccounts" ? selectedAccounts : [], // what about the conditional of all accounts mode?  why not put them all in here?
+      usersIdsOfGoal:
+        targetMode === "goalForSelectedUsers" ? selectedUserIds : [],
       goalTitle,
       goalDescription,
       goalMetric,
@@ -179,8 +185,12 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
             label="Target Mode"
           >
             <MenuItem value="goalForAllAccounts">All Accounts</MenuItem>
-            <MenuItem value="goalForSelectedAccounts">Specific Accounts</MenuItem>
-            <MenuItem value="goalForSelectedUsers">Accounts Assigned to Users</MenuItem>
+            <MenuItem value="goalForSelectedAccounts">
+              Specific Accounts
+            </MenuItem>
+            <MenuItem value="goalForSelectedUsers">
+              Accounts Assigned to Users
+            </MenuItem>
           </Select>
         </FormControl>
 

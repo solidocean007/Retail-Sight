@@ -45,19 +45,19 @@ const AdminGoalViewerCard: React.FC<AdminGoalViewerProps> = ({
   // 🔍 Memoized account list based on targetMode
   const effectiveAccounts = useMemo(
     () => getEffectiveAccounts(goal, allCompanyAccounts),
-    [goal, allCompanyAccounts]
+    [goal, allCompanyAccounts],
   );
 
   // 📊 Memoized submission statistics
   const { total, submitted, percentage } = useMemo(
     () => calculateSubmissionStats(goal, effectiveAccounts),
-    [goal, effectiveAccounts]
+    [goal, effectiveAccounts],
   );
 
   // 🧠 Add status to accounts
   const accountsWithStatus = useMemo(
     () => mapAccountsWithStatus(goal, effectiveAccounts),
-    [goal, effectiveAccounts]
+    [goal, effectiveAccounts],
   );
 
   // 🔄 Fallback for account cache
@@ -76,7 +76,7 @@ const AdminGoalViewerCard: React.FC<AdminGoalViewerProps> = ({
       .filter((u) => goal.usersIdsOfGoal?.includes(u.uid))
       .map((user) => {
         const matchingPost = goal.submittedPosts?.find(
-          (post) => post.submittedBy === user.uid
+          (post) => post.submittedBy === user.uid,
         );
 
         return {

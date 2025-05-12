@@ -90,7 +90,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
     return 800; // Fallback for SSR or very early load
   });
-  
 
   useEffect(() => {
     if (!listRef.current) return;
@@ -195,7 +194,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           lastVisible,
           limit: POSTS_BATCH_SIZE,
           currentUserCompanyId,
-        })
+        }),
       )
         .then((action) => {
           if (fetchMorePostsBatch.fulfilled.match(action)) {

@@ -89,7 +89,7 @@ const PostCard: React.FC<PostCardProps> = ({
       .getPropertyValue(
         theme === "dark"
           ? "--post-card-animated-gradient-dark"
-          : "--post-card-animated-gradient-light"
+          : "--post-card-animated-gradient-light",
       )
       .trim();
   };
@@ -115,7 +115,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   // Use the postId to fetch the latest post data from the Redux store
   const updatedPost = useSelector((state: RootState) =>
-    state.posts.posts.find((p) => p.id === post.id)
+    state.posts.posts.find((p) => p.id === post.id),
   );
 
   // Extract the likes count and likedByUser status from the updated post object
@@ -132,7 +132,7 @@ const PostCard: React.FC<PostCardProps> = ({
     try {
       const commentQuery = query(
         collection(db, "comments"),
-        where("postId", "==", postId)
+        where("postId", "==", postId),
       );
       const commentSnapshot = await getDocs(commentQuery);
       const comments: CommentType[] = commentSnapshot.docs.map((doc) => ({
@@ -188,7 +188,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
       // Remove the comment from local state
       setComments(
-        comments.filter((comment) => comment.commentId !== commentId)
+        comments.filter((comment) => comment.commentId !== commentId),
       );
     } catch (error) {
       console.error("Failed to delete comment:", error);
@@ -313,7 +313,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 <div className="store-address-box">
                   <h5>{post.account?.accountAddress}</h5>{" "}
                   {/* this matches the saved post but not the future account object.  should it do either or both?*/}
-                  {/* <h5>{post.id}</h5> */}
+                  <h5>{post.id}</h5>
                 </div>
               </div>
             </div>
@@ -356,8 +356,8 @@ const PostCard: React.FC<PostCardProps> = ({
           {post.companyGoalId
             ? `Company goal: ${post.companyGoalTitle}` /* this renders null */
             : post.oppId
-            ? `Gallo goal: ${post.galloGoalTitle}`
-            : ""}
+              ? `Gallo goal: ${post.galloGoalTitle}`
+              : ""}
         </div>
 
         <div className="description-image">

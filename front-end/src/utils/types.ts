@@ -100,7 +100,7 @@ export interface PostType {
   hashtags: string[];
   starTags: string[];
   commentCount: number;
-  token: { sharedToken: string; tokenExpiry: string };
+  token: { sharedToken: string; tokenExpiry?: string };
   companyGoalId?: string | null;
   companyGoalDescription?: string | null;
   companyGoalTitle?: string | null;
@@ -253,6 +253,7 @@ export type CompanyGoalType = {
   targetMode: GoalTargetMode;
   accounts: CompanyAccountType[];
   usersIdsOfGoal?: string[];
+  perUserQuota?: number;
   submittedPosts?: GoalSubmissionType[];
 };
 

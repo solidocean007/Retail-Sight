@@ -30,19 +30,19 @@ const MyGalloGoals = () => {
   const user = useSelector(selectUser);
   const salesRouteNum = user?.salesRouteNum;
   const usersGalloGoals = useSelector((state: RootState) =>
-    selectUsersGalloGoals(state, salesRouteNum)
+    selectUsersGalloGoals(state, salesRouteNum),
   );
   const companyId = user?.companyId;
   const [expandedPrograms, setExpandedPrograms] = useState<string[]>([]);
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
 
   const toggleProgramExpansion = (programTitle: string) => {
     setExpandedPrograms((prev) =>
       prev.includes(programTitle)
         ? prev.filter((title) => title !== programTitle)
-        : [...prev, programTitle]
+        : [...prev, programTitle],
     );
   };
 
@@ -53,7 +53,7 @@ const MyGalloGoals = () => {
     }));
   };
 
-  if(usersGalloGoals.length === 0) return;
+  if (usersGalloGoals.length === 0) return;
 
   return (
     <div className="my-gallo-goals-container">
@@ -102,14 +102,14 @@ const MyGalloGoals = () => {
                       <Button
                         onClick={() =>
                           toggleProgramExpansion(
-                            goal.programDetails.programTitle
+                            goal.programDetails.programTitle,
                           )
                         }
                         variant="outlined"
                         size="small"
                       >
                         {expandedPrograms.includes(
-                          goal.programDetails.programTitle
+                          goal.programDetails.programTitle,
                         )
                           ? "Collapse"
                           : "Show Goal"}
@@ -119,7 +119,7 @@ const MyGalloGoals = () => {
 
                   {/* Expandable Goal Section */}
                   {expandedPrograms.includes(
-                    goal.programDetails.programTitle
+                    goal.programDetails.programTitle,
                   ) && (
                     <React.Fragment>
                       <TableRow>
@@ -237,7 +237,7 @@ const MyGalloGoals = () => {
                                             </TableCell>
                                           </TableRow>
                                         );
-                                      }
+                                      },
                                     )}
                                   </TableBody>
                                 </Table>

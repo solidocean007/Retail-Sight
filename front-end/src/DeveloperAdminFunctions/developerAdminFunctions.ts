@@ -45,12 +45,16 @@ const deleteFirestoreUser = async (userId: string) => {
 // };
 
 // Function to delete both auth and Firestore data
-export const deleteUserAuthAndFirestore = async (userId:string) => {
+export const deleteUserAuthAndFirestore = async (userId: string) => {
   // await deleteSelectedUserAuth(userId);
   await deleteFirestoreUser(userId);
 };
 
-export const updateSelectedUser = async (userId:string, updatedUserData : { [key: string]: any }) => { // Unexpected any. Specify a different type. should this be a usertype?
+export const updateSelectedUser = async (
+  userId: string,
+  updatedUserData: { [key: string]: any },
+) => {
+  // Unexpected any. Specify a different type. should this be a usertype?
   try {
     await updateDoc(doc(db, "users", userId), updatedUserData);
     console.log("User updated successfully");

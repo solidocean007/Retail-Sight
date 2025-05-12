@@ -38,7 +38,7 @@ export const useHandlePostSubmission = () => {
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     selectedCompanyMission: CompanyMissionType,
     apiKey: string,
-    navigate: NavigateFunction
+    navigate: NavigateFunction,
   ) => {
     setIsUploading(true);
     const user = auth.currentUser;
@@ -47,7 +47,7 @@ export const useHandlePostSubmission = () => {
     // Create a unique folder for each post's images
     const currentDate = new Date();
     const formattedDate = `${currentDate.getFullYear()}-${String(
-      currentDate.getMonth() + 1
+      currentDate.getMonth() + 1,
     ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
     const uniquePostFolder = `${formattedDate}/${user.uid}-${Date.now()}`;
 
@@ -70,14 +70,14 @@ export const useHandlePostSubmission = () => {
       const originalImageRef = storageRef(storage, originalImagePath);
       const uploadOriginalTask = uploadBytesResumable(
         originalImageRef,
-        resizedOriginalBlob
+        resizedOriginalBlob,
       );
 
       uploadOriginalTask.on(
         "state_changed",
         (snapshot) => {
           originalUploadProgress = Math.round(
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
           );
           updateOverallProgress();
         },
@@ -96,14 +96,14 @@ export const useHandlePostSubmission = () => {
           const resizedImageRef = storageRef(storage, resizedImagePath);
           const uploadResizedTask = uploadBytesResumable(
             resizedImageRef,
-            resizedBlob
+            resizedBlob,
           );
 
           uploadResizedTask.on(
             "state_changed",
             (snapshot) => {
               resizedUploadProgress = Math.round(
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
               );
               updateOverallProgress();
             },
@@ -113,14 +113,14 @@ export const useHandlePostSubmission = () => {
             },
             async () => {
               const resizedImageUrl = await getDownloadURL(
-                uploadResizedTask.snapshot.ref
+                uploadResizedTask.snapshot.ref,
               );
 
               const sharedToken = uuidv4();
               // Set the expiry to one week from now
-              const tokenExpiryDate = new Date();
-              tokenExpiryDate.setDate(tokenExpiryDate.getDate() + 7);
-              const tokenExpiry = tokenExpiryDate.toISOString();
+              // const tokenExpiryDate = new Date();
+              // tokenExpiryDate.setDate(tokenExpiryDate.getDate() + 7);
+              // const tokenExpiry = tokenExpiryDate.toISOString();
 
               // Extract hashtags and starTags directly from the description
               const hashtags = extractHashtags(post.description ?? "");
@@ -159,7 +159,7 @@ export const useHandlePostSubmission = () => {
                 likes: [],
                 token: {
                   sharedToken: sharedToken,
-                  tokenExpiry: tokenExpiry,
+                  // tokenExpiry: tokenExpiry,
                 },
                 oppId: post.oppId || null,
                 closedBy: post.closedBy || user.displayName || "",
@@ -171,7 +171,7 @@ export const useHandlePostSubmission = () => {
               // Create the post in Firestore
               const newDocRef = await addPostToFirestore(
                 db,
-                postDataWithoutImage
+                postDataWithoutImage,
               );
 
               const postId = newDocRef.id;
@@ -210,7 +210,7 @@ export const useHandlePostSubmission = () => {
                   achievementPayload,
                   apiKey,
                   navigate,
-                  dispatch
+                  dispatch,
                 );
               }
 
@@ -221,7 +221,7 @@ export const useHandlePostSubmission = () => {
               await updateCategoriesInFirestore(
                 db,
                 post.category,
-                newDocRef.id
+                newDocRef.id,
               );
 
               if (newDocRef && selectedCompanyMission) {
@@ -236,9 +236,9 @@ export const useHandlePostSubmission = () => {
               dispatch(showMessage("Post added successfully!"));
               setIsUploading(false);
               navigate("/user-home-page");
-            }
+            },
           );
-        }
+        },
       );
     } catch (error) {
       if (error instanceof Error) {

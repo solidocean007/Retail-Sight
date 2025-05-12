@@ -1,7 +1,7 @@
 /* checkBoxModal.css */
 
 .modal-container {
-  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
 }
 
 .checkbox-container {
@@ -33,7 +33,7 @@
 }
 
 .apply-button {
-  background-color: #4CAF50; /* Green */
+  background-color: #4caf50; /* Green */
   color: white;
   padding: 15px 32px;
   text-align: center;
@@ -80,4 +80,3 @@
   padding: 10px;
   border-bottom: 1px solid #e0e0e0; /* Light grey line to separate the buttons */
 }
-

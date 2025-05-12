@@ -55,7 +55,9 @@ input[type="password"] {
   padding: 20px; /* Adjust as necessary */
   /* border: 1px solid #ccc; */
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 input[type="text"]:focus,
@@ -64,15 +66,14 @@ input[type="password"]:focus {
   box-shadow: var(--card-shadow);
 }
 
-
-
 table {
   font-family: "Arial", sans-serif;
   font-size: 14px;
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   border: 1px solid #ccc;
   padding: 8px;
   text-align: left;
@@ -114,4 +115,3 @@ tr:nth-child(even) {
     height: 100%;
   }
 }
-

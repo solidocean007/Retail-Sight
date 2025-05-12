@@ -9,7 +9,7 @@ import {
  */
 export function getEffectiveAccounts(
   goal: CompanyGoalType,
-  allAccounts: CompanyAccountType[]
+  allAccounts: CompanyAccountType[],
 ): CompanyAccountType[] {
   switch (
     goal.targetMode ||
@@ -22,8 +22,8 @@ export function getEffectiveAccounts(
     case "goalForSelectedUsers":
       return allAccounts.filter((account) =>
         account.salesRouteNums?.some((route) =>
-          goal.usersIdsOfGoal?.includes(route)
-        )
+          goal.usersIdsOfGoal?.includes(route),
+        ),
       );
     default:
       return [];
@@ -35,17 +35,17 @@ export function getEffectiveAccounts(
  */
 export function calculateSubmissionStats(
   goal: CompanyGoalType,
-  effectiveAccounts: CompanyAccountType[]
+  effectiveAccounts: CompanyAccountType[],
 ) {
   if (
     goal.targetMode === "goalForSelectedUsers" &&
     goal.usersIdsOfGoal?.length
   ) {
     const uniqueSubmitters = new Set(
-      goal.submittedPosts?.map((p) => p.submittedBy).filter(Boolean)
+      goal.submittedPosts?.map((p) => p.submittedBy).filter(Boolean),
     );
     const submittedCount = Array.from(uniqueSubmitters).filter(
-      (uid) => goal.usersIdsOfGoal!.includes(uid) // Type 'undefined' is not assignable to type 'string'
+      (uid) => goal.usersIdsOfGoal!.includes(uid), // Type 'undefined' is not assignable to type 'string'
     ).length;
     const totalCount = goal.usersIdsOfGoal.length;
     const percentage =
@@ -55,7 +55,7 @@ export function calculateSubmissionStats(
 
   const submittedCount =
     goal.submittedPosts?.filter((post) =>
-      effectiveAccounts.some((acc) => acc.accountNumber === post.accountNumber)
+      effectiveAccounts.some((acc) => acc.accountNumber === post.accountNumber),
     ).length || 0;
   const totalCount = effectiveAccounts.length;
   const percentage =
@@ -68,7 +68,7 @@ export function calculateSubmissionStats(
  */
 export function mapAccountsWithStatus(
   goal: CompanyGoalType,
-  effectiveAccounts: CompanyAccountType[]
+  effectiveAccounts: CompanyAccountType[],
 ) {
   if (
     goal.targetMode === "goalForSelectedUsers" &&
@@ -76,10 +76,10 @@ export function mapAccountsWithStatus(
   ) {
     return goal.usersIdsOfGoal.map((uid) => {
       const matchingAccount = effectiveAccounts.find((account) =>
-        account.salesRouteNums?.includes(uid)
+        account.salesRouteNums?.includes(uid),
       );
       const matchingPost = goal.submittedPosts?.find(
-        (post) => post.submittedBy === uid
+        (post) => post.submittedBy === uid,
       );
       return {
         ...(matchingAccount || {
@@ -98,7 +98,8 @@ export function mapAccountsWithStatus(
 
   return effectiveAccounts.map((account) => {
     const found = goal.submittedPosts?.find(
-      (post: GoalSubmissionType) => post.accountNumber === account.accountNumber
+      (post: GoalSubmissionType) =>
+        post.accountNumber === account.accountNumber,
     );
     return {
       ...account,

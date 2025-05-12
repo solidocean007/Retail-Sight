@@ -107,7 +107,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const saveAccountsToFirestore = async (
-    mergedAccounts: CompanyAccountType[]
+    mergedAccounts: CompanyAccountType[],
   ) => {
     if (!user?.companyId) return;
 
@@ -123,8 +123,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           await updateDoc(accountsDocRef, {
             accounts: mergedAccounts.map((a) =>
               Object.fromEntries(
-                Object.entries(a).filter(([, v]) => v !== undefined)
-              )
+                Object.entries(a).filter(([, v]) => v !== undefined),
+              ),
             ),
           });
         } else {
@@ -146,7 +146,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const confirmUpdates = async () => {
     setIsSubmitting(true);
-  
+
     try {
       if (
         pendingUpdates &&
@@ -159,21 +159,26 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         const map = new Map(accounts.map((a) => [a.accountNumber, a]));
         fileData.forEach((acc) => map.set(acc.accountNumber, acc));
         const merged = Array.from(map.values());
-  
+
         await saveAccountsToFirestore(merged); // ✅ Primary write
-  
+
         try {
           await writeCustomerTypesToCompany(user.companyId, merged); // ✅ Secondary write
         } catch (configErr) {
-          console.warn("Accounts saved, but failed to update customer types:", configErr);
-          dispatch(showMessage("Accounts saved, but failed to update customer types."));
+          console.warn(
+            "Accounts saved, but failed to update customer types:",
+            configErr,
+          );
+          dispatch(
+            showMessage("Accounts saved, but failed to update customer types."),
+          );
         }
-  
+
         const mode = getUploadMode();
         dispatch(
           showMessage(
-            `${pendingUpdates?.length || 0} account(s) ${mode === "initial" ? "added" : "updated"}.`
-          )
+            `${pendingUpdates?.length || 0} account(s) ${mode === "initial" ? "added" : "updated"}.`,
+          ),
         );
       }
     } catch (err) {
@@ -186,33 +191,42 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       setFileData([]);
     }
   };
-  
 
   const handleDeleteAccount = async (accNum: string) => {
     const updated = accounts.filter((a) => a.accountNumber !== accNum);
-  
+
     await saveAccountsToFirestore(updated);
     await deleteAccountFromIndexedDB(accNum);
-  
+
     // 🧠 Check if any accounts still use the deleted type
     const deletedAccount = accounts.find((a) => a.accountNumber === accNum);
     const deletedType = deletedAccount?.typeOfAccount;
-  
+
     if (user?.companyId && deletedType) {
       const stillUsed = updated.some((a) => a.typeOfAccount === deletedType);
-  
+
       if (!stillUsed) {
         try {
-          const configRef = doc(db, "companies", user.companyId, "config", "general");
+          const configRef = doc(
+            db,
+            "companies",
+            user.companyId,
+            "config",
+            "general",
+          );
           const configSnap = await getDoc(configRef);
-  
+
           if (configSnap.exists()) {
             const configData = configSnap.data();
             const customerTypes: string[] = configData.customerTypes || [];
-  
+
             const updatedTypes = customerTypes.filter((t) => t !== deletedType);
-            await setDoc(configRef, { customerTypes: updatedTypes }, { merge: true });
-  
+            await setDoc(
+              configRef,
+              { customerTypes: updatedTypes },
+              { merge: true },
+            );
+
             console.log(`Removed unused customer type: ${deletedType}`);
           }
         } catch (err) {
@@ -221,10 +235,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       }
     }
   };
-  
 
   const handleAddAccounts = async (file: File) => {
-    if(!user) return;
+    if (!user) return;
     const newAccounts = await getAccountsForAdd(file);
     setPendingUpdates(newAccounts);
     setFileData([...accounts, ...newAccounts]);
@@ -233,7 +246,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const handleUpdateAccounts = async (file: File) => {
-    if(!user) return;
+    if (!user) return;
     const updatedAccounts = await getAccountsForUpdate(file, accounts);
     const map = new Map(accounts.map((a) => [a.accountNumber, a]));
     updatedAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
@@ -258,7 +271,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const filteredAccounts = accounts.filter(
     (a) =>
       a.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.accountNumber.toString().includes(searchTerm)
+      a.accountNumber.toString().includes(searchTerm),
   );
 
   return (
@@ -295,7 +308,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             </Typography>
           </Box>
           <div className="account-management-buttons">
-           
             <Button variant="contained" sx={{ marginBottom: 2 }}>
               View Upload File Template
             </Button>
@@ -396,7 +408,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             {filteredAccounts
               .slice(
                 (currentPage - 1) * itemsPerPage,
-                currentPage * itemsPerPage
+                currentPage * itemsPerPage,
               )
               .map((a, i) => (
                 <TableRow key={i}>
@@ -423,7 +435,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                         onClick={() => {
                           setPendingUpdates([a]);
                           setConfirmMessage(
-                            `Are you sure you want to delete "${a.accountName}"?`
+                            `Are you sure you want to delete "${a.accountName}"?`,
                           );
                           setShowConfirm(true);
                         }}

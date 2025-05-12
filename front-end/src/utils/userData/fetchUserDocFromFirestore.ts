@@ -1,9 +1,9 @@
 // fetchUserDocFromFirestore
-import { doc, getDoc, collection } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, getDoc, collection } from "firebase/firestore";
+import { db } from "../firebase";
 
 export const fetchUserDocFromFirestore = async (uid: string) => {
-  const userRef = doc(collection(db, 'users'), uid);
+  const userRef = doc(collection(db, "users"), uid);
 
   try {
     const userSnap = await getDoc(userRef);
@@ -20,4 +20,4 @@ export const fetchUserDocFromFirestore = async (uid: string) => {
     // Handle or propagate the error as needed
     return null;
   }
-}
+};

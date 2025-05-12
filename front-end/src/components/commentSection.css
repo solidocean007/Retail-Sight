@@ -32,8 +32,8 @@
 
 /* For the like button */
 button.like-button {
-  font-size: 0.8rem;  /* makes the font smaller */
-  padding: 2px 2px;  /* smaller padding */
+  font-size: 0.8rem; /* makes the font smaller */
+  padding: 2px 2px; /* smaller padding */
   border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
@@ -41,5 +41,5 @@ button.like-button {
 }
 
 button.like-button:hover {
-  background-color: #eee;  /* a subtle hover effect */
+  background-color: #eee; /* a subtle hover effect */
 }

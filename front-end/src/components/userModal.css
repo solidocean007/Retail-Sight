@@ -1,8 +1,10 @@
-
-
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .user-modal {
@@ -19,8 +21,12 @@
 }
 
 @keyframes popIn {
-  from { transform: scale(0.9); }
-  to { transform: scale(1); }
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .close {
@@ -46,7 +52,8 @@
   margin-bottom: 10px;
 }
 
-.user-company, .user-email {
+.user-company,
+.user-email {
   font-size: 18px;
   color: #555;
   margin-bottom: 10px;
@@ -56,4 +63,3 @@
   text-decoration: none; /* Remove underline */
   transition: color 0.2s ease;
 }
-

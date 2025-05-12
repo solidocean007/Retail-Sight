@@ -53,8 +53,8 @@ const DateFilter: React.FC<DateFilterProps> = ({ dateRange, onDateChange }) => {
               fullWidth: true,
               variant: "standard", // Avoid default outlined borders
               InputProps: { disableUnderline: true },
-              className: "date-picker-input"
-            }
+              className: "date-picker-input",
+            },
           }}
         />
       </div>

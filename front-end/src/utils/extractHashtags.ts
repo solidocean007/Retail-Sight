@@ -13,4 +13,3 @@ export const extractStarTags = (description: string) => {
       ?.map((tag) => tag.toLowerCase().replace(/\s+/g, "")) || [] // Convert to lowercase and remove spaces
   );
 };
-

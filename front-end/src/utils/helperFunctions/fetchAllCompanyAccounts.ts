@@ -2,7 +2,9 @@ import { fetchAllAccountsFromFirestore } from "./fetchAllAcccountsFromFirestore"
 import getCompanyAccountId from "./getCompanyAccountId";
 
 // this gets all of the accounts for the users company
-export const fetchAllCompanyAccounts = async (companyId: string | undefined) => {
+export const fetchAllCompanyAccounts = async (
+  companyId: string | undefined,
+) => {
   // this gets all of the users companys accounts
   if (!companyId) {
     console.error("No company ID provided.");

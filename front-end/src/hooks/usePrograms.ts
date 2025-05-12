@@ -33,4 +33,3 @@ const usePrograms = (apiKey: string, startDate: Dayjs | null) => {
 };
 
 export default usePrograms;
-
