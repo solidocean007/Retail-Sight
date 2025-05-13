@@ -41,15 +41,13 @@ import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
-import { set } from "react-hook-form";
-import { DisplayablePost } from "./ActivityFeed";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
 interface PostCardProps {
   id: string;
   currentUserUid: string;
-  post: DisplayablePost;
+  post: PostWithID;
   getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
   getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   style?: React.CSSProperties;

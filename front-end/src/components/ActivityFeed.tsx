@@ -35,7 +35,6 @@ import NoResults from "./NoResults";
 const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
 
-export type DisplayablePost = PostWithID | { id: string };
 
 interface ActivityFeedProps {
   listRef: React.RefObject<VariableSizeList>;
@@ -71,15 +70,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector((state: RootState) => state.posts.filteredPosts);
   
-  let displayPosts: DisplayablePost[] = activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
-  
-  // Inject 3 filler posts to prevent auto-scroll issues
-  displayPosts = [ // Type '{ id: string; }[]' is not assignable to type 'PostWithID[]'.
-    // Type '{ id: string; }' is not assignable to type 'PostWithID'.
-      // Type '{ id: string; }' is missing the following properties from type 'PostType': category, channel, account, displayDate, and 8 more.
-    ...displayPosts,
-    ...Array(3).fill(null).map(() => ({ id: `filler-${Math.random()}` })),
-  ];
+  let displayPosts: PostWithID[] = activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
+
   
   // const listRef = useRef<List>(null);
   useScrollToPost(listRef, displayPosts, AD_INTERVAL);
@@ -233,7 +225,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   };
 
   const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
-  const itemCount = displayPosts.length + numberOfAds;
+  const fillerCount = 3;
+  const itemCount = displayPosts.length + numberOfAds + fillerCount;
   const itemRenderer = ({
     index,
     style,
