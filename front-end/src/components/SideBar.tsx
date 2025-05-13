@@ -92,13 +92,13 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
   const protectedAction = useProtectedAction();
   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(
-    [],
+    []
   );
   const selectedStates = useSelector(
-    (state: RootState) => state.locations.selectedStates,
+    (state: RootState) => state.locations.selectedStates
   );
   const selectedCities = useSelector(
-    (state: RootState) => state.locations.selectedCities,
+    (state: RootState) => state.locations.selectedCities
   );
 
   // ✅ Expose a public method for parent
@@ -158,19 +158,19 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
 
     try {
       const actionResult = await dispatch(
-        fetchFilteredPosts({ filters, currentHashtag, currentStarTag }),
+        fetchFilteredPosts({ filters, currentHashtag, currentStarTag })
       );
       let fetchedPosts: PostWithID[] = actionResult.payload as PostWithID[];
 
       if (currentHashtag) {
         fetchedPosts = fetchedPosts.filter(
-          (post) => post.hashtags && post.hashtags.includes(currentHashtag),
+          (post) => post.hashtags && post.hashtags.includes(currentHashtag)
         );
       }
 
       if (currentStarTag) {
         fetchedPosts = fetchedPosts.filter(
-          (post) => post.hashtags && post.starTags.includes(currentStarTag),
+          (post) => post.hashtags && post.starTags.includes(currentStarTag)
         );
       }
 
@@ -183,7 +183,7 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
 
         const endDate = filters.dateRange.endDate
           ? new Date(
-              new Date(filters.dateRange.endDate).setHours(23, 59, 59, 999),
+              new Date(filters.dateRange.endDate).setHours(23, 59, 59, 999)
             ).getTime()
           : null;
 
@@ -222,7 +222,7 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
       } else {
         if (currentUserCompanyId && currentUserCompanyId) {
           dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }),
+            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
           ).then((action) => {
             if (fetchInitialPostsBatch.fulfilled.match(action)) {
               const { posts } = action.payload;
@@ -355,7 +355,7 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
             setSelectedChannels((prev) =>
               prev.includes(option)
                 ? prev.filter((c) => c !== option)
-                : [...prev, option],
+                : [...prev, option]
             );
           }}
         />
@@ -367,7 +367,7 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
             setSelectedCategories((prev) =>
               prev.includes(option)
                 ? prev.filter((c) => c !== option)
-                : [...prev, option],
+                : [...prev, option]
             );
           }}
         />
@@ -405,20 +405,16 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
       </div>
       {activePostSet === "filteredPosts" && (
         <div className="filter-summary-box">
-          {activePostSet === "filteredPosts" && (
+          {filteredPosts.length > 0 ? (
             <div className="filter-summary">
-              {filteredPosts.length > 0 ? (
-                <div className="filter-summary">
-                  <p>
-                    Showing {filteredPosts.length} filtered post
-                    {filteredPosts.length > 1 ? "s" : ""} •{" "}
-                  </p>
-                  <p>{getFilterSummaryText()}</p>
-                </div>
-              ) : (
-                <p>No posts match the current filters.</p>
-              )}
+              <p>
+                Showing {filteredPosts.length} filtered post
+                {filteredPosts.length > 1 ? "s" : ""} •{" "}
+              </p>
+              <p>{getFilterSummaryText()}</p>
             </div>
+          ) : (
+            <p>No posts match the current filters.</p>
           )}
         </div>
       )}

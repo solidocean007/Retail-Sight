@@ -65,6 +65,11 @@
   animation: slideInFromRight 0.4s forwards;
 }
 
+.filter-summary-box {
+  width: 100%;
+  background-color: green;
+}
+
 .filter-summary {
   display: flex;
   flex-direction: column;
