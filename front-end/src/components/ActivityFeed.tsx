@@ -308,6 +308,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         itemCount={itemCount}
         width={"100%"}
         itemSize={getItemSize}
+        initialScrollOffset={0}
         onItemsRendered={handleItemsRendered}
         itemData={{
           posts: displayPosts,
