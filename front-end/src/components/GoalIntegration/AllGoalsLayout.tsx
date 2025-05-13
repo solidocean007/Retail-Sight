@@ -77,7 +77,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
           >
             <MenuItem value={0}>Goals View</MenuItem>
             <MenuItem value={1}>Company Goals</MenuItem>
-            <MenuItem value={2}>Gallo Programs & Goals</MenuItem>
+            {/* <MenuItem value={2}>Gallo Programs & Goals</MenuItem> */}
           </Select>
         ) : (
           <Tabs
@@ -90,7 +90,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
           >
             <Tab label="Goals View" {...a11yProps(0)} />
             <Tab label="Company Goals" {...a11yProps(1)} />
-            <Tab label="Gallo Programs & Goals" {...a11yProps(2)} />
+            {/* <Tab label="Gallo Programs & Goals" {...a11yProps(2)} /> */}
           </Tabs>
         )}
       </Box>
@@ -104,11 +104,11 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
           <AllCompanyGoalsView companyId={companyId} />
         </div>
       )}
-      {value === 2 && (
+      {/* {value === 2 && (
         <div className="table-container">
           <AllGalloGoalsView galloGoals={galloGoals} />
         </div>
-      )}
+      )} */}
     </div>
   );
 };
