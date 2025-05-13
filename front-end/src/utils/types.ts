@@ -152,7 +152,7 @@ export type CollectionWithId = CollectionType & { id: string };
 
 export interface TokenData {
   sharedToken: string;
-  tokenExpiry: string;
+  tokenExpiry?: string;
 }
 
 export interface CompanyTeamType {

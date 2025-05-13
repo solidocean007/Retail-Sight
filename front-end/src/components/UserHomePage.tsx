@@ -158,10 +158,10 @@ export const UserHomePage = () => {
             <ActivityFeed
               listRef={listRef}
               // posts={displayPosts}
-              posts={[
-                ...displayPosts,
-                ...Array(3).fill({ id: `filler-${Math.random()}` }),
-              ]}
+              // posts={[
+              //   ...displayPosts,
+              //   ...Array(3).fill({ id: `filler-${Math.random()}` }),
+              // ]}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               currentStarTag={currentStarTag}

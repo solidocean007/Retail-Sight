@@ -42,13 +42,14 @@ import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { set } from "react-hook-form";
+import { DisplayablePost } from "./ActivityFeed";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
 interface PostCardProps {
   id: string;
   currentUserUid: string;
-  post: PostWithID;
+  post: DisplayablePost;
   getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
   getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   style?: React.CSSProperties;

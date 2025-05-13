@@ -2,13 +2,14 @@
 import React from "react";
 import MemoizedPostCard from "./PostCard";
 import { PostWithID } from "../utils/types";
+import { DisplayablePost } from "./ActivityFeed";
 
 interface PostCardRendererProps {
   currentUserUid?: string;
   index: number;
   style: React.CSSProperties;
   data: {
-    post: PostWithID;
+    post: DisplayablePost;
     getPostsByTag: (
       hashTag: string,
       companyId?: string,

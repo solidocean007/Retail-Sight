@@ -2,10 +2,11 @@ import { RefObject, useEffect } from "react";
 import { VariableSizeList } from "react-window";
 import { PostWithID } from "../utils/types";
 import { useSearchParams } from "react-router-dom";
+import { DisplayablePost } from "../components/ActivityFeed";
 
 const useScrollToPost = (
   listRef: RefObject<VariableSizeList>,
-  displayPosts: PostWithID[],
+  displayPosts: DisplayablePost[],
   AD_INTERVAL: number,
   adsOn: boolean = false, // optional toggle
 ) => {

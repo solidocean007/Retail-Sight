@@ -69,7 +69,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
-  const [openAccountModal, setOpenAccountModal] = useState(true);
+  const [openAccountModal, setOpenAccountModal] = useState(false);
 
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId,

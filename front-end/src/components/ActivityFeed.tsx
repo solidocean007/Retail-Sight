@@ -35,9 +35,11 @@ import NoResults from "./NoResults";
 const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
 
+export type DisplayablePost = PostWithID | { id: string };
+
 interface ActivityFeedProps {
   listRef: React.RefObject<VariableSizeList>;
-  posts: PostWithID[];
+  // posts: PostWithID[];
   currentHashtag?: string | null;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   currentStarTag: string | null;
@@ -52,7 +54,7 @@ interface ActivityFeedProps {
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   listRef,
-  posts,
+  // posts,
   currentHashtag,
   setCurrentHashtag,
   currentStarTag,
@@ -66,9 +68,21 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
-
+  const rawPosts = useSelector((state: RootState) => state.posts.posts);
+  const filteredPosts = useSelector((state: RootState) => state.posts.filteredPosts);
+  
+  let displayPosts: DisplayablePost[] = activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
+  
+  // Inject 3 filler posts to prevent auto-scroll issues
+  displayPosts = [ // Type '{ id: string; }[]' is not assignable to type 'PostWithID[]'.
+    // Type '{ id: string; }' is not assignable to type 'PostWithID'.
+      // Type '{ id: string; }' is missing the following properties from type 'PostType': category, channel, account, displayDate, and 8 more.
+    ...displayPosts,
+    ...Array(3).fill(null).map(() => ({ id: `filler-${Math.random()}` })),
+  ];
+  
   // const listRef = useRef<List>(null);
-  useScrollToPost(listRef, posts, AD_INTERVAL);
+  useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
   // hook to load posts
@@ -107,7 +121,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }, 200);
 
     return () => clearTimeout(timeout);
-  }, [posts.length, windowWidth, listHeight]);
+  }, [displayPosts.length, windowWidth, listHeight]);
 
   // Function to calculate list height
   const calculateListHeight = () => {
@@ -187,14 +201,14 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     const lastIndex = itemCount; // last index is declared but never read
 
     // If the last visible index is the last item in the list
-    if (visibleStopIndex >= posts.length - 1 && !loadingMore && hasMore) {
+    if (visibleStopIndex >= displayPosts.length - 1 && !loadingMore && hasMore) {
       setLoadingMore(true);
       dispatch(
         fetchMorePostsBatch({
           lastVisible,
           limit: POSTS_BATCH_SIZE,
           currentUserCompanyId,
-        }),
+        })
       )
         .then((action) => {
           if (fetchMorePostsBatch.fulfilled.match(action)) {
@@ -218,8 +232,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   };
 
-  const numberOfAds = adsOn ? Math.floor(posts.length / AD_INTERVAL) : 0;
-  const itemCount = posts.length + numberOfAds;
+  const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
+  const itemCount = displayPosts.length + numberOfAds;
   const itemRenderer = ({
     index,
     style,
@@ -244,8 +258,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     if (isAdPosition) {
       return <div style={wrapperStyle}>{/* Your AdComponent here */}</div>;
-    } else if (postIndex < posts.length) {
-      const postWithID = posts[postIndex];
+    } else if (postIndex < displayPosts.length) {
+      const postWithID = displayPosts[postIndex];
 
       if (!postWithID?.id || postWithID.id.startsWith("filler-")) {
         return <div style={style}></div>; // empty div for filler
@@ -274,7 +288,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return <CircularProgress />;
   }
 
-  if (posts.length === 0) {
+  if (displayPosts.length === 0) {
     return <NoResults onClearFilters={clearSearch} />;
   }
 
@@ -303,7 +317,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         itemSize={getItemSize}
         onItemsRendered={handleItemsRendered}
         itemData={{
-          posts: posts,
+          posts: displayPosts,
           getPostsByTag: getPostsByTag,
           getPostsByStarTag: getPostsByStarTag,
         }}
