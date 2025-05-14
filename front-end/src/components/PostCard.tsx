@@ -8,6 +8,7 @@ import {
   MenuItem,
   Dialog,
   Typography,
+  CircularProgress,
 } from "@mui/material";
 import { CommentType, CompanyAccountType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
@@ -41,6 +42,7 @@ import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
+import { extendPostTokenExpiryAndShare } from "../utils/extendPostTokenExpiryAndShare";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -75,7 +77,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const user = useSelector(selectUser);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
+  const [isSharing, setIsSharing] = useState(false);
   const open = Boolean(anchorEl);
 
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -88,7 +90,7 @@ const PostCard: React.FC<PostCardProps> = ({
       .getPropertyValue(
         theme === "dark"
           ? "--post-card-animated-gradient-dark"
-          : "--post-card-animated-gradient-light",
+          : "--post-card-animated-gradient-light"
       )
       .trim();
   };
@@ -114,7 +116,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   // Use the postId to fetch the latest post data from the Redux store
   const updatedPost = useSelector((state: RootState) =>
-    state.posts.posts.find((p) => p.id === post.id),
+    state.posts.posts.find((p) => p.id === post.id)
   );
 
   // Extract the likes count and likedByUser status from the updated post object
@@ -131,7 +133,7 @@ const PostCard: React.FC<PostCardProps> = ({
     try {
       const commentQuery = query(
         collection(db, "comments"),
-        where("postId", "==", postId),
+        where("postId", "==", postId)
       );
       const commentSnapshot = await getDocs(commentQuery);
       const comments: CommentType[] = commentSnapshot.docs.map((doc) => ({
@@ -187,7 +189,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
       // Remove the comment from local state
       setComments(
-        comments.filter((comment) => comment.commentId !== commentId),
+        comments.filter((comment) => comment.commentId !== commentId)
       );
     } catch (error) {
       console.error("Failed to delete comment:", error);
@@ -224,9 +226,18 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   const handleShare = async () => {
-    handlePostShare(post.id, post.token);
-    // updatePostWithNewTimestamp(post.id);
-    handleClose(); // Close the menu after sharing
+    try {
+      setIsSharing(true);
+      await handlePostShare(post.id, post.token);
+
+      // Optionally show success message or copy link to clipboard
+    } catch (error) {
+      console.error("Error sharing post:", error);
+      // Optionally show an error message
+    } finally {
+      setIsSharing(false);
+      handleClose(); // Close the menu after sharing
+    }
   };
 
   const createdOnBehalf =
@@ -267,7 +278,12 @@ const PostCard: React.FC<PostCardProps> = ({
                     open={open}
                     onClose={() => setAnchorEl(null)}
                   >
-                    <MenuItem onClick={() => handleShare()}>Share</MenuItem>
+                    <MenuItem
+                      onClick={() => handleShare()}
+                      disabled={isSharing}
+                    >
+                      {isSharing ? <CircularProgress size={20} /> : "Share"}
+                    </MenuItem>
                     {(user?.uid === post.createdBy?.uid ||
                       user?.uid === post.userId ||
                       user?.role === "admin" ||
@@ -355,8 +371,8 @@ const PostCard: React.FC<PostCardProps> = ({
           {post.companyGoalId
             ? `Company goal: ${post.companyGoalTitle}` /* this renders null */
             : post.oppId
-              ? `Gallo goal: ${post.galloGoalTitle}`
-              : ""}
+            ? `Gallo goal: ${post.galloGoalTitle}`
+            : ""}
         </div>
 
         <div className="description-image">

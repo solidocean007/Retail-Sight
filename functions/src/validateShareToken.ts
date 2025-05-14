@@ -1,3 +1,4 @@
+
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
@@ -43,9 +44,16 @@ export const validateShareToken = functions.https.onCall(
           "Failed to retrieve collection data."
         );
       }
-      const isTokenValid = token === collection.shareToken;
 
-      return { valid: isTokenValid };
+      const tokenExpiry = collection.tokenExpiry
+        ? new Date(collection.tokenExpiry.toDate())
+        : null;
+      const isTokenValid =
+        token === collection.shareToken &&
+        tokenExpiry &&
+        new Date() < tokenExpiry;
+
+      return { valid: isTokenValid || false };
     } catch (error) {
       console.error("Error validating share token:", error);
       throw new functions.https.HttpsError(

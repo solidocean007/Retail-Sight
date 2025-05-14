@@ -1,46 +1,55 @@
 // handlePostShare.ts
 import { showMessage } from "../Slices/snackbarSlice";
+import { doc, updateDoc, Timestamp, getDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import buildPostLink from "./buildPostLink";
-import { TokenData } from "./types";
-import { updatePostToken } from "./updatePostToken";
-import { getFunctions, httpsCallable } from "@firebase/functions";
 
-interface GeneratePostShareTokenResponse {
+interface TokenData {
   sharedToken: string;
-  tokenExpiry: string;
+  tokenExpiry?: string;
 }
 
-export const handlePostShare = async (
-  postId: string,
-  tokenParam: TokenData,
-) => {
-  const functions = getFunctions();
-  const getSharePostTokenFunction = httpsCallable(
-    functions,
-    "generatePostShareToken",
-  );
-  let token = { ...tokenParam };
-
+export const handlePostShare = async (postId: string, tokenData: TokenData) => {
   try {
-    if (!token.sharedToken || new Date() > new Date(token.tokenExpiry || 0)) {
-      const result = await getSharePostTokenFunction({ postId });
-      const newTokenData = result.data as GeneratePostShareTokenResponse; // should this be awaited?
+    console.log(`Extending token expiry for post ${postId}...`);
 
-      if (newTokenData.sharedToken && newTokenData.tokenExpiry) {
-        token.sharedToken = newTokenData.sharedToken;
-        token.tokenExpiry = newTokenData.tokenExpiry;
+    // Set expiry to 7 days from now
+    const newExpiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiryTimestamp = Timestamp.fromDate(newExpiryDate);
 
-        await updatePostToken({ postId, token });
-      } else {
-        showMessage("Failed to generate a valid share token."); // when a token has expired this throws
-      }
+    const postRef = doc(db, "posts", postId);
+    await updateDoc(postRef, { "token.tokenExpiry": expiryTimestamp });
+
+    console.log(`Token expiry extended to ${newExpiryDate.toISOString()}.`);
+
+    // Fetch the updated post data
+    const postSnapshot = await getDoc(postRef);
+    const updatedPostData = postSnapshot.data();
+    const updatedTokenData = updatedPostData?.token;
+
+    if (!updatedTokenData) {
+      showMessage("Failed to generate a valid share token.");
+      return; // or throw new Error("Failed to fetch updated token data.");
     }
 
-    const shareableLink = buildPostLink(postId, token.sharedToken);
-    await navigator.share({ url: shareableLink });
-    console.log("Post shared successfully.");
+    const functions = getFunctions();
+    const generatePostShareToken = httpsCallable(
+      functions,
+      "generatePostShareToken"
+    );
+    const response = await generatePostShareToken({
+      postId,
+      tokenData: updatedTokenData,
+    });
+    const newToken = (response.data as { token: string }).token;
+
+    const shareableLink = buildPostLink(postId, newToken);
+    console.log("Shareable Link:", shareableLink);
+    showMessage("Post Shared");
+    return shareableLink;
   } catch (error) {
-    console.error("Error sharing the post:", error);
-    showMessage(`Error sharing the post. Please try again.", ${error}`);
+    console.error("Failed to share post:", error);
+    throw error;
   }
 };
