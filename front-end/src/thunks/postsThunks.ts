@@ -29,9 +29,6 @@ import {
   storeLatestPostsInIndexedDB,
   getLatestPostsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
-import { DocumentSnapshot } from "firebase/firestore";
-import { getFunctions, httpsCallable } from "@firebase/functions";
-// import { showMessage } from "../Slices/snackbarSlice";
 
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
@@ -308,17 +305,6 @@ type FetchPostsByIdsArgs = {
   token?: string;
 };
 
-// Define the request payload type for the Firebase callable function
-interface ValidatePostShareTokenRequest {
-  postId: string;
-  token: string;
-}
-
-// Define the response payload type for the callable function
-interface FetchPostWithTokenResponse {
-  post: PostWithID;
-}
-
 // The thunk to fetch posts by IDs after validating the token
 export const fetchPostsByIds = createAsyncThunk<
   PostWithID[],
@@ -326,28 +312,24 @@ export const fetchPostsByIds = createAsyncThunk<
   { rejectValue: string }
 >("posts/fetchPostsByIds", async ({ postIds, token }, { rejectWithValue }) => {
   try {
-    const functions = getFunctions();
-    // Define the callable function with input and output types
-    const validatePostShareToken = httpsCallable<
-      ValidatePostShareTokenRequest,
-      FetchPostWithTokenResponse
-    >(functions, "validatePostShareToken");
-
-    // Ensure postIds is an array (if it's a single string, convert it to an array)
     const ids = Array.isArray(postIds) ? postIds : [postIds];
 
-    // Iterate over postIds and fetch each post with the token
     const fetchPostPromises = ids.map(async (postId) => {
-      const result = await validatePostShareToken({
-        postId,
-        token: token || "",
+      const response = await fetch("https://my-fetch-data-api.vercel.app/api/validatePostShareToken", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, token: token || "" }),
       });
 
-      const data = result.data as FetchPostWithTokenResponse;
-      return data.post;
+      const result = await response.json();
+
+      if (!result.valid) {
+        throw new Error(`Invalid token for post ${postId}`);
+      }
+
+      return result.post as PostWithID;
     });
 
-    // Wait for all posts to be fetched
     const postsWithIds = await Promise.all(fetchPostPromises);
     return postsWithIds;
   } catch (error) {
@@ -355,3 +337,4 @@ export const fetchPostsByIds = createAsyncThunk<
     return rejectWithValue("Error fetching posts by IDs.");
   }
 });
+

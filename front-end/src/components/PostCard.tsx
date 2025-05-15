@@ -225,20 +225,27 @@ const PostCard: React.FC<PostCardProps> = ({
     setAnchorEl(null);
   };
 
-  const handleShare = async () => {
-    try {
-      setIsSharing(true);
-      await handlePostShare(post.id, post.token);
+const handleShare = async () => {
+  console.log("Share button clicked");
+  try {
+    setIsSharing(true);
+    console.log("Starting share process...");
 
-      // Optionally show success message or copy link to clipboard
-    } catch (error) {
-      console.error("Error sharing post:", error);
-      // Optionally show an error message
-    } finally {
-      setIsSharing(false);
-      handleClose(); // Close the menu after sharing
-    }
-  };
+    const result = await handlePostShare(post.id); // expects one arg but got two
+
+    console.log("Share process completed. Result:", result);
+
+    // Optionally: show result in a toast/snackbar here
+  } catch (error) {
+    console.error("Error sharing post:", error);
+    // Optionally: show error in a toast/snackbar here
+  } finally {
+    console.log("Resetting UI state and closing menu");
+    setIsSharing(false);
+    handleClose();
+  }
+};
+
 
   const createdOnBehalf =
     post.postedFor && post.createdBy?.uid !== post.postedFor.uid;
@@ -296,7 +303,7 @@ const PostCard: React.FC<PostCardProps> = ({
                     <MenuItem
                       onClick={() => setIsAddToCollectionModalOpen(true)}
                     >
-                      Add to Collection
+                      Add to Collections
                     </MenuItem>
                   </Menu>
                 </div>
@@ -328,7 +335,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 <div className="store-address-box">
                   <h5>{post.account?.accountAddress}</h5>{" "}
                   {/* this matches the saved post but not the future account object.  should it do either or both?*/}
-                  <h5>{post.id}</h5>
+                  {/* <h5>{post.id}</h5> */}
                 </div>
               </div>
             </div>

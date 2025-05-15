@@ -1,5 +1,4 @@
-// Assuming postToken is an object { sharedToken: string; tokenExpiry: string }
-// Inside buildPostLink.ts
+// buildPostLink.ts
 const buildPostLink = (postId: string, sharedToken?: string) => {
   console.log(sharedToken);
   if (!sharedToken) {

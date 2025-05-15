@@ -38,7 +38,7 @@ export const ViewCollection = () => {
   const { currentUser } = useFirebaseAuth(); // Adjust based on your auth hook
   const [posts, setPosts] = useState<PostWithID[]>([]);
   const [selectedPosts, setSelectedPosts] = useState<{ [id: string]: boolean }>(
-    {},
+    {}
   );
   const [loading, setLoading] = useState(true);
 
@@ -71,30 +71,9 @@ export const ViewCollection = () => {
       setLoading(true);
       try {
         // Validate token for shared link access
-        if (token && collectionId) {
-          const functions = getFunctions();
-          const validateShareTokenFn = httpsCallable(
-            functions,
-            "validateShareToken",
-          );
-          const tokenValidationResponse = await validateShareTokenFn({
-            collectionId,
-            token,
-          });
-          console.log("Token Validation Response:", tokenValidationResponse);
-
-          const isValidToken = (
-            tokenValidationResponse.data as TokenValidationResponse
-          ).valid;
-          console.log("Is token valid?", isValidToken);
-
-          if (!isValidToken) {
-            console.log(
-              "Navigating to /access-denied because token is invalid.",
-            );
-            navigate("/access-denied");
-            return;
-          }
+        if (!currentUser) {
+          navigate("/sign-up-login");
+          return;
         }
 
         // Fetch collection and posts logic
@@ -104,7 +83,7 @@ export const ViewCollection = () => {
         if (docSnap.exists()) {
           console.log(
             "Fetched document snapshot:",
-            docSnap.exists() ? docSnap.data() : "No document found.",
+            docSnap.exists() ? docSnap.data() : "No document found."
           );
 
           const data = docSnap.data();
@@ -120,7 +99,7 @@ export const ViewCollection = () => {
 
           if (data && Array.isArray(data.posts) && data.posts.length > 0) {
             const actionResult = await dispatch(
-              fetchPostsByIds({ postIds: data.posts, token: token || "" }),
+              fetchPostsByIds({ postIds: data.posts, token: token || "" })
             ).unwrap();
             setPosts(actionResult);
 
@@ -129,13 +108,13 @@ export const ViewCollection = () => {
                 acc[post.id] = true;
                 return acc;
               },
-              {},
+              {}
             );
 
             setSelectedPosts(allSelected);
           } else {
             console.log(
-              "Document has no posts or posts are not in expected format.",
+              "Document has no posts or posts are not in expected format."
             );
             // Handle the case where posts are missing or malformed, possibly set an error state or message
           }
@@ -202,7 +181,7 @@ export const ViewCollection = () => {
       return;
     }
     console.log(
-      `Filtered posts, total posts to export: ${postIdsToExport.length}`,
+      `Filtered posts, total posts to export: ${postIdsToExport.length}`
     );
 
     if (postIdsToExport.length === 0) {
@@ -230,7 +209,7 @@ export const ViewCollection = () => {
 
       if (result.data.url) {
         console.log(
-          `Download URL received: ${result.data.url}, initiating download`,
+          `Download URL received: ${result.data.url}, initiating download`
         ); // this line logs the correct url to begin download
         downloadZipFile(result.data.url);
       } else {

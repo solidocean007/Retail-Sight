@@ -27,7 +27,6 @@ import {
 import CustomConfirmation from "./CustomConfirmation";
 import { useDispatch } from "react-redux";
 import { showMessage } from "../Slices/snackbarSlice";
-import { getFunctions, httpsCallable } from "@firebase/functions";
 import LinkShareModal from "./LinkShareModal";
 import { Delete, LinkSharp } from "@mui/icons-material";
 
@@ -117,6 +116,7 @@ const CollectionsViewer = () => {
 
   const handleOpenCreateCollectionDialog = () =>
     setShowCreateCollectionDialog(true);
+
   const handleCloseCreateCollectionDialog = () =>
     setShowCreateCollectionDialog(false);
 
@@ -134,33 +134,32 @@ const CollectionsViewer = () => {
     }
   };
 
-  const handleCreateLinkClick = async (collectionId: string) => {
-    setLinkModalLoading(true);
-    const functions = getFunctions(); // Initialize Firebase Functions
-    const generateShareTokenFunction = httpsCallable(
-      functions,
-      "generateShareToken",
-    );
-    let shareableUrl = ""; // Declare shareableUrl outside of the try-catch block to widen its scope
+const handleCreateLinkClick = async (collectionId: string) => {
+  setLinkModalLoading(true);
 
-    try {
-      const result = await generateShareTokenFunction({ collectionId });
-      // Assert the type of result.data directly without intermediate assignment
-      const shareToken = (result.data as ShareTokenResponse).shareToken;
-      // Construct the shareable URL with the token
-      shareableUrl = `${window.location.origin}/view-collection/${collectionId}?token=${shareToken}`;
+  try {
+    const response = await fetch('https://my-fetch-data-api.vercel.app/api/generateCollectionShareToken', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collectionId }),
+    });
 
-      setGeneratedLink(shareableUrl); // Assume shareableUrl is generated here
-      setLinkModalLoading(false);
-      setShowLinkModal(true);
+    const data = await response.json();
+    const shareToken = data.token; // shareToken' is declared but its value is never read.
 
-      // Here you can copy the URL to the clipboard, display it to the user, or send it through email/text
-    } catch (error) {
-      console.error("Error generating share token:", error);
-      setLinkModalLoading(false);
-      // Handle the error appropriately
-    }
-  };
+    // You could optionally include the token in the URL for internal tracking,
+    // but based on your rules, only authenticated users can view, so it may be pointless.
+    const shareableUrl = `${window.location.origin}/view-collection/${collectionId}`;
+
+    setGeneratedLink(shareableUrl);
+    setLinkModalLoading(false);
+    setShowLinkModal(true);
+  } catch (error) {
+    console.error("Error generating collection share token:", error);
+    setLinkModalLoading(false);
+  }
+};
+
 
   return (
     <div className="collections-container">

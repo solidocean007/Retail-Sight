@@ -25,6 +25,7 @@ import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementTo
 import { updateGoalWithSubmission } from "../helperFunctions/updateGoalWithSubmission";
 import { addPostsToIndexedDB } from "../database/indexedDBUtils";
 import { addNewPost } from "../../Slices/postsSlice";
+import { getOptimizedSizes } from "./getOptimizedSizes";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
@@ -38,8 +39,9 @@ export const useHandlePostSubmission = () => {
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     selectedCompanyMission: CompanyMissionType,
     apiKey: string,
-    navigate: NavigateFunction,
+    navigate: NavigateFunction
   ) => {
+  const { original, resized } = await getOptimizedSizes(selectedFile); 
     setIsUploading(true);
     const user = auth.currentUser;
     if (!user || !userData) return;
@@ -47,7 +49,7 @@ export const useHandlePostSubmission = () => {
     // Create a unique folder for each post's images
     const currentDate = new Date();
     const formattedDate = `${currentDate.getFullYear()}-${String(
-      currentDate.getMonth() + 1,
+      currentDate.getMonth() + 1
     ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
     const uniquePostFolder = `${formattedDate}/${user.uid}-${Date.now()}`;
 
@@ -65,19 +67,23 @@ export const useHandlePostSubmission = () => {
     const newDocRef: DocumentReference | null = null; // Initialize as null
 
     try {
-      const resizedOriginalBlob = await resizeImage(selectedFile, 800, 900); // what does this do?
+      const resizedOriginalBlob = await resizeImage(
+        selectedFile,
+        original[0],
+        original[1]
+      );
       const originalImagePath = `images/${uniquePostFolder}/original.jpg`;
       const originalImageRef = storageRef(storage, originalImagePath);
       const uploadOriginalTask = uploadBytesResumable(
         originalImageRef,
-        resizedOriginalBlob,
+        resizedOriginalBlob
       );
 
       uploadOriginalTask.on(
         "state_changed",
         (snapshot) => {
           originalUploadProgress = Math.round(
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
           );
           updateOverallProgress();
         },
@@ -91,19 +97,23 @@ export const useHandlePostSubmission = () => {
           // );
 
           // Resize and compress the image
-          const resizedBlob = await resizeImage(selectedFile, 500, 600); // what does this do as well?
+          const resizedBlob = await resizeImage(
+            selectedFile,
+            resized[0],
+            resized[1]
+          );
           const resizedImagePath = `images/${uniquePostFolder}/resized.jpg`;
           const resizedImageRef = storageRef(storage, resizedImagePath);
           const uploadResizedTask = uploadBytesResumable(
             resizedImageRef,
-            resizedBlob,
+            resizedBlob
           );
 
           uploadResizedTask.on(
             "state_changed",
             (snapshot) => {
               resizedUploadProgress = Math.round(
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
               );
               updateOverallProgress();
             },
@@ -113,7 +123,7 @@ export const useHandlePostSubmission = () => {
             },
             async () => {
               const resizedImageUrl = await getDownloadURL(
-                uploadResizedTask.snapshot.ref,
+                uploadResizedTask.snapshot.ref
               );
 
               const sharedToken = uuidv4();
@@ -171,7 +181,7 @@ export const useHandlePostSubmission = () => {
               // Create the post in Firestore
               const newDocRef = await addPostToFirestore(
                 db,
-                postDataWithoutImage,
+                postDataWithoutImage
               );
 
               const postId = newDocRef.id;
@@ -210,7 +220,7 @@ export const useHandlePostSubmission = () => {
                   achievementPayload,
                   apiKey,
                   navigate,
-                  dispatch,
+                  dispatch
                 );
               }
 
@@ -221,7 +231,7 @@ export const useHandlePostSubmission = () => {
               await updateCategoriesInFirestore(
                 db,
                 post.category,
-                newDocRef.id,
+                newDocRef.id
               );
 
               if (newDocRef && selectedCompanyMission) {
@@ -236,9 +246,9 @@ export const useHandlePostSubmission = () => {
               dispatch(showMessage("Post added successfully!"));
               setIsUploading(false);
               navigate("/user-home-page");
-            },
+            }
           );
-        },
+        }
       );
     } catch (error) {
       if (error instanceof Error) {
