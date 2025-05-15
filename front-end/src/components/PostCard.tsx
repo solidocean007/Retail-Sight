@@ -43,6 +43,7 @@ import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { extendPostTokenExpiryAndShare } from "../utils/extendPostTokenExpiryAndShare";
+import LinkShareModal from "./LinkShareModal";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -78,6 +79,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const user = useSelector(selectUser);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareLink, setShareLink] = useState("");
+
   const open = Boolean(anchorEl);
 
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -225,27 +229,20 @@ const PostCard: React.FC<PostCardProps> = ({
     setAnchorEl(null);
   };
 
-const handleShare = async () => {
-  console.log("Share button clicked");
-  try {
-    setIsSharing(true);
-    console.log("Starting share process...");
-
-    const result = await handlePostShare(post.id); // expects one arg but got two
-
-    console.log("Share process completed. Result:", result);
-
-    // Optionally: show result in a toast/snackbar here
-  } catch (error) {
-    console.error("Error sharing post:", error);
-    // Optionally: show error in a toast/snackbar here
-  } finally {
-    console.log("Resetting UI state and closing menu");
-    setIsSharing(false);
-    handleClose();
-  }
-};
-
+  const handleShare = async () => {
+    try {
+      setIsSharing(true);
+      const link = await handlePostShare(post.id);
+      setShareLink(link);
+      handleClose(); // Ensures menu is closed before opening modal
+      setShareModalOpen(true);
+    } catch (error) {
+      console.error("Error sharing post:", error);
+    } finally {
+      setIsSharing(false);
+      handleClose();
+    }
+  };
 
   const createdOnBehalf =
     post.postedFor && post.createdBy?.uid !== post.postedFor.uid;
@@ -469,6 +466,12 @@ const handleShare = async () => {
         isOpen={isImageModalOpen}
         src={fullSizeImageUrl}
         onClose={() => setIsImageModalOpen(false)}
+      />
+      <LinkShareModal
+        open={shareModalOpen}
+        handleClose={() => setShareModalOpen(false)}
+        link={shareLink}
+        loading={isSharing}
       />
     </>
   );
