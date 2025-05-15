@@ -17,6 +17,9 @@ export const ViewSharedPost = () => {
   const postId = query.get("id");
   const token = query.get("token");
 
+  console.log("Loaded page with query params:", { postId, token });
+
+
 useEffect(() => {
   if (!postId || !token) {
     console.error("Missing postId or token in URL.");
