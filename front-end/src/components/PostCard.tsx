@@ -233,9 +233,19 @@ const PostCard: React.FC<PostCardProps> = ({
     try {
       setIsSharing(true);
       const link = await handlePostShare(post.id);
-      setShareLink(link);
-      handleClose(); // Ensures menu is closed before opening modal
-      setShareModalOpen(true);
+      console.log("Generated link:", link);
+  
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Displaygram Post',
+          text: 'Check out this post on Displaygram!',
+          url: link,
+        });
+      } else {
+        setShareLink(link);
+        setShareModalOpen(true);
+      }
+  
     } catch (error) {
       console.error("Error sharing post:", error);
     } finally {
@@ -385,7 +395,7 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.category}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
-            {/* {post.id} */}
+            {post.id}
             <div className="likes-box">
               <button
                 className="like-button"

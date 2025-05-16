@@ -1,70 +1,40 @@
 import { useState, useEffect } from "react";
-import {
-  collection as firestoreCollection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
+import { collection as firestoreCollection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import CollectionForm from "./CollectionForm";
 import { CollectionType, CollectionWithId } from "../utils/types";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  Link,
-  Typography,
-} from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, Typography } from "@mui/material";
 import "./collectionsPage.css";
-import {
-  addOrUpdateCollection,
-  deleteUserCreatedCollectionFromIndexedDB,
-  getCollectionsFromIndexedDB,
-} from "../utils/database/indexedDBUtils";
+import { addOrUpdateCollection, deleteUserCreatedCollectionFromIndexedDB, getCollectionsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import CustomConfirmation from "./CustomConfirmation";
 import { useDispatch } from "react-redux";
 import { showMessage } from "../Slices/snackbarSlice";
-import LinkShareModal from "./LinkShareModal";
-import { Delete, LinkSharp } from "@mui/icons-material";
-
-interface ShareTokenResponse {
-  shareToken: string;
-  // Include other properties if your function returns more information
-}
+import { Delete } from "@mui/icons-material";
 
 const CollectionsViewer = () => {
   const [collections, setCollections] = useState<CollectionWithId[]>([]);
-  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(
-    null,
-  );
-  const [linkModalLoading, setLinkModalLoading] = useState(false);
-  const [showCreateCollectionDialog, setShowCreateCollectionDialog] =
-    useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
+  const [showCreateCollectionDialog, setShowCreateCollectionDialog] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showLinkModal, setShowLinkModal] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState("");
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Fetch collections from Firestore
   const fetchCollections = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(
-        firestoreCollection(db, "collections"),
-      );
+      const querySnapshot = await getDocs(firestoreCollection(db, "collections"));
       const fetchedCollections = querySnapshot.docs.map((doc) => ({
         ...(doc.data() as CollectionType),
         id: doc.id,
       }));
-      // Store collections in IndexedDB
+
       for (const collection of fetchedCollections) {
         await addOrUpdateCollection(collection);
       }
+
       setCollections(fetchedCollections);
     } catch (error) {
       console.error("Error fetching collections: ", error);
@@ -73,13 +43,12 @@ const CollectionsViewer = () => {
     }
   };
 
-  // Load collections either from IndexedDB or Firestore
   useEffect(() => {
     const loadCollections = async () => {
       setLoading(true);
-      const indexedDbCollections = await getCollectionsFromIndexedDB();
-      if (indexedDbCollections.length > 0) {
-        setCollections(indexedDbCollections);
+      const localCollections = await getCollectionsFromIndexedDB();
+      if (localCollections.length > 0) {
+        setCollections(localCollections);
       } else {
         await fetchCollections();
       }
@@ -103,9 +72,7 @@ const CollectionsViewer = () => {
       try {
         await deleteDoc(doc(db, "collections", collectionToDelete));
         await deleteUserCreatedCollectionFromIndexedDB(collectionToDelete);
-        setCollections((prev) =>
-          prev.filter((c) => c.id !== collectionToDelete),
-        );
+        setCollections((prev) => prev.filter((c) => c.id !== collectionToDelete));
         setCollectionToDelete(null);
       } catch (error) {
         console.error("Error deleting collection: ", error);
@@ -114,151 +81,77 @@ const CollectionsViewer = () => {
     setIsConfirmationOpen(false);
   };
 
-  const handleOpenCreateCollectionDialog = () =>
-    setShowCreateCollectionDialog(true);
-
-  const handleCloseCreateCollectionDialog = () =>
-    setShowCreateCollectionDialog(false);
-
-  const openConfirmDeletionDialog = (collectionId: string) => {
-    setCollectionToDelete(collectionId);
-    setIsConfirmationOpen(true);
-  };
-
   const handleCollectionClick = (collection: CollectionWithId) => {
-    // check if the collection.posts.length has a length greater than 0
     if (collection.posts.length > 0) {
       navigate(`/view-collection/${collection.id}`);
     } else {
-      dispatch(showMessage("No posts are in this collection yet. "));
+      dispatch(showMessage("No posts are in this collection yet."));
     }
   };
 
-const handleCreateLinkClick = async (collectionId: string) => {
-  setLinkModalLoading(true);
-
-  try {
-    const response = await fetch('https://my-fetch-data-api.vercel.app/api/generateCollectionShareToken', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ collectionId }),
-    });
-
-    const data = await response.json();
-    const shareToken = data.token; // shareToken' is declared but its value is never read.
-
-    // You could optionally include the token in the URL for internal tracking,
-    // but based on your rules, only authenticated users can view, so it may be pointless.
-    const shareableUrl = `${window.location.origin}/view-collection/${collectionId}`;
-
-    setGeneratedLink(shareableUrl);
-    setLinkModalLoading(false);
-    setShowLinkModal(true);
-  } catch (error) {
-    console.error("Error generating collection share token:", error);
-    setLinkModalLoading(false);
-  }
-};
-
-
   return (
     <div className="collections-container">
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 2,
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h4">Your Collections</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleOpenCreateCollectionDialog}
-        >
-          Create collection
+        <Button variant="contained" color="primary" onClick={() => setShowCreateCollectionDialog(true)}>
+          Create Collection
         </Button>
       </Box>
 
-      {collections.length === 0 && <div>No collections</div>}
+      {collections.length === 0 && !loading && (
+        <Box textAlign="center" mt={4}>
+          <Typography variant="h6">No collections found.</Typography>
+          <Button variant="contained" color="primary" onClick={() => setShowCreateCollectionDialog(true)} sx={{ mt: 2 }}>
+            Create Your First Collection
+          </Button>
+        </Box>
+      )}
+
       {loading ? (
         <CircularProgress />
       ) : (
-        <Box
-          component="ul"
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: 2,
-            padding: 0,
-            listStyle: "none",
-          }}
-        >
+        <Box component="ul" sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2, p: 0, listStyle: "none" }}>
           {collections.map((collection) => (
             <Box
               component="li"
               key={collection.id}
               sx={{
-                padding: 2,
-                borderRadius: 2,
-                boxShadow: 3,
+                p: 3,
+                borderRadius: 3,
+                boxShadow: 4,
                 backgroundColor: "background.paper",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "space-between",
                 textAlign: "center",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": { transform: "scale(1.02)", boxShadow: 6 },
               }}
             >
-              <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                {collection.name}
-              </Typography>
-              <Typography variant="subtitle1" sx={{ marginBottom: 2 }}>
-                Posts: {collection.posts.length}
-              </Typography>
-              <Button
-                variant="outlined"
-                onClick={() => handleCollectionClick(collection)}
-                sx={{ marginBottom: 1 }}
-              >
+              <Typography variant="h6" sx={{ mb: 1 }}>{collection.name}</Typography>
+              <Typography variant="subtitle1" sx={{ mb: 2 }}>Posts: {collection.posts.length}</Typography>
+              <Button variant="outlined" onClick={() => handleCollectionClick(collection)} sx={{ mb: 1 }}>
                 View
               </Button>
-              <Box>
-                <IconButton
-                  onClick={() => handleCreateLinkClick(collection.id)}
-                >
-                  <LinkSharp />
-                </IconButton>
-                <IconButton
-                  onClick={() => openConfirmDeletionDialog(collection.id)}
-                >
-                  <Delete />
-                </IconButton>
-              </Box>
+              <IconButton onClick={() => setCollectionToDelete(collection.id)}>
+                <Delete />
+              </IconButton>
             </Box>
           ))}
         </Box>
       )}
-      <CollectionForm
-        isOpen={showCreateCollectionDialog}
-        onAddCollection={handleAddCollection}
-        onClose={handleCloseCreateCollectionDialog}
-      />
+
+      <CollectionForm isOpen={showCreateCollectionDialog} onAddCollection={handleAddCollection} onClose={() => setShowCreateCollectionDialog(false)} />
       <CustomConfirmation
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}
         onConfirm={handleDeleteCollectionConfirmed}
         message="Are you sure you want to delete this collection?"
       />
-      <LinkShareModal
-        open={showLinkModal}
-        handleClose={() => setShowLinkModal(false)}
-        link={generatedLink}
-        loading={linkModalLoading}
-      />
     </div>
   );
 };
 
 export default CollectionsViewer;
+

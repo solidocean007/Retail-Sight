@@ -1,273 +1,148 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { saveAs } from "file-saver";
 import { fetchPostsByIds } from "../thunks/postsThunks";
 import { useAppDispatch } from "../utils/store";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { useFirebaseAuth } from "../utils/useFirebaseAuth"; // Adjust based on your auth hook
+import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 import { CollectionType, PostWithID } from "../utils/types";
+import { CircularProgress, Button } from "@mui/material";
 import "./viewCollection.css";
-import { CircularProgress } from "@mui/material";
-
-interface SelectedPosts {
-  // unused
-  // this isnt used
-  [key: string]: boolean;
-}
-
-// Define a type for your function's response
-interface ExportDummyDataResponse {
-  // unused
-  url: string;
-}
 
 export const ViewCollection = () => {
-  const [collectionDetails, setCollectionDetails] =
-    useState<CollectionType | null>(null);
-  const [exporting, setExporting] = useState(false); // exporting isnt used
-
   const { collectionId } = useParams<{ collectionId: string }>();
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const token = params.get("token");
-
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { currentUser } = useFirebaseAuth(); // Adjust based on your auth hook
+  const { currentUser } = useFirebaseAuth();
+
+  const [collectionDetails, setCollectionDetails] = useState<CollectionType | null>(null);
   const [posts, setPosts] = useState<PostWithID[]>([]);
-  const [selectedPosts, setSelectedPosts] = useState<{ [id: string]: boolean }>(
-    {}
-  );
+  const [selectedPosts, setSelectedPosts] = useState<{ [id: string]: boolean }>({});
   const [loading, setLoading] = useState(true);
 
-  interface TokenValidationResponse {
-    valid: boolean; // Assuming this is the correct shape
-  }
+  // ✅ Validate collection access via API
+  const validateCollectionAccess = async (): Promise<boolean> => {
+    console.log("Current user before validating collection access:", currentUser);
 
-  // Define the shape of the accumulator
-  interface SelectedPosts {
-    [key: string]: boolean;
-  }
+    try {
+      const response = await fetch(
+        "https://my-fetch-data-api.vercel.app/api/validateCollectionAccess",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            collectionId,
+            userId: currentUser?.uid,
+          }),
+        }
+      );
 
-  interface ExportPostsResponse {
-    url?: string;
-  }
+      const result = await response.json();
+      console.log("Collection access validation result:", result);
 
-  interface ExportPostsRequest {
-    collectionId: string | undefined;
-    postIds: string[];
-  }
+      if (!response.ok || !result.valid) {
+        navigate("/access-denied");
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error validating collection access:", error);
+      navigate("/access-denied");
+      return false;
+    }
+  };
 
   useEffect(() => {
-    const fetchCollection = async () => {
-      console.log(collectionId); // NVpuDB79jE2gfxMqIM1k
+    const loadCollection = async () => {
       if (!collectionId) {
-        console.error("Collection ID is undefined.");
         navigate("/page-not-found");
         return;
       }
-      setLoading(true);
-      try {
-        // Validate token for shared link access
-        if (!currentUser) {
-          navigate("/sign-up-login");
-          return;
-        }
 
-        // Fetch collection and posts logic
+      setLoading(true);
+
+      if (!(await validateCollectionAccess())) {
+        return;
+      }
+
+      try {
         const collectionRef = doc(db, "collections", collectionId);
         const docSnap = await getDoc(collectionRef);
 
-        if (docSnap.exists()) {
-          console.log(
-            "Fetched document snapshot:",
-            docSnap.exists() ? docSnap.data() : "No document found."
-          );
-
-          const data = docSnap.data();
-          const collectionData: CollectionType = {
-            name: data.name,
-            ownerId: data.ownerId,
-            posts: data.posts,
-            sharedWith: data.sharedWith,
-            isShareableOutsideCompany: data.isShareableOutsideCompany,
-          };
-
-          setCollectionDetails(collectionData);
-
-          if (data && Array.isArray(data.posts) && data.posts.length > 0) {
-            const actionResult = await dispatch(
-              fetchPostsByIds({ postIds: data.posts, token: token || "" })
-            ).unwrap();
-            setPosts(actionResult);
-
-            const allSelected = actionResult.reduce<{ [key: string]: boolean }>(
-              (acc, post) => {
-                acc[post.id] = true;
-                return acc;
-              },
-              {}
-            );
-
-            setSelectedPosts(allSelected);
-          } else {
-            console.log(
-              "Document has no posts or posts are not in expected format."
-            );
-            // Handle the case where posts are missing or malformed, possibly set an error state or message
-          }
-        } else {
-          console.log("No such document!");
+        if (!docSnap.exists()) {
           navigate("/page-not-found");
+          return;
+        }
+
+        const data = docSnap.data();
+        const collectionData: CollectionType = {
+          name: data.name,
+          ownerId: data.ownerId,
+          posts: data.posts,
+          sharedWith: data.sharedWith,
+          isShareableOutsideCompany: data.isShareableOutsideCompany,
+        };
+
+        setCollectionDetails(collectionData);
+
+        if (Array.isArray(data.posts) && data.posts.length > 0) {
+          const actionResult = await dispatch(fetchPostsByIds({ postIds: data.posts })).unwrap();
+          setPosts(actionResult);
+
+          const initialSelection = actionResult.reduce((acc, post) => {
+            acc[post.id] = true;
+            return acc;
+          }, {} as { [key: string]: boolean });
+
+          setSelectedPosts(initialSelection);
         }
       } catch (error) {
-        console.error("Error fetching collection or validating token:", error);
+        console.error("Error fetching collection:", error);
         navigate("/access-denied");
       } finally {
         setLoading(false);
       }
     };
 
-    if (collectionId) {
-      fetchCollection();
-    }
-  }, [collectionId, token, dispatch, navigate]);
+    loadCollection();
+  }, [collectionId, dispatch, navigate]);
 
-  // Handle checkbox change
   const handleCheckboxChange = (postId: string) => {
-    setSelectedPosts((prevSelectedPosts) => ({
-      ...prevSelectedPosts,
-      [postId]: !prevSelectedPosts[postId],
-    }));
-  };
-
-  const downloadZipFile = async (url: string) => {
-    console.log(`Starting to download zip file from: ${url}`);
-    try {
-      console.log("begin download??");
-      const response = await fetch(url);
-      console.log("Received response from fetch");
-      const data = await response.blob();
-      console.log("Converted response to blob");
-      const downloadUrl = window.URL.createObjectURL(data);
-      console.log(`Generated download URL: ${downloadUrl}`);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.setAttribute("download", "exported_posts.zip");
-      document.body.appendChild(link);
-      link.click();
-      console.log("Link clicked for download");
-      link.remove(); // Clean up
-    } catch (error) {
-      console.error("Failed to download the file:", error);
-    }
-  };
-
-  const handleExportSelected = async () => {
-    console.log("Starting handleExportSelected");
-    if (!currentUser) {
-      navigate("/sign-up-login");
-      return;
-    }
-
-    const postIdsToExport = posts
-      .filter((post) => selectedPosts[post.id])
-      .map((post) => post.id);
-
-    if (postIdsToExport.length === 0) {
-      alert("No posts selected for export.");
-      return;
-    }
-    console.log(
-      `Filtered posts, total posts to export: ${postIdsToExport.length}`
-    );
-
-    if (postIdsToExport.length === 0) {
-      console.log("No posts selected for export, alerting user");
-      alert("No posts selected for export.");
-      return;
-    }
-
-    try {
-      console.log("Attempting to call exportPosts cloud function");
-      const functions = getFunctions();
-      const exportPostsFn = httpsCallable<
-        ExportPostsRequest,
-        ExportPostsResponse
-      >(functions, "exportPosts");
-      console.log("Cloud function call successful, result received"); // this logs
-      setExporting(true);
-
-      const result = await exportPostsFn({
-        collectionId,
-        postIds: postIdsToExport,
-      });
-      console.log(result);
-      setExporting(false);
-
-      if (result.data.url) {
-        console.log(
-          `Download URL received: ${result.data.url}, initiating download`
-        ); // this line logs the correct url to begin download
-        downloadZipFile(result.data.url);
-      } else {
-        console.log("No URL received from cloud function, alerting user");
-        alert("Failed to export posts. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error exporting posts:", error);
-      setExporting(false);
-      alert("Error exporting posts. Please try again."); // Error exporting posts. Please try again.
-    }
+    setSelectedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
   if (loading) {
     return <CircularProgress />;
   }
 
-  // const handleBackButton = () => {
-  //   navigate('/collections')
-  // }
-
   return (
     <div className="view-collection-container">
       <div className="view-collection-header">
-        <h1>
-          Collection:{" "}
-          {collectionDetails ? collectionDetails.name : <CircularProgress />}
-        </h1>
-        <button onClick={handleExportSelected}>Export Selected</button>
-        {/* <button onClick={handleBackButton}>Back</button> */}
-        <button onClick={() => navigate("/dashboard")}>Back</button>
+        <h1>{collectionDetails?.name || "Loading..."}</h1>
+        <Button onClick={() => navigate("/dashboard")} variant="outlined">
+          Back to Dashboard
+        </Button>
       </div>
 
       <div className="posts-list">
         {posts.map((post) => (
           <div key={post.id} className="post-list-item">
             <div className="list-item-image">
-              <img src={`${post.imageUrl}_200x200`} alt="" />
+              <img src={`${post.imageUrl}_200x200`} alt="Post preview" />
             </div>
             <div className="list-item-details">
               <h3>{post.account?.accountName}</h3>
-              <h4>
-                {post.description} {/* Display post details */}
-              </h4>
-              <h4>
-                {post.account?.accountAddress} {post.state || ""}
-              </h4>
-              <h4>
-                {post.totalCaseCount > 0
-                  ? `${post.totalCaseCount} : total cases`
-                  : "Total cases undefined"}
-              </h4>
+              <p>{post.description}</p>
+              <p>{post.account?.accountAddress} {post.state}</p>
+              <p>{post.totalCaseCount > 0 ? `${post.totalCaseCount} cases` : "No cases specified"}</p>
             </div>
-
             <input
               type="checkbox"
+              aria-label={`Select post ${post.account?.accountName || post.id}`}
               checked={!!selectedPosts[post.id]}
               onChange={() => handleCheckboxChange(post.id)}
+              className="list-item-checkbox"
             />
           </div>
         ))}
@@ -275,3 +150,6 @@ export const ViewCollection = () => {
     </div>
   );
 };
+
+export default ViewCollection;
+
