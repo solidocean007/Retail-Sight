@@ -21,11 +21,11 @@
 
 /* Assuming .post-card is the container for your image */
 .post-card img {
-  width: 100%; /* Make the image fill its container */
-  height: auto; /* Maintain aspect ratio */
-  max-width: 600px; /* Set a max-width if needed */
-  display: block; /* Remove any extra space below the image */
-  margin: 0 auto; /* Center the image within its container */
+  width: auto;
+  height: auto;
+  max-width: 600px;
+  display: block;
+  margin: 0 auto;
 }
 
 /* viewSharedPost.css */

@@ -32,12 +32,9 @@ import AccountModalSelector from "./AccountModalSelector";
 
 interface EditPostModalProps {
   post: PostWithID;
-  // setPost: React.Dispatch<React.SetStateAction<PostWithID>>; // Added this line
   isOpen: boolean;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedCompanyAccount: (account: CompanyAccountType) => void;
-  // onClose: () => void;
-  // onSave: (updatedPost: PostType) => void;
 }
 
 const EditPostModal: React.FC<EditPostModalProps> = ({
@@ -52,13 +49,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   >([]);
   const dispatch = useDispatch();
   const [description, setDescription] = useState<string>(
-    post.description || "",
+    post.description || ""
   );
   const [category, setCategory] = useState<CategoryType | "">(
-    (post.category as CategoryType) || "",
+    (post.category as CategoryType) || ""
   );
   const [channel, setChannel] = useState<ChannelType | "">(
-    (post.channel as ChannelType) || "",
+    (post.channel as ChannelType) || ""
   );
 
   const [postVisibility, setPostVisibility] = useState<
@@ -72,7 +69,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [openAccountModal, setOpenAccountModal] = useState(false);
 
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId,
+    (state: RootState) => state.user.currentUser?.companyId
   );
 
   useEffect(() => {
@@ -119,7 +116,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
             accountAddress: account.accountAddress,
             salesRouteNums: account.salesRouteNums || [],
           },
-        }),
+        })
       );
 
       await updatePostInIndexedDB({
@@ -208,20 +205,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     handleSavePost(updatedPost);
   };
 
-  // const handleDeletePostClick = async () => {
-  //   try {
-  //     await userDeletePost({ post });
-  //     await removePostFromIndexedDB(post.id);
-  //     await deleteUserCreatedPostInIndexedDB(post.id);
-  //     dispatch(deletePost(post.id));
-  //     handleCloseEditModal();
-  //     dispatch(showMessage("Post deleted successfully!"));
-  //   } catch (error) {
-  //     console.error("Failed to delete post:", error);
-  //     dispatch(showMessage("Error deleting post."));
-  //   }
-  // };
-
   const handleDeletePostClick = async () => {
     try {
       console.log("🗑️ Starting delete for post:", {
@@ -247,12 +230,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     }
   };
 
-  useOutsideAlerter(wrapperRef, () => {
-    if (!openAccountModal) {
-      handleCloseEditModal();
-    }
-  });
-
   return (
     <>
       <Modal open={isOpen}>
@@ -266,20 +243,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 &times; {/* This is a common symbol used for close buttons */}
               </button>
             </div>
-            {/* <h4 className="store-title">Store: {post.selectedStore}</h4>
-        <h6 className="store-address">Address: {post.storeAddress}</h6> */}
-            {/* {post.imageUrl && (
-              <div className="image-container">
-                <Card>
-                  <CardMedia
-                    component="img"
-                    image={post.imageUrl}
-                    alt="Selected Preview"
-                    className="image"
-                  />
-                </Card>
-              </div>
-            )} */}
+
             {post.account && (
               <Typography variant="body2" sx={{ mt: 2 }}>
                 Selected Account: {post.account.accountName}
@@ -319,14 +283,14 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 onChange={(
                   e: SelectChangeEvent<
                     "public" | "company" | "supplier" | "private" | undefined
-                  >,
+                  >
                 ) => {
                   setPostVisibility(
                     e.target.value as
                       | "public"
                       | "company"
                       | "supplier"
-                      | "private",
+                      | "private"
                   );
                 }}
                 className="select-input"

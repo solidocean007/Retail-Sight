@@ -42,9 +42,8 @@ import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
-import { extendPostTokenExpiryAndShare } from "../utils/extendPostTokenExpiryAndShare";
 import LinkShareModal from "./LinkShareModal";
-import BlurUpImage from "../utils/PostLogic/BlurUpImage";
+import BlurUpImage from "./BlurUpImage";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -338,25 +337,23 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="post-header-top"></div>
           <div className="header-bottom">
             <div className="details-date">
-              <div className="store-details">
-                <div className="store-name-number">
+              <div className="store-details"> {/* i need to eventually add store names to the filters*/}
+                <div className="store-name-number" >
                   <h3>
                     {post.account?.accountName}{" "}
-                    {/* this matches the saved post but not the future account object.  should it do either or both?*/}
-                    {/* <span> {post.storeNumber}</span> */}
+ 
                   </h3>
 
                   <h5>{formattedDate}</h5>
                 </div>
                 <div className="store-address-box">
                   <h5>{post.account?.accountAddress}</h5>{" "}
-                  {/* this matches the saved post but not the future account object.  should it do either or both?*/}
-                  {/* <h5>{post.id}</h5> */}
+     
                 </div>
               </div>
             </div>
             <div className="post-user-details">
-              {/* <div onClick={handleOnUserNameClick}> */}
+              {/* <div onClick={handleOnUserNameClick}> i need to eventually add posts by users to the filters*/}
               <div className="post-user-name">
                 <p>
                   by:{" "}
@@ -431,7 +428,7 @@ const PostCard: React.FC<PostCardProps> = ({
             />
           </div>
 
-          <div className="activity-post-image-box">
+          <div className="activity-post-image-box" onClick={handleImageClick}>
             {post.imageUrl && (
               <BlurUpImage
                 lowResSrc={getLowResUrl(post.imageUrl)}
