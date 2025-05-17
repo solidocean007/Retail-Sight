@@ -6,14 +6,14 @@
   box-sizing: border-box;
 }
 
-ul {
+.collections-container  {
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
 /* Collection Item Styling */
-li {
+.collections-container  {
   background: #fff;
   border-radius: 8px;
   padding: 16px;
@@ -22,42 +22,42 @@ li {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-li:hover {
+.collections-container :hover {
   transform: scale(1.02);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 /* Responsive Grid Layout */
 @media (min-width: 600px) {
-  ul {
+  .collections-container  {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
   }
 
-  li {
+  .collections-container  {
     margin-bottom: 0;
   }
 }
 
 /* Button and Typography Improvements */
 button,
-a {
+.collections-container  {
   cursor: pointer;
 }
 
-button:focus,
-a:focus {
+.collections-container button:focus,
+.collections-container :focus {
   outline: 2px solid #1976d2;
   outline-offset: 2px;
 }
 
-h4 {
+.collections-container  {
   margin: 0;
   font-size: 1.5rem;
 }
 
-h6 {
+.collections-container h6 {
   margin: 0.5rem 0;
   font-size: 1rem;
 }

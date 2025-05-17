@@ -8,7 +8,7 @@ const BlurUpImage = ({ lowResSrc, fullResSrc, alt = "" }) => {
       style={{
         position: "relative",
         width: "auto",
-        overflow: "hidden",
+        overflow: "auto",
       }}
     >
       {/* Low-Res Blurred Image */}
@@ -36,7 +36,7 @@ const BlurUpImage = ({ lowResSrc, fullResSrc, alt = "" }) => {
         alt={alt}
         style={{
           width: "100%",
-          height: "auto",
+          height: "100%",
           objectFit: "cover",
           display: "block",
           transition: "opacity 0.5s ease",

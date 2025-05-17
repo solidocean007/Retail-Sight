@@ -82,7 +82,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  /* height: 100%; */
   width: 100%;
 }
 
@@ -260,8 +260,8 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  width: 100%;
-  height: 100%;
+  width: 90%;
+  height: 50%;
 }
 
 .post-card img.post-image {
@@ -329,6 +329,6 @@
 
 @media (max-width: 470px) {
   .post-card img.post-image {
-    /* max-height: 350px;  */
+    /* max-height: 300px;  */
   }
 }
