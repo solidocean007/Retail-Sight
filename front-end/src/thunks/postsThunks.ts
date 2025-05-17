@@ -1,5 +1,5 @@
 // postsThunks.ts
-import { PostType, PostWithID } from "../utils/types";
+import { CollectionType, PostType, PostWithID } from "../utils/types";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
 import {
@@ -208,6 +208,8 @@ export const fetchFilteredPosts = createAsyncThunk(
         );
       }
 
+      // i need more filters
+
       queryToExecute = query(queryToExecute, orderBy("displayDate", "desc"));
       const postSnapshot = await getDocs(queryToExecute);
 
@@ -337,4 +339,53 @@ export const fetchPostsByIds = createAsyncThunk<
     return rejectWithValue("Error fetching posts by IDs.");
   }
 });
+
+export const fetchPostsByCollectionId = createAsyncThunk<
+  PostWithID[],
+  string, // collectionId
+  { rejectValue: string }
+>(
+  "posts/fetchPostsByCollectionId",
+  async (collectionId, { rejectWithValue }) => {
+    try {
+      // Step 1: Look up the collection document
+      const collectionDocRef = doc(db, "collections", collectionId);
+      const collectionSnap = await getDoc(collectionDocRef);
+
+      if (!collectionSnap.exists()) {
+        return rejectWithValue("Collection not found.");
+      }
+
+      const collectionData = collectionSnap.data() as CollectionType;
+
+      if (!Array.isArray(collectionData.posts) || collectionData.posts.length === 0) {
+        return []; // No posts in collection
+      }
+
+      // Step 2: Look up each post by its ID
+      const postFetchPromises = collectionData.posts.map(async (postId) => {
+        const postDocRef = doc(db, "posts", postId);
+        const postSnap = await getDoc(postDocRef);
+
+        if (!postSnap.exists()) {
+          console.warn(`Post with ID ${postId} not found.`);
+          return null;
+        }
+
+        return {
+          id: postSnap.id,
+          ...(postSnap.data() as PostType),
+        } as PostWithID;
+      });
+
+      const fetchedPosts = await Promise.all(postFetchPromises);
+      const validPosts = fetchedPosts.filter((post) => post !== null) as PostWithID[];
+
+      return validPosts;
+    } catch (error) {
+      console.error("Error fetching posts for collection:", error);
+      return rejectWithValue("Error fetching posts for collection.");
+    }
+  }
+);
 

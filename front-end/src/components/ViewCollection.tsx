@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { fetchPostsByIds } from "../thunks/postsThunks";
+import { fetchPostsByCollectionId, fetchPostsByIds } from "../thunks/postsThunks";
 import { useAppDispatch } from "../utils/store";
 import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 import { CollectionType, PostWithID } from "../utils/types";
@@ -15,14 +15,20 @@ export const ViewCollection = () => {
   const dispatch = useAppDispatch();
   const { currentUser } = useFirebaseAuth();
 
-  const [collectionDetails, setCollectionDetails] = useState<CollectionType | null>(null);
+  const [collectionDetails, setCollectionDetails] =
+    useState<CollectionType | null>(null);
   const [posts, setPosts] = useState<PostWithID[]>([]);
-  const [selectedPosts, setSelectedPosts] = useState<{ [id: string]: boolean }>({});
+  const [selectedPosts, setSelectedPosts] = useState<{ [id: string]: boolean }>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
 
   // ✅ Validate collection access via API
   const validateCollectionAccess = async (): Promise<boolean> => {
-    console.log("Current user before validating collection access:", currentUser);
+    console.log(
+      "Current user before validating collection access:",
+      currentUser
+    );
 
     try {
       const response = await fetch(
@@ -87,7 +93,9 @@ export const ViewCollection = () => {
         setCollectionDetails(collectionData);
 
         if (Array.isArray(data.posts) && data.posts.length > 0) {
-          const actionResult = await dispatch(fetchPostsByIds({ postIds: data.posts })).unwrap();
+          const actionResult = await dispatch(
+            fetchPostsByCollectionId(collectionId)
+          ).unwrap();
           setPosts(actionResult);
 
           const initialSelection = actionResult.reduce((acc, post) => {
@@ -115,7 +123,7 @@ export const ViewCollection = () => {
   if (loading) {
     return <CircularProgress />;
   }
-
+  console.log("Posts in ViewCollection:", posts);
   return (
     <div className="view-collection-container">
       <div className="view-collection-header">
@@ -134,8 +142,14 @@ export const ViewCollection = () => {
             <div className="list-item-details">
               <h3>{post.account?.accountName}</h3>
               <p>{post.description}</p>
-              <p>{post.account?.accountAddress} {post.state}</p>
-              <p>{post.totalCaseCount > 0 ? `${post.totalCaseCount} cases` : "No cases specified"}</p>
+              <p>
+                {post.account?.accountAddress} {post.state}
+              </p>
+              <p>
+                {post.totalCaseCount > 0
+                  ? `${post.totalCaseCount} cases`
+                  : "No cases specified"}
+              </p>
             </div>
             <input
               type="checkbox"
@@ -152,4 +166,3 @@ export const ViewCollection = () => {
 };
 
 export default ViewCollection;
-
