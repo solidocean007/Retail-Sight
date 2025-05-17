@@ -67,6 +67,10 @@
   padding: 0rem 1rem;
 }
 
+.like-quantity-row h4 {
+  margin: 0;
+}
+
 .post-type-quantity {
   display: flex;
 }
@@ -315,7 +319,7 @@
 }
 @media (max-width: 670px) {
   .post-card img.post-image {
-    max-height: 350px;
+    max-height: 335px;
   }
 
   .post-user-name,

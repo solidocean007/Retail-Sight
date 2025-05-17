@@ -307,10 +307,14 @@ const PostCard: React.FC<PostCardProps> = ({
                       {isSharing ? <CircularProgress size={20} /> : "Share"}
                     </MenuItem>
                     {(user?.uid === post.createdBy?.uid ||
-                      user?.uid === post.userId ||
                       user?.role === "admin" ||
                       user?.role === "super-admin") && (
-                      <MenuItem onClick={() => setIsEditModalOpen(true)}>
+                      <MenuItem
+                        onClick={() => {
+                          handleClose(); // This closes the menu
+                          setIsEditModalOpen(true); // Then open the edit modal
+                        }}
+                      >
                         Edit
                       </MenuItem>
                     )}
@@ -337,18 +341,16 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="post-header-top"></div>
           <div className="header-bottom">
             <div className="details-date">
-              <div className="store-details"> {/* i need to eventually add store names to the filters*/}
-                <div className="store-name-number" >
-                  <h3>
-                    {post.account?.accountName}{" "}
- 
-                  </h3>
+              <div className="store-details">
+                {" "}
+                {/* i need to eventually add store names to the filters*/}
+                <div className="store-name-number">
+                  <h3>{post.account?.accountName} </h3>
 
                   <h5>{formattedDate}</h5>
                 </div>
                 <div className="store-address-box">
                   <h5>{post.account?.accountAddress}</h5>{" "}
-     
                 </div>
               </div>
             </div>
