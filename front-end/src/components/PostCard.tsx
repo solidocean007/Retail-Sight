@@ -432,11 +432,13 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
 
           <div className="activity-post-image-box">
-            <BlurUpImage
-              lowResSrc={getLowResUrl(post.imageUrl || "")}
-              fullResSrc={post.imageUrl || ""}
-              alt="Post image"
-            />
+            {post.imageUrl && (
+              <BlurUpImage
+                lowResSrc={getLowResUrl(post.imageUrl)}
+                fullResSrc={post.imageUrl}
+                alt="Post image"
+              />
+            )}
           </div>
 
           {commentCount > 0 && (
