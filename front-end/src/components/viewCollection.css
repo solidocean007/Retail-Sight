@@ -8,41 +8,44 @@
 
 .view-collection-header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
   padding: 16px;
   background: #f0f0f0;
-  z-index: 1000;
   border-radius: 8px;
-}
-
-.view-collection-header h1 {
-  margin: 0;
-}
-
-.view-collection-header button {
-  align-self: flex-end;
+  margin-bottom: 16px;
 }
 
 .posts-list {
-  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .post-list-item {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #ccc;
   gap: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background: white;
 }
 
 .list-item-image img {
-  width: 100px;
+  width: 100%;
   height: auto;
   border-radius: 4px;
+  display: block;
+  /* Remove or comment out any fixed max-width here */
+}
+
+.image-size-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .list-item-details {
@@ -52,35 +55,12 @@
   gap: 4px;
 }
 
-.list-item-store,
-.list-item-display-date,
-.list-item-address,
-.list-item-cases {
-  font-size: 0.9rem;
-}
-
 .list-item-checkbox {
   align-self: center;
 }
 
-.view-collection-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
-}
-
 /* Responsive Behavior */
 @media (max-width: 600px) {
-  .view-collection-header {
-    align-items: stretch;
-  }
-
-  .view-collection-header button {
-    align-self: stretch;
-    width: 100%;
-  }
-
   .post-list-item {
     flex-direction: column;
     align-items: stretch;
@@ -88,20 +68,6 @@
 
   .list-item-image img {
     width: 100%;
-    max-width: 100%;
     height: auto;
-  }
-
-  .list-item-details {
-    margin-left: 0;
-  }
-
-  .view-collection-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .view-collection-actions button {
-    width: 100%;
   }
 }

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../utils/firebase";
-import { fetchPostsByCollectionId, fetchPostsByIds } from "../thunks/postsThunks";
 import { useAppDispatch } from "../utils/store";
 import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 import { CollectionType, PostWithID } from "../utils/types";
 import { CircularProgress, Button } from "@mui/material";
+import { db } from "../utils/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { fetchPostsByCollectionId } from "../thunks/postsThunks";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import "./viewCollection.css";
 
 export const ViewCollection = () => {
@@ -22,42 +23,10 @@ export const ViewCollection = () => {
     {}
   );
   const [loading, setLoading] = useState(true);
-
-  // ✅ Validate collection access via API
-  const validateCollectionAccess = async (): Promise<boolean> => {
-    console.log(
-      "Current user before validating collection access:",
-      currentUser
-    );
-
-    try {
-      const response = await fetch(
-        "https://my-fetch-data-api.vercel.app/api/validateCollectionAccess",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            collectionId,
-            userId: currentUser?.uid,
-          }),
-        }
-      );
-
-      const result = await response.json();
-      console.log("Collection access validation result:", result);
-
-      if (!response.ok || !result.valid) {
-        navigate("/access-denied");
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error validating collection access:", error);
-      navigate("/access-denied");
-      return false;
-    }
-  };
+  const [exporting, setExporting] = useState(false);
+  const [imageSize, setImageSize] = useState<"small" | "medium" | "large">(
+    "medium"
+  );
 
   useEffect(() => {
     const loadCollection = async () => {
@@ -67,11 +36,6 @@ export const ViewCollection = () => {
       }
 
       setLoading(true);
-
-      if (!(await validateCollectionAccess())) {
-        return;
-      }
-
       try {
         const collectionRef = doc(db, "collections", collectionId);
         const docSnap = await getDoc(collectionRef);
@@ -92,21 +56,19 @@ export const ViewCollection = () => {
 
         setCollectionDetails(collectionData);
 
-        if (Array.isArray(data.posts) && data.posts.length > 0) {
-          const actionResult = await dispatch(
-            fetchPostsByCollectionId(collectionId)
-          ).unwrap();
-          setPosts(actionResult);
+        const actionResult = await dispatch(
+          fetchPostsByCollectionId(collectionId)
+        ).unwrap();
+        setPosts(actionResult);
 
-          const initialSelection = actionResult.reduce((acc, post) => {
-            acc[post.id] = true;
-            return acc;
-          }, {} as { [key: string]: boolean });
+        const initialSelection = actionResult.reduce((acc, post) => {
+          acc[post.id] = true;
+          return acc;
+        }, {} as { [id: string]: boolean });
 
-          setSelectedPosts(initialSelection);
-        }
+        setSelectedPosts(initialSelection);
       } catch (error) {
-        console.error("Error fetching collection:", error);
+        console.error("Error loading collection:", error);
         navigate("/access-denied");
       } finally {
         setLoading(false);
@@ -120,14 +82,94 @@ export const ViewCollection = () => {
     setSelectedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
+  const handleExportSelected = async () => {
+    const postIdsToExport = posts
+      .filter((post) => selectedPosts[post.id])
+      .map((post) => post.id);
+    if (postIdsToExport.length === 0) {
+      alert("No posts selected for export.");
+      return;
+    }
+
+    try {
+      const functions = getFunctions();
+      const exportPostsFn = httpsCallable(functions, "exportPosts");
+      setExporting(true);
+      const result: any = await exportPostsFn({
+        collectionId,
+        postIds: postIdsToExport,
+      });
+
+      if (result.data?.url) {
+        const response = await fetch(result.data.url);
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.setAttribute("download", "exported_posts.zip");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        alert("Failed to export posts.");
+      }
+    } catch (error) {
+      console.error("Error exporting posts:", error);
+      alert("Error exporting posts.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return <CircularProgress />;
   }
-  console.log("Posts in ViewCollection:", posts);
+
+  const getImageSizeStyle = () => {
+    switch (imageSize) {
+      case "small":
+        return { width: "100%", maxWidth: "200px", height: "auto" };
+      case "medium":
+        return { width: "100%", maxWidth: "400px", height: "auto" };
+      case "large":
+        return { width: "100%", maxWidth: "800px", height: "auto" };
+      default:
+        return { width: "100%", maxWidth: "400px", height: "auto" };
+    }
+  };
+
   return (
     <div className="view-collection-container">
       <div className="view-collection-header">
-        <h1>{collectionDetails?.name || "Loading..."}</h1>
+        <h1>{collectionDetails?.name}</h1>
+        <Button
+          onClick={handleExportSelected}
+          disabled={exporting}
+          variant="outlined"
+        >
+          {exporting ? "Exporting..." : "Export Selected"}
+        </Button>
+        <div className="image-size-controls">
+          <Button
+            onClick={() => setImageSize("small")}
+            variant={imageSize === "small" ? "contained" : "outlined"}
+          >
+            Small
+          </Button>
+          <Button
+            onClick={() => setImageSize("medium")}
+            variant={imageSize === "medium" ? "contained" : "outlined"}
+          >
+            Medium
+          </Button>
+          <Button
+            onClick={() => setImageSize("large")}
+            variant={imageSize === "large" ? "contained" : "outlined"}
+          >
+            Large
+          </Button>
+        </div>
+
         <Button onClick={() => navigate("/dashboard")} variant="outlined">
           Back to Dashboard
         </Button>
@@ -137,7 +179,11 @@ export const ViewCollection = () => {
         {posts.map((post) => (
           <div key={post.id} className="post-list-item">
             <div className="list-item-image">
-              <img src={`${post.imageUrl}_200x200`} alt="Post preview" />
+              <img
+                src={post.imageUrl}
+                alt="Post Preview"
+                style={getImageSizeStyle()}
+              />
             </div>
             <div className="list-item-details">
               <h3>{post.account?.accountName}</h3>
@@ -153,7 +199,6 @@ export const ViewCollection = () => {
             </div>
             <input
               type="checkbox"
-              aria-label={`Select post ${post.account?.accountName || post.id}`}
               checked={!!selectedPosts[post.id]}
               onChange={() => handleCheckboxChange(post.id)}
               className="list-item-checkbox"

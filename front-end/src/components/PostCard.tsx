@@ -44,6 +44,7 @@ import "./viewSharedPost.css";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { extendPostTokenExpiryAndShare } from "../utils/extendPostTokenExpiryAndShare";
 import LinkShareModal from "./LinkShareModal";
+import BlurUpImage from "../utils/PostLogic/BlurUpImage";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -234,18 +235,17 @@ const PostCard: React.FC<PostCardProps> = ({
       setIsSharing(true);
       const link = await handlePostShare(post.id);
       console.log("Generated link:", link);
-  
+
       if (navigator.share) {
         await navigator.share({
-          title: 'Displaygram Post',
-          text: 'Check out this post on Displaygram!',
+          title: "Displaygram Post",
+          text: "Check out this post on Displaygram!",
           url: link,
         });
       } else {
         setShareLink(link);
         setShareModalOpen(true);
       }
-  
     } catch (error) {
       console.error("Error sharing post:", error);
     } finally {
@@ -256,6 +256,15 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const createdOnBehalf =
     post.postedFor && post.createdBy?.uid !== post.postedFor.uid;
+
+  const getLowResUrl = (fullUrl: string) => {
+    if (fullUrl.includes("original.jpg")) {
+      return fullUrl.replace("original.jpg", "original_200x200.jpg");
+    } else if (fullUrl.includes("resized.jpg")) {
+      return fullUrl.replace("resized.jpg", "resized_200x200.jpg");
+    }
+    return fullUrl; // fallback to full res if no match
+  };
 
   return (
     <>
@@ -395,7 +404,7 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.category}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
-            {post.id}
+            {/* {post.id} */}
             <div className="likes-box">
               <button
                 className="like-button"
@@ -423,14 +432,11 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
 
           <div className="activity-post-image-box">
-            {post.imageUrl && (
-              <img
-                className="post-image"
-                onClick={handleImageClick}
-                src={post.imageUrl}
-                alt="Post image"
-              />
-            )}
+            <BlurUpImage
+              lowResSrc={getLowResUrl(post.imageUrl || "")}
+              fullResSrc={post.imageUrl || ""}
+              alt="Post image"
+            />
           </div>
 
           {commentCount > 0 && (
