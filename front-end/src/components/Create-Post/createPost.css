@@ -93,7 +93,7 @@
   border: 1px solid var(--border-color);
 }
 
-.post-image {
+.image-box .post-image {
   max-height: 400px;
   width: auto;
 }

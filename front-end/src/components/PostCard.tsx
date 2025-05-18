@@ -43,6 +43,7 @@ import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
 import LinkShareModal from "./LinkShareModal";
 import BlurUpImage from "./BlurUpImage";
+import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -249,14 +250,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const createdOnBehalf =
     post.postedFor && post.createdBy?.uid !== post.postedFor.uid;
 
-  const getLowResUrl = (fullUrl: string) => {
-    if (fullUrl.includes("original.jpg")) {
-      return fullUrl.replace("original.jpg", "original_200x200.jpg");
-    } else if (fullUrl.includes("resized.jpg")) {
-      return fullUrl.replace("resized.jpg", "resized_200x200.jpg");
-    }
-    return fullUrl; // fallback to full res if no match
-  };
+
 
   return (
     <>

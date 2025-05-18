@@ -1,6 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
-import "./ImageModal.css"; // Your existing styling
+import "./ImageModal.css";
+import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface ImageModalProps {
   isOpen: boolean;
@@ -10,6 +12,8 @@ interface ImageModalProps {
 
 const ImageModal: React.FC<ImageModalProps> = ({ isOpen, src, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [loaded, setLoaded] = useState(false);
+  const lowResUrl = getLowResUrl(src);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -22,9 +26,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ isOpen, src, onClose }) => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
   if (!isOpen) return null;
@@ -32,13 +34,29 @@ const ImageModal: React.FC<ImageModalProps> = ({ isOpen, src, onClose }) => {
   return ReactDOM.createPortal(
     <div className="image-modal-backdrop">
       <div className="image-modal-content" ref={modalRef}>
-        <img src={src} alt="Full size" />
+        <div className="blur-up-image-wrapper">
+          <img
+            src={lowResUrl}
+            alt="Low resolution preview"
+            className={`blur-up-image post-image low-res ${
+              loaded ? "hidden" : ""
+            }`}
+          />
+          <img
+            src={src}
+            alt="Full size"
+            className={`blur-up-image post-image full-res ${
+              loaded ? "visible" : "hidden"
+            }`}
+            onLoad={() => setLoaded(true)}
+          />
+        </div>
         <button className="close-modal" onClick={onClose}>
-          X
+          <CloseIcon fontSize="small" />
         </button>
       </div>
     </div>,
-    document.getElementById("modal-root")!,
+    document.getElementById("modal-root")!
   );
 };
 
