@@ -5,9 +5,10 @@ interface BlurUpImageProps {
   lowResSrc: string;
   fullResSrc: string;
   alt?: string;
+  openImageModal: () => void;
 }
 
-const BlurUpImage: React.FC<BlurUpImageProps> = ({ lowResSrc, fullResSrc, alt = "" }) => {
+const BlurUpImage: React.FC<BlurUpImageProps> = ({ lowResSrc, fullResSrc, alt = "", openImageModal }) => {
   const [loaded, setLoaded] = useState(false);
 
   return (
@@ -22,6 +23,7 @@ const BlurUpImage: React.FC<BlurUpImageProps> = ({ lowResSrc, fullResSrc, alt = 
         alt={alt}
         className={`blur-up-image post-image full-res ${loaded ? "visible" : "hidden"}`}
         onLoad={() => setLoaded(true)}
+        onClick={openImageModal}
       />
     </div>
   );

@@ -41,7 +41,6 @@ import { MoreVert } from "@mui/icons-material";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import "./viewSharedPost.css";
-import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import LinkShareModal from "./LinkShareModal";
 import BlurUpImage from "./BlurUpImage";
 
@@ -73,7 +72,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const protectedAction = useProtectedAction();
   const [commentCount] = useState(post.commentCount);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-  const [comments, setComments] = useState<CommentType[]>([]); // State to store comments for the modal
+  const [comments, setComments] = useState<CommentType[]>([]);
   const [showAllComments] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const user = useSelector(selectUser);
@@ -81,12 +80,6 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isSharing, setIsSharing] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareLink, setShareLink] = useState("");
-
-  const open = Boolean(anchorEl);
-
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useOutsideAlerter(menuRef, () => setAnchorEl(null));
 
   const getAnimatedPostCardGradient = () => {
     const theme = document.body.getAttribute("data-theme");
@@ -106,7 +99,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [fullSizeImageUrl, setFullSizeImageUrl] = useState("");
 
-  const [selectedCompanyAccount, setSelectedCompanyAccount] =
+  const [_selectedCompanyAccount, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
 
   const handleImageClick = () => {
@@ -270,9 +263,9 @@ const PostCard: React.FC<PostCardProps> = ({
       <Card
         className="post-card textured-background"
         style={{
-          // height: "70%", // 👈 important
-          // width: "95%", // optional slight side margin
-          // margin: "auto",
+          height: "70%", // 👈 important
+          width: "95%", // optional slight side margin
+          margin: "auto",
           ...style,
           backgroundImage: getAnimatedPostCardGradient(),
           backgroundSize: "600% 600%",
@@ -292,39 +285,39 @@ const PostCard: React.FC<PostCardProps> = ({
                 >
                   <MoreVert />
                 </IconButton>
-                <div ref={menuRef}>
-                  <Menu
-                    id="post-card-menu"
-                    anchorEl={anchorEl}
-                    keepMounted
-                    open={open}
-                    onClose={() => setAnchorEl(null)}
-                  >
-                    <MenuItem
-                      onClick={() => handleShare()}
-                      disabled={isSharing}
+                <div>
+                  {Boolean(anchorEl) && (
+                    <Menu
+                      id="post-card-menu"
+                      anchorEl={anchorEl}
+                      open={true}
+                      onClose={() => setAnchorEl(null)}
                     >
-                      {isSharing ? <CircularProgress size={20} /> : "Share"}
-                    </MenuItem>
-                    {(user?.uid === post.createdBy?.uid ||
-                      user?.role === "admin" ||
-                      user?.role === "super-admin") && (
                       <MenuItem
-                        onClick={() => {
-                          handleClose(); // This closes the menu
-                          setIsEditModalOpen(true); // Then open the edit modal
-                        }}
+                        onClick={() => handleShare()}
+                        disabled={isSharing}
                       >
-                        Edit
+                        {isSharing ? <CircularProgress size={20} /> : "Share"}
                       </MenuItem>
-                    )}
-
-                    <MenuItem
-                      onClick={() => setIsAddToCollectionModalOpen(true)}
-                    >
-                      Add to Collections
-                    </MenuItem>
-                  </Menu>
+                      {(user?.uid === post.createdBy?.uid ||
+                        user?.role === "admin" ||
+                        user?.role === "super-admin") && (
+                        <MenuItem
+                          onClick={() => {
+                            setAnchorEl(null); // Close menu completely
+                            setIsEditModalOpen(true); // Open edit modal
+                          }}
+                        >
+                          Editing
+                        </MenuItem>
+                      )}
+                      <MenuItem
+                        onClick={() => setIsAddToCollectionModalOpen(true)}
+                      >
+                        Add to Collections
+                      </MenuItem>
+                    </Menu>
+                  )}
                 </div>
                 <Dialog
                   open={isAddToCollectionModalOpen}
@@ -430,12 +423,13 @@ const PostCard: React.FC<PostCardProps> = ({
             />
           </div>
 
-          <div className="activity-post-image-box" onClick={handleImageClick}>
+          <div className="activity-post-image-box">
             {post.imageUrl && (
               <BlurUpImage
                 lowResSrc={getLowResUrl(post.imageUrl)}
                 fullResSrc={post.imageUrl}
                 alt="Post image"
+                openImageModal={handleImageClick}
               />
             )}
           </div>
@@ -457,28 +451,22 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
         <CommentSection post={post} />
       </Card>
-      {isEditModalOpen ? (
-        <EditPostModal
-          post={post}
-          // setPost={setPost}
-          setSelectedCompanyAccount={setSelectedCompanyAccount}
-          isOpen={isEditModalOpen}
-          setIsEditModalOpen={setIsEditModalOpen}
-          // onClose={handleCloseEditModal}
-          // onSave={handleSavePost}
-        />
-      ) : null}
-      {isCommentModalOpen && comments.length > 0 && (
-        <CommentModal
-          isOpen={isCommentModalOpen}
-          onClose={() => setIsCommentModalOpen(false)}
-          post={post}
-          comments={comments}
-          onLikeComment={handleLikeComment}
-          onDeleteComment={handleDeleteComment}
-          likedByUser={likedByUser}
-        />
-      )}
+      <EditPostModal
+        post={post}
+        setSelectedCompanyAccount={setSelectedCompanyAccount}
+        isOpen={isEditModalOpen}
+        setIsEditModalOpen={setIsEditModalOpen}
+      />
+
+      <CommentModal
+        isOpen={isCommentModalOpen}
+        onClose={() => setIsCommentModalOpen(false)}
+        post={post}
+        comments={comments}
+        onLikeComment={handleLikeComment}
+        onDeleteComment={handleDeleteComment}
+        likedByUser={likedByUser}
+      />
       <ImageModal
         isOpen={isImageModalOpen}
         src={fullSizeImageUrl}

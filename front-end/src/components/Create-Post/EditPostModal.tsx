@@ -1,20 +1,18 @@
 //EditPostModal.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
-import Modal from "@mui/material/Modal";
 import { CompanyAccountType, PostWithID } from "../../utils/types";
 import { useDispatch, useSelector } from "react-redux";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { deletePost, updatePost } from "../../Slices/postsSlice";
-import { SelectChangeEvent, Typography } from "@mui/material";
+import { Dialog, SelectChangeEvent, Typography } from "@mui/material";
 import "./editPostModal.css";
 
 import { Button, TextField, Select, MenuItem } from "@mui/material";
 
 import "./editPostModal.css";
-// import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import {
   deleteUserCreatedPostInIndexedDB,
   removePostFromIndexedDB,
@@ -25,7 +23,6 @@ import { extractHashtags, extractStarTags } from "../../utils/extractHashtags";
 import TotalCaseCount from "../TotalCaseCount";
 import CategorySelector, { CategoryType } from "./CategorySelector";
 import ChannelSelector, { ChannelType } from "./ChannelSelector";
-import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
 import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCompanyAccounts";
 import { RootState } from "../../utils/store";
 import AccountModalSelector from "./AccountModalSelector";
@@ -43,7 +40,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   isOpen,
   setIsEditModalOpen,
 }) => {
-  const wrapperRef = useRef(null);
+  const wrapperRef = useRef(null); // what is this for?
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
@@ -137,7 +134,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     }
   };
 
-  // what is this useEffect for?
   useEffect(() => {
     setDescription(post?.description || "");
     setPostVisibility(post?.visibility || "public");
@@ -232,7 +228,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   return (
     <>
-      <Modal open={isOpen}>
+      <Dialog open={isOpen}>
         <>
           <div className="edit-post-modal-container" ref={wrapperRef}>
             <div className="edit-post-header">
@@ -326,7 +322,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
             </div>
           </div>
         </>
-      </Modal>
+      </Dialog>
       <AccountModalSelector
         open={openAccountModal}
         onClose={() => setOpenAccountModal(false)}

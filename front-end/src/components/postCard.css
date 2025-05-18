@@ -330,6 +330,6 @@
 
 @media (max-width: 470px) {
   .post-card img.post-image {
-    /* max-height: 300px;  */
+    max-height: 300px; 
   }
 }

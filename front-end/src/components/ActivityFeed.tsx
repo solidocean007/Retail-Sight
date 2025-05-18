@@ -35,7 +35,6 @@ import NoResults from "./NoResults";
 const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
 
-
 interface ActivityFeedProps {
   listRef: React.RefObject<VariableSizeList>;
   // posts: PostWithID[];
@@ -68,11 +67,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
-  const filteredPosts = useSelector((state: RootState) => state.posts.filteredPosts);
-  
-  let displayPosts: PostWithID[] = activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
+  const filteredPosts = useSelector(
+    (state: RootState) => state.posts.filteredPosts
+  );
 
-  
+  let displayPosts: PostWithID[] =
+    activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
+
   // const listRef = useRef<List>(null);
   useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -148,7 +149,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   // Function to get the dynamic height of each item
   const ITEM_GAP = 8;
 
-  const getItemSize = (index: number) => {
+  const getItemSize = () => {
     // const baseHeight = getActivityItemHeight(windowWidth);
     // const isAdPosition = adsOn && (index + 1) % AD_INTERVAL === 0;
     // return isAdPosition ? 200 + ITEM_GAP : baseHeight + ITEM_GAP;
@@ -173,17 +174,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   };
 
-  // Effect to update the window width on resize
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setListHeight(calculateListHeight());
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   const handleItemsRendered = ({
     visibleStopIndex,
   }: {
@@ -193,7 +183,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     const lastIndex = itemCount; // last index is declared but never read
 
     // If the last visible index is the last item in the list
-    if (visibleStopIndex >= displayPosts.length - 1 && !loadingMore && hasMore) {
+    if (
+      visibleStopIndex >= displayPosts.length - 1 &&
+      !loadingMore &&
+      hasMore
+    ) {
       setLoadingMore(true);
       dispatch(
         fetchMorePostsBatch({
