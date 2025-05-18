@@ -45,7 +45,7 @@ export function calculateSubmissionStats(
       goal.submittedPosts?.map((p) => p.submittedBy).filter(Boolean),
     );
     const submittedCount = Array.from(uniqueSubmitters).filter(
-      (uid) => goal.usersIdsOfGoal!.includes(uid), // Type 'undefined' is not assignable to type 'string'
+      (user) => goal.usersIdsOfGoal!.includes(user.uid),
     ).length;
     const totalCount = goal.usersIdsOfGoal.length;
     const percentage =
@@ -55,7 +55,7 @@ export function calculateSubmissionStats(
 
   const submittedCount =
     goal.submittedPosts?.filter((post) =>
-      effectiveAccounts.some((acc) => acc.accountNumber === post.accountNumber),
+      effectiveAccounts.some((acc) => acc.accountNumber === post.account.accountNumber),
     ).length || 0;
   const totalCount = effectiveAccounts.length;
   const percentage =
@@ -79,7 +79,7 @@ export function mapAccountsWithStatus(
         account.salesRouteNums?.includes(uid),
       );
       const matchingPost = goal.submittedPosts?.find(
-        (post) => post.submittedBy === uid,
+        (post) => post.submittedBy.uid === uid,
       );
       return {
         ...(matchingAccount || {
@@ -99,7 +99,7 @@ export function mapAccountsWithStatus(
   return effectiveAccounts.map((account) => {
     const found = goal.submittedPosts?.find(
       (post: GoalSubmissionType) =>
-        post.accountNumber === account.accountNumber,
+        post.account.accountNumber === account.accountNumber,
     );
     return {
       ...account,

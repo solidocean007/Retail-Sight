@@ -1,10 +1,10 @@
 // AdminCompanyGoalsOverview.tsx
 import React, { useState } from "react";
-import AdminGoalViewerCard from "./AdminGoalViewerCard";
 import "./adminCompanyGoalsOverview.css";
-import { CompanyGoalType } from "../utils/types";
 import { useSelector } from "react-redux";
-import { selectAllCompanyAccounts } from "../Slices/allAccountsSlice";
+import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
+import AdminGoalViewerCard from "./AdminGoalViewerCard";
+import { CompanyGoalType } from "../../utils/types";
 
 interface CompanyGoalsStatusSummaryProps {
   goals: CompanyGoalType[];
@@ -22,9 +22,9 @@ const AdminCompanyGoalsOverview: React.FC<CompanyGoalsStatusSummaryProps> = ({
       {goals.length === 0 ? (
         <p>No goals available for this company.</p>
       ) : (
-        goals.map((goal) => (
+        goals.map((goal, index) => (
           <AdminGoalViewerCard
-            key={goal.id}
+            key={index}
             goal={goal}
             isExpanded={expandedGoalId === goal.id}
             toggleExpand={() =>

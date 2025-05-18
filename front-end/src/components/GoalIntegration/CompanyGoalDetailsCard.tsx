@@ -18,7 +18,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import InfoIcon from "@mui/icons-material/Info";
 import GoalViewerFilters from "../GoalViewerFilters";
 import AccountTable from "../AccountTable";
-import { FixedSizeList as List } from "react-window";
 import {
   selectAllCompanyAccounts,
   setAllAccounts,
@@ -93,8 +92,8 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
     ) {
       return allCompanyAccounts.filter((account) =>
         account.salesRouteNums?.some((route) =>
-          goal.usersIdsOfGoal!.includes(route),
-        ),
+          goal.usersIdsOfGoal!.includes(route)
+        )
       );
     }
     return [];
@@ -107,10 +106,10 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
     ) {
       // 🔥 When goal is by USERS, count by user IDs
       const uniqueSubmitters = new Set(
-        goal.submittedPosts?.map((p) => p.submittedBy?.uid).filter(Boolean),
+        goal.submittedPosts?.map((p) => p.submittedBy?.uid).filter(Boolean)
       );
       const submittedCount = Array.from(uniqueSubmitters).filter((uid) =>
-        goal.usersIdsOfGoal!.includes(uid as string),
+        goal.usersIdsOfGoal!.includes(uid as string)
       ).length;
       const totalCount = goal.usersIdsOfGoal.length;
       const percent =
@@ -126,8 +125,8 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
     const submittedCount =
       goal.submittedPosts?.filter((post) =>
         effectiveAccounts.some(
-          (acc) => acc.accountNumber === post.account?.accountNumber,
-        ),
+          (acc) => acc.accountNumber === post.account?.accountNumber
+        )
       ).length || 0;
     const totalCount = effectiveAccounts.length;
     const percent =
@@ -143,7 +142,7 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
   const accountsToRender = useMemo(() => {
     return isUserView
       ? effectiveAccounts.filter((account) =>
-          account.salesRouteNums?.includes(salesRouteNum!),
+          account.salesRouteNums?.includes(salesRouteNum!)
         )
       : effectiveAccounts;
   }, [isUserView, effectiveAccounts, salesRouteNum]);
@@ -270,7 +269,9 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
               {submitted} / {total} Submitted
             </span>
             <span
-              className={`summary-percentage ${percentage === 100 ? "complete" : "incomplete"}`}
+              className={`summary-percentage ${
+                percentage === 100 ? "complete" : "incomplete"
+              }`}
             >
               {percentage}%
               <Tooltip title={`${submitted} of ${total} submitted`}>
@@ -310,7 +311,7 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
       </div>
     );
   }
-
+  console.log("goal", goal);
   // Desktop View
   return (
     <div className="info-box-company-goal">
@@ -343,6 +344,13 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
             <div className="info-description">
               Description: {goal.goalDescription}
             </div>
+            {goal.perUserQuota && goal.perUserQuota > 0 && (
+              <div className="info-quota">
+                <strong>Requirement:</strong> Each assigned user must submit at
+                least {goal.perUserQuota}{" "}
+                {goal.perUserQuota > 1 ? "submissions" : "submission"}.
+              </div>
+            )}
           </div>
         </div>
 
@@ -354,7 +362,9 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
             {submitted} / {total} Submitted
           </span>
           <span
-            className={`summary-percentage ${percentage === 100 ? "complete" : "incomplete"}`}
+            className={`summary-percentage ${
+              percentage === 100 ? "complete" : "incomplete"
+            }`}
           >
             {percentage}%
             <Tooltip title={`${submitted} of ${total} submitted`}>
@@ -373,8 +383,8 @@ const CompanyGoalDetailsCard: React.FC<CompanyGoalDetailsCardProps> = ({
             {expanded
               ? `Hide Submissions (${filteredRows.length})`
               : filteredRows.length > 0
-                ? `View Submissions (${filteredRows.length})`
-                : "No Submissions"}
+              ? `View Submissions (${filteredRows.length})`
+              : "No Submissions"}
           </button>
           <div className="tab-filler" />
         </div>

@@ -11,14 +11,23 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { useState } from "react";
 import AllCompanyGoalsView from "./AllCompanyGoalsView";
-import AllGalloGoalsView from "./AllGalloGoalsView";
 import "./allGoalsLayout.css";
 import { useSelector } from "react-redux";
 import {
   selectAllCompanyGoals,
   selectAllGalloGoals,
 } from "../../Slices/goalsSlice";
-import AdminCompanyGoalsOverview from "../AdminCompanyGoalsOverview";
+import AdminCompanyGoalsOverview from "./AdminCompanyGoalsOverview";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from "@firebase/firestore";
+import { db } from "../../utils/firebase";
+import path from "path";
+import fs from 'fs';
+import { CompanyGoalType } from "../../utils/types";
+
+// import allAccountNumbers from "../../allCompanyAccountNumbers.json";
+import allAccountNumbers from "../../../allCompanyAccountNumbers.json";
+
+
 
 const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   const [value, setValue] = useState(0);
@@ -64,6 +73,41 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   const handleSelectChange = (event: SelectChangeEvent<number>) => {
     setValue(Number(event.target.value));
   };
+
+// IDs of the two goals you want to migrate
+const goalIdsToUpdate = ["Qc4K4TPgjMjpARUakkFx", "hWXopstr1FDJTr33ToRG"]; // replace with real IDs
+
+async function migrateGoalsToUnifiedShape() {
+  for (const goalId of goalIdsToUpdate) {
+    const goalRef = doc(db, "companyGoals", goalId);
+    const goalSnap = await getDoc(goalRef);
+
+    if (!goalSnap.exists()) {
+      console.error(`Goal with ID ${goalId} not found.`);
+      continue;
+    }
+
+    const goalData = goalSnap.data();
+
+    const updatedGoalData = {
+      ...goalData,
+      accountNumbersForThisGoal: allAccountNumbers,
+    };
+
+    // Remove old targeting keys if they exist
+    delete updatedGoalData.appliesToAllAccounts;
+    delete updatedGoalData.accounts;
+    delete updatedGoalData.targetMode;
+    delete updatedGoalData.usersIdsOfGoal;
+
+    await updateDoc(goalRef, updatedGoalData);
+    console.log(`Migrated goal ${goalId} to new format.`);
+  }
+}
+
+migrateGoalsToUnifiedShape();
+
+
 
   return (
     <div className="all-goals-container">

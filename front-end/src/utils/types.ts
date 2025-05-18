@@ -240,7 +240,7 @@ export type GoalTargetMode =
   | "goalForSelectedAccounts"
   | "goalForSelectedUsers";
 
-export type CompanyGoalType = {
+export type OldCompanyGoalType = {
   id: string;
   companyId: string;
   goalTitle: string;
@@ -256,6 +256,20 @@ export type CompanyGoalType = {
   perUserQuota?: number;
   submittedPosts?: GoalSubmissionType[];
 };
+
+export type CompanyGoalType = {
+  companyId: string;
+  goalTitle: string;
+  goalDescription: string;
+  goalMetric: string;
+  goalValueMin: number;
+  goalStartDate: string;
+  goalEndDate: string;
+  accountNumbersForThisGoal: string[];        // ✅ Full scope of accounts this goal applies to
+  perUserQuota?: number;           // ✅ Minimum required submissions per user (if defined)
+  submittedPosts?: GoalSubmissionType[];
+};
+
 
 export type GoalSubmissionType = {
   postId: string;

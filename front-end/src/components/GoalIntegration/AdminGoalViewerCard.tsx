@@ -1,25 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import {
-  CompanyGoalType,
-  GoalSubmissionType,
-  CompanyAccountType,
-} from "../utils/types";
-import { setAllAccounts } from "../Slices/allAccountsSlice";
-import { getAllCompanyAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
-import GoalViewerFilters from "./GoalViewerFilters";
-import AccountTable from "./AccountTable";
 import "./adminGoalViewerCard.css";
 import { Tooltip } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
-import { selectCompanyUsers } from "../Slices/userSlice";
-import UserTableForGoals from "./UserTableForGoals";
-import {
-  calculateSubmissionStats,
-  getEffectiveAccounts,
-  mapAccountsWithStatus,
-} from "./GoalIntegration/utils/goalModeUtils";
+import { CompanyAccountType, CompanyGoalType } from "../../utils/types";
+import { selectCompanyUsers } from "../../Slices/userSlice";
+import { calculateSubmissionStats, getEffectiveAccounts, mapAccountsWithStatus } from "./utils/goalModeUtils";
+import { getAllCompanyAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
+import { setAllAccounts } from "../../Slices/allAccountsSlice";
+import GoalViewerFilters from "../GoalViewerFilters";
+import UserTableForGoals from "../UserTableForGoals";
+import AccountTable from "../AccountTable";
 
 interface AdminGoalViewerProps {
   goal: CompanyGoalType;

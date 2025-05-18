@@ -2,11 +2,11 @@
 import React from "react";
 import { FixedSizeList as List } from "react-window";
 import { NavigateFunction } from "react-router-dom";
-import { CompanyAccountType } from "../utils/types";
+import { CompanyAccountType, UserType } from "../utils/types";
 import "./accountTable.css";
 
 interface AccountWithStatus extends CompanyAccountType {
-  submittedBy: string | null;
+  submittedBy: UserType | null;
   submittedAt: string | null;
   postId: string | null;
 }
@@ -43,7 +43,7 @@ const AccountTable: React.FC<AccountTableProps> = ({
         <div className="account-small-cell">{acc.postId ? "✅" : "❌"}</div>
 
         <div className="account-cell submitted-by-cell">
-          {acc.submittedBy || "—"}
+          {`${acc.submittedBy?.firstName} ${acc.submittedBy?.lastName} ` || "—"}
         </div>
         <div className="account-cell submitted-at-cell">
           {acc.submittedAt ? new Date(acc.submittedAt).toLocaleString() : "—"}

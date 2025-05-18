@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import "./allCompanyGoalsView.css";
 import CompanyGoalDetailsCard from "./CompanyGoalDetailsCard";
 import { CompanyGoalType } from "../../utils/types";
+import CompanyGoalCard from "./CompanyGoalCard";
 
 const AllCompanyGoalsView = ({
   companyId,
@@ -83,7 +84,16 @@ const AllCompanyGoalsView = ({
           // Normalize accounts for rendering
 
           return (
-            <CompanyGoalDetailsCard
+            // <CompanyGoalDetailsCard
+            //   key={goal.id}
+            //   goal={goal}
+            //   mobile={isMobile}
+            //   onDelete={openConfirmationDialog}
+            //   onEdit={(goalId, updatedFields) =>
+            //     handleEditCompanyGoal(goalId, updatedFields)
+            //   }
+            // />
+            <CompanyGoalCard
               key={goal.id}
               goal={goal}
               mobile={isMobile}
@@ -91,7 +101,7 @@ const AllCompanyGoalsView = ({
               onEdit={(goalId, updatedFields) =>
                 handleEditCompanyGoal(goalId, updatedFields)
               }
-            />
+              />
           );
         })}
       </div>
