@@ -25,7 +25,7 @@ import { useAppDispatch } from "../../utils/store";
 import {
   FireStoreGalloGoalWithId,
   selectAllGalloGoals,
-  selectCompanyGoalsIsLoading,
+  // selectCompanyGoalsIsLoading,
 } from "../../Slices/goalsSlice";
 import { showMessage } from "../../Slices/snackbarSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";

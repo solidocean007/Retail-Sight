@@ -13,10 +13,6 @@ import { useState } from "react";
 import AllCompanyGoalsView from "./AllCompanyGoalsView";
 import "./allGoalsLayout.css";
 import { useSelector } from "react-redux";
-import {
-  selectAllCompanyGoals,
-  selectAllGalloGoals,
-} from "../../Slices/goalsSlice";
 import AdminCompanyGoalsOverview from "./AdminCompanyGoalsOverview";
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
@@ -26,6 +22,7 @@ import { CompanyGoalType } from "../../utils/types";
 
 // import allAccountNumbers from "../../allCompanyAccountNumbers.json";
 import allAccountNumbers from "../../../allCompanyAccountNumbers.json";
+import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 
 
 
@@ -34,8 +31,9 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   const theme = useTheme(); // Correct usage of `useTheme`
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Accessing breakpoints safely
 
-  const galloGoals = useSelector(selectAllGalloGoals);
+  // const galloGoals = useSelector(selectAllGalloGoals);
   const companyGoals = useSelector(selectAllCompanyGoals);
+  console.log("Company Goals:", companyGoals);
 
   interface TabPanelProps {
     children?: React.ReactNode;
@@ -74,10 +72,6 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
     setValue(Number(event.target.value));
   };
 
-// IDs of the two goals you want to migrate
-const goalIdsToUpdate = ["Qc4K4TPgjMjpARUakkFx", "hWXopstr1FDJTr33ToRG"]; // replace with real IDs
-
-
   return (
     <div className="all-goals-container">
       <Box className="tabs-container">
@@ -88,8 +82,8 @@ const goalIdsToUpdate = ["Qc4K4TPgjMjpARUakkFx", "hWXopstr1FDJTr33ToRG"]; // rep
             fullWidth
             displayEmpty
           >
-            <MenuItem value={0}>Goals View</MenuItem>
-            <MenuItem value={1}>Company Goals</MenuItem>
+            {/* <MenuItem value={0}>Goals View</MenuItem> */}
+            <MenuItem value={0}>Company Goals</MenuItem>
             {/* <MenuItem value={2}>Gallo Programs & Goals</MenuItem> */}
           </Select>
         ) : (
@@ -101,18 +95,18 @@ const goalIdsToUpdate = ["Qc4K4TPgjMjpARUakkFx", "hWXopstr1FDJTr33ToRG"]; // rep
             variant="scrollable"
             scrollButtons="auto"
           >
-            <Tab label="Goals View" {...a11yProps(0)} />
+            {/* <Tab label="Goals View" {...a11yProps(0)} /> */}
             <Tab label="Company Goals" {...a11yProps(1)} />
             {/* <Tab label="Gallo Programs & Goals" {...a11yProps(2)} /> */}
           </Tabs>
         )}
       </Box>
-      {value === 0 && (
+      {/* {value === 0 && (
         <div className="all-company-goals-view-container">
           <AdminCompanyGoalsOverview goals={companyGoals} />
         </div>
-      )}
-      {value === 1 && (
+      )} */}
+      {value === 0 && (
         <div className="all-company-goals-view-container">
           <AllCompanyGoalsView companyId={companyId} />
         </div>

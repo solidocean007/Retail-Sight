@@ -1,12 +1,12 @@
 // src/utils/listeners/setupUserCompanyGoalsListener.ts
 import { collection, onSnapshot, query, where } from "@firebase/firestore";
 import { db } from "../firebase";
-import { setCompanyGoals } from "../../Slices/goalsSlice";
 import { CompanyGoalType } from "../types";
 import {
   saveGoalsToIndexedDB,
   clearGoalsFromIndexedDB,
 } from "../database/indexedDBUtils";
+import { setCompanyGoals } from "../../Slices/companyGoalsSlice";
 
 export const setupCompanyGoalsListener =
   (companyId: string) => (dispatch: any) => {

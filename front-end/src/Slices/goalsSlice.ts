@@ -263,16 +263,16 @@ export const { setGalloGoals, addGalloGoal } =
 
 // Selectors
 export const selectAllGalloGoals = (state: RootState) => state.goals.galloGoals;
-export const selectAllCompanyGoals = (state: RootState) =>
-  state.goals.companyGoals;
+// export const selectAllCompanyGoals = (state: RootState) =>
+//   state.goals.companyGoals;
 export const selectGalloGoalsLoading = (state: RootState) =>
   state.goals.galloGoalsIsLoading;
-export const selectCompanyGoalsIsLoading = (state: RootState) =>
-  state.goals.companyGoalsIsLoading;
+// export const selectCompanyGoalsIsLoading = (state: RootState) =>
+//   state.goals.companyGoalsIsLoading;
 export const selectGalloGoalsError = (state: RootState) =>
   state.goals.galloGoalsError;
-export const selectCompanyGoalsError = (state: RootState) =>
-  state.goals.companyGoalsError;
+// export const selectCompanyGoalsError = (state: RootState) =>
+//   state.goals.companyGoalsError;
 export const selectLastUpdated = (state: RootState) => state.goals.lastUpdated;
 
 // **New selectors for user-specific goals**

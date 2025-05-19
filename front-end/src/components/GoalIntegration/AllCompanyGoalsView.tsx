@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import {
-  selectAllCompanyGoals,
-  updateCompanyGoalInFirestore,
-} from "../../Slices/goalsSlice";
 import { useSelector } from "react-redux";
 import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
 import { useAppDispatch } from "../../utils/store";
@@ -15,6 +11,8 @@ import "./allCompanyGoalsView.css";
 import CompanyGoalDetailsCard from "./CompanyGoalDetailsCard";
 import { CompanyGoalType } from "../../utils/types";
 import CompanyGoalCard from "./CompanyGoalCard";
+import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
+import { updateCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 
 const AllCompanyGoalsView = ({
   companyId,

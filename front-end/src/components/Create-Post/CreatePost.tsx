@@ -36,9 +36,10 @@ import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
 import {
-  selectUsersCompanyGoals,
+  // selectUsersCompanyGoals,
   selectUsersGalloGoals,
 } from "../../Slices/goalsSlice";
+import { selectUsersCompanyGoals } from "../../Slices/companyGoalsSlice";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();

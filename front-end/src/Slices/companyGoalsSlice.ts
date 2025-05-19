@@ -4,12 +4,13 @@ import { CompanyGoalWithIdType } from "../utils/types";
 
 // Slice State
 interface CompanyGoalsState {
-  // Optional if you want to track status separately in the future
   lastUpdated: string | null;
+  goals: CompanyGoalWithIdType[];  // Add this line
 }
 
 const initialState: CompanyGoalsState = {
   lastUpdated: null,
+  goals: [],  // Initialize it here
 };
 
 // Slice
@@ -20,10 +21,13 @@ const companyGoalsSlice = createSlice({
     setCompanyGoalsLastUpdated(state) {
       state.lastUpdated = new Date().toISOString();
     },
+     setCompanyGoals(state, action) {
+      state.goals = action.payload;
+    },
   },
 });
 
-export const { setCompanyGoalsLastUpdated } = companyGoalsSlice.actions;
+export const { setCompanyGoalsLastUpdated, setCompanyGoals } = companyGoalsSlice.actions;
 
 export default companyGoalsSlice.reducer;
 

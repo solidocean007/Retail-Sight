@@ -10,6 +10,7 @@ export const loadCompany = createAsyncThunk(
     const companyRef = doc(db, "companies", companyId);
     const companySnap = await getDoc(companyRef);
 
+
     if (companySnap.exists()) {
       dispatch(setCompany(companySnap.data() as CompanyType));
     } else {

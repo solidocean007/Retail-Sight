@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   CompanyAccountType,
   CompanyGoalType,
+  CompanyGoalWithIdType,
   FireStoreGalloGoalDocType,
   PostType,
 } from "../../utils/types";
@@ -31,7 +32,7 @@ import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getAc
 import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
 import { selectUser } from "../../Slices/userSlice";
 import {
-  selectAllCompanyGoals,
+  // selectAllCompanyGoals,
   selectAllGalloGoals,
   setGalloGoals,
 } from "../../Slices/goalsSlice";
@@ -42,6 +43,7 @@ import GalloGoalDropdown from "./GalloGoalDropdown";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import "./pickstore.css";
 import AccountModalSelector from "./AccountModalSelector";
+import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 
 interface PickStoreProps {
   onNext: () => void;
@@ -257,7 +259,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   };
 
-  const handleCompanyGoalSelection = (goal: CompanyGoalType | undefined) => {
+  const handleCompanyGoalSelection = (goal: CompanyGoalWithIdType | undefined) => {
     if (!goal) {
       console.warn("No goal selected.");
       return;

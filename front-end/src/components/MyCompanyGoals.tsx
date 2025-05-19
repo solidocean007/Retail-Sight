@@ -5,15 +5,16 @@ import { RootState } from "../utils/store";
 import { Typography, CircularProgress, useMediaQuery } from "@mui/material";
 import { selectUser } from "../Slices/userSlice";
 import "./myCompanyGoals.css";
-import {
-  selectCompanyGoalsIsLoading,
-  selectUsersCompanyGoals,
-} from "../Slices/goalsSlice";
+// import {
+//   selectCompanyGoalsIsLoading,
+//   selectUsersCompanyGoals,
+// } from "../Slices/goalsSlice";
 import { CompanyGoalType } from "../utils/types";
 import { useNavigate } from "react-router-dom";
 import CompanyGoalDetailsCard from "./GoalIntegration/CompanyGoalDetailsCard";
 import { useTheme } from "@mui/material/styles";
 import UserGoalCard from "./GoalIntegration/UserGoalCard";
+import { selectUsersCompanyGoals } from "../Slices/companyGoalsSlice";
 
 const MyCompanyGoals = () => {
   const theme = useTheme();
