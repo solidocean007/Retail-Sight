@@ -15,6 +15,7 @@ export type CompanyType = {
   companyVerified: boolean;
   createdAt: string;
   accountsId: string | null;
+  goals: CompanyGoalWithIdType[];
 };
 
 export type TUserInputType = {
@@ -269,6 +270,9 @@ export type CompanyGoalType = {
   perUserQuota?: number;           // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
 };
+
+export type CompanyGoalWithIdType = CompanyGoalType & { id: string };
+
 
 
 export type GoalSubmissionType = {

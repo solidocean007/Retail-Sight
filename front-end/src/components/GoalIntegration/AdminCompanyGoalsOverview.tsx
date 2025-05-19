@@ -22,9 +22,9 @@ const AdminCompanyGoalsOverview: React.FC<CompanyGoalsStatusSummaryProps> = ({
       {goals.length === 0 ? (
         <p>No goals available for this company.</p>
       ) : (
-        goals.map((goal, index) => (
+        goals.map((goal) => (
           <AdminGoalViewerCard
-            key={index}
+            key={goal.id}
             goal={goal}
             isExpanded={expandedGoalId === goal.id}
             toggleExpand={() =>

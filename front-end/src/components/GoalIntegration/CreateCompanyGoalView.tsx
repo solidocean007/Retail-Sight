@@ -1,5 +1,5 @@
 // CreateCompanyGoalView.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Container,
@@ -24,14 +24,15 @@ import {
   // customerType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
-import { RootState } from "../../utils/store";
+import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
 import { doc, getDoc } from "@firebase/firestore";
 import getCompanyAccountId from "../../utils/helperFunctions/getCompanyAccountId";
-import { createCompanyGoal } from "../../utils/helperFunctions/createCompanyGoal";
 import UserMultiSelector from "./UserMultiSelector";
 import AccountMultiSelector from "./AccountMultiSelector";
 import { selectCompanyUsers } from "../../Slices/userSlice";
+import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
+import { selectCompany } from "../../Slices/companySlice";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -42,9 +43,11 @@ const defaultCustomerTypes: string[] = [
 ];
 
 const CreateCompanyGoalView = () => {
+  const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const companyId = currentUser?.companyId;
   const companyUsers = useSelector(selectCompanyUsers);
+  const usersCompany = useSelector(selectCompany);
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
@@ -176,7 +179,8 @@ const CreateCompanyGoalView = () => {
     const fetchAccounts = async () => {
       if (!companyId) return;
       try {
-        const accountsId = await getCompanyAccountId(companyId);
+        // const accountsId = await getCompanyAccountId(companyId);
+        const accountsId = usersCompany?.accountsId;
         if (!accountsId) return;
         const accountsDocRef = doc(db, "accounts", accountsId);
         const snapshot = await getDoc(accountsDocRef);
@@ -200,6 +204,7 @@ const CreateCompanyGoalView = () => {
     fetchAccounts();
   }, [companyId]);
 
+  // i think this can be removed.. wait it should be used.. whatever users are selected all of their account ids would be added to the accountNumberForThisGoal array
   const accountsForSelectedUsers = useMemo(() => {
     if (!selectedUserIds.length) return [];
     return accounts.filter((account) =>
@@ -214,70 +219,50 @@ const CreateCompanyGoalView = () => {
     );
   }, [accounts, selectedUserIds, normalizedCompanyUsers]);
 
-  const handleCreateGoal = async () => {
-    if (!readyForCreation) {
-      alert("Please fill out all required fields.");
-      return;
-    }
-    if (
-      goalTargetMode === "goalForSelectedAccounts" &&
-      selectedAccounts.length === 0
-    ) {
-      alert("You must select at least one account.");
-      return;
-    }
-    if (
-      goalTargetMode === "goalForSelectedUsers" &&
-      selectedUserIds.length === 0
-    ) {
-      alert("You must select at least one user.");
-      return;
-    }
+const handleCreateGoal = async () => {
+  if (!readyForCreation) {
+    alert("Please fill out all required fields.");
+    return;
+  }
 
-    if (enforcePerUserQuota && (!perUserQuota || Number(perUserQuota) < 1)) {
-      alert(
-        "Specify a valid number greater than 0 for per user submission requirement."
-      );
-      return;
-    }
+  const accountNumbersForThisGoal =
+    goalTargetMode === "goalForAllAccounts"
+      ? accounts.map((acc) => acc.accountNumber.toString())
+      : goalTargetMode === "goalForSelectedAccounts"
+      ? selectedAccounts.map((acc) => acc.accountNumber.toString())
+      : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
 
-    setIsSaving(true);
-    try {
-      const newGoal = {
-        companyId: companyId || "",
-        appliesToAllAccounts: goalTargetMode === "goalForAllAccounts",
-        targetMode: goalTargetMode,
-        goalTitle,
-        goalDescription,
-        goalMetric,
-        goalValueMin: Number(goalValueMin),
-        goalStartDate,
-        goalEndDate,
-        accounts:
-          goalTargetMode === "goalForSelectedAccounts" ? selectedAccounts : [],
-        usersIdsOfGoal:
-          goalTargetMode === "goalForSelectedUsers" ? selectedUserIds : [],
-        perUserQuota: enforcePerUserQuota ? Number(perUserQuota) : undefined,
-      };
-
-      await createCompanyGoal(newGoal);
-      alert("Goal created successfully!");
-
-      setGoalTitle("");
-      setGoalDescription("");
-      setGoalMetric("");
-      setGoalValueMin(1);
-      setGoalTargetMode("goalForAllAccounts");
-      setGoalStartDate("");
-      setGoalEndDate("");
-      setSelectedAccounts([]);
-      setSelectedUserIds([]);
-    } catch (error) {
-      alert("Error creating goal. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
+  const newGoal = {
+    companyId: companyId || "",
+    goalTitle,
+    goalDescription,
+    goalMetric,
+    goalValueMin: Number(goalValueMin),
+    goalStartDate,
+    goalEndDate,
+    accountNumbersForThisGoal,
+    perUserQuota: enforcePerUserQuota ? Number(perUserQuota) : undefined,
   };
+
+  setIsSaving(true);
+  try {
+    await dispatch(createCompanyGoalInFirestore({ companyId: companyId || "", goal: newGoal }));
+    alert("Goal created successfully!");
+    // Reset Form
+    setGoalTitle("");
+    setGoalDescription("");
+    setGoalMetric("");
+    setGoalValueMin(1);
+    setGoalStartDate("");
+    setGoalEndDate("");
+    setSelectedAccounts([]);
+    setSelectedUserIds([]);
+  } catch (error) {
+    alert("Error creating goal. Please try again.");
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   return (
     <Container>
@@ -312,7 +297,7 @@ const CreateCompanyGoalView = () => {
               type="date"
               value={goalEndDate}
               onChange={(e) => setGoalEndDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }} // depracated
               fullWidth
             />
           </Box>

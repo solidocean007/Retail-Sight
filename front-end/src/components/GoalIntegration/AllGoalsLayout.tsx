@@ -18,7 +18,7 @@ import {
   selectAllGalloGoals,
 } from "../../Slices/goalsSlice";
 import AdminCompanyGoalsOverview from "./AdminCompanyGoalsOverview";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from "@firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
 import path from "path";
 import fs from 'fs';
@@ -76,37 +76,6 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
 
 // IDs of the two goals you want to migrate
 const goalIdsToUpdate = ["Qc4K4TPgjMjpARUakkFx", "hWXopstr1FDJTr33ToRG"]; // replace with real IDs
-
-async function migrateGoalsToUnifiedShape() {
-  for (const goalId of goalIdsToUpdate) {
-    const goalRef = doc(db, "companyGoals", goalId);
-    const goalSnap = await getDoc(goalRef);
-
-    if (!goalSnap.exists()) {
-      console.error(`Goal with ID ${goalId} not found.`);
-      continue;
-    }
-
-    const goalData = goalSnap.data();
-
-    const updatedGoalData = {
-      ...goalData,
-      accountNumbersForThisGoal: allAccountNumbers,
-    };
-
-    // Remove old targeting keys if they exist
-    delete updatedGoalData.appliesToAllAccounts;
-    delete updatedGoalData.accounts;
-    delete updatedGoalData.targetMode;
-    delete updatedGoalData.usersIdsOfGoal;
-
-    await updateDoc(goalRef, updatedGoalData);
-    console.log(`Migrated goal ${goalId} to new format.`);
-  }
-}
-
-migrateGoalsToUnifiedShape();
-
 
 
   return (

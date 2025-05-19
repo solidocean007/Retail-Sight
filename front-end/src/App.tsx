@@ -18,6 +18,7 @@ import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsLi
 import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { loadCompany } from "./thunks/companyThunk";
 
 function App() {
   useSchemaVersion();
@@ -38,6 +39,12 @@ function App() {
       dispatch(setDarkMode(storedTheme === "dark"));
     }
   }, [dispatch]);
+
+   useEffect(() => {
+    if (companyId) {
+      dispatch(loadCompany(user.companyId));
+    }
+  }, [user?.companyId, dispatch]);
 
   // 🧠 Rebuild MUI theme when Redux theme mode changes
   useEffect(() => {
