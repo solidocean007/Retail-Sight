@@ -19,9 +19,7 @@ import "./accountMultiSelector.css";
 interface AccountMultiSelectorProps {
   allAccounts: CompanyAccountType[];
   selectedAccounts: CompanyAccountType[];
-  setSelectedAccounts: React.Dispatch<
-    React.SetStateAction<CompanyAccountType[]>
-  >;
+  setSelectedAccounts: (updatedAccounts: CompanyAccountType[]) => void;
   itemsPerPage?: number;
 }
 
@@ -37,23 +35,23 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
   const filteredAccounts = allAccounts.filter(
     (account) =>
       account.accountName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      account.accountNumber?.toString().includes(searchTerm),
+      account.accountNumber?.toString().includes(searchTerm)
   );
 
   const paginatedAccounts = filteredAccounts.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const handleAccountSelection = (account: CompanyAccountType) => {
     const exists = selectedAccounts.some(
-      (a) => a.accountNumber === account.accountNumber,
+      (a) => a.accountNumber === account.accountNumber
     );
     if (exists) {
       setSelectedAccounts(
         selectedAccounts.filter(
-          (a) => a.accountNumber !== account.accountNumber,
-        ),
+          (a) => a.accountNumber !== account.accountNumber
+        )
       );
     } else {
       setSelectedAccounts([...selectedAccounts, account]);
@@ -121,7 +119,7 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
                 <TableCell>
                   <Checkbox
                     checked={selectedAccounts.some(
-                      (a) => a.accountNumber === account.accountNumber,
+                      (a) => a.accountNumber === account.accountNumber
                     )}
                     onChange={() => handleAccountSelection(account)}
                   />

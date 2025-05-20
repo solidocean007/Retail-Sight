@@ -1,7 +1,6 @@
-// src/utils/listeners/setupUserCompanyGoalsListener.ts
 import { collection, onSnapshot, query, where } from "@firebase/firestore";
 import { db } from "../firebase";
-import { CompanyGoalType } from "../types";
+import { CompanyGoalType, CompanyGoalWithIdType } from "../types";
 import {
   saveGoalsToIndexedDB,
   clearGoalsFromIndexedDB,
@@ -12,28 +11,28 @@ export const setupCompanyGoalsListener =
   (companyId: string) => (dispatch: any) => {
     const q = query(
       collection(db, "companyGoals"),
-      where("companyId", "==", companyId),
+      where("companyId", "==", companyId)
     );
 
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-        // Map the snapshot to company goals
-        const allCompanyGoals = snapshot.docs.map((doc) => ({
+        const allCompanyGoals: CompanyGoalWithIdType[] = snapshot.docs.map((doc) => ({
+          id: doc.id,  // ✅ Explicitly attach Firestore doc ID
           ...(doc.data() as CompanyGoalType),
         }));
 
-        // Save all company goals to IndexedDB and Redux
-        await clearGoalsFromIndexedDB("companyGoals"); // Clear IndexedDB
-        dispatch(setCompanyGoals([])); // Clear Redux store before updating
+        await clearGoalsFromIndexedDB("companyGoals");
+        dispatch(setCompanyGoals([]));
 
-        await saveGoalsToIndexedDB(allCompanyGoals, "companyGoals"); // Save all goals
-        dispatch(setCompanyGoals(allCompanyGoals)); // Store all goals in Redux
+        await saveGoalsToIndexedDB(allCompanyGoals, "companyGoals");
+        dispatch(setCompanyGoals(allCompanyGoals));
       },
       (error) => {
         console.error("Error in company goals listener:", error);
-      },
+      }
     );
 
     return () => unsubscribe();
   };
+

@@ -27,7 +27,6 @@ import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
 import { doc, getDoc } from "@firebase/firestore";
-import getCompanyAccountId from "../../utils/helperFunctions/getCompanyAccountId";
 import UserMultiSelector from "./UserMultiSelector";
 import AccountMultiSelector from "./AccountMultiSelector";
 import { selectCompanyUsers } from "../../Slices/userSlice";
@@ -246,7 +245,7 @@ const handleCreateGoal = async () => {
 
   setIsSaving(true);
   try {
-    await dispatch(createCompanyGoalInFirestore({ companyId: companyId || "", goal: newGoal }));
+    await dispatch(createCompanyGoalInFirestore({ goal: newGoal }));
     alert("Goal created successfully!");
     // Reset Form
     setGoalTitle("");

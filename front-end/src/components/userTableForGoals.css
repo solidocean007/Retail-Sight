@@ -1,0 +1,86 @@
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.user-table th,
+.user-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.user-table th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+.user-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.user-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.user-table button {
+  padding: 2px 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+.user-table button:hover {
+  background-color: #1565c0;
+}
+
+.submissions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.submission-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  white-space: nowrap;
+}
+
+.completion-0 {
+  color: hsl(0, 100%, 40%);
+}
+.completion-10 {
+  color: hsl(10, 100%, 40%);
+}
+.completion-20 {
+  color: hsl(20, 100%, 40%);
+}
+.completion-30 {
+  color: hsl(30, 100%, 40%);
+}
+.completion-40 {
+  color: hsl(40, 100%, 40%);
+}
+.completion-50 {
+  color: hsl(50, 100%, 40%);
+}
+.completion-60 {
+  color: hsl(60, 100%, 40%);
+}
+.completion-70 {
+  color: hsl(90, 100%, 40%);
+}
+.completion-80 {
+  color: hsl(120, 100%, 40%);
+}
+.completion-90 {
+  color: hsl(130, 100%, 40%);
+}
+.completion-100 {
+  color: hsl(140, 100%, 40%);
+}

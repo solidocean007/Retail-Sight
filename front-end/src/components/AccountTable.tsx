@@ -43,8 +43,13 @@ const AccountTable: React.FC<AccountTableProps> = ({
         <div className="account-small-cell">{acc.postId ? "✅" : "❌"}</div>
 
         <div className="account-cell submitted-by-cell">
-          {`${acc.submittedBy?.firstName} ${acc.submittedBy?.lastName} ` || "—"}
+          {acc.submittedBy?.firstName || acc.submittedBy?.lastName
+            ? `${acc.submittedBy?.firstName || ""} ${
+                acc.submittedBy?.lastName || ""
+              }`.trim()
+            : "—"}
         </div>
+
         <div className="account-cell submitted-at-cell">
           {acc.submittedAt ? new Date(acc.submittedAt).toLocaleString() : "—"}
         </div>
@@ -66,23 +71,25 @@ const AccountTable: React.FC<AccountTableProps> = ({
 
   return (
     <div className="account-list-wrapper">
-      <div className="account-table-header">
-        <div className="account-small-cell">#</div>
-        <div className="account-cell name-cell">Account</div>
-        <div className="account-cell address-cell">Address</div>
-        <div className="account-small-cell">Status</div>
-        <div className="account-cell submitted-by-cell">Submitted By</div>
-        <div className="account-cell submitted-at-cell">Submitted At</div>
-        <div className="account-small-cell">Post</div>
+      <div className="account-list-scrollable">
+        <div className="account-table-header">
+          <div className="account-small-cell">#</div>
+          <div className="account-cell name-cell">Account</div>
+          <div className="account-cell address-cell">Address</div>
+          <div className="account-small-cell">Status</div>
+          <div className="account-cell submitted-by-cell">Submitted By</div>
+          <div className="account-cell submitted-at-cell">Submitted At</div>
+          <div className="account-small-cell">Post</div>
+        </div>
+        <List
+          height={Math.min(accounts.length * rowHeight, height)}
+          itemCount={accounts.length}
+          itemSize={rowHeight}
+          width="100%"
+        >
+          {Row}
+        </List>
       </div>
-      <List
-        height={Math.min(accounts.length * rowHeight, height)}
-        itemCount={accounts.length}
-        itemSize={rowHeight}
-        width="100%"
-      >
-        {Row}
-      </List>
     </div>
   );
 };
