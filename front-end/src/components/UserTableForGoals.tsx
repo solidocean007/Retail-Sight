@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./userTableForGoals.css";
+import { getCompletionClass } from "../utils/helperFunctions/getCompletionClass";
 
 interface UserRowType {
   uid: string;
@@ -13,47 +14,65 @@ interface UserRowType {
 const UserTableForGoals = ({ users }: { users: UserRowType[] }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  type SortMode = "completion-desc" | "completion-asc" | "alphabetical";
+  const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
 
   const handleViewPost = (postId: string) => {
     navigate(`/user-home-page?postId=${postId}`);
   };
 
   const sortedFilteredUsers = useMemo(() => {
-    return users
-      .filter((u) =>
-        `${u.firstName} ${u.lastName}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      )
-      .sort((a, b) => {
-        const aLast = a.lastName || "";
-        const bLast = b.lastName || "";
-        const aFirst = a.firstName || "";
-        const bFirst = b.firstName || "";
+    const filtered = users.filter((u) =>
+      `${u.firstName} ${u.lastName}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
 
-        return aLast.localeCompare(bLast) || aFirst.localeCompare(bFirst);
-      });
-  }, [users, searchTerm]);
-
-  const getCompletionClass = (percentage: number) => {
-    const rounded = Math.round(percentage / 10) * 10; // Round to nearest 10
-    return `completion-${rounded}`;
-  };
+    return filtered.sort((a, b) => {
+      if (sortMode === "completion-desc") {
+        return b.userCompletionPercentage - a.userCompletionPercentage;
+      }
+      if (sortMode === "completion-asc") {
+        return a.userCompletionPercentage - b.userCompletionPercentage;
+      }
+      // Alphabetical by last, then first
+      const aLast = a.lastName || "";
+      const bLast = b.lastName || "";
+      const aFirst = a.firstName || "";
+      const bFirst = b.firstName || "";
+      return aLast.localeCompare(bLast) || aFirst.localeCompare(bFirst);
+    });
+  }, [users, searchTerm, sortMode]);
 
   return (
     <div>
-      <input
-        type="text"
-        placeholder="Search users..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        style={{ marginBottom: "8px", padding: "4px", width: "100%" }}
-      />
+      <div className="user-table-head">
+        <div className="user-table-search">
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ marginBottom: "8px", padding: "4px", width: "100%" }}
+          />
+        </div>
+        <div className="user-table-filter">
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as SortMode)}
+            style={{ marginBottom: "8px", marginLeft: "8px" }}
+          >
+            <option value="completion-desc">Completion ↓</option>
+            <option value="completion-asc">Completion ↑</option>
+            <option value="alphabetical">Alphabetical (Last Name)</option>
+          </select>
+        </div>
+      </div>
 
       <table className="user-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th style={{ width: "2rem", minWidth: "2rem" }}>#</th>
             <th>Last Name, First Name</th>
             <th>Submissions</th>
           </tr>
@@ -61,14 +80,15 @@ const UserTableForGoals = ({ users }: { users: UserRowType[] }) => {
         <tbody>
           {sortedFilteredUsers.map((user, idx) => (
             <tr key={user.uid}>
-              <td>{idx + 1}</td>
-              <td>
-                {user.lastName}, {user.firstName}{" "}
-                <span
+              <td className="user-table-count">{idx + 1}</td>
+
+              <td className="user-info-cell">
+                <div className="user-name-cell">{`${user.lastName}, ${user.firstName}`}</div>
+                <div
                   className={getCompletionClass(user.userCompletionPercentage)}
                 >
                   {user.userCompletionPercentage}%
-                </span>
+                </div>
               </td>
 
               <td>

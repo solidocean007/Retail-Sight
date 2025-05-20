@@ -1,13 +1,49 @@
+.user-table-head {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.user-table-search {
+  display: flex;
+  width: 100%;
+  max-width: 300px;
+}
+
+.user-table-filter {
+  display: flex;
+  width: 100%;
+  max-width: 300px;
+}
+
+.user-table-search input {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
 .user-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
 }
 
+.user-table-count {
+  font-size: 0.875rem;
+  padding-left: 4px;
+  padding-right: 4px;
+  text-align: center;
+  width: 2rem;
+  min-width: 2rem;
+  max-width: 2rem;
+}
+
 .user-table th,
 .user-table td {
   border: 1px solid #ddd;
   padding: 8px;
+  padding-right: 2rem;
   text-align: left;
 }
 
@@ -34,6 +70,13 @@
   border-radius: 4px;
 }
 
+.user-info-cell {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .user-table button:hover {
   background-color: #1565c0;
 }
@@ -51,36 +94,35 @@
   white-space: nowrap;
 }
 
-.completion-0 {
-  color: hsl(0, 100%, 40%);
+.completion {
+  font-weight: bold;
+  margin-left: 6px;
 }
-.completion-10 {
-  color: hsl(10, 100%, 40%);
-}
-.completion-20 {
-  color: hsl(20, 100%, 40%);
-}
-.completion-30 {
-  color: hsl(30, 100%, 40%);
-}
-.completion-40 {
-  color: hsl(40, 100%, 40%);
-}
-.completion-50 {
-  color: hsl(50, 100%, 40%);
-}
-.completion-60 {
-  color: hsl(60, 100%, 40%);
-}
-.completion-70 {
-  color: hsl(90, 100%, 40%);
-}
-.completion-80 {
-  color: hsl(120, 100%, 40%);
-}
-.completion-90 {
-  color: hsl(130, 100%, 40%);
-}
-.completion-100 {
-  color: hsl(140, 100%, 40%);
+
+
+@media (max-width: 768px) {
+  .user-table th,
+  .user-table td {
+    font-size: 0.75rem;
+    padding: 6px;
+  }
+
+  .submission-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .user-info-cell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .completion {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .user-table-count {
+    font-size: 0.75rem;
+  }
 }

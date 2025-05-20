@@ -20,6 +20,7 @@ import GoalViewerFilters from "../GoalViewerFilters";
 import EditCompanyGoalModal from "./EditCompanyGoalModal";
 import "./companyGoalCard.css";
 import { mapAccountsWithStatus } from "./utils/goalModeUtils";
+import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
 
 interface CompanyGoalCardProps {
   goal: CompanyGoalWithIdType;
@@ -88,100 +89,143 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const submitted = goal.submittedPosts?.length || 0;
   const percentage = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
-const userBasedRows = useMemo(() => {
-  const matchedAccounts = allCompanyAccounts.filter((acc) =>
-    goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
-  );
-
-  const salesRouteNumsForGoal = Array.from(
-    new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
-  );
-
-  const usersForGoal = companyUsers.filter((user) =>
-    salesRouteNumsForGoal.includes(user.salesRouteNum || "")
-  );
-
-  return usersForGoal.map((user) => {
-    const userSubmissions = (goal.submittedPosts || []).filter(
-      (post) => post.submittedBy?.uid === user.uid
+  const { userBasedRows, salesRouteNumsForGoal } = useMemo(() => {
+    const matchedAccounts = allCompanyAccounts.filter((acc) =>
+      goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
     );
 
-    const submissionCount = userSubmissions.length;
-    const quota = goal.perUserQuota || 1;
-    const completionPercentage = Math.min(Math.round((submissionCount / quota) * 100), 100);
+    const salesRouteNumsForGoal = Array.from(
+      new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
+    );
 
-    return {
-      uid: user.uid,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      submissions: userSubmissions.map((post) => ({
-        postId: post.postId,
-        submittedAt: post.submittedAt,
-      })),
-      userCompletionPercentage: completionPercentage,
-    };
-  });
-}, [goal, companyUsers, allCompanyAccounts]);
+    const usersForGoal = companyUsers.filter((user) =>
+      salesRouteNumsForGoal.includes(user.salesRouteNum || "")
+    );
 
+    const userBasedRows = usersForGoal.map((user) => {
+      const userSubmissions = (goal.submittedPosts || []).filter(
+        (post) => post.submittedBy?.uid === user.uid
+      );
+
+      const submissionCount = userSubmissions.length;
+      const quota = goal.perUserQuota || 1;
+      const completionPercentage = Math.min(
+        Math.round((submissionCount / quota) * 100),
+        100
+      );
+
+      return {
+        uid: user.uid,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        submissions: userSubmissions.map((post) => ({
+          postId: post.postId,
+          submittedAt: post.submittedAt,
+        })),
+        userCompletionPercentage: completionPercentage,
+      };
+    });
+
+    return { userBasedRows, salesRouteNumsForGoal };
+  }, [goal, companyUsers, allCompanyAccounts]);
+
+  const percentageOfGoal =
+    goal.perUserQuota && salesRouteNumsForGoal.length > 0
+      ? Math.round(
+          (submitted / (salesRouteNumsForGoal.length * goal.perUserQuota)) * 100
+        )
+      : 0;
 
   return (
     <div className="info-box-company-goal">
-      <div className="info-layout-row">
-        <div className="info-layout">
-          <div className="info-title-row">
-            <div className="info-title">{goal.goalTitle}</div>
-            {onDelete && (
-              <Box display="flex" gap={1}>
-                <CloseIcon
-                  fontSize="small"
-                  className="delete-button"
-                  onClick={() => onDelete(goal.id)}
-                />
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => setIsEditModalOpen(true)}
-                >
-                  Edit
-                </Button>
-              </Box>
-            )}
-          </div>
-          <div className="info-description">{goal.goalDescription}</div>
-          {goal.perUserQuota && (
-            <div className="info-quota">
-              Requirement: Each user must submit at least {goal.perUserQuota}{" "}
-              submission{goal.perUserQuota > 1 ? "s" : ""}.
-            </div>
+      <div className="company-goal-card-header">
+        <div className="info-title-row">
+          <div className="info-title">{goal.goalTitle}</div>
+          {onDelete && (
+            <Box display="flex" gap={1}>
+              <Button
+                variant="outlined"
+                size="small"
+                className="delete-button"
+                onClick={() => onDelete(goal.id)}
+              >
+                Delete
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setIsEditModalOpen(true)}
+              >
+                Edit
+              </Button>
+            </Box>
           )}
         </div>
-
-        <Box textAlign={isMobileScreen ? "left" : "right"} mt={1}>
-          <Typography variant="caption">Goal Progress</Typography>
-          <div>
-            {submitted} / {total} Submitted
-            <Tooltip title={`${submitted} of ${total} submitted`}>
-              <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
-            </Tooltip>
-          </div>
-          <div>{percentage}% Complete</div>
-        </Box>
       </div>
+      <div className="info-layout-row">
+        <div className="info-layout">
+          <div className="info-description">
+            {goal.goalDescription}
+            {goal.perUserQuota && (
+              <div className="info-quota">
+                Requirement: Each user must submit at least {goal.perUserQuota}{" "}
+                submission{goal.perUserQuota > 1 ? "s" : ""}.
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="goal-progress-section">
+            <Typography variant="caption">Goal Progress</Typography>
 
-      <div className="info-layout-row-bottom">
-        <button
-          className="tab-submissions"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? "Collapse" : "Expand"}
-        </button>
+          {/* <div className={isMobileScreen ? "left" : "right"} mt={1}> */}
+          <div className="goal-progress-numbers">
+
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span>{submitted} Total Submissions</span>
+              <Tooltip title={`${submitted} of ${total} submitted`}>
+                <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
+              </Tooltip>
+            </div>
+
+            {!goal.perUserQuota && (
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span className={getCompletionClass(percentage)}>{percentage}% Complete</span>
+                <Tooltip
+                  title={`${percentage}% of ${total} accounts submitted`}
+                >
+                  <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
+                </Tooltip>
+              </div>
+            )}
+
+            {goal.perUserQuota && !isNaN(percentageOfGoal) && (
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span className={getCompletionClass(percentageOfGoal)}>{percentageOfGoal}% Complete</span>
+                <Tooltip
+                  title={`${percentageOfGoal}% of required submissions completed`}
+                >
+                  <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
+                </Tooltip>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="info-layout-row-bottom">
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? "Hide submissions" : "Show submissions"}
+          </Button>
+        </div>
       </div>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <Typography variant="h6" sx={{ mt: 2 }}>
           User Progress
         </Typography>
-        <UserTableForGoals users={userBasedRows} /> 
+        <UserTableForGoals users={userBasedRows} />
 
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
