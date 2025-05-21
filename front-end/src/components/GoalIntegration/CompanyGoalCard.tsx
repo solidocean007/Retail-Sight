@@ -24,6 +24,7 @@ import { getCompletionClass } from "../../utils/helperFunctions/getCompletionCla
 
 interface CompanyGoalCardProps {
   goal: CompanyGoalWithIdType;
+  salesRouteNum?: string; // 🔧 new
   mobile?: boolean;
   onDelete?: (id: string) => void;
   onEdit?: (
@@ -34,6 +35,7 @@ interface CompanyGoalCardProps {
 
 const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   goal,
+  salesRouteNum,
   mobile = false,
   onDelete,
   onEdit,
@@ -51,13 +53,17 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   >("all");
 
   // ✅ Resolve relevant accounts for this goal
-  const effectiveAccounts = useMemo(
-    () =>
-      allCompanyAccounts.filter((acc) =>
-        goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
-      ),
-    [allCompanyAccounts, goal.accountNumbersForThisGoal]
-  );
+  const effectiveAccounts = useMemo(() => {
+    const allMatching = allCompanyAccounts.filter((acc) =>
+      goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+    );
+
+    return salesRouteNum
+      ? allMatching.filter((acc) =>
+          (acc.salesRouteNums || []).includes(salesRouteNum)
+        )
+      : allMatching;
+  }, [allCompanyAccounts, goal.accountNumbersForThisGoal, salesRouteNum]);
 
   const accountsWithStatus = useMemo(
     () => mapAccountsWithStatus(goal, effectiveAccounts),
@@ -86,48 +92,74 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   };
 
   const total = effectiveAccounts.length;
-  const submitted = goal.submittedPosts?.length || 0;
+
+  const submitted = useMemo(() => {
+    if (!goal.submittedPosts) return 0;
+
+    if (salesRouteNum) {
+      const userAccounts = effectiveAccounts.map((acc) =>
+        acc.accountNumber.toString()
+      );
+
+      return goal.submittedPosts.filter(
+        (post) =>
+          post.account &&
+          userAccounts.includes(post.account.accountNumber?.toString())
+      ).length;
+    }
+
+    return goal.submittedPosts.length;
+  }, [goal.submittedPosts, salesRouteNum, effectiveAccounts]);
+
   const percentage = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
-  const { userBasedRows, salesRouteNumsForGoal } = useMemo(() => {
-    const matchedAccounts = allCompanyAccounts.filter((acc) =>
-      goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+// Top-level memo to compute sales routes and matched accounts
+const matchedAccounts = useMemo(() =>
+  allCompanyAccounts.filter((acc) =>
+    goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+  ), [allCompanyAccounts, goal.accountNumbersForThisGoal]);
+
+const salesRouteNumsForGoal = useMemo(() =>
+  Array.from(
+    new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
+  ), [matchedAccounts]);
+
+const usersForGoal = useMemo(() => {
+  const routeFiltered = companyUsers.filter((user) =>
+    salesRouteNumsForGoal.includes(user.salesRouteNum || "")
+  );
+  return salesRouteNum
+    ? routeFiltered.filter((u) => u.salesRouteNum === salesRouteNum)
+    : routeFiltered;
+}, [companyUsers, salesRouteNum, salesRouteNumsForGoal]);
+
+const userBasedRows = useMemo(() => {
+  return usersForGoal.map((user) => {
+    const userSubmissions = (goal.submittedPosts || []).filter(
+      (post) => post.submittedBy?.uid === user.uid
     );
 
-    const salesRouteNumsForGoal = Array.from(
-      new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
+    const submissionCount = userSubmissions.length;
+    const quota = goal.perUserQuota || 1;
+    const completionPercentage = Math.min(
+      Math.round((submissionCount / quota) * 100),
+      100
     );
 
-    const usersForGoal = companyUsers.filter((user) =>
-      salesRouteNumsForGoal.includes(user.salesRouteNum || "")
-    );
+   return {
+  uid: user.uid,
+  firstName: user.firstName || "",  // ✅ ensure it's a string
+  lastName: user.lastName || "",    // ✅ ensure it's a string
+  submissions: userSubmissions.map((post) => ({
+    postId: post.postId,
+    submittedAt: post.submittedAt,
+  })),
+  userCompletionPercentage: completionPercentage,
+};
 
-    const userBasedRows = usersForGoal.map((user) => {
-      const userSubmissions = (goal.submittedPosts || []).filter(
-        (post) => post.submittedBy?.uid === user.uid
-      );
+  });
+}, [usersForGoal, goal.submittedPosts, goal.perUserQuota]);
 
-      const submissionCount = userSubmissions.length;
-      const quota = goal.perUserQuota || 1;
-      const completionPercentage = Math.min(
-        Math.round((submissionCount / quota) * 100),
-        100
-      );
-
-      return {
-        uid: user.uid,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        submissions: userSubmissions.map((post) => ({
-          postId: post.postId,
-          submittedAt: post.submittedAt,
-        })),
-        userCompletionPercentage: completionPercentage,
-      };
-    });
-
-    return { userBasedRows, salesRouteNumsForGoal };
-  }, [goal, companyUsers, allCompanyAccounts]);
 
   const percentageOfGoal =
     goal.perUserQuota && salesRouteNumsForGoal.length > 0
@@ -175,11 +207,10 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           </div>
         </div>
         <div className="goal-progress-section">
-            <Typography variant="caption">Goal Progress</Typography>
+          <Typography variant="caption">Goal Progress</Typography>
 
           {/* <div className={isMobileScreen ? "left" : "right"} mt={1}> */}
           <div className="goal-progress-numbers">
-
             <div style={{ display: "flex", alignItems: "center" }}>
               <span>{submitted} Total Submissions</span>
               <Tooltip title={`${submitted} of ${total} submitted`}>
@@ -189,7 +220,9 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
             {!goal.perUserQuota && (
               <div style={{ display: "flex", alignItems: "center" }}>
-                <span className={getCompletionClass(percentage)}>{percentage}% Complete</span>
+                <span className={getCompletionClass(percentage)}>
+                  {percentage}% Complete
+                </span>
                 <Tooltip
                   title={`${percentage}% of ${total} accounts submitted`}
                 >
@@ -200,7 +233,9 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
             {goal.perUserQuota && !isNaN(percentageOfGoal) && (
               <div style={{ display: "flex", alignItems: "center" }}>
-                <span className={getCompletionClass(percentageOfGoal)}>{percentageOfGoal}% Complete</span>
+                <span className={getCompletionClass(percentageOfGoal)}>
+                  {percentageOfGoal}% Complete
+                </span>
                 <Tooltip
                   title={`${percentageOfGoal}% of required submissions completed`}
                 >
@@ -225,8 +260,8 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         <Typography variant="h6" sx={{ mt: 2 }}>
           User Progress
         </Typography>
-        <UserTableForGoals users={userBasedRows} />
-
+        <UserTableForGoals users={userBasedRows} /> // Type 'undefined' is not
+        assignable to type 'string'.ts(2322)
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
         </Typography>

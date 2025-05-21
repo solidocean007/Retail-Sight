@@ -1,7 +1,7 @@
 // MyGoals.tsx
 import { Container, Typography } from "@mui/material";
 import MyCompanyGoals from "./MyCompanyGoals";
-import MyGalloGoals from "./MyGalloGoals";
+// import MyGalloGoals from "./MyGalloGoals";
 
 const MyGoals = () => {
   return (
@@ -10,7 +10,7 @@ const MyGoals = () => {
         My Goals
       </Typography>
       <MyCompanyGoals />
-      <MyGalloGoals />
+      {/* <MyGalloGoals /> */}
     </Container>
   );
 };

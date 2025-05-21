@@ -1,140 +1,81 @@
-// MyCompanyGoals.tsx
-import { useState } from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "../utils/store";
-import { Typography, CircularProgress, useMediaQuery } from "@mui/material";
-import { selectUser } from "../Slices/userSlice";
-import "./myCompanyGoals.css";
-// import {
-//   selectCompanyGoalsIsLoading,
-//   selectUsersCompanyGoals,
-// } from "../Slices/goalsSlice";
-import { CompanyGoalType } from "../utils/types";
-import { useNavigate } from "react-router-dom";
-import CompanyGoalDetailsCard from "./GoalIntegration/CompanyGoalDetailsCard";
+import {
+  Typography,
+  CircularProgress,
+  useMediaQuery,
+  Box,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import UserGoalCard from "./GoalIntegration/UserGoalCard";
-import { selectUsersCompanyGoals } from "../Slices/companyGoalsSlice";
+import { selectUser } from "../Slices/userSlice";
+import {
+  makeSelectUsersCompanyGoals,
+  selectAllCompanyGoals,
+  selectCompanyGoalsIsLoading,
+  selectUsersCompanyGoals,
+} from "../Slices/companyGoalsSlice";
+import { RootState } from "../utils/store";
+import CompanyGoalCard from "./GoalIntegration/CompanyGoalCard";
+import "./myCompanyGoals.css";
 
 const MyCompanyGoals = () => {
   const theme = useTheme();
-  const user = useSelector(selectUser);
-  const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const salesRouteNum = user?.salesRouteNum;
-  const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
-    {},
-  );
-
+  const user = useSelector(selectUser);
   const loading = useSelector(selectCompanyGoalsIsLoading);
 
   const userCompanyGoals = useSelector(
-    (
-      state: RootState, // Selector unknown returned a different result when called with the same parameters. This can lead to unnecessary rerenders.Selectors that return a new reference (such as an object or an array) should be memoized:
-    ) => selectUsersCompanyGoals(state, salesRouteNum),
-  );
-  // console.log(userCompanyGoals[0].id)
-  // console.log(userCompanyGoals[0].submittedPosts[30])
-
-  // ✅ Toggle expanded state for goals
-  // const toggleGoalExpansion = (goalId: string) => {
-  //   setExpandedGoals((prev) => ({
-  //     ...prev,
-  //     [goalId]: !prev[goalId],
-  //   }));
-  // };
-
-  const usersAccountsForGoal = (goal: CompanyGoalType) => {
-    if (!Array.isArray(goal.accounts)) {
-      return [];
-    }
-    // Filter accounts that match the user's salesRouteNum
-    return goal.accounts.filter(
-      (account) =>
-        Array.isArray(account.salesRouteNums)
-          ? account.salesRouteNums.includes(salesRouteNum || "") // Match salesRouteNum if it's an array
-          : account.salesRouteNums === salesRouteNum, // Match directly if it's a single value
-    );
-  };
+  makeSelectUsersCompanyGoals(user?.salesRouteNum)
+);
 
   const today = new Date();
 
-  // Separate and sort current vs upcoming
-  const currentGoals = [...userCompanyGoals]
-    .filter((goal) => {
-      const start = new Date(goal.goalStartDate);
-      const end = new Date(goal.goalEndDate);
-      return start <= today && end >= today; // Ongoing today
-    })
-    .sort(
-      (a, b) =>
-        new Date(b.goalStartDate).getTime() -
-        new Date(a.goalStartDate).getTime(),
-    );
+  const currentGoals = userCompanyGoals.filter((goal) => {
+    const start = new Date(goal.goalStartDate);
+    const end = new Date(goal.goalEndDate);
+    return start <= today && end >= today;
+  });
 
-  const upcomingGoals = [...userCompanyGoals]
+  const upcomingGoals = userCompanyGoals
     .filter((goal) => new Date(goal.goalStartDate) > today)
-    .sort(
-      (a, b) =>
-        new Date(a.goalStartDate).getTime() -
-        new Date(b.goalStartDate).getTime(),
-    );
+    .sort((a, b) => new Date(a.goalStartDate).getTime() - new Date(b.goalStartDate).getTime());
+
+  const pastGoals = userCompanyGoals
+    .filter((goal) => new Date(goal.goalEndDate) < today)
+    .sort((a, b) => new Date(b.goalEndDate).getTime() - new Date(a.goalEndDate).getTime());
+
+  const renderSection = (title: string, goals: typeof userCompanyGoals) => (
+    <Box mb={3}>
+      <Typography variant="h5" className="goals-section-header">
+        {title}
+      </Typography>
+      {goals.map((goal) => (
+        <CompanyGoalCard key={goal.id} goal={goal} salesRouteNum={user?.salesRouteNum} mobile={isMobile} />
+      ))}
+    </Box>
+  );
 
   return (
     <div className="my-company-goals-container">
-      <Typography
-        variant="h3"
-        sx={{ flexGrow: 1, fontSize: "large" }}
-        className="my-goals-title"
-      >
-        {/* {`${user?.company} Goals`} */}
+      <Typography variant="h3" className="my-goals-title" sx={{ fontSize: "large" }}>
+        My Company Goals
       </Typography>
+
       {loading ? (
         <CircularProgress />
+      ) : userCompanyGoals.length === 0 ? (
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          No company goals found for your route.
+        </Typography>
       ) : (
-        <div>
-          {/* CURRENT GOALS */}
-          {currentGoals.length > 0 && (
-            <div>
-              <Typography variant="h5" className="goals-section-header">
-                Current Goals
-              </Typography>
-              {currentGoals.map((goal, index) => (
-                <UserGoalCard
-                  key={goal.id || index}
-                  goal={goal}
-                  userUid={user?.uid}
-                />
-                // <CompanyGoalDetailsCard
-                //   key={goal.id || index}
-                //   goal={goal}
-                //   mobile={isMobile}
-                //   salesRouteNum={salesRouteNum}
-                // />
-              ))}
-            </div>
-          )}
-
-          {/* UPCOMING GOALS */}
-          {upcomingGoals.length > 0 && (
-            <div style={{ marginTop: "2rem" }}>
-              <Typography variant="h5" className="goals-section-header">
-                Upcoming Goals
-              </Typography>
-              {upcomingGoals.map((goal, index) => (
-                <CompanyGoalDetailsCard
-                  key={goal.id || index}
-                  goal={goal}
-                  mobile={isMobile}
-                  salesRouteNum={salesRouteNum}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        <>
+          {currentGoals.length > 0 && renderSection("Current Goals", currentGoals)}
+          {upcomingGoals.length > 0 && renderSection("Upcoming Goals", upcomingGoals)}
+          {pastGoals.length > 0 && renderSection("Past Goals", pastGoals)}
+        </>
       )}
     </div>
   );
 };
 
 export default MyCompanyGoals;
+
