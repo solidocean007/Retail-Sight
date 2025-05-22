@@ -1,11 +1,14 @@
 .account-list-wrapper {
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--card-outline);
   max-width: 100%;
+  overflow: hidden;
 }
 
-.account-list-wrapper .account-list-scrollable {
+.account-list-scrollable {
   overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
 }
 
 .account-list-wrapper .account-table-header {
@@ -36,11 +39,32 @@
   text-overflow: ellipsis;
 }
 
+.account-small-cell {
+  font-size: 0.875rem;
+  padding-left: 4px;
+  padding-right: 4px;
+  text-align: center;
+  width: 2rem;
+  min-width: 2rem;
+  max-width: 2rem;
+}
+
 .account-list-wrapper .address-cell,
 .account-list-wrapper .submitted-at-cell,
 .account-list-wrapper .submitted-by-cell {
   font-size: smaller;
-  min-width: 10rem;
+  min-width: 9rem;
+  max-width: 13rem;;
+}
+
+.submitted-by-cell {
+  min-width: 12rem;
+  flex: 1;
+}
+
+.submitted-at-cell {
+  min-width: 14rem;
+  flex: 1;
 }
 
 .account-list-wrapper .address-cell {
@@ -48,13 +72,14 @@
 }
 
 .account-list-wrapper .name-cell {
-  min-width: 15rem;
+  min-width: 5rem;
+  max-width: 15rem;
 }
 
 .account-list-wrapper .account-small-cell {
   display: flex;
   flex: 0.25;
-  min-width: 10rem;
+  min-width: 3rem;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -78,12 +103,12 @@
 @media (max-width: 768px) {
   .account-list-wrapper .account-table th,
   .account-list-wrapper .account-table td {
-    padding: 10px 12px;
     font-size: 0.85rem;
+    padding: 0.25rem;
   }
 
   .account-list-wrapper .view-post-button {
-    font-size: 0.8rem;
-    padding: 4px 6px;
+    font-size: 0.75rem;
+    padding: 2px 6px;
   }
 }

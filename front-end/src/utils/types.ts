@@ -241,22 +241,22 @@ export type GoalTargetMode =
   | "goalForSelectedAccounts"
   | "goalForSelectedUsers";
 
-export type OldCompanyGoalType = {
-  id: string;
-  companyId: string;
-  goalTitle: string;
-  goalDescription: string;
-  goalMetric: string;
-  goalValueMin: number;
-  goalStartDate: string;
-  goalEndDate: string;
-  appliesToAllAccounts: boolean;
-  targetMode: GoalTargetMode;
-  accounts: CompanyAccountType[];
-  usersIdsOfGoal?: string[];
-  perUserQuota?: number;
-  submittedPosts?: GoalSubmissionType[];
-};
+// export type OldCompanyGoalType = {
+//   id: string;
+//   companyId: string;
+//   goalTitle: string;
+//   goalDescription: string;
+//   goalMetric: string;
+//   goalValueMin: number;
+//   goalStartDate: string;
+//   goalEndDate: string;
+//   appliesToAllAccounts: boolean;
+//   targetMode: GoalTargetMode;
+//   accounts: CompanyAccountType[];
+//   usersIdsOfGoal?: string[];
+//   perUserQuota?: number;
+//   submittedPosts?: GoalSubmissionType[];
+// };
 
 export type CompanyGoalType = {
   companyId: string;

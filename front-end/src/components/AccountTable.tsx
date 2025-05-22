@@ -16,6 +16,7 @@ interface AccountTableProps {
   navigate: NavigateFunction;
   height?: number;
   rowHeight?: number;
+  salesRouteNum?: string; // Add this
 }
 
 const AccountTable: React.FC<AccountTableProps> = ({
@@ -23,6 +24,7 @@ const AccountTable: React.FC<AccountTableProps> = ({
   navigate,
   height = 500,
   rowHeight = 60,
+  salesRouteNum
 }) => {
   const Row = ({
     index,
@@ -42,13 +44,13 @@ const AccountTable: React.FC<AccountTableProps> = ({
         <div className="account-cell address-cell"> {acc.accountAddress}</div>
         <div className="account-small-cell">{acc.postId ? "✅" : "❌"}</div>
 
-        <div className="account-cell submitted-by-cell">
-          {acc.submittedBy?.firstName || acc.submittedBy?.lastName
-            ? `${acc.submittedBy?.firstName || ""} ${
-                acc.submittedBy?.lastName || ""
-              }`.trim()
-            : "—"}
-        </div>
+        {salesRouteNum && (
+          <div className="account-cell submitted-by-cell">
+            {acc.submittedBy
+              ? `${acc.submittedBy.firstName} ${acc.submittedBy.lastName}`
+              : "—"}
+          </div>
+        )}
 
         <div className="account-cell submitted-at-cell">
           {acc.submittedAt ? new Date(acc.submittedAt).toLocaleString() : "—"}
@@ -77,7 +79,7 @@ const AccountTable: React.FC<AccountTableProps> = ({
           <div className="account-cell name-cell">Account</div>
           <div className="account-cell address-cell">Address</div>
           <div className="account-small-cell">Status</div>
-          <div className="account-cell submitted-by-cell">Submitted By</div>
+          {salesRouteNum && <div className="account-cell submitted-by-cell">Submitted By</div>}
           <div className="account-cell submitted-at-cell">Submitted At</div>
           <div className="account-small-cell">Post</div>
         </div>

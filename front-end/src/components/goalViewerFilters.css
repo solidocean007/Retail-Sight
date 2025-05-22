@@ -21,6 +21,9 @@
   border: 1px solid #ccc;
   font-size: 1rem;
   min-width: 180px;
+  height: 40px; /* Match MUI Input height */
+  padding: 6px 10px;
+  border-radius: 6px;
 }
 
 .sr-only {

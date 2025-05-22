@@ -27,6 +27,8 @@ const MyCompanyGoals = () => {
   makeSelectUsersCompanyGoals(user?.salesRouteNum)
 );
 
+  console.log("userCompanyGoals", userCompanyGoals);
+
   const today = new Date();
 
   const currentGoals = userCompanyGoals.filter((goal) => {

@@ -21,6 +21,7 @@ import EditCompanyGoalModal from "./EditCompanyGoalModal";
 import "./companyGoalCard.css";
 import { mapAccountsWithStatus } from "./utils/goalModeUtils";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
+import { selectUserAccounts } from "../../Slices/userAccountsSlice";
 
 interface CompanyGoalCardProps {
   goal: CompanyGoalWithIdType;
@@ -70,6 +71,8 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     [goal, effectiveAccounts]
   );
 
+  console.log(accountsWithStatus);
+
   const filteredAccountsWithStatus = useMemo(
     () =>
       accountsWithStatus.filter((account) => {
@@ -78,10 +81,14 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
           account.accountNumber.toString().includes(searchTerm);
+
+        const hasSubmitted = !!account.postId; // 👈 derive dynamically
+
         const matchesFilter =
           filterSubmitted === "all" ||
-          (filterSubmitted === "submitted" && account.hasSubmitted) ||
-          (filterSubmitted === "not-submitted" && !account.hasSubmitted);
+          (filterSubmitted === "submitted" && hasSubmitted) ||
+          (filterSubmitted === "not-submitted" && !hasSubmitted);
+
         return matchesSearch && matchesFilter;
       }),
     [accountsWithStatus, searchTerm, filterSubmitted]
@@ -92,6 +99,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   };
 
   const total = effectiveAccounts.length;
+  console.log("total", total);
 
   const submitted = useMemo(() => {
     if (!goal.submittedPosts) return 0;
@@ -113,53 +121,62 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
   const percentage = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
-// Top-level memo to compute sales routes and matched accounts
-const matchedAccounts = useMemo(() =>
-  allCompanyAccounts.filter((acc) =>
-    goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
-  ), [allCompanyAccounts, goal.accountNumbersForThisGoal]);
-
-const salesRouteNumsForGoal = useMemo(() =>
-  Array.from(
-    new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
-  ), [matchedAccounts]);
-
-const usersForGoal = useMemo(() => {
-  const routeFiltered = companyUsers.filter((user) =>
-    salesRouteNumsForGoal.includes(user.salesRouteNum || "")
-  );
-  return salesRouteNum
-    ? routeFiltered.filter((u) => u.salesRouteNum === salesRouteNum)
-    : routeFiltered;
-}, [companyUsers, salesRouteNum, salesRouteNumsForGoal]);
-
-const userBasedRows = useMemo(() => {
-  return usersForGoal.map((user) => {
-    const userSubmissions = (goal.submittedPosts || []).filter(
-      (post) => post.submittedBy?.uid === user.uid
+  const matchedAccounts = useMemo(() => {
+    const base = allCompanyAccounts.filter((acc) =>
+      goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
     );
 
-    const submissionCount = userSubmissions.length;
-    const quota = goal.perUserQuota || 1;
-    const completionPercentage = Math.min(
-      Math.round((submissionCount / quota) * 100),
-      100
+    return salesRouteNum
+      ? base.filter((acc) => (acc.salesRouteNums || []).includes(salesRouteNum))
+      : base;
+  }, [allCompanyAccounts, goal.accountNumbersForThisGoal, salesRouteNum]);
+
+  const salesRouteNumsForGoal = useMemo(() => {
+    if (salesRouteNum && typeof salesRouteNum === "string") {
+      return [salesRouteNum];
+    }
+
+    return Array.from(
+      new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
     );
+  }, [matchedAccounts, salesRouteNum]);
 
-   return {
-  uid: user.uid,
-  firstName: user.firstName || "",  // ✅ ensure it's a string
-  lastName: user.lastName || "",    // ✅ ensure it's a string
-  submissions: userSubmissions.map((post) => ({
-    postId: post.postId,
-    submittedAt: post.submittedAt,
-  })),
-  userCompletionPercentage: completionPercentage,
-};
+  console.log("salesRouteNumsForGoal", salesRouteNumsForGoal); // this logs 2
 
-  });
-}, [usersForGoal, goal.submittedPosts, goal.perUserQuota]);
+  const usersForGoal = useMemo(() => {
+    const routeFiltered = companyUsers.filter((user) =>
+      salesRouteNumsForGoal.includes(user.salesRouteNum || "")
+    );
+    return salesRouteNum
+      ? routeFiltered.filter((u) => u.salesRouteNum === salesRouteNum)
+      : routeFiltered;
+  }, [companyUsers, salesRouteNum, salesRouteNumsForGoal]);
 
+  const userBasedRows = useMemo(() => {
+    return usersForGoal.map((user) => {
+      const userSubmissions = (goal.submittedPosts || []).filter(
+        (post) => post.submittedBy?.uid === user.uid
+      );
+
+      const submissionCount = userSubmissions.length;
+      const quota = goal.perUserQuota || 1;
+      const completionPercentage = Math.min(
+        Math.round((submissionCount / quota) * 100),
+        100
+      );
+
+      return {
+        uid: user.uid,
+        firstName: user.firstName || "", // ✅ ensure it's a string
+        lastName: user.lastName || "", // ✅ ensure it's a string
+        submissions: userSubmissions.map((post) => ({
+          postId: post.postId,
+          submittedAt: post.submittedAt,
+        })),
+        userCompletionPercentage: completionPercentage,
+      };
+    });
+  }, [usersForGoal, goal.submittedPosts, goal.perUserQuota]);
 
   const percentageOfGoal =
     goal.perUserQuota && salesRouteNumsForGoal.length > 0
@@ -260,8 +277,7 @@ const userBasedRows = useMemo(() => {
         <Typography variant="h6" sx={{ mt: 2 }}>
           User Progress
         </Typography>
-        <UserTableForGoals users={userBasedRows} /> // Type 'undefined' is not
-        assignable to type 'string'.ts(2322)
+        <UserTableForGoals users={userBasedRows} /> 
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
         </Typography>

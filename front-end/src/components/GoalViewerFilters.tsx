@@ -14,6 +14,7 @@ const GoalViewerFilters: React.FC<GoalViewerFiltersProps> = ({
   filterSubmitted,
   setFilterSubmitted,
 }) => {
+
   // Optional: debounce typing if needed
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
