@@ -262,35 +262,35 @@ export const { setGalloGoals, addGalloGoal } =
   goalsSlice.actions;
 
 // Selectors
-export const selectAllGalloGoals = (state: RootState) => state.goals.galloGoals;
+// export const selectAllGalloGoals = (state: RootState) => state.goals.galloGoals;
 // export const selectAllCompanyGoals = (state: RootState) =>
 //   state.goals.companyGoals;
-export const selectGalloGoalsLoading = (state: RootState) =>
-  state.goals.galloGoalsIsLoading;
+// export const selectGalloGoalsLoading = (state: RootState) =>
+//   state.goals.galloGoalsIsLoading;
 // export const selectCompanyGoalsIsLoading = (state: RootState) =>
 //   state.goals.companyGoalsIsLoading;
-export const selectGalloGoalsError = (state: RootState) =>
-  state.goals.galloGoalsError;
+// export const selectGalloGoalsError = (state: RootState) =>
+//   state.goals.galloGoalsError;
 // export const selectCompanyGoalsError = (state: RootState) =>
 //   state.goals.companyGoalsError;
-export const selectLastUpdated = (state: RootState) => state.goals.lastUpdated;
+// export const selectLastUpdated = (state: RootState) => state.goals.lastUpdated;
 
 // **New selectors for user-specific goals**
-export const selectUsersGalloGoals = createSelector(
-  [
-    selectAllGalloGoals,
-    (state: RootState, salesRouteNum: string | undefined) =>
-      salesRouteNum || "",
-  ],
-  (galloGoals, salesRouteNum) =>
-    galloGoals.filter((goal) =>
-      goal.accounts.some((account) =>
-        Array.isArray(account.salesRouteNums)
-          ? account.salesRouteNums.includes(salesRouteNum)
-          : account.salesRouteNums === salesRouteNum,
-      ),
-    ),
-);
+// export const selectUsersGalloGoals = createSelector(
+//   [
+//     selectAllGalloGoals,
+//     (state: RootState, salesRouteNum: string | undefined) =>
+//       salesRouteNum || "",
+//   ],
+//   (galloGoals, salesRouteNum) =>
+//     galloGoals.filter((goal) =>
+//       goal.accounts.some((account) =>
+//         Array.isArray(account.salesRouteNums)
+//           ? account.salesRouteNums.includes(salesRouteNum)
+//           : account.salesRouteNums === salesRouteNum,
+//       ),
+//     ),
+// );
 
 export const selectUsersCompanyGoals = createSelector(
   [

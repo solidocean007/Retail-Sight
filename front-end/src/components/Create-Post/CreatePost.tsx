@@ -37,7 +37,7 @@ import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
 import {
   // selectUsersCompanyGoals,
-  selectUsersGalloGoals,
+  // selectUsersGalloGoals,
 } from "../../Slices/goalsSlice";
 import { selectUsersCompanyGoals } from "../../Slices/companyGoalsSlice";
 
@@ -51,11 +51,12 @@ export const CreatePost = () => {
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
   const salesRouteNum = userData?.salesRouteNum;
 
-  const usersGalloGoals = useSelector((state: RootState) =>
-    selectUsersGalloGoals(state, salesRouteNum),
-  );
+  // const usersGalloGoals = useSelector((state: RootState) =>
+  //   selectUsersGalloGoals(state, salesRouteNum),
+  // );
   const usersCompanyGoals = useSelector((state: RootState) =>
-    selectUsersCompanyGoals(state, salesRouteNum),
+    // selectUsersCompanyGoals(state, salesRouteNum),
+    selectUsersCompanyGoals(state),
   );
   // console.log(usersCompanyGoals)
   // Function to navigate to the next step
@@ -232,7 +233,7 @@ export const CreatePost = () => {
             onPrevious={goToPreviousStep}
             post={post}
             setPost={setPost}
-            usersGalloGoals={usersGalloGoals}
+            // usersGalloGoals={usersGalloGoals}
             usersCompanyGoals={usersCompanyGoals}
             handleFieldChange={handleFieldChange}
             setSelectedCompanyAccount={setSelectedCompanyAccount}

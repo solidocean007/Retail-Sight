@@ -1,16 +1,14 @@
-// getActiveCompanyGoalsForAccounts.ts
-import { CompanyGoalType } from "../types";
+import { CompanyGoalWithIdType } from "../types";
 
 export const getActiveCompanyGoalsForAccount = (
   accountNumber: string | null | undefined,
-  goals: CompanyGoalType[],
-  userId?: string,
-): CompanyGoalType[] => {
+  goals: CompanyGoalWithIdType[]
+): CompanyGoalWithIdType[] => {
   if (!accountNumber) return [];
 
   const today = new Date();
 
-  const parseDate = (date: any) => {
+  const parseDate = (date: any): Date | null => {
     if (!date) return null;
     if (typeof date === "string" || typeof date === "number")
       return new Date(date);
@@ -18,32 +16,19 @@ export const getActiveCompanyGoalsForAccount = (
     return null;
   };
 
+  console.log("goals", goals);
+
   return goals.filter((goal) => {
-    const {
-      accounts,
-      appliesToAllAccounts,
-      goalStartDate,
-      goalEndDate,
-      targetMode,
-      usersIdsOfGoal,
-    } = goal;
-
-    const isMatchingAccount =
-      appliesToAllAccounts ||
-      (Array.isArray(accounts) &&
-        accounts.some(
-          (account) => String(account.accountNumber) === String(accountNumber),
-        ));
-
-    const isMatchingUser =
-      targetMode === "goalForSelectedUsers" &&
-      Array.isArray(usersIdsOfGoal) &&
-      usersIdsOfGoal.includes(userId || "");
-
-    const start = parseDate(goalStartDate);
-    const end = parseDate(goalEndDate);
+    const start = parseDate(goal.goalStartDate);
+    const end = parseDate(goal.goalEndDate);
     const isWithinDateRange = start && end && start <= today && end >= today;
 
-    return (isMatchingAccount || isMatchingUser) && isWithinDateRange;
+    const isAccountIncluded =
+      Array.isArray(goal.accountNumbersForThisGoal) &&
+      goal.accountNumbersForThisGoal
+        .map(String)
+        .includes(String(accountNumber));
+
+    return isWithinDateRange && isAccountIncluded;
   });
 };
