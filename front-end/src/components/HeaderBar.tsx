@@ -90,7 +90,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           <div className="title-and-version">
             <h1>Displaygram</h1>
             {localVersion ? (
-              <p className="version-number">{localVersion}</p>
+              <h6 className="version-number">{localVersion}</h6>
             ) : (
               <p className="version-number">loading…</p>
             )}

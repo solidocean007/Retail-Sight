@@ -61,6 +61,12 @@
   gap: 0.5rem;
 }
 
+.title-and-version h6 {
+  font-size: 10px;
+  margin: 0;
+  color: var(--header-title);
+}
+
 .version-number {
   font-size: 0.9rem;
   margin: 0;

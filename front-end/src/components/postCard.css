@@ -1,19 +1,64 @@
-.post-card {
+/* .post-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: flex-start;
   background-color: var(--post-card-background);
   height: 100%;
-  box-shadow: var(--card-shadow); /* ✅ shadow for depth */
+  box-shadow: var(--card-shadow);
   width: 100%;
-  color: var(--text-color); /* ✅ ensures dark mode legibility */
+  color: var(--text-color);
   border: 1px solid var(--border-color);
-  border-radius: var(--card-radius); /* ✅ rounded corners */
+  border-radius: var(--card-radius);
   overflow: visible;
   border: 1px solid rgba(0, 0, 0, 0.125);
   padding-bottom: 1rem;
+ } */
+
+.post-card-container {
+  height: 100%;
+  width: 100%;
+  margin: auto;
+
+  /* 4 static texture layers + 1 animated light effect layer */
+  background-image:
+    linear-gradient(45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%),
+    var(--post-card-animated-gradient-light);
+
+  background-size:
+    20px 20px,
+    20px 20px,
+    20px 20px,
+    20px 20px,
+    600% 600%;
+
+  background-blend-mode:
+    normal,
+    normal,
+    normal,
+    normal,
+    lighten;
+
+  /* NEW: Only animate the final gradient layer */
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0,
+    0% 50%;
+
+  animation: gradientOnlyShift 10s ease infinite;
+
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  overflow: visible;
+  color: var(--text-color);
 }
+
 
 .missing-account-banner {
   width: 100%;
@@ -31,8 +76,11 @@
 }
 
 .textured-background {
-  background-image:
-    linear-gradient(45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
+  background-image: linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.03) 25%,
+      transparent 25%
+    ),
     linear-gradient(-45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%),
     linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%);
@@ -41,17 +89,33 @@
   width: 100%;
 }
 
-@keyframes gradientShift {
+@keyframes gradientOnlyShift {
   0% {
-    background-position: 0% 50%;
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0% 50%;
   }
   50% {
-    background-position: 100% 45%;
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      100% 45%;
   }
   100% {
-    background-position: 0% 50%;
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0% 50%;
   }
 }
+
 
 .visibility {
   width: 100%;
@@ -95,7 +159,7 @@
 }
 
 .description-image .post-image {
-  max-height: 500px;
+  max-height: 370px;
   width: auto; /* ensures the image scales with its height */
 }
 
@@ -330,6 +394,6 @@
 
 @media (max-width: 470px) {
   .post-card img.post-image {
-    max-height: 300px; 
+    max-height: 300px;
   }
 }

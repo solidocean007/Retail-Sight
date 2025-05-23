@@ -51,9 +51,8 @@ interface PostCardProps {
   id: string;
   currentUserUid: string;
   post: PostWithID;
-  getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
-  getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
-  style?: React.CSSProperties;
+  getPostsByTag?: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
+  getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -64,7 +63,6 @@ const PostCard: React.FC<PostCardProps> = ({
   post,
   getPostsByTag,
   getPostsByStarTag,
-  style,
   setCurrentHashtag,
   setActivePostSet,
   setIsSearchActive,
@@ -81,17 +79,6 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isSharing, setIsSharing] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareLink, setShareLink] = useState("");
-
-  const getAnimatedPostCardGradient = () => {
-    const theme = document.body.getAttribute("data-theme");
-    return getComputedStyle(document.body)
-      .getPropertyValue(
-        theme === "dark"
-          ? "--post-card-animated-gradient-dark"
-          : "--post-card-animated-gradient-light"
-      )
-      .trim();
-  };
 
   // New state for controlling the visibility of the SharePost component
   const [isAddToCollectionModalOpen, setIsAddToCollectionModalOpen] =
@@ -250,21 +237,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const createdOnBehalf =
     post.postedFor && post.createdBy?.uid !== post.postedFor.uid;
 
-
-
   return (
     <>
-      <Card
-        className="post-card textured-background"
-        style={{
-          height: "70%", // 👈 important
-          width: "95%", // optional slight side margin
-          margin: "auto",
-          ...style,
-          backgroundImage: getAnimatedPostCardGradient(),
-          backgroundSize: "600% 600%",
-          animation: "gradientShift 10s ease infinite",
-        }}
+      <div className="post-card-container"
       >
         <div className="post-header">
           <div className="visibility">
@@ -395,6 +370,7 @@ const PostCard: React.FC<PostCardProps> = ({
               <button
                 className="like-button"
                 onClick={handleLikePostButtonClick}
+                disabled={!user}
               >
                 {likedByUser ? "❤️" : "🤍"}
               </button>
@@ -443,8 +419,8 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
           )}
         </div>
-        <CommentSection post={post} />
-      </Card>
+        {user && <CommentSection post={post} />}
+      </div>
       <EditPostModal
         post={post}
         setSelectedCompanyAccount={setSelectedCompanyAccount}

@@ -16,8 +16,8 @@ import { RootState } from "../utils/store";
 
 interface PostDescriptionProps {
   description?: string;
-  getPostsByTag: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
-  getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
+  getPostsByTag?: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
+  getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -117,6 +117,9 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
     event.preventDefault();
     setFilteredPosts([]);
     // Prevents the default anchor behavior
+    if(!getPostsByTag) {
+      return;
+    }
     try {
       const hashtagPosts = await getPostsByTag(hashtag, userCompanyID);
       setIsSearchActive?.(true);
@@ -138,7 +141,9 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
   ) => {
     event.preventDefault(); // Prevents the default anchor behavior
     setFilteredPosts([]);
-
+    if(!getPostsByStarTag) {
+      return;
+    }
     try {
       console.log("click");
       const starTagPosts = await getPostsByStarTag(starTag);

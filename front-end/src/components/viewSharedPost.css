@@ -1,110 +1,126 @@
-/* Add this within your viewSharedPost.css */
-.view-shared-post-container {
-  width: 100%;
+.view-shared-post-page {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-}
-
-.view-shared-post-container .list-container {
-  width: 100%;
-}
-
-.view-shared-post-container .post-card img {
-  max-width: 600px;
-}
-
-.view-shared-post-container .card-content {
-  padding: 20px;
-}
-
-/* Assuming .post-card is the container for your image */
-.post-card img {
-  width: auto;
-  height: auto;
-  max-width: 600px;
-  display: block;
-  margin: 0 auto;
-}
-
-/* viewSharedPost.css */
-
-.view-shared-post-container {
-  display: flex;
+  justify-content: flex-start;
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding-bottom: 50px;
+  max-width: 1500px;
 }
 
-.list-card {
+
+.view-shared-post-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 20px;
+  gap: 1rem
+}
+
+.view-shared-post-header {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: auto;
+}
+
+.view-shared-post-box {
+  display: flex;
+  flex-direction: column; /* Default to column on narrow screens */
   width: 100%;
-  max-width: 600px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  margin-top: 24px;
-  padding: 16px;
-}
-
-.post-card {
-  border-radius: 8px;
+  max-width: 960px;
+  /* background: #ffffff; */
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  background: #ffffff;
+  padding: 24px;
+  gap: 24px;
 }
 
-.dynamic-height {
+.view-shared-post-text {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
-.card-content {
-  padding: 16px;
-}
-
-.post-header {
+.view-shared-post-page h1 {
+  font-size: 2rem;
+  color: var(--text-color);
   margin-bottom: 16px;
-  text-align: center;
-  cursor: pointer;
 }
 
-.header-bottom {
+.view-shared-post-page h2 {
+  font-size: 1.5rem;
+  color: var(--text-color);
+  margin-bottom: 16px;
+} 
+
+.view-shared-post-text h4,
+.view-shared-post-text h6,
+.view-shared-post-text p {
+  margin: 0 0 8px 0;
+}
+
+.view-shared-post-image {
+  flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: center;
+  align-items: center;
 }
 
-.details-date,
-.post-user-details {
+.view-shared-post-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cta-hero {
   text-align: center;
-}
-
-img {
+  margin-bottom: 2rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+  color: white;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
   width: 100%;
-  border-radius: 8px;
-  margin-top: 16px;
+  max-width: 960px;
 }
 
-.error-message {
-  color: #d32f2f;
-  font-size: 1.2rem;
-  text-align: center;
-  margin-top: 24px;
+.cta-heading {
+  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+}
+
+.cta-subtext {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cta-learn-button {
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
 }
 
 
+/* Wide screens: switch to row */
 @media (min-width: 768px) {
-  /* Adjust for tablets and desktop screens */
-  .post-card img {
-    max-width: 100%; /* On larger screens, allow the image to be as wide as its container */
+  .view-shared-post-container {
+    flex-direction: row;
   }
-}
 
-/* If you want to ensure the image takes a certain amount of vertical space */
-@media (min-width: 1024px) {
-  .dynamic-height {
-    min-height: 500px; /* Adjust this value as needed */
+  .view-shared-post-header {
+    justify-content: flex-start;
+    align-self: start;
+  }
+
+  .view-shared-post-image {
+    max-width: 50%;
+  }
+
+  .view-shared-post-text {
+    max-width: 50%;
   }
 }

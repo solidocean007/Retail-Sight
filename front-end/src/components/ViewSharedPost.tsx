@@ -6,6 +6,7 @@ import { CircularProgress, Button, Box, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import "./viewSharedPost.css";
+import MemoizedPostCard from "./PostCard";
 
 export const ViewSharedPost = () => {
   const navigate = useNavigate();
@@ -15,7 +16,10 @@ export const ViewSharedPost = () => {
   const [error, setError] = useState("");
 
   const location = useLocation();
-  const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const query = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
   const postId = query.get("id");
   const token = query.get("token");
 
@@ -28,11 +32,14 @@ export const ViewSharedPost = () => {
 
     const validateToken = async () => {
       try {
-        const response = await fetch("https://my-fetch-data-api.vercel.app/api/validatePostShareToken", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ postId, token }),
-        });
+        const response = await fetch(
+          "https://my-fetch-data-api.vercel.app/api/validatePostShareToken",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ postId, token }),
+          }
+        );
 
         const result = await response.json();
         if (!response.ok || !result.valid || !result.post) {
@@ -52,7 +59,12 @@ export const ViewSharedPost = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="80vh"
+      >
         <CircularProgress />
       </Box>
     );
@@ -62,48 +74,73 @@ export const ViewSharedPost = () => {
     return (
       <Box textAlign="center" mt={8}>
         <HeaderBar toggleFilterMenu={() => {}} />
-        <Typography variant="h5" color="error">{error}</Typography>
-        <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={() => navigate("/")}>
-          Go Back Home
+        <Typography variant="h5" color="error">
+          {error}
+        </Typography>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => navigate("/sign-up-login?mode=signup")}
+        >
+          Join Displaygram to Share Your Own!
         </Button>
       </Box>
     );
   }
 
-  const formattedDate = post?.displayDate ? new Date(post.displayDate).toLocaleDateString() : "N/A";
-
   return (
-    <div className="view-shared-post-container">
+    <div className=" view-shared-post-page">
       <HeaderBar toggleFilterMenu={() => {}} />
-      <Box mx="auto" maxWidth="600px" p={2} boxShadow={3} borderRadius={2} mt={4} bgcolor="background.paper">
-        <Typography variant="h4" gutterBottom>
-          Check out this display from Displaygram
-        </Typography>
-        <Typography variant="h6" gutterBottom>
-          {post?.account?.accountName}
-        </Typography>
-        <Typography variant="body2" gutterBottom>
-          {post?.account?.accountAddress}
-        </Typography>
-        <Typography variant="body2" gutterBottom>
-          Date: {formattedDate}
-        </Typography>
-        <Typography variant="body2" gutterBottom>
-          By: {post?.createdBy.firstName} {post?.createdBy.lastName} from {post?.createdBy.company}
-        </Typography>
-        <Box my={2}>
-          <Typography variant="body1">{post?.description}</Typography>
-        </Box>
-        {post?.imageUrl && <img src={post.imageUrl} alt="Shared post" style={{ width: "100%", borderRadius: "8px" }} />}
+
+      <div className="view-shared-post-container">
+        <div className="view-shared-post-header">
+          <div className="cta-hero">
+            <Typography variant="h2" align="center" className="cta-heading">
+              Retail displays that inspire. Results that scale.
+            </Typography>
+            <Typography variant="body1" align="center" className="cta-subtext">
+              Displaygram is where suppliers and distributors showcase their best
+              work—and get results.
+            </Typography>
+            <Button
+              variant="contained"
+              color="secondary"
+              className="cta-learn-button"
+              onClick={() => navigate("/sign-up-login?mode=signup")}
+            >
+              Learn More & Get Started
+            </Button>
+          </div>
+
+          <div>
+            <h3>Click Image For Larger View</h3>
+          </div>
+
+        </div>
+
+        <MemoizedPostCard
+          post={post as PostWithID}
+          id={(post as PostWithID).id}
+          currentUserUid={user?.uid || ""}
+        />
+
         {!user && (
           <Box textAlign="center" mt={4}>
-            <Typography variant="h6" gutterBottom>Love what you see?</Typography>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/signup")}>
+            <Typography variant="h6" gutterBottom>
+              Love what you see?
+            </Typography>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => navigate("/sign-up-login?mode=signup")}
+            >
               Join Displaygram to Share Your Own!
             </Button>
           </Box>
         )}
-      </Box>
+      </div>
+      {/* i need a cta modal here */}
+      {/* abstract it and we can import it */}
     </div>
   );
 };

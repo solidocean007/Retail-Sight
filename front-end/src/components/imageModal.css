@@ -64,6 +64,7 @@
 }
 
 .close-modal {
+  display: flex;
   position: absolute;
   top: 8px;
   right: 8px;
@@ -76,6 +77,9 @@
   transition: color 0.2s ease;
   padding: 4px;
   line-height: 1;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-modal:hover {
