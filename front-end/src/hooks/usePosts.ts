@@ -35,30 +35,6 @@ const usePosts = (
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
 
-  function isFirestoreTimestamp(value: any): value is Timestamp {
-    return value?.toDate instanceof Function;
-  }
-
-  function normalizePost(post: PostWithID): PostWithID {
-    const token = post.token;
-
-    if (!token?.tokenExpiry) {
-      return post;
-    }
-
-    const normalizedToken = isFirestoreTimestamp(token.tokenExpiry)
-      ? {
-          ...token,
-          tokenExpiry: token.tokenExpiry.toDate().toISOString(),
-        }
-      : token;
-
-    return {
-      ...post,
-      token: normalizedToken,
-    };
-  }
-
   useEffect(() => {
     const setupListeners = async () => {
       const lastSeen = await getLastSeenTimestamp();
@@ -116,10 +92,7 @@ const usePosts = (
             new Date(a.displayDate).getTime()
         );
         if (postsToUpdate.length > 0) {
-          const normalizedPosts = postsToUpdate.map((post) =>
-            normalizePost(post)
-          );
-          dispatch(mergeAndSetPosts(normalizedPosts));
+          dispatch(mergeAndSetPosts(postsToUpdate));
           postsToUpdate.forEach((post) => updatePostInIndexedDB(post));
         }
 
@@ -167,22 +140,15 @@ const usePosts = (
       try {
         const indexedDBPosts = await getPostsFromIndexedDB();
         if (indexedDBPosts.length > 0) {
-          const normalizedPosts = indexedDBPosts.map((post) =>
-            normalizePost(post)
-          );
           // dispatch(mergeAndSetPosts(indexedDBPosts));
-          dispatch(mergeAndSetPosts(normalizedPosts));
+          dispatch(mergeAndSetPosts(indexedDBPosts));
         } else {
           const action = await dispatch(
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
           );
           if (fetchInitialPostsBatch.fulfilled.match(action)) {
             const fetchedPosts = action.payload.posts;
-            const normalizedPosts = fetchedPosts.map((post) =>
-              normalizePost(post)
-            );
-            // dispatch(mergeAndSetPosts(fetchedPosts));
-            dispatch(mergeAndSetPosts(normalizedPosts));
+            dispatch(mergeAndSetPosts(fetchedPosts));
             addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
           }
         }
@@ -202,12 +168,10 @@ const usePosts = (
         const querySnapshot = await getDocs(publicPostsQuery);
         const publicPosts = querySnapshot.docs
           .map((doc) =>
-            normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
-          )
-          .filter((post) => post.visibility === "public");
+            ({ id: doc.id, ...doc.data() }) as PostWithID
+          ).filter((post) => post.visibility === "public");
 
-        const normalizedPosts = publicPosts.map(normalizePost);
-        dispatch(mergeAndSetPosts(normalizedPosts));
+        dispatch(mergeAndSetPosts(publicPosts));
       } catch (error) {
         console.error("Error fetching public posts:", error);
       }

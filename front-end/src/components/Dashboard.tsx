@@ -184,68 +184,6 @@ export const Dashboard = () => {
     loadAllCompanyAccounts();
   }, [user?.companyId, user?.role, dispatch]);
 
-  // const backupAccounts = async () => {
-  //   const originalDocRef = doc(db, "accounts", "ItrfDhvSl15y2IObOdop"); // your current ID
-  //   const backupDocRef = doc(db, "accounts_backup", "backup_2025_05_06");
-
-  //   const snapshot = await getDoc(originalDocRef);
-  //   if (!snapshot.exists()) {
-  //     console.error("Original document does not exist");
-  //     return;
-  //   }
-
-  //   const data = snapshot.data();
-  //   await setDoc(backupDocRef, data);
-  //   console.log("Backup created successfully ✅");
-  // };
-
-  // backupAccounts();
-
-// const cleanUpPostTokens = async () => {
-//   try {
-//     const postsSnapshot = await getDocs(collection(db, "posts"));
-//     const updates: Promise<void>[] = [];
-
-//     postsSnapshot.forEach((postDoc) => {
-//       const data = postDoc.data();
-//       let modified = false;
-
-//       // Step 1: Clean up tokens array
-//       const tokens = Array.isArray(data.tokens) ? data.tokens : [];
-//       const cleanedTokens = tokens.map((entry: any) => {
-//         if (entry?.expiry) {
-//           modified = true;
-//           const { expiry, ...rest } = entry;
-//           return rest;
-//         }
-//         return entry;
-//       });
-
-//       // Step 2: Check if top-level `token` exists
-//       const removeLegacyToken = data.token?.sharedToken !== undefined;
-
-//       // Step 3: Prepare updates
-//       const updatePayload: any = {};
-//       if (modified) updatePayload.tokens = cleanedTokens;
-//       if (removeLegacyToken) updatePayload.token = deleteField();
-
-//       if (Object.keys(updatePayload).length > 0) {
-//         const postRef = doc(db, "posts", postDoc.id);
-//         updates.push(updateDoc(postRef, updatePayload));
-//         console.log(`🧼 Cleaned post ${postDoc.id}`);
-//       }
-//     });
-
-//     await Promise.all(updates);
-//     console.log("✅ Finished cleaning all redundant tokens and expiry fields.");
-//   } catch (err) {
-//     console.error("❌ Cleanup failed:", err);
-//   }
-// };
-
-// cleanUpPostTokens();
-
-
   return (
     <div className="dashboard-container">
       <DashboardHelmet />
