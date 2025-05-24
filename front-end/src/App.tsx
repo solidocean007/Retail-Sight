@@ -13,7 +13,6 @@ import { AppRoutes } from "./utils/Routes";
 import { getTheme } from "./theme";
 import { useEffect, useState } from "react";
 import { setDarkMode } from "./Slices/themeSlice"; // ✅ New, clean import
-import useSchemaVersion from "./hooks/useSchemaVersion";
 import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener";
 import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -21,7 +20,6 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { loadCompany } from "./thunks/companyThunk";
 
 function App() {
-  useSchemaVersion();
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);

@@ -6,7 +6,7 @@
   justify-content: space-between;
   width: 100%;
   background: var(--header-background);
-  backdrop-filter: blur(8px);
+  /* backdrop-filter: blur(8px); */
   color: var(--header-title);
   box-shadow: var(--card-shadow);
   padding: 0.2rem 0.5rem;
@@ -72,6 +72,36 @@
   margin: 0;
   color: var(--text-color);
 }
+
+.version-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.version-text {
+  font-size: 12px;
+  color: var(--gray-600);
+  display: flex;
+  align-items: center;
+}
+
+.refresh-app-button {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-blue);
+  background: transparent;
+  color: var(--primary-blue);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.refresh-app-button:hover {
+  background: var(--outlined-button-hover);
+}
+
 
 /* Responsive Breakpoints */
 

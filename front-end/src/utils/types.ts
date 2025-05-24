@@ -105,7 +105,7 @@ export interface PostType {
   hashtags: string[];
   starTags: string[];
   commentCount: number;
-  tokens: PostTokenType[];
+  tokens?: PostTokenType[];
   companyGoalId?: string | null;
   companyGoalDescription?: string | null;
   companyGoalTitle?: string | null;

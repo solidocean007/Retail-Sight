@@ -167,10 +167,6 @@ export const useHandlePostSubmission = () => {
                 starTags: starTags,
                 commentCount: 0,
                 likes: [],
-                token: {
-                  sharedToken: sharedToken,
-                  // tokenExpiry: tokenExpiry,
-                },
                 oppId: post.oppId || null,
                 closedBy: post.closedBy || user.displayName || "",
                 closedDate:

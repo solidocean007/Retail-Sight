@@ -8,43 +8,103 @@ import { useEffect, useRef, useState } from "react";
 import { showMessage } from "../Slices/snackbarSlice";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { openDB } from "../utils/database/indexedDBOpen";
+import { doc, getDoc } from "@firebase/firestore";
+import { db } from "../utils/firebase";
+import { Tooltip } from "@mui/material";
+import InfoIcon from "@mui/icons-material/Info";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
-  const { currentUser } = useSelector((state: RootState) => state.user); // Simplified extraction
+  const { currentUser } = useSelector((state: RootState) => state.user);
   const [showMenuTab, setShowMenuTab] = useState(false);
   const [localVersion, setLocalVersion] = useState<string | null>("Loading...");
-
+  const [serverVersion, setServerVersion] = useState<string | null>(null);
   const navigate = useNavigate();
   const protectedAction = useProtectedAction();
-  const menuRef = useRef<HTMLDivElement | null>(null); // Reference to MenuTab
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useOutsideAlerter(menuRef, () => setShowMenuTab(false));
+useEffect(() => {
+  const checkVersions = async () => {
+    try {
+      const configSnap = await getDoc(
+        doc(db, "appConfig", "HlAAI92RInjZymlMiwqu")
+      );
+      const server = configSnap.data()?.schemaVersion || null;
+      setServerVersion(server);
+      console.log("✅ Server version (fresh):", server);
 
-  const goToSignUpLogin = () => {
-    navigate("/sign-up-login");
+      if (!server) {
+        console.warn("⚠️ No schemaVersion found in Firestore.");
+        return;
+      }
+
+      const dbInstance = await openDB();
+      const tx = dbInstance.transaction("localSchemaVersion", "readonly");
+      const store = tx.objectStore("localSchemaVersion");
+      const request = store.get("schemaVersion");
+
+      request.onsuccess = () => {
+        const local = request.result?.version;
+        console.log("✅ Local version (from onsuccess):", local);
+
+        const alreadyReloaded = sessionStorage.getItem("schemaVersionSynced");
+
+        if (!local) {
+          console.warn("⚠️ No local schemaVersion found in IndexedDB.");
+          if (!alreadyReloaded) {
+            const tx2 = dbInstance.transaction("localSchemaVersion", "readwrite");
+            const store2 = tx2.objectStore("localSchemaVersion");
+            store2.put({ id: "schemaVersion", version: server });
+            sessionStorage.setItem("schemaVersionSynced", "true");
+            setTimeout(() => window.location.reload(), 150);
+          } else {
+            console.warn("⚠️ Already reloaded, but local version is still missing.");
+          }
+          return;
+        }
+
+        setLocalVersion(local);
+
+        if (local !== server) {
+          if (!alreadyReloaded) {
+            const tx2 = dbInstance.transaction("localSchemaVersion", "readwrite");
+            const store2 = tx2.objectStore("localSchemaVersion");
+            store2.put({ id: "schemaVersion", version: server });
+            sessionStorage.setItem("schemaVersionSynced", "true");
+            setTimeout(() => window.location.reload(), 150);
+          } else {
+            console.warn("⚠️ Already reloaded this session. Skipping another reload.");
+          }
+        } else {
+          sessionStorage.setItem("schemaVersionSynced", "true");
+        }
+      };
+
+      request.onerror = () => {
+        console.error("❌ Error reading from IndexedDB");
+        setLocalVersion("Error");
+      };
+    } catch (err) {
+      console.error("❌ Error checking schema versions:", err);
+      setLocalVersion("Error");
+    }
   };
 
-  const handleCreatePostClick = () => {
-    protectedAction(() => {
-      navigate("/createPost");
-    });
-  };
+  checkVersions();
+}, []);
 
-  const handleTutorialClick = () => {
-    protectedAction(() => {
-      navigate("/tutorial");
-    });
-  };
 
+  const goToSignUpLogin = () => navigate("/sign-up-login");
+  const handleCreatePostClick = () =>
+    protectedAction(() => navigate("/createPost"));
+  const handleTutorialClick = () =>
+    protectedAction(() => navigate("/tutorial"));
   const handleDashboardClick = () => {
     protectedAction(() => {
-      if (currentUser?.role != "developer") {
-        navigate("/dashboard");
-      } else if (currentUser?.role == "developer") {
+      if (currentUser?.role !== "developer") navigate("/dashboard");
+      else if (currentUser?.role === "developer")
         navigate("/developer-dashboard");
-      } else {
-        showMessage("Not Logged in.");
-      }
+      else showMessage("Not Logged in.");
     });
   };
 
@@ -56,32 +116,9 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
       if (option === "createPost") handleCreatePostClick();
       else if (option === "tutorial") handleTutorialClick();
       else if (option === "dashboard") handleDashboardClick();
-
       setShowMenuTab(false);
     }
   };
-
-  useEffect(() => {
-    const getVersion = async () => {
-      const db = await openDB();
-      const tx = db.transaction("localSchemaVersion", "readonly");
-      const store = tx.objectStore("localSchemaVersion");
-      const request = store.get("schemaVersion");
-
-      request.onsuccess = () => {
-        const version = request.result?.version || "Not set";
-        setLocalVersion(version);
-        console.log("📦 Loaded local schema version:", version);
-      };
-
-      request.onerror = () => {
-        console.error("❌ Failed to load schema version");
-        setLocalVersion("Error");
-      };
-    };
-
-    getVersion();
-  }, []);
 
   return (
     <>
@@ -89,11 +126,18 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
         <div className="website-title" onClick={() => navigate("/")}>
           <div className="title-and-version">
             <h1>Displaygram</h1>
-            {localVersion ? (
-              <h6 className="version-number">{localVersion}</h6>
-            ) : (
-              <p className="version-number">loading…</p>
-            )}
+            <div className="version-info">
+              <Tooltip
+                title={`Local version: ${localVersion}${
+                  serverVersion ? ` | Latest: ${serverVersion}` : ""
+                }`}
+              >
+                <span className="version-text">
+                  v{localVersion}
+                  <InfoIcon fontSize="small" style={{ marginLeft: "4px" }} />
+                </span>
+              </Tooltip>
+            </div>
           </div>
           <h5>{currentUser?.company}</h5>
         </div>
@@ -110,8 +154,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
                 <button onClick={handleCreatePostClick}>Create Display</button>
               </div>
             </div>
-
-            <div // ARIA attributes must conform to valid values: Invalid ARIA attribute value: aria-expanded="{expression}"
+            <div
               className="hamburger-menu-button"
               onClick={() => setShowMenuTab(!showMenuTab)}
               aria-haspopup="true"
