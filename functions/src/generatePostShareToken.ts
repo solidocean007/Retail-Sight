@@ -6,7 +6,6 @@ if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-// Define the expected input type for the function
 interface GeneratePostShareTokenParams {
   postId: string;
 }
@@ -15,7 +14,6 @@ export const generatePostShareToken = functions.https.onCall(
   async (
     request: functions.https.CallableRequest<GeneratePostShareTokenParams>
   ) => {
-    // Ensure the user is authenticated
     if (!request.auth) {
       throw new functions.https.HttpsError(
         "failed-precondition",
@@ -27,33 +25,56 @@ export const generatePostShareToken = functions.https.onCall(
     if (!postId) {
       throw new functions.https.HttpsError(
         "invalid-argument",
-        "The function must be called with a valid 'postId'."
+        "Missing required parameter: postId"
       );
     }
 
     const shareToken = uuidv4();
-    const tokenExpiryTimestamp = admin.firestore.Timestamp.fromDate(
-      new Date(Date.now() + 24 * 60 * 60 * 1000)
-    );
-    const tokenExpiryString = tokenExpiryTimestamp.toDate().toISOString();
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // ✅ 24-hour expiry
+    const now = new Date().toISOString();
 
     try {
-      const currentISOTimeString = new Date().toISOString();
+      const postRef = admin.firestore().collection("posts").doc(postId);
+      const docSnap = await postRef.get();
 
-      await admin.firestore().collection("posts").doc(postId).update({
-        "token.sharedToken": shareToken,
-        "token.tokenExpiry": tokenExpiryString,
-        timestamp: currentISOTimeString,
+      if (!docSnap.exists) {
+        throw new functions.https.HttpsError("not-found", "Post not found.");
+      }
+
+      const existingData = docSnap.data();
+      const existingTokens = Array.isArray(existingData?.tokens)
+        ? existingData.tokens
+        : [];
+
+      const updatedTokens = [
+        ...existingTokens,
+        {
+          token: {
+            sharedToken: shareToken,
+            tokenExpiry,
+          },
+        },
+      ];
+
+      await postRef.update({
+        tokens: updatedTokens,
+        timestamp: now,
+        token: admin.firestore.FieldValue.delete(), // ✅ clean up legacy token field
       });
 
-      return { shareToken, tokenExpiry: tokenExpiryString };
+      return {
+        shareToken,
+        tokenExpiry,
+        message: "New token added to tokens[] array.",
+      };
     } catch (error) {
-      console.error("Failed to generate post share token:", error);
+      console.error("Error updating post with share token:", error);
       throw new functions.https.HttpsError(
-        "unknown",
-        "Failed to generate post share token",
+        "internal",
+        "Failed to update post with share token",
         error
       );
     }
   }
 );
+

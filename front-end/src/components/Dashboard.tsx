@@ -35,6 +35,7 @@ import AccountManager from "./AccountManagement/AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
 import {
   collection,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -199,6 +200,51 @@ export const Dashboard = () => {
   // };
 
   // backupAccounts();
+
+// const cleanUpPostTokens = async () => {
+//   try {
+//     const postsSnapshot = await getDocs(collection(db, "posts"));
+//     const updates: Promise<void>[] = [];
+
+//     postsSnapshot.forEach((postDoc) => {
+//       const data = postDoc.data();
+//       let modified = false;
+
+//       // Step 1: Clean up tokens array
+//       const tokens = Array.isArray(data.tokens) ? data.tokens : [];
+//       const cleanedTokens = tokens.map((entry: any) => {
+//         if (entry?.expiry) {
+//           modified = true;
+//           const { expiry, ...rest } = entry;
+//           return rest;
+//         }
+//         return entry;
+//       });
+
+//       // Step 2: Check if top-level `token` exists
+//       const removeLegacyToken = data.token?.sharedToken !== undefined;
+
+//       // Step 3: Prepare updates
+//       const updatePayload: any = {};
+//       if (modified) updatePayload.tokens = cleanedTokens;
+//       if (removeLegacyToken) updatePayload.token = deleteField();
+
+//       if (Object.keys(updatePayload).length > 0) {
+//         const postRef = doc(db, "posts", postDoc.id);
+//         updates.push(updateDoc(postRef, updatePayload));
+//         console.log(`🧼 Cleaned post ${postDoc.id}`);
+//       }
+//     });
+
+//     await Promise.all(updates);
+//     console.log("✅ Finished cleaning all redundant tokens and expiry fields.");
+//   } catch (err) {
+//     console.error("❌ Cleanup failed:", err);
+//   }
+// };
+
+// cleanUpPostTokens();
+
 
   return (
     <div className="dashboard-container">

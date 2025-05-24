@@ -80,6 +80,10 @@ export interface UserType {
 //   | "Meat"
 //   | "Cookies and Pastries"
 
+export interface PostTokenType {
+  token: { sharedToken: string; tokenExpiry?: string };
+}
+
 export interface PostType {
   category: CategoryType | "";
   channel: ChannelType | "";
@@ -101,7 +105,7 @@ export interface PostType {
   hashtags: string[];
   starTags: string[];
   commentCount: number;
-  token: { sharedToken: string; tokenExpiry?: string };
+  tokens: PostTokenType[];
   companyGoalId?: string | null;
   companyGoalDescription?: string | null;
   companyGoalTitle?: string | null;

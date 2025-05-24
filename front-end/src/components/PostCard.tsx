@@ -365,7 +365,7 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.category}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
-            {/* {post.id} */}
+            {post.id}
             <div className="likes-box">
               <button
                 className="like-button"

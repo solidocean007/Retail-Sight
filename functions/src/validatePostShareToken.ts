@@ -5,19 +5,14 @@ if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-// Define the input data type
 interface ValidatePostShareTokenData {
   postId: string;
   token: string;
 }
 
-// Define the post data type (simplified version, adjust according to your Firestore schema)
 interface PostData {
-  token?: {
-    tokenExpiry?: string;
-    sharedToken?: string;
-  };
-  [key: string]: unknown; // Allow other properties as needed
+  tokens?: { token: { sharedToken: string; tokenExpiry?: string } }[];
+  [key: string]: any;
 }
 
 export const validatePostShareToken = functions.https.onCall(
@@ -38,30 +33,31 @@ export const validatePostShareToken = functions.https.onCall(
     try {
       const doc = await postRef.get();
       if (!doc.exists) {
-        console.error(`Post with ID ${postId} does not exist.`);
-        throw new functions.https.HttpsError(
-          "not-found",
-          "Post does not exist."
-        );
+        throw new functions.https.HttpsError("not-found", "Post does not exist.");
       }
 
       const post = doc.data() as PostData;
-      if (!post) {
-        console.error(`Failed to retrieve post data for post ID ${postId}.`);
-        throw new functions.https.HttpsError(
-          "internal",
-          "Failed to retrieve post data."
-        );
+      const now = new Date();
+
+      const originalTokens = Array.isArray(post.tokens) ? post.tokens : [];
+
+      // Separate valid tokens from expired ones
+      const validTokens = originalTokens.filter((t) => {
+        const expiry = t?.token?.tokenExpiry;
+        return expiry && new Date(expiry) > now;
+      });
+
+      const matchingToken = validTokens.find(
+        (t) => t.token.sharedToken === token
+      );
+
+      const isTokenValid = !!matchingToken;
+
+      // If any expired tokens were removed, update the post document
+      if (validTokens.length !== originalTokens.length) {
+        await postRef.update({ tokens: validTokens });
+        console.log(`🧼 Cleaned expired tokens for post ${postId}`);
       }
-
-      const tokenExpiry = post.token?.tokenExpiry
-        ? new Date(post.token.tokenExpiry)
-        : null;
-      const sharedToken = post.token?.sharedToken;
-
-      const currentDateTime = new Date(); // Use server time for comparison
-      const isTokenValid =
-        token === sharedToken && tokenExpiry && currentDateTime < tokenExpiry;
 
       if (!isTokenValid) {
         throw new functions.https.HttpsError(
@@ -70,13 +66,12 @@ export const validatePostShareToken = functions.https.onCall(
         );
       }
 
-      // Return both the post and the token validation status
-      return { valid: isTokenValid, post: { id: doc.id, ...post } };
+      return { valid: true, post: { id: doc.id, ...post } };
     } catch (error) {
       console.error("Error validating post share token:", error);
       throw new functions.https.HttpsError(
         "internal",
-        "An error occurred while validating the post share token."
+        "An error occurred while validating the post share token"
       );
     }
   }

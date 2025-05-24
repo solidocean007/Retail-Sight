@@ -3,11 +3,12 @@ import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../utils/store";
 import { useEffect } from "react";
 import {
-  DocumentChange,
+  // DocumentChange,
   QuerySnapshot,
+  Timestamp,
   collection,
   getDocs,
-  limit,
+  // limit,
   onSnapshot,
   orderBy,
   query,
@@ -29,10 +30,34 @@ import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 
 const usePosts = (
   currentUserCompanyId: string | undefined,
-  POSTS_BATCH_SIZE: number,
+  POSTS_BATCH_SIZE: number
 ) => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+
+  function isFirestoreTimestamp(value: any): value is Timestamp {
+    return value?.toDate instanceof Function;
+  }
+
+  function normalizePost(post: PostWithID): PostWithID {
+    const token = post.token;
+
+    if (!token?.tokenExpiry) {
+      return post;
+    }
+
+    const normalizedToken = isFirestoreTimestamp(token.tokenExpiry)
+      ? {
+          ...token,
+          tokenExpiry: token.tokenExpiry.toDate().toISOString(),
+        }
+      : token;
+
+    return {
+      ...post,
+      token: normalizedToken,
+    };
+  }
 
   useEffect(() => {
     const setupListeners = async () => {
@@ -88,10 +113,13 @@ const usePosts = (
         postsToUpdate.sort(
           (a, b) =>
             new Date(b.displayDate).getTime() -
-            new Date(a.displayDate).getTime(),
+            new Date(a.displayDate).getTime()
         );
         if (postsToUpdate.length > 0) {
-          dispatch(mergeAndSetPosts(postsToUpdate));
+          const normalizedPosts = postsToUpdate.map((post) =>
+            normalizePost(post)
+          );
+          dispatch(mergeAndSetPosts(normalizedPosts));
           postsToUpdate.forEach((post) => updatePostInIndexedDB(post));
         }
 
@@ -108,7 +136,7 @@ const usePosts = (
         collection(db, "posts"),
         where("timestamp", ">", lastSeenTimestamp),
         where("visibility", "==", "public"),
-        orderBy("timestamp", "desc"),
+        orderBy("timestamp", "desc")
       );
       const unsubscribePublic = onSnapshot(qPublic, processDocChanges);
 
@@ -118,7 +146,7 @@ const usePosts = (
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTimestamp),
           where("createdBy.companyId", "==", currentUserCompanyId),
-          orderBy("timestamp", "desc"),
+          orderBy("timestamp", "desc")
         );
         unsubscribeCompany = onSnapshot(qCompany, processDocChanges);
       }
@@ -139,14 +167,22 @@ const usePosts = (
       try {
         const indexedDBPosts = await getPostsFromIndexedDB();
         if (indexedDBPosts.length > 0) {
-          dispatch(mergeAndSetPosts(indexedDBPosts)); // Update Redux store with posts from IndexedDB
+          const normalizedPosts = indexedDBPosts.map((post) =>
+            normalizePost(post)
+          );
+          // dispatch(mergeAndSetPosts(indexedDBPosts));
+          dispatch(mergeAndSetPosts(normalizedPosts));
         } else {
           const action = await dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId }),
+            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
           );
           if (fetchInitialPostsBatch.fulfilled.match(action)) {
             const fetchedPosts = action.payload.posts;
-            dispatch(mergeAndSetPosts(fetchedPosts));
+            const normalizedPosts = fetchedPosts.map((post) =>
+              normalizePost(post)
+            );
+            // dispatch(mergeAndSetPosts(fetchedPosts));
+            dispatch(mergeAndSetPosts(normalizedPosts));
             addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
           }
         }
@@ -160,14 +196,18 @@ const usePosts = (
         const publicPostsQuery = query(
           collection(db, "posts"),
           where("visibility", "==", "public"),
-          orderBy("displayDate", "desc"),
+          orderBy("displayDate", "desc")
           // limit(4)
         );
         const querySnapshot = await getDocs(publicPostsQuery);
         const publicPosts = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }) as PostWithID)
+          .map((doc) =>
+            normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+          )
           .filter((post) => post.visibility === "public");
-        dispatch(mergeAndSetPosts(publicPosts));
+
+        const normalizedPosts = publicPosts.map(normalizePost);
+        dispatch(mergeAndSetPosts(normalizedPosts));
       } catch (error) {
         console.error("Error fetching public posts:", error);
       }
