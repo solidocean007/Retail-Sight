@@ -101,6 +101,7 @@ export interface PostType {
   postedFor?: UserType;
   supplier?: string;
   brands: string[];
+  product?: ProductType[];
   likes?: string[];
   hashtags: string[];
   starTags: string[];
@@ -119,6 +120,17 @@ export interface PostType {
 }
 
 export type PostWithID = PostType & { id: string };
+
+export interface ProductType {
+  companyProductId: string;
+  productName: string;
+  package: string;
+  productType: string;
+  brand?: string;
+  brandFamily?: string;
+  productSupplier?: string;
+  supplierProductNumber?: string;
+}
 
 export interface CommentType {
   commentId?: string;
