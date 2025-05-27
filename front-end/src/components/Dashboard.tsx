@@ -55,6 +55,7 @@ import {
 import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
 import DashMenu from "./DashMenu.tsx";
 import { updatePostsWithFreshAccounts } from "../script.ts";
+import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -250,6 +251,9 @@ export const Dashboard = () => {
         )}
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
+        )}
+        {dashboardMode === "ProductsMode" && (
+          <ProductsManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
         {dashboardMode === "MyGoalsMode" && <MyGoals />}
         {dashboardMode === "UsersMode" && (

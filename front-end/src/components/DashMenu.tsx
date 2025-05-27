@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
 import "./dashMenu.css";
 import { DashboardModeType } from "../utils/types";
+import { Inventory2 } from "@mui/icons-material";
 
 const drawerWidth = 240;
 
@@ -112,6 +113,13 @@ const DashMenu = ({
           >
             <StoreIcon sx={{ mr: 1 }} />
             <ListItemText primary="Accounts" />
+          </ListItemButton>
+          <ListItemButton
+            selected={selectedMode === "ProductsMode"}
+            onClick={() => onMenuClick("ProductsMode")}
+          >
+            <Inventory2 sx={{ mr: 1 }} />
+            <ListItemText primary="Products" />
           </ListItemButton>
           <ListItemButton
             selected={selectedMode === "UsersMode"}

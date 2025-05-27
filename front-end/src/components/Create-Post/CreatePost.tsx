@@ -80,19 +80,15 @@ export const CreatePost = () => {
     useState<CompanyAccountType | null>(null);
 
   const [post, setPost] = useState<PostType>({
-    // accountNumber: "",
     category: selectedCategory,
     channel: selectedChannel,
     description: "",
     imageUrl: "",
     account: null,
-    // selectedStore: "",
-    // storeNumber: "", // this was stil in the object but i just now commented it out
     state: "",
     city: "",
     visibility: "company",
     supplier: "",
-    brands: [],
     displayDate: "",
     timestamp: "",
     totalCaseCount: 0,
@@ -112,7 +108,6 @@ export const CreatePost = () => {
     hashtags: [""],
     starTags: [""],
     commentCount: 0,
-    token: { sharedToken: "", tokenExpiry: "" },
   });
 
   const [selectedCompanyMission, setSelectedCompanyMission] =

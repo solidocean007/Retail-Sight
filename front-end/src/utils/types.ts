@@ -100,7 +100,7 @@ export interface PostType {
   createdBy: UserType;
   postedFor?: UserType;
   supplier?: string;
-  brands: string[];
+  brands?: string[];
   product?: ProductType[];
   likes?: string[];
   hashtags: string[];
@@ -131,6 +131,11 @@ export interface ProductType {
   productSupplier?: string;
   supplierProductNumber?: string;
 }
+
+export interface ProductTypeWithId extends ProductType {
+  id: string;
+}
+
 
 export interface CommentType {
   commentId?: string;
@@ -374,6 +379,7 @@ export type DashboardModeType =
   | "TeamMode"
   | "UsersMode"
   | "AccountsMode"
+  | "ProductsMode"
   | "MyGoalsMode"
   | "ProfileMode"
   | "IntegrationMode"

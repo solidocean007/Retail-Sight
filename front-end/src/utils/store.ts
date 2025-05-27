@@ -16,6 +16,7 @@ import missionsSlice from "../Slices/missionsSlice";
 import companySlice from "../Slices/companySlice"
 import companyGoalsSlice from "../Slices/companyGoalsSlice"
 import galloGoalsSlice from "../Slices/galloGoalsSlice"
+import productsSlice from "../Slices/productsSlice"
 
 const store = configureStore({
   reducer: {
@@ -32,6 +33,7 @@ const store = configureStore({
     company: companySlice,
     companyGoals: companyGoalsSlice,  // 🆕 First-party company goals
     galloGoals: galloGoalsSlice,      // 🆕 Third-party Gallo goals
+    companyProducts: productsSlice,
   },
   devTools: process.env.NODE_ENV !== "production",
 });
