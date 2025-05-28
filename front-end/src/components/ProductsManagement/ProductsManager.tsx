@@ -23,24 +23,41 @@ import { ProductType, ProductTypeWithId } from "../../utils/types";
 import getCompanyProductsId from "../../utils/helperFunctions/getCompanyProductsId";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
-import { fetchProductsThunk, setAllProducts } from "../../Slices/productsSlice";
+import {
+  fetchProductsThunk,
+  selectAllProducts,
+  setAllProducts,
+} from "../../Slices/productsSlice";
 import "./styles/productsManager.css";
 import CustomConfirmation from "../CustomConfirmation";
 import ProductForm from "./ProdutForm";
 import UploadProductTemplateModal from "./UploadProductTemplate";
+import {
+  getProductsForAdd,
+  getProductsForUpdate,
+} from "./utils/getProductsForUpdate";
 
-const ProductsManager: React.FC = () => {
+interface ProductManagerProps {
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+}
+
+const ProductsManager: React.FC<ProductManagerProps> = ({
+  isAdmin,
+  isSuperAdmin,
+}) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
-  const [companyProducts, setCompanyProducts] = useState<ProductTypeWithId[]>([]);
+  const companyProducts = useSelector(selectAllProducts) as ProductTypeWithId[];
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showProductTemplateModal, setShowProductTemplateModal] = useState(false);
+  const [showProductTemplateModal, setShowProductTemplateModal] =
+    useState(false);
   const [openAddProductModal, setOpenAddProductModal] = useState(false);
-  const [newProduct, setNewProduct] = useState<ProductType>({
+  const [newCompanyProduct, setNewCompanyProduct] = useState<ProductType>({
     companyProductId: "",
     productName: "",
     package: "",
@@ -50,6 +67,59 @@ const ProductsManager: React.FC = () => {
     productSupplier: "",
     supplierProductNumber: "",
   });
+
+  const handleAddProducts = async (file: File) => {
+    try {
+      const parsed = await getProductsForAdd(file);
+      if (!user?.companyId || parsed.length === 0) return;
+
+      const productsId = await getCompanyProductsId(user.companyId);
+      if (!productsId) return;
+
+      const snapshot = await getDoc(doc(db, "products", productsId));
+      const current = (snapshot.data()?.products || []) as ProductType[];
+
+      await updateDoc(doc(db, "products", productsId), {
+        products: [...current, ...parsed],
+      });
+
+      dispatch(fetchProductsThunk(user.companyId));
+      dispatch(showMessage("Products uploaded successfully"));
+    } catch (err) {
+      console.error("Upload error:", err);
+      dispatch(showMessage("Error uploading products"));
+    }
+  };
+
+  const handleUpdateProducts = async (file: File) => {
+    try {
+      const parsed = await getProductsForUpdate(file, companyProducts);
+      if (!user?.companyId || parsed.length === 0) return;
+
+      const productsId = await getCompanyProductsId(user.companyId);
+      if (!productsId) return;
+
+      const snapshot = await getDoc(doc(db, "products", productsId));
+      const existing = (snapshot.data()?.products || []) as ProductType[];
+
+      const updatedList = existing.map((existingProduct) => {
+        const match = parsed.find(
+          (p) => p.companyProductId === existingProduct.companyProductId
+        );
+        return match ? { ...existingProduct, ...match } : existingProduct;
+      });
+
+      await updateDoc(doc(db, "products", productsId), {
+        products: updatedList,
+      });
+
+      dispatch(fetchProductsThunk(user.companyId));
+      dispatch(showMessage("Products updated successfully"));
+    } catch (err) {
+      console.error("Update error:", err);
+      dispatch(showMessage("Error updating products"));
+    }
+  };
 
   useEffect(() => {
     if (user?.companyId) {
@@ -64,7 +134,8 @@ const ProductsManager: React.FC = () => {
       if (!productsId) return;
 
       const snapshot = await getDoc(doc(db, "products", productsId));
-      const currentProducts = (snapshot.data()?.products || []) as ProductType[];
+      const currentProducts = (snapshot.data()?.products ||
+        []) as ProductType[];
       const updated = [...currentProducts, product];
 
       await updateDoc(doc(db, "products", productsId), { products: updated });
@@ -77,16 +148,113 @@ const ProductsManager: React.FC = () => {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" mb={2}>Products Manager</Typography>
+      <Typography variant="h4" mb={2}>
+        Products Manager
+      </Typography>
 
-      <Box className="account-management-buttons">
-        <Button variant="contained" sx={{ mb: 2 }} onClick={() => setShowProductTemplateModal(true)}>
-          View Upload File Template
-        </Button>
-        <Button variant="contained" sx={{ mb: 2 }} onClick={() => setOpenAddProductModal(true)}>
-          Quickly Add Single Product
-        </Button>
-      </Box>
+      <div>
+        {(isAdmin || isSuperAdmin) && (
+          <>
+            <Box
+              className="product-instructions"
+              sx={{ textAlign: "left", mb: 2 }}
+            >
+              <Typography variant="body1" gutterBottom>
+                <strong>Instructions:</strong>
+              </Typography>
+              <Typography variant="body2">
+                <strong>1.</strong> Upload a <code>.csv</code> or{" "}
+                <code>.xlsx</code> file to add products in bulk.
+              </Typography>
+              <Typography variant="body2">
+                <strong>2.</strong> Click <strong>"Add more Products"</strong>{" "}
+                to append new products without overwriting.
+              </Typography>
+              <Typography variant="body2">
+                <strong>3.</strong> Use <strong>"Update Products"</strong> to
+                update existing products by product ID or name.
+              </Typography>
+              <Typography variant="body2">
+                <strong>4.</strong> Use{" "}
+                <strong>"Quickly Add Single Product"</strong> to manually add
+                one product.
+              </Typography>
+            </Box>
+
+            <div className="product-management-buttons">
+              <Button
+                variant="contained"
+                sx={{ marginBottom: 2 }}
+                onClick={() => setShowProductTemplateModal(true)}
+              >
+                View Upload File Template
+              </Button>
+
+              <Tooltip title="Upload CSV or Excel to create products">
+                <Button
+                  variant="contained"
+                  component="label"
+                  sx={{ marginBottom: 2 }}
+                >
+                  {companyProducts.length
+                    ? "Add more Products"
+                    : "Upload Initial Products"}
+                  <input
+                    hidden
+                    type="file"
+                    accept=".csv, .xlsx, .xls"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAddProducts(file);
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+
+              <Tooltip title="Upload CSV or Excel to update existing products">
+                <Button
+                  variant="contained"
+                  component="label"
+                  sx={{ marginBottom: 2 }}
+                  disabled={companyProducts.length === 0}
+                >
+                  Update Products
+                  <input
+                    hidden
+                    type="file"
+                    accept=".csv, .xlsx, .xls"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUpdateProducts(file);
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+
+              <Button
+                variant="contained"
+                onClick={() => {
+                  console.log("click");
+                  setNewCompanyProduct({
+                    companyProductId: "",
+                    productName: "",
+                    package: "",
+                    productType: "",
+                    brand: "",
+                    brandFamily: "",
+                    productSupplier: "",
+                    supplierProductNumber: "",
+                  });
+                  setOpenAddProductModal(true);
+                }}
+                sx={{ marginBottom: 2 }}
+              >
+                Quickly Add Single Product
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
 
       {isLoading ? (
         <CircularProgress />
@@ -158,12 +326,18 @@ const ProductsManager: React.FC = () => {
                     <TableCell>
                       {editIndex === index ? (
                         <>
-                          <Button onClick={() => setEditIndex(null)}>Save</Button>
-                          <Button onClick={() => setEditIndex(null)}>Cancel</Button>
+                          <Button onClick={() => setEditIndex(null)}>
+                            Save
+                          </Button>
+                          <Button onClick={() => setEditIndex(null)}>
+                            Cancel
+                          </Button>
                         </>
                       ) : (
                         <>
-                          <Button onClick={() => setEditIndex(index)}>Edit</Button>
+                          <Button onClick={() => setEditIndex(index)}>
+                            Edit
+                          </Button>
                           <Button color="error" onClick={() => {}}>
                             Delete
                           </Button>
@@ -180,7 +354,7 @@ const ProductsManager: React.FC = () => {
 
       <ProductForm
         isOpen={openAddProductModal}
-        initialData={newProduct}
+        initialData={newCompanyProduct}
         onSubmit={(data) => {
           setOpenAddProductModal(false);
           handleManualSubmit(data);
@@ -205,4 +379,3 @@ const ProductsManager: React.FC = () => {
 };
 
 export default ProductsManager;
-
