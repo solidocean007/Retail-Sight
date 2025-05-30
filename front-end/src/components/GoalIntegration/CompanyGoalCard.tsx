@@ -71,8 +71,6 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     [goal, effectiveAccounts]
   );
 
-  console.log(accountsWithStatus);
-
   const filteredAccountsWithStatus = useMemo(
     () =>
       accountsWithStatus.filter((account) => {
@@ -99,7 +97,6 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   };
 
   const total = effectiveAccounts.length;
-  console.log("total", total);
 
   const submitted = useMemo(() => {
     if (!goal.submittedPosts) return 0;

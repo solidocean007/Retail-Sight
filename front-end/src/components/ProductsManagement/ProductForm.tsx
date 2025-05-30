@@ -1,4 +1,3 @@
-// ProductForm.tsx
 import React, { useState } from "react";
 import { ProductType } from "../../utils/types";
 import "../AccountManagement/styles/accountForm.css";
@@ -30,11 +29,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
       brandFamily: "",
       productSupplier: "",
       supplierProductNumber: "",
-    },
+    }
   );
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -45,96 +44,114 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.productName) {
+    if (!formData.productName.trim()) {
       alert("Product name is required.");
       return;
     }
     onSubmit(formData);
   };
 
-return (
-  <div className="account-form-backdrop">
-    <form onSubmit={handleSubmit} className="account-form">
-      <h2>
-        {editMode ? "Edit Product" : "Add New Product"}
-      </h2>
+  return (
+    <div className="account-form-backdrop">
+      <form onSubmit={handleSubmit} className="account-form">
+        <h2>{editMode ? "Edit Product" : "Add New Product"}</h2>
 
-      <label>
-        Product Name:
-        <input
-          name="productName"
-          value={formData.productName}
-          onChange={handleChange}
-          required
-        />
-      </label>
+        <label>
+          Company Product ID:
+          <input
+            name="companyProductId"
+            maxLength={10}
+            value={formData.companyProductId}
+            onChange={handleChange}
+            placeholder="e.g. PROD123"
+            required={!editMode} // required only when adding
+          />
+        </label>
 
-      <label>
-        Package:
-        <input
-          name="package"
-          value={formData.package}
-          onChange={handleChange}
-        />
-      </label>
+        <label>
+          Product Name:
+          <input
+            name="productName"
+            maxLength={50}
+            value={formData.productName}
+            onChange={handleChange}
+            required
+          />
+        </label>
 
-      <label>
-        Product Type:
-        <input
-          name="productType"
-          value={formData.productType}
-          onChange={handleChange}
-        />
-      </label>
+        <label>
+          Package:
+          <input
+            name="package"
+            maxLength={50}
+            value={formData.package}
+            onChange={handleChange}
+          />
+        </label>
 
-      <label>
-        Brand:
-        <input
-          name="brand"
-          value={formData.brand || ""}
-          onChange={handleChange}
-        />
-      </label>
+        <label>
+          Product Type:
+          <input
+            name="productType"
+            maxLength={50}
+            value={formData.productType}
+            onChange={handleChange}
+          />
+        </label>
 
-      <label>
-        Brand Family:
-        <input
-          name="brandFamily"
-          value={formData.brandFamily || ""}
-          onChange={handleChange}
-        />
-      </label>
+        <label>
+          Brand:
+          <input
+            name="brand"
+            maxLength={50}
+            value={formData.brand || ""}
+            onChange={handleChange}
+          />
+        </label>
 
-      <label>
-        Product Supplier:
-        <input
-          name="productSupplier"
-          value={formData.productSupplier || ""}
-          onChange={handleChange}
-        />
-      </label>
+        <label>
+          Brand Family:
+          <input
+            name="brandFamily"
+            maxLength={50}
+            value={formData.brandFamily || ""}
+            onChange={handleChange}
+          />
+        </label>
 
-      <label>
-        Supplier Product Number:
-        <input
-          name="supplierProductNumber"
-          value={formData.supplierProductNumber || ""}
-          onChange={handleChange}
-        />
-      </label>
+        <label>
+          Product Supplier:
+          <input
+            name="productSupplier"
+            maxLength={50}
+            value={formData.productSupplier || ""}
+            onChange={handleChange}
+          />
+        </label>
 
-      <div className="form-actions">
-        <button type="submit">{editMode ? "Save Changes" : "Save"}</button>
-        {onCancel && (
-          <button type="button" onClick={onCancel}>
-            Cancel
+        <label>
+          Supplier Product Number:
+          <input
+            name="supplierProductNumber"
+            maxLength={50}
+            value={formData.supplierProductNumber || ""}
+            onChange={handleChange}
+          />
+        </label>
+
+        <div className="form-actions">
+          <button type="submit">
+            {editMode ? "Save Changes" : "Save"}
           </button>
-        )}
-      </div>
-    </form>
-  </div>
-);
-
+          {onCancel && (
+            <button type="button" onClick={onCancel}>
+              Cancel
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
 };
 
 export default ProductForm;

@@ -16,7 +16,17 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { db } from "../../utils/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  CollectionReference,
+  deleteDoc,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  writeBatch,
+} from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { ProductType, ProductTypeWithId } from "../../utils/types";
@@ -24,7 +34,6 @@ import getCompanyProductsId from "../../utils/helperFunctions/getCompanyProducts
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 import {
-  fetchProductsThunk,
   selectAllProducts,
   setAllProducts,
 } from "../../Slices/productsSlice";
@@ -36,6 +45,7 @@ import {
   getProductsForAdd,
   getProductsForUpdate,
 } from "./utils/getProductsForUpdate";
+import { fetchCompanyProducts } from "../../thunks/productThunks";
 
 interface ProductManagerProps {
   isAdmin: boolean;
@@ -58,6 +68,12 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editedProduct, setEditedProduct] = useState<ProductTypeWithId | null>(
+    null
+  );
+  const [originalProduct, setOriginalProduct] =
+    useState<ProductTypeWithId | null>(null);
+
   const [showProductTemplateModal, setShowProductTemplateModal] =
     useState(false);
   const [openAddProductModal, setOpenAddProductModal] = useState(false);
@@ -81,11 +97,12 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     supplierProductNumber: "",
   });
 
-  useEffect(() => {
-    if (user?.companyId) {
-      dispatch(fetchProductsThunk(user.companyId));
-    }
-  }, [dispatch, user?.companyId]);
+useEffect(() => {
+  if (user?.companyId) {
+    dispatch(fetchCompanyProducts(user.companyId)); // ✅ updated thunk
+  }
+}, [dispatch, user?.companyId]);
+
 
   const handleAddProducts = async (file: File) => {
     try {
@@ -108,17 +125,18 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     try {
       setIsSubmitting(true);
 
-      const productsId = await getCompanyProductsId(user!.companyId);
-      if (!productsId) return;
+      const companyId = user!.companyId;
+      const itemsCollectionRef = collection(db, "products", companyId, "items");
+      const batch = writeBatch(db);
 
-      const snapshot = await getDoc(doc(db, "products", productsId));
-      const current = (snapshot.data()?.products || []) as ProductType[];
+      for (const product of products) {
+        const newDocRef = doc(itemsCollectionRef); // Auto-generated ID
+        batch.set(newDocRef, product);
+      }
 
-      await updateDoc(doc(db, "products", productsId), {
-        products: [...current, ...products],
-      });
+      await batch.commit();
 
-      dispatch(fetchProductsThunk(user!.companyId));
+      dispatch(fetchCompanyProducts(companyId));
       dispatch(showMessage("Products uploaded successfully"));
     } catch (err) {
       console.error("Upload error:", err);
@@ -162,27 +180,19 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   const executeUpdateProducts = async (parsed: ProductType[]) => {
     try {
       setIsSubmitting(true);
-      const productsId = await getCompanyProductsId(user!.companyId);
-      if (!productsId) return;
 
-      const snapshot = await getDoc(doc(db, "products", productsId));
-      const existing = (snapshot.data()?.products || []) as ProductType[];
+      const companyId = user!.companyId;
+      const itemsCollectionRef = collection(db, "products", companyId, "items");
+      const batch = writeBatch(db);
 
-      const existingMap = new Map(existing.map((p) => [p.companyProductId, p]));
+      for (const product of parsed) {
+        const docRef = doc(itemsCollectionRef, product.companyProductId);
+        batch.set(docRef, product, { merge: true });
+      }
 
-      const merged = [
-        ...existing.filter(
-          (p) =>
-            !parsed.find((np) => np.companyProductId === p.companyProductId)
-        ),
-        ...parsed,
-      ];
+      await batch.commit();
 
-      await updateDoc(doc(db, "products", productsId), {
-        products: merged,
-      });
-
-      dispatch(fetchProductsThunk(user!.companyId));
+      dispatch(fetchCompanyProducts(companyId));
       dispatch(showMessage("Products updated successfully"));
     } catch (err) {
       console.error("Error updating products:", err);
@@ -211,49 +221,17 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   const executeDelete = async (productId: string) => {
     try {
       setIsSubmitting(true);
-      const productsId = await getCompanyProductsId(user!.companyId);
-      if (!productsId) return;
 
-      const snapshot = await getDoc(doc(db, "products", productsId));
-      const current = (snapshot.data()?.products || []) as ProductType[];
+      const companyId = user!.companyId;
+      const productDocRef = doc(db, "products", companyId, "items", productId);
 
-      const updated = current.filter((p) => p.companyProductId !== productId);
-      await updateDoc(doc(db, "products", productsId), { products: updated });
+      await deleteDoc(productDocRef);
 
-      dispatch(fetchProductsThunk(user!.companyId));
+      dispatch(fetchCompanyProducts(companyId));
       dispatch(showMessage("Product deleted successfully"));
     } catch (err) {
       console.error("Delete error:", err);
       dispatch(showMessage("Error deleting product."));
-    } finally {
-      setIsSubmitting(false);
-      setShowConfirm(false);
-      setProductToDelete(null);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!productToDelete || !user?.companyId) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const productsId = await getCompanyProductsId(user.companyId);
-      if (!productsId) return;
-
-      const snapshot = await getDoc(doc(db, "products", productsId));
-      const current = (snapshot.data()?.products || []) as ProductType[];
-
-      const updated = current.filter(
-        (p) => p.companyProductId !== productToDelete.companyProductId
-      );
-
-      await updateDoc(doc(db, "products", productsId), { products: updated });
-      dispatch(fetchProductsThunk(user.companyId));
-      dispatch(showMessage("Product deleted."));
-    } catch (err) {
-      console.error("Delete error:", err);
-      dispatch(showMessage("Failed to delete product."));
     } finally {
       setIsSubmitting(false);
       setShowConfirm(false);
@@ -270,20 +248,56 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     setShowConfirm(true);
   };
 
+  const handleInlineSave = (index: number) => {
+    const product = companyProducts[index];
+    setConfirmMessage(`Save changes to "${product.productName}"?`);
+    setConfirmAction(() => () => executeInlineSave(product));
+    setShowConfirm(true);
+  };
+
+  const executeInlineSave = async (product: ProductTypeWithId) => {
+    try {
+      setIsSubmitting(true);
+      const companyId = user!.companyId;
+
+      const productDocRef = doc(
+        db,
+        "products",
+        companyId,
+        "items",
+        product.companyProductId
+      );
+
+      await setDoc(productDocRef, product); // Overwrites existing product with updated data
+
+      dispatch(fetchCompanyProducts(companyId));
+      dispatch(showMessage("Changes saved."));
+    } catch (err) {
+      console.error("Error saving changes:", err);
+      dispatch(showMessage("Failed to save changes."));
+    } finally {
+      setIsSubmitting(false);
+      setShowConfirm(false);
+      setEditIndex(null);
+    }
+  };
+
   const executeManualSubmit = async (product: ProductType) => {
     try {
       setIsSubmitting(true);
-      const productsId = await getCompanyProductsId(user!.companyId);
-      if (!productsId) return;
+      const companyId = user!.companyId;
 
-      const snapshot = await getDoc(doc(db, "products", productsId));
-      const currentProducts = (snapshot.data()?.products ||
-        []) as ProductType[];
+      const productDocRef = doc(
+        db,
+        "products",
+        companyId,
+        "items",
+        product.companyProductId
+      );
 
-      const updated = [...currentProducts, product];
+      await setDoc(productDocRef, product); // Creates or overwrites the product
 
-      await updateDoc(doc(db, "products", productsId), { products: updated });
-      dispatch(fetchProductsThunk(user!.companyId));
+      dispatch(fetchCompanyProducts(companyId));
       dispatch(showMessage("Product added successfully"));
     } catch (err) {
       console.error("Error saving product:", err);
@@ -419,77 +433,136 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
               ) : (
                 companyProducts.map((product, index) => (
                   <TableRow key={product.id || index}>
-                    <TableCell>
-                      {editIndex === index ? (
-                        <TextField
-                          value={product.productName}
-                          onChange={(e) => {
-                            const updated = [...companyProducts];
-                            updated[index].productName = e.target.value;
-                            dispatch(setAllProducts(updated));
-                          }}
-                        />
-                      ) : (
-                        product.productName
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editIndex === index ? (
-                        <TextField
-                          value={product.package}
-                          onChange={(e) => {
-                            const updated = [...companyProducts];
-                            updated[index].package = e.target.value;
-                            dispatch(setAllProducts(updated));
-                          }}
-                        />
-                      ) : (
-                        product.package
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editIndex === index ? (
-                        <TextField
-                          value={product.productType}
-                          onChange={(e) => {
-                            const updated = [...companyProducts];
-                            updated[index].productType = e.target.value;
-                            dispatch(setAllProducts(updated));
-                          }}
-                        />
-                      ) : (
-                        product.productType
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editIndex === index ? (
-                        <>
-                          <Button onClick={() => setEditIndex(null)}>
+                    {editIndex === index ? (
+                      <>
+                        <TableCell>
+                          <TextField
+                            value={editedProduct?.productName || ""}
+                            onChange={(e) =>
+                              setEditedProduct((prev) =>
+                                prev
+                                  ? { ...prev, productName: e.target.value }
+                                  : null
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            value={editedProduct?.package || ""}
+                            onChange={(e) =>
+                              setEditedProduct((prev) =>
+                                prev
+                                  ? { ...prev, package: e.target.value }
+                                  : null
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            value={editedProduct?.productType || ""}
+                            onChange={(e) =>
+                              setEditedProduct((prev) =>
+                                prev
+                                  ? { ...prev, productType: e.target.value }
+                                  : null
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            value={editedProduct?.brand || ""}
+                            onChange={(e) =>
+                              setEditedProduct((prev) =>
+                                prev ? { ...prev, brand: e.target.value } : null
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            value={editedProduct?.brandFamily || ""}
+                            onChange={(e) =>
+                              setEditedProduct((prev) =>
+                                prev
+                                  ? { ...prev, brandFamily: e.target.value }
+                                  : null
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            value={editedProduct?.productSupplier || ""}
+                            onChange={(e) =>
+                              setEditedProduct((prev) =>
+                                prev
+                                  ? { ...prev, productSupplier: e.target.value }
+                                  : null
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            value={editedProduct?.supplierProductNumber || ""}
+                            onChange={(e) =>
+                              setEditedProduct((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      supplierProductNumber: e.target.value,
+                                    }
+                                  : null
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            onClick={() => handleInlineSave(index)}
+                            disabled={
+                              JSON.stringify(originalProduct) ===
+                              JSON.stringify(editedProduct)
+                            }
+                          >
                             Save
                           </Button>
                           <Button onClick={() => setEditIndex(null)}>
                             Cancel
                           </Button>
-                        </>
-                      ) : (
-                        <>
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell>{product.productName}</TableCell>
+                        <TableCell>{product.package}</TableCell>
+                        <TableCell>{product.productType}</TableCell>
+                        <TableCell>{product.brand}</TableCell>
+                        <TableCell>{product.brandFamily}</TableCell>
+                        <TableCell>{product.productSupplier}</TableCell>
+                        <TableCell>{product.supplierProductNumber}</TableCell>
+                        <TableCell>
                           <Button
-                            className="account-edit-button"
-                            onClick={() => setEditIndex(index)}
+                            onClick={() => {
+                              setEditIndex(index);
+                              setEditedProduct({ ...product });
+                              setOriginalProduct({ ...product });
+                            }}
                           >
                             Edit
                           </Button>
                           <Button
                             color="error"
-                            onClick={() =>
-                              handleDelete(product.companyProductId)
-                            }
+                            onClick={() => handleDelete(product.id)}
                           >
                             Delete
                           </Button>
-                        </>
-                      )}
-                    </TableCell>
+                        </TableCell>
+                      </>
+                    )}
                   </TableRow>
                 ))
               )}
