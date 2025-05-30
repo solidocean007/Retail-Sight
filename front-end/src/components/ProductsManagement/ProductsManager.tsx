@@ -310,7 +310,6 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     }
   };
 
-  console.log("Company Products:", companyProducts);
 
   return (
     <Box className="account-manager-container">
