@@ -19,7 +19,7 @@ interface UploadProductTemplateModalProps {
 
 const mockProducts = [
   {
-    companyProductId: "P1001",
+    companyProductId: "1001",
     productName: "Mountain Spring Water 24pk",
     package: "24 x 16.9oz Bottles",
     productType: "Water",
@@ -29,7 +29,7 @@ const mockProducts = [
     supplierProductNumber: "BR12345",
   },
   {
-    companyProductId: "P1002",
+    companyProductId: "1002",
     productName: "",
     package: "",
     productType: "",
@@ -39,7 +39,7 @@ const mockProducts = [
     supplierProductNumber: "",
   },
   {
-    companyProductId: "P1003",
+    companyProductId: "1003",
     productName: "Sunburst Soda 12oz",
     package: "12 x 12oz Cans",
     productType: "Soda",

@@ -28,9 +28,9 @@ import {
   selectAllProducts,
   setAllProducts,
 } from "../../Slices/productsSlice";
-import "./styles/productsManager.css";
+import "../AccountManagement/styles/accountsManager.css";
 import CustomConfirmation from "../CustomConfirmation";
-import ProductForm from "./ProdutForm";
+import ProductForm from "./ProductForm";
 import UploadProductTemplateModal from "./UploadProductTemplate";
 import {
   getProductsForAdd,
@@ -52,11 +52,24 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [productToDelete, setProductToDelete] =
+    useState<ProductTypeWithId | null>(null);
   const [confirmMessage, setConfirmMessage] = useState("");
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProductTemplateModal, setShowProductTemplateModal] =
     useState(false);
   const [openAddProductModal, setOpenAddProductModal] = useState(false);
+  const [pendingAddProducts, setPendingAddProducts] = useState<ProductType[]>(
+    []
+  );
+  const [pendingUpdateProducts, setPendingUpdateProducts] = useState<
+    ProductType[]
+  >([]);
+  const [pendingManualProduct, setPendingManualProduct] =
+    useState<ProductType | null>(null);
+
   const [newCompanyProduct, setNewCompanyProduct] = useState<ProductType>({
     companyProductId: "",
     productName: "",
@@ -68,26 +81,52 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     supplierProductNumber: "",
   });
 
+  useEffect(() => {
+    if (user?.companyId) {
+      dispatch(fetchProductsThunk(user.companyId));
+    }
+  }, [dispatch, user?.companyId]);
+
   const handleAddProducts = async (file: File) => {
     try {
       const parsed = await getProductsForAdd(file);
       if (!user?.companyId || parsed.length === 0) return;
 
-      const productsId = await getCompanyProductsId(user.companyId);
+      setPendingAddProducts(parsed);
+      setConfirmMessage(
+        `You're about to upload ${parsed.length} new product(s). Continue?`
+      );
+      setConfirmAction(() => () => executeAddProducts(parsed));
+      setShowConfirm(true);
+    } catch (err) {
+      console.error("Parsing error:", err);
+      dispatch(showMessage("Error parsing uploaded products."));
+    }
+  };
+
+  const executeAddProducts = async (products: ProductType[]) => {
+    try {
+      setIsSubmitting(true);
+
+      const productsId = await getCompanyProductsId(user!.companyId);
       if (!productsId) return;
 
       const snapshot = await getDoc(doc(db, "products", productsId));
       const current = (snapshot.data()?.products || []) as ProductType[];
 
       await updateDoc(doc(db, "products", productsId), {
-        products: [...current, ...parsed],
+        products: [...current, ...products],
       });
 
-      dispatch(fetchProductsThunk(user.companyId));
+      dispatch(fetchProductsThunk(user!.companyId));
       dispatch(showMessage("Products uploaded successfully"));
     } catch (err) {
       console.error("Upload error:", err);
       dispatch(showMessage("Error uploading products"));
+    } finally {
+      setShowConfirm(false);
+      setIsSubmitting(false);
+      setPendingAddProducts([]);
     }
   };
 
@@ -96,69 +135,176 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
       const parsed = await getProductsForUpdate(file, companyProducts);
       if (!user?.companyId || parsed.length === 0) return;
 
-      const productsId = await getCompanyProductsId(user.companyId);
+      // Check for truly new items not in current Firestore list
+      const currentIds = new Set(
+        companyProducts.map((p) => p.companyProductId)
+      );
+      const newItems = parsed.filter(
+        (p) => !currentIds.has(p.companyProductId)
+      );
+      const updates = parsed.filter((p) => currentIds.has(p.companyProductId));
+
+      const updateCount = updates.length;
+      const newCount = newItems.length;
+
+      setPendingUpdateProducts(parsed);
+      setConfirmMessage(
+        `You're updating ${updateCount} existing product(s) and adding ${newCount} new product(s). Continue?`
+      );
+      setConfirmAction(() => () => executeUpdateProducts(parsed));
+      setShowConfirm(true);
+    } catch (err) {
+      console.error("Update parsing error:", err);
+      dispatch(showMessage("Error preparing product updates."));
+    }
+  };
+
+  const executeUpdateProducts = async (parsed: ProductType[]) => {
+    try {
+      setIsSubmitting(true);
+      const productsId = await getCompanyProductsId(user!.companyId);
       if (!productsId) return;
 
       const snapshot = await getDoc(doc(db, "products", productsId));
       const existing = (snapshot.data()?.products || []) as ProductType[];
 
-      const updatedList = existing.map((existingProduct) => {
-        const match = parsed.find(
-          (p) => p.companyProductId === existingProduct.companyProductId
-        );
-        return match ? { ...existingProduct, ...match } : existingProduct;
-      });
+      const existingMap = new Map(existing.map((p) => [p.companyProductId, p]));
+
+      const merged = [
+        ...existing.filter(
+          (p) =>
+            !parsed.find((np) => np.companyProductId === p.companyProductId)
+        ),
+        ...parsed,
+      ];
 
       await updateDoc(doc(db, "products", productsId), {
-        products: updatedList,
+        products: merged,
       });
 
-      dispatch(fetchProductsThunk(user.companyId));
+      dispatch(fetchProductsThunk(user!.companyId));
       dispatch(showMessage("Products updated successfully"));
     } catch (err) {
-      console.error("Update error:", err);
-      dispatch(showMessage("Error updating products"));
+      console.error("Error updating products:", err);
+      dispatch(showMessage("Error during product update"));
+    } finally {
+      setShowConfirm(false);
+      setIsSubmitting(false);
+      setPendingUpdateProducts([]);
     }
   };
 
-  useEffect(() => {
-    if (user?.companyId) {
-      dispatch(fetchProductsThunk(user.companyId));
-    }
-  }, [dispatch, user?.companyId]);
+  const handleDelete = (productId: string) => {
+    const product = companyProducts.find(
+      (p) => p.companyProductId === productId
+    );
+    if (!product) return;
 
-  const handleManualSubmit = async (product: ProductType) => {
-    if (!product.productName || !user?.companyId) return;
+    setProductToDelete(product);
+    setConfirmMessage(
+      `Are you sure you want to delete "${product.productName}"?`
+    );
+    setConfirmAction(() => () => executeDelete(productId));
+    setShowConfirm(true);
+  };
+
+  const executeDelete = async (productId: string) => {
+    try {
+      setIsSubmitting(true);
+      const productsId = await getCompanyProductsId(user!.companyId);
+      if (!productsId) return;
+
+      const snapshot = await getDoc(doc(db, "products", productsId));
+      const current = (snapshot.data()?.products || []) as ProductType[];
+
+      const updated = current.filter((p) => p.companyProductId !== productId);
+      await updateDoc(doc(db, "products", productsId), { products: updated });
+
+      dispatch(fetchProductsThunk(user!.companyId));
+      dispatch(showMessage("Product deleted successfully"));
+    } catch (err) {
+      console.error("Delete error:", err);
+      dispatch(showMessage("Error deleting product."));
+    } finally {
+      setIsSubmitting(false);
+      setShowConfirm(false);
+      setProductToDelete(null);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!productToDelete || !user?.companyId) return;
+
+    setIsSubmitting(true);
+
     try {
       const productsId = await getCompanyProductsId(user.companyId);
       if (!productsId) return;
 
       const snapshot = await getDoc(doc(db, "products", productsId));
-      const currentProducts = (snapshot.data()?.products ||
-        []) as ProductType[];
-      const updated = [...currentProducts, product];
+      const current = (snapshot.data()?.products || []) as ProductType[];
+
+      const updated = current.filter(
+        (p) => p.companyProductId !== productToDelete.companyProductId
+      );
 
       await updateDoc(doc(db, "products", productsId), { products: updated });
       dispatch(fetchProductsThunk(user.companyId));
+      dispatch(showMessage("Product deleted."));
+    } catch (err) {
+      console.error("Delete error:", err);
+      dispatch(showMessage("Failed to delete product."));
+    } finally {
+      setIsSubmitting(false);
+      setShowConfirm(false);
+      setProductToDelete(null);
+    }
+  };
+
+  const handleManualSubmit = (product: ProductType) => {
+    if (!product.productName || !user?.companyId) return;
+
+    setPendingManualProduct(product);
+    setConfirmMessage(`Add "${product.productName}" to your product list?`);
+    setConfirmAction(() => () => executeManualSubmit(product));
+    setShowConfirm(true);
+  };
+
+  const executeManualSubmit = async (product: ProductType) => {
+    try {
+      setIsSubmitting(true);
+      const productsId = await getCompanyProductsId(user!.companyId);
+      if (!productsId) return;
+
+      const snapshot = await getDoc(doc(db, "products", productsId));
+      const currentProducts = (snapshot.data()?.products ||
+        []) as ProductType[];
+
+      const updated = [...currentProducts, product];
+
+      await updateDoc(doc(db, "products", productsId), { products: updated });
+      dispatch(fetchProductsThunk(user!.companyId));
+      dispatch(showMessage("Product added successfully"));
     } catch (err) {
       console.error("Error saving product:", err);
       dispatch(showMessage("Error saving product."));
+    } finally {
+      setIsSubmitting(false);
+      setShowConfirm(false);
+      setPendingManualProduct(null);
     }
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" mb={2}>
+    <Box className="account-manager-container">
+      <Typography variant="h4" className="account-header-title" mb={2}>
         Products Manager
       </Typography>
 
       <div>
         {(isAdmin || isSuperAdmin) && (
           <>
-            <Box
-              className="product-instructions"
-              sx={{ textAlign: "left", mb: 2 }}
-            >
+            <Box className="account-instructions">
               <Typography variant="body1" gutterBottom>
                 <strong>Instructions:</strong>
               </Typography>
@@ -168,34 +314,29 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
               </Typography>
               <Typography variant="body2">
                 <strong>2.</strong> Click <strong>"Add more Products"</strong>{" "}
-                to append new products without overwriting.
+                to append new products.
               </Typography>
               <Typography variant="body2">
                 <strong>3.</strong> Use <strong>"Update Products"</strong> to
-                update existing products by product ID or name.
+                update by product ID.
               </Typography>
               <Typography variant="body2">
                 <strong>4.</strong> Use{" "}
                 <strong>"Quickly Add Single Product"</strong> to manually add
-                one product.
+                one.
               </Typography>
             </Box>
 
-            <div className="product-management-buttons">
+            <div className="account-management-buttons">
               <Button
-                variant="contained"
-                sx={{ marginBottom: 2 }}
+                className="account-upload-button"
                 onClick={() => setShowProductTemplateModal(true)}
               >
                 View Upload File Template
               </Button>
 
               <Tooltip title="Upload CSV or Excel to create products">
-                <Button
-                  variant="contained"
-                  component="label"
-                  sx={{ marginBottom: 2 }}
-                >
+                <Button className="account-upload-button" component="label">
                   {companyProducts.length
                     ? "Add more Products"
                     : "Upload Initial Products"}
@@ -213,9 +354,8 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
 
               <Tooltip title="Upload CSV or Excel to update existing products">
                 <Button
-                  variant="contained"
+                  className="account-upload-button"
                   component="label"
-                  sx={{ marginBottom: 2 }}
                   disabled={companyProducts.length === 0}
                 >
                   Update Products
@@ -232,9 +372,8 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
               </Tooltip>
 
               <Button
-                variant="contained"
+                className="account-submit-button"
                 onClick={() => {
-                  console.log("click");
                   setNewCompanyProduct({
                     companyProductId: "",
                     productName: "",
@@ -247,7 +386,6 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
                   });
                   setOpenAddProductModal(true);
                 }}
-                sx={{ marginBottom: 2 }}
               >
                 Quickly Add Single Product
               </Button>
@@ -260,7 +398,7 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
         <CircularProgress />
       ) : (
         <TableContainer component={Paper}>
-          <Table>
+          <Table className="account-table">
             <TableHead>
               <TableRow>
                 <TableCell>Product Name</TableCell>
@@ -335,10 +473,18 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
                         </>
                       ) : (
                         <>
-                          <Button onClick={() => setEditIndex(index)}>
+                          <Button
+                            className="account-edit-button"
+                            onClick={() => setEditIndex(index)}
+                          >
                             Edit
                           </Button>
-                          <Button color="error" onClick={() => {}}>
+                          <Button
+                            color="error"
+                            onClick={() =>
+                              handleDelete(product.companyProductId)
+                            }
+                          >
                             Delete
                           </Button>
                         </>
@@ -364,8 +510,11 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
 
       <CustomConfirmation
         isOpen={showConfirm}
-        onClose={() => setShowConfirm(false)}
-        onConfirm={() => {}}
+        onClose={() => {
+          setShowConfirm(false);
+          setProductToDelete(null);
+        }}
+        onConfirm={confirmAction} // ✅ More flexible
         message={confirmMessage}
         loading={isSubmitting}
       />
