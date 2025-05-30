@@ -29,13 +29,16 @@ import {
 } from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
-import { ProductType, ProductTypeWithId } from "../../utils/types";
+import { ProductType } from "../../utils/types";
 import getCompanyProductsId from "../../utils/helperFunctions/getCompanyProductsId";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 import {
+  addProduct,
+  deleteProduct,
   selectAllProducts,
   setAllProducts,
+  updateProduct,
 } from "../../Slices/productsSlice";
 import "../AccountManagement/styles/accountsManager.css";
 import CustomConfirmation from "../CustomConfirmation";
@@ -58,21 +61,21 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
-  const companyProducts = useSelector(selectAllProducts) as ProductTypeWithId[];
+  const companyProducts = useSelector(selectAllProducts) as ProductType[];
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [productToDelete, setProductToDelete] =
-    useState<ProductTypeWithId | null>(null);
+  const [productToDelete, setProductToDelete] = useState<ProductType | null>(
+    null
+  );
   const [confirmMessage, setConfirmMessage] = useState("");
   const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editedProduct, setEditedProduct] = useState<ProductTypeWithId | null>(
+  const [editedProduct, setEditedProduct] = useState<ProductType | null>(null);
+  const [originalProduct, setOriginalProduct] = useState<ProductType | null>(
     null
   );
-  const [originalProduct, setOriginalProduct] =
-    useState<ProductTypeWithId | null>(null);
 
   const [showProductTemplateModal, setShowProductTemplateModal] =
     useState(false);
@@ -97,12 +100,11 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     supplierProductNumber: "",
   });
 
-useEffect(() => {
-  if (user?.companyId) {
-    dispatch(fetchCompanyProducts(user.companyId)); // ✅ updated thunk
-  }
-}, [dispatch, user?.companyId]);
-
+  useEffect(() => {
+    if (user?.companyId) {
+      dispatch(fetchCompanyProducts(user.companyId)); // ✅ updated thunk
+    }
+  }, [dispatch, user?.companyId]);
 
   const handleAddProducts = async (file: File) => {
     try {
@@ -226,8 +228,7 @@ useEffect(() => {
       const productDocRef = doc(db, "products", companyId, "items", productId);
 
       await deleteDoc(productDocRef);
-
-      dispatch(fetchCompanyProducts(companyId));
+      dispatch(deleteProduct(productId));
       dispatch(showMessage("Product deleted successfully"));
     } catch (err) {
       console.error("Delete error:", err);
@@ -255,7 +256,7 @@ useEffect(() => {
     setShowConfirm(true);
   };
 
-  const executeInlineSave = async (product: ProductTypeWithId) => {
+  const executeInlineSave = async (product: ProductType) => {
     try {
       setIsSubmitting(true);
       const companyId = user!.companyId;
@@ -268,9 +269,9 @@ useEffect(() => {
         product.companyProductId
       );
 
-      await setDoc(productDocRef, product); // Overwrites existing product with updated data
+      await setDoc(productDocRef, product);
+      dispatch(updateProduct(product)); // ✅ Optimistic update
 
-      dispatch(fetchCompanyProducts(companyId));
       dispatch(showMessage("Changes saved."));
     } catch (err) {
       console.error("Error saving changes:", err);
@@ -295,9 +296,9 @@ useEffect(() => {
         product.companyProductId
       );
 
-      await setDoc(productDocRef, product); // Creates or overwrites the product
+      await setDoc(productDocRef, product);
+      dispatch(addProduct(product)); // ✅ Optimistic update
 
-      dispatch(fetchCompanyProducts(companyId));
       dispatch(showMessage("Product added successfully"));
     } catch (err) {
       console.error("Error saving product:", err);
@@ -308,6 +309,8 @@ useEffect(() => {
       setPendingManualProduct(null);
     }
   };
+
+  console.log("Company Products:", companyProducts);
 
   return (
     <Box className="account-manager-container">
@@ -415,9 +418,14 @@ useEffect(() => {
           <Table className="account-table">
             <TableHead>
               <TableRow>
+                <TableCell>Product Number</TableCell>
                 <TableCell>Product Name</TableCell>
                 <TableCell>Package</TableCell>
                 <TableCell>Product Type</TableCell>
+                <TableCell>Brand</TableCell>
+                <TableCell>Brand Family</TableCell>
+                <TableCell>Supplier</TableCell>
+                <TableCell>Supplier Number</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -432,9 +440,24 @@ useEffect(() => {
                 </TableRow>
               ) : (
                 companyProducts.map((product, index) => (
-                  <TableRow key={product.id || index}>
+                  <TableRow key={product.companyProductId || index}>
                     {editIndex === index ? (
                       <>
+                        <TableCell>
+                          <TextField
+                            value={editedProduct?.companyProductId || ""}
+                            onChange={(e) =>
+                              setEditedProduct((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      companyProductId: e.target.value,
+                                    }
+                                  : null
+                              )
+                            }
+                          />
+                        </TableCell>
                         <TableCell>
                           <TextField
                             value={editedProduct?.productName || ""}
@@ -537,6 +560,8 @@ useEffect(() => {
                       </>
                     ) : (
                       <>
+                        <TableCell>{product.companyProductId}</TableCell>
+
                         <TableCell>{product.productName}</TableCell>
                         <TableCell>{product.package}</TableCell>
                         <TableCell>{product.productType}</TableCell>
@@ -556,7 +581,9 @@ useEffect(() => {
                           </Button>
                           <Button
                             color="error"
-                            onClick={() => handleDelete(product.id)}
+                            onClick={() =>
+                              handleDelete(product.companyProductId)
+                            }
                           >
                             Delete
                           </Button>

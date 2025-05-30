@@ -1,11 +1,11 @@
 // productsSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ProductTypeWithId } from "../utils/types";
+import { ProductType } from "../utils/types";
 import { RootState } from "../utils/store";
 import { fetchCompanyProducts } from "../thunks/productThunks";
 
 interface ProductsState {
-  allProducts: ProductTypeWithId[];
+  allProducts: ProductType[];
   loading: boolean;
   error: string | null;
 }
@@ -20,20 +20,20 @@ const productsSlice = createSlice({
   name: "products",
   initialState,
   reducers: {
-    setAllProducts: (state, action: PayloadAction<ProductTypeWithId[]>) => {
+    setAllProducts: (state, action: PayloadAction<ProductType[]>) => {
       state.allProducts = action.payload;
     },
-    addProduct: (state, action: PayloadAction<ProductTypeWithId>) => {
+    addProduct: (state, action: PayloadAction<ProductType>) => {
       state.allProducts.push(action.payload);
     },
-    updateProduct: (state, action: PayloadAction<ProductTypeWithId>) => {
-      const index = state.allProducts.findIndex((p) => p.id === action.payload.id);
+    updateProduct: (state, action: PayloadAction<ProductType>) => {
+      const index = state.allProducts.findIndex((p) => p.companyProductId=== action.payload.companyProductId);
       if (index !== -1) {
         state.allProducts[index] = action.payload;
       }
     },
     deleteProduct: (state, action: PayloadAction<string>) => {
-      state.allProducts = state.allProducts.filter((p) => p.id !== action.payload);
+      state.allProducts = state.allProducts.filter((p) => p.companyProductId !== action.payload);
     },
   },
   extraReducers: (builder) => {

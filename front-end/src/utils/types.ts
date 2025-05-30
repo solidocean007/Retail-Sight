@@ -132,11 +132,6 @@ export interface ProductType {
   supplierProductNumber?: string;
 }
 
-export interface ProductTypeWithId extends ProductType {
-  id: string;
-}
-
-
 export interface CommentType {
   commentId?: string;
   text: string;

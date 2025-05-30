@@ -138,8 +138,6 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     );
   }, [matchedAccounts, salesRouteNum]);
 
-  console.log("salesRouteNumsForGoal", salesRouteNumsForGoal); // this logs 2
-
   const usersForGoal = useMemo(() => {
     const routeFiltered = companyUsers.filter((user) =>
       salesRouteNumsForGoal.includes(user.salesRouteNum || "")

@@ -9,20 +9,17 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { ProductTypeWithId, ProductType } from "../utils/types";
+import { ProductType } from "../utils/types";
 
 export const fetchCompanyProducts = createAsyncThunk<
-  ProductTypeWithId[],
+  ProductType[],
   string,
   { rejectValue: string }
 >("products/fetchCompanyProducts", async (companyId, { rejectWithValue }) => {
   try {
     const itemsRef = collection(db, "products", companyId, "items");
     const snapshot = await getDocs(itemsRef);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as ProductType),
-    }));
+    return snapshot.docs.map((doc) => doc.data() as ProductType);
   } catch (error) {
     console.error("Error fetching products:", error);
     return rejectWithValue("Failed to fetch products.");
@@ -50,7 +47,7 @@ export const updateCompanyProduct = createAsyncThunk<
 >("products/updateCompanyProduct", async ({ companyId, productId, product }, { rejectWithValue }) => {
   try {
     const productRef = doc(db, "products", companyId, "items", productId);
-    await updateDoc(productRef, product); //  Index signature for type '`${string}.${string}`' is missing in type 'ProductType'.t
+    await updateDoc(productRef, { ...product });
   } catch (error) {
     console.error("Error updating product:", error);
     return rejectWithValue("Failed to update product.");
