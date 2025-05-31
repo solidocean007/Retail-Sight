@@ -4,27 +4,14 @@ import {
   Box,
   Button,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  TextField,
   Tooltip,
-  CircularProgress,
 } from "@mui/material";
 import { db } from "../../utils/firebase";
 import {
-  addDoc,
   collection,
-  CollectionReference,
   deleteDoc,
   doc,
-  getDoc,
   setDoc,
-  updateDoc,
   writeBatch,
 } from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
@@ -37,7 +24,6 @@ import {
   addProduct,
   deleteProduct,
   selectAllProducts,
-  setAllProducts,
   updateProduct,
 } from "../../Slices/productsSlice";
 import "../AccountManagement/styles/accountsManager.css";
@@ -64,33 +50,26 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   const user = useSelector(selectUser);
   const companyProducts = useSelector(selectAllProducts) as ProductType[];
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [_editIndex, setEditIndex] = useState<number | null>(null); // editIndex is unused
   const [showConfirm, setShowConfirm] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<ProductType | null>(
+  const [_productToDelete, setProductToDelete] = useState<ProductType | null>(
     null
-  );
+  ); // productToDelete isnt used
   const [confirmMessage, setConfirmMessage] = useState("");
   const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editedProduct, setEditedProduct] = useState<ProductType | null>(null);
-  const [originalProduct, setOriginalProduct] = useState<ProductType | null>(
-    null
-  );
-
   const [showProductTemplateModal, setShowProductTemplateModal] =
     useState(false);
   const [openAddProductModal, setOpenAddProductModal] = useState(false);
-  const [pendingAddProducts, setPendingAddProducts] = useState<ProductType[]>(
+  const [_pendingAddProducts, setPendingAddProducts] = useState<ProductType[]>(
     []
-  );
+  ); // pendingAddProducts is unused
   const [pendingUpdateProducts, setPendingUpdateProducts] = useState<
     ProductType[]
-  >([]);
+  >([]); // pendingUpdateProducts is unused
   const [pendingManualProduct, setPendingManualProduct] =
-    useState<ProductType | null>(null);
+    useState<ProductType | null>(null); // pendingManualProduct is unused
 
   const [newCompanyProduct, setNewCompanyProduct] = useState<ProductType>({
     companyProductId: "",
@@ -103,8 +82,6 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     supplierProductNumber: "",
   });
 
-  const itemsPerPage = 15;
-
   useEffect(() => {
     if (user?.companyId) {
       dispatch(fetchCompanyProducts(user.companyId)); // ✅ updated thunk
@@ -114,7 +91,10 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   const handleAddProducts = async (file: File) => {
     try {
       const parsed = await getProductsForAdd(file);
-      if (!user?.companyId || parsed.length === 0) return;
+      if (!user?.companyId || parsed.length === 0) {
+        dispatch(showMessage("No valid products found in file."));
+        return;
+      }
 
       setPendingAddProducts(parsed);
       setConfirmMessage(
@@ -122,9 +102,9 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
       );
       setConfirmAction(() => () => executeAddProducts(parsed));
       setShowConfirm(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Parsing error:", err);
-      dispatch(showMessage("Error parsing uploaded products."));
+      dispatch(showMessage(err.message || "Error parsing uploaded products."));
     }
   };
 
@@ -178,9 +158,9 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
       );
       setConfirmAction(() => () => executeUpdateProducts(parsed));
       setShowConfirm(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Update parsing error:", err);
-      dispatch(showMessage("Error preparing product updates."));
+      dispatch(showMessage(err.message || "Error preparing product updates."));
     }
   };
 
@@ -211,19 +191,20 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     }
   };
 
-  const handleDelete = (productId: string) => {
-    const product = companyProducts.find(
-      (p) => p.companyProductId === productId
-    );
-    if (!product) return;
+  // const handleDelete = (productId: string) => { // unused
+  //   // declared but never read
+  //   const product = companyProducts.find(
+  //     (p) => p.companyProductId === productId
+  //   );
+  //   if (!product) return;
 
-    setProductToDelete(product);
-    setConfirmMessage(
-      `Are you sure you want to delete "${product.productName}"?`
-    );
-    setConfirmAction(() => () => executeDelete(productId));
-    setShowConfirm(true);
-  };
+  //   setProductToDelete(product);
+  //   setConfirmMessage(
+  //     `Are you sure you want to delete "${product.productName}"?`
+  //   );
+  //   setConfirmAction(() => () => executeDelete(productId));
+  //   setShowConfirm(true);
+  // };
 
   const executeDelete = async (productId: string) => {
     try {
@@ -254,12 +235,13 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     setShowConfirm(true);
   };
 
-  const handleInlineSave = (index: number) => {
-    const product = companyProducts[index];
-    setConfirmMessage(`Save changes to "${product.productName}"?`);
-    setConfirmAction(() => () => executeInlineSave(product));
-    setShowConfirm(true);
-  };
+  // const handleInlineSave = (index: number) => {
+  //   // declared but never read
+  //   const product = companyProducts[index];
+  //   setConfirmMessage(`Save changes to "${product.productName}"?`);
+  //   setConfirmAction(() => () => executeInlineSave(product));
+  //   setShowConfirm(true);
+  // };
 
   const executeInlineSave = async (product: ProductType) => {
     try {

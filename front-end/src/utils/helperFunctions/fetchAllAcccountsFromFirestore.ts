@@ -21,7 +21,6 @@ export async function fetchAllAccountsFromFirestore(
     }
 
     const accountsData = accountsSnapshot.data();
-    console.log("Fetched accounts data:", accountsData);
 
     // Return the accounts array or an empty array if not present
     return accountsData.accounts || [];
