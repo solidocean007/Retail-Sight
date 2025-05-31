@@ -49,6 +49,7 @@ import {
   getProductsForUpdate,
 } from "./utils/getProductsForUpdate";
 import { fetchCompanyProducts } from "../../thunks/productThunks";
+import ProductTable from "./ProductTable";
 
 interface ProductManagerProps {
   isAdmin: boolean;
@@ -62,6 +63,8 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyProducts = useSelector(selectAllProducts) as ProductType[];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -99,6 +102,8 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     productSupplier: "",
     supplierProductNumber: "",
   });
+
+  const itemsPerPage = 15;
 
   useEffect(() => {
     if (user?.companyId) {
@@ -310,13 +315,11 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     }
   };
 
-
   return (
     <Box className="account-manager-container">
       <Typography variant="h4" className="account-header-title" mb={2}>
         Products Manager
       </Typography>
-
       <div>
         {(isAdmin || isSuperAdmin) && (
           <>
@@ -409,194 +412,30 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
           </>
         )}
       </div>
-
-      {isLoading ? (
-        <CircularProgress />
-      ) : (
-        <TableContainer component={Paper}>
-          <Table className="account-table">
-            <TableHead>
-              <TableRow>
-                <TableCell>Product Number</TableCell>
-                <TableCell>Product Name</TableCell>
-                <TableCell>Package</TableCell>
-                <TableCell>Product Type</TableCell>
-                <TableCell>Brand</TableCell>
-                <TableCell>Brand Family</TableCell>
-                <TableCell>Supplier</TableCell>
-                <TableCell>Supplier Number</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {companyProducts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    <Typography variant="subtitle1" color="textSecondary">
-                      No products found.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                companyProducts.map((product, index) => (
-                  <TableRow key={product.companyProductId || index}>
-                    {editIndex === index ? (
-                      <>
-                        <TableCell>
-                          <TextField
-                            value={editedProduct?.companyProductId || ""}
-                            onChange={(e) =>
-                              setEditedProduct((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      companyProductId: e.target.value,
-                                    }
-                                  : null
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            value={editedProduct?.productName || ""}
-                            onChange={(e) =>
-                              setEditedProduct((prev) =>
-                                prev
-                                  ? { ...prev, productName: e.target.value }
-                                  : null
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            value={editedProduct?.package || ""}
-                            onChange={(e) =>
-                              setEditedProduct((prev) =>
-                                prev
-                                  ? { ...prev, package: e.target.value }
-                                  : null
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            value={editedProduct?.productType || ""}
-                            onChange={(e) =>
-                              setEditedProduct((prev) =>
-                                prev
-                                  ? { ...prev, productType: e.target.value }
-                                  : null
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            value={editedProduct?.brand || ""}
-                            onChange={(e) =>
-                              setEditedProduct((prev) =>
-                                prev ? { ...prev, brand: e.target.value } : null
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            value={editedProduct?.brandFamily || ""}
-                            onChange={(e) =>
-                              setEditedProduct((prev) =>
-                                prev
-                                  ? { ...prev, brandFamily: e.target.value }
-                                  : null
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            value={editedProduct?.productSupplier || ""}
-                            onChange={(e) =>
-                              setEditedProduct((prev) =>
-                                prev
-                                  ? { ...prev, productSupplier: e.target.value }
-                                  : null
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            value={editedProduct?.supplierProductNumber || ""}
-                            onChange={(e) =>
-                              setEditedProduct((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      supplierProductNumber: e.target.value,
-                                    }
-                                  : null
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            onClick={() => handleInlineSave(index)}
-                            disabled={
-                              JSON.stringify(originalProduct) ===
-                              JSON.stringify(editedProduct)
-                            }
-                          >
-                            Save
-                          </Button>
-                          <Button onClick={() => setEditIndex(null)}>
-                            Cancel
-                          </Button>
-                        </TableCell>
-                      </>
-                    ) : (
-                      <>
-                        <TableCell>{product.companyProductId}</TableCell>
-
-                        <TableCell>{product.productName}</TableCell>
-                        <TableCell>{product.package}</TableCell>
-                        <TableCell>{product.productType}</TableCell>
-                        <TableCell>{product.brand}</TableCell>
-                        <TableCell>{product.brandFamily}</TableCell>
-                        <TableCell>{product.productSupplier}</TableCell>
-                        <TableCell>{product.supplierProductNumber}</TableCell>
-                        <TableCell>
-                          <Button
-                            onClick={() => {
-                              setEditIndex(index);
-                              setEditedProduct({ ...product });
-                              setOriginalProduct({ ...product });
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            color="error"
-                            onClick={() =>
-                              handleDelete(product.companyProductId)
-                            }
-                          >
-                            Delete
-                          </Button>
-                        </TableCell>
-                      </>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
+      <ProductTable
+        products={companyProducts}
+        height={500}
+        rowHeight={60}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        onEditSave={(product) => {
+          setConfirmMessage(`Save changes to "${product.productName}"?`);
+          setConfirmAction(() => () => executeInlineSave(product));
+          setShowConfirm(true);
+        }}
+        onDelete={(productId) => {
+          const product = companyProducts.find(
+            (p) => p.companyProductId === productId
+          );
+          if (!product) return;
+          setProductToDelete(product);
+          setConfirmMessage(
+            `Are you sure you want to delete "${product.productName}"?`
+          );
+          setConfirmAction(() => () => executeDelete(productId));
+          setShowConfirm(true);
+        }}
+      />
       <ProductForm
         isOpen={openAddProductModal}
         initialData={newCompanyProduct}
@@ -606,7 +445,6 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
         }}
         onCancel={() => setOpenAddProductModal(false)}
       />
-
       <CustomConfirmation
         isOpen={showConfirm}
         onClose={() => {
@@ -617,7 +455,6 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
         message={confirmMessage}
         loading={isSubmitting}
       />
-
       <UploadProductTemplateModal
         open={showProductTemplateModal}
         onClose={() => setShowProductTemplateModal(false)}
