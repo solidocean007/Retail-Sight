@@ -1,7 +1,7 @@
 /* App.css — Global Layout & Button Styling */
 
 .MuiInputBase-root {
-  margin: 8px;
+  margin: 4px;
   /* width: 50ch; */
   /* background-color: var(--input-background); */
   color: var(--input-text-color);
@@ -52,7 +52,7 @@ input[type="password"] {
   box-sizing: border-box;
   max-width: 100%;
   width: 100%;
-  padding: 20px; /* Adjust as necessary */
+  padding: 5px; /* Adjust as necessary */
   /* border: 1px solid #ccc; */
   outline: none;
   transition:

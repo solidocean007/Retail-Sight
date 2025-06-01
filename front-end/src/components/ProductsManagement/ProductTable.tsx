@@ -1,9 +1,10 @@
 // ProductTable.tsx
 import React, { useState } from "react";
-import { Button, TextField, Box } from "@mui/material";
+import { Button, TextField, Box, useMediaQuery, FormControl, InputLabel, OutlinedInput } from "@mui/material";
 import { FixedSizeList as List } from "react-window";
 import { ProductType } from "../../utils/types";
 import "./styles/productTable.css";
+import MobileProductCard from "./MobileProductCard";
 
 interface ProductTableProps {
   products: ProductType[];
@@ -18,12 +19,15 @@ interface ProductTableProps {
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
   height = 500,
-  rowHeight = 60,
+  rowHeight,
   searchTerm = "",
   setSearchTerm = () => {},
   onEditSave,
   onDelete,
 }) => {
+  const isMobile = useMediaQuery("(max-width:1200px)");
+  const computedRowHeight = rowHeight || (isMobile ? 400 : 80);
+
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editedProduct, setEditedProduct] = useState<ProductType | null>(null);
 
@@ -49,12 +53,25 @@ const ProductTable: React.FC<ProductTableProps> = ({
     const product = filteredProducts[index];
     const isEditing = index === editIndex;
 
+    if (isMobile) {
+      return (
+        <MobileProductCard
+          product={product}
+          onEdit={() => {
+            setEditIndex(index);
+            setEditedProduct({ ...product });
+          }}
+          onDelete={() => onDelete(product.companyProductId)}
+        />
+      );
+    }
+
     return (
-      <Box style={style} className="product-table-row">
+      <Box style={style} className="product-row">
         {isEditing ? (
           <>
             <TextField
-              className="account-small-cell"
+              className="product-cell product-column-id"
               value={editedProduct?.companyProductId || ""}
               onChange={(e) =>
                 setEditedProduct((prev) =>
@@ -63,7 +80,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
               }
             />
             <TextField
-              className="account-cell name-cell"
+              className="product-cell product-column-name"
               value={editedProduct?.productName || ""}
               onChange={(e) =>
                 setEditedProduct((prev) =>
@@ -72,7 +89,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
               }
             />
             <TextField
-              className="account-cell address-cell"
+              className="product-cell product-column-package"
               value={editedProduct?.package || ""}
               onChange={(e) =>
                 setEditedProduct((prev) =>
@@ -81,7 +98,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
               }
             />
             <TextField
-              className="account-small-cell"
+              className="product-cell product-column-brand"
               value={editedProduct?.brand || ""}
               onChange={(e) =>
                 setEditedProduct((prev) =>
@@ -90,7 +107,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
               }
             />
             <TextField
-              className="account-cell submitted-at-cell"
+              className="product-cell product-column-family"
               value={editedProduct?.brandFamily || ""}
               onChange={(e) =>
                 setEditedProduct((prev) =>
@@ -99,7 +116,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
               }
             />
             <TextField
-              className="account-small-cell"
+              className="product-cell product-column-supplier"
               value={editedProduct?.productSupplier || ""}
               onChange={(e) =>
                 setEditedProduct((prev) =>
@@ -108,46 +125,63 @@ const ProductTable: React.FC<ProductTableProps> = ({
               }
             />
             <TextField
-              className="account-small-cell"
+              className="product-cell product-column-number"
               value={editedProduct?.supplierProductNumber || ""}
               onChange={(e) =>
                 setEditedProduct((prev) =>
                   prev
-                    ? { ...prev, supplierProductNumber: e.target.value }
+                    ? {
+                        ...prev,
+                        supplierProductNumber: e.target.value,
+                      }
                     : null
                 )
               }
             />
-            <Button onClick={handleSave}>Save</Button>
-            <Button onClick={() => setEditIndex(null)}>Cancel</Button>
+            <div className="product-cell product-column-actions">
+              <Button onClick={handleSave}>Save</Button>
+              <Button onClick={() => setEditIndex(null)}>Cancel</Button>
+            </div>
           </>
         ) : (
           <>
-            <div className="product-small-cell">{product.companyProductId}</div>
-            <div className="product-cell">{product.productName}</div>
-            <div className="product-cell">{product.package}</div>
-            <div className="product-small-cell">{product.brand}</div>
-            <div className="product-cell">
+            <div className="product-cell product-column-id">
+              {product.companyProductId}
+            </div>
+            <div className="product-cell product-column-name">
+              {product.productName}
+            </div>
+            <div className="product-cell product-column-package">
+              {product.package}
+            </div>
+            <div className="product-cell product-column-brand">
+              {product.brand}
+            </div>
+            <div className="product-cell product-column-family">
               {product.brandFamily}
             </div>
-            <div className="product-small-cell">{product.productSupplier}</div>
-            <div className="product-small-cell">
+            <div className="product-cell product-column-supplier">
+              {product.productSupplier}
+            </div>
+            <div className="product-cell product-column-number">
               {product.supplierProductNumber}
             </div>
-            <Button
-              onClick={() => {
-                setEditIndex(index);
-                setEditedProduct({ ...product });
-              }}
-            >
-              Edit
-            </Button>
-            <Button
-              color="error"
-              onClick={() => onDelete(product.companyProductId)}
-            >
-              Delete
-            </Button>
+            <div className="product-cell product-column-actions">
+              <Button
+                onClick={() => {
+                  setEditIndex(index);
+                  setEditedProduct({ ...product });
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                color="error"
+                onClick={() => onDelete(product.companyProductId)}
+              >
+                Delete
+              </Button>
+            </div>
           </>
         )}
       </Box>
@@ -156,28 +190,41 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
   return (
     <div className="product-list-wrapper">
-      <TextField
-        label="Search products"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+      <FormControl
         fullWidth
-        sx={{ mb: 2 }}
-      />
+        sx={{ mb: 2, width: isMobile ? "60%" : "300px" }}
+        variant="outlined"
+      >
+        <InputLabel shrink>Search products</InputLabel>
+        <OutlinedInput
+          notched
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          label="Search products"
+        />
+      </FormControl>
+
       <div className="product-list-scrollable">
-        <div className="product-table-header">
-          <div className="product-small-cell">Product ID</div>
-          <div className="product-cell">Product Name</div>
-          <div className="product-cell">Package</div>
-          <div className="product-small-cell">Brand</div>
-          <div className="product-small-cell">Brand Family</div>
-          <div className="product-cell">Supplier</div>
-          <div className="product-small-cell">Supplier Product #</div>
-          <div className="product-small-cell">Actions</div>
-        </div>
+        {!isMobile && (
+          <div className="product-table-header">
+            <div className="product-cell product-column-id">#</div>
+            <div className="product-cell product-column-name">Product Name</div>
+            <div className="product-cell product-column-package">Package</div>
+            <div className="product-cell product-column-brand">Brand</div>
+            <div className="product-cell product-column-family">
+              Brand Family
+            </div>
+            <div className="product-cell product-column-supplier">Supplier</div>
+            <div className="product-cell product-column-number">
+              Supplier Product #
+            </div>
+            <div className="product-cell product-column-actions">Actions</div>
+          </div>
+        )}
         <List
-          height={Math.min(filteredProducts.length * rowHeight, height)}
+          height={Math.min(filteredProducts.length * computedRowHeight, height)}
           itemCount={filteredProducts.length}
-          itemSize={rowHeight}
+          itemSize={computedRowHeight}
           width="100%"
         >
           {Row}

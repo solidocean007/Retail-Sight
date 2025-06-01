@@ -297,6 +297,8 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     }
   };
 
+  const isMobile = window.innerWidth <= 768; // Adjust based on your design breakpoints;
+  const rowHeight = isMobile ? 180 : 60; // Adjust row height based on mobile view
   return (
     <Box className="account-manager-container">
       <Typography variant="h4" className="account-header-title" mb={2}>
@@ -397,7 +399,7 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
       <ProductTable
         products={companyProducts}
         height={500}
-        rowHeight={60}
+        rowHeight = {rowHeight}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         onEditSave={(product) => {

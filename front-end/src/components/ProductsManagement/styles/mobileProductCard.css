@@ -1,0 +1,54 @@
+.mobile-product-card {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 6px 12px;
+  padding: 12px;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background-color: var(--white);
+  border: 1px solid var(--card-outline);
+}
+
+.mobile-product-label {
+  font-weight: 600;
+  text-align: left;
+  padding: 6px;
+  background-color: var(--gray-100);
+  border-radius: 4px 0 0 4px;
+}
+
+.mobile-product-value {
+  padding: 6px;
+  background-color: var(--gray-50);
+  border-radius: 0 4px 4px 0;
+  font-weight: 400;
+  color: var(--text-color);
+  word-break: break-word;
+}
+
+.mobile-product-actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 8px;
+}
+
+.mobile-product-actions button {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+}
+
+.mobile-product-actions .edit-btn {
+  background-color: var(--primary-blue);
+  color: var(--white);
+}
+
+.mobile-product-actions .product-delete-btn {
+  background-color: red;
+  color: var(--white);
+}
