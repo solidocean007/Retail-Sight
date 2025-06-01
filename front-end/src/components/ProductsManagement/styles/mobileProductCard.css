@@ -43,7 +43,7 @@
   cursor: pointer;
 }
 
-.mobile-product-actions .edit-btn {
+.mobile-product-actions .product-edit-btn {
   background-color: var(--primary-blue);
   color: var(--white);
 }

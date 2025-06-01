@@ -167,20 +167,22 @@ const ProductTable: React.FC<ProductTableProps> = ({
               {product.supplierProductNumber}
             </div>
             <div className="product-cell product-column-actions">
-              <Button
+              <button
+                className="product-edit-btn"  
                 onClick={() => {
                   setEditIndex(index);
                   setEditedProduct({ ...product });
                 }}
               >
                 Edit
-              </Button>
-              <Button
+              </button>
+              <button
+                className="product-delete-btn"
                 color="error"
                 onClick={() => onDelete(product.companyProductId)}
               >
                 Delete
-              </Button>
+              </button>
             </div>
           </>
         )}

@@ -35,7 +35,7 @@ const MobileProductCard: React.FC<Props> = ({ product, onEdit, onDelete }) => {
       <div className="mobile-product-label">supplier id:</div>
       <div className="mobile-product-value">{product.supplierProductNumber}</div>
       <div className="mobile-product-actions">
-        <button className="edit-btn" onClick={onEdit}>edit</button>
+        <button className="product-edit-btn" onClick={onEdit}>edit</button>
         <button className="product-delete-btn" onClick={onDelete}>delete</button>
       </div>
     </div>
