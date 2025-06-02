@@ -12,7 +12,7 @@ const useScrollToPost = (
 ) => {
   const [searchParams] = useSearchParams();
   const postId = searchParams.get("postId");
-
+  console.log("scrolled");
   useEffect(() => {
     if (!postId || !listRef.current || displayPosts.length === 0) return;
 

@@ -5,6 +5,7 @@ const useScrollToTopOnChange = (
   listRef: RefObject<VariableSizeList>,
   activePostSet: string, // This will trigger the effect when the active post set changes
 ) => {
+  console.log('useScrollToTopOnChange')
   useEffect(() => {
     // Always scroll to the top when the active post set changes
     listRef.current?.scrollTo(0);

@@ -1,5 +1,5 @@
 // ActivityFeed.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeList as List, VariableSizeList } from "react-window";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
@@ -64,6 +64,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   setIsSearchActive,
   clearInput,
 }) => {
+  const lastScrollTopRef = useRef(0);
+
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
@@ -75,7 +77,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
 
   // const listRef = useRef<List>(null);
-  useScrollToPost(listRef, displayPosts, AD_INTERVAL);
+  // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
   // hook to load posts
@@ -103,7 +105,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     // Reset the list when posts finish loading or screen size changes
     const resetList = () => {
-      listRef.current?.resetAfterIndex(0, true);
+      console.log("resetList");
+      // listRef.current?.resetAfterIndex(0, true);
     };
 
     resetList();
@@ -114,9 +117,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }, 200);
 
     return () => clearTimeout(timeout);
-  }, [displayPosts.length, windowWidth, listHeight]);
+  }, [windowWidth, listHeight]);
 
-  // Function to calculate list height
+  // Function to calculate list height does this need to be reintroduced?
   const calculateListHeight = () => {
     if (window.visualViewport) {
       return window.visualViewport.height * 0.95;
@@ -126,15 +129,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   useEffect(() => {
     // Whenever activePostSet changes, scroll to the top of the list
-    listRef.current?.scrollTo(0);
+    // listRef.current?.scrollTo(0);
   }, [activePostSet, listRef]);
 
   // Effect to set initial and update list height on resize
+  // does this also make the list scroll to the top?
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
       setListHeight(window.visualViewport?.height ?? window.innerHeight);
-      listRef.current?.resetAfterIndex(0, true);
+      // listRef.current?.resetAfterIndex(0, true);
     };
 
     window.addEventListener("resize", handleResize);
@@ -279,6 +283,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return <NoResults onClearFilters={clearSearch} />;
   }
 
+  console.log("Scroll jump detected!", lastScrollTopRef.current);
+
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
@@ -295,7 +301,26 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         />
       </div>
 
+      {/* <List
+        overscanCount={5}
+        ref={listRef}
+        className="list-container"
+        height={listHeight}
+        itemCount={itemCount}
+        width={"100%"}
+        itemSize={getItemSize}
+        initialScrollOffset={0}
+        onItemsRendered={handleItemsRendered}
+        itemData={{
+          posts: displayPosts,
+          getPostsByTag: getPostsByTag,
+          getPostsByStarTag: getPostsByStarTag,
+        }}
+      >
+        {itemRenderer}
+      </List> */}
       <List
+        overscanCount={5}
         ref={listRef}
         className="list-container"
         height={listHeight}

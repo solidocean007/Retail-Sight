@@ -43,7 +43,7 @@ export const UserHomePage = () => {
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts,
   ); // this is the state of redux filtered posts
-  useScrollToTopOnChange(listRef, activePostSet);
+  // useScrollToTopOnChange(listRef, activePostSet);
 
   const getFilterSummaryText = (filters: FilterState) => {
     const parts: string[] = [];
