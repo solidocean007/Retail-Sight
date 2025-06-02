@@ -18,6 +18,9 @@ import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListen
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { loadCompany } from "./thunks/companyThunk";
+import { fetchCompanyProducts } from "./thunks/productThunks";
+import { setAllProducts } from "./Slices/productsSlice";
+import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -29,6 +32,22 @@ function App() {
   const { currentUser, initializing } = useFirebaseAuth();
 
   const [theme, setTheme] = useState(() => getTheme(isDarkMode));
+
+  useEffect(() => {
+  const loadProducts = async () => {
+    if (!user?.companyId) return;
+
+    const cachedProducts = await getAllCompanyProductsFromIndexedDB();
+    if (cachedProducts.length > 0) {
+      dispatch(setAllProducts(cachedProducts)); // Optional preload
+    }
+
+    dispatch(fetchCompanyProducts(user.companyId)); // Still fetch latest
+  };
+
+  loadProducts();
+}, [dispatch, user?.companyId]);
+
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {

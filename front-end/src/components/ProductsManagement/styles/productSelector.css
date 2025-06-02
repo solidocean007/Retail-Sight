@@ -1,0 +1,87 @@
+/* productSelector.css */
+.product-selector {
+  border-radius: 8px;
+  border: 1px solid var(--card-outline);
+  background-color: var(--form-background-color);
+  padding: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-shadow: var(--card-shadow);
+  font-family: sans-serif;
+}
+
+.product-selector h6,
+.product-selector label {
+  color: var(--text-color);
+}
+
+.product-selector .MuiTextField-root {
+  margin-bottom: 1rem;
+  background-color: var(--input-background);
+  border-radius: 4px;
+}
+
+.product-row {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background-pop-out-body);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.product-row:hover {
+  background-color: var(--outlined-button-hover);
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  margin-left: 8px;
+  overflow: hidden;
+}
+
+.product-info strong {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.product-sub {
+  font-size: 0.75rem;
+  color: var(--gray-600);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Scrollbar styling */
+.product-selector ::-webkit-scrollbar {
+  height: 12px;
+  width: 12px;
+}
+
+.product-selector ::-webkit-scrollbar-thumb {
+  background-color: var(--primary-blue);
+  border-radius: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .product-info strong,
+  .product-sub {
+    font-size: 0.75rem;
+  }
+
+  .product-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .product-info {
+    margin-left: 0;
+  }
+}

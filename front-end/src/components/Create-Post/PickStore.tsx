@@ -13,19 +13,8 @@ import { RootState, useAppDispatch } from "../../utils/store";
 import {
   Box,
   CircularProgress,
-  // Switch,
   Typography,
   Button,
-  // Dialog,
-  // DialogTitle,
-  // DialogContent,
-  // List,
-  // ListItem,
-  // DialogActions,
-  // ListItemText,
-  // ListItemButton,
-  // ListItemIcon,
-  // Checkbox,
 } from "@mui/material";
 // import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGalloGoalsByCompanyId";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
@@ -56,12 +45,7 @@ interface PickStoreProps {
     field: keyof PostType,
     value: PostType[keyof PostType],
   ) => void;
-  setSelectedCompanyAccount: (account: CompanyAccountType | null) => void; // Function to set selected company account
-  // onStoreNameChange: (storeName: string) => void;
-  // onStoreNumberChange: (newStoreNumber: string) => void;
-  // onStoreAddressChange: (address: string) => void;
-  // onStoreCityChange: (city: string) => void;
-  // onStoreStateChange: (newStoreState: string) => void;
+  setSelectedCompanyAccount: (account: CompanyAccountType | null) => void;
 }
 
 export const PickStore: React.FC<PickStoreProps> = ({
@@ -122,9 +106,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
   //   usersGalloGoals,
   // );
 
-  console.log("Checking goals for account:", post.account?.accountNumber);
-
-
   const usersActiveCompanyGoals = getActiveCompanyGoalsForAccount(
     post.account?.accountNumber,
     usersCompanyGoals,
@@ -140,8 +121,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
     post.account?.accountNumber,
     allCompanyGoals,
   );
-
-  console.log(allActiveCompanyGoals, "allActiveCompanyGoals");
 
   // const [closestMatches, setClosestMatches] = useState<CompanyAccountType[]>(
   //   [],

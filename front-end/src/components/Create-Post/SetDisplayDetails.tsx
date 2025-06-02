@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import CategorySelector, { CategoryType } from "./CategorySelector";
 import ChannelSelector, { ChannelType } from "./ChannelSelector";
 import "./setDisplayDetails.css";
 import TotalCaseCount from "../TotalCaseCount";
+import ProductSelector from "../ProductsManagement/ProductSelector";
+import { useSelector } from "react-redux";
+import { selectAllProducts } from "../../Slices/productsSlice";
+import { ProductType } from "../../utils/types";
 
 interface SetDisplayDetailsProps {
   onNext: () => void;
@@ -23,12 +27,21 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
   selectedCategory,
   setSelectedCategory,
 }) => {
+  const companyProducts = useSelector(selectAllProducts);
+  const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
+
   return (
     <div className="setDisplayDetails">
       <button className="create-post-btn" onClick={onPrevious}>
         Back
       </button>
       <div className="property-zone">
+        <ProductSelector
+          availableProducts={companyProducts}
+          selectedProducts={selectedProducts}
+          onSelect={setSelectedProducts}
+        />
+
         <ChannelSelector
           selectedChannel={selectedChannel}
           onChannelChange={setSelectedChannel}

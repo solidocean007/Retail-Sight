@@ -10,21 +10,32 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { ProductType } from "../utils/types";
+import { setAllProducts } from "../Slices/productsSlice";
+import { saveAllCompanyProductsToIndexedDB } from "../utils/database/indexedDBUtils";
 
-export const fetchCompanyProducts = createAsyncThunk<
-  ProductType[],
-  string,
-  { rejectValue: string }
->("products/fetchCompanyProducts", async (companyId, { rejectWithValue }) => {
-  try {
-    const itemsRef = collection(db, "products", companyId, "items");
-    const snapshot = await getDocs(itemsRef);
-    return snapshot.docs.map((doc) => doc.data() as ProductType);
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    return rejectWithValue("Failed to fetch products.");
+export const fetchCompanyProducts = createAsyncThunk(
+  "products/fetchCompanyProducts",
+  async (companyId: string, { dispatch }) => {
+    const snapshot = await getDocs(collection(db, "products", companyId, "items"));
+    const products = snapshot.docs.map((doc) => ({
+      ...doc.data(),
+      companyProductId: doc.id,
+    })) as ProductType[];
+
+    // 🔁 Update Redux immediately
+    dispatch(setAllProducts(products));
+
+    // 💾 Save to IndexedDB in background
+    try {
+      await saveAllCompanyProductsToIndexedDB(products);
+    } catch (err) {
+      console.warn("Failed to cache products in IndexedDB:", err);
+    }
+
+    return products;
   }
-});
+);
+
 
 export const addProductToCompany = createAsyncThunk<
   void,

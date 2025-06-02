@@ -1,7 +1,7 @@
 // ProductTable.tsx
 import React, { useState } from "react";
 import { Button, TextField, Box, useMediaQuery, FormControl, InputLabel, OutlinedInput } from "@mui/material";
-import { FixedSizeList as List } from "react-window";
+import { VariableSizeList as List } from 'react-window';
 import { ProductType } from "../../utils/types";
 import "./styles/productTable.css";
 import MobileProductCard from "./MobileProductCard";
@@ -27,7 +27,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
 }) => {
   const isMobile = useMediaQuery("(max-width:1200px)");
   const computedRowHeight = rowHeight || (isMobile ? 400 : 80);
-
+  const getItemSize = (index: number) => isMobile ? 400 : 60;
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editedProduct, setEditedProduct] = useState<ProductType | null>(null);
 
@@ -57,6 +57,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       return (
         <MobileProductCard
           product={product}
+          style={style}
           onEdit={() => {
             setEditIndex(index);
             setEditedProduct({ ...product });
@@ -226,7 +227,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         <List
           height={Math.min(filteredProducts.length * computedRowHeight, height)}
           itemCount={filteredProducts.length}
-          itemSize={computedRowHeight}
+          itemSize={getItemSize}
           width="100%"
         >
           {Row}

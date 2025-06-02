@@ -1,13 +1,13 @@
 import React from "react";
 import { Box, CircularProgress, MenuItem, Select } from "@mui/material";
-import { CompanyGoalType } from "../../utils/types";
+import { CompanyGoalType, CompanyGoalWithIdType } from "../../utils/types";
 
 interface CompanyGoalDropdownProps {
-  goals: CompanyGoalType[];
+  goals: CompanyGoalWithIdType[];
   label: string;
   loading: boolean;
-  onSelect: (goal: CompanyGoalType | undefined) => void;
-  selectedGoal?: CompanyGoalType;
+  onSelect: (goal: CompanyGoalWithIdType | undefined) => void;
+  selectedGoal?: CompanyGoalWithIdType;
 }
 
 const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({

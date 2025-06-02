@@ -82,11 +82,7 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     supplierProductNumber: "",
   });
 
-  useEffect(() => {
-    if (user?.companyId) {
-      dispatch(fetchCompanyProducts(user.companyId)); // ✅ updated thunk
-    }
-  }, [dispatch, user?.companyId]);
+
 
   const handleAddProducts = async (file: File) => {
     try {
@@ -331,15 +327,15 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
             </Box>
 
             <div className="account-management-buttons">
-              <Button
-                className="account-upload-button"
+              <button
+                className="account-upload-button btn-outline"
                 onClick={() => setShowProductTemplateModal(true)}
               >
                 View Upload File Template
-              </Button>
+              </button>
 
               <Tooltip title="Upload CSV or Excel to create products">
-                <Button className="account-upload-button" component="label">
+                <button className="account-upload-button">
                   {companyProducts.length
                     ? "Add more Products"
                     : "Upload Initial Products"}
@@ -352,13 +348,12 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
                       if (file) handleAddProducts(file);
                     }}
                   />
-                </Button>
+                </button>
               </Tooltip>
 
               <Tooltip title="Upload CSV or Excel to update existing products">
-                <Button
+                <button
                   className="account-upload-button"
-                  component="label"
                   disabled={companyProducts.length === 0}
                 >
                   Update Products
@@ -371,10 +366,10 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
                       if (file) handleUpdateProducts(file);
                     }}
                   />
-                </Button>
+                </button>
               </Tooltip>
 
-              <Button
+              <button
                 className="account-submit-button"
                 onClick={() => {
                   setNewCompanyProduct({
@@ -391,7 +386,7 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
                 }}
               >
                 Quickly Add Single Product
-              </Button>
+              </button>
             </div>
           </>
         )}

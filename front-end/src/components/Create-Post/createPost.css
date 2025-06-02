@@ -114,10 +114,12 @@ select {
 
 .property-zone {
   display: flex;
+  width: 100%;
   justify-content: space-around;
   align-items: center;
   margin: 0;
   flex-direction: column;
+  max-width: 700px;
 }
 
 .store-address-container {

@@ -1,96 +1,69 @@
-// indexedDBOpen.ts
 const dbName = "myRetailAppDB";
-const dbVersion = 27;
+const dbVersion = 28;
+
+const objectStores: {
+  name: string;
+  options: IDBObjectStoreParameters;
+  index?: { name: string; keyPath: string; options?: IDBIndexParameters };
+  replaceIfExists?: boolean;
+}[] = [
+  { name: "posts", options: { keyPath: "id" } },
+  { name: "filteredPosts", options: { keyPath: "id" } },
+  { name: "users", options: { keyPath: "uid" } },
+  { name: "categories", options: { keyPath: "id" } },
+  { name: "channels", options: { keyPath: "id" } },
+  { name: "locations", options: { keyPath: "state" } },
+  { name: "latestPosts", options: { keyPath: "id" } },
+  { name: "hashtagPosts", options: { keyPath: "id" } },
+  { name: "starTagPosts", options: { keyPath: "id" } },
+  { name: "userCreatedPosts", options: { keyPath: "id" } },
+  { name: "userCompanyEmployees", options: { keyPath: "uid" }, replaceIfExists: true },
+  { name: "usersCompanyEmployees", options: { keyPath: "uid" } },
+  { name: "localSchemaVersion", options: { keyPath: "id" } },
+  {
+    name: "collections",
+    options: { keyPath: "id" },
+    index: { name: "byUserId", keyPath: "ownerId" },
+  },
+  { name: "lastSeenTimestamp", options: {} },
+  { name: "userAccounts_v2", options: { keyPath: "accountNumber" } },
+  { name: "allUsersCompanyAccounts", options: { keyPath: "accountNumber" } },
+  { name: "galloGoals", options: { keyPath: "id" } },
+  { name: "companyGoals", options: { keyPath: "id" } },
+  { name: "allGalloGoals", options: { keyPath: "id" } },
+  { name: "allCompanySpecificGoals", options: { keyPath: "id" } },
+  { name: "companyProducts", options: { keyPath: "companyProductId" } }, // ✅ NEW
+];
+
 export function openDB(): Promise<IDBDatabase> {
-  return new Promise<IDBDatabase>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
 
     request.onerror = (event: Event) => {
-      // Cast the event.target to an IDBRequest which has the error property
       const target = event.target as IDBRequest;
-      if (target.error) {
-        reject(`IndexedDB database error: ${target.error.message}`);
-      } else {
-        reject(`IndexedDB database error: Unknown error`);
-      }
+      reject(`IndexedDB error: ${target?.error?.message || "Unknown error"}`);
     };
 
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
+    request.onsuccess = () => resolve(request.result);
 
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
       const db = (event.target as IDBOpenDBRequest).result;
 
-      if (!db.objectStoreNames.contains("posts")) {
-        db.createObjectStore("posts", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("filteredPosts")) {
-        db.createObjectStore("filteredPosts", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("users")) {
-        db.createObjectStore("users", { keyPath: "uid" });
-      }
-      if (!db.objectStoreNames.contains("categories")) {
-        db.createObjectStore("categories", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("channels")) {
-        db.createObjectStore("channels", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("locations")) {
-        db.createObjectStore("locations", { keyPath: "state" });
-      }
-      if (!db.objectStoreNames.contains("latestPosts")) {
-        db.createObjectStore("latestPosts", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("hashtagPosts")) {
-        db.createObjectStore("hashtagPosts", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("starTagPosts")) {
-        db.createObjectStore("starTagPosts", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("userCreatedPosts")) {
-        db.createObjectStore("userCreatedPosts", { keyPath: "id" });
-      }
-      if (db.objectStoreNames.contains("userCompanyEmployees")) {
-        db.deleteObjectStore("userCompanyEmployees");
-      }
-      if (!db.objectStoreNames.contains("usersCompanyEmployees")) {
-        db.createObjectStore("usersCompanyEmployees", { keyPath: "uid" });
-      }
-      if (!db.objectStoreNames.contains("localSchemaVersion")) {
-        db.createObjectStore("localSchemaVersion", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("collections")) {
-        const collectionsStore = db.createObjectStore("collections", {
-          keyPath: "id",
-        });
-        collectionsStore.createIndex("byUserId", "ownerId", { unique: false });
-      }
-      if (!db.objectStoreNames.contains("lastSeenTimestamp")) {
-        db.createObjectStore("lastSeenTimestamp");
-      }
-      if (!db.objectStoreNames.contains("userAccounts_v2")) {
-        db.createObjectStore("userAccounts_v2", { keyPath: "accountNumber" });
-      }
-      if (!db.objectStoreNames.contains("allUsersCompanyAccounts")) {
-        db.createObjectStore("allUsersCompanyAccounts", {
-          keyPath: "accountNumber",
-        });
-      }
+      for (const store of objectStores) {
+        const { name, options, replaceIfExists, index } = store;
 
-      if (!db.objectStoreNames.contains("galloGoals")) {
-        db.createObjectStore("galloGoals", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("companyGoals")) {
-        db.createObjectStore("companyGoals", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("allGalloGoals")) {
-        db.createObjectStore("allGalloGoals", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("allCompanySpecificGoals")) {
-        db.createObjectStore("allCompanySpecificGoals", { keyPath: "id" });
+        if (db.objectStoreNames.contains(name)) {
+          if (replaceIfExists) db.deleteObjectStore(name);
+          else continue;
+        }
+
+        const objectStore = db.createObjectStore(name, options);
+
+        if (index) {
+          objectStore.createIndex(index.name, index.keyPath, index.options);
+        }
       }
     };
   });
 }
+
