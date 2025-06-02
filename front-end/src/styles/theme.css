@@ -255,6 +255,16 @@ tr:nth-child(even) {
   background-color: var(--gray-800);
 }
 
+[data-theme="dark"] tr:hover {
+  background-color: var(--gray-600); /* or use --sidebar-hover-bg */
+}
+
+[data-theme="light"] tr:hover {
+  background-color: var(--gray-200); /* or any appropriate light hover */
+}
+
+
+
 /* Typography fallback */
 [data-theme="dark"] h1,
 [data-theme="dark"] h2,

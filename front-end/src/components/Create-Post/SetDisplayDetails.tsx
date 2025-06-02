@@ -36,11 +36,11 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
         Back
       </button>
       <div className="property-zone">
-        <ProductSelector
+        {/* <ProductSelector
           availableProducts={companyProducts}
           selectedProducts={selectedProducts}
           onSelect={setSelectedProducts}
-        />
+        /> */}
 
         <ChannelSelector
           selectedChannel={selectedChannel}
