@@ -72,7 +72,9 @@ const AccountTable: React.FC<AccountTableProps> = ({
                   {acc.postId ? (
                     <button
                       className="view-post-button"
-                      onClick={() => navigate(`/user-home-page?postId=${acc.postId}`)}
+                      onClick={() => navigate("/user-home-page", { state: { postIdToScroll: acc.postId } })}
+                      title="View Post"
+                      aria-label="View Post"
                     >
                       View Post
                     </button>

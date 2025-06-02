@@ -46,6 +46,8 @@ interface ActivityFeedProps {
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   clearInput: boolean;
   onReadyToScrollToPostId?: (cb: (postId: string) => void) => void;
+  postIdToScroll: string | null;
+  setPostIdToScroll: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
@@ -61,6 +63,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   setIsSearchActive,
   clearInput,
   onReadyToScrollToPostId,
+  postIdToScroll,
+  setPostIdToScroll,
 }) => {
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
@@ -95,6 +99,18 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return 800; // Fallback for SSR or very early load
   });
 
+useEffect(() => {
+  if (!postIdToScroll || !virtuosoRef.current) return;
+
+  const index = displayPosts.findIndex((p) => p.id === postIdToScroll);
+  if (index >= 0) {
+    virtuosoRef.current.scrollToIndex({ index, align: "start" });
+    setPostIdToScroll?.(null); // clear after scroll
+  }
+}, [postIdToScroll, displayPosts]);
+
+
+// what is this doing differently than the useEffect above?
   useEffect(() => {
     onReadyToScrollToPostId?.(scrollToPostId);
   }, [displayPosts]);

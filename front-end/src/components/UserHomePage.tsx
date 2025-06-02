@@ -15,19 +15,18 @@ import {
   getUserAccountsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
-import { VariableSizeList } from "react-window";
 import { PostWithID } from "../utils/types";
-import useScrollToTopOnChange from "../hooks/scrollToTopOnChange";
 import { selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
+import { useLocation } from "react-router-dom";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const sideBarRef = useRef<SideBarHandle>(null);
-  const listRef = useRef<VariableSizeList>(null);
+  const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
@@ -45,7 +44,13 @@ export const UserHomePage = () => {
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   ); // this is the state of redux filtered posts
-  // useScrollToTopOnChange(listRef, activePostSet);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.postIdToScroll) {
+      setPostIdToScroll(location.state.postIdToScroll);
+    }
+  }, [location]);
 
   const scrollToPost = useRef<(postId: string) => void>();
 
@@ -143,10 +148,10 @@ export const UserHomePage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-  if (postIdToScroll && scrollToPost.current) {
-    scrollToPost.current(postIdToScroll);
-  }
-}, [postIdToScroll]);
+    if (postIdToScroll && scrollToPost.current) {
+      scrollToPost.current(postIdToScroll);
+    }
+  }, [postIdToScroll]);
 
   return (
     <>
@@ -180,6 +185,8 @@ export const UserHomePage = () => {
               onReadyToScrollToPostId={(fn) => {
                 scrollToPost.current = fn;
               }}
+              postIdToScroll={postIdToScroll}
+              setPostIdToScroll={setPostIdToScroll}
             />
           </div>
 
