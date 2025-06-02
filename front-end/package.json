@@ -41,6 +41,7 @@
     "react-redux": "^8.1.2",
     "react-router-dom": "^6.17.0",
     "react-select": "^5.8.0",
+    "react-virtuoso": "^4.12.8",
     "react-window": "^1.8.9",
     "redux": "^4.2.1",
     "uuid": "^9.0.1",

@@ -1,10 +1,9 @@
 // ActivityFeed.tsx
-import React, { useEffect, useRef, useState } from "react";
-import { VariableSizeList as List, VariableSizeList } from "react-window";
+import React, { useEffect, useState } from "react";
+import { Virtuoso } from "react-virtuoso";
+import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
-// import NoContentCard from "./NoContentCard";
-// import AdComponent from "./AdSense/AdComponent";
 import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
 import {
@@ -30,14 +29,12 @@ import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
-// import NoResults from "./NoResults";
 
 const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
 
 interface ActivityFeedProps {
-  listRef: React.RefObject<VariableSizeList>;
-  // posts: PostWithID[];
+  virtuosoRef: React.RefObject<VirtuosoHandle>;
   currentHashtag?: string | null;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   currentStarTag: string | null;
@@ -48,11 +45,11 @@ interface ActivityFeedProps {
   isSearchActive?: boolean;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   clearInput: boolean;
+  onReadyToScrollToPostId?: (cb: (postId: string) => void) => void;
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
-  listRef,
-  // posts,
+  virtuosoRef,
   currentHashtag,
   setCurrentHashtag,
   currentStarTag,
@@ -63,9 +60,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   isSearchActive,
   setIsSearchActive,
   clearInput,
+  onReadyToScrollToPostId,
 }) => {
-  const lastScrollTopRef = useRef(0);
-
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
@@ -76,7 +72,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   let displayPosts: PostWithID[] =
     activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
 
-  // const listRef = useRef<List>(null);
   // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
@@ -101,12 +96,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   });
 
   useEffect(() => {
-    if (!listRef.current) return;
+    onReadyToScrollToPostId?.(scrollToPostId);
+  }, [displayPosts]);
+
+  useEffect(() => {
+    if (!virtuosoRef.current) return;
 
     // Reset the list when posts finish loading or screen size changes
     const resetList = () => {
-      console.log("resetList");
-      // listRef.current?.resetAfterIndex(0, true);
+      virtuosoRef.current?.scrollToIndex({ index: 0, align: "start" });
     };
 
     resetList();
@@ -119,51 +117,41 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => clearTimeout(timeout);
   }, [windowWidth, listHeight]);
 
-  // Function to calculate list height does this need to be reintroduced?
-  const calculateListHeight = () => {
-    if (window.visualViewport) {
-      return window.visualViewport.height * 0.95;
+  const scrollToPostId = (postId: string) => {
+    const index = displayPosts.findIndex((post) => post.id === postId);
+    if (index >= 0) {
+      virtuosoRef.current?.scrollToIndex({ index, align: "start" });
     }
-    return window.innerHeight * 0.95;
   };
 
   useEffect(() => {
     // Whenever activePostSet changes, scroll to the top of the list
-    // listRef.current?.scrollTo(0);
-  }, [activePostSet, listRef]);
+    virtuosoRef.current?.scrollToIndex({ index: 0, align: "start" });
+  }, [activePostSet, virtuosoRef]);
 
   // Effect to set initial and update list height on resize
   // does this also make the list scroll to the top?
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setListHeight(window.visualViewport?.height ?? window.innerHeight);
-      // listRef.current?.resetAfterIndex(0, true);
-    };
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     setWindowWidth(window.innerWidth);
+  //     setListHeight(window.visualViewport?.height ?? window.innerHeight);
+  //     listRef.current?.resetAfterIndex(0, true);
+  //   };
 
-    window.addEventListener("resize", handleResize);
-    window.visualViewport?.addEventListener("resize", handleResize); // listen to real viewport changes
+  //   window.addEventListener("resize", handleResize);
+  //   window.visualViewport?.addEventListener("resize", handleResize); // listen to real viewport changes
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      window.visualViewport?.removeEventListener("resize", handleResize);
-    };
-  }, []);
+  //   return () => {
+  //     window.removeEventListener("resize", handleResize);
+  //     window.visualViewport?.removeEventListener("resize", handleResize);
+  //   };
+  // }, []);
 
   // Function to get the dynamic height of each item
   const ITEM_GAP = 8;
 
-  const getItemSize = () => {
-    // const baseHeight = getActivityItemHeight(windowWidth);
-    // const isAdPosition = adsOn && (index + 1) % AD_INTERVAL === 0;
-    // return isAdPosition ? 200 + ITEM_GAP : baseHeight + ITEM_GAP;
-    return getActivityItemHeight(windowWidth) + ITEM_GAP;
-  };
-
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 500) {
-      // return 720;
-      // return 620;
       return 700;
     } else if (windowWidth <= 600) {
       return 750;
@@ -225,55 +213,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   const fillerCount = 3;
   const itemCount = displayPosts.length + numberOfAds + fillerCount;
-  const itemRenderer = ({
-    index,
-    style,
-  }: {
-    index: number;
-    style: React.CSSProperties;
-  }) => {
-    let postIndex = index;
-    if (adsOn) {
-      const adSlotsBefore = Math.floor(index / AD_INTERVAL);
-      postIndex -= adSlotsBefore;
-    }
-
-    const isAdPosition = adsOn && index % AD_INTERVAL === 0;
-
-    // REMOVE any marginBottom/height here — it's not respected properly
-    const wrapperStyle: React.CSSProperties = {
-      ...style,
-      paddingBottom: `${ITEM_GAP}px`, // this space is within the fixed height
-      boxSizing: "border-box",
-    };
-
-    if (isAdPosition) {
-      return <div style={wrapperStyle}>{/* Your AdComponent here */}</div>;
-    } else if (postIndex < displayPosts.length) {
-      const postWithID = displayPosts[postIndex];
-
-      if (!postWithID?.id || postWithID.id.startsWith("filler-")) {
-        return <div style={style}></div>; // empty div for filler
-      }
-
-      return (
-        <div className="post-card-renderer-container" style={wrapperStyle}>
-          <PostCardRenderer
-            key={postWithID.id}
-            currentUserUid={currentUser?.uid}
-            index={index}
-            style={{ height: "100%" }} // Make post take full height
-            data={{ post: postWithID, getPostsByTag, getPostsByStarTag }}
-            setCurrentHashtag={setCurrentHashtag}
-            setActivePostSet={setActivePostSet}
-            setIsSearchActive={setIsSearchActive}
-          />
-        </div>
-      );
-    } else {
-      return null;
-    }
-  };
 
   if (loading || loadingMore) {
     return <CircularProgress />;
@@ -282,8 +221,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   if (displayPosts.length === 0) {
     return <NoResults onClearFilters={clearSearch} />;
   }
-
-  console.log("Scroll jump detected!", lastScrollTopRef.current);
 
   return (
     <div className="activity-feed-box">
@@ -301,42 +238,35 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         />
       </div>
 
-      {/* <List
-        overscanCount={5}
-        ref={listRef}
-        className="list-container"
-        height={listHeight}
-        itemCount={itemCount}
-        width={"100%"}
-        itemSize={getItemSize}
-        initialScrollOffset={0}
-        onItemsRendered={handleItemsRendered}
-        itemData={{
-          posts: displayPosts,
-          getPostsByTag: getPostsByTag,
-          getPostsByStarTag: getPostsByStarTag,
+      <Virtuoso
+        ref={virtuosoRef}
+        style={{ height: listHeight, width: "100%" }}
+        totalCount={displayPosts.length}
+        itemContent={(index) => {
+          const post = displayPosts[index];
+          return (
+            <div className="post-card-renderer-container">
+              <PostCardRenderer
+                key={post.id}
+                currentUserUid={currentUser?.uid}
+                index={index}
+                style={{ height: "100%" }}
+                data={{ post, getPostsByTag, getPostsByStarTag }}
+                setCurrentHashtag={setCurrentHashtag}
+                setActivePostSet={setActivePostSet}
+                setIsSearchActive={setIsSearchActive}
+              />
+            </div>
+          );
         }}
-      >
-        {itemRenderer}
-      </List> */}
-      <List
-        overscanCount={5}
-        ref={listRef}
-        className="list-container"
-        height={listHeight}
-        itemCount={itemCount}
-        width={"100%"}
-        itemSize={getItemSize}
-        initialScrollOffset={0}
-        onItemsRendered={handleItemsRendered}
-        itemData={{
-          posts: displayPosts,
-          getPostsByTag: getPostsByTag,
-          getPostsByStarTag: getPostsByStarTag,
+        components={{
+          Footer: () => (
+            <div style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}>
+              🚩 End of results
+            </div>
+          ),
         }}
-      >
-        {itemRenderer}
-      </List>
+      />
     </div>
   );
 };

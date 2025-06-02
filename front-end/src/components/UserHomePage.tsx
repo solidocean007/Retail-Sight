@@ -1,5 +1,6 @@
 // userHomePage.tsx
 import { useEffect, useRef, useState } from "react";
+import { VirtuosoHandle } from "react-virtuoso";
 import ActivityFeed from "./ActivityFeed";
 import "./userHomePage.css";
 import SideBar, { FilterState, SideBarHandle } from "./SideBar";
@@ -24,6 +25,7 @@ import FilterSummaryBanner from "./FilterSummaryBanner";
 // import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const sideBarRef = useRef<SideBarHandle>(null);
   const listRef = useRef<VariableSizeList>(null);
   const dispatch = useDispatch<AppDispatch>();
@@ -41,9 +43,11 @@ export const UserHomePage = () => {
   const [lastFilters, setLastFilters] = useState<FilterState | null>(null);
   const posts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
-    (state: RootState) => state.posts.filteredPosts,
+    (state: RootState) => state.posts.filteredPosts
   ); // this is the state of redux filtered posts
   // useScrollToTopOnChange(listRef, activePostSet);
+
+  const scrollToPost = useRef<(postId: string) => void>();
 
   const getFilterSummaryText = (filters: FilterState) => {
     const parts: string[] = [];
@@ -87,7 +91,7 @@ export const UserHomePage = () => {
         ) {
           const fetchedAccounts = await fetchUsersAccounts(
             companyId,
-            user.salesRouteNum,
+            user.salesRouteNum
           );
           if (fetchedAccounts.length > 0) {
             setUsersAccounts(fetchedAccounts);
@@ -138,6 +142,12 @@ export const UserHomePage = () => {
     dispatch(fetchLocationOptions());
   }, [dispatch]);
 
+  useEffect(() => {
+  if (postIdToScroll && scrollToPost.current) {
+    scrollToPost.current(postIdToScroll);
+  }
+}, [postIdToScroll]);
+
   return (
     <>
       <UserHomePageHelmet />
@@ -156,12 +166,7 @@ export const UserHomePage = () => {
             )}
 
             <ActivityFeed
-              listRef={listRef}
-              // posts={displayPosts}
-              // posts={[
-              //   ...displayPosts,
-              //   ...Array(3).fill({ id: `filler-${Math.random()}` }),
-              // ]}
+              virtuosoRef={virtuosoRef}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               currentStarTag={currentStarTag}
@@ -172,6 +177,9 @@ export const UserHomePage = () => {
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
               clearInput={clearInput}
+              onReadyToScrollToPostId={(fn) => {
+                scrollToPost.current = fn;
+              }}
             />
           </div>
 
