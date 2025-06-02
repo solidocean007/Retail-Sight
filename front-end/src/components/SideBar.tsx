@@ -163,14 +163,20 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
       let fetchedPosts: PostWithID[] = actionResult.payload as PostWithID[];
 
       if (currentHashtag) {
+        const normalizedTag = currentHashtag.toLowerCase();
         fetchedPosts = fetchedPosts.filter(
-          (post) => post.hashtags && post.hashtags.includes(currentHashtag)
+          (post) =>
+            post.hashtags &&
+            post.hashtags.some((tag) => tag.toLowerCase() === normalizedTag)
         );
       }
 
       if (currentStarTag) {
+        const normalizedStarTag = currentStarTag.toLowerCase();
         fetchedPosts = fetchedPosts.filter(
-          (post) => post.hashtags && post.starTags.includes(currentStarTag)
+          (post) =>
+            post.starTags &&
+            post.starTags.some((tag) => tag.toLowerCase() === normalizedStarTag)
         );
       }
 
