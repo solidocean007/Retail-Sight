@@ -45,7 +45,6 @@ interface ActivityFeedProps {
   isSearchActive?: boolean;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   clearInput: boolean;
-  onReadyToScrollToPostId?: (cb: (postId: string) => void) => void;
   postIdToScroll: string | null;
   setPostIdToScroll: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -62,7 +61,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   isSearchActive,
   setIsSearchActive,
   clearInput,
-  onReadyToScrollToPostId,
   postIdToScroll,
   setPostIdToScroll,
 }) => {
@@ -100,18 +98,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   });
 
   useEffect(() => {
-  if (!postIdToScroll || !virtuosoRef.current || !displayPosts.length) return;
+    if (!postIdToScroll || !virtuosoRef.current || !displayPosts.length) return;
 
-  const index = displayPosts.findIndex((p) => p.id === postIdToScroll);
-  if (index === -1) return;
+    const index = displayPosts.findIndex((p) => p.id === postIdToScroll);
+    if (index === -1) return;
 
-  console.log("Scrolling to:", postIdToScroll, "at index:", index);
-  virtuosoRef.current.scrollToIndex({ index, align: "start" });
+    console.log("Scrolling to:", postIdToScroll, "at index:", index);
+    virtuosoRef.current.scrollToIndex({ index, align: "start" });
 
-  setPostIdToScroll(null); // No delay
-
-}, [postIdToScroll, displayPosts.length]);
-
+    setPostIdToScroll(null); // No delay
+  }, [postIdToScroll, displayPosts.length]);
 
   useEffect(() => {
     // Only scroll to top when activePostSet changes and no postId is targeted
@@ -132,6 +128,24 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return <NoResults onClearFilters={clearSearch} />;
   }
 
+  const getActivityItemHeight = (windowWidth: number) => {
+    if (windowWidth <= 500) {
+      return 700;
+    } else if (windowWidth <= 600) {
+      return 750;
+    } else if (windowWidth <= 700) {
+      return 750;
+    } else if (windowWidth <= 800) {
+      return 800;
+    } else if (windowWidth <= 900) {
+      return 850;
+    } else {
+      return 900;
+    }
+  };
+
+  const itemHeight = getActivityItemHeight(windowWidth);
+
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
@@ -150,6 +164,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
       <Virtuoso
         ref={virtuosoRef}
+         increaseViewportBy={500}
         style={{ height: listHeight, width: "100%" }}
         totalCount={displayPosts.length}
         itemContent={(index) => {
@@ -170,6 +185,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             </div>
           );
         }}
+        defaultItemHeight={itemHeight}
         components={{
           Footer: () => (
             <div style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}>

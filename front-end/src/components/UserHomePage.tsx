@@ -20,8 +20,6 @@ import { selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
-import { useLocation } from "react-router-dom";
-// import CheckBoxModal from "./CheckBoxModal";
 
 export const UserHomePage = () => {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -181,9 +179,6 @@ export const UserHomePage = () => {
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
               clearInput={clearInput}
-              onReadyToScrollToPostId={(fn) => {
-                scrollToPost.current = fn;
-              }}
               postIdToScroll={postIdToScroll}
               setPostIdToScroll={setPostIdToScroll}
             />

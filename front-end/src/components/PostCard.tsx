@@ -427,6 +427,12 @@ const PostCard: React.FC<PostCardProps> = ({
                 openImageModal={handleImageClick}
               />
             )}
+            {/* <img
+              src={post.imageUrl}
+              alt="Post image"
+              className="post-image"
+              onClick={handleImageClick}
+            /> */}
           </div>
 
           {commentCount > 0 && (
