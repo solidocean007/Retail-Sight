@@ -1,4 +1,3 @@
-// exportPosts
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as os from "os";
@@ -7,200 +6,147 @@ import * as fs from "fs";
 import * as archiver from "archiver";
 import { Parser } from "json2csv";
 
-export interface PostType {
-  // category: CategoryType | "";
-  // channel: ChannelType | "";
-  id: string;
-  description?: string;
-  imageUrl?: string;
-  selectedStore?: string;
-  storeNumber?: string;
-  storeAddress: string;
-  city?: string; // Added city
-  state?: string; // Added state
-  visibility?: "public" | "company" | "supplier" | "private";
-  displayDate: string;
-  timestamp: string;
-  totalCaseCount: number;
-  postUserName: string | undefined;
-  postUserId: string | undefined;
-  postUserCompany: string | undefined;
-  postUserCompanyId: string | undefined;
-  postUserEmail: string | undefined; // Added email
-  supplier?: string;
-  brands: string[];
-  likes?: string[];
-  hashtags: string[];
-  starTags: string[];
-  commentCount: number;
-}
-
-// Initialize Firebase Admin SDK if not already initialized
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-type ExportPostsParams = {
-  collectionId: string;
-};
+interface PostExportType {
+  id: string;
+  description?: string;
+  imageUrl?: string;
+  storeAddress?: string;
+  city?: string;
+  state?: string;
+  displayDate: string;
+  totalCaseCount: number;
+  createdByName?: string;
+  createdByEmail?: string;
+  company?: string;
+  hashtags?: string;
+  starTags?: string;
+  brands?: string;
+}
 
 export const exportPosts = functions.https.onCall(
-  async (data: functions.https.CallableRequest<ExportPostsParams>) => {
-    // Ensure the user is authenticated
-    if (!data.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "Authentication is required."
-      );
+  async (data, context) => {
+    console.log("🔥 exportPosts triggered");
+
+    if (!context?.auth) { // Property 'auth' does not exist on type 'CallableResponse<unknown>'
+      throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
     }
 
-    const { collectionId } = data.data;
+    const { collectionId } = data; // Property 'collectionId' does not exist on type 'CallableRequest<any>'
     if (!collectionId) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Collection ID is required."
-      );
+      throw new functions.https.HttpsError("invalid-argument", "Missing collectionId.");
     }
 
-    // Initialize the CSV parser
-    const json2csvParser = new Parser();
-
-    // Prepare the ZIP file
     const tempFilePath = path.join(os.tmpdir(), `${collectionId}.zip`);
     const output = fs.createWriteStream(tempFilePath);
     const zip = archiver("zip", { zlib: { level: 9 } });
-
     zip.pipe(output);
 
-    // Fetch posts
     const posts = await fetchPostsForCollection(collectionId);
+    const json2csvParser = new Parser();
+
+    console.log(`📦 Archiving ${posts.length} posts`);
 
     for (const post of posts) {
-      const postDir = `${post.id}`;
-      const postCSV = json2csvParser.parse(post);
+      console.log(`🔧 Processing post: ${post.id}`);
 
-      // Append CSV to the zip
-      zip.append(postCSV, { name: `${postDir}/data.csv` });
+      const flatPost: PostExportType = {
+        id: post.id,
+        description: post.description ?? "",
+        imageUrl: post.imageUrl ?? "",
+        storeAddress: post.account?.accountAddress ?? "",
+        city: post.city ?? "",
+        state: post.state ?? "",
+        displayDate: post.displayDate ?? "",
+        totalCaseCount: post.totalCaseCount ?? 0,
+        createdByName: `${post.createdBy?.firstName ?? ""} ${post.createdBy?.lastName ?? ""}`.trim(),
+        createdByEmail: post.createdBy?.email ?? "",
+        company: post.createdBy?.company ?? "",
+        hashtags: (post.hashtags ?? []).join(", "),
+        starTags: (post.starTags ?? []).join(", "),
+        brands: (post.brands ?? []).join(", "),
+      };
 
-      // Check if an image URL exists and fetch the image
+      const postCSV = json2csvParser.parse(flatPost);
+      zip.append(postCSV, { name: `${post.id}/data.csv` });
+
       if (post.imageUrl) {
         try {
           const imageData = await fetchImageData(post.imageUrl);
-          // Append the image data to the zip
           zip.append(imageData.buffer, {
-            name: `${postDir}/${imageData.name}`,
+            name: `${post.id}/${imageData.name}`,
           });
-        } catch (error) {
-          // Handle the error (e.g., skip the image or log the error)
-          console.error(`Failed to fetch image for post ${post.id}:`, error);
+        } catch (err: any) {
+          console.warn(`⚠️ Skipped image for ${post.id}:`, err.message);
         }
       }
     }
 
-    await new Promise((resolve, reject) => {
-      output.on("close", resolve);
-      zip.on("error", reject);
+    await new Promise<void>((resolve, reject) => {
+      output.on("close", () => {
+        console.log("✅ ZIP finalized");
+        resolve();
+      });
+      zip.on("error", (err) => {
+        console.error("❌ Archiving error:", err);
+        reject(err);
+      });
       zip.finalize();
     });
 
-    // Upload ZIP to Firebase Storage
     const bucket = admin.storage().bucket();
-    const zipFilePath = `exports/${collectionId}.zip`;
-    await bucket.upload(tempFilePath, { destination: zipFilePath });
+    const zipPath = `exports/${collectionId}.zip`;
+    await bucket.upload(tempFilePath, { destination: zipPath });
 
-    // Generate a signed URL for the ZIP file
-    const file = bucket.file(zipFilePath);
+    const file = bucket.file(zipPath);
     const [url] = await file.getSignedUrl({
       action: "read",
-      expires: Date.now() + 1000 * 60 * 60, // URL valid for 1 hour
+      expires: Date.now() + 60 * 60 * 1000,
     });
 
-    // Clean up temporary file
     fs.unlinkSync(tempFilePath);
-
     return { url };
   }
 );
 
-/**
- * Fetches posts associated with a given collection ID from Firestore.
- * @param {string} collectionId -
- * @return {Promise<PostType[]>}
- */
-async function fetchPostsForCollection(
-  collectionId: string
-): Promise<PostType[]> {
+async function fetchPostsForCollection(collectionId: string) {
   const db = admin.firestore();
-  // First, fetch the collection document to get the array of post IDs
-  const collectionRef = db.collection("collections").doc(collectionId);
-  const collectionSnapshot = await collectionRef.get();
+  const ref = db.collection("collections").doc(collectionId);
+  const snap = await ref.get();
+  if (!snap.exists) throw new Error(`Collection ${collectionId} not found.`);
 
-  if (!collectionSnapshot.exists) {
-    console.log(`No collection found with ID: ${collectionId}`);
-    return [];
-  }
+  const postIds: string[] = snap.data()?.posts ?? [];
+  const allPosts: any[] = [];
 
-  const collectionData = collectionSnapshot.data();
-  const postIds = collectionData?.posts || [];
-  console.log(
-    `Found ${postIds.length} post IDs. Starting to fetch posts in batches.`
-  );
-
-  // Initialize an array to hold all the fetched posts
-  let allPosts: PostType[] = [];
-
-  // Chunk the postIds array and fetch posts in batches
   for (let i = 0; i < postIds.length; i += 10) {
     const chunk = postIds.slice(i, i + 10);
-    const postsSnapshot = await db
+    const batch = await db
       .collection("posts")
       .where(admin.firestore.FieldPath.documentId(), "in", chunk)
       .get();
 
-    const posts: PostType[] = postsSnapshot.docs.map((doc) => {
-      return {
-        ...doc.data(),
-        id: doc.id, // Ensure that 'id' is being set correctly
-      } as PostType;
-    });
-
-    allPosts = allPosts.concat(posts);
+    allPosts.push(...batch.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
   }
+
   return allPosts;
 }
-/**
- * Fetches the image data from Firebase Storage given the full URL to the file.
- *
- * @param {string} fileUrl - The full URL of the image in Firebase Storage.
- * @return {Promise<{buffer: Buffer, name: string}>}
- */
-async function fetchImageData(
-  fileUrl: string
-): Promise<{ buffer: Buffer; name: string }> {
+
+async function fetchImageData(fileUrl: string) {
   const storage = admin.storage();
   const bucket = storage.bucket();
-
-  // Extract the file path from the URL
   const matches = fileUrl.match(/\/o\/(.+?)\?alt=media/);
-  if (!matches || matches.length < 2) {
-    throw new Error(`Invalid file URL: ${fileUrl}`);
-  }
+  if (!matches?.[1]) throw new Error(`Invalid image URL: ${fileUrl}`);
+
   const filePath = decodeURIComponent(matches[1]);
-
-  // Use the file path to access the file
   const file = bucket.file(filePath);
+  const buffer = await file.download();
 
-  try {
-    // Download the file as a Buffer
-    const buffer = await file.download();
-    // Use just the filename for the ZIP
-    const name = path.basename(filePath);
-    return { buffer: buffer[0], name };
-  } catch (error) {
-    console.error(`Error fetching image for ${fileUrl}:`, error);
-    throw new functions.https.HttpsError(
-      "internal",
-      `Error fetching image for ${fileUrl}`
-    );
-  }
+  return {
+    buffer: buffer[0],
+    name: path.basename(filePath),
+  };
 }
+

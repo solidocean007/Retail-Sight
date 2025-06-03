@@ -329,6 +329,17 @@
   display: flex;
 }
 
+.shouldHighlight {
+  animation: flashHighlight 2s ease;
+}
+
+@keyframes flashHighlight {
+  0%   { background-color: #fff3cd; }
+  50%  { background-color: #ffeeba; }
+  100% { background-color: transparent; }
+}
+
+
 @media (max-width: 1000px) {
   .image-new-comment-box .post-image {
     /* max-height: 500px; */

@@ -1,20 +1,30 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+  Container,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Typography,
+  Checkbox,
+  Button,
+  IconButton,
+  CircularProgress,
+  Snackbar,
+  Tooltip,
+} from "@mui/material";
+import ShareIcon from "@mui/icons-material/Share";
 import { useAppDispatch } from "../utils/store";
-import { useFirebaseAuth } from "../utils/useFirebaseAuth";
-import { CollectionType, PostWithID } from "../utils/types";
-import { CircularProgress, Button } from "@mui/material";
+import { fetchPostsByCollectionId } from "../thunks/postsThunks";
 import { db } from "../utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { fetchPostsByCollectionId } from "../thunks/postsThunks";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import "./viewCollection.css";
+import { CollectionType, PostWithID } from "../utils/types";
 
-export const ViewCollection = () => {
+const ViewCollection = () => {
   const { collectionId } = useParams<{ collectionId: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { currentUser } = useFirebaseAuth();
 
   const [collectionDetails, setCollectionDetails] =
     useState<CollectionType | null>(null);
@@ -23,52 +33,37 @@ export const ViewCollection = () => {
     {}
   );
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
-  const [imageSize, setImageSize] = useState<"small" | "medium" | "large">(
-    "medium"
-  );
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     const loadCollection = async () => {
-      if (!collectionId) {
-        navigate("/page-not-found");
-        return;
-      }
+      if (!collectionId) return navigate("/page-not-found");
 
-      setLoading(true);
       try {
-        const collectionRef = doc(db, "collections", collectionId);
-        const docSnap = await getDoc(collectionRef);
+        const snap = await getDoc(doc(db, "collections", collectionId));
+        if (!snap.exists()) return navigate("/page-not-found");
 
-        if (!docSnap.exists()) {
-          navigate("/page-not-found");
-          return;
-        }
-
-        const data = docSnap.data();
-        const collectionData: CollectionType = {
+        const data = snap.data();
+        setCollectionDetails({
           name: data.name,
           ownerId: data.ownerId,
           posts: data.posts,
           sharedWith: data.sharedWith,
           isShareableOutsideCompany: data.isShareableOutsideCompany,
-        };
+        });
 
-        setCollectionDetails(collectionData);
-
-        const actionResult = await dispatch(
+        const results = await dispatch(
           fetchPostsByCollectionId(collectionId)
         ).unwrap();
-        setPosts(actionResult);
-
-        const initialSelection = actionResult.reduce((acc, post) => {
-          acc[post.id] = true;
-          return acc;
-        }, {} as { [id: string]: boolean });
-
-        setSelectedPosts(initialSelection);
-      } catch (error) {
-        console.error("Error loading collection:", error);
+        setPosts(results);
+        setSelectedPosts(
+          results.reduce((acc, post) => {
+            acc[post.id] = true;
+            return acc;
+          }, {} as { [id: string]: boolean })
+        );
+      } catch (err) {
+        console.error(err);
         navigate("/access-denied");
       } finally {
         setLoading(false);
@@ -82,131 +77,92 @@ export const ViewCollection = () => {
     setSelectedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const handleExportSelected = async () => {
-    const postIdsToExport = posts
-      .filter((post) => selectedPosts[post.id])
-      .map((post) => post.id);
-    if (postIdsToExport.length === 0) {
-      alert("No posts selected for export.");
-      return;
-    }
-
-    try {
-      const functions = getFunctions();
-      const exportPostsFn = httpsCallable(functions, "exportPosts");
-      setExporting(true);
-      const result: any = await exportPostsFn({
-        collectionId,
-        postIds: postIdsToExport,
-      });
-
-      if (result.data?.url) {
-        const response = await fetch(result.data.url);
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = downloadUrl;
-        link.setAttribute("download", "exported_posts.zip");
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      } else {
-        alert("Failed to export posts.");
-      }
-    } catch (error) {
-      console.error("Error exporting posts:", error);
-      alert("Error exporting posts.");
-    } finally {
-      setExporting(false);
-    }
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(
+      `${window.location.origin}/view-collection/${collectionId}`
+    );
+    setSnackbarOpen(true);
   };
 
-  if (loading) {
-    return <CircularProgress />;
+  if (loading) return <CircularProgress sx={{ m: 4 }} />;
+
+  function formatDisplayDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   }
 
-  const getImageSizeStyle = () => {
-    switch (imageSize) {
-      case "small":
-        return { width: "100%", maxWidth: "200px", height: "auto" };
-      case "medium":
-        return { width: "100%", maxWidth: "400px", height: "auto" };
-      case "large":
-        return { width: "100%", maxWidth: "800px", height: "auto" };
-      default:
-        return { width: "100%", maxWidth: "400px", height: "auto" };
-    }
-  };
-
   return (
-    <div className="view-collection-container">
-      <div className="view-collection-header">
-        <h1>{collectionDetails?.name}</h1>
-        <Button
-          onClick={handleExportSelected}
-          disabled={exporting}
-          variant="outlined"
-        >
-          {exporting ? "Exporting..." : "Export Selected"}
-        </Button>
-        <div className="image-size-controls">
-          <Button
-            onClick={() => setImageSize("small")}
-            variant={imageSize === "small" ? "contained" : "outlined"}
-          >
-            Small
-          </Button>
-          <Button
-            onClick={() => setImageSize("medium")}
-            variant={imageSize === "medium" ? "contained" : "outlined"}
-          >
-            Medium
-          </Button>
-          <Button
-            onClick={() => setImageSize("large")}
-            variant={imageSize === "large" ? "contained" : "outlined"}
-          >
-            Large
-          </Button>
-        </div>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        {collectionDetails?.name}
+      </Typography>
+      <Tooltip title="Copy shareable link">
+        <IconButton onClick={handleCopyLink}>
+          <ShareIcon />
+        </IconButton>
+      </Tooltip>
 
-        <Button onClick={() => navigate("/dashboard")} variant="outlined">
-          Back to Dashboard
-        </Button>
-      </div>
-
-      <div className="posts-list">
+      <Grid container spacing={3}>
         {posts.map((post) => (
-          <div key={post.id} className="post-list-item">
-            <div className="list-item-image">
-              <img
-                src={post.imageUrl}
-                alt="Post Preview"
-                style={getImageSizeStyle()}
+          <Grid item xs={12} sm={6} md={6} key={post.id}>
+            <Card sx={{ position: "relative" }}>
+              <CardMedia
+                component="img"
+                height="440"
+                image={post.imageUrl}
+                alt="Post image"
               />
-            </div>
-            <div className="list-item-details">
-              <h3>{post.account?.accountName}</h3>
-              <p>{post.description}</p>
-              <p>
-                {post.account?.accountAddress} {post.state}
-              </p>
-              <p>
-                {post.totalCaseCount > 0
-                  ? `${post.totalCaseCount} cases`
-                  : "No cases specified"}
-              </p>
-            </div>
-            <input
-              type="checkbox"
-              checked={!!selectedPosts[post.id]}
-              onChange={() => handleCheckboxChange(post.id)}
-              className="list-item-checkbox"
-            />
-          </div>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {post.account?.accountName}
+                </Typography>
+                <Typography variant="body2">{post.description}</Typography>
+                <Typography variant="body2">
+                  Date: {formatDisplayDate(post.displayDate)}
+                </Typography>
+                {/* <Typography variant="body2">
+                  Brands: {(post.brands ?? []).join(", ")}
+                </Typography> */}
+                <Typography variant="body2">
+                  Hashtags:{" "}
+                  {(post.hashtags ?? []).map((tag) => `${tag}`).join(" ")}
+                </Typography>
+                <Typography variant="body2">
+                  Created by: {post.createdBy?.firstName}{" "}
+                  {post.createdBy?.lastName}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                  {post.account?.accountAddress} {post.state}
+                </Typography>
+                <Typography variant="body2">
+                  {post.totalCaseCount
+                    ? `${post.totalCaseCount} cases`
+                    : "No cases specified"}
+                </Typography>
+              </CardContent>
+              <Checkbox
+                checked={!!selectedPosts[post.id]}
+                onChange={() => handleCheckboxChange(post.id)}
+                sx={{ position: "absolute", top: 8, right: 8 }}
+              />
+            </Card>
+          </Grid>
         ))}
-      </div>
-    </div>
+      </Grid>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={2000}
+        onClose={() => setSnackbarOpen(false)}
+        message="Link copied to clipboard"
+      />
+    </Container>
   );
 };
 

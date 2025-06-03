@@ -18,6 +18,7 @@ interface PostCardRendererProps {
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
+  postIdToScroll?: string | null;
 }
 
 const PostCardRenderer: React.FC<PostCardRendererProps> = ({
@@ -28,11 +29,13 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   setCurrentHashtag,
   setActivePostSet,
   setIsSearchActive,
+  postIdToScroll
 }) => {
   if (!post) {
     console.error("Post data is undefined at index:", index);
     return null;
   }
+ 
 
   return (
     <MemoizedPostCard
@@ -45,6 +48,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
       setCurrentHashtag={setCurrentHashtag}
       setActivePostSet={setActivePostSet}
       setIsSearchActive={setIsSearchActive}
+      postIdToScroll={postIdToScroll}
     />
   );
 };

@@ -1,5 +1,5 @@
 // PostCard.tsx
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useState } from "react";
 import {
   Card,
@@ -51,21 +51,29 @@ interface PostCardProps {
   id: string;
   currentUserUid: string;
   post: PostWithID;
-  getPostsByTag?: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
+  style: React.CSSProperties;
+  getPostsByTag?: (
+    hashTag: string,
+    companyID?: string
+  ) => Promise<PostWithID[]>;
   getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
+  postIdToScroll?: string | null; // New prop to control highlighting
 }
 
 const PostCard: React.FC<PostCardProps> = ({
+  id,
   currentUserUid,
   post,
+  style,
   getPostsByTag,
   getPostsByStarTag,
   setCurrentHashtag,
   setActivePostSet,
   setIsSearchActive,
+  postIdToScroll = null, // Default to null if not provided
 }) => {
   const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
@@ -79,7 +87,6 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isSharing, setIsSharing] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareLink, setShareLink] = useState("");
-
   // New state for controlling the visibility of the SharePost component
   const [isAddToCollectionModalOpen, setIsAddToCollectionModalOpen] =
     useState(false);
@@ -89,6 +96,20 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const [_selectedCompanyAccount, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
+  const [shouldHighlight, setShouldHighlight] = useState(false);
+
+  useEffect(() => {
+    if (postIdToScroll === post.id) {
+      setShouldHighlight(true);
+
+      // Optional: Clear highlight after scroll
+      const timer = setTimeout(() => {
+        setShouldHighlight(false);
+      }, 2000); // give enough time for scroll and visibility
+
+      return () => clearTimeout(timer);
+    }
+  }, [postIdToScroll, post.id]);
 
   const handleImageClick = () => {
     // Assuming post.imageUrl is available and contains the 'resized' keyword
@@ -239,7 +260,11 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <>
-      <div className="post-card-container"
+      <div
+        className={`post-card-container ${
+          shouldHighlight ? "shouldHighlight" : ""
+        }`}
+        style={{ position: "relative" }}
       >
         <div className="post-header">
           <div className="visibility">

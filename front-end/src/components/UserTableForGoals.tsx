@@ -18,6 +18,7 @@ const UserTableForGoals = ({ users }: { users: UserRowType[] }) => {
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
 
   const handleViewPost = (postId: string) => {
+    console.log("Navigating to user-home-page with postId", postId);
     navigate(`/user-home-page?postId=${postId}`);
   };
 

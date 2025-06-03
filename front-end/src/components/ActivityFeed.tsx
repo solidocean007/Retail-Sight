@@ -99,132 +99,26 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return 800; // Fallback for SSR or very early load
   });
 
-useEffect(() => {
-  if (!postIdToScroll || !virtuosoRef.current) return;
+  useEffect(() => {
+  if (!postIdToScroll || !virtuosoRef.current || !displayPosts.length) return;
 
   const index = displayPosts.findIndex((p) => p.id === postIdToScroll);
-  if (index >= 0) {
-    virtuosoRef.current.scrollToIndex({ index, align: "start" });
-    setPostIdToScroll?.(null); // clear after scroll
-  }
-}, [postIdToScroll, displayPosts]);
+  if (index === -1) return;
 
+  console.log("Scrolling to:", postIdToScroll, "at index:", index);
+  virtuosoRef.current.scrollToIndex({ index, align: "start" });
 
-// what is this doing differently than the useEffect above?
-  useEffect(() => {
-    onReadyToScrollToPostId?.(scrollToPostId);
-  }, [displayPosts]);
+  setPostIdToScroll(null); // No delay
+
+}, [postIdToScroll, displayPosts.length]);
+
 
   useEffect(() => {
-    if (!virtuosoRef.current) return;
-
-    // Reset the list when posts finish loading or screen size changes
-    const resetList = () => {
+    // Only scroll to top when activePostSet changes and no postId is targeted
+    if (!postIdToScroll) {
       virtuosoRef.current?.scrollToIndex({ index: 0, align: "start" });
-    };
-
-    resetList();
-
-    // Small delay in case visual viewport changes slightly after load
-    const timeout = setTimeout(() => {
-      resetList();
-    }, 200);
-
-    return () => clearTimeout(timeout);
-  }, [windowWidth, listHeight]);
-
-  const scrollToPostId = (postId: string) => {
-    const index = displayPosts.findIndex((post) => post.id === postId);
-    if (index >= 0) {
-      virtuosoRef.current?.scrollToIndex({ index, align: "start" });
     }
-  };
-
-  useEffect(() => {
-    // Whenever activePostSet changes, scroll to the top of the list
-    virtuosoRef.current?.scrollToIndex({ index: 0, align: "start" });
-  }, [activePostSet, virtuosoRef]);
-
-  // Effect to set initial and update list height on resize
-  // does this also make the list scroll to the top?
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     setWindowWidth(window.innerWidth);
-  //     setListHeight(window.visualViewport?.height ?? window.innerHeight);
-  //     listRef.current?.resetAfterIndex(0, true);
-  //   };
-
-  //   window.addEventListener("resize", handleResize);
-  //   window.visualViewport?.addEventListener("resize", handleResize); // listen to real viewport changes
-
-  //   return () => {
-  //     window.removeEventListener("resize", handleResize);
-  //     window.visualViewport?.removeEventListener("resize", handleResize);
-  //   };
-  // }, []);
-
-  // Function to get the dynamic height of each item
-  const ITEM_GAP = 8;
-
-  const getActivityItemHeight = (windowWidth: number) => {
-    if (windowWidth <= 500) {
-      return 700;
-    } else if (windowWidth <= 600) {
-      return 750;
-    } else if (windowWidth <= 700) {
-      return 750;
-    } else if (windowWidth <= 800) {
-      return 800;
-    } else if (windowWidth <= 900) {
-      return 850;
-    } else {
-      return 900;
-    }
-  };
-
-  const handleItemsRendered = ({
-    visibleStopIndex,
-  }: {
-    visibleStopIndex: number;
-  }) => {
-    // const lastIndex = itemCount - 1;
-    const lastIndex = itemCount; // last index is declared but never read
-
-    // If the last visible index is the last item in the list
-    if (
-      visibleStopIndex >= displayPosts.length - 1 &&
-      !loadingMore &&
-      hasMore
-    ) {
-      setLoadingMore(true);
-      dispatch(
-        fetchMorePostsBatch({
-          lastVisible,
-          limit: POSTS_BATCH_SIZE,
-          currentUserCompanyId,
-        })
-      )
-        .then((action) => {
-          if (fetchMorePostsBatch.fulfilled.match(action)) {
-            const { posts, lastVisible: newLastVisible } = action.payload;
-            setLastVisible(newLastVisible);
-            if (posts.length > 0) {
-              addPostsToIndexedDB(posts); // Ensure new posts are added to IndexedDB
-              setHasMore(true);
-            } else {
-              setHasMore(false);
-            }
-            // Merge new posts with existing posts in Redux store
-            dispatch(mergeAndSetPosts(posts));
-          } else if (fetchMorePostsBatch.rejected.match(action)) {
-            // Handle error
-          }
-        })
-        .finally(() => {
-          setLoadingMore(false);
-        });
-    }
-  };
+  }, [activePostSet]); // ✅ remove postIdToScroll from deps
 
   const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   const fillerCount = 3;
@@ -271,6 +165,7 @@ useEffect(() => {
                 setCurrentHashtag={setCurrentHashtag}
                 setActivePostSet={setActivePostSet}
                 setIsSearchActive={setIsSearchActive}
+                postIdToScroll={postIdToScroll}
               />
             </div>
           );

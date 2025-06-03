@@ -13,7 +13,7 @@ import PrivacyPolicy from "../components/PrivacyPolicy";
 import TermsOfService from "../components/TermsService";
 import HelpSupport from "../components/HelpSupport";
 import SplashPage from "../components/SplashPage";
-import { ViewCollection } from "../components/ViewCollection";
+import ViewCollection from "../components/ViewCollection";
 import { PageNotFound } from "../components/ErrorPages/PageNotFound";
 import { AccessDenied } from "../components/ErrorPages/AccessDenied";
 import { ViewSharedPost } from "../components/ViewSharedPost";

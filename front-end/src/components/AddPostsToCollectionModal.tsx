@@ -1,9 +1,9 @@
-// AddPostsToCollectionModal.tsx
 import React, { useState, useEffect } from "react";
 import { db } from "../utils/firebase";
 import {
   collection,
   addDoc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -16,15 +16,18 @@ import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { CollectionType, CollectionWithId } from "../utils/types";
 import { Dialog } from "@mui/material";
+import { addOrUpdateCollection } from "../utils/database/indexedDBUtils";
 
 interface AddPostToCollectionModalProps {
   postId: string;
   onClose: () => void;
+  onCollectionChange?: () => void; // Optional: trigger refresh in parent
 }
 
 const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
   postId,
   onClose,
+  onCollectionChange,
 }) => {
   const [collections, setCollections] = useState<CollectionWithId[]>([]);
   const user = useSelector(selectUser);
@@ -34,14 +37,14 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
       if (user?.uid) {
         const q = query(
           collection(db, "collections"),
-          where("ownerId", "==", user.uid),
+          where("ownerId", "==", user.uid)
         );
         const querySnapshot = await getDocs(q);
         const fetchedCollections: CollectionWithId[] = querySnapshot.docs.map(
           (doc) => ({
             ...(doc.data() as CollectionType),
             id: doc.id,
-          }),
+          })
         );
         setCollections(fetchedCollections);
       }
@@ -52,25 +55,52 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
   const handleAddPostToCollection = async (collectionId: string) => {
     const collectionRef = doc(db, "collections", collectionId);
     try {
-      await updateDoc(collectionRef, {
-        posts: arrayUnion(postId), // Assumes arrayUnion is imported from 'firebase/firestore'
-      });
-      onClose(); // Close the modal after adding
+      const snapshot = await getDoc(collectionRef);
+      const existing = snapshot.data() as CollectionType;
+
+      if (!existing.posts?.includes(postId)) {
+        await updateDoc(collectionRef, {
+          posts: arrayUnion(postId),
+        });
+
+        const updatedDoc = await getDoc(collectionRef);
+        const updatedCollection = {
+          ...(updatedDoc.data() as CollectionType),
+          id: collectionId,
+        };
+
+        await addOrUpdateCollection(updatedCollection);
+        onCollectionChange?.();
+      }
+
+      onClose(); // always close modal
     } catch (error) {
       console.error("Error adding post to collection:", error);
     }
   };
 
   const onAddNewCollection = async (
-    collectionData: Omit<CollectionType, "id">,
+    collectionData: Omit<CollectionType, "id">
   ) => {
     try {
       const newCollectionData = {
         ...collectionData,
-        posts: [postId], // Automatically include the current post in the new collection
+        posts: [postId],
       };
-      await addDoc(collection(db, "collections"), newCollectionData);
-      onClose(); // Close the modal after creation
+
+      const docRef = await addDoc(
+        collection(db, "collections"),
+        newCollectionData
+      );
+      const snapshot = await getDoc(docRef);
+      const savedCollection = {
+        ...(snapshot.data() as CollectionType),
+        id: docRef.id,
+      };
+
+      await addOrUpdateCollection(savedCollection);
+      onCollectionChange?.(); // Optional refresh hook
+      onClose();
     } catch (error) {
       console.error("Error creating new collection:", error);
     }
@@ -79,7 +109,6 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
   return (
     <div>
       <h2>Add Post to Collection</h2>
-      {/* List existing collections with an option to add post to them */}
       {collections.map((collection) => (
         <button
           key={collection.id}
@@ -88,7 +117,12 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
           Add to {collection.name}
         </button>
       ))}
-      <CollectionForm onAddCollection={onAddNewCollection} />
+      <CollectionForm
+        isOpen={true}
+        onAddCollection={onAddNewCollection}
+        onClose={onClose}
+      />
+
       <button onClick={onClose}>Close</button>
     </div>
   );

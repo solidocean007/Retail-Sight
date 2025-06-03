@@ -43,14 +43,13 @@ export const UserHomePage = () => {
   const posts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
-  ); // this is the state of redux filtered posts
+  ); //
 
-  const location = useLocation();
   useEffect(() => {
-    if (location.state?.postIdToScroll) {
-      setPostIdToScroll(location.state.postIdToScroll);
-    }
-  }, [location]);
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("postId");
+    if (id) setPostIdToScroll(id);
+  }, []);
 
   const scrollToPost = useRef<(postId: string) => void>();
 

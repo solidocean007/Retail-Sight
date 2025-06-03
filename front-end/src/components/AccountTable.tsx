@@ -41,18 +41,29 @@ const AccountTable: React.FC<AccountTableProps> = ({
         </div>
 
         <Virtuoso
-          style={{ height: Math.min(accounts.length * rowHeight, height), width: "100%" }}
+          style={{
+            height: Math.min(accounts.length * rowHeight, height),
+            width: "100%",
+          }}
           totalCount={accounts.length}
           itemContent={(index) => {
             const acc = accounts[index];
+            console.log("Navigating to user-home-page with postId", acc.postId);
+
             return (
               <div
-                className={`account-row ${acc.postId ? "submitted" : "not-submitted"}`}
+                className={`account-row ${
+                  acc.postId ? "submitted" : "not-submitted"
+                }`}
               >
                 <div className="account-small-cell">{index + 1}</div>
                 <div className="account-cell name-cell">{acc.accountName}</div>
-                <div className="account-cell address-cell">{acc.accountAddress}</div>
-                <div className="account-small-cell">{acc.postId ? "✅" : "❌"}</div>
+                <div className="account-cell address-cell">
+                  {acc.accountAddress}
+                </div>
+                <div className="account-small-cell">
+                  {acc.postId ? "✅" : "❌"}
+                </div>
 
                 {salesRouteNum && (
                   <div className="account-cell submitted-by-cell">
@@ -72,7 +83,15 @@ const AccountTable: React.FC<AccountTableProps> = ({
                   {acc.postId ? (
                     <button
                       className="view-post-button"
-                      onClick={() => navigate("/user-home-page", { state: { postIdToScroll: acc.postId } })}
+                      onClick={() => {
+                        console.log(
+                          "Navigating to user-home-page with postId",
+                          acc.postId
+                        );
+                        navigate("/user-home-page", {
+                          state: { postIdToScroll: acc.postId },
+                        });
+                      }}
                       title="View Post"
                       aria-label="View Post"
                     >

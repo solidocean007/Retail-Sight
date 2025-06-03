@@ -31,7 +31,7 @@ useEffect(() => {
       );
       const server = configSnap.data()?.schemaVersion || null;
       setServerVersion(server);
-      console.log("✅ Server version (fresh):", server);
+      // console.log("✅ Server version (fresh):", server);
 
       if (!server) {
         console.warn("⚠️ No schemaVersion found in Firestore.");
@@ -45,7 +45,7 @@ useEffect(() => {
 
       request.onsuccess = () => {
         const local = request.result?.version;
-        console.log("✅ Local version (from onsuccess):", local);
+        // console.log("✅ Local version (from onsuccess):", local);
 
         const alreadyReloaded = sessionStorage.getItem("schemaVersionSynced");
 
