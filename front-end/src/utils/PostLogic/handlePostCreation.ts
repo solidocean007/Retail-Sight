@@ -157,7 +157,7 @@ export const useHandlePostSubmission = () => {
                 createdBy: userData ?? null, // ✅ Save whole current user object
                 ...(post.postedFor && { postedFor: post.postedFor }), // ✅ Save if creating on behalf
                 supplier: post.supplier,
-                brands: post.brands,
+                brands: Array.isArray(post.brands) ? post.brands : [],
                 companyGoalId: post.companyGoalId || null, // Ensures companyGoalId exists
                 companyGoalDescription: post.companyGoalDescription || null, // Ensures description exists
                 companyGoalTitle: post.companyGoalTitle || null, // Ensures title  exists
