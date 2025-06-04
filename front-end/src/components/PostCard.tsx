@@ -318,7 +318,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   onClose={() => setIsAddToCollectionModalOpen(false)}
                 >
                   <AddPostToCollectionModal
-                    postId={post.id}
+                    post={post}
                     onClose={() => setIsAddToCollectionModalOpen(false)}
                   />
                 </Dialog>

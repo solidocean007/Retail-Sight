@@ -1,24 +1,25 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import {
-  Container,
-  Grid,
+  Box,
   Card,
-  CardMedia,
   CardContent,
-  Typography,
+  CardMedia,
   Checkbox,
-  Button,
+  Container,
   IconButton,
-  CircularProgress,
   Snackbar,
+  Stack,
   Tooltip,
+  Typography,
+  CircularProgress,
+  Button,
 } from "@mui/material";
 import ShareIcon from "@mui/icons-material/Share";
-import { useAppDispatch } from "../utils/store";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { fetchPostsByCollectionId } from "../thunks/postsThunks";
 import { db } from "../utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { useAppDispatch } from "../utils/store";
 import { CollectionType, PostWithID } from "../utils/types";
 
 const ViewCollection = () => {
@@ -57,10 +58,7 @@ const ViewCollection = () => {
         ).unwrap();
         setPosts(results);
         setSelectedPosts(
-          results.reduce((acc, post) => {
-            acc[post.id] = true;
-            return acc;
-          }, {} as { [id: string]: boolean })
+          results.reduce((acc, post) => ({ ...acc, [post.id]: true }), {})
         );
       } catch (err) {
         console.error(err);
@@ -77,84 +75,102 @@ const ViewCollection = () => {
     setSelectedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(
-      `${window.location.origin}/view-collection/${collectionId}`
-    );
+  const handleCopyLink = (postId?: string) => {
+    const url = postId
+      ? `${window.location.origin}/view-post/${postId}`
+      : `${window.location.origin}/view-collection/${collectionId}`;
+    navigator.clipboard.writeText(url);
     setSnackbarOpen(true);
   };
 
-  if (loading) return <CircularProgress sx={{ m: 4 }} />;
-
-  function formatDisplayDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, {
+  const formatDisplayDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, {
       weekday: "short",
       year: "numeric",
       month: "short",
       day: "numeric",
     });
-  }
+  };
+
+  if (loading) return <CircularProgress sx={{ m: 4 }} />;
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        {collectionDetails?.name}
-      </Typography>
-      <Tooltip title="Copy shareable link">
-        <IconButton onClick={handleCopyLink}>
-          <ShareIcon />
-        </IconButton>
-      </Tooltip>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        spacing={2}
+        mb={3}
+      >
+        <Typography variant="h4">{collectionDetails?.name}</Typography>
+        <Tooltip title="Copy collection link">
+          <IconButton onClick={() => handleCopyLink()}>
+            <ShareIcon />
+          </IconButton>
+        </Tooltip>
+        <Button
+          variant="outlined"
+          onClick={() => navigate("/user-home-page")}
+          sx={{ mt: 2 }}
+        >
+          Go to Home
+        </Button>
+      </Stack>
 
-      <Grid container spacing={3}>
+      <Stack spacing={3}>
         {posts.map((post) => (
-          <Grid item xs={12} sm={6} md={6} key={post.id}>
-            <Card sx={{ position: "relative" }}>
-              <CardMedia
-                component="img"
-                height="440"
-                image={post.imageUrl}
-                alt="Post image"
-              />
-              <CardContent>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {post.account?.accountName}
+          <Card key={post.id} sx={{ position: "relative" }}>
+            <CardMedia
+              component="img"
+              height="400"
+              image={post.imageUrl}
+              alt="Post image"
+              sx={{ objectFit: "cover" }}
+            />
+            <CardContent>
+              <Stack spacing={1}>
+                <Typography variant="h6">
+                  {post.account?.accountName || "Unknown Store"}
                 </Typography>
                 <Typography variant="body2">{post.description}</Typography>
                 <Typography variant="body2">
-                  Date: {formatDisplayDate(post.displayDate)}
-                </Typography>
-                {/* <Typography variant="body2">
-                  Brands: {(post.brands ?? []).join(", ")}
-                </Typography> */}
-                <Typography variant="body2">
-                  Hashtags:{" "}
-                  {(post.hashtags ?? []).map((tag) => `${tag}`).join(" ")}
+                  📅 {formatDisplayDate(post.displayDate)}
                 </Typography>
                 <Typography variant="body2">
-                  Created by: {post.createdBy?.firstName}{" "}
-                  {post.createdBy?.lastName}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                  {post.account?.accountAddress} {post.state}
+                  📍 {post.account?.accountAddress} {post.state}
                 </Typography>
                 <Typography variant="body2">
-                  {post.totalCaseCount
-                    ? `${post.totalCaseCount} cases`
-                    : "No cases specified"}
+                  🧃 Brands: {post.brands?.join(", ") || "N/A"}
                 </Typography>
-              </CardContent>
+                <Typography variant="body2">
+                  🔖 Hashtags: {post.hashtags?.join(" ") || "None"}
+                </Typography>
+                <Typography variant="body2">
+                  👤 {post.createdBy?.firstName} {post.createdBy?.lastName}
+                </Typography>
+                <Typography variant="body2">
+                  📦 {post.totalCaseCount || "No"} cases
+                </Typography>
+              </Stack>
               <Checkbox
                 checked={!!selectedPosts[post.id]}
                 onChange={() => handleCheckboxChange(post.id)}
                 sx={{ position: "absolute", top: 8, right: 8 }}
               />
-            </Card>
-          </Grid>
+              <Tooltip title="Copy link to this post">
+                <IconButton
+                  onClick={() => handleCopyLink(post.id)}
+                  sx={{ position: "absolute", top: 8, right: 48 }}
+                >
+                  <ShareIcon />
+                </IconButton>
+              </Tooltip>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Stack>
 
       <Snackbar
         open={snackbarOpen}

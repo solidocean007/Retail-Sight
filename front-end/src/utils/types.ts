@@ -160,6 +160,7 @@ export interface CollectionType {
   description?: string;
   ownerId: string;
   posts: string[];
+  previewImages?: string[]; // Array of post IDs for preview images
   sharedWith: string[];
   shareToken?: string;
   isShareableOutsideCompany: boolean;

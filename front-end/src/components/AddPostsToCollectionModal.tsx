@@ -14,23 +14,45 @@ import {
 import CollectionForm from "./CollectionForm";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
-import { CollectionType, CollectionWithId } from "../utils/types";
+import {
+  CollectionType,
+  CollectionWithId,
+  PostType,
+  PostWithID,
+} from "../utils/types";
 import { Dialog } from "@mui/material";
 import { addOrUpdateCollection } from "../utils/database/indexedDBUtils";
 
 interface AddPostToCollectionModalProps {
-  postId: string;
+  post: PostWithID;
   onClose: () => void;
   onCollectionChange?: () => void; // Optional: trigger refresh in parent
 }
 
 const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
-  postId,
+  post,
   onClose,
   onCollectionChange,
 }) => {
   const [collections, setCollections] = useState<CollectionWithId[]>([]);
   const user = useSelector(selectUser);
+
+  const getThumbnailUrl = (imageUrl: string): string => {
+    try {
+      const url = new URL(imageUrl);
+      const segments = url.pathname.split("/");
+      const filename = segments.pop();
+      if (!filename) return imageUrl;
+
+      const [base, ext] = filename.split(".");
+      const thumbFilename = `${base}_200x200.${ext}`;
+      segments.push(thumbFilename);
+      url.pathname = segments.join("/");
+      return url.toString();
+    } catch {
+      return imageUrl;
+    }
+  };
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -58,10 +80,20 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
       const snapshot = await getDoc(collectionRef);
       const existing = snapshot.data() as CollectionType;
 
-      if (!existing.posts?.includes(postId)) {
-        await updateDoc(collectionRef, {
-          posts: arrayUnion(postId),
-        });
+      if (!existing.posts?.includes(post.id)) {
+        const updates: any = {
+          posts: arrayUnion(post.id),
+        };
+
+        const imageUrl = getThumbnailUrl(post.imageUrl ?? "");
+        if (
+          imageUrl &&
+          (!existing.previewImages || existing.previewImages.length < 4)
+        ) {
+          updates.previewImages = arrayUnion(imageUrl);
+        }
+
+        await updateDoc(collectionRef, updates);
 
         const updatedDoc = await getDoc(collectionRef);
         const updatedCollection = {
@@ -83,9 +115,11 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
     collectionData: Omit<CollectionType, "id">
   ) => {
     try {
+      const imageUrl = getThumbnailUrl(post.imageUrl ?? "");
       const newCollectionData = {
         ...collectionData,
-        posts: [postId],
+        posts: [post.id],
+        previewImages: imageUrl ? [imageUrl] : [],
       };
 
       const docRef = await addDoc(
@@ -118,7 +152,7 @@ const AddPostToCollectionModal: React.FC<AddPostToCollectionModalProps> = ({
         </button>
       ))}
       <CollectionForm
-        isOpen={true}
+        isOpen={false}
         onAddCollection={onAddNewCollection}
         onClose={onClose}
       />

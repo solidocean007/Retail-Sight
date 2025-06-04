@@ -54,7 +54,7 @@ import {
 } from "../Slices/allAccountsSlice.ts";
 import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
 import DashMenu from "./DashMenu.tsx";
-import { updatePostsWithFreshAccounts } from "../script.ts";
+// import { updatePostsWithFreshAccounts } from "../script.ts";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 
 export const Dashboard = () => {
@@ -76,7 +76,7 @@ export const Dashboard = () => {
 
   const handleUpdatePosts = async () => {
     console.log("Starting post updates with fresh accounts...");
-    await updatePostsWithFreshAccounts(allAccounts);
+    // await updatePostsWithFreshAccounts(allAccounts);
     console.log("✅ Done updating posts.");
   };
 
