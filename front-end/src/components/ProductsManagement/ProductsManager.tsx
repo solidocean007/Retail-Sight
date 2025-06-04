@@ -187,21 +187,6 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     }
   };
 
-  // const handleDelete = (productId: string) => { // unused
-  //   // declared but never read
-  //   const product = companyProducts.find(
-  //     (p) => p.companyProductId === productId
-  //   );
-  //   if (!product) return;
-
-  //   setProductToDelete(product);
-  //   setConfirmMessage(
-  //     `Are you sure you want to delete "${product.productName}"?`
-  //   );
-  //   setConfirmAction(() => () => executeDelete(productId));
-  //   setShowConfirm(true);
-  // };
-
   const executeDelete = async (productId: string) => {
     try {
       setIsSubmitting(true);
@@ -230,14 +215,6 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     setConfirmAction(() => () => executeManualSubmit(product));
     setShowConfirm(true);
   };
-
-  // const handleInlineSave = (index: number) => {
-  //   // declared but never read
-  //   const product = companyProducts[index];
-  //   setConfirmMessage(`Save changes to "${product.productName}"?`);
-  //   setConfirmAction(() => () => executeInlineSave(product));
-  //   setShowConfirm(true);
-  // };
 
   const executeInlineSave = async (product: ProductType) => {
     try {
@@ -293,8 +270,8 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
     }
   };
 
-  const isMobile = window.innerWidth <= 768; // Adjust based on your design breakpoints;
-  const rowHeight = isMobile ? 180 : 60; // Adjust row height based on mobile view
+  const isMobile = window.innerWidth <= 1200; // Adjust based on your design breakpoints;
+  const rowHeight = isMobile ? 400 : 80; // Adjust row height based on mobile view
   return (
     <Box className="account-manager-container">
       <Typography variant="h4" className="account-header-title" mb={2}>

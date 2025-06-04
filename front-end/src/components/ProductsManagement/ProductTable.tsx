@@ -1,7 +1,16 @@
 // ProductTable.tsx
 import React, { useState } from "react";
-import { Button, TextField, Box, useMediaQuery, FormControl, InputLabel, OutlinedInput } from "@mui/material";
-import { VariableSizeList as List } from 'react-window';
+import {
+  Button,
+  TextField,
+  Box,
+  useMediaQuery,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
+} from "@mui/material";
+import { FixedSizeList as List } from "react-window";
+
 import { ProductType } from "../../utils/types";
 import "./styles/productTable.css";
 import MobileProductCard from "./MobileProductCard";
@@ -19,15 +28,14 @@ interface ProductTableProps {
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
   height = 500,
-  rowHeight,
+  rowHeight = 60,
   searchTerm = "",
   setSearchTerm = () => {},
   onEditSave,
   onDelete,
 }) => {
   const isMobile = useMediaQuery("(max-width:1200px)");
-  const computedRowHeight = rowHeight || (isMobile ? 400 : 80);
-  const getItemSize = (index: number) => isMobile ? 400 : 60;
+  const computedRowHeight = rowHeight || (isMobile ? 400 : 60);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editedProduct, setEditedProduct] = useState<ProductType | null>(null);
 
@@ -169,7 +177,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             </div>
             <div className="product-cell product-column-actions">
               <button
-                className="product-edit-btn"  
+                className="product-edit-btn"
                 onClick={() => {
                   setEditIndex(index);
                   setEditedProduct({ ...product });
@@ -227,7 +235,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         <List
           height={Math.min(filteredProducts.length * computedRowHeight, height)}
           itemCount={filteredProducts.length}
-          itemSize={getItemSize}
+          itemSize={rowHeight} // Type 'number | undefined' is not assignable to type '(index: number) => number'
           width="100%"
         >
           {Row}

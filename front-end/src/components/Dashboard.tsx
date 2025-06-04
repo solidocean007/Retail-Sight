@@ -83,14 +83,25 @@ export const Dashboard = () => {
   // handleUpdatePosts();
 
   const [dashboardMode, setDashboardMode] = useState<DashboardModeType>(
-    isEmployee ? "MyGoalsMode" : "GoalManagerMode",
+    isEmployee ? "MyGoalsMode" : "GoalManagerMode"
   );
 
   const [selectedMode, setSelectedMode] = useState<DashboardModeType>(
-    isEmployee ? "MyGoalsMode" : "GoalManagerMode",
+    isEmployee ? "MyGoalsMode" : "GoalManagerMode"
   );
 
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const savedMode = sessionStorage.getItem(
+      "dashboardMode"
+    ) as DashboardModeType;
+    if (savedMode) {
+      setDashboardMode(savedMode);
+      setSelectedMode(savedMode);
+      sessionStorage.removeItem("dashboardMode");
+    }
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -137,7 +148,7 @@ export const Dashboard = () => {
       // 2. Real-time Firestore listener
       const q = query(
         collection(db, "users"),
-        where("companyId", "==", companyId),
+        where("companyId", "==", companyId)
       );
       const unsubscribe = onSnapshot(
         q,
@@ -147,7 +158,7 @@ export const Dashboard = () => {
               ({
                 ...doc.data(),
                 uid: doc.id,
-              }) as UserType,
+              } as UserType)
           );
 
           // 3. Update Redux store and IndexedDB if Firestore data changes
@@ -157,7 +168,7 @@ export const Dashboard = () => {
         },
         (error) => {
           console.error("Error syncing company users:", error);
-        },
+        }
       );
 
       return () => unsubscribe(); // Cleanup listener
@@ -230,7 +241,6 @@ export const Dashboard = () => {
           </Toolbar>
         </AppBar>
       </Box>
-
       <DashMenu
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -239,7 +249,6 @@ export const Dashboard = () => {
         isEmployee={isEmployee}
         selectedMode={selectedMode} // ✅ pass current selection
       />
-
       <Box
         sx={{
           marginLeft: isLargeScreen ? `${drawerWidth}px` : 0,
@@ -266,36 +275,13 @@ export const Dashboard = () => {
         {dashboardMode === "GoalManagerMode" && (
           <GoalManager companyId={companyId} />
         )}
-        {dashboardMode === "CollectionsMode" && <CollectionsViewer />}
+        {dashboardMode === "CollectionsMode" && (
+          <CollectionsViewer setDashboardMode={setDashboardMode} />
+        )}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
     </div>
   );
 };
-
-// async function removeTokenExpiryFromAllPosts() {
-//   const postsSnapshot = await getDocs(collection(db, "posts"));
-//   const batchUpdates: Promise<void>[] = [];
-
-//   postsSnapshot.forEach((postDoc) => {
-//     const data = postDoc.data();
-//     if (data.token && data.token.tokenExpiry) {
-//       const postRef = doc(db, "posts", postDoc.id);
-//       batchUpdates.push(
-//         updateDoc(postRef, {
-//           "token.tokenExpiry": deleteField()  // Firebase deleteField utility
-//         })
-//       );
-//     }
-//   });
-
-//   await Promise.all(batchUpdates);
-//   console.log("All tokenExpiry fields have been removed.");
-// }
-
-// import { deleteField } from "firebase/firestore";
-
-// // Call the function when ready
-// removeTokenExpiryFromAllPosts();
 
 export default Dashboard;

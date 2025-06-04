@@ -1,43 +1,33 @@
-/* user-profile-page.css */
-.user-profile-page-header {
-  position: relative;
+.user-profile-container {
   display: flex;
-  justify-content: space-between;
-  padding: 1rem;
-  align-items: center;
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  width: 100%;
+  padding: 16px;
+  /* background-color: var(--background-body); */
 }
 
-.user-edit-section {
+.avatar-box {
   display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 
-.user-name {
-  margin-right: 1rem;
-  font-weight: bold;
+.avatar-box button {
+  max-width: 300px;
 }
 
-.user-posts h3,
-.user-saved-stores h3 {
-  background: var(--form-background-color);
+
+.user-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--dashboard-card);
+  border-radius: 8px;
 }
 
-.user-edit-section button,
-.close-profile-page button {
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-  margin-left: 1rem;
-  border: none;
-  background-color: #1976d2;
-  color: white;
-  border-radius: 4px;
-  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease;
-}
-
-.user-edit-section button:hover,
-.close-profile-page button:hover {
-  background-color: #115293;
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
 }

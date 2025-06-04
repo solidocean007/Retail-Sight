@@ -1,18 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-  IconButton,
-  Grid,
-  Tooltip,
-  Stack,
-  Card,
-  CardMedia,
-  CardContent,
-} from "@mui/material";
+import { CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { Delete, Share } from "@mui/icons-material";
 import { db } from "../utils/firebase";
 import {
@@ -25,15 +13,20 @@ import {
 import { useDispatch } from "react-redux";
 import CollectionForm from "./CollectionForm";
 import CustomConfirmation from "./CustomConfirmation";
-import { CollectionType, CollectionWithId } from "../utils/types";
+import { CollectionType, CollectionWithId, DashboardModeType } from "../utils/types";
 import {
   addOrUpdateCollection,
   deleteUserCreatedCollectionFromIndexedDB,
   getCollectionsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { showMessage } from "../Slices/snackbarSlice";
+import "./collectionsViewer.css";
 
-const CollectionsViewer = () => {
+const CollectionsViewer = ({
+  setDashboardMode,
+}: {
+  setDashboardMode: React.Dispatch<React.SetStateAction<DashboardModeType>>;
+}) => {
   const [collections, setCollections] = useState<CollectionWithId[]>([]);
   const [collectionToDelete, setCollectionToDelete] = useState<string | null>(
     null
@@ -108,7 +101,9 @@ const CollectionsViewer = () => {
 
   const handleCollectionClick = (collection: CollectionWithId) => {
     if (collection.posts.length > 0) {
-      navigate(`/view-collection/${collection.id}`);
+      navigate(`/view-collection/${collection.id}`, {
+        state: { returnToDashboard: true },
+      });
     } else {
       dispatch(showMessage("No posts are in this collection yet."));
     }
@@ -122,93 +117,64 @@ const CollectionsViewer = () => {
   };
 
   return (
-    <Box p={3}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
-      >
-        <Typography variant="h4">Your Collections</Typography>
-        <Button
-          variant="contained"
+    <div className="collections-viewer-container">
+      <div className="collections-header">
+        <h2>Your Collections</h2>
+        <button
+          className="create-btn"
           onClick={() => setShowCreateCollectionDialog(true)}
         >
           Create Collection
-        </Button>
-      </Stack>
+        </button>
+      </div>
 
       {loading ? (
         <CircularProgress />
       ) : (
-        <Grid container spacing={3}>
+        <div className="collections-grid">
           {collections.map((collection) => {
             const sampleImages = (collection.previewImages || []).slice(0, 6);
-
             return (
-              <Grid item xs={12} sm={6} md={4} key={collection.id}>
-                <Card sx={{ p: 2, position: "relative" }}>
-                  <Box display="flex" justifyContent="center" gap={-2}>
-                    {sampleImages.map((url, index) => (
-                      <CardMedia
-                        key={index}
-                        component="img"
-                        src={url}
-                        alt={`preview-${index}`}
-                        sx={{
-                          width: 60,
-                          height: 60,
-                          borderRadius: 1,
-                          boxShadow: 2,
-                          transform: `rotate(${index * 2 - 9}deg)`, // more angled
-                          marginLeft: index === 0 ? 0 : -1, // tighter overlap
-                          zIndex: sampleImages.length - index,
-                        }}
-                      />
-                    ))}
-                  </Box>
-
-                  <CardContent>
-                    <Typography variant="h6" noWrap>
-                      {collection.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {collection.posts.length} post
-                      {collection.posts.length !== 1 ? "s" : ""}
-                    </Typography>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      mt={2}
+              <div className="collection-card" key={collection.id}>
+                <div className="collection-images">
+                  {sampleImages.map((url, index) => (
+                    <img
+                      key={index}
+                      src={url}
+                      alt={`preview-${index}`}
+                      className="collection-thumbnail"
+                      style={{
+                        transform: `rotate(${index * -1.5 - 5}deg)`,
+                        marginLeft: index === 0 ? 0 : -20,
+                        zIndex: sampleImages.length - index,
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="collection-content">
+                  <h4>{collection.name}</h4>
+                  <p>
+                    {collection.posts.length} post
+                    {collection.posts.length !== 1 ? "s" : ""}
+                  </p>
+                  <div className="collection-actions">
+                    <button onClick={() => handleCollectionClick(collection)}>
+                      View
+                    </button>
+                    <IconButton onClick={() => handleCopyLink(collection.id)}>
+                      <Share />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => setCollectionToDelete(collection.id)}
                     >
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleCollectionClick(collection)}
-                      >
-                        View
-                      </Button>
-                      <Tooltip title="Copy link">
-                        <IconButton
-                          onClick={() => handleCopyLink(collection.id)}
-                        >
-                          <Share />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          onClick={() => setCollectionToDelete(collection.id)}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
+                      <Delete />
+                    </IconButton>
+                  </div>
+                </div>
+              </div>
             );
           })}
-        </Grid>
+        </div>
       )}
 
       <CollectionForm
@@ -223,7 +189,7 @@ const CollectionsViewer = () => {
         onConfirm={handleDeleteCollectionConfirmed}
         message="Are you sure you want to delete this collection?"
       />
-    </Box>
+    </div>
   );
 };
 

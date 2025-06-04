@@ -1,13 +1,20 @@
 .mobile-product-card {
+  padding: 12px;
+  background-color: transparent;
+  height: 100%;
+}
+
+.mobile-product-card-inner {
+  padding: 10px;
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 6px 12px;
-  padding: 12px;
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  background-color: var(--white);
   border: 1px solid var(--card-outline);
+  border-radius: 8px;
+  width: 100%;
+  background-color: var(--white);
 }
+
 
 .mobile-product-label {
   font-weight: 600;

@@ -51,6 +51,7 @@ export interface UserType {
   uid: string; // from Firebase
   firstName: string | undefined; // from signup
   lastName: string | undefined; // from signup
+  pictureUrl?: string;
   email: string | undefined; // from signup
   company: string;
   companyId: string;
