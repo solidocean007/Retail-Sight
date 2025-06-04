@@ -21,8 +21,10 @@ import { loadCompany } from "./thunks/companyThunk";
 import { fetchCompanyProducts } from "./thunks/productThunks";
 import { setAllProducts } from "./Slices/productsSlice";
 import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
+import useSchemaVersion from "./hooks/useSchemaVersion.ts";
 
 function App() {
+  useSchemaVersion();
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
