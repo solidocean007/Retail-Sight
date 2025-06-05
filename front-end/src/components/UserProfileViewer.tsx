@@ -5,11 +5,11 @@ import {
   Avatar,
   Typography,
   Button,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
+  // Table,
+  // TableHead,
+  // TableBody,
+  // TableRow,
+  // TableCell,
 } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
@@ -19,21 +19,17 @@ import LogOutButton from "./LogOutButton";
 import "./userProfileViewer.css";
 import UploadAvatar from "./UploadAvatar";
 
-interface AccountDisplayCount {
-  accountName: string;
-  accountAddress: string;
-  displayCount: number;
-}
-
-interface UserProfileViewerProps {
-  user: UserType | null;
-  // accountDisplayData: AccountDisplayCount[]; // passed in from parent or selector
-}
+// interface AccountDisplayCount {
+//   accountName: string;
+//   accountAddress: string;
+//   displayCount: number;
+// }
 
 // const UserProfileViewer: React.FC<UserProfileViewerProps> = ({ user, accountDisplayData }) => {
-const UserProfileViewer: React.FC<UserProfileViewerProps> = ({ user }) => {
-  const navigate = useNavigate();
+const UserProfileViewer: React.FC = () => {
+  // const navigate = useNavigate();
   const [editingPicture, setEditingPicture] = useState(false);
+  const user = useSelector((state: RootState) => state.user.currentUser) as UserType;
 
   if (!user) return <Typography>Loading...</Typography>;
 
@@ -42,8 +38,8 @@ const UserProfileViewer: React.FC<UserProfileViewerProps> = ({ user }) => {
       <div className="user-info-section">
         <div className="avatar-box">
           <Avatar
-            src={user.pictureUrl || undefined}
-            sx={{ width: 96, height: 96 }}
+            src={user.profileUrlOriginal || undefined}
+            sx={{ width: 96, height: 96, margin: "16px auto" }}
           />
           <Button
             onClick={() => setEditingPicture(!editingPicture)}

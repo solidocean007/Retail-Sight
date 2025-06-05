@@ -29,6 +29,12 @@ export const userSlice = createSlice({
       state.loading = "idle"; // Optionally set loading state to 'idle'
       state.error = null; // Optionally clear any previous error
     },
+    updateCurrentUser: (state, action) => {
+    state.currentUser = {
+      ...state.currentUser,
+      ...action.payload,
+    };
+  },
     clearUserData(state) {
       state.currentUser = null;
       state.otherUsers = null;
@@ -69,7 +75,7 @@ export const userSlice = createSlice({
 });
 
 // Export the action creators and selectors
-export const { setUser, clearUserData, setCompanyUsers, setLoading, setError } =
+export const { setUser, updateCurrentUser, clearUserData, setCompanyUsers, setLoading, setError } =
   userSlice.actions;
 export const selectUser = (state: { user: UserState }) =>
   state.user.currentUser;

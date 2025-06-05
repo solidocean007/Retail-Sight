@@ -3,16 +3,23 @@
   flex-direction: column;
   width: 100%;
   padding: 16px;
+  height: 100%;
   /* background-color: var(--background-body); */
 }
 
 .avatar-box {
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+
+.avatar-box img, .avatar-box svg {
+  margin: 20px;
 }
 
 .avatar-box button {
-  max-width: 300px;
+  max-width: 120px;
+  margin: 20px;
 }
 
 

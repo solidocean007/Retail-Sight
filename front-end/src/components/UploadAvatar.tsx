@@ -6,6 +6,8 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { UserType } from "../utils/types";
 import "./uploadAvatar.css"; // include theme-friendly overrides here
+import { useDispatch } from "react-redux";
+import { updateCurrentUser } from "../Slices/userSlice";
 
 interface Props {
   user: UserType;
@@ -13,6 +15,7 @@ interface Props {
 }
 
 const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
+  const dispatch = useDispatch();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [scale, setScale] = useState(1.1);
   const editorRef = useRef<AvatarEditor | null>(null);
@@ -28,16 +31,29 @@ const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
     if (!editorRef.current || !selectedFile) return;
 
     const canvas = editorRef.current.getImageScaledToCanvas();
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-      const downloadUrl = await uploadUserAvatar(file, user.uid);
+    canvas.toBlob(async (croppedBlob) => {
+      if (!croppedBlob || !selectedFile) return;
+
+      const avatarData = await uploadUserAvatar(
+        selectedFile,
+        croppedBlob,
+        user.uid
+      );
 
       const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { profileUrl: downloadUrl });
+      await updateDoc(userRef, {
+        profileUrlOriginal: avatarData.profileUrlOriginal,
+        profileUrlThumbnail: avatarData.profileUrlThumbnail,
+      });
+
+      dispatch(
+        updateCurrentUser({
+          profileUrlOriginal: avatarData.profileUrlOriginal,
+          profileUrlThumbnail: avatarData.profileUrlThumbnail,
+        })
+      );
 
       setEditingPicture(false);
-      window.location.reload(); // or trigger a redux update if you prefer
     }, "image/jpeg");
   };
 
@@ -78,7 +94,10 @@ const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
               onClick={handleUpload}
               variant="contained"
               size="small"
-              sx={{ fontSize: "0.75rem", backgroundColor: "var(--primary-blue)" }}
+              sx={{
+                fontSize: "0.75rem",
+                backgroundColor: "var(--primary-blue)",
+              }}
             >
               Save Avatar
             </Button>
@@ -90,4 +109,3 @@ const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
 };
 
 export default UploadAvatar;
-

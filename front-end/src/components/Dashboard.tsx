@@ -252,7 +252,8 @@ export const Dashboard = () => {
       <Box
         sx={{
           marginLeft: isLargeScreen ? `${drawerWidth}px` : 0,
-          padding: 0, // Add some padding for better spacing
+          padding: 0,
+          height: "100%"
         }}
       >
         {dashboardMode === "TeamMode" && (

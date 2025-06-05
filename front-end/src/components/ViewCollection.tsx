@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import ShareIcon from "@mui/icons-material/Share";
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { fetchPostsByCollectionId } from "../thunks/postsThunks";
 import { db } from "../utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -23,14 +23,8 @@ import { useAppDispatch } from "../utils/store";
 import { CollectionType, PostWithID } from "../utils/types";
 import "./viewCollection.css";
 
-const ViewCollection = ({
-  setDashboardMode,
-}: {
-  setDashboardMode: () => void;
-}) => {
-  const location = useLocation();
+const ViewCollection = () => {
   const navigate = useNavigate();
-  const shouldReturnToDashboard = location.state?.returnToDashboard;
   const { collectionId } = useParams<{ collectionId: string }>();
   const dispatch = useAppDispatch();
 
