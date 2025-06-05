@@ -49,6 +49,7 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyProducts = useSelector(selectAllProducts) as ProductType[];
+  console.log("Company Products:", companyProducts);
   const [searchTerm, setSearchTerm] = useState("");
   const [_editIndex, setEditIndex] = useState<number | null>(null); // editIndex is unused
   const [showConfirm, setShowConfirm] = useState(false);

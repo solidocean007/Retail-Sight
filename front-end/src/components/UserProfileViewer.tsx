@@ -29,7 +29,9 @@ import UploadAvatar from "./UploadAvatar";
 const UserProfileViewer: React.FC = () => {
   // const navigate = useNavigate();
   const [editingPicture, setEditingPicture] = useState(false);
-  const user = useSelector((state: RootState) => state.user.currentUser) as UserType;
+  const user = useSelector(
+    (state: RootState) => state.user.currentUser
+  ) as UserType;
 
   if (!user) return <Typography>Loading...</Typography>;
 
@@ -38,9 +40,16 @@ const UserProfileViewer: React.FC = () => {
       <div className="user-info-section">
         <div className="avatar-box">
           <Avatar
-            src={user.profileUrlOriginal || undefined}
-            sx={{ width: 96, height: 96, margin: "16px auto" }}
+            src={user.profileUrlThumbnail}
+            sx={{
+              width: 120,
+              height: 120,
+              borderRadius: "50%", // Ensures it's round
+              objectFit: "cover",
+              boxShadow: "0 0 6px rgba(0, 0, 0, 0.2)", // optional
+            }}
           />
+
           <Button
             onClick={() => setEditingPicture(!editingPicture)}
             variant="outlined"

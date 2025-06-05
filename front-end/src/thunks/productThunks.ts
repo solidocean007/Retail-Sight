@@ -19,7 +19,6 @@ export const fetchCompanyProducts = createAsyncThunk(
     const snapshot = await getDocs(collection(db, "products", companyId, "items"));
     const products = snapshot.docs.map((doc) => ({
       ...doc.data(),
-      companyProductId: doc.id,
     })) as ProductType[];
 
     // 🔁 Update Redux immediately
