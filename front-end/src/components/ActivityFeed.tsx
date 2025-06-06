@@ -24,7 +24,6 @@ import {
   // clearUserCreatedPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
-import useScrollToPost from "../hooks/useScrollToPost";
 import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
@@ -164,9 +163,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
       <Virtuoso
         ref={virtuosoRef}
-         increaseViewportBy={500}
+        increaseViewportBy={500}
         style={{ height: listHeight, width: "100%" }}
-        totalCount={displayPosts.length}
+        totalCount={itemCount}
+        defaultItemHeight={itemHeight}
         itemContent={(index) => {
           const post = displayPosts[index];
           return (
@@ -185,7 +185,33 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             </div>
           );
         }}
-        defaultItemHeight={itemHeight}
+        endReached={() => {
+          if (!loadingMore && hasMore) {
+            setLoadingMore(true);
+            dispatch(
+              fetchMorePostsBatch({
+                lastVisible,
+                limit: POSTS_BATCH_SIZE,
+                currentUserCompanyId,
+              })
+            )
+              .then((action) => {
+                if (fetchMorePostsBatch.fulfilled.match(action)) {
+                  const { posts, lastVisible: newLastVisible } = action.payload;
+                  setLastVisible(newLastVisible);
+
+                  if (posts.length > 0) {
+                    addPostsToIndexedDB(posts);
+                    dispatch(mergeAndSetPosts(posts));
+                    setHasMore(true);
+                  } else {
+                    setHasMore(false);
+                  }
+                }
+              })
+              .finally(() => setLoadingMore(false));
+          }
+        }}
         components={{
           Footer: () => (
             <div style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}>
