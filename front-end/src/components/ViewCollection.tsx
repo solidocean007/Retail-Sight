@@ -160,7 +160,7 @@ const ViewCollection = () => {
                     🔖 Hashtags: {post.hashtags?.join(" ") || "None"}
                   </Typography>
                   <Typography variant="body2">
-                    👤 {post.createdBy?.firstName} {post.createdBy?.lastName}
+                    👤 {post.postUser?.firstName} {post.postUser?.lastName}
                   </Typography>
                   <Typography variant="body2">
                     📦 {post.totalCaseCount || "No"} cases

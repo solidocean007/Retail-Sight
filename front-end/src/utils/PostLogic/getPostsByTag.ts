@@ -37,7 +37,7 @@ export const getPostsByTag = async (
       }
 
       // Check if postUserCompanyID matches the user's company ID
-      const postCompanyID = post.createdBy.companyId;
+      const postCompanyID = post.postUserCompanyId;
       return postCompanyID === usersCompanyID; // what does this line do?  does it return a post that has a matching company id to the logged in user?
     });
     return filteredPosts;

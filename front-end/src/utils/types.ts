@@ -54,7 +54,7 @@ export interface UserType {
   profileUrlThumbnail?: string;
   profileUrlOriginal?: string;
   email: string | undefined; // from signup
-  company: string;
+  companyName: string;
   companyId: string;
   salesRouteNum: string | undefined;
   phone: string | undefined; // from signup
@@ -87,41 +87,114 @@ export interface PostTokenType {
 }
 
 export interface PostType {
+  // 🔍 Filtering Info
   category: CategoryType | "";
   channel: ChannelType | "";
-  description?: string;
-  imageUrl?: string;
-  account: CompanyAccountType | null;
-  // storeNumber?: string;
-  city?: string; // Added city
-  state?: string; // Added state
-  visibility?: "public" | "company" | "supplier" | "private";
-  displayDate: string;
-  timestamp: string;
-  totalCaseCount: number;
-  createdBy: UserType;
-  postedFor?: UserType;
-  supplier?: string;
-  brands?: string[];
-  product?: ProductType[];
-  likes?: string[];
   hashtags: string[];
   starTags: string[];
+  productType?: string;
+  productNames?: string[];
+  brands?: string[];
+  supplier?: string;
+
+  // 🧾 Account Info
+  accountNumber?: string;
+  accountName?: string;
+  accountAddress?: string;
+  accountSalesRouteNums?: string[];
+  accountType?: string;
+  chain?: string;
+  chainType?: string;
+  state?: string;
+  city?: string;
+
+  // 👤 Created By
+  postUserUid: string;
+  postUserFirstName?: string;
+  postUserLastName?: string;
+  postUserFullName?: string;
+  postUserProfileUrlThumbnail?: string;
+  postUserProfileUrlOriginal?: string;
+  postUserEmail?: string;
+  postUserCompanyId: string;
+  postUserCompanyName: string;
+  postUserSalesRouteNum?: string;
+  postUserPhone?: string;
+  postUser: UserType;
+  postUserRole:
+    | "admin"
+    | "super-admin"
+    | "employee"
+    | "status-pending"
+    | "developer"
+    | "supervisor";
+
+  // 🧍 Optional Poster Info
+  postedBy?: UserType;
+  postedByFirstName?: string;
+  postedByLastName?: string;
+  postedByUid?: string;
+
+  // 📸 Post Content
+  description?: string;
+  imageUrl?: string;
+  photos?: { file: string }[];
+  totalCaseCount: number;
   commentCount: number;
-  tokens?: PostTokenType[];
+  likes?: string[];
+
+  // 🗓 Timing
+  displayDate: string;
+  timestamp: string;
+  visibility?: "public" | "company" | "supplier" | "private";
+
+  // 🎯 Goals
   companyGoalId?: string | null;
-  companyGoalDescription?: string | null;
   companyGoalTitle?: string | null;
-  oppId?: string | null; // New key for the opportunity ID
-  galloGoalDescription?: string | null;
+  companyGoalDescription?: string | null;
   galloGoalTitle?: string | null;
-  closedBy?: string; // New key for who closed the goal
-  closedDate?: string; // New key for the date in DD-MM-YYYY format
-  closedUnits?: string | number; // New key for the closed units
-  photos?: { file: string }[]; // New key for the array of photos
+  galloGoalDescription?: string | null;
+  oppId?: string | null;
+
+  // 🧾 Closure Info
+  closedBy?: string;
+  closedDate?: string;
+  closedUnits?: string | number;
+
+  // 🔐 Tokens
+  tokens?: PostTokenType[];
+
+  // 🔁 Legacy reference (optional)
+  account?: CompanyAccountType | null;
 }
 
 export type PostWithID = PostType & { id: string };
+
+export type PostQueryFilters = {
+  companyId?: string | null;
+  postUserUid?: string | null; 
+  accountNumber?: string | null; 
+  accountName?: string | null; 
+  accountType?: string | null; 
+  accountChain?: string | null; 
+  chainType?: string | null;
+  hashtag?: string | null;
+  starTag?: string | null;
+  channel?: string | null;
+  category?: string | null; 
+  brand?: string | null;
+  productType: string | null; 
+  companyGoalId?: string | null; 
+  companyGoalTitle?: string | null; 
+  states?: string[] | null; 
+  cities?: string[] | null; 
+  dateRange?: {
+    startDate?: string | null; 
+    endDate?: string | null; 
+  } | null; 
+};
+
+
 
 export interface ProductType {
   companyProductId: string;
@@ -260,22 +333,6 @@ export type GoalTargetMode =
   | "goalForSelectedAccounts"
   | "goalForSelectedUsers";
 
-// export type OldCompanyGoalType = {
-//   id: string;
-//   companyId: string;
-//   goalTitle: string;
-//   goalDescription: string;
-//   goalMetric: string;
-//   goalValueMin: number;
-//   goalStartDate: string;
-//   goalEndDate: string;
-//   appliesToAllAccounts: boolean;
-//   targetMode: GoalTargetMode;
-//   accounts: CompanyAccountType[];
-//   usersIdsOfGoal?: string[];
-//   perUserQuota?: number;
-//   submittedPosts?: GoalSubmissionType[];
-// };
 
 export type CompanyGoalType = {
   companyId: string;
@@ -296,7 +353,6 @@ export type CompanyGoalWithIdType = CompanyGoalType & { id: string };
 
 export type GoalSubmissionType = {
   postId: string;
-  // accountNumber: string;
   account: CompanyAccountType;
   submittedBy: UserType;
   submittedAt: string;

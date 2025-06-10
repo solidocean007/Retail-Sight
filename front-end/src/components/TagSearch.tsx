@@ -16,10 +16,10 @@ import {
   setFilteredPosts,
   setHashtagPosts,
 } from "../Slices/postsSlice";
-import "./tagOnlySearchBar.css";
+import "./tagSearch.css";
 import { RootState } from "../utils/store";
 
-interface TagOnlySearchBarProps {
+interface TagSearchProps {
   currentStarTag: string | null;
   setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
   currentHashtag?: string | null;
@@ -32,7 +32,7 @@ interface TagOnlySearchBarProps {
   clearInput: boolean;
 }
 
-const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
+const TagSearch: React.FC<TagSearchProps> = ({
   currentStarTag,
   setCurrentStarTag,
   currentHashtag,
@@ -139,4 +139,4 @@ const TagOnlySearchBar: React.FC<TagOnlySearchBarProps> = ({
   );
 };
 
-export default TagOnlySearchBar;
+export default TagSearch;

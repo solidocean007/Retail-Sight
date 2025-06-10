@@ -22,6 +22,8 @@ import { fetchCompanyProducts } from "./thunks/productThunks";
 import { setAllProducts } from "./Slices/productsSlice";
 import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
 import useSchemaVersion from "./hooks/useSchemaVersion.ts";
+import { collection, getDocs } from "@firebase/firestore";
+import { db } from "./utils/firebase.ts";
 
 function App() {
   useSchemaVersion();
@@ -49,7 +51,6 @@ function App() {
 
   loadProducts();
 }, [dispatch, user?.companyId]);
-
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {

@@ -1,7 +1,7 @@
 // postsSlice
 import { createSlice } from "@reduxjs/toolkit";
 import {
-  fetchFilteredPosts,
+  fetchFilteredPostsBatch, // i need to use this now
   fetchLatestPosts,
   fetchInitialPostsBatch,
   fetchMorePostsBatch,
@@ -65,6 +65,8 @@ const postsSlice = createSlice({
       state.posts = sortPostsByDate(action.payload);
     },
     setFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
+      console.log("[SLICE] Setting filtered posts:", action.payload.length);
+
       state.filteredPosts = sortPostsByDate(action.payload);
     },
     // Add setUserPosts reducer function
@@ -94,7 +96,7 @@ const postsSlice = createSlice({
     // Adjusted to the correct state.posts property
     updatePost: (state, action: PayloadAction<PostWithID>) => {
       state.posts = state.posts.map((post) =>
-        post.id === action.payload.id ? action.payload : post,
+        post.id === action.payload.id ? action.payload : post
       );
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
@@ -123,7 +125,7 @@ const postsSlice = createSlice({
           }
           return acc;
         },
-        [] as PostWithID[],
+        [] as PostWithID[]
       );
 
       state.posts = sortPostsByDate(mergedPosts);
@@ -170,15 +172,17 @@ const postsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchFilteredPosts.pending, (state) => {
+      .addCase(fetchFilteredPostsBatch.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(
-        fetchFilteredPosts.fulfilled,
-        (state, action: PayloadAction<PostWithID[]>) => {
-          // Merge and sort filtered posts directly here
-          const newFilteredPosts = action.payload;
+        fetchFilteredPostsBatch.fulfilled,
+        (
+          state,
+          action: PayloadAction<{ posts: PostWithID[]; lastVisible: any }>
+        ) => {
+          const newFilteredPosts = action.payload.posts;
           const mergedFilteredPosts = [
             ...state.filteredPosts,
             ...newFilteredPosts,
@@ -198,15 +202,14 @@ const postsSlice = createSlice({
           state.filteredPosts = mergedFilteredPosts;
           state.loading = false;
 
-          // Update the last visible filtered post's ID for pagination purposes
           state.lastVisibleFiltered =
             newFilteredPosts.length > 0
               ? newFilteredPosts[newFilteredPosts.length - 1].id
               : null;
-        },
+        }
       )
 
-      .addCase(fetchFilteredPosts.rejected, (state, action) => {
+      .addCase(fetchFilteredPostsBatch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Error fetching posts";
       })
@@ -224,7 +227,7 @@ const postsSlice = createSlice({
             action.payload.length > 0
               ? action.payload[action.payload.length - 1].id
               : state.lastVisible;
-        },
+        }
       )
       .addCase(fetchLatestPosts.rejected, (state, action) => {
         // Handle any errors if the fetch fails

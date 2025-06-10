@@ -38,7 +38,8 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
  
 
   return (
-    <MemoizedPostCard
+    <div style={{padding: "10px", ...style}}>
+      <MemoizedPostCard
       id={post.id}
       currentUserUid={currentUserUid ?? ""} // Fallback to empty string if undefined
       post={post} // Now using post.data
@@ -50,6 +51,8 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
       setIsSearchActive={setIsSearchActive}
       postIdToScroll={postIdToScroll}
     />
+    </div>
+    
   );
 };
 

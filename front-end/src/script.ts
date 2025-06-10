@@ -1,104 +1,81 @@
-// import { getDocs, collection, doc, writeBatch } from "firebase/firestore";
+// import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
 // import { db } from "./utils/firebase";
-// import { CompanyAccountType } from "./utils/types";
 
-// export const updatePostsWithFreshAccounts = async (
-//   updatedAccounts: CompanyAccountType[],
-// ) => {
-//   const postsSnap = await getDocs(collection(db, "posts"));
-//   const accountMap = new Map(
-//     updatedAccounts.map((acc) => [String(acc.accountNumber), acc]),
-//   );
+// // export const migratePostToCleanedFlattenedVersion = async (postId: string) => {
+// export const migratePostToCleanedFlattenedVersion = async (postId: string) => {
+//   try {
+//     const postRef = doc(db, "posts", postId);
+//     const snapshot = await getDoc(postRef);
 
-//   let batch = writeBatch(db); // ✅ initialize batch
-//   let updatedCount = 0;
-//   let opCount = 0;
-
-//   for (const postDoc of postsSnap.docs) {
-//     const postData = postDoc.data();
-//     const oldAccNum = String(postData.account?.accountNumber);
-//     const freshAccount = accountMap.get(oldAccNum);
-
-//     if (!freshAccount) {
-//       console.warn(`⚠️ No updated account found for ${oldAccNum}`);
-//       continue;
+//     if (!snapshot.exists()) {
+//       console.warn(`Post ${postId} not found.`);
+//       return;
 //     }
 
-//     const postRef = doc(db, "posts", postDoc.id);
-//     batch.update(postRef, {
-//       account: freshAccount,
-//     });
-//     updatedCount++;
-//     opCount++;
+//     const data = snapshot.data();
+//     const updates: Record<string, any> = {};
+//     const deletions: string[] = [];
 
-//     if (opCount === 400) {
-//       await batch.commit();
-//       console.log(`✅ Committed 400 updates...`);
-//       batch = writeBatch(db); // ✅ reset batch after commit
-//       opCount = 0;
+//     // ✅ Rename createdBy → postUser (as full UserType)
+//     if (data.createdBy) {
+//       updates.postUser = data.createdBy;
 //     }
-//   }
 
-//   if (opCount > 0) {
-//     await batch.commit();
-//     console.log(`✅ Final batch committed (${updatedCount} total updates)`);
+//     // ✅ Convert legacy postUserName → postUserFullName
+//     if (data.postUserName) {
+//       updates.postUserFullName = data.postUserName;
+//     }
+
+//     // ✅ Flatten account.name → accountName, etc.
+//     const account = data.account;
+//     if (account) {
+//       updates.accountName = account.name || account.accountName || "";
+//       updates.accountAddress = account.address || account.accountAddress || "";
+//       updates.accountSalesRouteNums = account.salesRouteNums || [];
+//     }
+
+//     // ✅ Fields to clean up (after rewrite)
+//     const legacyFieldsToRemove = [
+//       "createdBy",         // fully replaced by postUser
+//       "postUserName",      // now renamed to postUserFullName
+//       "postUserCompany",
+//     ];
+//     for (const field of legacyFieldsToRemove) {
+//       if (field in data) deletions.push(field);
+//     }
+
+//     // ✅ Avoid overwriting unchanged values
+//     for (const key in updates) {
+//       if (
+//         key in data &&
+//         data[key] !== undefined &&
+//         data[key] !== null &&
+//         data[key] !== "" &&
+//         JSON.stringify(data[key]) === JSON.stringify(updates[key])
+//       ) {
+//         delete updates[key]; // no need to write again
+//       }
+//     }
+
+//     // ✅ Apply updates if needed
+//     if (Object.keys(updates).length > 0) {
+//       await updateDoc(postRef, updates);
+//       console.log(`✅ Updated ${postId} with`, updates);
+//     }
+
+//     // ✅ Remove legacy fields if present
+//     if (deletions.length > 0) {
+//       const deletePayload = Object.fromEntries(
+//         deletions.map((key) => [key, deleteField()])
+//       );
+//       await updateDoc(postRef, deletePayload);
+//       console.log(`🧹 Removed legacy fields from ${postId}:`, deletions);
+//     }
+//   } catch (err) {
+//     console.error(`❌ Failed to migrate post ${postId}`, err);
 //   }
 // };
-import {
-  collection,
-  getDocs,
-  doc,
-  getDoc,
-  updateDoc,
-} from "firebase/firestore";
-import { db } from "./utils/firebase";
 
-function getThumbnailUrl(imageUrl: string): string {
-  try {
-    const url = new URL(imageUrl);
-    const parts = url.pathname.split("/");
-    const filename = parts.pop();
-    if (!filename) return imageUrl;
-    const [base, ext] = filename.split(".");
-    const thumbFilename = `${base}_200x200.${ext}`;
-    parts.push(thumbFilename);
-    url.pathname = parts.join("/");
-    return url.toString();
-  } catch {
-    return imageUrl;
-  }
-}
 
-export const runThumbnailMigration = async () => {
-  const collectionsRef = collection(db, "collections");
-  const collectionsSnapshot = await getDocs(collectionsRef);
 
-  for (const collectionDoc of collectionsSnapshot.docs) {
-    const collectionData = collectionDoc.data();
-    const postIds = collectionData.posts || [];
-
-    const previewImages: string[] = [];
-
-    for (const postId of postIds) {
-      const postRef = doc(db, "posts", postId);
-      const postSnap = await getDoc(postRef);
-
-      if (postSnap.exists()) {
-        const post = postSnap.data();
-        if (post.imageUrl) {
-          const thumbUrl = getThumbnailUrl(post.imageUrl);
-          previewImages.push(thumbUrl);
-        }
-      }
-
-      if (previewImages.length >= 6) break;
-    }
-
-    await updateDoc(doc(db, "collections", collectionDoc.id), {
-      previewImages,
-    });
-
-    console.log(`✅ Updated collection ${collectionDoc.id} with ${previewImages.length} previews`);
-  }
-};
 

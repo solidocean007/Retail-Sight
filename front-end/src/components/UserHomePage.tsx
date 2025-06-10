@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { VirtuosoHandle } from "react-virtuoso";
 import ActivityFeed from "./ActivityFeed";
 import "./userHomePage.css";
-import SideBar, { FilterState, SideBarHandle } from "./SideBar";
+import SideBar, { UIFilterState, SideBarHandle } from "./SideBar";
 import { AppDispatch, RootState } from "../utils/store";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
@@ -15,11 +15,13 @@ import {
   getUserAccountsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
-import { PostWithID } from "../utils/types";
+import { PostQueryFilters, PostWithID } from "../utils/types";
 import { selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
+import EnhancedFilterSidebar from "./FilterSideBar/EnhancedFilterSideBar";
+import { getFilterSummaryText } from "./FilterSideBar/utils/filterUtils";
 
 export const UserHomePage = () => {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -37,7 +39,7 @@ export const UserHomePage = () => {
   // const [usersAccounts, setUsersAccounts] = useState<CompanyAccountType[] | null>(null);
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
   const [isClosing, setIsClosing] = useState(false);
-  const [lastFilters, setLastFilters] = useState<FilterState | null>(null);
+  const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
   const posts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
@@ -51,27 +53,7 @@ export const UserHomePage = () => {
 
   const scrollToPost = useRef<(postId: string) => void>();
 
-  const getFilterSummaryText = (filters: FilterState) => {
-    const parts: string[] = [];
-    if (filters.Hashtag) parts.push(`#${filters.Hashtag}`);
-    if (filters.StarTag) parts.push(`⭐ ${filters.StarTag}`);
-    if (filters.channels.length)
-      parts.push(`Channels: ${filters.channels.join(", ")}`);
-    if (filters.categories.length)
-      parts.push(`Categories: ${filters.categories.join(", ")}`);
-    if (filters.dateRange.startDate || filters.dateRange.endDate) {
-      const start = filters.dateRange.startDate
-        ? new Date(filters.dateRange.startDate).toLocaleDateString()
-        : "";
-      const end = filters.dateRange.endDate
-        ? new Date(filters.dateRange.endDate).toLocaleDateString()
-        : "";
-      parts.push(start === end ? `Date: ${start}` : `From ${start} to ${end}`);
-    }
-    return parts.join(" • ");
-  };
-
-  let displayPosts: PostWithID[];
+  let displayPosts: PostWithID[]; // why arent i using this?
   if (activePostSet === "filteredPosts") {
     displayPosts = filteredPosts;
   } else {
@@ -112,6 +94,7 @@ export const UserHomePage = () => {
   }, [user, companyId]);
 
   const toggleFilterMenu = () => {
+    console.log("clicked toggleFilterMenu");
     if (isFilterMenuOpen) {
       setIsClosing(true);
       setTimeout(() => {
@@ -159,13 +142,15 @@ export const UserHomePage = () => {
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
-            {activePostSet === "filteredPosts" && lastFilters && (
-              <FilterSummaryBanner
-                filteredCount={filteredPosts.length}
-                filterText={getFilterSummaryText(lastFilters)} // ✅ use correct state
-                onClear={clearSearch}
-              />
-            )}
+            <div className="filter-summary-mobile-banner">
+              {activePostSet === "filteredPosts" && lastFilters && (
+                <FilterSummaryBanner
+                  filteredCount={filteredPosts.length}
+                  filterText={getFilterSummaryText(lastFilters)} // ✅ use correct state
+                  onClear={clearSearch}
+                />
+              )}
+            </div>
 
             <ActivityFeed
               virtuosoRef={virtuosoRef}
@@ -181,6 +166,7 @@ export const UserHomePage = () => {
               clearInput={clearInput}
               postIdToScroll={postIdToScroll}
               setPostIdToScroll={setPostIdToScroll}
+              toggleFilterMenu={toggleFilterMenu}
             />
           </div>
 
@@ -189,7 +175,7 @@ export const UserHomePage = () => {
               isFilterMenuOpen ? "sidebar-fullscreen" : ""
             } ${isClosing ? "sidebar-closing" : ""}`}
           >
-            <SideBar
+            {/* <SideBar
               // setSearchResults={setSearchResults}
               // ref={sideBarRef}
               currentHashtag={currentHashtag}
@@ -206,6 +192,14 @@ export const UserHomePage = () => {
               clearInput={clearInput}
               setClearInput={setClearInput}
               onFiltersApplied={setLastFilters}
+            /> */}
+
+            <EnhancedFilterSidebar
+              activePostSet={activePostSet}
+              setActivePostSet={setActivePostSet}
+              isSearchActive={isSearchActive}
+              setIsSearchActive={setIsSearchActive}
+              // onFiltersApplied={setLastFilters}
             />
           </div>
         </div>

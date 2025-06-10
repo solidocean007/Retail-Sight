@@ -1,0 +1,207 @@
+.enhanced-sidebar {
+  /* display: flex; */
+  display: none;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: var(--sidebar-background-color);
+  color: var(--text-color);
+  padding: 10px;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  width: 100%;
+  margin: auto;
+  font-family: "Segoe UI", sans-serif;
+  transition: all 0.3s ease;
+  height: 100%;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.filter-summary-banner {
+  margin-bottom: 12px;
+  background-color: #f8f9fa;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+
+.filter-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--primary-blue);
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--primary-blue);
+  padding-bottom: 0.5rem;
+}
+
+.active-filters-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.active-filters-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chip {
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.chip:hover {
+  background-color: var(--primary-blue-dark);
+}
+
+.section-toggle {
+  background-color: var(--outlined-button-bg);
+  color: var(--text-color);
+  border: 1px solid var(--outlined-button-border);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.3s ease;
+  margin: 0;
+}
+
+.section-toggle:hover {
+  background-color: var(--outlined-button-hover);
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow: hidden;
+  border-left: 3px solid transparent;
+  transition: all 0.4s ease;
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.filter-section.open {
+  border-left-color: var(--primary-blue);
+}
+
+.filter-group {
+  display: none;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  animation: expandIn 0.4s ease;
+}
+
+.filter-section.open .filter-group {
+  display: flex;
+}
+
+.filter-group input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--input-border);
+  background-color: var(--input-background);
+  color: var(--input-text-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  width: 100%;
+  transition: border 0.2s ease;
+}
+
+.filter-group input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.date-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.apply-button {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.apply-button:hover {
+  background-color: var(--primary-blue-dark);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.dropdown {
+  padding: 0.5rem;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+
+@media (min-width: 900px) {
+  .enhanced-sidebar {
+    display: flex; /* why is this not working? */
+  }
+}
+
+/* Animation */
+@keyframes expandIn {
+  from {
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .enhanced-sidebar {
+    padding: 1rem;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .filter-title {
+    font-size: 1.5rem;
+  }
+
+  .section-toggle {
+    font-size: 0.95rem;
+  }
+
+  .apply-button {
+    font-size: 0.95rem;
+  }
+}
+
+

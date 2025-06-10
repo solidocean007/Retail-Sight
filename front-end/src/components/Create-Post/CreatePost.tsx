@@ -79,36 +79,69 @@ export const CreatePost = () => {
   const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
     useState<CompanyAccountType | null>(null);
 
-  const [post, setPost] = useState<PostType>({
-    category: selectedCategory,
-    channel: selectedChannel,
-    description: "",
-    imageUrl: "",
-    account: null,
-    state: "",
-    city: "",
-    visibility: "company",
-    supplier: "",
-    displayDate: "",
-    timestamp: "",
-    totalCaseCount: 0,
-    createdBy: {
-      role: userData?.role || "employee",
-      uid: userData?.uid || "",
-      firstName: userData?.firstName || "",
-      lastName: userData?.lastName || "",
-      email: userData?.email || "",
-      company: userData?.company || "",
-      companyId: userData?.companyId || "",
-      salesRouteNum: userData?.salesRouteNum || "",
-      phone: userData?.phone || "",
-    },
-    postedFor: undefined,
-    likes: [],
-    hashtags: [""],
-    starTags: [""],
-    commentCount: 0,
-  });
+ const [post, setPost] = useState<PostType>(() => ({
+  category: selectedCategory,
+  channel: selectedChannel,
+  hashtags: [],
+  starTags: [],
+  productTypes: [],
+  productNames: [],
+  brands: [],
+  supplier: "",
+  accountNumber: "",
+  accountName: "",
+  accountAddress: "",
+  accountSalesRouteNums: [],
+  accountType: "",
+  chain: "",
+  chainType: "",
+  state: "",
+  city: "",
+
+  postUserUid: userData?.uid ?? "",
+  postUserFirstName: userData?.firstName ?? "",
+  postUserLastName: userData?.lastName ?? "",
+  postUserProfileUrlThumbnail: userData?.profileUrlThumbnail ?? "",
+  postUserProfileUrlOriginal: userData?.profileUrlOriginal ?? "",
+  postUserEmail: userData?.email ?? "",
+  postUserCompanyId: userData?.companyId ?? "",
+  postUserCompanyName: userData?.companyName ?? "",
+  postUserSalesRouteNum: userData?.salesRouteNum ?? "",
+  postUserPhone: userData?.phone ?? "",
+  postUser: userData!,
+  postUserRole: userData?.role ?? "employee",
+
+  postedBy: undefined,
+  postedByFirstName: undefined,
+  postedByLastName: undefined,
+  postedByUid: undefined,
+
+  description: "",
+  imageUrl: "",
+  photos: [],
+  totalCaseCount: 0,
+  commentCount: 0,
+  likes: [],
+
+  displayDate: "",
+  timestamp: "",
+  visibility: "company",
+
+  companyGoalId: null,
+  companyGoalTitle: null,
+  companyGoalDescription: null,
+  galloGoalTitle: null,
+  galloGoalDescription: null,
+  oppId: null,
+
+  closedBy: "",
+  closedDate: "",
+  closedUnits: 0,
+
+  tokens: [],
+  account: null,
+}));
+
 
   const [selectedCompanyMission, setSelectedCompanyMission] =
     useState<CompanyMissionType>();
@@ -118,35 +151,15 @@ export const CreatePost = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // i think i don't need to destructure these items below.. simply use userData?.role and so on
-    setPost((prevPost) => ({
-      ...prevPost,
-      createdBy: {
-        role: userData?.role || "employee",
-        uid: userData?.uid || "",
-        firstName: userData?.firstName || "",
-        lastName: userData?.lastName || "",
-        email: userData?.email || "",
-        company: userData?.company || "",
-        companyId: userData?.companyId || "",
-        salesRouteNum: userData?.salesRouteNum || "",
-        phone: userData?.phone || "",
-      },
-      postedFor: onBehalf
-        ? {
-            role: onBehalf.role,
-            uid: onBehalf.uid,
-            firstName: onBehalf.firstName,
-            lastName: onBehalf.lastName,
-            email: onBehalf.email,
-            company: onBehalf.company,
-            companyId: onBehalf.companyId,
-            salesRouteNum: onBehalf.salesRouteNum,
-            phone: onBehalf.phone,
-          }
-        : undefined,
-    }));
-  }, [onBehalf, userData]);
+  setPost((prevPost) => ({
+    ...prevPost,
+    postedBy: onBehalf ?? undefined,
+    postedByFirstName: onBehalf?.firstName,
+    postedByLastName: onBehalf?.lastName,
+    postedByUid: onBehalf?.uid,
+  }));
+}, [onBehalf]);
+
 
   useEffect(() => {
     const storedCategory = localStorage.getItem(

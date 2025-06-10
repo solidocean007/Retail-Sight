@@ -6,6 +6,7 @@ import {
   CompanyGoalType,
   FireStoreGalloGoalDocType,
   GalloGoalType,
+  PostQueryFilters,
   PostType,
   PostWithID,
 } from "../types";
@@ -192,7 +193,7 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
 
 // Create a utility function that retrieves filtered posts from IndexedDB
 export async function getFilteredPostsFromIndexedDB(
-  filters: FilterCriteria,
+  filters: PostQueryFilters,
 ): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readonly");
@@ -244,7 +245,7 @@ export async function getFilteredPostsFromIndexedDB(
 // Utility function to store filtered posts in IndexedDB
 export async function storeFilteredPostsInIndexedDB(
   posts: PostWithID[],
-  filters: FilterCriteria,
+  filters: PostQueryFilters,
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");

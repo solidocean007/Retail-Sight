@@ -11,7 +11,7 @@ export const updateGoalWithSubmission = async (
     const submission: GoalSubmissionType = {
       postId,
       submittedAt: new Date().toISOString(),
-      submittedBy: post.postedFor ?? post.createdBy, // ✅ Use full object
+      submittedBy: post.postedBy ?? post.postUser, // ✅ Use full object
       account: post.account ?? {
         accountNumber: "",
         accountName: "",

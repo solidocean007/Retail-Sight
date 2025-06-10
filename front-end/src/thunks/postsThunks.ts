@@ -1,5 +1,15 @@
 // postsThunks.ts
-import { CollectionType, PostType, PostWithID } from "../utils/types";
+import {
+  CollectionType,
+  PostQueryFilters,
+  PostType,
+  PostWithID,
+} from "../utils/types";
+import {
+  filterExactMatch,
+  filterInMatch,
+  filterArrayContains,
+} from "../filters/postFilterServices"; // adjust path as needed
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db } from "../utils/firebase";
 import {
@@ -15,20 +25,14 @@ import {
   startAfter,
   where,
   Timestamp,
+  QueryConstraint,
 } from "firebase/firestore";
-import {
-  filterByCategories,
-  filterByChannels,
-  filterByCities,
-  filterByHashtag,
-  filterByStarTag,
-  filterByStates,
-} from "../filters/postFilterServices";
 import {
   // getFilteredPostsFromIndexedDB,
   storeLatestPostsInIndexedDB,
   getLatestPostsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
+import { normalizePost } from "../utils/normalizePost";
 
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
@@ -40,33 +44,30 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   "posts/fetchInitial",
   async (
     { POSTS_BATCH_SIZE, currentUserCompanyId }: FetchInitialPostsArgs,
-    { rejectWithValue },
+    { rejectWithValue }
   ) => {
     try {
       const postsCollectionRef = collection(db, "posts");
 
       const postsQuery = query(
         postsCollectionRef,
-        orderBy("displayDate", "desc"),
+        orderBy("displayDate", "desc")
       );
       const querySnapshot = await getDocs(postsQuery);
 
       const postsWithIds: PostWithID[] = querySnapshot.docs
         .map((doc) => {
           const postData: PostType = doc.data() as PostType;
-          return {
-            ...postData,
-            id: doc.id,
-          };
+          return normalizePost({ ...postData, id: doc.id });
         })
         .filter((post) => {
           const isPublic = post.visibility === "public";
           const isCompanyPost =
             post.visibility === "company" &&
-            post.createdBy.companyId === currentUserCompanyId;
+            post.postUserCompanyId === currentUserCompanyId;
           const isSupplier = // add the posts where visibility is "supplier"
             post.visibility === "supplier" &&
-            post.createdBy.companyId === currentUserCompanyId;
+            post.postUserCompanyId === currentUserCompanyId;
           return isPublic || isCompanyPost || isSupplier;
         })
         .slice(0, POSTS_BATCH_SIZE);
@@ -78,7 +79,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       console.error("Error fetching initial posts:", error);
       return rejectWithValue(error instanceof Error ? error.message : error);
     }
-  },
+  }
 );
 
 // Define a type for the thunk argument
@@ -92,12 +93,12 @@ export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
     { lastVisible, limit: batchSize, currentUserCompanyId }: FetchMorePostsArgs,
-    { rejectWithValue },
+    { rejectWithValue }
   ) => {
     try {
       if (!currentUserCompanyId) {
         console.warn(
-          "⚠️ fetchMorePostsBatch called without a valid companyId.",
+          "⚠️ fetchMorePostsBatch called without a valid companyId."
         );
         return { posts: [], lastVisible: null };
       }
@@ -115,13 +116,13 @@ export const fetchMorePostsBatch = createAsyncThunk(
           postsCollectionRef,
           orderBy("displayDate", "desc"),
           startAfter(lastVisibleSnapshot),
-          limit(batchSize),
+          limit(batchSize)
         );
       } else {
         postsQuery = query(
           postsCollectionRef,
           orderBy("displayDate", "desc"),
-          limit(batchSize),
+          limit(batchSize)
         );
       }
 
@@ -134,14 +135,14 @@ export const fetchMorePostsBatch = createAsyncThunk(
           const isPublic = data.visibility === "public";
           const isCompanyPost =
             data.visibility === "company" &&
-            data.createdBy?.companyId === currentUserCompanyId;
+            data.postUser?.companyId === currentUserCompanyId;
           const isSupplierPost =
             data.visibility === "supplier" &&
-            data.createdBy?.companyId === currentUserCompanyId;
+            data.postUser?.companyId === currentUserCompanyId;
 
           const include = isPublic || isCompanyPost || isSupplierPost;
 
-          return include ? { id: doc.id, ...data } : null;
+          return include ? normalizePost({ id: doc.id, ...data }) : null;
         })
         .filter((post): post is PostWithID => post !== null);
 
@@ -156,7 +157,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
       }
       return rejectWithValue("An unknown error occurred");
     }
-  },
+  }
 );
 
 type FetchFilteredPostsArgs = {
@@ -172,66 +173,306 @@ type FetchFilteredPostsArgs = {
   // should i rename currentHashtag to currentTag or also define a currentStarTag?
 };
 
-export const fetchFilteredPosts = createAsyncThunk(
-  "posts/fetchFiltered",
-  async (
-    { filters, currentHashtag, currentStarTag }: FetchFilteredPostsArgs,
-    { rejectWithValue },
-  ) => {
-    try {
-      let queryToExecute: Query<DocumentData> = collection(db, "posts");
+// export const fetchFilteredPostsBatch = createAsyncThunk(
+//   "posts/fetchPostsBatch",
+//   async ({
+//     filters,
+//     lastVisible,
+//     batchSize = 10,
+//   }: {
+//     filters: PostQueryFilters;
+//     lastVisible?: DocumentData | null;
+//     batchSize?: number;
+//   }) => {
+//     console.log("filters: ", filters);
+//     let baseQuery: Query<DocumentData> = collection(db, "posts");
 
-      if (filters.channels && filters.channels.length > 0) {
-        queryToExecute = filterByChannels(filters.channels, queryToExecute);
-      }
-      if (filters.categories && filters.categories.length > 0) {
-        queryToExecute = filterByCategories(filters.categories, queryToExecute);
-      }
-      if (filters.states && filters.states.length > 0) {
-        queryToExecute = filterByStates(filters.states, queryToExecute);
-      }
-      if (filters.cities && filters.cities.length > 0) {
-        queryToExecute = filterByCities(filters.cities, queryToExecute);
-      }
-      if (currentStarTag && currentStarTag.length > 0) {
-        queryToExecute = filterByStarTag(currentStarTag, queryToExecute);
-      }
-      if (currentHashtag && currentHashtag.length > 0) {
-        queryToExecute = filterByHashtag(currentHashtag, queryToExecute);
-      }
-      // Apply date range filter using ISO strings
-      if (filters.dateRange.startDate && filters.dateRange.endDate) {
-        queryToExecute = query(
-          queryToExecute,
-          where("displayDate", ">=", filters.dateRange.startDate),
-          where("displayDate", "<=", filters.dateRange.endDate),
-        );
-      }
+//     if (filters.companyId) {
+//       baseQuery = filterExactMatch(
+//         "postUserCompanyId",
+//         filters.companyId ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.postUserUid) {
+//       baseQuery = filterExactMatch(
+//         "postUserUid",
+//         filters.postUserUid ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.accountNumber) {
+//       baseQuery = filterExactMatch(
+//         "accountNumber",
+//         filters.accountNumber ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.accountName) {
+//       baseQuery = filterExactMatch(
+//         "accountName",
+//         filters.accountName ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.accountType) {
+//       baseQuery = filterExactMatch(
+//         "typeOfAccount",
+//         filters.accountType ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.accountChain) {
+//       baseQuery = filterExactMatch(
+//         "accountChain",
+//         filters.accountChain ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.chainType) {
+//       baseQuery = filterExactMatch(
+//         "chainType",
+//         filters.chainType ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.channel) {
+//       baseQuery = filterExactMatch(
+//         "channel",
+//         filters.channel ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.category) {
+//       baseQuery = filterExactMatch(
+//         "category",
+//         filters.category ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.companyGoalId) {
+//       baseQuery = filterExactMatch(
+//         "companyGoalId",
+//         filters.companyGoalId ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.hashtag) {
+//       baseQuery = filterArrayContains(
+//         "hashtags",
+//         filters.hashtag ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.starTag) {
+//       baseQuery = filterArrayContains(
+//         "starTags",
+//         filters.starTag ?? undefined,
+//         baseQuery
+//       );
+//     }
 
-      // i need more filters
+//     if (filters.brand) {
+//       baseQuery = filterArrayContains(
+//         "brands",
+//         filters.brand ?? undefined,
+//         baseQuery
+//       );
+//     }
+//     if (filters.productType) {
+//       baseQuery = filterExactMatch(
+//         "productType",
+//         filters.productType ?? undefined,
+//         baseQuery
+//       );
+//     }
 
-      queryToExecute = query(queryToExecute, orderBy("displayDate", "desc"));
-      const postSnapshot = await getDocs(queryToExecute);
+//     // ✅ Handle date range
+//     const { startDate, endDate } = filters.dateRange || {};
+//     if (startDate)
+//       baseQuery = query(baseQuery, where("displayDate", ">=", startDate));
+//     if (endDate)
+//       baseQuery = query(baseQuery, where("displayDate", "<=", endDate));
 
-      if (postSnapshot.empty) {
-        return [];
-      }
+//     // ✅ Optional: restrict to 1-item filters (Firestore limit)
+//     if (filters.states?.length === 1) {
+//       baseQuery = filterExactMatch("state", filters.states[0], baseQuery);
+//     }
+//     if (filters.cities?.length === 1) {
+//       baseQuery = filterExactMatch("city", filters.cities[0], baseQuery);
+//     }
 
-      const fetchedFilteredPosts: PostWithID[] = postSnapshot.docs.map(
-        (doc) => ({
-          id: doc.id,
-          ...(doc.data() as PostType),
-        }),
-      );
-      return fetchedFilteredPosts;
-    } catch (error) {
-      console.error("Error fetching filtered posts:", error);
-      return rejectWithValue("Error fetching filtered posts.");
-    }
-  },
-);
+//     // 📦 Pagination
+//     const constraints: QueryConstraint[] = [orderBy("displayDate", "desc")];
+//     if (lastVisible) constraints.push(startAfter(lastVisible));
+//     constraints.push(limit(batchSize));
+
+//     const finalQuery = query(baseQuery, ...constraints);
+//     console.log("finalQuery: ", finalQuery); // this logs
+//     const snapshot = await getDocs(finalQuery);
+//     console.log('snapshot: ', snapshot) // this doesnt log
+//     console.log("[FETCH] Documents fetched:", snapshot.size); // this doesnt log
+
+//     const posts: PostWithID[] = snapshot.docs.map((doc) => ({
+//       ...(doc.data() as PostWithID),
+//       id: doc.id,
+//     }));
+//     console.log("[FETCH] Posts data:", posts);
+
+//     const newLastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+
+//     return { posts, lastVisible: newLastVisible };
+//   }
+// );
 
 // Thunk for fetching user posts
+
+export const fetchFilteredPostsBatch = createAsyncThunk(
+  "posts/fetchPostsBatch",
+  async ({
+    filters,
+  }: {
+    filters: PostQueryFilters;
+    lastVisible?: DocumentData | null; // now unused
+    batchSize?: number; // now unused
+  }) => {
+    console.log("filters: ", filters);
+    let baseQuery: Query<DocumentData> = collection(db, "posts");
+
+    if (filters.companyId) {
+      baseQuery = filterExactMatch(
+        "postUserCompanyId",
+        filters.companyId ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.postUserUid) {
+      baseQuery = filterExactMatch(
+        "postUserUid",
+        filters.postUserUid ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.accountNumber) {
+      baseQuery = filterExactMatch(
+        "accountNumber",
+        filters.accountNumber ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.accountName) {
+      baseQuery = filterExactMatch(
+        "accountName",
+        filters.accountName ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.accountType) {
+      baseQuery = filterExactMatch(
+        "typeOfAccount",
+        filters.accountType ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.accountChain) {
+      baseQuery = filterExactMatch(
+        "accountChain",
+        filters.accountChain ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.chainType) {
+      baseQuery = filterExactMatch(
+        "chainType",
+        filters.chainType ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.channel) {
+      baseQuery = filterExactMatch(
+        "channel",
+        filters.channel ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.category) {
+      baseQuery = filterExactMatch(
+        "category",
+        filters.category ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.companyGoalId) {
+      baseQuery = filterExactMatch(
+        "companyGoalId",
+        filters.companyGoalId ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.hashtag) {
+      baseQuery = filterArrayContains(
+        "hashtags",
+        filters.hashtag ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.starTag) {
+      baseQuery = filterArrayContains(
+        "starTags",
+        filters.starTag ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.brand) {
+      baseQuery = filterArrayContains(
+        "brands",
+        filters.brand ?? undefined,
+        baseQuery
+      );
+    }
+    if (filters.productType) {
+      baseQuery = filterExactMatch(
+        "productType",
+        filters.productType ?? undefined,
+        baseQuery
+      );
+    }
+
+    // ❌ REMOVE: date filtering — these rely on displayDate index
+    // const { startDate, endDate } = filters.dateRange || {};
+    // if (startDate) baseQuery = query(baseQuery, where("displayDate", ">=", startDate));
+    // if (endDate) baseQuery = query(baseQuery, where("displayDate", "<=", endDate));
+
+    // ✅ Optional: single state/city
+    if (filters.states?.length === 1) {
+      baseQuery = filterExactMatch("state", filters.states[0], baseQuery);
+    }
+    if (filters.cities?.length === 1) {
+      baseQuery = filterExactMatch("city", filters.cities[0], baseQuery);
+    }
+
+    // ❌ REMOVE: ordering, pagination
+    // const constraints: QueryConstraint[] = [orderBy("displayDate", "desc")];
+    // if (lastVisible) constraints.push(startAfter(lastVisible));
+    // constraints.push(limit(batchSize));
+    // const finalQuery = query(baseQuery, ...constraints);
+
+    const finalQuery = baseQuery; // 👈 Just use filtered baseQuery
+    console.log("finalQuery (no sort/pagination):", finalQuery);
+
+    const snapshot = await getDocs(finalQuery);
+    console.log("[FETCH] Documents fetched:", snapshot.size);
+
+    const posts: PostWithID[] = snapshot.docs.map((doc) => ({
+      ...(doc.data() as PostWithID),
+      id: doc.id,
+    }));
+    console.log("[FETCH] Posts data:", posts);
+
+    return { posts, lastVisible: null };
+  }
+);
+
 export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
   "posts/fetchUserPosts",
   async (userId, { rejectWithValue }) => {
@@ -240,7 +481,7 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
       // Firestore query to fetch user posts
       const q = query(
         collection(db, "posts"),
-        where("postUserId", "==", userId),
+        where("postUserId", "==", userId)
       );
       const querySnapshot = await getDocs(q);
       console.log(querySnapshot);
@@ -253,7 +494,7 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
       // showMessage
       return rejectWithValue("Error fetching user posts");
     }
-  },
+  }
 );
 
 export const fetchLatestPosts = createAsyncThunk<
@@ -273,7 +514,7 @@ export const fetchLatestPosts = createAsyncThunk<
       const baseQuery = query(
         postsCollectionRef,
         orderBy("timestamp", "desc"),
-        limit(10),
+        limit(10)
       );
 
       console.log("fetchLatestPosts read");
@@ -317,11 +558,14 @@ export const fetchPostsByIds = createAsyncThunk<
     const ids = Array.isArray(postIds) ? postIds : [postIds];
 
     const fetchPostPromises = ids.map(async (postId) => {
-      const response = await fetch("https://my-fetch-data-api.vercel.app/api/validatePostShareToken", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, token: token || "" }),
-      });
+      const response = await fetch(
+        "https://my-fetch-data-api.vercel.app/api/validatePostShareToken",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId, token: token || "" }),
+        }
+      );
 
       const result = await response.json();
 
@@ -358,7 +602,10 @@ export const fetchPostsByCollectionId = createAsyncThunk<
 
       const collectionData = collectionSnap.data() as CollectionType;
 
-      if (!Array.isArray(collectionData.posts) || collectionData.posts.length === 0) {
+      if (
+        !Array.isArray(collectionData.posts) ||
+        collectionData.posts.length === 0
+      ) {
         return []; // No posts in collection
       }
 
@@ -379,7 +626,9 @@ export const fetchPostsByCollectionId = createAsyncThunk<
       });
 
       const fetchedPosts = await Promise.all(postFetchPromises);
-      const validPosts = fetchedPosts.filter((post) => post !== null) as PostWithID[];
+      const validPosts = fetchedPosts.filter(
+        (post) => post !== null
+      ) as PostWithID[];
 
       return validPosts;
     } catch (error) {
@@ -388,4 +637,3 @@ export const fetchPostsByCollectionId = createAsyncThunk<
     }
   }
 );
-

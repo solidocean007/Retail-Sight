@@ -1,7 +1,7 @@
 // useHandlePostSubmission
 import { useSelector } from "react-redux";
 import { NavigateFunction } from "react-router-dom";
-import { CompanyMissionType, PostType, SubmittedMissionType } from "../types";
+import { CompanyAccountType, CompanyMissionType, PostType, SubmittedMissionType } from "../types";
 import { auth, db, storage } from "../firebase";
 import {
   getDownloadURL,
@@ -41,7 +41,7 @@ export const useHandlePostSubmission = () => {
     apiKey: string,
     navigate: NavigateFunction
   ) => {
-  const { original, resized } = await getOptimizedSizes(selectedFile); 
+    const { original, resized } = await getOptimizedSizes(selectedFile);
     setIsUploading(true);
     const user = auth.currentUser;
     if (!user || !userData) return;
@@ -147,15 +147,14 @@ export const useHandlePostSubmission = () => {
                 description: cleanedDescription,
                 imageUrl: "", // Temporary placeholder
                 account: post.account ?? null,
-                // storeNumber: post.storeNumber,
                 city: post.city,
                 state: post.state,
                 visibility: post.visibility,
                 displayDate: new Date().toISOString(),
                 timestamp: new Date().toISOString(),
                 totalCaseCount: post.totalCaseCount,
-                createdBy: userData ?? null, // ✅ Save whole current user object
-                ...(post.postedFor && { postedFor: post.postedFor }), // ✅ Save if creating on behalf
+                postedBy: userData ?? null, // ✅ Save whole current user object
+                ...(post.postedBy && { postedFor: post.postedBy }), // ✅ Save if creating on behalf
                 supplier: post.supplier,
                 brands: Array.isArray(post.brands) ? post.brands : [],
                 companyGoalId: post.companyGoalId || null, // Ensures companyGoalId exists
@@ -174,11 +173,56 @@ export const useHandlePostSubmission = () => {
                 closedUnits: post.closedUnits || 0,
               };
 
+              const account = post.account as CompanyAccountType;
+
+              const {
+                accountNumber, // Property 'accountNumber' does not exist on type '{}'.
+                accountName: accountName,
+                accountAddress: accountAddress,
+                salesRouteNums: accountSalesRouteNums,
+                typeOfAccount: accountType,
+                chain,
+                chainType,
+              } = account;
+
+              const {
+                uid: postUserUid,
+                role: postUserRole,
+                firstName: postUserFirstName,
+                lastName: postUserLastName,
+                profileUrlThumbnail: postUserProfileUrlThumbnail,
+                profileUrlOriginal: postUserProfileUrlOriginal,
+                email: postUserEmail,
+                phone: postUserPhone,
+                companyName: postUserCompanyName,
+                companyId: postUserCompanyId,
+                salesRouteNum: postUserSalesRouteNum,
+              } = userData;
+
+              const enrichedPostData = {
+                ...postDataWithoutImage,
+                accountNumber,
+                accountName,
+                accountAddress,
+                accountSalesRouteNums,
+                accountType,
+                chain,
+                chainType,
+                postUserUid,
+                postUserRole,
+                postUserFirstName,
+                postUserLastName,
+                postUserProfileUrlThumbnail,
+                postUserProfileUrlOriginal,
+                postUserEmail,
+                postUserPhone,
+                postUserCompanyName,
+                postUserCompanyId,
+                postUserSalesRouteNum,
+              };
+
               // Create the post in Firestore
-              const newDocRef = await addPostToFirestore(
-                db,
-                postDataWithoutImage
-              );
+              const newDocRef = await addPostToFirestore(db, enrichedPostData);
 
               const postId = newDocRef.id;
 
@@ -192,7 +236,7 @@ export const useHandlePostSubmission = () => {
               });
 
               const newPostWithID = {
-                ...postDataWithoutImage,
+                ...enrichedPostData,
                 id: newDocRef.id,
                 imageUrl: resizedImageUrl,
               };

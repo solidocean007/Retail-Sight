@@ -1,6 +1,5 @@
 // CategorySelector.tsx
 import React from "react";
-// import { CategoryType } from "../utils/types";
 import "./categorySelector.css";
 
 interface CategorySelectorProps {
@@ -13,6 +12,7 @@ export type CategoryType =
   | "Wine"
   | "Beer"
   | "Bread"
+  | "Energy"
   | "Soda"
   | "Chips"
   | "Produce"
@@ -27,6 +27,7 @@ const CATEGORIES: CategoryType[] = [
   "Wine",
   "Beer",
   "Bread",
+  "Energy",
   "Soda",
   "Chips",
   "Produce",

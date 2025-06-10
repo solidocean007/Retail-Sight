@@ -24,7 +24,6 @@ import {
   // clearUserCreatedPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
-import TagOnlySearchBar from "./TagOnlySearchBar";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
@@ -46,6 +45,7 @@ interface ActivityFeedProps {
   clearInput: boolean;
   postIdToScroll: string | null;
   setPostIdToScroll: React.Dispatch<React.SetStateAction<string | null>>;
+  toggleFilterMenu?: () => void;
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
@@ -62,6 +62,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   clearInput,
   postIdToScroll,
   setPostIdToScroll,
+  toggleFilterMenu,
 }) => {
   const dispatch = useAppDispatch();
   const [adsOn] = useState(false);
@@ -148,17 +149,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
-        <TagOnlySearchBar
-          currentStarTag={currentStarTag}
-          setCurrentStarTag={setCurrentStarTag}
-          currentHashtag={currentHashtag}
-          setCurrentHashtag={setCurrentHashtag}
-          clearSearch={clearSearch}
-          setActivePostSet={setActivePostSet}
-          isSearchActive={isSearchActive}
-          setIsSearchActive={setIsSearchActive}
-          clearInput={clearInput}
-        />
+        <button onClick={toggleFilterMenu} className="filter-menu-toggle">
+          Filters
+        </button>
       </div>
 
       <Virtuoso

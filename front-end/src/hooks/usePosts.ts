@@ -27,6 +27,7 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { db } from "../utils/firebase";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
+import { normalizePost } from "../utils/normalizePost";
 
 const usePosts = (
   currentUserCompanyId: string | undefined,
@@ -118,7 +119,7 @@ const usePosts = (
         const qCompany = query(
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTimestamp),
-          where("createdBy.companyId", "==", currentUserCompanyId),
+          where("postUserCompanyId", "==", currentUserCompanyId),
           orderBy("timestamp", "desc")
         );
         unsubscribeCompany = onSnapshot(qCompany, processDocChanges);
@@ -147,9 +148,9 @@ const usePosts = (
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
           );
           if (fetchInitialPostsBatch.fulfilled.match(action)) {
-            const fetchedPosts = action.payload.posts;
+            const fetchedPosts = action.payload.posts.map(normalizePost);
             dispatch(mergeAndSetPosts(fetchedPosts));
-            addPostsToIndexedDB(fetchedPosts); // Add fetched posts to IndexedDB
+            addPostsToIndexedDB(fetchedPosts);
           }
         }
       } catch (error) {
@@ -167,9 +168,8 @@ const usePosts = (
         );
         const querySnapshot = await getDocs(publicPostsQuery);
         const publicPosts = querySnapshot.docs
-          .map((doc) =>
-            ({ id: doc.id, ...doc.data() }) as PostWithID
-          ).filter((post) => post.visibility === "public");
+          .map((doc) => normalizePost({ id: doc.id, ...doc.data() }))
+          .filter((post) => post.visibility === "public");
 
         dispatch(mergeAndSetPosts(publicPosts));
       } catch (error) {

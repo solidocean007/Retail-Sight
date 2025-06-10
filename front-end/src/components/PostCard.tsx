@@ -256,7 +256,7 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   const createdOnBehalf =
-    post.postedFor && post.createdBy?.uid !== post.postedFor.uid;
+    post.postedBy && post.postUser?.uid !== post.postedBy.uid;
 
   return (
     <>
@@ -293,7 +293,7 @@ const PostCard: React.FC<PostCardProps> = ({
                       >
                         {isSharing ? <CircularProgress size={20} /> : "Share"}
                       </MenuItem>
-                      {(user?.uid === post.createdBy?.uid ||
+                      {(user?.uid === post.postUser?.uid ||
                         user?.role === "admin" ||
                         user?.role === "super-admin") && (
                         <MenuItem
@@ -347,8 +347,8 @@ const PostCard: React.FC<PostCardProps> = ({
                 <p>
                   by:{" "}
                   <a href="#" onClick={handleOnUserNameClick}>
-                    {post.createdBy?.firstName && post.createdBy?.lastName
-                      ? `${post.createdBy.firstName} ${post.createdBy.lastName}`
+                    {post.postUser?.firstName && post.postUser?.lastName
+                      ? `${post.postUser.firstName} ${post.postUser.lastName}`
                       : "Unknown User"}
                   </a>
                 </p>
@@ -357,14 +357,14 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="created-On-Behalf">
                 {createdOnBehalf && (
                   <h5>
-                    Created for: {post.postedFor?.firstName}{" "}
-                    {post.postedFor?.lastName}
+                    Created for: {post.postedBy?.firstName}{" "}
+                    {post.postedBy?.lastName}
                   </h5>
                 )}
               </div>
 
               <div className="user-company-box">
-                <p>company: {post.createdBy?.company}</p>{" "}
+                <p>company: {post.postUser?.companyName}</p>{" "}
                 {/* this matches the saved post but not the future account object.  should it do either or both?*/}
               </div>
             </div>
@@ -390,7 +390,6 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.category}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
-            {/* {post.id} */}
             <div className="likes-box">
               <button
                 className="like-button"

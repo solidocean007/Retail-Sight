@@ -4,7 +4,7 @@ import { Button } from "@mui/material";
 // import FilterSection from "./FilterSection";
 import FilterLocation from "./FilterLocation";
 import {
-  fetchFilteredPosts,
+  fetchFilteredPostsBatch,
   // fetchFilteredPosts,
   fetchInitialPostsBatch,
 } from "../thunks/postsThunks";
@@ -34,9 +34,9 @@ import {
 } from "../Slices/postsSlice";
 import DateFilter from "./DateFilter";
 import { PostWithID } from "../utils/types";
-import TagOnlySearchBar from "./TagOnlySearchBar";
+import TagSearch from "./TagSearch";
 
-export interface FilterState {
+export interface UIFilterState {
   channels: ChannelType[];
   categories: CategoryType[];
   states: string[];
@@ -62,7 +62,7 @@ interface SideBarProps {
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
   clearInput: boolean;
   setClearInput: React.Dispatch<React.SetStateAction<boolean>>;
-  onFiltersApplied?: (filters: FilterState) => void;
+  onFiltersApplied?: (filters: UIFilterState) => void;
 }
 
 export type SideBarHandle = {
@@ -114,7 +114,7 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
     endDate: null,
   });
 
-  const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState>({
+  const [lastAppliedFilters, setLastAppliedFilters] = useState<UIFilterState>({
     channels: [],
     categories: [],
     states: [],
@@ -142,23 +142,25 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
     dispatch(setFilteredPosts([]));
 
     const filters = {
-      channels: selectedChannels,
-      categories: selectedCategories,
+      companyId: currentUserCompanyId,
+      channel: selectedChannels[0] || undefined,
+      category: selectedCategories[0] || undefined,
       states: selectedStates,
       cities: selectedCities,
       dateRange: {
-        startDate: dateRange.startDate ? dateRange.startDate.toString() : null,
-        endDate: dateRange.endDate ? dateRange.endDate.toString() : null,
+        startDate: dateRange.startDate ?? undefined,
+        endDate: dateRange.endDate ?? undefined,
       },
-      Hashtag: currentHashtag,
-      StarTag: currentStarTag,
+      hashtag: currentHashtag || undefined,
+      starTag: currentStarTag || undefined,
     };
-    setLastAppliedFilters(filters);
+
+    setLastAppliedFilters(filters); // missing the following properties from type 'UIFilterState': channels, categories, Hashtag, StarTag
     onFiltersApplied?.(filters);
 
     try {
       const actionResult = await dispatch(
-        fetchFilteredPosts({ filters, currentHashtag, currentStarTag })
+        fetchFilteredPostsBatch({ filters, currentHashtag, currentStarTag }) // probelm here with filters.. type mismatch with dates i think
       );
       let fetchedPosts: PostWithID[] = actionResult.payload as PostWithID[];
 
@@ -339,7 +341,7 @@ const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
         Close filters
       </button>
       <div className="top-of-side-bar">
-        <TagOnlySearchBar
+        <TagSearch
           setCurrentStarTag={setCurrentStarTag}
           currentStarTag={currentStarTag}
           currentHashtag={currentHashtag}
