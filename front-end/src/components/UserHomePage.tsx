@@ -198,7 +198,11 @@ export const UserHomePage = () => {
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
               // onFiltersApplied={setLastFilters}
-               toggleFilterMenu={toggleFilterMenu}
+              currentHashtag={currentHashtag}
+              setCurrentHashtag={setCurrentHashtag}
+              currentStarTag={currentStarTag}
+              setCurrentStarTag={setCurrentStarTag}
+              toggleFilterMenu={toggleFilterMenu}
             />
           </div>
         </div>

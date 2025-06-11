@@ -29,6 +29,10 @@ interface EnhancedFilterSideBarProps {
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
   // onFiltersApplied?: (filters: PostQueryFilters) => void;
   toggleFilterMenu: () => void;
+  currentHashtag?: string | null;
+  setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
+  currentStarTag?: string | null;
+  setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
@@ -37,13 +41,17 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   isSearchActive,
   setIsSearchActive,
   // onFiltersApplied,
+  currentHashtag,
+  setCurrentHashtag,
+  currentStarTag,
+  setCurrentStarTag,
   toggleFilterMenu,
 }) => {
-const [openSection, setOpenSection] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
-const toggleSection = (section: string) => {
-  setOpenSection((prev) => (prev === section ? null : section));
-};
+  const toggleSection = (section: string) => {
+    setOpenSection((prev) => (prev === section ? null : section));
+  };
 
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
@@ -80,6 +88,23 @@ const toggleSection = (section: string) => {
 
   const debouncedFilters = useDebouncedValue(filters, 150);
   const [tagInput, setTagInput] = useState("");
+
+  useEffect(() => {
+  if (currentHashtag) {
+    setFilters((prev) => ({
+      ...prev,
+      hashtag: currentHashtag,
+      starTag: null,
+    }));
+  } else if (currentStarTag) {
+    setFilters((prev) => ({
+      ...prev,
+      starTag: currentStarTag,
+      hashtag: null,
+    }));
+  }
+}, [currentHashtag, currentStarTag]);
+
 
   useEffect(() => {
     const activeFiltersCount = Object.entries(debouncedFilters).filter(
@@ -229,11 +254,7 @@ const toggleSection = (section: string) => {
         )}
       </div>
 
-      <div
-        className={`filter-section ${
-          openSection === "tags" ? "open" : ""
-        }`}
-      >
+      <div className={`filter-section ${openSection === "tags" ? "open" : ""}`}>
         <button
           className="section-toggle"
           onClick={() => toggleSection("tags")}
@@ -265,9 +286,7 @@ const toggleSection = (section: string) => {
       </div>
 
       <div
-        className={`filter-section ${
-          openSection === "product" ? "open" : ""
-        }`}
+        className={`filter-section ${openSection === "product" ? "open" : ""}`}
       >
         <button
           className="section-toggle"
@@ -290,11 +309,7 @@ const toggleSection = (section: string) => {
         </div>
       </div>
 
-      <div
-        className={`filter-section ${
-          openSection === "user" ? "open" : ""
-        }`}
-      >
+      <div className={`filter-section ${openSection === "user" ? "open" : ""}`}>
         <button
           className="section-toggle"
           onClick={() => toggleSection("user")}
@@ -311,9 +326,7 @@ const toggleSection = (section: string) => {
         </div>
       </div>
       <div
-        className={`filter-section ${
-          openSection === "account" ? "open" : ""
-        }`}
+        className={`filter-section ${openSection === "account" ? "open" : ""}`}
       >
         <button
           className="section-toggle"
@@ -346,11 +359,7 @@ const toggleSection = (section: string) => {
         </div>
       </div>
 
-      <div
-        className={`filter-section ${
-          openSection === "goal" ? "open" : ""
-        }`}
-      >
+      <div className={`filter-section ${openSection === "goal" ? "open" : ""}`}>
         <button
           className="section-toggle"
           onClick={() => toggleSection("goal")}
@@ -380,11 +389,7 @@ const toggleSection = (section: string) => {
         </div>
       </div>
 
-      <div
-        className={`filter-section ${
-          openSection === "date" ? "open" : ""
-        }`}
-      >
+      <div className={`filter-section ${openSection === "date" ? "open" : ""}`}>
         <button
           className="section-toggle"
           onClick={() => toggleSection("date")}
