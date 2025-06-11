@@ -33,6 +33,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
 
   // const galloGoals = useSelector(selectAllGalloGoals);
   const companyGoals = useSelector(selectAllCompanyGoals);
+  console.log(companyGoals);
 
   interface TabPanelProps {
     children?: React.ReactNode;
