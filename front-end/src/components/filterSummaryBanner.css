@@ -3,7 +3,7 @@
   position: fixed;
   bottom: 15;
   width: 100%;
-  z-index: 15;
+  z-index: 13;
   background-color: green;
   color: var(--text-color);
   padding: 0.5rem 1rem;

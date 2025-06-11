@@ -37,7 +37,7 @@ interface ActivityFeedProps {
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   currentStarTag: string | null;
   setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
-  clearSearch: () => Promise<void>;
+  // clearSearch: () => Promise<void>;
   activePostSet?: string;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   isSearchActive?: boolean;
@@ -50,21 +50,23 @@ interface ActivityFeedProps {
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   virtuosoRef,
-  currentHashtag,
+  // currentHashtag,
   setCurrentHashtag,
-  currentStarTag,
-  setCurrentStarTag,
-  clearSearch,
+  // currentStarTag,
+  // setCurrentStarTag,
+  // clearSearch,
   activePostSet,
   setActivePostSet,
-  isSearchActive,
+  // isSearchActive,
   setIsSearchActive,
-  clearInput,
+  // clearInput,
   postIdToScroll,
   setPostIdToScroll,
-  toggleFilterMenu,
+  // toggleFilterMenu,
 }) => {
   const dispatch = useAppDispatch();
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
   const [adsOn] = useState(false);
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
@@ -87,6 +89,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const loading = useSelector((state: RootState) => state.posts.loading);
+
+  const scrollToTop = () => {
+    virtuosoRef.current?.scrollToIndex({
+      index: 0,
+      align: "start",
+      behavior: "smooth",
+    });
+  };
+
   // State to store the list height
   const [listHeight, setListHeight] = useState(() => {
     if (typeof window !== "undefined") {
@@ -125,7 +136,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   }
 
   if (displayPosts.length === 0) {
-    return <NoResults onClearFilters={clearSearch} />;
+    return <NoResults />;
   }
 
   const getActivityItemHeight = (windowWidth: number) => {
@@ -149,9 +160,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
-        <button onClick={toggleFilterMenu} className="filter-menu-toggle">
+        {/* <button onClick={toggleFilterMenu} className="filter-menu-toggle">
           Filters
-        </button>
+        </button> */}
       </div>
 
       <Virtuoso
@@ -212,7 +223,24 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             </div>
           ),
         }}
+        scrollerRef={(ref) => {
+          if (ref) {
+            ref.addEventListener("scroll", (e) => {
+              const scrollTop = (e.target as HTMLElement).scrollTop;
+              setShowScrollTop(scrollTop > 4000);
+            });
+          }
+        }}
       />
+      {showScrollTop && (
+        <button
+          className="scroll-to-top-btn"
+          aria-label="Scroll to top"
+          onClick={scrollToTop}
+        >
+          <span className="arrow-icon">↑</span>
+        </button>
+      )}
     </div>
   );
 };

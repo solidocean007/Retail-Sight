@@ -6,6 +6,7 @@
   flex-direction: column;
   align-items: center;
   margin-top: 0;
+  position: relative;
 }
 
 .top-of-activity-feed {
@@ -49,6 +50,32 @@
   box-shadow: var(--card-shadow);
 }
 
+.scroll-to-top-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  background-color: var(--menu-background-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  height: 30px;
+  width: 30px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.scroll-to-top-btn:hover {
+  transform: scale(1.05);
+  background-color: var(--primary-blue-dark);
+}
+
+
+
 /* Responsive Breakpoints */
 
 /* Hide top activity feed header on wider screens */
@@ -57,6 +84,17 @@
     display: none;
   }
 }
+
+@media (max-width: 600px) {
+  /* .scroll-to-top-btn {
+    top: 2rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  } */
+}
+
 
 /* Basic mobile structure placeholders */
 @media (max-width: 414px) {

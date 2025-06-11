@@ -49,7 +49,7 @@
 .hamburger-menu-button {
   display: flex;
   cursor: pointer;
-  z-index: 11;
+  z-index: 5;
   font-size: 30px;
   color: var(--button-text-color);
   margin-right: 1rem;

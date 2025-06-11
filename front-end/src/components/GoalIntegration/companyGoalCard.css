@@ -30,6 +30,7 @@
 .info-layout {
   display: flex;
   flex-direction: column;
+  text-align: justify;
   /* padding: 1rem; */
 }
 
@@ -306,5 +307,8 @@
   .account-cell:nth-child(5),
   .account-cell:nth-child(6) {
     display: none; /* hide 'submitted by' and 'submitted at' on small screens */
+  }
+  .info-layout-row {
+    flex-direction: column;
   }
 }

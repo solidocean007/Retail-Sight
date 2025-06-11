@@ -28,6 +28,7 @@ interface EnhancedFilterSideBarProps {
   isSearchActive: boolean;
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
   // onFiltersApplied?: (filters: PostQueryFilters) => void;
+  toggleFilterMenu: () => void;
 }
 
 const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
@@ -36,7 +37,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   isSearchActive,
   setIsSearchActive,
   // onFiltersApplied,
+  toggleFilterMenu,
 }) => {
+const [openSection, setOpenSection] = useState<string | null>(null);
+
+const toggleSection = (section: string) => {
+  setOpenSection((prev) => (prev === section ? null : section));
+};
+
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
@@ -133,18 +141,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     console.log("Updated filters:", filters);
   }, [filters]);
 
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set()
-  );
-
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => {
-      const newSet = new Set(prev);
-      newSet.has(section) ? newSet.delete(section) : newSet.add(section);
-      return newSet;
-    });
-  };
-
   const handleChange = (field: keyof PostQueryFilters, value: any) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
@@ -175,8 +171,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       const locallyFiltered = locallyFilterPosts(filteredPosts, updatedFilters); // Cannot find name 'filteredPosts'
       dispatch(setFilteredPosts(locallyFiltered));
     }
-
-    
   };
 
   const handleApply = async () => {
@@ -186,8 +180,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       const rawPosts = result.payload.posts;
       const normalizedPosts = rawPosts.map(normalizePost);
 
-      dispatch(setFilteredPosts([]));
-      // dispatch(mergeAndSetFilteredPosts(normalizedPosts));
+      dispatch(setFilteredPosts([])); // what is this for?
       dispatch(setFilteredPosts(normalizedPosts));
       await storeFilteredPostsInIndexedDB(normalizedPosts, filters);
       setActivePostSet("filteredPosts");
@@ -205,14 +198,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const handleClearFilters = () => {
     setFilters(clearAllFilters());
     setTagInput("");
-    setActivePostSet("posts")
+    setActivePostSet("posts");
   };
 
   console.log(filters.hashtag, filters.starTag); // this logs undefined as i type in the
 
   return (
-    <div className="enhanced-sidebar">
-      <div className="filter-summary-banner">
+    <div className="enhanced-sidebar side-bar-box">
+      {/* <div className="filter-summary-banner">
         {activePostSet === "filteredPosts" && filteredPosts.length > 0 && (
           <FilterSummaryBanner
             filteredCount={filteredPosts.length}
@@ -220,16 +213,25 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             onClear={() => setFilters(clearAllFilters())}
           />
         )}
-      </div>
+      </div> */}
 
       <h3 className="filter-title">🔎 Filters</h3>
       <div className="active-filters-chip-row">
         <FilterChips filters={filters} onRemove={handleRemoveFilter} />
       </div>
+      <div className="mobile-filter-close-button">
+        {activePostSet === "filteredPosts" && filteredPosts.length > 0 ? (
+          <button onClick={toggleFilterMenu}>
+            Show {filteredPosts.length} Posts
+          </button>
+        ) : (
+          <button onClick={toggleFilterMenu}>Close Filters</button>
+        )}
+      </div>
 
       <div
         className={`filter-section ${
-          expandedSections.has("tags") ? "open" : ""
+          openSection === "tags" ? "open" : ""
         }`}
       >
         <button
@@ -264,7 +266,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
       <div
         className={`filter-section ${
-          expandedSections.has("product") ? "open" : ""
+          openSection === "product" ? "open" : ""
         }`}
       >
         <button
@@ -290,7 +292,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
       <div
         className={`filter-section ${
-          expandedSections.has("user") ? "open" : ""
+          openSection === "user" ? "open" : ""
         }`}
       >
         <button
@@ -310,7 +312,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       </div>
       <div
         className={`filter-section ${
-          expandedSections.has("account") ? "open" : ""
+          openSection === "account" ? "open" : ""
         }`}
       >
         <button
@@ -346,7 +348,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
       <div
         className={`filter-section ${
-          expandedSections.has("goal") ? "open" : ""
+          openSection === "goal" ? "open" : ""
         }`}
       >
         <button
@@ -380,7 +382,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
       <div
         className={`filter-section ${
-          expandedSections.has("date") ? "open" : ""
+          openSection === "date" ? "open" : ""
         }`}
       >
         <button

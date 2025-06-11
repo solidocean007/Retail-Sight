@@ -254,4 +254,8 @@
   .account-cell:nth-child(6) {
     display: none; /* hide 'submitted by' and 'submitted at' on small screens */
   }
+  
+  .info-layout-row {
+    flex-direction: column;
+  }
 }

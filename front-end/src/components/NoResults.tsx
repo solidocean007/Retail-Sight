@@ -3,10 +3,10 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import React from "react";
 
 interface NoResultsProps {
-  onClearFilters: () => Promise<void> | undefined;
+  // onClearFilters: () => Promise<void> | undefined;
 }
 
-const NoResults: React.FC<NoResultsProps> = ({ onClearFilters }) => {
+const NoResults: React.FC<NoResultsProps> = () => {
   return (
     <Box
       display="flex"
@@ -21,9 +21,10 @@ const NoResults: React.FC<NoResultsProps> = ({ onClearFilters }) => {
       <Typography variant="h6" color="textSecondary" gutterBottom>
         No posts match your current filters.
       </Typography>
-      <Button variant="contained" color="primary" onClick={onClearFilters}>
+      {/* <Button variant="contained" color="primary" onClick={onClearFilters}> */}
+      {/* <Button variant="contained" color="primary">
         Clear Filters
-      </Button>
+      </Button> */}
     </Box>
   );
 };

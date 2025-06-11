@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { VirtuosoHandle } from "react-virtuoso";
 import ActivityFeed from "./ActivityFeed";
 import "./userHomePage.css";
-import SideBar, { UIFilterState, SideBarHandle } from "./SideBar";
+// import SideBar, { UIFilterState, SideBarHandle } from "./SideBar";
 import { AppDispatch, RootState } from "../utils/store";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
@@ -25,7 +25,6 @@ import { getFilterSummaryText } from "./FilterSideBar/utils/filterUtils";
 
 export const UserHomePage = () => {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const sideBarRef = useRef<SideBarHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -106,24 +105,23 @@ export const UserHomePage = () => {
     }
   };
 
-  const clearSearch = async () => {
-    setCurrentHashtag(null);
-    setCurrentStarTag(null);
-    setActivePostSet("posts");
-    dispatch(setFilteredPosts([]));
-    setLastFilters(null); // ✅ hides FilterSummaryBanner
+  // const clearSearch = async () => {
+  //   setCurrentHashtag(null);
+  //   setCurrentStarTag(null);
+  //   setActivePostSet("posts");
+  //   dispatch(setFilteredPosts([]));
+  //   setLastFilters(null); // ✅ hides FilterSummaryBanner
 
-    // ✅ Clear filters inside SideBar
-    sideBarRef.current?.clearAllFilters();
+  //   // ✅ Clear filters inside SideBar
+  //   // sideBarRef.current?.clearAllFilters(); // im not using sidebar anymore.. how can i clearAllFilters from activityfeed
 
-    const cachedPosts = await getPostsFromIndexedDB();
-    if (cachedPosts?.length > 0) {
-      dispatch(mergeAndSetPosts(cachedPosts));
-    }
-  };
+  //   const cachedPosts = await getPostsFromIndexedDB();
+  //   if (cachedPosts?.length > 0) {
+  //     dispatch(mergeAndSetPosts(cachedPosts));
+  //   }
+  // };
 
   useEffect(() => {
-    // I need to check if location options are in indexedDb before doing this next line.
     dispatch(fetchLocationOptions());
   }, [dispatch]);
 
@@ -142,7 +140,7 @@ export const UserHomePage = () => {
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
-            <div className="filter-summary-mobile-banner">
+            {/* <div className="filter-summary-mobile-banner">
               {activePostSet === "filteredPosts" && lastFilters && (
                 <FilterSummaryBanner
                   filteredCount={filteredPosts.length}
@@ -150,7 +148,7 @@ export const UserHomePage = () => {
                   onClear={clearSearch}
                 />
               )}
-            </div>
+            </div> */}
 
             <ActivityFeed
               virtuosoRef={virtuosoRef}
@@ -158,7 +156,7 @@ export const UserHomePage = () => {
               setCurrentHashtag={setCurrentHashtag}
               currentStarTag={currentStarTag}
               setCurrentStarTag={setCurrentStarTag}
-              clearSearch={clearSearch}
+              // clearSearch={clearSearch}
               activePostSet={activePostSet}
               setActivePostSet={setActivePostSet}
               isSearchActive={isSearchActive}
@@ -200,6 +198,7 @@ export const UserHomePage = () => {
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
               // onFiltersApplied={setLastFilters}
+               toggleFilterMenu={toggleFilterMenu}
             />
           </div>
         </div>

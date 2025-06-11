@@ -34,6 +34,8 @@
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow); /* Optional for depth */
   width: 100%;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .onboarding-tutorial-intro-box {
@@ -73,7 +75,7 @@
 .filter-summary-mobile-banner {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 10;
   background: white;
   padding: 0.5rem 1rem;
   border-bottom: 1px solid #ddd;

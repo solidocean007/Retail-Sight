@@ -16,7 +16,7 @@ import { useSelector } from "react-redux";
 import { AppDispatch } from "../utils/store";
 import { RootState } from "../utils/store";
 import { clearLocationFilters } from "../Slices/locationSlice";
-import "./sideBar.css";
+// import "./sideBar.css";
 import CustomAccordion from "./CustomAccordion";
 import {
   addPostsToIndexedDB,
@@ -65,9 +65,9 @@ interface SideBarProps {
   onFiltersApplied?: (filters: UIFilterState) => void;
 }
 
-export type SideBarHandle = {
-  clearAllFilters: () => void;
-};
+// export type SideBarHandle = {
+//   clearAllFilters: () => void;
+// };
 
 const SideBar = forwardRef<SideBarHandle, SideBarProps>((props, ref) => {
   const {
