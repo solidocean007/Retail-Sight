@@ -26,6 +26,7 @@ import { updateGoalWithSubmission } from "../helperFunctions/updateGoalWithSubmi
 import { addPostsToIndexedDB } from "../database/indexedDBUtils";
 import { addNewPost } from "../../Slices/postsSlice";
 import { getOptimizedSizes } from "./getOptimizedSizes";
+import { buildPostPayload } from "./buildPostPayload";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
@@ -92,9 +93,6 @@ export const useHandlePostSubmission = () => {
           setIsUploading(false);
         },
         async () => {
-          // const originalImageUrl = await getDownloadURL( // not being used
-          //   uploadOriginalTask.snapshot.ref
-          // );
 
           // Resize and compress the image
           const resizedBlob = await resizeImage(
@@ -126,104 +124,13 @@ export const useHandlePostSubmission = () => {
                 uploadResizedTask.snapshot.ref
               );
 
-              const sharedToken = uuidv4();
-              // Set the expiry to one week from now
-              // const tokenExpiryDate = new Date();
-              // tokenExpiryDate.setDate(tokenExpiryDate.getDate() + 7);
-              // const tokenExpiry = tokenExpiryDate.toISOString();
-
-              // Extract hashtags and starTags directly from the description
-              const hashtags = extractHashtags(post.description ?? "");
-              const starTags = extractStarTags(post.description ?? "");
-
-              const cleanedDescription = post.description
-                ?.replace(/(#|[*])\s+/g, "$1") // Remove spaces after # or *
-                .trim(); // Trim any leading/trailing spaces
-
-              // Post data without images
-              const postDataWithoutImage = {
-                category: post.category,
-                channel: post.channel,
-                description: cleanedDescription,
-                imageUrl: "", // Temporary placeholder
-                account: post.account ?? null,
-                city: post.city,
-                state: post.state,
-                visibility: post.visibility,
-                displayDate: new Date().toISOString(),
-                timestamp: new Date().toISOString(),
-                totalCaseCount: post.totalCaseCount,
-                postedBy: userData ?? null, // ✅ Save whole current user object
-                ...(post.postedBy && { postedFor: post.postedBy }), // ✅ Save if creating on behalf
-                supplier: post.supplier,
-                brands: Array.isArray(post.brands) ? post.brands : [],
-                companyGoalId: post.companyGoalId || null, // Ensures companyGoalId exists
-                companyGoalDescription: post.companyGoalDescription || null, // Ensures description exists
-                companyGoalTitle: post.companyGoalTitle || null, // Ensures title  exists
-                galloGoalDescription: post.galloGoalDescription || null, // Ensures galloGoalDescription exists
-                galloGoalTitle: post.galloGoalTitle || null, // Ensures galloGoal title exists
-                hashtags: hashtags,
-                starTags: starTags,
-                commentCount: 0,
-                likes: [],
-                oppId: post.oppId || null,
-                closedBy: post.closedBy || user.displayName || "",
-                closedDate:
-                  post.closedDate || new Date().toISOString().split("T")[0],
-                closedUnits: post.closedUnits || 0,
-              };
-
-              const account = post.account as CompanyAccountType;
-
-              const {
-                accountNumber, // Property 'accountNumber' does not exist on type '{}'.
-                accountName: accountName,
-                accountAddress: accountAddress,
-                salesRouteNums: accountSalesRouteNums,
-                typeOfAccount: accountType,
-                chain,
-                chainType,
-              } = account;
-
-              const {
-                uid: postUserUid,
-                role: postUserRole,
-                firstName: postUserFirstName,
-                lastName: postUserLastName,
-                profileUrlThumbnail: postUserProfileUrlThumbnail,
-                profileUrlOriginal: postUserProfileUrlOriginal,
-                email: postUserEmail,
-                phone: postUserPhone,
-                companyName: postUserCompanyName,
-                companyId: postUserCompanyId,
-                salesRouteNum: postUserSalesRouteNum,
-              } = userData;
-
-              const enrichedPostData = {
-                ...postDataWithoutImage,
-                accountNumber,
-                accountName,
-                accountAddress,
-                accountSalesRouteNums,
-                accountType,
-                chain,
-                chainType,
-                postUserUid,
-                postUserRole,
-                postUserFirstName,
-                postUserLastName,
-                postUserProfileUrlThumbnail,
-                postUserProfileUrlOriginal,
-                postUserEmail,
-                postUserPhone,
-                postUserCompanyName,
-                postUserCompanyId,
-                postUserSalesRouteNum,
-              };
+              const postDataWithoutImage: PostType = buildPostPayload({ // right here is the error
+                ...post,
+                imageUrl: "",
+              })
 
               // Create the post in Firestore
-              const newDocRef = await addPostToFirestore(db, enrichedPostData);
-
+              const newDocRef = await addPostToFirestore(db, postDataWithoutImage); 
               const postId = newDocRef.id;
 
               // Update goal with the post ID
@@ -236,7 +143,7 @@ export const useHandlePostSubmission = () => {
               });
 
               const newPostWithID = {
-                ...enrichedPostData,
+                ...postDataWithoutImage,
                 id: newDocRef.id,
                 imageUrl: resizedImageUrl,
               };
@@ -248,8 +155,10 @@ export const useHandlePostSubmission = () => {
               if (post.oppId) {
                 const achievementPayload = {
                   oppId: post.oppId,
+                  galloGoalTitle: post.galloGoalTitle,
+                  galloGoalDescription: post.galloGoalDescription,
                   closedBy: post.closedBy ?? user.displayName ?? "",
-
+                  // i should add the gallo goal description and title here and remove from above
                   closedDate:
                     post.closedDate || new Date().toISOString().split("T")[0],
                   closedUnits: post.closedUnits || "0",

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CompanyMissionType, MissionType, PostType } from "../../utils/types";
+import { CompanyMissionType, MissionType, PostInputType } from "../../utils/types";
 import {
   Box,
   Button,
@@ -15,11 +15,11 @@ import { useNavigate } from "react-router-dom";
 
 interface ReviewAndSubmitProps {
   companyId: string | undefined;
-  post: PostType;
+  post: PostInputType;
   onPrevious: () => void;
   handleFieldChange: (
-    field: keyof PostType,
-    value: PostType[keyof PostType],
+    field: keyof PostInputType,
+    value: PostInputType[keyof PostInputType],
   ) => void;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   uploadProgress: number;
@@ -65,6 +65,8 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
       fetchApiKey();
     }
   }, [companyId, apiKey, dispatch]);
+
+  console.log('post to submit: ', post)
 
   const handleSubmitClick = async () => {
     if (!selectedFile || isSubmitting) return; // Prevent multiple submissions

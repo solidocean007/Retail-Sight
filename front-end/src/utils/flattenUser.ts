@@ -8,7 +8,7 @@ export const flattenUser = (user: UserType) => ({
   postUserProfileUrlOriginal: user.profileUrlOriginal,
   postUserEmail: user.email,
   postUserCompanyId: user.companyId,
-  postUserCompanyName: user.companyName,
+  postUserCompanyName: user.company,
   postUserSalesRouteNum: user.salesRouteNum,
   postUserPhone: user.phone,
   postUser: user,

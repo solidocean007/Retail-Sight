@@ -4,7 +4,7 @@ import "./channelSelector.css";
 // import { ChannelType } from '../utils/types';
 
 interface ChannelSelectorProps {
-  selectedChannel?: ChannelType | "";
+  selectedChannel?: ChannelType;
   onChannelChange: (channel: ChannelType) => void;
 }
 

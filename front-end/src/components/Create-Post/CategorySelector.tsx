@@ -3,7 +3,7 @@ import React from "react";
 import "./categorySelector.css";
 
 interface CategorySelectorProps {
-  selectedCategory?: CategoryType | "";
+  selectedCategory?: CategoryType | null;
   onCategoryChange: (category: CategoryType) => void;
 }
 

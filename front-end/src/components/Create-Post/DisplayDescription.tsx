@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { PostType } from "../../utils/types";
+import { PostInputType } from "../../utils/types";
 import "./displayDescription.css";
 
 interface DisplayDescriptionProps {
-  post: PostType;
+  post: PostInputType;
   onNext: () => void;
   onPrevious: () => void;
   handleFieldChange: (
-    field: keyof PostType,
-    value: PostType[keyof PostType],
+    field: keyof PostInputType,
+    value: PostInputType[keyof PostInputType],
   ) => void;
 }
 

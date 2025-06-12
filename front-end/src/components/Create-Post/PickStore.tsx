@@ -5,6 +5,7 @@ import {
   CompanyGoalType,
   CompanyGoalWithIdType,
   FireStoreGalloGoalDocType,
+  PostInputType,
   PostType,
 } from "../../utils/types";
 import StoreLocator from "./StoreLocator";
@@ -37,12 +38,12 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 interface PickStoreProps {
   onNext: () => void;
   onPrevious: () => void;
-  post: PostType;
-  setPost: React.Dispatch<React.SetStateAction<PostType>>;
+  post: PostInputType;
+  setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   usersGalloGoals?: FireStoreGalloGoalDocType[]; // Pass goals from Redux
   usersCompanyGoals: CompanyGoalWithIdType[]; // Pass goals from Redux
   handleFieldChange: (
-    field: keyof PostType,
+    field: keyof PostInputType,
     value: PostType[keyof PostType],
   ) => void;
   setSelectedCompanyAccount: (account: CompanyAccountType | null) => void;
@@ -76,7 +77,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     null,
   );
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
-    useState<CompanyGoalWithIdType>();
+    useState<CompanyGoalWithIdType | null>();
   const userRole = useSelector(selectUser)?.role;
   const userId = useSelector(selectUser)?.uid;
   const isAdmin = userRole === "admin" || userRole === "super-admin";
@@ -292,7 +293,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }));
     setSelectedCompanyAccount(null);
     setSelectedGalloGoalId(null);
-    setSelectedCompanyGoal(undefined);
+    setSelectedCompanyGoal(null);
   };
 
   // this function is called when we find an account and its account number via the map process i believe

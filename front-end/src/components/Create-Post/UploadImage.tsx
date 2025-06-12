@@ -1,6 +1,6 @@
 import { Button, CircularProgress } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
-import { PostType } from "../../utils/types";
+import { PostInputType } from "../../utils/types";
 import "./uploadimage.css";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
@@ -9,8 +9,8 @@ import { useState } from "react";
 
 interface UploadImageProps {
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
-  post: PostType;
-  setPost: React.Dispatch<React.SetStateAction<PostType>>;
+  post: PostInputType;
+  setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   onNext: () => void;
 }
 

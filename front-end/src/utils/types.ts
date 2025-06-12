@@ -23,8 +23,7 @@ export type TUserInputType = {
   lastNameInput: string;
   emailInput: string;
   companyInput: string;
-  // phoneInput: TPhoneInputState; // change this to string
-  phoneInput: string; // change this to string
+  phoneInput: string;
   passwordInput: string;
   verifyPasswordInput: string;
   setSignUpError?: (error: string) => void;
@@ -54,7 +53,7 @@ export interface UserType {
   profileUrlThumbnail?: string;
   profileUrlOriginal?: string;
   email: string | undefined; // from signup
-  companyName: string;
+  company: string;
   companyId: string;
   salesRouteNum: string | undefined;
   phone: string | undefined; // from signup
@@ -88,14 +87,16 @@ export interface PostTokenType {
 
 export interface PostType {
   // 🔍 Filtering Info
-  category: CategoryType | "";
-  channel: ChannelType | "";
+  category: CategoryType;
+  channel: ChannelType;
   hashtags: string[];
   starTags: string[];
-  productType?: string;
+  productType?: string[];
   productNames?: string[];
   brands?: string[];
   supplier?: string;
+
+  account: CompanyAccountType;
 
   // 🧾 Account Info
   accountNumber?: string;
@@ -130,13 +131,13 @@ export interface PostType {
     | "supervisor";
 
   // 🧍 Optional Poster Info
-  postedBy?: UserType;
-  postedByFirstName?: string;
-  postedByLastName?: string;
-  postedByUid?: string;
+  postedBy?: UserType | null;
+  postedByFirstName?: string | null;
+  postedByLastName?: string | null;
+  postedByUid?: string | null;
 
   // 📸 Post Content
-  description?: string;
+  description: string;
   imageUrl?: string;
   photos?: { file: string }[];
   totalCaseCount: number;
@@ -146,7 +147,7 @@ export interface PostType {
   // 🗓 Timing
   displayDate: string;
   timestamp: string;
-  visibility?: "public" | "company" | "supplier" | "private";
+  visibility: "public" | "company" | "supplier" | "private";
 
   // 🎯 Goals
   companyGoalId?: string | null;
@@ -164,9 +165,43 @@ export interface PostType {
   // 🔐 Tokens
   tokens?: PostTokenType[];
 
-  // 🔁 Legacy reference (optional)
-  account?: CompanyAccountType | null;
 }
+
+export type PostInputType = {
+  category: CategoryType | string;
+  channel: ChannelType | string;
+  description: string;
+  imageUrl: string;
+  totalCaseCount: number;
+  visibility: string;
+
+  postUser: UserType | null;
+  account: CompanyAccountType | null;
+
+  // Optional extras
+  postedBy?: UserType | null;
+
+  // Optional fields for editing or viewing
+  companyGoalId?: string | null;
+  companyGoalTitle?: string | null;
+  companyGoalDescription?: string | null;
+
+
+  galloGoalTitle?: string | null;
+  galloGoalDescription?: string | null;
+  closedBy?: string | null;
+  oppId?: string | null;
+
+  // Raw arrays (not flattened)
+  hashtags?: string[];
+  starTags?: string[];
+  brands?: string[];
+  productType?: string[];
+  productNames?: string[];
+  supplier?: string;
+
+  // UI-local fields — no need to flatten anything yet
+};
 
 export type PostWithID = PostType & { id: string };
 

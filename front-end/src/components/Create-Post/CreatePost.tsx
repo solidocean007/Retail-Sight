@@ -15,6 +15,7 @@ import {
   CompanyAccountType,
   CompanyMissionType,
   MissionType,
+  PostInputType,
   PostType,
   UserType,
 } from "../../utils/types";
@@ -41,9 +42,12 @@ import {
 } from "../../Slices/goalsSlice";
 import { selectUsersCompanyGoals } from "../../Slices/companyGoalsSlice";
 
+
+
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
   const userData = useSelector(selectUser);
+  console.log(userData)
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
@@ -58,7 +62,7 @@ export const CreatePost = () => {
     // selectUsersCompanyGoals(state, salesRouteNum),
     selectUsersCompanyGoals(state),
   );
-  // console.log(usersCompanyGoals)
+  console.log(usersCompanyGoals)
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 
@@ -79,68 +83,17 @@ export const CreatePost = () => {
   const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
     useState<CompanyAccountType | null>(null);
 
- const [post, setPost] = useState<PostType>(() => ({
-  category: selectedCategory,
-  channel: selectedChannel,
-  hashtags: [],
-  starTags: [],
-  productTypes: [],
-  productNames: [],
-  brands: [],
-  supplier: "",
-  accountNumber: "",
-  accountName: "",
-  accountAddress: "",
-  accountSalesRouteNums: [],
-  accountType: "",
-  chain: "",
-  chainType: "",
-  state: "",
-  city: "",
-
-  postUserUid: userData?.uid ?? "",
-  postUserFirstName: userData?.firstName ?? "",
-  postUserLastName: userData?.lastName ?? "",
-  postUserProfileUrlThumbnail: userData?.profileUrlThumbnail ?? "",
-  postUserProfileUrlOriginal: userData?.profileUrlOriginal ?? "",
-  postUserEmail: userData?.email ?? "",
-  postUserCompanyId: userData?.companyId ?? "",
-  postUserCompanyName: userData?.companyName ?? "",
-  postUserSalesRouteNum: userData?.salesRouteNum ?? "",
-  postUserPhone: userData?.phone ?? "",
-  postUser: userData!,
-  postUserRole: userData?.role ?? "employee",
-
-  postedBy: undefined,
-  postedByFirstName: undefined,
-  postedByLastName: undefined,
-  postedByUid: undefined,
-
+const [post, setPost] = useState<PostInputType>(() => ({
+  category: "Beer",
+  channel: "Grocery",
   description: "",
   imageUrl: "",
-  photos: [],
   totalCaseCount: 0,
-  commentCount: 0,
-  likes: [],
-
-  displayDate: "",
-  timestamp: "",
   visibility: "company",
-
-  companyGoalId: null,
-  companyGoalTitle: null,
-  companyGoalDescription: null,
-  galloGoalTitle: null,
-  galloGoalDescription: null,
-  oppId: null,
-
-  closedBy: "",
-  closedDate: "",
-  closedUnits: 0,
-
-  tokens: [],
-  account: null,
+  postUser: userData || null,
+  account: null, // should i define this as selectedCompanyAccount??
 }));
+
 
 
   const [selectedCompanyMission, setSelectedCompanyMission] =
@@ -153,10 +106,10 @@ export const CreatePost = () => {
   useEffect(() => {
   setPost((prevPost) => ({
     ...prevPost,
-    postedBy: onBehalf ?? undefined,
-    postedByFirstName: onBehalf?.firstName,
-    postedByLastName: onBehalf?.lastName,
-    postedByUid: onBehalf?.uid,
+    postedBy: onBehalf ?? null,
+    postedByFirstName: onBehalf?.firstName || null,
+    postedByLastName: onBehalf?.lastName || null,
+    postedByUid: onBehalf?.uid || null,
   }));
 }, [onBehalf]);
 

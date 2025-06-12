@@ -364,7 +364,7 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
 
               <div className="user-company-box">
-                <p>company: {post.postUser?.companyName}</p>{" "}
+                <p>company: {post.postUser?.company}</p>{" "}
                 {/* this matches the saved post but not the future account object.  should it do either or both?*/}
               </div>
             </div>
@@ -416,7 +416,7 @@ const PostCard: React.FC<PostCardProps> = ({
               setIsSearchActive={setIsSearchActive}
             />
           </div>
-
+              {/* {post.id} */}
           <div className="activity-post-image-box">
             {post.imageUrl && (
               <BlurUpImage

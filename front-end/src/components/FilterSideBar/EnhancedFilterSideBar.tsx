@@ -90,21 +90,20 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
-  if (currentHashtag) {
-    setFilters((prev) => ({
-      ...prev,
-      hashtag: currentHashtag,
-      starTag: null,
-    }));
-  } else if (currentStarTag) {
-    setFilters((prev) => ({
-      ...prev,
-      starTag: currentStarTag,
-      hashtag: null,
-    }));
-  }
-}, [currentHashtag, currentStarTag]);
-
+    if (currentHashtag) {
+      setFilters((prev) => ({
+        ...prev,
+        hashtag: currentHashtag,
+        starTag: null,
+      }));
+    } else if (currentStarTag) {
+      setFilters((prev) => ({
+        ...prev,
+        starTag: currentStarTag,
+        hashtag: null,
+      }));
+    }
+  }, [currentHashtag, currentStarTag]);
 
   useEffect(() => {
     const activeFiltersCount = Object.entries(debouncedFilters).filter(
@@ -423,17 +422,25 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       </div>
 
       <div className="filter-actions">
-        <button className="apply-button" onClick={handleApply}>
-          Apply Filters
-        </button>
-        <button
-          className="apply-button clear-all-button"
-          // onClick={() => setFilters(clearAllFilters())}
-          onClick={handleClearFilters}
-          disabled={!filtersSet}
-        >
-          Clear All Filters
-        </button>
+        {filtersSet && (
+          <button
+            className="apply-button"
+            onClick={handleApply}
+            disabled={!filtersSet}
+          >
+            Apply Filters
+          </button>
+        )}
+        {filtersSet && (
+          <button
+            className="apply-button clear-all-button"
+            // onClick={() => setFilters(clearAllFilters())}
+            onClick={handleClearFilters}
+            disabled={!filtersSet}
+          >
+            Clear All Filters
+          </button>
+        )}
       </div>
     </div>
   );

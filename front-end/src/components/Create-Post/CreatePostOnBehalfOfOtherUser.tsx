@@ -7,7 +7,7 @@ import {
   TextField,
 } from "@mui/material";
 import { useSelector } from "react-redux";
-import { PostType, UserType } from "../../utils/types";
+import { PostInputType, UserType } from "../../utils/types";
 import {
   selectCompanyUsers,
   selectUser,
@@ -26,7 +26,7 @@ import { MenuOutlined } from "@mui/icons-material";
 interface Props {
   onBehalf: UserType | null;
   setOnBehalf: React.Dispatch<React.SetStateAction<UserType | null>>;
-  setPost: React.Dispatch<React.SetStateAction<PostType>>;
+  setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
 }
 
 const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
