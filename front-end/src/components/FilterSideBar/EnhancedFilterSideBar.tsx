@@ -48,6 +48,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   toggleFilterMenu,
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const [lastAppliedFilters, setLastAppliedFilters] =
+    useState<PostQueryFilters | null>(null);
+  const areFiltersEqual = (
+    a: PostQueryFilters,
+    b: PostQueryFilters
+  ): boolean => {
+    return JSON.stringify(a) === JSON.stringify(b);
+  };
 
   const toggleSection = (section: string) => {
     setOpenSection((prev) => (prev === section ? null : section));
@@ -85,6 +93,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     cities: [],
     dateRange: { startDate: null, endDate: null },
   });
+
+  const filtersChanged =
+    !lastAppliedFilters || !areFiltersEqual(filters, lastAppliedFilters);
 
   const debouncedFilters = useDebouncedValue(filters, 150);
   const [tagInput, setTagInput] = useState("");
@@ -203,12 +214,13 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     if (fetchFilteredPostsBatch.fulfilled.match(result)) {
       const rawPosts = result.payload.posts;
       const normalizedPosts = rawPosts.map(normalizePost);
-      console.log(normalizedPosts)
-      
+      console.log(normalizedPosts);
+
       dispatch(setFilteredPosts([])); // what is this for?
       dispatch(setFilteredPosts(normalizedPosts));
       await storeFilteredPostsInIndexedDB(normalizedPosts, filters);
       setActivePostSet("filteredPosts");
+      setLastAppliedFilters(filters);
     }
   };
 
@@ -222,6 +234,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const handleClearFilters = () => {
     setFilters(clearAllFilters());
+    setLastAppliedFilters(null);
     setTagInput("");
     setActivePostSet("posts");
   };
@@ -421,11 +434,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       </div>
 
       <div className="filter-actions">
-        {filtersSet && (
+        {filtersSet && filtersChanged && (
           <button
             className="apply-button"
             onClick={handleApply}
-            disabled={!filtersSet}
           >
             Apply Filters
           </button>

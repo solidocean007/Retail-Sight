@@ -22,8 +22,9 @@ import { fetchCompanyProducts } from "./thunks/productThunks";
 import { setAllProducts } from "./Slices/productsSlice";
 import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
 import useSchemaVersion from "./hooks/useSchemaVersion.ts";
-import { collection, getDocs } from "@firebase/firestore";
-import { db } from "./utils/firebase.ts";
+// import { collection, getDocs } from "@firebase/firestore";
+// import { db } from "./utils/firebase.ts";
+// import { migratePostToCleanedFlattenedVersion } from "./script.ts";
 
 function App() {
   useSchemaVersion();
@@ -83,6 +84,7 @@ function App() {
       unsubscribeGalloGoals();
     };
   }, [dispatch, companyId, salesRouteNum]);
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>

@@ -19,6 +19,20 @@
 //     // ✅ Rename createdBy → postUser (as full UserType)
 //     if (data.createdBy) {
 //       updates.postUser = data.createdBy;
+//       // ✅ Flatten critical fields from createdBy (postUser)
+//       const user = data.createdBy;
+//       if (user) {
+//         updates.postUserUid = user.uid || null;
+//         updates.postUserFirstName = user.firstName || null;
+//         updates.postUserLastName = user.lastName || null;
+//         updates.postUserEmail = user.email || null;
+//         updates.postUserPhone = user.phone || null;
+//         updates.postUserCompanyId = user.companyId || null;
+//         updates.postUserCompanyName = user.company || null;
+//         updates.postUserSalesRouteNum = user.salesRouteNum || null;
+//         updates.postUserProfileUrlThumbnail = user.profileUrlThumbnail || null;
+//         updates.postUserProfileUrlOriginal = user.profileUrlOriginal || null;
+//       }
 //     }
 
 //     // ✅ Convert legacy postUserName → postUserFullName
@@ -36,8 +50,8 @@
 
 //     // ✅ Fields to clean up (after rewrite)
 //     const legacyFieldsToRemove = [
-//       "createdBy",         // fully replaced by postUser
-//       "postUserName",      // now renamed to postUserFullName
+//       "createdBy", // fully replaced by postUser
+//       "postUserName", // now renamed to postUserFullName
 //       "postUserCompany",
 //     ];
 //     for (const field of legacyFieldsToRemove) {
@@ -75,7 +89,3 @@
 //     console.error(`❌ Failed to migrate post ${postId}`, err);
 //   }
 // };
-
-
-
-

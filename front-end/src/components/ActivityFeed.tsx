@@ -130,7 +130,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   // const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
   // const fillerCount = 3;
-  const itemCount = displayPosts.length;
+  const itemCount = displayPosts.length + 4;
 
   if (loading || loadingMore) {
     return <CircularProgress />;
@@ -158,8 +158,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const itemHeight = getActivityItemHeight(windowWidth);
 
-  console.log(activePostSet, itemCount, ' : is itemcount') // this is correct
-  console.log(displayPosts[22])
+  console.log(activePostSet, itemCount, " : is itemcount"); // this is correct
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
@@ -197,33 +196,38 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             </div>
           );
         }}
-        endReached={() => {
-          if (!loadingMore && hasMore) {
-            setLoadingMore(true);
-            dispatch(
-              fetchMorePostsBatch({
-                lastVisible,
-                limit: POSTS_BATCH_SIZE,
-                currentUserCompanyId,
-              })
-            )
-              .then((action) => {
-                if (fetchMorePostsBatch.fulfilled.match(action)) {
-                  const { posts, lastVisible: newLastVisible } = action.payload;
-                  setLastVisible(newLastVisible);
+        endReached={
+          activePostSet === "posts"
+            ? () => {
+                if (!loadingMore && hasMore) {
+                  setLoadingMore(true);
+                  dispatch(
+                    fetchMorePostsBatch({
+                      lastVisible,
+                      limit: POSTS_BATCH_SIZE,
+                      currentUserCompanyId,
+                    })
+                  )
+                    .then((action) => {
+                      if (fetchMorePostsBatch.fulfilled.match(action)) {
+                        const { posts, lastVisible: newLastVisible } =
+                          action.payload;
+                        setLastVisible(newLastVisible);
 
-                  if (posts.length > 0) {
-                    addPostsToIndexedDB(posts);
-                    dispatch(mergeAndSetPosts(posts));
-                    setHasMore(true);
-                  } else {
-                    setHasMore(false);
-                  }
+                        if (posts.length > 0) {
+                          addPostsToIndexedDB(posts);
+                          dispatch(mergeAndSetPosts(posts));
+                          setHasMore(true);
+                        } else {
+                          setHasMore(false);
+                        }
+                      }
+                    })
+                    .finally(() => setLoadingMore(false));
                 }
-              })
-              .finally(() => setLoadingMore(false));
-          }
-        }}
+              }
+            : undefined
+        }
         components={{
           Footer: () => (
             <div style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}>
