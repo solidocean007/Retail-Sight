@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { RootState } from "../utils/store";
+import { RootState, useAppDispatch } from "../utils/store";
 import { useNavigate } from "react-router-dom";
 import useProtectedAction from "../utils/useProtectedAction";
 import "./headerBar.css";
@@ -12,8 +12,20 @@ import { doc, getDoc } from "@firebase/firestore";
 import { db } from "../utils/firebase";
 import { Tooltip } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
+import { clearPostsData } from "../Slices/postsSlice";
+import {
+  clearCompanyProductsFromIndexedDB,
+  clearGoalsFromIndexedDB,
+  clearHashtagPostsInIndexedDB,
+  clearIndexedDBStore,
+  clearPostsInIndexedDB,
+  clearStarTagPostsInIndexedDB,
+  clearUserCreatedPostsInIndexedDB,
+  closeAndDeleteIndexedDB,
+} from "../utils/database/indexedDBUtils";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
+  const dispatch = useAppDispatch();
   const { currentUser } = useSelector((state: RootState) => state.user);
   const [showMenuTab, setShowMenuTab] = useState(false);
   const [localVersion, setLocalVersion] = useState<string | null>("Loading...");
@@ -23,76 +35,85 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useOutsideAlerter(menuRef, () => setShowMenuTab(false));
-useEffect(() => {
-  const checkVersions = async () => {
-    try {
-      const configSnap = await getDoc(
-        doc(db, "appConfig", "HlAAI92RInjZymlMiwqu")
-      );
-      const server = configSnap.data()?.schemaVersion || null;
-      setServerVersion(server);
-      // console.log("✅ Server version (fresh):", server);
+  useEffect(() => {
+    const checkVersions = async () => {
+      try {
+        const configSnap = await getDoc(
+          doc(db, "appConfig", "HlAAI92RInjZymlMiwqu")
+        );
+        const server = configSnap.data()?.schemaVersion || null;
+        setServerVersion(server);
+        // console.log("✅ Server version (fresh):", server);
 
-      if (!server) {
-        console.warn("⚠️ No schemaVersion found in Firestore.");
-        return;
-      }
-
-      const dbInstance = await openDB();
-      const tx = dbInstance.transaction("localSchemaVersion", "readonly");
-      const store = tx.objectStore("localSchemaVersion");
-      const request = store.get("schemaVersion");
-
-      request.onsuccess = () => {
-        const local = request.result?.version;
-        // console.log("✅ Local version (from onsuccess):", local);
-
-        const alreadyReloaded = sessionStorage.getItem("schemaVersionSynced");
-
-        if (!local) {
-          console.warn("⚠️ No local schemaVersion found in IndexedDB.");
-          if (!alreadyReloaded) {
-            const tx2 = dbInstance.transaction("localSchemaVersion", "readwrite");
-            const store2 = tx2.objectStore("localSchemaVersion");
-            store2.put({ id: "schemaVersion", version: server });
-            sessionStorage.setItem("schemaVersionSynced", "true");
-            setTimeout(() => window.location.reload(), 150);
-          } else {
-            console.warn("⚠️ Already reloaded, but local version is still missing.");
-          }
+        if (!server) {
+          console.warn("⚠️ No schemaVersion found in Firestore.");
           return;
         }
 
-        setLocalVersion(local);
+        const dbInstance = await openDB();
+        const tx = dbInstance.transaction("localSchemaVersion", "readonly");
+        const store = tx.objectStore("localSchemaVersion");
+        const request = store.get("schemaVersion");
 
-        if (local !== server) {
-          if (!alreadyReloaded) {
-            const tx2 = dbInstance.transaction("localSchemaVersion", "readwrite");
-            const store2 = tx2.objectStore("localSchemaVersion");
-            store2.put({ id: "schemaVersion", version: server });
-            sessionStorage.setItem("schemaVersionSynced", "true");
-            setTimeout(() => window.location.reload(), 150);
-          } else {
-            console.warn("⚠️ Already reloaded this session. Skipping another reload.");
+        request.onsuccess = () => {
+          const local = request.result?.version;
+          // console.log("✅ Local version (from onsuccess):", local);
+
+          const alreadyReloaded = sessionStorage.getItem("schemaVersionSynced");
+
+          if (!local) {
+            console.warn("⚠️ No local schemaVersion found in IndexedDB.");
+            if (!alreadyReloaded) {
+              const tx2 = dbInstance.transaction(
+                "localSchemaVersion",
+                "readwrite"
+              );
+              const store2 = tx2.objectStore("localSchemaVersion");
+              store2.put({ id: "schemaVersion", version: server });
+              sessionStorage.setItem("schemaVersionSynced", "true");
+              setTimeout(() => window.location.reload(), 150);
+            } else {
+              console.warn(
+                "⚠️ Already reloaded, but local version is still missing."
+              );
+            }
+            return;
           }
-        } else {
-          sessionStorage.setItem("schemaVersionSynced", "true");
-        }
-      };
 
-      request.onerror = () => {
-        console.error("❌ Error reading from IndexedDB");
+          setLocalVersion(local);
+
+          if (local !== server) {
+            if (!alreadyReloaded) {
+              const tx2 = dbInstance.transaction(
+                "localSchemaVersion",
+                "readwrite"
+              );
+              const store2 = tx2.objectStore("localSchemaVersion");
+              store2.put({ id: "schemaVersion", version: server });
+              sessionStorage.setItem("schemaVersionSynced", "true");
+              setTimeout(() => window.location.reload(), 150);
+            } else {
+              console.warn(
+                "⚠️ Already reloaded this session. Skipping another reload."
+              );
+            }
+          } else {
+            sessionStorage.setItem("schemaVersionSynced", "true");
+          }
+        };
+
+        request.onerror = () => {
+          console.error("❌ Error reading from IndexedDB");
+          setLocalVersion("Error");
+        };
+      } catch (err) {
+        console.error("❌ Error checking schema versions:", err);
         setLocalVersion("Error");
-      };
-    } catch (err) {
-      console.error("❌ Error checking schema versions:", err);
-      setLocalVersion("Error");
-    }
-  };
+      }
+    };
 
-  checkVersions();
-}, []);
-
+    checkVersions();
+  }, []);
 
   const goToSignUpLogin = () => navigate("/sign-up-login");
   const handleCreatePostClick = () =>
@@ -120,6 +141,49 @@ useEffect(() => {
     }
   };
 
+const handleReset = async () => {
+  if (window.confirm("Are you sure you want to reset the app? This will clear all stored data.")) {
+    try {
+      // ✅ IndexedDB: Clear all relevant stores
+      await Promise.all([
+        clearPostsInIndexedDB(),
+        clearUserCreatedPostsInIndexedDB(),
+        clearHashtagPostsInIndexedDB(),
+        clearStarTagPostsInIndexedDB(),
+        clearGoalsFromIndexedDB("galloGoals"),
+        clearGoalsFromIndexedDB("companyGoals"),
+        clearGoalsFromIndexedDB("allGalloGoals"),
+        clearGoalsFromIndexedDB("allCompanySpecificGoals"),
+        clearCompanyProductsFromIndexedDB(),
+        clearIndexedDBStore("userAccounts_v2"),
+        clearIndexedDBStore("allUsersCompanyAccounts"),
+        clearIndexedDBStore("latestPosts"),
+        clearIndexedDBStore("locations"),
+        clearIndexedDBStore("collections"),
+        clearIndexedDBStore("lastSeenTimestamp"),
+      ]);
+
+      // ✅ Redux: Clear all slices (only posts right now)
+      dispatch(clearPostsData());
+
+      // ✅ Optional: clear schemaVersion manually
+      const db = await openDB();
+      const tx = db.transaction("localSchemaVersion", "readwrite");
+      const store = tx.objectStore("localSchemaVersion");
+      store.delete("schemaVersion");
+
+      sessionStorage.removeItem("schemaVersionSynced");
+
+      // ✅ Reload to boot fresh
+      window.location.reload();
+    } catch (error) {
+      console.error("App reset failed:", error);
+      alert("Failed to reset app. See console for details.");
+    }
+  }
+};
+
+
   return (
     <>
       <div className="header-bar">
@@ -141,7 +205,11 @@ useEffect(() => {
           </div>
           <h5>{currentUser?.company}</h5>
         </div>
-
+        {currentUser?.role === "super-admin" && (
+          <button className="btn-outline danger-button" onClick={handleReset}>
+            🧹 Reset App
+          </button>
+        )}
         {!currentUser ? (
           <button onClick={goToSignUpLogin}>Login</button>
         ) : (

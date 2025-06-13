@@ -258,6 +258,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const createdOnBehalf =
     post.postedBy && post.postUser?.uid !== post.postedBy.uid;
 
+  const fallbackImage = "https://via.placeholder.com/300x200?text=Loading";
+
   return (
     <>
       <div
@@ -342,7 +344,6 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
             <div className="post-user-details">
-              {/* <div onClick={handleOnUserNameClick}> i need to eventually add posts by users to the filters*/}
               <div className="post-user-name">
                 <p>
                   by:{" "}
@@ -416,7 +417,7 @@ const PostCard: React.FC<PostCardProps> = ({
               setIsSearchActive={setIsSearchActive}
             />
           </div>
-              {/* {post.id} */}
+          {post.id}
           <div className="activity-post-image-box">
             {post.imageUrl && (
               <BlurUpImage

@@ -203,7 +203,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     if (fetchFilteredPostsBatch.fulfilled.match(result)) {
       const rawPosts = result.payload.posts;
       const normalizedPosts = rawPosts.map(normalizePost);
-
+      console.log(normalizedPosts)
+      
       dispatch(setFilteredPosts([])); // what is this for?
       dispatch(setFilteredPosts(normalizedPosts));
       await storeFilteredPostsInIndexedDB(normalizedPosts, filters);
@@ -224,8 +225,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     setTagInput("");
     setActivePostSet("posts");
   };
-
-  console.log(filters.hashtag, filters.starTag); // this logs undefined as i type in the
 
   return (
     <div className="enhanced-sidebar side-bar-box">

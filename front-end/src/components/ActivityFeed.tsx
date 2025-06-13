@@ -72,6 +72,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
+  console.log("filterdPosts: ", filteredPosts);
 
   let displayPosts: PostWithID[] =
     activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
@@ -127,9 +128,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   }, [activePostSet]); // ✅ remove postIdToScroll from deps
 
-  const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
-  const fillerCount = 3;
-  const itemCount = displayPosts.length + numberOfAds + fillerCount;
+  // const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
+  // const fillerCount = 3;
+  const itemCount = displayPosts.length;
 
   if (loading || loadingMore) {
     return <CircularProgress />;
@@ -157,6 +158,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const itemHeight = getActivityItemHeight(windowWidth);
 
+  console.log(activePostSet, itemCount, ' : is itemcount') // this is correct
+  console.log(displayPosts[22])
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
@@ -169,12 +172,17 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         ref={virtuosoRef}
         increaseViewportBy={500}
         style={{ height: listHeight, width: "100%" }}
-        totalCount={itemCount}
+        // totalCount={itemCount}
+        data={displayPosts}
         defaultItemHeight={itemHeight}
-        itemContent={(index) => {
-          const post = displayPosts[index];
+        itemContent={(index, post) => {
+          if (!post?.id) return null;
+
           return (
-            <div className="post-card-renderer-container">
+            <div
+              className="post-card-renderer-container"
+              style={{ minHeight: 300 }}
+            >
               <PostCardRenderer
                 key={post.id}
                 currentUserUid={currentUser?.uid}

@@ -206,13 +206,13 @@ export async function getFilteredPostsFromIndexedDB(
       // Assuming the date filter criteria includes a startDate and endDate
       const filteredPosts = allPosts.filter((post) => {
         const matchesChannel =
-          !filters.channels ||
-          filters.channels.length === 0 ||
-          filters.channels.includes(post.channel);
+          !filters.channel ||
+          filters.channel.length === 0 ||
+          filters.channel.includes(post.channel);
         const matchesCategory =
-          !filters.categories ||
-          filters.categories.length === 0 ||
-          filters.categories.includes(post.category);
+          !filters.category ||
+          filters.category.length === 0 ||
+          filters.category.includes(post.category);
         const postDate = post.displayDate ? new Date(post.displayDate) : null;
 
         // Convert the string dates in the filters to Date objects for comparison
@@ -1246,3 +1246,20 @@ export async function clearCompanyProductsFromIndexedDB(): Promise<void> {
     };
   });
 }
+
+export async function clearIndexedDBStore(storeName: string): Promise<void> {
+  const db = await openDB();
+  if (!db.objectStoreNames.contains(storeName)) {
+    console.warn(`Store "${storeName}" does not exist in IndexedDB.`);
+    return;
+  }
+
+  const tx = db.transaction([storeName], "readwrite");
+  const store = tx.objectStore(storeName);
+  return new Promise((resolve, reject) => {
+    const clearRequest = store.clear();
+    clearRequest.onsuccess = () => resolve();
+    clearRequest.onerror = () => reject(clearRequest.error);
+  });
+}
+
