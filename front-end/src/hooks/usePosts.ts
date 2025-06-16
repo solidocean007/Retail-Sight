@@ -1,13 +1,14 @@
 // usePosts.ts
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../utils/store";
-import { useEffect } from "react";
+import store, { RootState, useAppDispatch } from "../utils/store";
+import { useEffect, useState } from "react";
 import {
   // DocumentChange,
   QuerySnapshot,
   Timestamp,
   collection,
   getDocs,
+  limit,
   // limit,
   onSnapshot,
   orderBy,
@@ -35,6 +36,8 @@ const usePosts = (
 ) => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const [initialLoaded, setInitialLoaded] = useState(false);
+
 
   useEffect(() => {
     const setupListeners = async () => {
@@ -44,7 +47,7 @@ const usePosts = (
 
       const processDocChanges = async (snapshot: QuerySnapshot) => {
         let mostRecentTimeStamp = new Date(lastSeenTimestamp);
-        let postsToUpdate: PostWithID[] = []; // Collect posts to sort them by displayDate later
+        let postsToUpdate: PostWithID[] = [];
 
         snapshot.docChanges().forEach((change) => {
           const docData = change.doc.data();
@@ -74,7 +77,7 @@ const usePosts = (
             (change.type === "added" || change.type === "modified") &&
             docData.imageUrl
           ) {
-            postsToUpdate.push(postData); // Collect for sorting and updating
+            postsToUpdate.push(normalizePost(postData)); // Collect for sorting and updating
           }
 
           // Handle 'removed' changes
@@ -110,17 +113,19 @@ const usePosts = (
         collection(db, "posts"),
         where("timestamp", ">", lastSeenTimestamp),
         where("visibility", "==", "public"),
-        orderBy("timestamp", "desc")
+        orderBy("timestamp", "desc"),
+        limit(POSTS_BATCH_SIZE)
       );
       const unsubscribePublic = onSnapshot(qPublic, processDocChanges);
 
       let unsubscribeCompany = () => {};
-      if (currentUserCompanyId) {
+      if (currentUserCompanyId && initialLoaded) {
         const qCompany = query(
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTimestamp),
           where("postUserCompanyId", "==", currentUserCompanyId),
-          orderBy("timestamp", "desc")
+          orderBy("timestamp", "desc"),
+          limit(POSTS_BATCH_SIZE)
         );
         unsubscribeCompany = onSnapshot(qCompany, processDocChanges);
       }
@@ -133,7 +138,7 @@ const usePosts = (
     };
 
     setupListeners();
-  }, [currentUserCompanyId, dispatch, currentUser]);
+  }, [currentUserCompanyId, dispatch, currentUser, initialLoaded]);
 
   // load indexDB posts or fetch from firestore
   useEffect(() => {
@@ -141,16 +146,17 @@ const usePosts = (
       try {
         const indexedDBPosts = await getPostsFromIndexedDB();
         if (indexedDBPosts.length > 0) {
-          // dispatch(mergeAndSetPosts(indexedDBPosts));
           dispatch(mergeAndSetPosts(indexedDBPosts));
+          setInitialLoaded(true);
         } else {
           const action = await dispatch(
             fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
           );
           if (fetchInitialPostsBatch.fulfilled.match(action)) {
             const fetchedPosts = action.payload.posts.map(normalizePost);
-            dispatch(mergeAndSetPosts(fetchedPosts));
+            dispatch(mergeAndSetPosts(fetchedPosts)); // why merge and sort on an empty array here?
             addPostsToIndexedDB(fetchedPosts);
+            setInitialLoaded(true);
           }
         }
       } catch (error) {
@@ -163,15 +169,15 @@ const usePosts = (
         const publicPostsQuery = query(
           collection(db, "posts"),
           where("visibility", "==", "public"),
-          orderBy("displayDate", "desc")
-          // limit(4)
+          orderBy("displayDate", "desc"),
+          limit(POSTS_BATCH_SIZE)
         );
         const querySnapshot = await getDocs(publicPostsQuery);
         const publicPosts = querySnapshot.docs
           .map((doc) => normalizePost({ id: doc.id, ...doc.data() }))
           .filter((post) => post.visibility === "public");
 
-        dispatch(mergeAndSetPosts(publicPosts));
+        dispatch(mergeAndSetPosts(publicPosts)); // this again makes me wonder why we are trying to merge posts
       } catch (error) {
         console.error("Error fetching public posts:", error);
       }

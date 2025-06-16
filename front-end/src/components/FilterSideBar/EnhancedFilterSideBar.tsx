@@ -27,7 +27,7 @@ interface EnhancedFilterSideBarProps {
   setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
   isSearchActive: boolean;
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
-  // onFiltersApplied?: (filters: PostQueryFilters) => void;
+  onFiltersApplied?: (filters: PostQueryFilters) => void;
   toggleFilterMenu: () => void;
   currentHashtag?: string | null;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
@@ -40,7 +40,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   setActivePostSet,
   isSearchActive,
   setIsSearchActive,
-  // onFiltersApplied,
+  onFiltersApplied,
   currentHashtag,
   setCurrentHashtag,
   currentStarTag,
@@ -63,6 +63,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
+  );
+  const filteredPostCount = useSelector(
+    (state: RootState) => state.posts.filteredPostCount
   );
   const dispatch = useAppDispatch();
   // const companyId = useSelector(
@@ -221,6 +224,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       await storeFilteredPostsInIndexedDB(normalizedPosts, filters);
       setActivePostSet("filteredPosts");
       setLastAppliedFilters(filters);
+      onFiltersApplied?.(filters);
     }
   };
 
@@ -241,27 +245,27 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   return (
     <div className="enhanced-sidebar side-bar-box">
-      {/* <div className="filter-summary-banner">
-        {activePostSet === "filteredPosts" && filteredPosts.length > 0 && (
+      {activePostSet === "filteredPosts" && filteredPosts.length > 0 && (
+        <div className="filter-summary-banner-container">
           <FilterSummaryBanner
-            filteredCount={filteredPosts.length}
+            filteredCount={filteredPostCount}
             filterText={getFilterSummaryText(filters)}
             onClear={() => setFilters(clearAllFilters())}
           />
-        )}
-      </div> */}
+        </div>
+      )}
 
       <h3 className="filter-title">🔎 Filters</h3>
       <div className="active-filters-chip-row">
         <FilterChips filters={filters} onRemove={handleRemoveFilter} />
       </div>
       <div className="mobile-filter-close-button">
-        {activePostSet === "filteredPosts" && filteredPosts.length > 0 ? (
-          <button onClick={toggleFilterMenu}>
-            Show {filteredPosts.length} Posts
+        {activePostSet === "filteredPosts" && filteredPostCount > 0 ? (
+          <button className="btn-outline" onClick={toggleFilterMenu}>
+            Show {filteredPostCount} Posts
           </button>
         ) : (
-          <button onClick={toggleFilterMenu}>Close Filters</button>
+          <button className="btn-outline" onClick={toggleFilterMenu}>Close Filters</button>
         )}
       </div>
 
@@ -435,10 +439,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
       <div className="filter-actions">
         {filtersSet && filtersChanged && (
-          <button
-            className="apply-button"
-            onClick={handleApply}
-          >
+          <button className="apply-button" onClick={handleApply}>
             Apply Filters
           </button>
         )}

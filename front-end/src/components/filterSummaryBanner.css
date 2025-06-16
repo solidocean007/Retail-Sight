@@ -1,28 +1,21 @@
 /* filterSummaryBanner.css */
 .filter-summary-banner {
-  position: fixed;
-  bottom: 15;
   width: 100%;
-  z-index: 13;
   background-color: green;
   color: var(--text-color);
-  padding: 0.5rem 1rem;
-  font-size: 0.95rem;
+  font-size: smaller;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
   flex-direction: column;
+  border-radius: 8px;
 }
+
 
 .clear-filter-btn {
   font-size: 0.85rem;
   padding: 0.3rem 0.75rem;
 }
 
-@media (min-width: 900px) {
-  .filter-summary-banner {
-    display: none;
-  }
-}

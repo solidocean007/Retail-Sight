@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import { openDB } from "../utils/database/indexedDBOpen";
-import { clearPostsData, setPosts } from "../Slices/postsSlice";
+import { clearPostsData, mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import store from "../utils/store";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
+import { normalizePost } from "../utils/normalizePost";
 
 // 🔧 Can be bumped manually when needed
 const POSTS_BATCH_SIZE = 50;
@@ -111,7 +112,9 @@ const useSchemaVersion = () => {
               if (fetchInitialPostsBatch.fulfilled.match(action)) {
                 const { posts } = action.payload;
                 console.log(`✅ Fetched ${posts.length} posts`);
-                store.dispatch(setPosts(posts));
+                const normalizedPosts = posts.map(normalizePost);
+                store.dispatch(mergeAndSetPosts(normalizedPosts));
+
                 await addPostsToIndexedDB(posts);
                 console.log("💾 Posts saved to Redux and IndexedDB");
               } else {

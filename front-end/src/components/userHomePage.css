@@ -9,7 +9,8 @@
   max-width: 1900px;
   padding: 5px;
   background-color: var(--background-body);
-  /* max-height: 105vh; */
+  max-height: 100%;
+  position: relative;
 }
 
 .header-bar-container {
@@ -26,6 +27,7 @@
   background-color: var(--background-body); /* Add this */
   padding-top: 5px;
   width: 100%;
+  height: 100%;
 }
 
 .activity-feed-container {
@@ -34,8 +36,9 @@
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow); /* Optional for depth */
   width: 100%;
-  height: 100vh;
-  overflow-y: auto;
+  height: 100%;
+  /* overflow-y: auto; */
+  padding: 0 10px;
 }
 
 .onboarding-tutorial-intro-box {
@@ -72,17 +75,8 @@
   align-items: center;
 }
 
-.filter-summary-mobile-banner {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: white;
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid #ddd;
-}
-
 @media (min-width: 900px) {
-  .filter-summary-mobile-banner {
+  .mobile-filter-banner {
     display: none;
   }
 }

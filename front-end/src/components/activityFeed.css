@@ -12,8 +12,9 @@
 .top-of-activity-feed {
   display: flex;
   text-align: center;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  padding: 5px 10px;
+  justify-content: flex-start;
   margin-bottom: 10px;
   width: 100%;
   background-color: var(--menu-background-color);

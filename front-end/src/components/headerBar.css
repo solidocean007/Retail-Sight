@@ -88,18 +88,24 @@
 }
 
 .refresh-app-button {
-  font-size: 12px;
-  padding: 2px 6px;
+  font-size: 5px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: 1px solid var(--primary-blue);
   background: transparent;
   color: var(--primary-blue);
   cursor: pointer;
   transition: background 0.2s;
+  margin-right: 1rem;
 }
 
 .refresh-app-button:hover {
   background: var(--outlined-button-hover);
+}
+
+.danger-button {
+ padding: 5px 5px;
+ width: 200px;
 }
 
 

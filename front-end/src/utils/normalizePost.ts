@@ -1,24 +1,27 @@
+import { Timestamp } from "@firebase/firestore";
 import { PostWithID } from "../utils/types";
 
 export function normalizePost(post: any): PostWithID {
   return {
     ...post,
-    displayDate: post.displayDate?.toDate?.() || post.displayDate || null,
-    createdAt: post.createdAt?.toDate?.() || post.createdAt || null,
-    updatedAt: post.updatedAt?.toDate?.() || post.updatedAt || null,
+    timestamp: normalizeDate(post.timestamp),
+    displayDate: normalizeDate(post.displayDate),
+    createdAt: normalizeDate(post.createdAt),
+    updatedAt: normalizeDate(post.updatedAt),
     tokens: Array.isArray(post.tokens)
       ? post.tokens.map((t: any) => ({
           ...t,
-          expiry:
-            typeof t.expiry?.toDate === "function"
-              ? t.expiry.toDate().toISOString()
-              : t.expiry instanceof Date
-              ? t.expiry.toISOString()
-              : typeof t.expiry === "string"
-              ? t.expiry
-              : null,
+          expiry: normalizeDate(t.expiry),
         }))
       : [],
   };
+}
+
+function normalizeDate(value: any): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value.toDate === "function") return value.toDate().toISOString();
+  return null;
 }
 

@@ -1,10 +1,10 @@
 // ActivityFeed.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
-import { RootState } from "../utils/store";
+import store, { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
 import {
   getPostsByStarTag,
@@ -15,20 +15,22 @@ import {
   fetchMorePostsBatch,
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
-import { PostWithID } from "../utils/types";
 import {
   addPostsToIndexedDB,
+  getPostsFromIndexedDB,
   // clearHashtagPostsInIndexedDB,
   // clearPostsInIndexedDB,
   // clearStarTagPostsInIndexedDB,
   // clearUserCreatedPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
-import { mergeAndSetPosts } from "../Slices/postsSlice";
+import { appendPosts, mergeAndSetPosts } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
+import FilterSummaryBanner from "./FilterSummaryBanner";
+import { getFilterSummaryText } from "./FilterSideBar/utils/filterUtils";
+import { PostQueryFilters } from "../utils/types";
 
-const AD_INTERVAL = 4;
 const POSTS_BATCH_SIZE = 5;
 
 interface ActivityFeedProps {
@@ -37,7 +39,7 @@ interface ActivityFeedProps {
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   currentStarTag: string | null;
   setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
-  // clearSearch: () => Promise<void>;
+  clearSearch: () => Promise<void>;
   activePostSet?: string;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   isSearchActive?: boolean;
@@ -46,6 +48,7 @@ interface ActivityFeedProps {
   postIdToScroll: string | null;
   setPostIdToScroll: React.Dispatch<React.SetStateAction<string | null>>;
   toggleFilterMenu?: () => void;
+  appliedFilters?: PostQueryFilters | null;
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
@@ -54,7 +57,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   setCurrentHashtag,
   // currentStarTag,
   // setCurrentStarTag,
-  // clearSearch,
+  clearSearch,
   activePostSet,
   setActivePostSet,
   // isSearchActive,
@@ -62,20 +65,26 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   // clearInput,
   postIdToScroll,
   setPostIdToScroll,
-  // toggleFilterMenu,
+  toggleFilterMenu,
+  appliedFilters,
 }) => {
   const dispatch = useAppDispatch();
   const [showScrollTop, setShowScrollTop] = useState(false);
-
-  const [adsOn] = useState(false);
+  const filteredCount = useSelector(
+    (s: RootState) => s.posts.filteredPostCount
+  );
+  const filterText = appliedFilters ? getFilterSummaryText(appliedFilters) : "";
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
-  console.log("filterdPosts: ", filteredPosts);
 
-  let displayPosts: PostWithID[] =
-    activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
+  const displayPosts = useMemo(() => {
+    return activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
+  }, [
+    activePostSet,
+    activePostSet === "filteredPosts" ? filteredPosts : rawPosts,
+  ]);
 
   // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -121,24 +130,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     setPostIdToScroll(null); // No delay
   }, [postIdToScroll, displayPosts.length]);
 
+  const prevActivePostSet = useRef(activePostSet);
   useEffect(() => {
-    // Only scroll to top when activePostSet changes and no postId is targeted
-    if (!postIdToScroll) {
+    if (activePostSet !== prevActivePostSet.current) {
       virtuosoRef.current?.scrollToIndex({ index: 0, align: "start" });
+      prevActivePostSet.current = activePostSet;
     }
-  }, [activePostSet]); // ✅ remove postIdToScroll from deps
-
-  // const numberOfAds = adsOn ? Math.floor(displayPosts.length / AD_INTERVAL) : 0;
-  // const fillerCount = 3;
-  const itemCount = displayPosts.length + 4;
-
-  if (loading || loadingMore) {
-    return <CircularProgress />;
-  }
-
-  if (displayPosts.length === 0) {
-    return <NoResults />;
-  }
+  }, [activePostSet]);
 
   const getActivityItemHeight = (windowWidth: number) => {
     if (windowWidth <= 500) {
@@ -158,20 +156,40 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const itemHeight = getActivityItemHeight(windowWidth);
 
-  console.log(activePostSet, itemCount, " : is itemcount"); // this is correct
+  console.log(activePostSet, " : is activePostSet"); // this is correct
+
+  // only block the whole feed when you have _no_ items yet:
+  if (loading && rawPosts.length === 0) {
+    return <CircularProgress />;
+  }
+
+  if (displayPosts.length === 0) {
+    return <NoResults />;
+  }
+
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
-        {/* <button onClick={toggleFilterMenu} className="filter-menu-toggle">
-          Filters
-        </button> */}
+        {activePostSet === "filteredPosts" && filteredCount > 0 ? (
+          <FilterSummaryBanner
+            filteredCount={filteredCount}
+            filterText={filterText} 
+            onClear={clearSearch}
+          />
+        ) : (
+          <button
+            onClick={toggleFilterMenu}
+            className="btn-outline filter-menu-toggle"
+          >
+            Filters
+          </button>
+        )}
       </div>
 
       <Virtuoso
         ref={virtuosoRef}
         increaseViewportBy={500}
-        style={{ height: listHeight, width: "100%" }}
-        // totalCount={itemCount}
+        style={{ height: 800, width: "100%" }} // is this necessary?
         data={displayPosts}
         defaultItemHeight={itemHeight}
         itemContent={(index, post) => {
@@ -179,11 +197,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
           return (
             <div
+              key={post.id}
               className="post-card-renderer-container"
               style={{ minHeight: 300 }}
             >
               <PostCardRenderer
-                key={post.id}
                 currentUserUid={currentUser?.uid}
                 index={index}
                 style={{ height: "100%" }}
@@ -216,6 +234,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
                         if (posts.length > 0) {
                           addPostsToIndexedDB(posts);
+                          // dispatch(appendPosts(posts));
                           dispatch(mergeAndSetPosts(posts));
                           setHasMore(true);
                         } else {
@@ -229,11 +248,18 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             : undefined
         }
         components={{
-          Footer: () => (
-            <div style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}>
-              🚩 End of results
-            </div>
-          ),
+          Footer: () =>
+            loadingMore ? (
+              <div style={{ textAlign: "center", padding: "1rem" }}>
+                <CircularProgress size={24} />
+              </div>
+            ) : (
+              <div
+                style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}
+              >
+                🚩 End of results
+              </div>
+            ),
         }}
         scrollerRef={(ref) => {
           if (ref) {

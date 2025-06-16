@@ -4,8 +4,8 @@ import { PostQueryFilters, PostWithID } from "../../../utils/types";
 
 export const getFilterSummaryText = (filters: PostQueryFilters) => {
   const parts: string[] = [];
-  if (filters.hashtag) parts.push(`#${filters.hashtag}`);
-  if (filters.starTag) parts.push(`⭐ ${filters.starTag}`);
+  if (filters.hashtag) parts.push(`${filters.hashtag}`);
+  if (filters.starTag) parts.push(`${filters.starTag}`);
   if (filters.channel) parts.push(`Channel: ${filters.channel}`);
   if (filters.category) parts.push(`Category: ${filters.category}`);
   if (filters.dateRange?.startDate || filters.dateRange?.endDate) {

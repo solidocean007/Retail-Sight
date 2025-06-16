@@ -51,7 +51,8 @@ export const fetchInitialPostsBatch = createAsyncThunk(
 
       const postsQuery = query(
         postsCollectionRef,
-        orderBy("displayDate", "desc")
+        orderBy("displayDate", "desc"),
+        limit(POSTS_BATCH_SIZE) // ✅ limits Firestore read
       );
       const querySnapshot = await getDocs(postsQuery);
 
@@ -69,8 +70,8 @@ export const fetchInitialPostsBatch = createAsyncThunk(
             post.visibility === "supplier" &&
             post.postUserCompanyId === currentUserCompanyId;
           return isPublic || isCompanyPost || isSupplier;
-        })
-        .slice(0, POSTS_BATCH_SIZE);
+          // return isCompanyPost || isSupplier;
+        });
 
       const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
 
@@ -173,160 +174,6 @@ type FetchFilteredPostsArgs = {
   // should i rename currentHashtag to currentTag or also define a currentStarTag?
 };
 
-// export const fetchFilteredPostsBatch = createAsyncThunk(
-//   "posts/fetchPostsBatch",
-//   async ({
-//     filters,
-//     lastVisible,
-//     batchSize = 10,
-//   }: {
-//     filters: PostQueryFilters;
-//     lastVisible?: DocumentData | null;
-//     batchSize?: number;
-//   }) => {
-//     console.log("filters: ", filters);
-//     let baseQuery: Query<DocumentData> = collection(db, "posts");
-
-//     if (filters.companyId) {
-//       baseQuery = filterExactMatch(
-//         "postUserCompanyId",
-//         filters.companyId ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.postUserUid) {
-//       baseQuery = filterExactMatch(
-//         "postUserUid",
-//         filters.postUserUid ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.accountNumber) {
-//       baseQuery = filterExactMatch(
-//         "accountNumber",
-//         filters.accountNumber ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.accountName) {
-//       baseQuery = filterExactMatch(
-//         "accountName",
-//         filters.accountName ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.accountType) {
-//       baseQuery = filterExactMatch(
-//         "typeOfAccount",
-//         filters.accountType ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.accountChain) {
-//       baseQuery = filterExactMatch(
-//         "accountChain",
-//         filters.accountChain ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.chainType) {
-//       baseQuery = filterExactMatch(
-//         "chainType",
-//         filters.chainType ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.channel) {
-//       baseQuery = filterExactMatch(
-//         "channel",
-//         filters.channel ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.category) {
-//       baseQuery = filterExactMatch(
-//         "category",
-//         filters.category ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.companyGoalId) {
-//       baseQuery = filterExactMatch(
-//         "companyGoalId",
-//         filters.companyGoalId ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.hashtag) {
-//       baseQuery = filterArrayContains(
-//         "hashtags",
-//         filters.hashtag ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.starTag) {
-//       baseQuery = filterArrayContains(
-//         "starTags",
-//         filters.starTag ?? undefined,
-//         baseQuery
-//       );
-//     }
-
-//     if (filters.brand) {
-//       baseQuery = filterArrayContains(
-//         "brands",
-//         filters.brand ?? undefined,
-//         baseQuery
-//       );
-//     }
-//     if (filters.productType) {
-//       baseQuery = filterExactMatch(
-//         "productType",
-//         filters.productType ?? undefined,
-//         baseQuery
-//       );
-//     }
-
-//     // ✅ Handle date range
-//     const { startDate, endDate } = filters.dateRange || {};
-//     if (startDate)
-//       baseQuery = query(baseQuery, where("displayDate", ">=", startDate));
-//     if (endDate)
-//       baseQuery = query(baseQuery, where("displayDate", "<=", endDate));
-
-//     // ✅ Optional: restrict to 1-item filters (Firestore limit)
-//     if (filters.states?.length === 1) {
-//       baseQuery = filterExactMatch("state", filters.states[0], baseQuery);
-//     }
-//     if (filters.cities?.length === 1) {
-//       baseQuery = filterExactMatch("city", filters.cities[0], baseQuery);
-//     }
-
-//     // 📦 Pagination
-//     const constraints: QueryConstraint[] = [orderBy("displayDate", "desc")];
-//     if (lastVisible) constraints.push(startAfter(lastVisible));
-//     constraints.push(limit(batchSize));
-
-//     const finalQuery = query(baseQuery, ...constraints);
-//     console.log("finalQuery: ", finalQuery); // this logs
-//     const snapshot = await getDocs(finalQuery);
-//     console.log('snapshot: ', snapshot) // this doesnt log
-//     console.log("[FETCH] Documents fetched:", snapshot.size); // this doesnt log
-
-//     const posts: PostWithID[] = snapshot.docs.map((doc) => ({
-//       ...(doc.data() as PostWithID),
-//       id: doc.id,
-//     }));
-//     console.log("[FETCH] Posts data:", posts);
-
-//     const newLastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
-
-//     return { posts, lastVisible: newLastVisible };
-//   }
-// );
-
-// Thunk for fetching user posts
-
 export const fetchFilteredPostsBatch = createAsyncThunk(
   "posts/fetchPostsBatch",
   async ({
@@ -336,7 +183,6 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     lastVisible?: DocumentData | null; // now unused
     batchSize?: number; // now unused
   }) => {
-    console.log("filters: ", filters);
     let baseQuery: Query<DocumentData> = collection(db, "posts");
 
     if (filters.companyId) {
@@ -463,13 +309,16 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     const snapshot = await getDocs(finalQuery);
     console.log("[FETCH] Documents fetched:", snapshot.size);
 
-    const posts: PostWithID[] = snapshot.docs.map((doc) => ({
-      ...(doc.data() as PostWithID),
+    const posts: PostWithID[] = snapshot.docs.map((doc) => normalizePost({
+      ...(doc.data() as PostType),
       id: doc.id,
     }));
-    console.log("[FETCH] Posts data:", posts);
 
-    return { posts, lastVisible: null };
+    return {
+      posts,
+      lastVisible: snapshot.docs[snapshot.docs.length - 1] ?? null,
+      count: snapshot.size,
+    };
   }
 );
 
@@ -485,7 +334,7 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
       );
       const querySnapshot = await getDocs(q);
       console.log(querySnapshot);
-      const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) => ({
+      const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) => normalizePost({
         id: doc.id,
         ...(doc.data() as PostType),
       }));
@@ -497,52 +346,53 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
   }
 );
 
-export const fetchLatestPosts = createAsyncThunk<
-  PostWithID[],
-  void,
-  { rejectValue: string }
->("posts/fetchLatest", async (_, { rejectWithValue }) => {
-  try {
-    // First, try to get the latest posts from IndexedDB
-    const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
+// export const fetchLatestPosts = createAsyncThunk<
+//   PostWithID[],
+//   void,
+//   { rejectValue: string }
+// >("posts/fetchLatest", async (_, { rejectWithValue }) => {
+//   try {
+//     // First, try to get the latest posts from IndexedDB
+//     const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
 
-    if (cachedPosts.length > 0) {
-      return cachedPosts; // Return cached posts to avoid Firestore reads
-    } else {
-      // Fetch from Firestore as fallback
-      const postsCollectionRef = collection(db, "posts");
-      const baseQuery = query(
-        postsCollectionRef,
-        orderBy("timestamp", "desc"),
-        limit(10)
-      );
+//     if (cachedPosts.length > 0) {
+//       return cachedPosts; // Return cached posts to avoid Firestore reads
+//     } else {
+//       // Fetch from Firestore as fallback
+//       const postsCollectionRef = collection(db, "posts");
+//       const baseQuery = query(
+//         postsCollectionRef,
+//         orderBy("timestamp", "desc"),
+//         limit(10)
+//       );
 
-      console.log("fetchLatestPosts read");
-      const postSnapshot = await getDocs(baseQuery);
+//       console.log("fetchLatestPosts read");
+//       const postSnapshot = await getDocs(baseQuery);
 
-      if (postSnapshot.empty) {
-        return [];
-      }
+//       if (postSnapshot.empty) {
+//         return [];
+//       }
 
-      const posts: PostWithID[] = postSnapshot.docs.map((doc) => ({
-        ...(doc.data() as PostType),
-        id: doc.id,
-      }));
+//       const posts: PostWithID[] = postSnapshot.docs.map((doc) => ({
+//         ...(doc.data() as PostType),
+//         id: doc.id,
+//       }));
 
-      // Optionally, store the fetched posts in IndexedDB
-      await storeLatestPostsInIndexedDB(posts); // Assume this function exists
+//       // Optionally, store the fetched posts in IndexedDB
+//       await storeLatestPostsInIndexedDB(posts); // Assume this function exists
 
-      return posts;
-    }
-  } catch (error) {
-    console.error("Error fetching latest posts:", error);
-    return rejectWithValue("Error fetching latest posts.");
-  }
-});
+//       return posts;
+//     }
+//   } catch (error) {
+//     console.error("Error fetching latest posts:", error);
+//     return rejectWithValue("Error fetching latest posts.");
+//   }
+// });
 
 // Define a type for the thunk argument
 
 // Define the arguments for the fetchPostsByIds thunk
+
 type FetchPostsByIdsArgs = {
   postIds: string[] | string; // This allows either a single string or an array of strings
   token?: string;

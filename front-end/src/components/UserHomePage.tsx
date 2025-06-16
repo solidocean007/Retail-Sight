@@ -1,9 +1,8 @@
 // userHomePage.tsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { VirtuosoHandle } from "react-virtuoso";
 import ActivityFeed from "./ActivityFeed";
 import "./userHomePage.css";
-// import SideBar, { UIFilterState, SideBarHandle } from "./SideBar";
 import { AppDispatch, RootState } from "../utils/store";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLocationOptions } from "../Slices/locationSlice";
@@ -39,10 +38,14 @@ export const UserHomePage = () => {
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
   const [isClosing, setIsClosing] = useState(false);
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
-  const posts = useSelector((state: RootState) => state.posts.posts);
-  const filteredPosts = useSelector(
-    (state: RootState) => state.posts.filteredPosts
-  ); //
+  // const posts = useSelector((state: RootState) => state.posts.posts);
+  // const filteredPosts = useSelector(
+  //   (state: RootState) => state.posts.filteredPosts
+  // ); //
+  // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
+  const filteredPostCount = useSelector(
+    (state: RootState) => state.posts.filteredPostCount
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -52,15 +55,44 @@ export const UserHomePage = () => {
 
   const scrollToPost = useRef<(postId: string) => void>();
 
-  let displayPosts: PostWithID[]; // why arent i using this?
-  if (activePostSet === "filteredPosts") {
-    displayPosts = filteredPosts;
-  } else {
-    displayPosts = posts;
-  }
+  const toggleFilterMenu = () => {
+    console.log("clicked toggleFilterMenu");
+    if (isFilterMenuOpen) {
+      setIsClosing(true);
+      setTimeout(() => {
+        setIsFilterMenuOpen(false);
+        setIsClosing(false);
+      }, 400); // match animation time
+    } else {
+      setIsFilterMenuOpen(true);
+    }
+  };
 
-  // this looks like a top level tool to make sure a users accounts are stored.  im doing this again in a child component but
-  // i shouldn't have to if this was working.. need to look into this a later.  preferably move it to a hook or something
+  const clearSearch = async () => {
+    setCurrentHashtag(null);
+    setCurrentStarTag(null);
+    setActivePostSet("posts");
+    dispatch(setFilteredPosts([]));
+    setLastFilters(null); // ✅ hides FilterSummaryBanner
+    dispatch(setFilteredPosts([]));
+    // dispatch(setFilteredPostCount(0)); // you'd need to define this reducer
+
+    const cachedPosts = await getPostsFromIndexedDB();
+    if (cachedPosts?.length > 0) {
+      dispatch(mergeAndSetPosts(cachedPosts));
+    }
+  };
+
+  useEffect(() => {
+    dispatch(fetchLocationOptions());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (postIdToScroll && scrollToPost.current) {
+      scrollToPost.current(postIdToScroll);
+    }
+  }, [postIdToScroll]);
+
   useEffect(() => {
     if (!user || !companyId) return;
 
@@ -92,45 +124,6 @@ export const UserHomePage = () => {
     fetchUserAccounts(companyId);
   }, [user, companyId]);
 
-  const toggleFilterMenu = () => {
-    console.log("clicked toggleFilterMenu");
-    if (isFilterMenuOpen) {
-      setIsClosing(true);
-      setTimeout(() => {
-        setIsFilterMenuOpen(false);
-        setIsClosing(false);
-      }, 400); // match animation time
-    } else {
-      setIsFilterMenuOpen(true);
-    }
-  };
-
-  // const clearSearch = async () => {
-  //   setCurrentHashtag(null);
-  //   setCurrentStarTag(null);
-  //   setActivePostSet("posts");
-  //   dispatch(setFilteredPosts([]));
-  //   setLastFilters(null); // ✅ hides FilterSummaryBanner
-
-  //   // ✅ Clear filters inside SideBar
-  //   // sideBarRef.current?.clearAllFilters(); // im not using sidebar anymore.. how can i clearAllFilters from activityfeed
-
-  //   const cachedPosts = await getPostsFromIndexedDB();
-  //   if (cachedPosts?.length > 0) {
-  //     dispatch(mergeAndSetPosts(cachedPosts));
-  //   }
-  // };
-
-  useEffect(() => {
-    dispatch(fetchLocationOptions());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (postIdToScroll && scrollToPost.current) {
-      scrollToPost.current(postIdToScroll);
-    }
-  }, [postIdToScroll]);
-
   return (
     <>
       <UserHomePageHelmet />
@@ -140,23 +133,13 @@ export const UserHomePage = () => {
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">
-            {/* <div className="filter-summary-mobile-banner">
-              {activePostSet === "filteredPosts" && lastFilters && (
-                <FilterSummaryBanner
-                  filteredCount={filteredPosts.length}
-                  filterText={getFilterSummaryText(lastFilters)} // ✅ use correct state
-                  onClear={clearSearch}
-                />
-              )}
-            </div> */}
-
             <ActivityFeed
               virtuosoRef={virtuosoRef}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               currentStarTag={currentStarTag}
               setCurrentStarTag={setCurrentStarTag}
-              // clearSearch={clearSearch}
+              clearSearch={clearSearch}
               activePostSet={activePostSet}
               setActivePostSet={setActivePostSet}
               isSearchActive={isSearchActive}
@@ -165,6 +148,7 @@ export const UserHomePage = () => {
               postIdToScroll={postIdToScroll}
               setPostIdToScroll={setPostIdToScroll}
               toggleFilterMenu={toggleFilterMenu}
+              appliedFilters={lastFilters}
             />
           </div>
 
@@ -173,31 +157,12 @@ export const UserHomePage = () => {
               isFilterMenuOpen ? "sidebar-fullscreen" : ""
             } ${isClosing ? "sidebar-closing" : ""}`}
           >
-            {/* <SideBar
-              // setSearchResults={setSearchResults}
-              // ref={sideBarRef}
-              currentHashtag={currentHashtag}
-              setCurrentHashtag={setCurrentHashtag}
-              setCurrentStarTag={setCurrentStarTag}
-              currentStarTag={currentStarTag}
-              clearSearch={clearSearch}
-              toggleFilterMenu={toggleFilterMenu}
-              activePostSet={activePostSet}
-              filteredPosts={filteredPosts}
-              setActivePostSet={setActivePostSet}
-              isSearchActive={isSearchActive}
-              setIsSearchActive={setIsSearchActive}
-              clearInput={clearInput}
-              setClearInput={setClearInput}
-              onFiltersApplied={setLastFilters}
-            /> */}
-
             <EnhancedFilterSidebar
               activePostSet={activePostSet}
               setActivePostSet={setActivePostSet}
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
-              // onFiltersApplied={setLastFilters}
+              onFiltersApplied={setLastFilters}
               currentHashtag={currentHashtag}
               setCurrentHashtag={setCurrentHashtag}
               currentStarTag={currentStarTag}

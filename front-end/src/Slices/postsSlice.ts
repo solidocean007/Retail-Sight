@@ -2,17 +2,19 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchFilteredPostsBatch, // i need to use this now
-  fetchLatestPosts,
+  // fetchLatestPosts,
   fetchInitialPostsBatch,
   fetchMorePostsBatch,
   fetchUserCreatedPosts,
 } from "../thunks/postsThunks";
 import { PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
+import { normalizePost } from "../utils/normalizePost";
 
 export type FilterCriteria = {
   channels?: string[];
   categories?: string[];
+  // this could be missing some fields is this not the same as postqueryfilters?
   dateRange?: {
     startDate: string | null;
     endDate: string | null;
@@ -25,6 +27,7 @@ type CursorType = string;
 interface PostsState {
   posts: PostWithID[];
   filteredPosts: PostWithID[];
+  filteredPostCount: number;
   userPosts: PostWithID[];
   loading: boolean;
   status: "idle" | "loading" | "succeeded" | "failed";
@@ -38,6 +41,7 @@ interface PostsState {
 const initialState: PostsState = {
   posts: [],
   filteredPosts: [],
+  filteredPostCount: 0,
   userPosts: [],
   loading: false,
   status: "idle",
@@ -62,12 +66,10 @@ const postsSlice = createSlice({
   reducers: {
     // Adjusted to the correct state.posts property
     setPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      state.posts = sortPostsByDate(action.payload);
+      state.posts = sortPostsByDate(action.payload.map(normalizePost));
     },
     setFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      console.log("[SLICE] Setting filtered posts:", action.payload.length);
-
-      state.filteredPosts = sortPostsByDate(action.payload);
+      state.filteredPosts = sortPostsByDate(action.payload.map(normalizePost));
     },
     // Add setUserPosts reducer function
     setUserPosts: (state, action: PayloadAction<PostWithID[]>) => {
@@ -89,9 +91,9 @@ const postsSlice = createSlice({
         state[key] = state[key].filter((post) => post.id !== postIdToDelete);
       });
     },
-
     appendPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      state.posts = [...state.posts, ...action.payload];
+      state.posts = [...state.posts, ...action.payload.map(normalizePost)];
+      // should i search for this instance of appendPosts to see if its causing the pop to top?
     },
     // Adjusted to the correct state.posts property
     updatePost: (state, action: PayloadAction<PostWithID>) => {
@@ -117,21 +119,30 @@ const postsSlice = createSlice({
     },
     mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
       const newPosts = action.payload;
-      // Merge new posts with existing posts without duplicates
-      const mergedPosts = [...state.posts, ...newPosts].reduce(
-        (acc: PostWithID[], post) => {
-          if (!acc.find((p) => p.id === post.id)) {
-            acc.push(post);
-          }
-          return acc;
-        },
-        [] as PostWithID[]
-      );
+      const existingIds = new Set(state.posts.map((p) => p.id));
 
-      state.posts = sortPostsByDate(mergedPosts);
+      const merged = [
+        ...state.posts,
+        ...newPosts.filter((p) => !existingIds.has(p.id)),
+      ];
+
+      const toTime = (val: any): number => {
+        if (val instanceof Date) return val.getTime();
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+      };
+
+      state.posts = merged.sort((a, b) => {
+        return (
+          toTime(b.displayDate || b.timestamp) -
+          toTime(a.displayDate || a.timestamp)
+        );
+      });
     },
     mergeAndSetFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
       const newFilteredPosts = action.payload;
+      console.log("[REDUX] Merging", action.payload.length, "posts");
+
       // Merge new filtered posts with existing filtered posts without duplicates
       const mergedFilteredPosts = [
         ...state.filteredPosts,
@@ -152,6 +163,14 @@ const postsSlice = createSlice({
 
       state.filteredPosts = mergedFilteredPosts;
     },
+    appendFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
+      state.filteredPosts.push(...action.payload.map(normalizePost));
+    },
+    clearFilteredPosts: (state) => {
+      state.filteredPosts = [];
+      state.lastVisibleFiltered = null;
+      state.filteredPostCount = 0;
+    },
     setHashtagPosts(state, action) {
       state.hashtagPosts = sortPostsByDate(action.payload);
     },
@@ -165,8 +184,8 @@ const postsSlice = createSlice({
       state.userPosts = [];
       state.lastVisible = null;
       state.lastVisibleFiltered = null;
-      // state.hashtagPosts = [];
-      // state.starTagPosts = [];
+      state.hashtagPosts = [];
+      state.starTagPosts = [];
       // Any other state properties that should be reset can go here
     },
   },
@@ -176,72 +195,64 @@ const postsSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(
-        fetchFilteredPostsBatch.fulfilled,
-        (
-          state,
-          action: PayloadAction<{ posts: PostWithID[]; lastVisible: any }>
-        ) => {
-          const newFilteredPosts = action.payload.posts;
-          const mergedFilteredPosts = [
-            ...state.filteredPosts,
-            ...newFilteredPosts,
-          ].reduce((acc: PostWithID[], post) => {
-            if (!acc.find((p) => p.id === post.id)) {
-              acc.push(post);
-            }
-            return acc;
-          }, []);
-
-          mergedFilteredPosts.sort((a, b) => {
-            const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
-            const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
-            return dateB - dateA;
-          });
-
-          state.filteredPosts = mergedFilteredPosts;
-          state.loading = false;
-
-          state.lastVisibleFiltered =
-            newFilteredPosts.length > 0
-              ? newFilteredPosts[newFilteredPosts.length - 1].id
-              : null;
-        }
-      )
-
       .addCase(fetchFilteredPostsBatch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Error fetching posts";
       })
-      .addCase(fetchLatestPosts.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(
-        fetchLatestPosts.fulfilled,
-        (state, action: PayloadAction<PostWithID[]>) => {
-          state.loading = false;
-          // Directly append PostWithID[] to the state.posts
-          state.posts = [...state.posts, ...action.payload];
-          state.lastVisible =
-            action.payload.length > 0
-              ? action.payload[action.payload.length - 1].id
-              : state.lastVisible;
-        }
-      )
-      .addCase(fetchLatestPosts.rejected, (state, action) => {
-        // Handle any errors if the fetch fails
-        state.loading = false;
-        state.error = action.error.message || "Error fetching latest posts";
-      })
+      // .addCase(fetchLatestPosts.pending, (state) => {
+      //   state.loading = true;
+      //   state.error = null;
+      // })
+      // .addCase(
+      //   fetchLatestPosts.fulfilled,
+      //   (state, action: PayloadAction<PostWithID[]>) => {
+      //     state.loading = false;
+      //     // Directly append PostWithID[] to the state.posts
+      //     state.posts = [...state.posts, ...action.payload];
+      //     state.lastVisible =
+      //       action.payload.length > 0
+      //         ? action.payload[action.payload.length - 1].id
+      //         : state.lastVisible;
+      //   }
+      // )
+      // .addCase(fetchLatestPosts.rejected, (state, action) => {
+      //   // Handle any errors if the fetch fails
+      //   state.loading = false;
+      //   state.error = action.error.message || "Error fetching latest posts";
+      // })
       .addCase(fetchInitialPostsBatch.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchInitialPostsBatch.fulfilled, (state, action) => {
+        state.loading = false;
+        // put your first page into state.posts, e.g.
         state.posts = action.payload.posts;
         state.lastVisible = action.payload.lastVisible;
-        state.loading = false;
       })
+      .addCase(
+        fetchFilteredPostsBatch.fulfilled,
+        (
+          state,
+          action: PayloadAction<{
+            posts: PostWithID[];
+            lastVisible: any;
+            count: number;
+          }>
+        ) => {
+          const { posts, lastVisible, count } = action.payload;
+          // on the very first page we want to _set_ them,
+          // on subsequent pages we just append:
+          if (!state.lastVisibleFiltered) {
+            state.filteredPosts = posts;
+          } else {
+            state.filteredPosts.push(...posts);
+          }
+          state.lastVisibleFiltered = lastVisible?.id ?? null;
+          state.filteredPostCount = count;
+          state.loading = false;
+        }
+      )
+
       .addCase(fetchInitialPostsBatch.rejected, (state, action) => {
         state.error = action.error.message || "Error fetching initial posts";
         state.loading = false;
@@ -250,10 +261,19 @@ const postsSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchMorePostsBatch.fulfilled, (state, action) => {
-        state.posts = [...state.posts, ...action.payload.posts];
+        const newPosts = action.payload.posts;
+        const existingIds = new Set(state.posts.map((p) => p.id));
+
+        newPosts.forEach((post) => {
+          if (!existingIds.has(post.id)) {
+            state.posts.push(post);
+          }
+        });
+
         state.lastVisible = action.payload.lastVisible;
         state.loading = false;
       })
+
       .addCase(fetchMorePostsBatch.rejected, (state, action) => {
         state.error = action.error.message || "Error fetching more posts";
         state.loading = false;
@@ -277,6 +297,9 @@ const postsSlice = createSlice({
 
 export const {
   setPosts,
+  appendPosts,
+  appendFilteredPosts,
+  clearFilteredPosts,
   setFilteredPosts,
   setUserPosts,
   deletePost,

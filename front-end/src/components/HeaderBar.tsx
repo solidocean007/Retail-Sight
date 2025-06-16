@@ -23,6 +23,7 @@ import {
   clearUserCreatedPostsInIndexedDB,
   closeAndDeleteIndexedDB,
 } from "../utils/database/indexedDBUtils";
+import { resetApp } from "../utils/resetApp";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const dispatch = useAppDispatch();
@@ -141,48 +142,15 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     }
   };
 
-const handleReset = async () => {
-  if (window.confirm("Are you sure you want to reset the app? This will clear all stored data.")) {
-    try {
-      // ✅ IndexedDB: Clear all relevant stores
-      await Promise.all([
-        clearPostsInIndexedDB(),
-        clearUserCreatedPostsInIndexedDB(),
-        clearHashtagPostsInIndexedDB(),
-        clearStarTagPostsInIndexedDB(),
-        clearGoalsFromIndexedDB("galloGoals"),
-        clearGoalsFromIndexedDB("companyGoals"),
-        clearGoalsFromIndexedDB("allGalloGoals"),
-        clearGoalsFromIndexedDB("allCompanySpecificGoals"),
-        clearCompanyProductsFromIndexedDB(),
-        clearIndexedDBStore("userAccounts_v2"),
-        clearIndexedDBStore("allUsersCompanyAccounts"),
-        clearIndexedDBStore("latestPosts"),
-        clearIndexedDBStore("locations"),
-        clearIndexedDBStore("collections"),
-        clearIndexedDBStore("lastSeenTimestamp"),
-      ]);
-
-      // ✅ Redux: Clear all slices (only posts right now)
-      dispatch(clearPostsData());
-
-      // ✅ Optional: clear schemaVersion manually
-      const db = await openDB();
-      const tx = db.transaction("localSchemaVersion", "readwrite");
-      const store = tx.objectStore("localSchemaVersion");
-      store.delete("schemaVersion");
-
-      sessionStorage.removeItem("schemaVersionSynced");
-
-      // ✅ Reload to boot fresh
-      window.location.reload();
-    } catch (error) {
-      console.error("App reset failed:", error);
-      alert("Failed to reset app. See console for details.");
+  const handleReset = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to reset the app? This will clear all stored data."
+      )
+    ) {
+      await resetApp(dispatch);
     }
-  }
-};
-
+  };
 
   return (
     <>
@@ -207,7 +175,7 @@ const handleReset = async () => {
         </div>
         {currentUser?.role === "super-admin" && (
           <button className="btn-outline danger-button" onClick={handleReset}>
-            🧹 Reset App
+            Reset App
           </button>
         )}
         {!currentUser ? (

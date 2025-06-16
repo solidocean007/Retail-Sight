@@ -22,9 +22,8 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     // Handle the successful completion of the transaction
     transaction.oncomplete = () => {
-      console.log(
-        "Transaction complete: Data added to IndexedDB successfully.",
-      );
+      console.log("[CACHE] Storing", posts.length, "posts in IndexedDB");
+
       resolve();
     };
 
@@ -253,6 +252,8 @@ export async function storeFilteredPostsInIndexedDB(
 
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
+      console.log("[CACHE] Storing", posts.length, "posts in IndexedDB");
+
       resolve();
     };
     transaction.onerror = (event) => {
@@ -914,9 +915,9 @@ export async function addAccountsToIndexedDB(
 
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => {
-      console.log(
-        "Transaction complete: Accounts added to IndexedDB successfully.",
-      );
+      // console.log(
+      //   "Transaction complete: Accounts added to IndexedDB successfully.",
+      // );
       resolve();
     };
 
