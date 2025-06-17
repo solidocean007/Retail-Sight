@@ -417,7 +417,7 @@ const PostCard: React.FC<PostCardProps> = ({
               setIsSearchActive={setIsSearchActive}
             />
           </div>
-          {post.id}
+          {/* {post.id} */}
           <div className="activity-post-image-box">
             {post.imageUrl && (
               <BlurUpImage
