@@ -48,7 +48,6 @@ const AccountTable: React.FC<AccountTableProps> = ({
           totalCount={accounts.length}
           itemContent={(index) => {
             const acc = accounts[index];
-            console.log("Navigating to user-home-page with postId", acc.postId);
 
             return (
               <div
@@ -84,10 +83,6 @@ const AccountTable: React.FC<AccountTableProps> = ({
                     <button
                       className="view-post-button"
                       onClick={() => {
-                        console.log(
-                          "Navigating to user-home-page with postId",
-                          acc.postId
-                        );
                         navigate("/user-home-page", {
                           state: { postIdToScroll: acc.postId },
                         });

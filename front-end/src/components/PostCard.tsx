@@ -135,7 +135,6 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   const fetchCommentsForPost = async (postId: string) => {
-    console.log("try to fetch comments");
     try {
       const commentQuery = query(
         collection(db, "comments"),
@@ -174,7 +173,6 @@ const PostCard: React.FC<PostCardProps> = ({
   }
 
   const handleDeleteComment = async (commentId: string) => {
-    console.log("Deleting comment with ID:", commentId);
     await updatePostWithNewTimestamp(post.id);
     try {
       // Decrement the commentCount for the relevant post in Firestore
@@ -235,7 +233,6 @@ const PostCard: React.FC<PostCardProps> = ({
     try {
       setIsSharing(true);
       const link = await handlePostShare(post.id);
-      console.log("Generated link:", link);
 
       if (navigator.share) {
         await navigator.share({
@@ -417,7 +414,6 @@ const PostCard: React.FC<PostCardProps> = ({
               setIsSearchActive={setIsSearchActive}
             />
           </div>
-          {/* {post.id} */}
           <div className="activity-post-image-box">
             {post.imageUrl && (
               <BlurUpImage

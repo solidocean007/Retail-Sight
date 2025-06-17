@@ -74,12 +74,6 @@ export const Dashboard = () => {
   const isSuperAdmin = user?.role === "super-admin";
   const allAccounts = useSelector(selectAllCompanyAccounts);
 
-  const handleUpdatePosts = async () => {
-    console.log("Starting post updates with fresh accounts...");
-    // await updatePostsWithFreshAccounts(allAccounts);
-    console.log("✅ Done updating posts.");
-  };
-
   // handleUpdatePosts();
 
   const [dashboardMode, setDashboardMode] = useState<DashboardModeType>(

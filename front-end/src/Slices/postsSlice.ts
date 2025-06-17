@@ -1,5 +1,5 @@
 // postsSlice
-import { createSlice } from "@reduxjs/toolkit";
+import { createAction, createSlice } from "@reduxjs/toolkit";
 import {
   fetchFilteredPostsBatch, // i need to use this now
   // fetchLatestPosts,
@@ -11,16 +11,6 @@ import { PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
 import { normalizePost } from "../utils/normalizePost";
 
-export type FilterCriteria = {
-  channels?: string[];
-  categories?: string[];
-  // this could be missing some fields is this not the same as postqueryfilters?
-  dateRange?: {
-    startDate: string | null;
-    endDate: string | null;
-  };
-};
-
 type CursorType = string;
 
 // New state shape including loading and error states
@@ -28,6 +18,7 @@ interface PostsState {
   posts: PostWithID[];
   filteredPosts: PostWithID[];
   filteredPostCount: number;
+  filteredPostFetchedAt: string | null;
   userPosts: PostWithID[];
   loading: boolean;
   status: "idle" | "loading" | "succeeded" | "failed";
@@ -42,6 +33,7 @@ const initialState: PostsState = {
   posts: [],
   filteredPosts: [],
   filteredPostCount: 0,
+  filteredPostFetchedAt: null,
   userPosts: [],
   loading: false,
   status: "idle",
@@ -59,6 +51,10 @@ export const sortPostsByDate = (posts: PostWithID[]) => {
     return dateB - dateA; // Sort in descending order
   });
 };
+
+export const setFilteredPostFetchedAt = createAction<string | null>(
+  "posts/setFilteredPostFetchedAt"
+);
 
 const postsSlice = createSlice({
   name: "posts",
@@ -252,6 +248,9 @@ const postsSlice = createSlice({
           state.loading = false;
         }
       )
+      .addCase(setFilteredPostFetchedAt, (state, action) => {
+        state.filteredPostFetchedAt = action.payload;
+      })
 
       .addCase(fetchInitialPostsBatch.rejected, (state, action) => {
         state.error = action.error.message || "Error fetching initial posts";
