@@ -1,5 +1,5 @@
 // PostDescription.tsx
-import styles from "./PostDescription.module.css";
+import styles from "./postDescription.css";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setFilteredPosts,
