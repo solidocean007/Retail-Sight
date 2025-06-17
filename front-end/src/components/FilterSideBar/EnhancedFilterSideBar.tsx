@@ -8,6 +8,7 @@ import { fetchFilteredPostsBatch } from "../../thunks/postsThunks";
 import FilterChips from "./FilterChips";
 import {
   clearAllFilters,
+  getFilterHash,
   getFilterSummaryText,
   locallyFilterPosts,
   removeFilterField,
@@ -15,9 +16,16 @@ import {
 import FilterSummaryBanner from "../FilterSummaryBanner";
 import {
   mergeAndSetFilteredPosts,
+  setFilteredPostFetchedAt,
   setFilteredPosts,
 } from "../../Slices/postsSlice";
-import { storeFilteredPostsInIndexedDB } from "../../utils/database/indexedDBUtils";
+import {
+  getFetchDate,
+  getFilteredSet,
+  shouldRefetch,
+  storeFilteredPostsInIndexedDB,
+  storeFilteredSet,
+} from "../../utils/database/indexedDBUtils";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { normalizePost } from "../../utils/normalizePost";
 import { clear } from "console";
@@ -50,6 +58,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [lastAppliedFilters, setLastAppliedFilters] =
     useState<PostQueryFilters | null>(null);
+  const newestRaw = useSelector(
+    (state: RootState) => state.posts.posts[0]?.displayDate ?? null
+  ); // optional: lift to param
   const areFiltersEqual = (
     a: PostQueryFilters,
     b: PostQueryFilters
@@ -99,6 +110,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const filtersChanged =
     !lastAppliedFilters || !areFiltersEqual(filters, lastAppliedFilters);
+  const fetchedAt = useSelector(
+    (s: RootState) => s.posts.filteredPostFetchedAt
+  );
 
   const debouncedFilters = useDebouncedValue(filters, 150);
   const [tagInput, setTagInput] = useState("");
@@ -175,9 +189,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   //   }
   // }, [companyId]);
 
-  useEffect(() => {
-    console.log("Updated filters:", filters);
-  }, [filters]);
+
 
   const handleChange = (field: keyof PostQueryFilters, value: any) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
@@ -185,9 +197,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const handleDateChange = (start: string | null, end: string | null) => {
     setFilters((prev) => ({
-      // The types of 'dateRange.startDate' are incompatible between these types.
-      // Type 'string | null' is not assignable to type 'string | undefined'.
-      // Type 'null' is not assignable to type 'string | undefined'
       ...prev,
       dateRange: { startDate: start, endDate: end },
     }));
@@ -212,16 +221,30 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   };
 
   const handleApply = async () => {
+    const hash = getFilterHash(filters);
+    console.log(`[FilterHash] Generated hash: ${hash}`);
+    const cached = await getFilteredSet(filters);
+
+    const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
+
+    if (!needFetch) {
+      console.log(`[FilterHash] Using cached results for hash: ${hash}`);
+      dispatch(setFilteredPosts(cached));
+      const fetchedAt = await getFetchDate(filters);
+      dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
+      setActivePostSet("filteredPosts");
+      setLastAppliedFilters(filters);
+      onFiltersApplied?.(filters);
+      return;
+    }
+    console.log(`[FilterHash] Fetching fresh results for hash: ${hash}`);
     const result = await dispatch(fetchFilteredPostsBatch({ filters }));
 
     if (fetchFilteredPostsBatch.fulfilled.match(result)) {
-      const rawPosts = result.payload.posts;
-      const normalizedPosts = rawPosts.map(normalizePost);
-      console.log(normalizedPosts);
-
-      dispatch(setFilteredPosts([])); // what is this for?
-      dispatch(setFilteredPosts(normalizedPosts));
-      await storeFilteredPostsInIndexedDB(normalizedPosts, filters);
+      const fresh = result.payload.posts.map(normalizePost);
+      dispatch(setFilteredPosts(fresh));
+      dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
+      await storeFilteredSet(filters, fresh);
       setActivePostSet("filteredPosts");
       setLastAppliedFilters(filters);
       onFiltersApplied?.(filters);
@@ -251,6 +274,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             filteredCount={filteredPostCount}
             filterText={getFilterSummaryText(filters)}
             onClear={() => setFilters(clearAllFilters())}
+            fetchedAt={fetchedAt}
           />
         </div>
       )}
@@ -265,7 +289,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             Show {filteredPostCount} Posts
           </button>
         ) : (
-          <button className="btn-outline" onClick={toggleFilterMenu}>Close Filters</button>
+          <button className="btn-outline" onClick={toggleFilterMenu}>
+            Close Filters
+          </button>
         )}
       </div>
 
@@ -383,6 +409,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         </button>
         <div className="filter-group">
           <select
+            title="goal-selection"
             className="dropdown"
             value={filters.companyGoalId || ""}
             onChange={(e) => {
@@ -414,6 +441,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <div className="filter-group">
           <label className="date-label">From</label>
           <input
+            title="end-date-input"
             type="date"
             value={filters.dateRange?.startDate || ""}
             onChange={(e) =>
@@ -425,6 +453,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           />
           <label className="date-label">To</label>
           <input
+            title="start-date-input"
             type="date"
             value={filters.dateRange?.endDate || ""}
             onChange={(e) =>

@@ -23,7 +23,7 @@ import {
   // clearStarTagPostsInIndexedDB,
   // clearUserCreatedPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
-import { appendPosts, mergeAndSetPosts } from "../Slices/postsSlice";
+import { mergeAndSetPosts } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
@@ -70,6 +70,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const fetchedAt = useSelector((s: RootState) => s.posts.filteredPostFetchedAt);
+
   const filteredCount = useSelector(
     (s: RootState) => s.posts.filteredPostCount
   );
@@ -124,7 +126,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     const index = displayPosts.findIndex((p) => p.id === postIdToScroll);
     if (index === -1) return;
 
-    console.log("Scrolling to:", postIdToScroll, "at index:", index);
     virtuosoRef.current.scrollToIndex({ index, align: "start" });
 
     setPostIdToScroll(null); // No delay
@@ -156,8 +157,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const itemHeight = getActivityItemHeight(windowWidth);
 
-  console.log(activePostSet, " : is activePostSet"); // this is correct
-
   // only block the whole feed when you have _no_ items yet:
   if (loading && rawPosts.length === 0) {
     return <CircularProgress />;
@@ -175,6 +174,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             filteredCount={filteredCount}
             filterText={filterText} 
             onClear={clearSearch}
+            fetchedAt={fetchedAt}
           />
         ) : (
           <button

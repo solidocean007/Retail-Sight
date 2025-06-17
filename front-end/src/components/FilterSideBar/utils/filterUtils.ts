@@ -202,5 +202,37 @@ export function locallyFilterPosts(
   });
 }
 
+export function getFilterHash(filters: PostQueryFilters): string {
+  // Step 1: Remove empty/null values
+  const cleaned: Record<string, any> = {};
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (
+      value === null ||
+      value === undefined ||
+      (typeof value === "string" && value.trim() === "") ||
+      (Array.isArray(value) && value.length === 0) ||
+      (typeof value === "object" &&
+        value !== null &&
+        "startDate" in value &&
+        !value.startDate &&
+        !value.endDate)
+    ) {
+      return;
+    }
+    cleaned[key] = value;
+  });
+
+  // Step 2: Sort keys
+  const sorted: Record<string, any> = Object.fromEntries(
+    Object.entries(cleaned).sort(([a], [b]) => a.localeCompare(b))
+  );
+
+  // Step 3: JSON stringify and base64 encode
+  const jsonString = JSON.stringify(sorted);
+  return btoa(jsonString);
+}
+
+
 
 
