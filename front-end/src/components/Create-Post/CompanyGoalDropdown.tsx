@@ -7,7 +7,7 @@ interface CompanyGoalDropdownProps {
   label: string;
   loading: boolean;
   onSelect: (goal: CompanyGoalWithIdType | undefined) => void;
-  selectedGoal?: CompanyGoalWithIdType;
+  selectedGoal?: CompanyGoalWithIdType | null;
 }
 
 const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
@@ -20,6 +20,7 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
   if (loading) {
     return <CircularProgress />;
   }
+
 
   return (
     <Box>

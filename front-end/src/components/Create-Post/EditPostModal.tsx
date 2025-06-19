@@ -58,7 +58,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [selectedBrands, setSelectedBrands] = useState<string[]>(
     post.brands || []
   );
-
+  const userId = useSelector(
+    (state: RootState) => state.user.currentUser?.uid)
   const [postVisibility, setPostVisibility] = useState<
     "public" | "company" | "supplier" | "private" | undefined
   >("public");
@@ -72,7 +73,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
-
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
   const activeCompanyGoals = getActiveCompanyGoalsForAccount(
   post.account?.accountNumber,

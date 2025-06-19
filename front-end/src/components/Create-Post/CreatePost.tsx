@@ -56,12 +56,8 @@ export const CreatePost = () => {
   // const usersGalloGoals = useSelector((state: RootState) =>
   //   selectUsersGalloGoals(state, salesRouteNum),
   // );
-const usersCompanyGoals = useSelector(selectUsersCompanyGoals);
 
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
-  console.log("All company goals", allCompanyGoals);
-
-  console.log("Users company goals", usersCompanyGoals);
 
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
@@ -192,7 +188,7 @@ const usersCompanyGoals = useSelector(selectUsersCompanyGoals);
             post={post}
             setPost={setPost}
             // usersGalloGoals={usersGalloGoals}
-            usersCompanyGoals={usersCompanyGoals}
+            allCompanyGoals={allCompanyGoals}
             handleFieldChange={handleFieldChange}
             setSelectedCompanyAccount={setSelectedCompanyAccount}
           />

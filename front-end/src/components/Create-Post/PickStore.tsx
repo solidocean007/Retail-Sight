@@ -1,8 +1,7 @@
 // PickStore.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   CompanyAccountType,
-  CompanyGoalType,
   CompanyGoalWithIdType,
   FireStoreGalloGoalDocType,
   PostInputType,
@@ -10,12 +9,7 @@ import {
 } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
-import {
-  Box,
-  CircularProgress,
-  Typography,
-  Button,
-} from "@mui/material";
+import { Box, CircularProgress, Typography, Button } from "@mui/material";
 // import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGalloGoalsByCompanyId";
 // import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
 import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
@@ -40,10 +34,10 @@ interface PickStoreProps {
   post: PostInputType;
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   usersGalloGoals?: FireStoreGalloGoalDocType[]; // Pass goals from Redux
-  usersCompanyGoals: CompanyGoalWithIdType[]; // Pass goals from Redux
+  allCompanyGoals: CompanyGoalWithIdType[]; // Pass goals from Redux
   handleFieldChange: (
     field: keyof PostInputType,
-    value: PostType[keyof PostType],
+    value: PostType[keyof PostType]
   ) => void;
   setSelectedCompanyAccount: (account: CompanyAccountType | null) => void;
 }
@@ -54,11 +48,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
   post,
   setPost,
   // usersGalloGoals,
-  usersCompanyGoals,
+  allCompanyGoals,
   handleFieldChange,
   setSelectedCompanyAccount,
 }) => {
-  console.log('usersCompanyGoals', usersCompanyGoals); // logs empty
   const [_allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
@@ -67,10 +60,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [loadingAccounts, setLoadingAccounts] = useState(true); // Tracks loading status
   const [accountsToSelect, setAccountsToSelect] =
     useState<CompanyAccountType[]>();
-  
+
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
-    null,
+    null
   );
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalWithIdType | null>();
@@ -79,13 +72,11 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const isAdmin = userRole === "admin" || userRole === "super-admin";
   // const isEmployee = userRole === "employee";
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId,
+    (state: RootState) => state.user.currentUser?.companyId
   );
 
   // these next two only need to be selected if a user is selecting all accounts and needs access to the entire company goal list or gallo goal list
   // const allGalloGoals = useSelector(selectAllGalloGoals); // delete this or from the parent
-  const allCompanyGoals = useSelector(selectAllCompanyGoals); // i probqably need to delete this from the parent or here
-  console.log(allCompanyGoals, "allCompanyGoals"); // logs with all company goals successfully
   const [openAccountModal, setOpenAccountModal] = useState(true);
 
   const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
@@ -96,31 +87,40 @@ export const PickStore: React.FC<PickStoreProps> = ({
   //   usersGalloGoals,
   // );
 
-  const usersActiveCompanyGoals = getActiveCompanyGoalsForAccount(
-    post.account?.accountNumber,
-    usersCompanyGoals,
-    // userId,
-  );
-  console.log(usersActiveCompanyGoals, "usersActiveCompanyGoals");
-
   // const allActiveGalloGoals = getActiveGalloGoalsForAccount(
   //   post.account?.accountNumber,
   //   allGalloGoals,
   // );
-  const allActiveCompanyGoals = getActiveCompanyGoalsForAccount(
-    post.account?.accountNumber,
-    allCompanyGoals,
-  );
 
-  const onlyUsersStores = !isAllStoresShown;
+  // const usersActiveCompanyGoals = useMemo(() => {
+  //   if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
+  //   return getActiveCompanyGoalsForAccount(
+  //     post.account.accountNumber,
+  //     allCompanyGoals
+  //   );
+  // }, [post.account?.accountNumber, allCompanyGoals]);
+
+  // const allActiveCompanyGoals = useMemo(() => {
+  //   if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
+  //   return getActiveCompanyGoalsForAccount(
+  //     post.account?.accountNumber,
+  //     allCompanyGoals
+  //   );
+  // }, [post.account?.accountNumber, allCompanyGoals]);
+
+  // const onlyUsersStores = !isAllStoresShown;
 
   // const galloGoals = onlyUsersStores
   //   ? usersActiveGalloGoals
   //   : allActiveGalloGoals;
 
-  const companyGoals = onlyUsersStores
-    ? usersActiveCompanyGoals
-    : allActiveCompanyGoals;
+  const companyGoals = useMemo(() => {
+  if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
+  return getActiveCompanyGoalsForAccount(
+    post.account.accountNumber,
+    allCompanyGoals
+  );
+}, [post.account?.accountNumber, allCompanyGoals]);
 
   useEffect(() => {
     if (!post.account?.accountNumber) {
@@ -137,7 +137,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
         const userAccounts = await getUserAccountsFromIndexedDB();
         if (userAccounts.length > 0) {
           setMyAccounts(userAccounts);
-          console.log("My Stores fetched:", userAccounts);
         } else {
           // fetch this users accounts
           // do i have an accountsSlice? to get accounts from?
@@ -175,7 +174,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   }, [isAllStoresShown, companyId, myAccounts]);
 
-  const handleCompanyGoalSelection = (goal: CompanyGoalWithIdType | undefined) => {
+  const handleCompanyGoalSelection = (
+    goal: CompanyGoalWithIdType | undefined
+  ) => {
     if (!goal) {
       console.warn("No goal selected.");
       return;
@@ -210,8 +211,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }));
     setSelectedCompanyAccount(null);
     setSelectedGalloGoalId(null);
-    setSelectedCompanyGoal(null);
+    setSelectedCompanyGoal(undefined);
   };
+
+  // if (loadingAccounts || !post.account?.accountNumber || !companyGoals.length) {
+  //   return <CircularProgress />;
+  // }
 
   return (
     <div className="pick-store">
@@ -279,7 +284,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
       {!post.account?.accountNumber && (
         <Box className="toggle-section" mt={3}>
-
           <Box className="toggle-wrapper" mt={2}>
             <Typography
               className={`toggle-label ${!isAllStoresShown ? "selected" : ""}`}
@@ -336,7 +340,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
               loading={isFetchingGoal}
               onSelect={handleCompanyGoalSelection} // 'id' is declared here.
               selectedGoal={selectedCompanyGoal} // Type 'CompanyGoalWithIdType | null | undefined' is not assignable to type 'CompanyGoalWithIdType | undefined'.
-  // Type 'null' is not assignable to type 'CompanyGoalWithIdType | undefined'. why is the selected goal here potentially null or undefined?
+              // Type 'null' is not assignable to type 'CompanyGoalWithIdType | undefined'. why is the selected goal here potentially null or undefined?
             />
           </Box>
 
