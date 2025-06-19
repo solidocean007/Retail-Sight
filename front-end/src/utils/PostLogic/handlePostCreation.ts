@@ -12,11 +12,7 @@ import { DocumentReference, deleteDoc, updateDoc } from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { selectUser } from "../../Slices/userSlice";
 import { resizeImage } from "../../images/resizeImages";
-import {
-  addPostToFirestore,
-  updateCategoriesInFirestore,
-  updateChannelsInFirestore,
-} from "./updateFirestore";
+
 import { v4 as uuidv4 } from "uuid";
 import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { useAppDispatch } from "../store";
@@ -27,6 +23,7 @@ import { addPostsToIndexedDB } from "../database/indexedDBUtils";
 import { addNewPost } from "../../Slices/postsSlice";
 import { getOptimizedSizes } from "./getOptimizedSizes";
 import { buildPostPayload } from "./buildPostPayload";
+import { addPostToFirestore } from "./updateFirestore";
 // Other necessary imports...
 
 export const useHandlePostSubmission = () => {
@@ -173,15 +170,15 @@ export const useHandlePostSubmission = () => {
                 );
               }
 
-              // Update channels collection
-              await updateChannelsInFirestore(db, post.channel, newDocRef.id);
+              // // Update channels collection
+              // await updateChannelsInFirestore(db, post.channel, newDocRef.id);
 
-              // Update categories collection
-              await updateCategoriesInFirestore(
-                db,
-                post.category,
-                newDocRef.id
-              );
+              // // Update categories collection
+              // await updateCategoriesInFirestore(
+              //   db,
+              //   post.category,
+              //   newDocRef.id
+              // );
 
               if (newDocRef && selectedCompanyMission) {
                 const submittedMission: SubmittedMissionType = {
