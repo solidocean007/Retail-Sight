@@ -15,6 +15,7 @@ import { Button, TextField, Select, MenuItem } from "@mui/material";
 import "./editPostModal.css";
 import {
   deleteUserCreatedPostInIndexedDB,
+  purgeDeletedPostFromFilteredSets,
   removePostFromIndexedDB,
   updatePostInIndexedDB,
 } from "../../utils/database/indexedDBUtils";
@@ -48,12 +49,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
-  const [category, setCategory] = useState<CategoryType | "">(
-    (post.category as CategoryType) || ""
-  );
-  const [channel, setChannel] = useState<ChannelType | "">(
-    (post.channel as ChannelType) || ""
-  );
+  // const [category, setCategory] = useState<CategoryType | "">(
+  //   (post.category as CategoryType) || ""
+  // );
+  // const [channel, setChannel] = useState<ChannelType | "">(
+  //   (post.channel as ChannelType) || ""
+  // );
 
   const [postVisibility, setPostVisibility] = useState<
     "public" | "company" | "supplier" | "private" | undefined
@@ -137,22 +138,22 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   useEffect(() => {
     setDescription(post?.description || "");
     setPostVisibility(post?.visibility || "public");
-    setCategory(post?.category || "");
-    setChannel(post?.channel || "");
+    // setCategory(post?.category || "");
+    // setChannel(post?.channel || "");
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
 
-    if (!category) {
-      dispatch(showMessage("Please select a category"));
-      return;
-    }
+    // if (!category) {
+    //   dispatch(showMessage("Please select a category"));
+    //   return;
+    // }
 
-    if (!channel) {
-      dispatch(showMessage("Please select a channel"));
-      return;
-    }
+    // if (!channel) {
+    //   dispatch(showMessage("Please select a channel"));
+    //   return;
+    // }
 
     try {
       const updatedFields = {
@@ -161,8 +162,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         totalCaseCount: updatedPost.totalCaseCount,
         hashtags: updatedPost.hashtags,
         starTags: updatedPost.starTags,
-        category: updatedPost.category,
-        channel: updatedPost.channel,
+        // category: updatedPost.category,
+        // channel: updatedPost.channel,
         account: updatedPost.account,
       };
 
@@ -190,12 +191,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     const updatedPost: PostWithID = {
       ...post,
       description,
-      visibility: postVisibility,
+      visibility: postVisibility, // Type 'undefined' is not assignable to type '"company" | "public" | "supplier" | "private"'
       totalCaseCount: updatedCaseCount,
       hashtags: extractedHashtags,
       starTags: extractedStarTags,
-      category,
-      channel,
+      // category,
+      // channel,
     };
 
     handleSavePost(updatedPost);
@@ -213,6 +214,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       console.log("✅ Finished Firestore + Storage deletion for:", post.id);
 
       await removePostFromIndexedDB(post.id);
+      await purgeDeletedPostFromFilteredSets(post.id);
       await deleteUserCreatedPostInIndexedDB(post.id);
 
       dispatch(deletePost(post.id));
@@ -257,7 +259,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 className="description-input"
               />
-              <CategorySelector
+              {/* <CategorySelector
                 selectedCategory={category}
                 onCategoryChange={setCategory}
               />
@@ -265,7 +267,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
               <ChannelSelector
                 selectedChannel={channel}
                 onChannelChange={setChannel}
-              />
+              /> */}
 
               <TotalCaseCount
                 handleTotalCaseCountChange={setUpdatedCaseCount}

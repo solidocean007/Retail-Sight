@@ -2,9 +2,6 @@ import { getFilterHash } from "../../components/FilterSideBar/utils/filterUtils"
 import { PostQueryFilters, PostWithID } from "../types";
 import { openDB } from "./indexedDBOpen";
 
-/**
- * Stores a filtered post set in IndexedDB under a unique filter hash.
- */
 export async function storeFilteredSet(
   filters: PostQueryFilters,
   posts: PostWithID[]
@@ -21,16 +18,13 @@ export async function storeFilteredSet(
     fetchedAt: new Date().toISOString(),
   };
 
-  return new Promise<void>((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const req = store.put(record);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
 }
 
-/**
- * Retrieves a cached filtered post set by filters.
- */
 export async function getFilteredSet(
   filters: PostQueryFilters
 ): Promise<PostWithID[] | null> {
@@ -40,19 +34,13 @@ export async function getFilteredSet(
 
   const id = getFilterHash(filters);
 
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     const req = store.get(id);
-    req.onsuccess = () => {
-      const result = req.result;
-      resolve(result?.posts ?? null);
-    };
+    req.onsuccess = () => resolve(req.result?.posts ?? null);
     req.onerror = () => reject(req.error);
   });
 }
 
-/**
- * Gets the fetchedAt timestamp for a cached filter result.
- */
 export async function getFetchDate(
   filters: PostQueryFilters
 ): Promise<Date | null> {
@@ -62,7 +50,7 @@ export async function getFetchDate(
 
   const id = getFilterHash(filters);
 
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     const req = store.get(id);
     req.onsuccess = () => {
       const result = req.result;
@@ -72,18 +60,37 @@ export async function getFetchDate(
   });
 }
 
-/**
- * Determines if the cache should be refreshed based on the newest post date.
- */
-export async function shouldRefetch(
-  filters: PostQueryFilters,
-  newestRawIso: string | null
-): Promise<boolean> {
-  if (!newestRawIso) return true;
+export async function purgeDeletedPostFromFilteredSets(postId: string) {
+  const db = await openDB();
+  const tx = db.transaction("filteredSets", "readwrite");
+  const store = tx.objectStore("filteredSets");
 
-  const fetchedAt = await getFetchDate(filters);
-  if (!fetchedAt) return true;
+  const keysReq = store.getAllKeys();
 
-  const newestRawDate = new Date(newestRawIso);
-  return newestRawDate > fetchedAt;
+  await new Promise<void>((resolve, reject) => {
+    keysReq.onsuccess = async () => {
+      const allKeys = keysReq.result;
+      for (const key of allKeys) {
+        const getReq = store.get(key);
+        getReq.onsuccess = () => {
+          const record = getReq.result;
+          if (!record || !Array.isArray(record.posts)) return;
+
+          const filtered = record.posts.filter((p: PostWithID) => p.id !== postId);
+          if (filtered.length !== record.posts.length) {
+            if (filtered.length === 0) {
+              store.delete(key);
+            } else {
+              store.put({ ...record, posts: filtered }, key);
+            }
+          }
+        };
+      }
+      resolve();
+    };
+    keysReq.onerror = () => reject(keysReq.error);
+  });
 }
+
+
+
