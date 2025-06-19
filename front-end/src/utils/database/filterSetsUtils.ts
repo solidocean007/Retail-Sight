@@ -92,5 +92,19 @@ export async function purgeDeletedPostFromFilteredSets(postId: string) {
   });
 }
 
+export async function shouldRefetch(
+  filters: PostQueryFilters,
+  newestRawIso: string | null
+): Promise<boolean> {
+  if (!newestRawIso) return true;
+
+  const fetchedAt = await getFetchDate(filters);
+  if (!fetchedAt) return true;
+
+  const newestRawDate = new Date(newestRawIso);
+  return newestRawDate > fetchedAt;
+}
+
+
 
 

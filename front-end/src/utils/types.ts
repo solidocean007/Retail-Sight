@@ -164,7 +164,6 @@ export interface PostType {
 
   // 🔐 Tokens
   tokens?: PostTokenType[];
-
 }
 
 export type PostInputType = {
@@ -186,7 +185,6 @@ export type PostInputType = {
   companyGoalTitle?: string | null;
   companyGoalDescription?: string | null;
 
-
   galloGoalTitle?: string | null;
   galloGoalDescription?: string | null;
   closedBy?: string | null;
@@ -207,29 +205,28 @@ export type PostWithID = PostType & { id: string };
 
 export type PostQueryFilters = {
   companyId?: string | null;
-  postUserUid?: string | null; 
-  accountNumber?: string | null; 
-  accountName?: string | null; 
-  accountType?: string | null; 
-  accountChain?: string | null; 
+  postUserUid?: string | null;
+  accountNumber?: string | null;
+  accountName?: string | null;
+  accountType?: string | null;
+  accountChain?: string | null;
   chainType?: string | null;
   hashtag?: string | null;
   starTag?: string | null;
   // channel?: string | null;
-  // category?: string | null; 
+  // category?: string | null;
   brand?: string | null;
-  productType: string | null; 
-  companyGoalId?: string | null; 
-  companyGoalTitle?: string | null; 
-  states?: string[] | null; 
-  cities?: string[] | null; 
+  productType: string | null;
+  companyGoalId?: string | null;
+  companyGoalTitle?: string | null;
+  states?: string[] | null;
+  cities?: string[] | null;
+  minCaseCount?: number | null;
   dateRange?: {
-    startDate?: string | null; 
-    endDate?: string | null; 
-  } | null; 
+    startDate?: string | null;
+    endDate?: string | null;
+  } | null;
 };
-
-
 
 export interface ProductType {
   companyProductId: string;
@@ -368,7 +365,6 @@ export type GoalTargetMode =
   | "goalForSelectedAccounts"
   | "goalForSelectedUsers";
 
-
 export type CompanyGoalType = {
   companyId: string;
   goalTitle: string;
@@ -377,14 +373,12 @@ export type CompanyGoalType = {
   goalValueMin: number;
   goalStartDate: string;
   goalEndDate: string;
-  accountNumbersForThisGoal: string[];        // ✅ Full scope of accounts this goal applies to
-  perUserQuota?: number;           // ✅ Minimum required submissions per user (if defined)
+  accountNumbersForThisGoal: string[]; // ✅ Full scope of accounts this goal applies to
+  perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
 };
 
 export type CompanyGoalWithIdType = CompanyGoalType & { id: string };
-
-
 
 export type GoalSubmissionType = {
   postId: string;

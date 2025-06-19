@@ -22,11 +22,10 @@ import {
 import { updatePostWithNewTimestamp } from "../../utils/PostLogic/updatePostWithNewTimestamp";
 import { extractHashtags, extractStarTags } from "../../utils/extractHashtags";
 import TotalCaseCount from "../TotalCaseCount";
-import CategorySelector, { CategoryType } from "./CategorySelector";
-import ChannelSelector, { ChannelType } from "./ChannelSelector";
 import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCompanyAccounts";
 import { RootState } from "../../utils/store";
 import AccountModalSelector from "./AccountModalSelector";
+import BrandsSelector from "../ProductsManagement/BrandsSelector";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -49,12 +48,9 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
-  // const [category, setCategory] = useState<CategoryType | "">(
-  //   (post.category as CategoryType) || ""
-  // );
-  // const [channel, setChannel] = useState<ChannelType | "">(
-  //   (post.channel as ChannelType) || ""
-  // );
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(
+    post.brands || []
+  );
 
   const [postVisibility, setPostVisibility] = useState<
     "public" | "company" | "supplier" | "private" | undefined
@@ -145,16 +141,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const handleSavePost = async (updatedPost: PostWithID) => {
     const postRef = doc(collection(db, "posts"), updatedPost.id);
 
-    // if (!category) {
-    //   dispatch(showMessage("Please select a category"));
-    //   return;
-    // }
-
-    // if (!channel) {
-    //   dispatch(showMessage("Please select a channel"));
-    //   return;
-    // }
-
     try {
       const updatedFields = {
         description: updatedPost.description,
@@ -162,8 +148,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         totalCaseCount: updatedPost.totalCaseCount,
         hashtags: updatedPost.hashtags,
         starTags: updatedPost.starTags,
-        // category: updatedPost.category,
-        // channel: updatedPost.channel,
+
         account: updatedPost.account,
       };
 
@@ -195,8 +180,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       totalCaseCount: updatedCaseCount,
       hashtags: extractedHashtags,
       starTags: extractedStarTags,
-      // category,
-      // channel,
+      brands: selectedBrands,
     };
 
     handleSavePost(updatedPost);
@@ -215,6 +199,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
       await removePostFromIndexedDB(post.id);
       await purgeDeletedPostFromFilteredSets(post.id);
+
       await deleteUserCreatedPostInIndexedDB(post.id);
 
       dispatch(deletePost(post.id));
@@ -259,15 +244,11 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 className="description-input"
               />
-              {/* <CategorySelector
-                selectedCategory={category}
-                onCategoryChange={setCategory}
-              />
 
-              <ChannelSelector
-                selectedChannel={channel}
-                onChannelChange={setChannel}
-              /> */}
+              <BrandsSelector
+                selectedBrands={selectedBrands}
+                onChange={setSelectedBrands}
+              />
 
               <TotalCaseCount
                 handleTotalCaseCountChange={setUpdatedCaseCount}

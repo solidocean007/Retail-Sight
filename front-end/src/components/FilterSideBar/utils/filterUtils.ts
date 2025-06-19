@@ -172,6 +172,18 @@ export function locallyFilterPosts(
     )
       return false;
 
+    if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
+      if (!post.totalCaseCount || post.totalCaseCount < filters.minCaseCount) {
+        return false;
+      }
+    }
+
+    if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
+      if (!post.totalCaseCount || post.totalCaseCount < filters.minCaseCount) {
+        return false;
+      }
+    }
+
     if (
       filters.cities &&
       filters.cities.length > 0 &&

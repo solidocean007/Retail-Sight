@@ -15,7 +15,7 @@ import {
 } from "./utils/filterUtils";
 import FilterSummaryBanner from "../FilterSummaryBanner";
 import {
-  mergeAndSetFilteredPosts,
+  // mergeAndSetFilteredPosts,
   setFilteredPostFetchedAt,
   setFilteredPosts,
 } from "../../Slices/postsSlice";
@@ -23,12 +23,12 @@ import {
   getFetchDate,
   getFilteredSet,
   shouldRefetch,
-  storeFilteredPostsInIndexedDB,
+  // storeFilteredPostsInIndexedDB,
   storeFilteredSet,
 } from "../../utils/database/indexedDBUtils";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { normalizePost } from "../../utils/normalizePost";
-import { clear } from "console";
+// import { clear } from "console";
 import { Autocomplete, TextField } from "@mui/material";
 import { useBrandOptions } from "../../hooks/useBrandOptions";
 
@@ -48,13 +48,13 @@ interface EnhancedFilterSideBarProps {
 const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   activePostSet,
   setActivePostSet,
-  isSearchActive,
-  setIsSearchActive,
+  // isSearchActive,
+  // setIsSearchActive,
   onFiltersApplied,
   currentHashtag,
-  setCurrentHashtag,
+  // setCurrentHashtag,
   currentStarTag,
-  setCurrentStarTag,
+  // setCurrentStarTag,
   toggleFilterMenu,
 }) => {
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -119,7 +119,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     dateRange: { startDate: null, endDate: null },
   });
 
-  const filtersSet: boolean = Object.entries(filters).some(([key, val]) => {
+  const filtersSet: boolean = Object.entries(filters).some(([_key, val]) => {
     if (Array.isArray(val)) return val.length > 0;
     if (typeof val === "object" && val !== null && "startDate" in val) {
       return val.startDate || val.endDate;
@@ -196,7 +196,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   useEffect(() => {
     const timeout = setTimeout(() => {
       const activeFiltersCount = Object.entries(filters).filter(
-        ([key, val]) => {
+        ([_key, val]) => {
           if (Array.isArray(val)) return val.length > 0;
           if (typeof val === "object" && val !== null && "startDate" in val) {
             return val.startDate || val.endDate;
@@ -214,7 +214,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   }, [filters, setActivePostSet]);
 
   useEffect(() => {
-    const activeFiltersCount = Object.entries(filters).filter(([key, val]) => {
+    const activeFiltersCount = Object.entries(filters).filter(([_key, val]) => {
       if (Array.isArray(val)) return val.length > 0;
       if (typeof val === "object" && val !== null && "startDate" in val) {
         return val.startDate || val.endDate;
@@ -507,6 +507,27 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           </select>
         </div>
       </div>
+
+      {/* <div
+        className={`filter-section ${openSection === "quantity" ? "open" : ""}`}
+      >
+        <button
+          className="section-toggle"
+          onClick={() => toggleSection("quantity")}
+        >
+          Quantity
+        </button>
+        <div className="filter-group">
+          <input
+            placeholder="Minimum Case Count"
+            type="number"
+            value={filters.minCaseCount || ""}
+            onChange={(e) =>
+              handleChange("minCaseCount", parseInt(e.target.value, 10) || null)
+            }
+          />
+        </div>
+      </div> */}
 
       <div className={`filter-section ${openSection === "date" ? "open" : ""}`}>
         <button

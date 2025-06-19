@@ -234,6 +234,13 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
         baseQuery
       );
     }
+    if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
+      baseQuery = query(
+        baseQuery,
+        where("totalCaseCount", ">=", filters.minCaseCount)
+      );
+    }
+
     // if (filters.channel) {
     //   baseQuery = filterExactMatch(
     //     "channel",
@@ -309,10 +316,12 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     const snapshot = await getDocs(finalQuery);
     console.log("[FETCH] Documents fetched:", snapshot.size);
 
-    const posts: PostWithID[] = snapshot.docs.map((doc) => normalizePost({
-      ...(doc.data() as PostType),
-      id: doc.id,
-    }));
+    const posts: PostWithID[] = snapshot.docs.map((doc) =>
+      normalizePost({
+        ...(doc.data() as PostType),
+        id: doc.id,
+      })
+    );
 
     return {
       posts,
@@ -334,10 +343,12 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
       );
       const querySnapshot = await getDocs(q);
       console.log(querySnapshot);
-      const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) => normalizePost({
-        id: doc.id,
-        ...(doc.data() as PostType),
-      }));
+      const userCreatedPosts: PostWithID[] = querySnapshot.docs.map((doc) =>
+        normalizePost({
+          id: doc.id,
+          ...(doc.data() as PostType),
+        })
+      );
       return userCreatedPosts;
     } catch (error) {
       // showMessage
@@ -346,7 +357,6 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
   }
 );
 
-// export const fetchLatestPosts = createAsyncThunk<
 //   PostWithID[],
 //   void,
 //   { rejectValue: string }

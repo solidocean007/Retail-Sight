@@ -9,7 +9,6 @@ interface FilterChipsProps {
 }
 
 const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
-
   return (
     <div className="active-filters-chip-row">
       {filters.hashtag && (
@@ -124,6 +123,11 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
           City: {city} ✕
         </span>
       ))}
+      {filters.minCaseCount !== null && filters.minCaseCount !== undefined && (
+        <span className="chip" onClick={() => onRemove("minCaseCount")}>
+          Min Cases: {filters.minCaseCount} ✕
+        </span>
+      )}
     </div>
   );
 };
