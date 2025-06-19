@@ -54,7 +54,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
           Type: {filters.chainType} ✕
         </span>
       )}
-      {filters.channel && (
+      {/* {filters.channel && (
         <span className="chip" onClick={() => onRemove("channel")}>
           Channel: {filters.channel} ✕
         </span>
@@ -63,7 +63,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
         <span className="chip" onClick={() => onRemove("category")}>
           Category: {filters.category} ✕
         </span>
-      )}
+      )} */}
       {filters.postUserUid && (
         <span className="chip" onClick={() => onRemove("postUserUid")}>
           User: {filters.postUserUid} ✕

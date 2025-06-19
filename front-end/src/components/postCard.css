@@ -99,6 +99,16 @@
   align-items: center;
 }
 
+.brands-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+  margin: 8px 0px;
+}
+
 .description-image {
   display: flex;
   flex-direction: column;

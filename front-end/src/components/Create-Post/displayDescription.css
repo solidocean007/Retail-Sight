@@ -28,6 +28,8 @@
 
 .description-text-area {
   width: 100%;
+  color: var(--text-color);
+  font-size: 16px;
   padding: 18px 12px 6px 12px; /* Adjust padding to ensure text aligns with the animated label */
   border: none;
   outline: none;

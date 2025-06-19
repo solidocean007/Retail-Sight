@@ -1,8 +1,8 @@
 // export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
 import { Timestamp } from "firebase/firestore";
-import { ChannelType } from "../components/Create-Post/ChannelSelector";
-import { CategoryType } from "../components/Create-Post/CategorySelector";
+// import { ChannelType } from "../components/Create-Post/ChannelSelector";
+// import { CategoryType } from "../components/Create-Post/CategorySelector";
 
 export type CompanyType = {
   lastUpdated: string;
@@ -87,8 +87,8 @@ export interface PostTokenType {
 
 export interface PostType {
   // 🔍 Filtering Info
-  category: CategoryType;
-  channel: ChannelType;
+  // category: CategoryType;
+  // channel: ChannelType;
   hashtags: string[];
   starTags: string[];
   productType?: string[];
@@ -168,8 +168,8 @@ export interface PostType {
 }
 
 export type PostInputType = {
-  category: CategoryType | string;
-  channel: ChannelType | string;
+  // category: string;
+  // channel: string;
   description: string;
   imageUrl: string;
   totalCaseCount: number;
@@ -215,8 +215,8 @@ export type PostQueryFilters = {
   chainType?: string | null;
   hashtag?: string | null;
   starTag?: string | null;
-  channel?: string | null;
-  category?: string | null; 
+  // channel?: string | null;
+  // category?: string | null; 
   brand?: string | null;
   productType: string | null; 
   companyGoalId?: string | null; 

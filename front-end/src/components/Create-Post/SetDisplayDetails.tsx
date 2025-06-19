@@ -1,34 +1,52 @@
 import React, { useState } from "react";
-import CategorySelector, { CategoryType } from "./CategorySelector";
-import ChannelSelector, { ChannelType } from "./ChannelSelector";
+// import CategorySelector, { CategoryType } from "./CategorySelector";
+// import ChannelSelector, { ChannelType } from "./ChannelSelector";
 import "./setDisplayDetails.css";
 import TotalCaseCount from "../TotalCaseCount";
-import ProductSelector from "../ProductsManagement/ProductSelector";
-import { useSelector } from "react-redux";
-import { selectAllProducts } from "../../Slices/productsSlice";
-import { ProductType } from "../../utils/types";
+// import ProductSelector from "../ProductsManagement/ProductSelector";
+// import { useSelector } from "react-redux";
+// import { selectAllProducts } from "../../Slices/productsSlice";
+// import { PostInputType, ProductType } from "../../utils/types";
+import { PostInputType } from "../../utils/types";
+import BrandsSelector from "../ProductsManagement/BrandsSelector";
 
 interface SetDisplayDetailsProps {
   onNext: () => void;
   onPrevious: () => void;
+  setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   handleTotalCaseCountChange: (caseCount: number) => void;
-  selectedChannel: ChannelType;
-  setSelectedChannel: React.Dispatch<React.SetStateAction<ChannelType>>;
-  selectedCategory: CategoryType;
-  setSelectedCategory: React.Dispatch<React.SetStateAction<CategoryType>>;
+  // selectedChannel: string;
+  // setSelectedChannel: React.Dispatch<React.SetStateAction<string>>;
+//   selectedCategory: string;
+//   setSelectedCategory: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
   onNext,
   onPrevious,
+  setPost,
   handleTotalCaseCountChange,
-  selectedChannel,
-  setSelectedChannel,
-  selectedCategory,
-  setSelectedCategory,
+  // selectedChannel,
+  // setSelectedChannel,
+  // selectedCategory,
+  // setSelectedCategory,
 }) => {
-  const companyProducts = useSelector(selectAllProducts);
-  const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+
+  const handleSelectedBrandsChange = (brands: string[]) => {
+    setSelectedBrands(brands);
+    setPost((prev: PostInputType) => ({ ...prev, brands }));
+  };
+
+  // const handleChannelChange = (chan: ChannelType) => {
+  //   setSelectedChannel(chan);
+  //   setPost((prev: PostInputType) => ({ ...prev, channel: chan }));
+  // };
+
+  // const handleCategoryChange = (cat: CategoryType) => {
+  //   setSelectedCategory(cat);
+  //   setPost((prev: PostInputType) => ({ ...prev, category: cat }));
+  // };
 
   return (
     <div className="setDisplayDetails">
@@ -41,16 +59,20 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
           selectedProducts={selectedProducts}
           onSelect={setSelectedProducts}
         /> */}
+         <BrandsSelector
+          selectedBrands={selectedBrands}
+          onChange={handleSelectedBrandsChange}
+        />
 
-        <ChannelSelector
+        {/* <ChannelSelector
           selectedChannel={selectedChannel}
           onChannelChange={setSelectedChannel}
-        />
+        /> */}
 
-        <CategorySelector
+        {/* <CategorySelector
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
-        />
+        /> */}
         <TotalCaseCount
           handleTotalCaseCountChange={handleTotalCaseCountChange}
         />

@@ -1,5 +1,5 @@
 // PostDescription.tsx
-import styles from "./postDescription.css";
+import "./postDescription.css";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setFilteredPosts,
@@ -30,8 +30,8 @@ const DescriptionModal = ({
   description: string | undefined;
   onClose: () => void;
 }) => (
-  <div className={styles.modalBackdrop}>
-    <div className={styles.modalContent}>
+  <div className="modalBackdrop">
+    <div className="modalContent">
       <p>{description}</p>
       <button onClick={onClose}>Close</button>
     </div>
@@ -61,7 +61,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
             key={index}
             href="#"
             onClick={(e) => handleHashtagClick(e, word)}
-            className={styles.hashtag}
+            className="hashtag"
           >
             {word}
           </a>
@@ -72,7 +72,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
             key={index}
             href="*"
             onClick={(e) => handleStarTagClick(e, word)}
-            className={styles.starTag}
+            className="starTag"
           >
             {word}
           </a>
@@ -100,7 +100,7 @@ export const PostDescription: React.FC<PostDescriptionProps> = ({
         <p>
           {truncatedDescription}
           {description.length > 25 && (
-            <a href="#" onClick={toggleModal} className={styles.moreLink}>
+            <a href="#" onClick={toggleModal} className="moreLink">
               more...
             </a>
           )}

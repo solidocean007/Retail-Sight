@@ -66,8 +66,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
     }
   }, [companyId, apiKey, dispatch]);
 
-  console.log('post to submit: ', post)
-
   const handleSubmitClick = async () => {
     if (!selectedFile || isSubmitting) return; // Prevent multiple submissions
 

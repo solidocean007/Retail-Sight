@@ -2,12 +2,13 @@
 
 import { PostQueryFilters, PostWithID } from "../../../utils/types";
 
+const normalizeBrand = (brand: string): string =>
+  brand.toLowerCase().replace(/[\s\-]+/g, "");
+
 export const getFilterSummaryText = (filters: PostQueryFilters) => {
   const parts: string[] = [];
   if (filters.hashtag) parts.push(`${filters.hashtag}`);
   if (filters.starTag) parts.push(`${filters.starTag}`);
-  if (filters.channel) parts.push(`Channel: ${filters.channel}`);
-  if (filters.category) parts.push(`Category: ${filters.category}`);
   if (filters.dateRange?.startDate || filters.dateRange?.endDate) {
     const start = filters.dateRange.startDate
       ? new Date(filters.dateRange.startDate).toLocaleDateString()
@@ -19,7 +20,6 @@ export const getFilterSummaryText = (filters: PostQueryFilters) => {
   }
   return parts.join(" • ");
 };
-
 
 export function removeFilterField(
   filters: PostQueryFilters,
@@ -62,14 +62,13 @@ export function clearAllFilters(): PostQueryFilters {
     companyId: null,
     states: [],
     cities: [],
-    channel: null,
-    category: null,
+    // channel: null,
+    // category: null,
     accountType: null,
     accountChain: null,
     chainType: null,
   };
 }
-
 
 let lastFilters: PostQueryFilters | null = null;
 let lastPosts: PostWithID[] | null = null;
@@ -95,11 +94,12 @@ export function locallyFilterPostsMemo(
   return result;
 }
 
-function shallowEqualFilters(a: PostQueryFilters, b: PostQueryFilters): boolean {
+function shallowEqualFilters(
+  a: PostQueryFilters,
+  b: PostQueryFilters
+): boolean {
   return JSON.stringify(a) === JSON.stringify(b); // quick & dirty for now
 }
-
-
 
 export function locallyFilterPosts(
   posts: PostWithID[],
@@ -128,45 +128,41 @@ export function locallyFilterPosts(
       return false;
     }
 
-    // Channel / Category
-    if (filters.channel && post.channel !== filters.channel) return false;
-    if (filters.category && post.category !== filters.category) return false;
-
-    // Brand / Product Type
-    if (filters.brand && post.brands !== filters.brand) return false; // This comparison appears to be unintentional because the types 'string[] | undefined' and 'string' have no overlap.
-    if (filters.productType && post.productType !== filters.productType)
+    if (
+      filters.brand &&
+      !post.brands?.some(
+        (b) => normalizeBrand(b) === normalizeBrand(filters.brand!)
+      )
+    ) {
       return false;
+    }
+
+    if (
+      filters.productType &&
+      !post.productType?.includes(filters.productType)
+    ) {
+      return false;
+    }
 
     // Account Info
     if (
       filters.accountName &&
-      !post.accountName?.toLowerCase().includes(filters.accountName.toLowerCase())
+      !post.accountName
+        ?.toLowerCase()
+        .includes(filters.accountName.toLowerCase())
     )
       return false;
 
-    if (
-      filters.accountNumber &&
-      post.accountNumber !== filters.accountNumber
-    )
+    if (filters.accountNumber && post.accountNumber !== filters.accountNumber)
       return false;
 
-    if (
-      filters.accountType &&
-      post.accountType !== filters.accountType
-    )
+    if (filters.accountType && post.accountType !== filters.accountType)
       return false;
 
-    if (
-      filters.accountChain &&
-      post.chain !== filters.accountChain
-    )
+    if (filters.accountChain && post.chain !== filters.accountChain)
       return false;
 
-    if (
-      filters.chainType &&
-      post.chainType !== filters.chainType
-    )
-      return false;
+    if (filters.chainType && post.chainType !== filters.chainType) return false;
 
     // State / City
     if (
@@ -232,7 +228,3 @@ export function getFilterHash(filters: PostQueryFilters): string {
   const jsonString = JSON.stringify(sorted);
   return btoa(jsonString);
 }
-
-
-
-

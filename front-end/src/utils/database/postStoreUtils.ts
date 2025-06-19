@@ -219,14 +219,14 @@ export async function getFilteredPostsFromIndexedDB(
       const allPosts = getAllRequest.result;
       // Assuming the date filter criteria includes a startDate and endDate
       const filteredPosts = allPosts.filter((post) => {
-        const matchesChannel =
-          !filters.channel ||
-          filters.channel.length === 0 ||
-          filters.channel.includes(post.channel);
-        const matchesCategory =
-          !filters.category ||
-          filters.category.length === 0 ||
-          filters.category.includes(post.category);
+        // const matchesChannel =
+        //   !filters.channel ||
+        //   filters.channel.length === 0 ||
+        //   filters.channel.includes(post.channel);
+        // const matchesCategory =
+        //   !filters.category ||
+        //   filters.category.length === 0 ||
+        //   filters.category.includes(post.category);
         const postDate = post.displayDate ? new Date(post.displayDate) : null;
 
         // Convert the string dates in the filters to Date objects for comparison
@@ -245,7 +245,8 @@ export async function getFilteredPostsFromIndexedDB(
             endDate &&
             postDate <= endDate);
 
-        return matchesChannel && matchesCategory && matchesDateRange;
+        // return matchesChannel && matchesCategory && matchesDateRange;
+        return matchesDateRange;
       });
 
       resolve(filteredPosts);

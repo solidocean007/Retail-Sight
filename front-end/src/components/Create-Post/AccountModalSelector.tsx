@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { CompanyAccountType } from "../../utils/types";
-import { set } from "react-hook-form";
 
 interface AccountModalSelectorProps {
   open: boolean;
@@ -30,6 +29,13 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
   isAllStoresShown,
   setIsAllStoresShown,
 }) => {
+  // filter based on your “My Stores” logic; e.g. salesRouteNum === userRoute
+  // const displayed = useMemo(() => {
+  //   if (!accounts?.length) return [];
+  //   if (isAllStoresShown) return accounts;
+  //   // example filter (adjust to your real field):
+  //   return accounts.filter((a) => a.salesRouteNums?.includes("85"));
+  // }, [accounts, isAllStoresShown]);
   return (
     <Dialog
       open={open}
@@ -80,7 +86,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
 
       <DialogContent>
         <Autocomplete
-          options={accounts}
+          options={accounts} // Type 'CompanyAccountType[] | undefined' is not assignable to type 'readonly CompanyAccountType[]'.
           getOptionLabel={(account) =>
             `${account.accountName} - ${account.accountAddress}`
           }

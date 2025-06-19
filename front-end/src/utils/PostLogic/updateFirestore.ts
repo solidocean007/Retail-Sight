@@ -1,10 +1,10 @@
 // updateFirestore.ts
 import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
+  // doc,
+  // getDoc,
+  // setDoc,
+  // updateDoc,
+  // arrayUnion,
   addDoc,
   collection,
   Firestore,
@@ -20,42 +20,42 @@ export const addPostToFirestore = async (
   return docRef; // This returns the DocumentReference
 };
 
-export const updateChannelsInFirestore = async (
-  db: Firestore,
-  channel: string,
-  postId: string,
-) => {
-  const channelRef = doc(db, "channels", channel);
-  console.log("update channels in firestore read");
-  const channelDoc = await getDoc(channelRef);
+// export const updateChannelsInFirestore = async (
+//   db: Firestore,
+//   channel: string,
+//   postId: string,
+// ) => {
+//   const channelRef = doc(db, "channels", channel);
+//   console.log("update channels in firestore read");
+//   const channelDoc = await getDoc(channelRef);
 
-  if (channelDoc.exists()) {
-    await updateDoc(channelRef, {
-      postIds: arrayUnion(postId),
-    });
-  } else {
-    await setDoc(channelRef, {
-      postIds: [postId],
-    });
-  }
-};
+//   if (channelDoc.exists()) {
+//     await updateDoc(channelRef, {
+//       postIds: arrayUnion(postId),
+//     });
+//   } else {
+//     await setDoc(channelRef, {
+//       postIds: [postId],
+//     });
+//   }
+// };
 
-export const updateCategoriesInFirestore = async (
-  db: Firestore,
-  category: string,
-  postId: string,
-) => {
-  const categoryRef = doc(db, "categories", category);
-  console.log("update categories in firestore read");
-  const categoryDoc = await getDoc(categoryRef);
+// export const updateCategoriesInFirestore = async (
+//   db: Firestore,
+//   category: string,
+//   postId: string,
+// ) => {
+//   const categoryRef = doc(db, "categories", category);
+//   console.log("update categories in firestore read");
+//   const categoryDoc = await getDoc(categoryRef);
 
-  if (categoryDoc.exists()) {
-    await updateDoc(categoryRef, {
-      postIds: arrayUnion(postId),
-    });
-  } else {
-    await setDoc(categoryRef, {
-      postIds: [postId],
-    });
-  }
-};
+//   if (categoryDoc.exists()) {
+//     await updateDoc(categoryRef, {
+//       postIds: arrayUnion(postId),
+//     });
+//   } else {
+//     await setDoc(categoryRef, {
+//       postIds: [postId],
+//     });
+//   }
+// };

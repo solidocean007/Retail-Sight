@@ -124,6 +124,7 @@ export const useHandlePostSubmission = () => {
               const postDataWithoutImage: PostType = buildPostPayload({ // right here is the error
                 ...post,
                 imageUrl: "",
+                postUser: userData!,
               })
 
               // Create the post in Firestore

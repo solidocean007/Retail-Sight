@@ -29,6 +29,8 @@ import {
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { normalizePost } from "../../utils/normalizePost";
 import { clear } from "console";
+import { Autocomplete, TextField } from "@mui/material";
+import { useBrandOptions } from "../../hooks/useBrandOptions";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -67,6 +69,15 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   ): boolean => {
     return JSON.stringify(a) === JSON.stringify(b);
   };
+  const [brandInput, setBrandInput] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+
+  const [isBrandValid, setIsBrandValid] = useState(true);
+
+  const normalizeBrand = (brand: string): string =>
+    brand.toLowerCase().replace(/[\s\-]+/g, "");
+
+  const brandOptions = useBrandOptions();
 
   const toggleSection = (section: string) => {
     setOpenSection((prev) => (prev === section ? null : section));
@@ -97,8 +108,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     chainType: null,
     hashtag: null,
     starTag: null,
-    channel: null,
-    category: null,
+    // channel: null,
+    // category: null,
     brand: undefined,
     productType: null,
     companyGoalId: undefined,
@@ -108,6 +119,21 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     dateRange: { startDate: null, endDate: null },
   });
 
+  const filtersSet: boolean = Object.entries(filters).some(([key, val]) => {
+    if (Array.isArray(val)) return val.length > 0;
+    if (typeof val === "object" && val !== null && "startDate" in val) {
+      return val.startDate || val.endDate;
+    }
+    return !!val;
+  });
+
+  const handleClearFilters = () => {
+    setFilters(clearAllFilters());
+    setLastAppliedFilters(null);
+    setTagInput("");
+    setActivePostSet("posts");
+  };
+
   const filtersChanged =
     !lastAppliedFilters || !areFiltersEqual(filters, lastAppliedFilters);
   const fetchedAt = useSelector(
@@ -116,6 +142,24 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const debouncedFilters = useDebouncedValue(filters, 150);
   const [tagInput, setTagInput] = useState("");
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        const active = document.activeElement;
+        const isInput =
+          active?.tagName === "INPUT" || active?.tagName === "TEXTAREA";
+
+        if (isInput && filtersSet && filtersChanged) {
+          e.preventDefault();
+          handleApply();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [filters, filtersSet, filtersChanged]);
 
   useEffect(() => {
     if (currentHashtag) {
@@ -183,13 +227,11 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
   }, [filters, dispatch]);
 
-  // useEffect(() => {
+  // useEffect(() => { what is this for?
   //   if (companyId) {
   //     setFilters((prev) => ({ ...prev, companyId }));
   //   }
   // }, [companyId]);
-
-
 
   const handleChange = (field: keyof PostQueryFilters, value: any) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
@@ -249,21 +291,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       setLastAppliedFilters(filters);
       onFiltersApplied?.(filters);
     }
-  };
-
-  const filtersSet: boolean = Object.entries(filters).some(([key, val]) => {
-    if (Array.isArray(val)) return val.length > 0;
-    if (typeof val === "object" && val !== null && "startDate" in val) {
-      return val.startDate || val.endDate;
-    }
-    return !!val;
-  });
-
-  const handleClearFilters = () => {
-    setFilters(clearAllFilters());
-    setLastAppliedFilters(null);
-    setTagInput("");
-    setActivePostSet("posts");
   };
 
   return (
@@ -336,12 +363,62 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           🍻 Product
         </button>
         <div className="filter-group">
-          <input // we would need a to debounce this and fetch brands from the server or from indexedDb or redux
-            placeholder="Brand filter coming soon"
+          <Autocomplete
+            options={brandOptions}
             value={filters.brand || ""}
-            onChange={(e) => handleChange("brand", e.target.value)}
-            disabled
+            inputValue={brandInput}
+            onInputChange={(_, value) => {
+              setBrandInput(value);
+
+              const normalized = normalizeBrand(value);
+
+              const matchingOptions = brandOptions.filter((option) =>
+                normalizeBrand(option).includes(normalized)
+              );
+
+              const exactMatch = brandOptions.find(
+                (b) => normalizeBrand(b) === normalized
+              );
+
+              setIsBrandValid(value === "" || matchingOptions.length > 0);
+
+              if (exactMatch) {
+                handleChange("brand", exactMatch);
+                setSelectedBrand(exactMatch);
+              } else if (matchingOptions.length > 0) {
+                // Keep existing brand selected while typing something that *could* be valid
+                handleChange("brand", selectedBrand);
+              } else {
+                handleChange("brand", null);
+                setSelectedBrand(null);
+              }
+            }}
+            onChange={(_, value) => {
+              handleChange("brand", value || null);
+              setBrandInput(value || "");
+              setSelectedBrand(value || null);
+            }}
+            open={brandInput.length > 0}
+            filterOptions={(options, state) =>
+              options.filter((option) =>
+                normalizeBrand(option).includes(
+                  normalizeBrand(state.inputValue)
+                )
+              )
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Brand"
+                placeholder="Type to search brands"
+                error={!isBrandValid}
+                helperText={!isBrandValid ? "No matching brand found" : ""}
+              />
+            )}
+            fullWidth
+            disablePortal
           />
+
           <input // same as above, we would need to debounce this and fetch product types from the server or from indexedDb or redux
             placeholder="Product Type"
             value={filters.productType || ""}

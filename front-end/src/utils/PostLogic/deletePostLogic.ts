@@ -39,21 +39,21 @@ export const userDeletePost = async ({ post }: userDeletePostProps) => {
       await deleteObject(imageRef);
     }
 
-    // ✅ Remove post ID from 'channels' collection
-    if (post.channel) {
-      const channelRef = doc(db, "channels", post.channel);
-      await updateDoc(channelRef, {
-        postIds: arrayRemove(post.id),
-      });
-    }
+    // // ✅ Remove post ID from 'channels' collection
+    // if (post.channel) {
+    //   const channelRef = doc(db, "channels", post.channel);
+    //   await updateDoc(channelRef, {
+    //     postIds: arrayRemove(post.id),
+    //   });
+    // }
 
-    // ✅ Remove post ID from 'categories' collection
-    if (post.category) {
-      const categoryRef = doc(db, "categories", post.category);
-      await updateDoc(categoryRef, {
-        postIds: arrayRemove(post.id),
-      });
-    }
+    // // ✅ Remove post ID from 'categories' collection
+    // if (post.category) {
+    //   const categoryRef = doc(db, "categories", post.category);
+    //   await updateDoc(categoryRef, {
+    //     postIds: arrayRemove(post.id),
+    //   });
+    // }
 
     // ✅ 🔥 Now clean up from goal's submittedPosts if applicable
     if (post.companyGoalId) {

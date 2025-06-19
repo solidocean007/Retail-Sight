@@ -19,8 +19,8 @@ export const buildPostPayload = (post: PostInputType): PostType => {
     .trim(); // Trim any leading/trailing spaces
 
   return {
-    category: (post.category as CategoryType) ?? "Beer", // or your safest default
-    channel: (post.channel as ChannelType) ?? "Grocery",
+    // category: (post.category as CategoryType) ?? "Beer", // or your safest default
+    // channel: (post.channel as ChannelType) ?? "Grocery",
     description: cleanedDescription || "",
     imageUrl: post.imageUrl || "",
     displayDate: new Date().toISOString(), // is this format serialized?

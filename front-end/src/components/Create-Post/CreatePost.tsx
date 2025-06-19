@@ -19,8 +19,8 @@ import {
   PostType,
   UserType,
 } from "../../utils/types";
-import { CategoryType } from "./CategorySelector";
-import { ChannelType } from "./ChannelSelector";
+// import { CategoryType } from "./CategorySelector";
+// import { ChannelType } from "./ChannelSelector";
 // import { SupplierType } from "./SupplierSelector";
 // import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
@@ -47,8 +47,6 @@ import { selectUsersCompanyGoals } from "../../Slices/companyGoalsSlice";
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
   const userData = useSelector(selectUser);
-  console.log(userData)
-
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
@@ -75,23 +73,23 @@ export const CreatePost = () => {
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
-  const [selectedCategory, setSelectedCategory] =
-    useState<CategoryType>("Beer");
-  const [selectedChannel, setSelectedChannel] =
-    useState<ChannelType>("Grocery");
+  // const [selectedCategory, setSelectedCategory] =
+  //   useState<string>("");
+  // const [selectedChannel, setSelectedChannel] =
+  //   useState<string>("");
 
   const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
     useState<CompanyAccountType | null>(null);
 
 const [post, setPost] = useState<PostInputType>(() => ({
-  category: "Beer",
-  channel: "Grocery",
+  brands: [],
+  productTypes: [],
   description: "",
   imageUrl: "",
   totalCaseCount: 0,
   visibility: "company",
   postUser: userData || null,
-  account: null, // should i define this as selectedCompanyAccount??
+  account: null,
 }));
 
 
@@ -114,15 +112,15 @@ const [post, setPost] = useState<PostInputType>(() => ({
 }, [onBehalf]);
 
 
-  useEffect(() => {
-    const storedCategory = localStorage.getItem(
-      "postCategory",
-    ) as CategoryType | null;
-    if (storedCategory) {
-      setSelectedCategory(storedCategory);
-      setPost((prevPost) => ({ ...prevPost, category: storedCategory }));
-    }
-  }, []);
+  // useEffect(() => {
+  //   const storedCategory = localStorage.getItem(
+  //     "postCategory",
+  //   ) as CategoryType | null;
+  //   if (storedCategory) {
+  //     setSelectedCategory(storedCategory);
+  //     setPost((prevPost) => ({ ...prevPost, category: storedCategory }));
+  //   }
+  // }, []);
 
   useEffect(() => {
     if (post.visibility === "supplier") {
@@ -205,11 +203,12 @@ const [post, setPost] = useState<PostInputType>(() => ({
           <SetDisplayDetails
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
+            setPost={setPost}
             handleTotalCaseCountChange={handleTotalCaseCountChange}
-            selectedChannel={selectedChannel}
-            setSelectedChannel={setSelectedChannel}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
+            // selectedChannel={selectedChannel}
+            // setSelectedChannel={setSelectedChannel}
+            // selectedCategory={selectedCategory}
+            // setSelectedCategory={setSelectedCategory}
           />
         );
       case 4:

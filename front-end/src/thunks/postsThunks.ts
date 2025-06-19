@@ -161,18 +161,18 @@ export const fetchMorePostsBatch = createAsyncThunk(
   }
 );
 
-type FetchFilteredPostsArgs = {
-  filters: {
-    channels: string[];
-    categories: string[];
-    states: string[];
-    cities: string[];
-    dateRange: { startDate: string | null; endDate: string | null };
-  };
-  currentHashtag: string | null;
-  currentStarTag?: string | null;
-  // should i rename currentHashtag to currentTag or also define a currentStarTag?
-};
+// type FetchFilteredPostsArgs = {
+//   filters: {
+//     channels: string[];
+//     categories: string[];
+//     states: string[];
+//     cities: string[];
+//     dateRange: { startDate: string | null; endDate: string | null };
+//   };
+//   currentHashtag: string | null;
+//   currentStarTag?: string | null;
+//   // should i rename currentHashtag to currentTag or also define a currentStarTag?
+// };
 
 export const fetchFilteredPostsBatch = createAsyncThunk(
   "posts/fetchPostsBatch",
@@ -234,20 +234,20 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
         baseQuery
       );
     }
-    if (filters.channel) {
-      baseQuery = filterExactMatch(
-        "channel",
-        filters.channel ?? undefined,
-        baseQuery
-      );
-    }
-    if (filters.category) {
-      baseQuery = filterExactMatch(
-        "category",
-        filters.category ?? undefined,
-        baseQuery
-      );
-    }
+    // if (filters.channel) {
+    //   baseQuery = filterExactMatch(
+    //     "channel",
+    //     filters.channel ?? undefined,
+    //     baseQuery
+    //   );
+    // }
+    // if (filters.category) {
+    //   baseQuery = filterExactMatch(
+    //     "category",
+    //     filters.category ?? undefined,
+    //     baseQuery
+    //   );
+    // }
     if (filters.companyGoalId) {
       baseQuery = filterExactMatch(
         "companyGoalId",

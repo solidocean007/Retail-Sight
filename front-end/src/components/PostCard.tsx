@@ -1,14 +1,15 @@
 // PostCard.tsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import {
-  Card,
+  // Card,
   IconButton,
   Menu,
   MenuItem,
   Dialog,
-  Typography,
+  // Typography,
   CircularProgress,
+  Chip,
 } from "@mui/material";
 import { CommentType, CompanyAccountType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
@@ -255,8 +256,6 @@ const PostCard: React.FC<PostCardProps> = ({
   const createdOnBehalf =
     post.postedBy && post.postUser?.uid !== post.postedBy.uid;
 
-  const fallbackImage = "https://via.placeholder.com/300x200?text=Loading";
-
   return (
     <>
       <div
@@ -381,11 +380,18 @@ const PostCard: React.FC<PostCardProps> = ({
             ? `Gallo goal: ${post.galloGoalTitle}`
             : ""}
         </div>
-
+        {post.brands && post.brands.length > 0 && (
+          <div className="brands-list">
+            {post.brands.map((brand) => (
+              <Chip key={brand} label={brand} size="small" />
+            ))}
+          </div>
+        )}
+    {post.id}
         <div className="description-image">
           <div className="like-quantity-row">
             <h4>
-              {post.category}
+              {post.productType}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
             <div className="likes-box">
