@@ -58,7 +58,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   handleFieldChange,
   setSelectedCompanyAccount,
 }) => {
-  console.log('usersCompanyGoals', usersCompanyGoals);
+  console.log('usersCompanyGoals', usersCompanyGoals); // logs empty
   const [_allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
@@ -85,6 +85,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   // these next two only need to be selected if a user is selecting all accounts and needs access to the entire company goal list or gallo goal list
   // const allGalloGoals = useSelector(selectAllGalloGoals); // delete this or from the parent
   const allCompanyGoals = useSelector(selectAllCompanyGoals); // i probqably need to delete this from the parent or here
+  console.log(allCompanyGoals, "allCompanyGoals"); // logs with all company goals successfully
   const [openAccountModal, setOpenAccountModal] = useState(true);
 
   const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
@@ -335,7 +336,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
               loading={isFetchingGoal}
               onSelect={handleCompanyGoalSelection} // 'id' is declared here.
               selectedGoal={selectedCompanyGoal} // Type 'CompanyGoalWithIdType | null | undefined' is not assignable to type 'CompanyGoalWithIdType | undefined'.
-  // Type 'null' is not assignable to type 'CompanyGoalWithIdType | undefined'.
+  // Type 'null' is not assignable to type 'CompanyGoalWithIdType | undefined'. why is the selected goal here potentially null or undefined?
             />
           </Box>
 

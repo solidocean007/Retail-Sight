@@ -1,7 +1,11 @@
 //EditPostModal.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
-import { CompanyAccountType, PostWithID } from "../../utils/types";
+import {
+  CompanyAccountType,
+  CompanyGoalWithIdType,
+  PostWithID,
+} from "../../utils/types";
 import { useDispatch, useSelector } from "react-redux";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
@@ -26,6 +30,9 @@ import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCom
 import { RootState } from "../../utils/store";
 import AccountModalSelector from "./AccountModalSelector";
 import BrandsSelector from "../ProductsManagement/BrandsSelector";
+import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
+import CompanyGoalDropdown from "./CompanyGoalDropdown";
+import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/getActiveCompanyGoalsForAccount";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -40,7 +47,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   isOpen,
   setIsEditModalOpen,
 }) => {
-  const wrapperRef = useRef(null); // what is this for?
+  const wrapperRef = useRef(null); // its used on a div
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
@@ -65,6 +72,16 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
+
+  const allCompanyGoals = useSelector(selectAllCompanyGoals);
+  const activeCompanyGoals = getActiveCompanyGoalsForAccount(
+  post.account?.accountNumber,
+  allCompanyGoals
+);
+
+  const [selectedCompanyGoal, setSelectedCompanyGoal] = useState<
+    CompanyGoalWithIdType | undefined
+  >(allCompanyGoals.find((g) => g.id === post.companyGoalId));
 
   useEffect(() => {
     if (openAccountModal) {
@@ -148,8 +165,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         totalCaseCount: updatedPost.totalCaseCount,
         hashtags: updatedPost.hashtags,
         starTags: updatedPost.starTags,
-
         account: updatedPost.account,
+        brands: updatedPost.brands ?? [],
+        companyGoalId: selectedCompanyGoal?.id || null,
+        companyGoalTitle: selectedCompanyGoal?.goalTitle || null,
       };
 
       // Update Firestore document
@@ -176,11 +195,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     const updatedPost: PostWithID = {
       ...post,
       description,
-      visibility: postVisibility, // Type 'undefined' is not assignable to type '"company" | "public" | "supplier" | "private"'
+      visibility: postVisibility ?? post.visibility,
       totalCaseCount: updatedCaseCount,
       hashtags: extractedHashtags,
       starTags: extractedStarTags,
       brands: selectedBrands,
+      companyGoalId: selectedCompanyGoal?.id || null,
+      companyGoalTitle: selectedCompanyGoal?.goalTitle || null,
     };
 
     handleSavePost(updatedPost);
@@ -215,7 +236,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   return (
     <>
-      <Dialog open={isOpen}>
+      <Dialog
+        open={isOpen}
+        onClose={handleCloseEditModal} // Type '() => void' is not assignable to type 'ReactNode'.
+        aria-labelledby="edit-post-dialog"
+      >
+        {" "}
         <>
           <div className="edit-post-modal-container" ref={wrapperRef}>
             <div className="edit-post-header">
@@ -243,6 +269,16 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="description-input"
+              />
+
+              <CompanyGoalDropdown
+                goals={activeCompanyGoals}
+                label="Company Goal"
+                loading={false}
+                selectedGoal={selectedCompanyGoal}
+                onSelect={(goal) => {
+                  setSelectedCompanyGoal(goal);
+                }}
               />
 
               <BrandsSelector
@@ -287,7 +323,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 onClick={() => setOpenAccountModal(true)}
                 sx={{ mt: 2 }}
               >
-                Select Account
+                Change Account
               </Button>
 
               <Button

@@ -1,6 +1,6 @@
 .edit-post-modal-container {
   max-width: 550px;
-  margin: 4rem auto;
+  /* margin: 4rem auto; */
   background-color: var(--form-background-color);
   color: var(--text-color);
   border-radius: var(--card-radius);

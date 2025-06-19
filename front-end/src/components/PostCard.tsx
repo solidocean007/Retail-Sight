@@ -300,7 +300,7 @@ const PostCard: React.FC<PostCardProps> = ({
                             setIsEditModalOpen(true); // Open edit modal
                           }}
                         >
-                          Editing
+                          Update Post
                         </MenuItem>
                       )}
                       <MenuItem

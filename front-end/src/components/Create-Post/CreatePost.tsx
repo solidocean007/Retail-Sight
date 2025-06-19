@@ -36,13 +36,13 @@ import { RootState, useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
+import // selectUsersCompanyGoals,
+// selectUsersGalloGoals,
+"../../Slices/goalsSlice";
 import {
-  // selectUsersCompanyGoals,
-  // selectUsersGalloGoals,
-} from "../../Slices/goalsSlice";
-import { selectUsersCompanyGoals } from "../../Slices/companyGoalsSlice";
-
-
+  selectAllCompanyGoals,
+  selectUsersCompanyGoals,
+} from "../../Slices/companyGoalsSlice";
 
 export const CreatePost = () => {
   const dispatch = useAppDispatch();
@@ -56,11 +56,13 @@ export const CreatePost = () => {
   // const usersGalloGoals = useSelector((state: RootState) =>
   //   selectUsersGalloGoals(state, salesRouteNum),
   // );
-  const usersCompanyGoals = useSelector((state: RootState) =>
-    // selectUsersCompanyGoals(state, salesRouteNum),
-    selectUsersCompanyGoals(state),
-  );
-  console.log(usersCompanyGoals)
+const usersCompanyGoals = useSelector(selectUsersCompanyGoals);
+
+  const allCompanyGoals = useSelector(selectAllCompanyGoals);
+  console.log("All company goals", allCompanyGoals);
+
+  console.log("Users company goals", usersCompanyGoals);
+
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
 
@@ -81,36 +83,33 @@ export const CreatePost = () => {
   const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
     useState<CompanyAccountType | null>(null);
 
-const [post, setPost] = useState<PostInputType>(() => ({
-  brands: [],
-  productTypes: [],
-  description: "",
-  imageUrl: "",
-  totalCaseCount: 0,
-  visibility: "company",
-  postUser: userData || null,
-  account: null,
-}));
-
-
+  const [post, setPost] = useState<PostInputType>(() => ({
+    brands: [],
+    productTypes: [],
+    description: "",
+    imageUrl: "",
+    totalCaseCount: 0,
+    visibility: "company",
+    postUser: userData || null,
+    account: null,
+  }));
 
   const [selectedCompanyMission, setSelectedCompanyMission] =
     useState<CompanyMissionType>();
   const [selectedMission, setSelectedMission] = useState<MissionType | null>(
-    null,
+    null
   );
   const navigate = useNavigate();
 
   useEffect(() => {
-  setPost((prevPost) => ({
-    ...prevPost,
-    postedBy: onBehalf ?? null,
-    postedByFirstName: onBehalf?.firstName || null,
-    postedByLastName: onBehalf?.lastName || null,
-    postedByUid: onBehalf?.uid || null,
-  }));
-}, [onBehalf]);
-
+    setPost((prevPost) => ({
+      ...prevPost,
+      postedBy: onBehalf ?? null,
+      postedByFirstName: onBehalf?.firstName || null,
+      postedByLastName: onBehalf?.lastName || null,
+      postedByUid: onBehalf?.uid || null,
+    }));
+  }, [onBehalf]);
 
   // useEffect(() => {
   //   const storedCategory = localStorage.getItem(
@@ -146,7 +145,7 @@ const [post, setPost] = useState<PostInputType>(() => ({
         [field]: value,
       }));
     },
-    [],
+    []
   );
 
   const supplierVisibility = post.visibility === "supplier";
