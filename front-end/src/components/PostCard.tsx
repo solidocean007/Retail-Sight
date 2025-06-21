@@ -380,14 +380,15 @@ const PostCard: React.FC<PostCardProps> = ({
             ? `Gallo goal: ${post.galloGoalTitle}`
             : ""}
         </div>
-        {post.brands && post.brands.length > 0 && (
+        {/* {post.brands && post.brands.length > 0 && (
           <div className="brands-list">
             {post.brands.map((brand) => (
               <Chip key={brand} label={brand} size="small" />
             ))}
           </div>
-        )}
-    {/* {post.id} */}
+        )} */}
+    {post.id}
+    {post.productType}
         <div className="description-image">
           <div className="like-quantity-row">
             <h4>

@@ -50,13 +50,20 @@ export const UploadImage: React.FC<UploadImageProps> = ({
       dispatch(showMessage("Converting HEIC image, please wait..."));
       setIsConverting(true);
       try {
-        const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg" });
-        const singleBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: "image/jpeg",
+        });
+        const singleBlob = Array.isArray(convertedBlob)
+          ? convertedBlob[0]
+          : convertedBlob;
         const convertedFile = new File(
           [singleBlob],
           file.name.replace(/\.\w+$/, ".jpg"),
           { type: "image/jpeg" }
         );
+
+        setSelectedFile(convertedFile);
         const reader = new FileReader();
         reader.onloadend = () => {
           setPost({ ...post, imageUrl: reader.result as string });
@@ -92,7 +99,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         </div>
       )}
 
-      <Button
+      {/* <Button
         variant="contained"
         component="label"
         startIcon={<AddAPhotoIcon />}
@@ -105,11 +112,31 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           onChange={handleImageChange}
           accept="image/*"
         />
+      </Button> */}
+      <Button
+        variant="contained"
+        component="label"
+        startIcon={<AddAPhotoIcon />}
+        disabled={isConverting}
+      >
+        {post.imageUrl ? "Change Image" : "Upload Image"}
+        <input
+          type="file"
+          hidden
+          accept="image/*"
+          capture="environment"
+          onClick={(e) => (e.currentTarget.value = "")}
+          onChange={handleImageChange}
+        />
       </Button>
 
       {post.imageUrl && (
         <>
-          <button className="create-post-btn" onClick={onNext} disabled={isConverting}>
+          <button
+            className="create-post-btn"
+            onClick={onNext}
+            disabled={isConverting}
+          >
             <h4>Next</h4>
           </button>
 
@@ -136,10 +163,11 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           }}
         >
           <CircularProgress />
-          <h4 style={{ marginTop: "1rem" }}>Converting image, please wait...</h4>
+          <h4 style={{ marginTop: "1rem" }}>
+            Converting image, please wait...
+          </h4>
         </div>
       )}
     </div>
   );
 };
-

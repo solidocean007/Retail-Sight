@@ -51,7 +51,7 @@ export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
-  const salesRouteNum = userData?.salesRouteNum;
+ 
 
   // const usersGalloGoals = useSelector((state: RootState) =>
   //   selectUsersGalloGoals(state, salesRouteNum),
@@ -71,17 +71,13 @@ export const CreatePost = () => {
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
-  // const [selectedCategory, setSelectedCategory] =
-  //   useState<string>("");
-  // const [selectedChannel, setSelectedChannel] =
-  //   useState<string>("");
 
   const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
     useState<CompanyAccountType | null>(null);
 
   const [post, setPost] = useState<PostInputType>(() => ({
     brands: [],
-    productTypes: [],
+    productType: [],
     description: "",
     imageUrl: "",
     totalCaseCount: 0,
@@ -106,16 +102,6 @@ export const CreatePost = () => {
       postedByUid: onBehalf?.uid || null,
     }));
   }, [onBehalf]);
-
-  // useEffect(() => {
-  //   const storedCategory = localStorage.getItem(
-  //     "postCategory",
-  //   ) as CategoryType | null;
-  //   if (storedCategory) {
-  //     setSelectedCategory(storedCategory);
-  //     setPost((prevPost) => ({ ...prevPost, category: storedCategory }));
-  //   }
-  // }, []);
 
   useEffect(() => {
     if (post.visibility === "supplier") {
@@ -145,28 +131,6 @@ export const CreatePost = () => {
   );
 
   const supplierVisibility = post.visibility === "supplier";
-
-  // ill use this logic or something similiar below later
-  // Add handlers for Supplier and Brand changes
-  // const handleSupplierChange = (supplierId: string) => {
-  //   setSelectedSupplier(supplierId);
-  //   // Update the post object
-  //   setPost((prev) => ({ ...prev, supplier: supplierId }));
-  // };
-
-  // const handleBrandChange = (brandId: string) => {
-  //   // If you're allowing multiple brands, you'll need logic to handle selection and deselection
-  //   setSelectedBrands((prevBrands) => {
-  //     // This is just an example logic, assuming you want to toggle brands in the selection
-  //     if (prevBrands.includes(brandId)) {
-  //       return prevBrands.filter((id) => id !== brandId);
-  //     } else {
-  //       return [...prevBrands, brandId];
-  //     }
-  //   });
-  //   // Update the post object
-  //   setPost((prev) => ({ ...prev, brands: selectedBrands }));
-  // };
 
   // Render different content based on the current step
   const renderStepContent = () => {
@@ -198,12 +162,9 @@ export const CreatePost = () => {
           <SetDisplayDetails
             onNext={goToNextStep}
             onPrevious={goToPreviousStep}
+            post={post}
             setPost={setPost}
             handleTotalCaseCountChange={handleTotalCaseCountChange}
-            // selectedChannel={selectedChannel}
-            // setSelectedChannel={setSelectedChannel}
-            // selectedCategory={selectedCategory}
-            // setSelectedCategory={setSelectedCategory}
           />
         );
       case 4:

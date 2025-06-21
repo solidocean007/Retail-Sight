@@ -44,6 +44,15 @@ export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
       <button className="create-post-btn" onClick={onPrevious}>
         Back
       </button>
+      <div className="display-description-instructions">
+        <h2>Display Description</h2>
+        <p>
+          Add a description for the display. You can use{" "}
+          <span className="highlight">#</span> for hashtags and{" "}
+          Example #flag, #valentines, #halloween
+          {/* <span className="highlight">*</span> for mentions. */}
+        </p>
+      </div>
       <div className={`text-area-container ${isFocused ? "focused" : ""}`}>
         <label
           htmlFor="description-box"

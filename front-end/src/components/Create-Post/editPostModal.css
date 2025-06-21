@@ -11,10 +11,11 @@
 
 .edit-post-modal-container .close-modal-button {
   font-size: 1.5rem;
-  position: absolute;
+  /* position: absolute; */
   background: none;
   border: none;
   cursor: pointer;
+  margin: 0;
 }
 
 .edit-post-header {
@@ -22,6 +23,11 @@
   justify-content: end;
   align-items: center;
   width: 100%;
+}
+
+.edit-post-top {
+  display: flex;
+  flex-direction: column;
 }
 
 .store-title,

@@ -9,41 +9,50 @@
 
 /* 🎯 Unified Button Styles */
 
-.btn {
-  padding: 10px 20px;
-  background-color: var(--primary-button-bg);
-  color: var(--button-text-color);
-  border: none;
-  border-radius: var(--card-radius);
-  font-weight: 600;
+button {
+  font-family: inherit;
+  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  border: none;
+  border-radius: var(--btn-border-radius);
+  padding: var(--btn-padding);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-
+/* — Primary / Save */
+.btn {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-text-color);
+}
 .btn:hover {
-  background-color: var(--primary-button-hover);
+  background-color: var(--btn-primary-hover);
 }
 
-.btn-outline {
-  background-color: var(--outlined-button-bg);
-  border: 2px solid var(--outlined-button-border);
+/* — Secondary (if needed) */
+.btn-secondary {
+  background-color: var(--btn-secondary-bg);
   color: var(--text-color);
-  padding: 1rem;
-  border-radius: var(--card-radius);
+}
+.btn-secondary:hover {
+  background-color: var(--btn-secondary-hover);
 }
 
+/* — Error / Delete */
+.btn-error {
+  background-color: var(--btn-error-bg);
+  color: var(--btn-error-text-color);
+}
+.btn-error:hover {
+  background-color: var(--btn-error-hover);
+}
+
+/* — Outlined variant */
+.btn-outline {
+  background-color: transparent;
+  color: var(--text-color);
+  border: 2px solid var(--outlined-button-border);
+}
 .btn-outline:hover {
   background-color: var(--outlined-button-hover);
-}
-
-.btn-secondary {
-  background-color: var(--secondary-button-bg);
-  color: var(--text-color);
-  border-radius: var(--card-radius);
-}
-
-.btn-secondary:hover {
-  background-color: var(--secondary-button-hover);
 }
 
 input[type="text"],
@@ -55,15 +64,21 @@ input[type="password"] {
   padding: 5px; /* Adjust as necessary */
   /* border: 1px solid #ccc; */
   outline: none;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 input[type="text"]:focus,
 input[type="password"]:focus {
   /* border-color: #007bff; */
   box-shadow: var(--card-shadow);
+}
+
+input[type="number"] {
+  background-color: var(--input-background);
+  color: var(--input-text-color);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 0.5rem;
 }
 
 table {

@@ -325,7 +325,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
 
     return {
       posts,
-      lastVisible: snapshot.docs[snapshot.docs.length - 1] ?? null,
+      lastVisible: snapshot.docs.at(-1)?.id ?? null,
       count: snapshot.size,
     };
   }

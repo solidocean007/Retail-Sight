@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { CompanyMissionType, MissionType, PostInputType } from "../../utils/types";
+// ReviewAndSubmit.tsx
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -9,24 +9,25 @@ import {
   Typography,
 } from "@mui/material";
 import { useAppDispatch } from "../../utils/store";
-import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useNavigate } from "react-router-dom";
+import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
+import { CompanyMissionType, MissionType, PostInputType } from "../../utils/types";
 
 interface ReviewAndSubmitProps {
-  companyId: string | undefined;
+  companyId?: string;
   post: PostInputType;
   onPrevious: () => void;
   handleFieldChange: (
     field: keyof PostInputType,
-    value: PostInputType[keyof PostInputType],
+    value: PostInputType[keyof PostInputType]
   ) => void;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   uploadProgress: number;
   selectedFile: File | null;
   setUploadProgress: React.Dispatch<React.SetStateAction<number>>;
   handlePostSubmission: any;
-  selectedCompanyMission: CompanyMissionType | undefined;
+  selectedCompanyMission?: CompanyMissionType;
   selectedMission: MissionType | null;
 }
 
@@ -36,43 +37,38 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   onPrevious,
   handleFieldChange,
   setIsUploading,
-  selectedFile,
   uploadProgress,
+  selectedFile,
   setUploadProgress,
   handlePostSubmission,
   selectedCompanyMission,
   selectedMission,
 }) => {
-  const [apiKey, setApiKey] = useState<string>("");
+  const [apiKey, setApiKey] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  // load external API key once
   useEffect(() => {
-    if (post.oppId && companyId && apiKey === "") {
-      const fetchApiKey = async () => {
-        try {
-          const fetchedApiKey = await fetchExternalApiKey(
-            companyId,
-            "galloApiKey",
-          );
-          setApiKey(fetchedApiKey);
-        } catch (error) {
-          console.error("Failed to fetch API key:", error);
+    if (post.oppId && companyId && !apiKey) {
+      fetchExternalApiKey(companyId, "galloApiKey")
+        .then((key) => setApiKey(key))
+        .catch(() => {
+          console.error("Failed to fetch API key");
           dispatch(showMessage("Failed to fetch API key."));
-        }
-      };
-      fetchApiKey();
+        });
     }
-  }, [companyId, apiKey, dispatch]);
+  }, [companyId, post.oppId, apiKey, dispatch]);
 
-  const handleSubmitClick = async () => {
-    if (!selectedFile || isSubmitting) return; // Prevent multiple submissions
+  const handleSubmitClick = useCallback(async () => {
+    if (!selectedFile || isSubmitting) return;
 
-    setIsSubmitting(true); // Set submitting to true when submission starts
+    setIsSubmitting(true);
+    setUploadProgress(0);        // reset bar at start
+    setIsUploading(true);
 
     try {
-      // Call the post submission logic
       await handlePostSubmission(
         post,
         selectedFile,
@@ -80,35 +76,40 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         setUploadProgress,
         selectedCompanyMission,
         apiKey,
-        navigate,
+        navigate
       );
 
-      if (uploadProgress === 100) {
-        // Ensure the upload has completed before proceeding
-        dispatch(showMessage("Post submitted successfully!"));
-      }
+      // only reach here if upload + Firestore writes succeeded
+      dispatch(showMessage("Post submitted successfully!"));
+      setUploadProgress(100);    // force 100% for UI
+      setTimeout(() => {
+        setIsUploading(false);
+        navigate("/user-home-page");
+      }, 800);
     } catch (error: any) {
       console.error("Error during post submission:", error);
-      navigate("/user-home-page");
-      // Show appropriate error message
       dispatch(
         showMessage(
-          error.message || "An unknown error occurred during post submission.",
-        ),
+          error.message || "An unknown error occurred during post submission."
+        )
       );
+      setUploadProgress(0);      // reset on failure
     } finally {
-      setIsSubmitting(false); // Reset submitting state
-      if (uploadProgress === 100) {
-        setTimeout(() => {
-          setIsUploading(false); // Hide loading indicator after completion
-          navigate("/user-home-page");
-        }, 1000); // Short delay for smoother UX
-      } else {
-        console.warn("Upload progress did not reach 100%; resetting.");
-        setUploadProgress(0); // Reset progress only if not fully uploaded
-      }
+      setIsSubmitting(false);
+      // no automatic reset here anymore :contentReference[oaicite:0]{index=0}
     }
-  };
+  }, [
+    apiKey,
+    dispatch,
+    handlePostSubmission,
+    isSubmitting,
+    navigate,
+    post,
+    selectedCompanyMission,
+    selectedFile,
+    setUploadProgress,
+    setIsUploading,
+  ]);
 
   return (
     <div className="review-and-submit">
@@ -141,7 +142,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         <Button
           variant="contained"
           color="primary"
-          type="submit"
+          type="button"
           fullWidth
           disabled={isSubmitting}
           onClick={handleSubmitClick}
@@ -152,3 +153,4 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
     </div>
   );
 };
+

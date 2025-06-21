@@ -1,6 +1,15 @@
 import React from "react";
-import { Box, CircularProgress, MenuItem, Select } from "@mui/material";
-import { CompanyGoalType, CompanyGoalWithIdType } from "../../utils/types";
+import CheckIcon from "@mui/icons-material/Check";
+import {
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  ListItemIcon,
+  ListItemText,
+  MenuItem,
+  Select,
+} from "@mui/material";
+import {  CompanyGoalWithIdType } from "../../utils/types";
 
 interface CompanyGoalDropdownProps {
   goals: CompanyGoalWithIdType[];
@@ -21,33 +30,58 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
     return <CircularProgress />;
   }
 
-
   return (
-    <Box>
-      <Select
-        fullWidth
-        label={label}
-        variant="outlined"
-        value={selectedGoal?.id || ""}
-        onChange={(e) => {
-          const selected = goals.find((goal) => goal.id === e.target.value);
-          onSelect(selected); // Pass the selected goal object
-        }}
-        displayEmpty
-        disabled={goals.length === 0}
-      >
-        <MenuItem value="" disabled>
-          {goals.length > 0
-            ? `${goals.length} ${label} available`
-            : `No ${label.toLowerCase()} available`}
+    // CompanyGoalDropdown.tsx
+<FormControl fullWidth sx={{ mb: 2 }} variant="outlined">
+  <InputLabel shrink id="company-goal-label">{label}</InputLabel>
+  <Select
+    variant="outlined"
+    id="company-goal-select"
+    labelId="company-goal-label"
+    label={label}
+    displayEmpty
+    value={selectedGoal?.id || ""}
+    onChange={(e) => {
+      const goal = goals.find((g) => g.id === e.target.value) || undefined;
+      onSelect(goal);
+    }}
+    renderValue={(val) => {
+      if (!val) {
+        return goals.length
+          ? `${goals.length} Company Goal${goals.length > 1 ? "s" : ""} available`
+          : "No goals available";
+      }
+      return selectedGoal!.goalTitle;
+    }}
+  >
+    {goals.map((goal) => {
+      const isSelected = selectedGoal?.id === goal.id;
+      return (
+        <MenuItem
+          key={goal.id}
+          value={goal.id}
+          selected={isSelected}
+          sx={{
+            ...(isSelected && {
+              fontWeight: "bold",
+              backgroundColor: (theme) =>
+                theme.palette.action.selected,
+            }),
+          }}
+        >
+          {/* optional check‐icon */}
+          {isSelected && (
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <CheckIcon fontSize="small" />
+            </ListItemIcon>
+          )}
+          <ListItemText primary={goal.goalTitle} />
         </MenuItem>
-        {goals.map((goal) => (
-          <MenuItem key={goal.id} value={goal.id}>
-            {goal.goalTitle}
-          </MenuItem>
-        ))}
-      </Select>
-    </Box>
+      );
+    })}
+  </Select>
+</FormControl>
+
   );
 };
 

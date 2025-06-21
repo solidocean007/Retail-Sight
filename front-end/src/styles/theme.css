@@ -67,6 +67,20 @@
   );
 
   --divider-color: #ccc; /* Light gray for light mode */
+
+  /* BUTTONS */
+  --btn-primary-bg: var(--primary-blue);
+  --btn-primary-hover: var(--primary-blue-dark);
+  --btn-secondary-bg: var(--gray-100);
+  --btn-secondary-hover: var(--gray-200);
+
+  --btn-error-bg: var(--error-red, #d32f2f); /* fallback if you need */
+  --btn-error-hover: rgba(211, 47, 47, 0.8);
+  --btn-error-text-color: var(--white);
+
+  --btn-text-color: var(--button-text-color); /* already set per theme */
+  --btn-border-radius: 8px;
+  --btn-padding: 0.75rem 1.5rem;
 }
 
 /* ============================
@@ -116,6 +130,15 @@
   --border-color: var(--gray-200);
   --sidebar-active-item: var(--primary-blue);
   --sidebar-hover-bg: #e0edff;
+
+  --btn-primary-bg: var(--primary-blue);
+  --btn-primary-hover: var(--primary-blue-dark);
+  --btn-secondary-bg: var(--gray-100);
+  --btn-secondary-hover: var(--gray-200);
+
+  --btn-error-bg: #691a1a; /* a deep-red background */
+  --btn-error-hover: #7b1f1f;
+  --btn-error-text-color: #fff;
 }
 
 /* ============================
@@ -164,6 +187,15 @@
   --sidebar-hover-bg: #2f3c55;
 
   --divider-color: #444; /* Darker gray for dark mode */
+
+  --btn-primary-bg: var(--primary-blue);
+  --btn-primary-hover: var(--primary-blue-dark);
+  --btn-secondary-bg: var(--gray-700);
+  --btn-secondary-hover: var(--gray-600);
+
+  --btn-error-bg: #691a1a;
+  --btn-error-hover: #7b1f1f;
+  --btn-error-text-color: #fff;
 }
 
 /* 🎨 Light Theme Scrollbar */
@@ -262,8 +294,6 @@ tr:nth-child(even) {
 [data-theme="light"] tr:hover {
   background-color: var(--gray-200); /* or any appropriate light hover */
 }
-
-
 
 /* Typography fallback */
 [data-theme="dark"] h1,

@@ -8,6 +8,8 @@ import {
   IconButton,
   Box,
   Button,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { CompanyAccountType } from "../../utils/types";
@@ -15,7 +17,7 @@ import { CompanyAccountType } from "../../utils/types";
 interface AccountModalSelectorProps {
   open: boolean;
   onClose: () => void;
-  accounts: CompanyAccountType[] | undefined;
+  accounts?: CompanyAccountType[] | undefined;
   onAccountSelect: (account: CompanyAccountType) => void;
   isAllStoresShown: boolean;
   setIsAllStoresShown: (isAllStoresShown: boolean) => void;
@@ -24,23 +26,22 @@ interface AccountModalSelectorProps {
 const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
   open,
   onClose,
-  accounts,
+  accounts = [],
   onAccountSelect,
   isAllStoresShown,
   setIsAllStoresShown,
 }) => {
-  // filter based on your “My Stores” logic; e.g. salesRouteNum === userRoute
-  // const displayed = useMemo(() => {
-  //   if (!accounts?.length) return [];
-  //   if (isAllStoresShown) return accounts;
-  //   // example filter (adjust to your real field):
-  //   return accounts.filter((a) => a.salesRouteNums?.includes("85"));
-  // }, [accounts, isAllStoresShown]);
+  
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
       fullWidth
+      fullScreen={fullScreen}
+      scroll="paper"
       maxWidth="sm"
       sx={{
         "& .MuiDialog-container": {
@@ -50,7 +51,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
       slotProps={{
         paper: {
           sx: {
-            mt: 10, // Margin from the top
+            mt: { mt: fullScreen ? 0 : 2 }, // Margin from the top
             borderRadius: 2,
             boxShadow: 3,
           },
@@ -86,7 +87,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
 
       <DialogContent>
         <Autocomplete
-          options={accounts} // Type 'CompanyAccountType[] | undefined' is not assignable to type 'readonly CompanyAccountType[]'.
+          options={accounts}
           getOptionLabel={(account) =>
             `${account.accountName} - ${account.accountAddress}`
           }

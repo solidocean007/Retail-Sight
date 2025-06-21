@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./totalCaseCount.css";
+import { TextField } from "@mui/material";
 
 interface TotalCaseCountProps {
   handleTotalCaseCountChange: (caseCount: number) => void;
@@ -19,24 +20,30 @@ const TotalCaseCount: React.FC<TotalCaseCountProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const parsed = parseInt(e.target.value, 10);
-    const caseCount = isNaN(parsed) ? 0 : parsed;
+    const caseCount = isNaN(parsed) || parsed < 1 ? 1 : parsed;
+
     setValue(caseCount);
   };
 
   return (
     <div className="total-case-count-box">
       <label htmlFor="quantity">Quantity:</label>
-      <input
-        id="quantity"
+      <TextField
+        fullWidth={false} // you can toggle fullWidth or give a fixed width via sx
+        variant="outlined"
+        // label="Quantity"
         type="number"
-        min="1"
         value={value}
         onChange={handleChange}
-        style={{
-          textAlign: "center",
-          fontSize: "1.5rem",
-          padding: "0.5rem 1rem",
-          width: "100px",
+        inputProps={{ min: 1 }}
+        sx={{
+          mb: 2,
+          width: "100px", // match your desired size
+          "& .MuiInputBase-input": {
+            textAlign: "center",
+            fontSize: "1.5rem",
+            padding: "0.5rem 1rem",
+          },
         }}
       />
     </div>

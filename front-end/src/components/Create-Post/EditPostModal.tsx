@@ -1,5 +1,5 @@
 //EditPostModal.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
 import {
   CompanyAccountType,
@@ -11,7 +11,7 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { deletePost, updatePost } from "../../Slices/postsSlice";
-import { Dialog, SelectChangeEvent, Typography } from "@mui/material";
+import { Chip, Dialog, SelectChangeEvent, Typography } from "@mui/material";
 import "./editPostModal.css";
 
 import { Button, TextField, Select, MenuItem } from "@mui/material";
@@ -33,6 +33,7 @@ import BrandsSelector from "../ProductsManagement/BrandsSelector";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/getActiveCompanyGoalsForAccount";
+import { useIsDirty } from "../../hooks/useIsDirty";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -43,11 +44,11 @@ interface EditPostModalProps {
 
 const EditPostModal: React.FC<EditPostModalProps> = ({
   post,
-  // setPost,
   isOpen,
   setIsEditModalOpen,
 }) => {
   const wrapperRef = useRef(null); // its used on a div
+  const [editablePost, setEditablePost] = useState<PostWithID>(post);
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
@@ -55,11 +56,11 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
+
   const [selectedBrands, setSelectedBrands] = useState<string[]>(
     post.brands || []
   );
-  const userId = useSelector(
-    (state: RootState) => state.user.currentUser?.uid)
+  const userId = useSelector((state: RootState) => state.user.currentUser?.uid);
   const [postVisibility, setPostVisibility] = useState<
     "public" | "company" | "supplier" | "private" | undefined
   >("public");
@@ -74,14 +75,37 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     (state: RootState) => state.user.currentUser?.companyId
   );
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
-  const activeCompanyGoals = getActiveCompanyGoalsForAccount(
-  post.account?.accountNumber,
-  allCompanyGoals
-);
+  const activeCompanyGoals = useMemo(() => {
+    if (!post.account?.accountNumber || allCompanyGoals.length === 0) return [];
+    return getActiveCompanyGoalsForAccount(
+      post.account.accountNumber,
+      allCompanyGoals
+    );
+  }, [post.account?.accountNumber, allCompanyGoals]);
 
   const [selectedCompanyGoal, setSelectedCompanyGoal] = useState<
     CompanyGoalWithIdType | undefined
   >(allCompanyGoals.find((g) => g.id === post.companyGoalId));
+
+  const isDirty = useIsDirty(
+    {
+      description: post.description,
+      totalCaseCount: post.totalCaseCount,
+      brands: post.brands || [],
+      companyGoalId: post.companyGoalId,
+      productType: post.productType || [],
+    },
+    {
+      description,
+      totalCaseCount: updatedCaseCount,
+      brands: editablePost.brands || [],
+      companyGoalId: selectedCompanyGoal?.id ?? null, // string|null
+      productType: editablePost.productType || [],
+    }
+  );
+
+ useEffect(() => setEditablePost(post), [post])
+
 
   useEffect(() => {
     if (openAccountModal) {
@@ -151,8 +175,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   useEffect(() => {
     setDescription(post?.description || "");
     setPostVisibility(post?.visibility || "public");
-    // setCategory(post?.category || "");
-    // setChannel(post?.channel || "");
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
@@ -167,6 +189,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         starTags: updatedPost.starTags,
         account: updatedPost.account,
         brands: updatedPost.brands ?? [],
+        productType: updatedPost.productType ?? [],
         companyGoalId: selectedCompanyGoal?.id || null,
         companyGoalTitle: selectedCompanyGoal?.goalTitle || null,
       };
@@ -199,7 +222,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       totalCaseCount: updatedCaseCount,
       hashtags: extractedHashtags,
       starTags: extractedStarTags,
-      brands: selectedBrands,
+      brands: editablePost.brands,
+      productType: editablePost.productType,
       companyGoalId: selectedCompanyGoal?.id || null,
       companyGoalTitle: selectedCompanyGoal?.goalTitle || null,
     };
@@ -244,31 +268,45 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         {" "}
         <>
           <div className="edit-post-modal-container" ref={wrapperRef}>
-            <div className="edit-post-header">
-              <button
-                className="close-modal-button"
-                onClick={handleCloseEditModal}
-              >
-                &times; {/* This is a common symbol used for close buttons */}
-              </button>
+            <div
+              className="edit-post-header"
+              style={{ justifyContent: "space-between", alignItems: "center" }}
+            >
+              <Typography variant="h6">Edit Post</Typography>
+              <Button onClick={handleCloseEditModal} size="small">
+                ×
+              </Button>
             </div>
-
-            {post.account && (
-              <Typography variant="body2" sx={{ mt: 2 }}>
-                Selected Account: {post.account.accountName}
-              </Typography>
-            )}
+            <div className="edit-post-top">
+              {post.account && (
+                <Chip
+                  label={post.account.accountName}
+                  size="small"
+                  sx={{
+                    mb: 2,
+                    backgroundColor: "var(--gray-100)",
+                    color: "var(--text-color)",
+                  }}
+                />
+              )}
+              {isDirty && (
+                <button className="btn btn-primary" onClick={handleSave}>
+                  Save Changes
+                </button>
+              )}
+            </div>
 
             <div className="input-container">
               <TextField
                 fullWidth
-                variant="outlined"
+                variant="filled"
                 label="Description"
                 multiline
-                rows={2}
+                minRows={1} // start at one line
+                maxRows={2} // expand up to two lines
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="description-input"
+                sx={{ mb: 2 }}
               />
 
               <CompanyGoalDropdown
@@ -282,8 +320,15 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
               />
 
               <BrandsSelector
-                selectedBrands={selectedBrands}
-                onChange={setSelectedBrands}
+                selectedBrands={editablePost.brands ?? []}
+                selectedProductType={editablePost.productType ?? []}
+                onChange={(brands, productTypes) =>
+                  setEditablePost((prev) => ({
+                    ...prev,
+                    brands,
+                    productType: productTypes,
+                  }))
+                }
               />
 
               <TotalCaseCount
@@ -291,51 +336,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 initialValue={post.totalCaseCount}
               />
 
-              <Select
-                fullWidth
-                variant="outlined"
-                value={postVisibility}
-                onChange={(
-                  e: SelectChangeEvent<
-                    "public" | "company" | "supplier" | "private" | undefined
-                  >
-                ) => {
-                  setPostVisibility(
-                    e.target.value as
-                      | "public"
-                      | "company"
-                      | "supplier"
-                      | "private"
-                  );
-                }}
-                className="select-input"
-              >
-                <MenuItem value="public">Public</MenuItem>
-                {/* <MenuItem value="private">Private</MenuItem> */}
-                <MenuItem value="company">Company</MenuItem>
-                {/* <MenuItem value="group">Group</MenuItem> */}
-              </Select>
-              {/* Account Search/Select */}
-              <Button
-                variant="contained"
-                color="secondary"
-                fullWidth
-                onClick={() => setOpenAccountModal(true)}
-                sx={{ mt: 2 }}
-              >
-                Change Account
-              </Button>
-
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                onClick={handleSave}
-                className="save-btn"
-              >
-                Save Changes
-              </Button>
-              <button className="delete-btn" onClick={handleDeletePostClick}>
+              <button className="btn btn-error" onClick={handleDeletePostClick}>
                 Delete Post
               </button>
             </div>
