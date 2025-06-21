@@ -46,6 +46,7 @@ export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
       </button>
       <div className="display-description-instructions">
         <h2>Display Description</h2>
+        <h3>Optional</h3>
         <p>
           Add a description for the display. You can use{" "}
           <span className="highlight">#</span> for hashtags and{" "}

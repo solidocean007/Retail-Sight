@@ -4,17 +4,19 @@ import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
 import {
   CompanyAccountType,
   CompanyGoalWithIdType,
+  PostInputType,
   PostWithID,
+  UserType,
 } from "../../utils/types";
 import { useDispatch, useSelector } from "react-redux";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { doc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { deletePost, updatePost } from "../../Slices/postsSlice";
-import { Chip, Dialog, SelectChangeEvent, Typography } from "@mui/material";
+import { Chip, Dialog, Typography } from "@mui/material";
 import "./editPostModal.css";
 
-import { Button, TextField, Select, MenuItem } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 
 import "./editPostModal.css";
 import {
@@ -34,6 +36,8 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/getActiveCompanyGoalsForAccount";
 import { useIsDirty } from "../../hooks/useIsDirty";
+import { selectUser } from "../../Slices/userSlice";
+import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -57,10 +61,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     post.description || ""
   );
 
-  const [selectedBrands, setSelectedBrands] = useState<string[]>(
-    post.brands || []
-  );
-  const userId = useSelector((state: RootState) => state.user.currentUser?.uid);
+  const userData = useSelector(selectUser);
+  const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [postVisibility, setPostVisibility] = useState<
     "public" | "company" | "supplier" | "private" | undefined
   >("public");
@@ -104,8 +106,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     }
   );
 
- useEffect(() => setEditablePost(post), [post])
-
+  useEffect(() => setEditablePost(post), [post]);
 
   useEffect(() => {
     if (openAccountModal) {
@@ -258,6 +259,18 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     }
   };
 
+  const authToCreateOnBehalf =
+    userData?.role === "admin" ||
+    userData?.role === "super-admin" ||
+    userData?.role === "employee";
+
+  const handleFieldChange = <K extends keyof PostInputType>(
+    field: K,
+    value: PostInputType[K]
+  ) => {
+    setEditablePost((prev) => ({ ...prev, [field]: value }));
+  };
+
   return (
     <>
       <Dialog
@@ -278,6 +291,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
               </Button>
             </div>
             <div className="edit-post-top">
+              {authToCreateOnBehalf && (
+                <CreatePostOnBehalfOfOtherUser
+                  onBehalf={onBehalf}
+                  setOnBehalf={setOnBehalf}
+                  handleFieldChange={handleFieldChange}
+                />
+              )}
               {post.account && (
                 <Chip
                   label={post.account.accountName}

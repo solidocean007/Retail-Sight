@@ -1,11 +1,12 @@
+// UploadAvatar.tsx
 import React, { useState, useRef } from "react";
 import AvatarEditor from "react-avatar-editor";
-import { Button, Slider } from "@mui/material";
+import { Button, Slider, Stack } from "@mui/material";
 import { uploadUserAvatar } from "../utils/uploadUserAvatar";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { UserType } from "../utils/types";
-import "./uploadAvatar.css"; // include theme-friendly overrides here
+import "./uploadAvatar.css";
 import { useDispatch } from "react-redux";
 import { updateCurrentUser } from "../Slices/userSlice";
 
@@ -20,6 +21,9 @@ const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
   const [scale, setScale] = useState(1.1);
   const editorRef = useRef<AvatarEditor | null>(null);
 
+  // reference to your user document
+  const userRef = doc(db, "users", user.uid);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
@@ -29,18 +33,16 @@ const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
 
   const handleUpload = async () => {
     if (!editorRef.current || !selectedFile) return;
-
     const canvas = editorRef.current.getImageScaledToCanvas();
     canvas.toBlob(async (croppedBlob) => {
-      if (!croppedBlob || !selectedFile) return;
-
+      if (!croppedBlob) return;
       const avatarData = await uploadUserAvatar(
         selectedFile,
         croppedBlob,
         user.uid
       );
 
-      const userRef = doc(db, "users", user.uid);
+      // save both original & thumbnail
       await updateDoc(userRef, {
         profileUrlOriginal: avatarData.profileUrlOriginal,
         profileUrlThumbnail: avatarData.profileUrlThumbnail,
@@ -57,6 +59,16 @@ const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
     }, "image/jpeg");
   };
 
+  const handleRemoveAvatar = async () => {
+    // clear both fields so you revert to initials/default
+    await updateDoc(userRef, {
+      profileUrlOriginal: null,
+      profileUrlThumbnail: null,
+    });
+    dispatch(updateCurrentUser({ profileUrlOriginal: null, profileUrlThumbnail: null }));
+    setEditingPicture(false);
+  };
+
   return (
     <div className="avatar-upload-container">
       <input
@@ -66,7 +78,7 @@ const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
         className="avatar-file-input"
       />
 
-      {selectedFile && (
+      {selectedFile ? (
         <div className="editor-preview-box">
           <AvatarEditor
             ref={editorRef}
@@ -75,34 +87,49 @@ const UploadAvatar: React.FC<Props> = ({ user, setEditingPicture }) => {
             height={150}
             border={40}
             borderRadius={999}
-            color={[255, 255, 255, 0.6]} // background
+            color={[255, 255, 255, 0.6]}
             scale={scale}
           />
-          <div className="scale-slider">
-            <Slider
-              value={scale}
-              min={1}
-              max={3}
-              step={0.01}
-              onChange={(_, value) => setScale(value as number)}
-              size="small"
-              sx={{ maxWidth: 180 }}
-            />
-          </div>
-          <div className="avatar-button-row">
+          <Slider
+            value={scale}
+            min={1}
+            max={3}
+            step={0.01}
+            onChange={(_, v) => setScale(v as number)}
+            size="small"
+            sx={{ maxWidth: 180, mt: 2 }}
+          />
+          <Stack direction="row" spacing={1} mt={2}>
             <Button
               onClick={handleUpload}
               variant="contained"
               size="small"
-              sx={{
-                fontSize: "0.75rem",
-                backgroundColor: "var(--primary-blue)",
-              }}
+              sx={{ fontSize: "0.75rem" }}
             >
               Save Avatar
             </Button>
-          </div>
+            <Button
+              onClick={() => setSelectedFile(null)}
+              variant="outlined"
+              size="small"
+              sx={{ fontSize: "0.75rem" }}
+            >
+              Cancel
+            </Button>
+          </Stack>
         </div>
+      ) : (
+        <Stack direction="row" spacing={1} mt={2}>
+          <Button
+            onClick={handleRemoveAvatar}
+            variant="outlined"
+            color="error"
+            size="small"
+            sx={{ fontSize: "0.75rem" }}
+          >
+            Remove Avatar
+          </Button>
+        </Stack>
       )}
     </div>
   );

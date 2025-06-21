@@ -26,13 +26,16 @@ import { MenuOutlined } from "@mui/icons-material";
 interface Props {
   onBehalf: UserType | null;
   setOnBehalf: React.Dispatch<React.SetStateAction<UserType | null>>;
-  setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
+  handleFieldChange: <K extends keyof PostInputType>(
+    field: K,
+    value: PostInputType[K]
+  ) => void;
 }
 
 const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
   onBehalf,
   setOnBehalf,
-  setPost,
+  handleFieldChange,
 }) => {
   const dispatch = useAppDispatch();
   const userData = useSelector(selectUser);
@@ -90,62 +93,27 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
     fetchData();
   }, [companyId, dispatch]);
 
-  const handleOnBehalfChange = (event: SelectChangeEvent<string>) => {
-    const selectedUid = event.target.value; // Extract the selected value
-    const selectedUser = companyUsers?.find((user) => user.uid === selectedUid);
+  const handleOnBehalfSelect = (e: SelectChangeEvent<string>) => {
+    const uid = e.target.value;
+    const selected = companyUsers?.find(u => u.uid === uid) || null;
+    setOnBehalf(selected);
 
-    setOnBehalf(selectedUser || null);
-
-    if (selectedUser) {
-      setPost((prevPost) => ({
-        ...prevPost,
-        postUserName: `${selectedUser.firstName} ${selectedUser.lastName}`,
-        postUserId: selectedUser.uid,
-        postUserCompany: selectedUser.company,
-        postUserCompanyId: selectedUser.companyId,
-        postUserEmail: selectedUser.email,
-      }));
+    // If someone else is selected, override all the postUser fields
+    if (selected) {
+      handleFieldChange("postUserName", `${selected.firstName} ${selected.lastName}`);
+      handleFieldChange("postUserId", selected.uid);
+      handleFieldChange("postUserCompany", selected.company);
+      handleFieldChange("postUserCompanyId", selected.companyId);
+      handleFieldChange("postUserEmail", selected.email);
     } else {
-      setPost((prevPost) => ({
-        ...prevPost,
-        postUserName: `${userData?.firstName} ${userData?.lastName}`,
-        postUserId: userData?.uid,
-        postUserCompany: userData?.company,
-        postUserCompanyId: userData?.companyId,
-        postUserEmail: userData?.email,
-      }));
+      // revert back to yourself
+      handleFieldChange("postUserName", `${userData.firstName} ${userData.lastName}`);
+      handleFieldChange("postUserId", userData.uid);
+      handleFieldChange("postUserCompany", userData.company);
+      handleFieldChange("postUserCompanyId", userData.companyId);
+      handleFieldChange("postUserEmail", userData.email);
     }
   };
-
-  // Handle user selection for posting on behalf
-  // const handleOnBehalfChange = (event: SelectChangeEvent<string>) => {
-  //   console.log(event.target.value) // this logs undefined
-  //   console.log(companyUsers) // this logs all the users correctly
-  //   const selectedUser = companyUsers?.find(
-  //     (user) => user.uid === event.target.value
-  //   );
-  //   setOnBehalf(selectedUser || null);
-  //   console.log(selectedUser, ': selectedUser') // this logs undefined
-  //   if (selectedUser) {
-  //     setPost((prevPost) => ({
-  //       ...prevPost,
-  //       postUserName: `${selectedUser.firstName} ${selectedUser.lastName}`,
-  //       postUserId: selectedUser.uid,
-  //       postUserCompany: selectedUser.company,
-  //       postUserCompanyId: selectedUser.companyId,
-  //       postUserEmail: selectedUser.email,
-  //     }));
-  //   } else {
-  //     setPost((prevPost) => ({
-  //       ...prevPost,
-  //       postUserName: `${userData?.firstName} ${userData?.lastName}`,
-  //       postUserId: userData?.uid,
-  //       postUserCompany: userData?.company,
-  //       postUserCompanyId: userData?.companyId,
-  //       postUserEmail: userData?.email,
-  //     }));
-  //   }
-  // };
 
   return (
     <Box sx={{ display: "flex", fontSize: "15px", flexDirection: "column" }}>
@@ -153,7 +121,7 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
       <Select
         id="onBehalf-select"
         value={onBehalf?.uid || userData?.uid || ""}
-        onChange={handleOnBehalfChange}
+        onChange={handleOnBehalfSelect}
         sx={{ width: "20rem", backgroundColor: "whitesmoke" }}
       >
         <MenuItem value={userData?.uid}>

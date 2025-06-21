@@ -91,6 +91,10 @@
   box-shadow: none;
 }
 
+.avatar-name {
+  display: flex;
+}
+
 .like-quantity-row h4 {
   margin: 0;
 }

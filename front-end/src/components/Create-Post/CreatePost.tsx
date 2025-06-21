@@ -51,7 +51,6 @@ export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
- 
 
   // const usersGalloGoals = useSelector((state: RootState) =>
   //   selectUsersGalloGoals(state, salesRouteNum),
@@ -197,7 +196,9 @@ export const CreatePost = () => {
   };
 
   const authToCreateOnBehalf =
-    userData?.role === "admin" || userData?.role === "super-admin";
+    userData?.role === "admin" ||
+    userData?.role === "super-admin" ||
+    userData?.role === "employee";
 
   const appBarStyle = {
     width: "100%",
@@ -233,7 +234,7 @@ export const CreatePost = () => {
               <CreatePostOnBehalfOfOtherUser
                 onBehalf={onBehalf}
                 setOnBehalf={setOnBehalf}
-                setPost={setPost}
+                handleFieldChange={handleFieldChange}
               />
             )}
           </div>

@@ -10,6 +10,7 @@ import {
   // Typography,
   CircularProgress,
   Chip,
+  Avatar,
 } from "@mui/material";
 import { CommentType, CompanyAccountType, PostWithID } from "../utils/types";
 import { PostDescription } from "./PostDescription";
@@ -340,15 +341,34 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
             <div className="post-user-details">
-              <div className="post-user-name">
-                <p>
-                  by:{" "}
-                  <a href="#" onClick={handleOnUserNameClick}>
-                    {post.postUser?.firstName && post.postUser?.lastName
-                      ? `${post.postUser.firstName} ${post.postUser.lastName}`
-                      : "Unknown User"}
-                  </a>
-                </p>
+              <div className="avatar-name">
+                <div
+                  className="post-user-avatar"
+                  onClick={handleOnUserNameClick}
+                  style={{ cursor: "pointer" }}
+                >
+                  {post.postUserProfileUrlThumbnail ? (
+                    <Avatar
+                      src={post.postUserProfileUrlThumbnail}
+                      alt={`${post.postUser?.firstName} ${post.postUser?.lastName}`}
+                      sx={{ width: 40, height: 40 }}
+                    />
+                  ) : (
+                    <Avatar sx={{ width: 40, height: 40 }}>
+                      {post.postUser?.firstName?.[0] || "?"}
+                    </Avatar>
+                  )}
+                </div>
+
+                <div className="post-user-name">
+                  <p>
+                    <a href="#" onClick={handleOnUserNameClick}>
+                      {post.postUser?.firstName && post.postUser?.lastName
+                        ? `${post.postUser.firstName} ${post.postUser.lastName}`
+                        : "Unknown User"}
+                    </a>
+                  </p>
+                </div>
               </div>
 
               <div className="created-On-Behalf">
@@ -387,7 +407,7 @@ const PostCard: React.FC<PostCardProps> = ({
             ))}
           </div>
         )}
-    {/* {post.id} */}
+        {/* {post.id} */}
         <div className="description-image">
           <div className="like-quantity-row">
             <h4>
