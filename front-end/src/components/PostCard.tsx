@@ -342,23 +342,23 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
             <div className="post-user-details">
               <div className="avatar-name">
-                <div
+                {/* <div
                   className="post-user-avatar"
-                  onClick={handleOnUserNameClick}
+                  onClick={handleOnUserNameClick} // type mismatch here
                   style={{ cursor: "pointer" }}
                 >
                   {post.postUserProfileUrlThumbnail ? (
                     <Avatar
                       src={post.postUserProfileUrlThumbnail}
                       alt={`${post.postUser?.firstName} ${post.postUser?.lastName}`}
-                      sx={{ width: 40, height: 40 }}
+                      sx={{ width: 30, height: 30 }}
                     />
                   ) : (
                     <Avatar sx={{ width: 40, height: 40 }}>
                       {post.postUser?.firstName?.[0] || "?"}
                     </Avatar>
                   )}
-                </div>
+                </div> */}
 
                 <div className="post-user-name">
                   <p>

@@ -93,6 +93,7 @@
 
 .avatar-name {
   display: flex;
+  width: 100%;
 }
 
 .like-quantity-row h4 {
