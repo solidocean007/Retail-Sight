@@ -17,7 +17,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  margin: 0 1rem;
+  text-align: justify;
+  margin: 0 0 0 5px;
   font-size: smaller;
   color: var(--header-title);
 }

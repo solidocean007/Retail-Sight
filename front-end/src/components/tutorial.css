@@ -29,24 +29,14 @@
     padding: 10px;
   }
 
-  h1 {
+  .tutorial-container h1 {
     font-size: 24px; /* Smaller font size for smaller screens */
   }
 
-  button {
+  .tutorial-container button {
     padding: 8px 15px;
     font-size: 14px;
   }
 }
 
-@media (max-width: 480px) {
-  h1 {
-    font-size: 20px; /* Even smaller font size for mobile screens */
-  }
 
-  .tutorial-container button {
-    width: 100%; /* Full width buttons on smaller screens */
-    padding: 10px;
-    margin: 5px 0px;
-  }
-}

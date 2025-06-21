@@ -20,7 +20,7 @@
   --gold: #ffd700; /* ✅ Now valid */
 
   /* Backgrounds */
-  --background-body: var(--gray-300);
+  --background-body: var(--gray-50);
   --input-background: var(--white);
 
   /* Buttons */
@@ -29,7 +29,9 @@
 
   /* Shadow & Radius */
   --card-radius: 16px;
-  --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 5px 5px -2px rgba(0, 0, 0, 0.08);
+  --button-shadow: 1px 2px 2px 2px rgba(0, 0, 0, 0.25),
+    0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
 
   /* Custom Color Groups */
   --bgColor-muted: #151b23;

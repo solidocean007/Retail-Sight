@@ -85,6 +85,12 @@
   padding: 0rem 1rem;
 }
 
+.post-card-controls button {
+  padding: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
 .like-quantity-row h4 {
   margin: 0;
 }
@@ -230,6 +236,7 @@
 
 .store-address-box h5,
 .store-name-number h5,
+.store-name-number h3,
 .created-On-Behalf h5,
 .likes-box h5 {
   margin: 0px;

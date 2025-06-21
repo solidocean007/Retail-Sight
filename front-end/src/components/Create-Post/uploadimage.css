@@ -1,3 +1,17 @@
 .step-one h4 {
   font-weight: bold;
 }
+
+.upload-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.upload-buttons label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}

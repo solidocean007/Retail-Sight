@@ -268,15 +268,15 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="visibility">
             <div className="view-box">
               <p>view: {post.visibility}</p>
-              <div className="dot-box">
-                <IconButton
+              <div className="post-card-controls">
+                <button
                   aria-label="settings"
                   aria-controls="post-card-menu"
                   aria-haspopup="true"
                   onClick={handleVertIconClick}
                 >
                   <MoreVert />
-                </IconButton>
+                </button>
                 <div>
                   {Boolean(anchorEl) && (
                     <Menu
@@ -380,15 +380,14 @@ const PostCard: React.FC<PostCardProps> = ({
             ? `Gallo goal: ${post.galloGoalTitle}`
             : ""}
         </div>
-        {/* {post.brands && post.brands.length > 0 && (
+        {post.brands && post.brands.length > 0 && (
           <div className="brands-list">
             {post.brands.map((brand) => (
               <Chip key={brand} label={brand} size="small" />
             ))}
           </div>
-        )} */}
-    {post.id}
-    {post.productType}
+        )}
+    {/* {post.id} */}
         <div className="description-image">
           <div className="like-quantity-row">
             <h4>

@@ -220,12 +220,13 @@ export const CreatePost = () => {
               }}
             >
               <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
-              <IconButton
+              <button
+                className="close-button"
                 aria-label="close"
                 onClick={() => navigate("/user-home-page")}
               >
                 <CancelRounded />
-              </IconButton>
+              </button>
             </div>
 
             {authToCreateOnBehalf && (

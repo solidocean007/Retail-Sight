@@ -6,6 +6,12 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import heic2any from "heic2any";
 import { useState } from "react";
+import {
+  Photo,
+  PhotoAlbum,
+  PhotoAlbumOutlined,
+  PhotoAlbumRounded,
+} from "@mui/icons-material";
 
 interface UploadImageProps {
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
@@ -99,36 +105,33 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         </div>
       )}
 
-      {/* <Button
-        variant="contained"
-        component="label"
-        startIcon={<AddAPhotoIcon />}
-        disabled={isConverting}
-      >
-        {post.imageUrl ? "Change Image" : "Upload Image"}
-        <input
-          type="file"
-          hidden
-          onChange={handleImageChange}
-          accept="image/*"
-        />
-      </Button> */}
-      <Button
-        variant="contained"
-        component="label"
-        startIcon={<AddAPhotoIcon />}
-        disabled={isConverting}
-      >
-        {post.imageUrl ? "Change Image" : "Upload Image"}
-        <input
-          type="file"
-          hidden
-          accept="image/*"
-          capture="environment"
-          onClick={(e) => (e.currentTarget.value = "")}
-          onChange={handleImageChange}
-        />
-      </Button>
+      <div className="upload-buttons">
+        <button className="upload-button btn-outline">
+          <label>
+            <AddAPhotoIcon /> Take Photo
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onClick={(e) => (e.currentTarget.value = "")}
+              onChange={handleImageChange}
+              style={{ display: "none" }}
+            />
+          </label>
+        </button>
+        <button className="upload-button btn-outline">
+          <label>
+            <Photo /> Select Photo
+            <input
+              type="file"
+              accept="image/*"
+              onClick={(e) => (e.currentTarget.value = "")}
+              onChange={handleImageChange}
+              style={{ display: "none" }}
+            />
+          </label>
+        </button>
+      </div>
 
       {post.imageUrl && (
         <>
