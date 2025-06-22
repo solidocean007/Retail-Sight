@@ -61,55 +61,88 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
     }
   }, [companyId, post.oppId, apiKey, dispatch]);
 
-  const handleSubmitClick = useCallback(async () => {
-    if (!selectedFile || isSubmitting) return;
+  // const handleSubmitClick = useCallback(async () => {
+  //   if (!selectedFile || isSubmitting) return;
 
-    setIsSubmitting(true);
-    setUploadProgress(0);        // reset bar at start
-    setIsUploading(true);
+  //   setIsSubmitting(true);
+  //   setUploadProgress(0);        // reset bar at start
+  //   setIsUploading(true);
 
-    try {
-      await handlePostSubmission(
-        post,
-        selectedFile,
-        setIsUploading,
-        setUploadProgress,
-        selectedCompanyMission,
-        apiKey,
-        navigate
-      );
+  //   try {
+  //     await handlePostSubmission(
+  //       post,
+  //       selectedFile,
+  //       setIsUploading,
+  //       setUploadProgress,
+  //       selectedCompanyMission,
+  //       apiKey,
+  //       navigate
+  //     );
 
-      // only reach here if upload + Firestore writes succeeded
-      dispatch(showMessage("Post submitted successfully!"));
-      setUploadProgress(100);    // force 100% for UI
-      setTimeout(() => {
-        setIsUploading(false);
-        navigate("/user-home-page");
-      }, 800);
-    } catch (error: any) {
-      console.error("Error during post submission:", error);
-      dispatch(
-        showMessage(
-          error.message || "An unknown error occurred during post submission."
-        )
-      );
-      setUploadProgress(0);      // reset on failure
-    } finally {
-      setIsSubmitting(false);
-      // no automatic reset here anymore :contentReference[oaicite:0]{index=0}
-    }
-  }, [
-    apiKey,
-    dispatch,
-    handlePostSubmission,
-    isSubmitting,
-    navigate,
-    post,
-    selectedCompanyMission,
-    selectedFile,
-    setUploadProgress,
-    setIsUploading,
-  ]);
+  //     // only reach here if upload + Firestore writes succeeded
+  //     dispatch(showMessage("Post submitted successfully!"));
+  //     setUploadProgress(100);    // force 100% for UI
+  //     setTimeout(() => {
+  //       setIsUploading(false);
+  //       navigate("/user-home-page");
+  //     }, 800);
+  //   } catch (error: any) {
+  //     console.error("Error during post submission:", error);
+  //     dispatch(
+  //       showMessage(
+  //         error.message || "An unknown error occurred during post submission."
+  //       )
+  //     );
+  //     setUploadProgress(0);      // reset on failure
+  //   } finally {
+  //     setIsSubmitting(false);
+  //     // no automatic reset here anymore :contentReference[oaicite:0]{index=0}
+  //   }
+  // }, [
+  //   apiKey,
+  //   dispatch,
+  //   handlePostSubmission,
+  //   isSubmitting,
+  //   navigate,
+  //   post,
+  //   selectedCompanyMission,
+  //   selectedFile,
+  //   setUploadProgress,
+  //   setIsUploading,
+  // ]);
+
+  // ReviewAndSubmit.tsx
+const handleSubmitClick = async () => {
+  if (!selectedFile) {
+    dispatch(showMessage("Please select an image before submitting."));
+    return;
+  }
+
+  setIsSubmitting(true);
+  setUploadProgress(0);
+  setIsUploading(true);
+
+  try {
+    await handlePostSubmission(
+      post,
+      selectedFile,
+      setIsUploading,
+      setUploadProgress,
+      selectedCompanyMission,
+      apiKey,
+      navigate
+    );
+    dispatch(showMessage("Post submitted successfully!"));
+    navigate("/user-home-page");
+  } catch (err: any) {
+    console.error("Upload failed:", err);
+    dispatch(showMessage(err.message || "An error occurred during upload."));
+  } finally {
+    setIsSubmitting(false);
+    setIsUploading(false);
+  }
+};
+
 
   return (
     <div className="review-and-submit">

@@ -56,15 +56,18 @@ import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUt
 import DashMenu from "./DashMenu.tsx";
 // import { updatePostsWithFreshAccounts } from "../script.ts";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
+import { useNavigate } from "react-router-dom";
 
 export const Dashboard = () => {
+  // const navigate = useNavigate();
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
   const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
-  const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
+  // const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
+  const [drawerOpen, setDrawerOpen] = useState(true);
 
   // Placeholder for role check. Replace 'user.role' with the actual role property.
   const isEmployee = user?.role === "employee";
@@ -122,9 +125,14 @@ export const Dashboard = () => {
       setDrawerOpen(open);
     };
 
-  useEffect(() => {
-    setDrawerOpen(isLargeScreen);
-  }, [isLargeScreen]);
+ useEffect(() => {
+  // if we flip into desktop view, open the drawer
+  if (isLargeScreen) {
+    setDrawerOpen(true);
+  }
+  // but if we flip into mobile, leave whatever state we were in
+}, [isLargeScreen]);
+
 
   useEffect(() => {
     const syncCompanyUsers = async () => {

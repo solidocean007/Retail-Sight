@@ -213,41 +213,34 @@ export const CreatePost = () => {
         {isUploading && <LoadingIndicator progress={uploadProgress} />}
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
-            <div
-              style={{
-                display: "flex",
-                width: "100%",
-                justifyContent: "space-between",
-              }}
+            <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
+            <button
+              className="close-button"
+              aria-label="close"
+              onClick={() => navigate("/user-home-page")}
             >
-              <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
-              <button
-                className="close-button"
-                aria-label="close"
-                onClick={() => navigate("/user-home-page")}
-              >
-                <CancelRounded />
-              </button>
-            </div>
-
-            {authToCreateOnBehalf && (
-              <CreatePostOnBehalfOfOtherUser
-                onBehalf={onBehalf}
-                setOnBehalf={setOnBehalf}
-                handleFieldChange={handleFieldChange}
-              />
-            )}
+              <CancelRounded />
+            </button>
           </div>
         </AppBar>
-        {renderStepContent()}
-        {supplierVisibility && (
-          <MissionSelection
-            open={openMissionSelection}
-            onClose={onClose}
-            setSelectedCompanyMission={setSelectedCompanyMission}
-            setSelectedMission={setSelectedMission}
-          />
-        )}
+        <div className="create-post-body">
+          {authToCreateOnBehalf && (
+            <CreatePostOnBehalfOfOtherUser
+              onBehalf={onBehalf}
+              setOnBehalf={setOnBehalf}
+              handleFieldChange={handleFieldChange}
+            />
+          )}
+          {renderStepContent()}
+          {supplierVisibility && (
+            <MissionSelection
+              open={openMissionSelection}
+              onClose={onClose}
+              setSelectedCompanyMission={setSelectedCompanyMission}
+              setSelectedMission={setSelectedMission}
+            />
+          )}
+        </div>
       </Container>
     </>
   );

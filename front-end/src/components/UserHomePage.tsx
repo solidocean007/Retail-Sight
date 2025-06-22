@@ -21,8 +21,10 @@ import { setReduxAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
 import EnhancedFilterSidebar from "./FilterSideBar/EnhancedFilterSideBar";
 import { getFilterSummaryText } from "./FilterSideBar/utils/filterUtils";
+import { useNavigate } from "react-router-dom";
 
 export const UserHomePage = () => {
+  const navigate = useNavigate();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
@@ -38,13 +40,13 @@ export const UserHomePage = () => {
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
   const [isClosing, setIsClosing] = useState(false);
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
-  // const posts = useSelector((state: RootState) => state.posts.posts);
-  // const filteredPosts = useSelector(
-  //   (state: RootState) => state.posts.filteredPosts
-  // ); //
+  const filterText = lastFilters ? getFilterSummaryText(lastFilters) : "";
   // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
-  const filteredPostCount = useSelector(
+  const filteredCount = useSelector(
     (state: RootState) => state.posts.filteredPostCount
+  );
+  const fetchedAt = useSelector(
+    (s: RootState) => s.posts.filteredPostFetchedAt
   );
 
   useEffect(() => {
@@ -130,6 +132,31 @@ export const UserHomePage = () => {
       <div className="user-home-page-container">
         <div className="header-bar-container">
           <HeaderBar toggleFilterMenu={toggleFilterMenu} />
+        </div>
+        <div className="mobile-home-page-actions">
+          {activePostSet === "filteredPosts" && filteredCount > 0 ? (
+            <FilterSummaryBanner
+              filteredCount={filteredCount}
+              filterText={filterText}
+              onClear={clearSearch}
+              fetchedAt={fetchedAt}
+            />
+          ) : (
+            <div className="activity-feed-header-bar">
+              <button
+                onClick={toggleFilterMenu}
+                className="btn-outline filter-menu-toggle"
+              >
+                Filters
+              </button>
+              <button
+                onClick={() => navigate("/createPost")}
+                className="btn-outline filter-menu-toggle"
+              >
+                Create Display
+              </button>
+            </div>
+          )}
         </div>
         <div className="home-page-content">
           <div className="activity-feed-container">

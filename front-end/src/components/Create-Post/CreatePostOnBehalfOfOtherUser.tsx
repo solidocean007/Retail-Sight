@@ -1,11 +1,5 @@
-import {
-  Box,
-  InputLabel,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  TextField,
-} from "@mui/material";
+import React, { useEffect, useMemo } from "react";
+import { Box, TextField, Autocomplete } from "@mui/material";
 import { useSelector } from "react-redux";
 import { PostInputType, UserType } from "../../utils/types";
 import {
@@ -13,7 +7,6 @@ import {
   selectUser,
   setCompanyUsers,
 } from "../../Slices/userSlice";
-import { useEffect } from "react";
 import {
   getCompanyUsersFromIndexedDB,
   saveCompanyUsersToIndexedDB,
@@ -21,7 +14,6 @@ import {
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { useAppDispatch } from "../../utils/store";
-import { MenuOutlined } from "@mui/icons-material";
 
 interface Props {
   onBehalf: UserType | null;
@@ -38,101 +30,121 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
   handleFieldChange,
 }) => {
   const dispatch = useAppDispatch();
-  const userData = useSelector(selectUser);
-  const companyId = userData?.companyId;
-  const companyUsers = useSelector(selectCompanyUsers);
+  const userData = useSelector(selectUser)!;
+  const companyId = userData.companyId!;
+  const companyUsers = useSelector(selectCompanyUsers) || [];
 
+  // Load & cache company users
   useEffect(() => {
     if (!companyId) return;
+    (async () => {
+      const cached = await getCompanyUsersFromIndexedDB();
+      if (cached) dispatch(setCompanyUsers(cached));
 
-    const fetchData = async () => {
-      // Check IndexedDB first
-      const cachedUsers = await getCompanyUsersFromIndexedDB();
-      if (cachedUsers) {
-        // setLocalUsers(cachedUsers);
-        dispatch(setCompanyUsers(cachedUsers));
-      }
-
-      // Firestore real-time subscription setup
       const q = query(
         collection(db, "users"),
-        where("companyId", "==", companyId),
+        where("companyId", "==", companyId)
       );
-
-      const unsubscribe = onSnapshot(
-        q,
-        async (snapshot) => {
-          const usersFromFirestore = snapshot.docs.map(
-            (doc) =>
-              ({
-                ...doc.data(),
-                uid: doc.id,
-              }) as UserType,
-          );
-
-          // Compare with IndexedDB data to see if there are changes
-          const isDifferent =
-            JSON.stringify(usersFromFirestore) !== JSON.stringify(cachedUsers);
-          if (isDifferent) {
-            dispatch(setCompanyUsers(usersFromFirestore)); // Update Redux store
-            // setLocalUsers(usersFromFirestore); // Update local state
-
-            // Save the updated list to IndexedDB
-            await saveCompanyUsersToIndexedDB(usersFromFirestore);
-          }
-        },
-        (error) => {
-          console.error("Error fetching users:", error);
-        },
-      );
-
-      // Return a cleanup function to unsubscribe from Firestore updates when the component unmounts
-      return () => unsubscribe();
-    };
-
-    fetchData();
+      const unsub = onSnapshot(q, async (snap) => {
+        const fresh = snap.docs.map(
+          (d) => ({ ...(d.data() as any), uid: d.id } as UserType)
+        );
+        if (JSON.stringify(fresh) !== JSON.stringify(cached)) {
+          dispatch(setCompanyUsers(fresh));
+          await saveCompanyUsersToIndexedDB(fresh);
+        }
+      });
+      return () => unsub();
+    })();
   }, [companyId, dispatch]);
 
-  const handleOnBehalfSelect = (e: SelectChangeEvent<string>) => {
-    const uid = e.target.value;
-    const selected = companyUsers?.find(u => u.uid === uid) || null;
-    setOnBehalf(selected);
-
-    // If someone else is selected, override all the postUser fields
-    if (selected) {
-      handleFieldChange("postUserName", `${selected.firstName} ${selected.lastName}`);
-      handleFieldChange("postUserId", selected.uid);
-      handleFieldChange("postUserCompany", selected.company);
-      handleFieldChange("postUserCompanyId", selected.companyId);
-      handleFieldChange("postUserEmail", selected.email);
-    } else {
-      // revert back to yourself
-      handleFieldChange("postUserName", `${userData.firstName} ${userData.lastName}`);
-      handleFieldChange("postUserId", userData.uid);
-      handleFieldChange("postUserCompany", userData.company);
-      handleFieldChange("postUserCompanyId", userData.companyId);
-      handleFieldChange("postUserEmail", userData.email);
-    }
-  };
+  // Build sorted list (including current user)
+  const options = useMemo(() => {
+    const all = [
+      userData,
+      ...companyUsers.filter((u) => u.uid !== userData.uid),
+    ];
+    return all.sort((a, b) => {
+      const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+      const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [companyUsers, userData]);
 
   return (
-    <Box sx={{ display: "flex", fontSize: "15px", flexDirection: "column" }}>
-      <InputLabel htmlFor="onBehalf-select">For user:</InputLabel>
-      <Select
-        id="onBehalf-select"
-        value={onBehalf?.uid || userData?.uid || ""}
-        onChange={handleOnBehalfSelect}
-        sx={{ width: "20rem", backgroundColor: "whitesmoke" }}
-      >
-        <MenuItem value={userData?.uid}>
-          {`${userData?.firstName} ${userData?.lastName} (You)`}
-        </MenuItem>
-        {companyUsers?.map((user) => (
-          <MenuItem key={user.uid} value={user.uid}>
-            {`${user.firstName} ${user.lastName}`}
-          </MenuItem>
-        ))}
-      </Select>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+        width: 320,
+        marginTop: "15px",
+      }}
+    >
+      <Autocomplete
+        options={options}
+        getOptionLabel={(u) =>
+          u.uid === userData.uid
+            ? `${u.firstName} ${u.lastName} (You)`
+            : `${u.firstName} ${u.lastName}`
+        }
+        value={onBehalf || userData}
+        onChange={(_, selected) => {
+          setOnBehalf(selected);
+          handleFieldChange("postedBy" as any, selected);
+        }}
+        clearOnEscape={false}
+        disableClearable
+        sx={{
+          width: 320,
+          // background behind the input box
+          backgroundColor: "var(--input-bg)",
+
+          // outline color
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "var(--input-border)",
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "var(--input-border-hover)",
+          },
+
+          // label color (floating & shrunk)
+          "& .MuiInputLabel-root": {
+            color: "var(--text-secondary)",
+          },
+          "& .MuiInputLabel-root.Mui-focused": {
+            color: "var(--text-primary)",
+          },
+
+          // the text you type
+          "& .MuiAutocomplete-inputRoot .MuiInputBase-input": {
+            color: "var(--text-primary)",
+          },
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="For user"
+            variant="outlined"
+            size="small"
+            // force the filled bg & text
+            InputProps={{
+              ...params.InputProps,
+              sx: {
+                backgroundColor: "var(--input-bg)",
+              },
+            }}
+            InputLabelProps={{
+              sx: {
+                color: "var(--text-secondary)",
+                "&.Mui-focused": {
+                  color: "var(--text-primary)",
+                },
+              },
+            }}
+          />
+        )}
+      />
     </Box>
   );
 };

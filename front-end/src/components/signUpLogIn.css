@@ -76,7 +76,7 @@ form {
 /* Scoped Material UI override */
 .signup-textfield {
   width: 100%;
-  height: 56px;
+  /* height: 56px; */
   background-color: var(--input-background);
   border-radius: 8px;
 }
@@ -92,6 +92,7 @@ form {
 .sign-up-container button {
   font-size: small;
   font-family: "Courier New", Courier, monospace;
+  background-color: var(--btn-primary-bg);
 }
 
 /* Responsive */

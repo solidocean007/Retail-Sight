@@ -10,19 +10,8 @@ import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { openDB } from "../utils/database/indexedDBOpen";
 import { doc, getDoc } from "@firebase/firestore";
 import { db } from "../utils/firebase";
-import { Tooltip } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
-import { clearPostsData } from "../Slices/postsSlice";
-import {
-  clearCompanyProductsFromIndexedDB,
-  clearGoalsFromIndexedDB,
-  clearHashtagPostsInIndexedDB,
-  clearIndexedDBStore,
-  clearPostsInIndexedDB,
-  clearStarTagPostsInIndexedDB,
-  clearUserCreatedPostsInIndexedDB,
-  closeAndDeleteIndexedDB,
-} from "../utils/database/indexedDBUtils";
 import { resetApp } from "../utils/resetApp";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
@@ -192,21 +181,18 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             </div>
             <div
               className="hamburger-menu-button"
-              onClick={() => setShowMenuTab(!showMenuTab)}
+               onClick={() => navigate("/dashboard")}
+
               aria-haspopup="true"
               aria-expanded={showMenuTab}
-              style={{ visibility: showMenuTab ? "hidden" : "visible" }}
+              // style={{ visibility: showMenuTab ? "hidden" : "visible" }}
             >
               ☰
             </div>
           </div>
         )}
       </div>
-      {showMenuTab && (
-        <div ref={menuRef}>
-          <MenuTab onOptionSelect={handleMenuOptionSelect} show={showMenuTab} />
-        </div>
-      )}
+     
     </>
   );
 };

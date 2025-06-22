@@ -30,6 +30,7 @@ import NoResults from "./NoResults";
 import FilterSummaryBanner from "./FilterSummaryBanner";
 import { getFilterSummaryText } from "./FilterSideBar/utils/filterUtils";
 import { PostQueryFilters } from "../utils/types";
+import { useNavigate } from "react-router-dom";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -70,24 +71,19 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const fetchedAt = useSelector((s: RootState) => s.posts.filteredPostFetchedAt);
-
   const filteredCount = useSelector(
     (s: RootState) => s.posts.filteredPostCount
   );
-  const filterText = appliedFilters ? getFilterSummaryText(appliedFilters) : "";
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
-
   const displayPosts = useMemo(() => {
     return activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
   }, [
     activePostSet,
     activePostSet === "filteredPosts" ? filteredPosts : rawPosts,
   ]);
-
   // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
@@ -109,16 +105,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       behavior: "smooth",
     });
   };
-
-  // State to store the list height
-  const [listHeight, setListHeight] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.visualViewport
-        ? window.visualViewport.height * 0.95
-        : window.innerHeight * 0.95;
-    }
-    return 800; // Fallback for SSR or very early load
-  });
 
   useEffect(() => {
     if (!postIdToScroll || !virtuosoRef.current || !displayPosts.length) return;
@@ -169,21 +155,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   return (
     <div className="activity-feed-box">
       <div className="top-of-activity-feed">
-        {activePostSet === "filteredPosts" && filteredCount > 0 ? (
-          <FilterSummaryBanner
-            filteredCount={filteredCount}
-            filterText={filterText} 
-            onClear={clearSearch}
-            fetchedAt={fetchedAt}
-          />
-        ) : (
-          <button
-            onClick={toggleFilterMenu}
-            className="btn-outline filter-menu-toggle"
-          >
-            Filters
-          </button>
-        )}
+       
       </div>
 
       <Virtuoso
