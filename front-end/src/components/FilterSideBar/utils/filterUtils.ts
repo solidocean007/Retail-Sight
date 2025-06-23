@@ -5,20 +5,30 @@ import { PostQueryFilters, PostWithID } from "../../../utils/types";
 const normalizeBrand = (brand: string): string =>
   brand.toLowerCase().replace(/[\s\-]+/g, "");
 
-export const getFilterSummaryText = (filters: PostQueryFilters) => {
+export const getFilterSummaryText = (
+  filters: PostQueryFilters | null | undefined
+): string => {
+  if (!filters) return "";
   const parts: string[] = [];
-  if (filters.hashtag) parts.push(`${filters.hashtag}`);
-  if (filters.starTag) parts.push(`${filters.starTag}`);
-  if (filters.dateRange?.startDate || filters.dateRange?.endDate) {
-    const start = filters.dateRange.startDate
-      ? new Date(filters.dateRange.startDate).toLocaleDateString()
-      : "";
-    const end = filters.dateRange.endDate
-      ? new Date(filters.dateRange.endDate).toLocaleDateString()
-      : "";
-    parts.push(start === end ? `Date: ${start}` : `From ${start} to ${end}`);
+
+  if (filters.hashtag) parts.push(filters.hashtag);
+  if (filters.starTag) parts.push(filters.starTag);
+  if (filters.brand) parts.push(filters.brand);
+  if (filters.productType) parts.push(filters.productType);
+
+  const { startDate, endDate } = filters.dateRange || {};
+  if (startDate || endDate) {
+    const start = startDate ? new Date(startDate).toLocaleDateString() : "";
+    const end = endDate ? new Date(endDate).toLocaleDateString() : "";
+    parts.push(
+      start && end && start !== end
+        ? `From ${start} to ${end}`
+        : `Date: ${start || end}`
+    );
   }
-  return parts.join(" • ");
+
+  // if nothing matched, return an empty string
+  return parts.length > 0 ? parts.join(" • ") : "";
 };
 
 export function removeFilterField(

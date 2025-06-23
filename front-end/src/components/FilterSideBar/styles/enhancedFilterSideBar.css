@@ -25,7 +25,7 @@
 
 .side-bar-box {
   width: 100%;
-  padding: 20px 10px;
+  padding: 5px 10px;
   border-radius: var(--card-radius);
   background-color: var(--sidebar-background-color);
   color: var(--text-color);
@@ -85,10 +85,12 @@
   font-weight: 700;
   text-align: center;
   color: var(--primary-blue);
-  margin-bottom: 0;
+  margin-bottom: 5px;
   border-bottom: 2px solid var(--primary-blue);
   padding-bottom: 0.5rem;
+  margin-top: 5px
 }
+
 
 .active-filters-chip-row {
   display: flex;

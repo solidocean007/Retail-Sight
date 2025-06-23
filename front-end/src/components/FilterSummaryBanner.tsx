@@ -18,8 +18,9 @@ const FilterSummaryBanner: React.FC<FilterSummaryBannerProps> = ({
   return (
     <div className="filter-summary-banner">
       <span>
-        Showing {filteredCount} filtered post{filteredCount !== 1 && "s"}{" "}
-        {filterText && `• ${filterText}`}
+        {/* Showing {filteredCount} filtered post{filteredCount !== 1 && "s"}{" "} */}
+        Showing filtered post{filteredCount !== 1 && "s"}{" "} for:
+        {filterText && ` ${filterText}`}
         {fetchedAt && (
           <div className="fetched-at">
             as of {new Date(fetchedAt).toLocaleString()}

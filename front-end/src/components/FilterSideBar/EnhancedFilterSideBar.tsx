@@ -58,6 +58,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   // setCurrentStarTag,
   toggleFilterMenu,
 }) => {
+  const allPosts = useSelector((s: RootState) => s.posts.posts);
   const [brandOpen, setBrandOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [lastAppliedFilters, setLastAppliedFilters] =
@@ -142,6 +143,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     setSelectedProductType(null);
     setProductTypeInput("");
     setActivePostSet("posts"); // ✨ resets the view
+
+    // ✨ RESET THE REDUX SLICE:
+    dispatch(setFilteredPosts(allPosts)); // reset filteredPosts & count
+    dispatch(setFilteredPostFetchedAt(null));
   };
 
   const filtersChanged =
@@ -286,6 +291,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       // apply local client-side filtering
       const locallyFiltered = locallyFilterPosts(filteredPosts, updatedFilters); // Cannot find name 'filteredPosts'
       dispatch(setFilteredPosts(locallyFiltered));
+      setLastAppliedFilters(updatedFilters);
     }
   };
 
@@ -346,8 +352,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <div className="filter-summary-banner-container">
           <FilterSummaryBanner
             filteredCount={filteredPostCount}
-            filterText={getFilterSummaryText(filters)}
-            // onClear={() => setFilters(clearAllFilters())}
+            filterText={getFilterSummaryText(lastAppliedFilters)} //  Type 'null' is not assignable to type 'PostQueryFilters'
             onClear={handleClearFilters}
             fetchedAt={fetchedAt}
           />
