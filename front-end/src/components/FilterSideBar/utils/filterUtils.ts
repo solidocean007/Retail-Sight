@@ -62,8 +62,6 @@ export function clearAllFilters(): PostQueryFilters {
     companyId: null,
     states: [],
     cities: [],
-    // channel: null,
-    // category: null,
     accountType: null,
     accountChain: null,
     chainType: null,

@@ -1,18 +1,23 @@
 // postsService.ts
 import { query, where, Query, DocumentData } from "firebase/firestore";
 
+const normalizeString = (s: string) =>
+  s.trim().toLowerCase().replace(/\s+/g, "");
+
 export const filterExactMatch = (
   field: string,
   value: string | undefined,
   baseQuery: Query<DocumentData>
-) => {
-  if (value) {
-    console.log(`Applying filter: ${field} == ${value}`);
-    return query(baseQuery, where(field, "==", value));
+): Query<DocumentData> => {
+  if (!value) {
+    return baseQuery;
   }
-  return baseQuery;
-};
 
+  const normValue = normalizeString(value);
+  const normField = `${field}Normalized`;
+
+  return query(baseQuery, where(normField, "==", normValue));
+};
 
 export const filterInMatch = (
   field: string,
@@ -29,7 +34,9 @@ export const filterArrayContains = (
   value: string | undefined,
   baseQuery: Query<DocumentData>
 ) => {
-  return value ? query(baseQuery, where(field, "array-contains", value)) : baseQuery;
+  return value
+    ? query(baseQuery, where(field, "array-contains", value))
+    : baseQuery;
 };
 
 // export const filterByChannels = (
@@ -146,19 +153,14 @@ export const filterArrayContains = (
 
 // };
 
-
 // export const filterByChainType= (
 
 // ) => {
 
 // };
 
-
 // export const filterByBrand = (
 
 // ) => {
 
 // };
-
-
-

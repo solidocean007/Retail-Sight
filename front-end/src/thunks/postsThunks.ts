@@ -284,11 +284,9 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       );
     }
     if (filters.productType) {
-      baseQuery = filterExactMatch(
-        "productType",
-        filters.productType ?? undefined,
-        baseQuery
-      );
+      // lowercase the user’s selection so it matches the lower-case data in Firestore
+      const val = filters.productType.trim().toLowerCase();
+      baseQuery = filterArrayContains("productType", val, baseQuery);
     }
 
     // ❌ REMOVE: date filtering — these rely on displayDate index

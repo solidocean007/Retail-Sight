@@ -21,7 +21,8 @@
 }
 
 .mobile-home-page-actions {
-    display: none;
+  width: 100%;
+  padding: 20px;
   }
 
 .home-page-content {
@@ -81,6 +82,10 @@
 
 @media (min-width: 900px) {
   .mobile-filter-banner {
+    display: none;
+  }
+
+  .mobile-home-page-actions {
     display: none;
   }
 }

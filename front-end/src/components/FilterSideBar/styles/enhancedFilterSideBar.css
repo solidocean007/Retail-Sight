@@ -137,6 +137,10 @@
   background-color: var(--outlined-button-hover);
 }
 
+.filter-actions {
+  min-height: 55px; /* i want the space the buttons will appear to always be there */
+}
+
 .filter-section {
   display: flex;
   flex-direction: column;
@@ -258,6 +262,7 @@
 
   .filter-title {
     font-size: 1.5rem;
+    margin-bottom: 1rem;
   }
 
   .section-toggle {

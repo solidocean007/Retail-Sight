@@ -31,6 +31,7 @@ import { normalizePost } from "../../utils/normalizePost";
 // import { clear } from "console";
 import { Autocomplete, TextField } from "@mui/material";
 import { useBrandOptions } from "../../hooks/useBrandOptions";
+import ProductTypeAutocomplete from "./ProductTypeAutoComplete";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -57,6 +58,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   // setCurrentStarTag,
   toggleFilterMenu,
 }) => {
+  const [brandOpen, setBrandOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [lastAppliedFilters, setLastAppliedFilters] =
     useState<PostQueryFilters | null>(null);
@@ -69,7 +71,12 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   ): boolean => {
     return JSON.stringify(a) === JSON.stringify(b);
   };
+  const [tagInput, setTagInput] = useState("");
   const [brandInput, setBrandInput] = useState("");
+  const [productTypeInput, setProductTypeInput] = useState("");
+  const [selectedProductType, setSelectedProductType] = useState<string | null>(
+    null
+  );
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
 
   const [isBrandValid, setIsBrandValid] = useState(true);
@@ -108,9 +115,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     chainType: null,
     hashtag: null,
     starTag: null,
-    // channel: null,
-    // category: null,
-    brand: undefined,
+    // brand: undefined, //
+    brand: null, //
     productType: null,
     companyGoalId: undefined,
     companyGoalTitle: undefined,
@@ -128,20 +134,32 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   });
 
   const handleClearFilters = () => {
-    setFilters(clearAllFilters());
-    setLastAppliedFilters(null);
-    setTagInput("");
-    setActivePostSet("posts");
+    const empty = clearAllFilters();
+    setFilters(empty); // ✨ clears your filter object
+    setLastAppliedFilters(empty); // ✨ clears the chips/banner
+    setBrandInput(""); // clears the text
+    setSelectedBrand(null);
+    setSelectedProductType(null);
+    setProductTypeInput("");
+    setActivePostSet("posts"); // ✨ resets the view
   };
 
   const filtersChanged =
     !lastAppliedFilters || !areFiltersEqual(filters, lastAppliedFilters);
+
   const fetchedAt = useSelector(
     (s: RootState) => s.posts.filteredPostFetchedAt
   );
 
   const debouncedFilters = useDebouncedValue(filters, 150);
-  const [tagInput, setTagInput] = useState("");
+
+  // in EnhancedFilterSidebar
+  useEffect(() => {
+    if (!filters.brand) {
+      setBrandInput("");
+      setSelectedBrand(null);
+    }
+  }, [filters.brand]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -161,6 +179,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [filters, filtersSet, filtersChanged]);
 
+  // what does this do?  should i include all other filters inside of this?
   useEffect(() => {
     if (currentHashtag) {
       setFilters((prev) => ({
@@ -255,6 +274,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       setTagInput("");
     }
 
+    if (field === "brand") {
+      setBrandInput("");
+    }
+
+    if (field === "productType") {
+      setProductTypeInput("");
+    }
+
     if (activePostSet === "filteredPosts") {
       // apply local client-side filtering
       const locallyFiltered = locallyFilterPosts(filteredPosts, updatedFilters); // Cannot find name 'filteredPosts'
@@ -293,14 +320,35 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
   };
 
+  useEffect(() => {
+    // clear the brand input if brand filter was cleared
+    if (!filters.brand) {
+      setBrandInput("");
+      setSelectedBrand(null);
+      setBrandOpen(false);
+    }
+
+    // clear the product-type input if productType filter was cleared
+    if (!filters.productType) {
+      setProductTypeInput("");
+    }
+
+    // clear the tag input if both hashtag & starTag were cleared
+    if (!filters.hashtag && !filters.starTag) {
+      setTagInput("");
+    }
+  }, [filters.brand, filters.productType, filters.hashtag, filters.starTag]);
+
   return (
     <div className="enhanced-sidebar side-bar-box">
-      {activePostSet === "filteredPosts" && filteredPosts.length > 0 && (
+      {/* {activePostSet === "filteredPosts" && filteredPosts.length > 0 && ( */}
+      {activePostSet === "filteredPosts" && (
         <div className="filter-summary-banner-container">
           <FilterSummaryBanner
             filteredCount={filteredPostCount}
             filterText={getFilterSummaryText(filters)}
-            onClear={() => setFilters(clearAllFilters())}
+            // onClear={() => setFilters(clearAllFilters())}
+            onClear={handleClearFilters}
             fetchedAt={fetchedAt}
           />
         </div>
@@ -318,6 +366,24 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         ) : (
           <button className="btn-outline" onClick={toggleFilterMenu}>
             Close Filters
+          </button>
+        )}
+      </div>
+      <div className="filter-actions">
+        {/* {filtersSet && filtersChanged && ( */}
+        {filtersSet && (
+          <button className="btn" onClick={handleApply}>
+            Apply Filters
+          </button>
+        )}
+        {filtersSet && (
+          <button
+            className="btn-secondary"
+            // onClick={() => setFilters(clearAllFilters())}
+            onClick={handleClearFilters}
+            disabled={!filtersSet}
+          >
+            Clear All Filters
           </button>
         )}
       </div>
@@ -367,8 +433,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             options={brandOptions}
             value={filters.brand || ""}
             inputValue={brandInput}
-            onInputChange={(_, value) => {
+            open={brandOpen}
+            onOpen={() => setBrandOpen(true)}
+            onClose={() => setBrandOpen(false)}
+            onInputChange={(_, value, reason) => {
               setBrandInput(value);
+
+              // only open when typing
+              if (reason === "input") setBrandOpen(value.length > 0);
 
               const normalized = normalizeBrand(value);
 
@@ -397,8 +469,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               handleChange("brand", value || null);
               setBrandInput(value || "");
               setSelectedBrand(value || null);
+              setBrandOpen;
             }}
-            open={brandInput.length > 0}
+            // open={brandInput.length > 0}
             filterOptions={(options, state) =>
               options.filter((option) =>
                 normalizeBrand(option).includes(
@@ -413,16 +486,25 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
                 placeholder="Type to search brands"
                 error={!isBrandValid}
                 helperText={!isBrandValid ? "No matching brand found" : ""}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault(); // stop form submission / menu re-open
+                    handleApply(); // trigger your Apply Filters logic
+                  }
+                }}
               />
             )}
             fullWidth
             disablePortal
           />
-
-          <input // same as above, we would need to debounce this and fetch product types from the server or from indexedDb or redux
-            placeholder="Product Type"
-            value={filters.productType || ""}
-            onChange={(e) => handleChange("productType", e.target.value)}
+          <ProductTypeAutocomplete
+            inputValue={productTypeInput}
+            selectedType={selectedProductType}
+            onInputChange={setProductTypeInput}
+            onTypeChange={(val) => {
+              setSelectedProductType(val);
+              handleChange("productType", val);
+            }}
           />
         </div>
       </div>
@@ -562,24 +644,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             }
           />
         </div>
-      </div>
-
-      <div className="filter-actions">
-        {filtersSet && filtersChanged && (
-          <button className="apply-button" onClick={handleApply}>
-            Apply Filters
-          </button>
-        )}
-        {filtersSet && (
-          <button
-            className="apply-button clear-all-button"
-            // onClick={() => setFilters(clearAllFilters())}
-            onClick={handleClearFilters}
-            disabled={!filtersSet}
-          >
-            Clear All Filters
-          </button>
-        )}
       </div>
     </div>
   );

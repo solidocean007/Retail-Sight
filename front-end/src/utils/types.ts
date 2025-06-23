@@ -213,8 +213,6 @@ export type PostQueryFilters = {
   chainType?: string | null;
   hashtag?: string | null;
   starTag?: string | null;
-  // channel?: string | null;
-  // category?: string | null;
   brand?: string | null;
   productType: string | null;
   companyGoalId?: string | null;

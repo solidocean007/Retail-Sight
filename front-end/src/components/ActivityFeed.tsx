@@ -154,9 +154,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   return (
     <div className="activity-feed-box">
-      <div className="top-of-activity-feed">
-       
-      </div>
+     
 
       <Virtuoso
         ref={virtuosoRef}
