@@ -1,32 +1,30 @@
-import React, { useState } from "react";
 import { Autocomplete, TextField } from "@mui/material";
-import { useProductTypeOptions } from "../../hooks/useProductTypeOptions";
+import { useBrandOptions } from "../../hooks/useBrandOptions";
+import { useState } from "react";
 
-interface ProductTypeAutocompleteProps {
+interface BrandAutocompleteProps {
   inputValue: string;
-  selectedType: string | null;
+  selectedBrand: string | null;
   onInputChange: (v: string) => void;
-  onTypeChange: (v: string | null) => void;
+  onBrandChange: (v: string | null) => void;
 }
 
 const normalize = (str: string) => str.toLowerCase().replace(/[\s\-]+/g, "");
 
-const ProductTypeAutocomplete: React.FC<ProductTypeAutocompleteProps> = ({
+const BrandAutoComplete: React.FC<BrandAutocompleteProps> = ({
   inputValue,
-  selectedType,
+  selectedBrand,
   onInputChange,
-  onTypeChange,
+  onBrandChange,
 }) => {
-  const options = useProductTypeOptions();
+  const brandOptions = useBrandOptions();
   const [open, setOpen] = useState<boolean>(false);
-
-
 
   return (
     <Autocomplete
       open={open}
-      options={options}
-      value={selectedType || ""}
+      options={brandOptions}
+      value={selectedBrand || ""}
       inputValue={inputValue}
       onOpen={() => setOpen(inputValue.length > 0)}
       onClose={(_, reason) => {
@@ -39,24 +37,31 @@ const ProductTypeAutocomplete: React.FC<ProductTypeAutocompleteProps> = ({
           setOpen(false);
         }
       }}
-      onInputChange={(_, newVal) => {
-        onInputChange(newVal);
-        setOpen(newVal.length > 0);
+      onInputChange={(_, v) => {
+        onInputChange(v);
+        setOpen(v.length > 0);
       }}
-      onChange={(_, newVal) => {
-        onTypeChange(newVal);
-        onInputChange(newVal || "");
+      onChange={(_, v) => {
+        onBrandChange(v);
+        onInputChange(v ?? "");
         setOpen(false);
       }}
-      
+      // onClose={() => setOpen(false)}
+      // onInputChange={(_, newVal) => {
+      //   onInputChange(newVal);
+      // }}
+      // onChange={(_, newVal) => {
+      //   onTypeChange(newVal);
+      //   onInputChange(newVal || "");
+      // }}
       filterOptions={(opts, { inputValue: iv }) =>
         opts.filter((opt) => normalize(opt).includes(normalize(iv)))
       }
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Product Type"
-          placeholder="Type to search product types"
+          label="Brand"
+          placeholder="Type to search brands"
           onBlur={() => setOpen(false)}
         />
       )}
@@ -66,4 +71,4 @@ const ProductTypeAutocomplete: React.FC<ProductTypeAutocompleteProps> = ({
   );
 };
 
-export default ProductTypeAutocomplete;
+export default BrandAutoComplete;

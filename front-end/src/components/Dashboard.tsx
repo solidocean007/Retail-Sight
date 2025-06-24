@@ -2,11 +2,11 @@
 import { useSelector } from "react-redux";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
-import { selectUser, setCompanyUsers } from "../Slices/userSlice";
-import {
-  getCompanyUsersFromIndexedDB,
-  saveCompanyUsersToIndexedDB,
-} from "../utils/database/userDataIndexedDB";
+import { selectCompanyUsers, selectUser, setCompanyUsers } from "../Slices/userSlice";
+// import {
+//   getCompanyUsersFromIndexedDB,
+//   saveCompanyUsersToIndexedDB,
+// } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
 import {
   CompanyAccountType,
@@ -33,19 +33,19 @@ import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import AccountManager from "./AccountManagement/AccountsManager.tsx";
 import MyGoals from "./MyGoals.tsx";
-import {
-  collection,
-  deleteField,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  query,
-  setDoc,
-  updateDoc,
-  where,
-} from "@firebase/firestore";
-import { db } from "../utils/firebase.ts";
+// import {
+//   collection,
+//   deleteField,
+//   doc,
+//   getDoc,
+//   getDocs,
+//   onSnapshot,
+//   query,
+//   setDoc,
+//   updateDoc,
+//   where,
+// } from "@firebase/firestore";
+// import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
 import {
@@ -56,15 +56,16 @@ import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUt
 import DashMenu from "./DashMenu.tsx";
 // import { updatePostsWithFreshAccounts } from "../script.ts";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 export const Dashboard = () => {
   // const navigate = useNavigate();
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
-  const [localUsers, setLocalUsers] = useState<UserType[]>([]);
+  // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
+  const companyUsers = useSelector(selectCompanyUsers);
   const companyId = user?.companyId;
   // const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
   const [drawerOpen, setDrawerOpen] = useState(true);
@@ -132,52 +133,6 @@ export const Dashboard = () => {
   }
   // but if we flip into mobile, leave whatever state we were in
 }, [isLargeScreen]);
-
-
-  useEffect(() => {
-    const syncCompanyUsers = async () => {
-      if (!user?.companyId) return;
-
-      const companyId = user.companyId;
-
-      // 1. Load cached users from IndexedDB
-      const cachedUsers = await getCompanyUsersFromIndexedDB();
-      if (cachedUsers && cachedUsers.length > 0) {
-        dispatch(setCompanyUsers(cachedUsers)); // Update Redux store
-        setLocalUsers(cachedUsers); // Update local state
-      }
-
-      // 2. Real-time Firestore listener
-      const q = query(
-        collection(db, "users"),
-        where("companyId", "==", companyId)
-      );
-      const unsubscribe = onSnapshot(
-        q,
-        async (snapshot) => {
-          const usersFromFirestore = snapshot.docs.map(
-            (doc) =>
-              ({
-                ...doc.data(),
-                uid: doc.id,
-              } as UserType)
-          );
-
-          // 3. Update Redux store and IndexedDB if Firestore data changes
-          dispatch(setCompanyUsers(usersFromFirestore));
-          setLocalUsers(usersFromFirestore);
-          await saveCompanyUsersToIndexedDB(usersFromFirestore);
-        },
-        (error) => {
-          console.error("Error syncing company users:", error);
-        }
-      );
-
-      return () => unsubscribe(); // Cleanup listener
-    };
-
-    syncCompanyUsers();
-  }, [user?.companyId, dispatch]);
 
   useEffect(() => {
     const loadAllCompanyAccounts = async () => {
@@ -259,7 +214,7 @@ export const Dashboard = () => {
         }}
       >
         {dashboardMode === "TeamMode" && (
-          <TeamsViewer localUsers={localUsers} setLocalUsers={setLocalUsers} />
+          // <TeamsViewer localUsers={companyUsers} />
         )}
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
@@ -270,11 +225,9 @@ export const Dashboard = () => {
         {dashboardMode === "MyGoalsMode" && <MyGoals />}
         {dashboardMode === "UsersMode" && (
           <EmployeesViewer
-            localUsers={localUsers}
-            setLocalUsers={setLocalUsers}
           />
         )}
-        {dashboardMode === "ProfileMode" && <UserProfileViewer user={user} />}
+        {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
         {dashboardMode === "GoalManagerMode" && (
           <GoalManager companyId={companyId} />
         )}

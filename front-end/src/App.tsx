@@ -22,12 +22,14 @@ import { fetchCompanyProducts } from "./thunks/productThunks";
 import { setAllProducts } from "./Slices/productsSlice";
 import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
 import useSchemaVersion from "./hooks/useSchemaVersion.ts";
+import useCompanyUsersSync from "./hooks/useCompanyUsersSync.ts";
 // import { collection, getDocs } from "@firebase/firestore";
 // import { db } from "./utils/firebase.ts";
 // import { migratePostToCleanedFlattenedVersion } from "./script.ts";
 
 function App() {
   useSchemaVersion();
+   useCompanyUsersSync();
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);

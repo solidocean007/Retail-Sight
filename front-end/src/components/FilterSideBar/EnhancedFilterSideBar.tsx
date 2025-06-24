@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
-import { PostQueryFilters } from "../../utils/types";
+import { PostQueryFilters, UserType } from "../../utils/types";
 import "./styles/enhancedFilterSideBar.css";
 import { fetchFilteredPostsBatch } from "../../thunks/postsThunks";
 import FilterChips from "./FilterChips";
@@ -29,9 +29,12 @@ import {
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { normalizePost } from "../../utils/normalizePost";
 // import { clear } from "console";
-import { Autocomplete, TextField } from "@mui/material";
+// import { Autocomplete, TextField } from "@mui/material";
 import { useBrandOptions } from "../../hooks/useBrandOptions";
 import ProductTypeAutocomplete from "./ProductTypeAutoComplete";
+import BrandAutoComplete from "./BrandAutoComplete";
+import UserFilterAutocomplete from "./UserFilterAutoComplete";
+import { selectCompanyUsers } from "../../Slices/userSlice";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -58,6 +61,11 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   // setCurrentStarTag,
   toggleFilterMenu,
 }) => {
+  // at top of EnhancedFilterSidebar.tsx
+  const fullUserState = useSelector((s: RootState) => s.user);
+  console.log("🔍 full user slice:", fullUserState);
+
+  const companyUsers = useSelector(selectCompanyUsers) || [];
   const allPosts = useSelector((s: RootState) => s.posts.posts);
   const [brandOpen, setBrandOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -75,7 +83,11 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const [tagInput, setTagInput] = useState("");
   const [brandInput, setBrandInput] = useState("");
   const [productTypeInput, setProductTypeInput] = useState("");
+  const [selectedUserInput, setSelectedUserInput] = useState("");
   const [selectedProductType, setSelectedProductType] = useState<string | null>(
+    null
+  );
+  const [selectedFilterUser, setSelectedFilterUser] = useState<UserType | null>(
     null
   );
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -144,6 +156,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     setProductTypeInput("");
     setActivePostSet("posts"); // ✨ resets the view
 
+    setSelectedFilterUser(null);
+    setSelectedUserInput("");
+    handleChange("postUserUid", null);
+
     // ✨ RESET THE REDUX SLICE:
     dispatch(setFilteredPosts(allPosts)); // reset filteredPosts & count
     dispatch(setFilteredPostFetchedAt(null));
@@ -157,6 +173,21 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   );
 
   const debouncedFilters = useDebouncedValue(filters, 150);
+
+  console.log("[EnhancedFilterSidebar] mount/update", {
+    selectedUserInput,
+    selectedFilterUser,
+    filtersPostUserUid: filters.postUserUid,
+    companyUsersCount: companyUsers.length,
+  });
+
+  useEffect(() => {
+    console.log("[EnhancedFilterSidebar] user state changed", {
+      selectedUserInput,
+      selectedFilterUserUid: selectedFilterUser?.uid,
+      filtersPostUserUid: filters.postUserUid,
+    });
+  }, [selectedUserInput, selectedFilterUser, filters.postUserUid]);
 
   // in EnhancedFilterSidebar
   useEffect(() => {
@@ -434,7 +465,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           🍻 Product
         </button>
         <div className="filter-group">
-          <Autocomplete
+          {/* <Autocomplete
             options={brandOptions}
             value={filters.brand || ""}
             inputValue={brandInput}
@@ -501,6 +532,15 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             )}
             fullWidth
             disablePortal
+          /> */}
+          <BrandAutoComplete
+            inputValue={brandInput}
+            selectedBrand={selectedBrand}
+            onInputChange={setBrandInput}
+            onBrandChange={(val) => {
+              setSelectedBrand(val);
+              handleChange("brand", val);
+            }}
           />
           <ProductTypeAutocomplete
             inputValue={productTypeInput}
@@ -522,11 +562,25 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           👤 User
         </button>
         <div className="filter-group">
-          <input // this needs to be a user search input that fetches users from the server or from indexedDb or redux for the users company... but what do i do for a supplier?  i can probably figure that out later
+          {/* <input // this needs to be a user search input that fetches users from the server or from indexedDb or redux for the users company... but what do i do for a supplier?  i can probably figure that out later
             placeholder="Search by user coming soon"
             value={filters.postUserUid || ""}
             onChange={(e) => handleChange("postUserUid", e.target.value)}
             disabled
+          /> */}
+          <UserFilterAutocomplete
+            inputValue={selectedUserInput}
+            selectedUserId={filters.postUserUid ?? null} // coalesce undefined → null
+            onInputChange={setSelectedUserInput}
+            onTypeChange={(uid) => {
+              // look up the full user so we can show their name
+              const user = companyUsers.find((u) => u.uid === uid) || null;
+              setSelectedFilterUser(user);
+              setSelectedUserInput(
+                user ? `${user.firstName} ${user.lastName}` : ""
+              );
+              handleChange("postUserUid", uid);
+            }}
           />
         </div>
       </div>

@@ -19,20 +19,16 @@ import { UserType } from "../utils/types";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useSelector } from "react-redux";
-import { selectUser } from "../Slices/userSlice";
+import { selectCompanyUsers, selectUser, setCompanyUsers } from "../Slices/userSlice";
 import { updateUserRoleInIndexedDB } from "../utils/database/userDataIndexedDB";
 import PendingInvites from "./PendingInvites";
 import { getFunctions, httpsCallable } from "@firebase/functions";
+import { useAppDispatch } from "../utils/store";
 
-interface EmployeesViewerProps {
-  localUsers: UserType[];
-  setLocalUsers: React.Dispatch<React.SetStateAction<UserType[]>>;
-}
 
-const EmployeesViewer: React.FC<EmployeesViewerProps> = ({
-  localUsers,
-  setLocalUsers,
-}) => {
+const EmployeesViewer = () => {
+  const dispatch = useAppDispatch();
+  const localUsers = useSelector(selectCompanyUsers) || [];
   const currentUser = useSelector(selectUser);
   const isSuperAdmin = currentUser?.role === "super-admin";
   const isAdmin = currentUser?.role === "admin";
@@ -46,12 +42,19 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({
   );
   const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
 
-  const sortedUsers = [...localUsers].sort((a, b) => {
-    const lastCompare = a.lastName.localeCompare(b.lastName);
-    return lastCompare !== 0
-      ? lastCompare
-      : a.firstName.localeCompare(b.firstName);
-  });
+ const sortedUsers: UserType[] = [...localUsers].sort((a, b) => { // Type 'UserType[] | null' must have a '[Symbol.iterator]()' method that returns an iterator.
+  // give yourself a non-undefined string to compare
+  const aLast = a.lastName ?? "";
+  const bLast = b.lastName ?? "";
+
+  const lastDiff = aLast.localeCompare(bLast);
+  if (lastDiff !== 0) return lastDiff;
+
+  // if last names tie, compare first names
+  const aFirst = a.firstName ?? "";
+  const bFirst = b.firstName ?? "";
+  return aFirst.localeCompare(bFirst);
+});
 
   const toggleInvites = () => setShowPendingInvites((prev) => !prev);
 
@@ -121,10 +124,10 @@ const EmployeesViewer: React.FC<EmployeesViewerProps> = ({
         { merge: true },
       );
 
-      const updatedUsers = localUsers.map((u) =>
+      const updatedUsers = localUsers.map((u) => // 'localUsers' is possibly 'null'
         u.uid === userId ? updatedUser : u,
       );
-      setLocalUsers(updatedUsers);
+     dispatch(setCompanyUsers(updatedUsers));
       await updateUserRoleInIndexedDB(userId, updatedUser.role);
       handleEditToggle(userId);
     } catch (err) {
