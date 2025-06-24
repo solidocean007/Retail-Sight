@@ -1,12 +1,13 @@
 // filterUtils.ts
 
-import { PostQueryFilters, PostWithID } from "../../../utils/types";
+import { PostQueryFilters, PostWithID, UserType } from "../../../utils/types";
 
 const normalizeBrand = (brand: string): string =>
   brand.toLowerCase().replace(/[\s\-]+/g, "");
 
 export const getFilterSummaryText = (
-  filters: PostQueryFilters | null | undefined
+  filters: PostQueryFilters | null | undefined,
+  users: UserType[]
 ): string => {
   if (!filters) return "";
   const parts: string[] = [];
@@ -15,6 +16,10 @@ export const getFilterSummaryText = (
   if (filters.starTag) parts.push(filters.starTag);
   if (filters.brand) parts.push(filters.brand);
   if (filters.productType) parts.push(filters.productType);
+  if (filters.postUserUid) {
+    const u = users.find(x => x.uid === filters.postUserUid);
+    parts.push(u ? `${u.firstName} ${u.lastName}` : filters.postUserUid);
+  }
 
   const { startDate, endDate } = filters.dateRange || {};
   if (startDate || endDate) {

@@ -193,11 +193,10 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       );
     }
     if (filters.postUserUid) {
-      baseQuery = filterExactMatch(
-        "postUserUid",
-        filters.postUserUid ?? undefined,
-        baseQuery
-      );
+      baseQuery = query(
+        baseQuery,
+        where("postUserUid", "==", filters.postUserUid)
+      )
     }
     if (filters.accountNumber) {
       baseQuery = filterExactMatch(

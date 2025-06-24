@@ -383,7 +383,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <div className="filter-summary-banner-container">
           <FilterSummaryBanner
             filteredCount={filteredPostCount}
-            filterText={getFilterSummaryText(lastAppliedFilters)} //  Type 'null' is not assignable to type 'PostQueryFilters'
+            filterText={getFilterSummaryText(lastAppliedFilters, companyUsers)} //  Type 'null' is not assignable to type 'PostQueryFilters'
             onClear={handleClearFilters}
             fetchedAt={fetchedAt}
           />

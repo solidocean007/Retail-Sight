@@ -29,7 +29,7 @@ import useCompanyUsersSync from "./hooks/useCompanyUsersSync.ts";
 
 function App() {
   useSchemaVersion();
-   useCompanyUsersSync();
+  useCompanyUsersSync();
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
@@ -41,19 +41,19 @@ function App() {
   const [theme, setTheme] = useState(() => getTheme(isDarkMode));
 
   useEffect(() => {
-  const loadProducts = async () => {
-    if (!user?.companyId) return;
+    const loadProducts = async () => {
+      if (!user?.companyId) return;
 
-    const cachedProducts = await getAllCompanyProductsFromIndexedDB();
-    if (cachedProducts.length > 0) {
-      dispatch(setAllProducts(cachedProducts)); // Optional preload
-    }
+      const cachedProducts = await getAllCompanyProductsFromIndexedDB();
+      if (cachedProducts.length > 0) {
+        dispatch(setAllProducts(cachedProducts)); // Optional preload
+      }
 
-    dispatch(fetchCompanyProducts(user.companyId)); // Still fetch latest
-  };
+      dispatch(fetchCompanyProducts(user.companyId)); // Still fetch latest
+    };
 
-  loadProducts();
-}, [dispatch, user?.companyId]);
+    loadProducts();
+  }, [dispatch, user?.companyId]);
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {
@@ -63,7 +63,7 @@ function App() {
     }
   }, [dispatch]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (companyId) {
       dispatch(loadCompany(user.companyId));
     }
@@ -78,7 +78,7 @@ function App() {
   useEffect(() => {
     if (!companyId) return;
     const unsubscribeCompanyGoals = dispatch(
-      setupCompanyGoalsListener(companyId),
+      setupCompanyGoalsListener(companyId)
     );
     const unsubscribeGalloGoals = dispatch(setupGalloGoalsListener(companyId));
     return () => {
@@ -86,7 +86,6 @@ function App() {
       unsubscribeGalloGoals();
     };
   }, [dispatch, companyId, salesRouteNum]);
-
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>

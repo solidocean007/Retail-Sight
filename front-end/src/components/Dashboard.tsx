@@ -213,9 +213,9 @@ export const Dashboard = () => {
           height: "100%"
         }}
       >
-        {dashboardMode === "TeamMode" && (
-          // <TeamsViewer localUsers={companyUsers} />
-        )}
+        {/* {dashboardMode === "TeamMode" && (
+          <TeamsViewer localUsers={companyUsers} />
+        )} */}
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}

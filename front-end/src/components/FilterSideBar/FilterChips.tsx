@@ -2,6 +2,8 @@
 import React from "react";
 import { PostQueryFilters } from "../../utils/types";
 import "./styles/filterChips.css"; // create this if needed
+import { useSelector } from "react-redux";
+import { selectCompanyUsers } from "../../Slices/userSlice";
 
 interface FilterChipsProps {
   filters: PostQueryFilters;
@@ -9,6 +11,10 @@ interface FilterChipsProps {
 }
 
 const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
+  const companyUsers = useSelector(selectCompanyUsers) ?? [];
+  const user =
+    filters.postUserUid &&
+    companyUsers.find((u) => u.uid === filters.postUserUid);
   return (
     <div className="active-filters-chip-row">
       {filters.hashtag && (
@@ -65,7 +71,8 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
       )} */}
       {filters.postUserUid && (
         <span className="chip" onClick={() => onRemove("postUserUid")}>
-          User: {filters.postUserUid} ✕
+          User:{" "}
+          {user ? `${user.firstName} ${user.lastName}` : filters.postUserUid} ✕
         </span>
       )}
       {filters.accountType && (

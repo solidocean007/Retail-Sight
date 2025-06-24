@@ -15,7 +15,7 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import { PostQueryFilters, PostWithID } from "../utils/types";
-import { selectUser } from "../Slices/userSlice";
+import { selectCompanyUsers, selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
+  const companyUsers = useSelector(selectCompanyUsers) || [];
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
@@ -40,7 +41,7 @@ export const UserHomePage = () => {
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
   const [isClosing, setIsClosing] = useState(false);
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
-  const filterText = lastFilters ? getFilterSummaryText(lastFilters) : "";
+  const filterText = lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : "";
   // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
   const filteredCount = useSelector(
     (state: RootState) => state.posts.filteredPostCount
