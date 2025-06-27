@@ -1,29 +1,30 @@
-// usePosts.ts
 import { useSelector } from "react-redux";
-import store, { RootState, useAppDispatch } from "../utils/store";
 import { useEffect, useState } from "react";
 import {
-  // DocumentChange,
   QuerySnapshot,
   Timestamp,
   collection,
   getDocs,
   limit,
-  // limit,
   onSnapshot,
   orderBy,
   query,
   where,
 } from "firebase/firestore";
+import { useAppDispatch, RootState } from "../utils/store";
 import { PostWithID } from "../utils/types";
-import { deletePost, mergeAndSetPosts } from "../Slices/postsSlice";
 import {
-  addPostsToIndexedDB,
-  deleteUserCreatedPostInIndexedDB,
-  getLastSeenTimestamp,
+  deletePost,
+  mergeAndSetPosts,
+  setPosts,
+} from "../Slices/postsSlice";
+import {
   getPostsFromIndexedDB,
-  removePostFromIndexedDB,
+  addPostsToIndexedDB,
+  getLastSeenTimestamp,
   setLastSeenTimestamp,
+  removePostFromIndexedDB,
+  deleteUserCreatedPostInIndexedDB,
   updatePostInIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { db } from "../utils/firebase";
@@ -35,160 +36,143 @@ const usePosts = (
   POSTS_BATCH_SIZE: number
 ) => {
   const dispatch = useAppDispatch();
-  const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const currentUser = useSelector(
+    (state: RootState) => state.user.currentUser
+  );
   const [initialLoaded, setInitialLoaded] = useState(false);
 
-
+  // 1️⃣ Initial load: IndexedDB or Firestore
   useEffect(() => {
-    const setupListeners = async () => {
-      const lastSeen = await getLastSeenTimestamp();
-      const lastSeenTimestamp = lastSeen || new Date(0).toISOString();
-      if (!currentUser) return;
-
-      const processDocChanges = async (snapshot: QuerySnapshot) => {
-        let mostRecentTimeStamp = new Date(lastSeenTimestamp);
-        let postsToUpdate: PostWithID[] = [];
-
-        snapshot.docChanges().forEach((change) => {
-          const docData = change.doc.data();
-          let docTimestamp = docData.timestamp;
-
-          // Convert Firestore Timestamp to JavaScript Date
-          if (docTimestamp?.toDate) {
-            docTimestamp = docTimestamp.toDate();
-          } else if (typeof docTimestamp === "string") {
-            docTimestamp = new Date(docTimestamp);
-          }
-
-          // Skip processing if the document's timestamp is not newer than the lastSeenTimestamp
-          if (docTimestamp <= new Date(lastSeenTimestamp)) {
-            return;
-          }
-
-          // Update the most recent timestamp seen
-          if (docTimestamp > mostRecentTimeStamp) {
-            mostRecentTimeStamp = docTimestamp;
-          }
-
-          const postData = { id: change.doc.id, ...docData } as PostWithID;
-
-          // Filter posts to those that have been added or modified with imageUrl
-          if (
-            (change.type === "added" || change.type === "modified") &&
-            docData.imageUrl
-          ) {
-            postsToUpdate.push(normalizePost(postData)); // Collect for sorting and updating
-          }
-
-          // Handle 'removed' changes
-          if (change.type === "removed") {
-            dispatch(deletePost(change.doc.id));
-            removePostFromIndexedDB(change.doc.id);
-            deleteUserCreatedPostInIndexedDB(change.doc.id);
-            return;
-          }
-        });
-
-        // Sort collected posts by displayDate and dispatch for state update and IndexedDB
-        postsToUpdate.sort(
-          (a, b) =>
-            new Date(b.displayDate).getTime() -
-            new Date(a.displayDate).getTime()
+    const loadInitialPosts = async (companyId: string) => {
+      const cached = await getPostsFromIndexedDB();
+      if (cached.length > 0) {
+        dispatch(setPosts(cached));
+      } else {
+        const action = await dispatch(
+          fetchInitialPostsBatch({ currentUserCompanyId: companyId, POSTS_BATCH_SIZE })
         );
-        if (postsToUpdate.length > 0) {
-          dispatch(mergeAndSetPosts(postsToUpdate));
-          postsToUpdate.forEach((post) => updatePostInIndexedDB(post));
+        if (fetchInitialPostsBatch.fulfilled.match(action)) {
+          const posts = action.payload.posts.map(normalizePost);
+          dispatch(setPosts(posts));
+          addPostsToIndexedDB(posts);
         }
-
-        // Update lastSeenTimestamp with the most recent timestamp seen
-        if (mostRecentTimeStamp > new Date(lastSeenTimestamp)) {
-          await setLastSeenTimestamp(mostRecentTimeStamp.toISOString());
-        }
-      };
-
-      // Listening queries remain based on timestamp for catching updates
-      // No changes needed here since we handle displayDate sorting after fetching
-
-      const qPublic = query(
-        collection(db, "posts"),
-        where("timestamp", ">", lastSeenTimestamp),
-        where("visibility", "==", "public"),
-        orderBy("timestamp", "desc"),
-        limit(POSTS_BATCH_SIZE)
-      );
-      const unsubscribePublic = onSnapshot(qPublic, processDocChanges);
-
-      let unsubscribeCompany = () => {};
-      if (currentUserCompanyId && initialLoaded) {
-        const qCompany = query(
-          collection(db, "posts"),
-          where("timestamp", ">", lastSeenTimestamp),
-          where("postUserCompanyId", "==", currentUserCompanyId),
-          orderBy("timestamp", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        );
-        unsubscribeCompany = onSnapshot(qCompany, processDocChanges);
       }
-
-      // Cleanup function
-      return () => {
-        unsubscribePublic();
-        unsubscribeCompany();
-      };
+      setInitialLoaded(true);
     };
 
-    setupListeners();
-  }, [currentUserCompanyId, dispatch, currentUser, initialLoaded]);
-
-  // load indexDB posts or fetch from firestore
-  useEffect(() => {
-    const fetchPostsForLoggedInUser = async (currentUserCompanyId: string) => {
-      try {
-        const indexedDBPosts = await getPostsFromIndexedDB();
-        if (indexedDBPosts.length > 0) {
-          dispatch(mergeAndSetPosts(indexedDBPosts));
-          setInitialLoaded(true);
-        } else {
-          const action = await dispatch(
-            fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUserCompanyId })
-          );
-          if (fetchInitialPostsBatch.fulfilled.match(action)) {
-            const fetchedPosts = action.payload.posts.map(normalizePost);
-            dispatch(mergeAndSetPosts(fetchedPosts)); // why merge and sort on an empty array here?
-            addPostsToIndexedDB(fetchedPosts);
-            setInitialLoaded(true);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching posts from IndexedDB:", error);
-      }
-    };
-
-    const fetchPublicPosts = async () => {
-      try {
-        const publicPostsQuery = query(
+    const loadPublic = async () => {
+      const snap = await getDocs(
+        query(
           collection(db, "posts"),
           where("visibility", "==", "public"),
           orderBy("displayDate", "desc"),
           limit(POSTS_BATCH_SIZE)
-        );
-        const querySnapshot = await getDocs(publicPostsQuery);
-        const publicPosts = querySnapshot.docs
-          .map((doc) => normalizePost({ id: doc.id, ...doc.data() }))
-          .filter((post) => post.visibility === "public");
+        )
+      );
+      const publicPosts = snap.docs.map((doc) =>
+        normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+      );
+      dispatch(setPosts(publicPosts));
+      setInitialLoaded(true);
+    };
 
-        dispatch(mergeAndSetPosts(publicPosts)); // this again makes me wonder why we are trying to merge posts
-      } catch (error) {
-        console.error("Error fetching public posts:", error);
+    if (!currentUser) {
+      loadPublic();
+    } else if (currentUserCompanyId) {
+      loadInitialPosts(currentUserCompanyId);
+    }
+  }, [currentUser, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE]);
+
+  // 2️⃣ Real-time listeners: only after initial load
+  useEffect(() => {
+    if (!initialLoaded) return;
+    let unsubscribePublic: () => void = () => {};
+    let unsubscribeCompany: () => void = () => {};
+
+    const setupListeners = async () => {
+      const lastSeenISO =
+        (await getLastSeenTimestamp()) || new Date(0).toISOString();
+      const lastSeenDate = new Date(lastSeenISO);
+      const lastSeenTs = Timestamp.fromDate(lastSeenDate);
+
+      const processDocChanges = async (snapshot: QuerySnapshot) => {
+        let mostRecent = lastSeenDate;
+        const updates: PostWithID[] = [];
+
+        snapshot.docChanges().forEach((change) => {
+          const data = change.doc.data();
+          let tsValue: any = data.timestamp;
+          if (tsValue?.toDate) tsValue = tsValue.toDate();
+          else if (typeof tsValue === "string") tsValue = new Date(tsValue);
+
+          if (tsValue <= mostRecent) return;
+          mostRecent = tsValue;
+
+          if (change.type === "removed") {
+            dispatch(deletePost(change.doc.id));
+            removePostFromIndexedDB(change.doc.id);
+            deleteUserCreatedPostInIndexedDB(change.doc.id);
+          } else if (
+            (change.type === "added" || change.type === "modified") &&
+            data.imageUrl
+          ) {
+            updates.push(
+              normalizePost({ id: change.doc.id, ...data } as PostWithID)
+            );
+          }
+        });
+
+        if (updates.length) {
+          updates.sort(
+            (a, b) =>
+              new Date(b.displayDate).getTime() -
+              new Date(a.displayDate).getTime()
+          );
+          dispatch(mergeAndSetPosts(updates));
+          updates.forEach((p) => updatePostInIndexedDB(p));
+        }
+
+        if (mostRecent > lastSeenDate) {
+          await setLastSeenTimestamp(mostRecent.toISOString());
+        }
+      };
+
+      unsubscribePublic = onSnapshot(
+        query(
+          collection(db, "posts"),
+          where("timestamp", ">", lastSeenTs),
+          where("visibility", "==", "public"),
+          orderBy("timestamp", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        ),
+        processDocChanges
+      );
+
+      if (currentUserCompanyId) {
+        unsubscribeCompany = onSnapshot(
+          query(
+            collection(db, "posts"),
+            where("timestamp", ">", lastSeenTs),
+            where(
+              "postUserCompanyId",
+              "==",
+              currentUserCompanyId
+            ),
+            orderBy("timestamp", "desc"),
+            limit(POSTS_BATCH_SIZE)
+          ),
+          processDocChanges
+        );
       }
     };
 
-    if (currentUser === null) {
-      fetchPublicPosts();
-    } else if (currentUserCompanyId) {
-      fetchPostsForLoggedInUser(currentUserCompanyId);
-    }
-  }, [currentUser, dispatch, currentUserCompanyId]);
+    setupListeners();
+
+    return () => {
+      unsubscribePublic();
+      unsubscribeCompany();
+    };
+  }, [initialLoaded, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE]);
 };
 
 export default usePosts;

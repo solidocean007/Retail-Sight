@@ -13,6 +13,8 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { useNavigate } from "react-router-dom";
 import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
 import { CompanyMissionType, MissionType, PostInputType } from "../../utils/types";
+import { mergeAndSetPosts } from "../../Slices/postsSlice";
+import { normalizePost } from "../../utils/normalizePost";
 
 interface ReviewAndSubmitProps {
   companyId?: string;
@@ -124,7 +126,7 @@ const handleSubmitClick = async () => {
   setIsUploading(true);
 
   try {
-    await handlePostSubmission(
+    const newPost = await handlePostSubmission(
       post,
       selectedFile,
       setIsUploading,
@@ -133,15 +135,13 @@ const handleSubmitClick = async () => {
       apiKey,
       navigate
     );
+    dispatch(mergeAndSetPosts([normalizePost(newPost)]))
     dispatch(showMessage("Post submitted successfully!"));
   } catch (err: any) {
     console.error("Upload failed:", err);
     dispatch(showMessage(err.message || "An error occurred during upload."));
   } finally {
-    setTimeout(() => {
-      setIsUploading(false);
-      navigate("/user-home-page");
-    }, 500)
+   navigate("/user-home-page");
   }
 };
 
