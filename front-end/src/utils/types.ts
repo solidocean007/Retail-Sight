@@ -1,6 +1,6 @@
 // export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
-import { Timestamp } from "firebase/firestore";
+import { serverTimestamp, Timestamp } from "firebase/firestore";
 // import { ChannelType } from "../components/Create-Post/ChannelSelector";
 // import { CategoryType } from "../components/Create-Post/CategorySelector";
 
@@ -167,10 +167,8 @@ export interface PostType {
 }
 
 export type PostInputType = {
-  // category: string;
-  // channel: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   totalCaseCount: number;
   visibility: string;
 
@@ -188,6 +186,8 @@ export type PostInputType = {
   galloGoalTitle?: string | null;
   galloGoalDescription?: string | null;
   closedBy?: string | null;
+  closedDate?: string;
+  closedUnits?: string | number;
   oppId?: string | null;
 
   // Raw arrays (not flattened)
@@ -202,6 +202,11 @@ export type PostInputType = {
 };
 
 export type PostWithID = PostType & { id: string };
+
+export type FirestorePostPayload = Omit<PostType, 'displayDate' | 'timestamp'> & {
+  displayDate: Date | ReturnType<typeof serverTimestamp> | Timestamp;
+  timestamp:   Date | ReturnType<typeof serverTimestamp> | Timestamp;
+}
 
 export type PostQueryFilters = {
   companyId?: string | null;

@@ -1,20 +1,24 @@
-// useHandlePostSubmission
 import { useSelector } from "react-redux";
 import { NavigateFunction } from "react-router-dom";
-import { CompanyAccountType, CompanyMissionType, PostType, SubmittedMissionType } from "../types";
+import {
+  CompanyMissionType,
+  FirestorePostPayload,
+  PostInputType,
+  PostWithID,
+  SubmittedMissionType,
+} from "../types";
 import { auth, db, storage } from "../firebase";
 import {
   getDownloadURL,
   ref as storageRef,
   uploadBytesResumable,
+  UploadTask,
+  UploadTaskSnapshot,
 } from "firebase/storage";
 import { DocumentReference, deleteDoc, updateDoc } from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { selectUser } from "../../Slices/userSlice";
 import { resizeImage } from "../../images/resizeImages";
-
-import { v4 as uuidv4 } from "uuid";
-import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { useAppDispatch } from "../store";
 import { createSubmittedMission } from "../../thunks/missionsThunks";
 import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementToGalloAxis";
@@ -24,196 +28,154 @@ import { addNewPost } from "../../Slices/postsSlice";
 import { getOptimizedSizes } from "./getOptimizedSizes";
 import { buildPostPayload } from "./buildPostPayload";
 import { addPostToFirestore } from "./updateFirestore";
-// Other necessary imports...
+import { normalizePost } from "../normalizePost";
+
+// Helper to wrap a Firebase storage upload task into a Promise
+function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
+  return new Promise((resolve, reject) => {
+    task.on(
+      'state_changed',
+      () => { /* progress handled externally */ },
+      (error) => reject(error),
+      () => resolve(task.snapshot)
+    );
+  });
+}
 
 export const useHandlePostSubmission = () => {
   const dispatch = useAppDispatch();
   const userData = useSelector(selectUser);
 
   const handlePostSubmission = async (
-    post: PostType,
+    post: PostInputType,
     selectedFile: File,
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     selectedCompanyMission: CompanyMissionType,
     apiKey: string,
     navigate: NavigateFunction
-  ) => {
-    const { original, resized } = await getOptimizedSizes(selectedFile);
-    setIsUploading(true);
+  ): Promise<PostWithID> => {
+    if (!userData) throw new Error("User not authenticated");
     const user = auth.currentUser;
-    if (!user || !userData) return;
+    if (!user) throw new Error("Auth missing");
 
-    // Create a unique folder for each post's images
-    const currentDate = new Date();
-    const formattedDate = `${currentDate.getFullYear()}-${String(
-      currentDate.getMonth() + 1
-    ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
-    const uniquePostFolder = `${formattedDate}/${user.uid}-${Date.now()}`;
-
-    // Initialize states for individual upload progress
-    let originalUploadProgress = 0;
-    let resizedUploadProgress = 0;
-
-    // Function to update overall progress
-    const updateOverallProgress = () => {
-      const totalProgress =
-        (originalUploadProgress + resizedUploadProgress) / 2;
-      setUploadProgress(totalProgress);
-    };
-
-    const newDocRef: DocumentReference | null = null; // Initialize as null
-
+    setIsUploading(true);
     try {
-      const resizedOriginalBlob = await resizeImage(
-        selectedFile,
-        original[0],
-        original[1]
+      // 1. Optimize sizes
+      const { original, resized } = await getOptimizedSizes(selectedFile);
+
+      // 2. Resize original and upload
+      let originalUploadProgress = 0;
+      const originalBlob = await resizeImage(selectedFile, original[0], original[1]);
+      const originalRef = storageRef(
+        storage,
+        `images/${new Date().toISOString().split('T')[0]}/${user.uid}-${Date.now()}/original.jpg`
       );
-      const originalImagePath = `images/${uniquePostFolder}/original.jpg`;
-      const originalImageRef = storageRef(storage, originalImagePath);
-      const uploadOriginalTask = uploadBytesResumable(
-        originalImageRef,
-        resizedOriginalBlob
+      const origTask = uploadBytesResumable(originalRef, originalBlob);
+      origTask.on('state_changed', (snap) => {
+        originalUploadProgress = (snap.bytesTransferred / snap.totalBytes) * 100;
+        setUploadProgress((originalUploadProgress + 0) / 2);
+      });
+      await uploadTaskAsPromise(origTask);
+
+      // 3. Resize compressed and upload
+      let resizedUploadProgress = 0;
+      const resizedBlob = await resizeImage(selectedFile, resized[0], resized[1]);
+      const resizedRef = storageRef(
+        storage,
+        `images/${new Date().toISOString().split('T')[0]}/${user.uid}-${Date.now()}/resized.jpg`
       );
+      const resTask = uploadBytesResumable(resizedRef, resizedBlob);
+      resTask.on('state_changed', (snap) => {
+        resizedUploadProgress = (snap.bytesTransferred / snap.totalBytes) * 100;
+        setUploadProgress((originalUploadProgress + resizedUploadProgress) / 2);
+      });
+      const resSnapshot = await uploadTaskAsPromise(resTask);
 
-      uploadOriginalTask.on(
-        "state_changed",
-        (snapshot) => {
-          originalUploadProgress = Math.round(
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          );
-          updateOverallProgress();
-        },
-        (error) => {
-          showMessage(`Upload error: ${error.message}`);
-          setIsUploading(false);
-        },
-        async () => {
+      // 4. Get URL
+      const resizedUrl = await getDownloadURL(resSnapshot.ref);
 
-          // Resize and compress the image
-          const resizedBlob = await resizeImage(
-            selectedFile,
-            resized[0],
-            resized[1]
-          );
-          const resizedImagePath = `images/${uniquePostFolder}/resized.jpg`;
-          const resizedImageRef = storageRef(storage, resizedImagePath);
-          const uploadResizedTask = uploadBytesResumable(
-            resizedImageRef,
-            resizedBlob
-          );
+      // 5. Build Firestore payload
+      const payload: FirestorePostPayload = buildPostPayload({
+        ...post,
+        imageUrl: "",
+        postUser: userData,
+      });
 
-          uploadResizedTask.on(
-            "state_changed",
-            (snapshot) => {
-              resizedUploadProgress = Math.round(
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-              );
-              updateOverallProgress();
-            },
-            (error) => {
-              showMessage(`Upload error: ${error.message}`);
-              setIsUploading(false);
-            },
-            async () => {
-              const resizedImageUrl = await getDownloadURL(
-                uploadResizedTask.snapshot.ref
-              );
+      // 6. Write to Firestore
+      let newDocRef: DocumentReference;
+      try {
+        newDocRef = await addPostToFirestore(db, payload);
+      } catch (error) {
+        throw new Error(`Failed to create post document: ${error}`);
+      }
 
-              const postDataWithoutImage: PostType = buildPostPayload({ // right here is the error
-                ...post,
-                imageUrl: "",
-                postUser: userData!,
-              })
+      const postId = newDocRef.id;
 
-              // Create the post in Firestore
-              const newDocRef = await addPostToFirestore(db, postDataWithoutImage); 
-              const postId = newDocRef.id;
+      // 7. Conditionally update goal
+      if (post.companyGoalId || post.oppId) {
+        await updateGoalWithSubmission(post, postId);
+      }
 
-              // Update goal with the post ID
-              await updateGoalWithSubmission(post, postId);
+      // 8. Stamp image URL + timestamp
+      await updateDoc(newDocRef, {
+        imageUrl: resizedUrl,
+        timestamp: new Date(),
+      });
 
-              // Update the post with image URLs
-              await updateDoc(newDocRef, {
-                imageUrl: resizedImageUrl,
-                timestamp: new Date().toISOString(), // Update the timestamp as well
-              });
+      // 9. Normalize and cache
+      const finalPost: PostWithID = normalizePost({
+        ...payload,
+        id: postId,
+        imageUrl: resizedUrl,
+      });
+      dispatch(addNewPost(finalPost));
+      await addPostsToIndexedDB([finalPost]);
 
-              const newPostWithID = {
-                ...postDataWithoutImage,
-                id: newDocRef.id,
-                imageUrl: resizedImageUrl,
-              };
+      // 10. Send achievement to Gallo Axis
+      if (post.oppId) {
+        const achievementPayload = {
+          oppId: post.oppId,
+          galloGoalTitle: post.galloGoalTitle,
+          galloGoalDescription: post.galloGoalDescription,
+          closedBy: post.closedBy ?? user.displayName ?? "",
+          closedDate: post.closedDate || new Date().toISOString().split('T')[0],
+          closedUnits: post.closedUnits || "0",
+          photos: [{ file: resizedUrl }],
+        };
+        await sendAchievementToGalloAxis(
+          achievementPayload,
+          apiKey,
+          navigate,
+          dispatch
+        );
+      }
 
-              dispatch(addNewPost(newPostWithID));
-              await addPostsToIndexedDB([newPostWithID]);
+      // 11. Create submitted mission
+      if (selectedCompanyMission?.id) {
+        const submittedMission: SubmittedMissionType = {
+          companyMissionId: selectedCompanyMission.id,
+          postIdForObjective: postId,
+        };
+        await dispatch(createSubmittedMission(submittedMission));
+      }
 
-              // Send Achievement to Gallo Axis if oppId exists
-              if (post.oppId) {
-                const achievementPayload = {
-                  oppId: post.oppId,
-                  galloGoalTitle: post.galloGoalTitle,
-                  galloGoalDescription: post.galloGoalDescription,
-                  closedBy: post.closedBy ?? user.displayName ?? "",
-                  // i should add the gallo goal description and title here and remove from above
-                  closedDate:
-                    post.closedDate || new Date().toISOString().split("T")[0],
-                  closedUnits: post.closedUnits || "0",
-                  photos: [{ file: resizedImageUrl }],
-                };
-
-                await sendAchievementToGalloAxis(
-                  achievementPayload,
-                  apiKey,
-                  navigate,
-                  dispatch
-                );
-              }
-
-              // // Update channels collection
-              // await updateChannelsInFirestore(db, post.channel, newDocRef.id);
-
-              // // Update categories collection
-              // await updateCategoriesInFirestore(
-              //   db,
-              //   post.category,
-              //   newDocRef.id
-              // );
-
-              if (newDocRef && selectedCompanyMission) {
-                const submittedMission: SubmittedMissionType = {
-                  companyMissionId: selectedCompanyMission.id!,
-                  postIdForObjective: newDocRef.id,
-                };
-
-                await dispatch(createSubmittedMission(submittedMission));
-              }
-
-              dispatch(showMessage("Post added successfully!"));
-              setIsUploading(false);
-              navigate("/user-home-page");
-            }
-          );
-        }
-      );
+      showMessage("Post added successfully!");
+      return finalPost;
     } catch (error) {
-      if (error instanceof Error) {
-        console.error("Error adding post:", error.message);
-        showMessage(`Error adding post: ${error.message}`);
-      } else {
-        // Handle case when error is not an instance of Error
-        console.error("An unknown error occurred");
-        showMessage("An unknown error occurred");
+      // Cleanup on any failure
+      console.error("Error in post submission:", error);
+      showMessage(`Error adding post: ${error instanceof Error ? error.message : error}`);
+      // Attempt to delete the Firestore doc if it exists
+      // Note: newDocRef scoped inside try; you could track it above if needed
+      try {
+        // @ts-ignore
+        if (newDocRef) await deleteDoc(newDocRef);
+      } catch {
+        console.warn("Failed to cleanup Firestore doc.");
       }
-      // Clean up: Delete the Firestore document if it was created
-      if (newDocRef) {
-        try {
-          await deleteDoc(newDocRef);
-        } catch (deleteError) {
-          console.error("Error cleaning up Firestore document:", deleteError);
-        }
-      }
+      throw error;
+    } finally {
       setIsUploading(false);
       navigate("/user-home-page");
     }

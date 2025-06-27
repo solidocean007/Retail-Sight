@@ -1,17 +1,22 @@
 // front-end/src/utils/helperFunctions/updateGoalWithSubmission.ts
 import { updateDoc, arrayUnion, doc, getDoc } from "@firebase/firestore";
 import { db } from "../firebase";
-import { PostType, GoalSubmissionType } from "../types";
+import { GoalSubmissionType, PostInputType } from "../types";
 
 export const updateGoalWithSubmission = async (
-  post: PostType,
+  post: PostInputType,
   postId: string,
 ): Promise<void> => {
   try {
+    const actor = post.postedBy ?? post.postUser;
+  if (!actor) {
+    console.warn("No user to attribute Gallo-goal submission to – skipping update.");
+    return;
+  }
     const submission: GoalSubmissionType = {
       postId,
       submittedAt: new Date().toISOString(),
-      submittedBy: post.postedBy ?? post.postUser, // ✅ Use full object
+      submittedBy: actor,
       account: post.account ?? {
         accountNumber: "",
         accountName: "",

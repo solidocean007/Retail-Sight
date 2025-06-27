@@ -3,12 +3,13 @@ import {
   CompanyAccountType,
   UserType,
   PostInputType,
+  FirestorePostPayload,
 } from "../types";
 import { extractHashtags, extractStarTags } from "../extractHashtags";
-import { CategoryType } from "../../components/Create-Post/CategorySelector";
-import { ChannelType } from "../../components/Create-Post/ChannelSelector";
 
-export const buildPostPayload = (post: PostInputType): PostType => {
+
+
+export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
   const hashtags = extractHashtags(post.description ?? "");
   const starTags = extractStarTags(post.description ?? "");
 
@@ -19,12 +20,11 @@ export const buildPostPayload = (post: PostInputType): PostType => {
     .trim(); // Trim any leading/trailing spaces
 
   return {
-    // category: (post.category as CategoryType) ?? "Beer", // or your safest default
-    // channel: (post.channel as ChannelType) ?? "Grocery",
+
     description: cleanedDescription || "",
     imageUrl: post.imageUrl || "",
-    displayDate: new Date().toISOString(), // is this format serialized?
-    timestamp: new Date().toISOString(),
+    displayDate: new Date(),
+    timestamp: new Date(),
     visibility: post.visibility as
       | "public"
       | "company"
@@ -81,5 +81,5 @@ export const buildPostPayload = (post: PostInputType): PostType => {
     likes: [],
     commentCount: 0,
     tokens: [],
-  };
+  } as FirestorePostPayload;
 };
