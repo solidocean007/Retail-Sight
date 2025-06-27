@@ -239,26 +239,10 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
         where("totalCaseCount", ">=", filters.minCaseCount)
       );
     }
-
-    // if (filters.channel) {
-    //   baseQuery = filterExactMatch(
-    //     "channel",
-    //     filters.channel ?? undefined,
-    //     baseQuery
-    //   );
-    // }
-    // if (filters.category) {
-    //   baseQuery = filterExactMatch(
-    //     "category",
-    //     filters.category ?? undefined,
-    //     baseQuery
-    //   );
-    // }
     if (filters.companyGoalId) {
-      baseQuery = filterExactMatch(
-        "companyGoalId",
-        filters.companyGoalId ?? undefined,
-        baseQuery
+      baseQuery = query(
+        baseQuery,
+        where("companyGoalId","==", filters.companyGoalId)
       );
     }
     if (filters.hashtag) {

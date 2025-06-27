@@ -412,7 +412,7 @@ export const CreatePostHelmet = () => (
       name="keywords"
       content="Displaygram, create post, retail display, share display, display innovation"
     />
-    <link rel="canonical" href="https://displaygram.com/createPost" />
+    <link rel="canonical" href="https://displaygram.com/create-post" />
     <meta
       property="og:title"
       content="Showcase Your Retail Display | Create a Post on Displaygram"
@@ -437,7 +437,7 @@ export const CreatePostHelmet = () => (
       name="twitter:image"
       content="https://firebasestorage.googleapis.com/path-to-your-create-post-twitter-image.jpg"
     />
-    <meta name="twitter:url" content="https://displaygram.com/createPost" />
+    <meta name="twitter:url" content="https://displaygram.com/create-post" />
   </Helmet>
 );
 

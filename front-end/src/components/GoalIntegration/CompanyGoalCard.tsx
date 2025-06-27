@@ -114,7 +114,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     }
 
     return goal.submittedPosts.length;
-  }, [goal.submittedPosts, salesRouteNum, effectiveAccounts]);
+  }, [goal.submittedPosts, salesRouteNum, effectiveAccounts]); // this is rendering 48 now.  i had 44 in firestore then i edited 4 now i think i may have duplicates.  
 
   const percentage = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
@@ -272,7 +272,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         <Typography variant="h6" sx={{ mt: 2 }}>
           User Progress
         </Typography>
-        <UserTableForGoals users={userBasedRows} /> 
+        <UserTableForGoals users={userBasedRows} goal={goal}/> 
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
         </Typography>

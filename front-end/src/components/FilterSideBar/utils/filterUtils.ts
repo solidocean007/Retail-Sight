@@ -17,8 +17,11 @@ export const getFilterSummaryText = (
   if (filters.brand) parts.push(filters.brand);
   if (filters.productType) parts.push(filters.productType);
   if (filters.postUserUid) {
-    const u = users.find(x => x.uid === filters.postUserUid);
+    const u = users.find((x) => x.uid === filters.postUserUid);
     parts.push(u ? `${u.firstName} ${u.lastName}` : filters.postUserUid);
+  }
+  if (filters.companyGoalId && filters.companyGoalTitle) {
+    parts.push(`Goal: ${filters.companyGoalTitle}`);
   }
 
   const { startDate, endDate } = filters.dateRange || {};

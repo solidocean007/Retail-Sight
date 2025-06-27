@@ -11,26 +11,34 @@ import {
   getPostsByTag,
 } from "../utils/PostLogic/getPostsByTag";
 import {
+  fetchFilteredPostsBatch,
   // fetchInitialPostsBatch,
   fetchMorePostsBatch,
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
 import {
   addPostsToIndexedDB,
+  getFilteredSet,
   getPostsFromIndexedDB,
+  shouldRefetch,
+  storeFilteredSet,
   // clearHashtagPostsInIndexedDB,
   // clearPostsInIndexedDB,
   // clearStarTagPostsInIndexedDB,
   // clearUserCreatedPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
-import { mergeAndSetPosts } from "../Slices/postsSlice";
+import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
-import FilterSummaryBanner from "./FilterSummaryBanner";
-import { getFilterSummaryText } from "./FilterSideBar/utils/filterUtils";
+// import FilterSummaryBanner from "./FilterSummaryBanner";
+// import {
+//   getFilterHash,
+//   getFilterSummaryText,
+// } from "./FilterSideBar/utils/filterUtils";
 import { PostQueryFilters } from "../utils/types";
 import { useNavigate } from "react-router-dom";
+import { normalizePost } from "../utils/normalizePost";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -98,6 +106,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const loading = useSelector((state: RootState) => state.posts.loading);
 
+  const filteredFetchedAt = useSelector(
+  (s: RootState) => s.posts.filteredPostFetchedAt
+);
+
+
   const scrollToTop = () => {
     virtuosoRef.current?.scrollToIndex({
       index: 0,
@@ -106,17 +119,52 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     });
   };
 
-  useEffect(() => {
-    if (!postIdToScroll || !virtuosoRef.current || !displayPosts.length) return;
+const hasFetchedForScroll = useRef(false);
 
-    const index = displayPosts.findIndex((p) => p.id === postIdToScroll);
-    if (index === -1) return;
+useEffect(() => {
+  if (!postIdToScroll || !virtuosoRef.current) return;
 
-    virtuosoRef.current.scrollToIndex({ index, align: "start" });
+  const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
 
-    setPostIdToScroll(null); // No delay
-  }, [postIdToScroll, displayPosts.length]);
+  console.log(displayPosts.length, " :length of displayPosts", activePostSet, " : type of posts")
 
+  if (idx >= 0) {
+    virtuosoRef.current.scrollToIndex({ index: idx, align: "start", behavior: "smooth" });
+    setPostIdToScroll(null);
+    hasFetchedForScroll.current = false;          // reset for next time
+    return;
+  }
+
+  // if we’ve *already* tried to fetch once, give up
+  if (hasFetchedForScroll.current) {
+    console.warn("Post not found after fetch:", postIdToScroll);
+    setPostIdToScroll(null);
+    hasFetchedForScroll.current = false;
+    return;
+  }
+
+  // first miss: go fetch
+  hasFetchedForScroll.current = true;
+  (async () => {
+    if (!appliedFilters) return;
+    const cached = await getFilteredSet(appliedFilters);
+    const stale = !(await shouldRefetch(appliedFilters, filteredFetchedAt));
+
+    if (Array.isArray(cached) && cached.length > 0 && stale) {
+      dispatch(setFilteredPosts(cached));
+    } else {
+      const result = await dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
+      if (fetchFilteredPostsBatch.fulfilled.match(result)) {
+        const fresh = result.payload.posts.map(normalizePost);
+        dispatch(setFilteredPosts(fresh));
+        await storeFilteredSet(appliedFilters, fresh);
+      }
+    }
+  })();
+}, [postIdToScroll, displayPosts, appliedFilters, filteredFetchedAt, dispatch]);
+
+
+  // how can i tighten this up to work when i need it to and not run when im passing filters to userhomepage frmo another route
   const prevActivePostSet = useRef(activePostSet);
   useEffect(() => {
     if (activePostSet !== prevActivePostSet.current) {
@@ -125,23 +173,23 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   }, [activePostSet]);
 
-  const getActivityItemHeight = (windowWidth: number) => {
-    if (windowWidth <= 500) {
-      return 700;
-    } else if (windowWidth <= 600) {
-      return 750;
-    } else if (windowWidth <= 700) {
-      return 750;
-    } else if (windowWidth <= 800) {
-      return 800;
-    } else if (windowWidth <= 900) {
-      return 850;
-    } else {
-      return 900;
-    }
-  };
+  // const getActivityItemHeight = (windowWidth: number) => {
+  //   if (windowWidth <= 500) {
+  //     return 700;
+  //   } else if (windowWidth <= 600) {
+  //     return 750;
+  //   } else if (windowWidth <= 700) {
+  //     return 750;
+  //   } else if (windowWidth <= 800) {
+  //     return 800;
+  //   } else if (windowWidth <= 900) {
+  //     return 850;
+  //   } else {
+  //     return 900;
+  //   }
+  // };
 
-  const itemHeight = getActivityItemHeight(windowWidth);
+  // const itemHeight = getActivityItemHeight(windowWidth);
 
   // only block the whole feed when you have _no_ items yet:
   if (loading && rawPosts.length === 0) {
@@ -154,14 +202,12 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   return (
     <div className="activity-feed-box">
-     
-
       <Virtuoso
         ref={virtuosoRef}
         increaseViewportBy={500}
         style={{ height: 800, width: "100%" }} // is this necessary?
         data={displayPosts}
-        defaultItemHeight={itemHeight}
+        // defaultItemHeight={itemHeight}
         itemContent={(index, post) => {
           if (!post?.id) return null;
 

@@ -374,7 +374,7 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="created-On-Behalf">
                 {createdOnBehalf && (
                   <h5>
-                    Created for: {post.postedBy?.firstName}{" "}
+                    Created by: {post.postedBy?.firstName}{" "}
                     {post.postedBy?.lastName}
                   </h5>
                 )}
@@ -407,11 +407,11 @@ const PostCard: React.FC<PostCardProps> = ({
             ))}
           </div>
         )}
-        {/* {post.id} */}
+        {post.id}
         <div className="description-image">
           <div className="like-quantity-row">
             <h4>
-              {post.productType}
+              {/* {post.productType} */}
               {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
             </h4>
             <div className="likes-box">

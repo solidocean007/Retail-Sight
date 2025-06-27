@@ -25,12 +25,12 @@ interface Props {
 }
 
 const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
-  onBehalf,
+  onBehalf, // this should be the person the display is posted for.. so should be the new postuser and all flattened fields.
   setOnBehalf,
   handleFieldChange,
 }) => {
   const dispatch = useAppDispatch();
-  const userData = useSelector(selectUser)!;
+  const userData = useSelector(selectUser)!; // this is the supervisor.. he should be set to postedBy
   const companyId = userData.companyId!;
   const companyUsers = useSelector(selectCompanyUsers) || [];
 
@@ -91,7 +91,7 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
         value={onBehalf || userData}
         onChange={(_, selected) => {
           setOnBehalf(selected);
-          handleFieldChange("postedBy" as any, selected);
+          handleFieldChange("postUser" as any, selected);
         }}
         clearOnEscape={false}
         disableClearable

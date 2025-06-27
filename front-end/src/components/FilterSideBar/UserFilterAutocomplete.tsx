@@ -21,18 +21,7 @@ export default function UserFilterAutocomplete({
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const [open, setOpen] = useState(false);
 
-  // log on every render
-  console.log("[UserFilterAutocomplete] render", {
-    inputValue,
-    selectedUserId,
-    usersCount: companyUsers.length,
-  });
-
   const filterFn = (opts: UserType[], params: { inputValue: string }) => {
-    console.log("[UserFilterAutocomplete] filterFn", {
-      filterText: params.inputValue,
-      optsLength: opts.length,
-    });
     return opts.filter((u) =>
       `${u.firstName} ${u.lastName}`
         .toLowerCase()

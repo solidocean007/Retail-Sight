@@ -2,7 +2,6 @@
 import { Route, Routes } from "react-router-dom";
 import { SignUpLogin } from "../components/SignUpLogIn";
 import { UserHomePage } from "../components/UserHomePage";
-// import { UserProfilePage } from "../components/UserProfileViewer";
 import { CreatePost } from "../components/Create-Post/CreatePost";
 import { Dashboard } from "../components/Dashboard";
 import DeveloperDashboard from "../components/DeveloperDashboard";
@@ -31,7 +30,7 @@ export const AppRoutes = () => {
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
       <Route path="/user-home-page" element={<UserHomePage />} />
-      <Route path="/createPost" element={<CreatePost />} />
+      <Route path="/create-post" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route
         path="/view-collection/:collectionId"
@@ -39,7 +38,7 @@ export const AppRoutes = () => {
       />
       <Route path="/view-shared-post" element={<ViewSharedPost />} />
       <Route path="/access-denied" element={<AccessDenied />} />
-      <Route path="/page-not-found" element={<PageNotFound />} />
+      <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };

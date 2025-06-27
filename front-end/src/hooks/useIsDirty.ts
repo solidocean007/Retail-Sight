@@ -7,7 +7,8 @@ interface DirtyCheckParams {
   totalCaseCount: number;
   brands: string[];
   companyGoalId: string | null;
-  productType: string[]; // now required for dirty checks
+  productType: string[];
+  postUserUid: string;
 }
 
 /**
@@ -16,7 +17,7 @@ interface DirtyCheckParams {
 export function useIsDirty(
   original: Pick<
     PostWithID,
-    "description" | "totalCaseCount" | "brands" | "companyGoalId" | "productType"
+    "description" | "totalCaseCount" | "brands" | "companyGoalId" | "productType" | "postUserUid"
   >,
   edited: DirtyCheckParams
 ) {
@@ -45,6 +46,9 @@ export function useIsDirty(
     if (aTypes.length !== bTypes.length || aTypes.some((v, i) => v !== bTypes[i]))
       return true;
 
+     // ---- NEW: postUser changed? ----
+    if (edited.postUserUid !== original.postUserUid) return true;
+
     // nothing changed
     return false;
   }, [
@@ -54,6 +58,7 @@ export function useIsDirty(
     JSON.stringify(original.brands ?? []),
     original.companyGoalId,
     JSON.stringify(original.productType ?? []),
+     original.postUserUid,  
 
     // edited deps
     edited.description,
@@ -61,5 +66,6 @@ export function useIsDirty(
     JSON.stringify(edited.brands),
     edited.companyGoalId,
     JSON.stringify(edited.productType),
+    edited.postUserUid,
   ]);
 }

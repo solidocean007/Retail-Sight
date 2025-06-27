@@ -33,7 +33,7 @@ import { normalizePost } from "../../utils/normalizePost";
 import { useBrandOptions } from "../../hooks/useBrandOptions";
 import ProductTypeAutocomplete from "./ProductTypeAutoComplete";
 import BrandAutoComplete from "./BrandAutoComplete";
-import UserFilterAutocomplete from "./UserFilterAutoComplete";
+import UserFilterAutocomplete from "./UserFilterAutocomplete";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 
 interface EnhancedFilterSideBarProps {
@@ -47,6 +47,7 @@ interface EnhancedFilterSideBarProps {
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
   currentStarTag?: string | null;
   setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
+  initialFilters: PostQueryFilters | undefined;
 }
 
 const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
@@ -60,11 +61,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   currentStarTag,
   // setCurrentStarTag,
   toggleFilterMenu,
+  initialFilters,
 }) => {
   // at top of EnhancedFilterSidebar.tsx
-  const fullUserState = useSelector((s: RootState) => s.user);
-  console.log("🔍 full user slice:", fullUserState);
-
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const allPosts = useSelector((s: RootState) => s.posts.posts);
   const [brandOpen, setBrandOpen] = useState(false);
@@ -92,13 +91,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   );
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
 
-  const [isBrandValid, setIsBrandValid] = useState(true);
-
-  const normalizeBrand = (brand: string): string =>
-    brand.toLowerCase().replace(/[\s\-]+/g, "");
-
-  const brandOptions = useBrandOptions();
-
   const toggleSection = (section: string) => {
     setOpenSection((prev) => (prev === section ? null : section));
   };
@@ -110,9 +102,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     (state: RootState) => state.posts.filteredPostCount
   );
   const dispatch = useAppDispatch();
-  // const companyId = useSelector(
-  //   (state: RootState) => state.user.currentUser?.companyId
-  // );
 
   const companyGoals = useSelector(
     (state: RootState) => state.companyGoals.goals
@@ -128,8 +117,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     chainType: null,
     hashtag: null,
     starTag: null,
-    // brand: undefined, //
-    brand: null, //
+    brand: null,
     productType: null,
     companyGoalId: undefined,
     companyGoalTitle: undefined,
@@ -145,6 +133,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
     return !!val;
   });
+
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters(initialFilters);
+      setLastAppliedFilters(initialFilters);
+      setActivePostSet("filteredPosts");
+    }
+  }, [initialFilters]);
 
   const handleClearFilters = () => {
     const empty = clearAllFilters();
@@ -173,21 +169,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   );
 
   const debouncedFilters = useDebouncedValue(filters, 150);
-
-  console.log("[EnhancedFilterSidebar] mount/update", {
-    selectedUserInput,
-    selectedFilterUser,
-    filtersPostUserUid: filters.postUserUid,
-    companyUsersCount: companyUsers.length,
-  });
-
-  useEffect(() => {
-    console.log("[EnhancedFilterSidebar] user state changed", {
-      selectedUserInput,
-      selectedFilterUserUid: selectedFilterUser?.uid,
-      filtersPostUserUid: filters.postUserUid,
-    });
-  }, [selectedUserInput, selectedFilterUser, filters.postUserUid]);
 
   // in EnhancedFilterSidebar
   useEffect(() => {
@@ -232,61 +213,55 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
   }, [currentHashtag, currentStarTag]);
 
-  useEffect(() => {
-    const activeFiltersCount = Object.entries(debouncedFilters).filter(
-      ([_, val]) => {
-        if (Array.isArray(val)) return val.length > 0;
-        if (typeof val === "object" && val !== null && "startDate" in val) {
-          return val.startDate || val.endDate;
-        }
-        return !!val;
-      }
-    ).length;
+  // useEffect(() => {
+  //   const activeFiltersCount = Object.entries(debouncedFilters).filter(
+  //     ([_, val]) => {
+  //       if (Array.isArray(val)) return val.length > 0;
+  //       if (typeof val === "object" && val !== null && "startDate" in val) {
+  //         return val.startDate || val.endDate;
+  //       }
+  //       return !!val;
+  //     }
+  //   ).length;
 
-    if (activeFiltersCount === 0) {
-      setActivePostSet("posts");
-    }
-  }, [debouncedFilters, setActivePostSet]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const activeFiltersCount = Object.entries(filters).filter(
-        ([_key, val]) => {
-          if (Array.isArray(val)) return val.length > 0;
-          if (typeof val === "object" && val !== null && "startDate" in val) {
-            return val.startDate || val.endDate;
-          }
-          return !!val;
-        }
-      ).length;
-
-      if (activeFiltersCount === 0) {
-        setActivePostSet("posts");
-      }
-    }, 150);
-
-    return () => clearTimeout(timeout);
-  }, [filters, setActivePostSet]);
-
-  useEffect(() => {
-    const activeFiltersCount = Object.entries(filters).filter(([_key, val]) => {
-      if (Array.isArray(val)) return val.length > 0;
-      if (typeof val === "object" && val !== null && "startDate" in val) {
-        return val.startDate || val.endDate;
-      }
-      return !!val;
-    }).length;
-
-    if (activeFiltersCount === 0) {
-      setActivePostSet("posts");
-    }
-  }, [filters, dispatch]);
-
-  // useEffect(() => { what is this for?
-  //   if (companyId) {
-  //     setFilters((prev) => ({ ...prev, companyId }));
+  //   if (activeFiltersCount === 0) {
+  //     setActivePostSet("posts");
   //   }
-  // }, [companyId]);
+  // }, [debouncedFilters, setActivePostSet]);
+
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
+  //     const activeFiltersCount = Object.entries(filters).filter(
+  //       ([_key, val]) => {
+  //         if (Array.isArray(val)) return val.length > 0;
+  //         if (typeof val === "object" && val !== null && "startDate" in val) {
+  //           return val.startDate || val.endDate;
+  //         }
+  //         return !!val;
+  //       }
+  //     ).length;
+
+  //     if (activeFiltersCount === 0) {
+  //       setActivePostSet("posts");
+  //     }
+  //   }, 150);
+
+  //   return () => clearTimeout(timeout);
+  // }, [filters, setActivePostSet]);
+
+  // useEffect(() => {
+  //   const activeFiltersCount = Object.entries(filters).filter(([_key, val]) => {
+  //     if (Array.isArray(val)) return val.length > 0;
+  //     if (typeof val === "object" && val !== null && "startDate" in val) {
+  //       return val.startDate || val.endDate;
+  //     }
+  //     return !!val;
+  //   }).length;
+
+  //   if (activeFiltersCount === 0) {
+  //     setActivePostSet("posts");
+  //   }
+  // }, [filters, dispatch]);
 
   const handleChange = (field: keyof PostQueryFilters, value: any) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
@@ -327,27 +302,13 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   };
 
   const handleApply = async () => {
-    const hash = getFilterHash(filters);
-    console.log(`[FilterHash] Generated hash: ${hash}`);
-    const cached = await getFilteredSet(filters);
-
-    const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
-
-    if (!needFetch) {
-      console.log(`[FilterHash] Using cached results for hash: ${hash}`);
-      dispatch(setFilteredPosts(cached));
-      const fetchedAt = await getFetchDate(filters);
-      dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
-      setActivePostSet("filteredPosts");
-      setLastAppliedFilters(filters);
-      onFiltersApplied?.(filters);
-      return;
-    }
-    console.log(`[FilterHash] Fetching fresh results for hash: ${hash}`);
+    // skip getFilteredSet / shouldRefetch entirely:
+    // console.log(filters)
+    // console.log("[BypassCache] always fetching…");
     const result = await dispatch(fetchFilteredPostsBatch({ filters }));
-
     if (fetchFilteredPostsBatch.fulfilled.match(result)) {
       const fresh = result.payload.posts.map(normalizePost);
+      console.log("[BypassCache] fetched", fresh.length, "posts");
       dispatch(setFilteredPosts(fresh));
       dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
       await storeFilteredSet(filters, fresh);
@@ -357,6 +318,40 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
   };
 
+  // const handleApply = async () => {
+  //   const hash = getFilterHash(filters);
+  //   console.log(`[FilterHash] Generated hash: ${hash}`);
+  //   const cached = await getFilteredSet(filters);
+
+  //   const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
+
+  //   if (!needFetch) {
+  //     console.log(`[FilterHash] Using cached results for hash: ${hash}`);
+  //     dispatch(setFilteredPosts(cached));
+  //     const fetchedAt = await getFetchDate(filters);
+  //     dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
+  //     setActivePostSet("filteredPosts");
+  //     setLastAppliedFilters(filters);
+  //     onFiltersApplied?.(filters);
+  //     return;
+  //   }
+  //   console.log(`[FilterHash] Fetching fresh results for hash: ${hash}`);
+  //   // EnhancedFilterSidebar.tsx → handleApply()
+  //   console.log("[handleApply] Filters being applied:", filters);
+
+  //   const result = await dispatch(fetchFilteredPostsBatch({ filters }));
+
+  //   if (fetchFilteredPostsBatch.fulfilled.match(result)) {
+  //     const fresh = result.payload.posts.map(normalizePost);
+  //     dispatch(setFilteredPosts(fresh));
+  //     dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
+  //     await storeFilteredSet(filters, fresh);
+  //     setActivePostSet("filteredPosts");
+  //     setLastAppliedFilters(filters);
+  //     onFiltersApplied?.(filters);
+  //   }
+  // };
+
   useEffect(() => {
     // clear the brand input if brand filter was cleared
     if (!filters.brand) {
@@ -364,6 +359,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       setSelectedBrand(null);
       setBrandOpen(false);
     }
+
+    // if (!filters.postUserUid) {
+
+    // }
 
     // clear the product-type input if productType filter was cleared
     if (!filters.productType) {
@@ -465,74 +464,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           🍻 Product
         </button>
         <div className="filter-group">
-          {/* <Autocomplete
-            options={brandOptions}
-            value={filters.brand || ""}
-            inputValue={brandInput}
-            open={brandOpen}
-            onOpen={() => setBrandOpen(true)}
-            onClose={() => setBrandOpen(false)}
-            onInputChange={(_, value, reason) => {
-              setBrandInput(value);
-
-              // only open when typing
-              if (reason === "input") setBrandOpen(value.length > 0);
-
-              const normalized = normalizeBrand(value);
-
-              const matchingOptions = brandOptions.filter((option) =>
-                normalizeBrand(option).includes(normalized)
-              );
-
-              const exactMatch = brandOptions.find(
-                (b) => normalizeBrand(b) === normalized
-              );
-
-              setIsBrandValid(value === "" || matchingOptions.length > 0);
-
-              if (exactMatch) {
-                handleChange("brand", exactMatch);
-                setSelectedBrand(exactMatch);
-              } else if (matchingOptions.length > 0) {
-                // Keep existing brand selected while typing something that *could* be valid
-                handleChange("brand", selectedBrand);
-              } else {
-                handleChange("brand", null);
-                setSelectedBrand(null);
-              }
-            }}
-            onChange={(_, value) => {
-              handleChange("brand", value || null);
-              setBrandInput(value || "");
-              setSelectedBrand(value || null);
-              setBrandOpen;
-            }}
-            // open={brandInput.length > 0}
-            filterOptions={(options, state) =>
-              options.filter((option) =>
-                normalizeBrand(option).includes(
-                  normalizeBrand(state.inputValue)
-                )
-              )
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Brand"
-                placeholder="Type to search brands"
-                error={!isBrandValid}
-                helperText={!isBrandValid ? "No matching brand found" : ""}
-                onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault(); // stop form submission / menu re-open
-                    handleApply(); // trigger your Apply Filters logic
-                  }
-                }}
-              />
-            )}
-            fullWidth
-            disablePortal
-          /> */}
           <BrandAutoComplete
             inputValue={brandInput}
             selectedBrand={selectedBrand}

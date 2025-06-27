@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./userTableForGoals.css";
 import { getCompletionClass } from "../utils/helperFunctions/getCompletionClass";
+import { CompanyGoalWithIdType, PostQueryFilters } from "../utils/types";
+import { clearAllFilters } from "./FilterSideBar/utils/filterUtils";
 
 interface UserRowType {
   uid: string;
@@ -11,15 +13,29 @@ interface UserRowType {
   userCompletionPercentage: number;
 }
 
-const UserTableForGoals = ({ users }: { users: UserRowType[] }) => {
+const UserTableForGoals = ({
+  users,
+  goal,
+}: {
+  users: UserRowType[];
+  goal: CompanyGoalWithIdType;
+}) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   type SortMode = "completion-desc" | "completion-asc" | "alphabetical";
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
 
-  const handleViewPost = (postId: string) => {
-    console.log("Navigating to user-home-page with postId", postId);
-    navigate(`/user-home-page?postId=${postId}`);
+  const handleViewGoalPost = (postId: string ) => {
+    const base = clearAllFilters();
+    const filters = {
+      ...base,
+      companyGoalId: goal.id,
+      companyGoalTitle: goal.goalTitle,
+    };
+
+    navigate("/user-home-page", {
+      state: { filters, postIdToScroll: postId },
+    });
   };
 
   const sortedFilteredUsers = useMemo(() => {
@@ -75,6 +91,7 @@ const UserTableForGoals = ({ users }: { users: UserRowType[] }) => {
           <tr>
             <th style={{ width: "2rem", minWidth: "2rem" }}>#</th>
             <th>Last Name, First Name</th>
+            <th>Store Name Name</th>
             <th>Submissions</th>
           </tr>
         </thead>
@@ -97,10 +114,15 @@ const UserTableForGoals = ({ users }: { users: UserRowType[] }) => {
                   {user.submissions.length > 0
                     ? user.submissions.map((sub, subIdx) => (
                         <div key={subIdx} className="submission-item">
+                          {sub.postId}
                           <span>
                             {new Date(sub.submittedAt).toLocaleString()}
                           </span>
-                          <button onClick={() => handleViewPost(sub.postId)}>
+                          <button
+                            onClick={() =>
+                              handleViewGoalPost(sub.postId)
+                            }
+                          >
                             View
                           </button>
                         </div>

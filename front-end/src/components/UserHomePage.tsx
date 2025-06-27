@@ -10,6 +10,7 @@ import HeaderBar from "./HeaderBar";
 import { UserHomePageHelmet } from "../utils/helmetConfigurations";
 import {
   addAccountsToIndexedDB,
+  getFilteredSet,
   getPostsFromIndexedDB,
   getUserAccountsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
@@ -20,8 +21,13 @@ import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { setReduxAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
 import EnhancedFilterSidebar from "./FilterSideBar/EnhancedFilterSideBar";
-import { getFilterSummaryText } from "./FilterSideBar/utils/filterUtils";
-import { useNavigate } from "react-router-dom";
+import {
+  // getFilterHash,
+  getFilterSummaryText,
+} from "./FilterSideBar/utils/filterUtils";
+import { useLocation, useNavigate } from "react-router-dom";
+import { fetchFilteredPostsBatch } from "../thunks/postsThunks";
+import { normalizePost } from "../utils/normalizePost";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
@@ -37,11 +43,70 @@ export const UserHomePage = () => {
   const [clearInput, setClearInput] = useState(false);
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
-  // const [usersAccounts, setUsersAccounts] = useState<CompanyAccountType[] | null>(null);
   const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
   const [isClosing, setIsClosing] = useState(false);
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
-  const filterText = lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : "";
+  const filterText = useMemo(
+    () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
+    [lastFilters, companyUsers]
+  );
+
+  const allPosts = useSelector((s: RootState) =>
+    activePostSet === "filteredPosts" ? s.posts.filteredPosts : s.posts.posts
+  );
+
+  // at top of UserHomePage.tsx
+  const location = useLocation();
+  const { filters: initialFilters, postIdToScroll: initialScrollId } =
+    (location.state as {
+      filters?: PostQueryFilters;
+      postIdToScroll?: string;
+    }) || {};
+
+  // 1) When we get new filters, load the full set
+  useEffect(() => {
+    if (!initialFilters) return;
+    setActivePostSet("filteredPosts");
+    setLastFilters(initialFilters);
+
+    (async () => {
+      const cached = await getFilteredSet(initialFilters);
+      if (cached) {
+        dispatch(setFilteredPosts(cached));
+      } else {
+        const result = await dispatch(
+          fetchFilteredPostsBatch({ filters: initialFilters })
+        );
+        if (fetchFilteredPostsBatch.fulfilled.match(result)) {
+          dispatch(setFilteredPosts(result.payload.posts.map(normalizePost)));
+        }
+      }
+    })();
+  }, [initialFilters, dispatch]);
+
+  // 2) When we get a scroll-ID from router state, set it
+  useEffect(() => {
+    if (initialScrollId) {
+      setPostIdToScroll(initialScrollId);
+    }
+  }, [initialScrollId]);
+
+  useEffect(() => {
+    if (!postIdToScroll || !virtuosoRef.current) return;
+    const idx = allPosts.findIndex((p) => p.id === postIdToScroll);
+
+    if (idx >= 0) {
+      // i had this part commented out because u said activity feed was also doing it
+      console.log("[UserHomePage] Calling scrollToIndex(", idx, ")");
+      virtuosoRef.current.scrollToIndex({
+        index: idx,
+        align: "start",
+        behavior: "smooth",
+      });
+      setPostIdToScroll(null);
+    }
+  }, [postIdToScroll, allPosts, virtuosoRef]);
+
   // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
   const filteredCount = useSelector(
     (state: RootState) => state.posts.filteredPostCount
@@ -50,16 +115,7 @@ export const UserHomePage = () => {
     (s: RootState) => s.posts.filteredPostFetchedAt
   );
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("postId");
-    if (id) setPostIdToScroll(id);
-  }, []);
-
-  const scrollToPost = useRef<(postId: string) => void>();
-
   const toggleFilterMenu = () => {
-    console.log("clicked toggleFilterMenu");
     if (isFilterMenuOpen) {
       setIsClosing(true);
       setTimeout(() => {
@@ -75,7 +131,6 @@ export const UserHomePage = () => {
     setCurrentHashtag(null);
     setCurrentStarTag(null);
     setActivePostSet("posts");
-    dispatch(setFilteredPosts([]));
     setLastFilters(null); // ✅ hides FilterSummaryBanner
     dispatch(setFilteredPosts([]));
     // dispatch(setFilteredPostCount(0)); // you'd need to define this reducer
@@ -89,12 +144,6 @@ export const UserHomePage = () => {
   useEffect(() => {
     dispatch(fetchLocationOptions());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (postIdToScroll && scrollToPost.current) {
-      scrollToPost.current(postIdToScroll);
-    }
-  }, [postIdToScroll]);
 
   useEffect(() => {
     if (!user || !companyId) return;
@@ -113,7 +162,8 @@ export const UserHomePage = () => {
           );
           if (fetchedAccounts.length > 0) {
             setUsersAccounts(fetchedAccounts);
-            setReduxAccounts(fetchedAccounts);
+            dispatch(setReduxAccounts(fetchedAccounts));
+
             await addAccountsToIndexedDB(fetchedAccounts);
           }
         } else {
@@ -151,7 +201,7 @@ export const UserHomePage = () => {
                 Filters
               </button>
               <button
-                onClick={() => navigate("/createPost")}
+                onClick={() => navigate("/create-post")}
                 className="btn-outline filter-menu-toggle"
               >
                 Create Display
@@ -196,6 +246,7 @@ export const UserHomePage = () => {
               currentStarTag={currentStarTag}
               setCurrentStarTag={setCurrentStarTag}
               toggleFilterMenu={toggleFilterMenu}
+              initialFilters={initialFilters}
             />
           </div>
         </div>

@@ -1,6 +1,6 @@
 import {
   Box,
-  Container,
+  // Container,
   Tab,
   Tabs,
   Select,
@@ -9,21 +9,53 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import AllCompanyGoalsView from "./AllCompanyGoalsView";
 import "./allGoalsLayout.css";
 import { useSelector } from "react-redux";
-import AdminCompanyGoalsOverview from "./AdminCompanyGoalsOverview";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "@firebase/firestore";
-import { db } from "../../utils/firebase";
-import path from "path";
-import fs from 'fs';
-import { CompanyGoalType } from "../../utils/types";
+// import AdminCompanyGoalsOverview from "./AdminCompanyGoalsOverview";
+// import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "@firebase/firestore";
+// import { db } from "../../utils/firebase";
+// import path from "path";
+// import fs from 'fs';
+// import { CompanyGoalType } from "../../utils/types";
 
 // import allAccountNumbers from "../../allCompanyAccountNumbers.json";
-import allAccountNumbers from "../../../allCompanyAccountNumbers.json";
+// import allAccountNumbers from "../../../allCompanyAccountNumbers.json";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
+import { CompanyGoalWithIdType } from "../../utils/types";
 
+
+export interface GoalDuplicateReport {
+  goalId: string;
+  duplicatePostIds: string[];
+}
+
+export function findDuplicateSubmissions(
+  goals: CompanyGoalWithIdType[]
+): GoalDuplicateReport[] {
+  return goals
+    .map((goal) => {
+      const counts = (goal.submittedPosts || []).reduce<Record<string, number>>(
+        (acc, submission) => {
+          acc[submission.postId] = (acc[submission.postId] || 0) + 1;
+          return acc;
+        },
+        {}
+      );
+
+      const duplicates = Object.entries(counts)
+        .filter(([, count]) => count > 1)
+        .map(([postId]) => postId);
+
+      return duplicates.length > 0
+        ? { goalId: goal.id, duplicatePostIds: duplicates }
+        : null;
+    })
+    .filter(
+      (report): report is GoalDuplicateReport => report !== null
+    );
+}
 
 
 const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
@@ -33,7 +65,21 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
 
   // const galloGoals = useSelector(selectAllGalloGoals);
   const companyGoals = useSelector(selectAllCompanyGoals);
-  console.log(companyGoals);
+  console.log(companyGoals); // logs 5.. the last one is the one i want to check for duplicates but we could just check them all.  specifically checking for duplicate postIds in the submittedPosts
+
+  // Compute duplicate reports once whenever goals change
+  const duplicateReports: GoalDuplicateReport[] = useMemo(
+    () => findDuplicateSubmissions(companyGoals),
+    [companyGoals]
+  );
+
+  // Optionally log to console
+  useMemo(() => {
+    if (duplicateReports.length) {
+      console.warn("Goals with duplicate submissions:", duplicateReports);
+    }
+  }, [duplicateReports]);
+
 
   interface TabPanelProps {
     children?: React.ReactNode;

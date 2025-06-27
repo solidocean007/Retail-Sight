@@ -11,7 +11,7 @@ import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 import UserModal from "./components/UserModal";
 import { AppRoutes } from "./utils/Routes";
 import { getTheme } from "./theme";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { setDarkMode } from "./Slices/themeSlice"; // ✅ New, clean import
 import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener";
 import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener";
@@ -21,13 +21,10 @@ import { loadCompany } from "./thunks/companyThunk";
 import { fetchCompanyProducts } from "./thunks/productThunks";
 import { setAllProducts } from "./Slices/productsSlice";
 import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
-import useSchemaVersion from "./hooks/useSchemaVersion.ts";
-import useCompanyUsersSync from "./hooks/useCompanyUsersSync.ts";
-// import { collection, getDocs } from "@firebase/firestore";
-// import { db } from "./utils/firebase.ts";
-// import { migratePostToCleanedFlattenedVersion } from "./script.ts";
+import useSchemaVersion from "./hooks/useSchemaVersion";
+import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 
-function App() {
+function App(): React.JSX.Element {
   useSchemaVersion();
   useCompanyUsersSync();
   const dispatch = useAppDispatch();
@@ -35,25 +32,23 @@ function App() {
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const user = useSelector((state: RootState) => state.user.currentUser);
   const companyId = user?.companyId;
-  const salesRouteNum = user?.salesRouteNum;
+  // const salesRouteNum = user?.salesRouteNum;
   const { currentUser, initializing } = useFirebaseAuth();
+  const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  const [theme, setTheme] = useState(() => getTheme(isDarkMode));
+ useEffect(() => {
+  if (!companyId) return;
+  ;(async () => {
+    try {
+      const cached = await getAllCompanyProductsFromIndexedDB();
+      if (cached.length) dispatch(setAllProducts(cached));
+      dispatch(fetchCompanyProducts(companyId));
+    } catch (err) {
+      console.error("Product load failed", err);
+    }
+  })();
+}, [dispatch, companyId]);
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      if (!user?.companyId) return;
-
-      const cachedProducts = await getAllCompanyProductsFromIndexedDB();
-      if (cachedProducts.length > 0) {
-        dispatch(setAllProducts(cachedProducts)); // Optional preload
-      }
-
-      dispatch(fetchCompanyProducts(user.companyId)); // Still fetch latest
-    };
-
-    loadProducts();
-  }, [dispatch, user?.companyId]);
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {
@@ -64,15 +59,15 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
+
+  useEffect(() => {
     if (companyId) {
       dispatch(loadCompany(user.companyId));
     }
   }, [user?.companyId, dispatch]);
 
-  // 🧠 Rebuild MUI theme when Redux theme mode changes
-  useEffect(() => {
-    setTheme(getTheme(isDarkMode));
-  }, [isDarkMode]);
 
   // 📡 Goal listeners
   useEffect(() => {
@@ -85,7 +80,10 @@ function App() {
       unsubscribeCompanyGoals();
       unsubscribeGalloGoals();
     };
-  }, [dispatch, companyId, salesRouteNum]);
+  }, [dispatch, companyId]);
+
+ if (initializing) return <></>;
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
