@@ -114,7 +114,6 @@ const UserTableForGoals = ({
                   {user.submissions.length > 0
                     ? user.submissions.map((sub, subIdx) => (
                         <div key={subIdx} className="submission-item">
-                          {sub.postId}
                           <span>
                             {new Date(sub.submittedAt).toLocaleString()}
                           </span>

@@ -183,6 +183,7 @@ export const CreatePost = () => {
             post={post}
             onPrevious={goToPreviousStep}
             handleFieldChange={handleFieldChange}
+            isUploading={isUploading}
             setIsUploading={setIsUploading}
             uploadProgress={uploadProgress}
             selectedFile={selectedFile}

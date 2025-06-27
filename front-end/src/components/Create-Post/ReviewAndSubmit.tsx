@@ -22,6 +22,7 @@ interface ReviewAndSubmitProps {
     field: keyof PostInputType,
     value: PostInputType[keyof PostInputType]
   ) => void;
+  isUploading: boolean;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   uploadProgress: number;
   selectedFile: File | null;
@@ -36,6 +37,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   post,
   onPrevious,
   handleFieldChange,
+  isUploading,
   setIsUploading,
   uploadProgress,
   selectedFile,
@@ -45,7 +47,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   selectedMission,
 }) => {
   const [apiKey, setApiKey] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -118,7 +119,7 @@ const handleSubmitClick = async () => {
     return;
   }
 
-  setIsSubmitting(true);
+  // setIsSubmitting(true);
   setUploadProgress(0);
   setIsUploading(true);
 
@@ -133,13 +134,14 @@ const handleSubmitClick = async () => {
       navigate
     );
     dispatch(showMessage("Post submitted successfully!"));
-    navigate("/user-home-page");
   } catch (err: any) {
     console.error("Upload failed:", err);
     dispatch(showMessage(err.message || "An error occurred during upload."));
   } finally {
-    setIsSubmitting(false);
-    setIsUploading(false);
+    setTimeout(() => {
+      setIsUploading(false);
+      navigate("/user-home-page");
+    }, 500)
   }
 };
 
@@ -177,10 +179,12 @@ const handleSubmitClick = async () => {
           color="primary"
           type="button"
           fullWidth
-          disabled={isSubmitting}
+          disabled={isUploading}
           onClick={handleSubmitClick}
         >
-          {!isSubmitting ? "Submit Post" : <CircularProgress size={44} />}
+          {isUploading
+            ? `Uploading ${Math.round(uploadProgress)}%` 
+            : "Submit Post"}
         </Button>
       </Box>
     </div>

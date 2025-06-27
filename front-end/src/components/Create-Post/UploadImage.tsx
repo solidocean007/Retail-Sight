@@ -52,7 +52,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
       return;
     }
 
-    if (file.type === "image/heic" || file.type === "image/heif") {
+    if (file.type.includes("heic") || file.type.includes("heif")) {
       dispatch(showMessage("Converting HEIC image, please wait..."));
       setIsConverting(true);
       try {
