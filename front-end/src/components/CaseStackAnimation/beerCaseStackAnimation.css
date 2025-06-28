@@ -1,0 +1,48 @@
+:root {
+  --box-color: orange;
+  /* --bg-color: #0b1d3a; */
+}
+
+.stack {
+  background-color: var(--bg-color);
+  position: relative;
+  width: 320px;
+  height: 500px;
+  margin: auto;
+}
+
+.box {
+  width: 70px;
+  height: 50px;
+  background-color: var(--box-color);
+  border-radius: 3px;
+  position: absolute;
+  opacity: 0;
+}
+
+@keyframes drop {
+  0% { transform: translateY(-100px); opacity: 0; }
+  40% { opacity: 1; transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  60% { transform: translateY(3px); }
+  70% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes exit-left {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-300px) rotate(-10deg); }
+}
+
+@keyframes exit-right {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(300px) rotate(10deg); }
+}
+
+.box.exit-left {
+  animation: exit-left 0.8s forwards;
+}
+
+.box.exit-right {
+  animation: exit-right 0.8s forwards;
+}

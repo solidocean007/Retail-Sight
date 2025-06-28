@@ -1,5 +1,5 @@
 const dbName = "myRetailAppDB";
-const dbVersion = 29;
+const dbVersion = 30;
 
 // db.createObjectStore("filteredSets", { keyPath: "id" });
 // Each record: { id: string, filters: PostQueryFilters, posts: PostWithID[], fetchedAt: string }

@@ -7,7 +7,14 @@ import { selectUser } from "../../Slices/userSlice";
 
 // import ChannelSelector from "./ChannelSelector";
 // import CategorySelector from "./CategorySelector";
-import { AppBar, Container, IconButton } from "@mui/material";
+import {
+  AppBar,
+  Backdrop,
+  Box,
+  Container,
+  IconButton,
+  Typography,
+} from "@mui/material";
 
 // import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
@@ -211,7 +218,21 @@ export const CreatePost = () => {
     <>
       <CreatePostHelmet />
       <Container disableGutters className="create-post-container">
-        {isUploading && <LoadingIndicator progress={uploadProgress} />}
+        {isUploading && (
+          <Backdrop
+            open
+            sx={{ color: "#fff", zIndex: (t) => t.zIndex.drawer + 1 }}
+          >
+            <Box textAlign="center">
+              <LoadingIndicator progress={uploadProgress} />
+
+              <Typography variant="h4" sx={{ mt: 2, fontWeight: "bold" }}>
+                Uploading… {Math.round(uploadProgress)}%
+              </Typography>
+            </Box>
+          </Backdrop>
+        )}
+
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
             <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>

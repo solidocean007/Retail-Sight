@@ -22,6 +22,7 @@ import { setReduxAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
 import EnhancedFilterSidebar from "./FilterSideBar/EnhancedFilterSideBar";
 import {
+  getFilterHash,
   // getFilterHash,
   getFilterSummaryText,
 } from "./FilterSideBar/utils/filterUtils";
@@ -49,10 +50,6 @@ export const UserHomePage = () => {
   const filterText = useMemo(
     () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
     [lastFilters, companyUsers]
-  );
-
-  const allPosts = useSelector((s: RootState) =>
-    activePostSet === "filteredPosts" ? s.posts.filteredPosts : s.posts.posts
   );
 
   // at top of UserHomePage.tsx
@@ -84,36 +81,14 @@ export const UserHomePage = () => {
     })();
   }, [initialFilters, dispatch]);
 
-  // 2) When we get a scroll-ID from router state, set it
-  useEffect(() => {
-    if (initialScrollId) {
-      setPostIdToScroll(initialScrollId);
-    }
-  }, [initialScrollId]);
-
-  useEffect(() => {
-    if (!postIdToScroll || !virtuosoRef.current) return;
-    const idx = allPosts.findIndex((p) => p.id === postIdToScroll);
-
-    if (idx >= 0) {
-      // i had this part commented out because u said activity feed was also doing it
-      console.log("[UserHomePage] Calling scrollToIndex(", idx, ")");
-      virtuosoRef.current.scrollToIndex({
-        index: idx,
-        align: "start",
-        behavior: "smooth",
-      });
-      setPostIdToScroll(null);
-    }
-  }, [postIdToScroll, allPosts, virtuosoRef]);
-
   // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
   const filteredCount = useSelector(
     (state: RootState) => state.posts.filteredPostCount
   );
-  const fetchedAt = useSelector(
-    (s: RootState) => s.posts.filteredPostFetchedAt
-  );
+const filteredFetchedAt = useSelector(
+  (state: RootState) => state.posts.filteredPostFetchedAt
+);
+
 
   const toggleFilterMenu = () => {
     if (isFilterMenuOpen) {
@@ -177,6 +152,9 @@ export const UserHomePage = () => {
     fetchUserAccounts(companyId);
   }, [user, companyId]);
 
+  const filterHash = lastFilters ? getFilterHash(lastFilters) : null;
+  const fetchedAt = filterHash ? filteredFetchedAt[filterHash] : undefined; // cannot find
+
   return (
     <>
       <UserHomePageHelmet />
@@ -190,7 +168,7 @@ export const UserHomePage = () => {
               filteredCount={filteredCount}
               filterText={filterText}
               onClear={clearSearch}
-              fetchedAt={fetchedAt}
+              fetchedAt={fetchedAt} // Type 'Record<string, string>' is not assignable to type 'string'.
             />
           ) : (
             <div className="activity-feed-header-bar">

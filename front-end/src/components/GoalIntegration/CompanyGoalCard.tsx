@@ -167,6 +167,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         submissions: userSubmissions.map((post) => ({
           postId: post.postId,
           submittedAt: post.submittedAt,
+          storeName: post.account.accountName,
         })),
         userCompletionPercentage: completionPercentage,
       };

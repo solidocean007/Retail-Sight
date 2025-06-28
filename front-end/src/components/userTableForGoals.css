@@ -30,10 +30,12 @@
 }
 
 .user-table-count {
+  display: flex;
   font-size: 0.875rem;
   padding-left: 4px;
   padding-right: 4px;
-  text-align: center;
+  text-align: start;
+
   width: 2rem;
   min-width: 2rem;
   max-width: 2rem;
@@ -75,6 +77,16 @@
   width: 100%;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 10px;
+  font-weight: bolder;
+}
+
+.store-name {
+  min-width: 300px;
+}
+
+.submitted-at  {
+  min-width: 250px;
 }
 
 .user-table button:hover {

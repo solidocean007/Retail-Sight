@@ -9,7 +9,7 @@ interface UserRowType {
   uid: string;
   firstName: string;
   lastName: string;
-  submissions: { postId: string; submittedAt: string }[];
+  submissions: { postId: string; storeName: string; submittedAt: string }[];
   userCompletionPercentage: number;
 }
 
@@ -25,7 +25,8 @@ const UserTableForGoals = ({
   type SortMode = "completion-desc" | "completion-asc" | "alphabetical";
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
 
-  const handleViewGoalPost = (postId: string ) => {
+  const handleViewGoalPost = (postId: string) => {
+    console.log('postId: ', postId)
     const base = clearAllFilters();
     const filters = {
       ...base,
@@ -87,40 +88,32 @@ const UserTableForGoals = ({
       </div>
 
       <table className="user-table">
-        <thead>
-          <tr>
-            <th style={{ width: "2rem", minWidth: "2rem" }}>#</th>
-            <th>Last Name, First Name</th>
-            <th>Store Name Name</th>
-            <th>Submissions</th>
-          </tr>
-        </thead>
         <tbody>
           {sortedFilteredUsers.map((user, idx) => (
             <tr key={user.uid}>
               <td className="user-table-count">{idx + 1}</td>
-
-              <td className="user-info-cell">
-                <div className="user-name-cell">{`${user.lastName}, ${user.firstName}`}</div>
-                <div
-                  className={getCompletionClass(user.userCompletionPercentage)}
-                >
-                  {user.userCompletionPercentage}%
-                </div>
-              </td>
-
               <td>
+                <div className="user-info-cell">
+                  <div className="user-name-cell">{`${user.lastName}, ${user.firstName}`}</div>
+                  <div
+                    className={getCompletionClass(
+                      user.userCompletionPercentage
+                    )}
+                  >
+                    {user.userCompletionPercentage}%
+                  </div>
+                </div>
                 <div className="submissions-wrapper">
                   {user.submissions.length > 0
                     ? user.submissions.map((sub, subIdx) => (
                         <div key={subIdx} className="submission-item">
-                          <span>
+                          <div className="store-name">{sub.storeName}</div>
+                          <div className="submitted-at">
                             {new Date(sub.submittedAt).toLocaleString()}
-                          </span>
+                          </div>
+
                           <button
-                            onClick={() =>
-                              handleViewGoalPost(sub.postId)
-                            }
+                            onClick={() => handleViewGoalPost(sub.postId)}
                           >
                             View
                           </button>

@@ -39,6 +39,8 @@ import NoResults from "./NoResults";
 import { PostQueryFilters } from "../utils/types";
 import { useNavigate } from "react-router-dom";
 import { normalizePost } from "../utils/normalizePost";
+import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
+import { getFilterHash } from "./FilterSideBar/utils/filterUtils";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -78,19 +80,22 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   appliedFilters,
 }) => {
   const dispatch = useAppDispatch();
+  const [showLoader, setShowLoader] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
   const [showScrollTop, setShowScrollTop] = useState(false);
   const filteredCount = useSelector(
     (s: RootState) => s.posts.filteredPostCount
   );
-  const rawPosts = useSelector((state: RootState) => state.posts.posts);
+  const allPosts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
   const displayPosts = useMemo(() => {
-    return activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
+    return activePostSet === "filteredPosts" ? filteredPosts : allPosts;
   }, [
     activePostSet,
-    activePostSet === "filteredPosts" ? filteredPosts : rawPosts,
+    activePostSet === "filteredPosts" ? filteredPosts : allPosts,
   ]);
   // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -101,15 +106,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // State to store the window width
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  const loading = useSelector((state: RootState) => state.posts.loading);
-
   const filteredFetchedAt = useSelector(
-  (s: RootState) => s.posts.filteredPostFetchedAt
-);
-
+    (s: RootState) => s.posts.filteredPostFetchedAt
+  );
 
   const scrollToTop = () => {
     virtuosoRef.current?.scrollToIndex({
@@ -119,50 +118,69 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     });
   };
 
-const hasFetchedForScroll = useRef(false);
+const appliedHash = appliedFilters ? getFilterHash(appliedFilters) : null;
+const hasFetchedRef = useRef<string | null>(null);
 
 useEffect(() => {
-  if (!postIdToScroll || !virtuosoRef.current) return;
+  if (!appliedFilters || !appliedHash) return;
+  if (hasFetchedRef.current === appliedHash) return;
 
-  const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
+  let cancelled = false;
 
-  console.log(displayPosts.length, " :length of displayPosts", activePostSet, " : type of posts")
-
-  if (idx >= 0) {
-    virtuosoRef.current.scrollToIndex({ index: idx, align: "start", behavior: "smooth" });
-    setPostIdToScroll(null);
-    hasFetchedForScroll.current = false;          // reset for next time
-    return;
-  }
-
-  // if we’ve *already* tried to fetch once, give up
-  if (hasFetchedForScroll.current) {
-    console.warn("Post not found after fetch:", postIdToScroll);
-    setPostIdToScroll(null);
-    hasFetchedForScroll.current = false;
-    return;
-  }
-
-  // first miss: go fetch
-  hasFetchedForScroll.current = true;
   (async () => {
-    if (!appliedFilters) return;
     const cached = await getFilteredSet(appliedFilters);
-    const stale = !(await shouldRefetch(appliedFilters, filteredFetchedAt));
+    const stale = await shouldRefetch(appliedFilters, allPosts);
 
-    if (Array.isArray(cached) && cached.length > 0 && stale) {
-      dispatch(setFilteredPosts(cached));
+    if (cancelled) return;
+
+    if (Array.isArray(cached) && cached.length > 0 && !stale) {
+      dispatch(setFilteredPosts({ filters: appliedFilters, posts: cached || [] }));
+      hasFetchedRef.current = appliedHash;
     } else {
       const result = await dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
       if (fetchFilteredPostsBatch.fulfilled.match(result)) {
         const fresh = result.payload.posts.map(normalizePost);
-        dispatch(setFilteredPosts(fresh));
+        dispatch(setFilteredPosts({ filters: appliedFilters, posts: fresh }));
         await storeFilteredSet(appliedFilters, fresh);
+        hasFetchedRef.current = appliedHash;
       }
     }
   })();
-}, [postIdToScroll, displayPosts, appliedFilters, filteredFetchedAt, dispatch]);
 
+  return () => {
+    cancelled = true;
+  };
+}, [appliedFilters, appliedHash, allPosts, dispatch]);
+
+
+
+  const hasScrolled = useRef(false);
+
+  // this next useEffect needs to be conditioned that the one above is done right?
+  useEffect(() => {
+    if (!postIdToScroll || !virtuosoRef.current || hasScrolled.current) return;
+
+    const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
+    if (idx === -1) return;
+
+    hasScrolled.current = true;
+
+    // Use double rAF to wait for virtual list to render
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        virtuosoRef.current?.scrollToIndex({
+          index: idx,
+          align: "start",
+          behavior: "smooth",
+        });
+        setPostIdToScroll(null); // done
+      });
+    });
+  }, [postIdToScroll, displayPosts]);
+
+  useEffect(() => {
+    hasScrolled.current = false;
+  }, [postIdToScroll]);
 
   // how can i tighten this up to work when i need it to and not run when im passing filters to userhomepage frmo another route
   const prevActivePostSet = useRef(activePostSet);
@@ -191,12 +209,22 @@ useEffect(() => {
 
   // const itemHeight = getActivityItemHeight(windowWidth);
 
-  // only block the whole feed when you have _no_ items yet:
-  if (loading && rawPosts.length === 0) {
-    return <CircularProgress />;
+  if (showLoader) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <BeerCaseStackAnimation minDuration={1000} />
+      </div>
+    );
   }
 
-  if (displayPosts.length === 0) {
+  if (hasLoadedOnce && displayPosts.length === 0) {
     return <NoResults />;
   }
 
