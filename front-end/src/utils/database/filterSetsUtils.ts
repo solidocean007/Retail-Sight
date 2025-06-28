@@ -76,7 +76,9 @@ export async function purgeDeletedPostFromFilteredSets(postId: string) {
           const record = getReq.result;
           if (!record || !Array.isArray(record.posts)) return;
 
-          const filtered = record.posts.filter((p: PostWithID) => p.id !== postId);
+          const filtered = record.posts.filter(
+            (p: PostWithID) => p.id !== postId
+          );
           if (filtered.length !== record.posts.length) {
             if (filtered.length === 0) {
               store.delete(key);
@@ -92,6 +94,26 @@ export async function purgeDeletedPostFromFilteredSets(postId: string) {
   });
 }
 
+// export async function shouldRefetch(
+//   filters: PostQueryFilters,
+//   latestClientPosts: PostWithID[] // pass in from Redux
+// ): Promise<boolean> {
+//   const fetchedAt = await getFetchDate(filters);
+//   if (!fetchedAt) return true;
+
+//   if (!Array.isArray(latestClientPosts) || latestClientPosts.length === 0) {
+//     return true; // no local posts to compare against
+//   }
+
+//   const newestLocalPost = latestClientPosts.reduce((latest, post) => {
+//     const date = new Date(post.displayDate || post.timestamp || 0);
+//     const latestDate = new Date(latest.displayDate || latest.timestamp || 0);
+//     return date > latestDate ? post : latest;
+//   }, latestClientPosts[0]);
+
+//   return new Date(newestLocalPost.displayDate || newestLocalPost.timestamp || 0) > new Date(fetchedAt);
+// }
+
 export async function shouldRefetch(
   filters: PostQueryFilters,
   newestRawIso: string | null
@@ -104,7 +126,3 @@ export async function shouldRefetch(
   const newestRawDate = new Date(newestRawIso);
   return newestRawDate > fetchedAt;
 }
-
-
-
-

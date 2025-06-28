@@ -85,10 +85,9 @@ export const UserHomePage = () => {
   const filteredCount = useSelector(
     (state: RootState) => state.posts.filteredPostCount
   );
-const filteredFetchedAt = useSelector(
-  (state: RootState) => state.posts.filteredPostFetchedAt
-);
-
+  const fetchedAt = useSelector(
+    (s: RootState) => s.posts.filteredPostFetchedAt
+  );
 
   const toggleFilterMenu = () => {
     if (isFilterMenuOpen) {
@@ -151,9 +150,6 @@ const filteredFetchedAt = useSelector(
 
     fetchUserAccounts(companyId);
   }, [user, companyId]);
-
-  const filterHash = lastFilters ? getFilterHash(lastFilters) : null;
-  const fetchedAt = filterHash ? filteredFetchedAt[filterHash] : undefined; // cannot find
 
   return (
     <>
