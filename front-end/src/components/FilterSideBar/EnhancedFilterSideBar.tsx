@@ -301,48 +301,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
   };
 
-  const handleApply = async () => {
-    // skip getFilteredSet / shouldRefetch entirely:
-    // console.log(filters)
-    // console.log("[BypassCache] always fetching…");
-    const result = await dispatch(fetchFilteredPostsBatch({ filters }));
-    if (fetchFilteredPostsBatch.fulfilled.match(result)) {
-      const fresh = result.payload.posts.map(normalizePost);
-      console.log("[BypassCache] fetched", fresh.length, "posts");
-      dispatch(setFilteredPosts(fresh));
-      dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
-      await storeFilteredSet(filters, fresh);
-      setActivePostSet("filteredPosts");
-      setLastAppliedFilters(filters);
-      onFiltersApplied?.(filters);
-    }
-  };
-
   // const handleApply = async () => {
-  //   const hash = getFilterHash(filters);
-  //   console.log(`[FilterHash] Generated hash: ${hash}`);
-  //   const cached = await getFilteredSet(filters);
-
-  //   const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
-
-  //   if (!needFetch) {
-  //     console.log(`[FilterHash] Using cached results for hash: ${hash}`);
-  //     dispatch(setFilteredPosts(cached));
-  //     const fetchedAt = await getFetchDate(filters);
-  //     dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
-  //     setActivePostSet("filteredPosts");
-  //     setLastAppliedFilters(filters);
-  //     onFiltersApplied?.(filters);
-  //     return;
-  //   }
-  //   console.log(`[FilterHash] Fetching fresh results for hash: ${hash}`);
-  //   // EnhancedFilterSidebar.tsx → handleApply()
-  //   console.log("[handleApply] Filters being applied:", filters);
-
+  //   // skip getFilteredSet / shouldRefetch entirely:
+  //   // console.log(filters)
+  //   // console.log("[BypassCache] always fetching…");
   //   const result = await dispatch(fetchFilteredPostsBatch({ filters }));
-
   //   if (fetchFilteredPostsBatch.fulfilled.match(result)) {
   //     const fresh = result.payload.posts.map(normalizePost);
+  //     console.log("[BypassCache] fetched", fresh.length, "posts");
   //     dispatch(setFilteredPosts(fresh));
   //     dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
   //     await storeFilteredSet(filters, fresh);
@@ -351,6 +317,40 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   //     onFiltersApplied?.(filters);
   //   }
   // };
+
+  const handleApply = async () => {
+    const hash = getFilterHash(filters);
+    console.log(`[FilterHash] Generated hash: ${hash}`);
+    const cached = await getFilteredSet(filters);
+
+    const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
+
+    if (!needFetch) {
+      console.log(`[FilterHash] Using cached results for hash: ${hash}`);
+      dispatch(setFilteredPosts(cached));
+      const fetchedAt = await getFetchDate(filters);
+      dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
+      setActivePostSet("filteredPosts");
+      setLastAppliedFilters(filters);
+      onFiltersApplied?.(filters);
+      return;
+    }
+    console.log(`[FilterHash] Fetching fresh results for hash: ${hash}`);
+    // EnhancedFilterSidebar.tsx → handleApply()
+    console.log("[handleApply] Filters being applied:", filters);
+
+    const result = await dispatch(fetchFilteredPostsBatch({ filters }));
+
+    if (fetchFilteredPostsBatch.fulfilled.match(result)) {
+      const fresh = result.payload.posts.map(normalizePost);
+      dispatch(setFilteredPosts(fresh));
+      dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
+      await storeFilteredSet(filters, fresh);
+      setActivePostSet("filteredPosts");
+      setLastAppliedFilters(filters);
+      onFiltersApplied?.(filters);
+    }
+  };
 
   useEffect(() => {
     // clear the brand input if brand filter was cleared

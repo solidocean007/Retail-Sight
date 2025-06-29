@@ -60,6 +60,12 @@ export const UserHomePage = () => {
       postIdToScroll?: string;
     }) || {};
 
+  useEffect(() => {
+    if (initialScrollId) {
+      setPostIdToScroll(initialScrollId);
+    }
+  }, [initialScrollId]);
+
   // 1) When we get new filters, load the full set
   useEffect(() => {
     if (!initialFilters) return;

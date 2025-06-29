@@ -1,5 +1,5 @@
 // ActivityFeed.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
@@ -106,9 +106,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const filteredFetchedAt = useSelector(
-    (s: RootState) => s.posts.filteredPostFetchedAt
-  );
+  // const filteredFetchedAt = useSelector(
+  //   (s: RootState) => s.posts.filteredPostFetchedAt
+  // );
 
   const scrollToTop = () => {
     virtuosoRef.current?.scrollToIndex({
@@ -118,51 +118,50 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     });
   };
 
-const hasFetchedForScroll = useRef(false);
+  // const hasFetchedForScroll = useRef(false);
 
-useEffect(() => {
-  if (!postIdToScroll || !virtuosoRef.current) return;
+  // useEffect(() => {
+  //   if (!postIdToScroll || !virtuosoRef.current) return;
 
-  const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
+  //   const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
 
-  console.log(displayPosts.length, " :length of displayPosts", activePostSet, " : type of posts")
+  //   console.log(displayPosts.length, " :length of displayPosts", activePostSet, " : type of posts")
 
-  if (idx >= 0) {
-    virtuosoRef.current.scrollToIndex({ index: idx, align: "start", behavior: "smooth" });
-    setPostIdToScroll(null);
-    hasFetchedForScroll.current = false;          // reset for next time
-    return;
-  }
+  //   if (idx >= 0) {
+  //     virtuosoRef.current.scrollToIndex({ index: idx, align: "start", behavior: "smooth" });
+  //     setPostIdToScroll(null);
+  //     hasFetchedForScroll.current = false;          // reset for next time
+  //     return;
+  //   }
 
-  // if we’ve *already* tried to fetch once, give up
-  if (hasFetchedForScroll.current) {
-    console.warn("Post not found after fetch:", postIdToScroll);
-    setPostIdToScroll(null);
-    hasFetchedForScroll.current = false;
-    return;
-  }
+  //   // if we’ve *already* tried to fetch once, give up
+  //   if (hasFetchedForScroll.current) {
+  //     console.warn("Post not found after fetch:", postIdToScroll);
+  //     setPostIdToScroll(null);
+  //     hasFetchedForScroll.current = false;
+  //     return;
+  //   }
 
-  // first miss: go fetch
-  hasFetchedForScroll.current = true;
-  (async () => {
-    if (!appliedFilters) return;
-    const cached = await getFilteredSet(appliedFilters);
-    const stale = !(await shouldRefetch(appliedFilters, filteredFetchedAt));
+  //   // first miss: go fetch
+  //   hasFetchedForScroll.current = true;
+  //   (async () => {
+  //     if (!appliedFilters) return;
+  //     const cached = await getFilteredSet(appliedFilters);
+  //     const stale = !(await shouldRefetch(appliedFilters, filteredFetchedAt));
 
-    if (Array.isArray(cached) && cached.length > 0 && stale) {
-      dispatch(setFilteredPosts(cached));
-    } else {
-      const result = await dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
-      if (fetchFilteredPostsBatch.fulfilled.match(result)) {
-        const fresh = result.payload.posts.map(normalizePost);
-        dispatch(setFilteredPosts(fresh));
-        await storeFilteredSet(appliedFilters, fresh);
-        hasFetchedRef.current = appliedHash;
-      }
-    }
-  })();
-}, [postIdToScroll, displayPosts, appliedFilters, filteredFetchedAt, dispatch]);
-
+  //     if (Array.isArray(cached) && cached.length > 0 && stale) {
+  //       dispatch(setFilteredPosts(cached));
+  //     } else {
+  //       const result = await dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
+  //       if (fetchFilteredPostsBatch.fulfilled.match(result)) {
+  //         const fresh = result.payload.posts.map(normalizePost);
+  //         dispatch(setFilteredPosts(fresh));
+  //         await storeFilteredSet(appliedFilters, fresh);
+  //         hasFetchedRef.current = appliedHash;
+  //       }
+  //     }
+  //   })();
+  // }, [postIdToScroll, displayPosts, appliedFilters, filteredFetchedAt, dispatch]);
 
   // how can i tighten this up to work when i need it to and not run when im passing filters to userhomepage frmo another route
   const prevActivePostSet = useRef(activePostSet);
@@ -210,8 +209,39 @@ useEffect(() => {
     return <NoResults />;
   }
 
+  const handleScrollToPost = useCallback(() => {
+  if (!postIdToScroll || !virtuosoRef.current) return;
+  const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
+  if (idx !== -1) {
+    virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
+    setPostIdToScroll(null);
+  }
+}, [postIdToScroll, displayPosts, virtuosoRef]);
+
+
   return (
     <div className="activity-feed-box">
+      <button
+          onClick={handleScrollToPost}
+          className="btn-outline"
+          style={{ margin: "1rem" }}
+        >
+          🔍 Scroll to Post #
+          {displayPosts.findIndex((p) => p.id === postIdToScroll) + 1} (
+          {postIdToScroll})
+        </button>
+      {/* {postIdToScroll && (
+        <button
+          onClick={handleScrollToPost}
+          className="btn-outline"
+          style={{ margin: "1rem" }}
+        >
+          🔍 Scroll to Post #
+          {displayPosts.findIndex((p) => p.id === postIdToScroll) + 1} (
+          {postIdToScroll})
+        </button>
+      )} */}
+
       <Virtuoso
         ref={virtuosoRef}
         increaseViewportBy={500}
