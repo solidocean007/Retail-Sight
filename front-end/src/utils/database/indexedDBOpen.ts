@@ -1,5 +1,5 @@
 const dbName = "myRetailAppDB";
-const dbVersion = 30;
+const dbVersion = 31;
 
 // db.createObjectStore("filteredSets", { keyPath: "id" });
 // Each record: { id: string, filters: PostQueryFilters, posts: PostWithID[], fetchedAt: string }
@@ -23,7 +23,6 @@ const objectStores: {
   { name: "starTagPosts", options: { keyPath: "id" } },
   { name: "userCreatedPosts", options: { keyPath: "id" } },
   { name: "userCompanyEmployees", options: { keyPath: "uid" }, replaceIfExists: true },
-  { name: "usersCompanyEmployees", options: { keyPath: "uid" } },
   { name: "localSchemaVersion", options: { keyPath: "id" } },
   {
     name: "collections",

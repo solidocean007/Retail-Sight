@@ -1,3 +1,7 @@
+.memoized-post-card {
+  padding: 10px;
+}
+
 .post-card-container {
   height: 100%;
   width: 100%;
@@ -352,13 +356,31 @@
 }
 
 .shouldHighlight {
-  animation: flashHighlight 2s ease;
+  animation: flashHighlight 4s ease;
 }
 
 @keyframes flashHighlight {
   0%   { background-color: #fff3cd; }
   50%  { background-color: #ffeeba; }
   100% { background-color: transparent; }
+}
+
+@keyframes flashHighlight {
+  0% {
+    background-color: #fff9c4; /* light yellow */
+  }
+  25% {
+    background-color: #ffeeba; /* light yellow */
+  }
+  50% {
+    background-color: #ffe082; /* deeper highlight */
+  }
+  75% {
+    background-color: #fff3cd; /* deeper highlight */
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 
 

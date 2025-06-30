@@ -83,28 +83,49 @@ export const clearUserDataFromIndexedDB = async () => {
 };
 
 export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
-  const db = await openDB(); // Assuming openDB is a function that opens the IndexedDB connection
+  const db = await openDB();
   const transaction = db.transaction(["usersCompanyEmployees"], "readwrite");
   const store = transaction.objectStore("usersCompanyEmployees");
 
   return new Promise<void>((resolve, reject) => {
-    companyUsers.forEach((user) => {
-      const request = store.put(user); // Ensure that user has a property that matches the key path
-      request.onerror = () => {
-        console.error("Error putting user into IndexedDB:", request.error);
-        reject(request.error);
-      };
-    });
+    let hasError = false;
+
+  companyUsers.forEach((user, index) => {
+  if (!user || typeof user !== "object") {
+    console.warn(`Skipped invalid user at index ${index}:`, user);
+    return;
+  }
+
+  if (!user.uid || typeof user.uid !== "string") {
+    console.warn(`Skipped user with invalid uid at index ${index}:`, user);
+    return;
+  }
+
+  try {
+    const request = store.put(user);
+    request.onerror = () => {
+      hasError = true;
+      console.error("Error putting user into IndexedDB:", request.error);
+    };
+  } catch (err) {
+    hasError = true;
+    console.error("Exception during IndexedDB put():", err, user);
+  }
+});
+
 
     transaction.oncomplete = () => {
-      resolve();
+      if (!hasError) resolve();
+      else reject(new Error("Some users failed to save due to put errors."));
     };
+
     transaction.onerror = () => {
       console.error("Transaction error in IndexedDB:", transaction.error);
       reject(transaction.error);
     };
   });
 };
+
 
 export const getCompanyUsersFromIndexedDB = async (): Promise<UserType[]> => {
   const db = await openDB();

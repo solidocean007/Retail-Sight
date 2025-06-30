@@ -1,5 +1,11 @@
 // ActivityFeed.tsx
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Virtuoso } from "react-virtuoso";
 import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
@@ -81,6 +87,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [showLoader, setShowLoader] = useState(false);
+
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -106,10 +113,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // const filteredFetchedAt = useSelector(
-  //   (s: RootState) => s.posts.filteredPostFetchedAt
-  // );
-
   const scrollToTop = () => {
     virtuosoRef.current?.scrollToIndex({
       index: 0,
@@ -118,52 +121,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     });
   };
 
-  // const hasFetchedForScroll = useRef(false);
-
-  // useEffect(() => {
-  //   if (!postIdToScroll || !virtuosoRef.current) return;
-
-  //   const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
-
-  //   console.log(displayPosts.length, " :length of displayPosts", activePostSet, " : type of posts")
-
-  //   if (idx >= 0) {
-  //     virtuosoRef.current.scrollToIndex({ index: idx, align: "start", behavior: "smooth" });
-  //     setPostIdToScroll(null);
-  //     hasFetchedForScroll.current = false;          // reset for next time
-  //     return;
-  //   }
-
-  //   // if we’ve *already* tried to fetch once, give up
-  //   if (hasFetchedForScroll.current) {
-  //     console.warn("Post not found after fetch:", postIdToScroll);
-  //     setPostIdToScroll(null);
-  //     hasFetchedForScroll.current = false;
-  //     return;
-  //   }
-
-  //   // first miss: go fetch
-  //   hasFetchedForScroll.current = true;
-  //   (async () => {
-  //     if (!appliedFilters) return;
-  //     const cached = await getFilteredSet(appliedFilters);
-  //     const stale = !(await shouldRefetch(appliedFilters, filteredFetchedAt));
-
-  //     if (Array.isArray(cached) && cached.length > 0 && stale) {
-  //       dispatch(setFilteredPosts(cached));
-  //     } else {
-  //       const result = await dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
-  //       if (fetchFilteredPostsBatch.fulfilled.match(result)) {
-  //         const fresh = result.payload.posts.map(normalizePost);
-  //         dispatch(setFilteredPosts(fresh));
-  //         await storeFilteredSet(appliedFilters, fresh);
-  //         hasFetchedRef.current = appliedHash;
-  //       }
-  //     }
-  //   })();
-  // }, [postIdToScroll, displayPosts, appliedFilters, filteredFetchedAt, dispatch]);
-
-  // how can i tighten this up to work when i need it to and not run when im passing filters to userhomepage frmo another route
+  // this should only be responsible for scrolling to the top on a activePostsSet change
   const prevActivePostSet = useRef(activePostSet);
   useEffect(() => {
     if (activePostSet !== prevActivePostSet.current) {
@@ -171,6 +129,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       prevActivePostSet.current = activePostSet;
     }
   }, [activePostSet]);
+
+  useEffect(() => {
+    setShowLoader(true);
+    const timeout = setTimeout(() => {
+      setShowLoader(false);
+    }, 1000); // 1 sec for animation effect
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   // const getActivityItemHeight = (windowWidth: number) => {
   //   if (windowWidth <= 500) {
@@ -190,143 +157,151 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   // const itemHeight = getActivityItemHeight(windowWidth);
 
-  if (showLoader) {
-    return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <BeerCaseStackAnimation minDuration={1000} />
-      </div>
-    );
-  }
+  // if (showLoader) {
+  //   return (
+  //     <div
+  //       style={{
+  //         height: "100vh",
+  //         display: "flex",
+  //         justifyContent: "center",
+  //         alignItems: "center",
+  //       }}
+  //     >
+  //       <BeerCaseStackAnimation minDuration={1000} />
+  //     </div>
+  //   );
+  // }
 
   if (hasLoadedOnce && displayPosts.length === 0) {
     return <NoResults />;
   }
 
-  const handleScrollToPost = useCallback(() => {
-  if (!postIdToScroll || !virtuosoRef.current) return;
-  const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
-  if (idx !== -1) {
-    virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
-    setPostIdToScroll(null);
-  }
-}, [postIdToScroll, displayPosts, virtuosoRef]);
+  const hasAutoScrolled = useRef(false);
 
+  const handlePostVisible = (id: string, idx: number) => {
+    if (hasAutoScrolled.current || id !== postIdToScroll) return;
+    if (virtuosoRef.current) {
+      virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
+      setPostIdToScroll(null);
+      hasAutoScrolled.current = true;
+    }
+  };
 
+  useEffect(() => {
+    if (!postIdToScroll || !virtuosoRef.current) return;
+
+    const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
+    if (idx === -1) return;
+
+    const timeout = setTimeout(() => {
+      virtuosoRef.current?.scrollToIndex({ index: idx, align: "start" });
+    }, 1000); // 🔧 tweak this value (500–1000ms) based on real-world test
+
+    return () => clearTimeout(timeout);
+  }, [postIdToScroll, displayPosts]);
+
+  console.log(postIdToScroll, "postIdToSCroll");
   return (
     <div className="activity-feed-box">
-      <button
-          onClick={handleScrollToPost}
-          className="btn-outline"
-          style={{ margin: "1rem" }}
+      {showLoader ? (
+        <div
+          style={{
+            height: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
         >
-          🔍 Scroll to Post #
-          {displayPosts.findIndex((p) => p.id === postIdToScroll) + 1} (
-          {postIdToScroll})
-        </button>
-      {/* {postIdToScroll && (
-        <button
-          onClick={handleScrollToPost}
-          className="btn-outline"
-          style={{ margin: "1rem" }}
-        >
-          🔍 Scroll to Post #
-          {displayPosts.findIndex((p) => p.id === postIdToScroll) + 1} (
-          {postIdToScroll})
-        </button>
-      )} */}
+          <BeerCaseStackAnimation minDuration={1000} />
+        </div>
+      ) : (
+        <Virtuoso
+          ref={virtuosoRef}
+          increaseViewportBy={500}
+          style={{ height: 800, width: "100%" }} // is this necessary?
+          data={displayPosts}
+          // defaultItemHeight={itemHeight}
+          itemContent={(index, post) => {
+            if (!post?.id) return null;
 
-      <Virtuoso
-        ref={virtuosoRef}
-        increaseViewportBy={500}
-        style={{ height: 800, width: "100%" }} // is this necessary?
-        data={displayPosts}
-        // defaultItemHeight={itemHeight}
-        itemContent={(index, post) => {
-          if (!post?.id) return null;
-
-          return (
-            <div
-              key={post.id}
-              className="post-card-renderer-container"
-              style={{ minHeight: 300 }}
-            >
-              <PostCardRenderer
-                currentUserUid={currentUser?.uid}
-                index={index}
-                style={{ height: "100%" }}
-                data={{ post, getPostsByTag, getPostsByStarTag }}
-                setCurrentHashtag={setCurrentHashtag}
-                setActivePostSet={setActivePostSet}
-                setIsSearchActive={setIsSearchActive}
-                postIdToScroll={postIdToScroll}
-              />
-            </div>
-          );
-        }}
-        endReached={
-          activePostSet === "posts"
-            ? () => {
-                if (!loadingMore && hasMore) {
-                  setLoadingMore(true);
-                  dispatch(
-                    fetchMorePostsBatch({
-                      lastVisible,
-                      limit: POSTS_BATCH_SIZE,
-                      currentUserCompanyId,
-                    })
-                  )
-                    .then((action) => {
-                      if (fetchMorePostsBatch.fulfilled.match(action)) {
-                        const { posts, lastVisible: newLastVisible } =
-                          action.payload;
-                        setLastVisible(newLastVisible);
-
-                        if (posts.length > 0) {
-                          addPostsToIndexedDB(posts);
-                          // dispatch(appendPosts(posts));
-                          dispatch(mergeAndSetPosts(posts));
-                          setHasMore(true);
-                        } else {
-                          setHasMore(false);
-                        }
-                      }
-                    })
-                    .finally(() => setLoadingMore(false));
-                }
-              }
-            : undefined
-        }
-        components={{
-          Footer: () =>
-            loadingMore ? (
-              <div style={{ textAlign: "center", padding: "1rem" }}>
-                <CircularProgress size={24} />
-              </div>
-            ) : (
+            return (
               <div
-                style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}
+                key={post.id}
+                className="post-card-renderer-container"
+                style={{ minHeight: 300 }}
               >
-                🚩 End of results
+                <PostCardRenderer
+                  currentUserUid={currentUser?.uid}
+                  index={index}
+                  style={{ height: "100%" }}
+                  data={{ post, getPostsByTag, getPostsByStarTag }}
+                  setCurrentHashtag={setCurrentHashtag}
+                  setActivePostSet={setActivePostSet}
+                  setIsSearchActive={setIsSearchActive}
+                  postIdToScroll={postIdToScroll}
+                  onPostVisible={handlePostVisible}
+                />
               </div>
-            ),
-        }}
-        scrollerRef={(ref) => {
-          if (ref) {
-            ref.addEventListener("scroll", (e) => {
-              const scrollTop = (e.target as HTMLElement).scrollTop;
-              setShowScrollTop(scrollTop > 4000);
-            });
+            );
+          }}
+          endReached={
+            activePostSet === "posts"
+              ? () => {
+                  if (!loadingMore && hasMore) {
+                    setLoadingMore(true);
+                    dispatch(
+                      fetchMorePostsBatch({
+                        lastVisible,
+                        limit: POSTS_BATCH_SIZE,
+                        currentUserCompanyId,
+                      })
+                    )
+                      .then((action) => {
+                        if (fetchMorePostsBatch.fulfilled.match(action)) {
+                          const { posts, lastVisible: newLastVisible } =
+                            action.payload;
+                          setLastVisible(newLastVisible);
+
+                          if (posts.length > 0) {
+                            addPostsToIndexedDB(posts);
+                            // dispatch(appendPosts(posts));
+                            dispatch(mergeAndSetPosts(posts));
+                            setHasMore(true);
+                          } else {
+                            setHasMore(false);
+                          }
+                        }
+                      })
+                      .finally(() => setLoadingMore(false));
+                  }
+                }
+              : undefined
           }
-        }}
-      />
-      {showScrollTop && (
+          components={{
+            Footer: () =>
+              loadingMore ? (
+                <div style={{ textAlign: "center", padding: "1rem" }}>
+                  <CircularProgress size={24} />
+                </div>
+              ) : (
+                <div
+                  style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}
+                >
+                  🚩 End of results
+                </div>
+              ),
+          }}
+          scrollerRef={(ref) => {
+            if (ref) {
+              ref.addEventListener("scroll", (e) => {
+                const scrollTop = (e.target as HTMLElement).scrollTop;
+                setShowScrollTop(scrollTop > 4000);
+              });
+            }
+          }}
+        />
+      )}
+      {showScrollTop && !showLoader && (
         <button
           className="scroll-to-top-btn"
           aria-label="Scroll to top"

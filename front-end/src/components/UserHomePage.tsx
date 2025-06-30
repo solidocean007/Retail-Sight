@@ -60,11 +60,17 @@ export const UserHomePage = () => {
       postIdToScroll?: string;
     }) || {};
 
-  useEffect(() => {
-    if (initialScrollId) {
-      setPostIdToScroll(initialScrollId);
-    }
-  }, [initialScrollId]);
+const hasSetInitialScroll = useRef(false);
+useEffect(() => {
+  if (hasSetInitialScroll.current) return;
+  const state = location.state as { filters?: PostQueryFilters; postIdToScroll?: string };
+  if (state?.postIdToScroll) {
+    setPostIdToScroll(state.postIdToScroll);
+    hasSetInitialScroll.current = true;
+  }
+}, [location.state]);
+
+
 
   // 1) When we get new filters, load the full set
   useEffect(() => {

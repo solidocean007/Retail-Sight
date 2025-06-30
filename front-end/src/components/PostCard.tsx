@@ -100,18 +100,25 @@ const PostCard: React.FC<PostCardProps> = ({
     useState<CompanyAccountType | null>(null);
   const [shouldHighlight, setShouldHighlight] = useState(false);
 
-  useEffect(() => {
-    if (postIdToScroll === post.id) {
+useEffect(() => {
+  let startTimer: NodeJS.Timeout;
+  let stopTimer: NodeJS.Timeout;
+
+  if (postIdToScroll === post.id) {
+    startTimer = setTimeout(() => {
       setShouldHighlight(true);
+      stopTimer = setTimeout(() => setShouldHighlight(false), 4000);
+    }, 600);
+  }
 
-      // Optional: Clear highlight after scroll
-      const timer = setTimeout(() => {
-        setShouldHighlight(false);
-      }, 2000); // give enough time for scroll and visibility
+  return () => {
+    clearTimeout(startTimer);
+    clearTimeout(stopTimer);
+  };
+}, [postIdToScroll, post.id]);
 
-      return () => clearTimeout(timer);
-    }
-  }, [postIdToScroll, post.id]);
+
+
 
   const handleImageClick = () => {
     // Assuming post.imageUrl is available and contains the 'resized' keyword
@@ -407,7 +414,7 @@ const PostCard: React.FC<PostCardProps> = ({
             ))}
           </div>
         )}
-        {post.id}
+        {/* {post.id} */}
         <div className="description-image">
           <div className="like-quantity-row">
             <h4>
