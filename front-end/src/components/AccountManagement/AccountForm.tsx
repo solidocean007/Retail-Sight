@@ -148,7 +148,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
         </label> */}
 
         <label>
-          Type of Account:
+          Type of Account
           <select
             name="typeOfAccount"
             value={formData.typeOfAccount || ""}

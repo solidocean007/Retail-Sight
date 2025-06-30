@@ -23,10 +23,12 @@ import { setAllProducts } from "./Slices/productsSlice";
 import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
 import useSchemaVersion from "./hooks/useSchemaVersion";
 import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
+import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
 
 function App(): React.JSX.Element {
   useSchemaVersion();
   useCompanyUsersSync();
+  useAllCompanyAccountsSync();
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);

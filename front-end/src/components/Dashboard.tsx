@@ -9,18 +9,18 @@ import { selectCompanyUsers, selectUser, setCompanyUsers } from "../Slices/userS
 // } from "../utils/database/userDataIndexedDB";
 // import { fetchCompanyUsers } from "../thunks/usersThunks";
 import {
-  CompanyAccountType,
+  // CompanyAccountType,
   DashboardModeType,
-  UserType,
+  // UserType,
 } from "../utils/types";
-import { useAppDispatch } from "../utils/store";
+// import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../utils/helmetConfigurations";
-import TeamsViewer from "./TeamsViewer";
+// import TeamsViewer from "./TeamsViewer";
 import {
   AppBar,
   Box,
-  Container,
+  // Container,
   IconButton,
   Toolbar,
   Typography,
@@ -47,12 +47,12 @@ import MyGoals from "./MyGoals.tsx";
 // } from "@firebase/firestore";
 // import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
-import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
-import {
-  selectAllCompanyAccounts,
-  setAllAccounts,
-} from "../Slices/allAccountsSlice.ts";
-import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
+// import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
+// import {
+//   selectAllCompanyAccounts,
+//   setAllAccounts,
+// } from "../Slices/allAccountsSlice.ts";
+// import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
 import DashMenu from "./DashMenu.tsx";
 // import { updatePostsWithFreshAccounts } from "../script.ts";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
@@ -63,9 +63,9 @@ export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
   // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
-  const dispatch = useAppDispatch();
+  // const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
-  const companyUsers = useSelector(selectCompanyUsers);
+  // const companyUsers = useSelector(selectCompanyUsers);
   const companyId = user?.companyId;
   // const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
   const [drawerOpen, setDrawerOpen] = useState(true);
@@ -74,9 +74,9 @@ export const Dashboard = () => {
   const isEmployee = user?.role === "employee";
   // const isEmployee = true;
   const isAdmin = user?.role === "admin";
-  const isDeveloper = user?.role === "developer"; // this needs to be used also
+  // const isDeveloper = user?.role === "developer"; // this needs to be used also
   const isSuperAdmin = user?.role === "super-admin";
-  const allAccounts = useSelector(selectAllCompanyAccounts);
+  // const allAccounts = useSelector(selectAllCompanyAccounts);
 
   // handleUpdatePosts();
 
@@ -88,7 +88,7 @@ export const Dashboard = () => {
     isEmployee ? "MyGoalsMode" : "GoalManagerMode"
   );
 
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+  const [_screenWidth, setScreenWidth] = useState(window.innerWidth);
 
   useEffect(() => {
     const savedMode = sessionStorage.getItem(
@@ -134,24 +134,24 @@ export const Dashboard = () => {
   // but if we flip into mobile, leave whatever state we were in
 }, [isLargeScreen]);
 
-  useEffect(() => {
-    const loadAllCompanyAccounts = async () => {
-      if (!user?.companyId || user.role === "employee") return;
+  // useEffect(() => {
+  //   const loadAllCompanyAccounts = async () => {
+  //     if (!user?.companyId || user.role === "employee") return;
 
-      const accounts = await fetchAllCompanyAccounts(user.companyId);
-      if (!accounts.length) return;
+  //     const accounts = await fetchAllCompanyAccounts(user.companyId);
+  //     if (!accounts.length) return;
 
-      dispatch(setAllAccounts(accounts)); // ⬅️ Save to Redux
+  //     dispatch(setAllAccounts(accounts)); // ⬅️ Save to Redux
 
-      try {
-        await saveAllCompanyAccountsToIndexedDB(accounts); // ⬅️ Optional: Save for offline use
-      } catch (err) {
-        console.warn("Could not save accounts to IndexedDB", err);
-      }
-    };
+  //     try {
+  //       await saveAllCompanyAccountsToIndexedDB(accounts); // ⬅️ Optional: Save for offline use
+  //     } catch (err) {
+  //       console.warn("Could not save accounts to IndexedDB", err);
+  //     }
+  //   };
 
-    loadAllCompanyAccounts();
-  }, [user?.companyId, user?.role, dispatch]);
+  //   loadAllCompanyAccounts();
+  // }, [user?.companyId, user?.role, dispatch]);
 
   return (
     <div className="dashboard-container">

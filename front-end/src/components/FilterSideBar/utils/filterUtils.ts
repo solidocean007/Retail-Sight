@@ -14,12 +14,25 @@ export const getFilterSummaryText = (
 
   if (filters.hashtag) parts.push(filters.hashtag);
   if (filters.starTag) parts.push(filters.starTag);
-  if (filters.brand) parts.push(filters.brand);
-  if (filters.productType) parts.push(filters.productType);
+  if (filters.brand) parts.push(`Brand: ${filters.brand}`);
+  if (filters.productType) parts.push(`Product: ${filters.productType}`);
+
+  if (filters.accountName) parts.push(`Store: ${filters.accountName}`);
+  if (filters.accountType) parts.push(`Type: ${filters.accountType}`);
+  if (filters.accountChain) parts.push(`Chain: ${filters.accountChain}`);
+  if (filters.chainType) parts.push(`Chain Type: ${filters.chainType}`);
+
+  if (filters.states?.length) parts.push(`States: ${filters.states.join(", ")}`);
+  if (filters.cities?.length) parts.push(`Cities: ${filters.cities.join(", ")}`);
+
+  if (filters.minCaseCount != null)
+    parts.push(`≥ ${filters.minCaseCount} cases`);
+
   if (filters.postUserUid) {
     const u = users.find((x) => x.uid === filters.postUserUid);
     parts.push(u ? `${u.firstName} ${u.lastName}` : filters.postUserUid);
   }
+
   if (filters.companyGoalId && filters.companyGoalTitle) {
     parts.push(`Goal: ${filters.companyGoalTitle}`);
   }
@@ -35,9 +48,9 @@ export const getFilterSummaryText = (
     );
   }
 
-  // if nothing matched, return an empty string
   return parts.length > 0 ? parts.join(" • ") : "";
 };
+
 
 export function removeFilterField(
   filters: PostQueryFilters,

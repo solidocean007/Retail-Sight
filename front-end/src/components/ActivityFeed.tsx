@@ -200,7 +200,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
 
-  console.log(postIdToScroll, "postIdToSCroll");
+  // console.log(postIdToScroll, "postIdToSCroll");
   return (
     <div className="activity-feed-box">
       {showLoader ? (

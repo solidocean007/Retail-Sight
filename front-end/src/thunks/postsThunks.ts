@@ -184,6 +184,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     batchSize?: number; // now unused
   }) => {
     let baseQuery: Query<DocumentData> = collection(db, "posts");
+    console.log("[FILTER DEBUG] Incoming filters:", filters);
 
     if (filters.companyId) {
       baseQuery = filterExactMatch(
@@ -196,7 +197,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       baseQuery = query(
         baseQuery,
         where("postUserUid", "==", filters.postUserUid)
-      )
+      );
     }
     if (filters.accountNumber) {
       baseQuery = filterExactMatch(
@@ -205,11 +206,21 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
         baseQuery
       );
     }
+    // if (filters.accountName) {
+    //   baseQuery = filterExactMatch(
+    //     "accountName",
+    //     filters.accountName ?? undefined,
+    //     baseQuery
+    //   );
+    // }
     if (filters.accountName) {
-      baseQuery = filterExactMatch(
-        "accountName",
-        filters.accountName ?? undefined,
-        baseQuery
+      console.log(
+        "[FILTER DEBUG] Filtering by accountName (raw match):",
+        filters.accountName
+      );
+      baseQuery = query(
+        baseQuery,
+        where("accountName", "==", filters.accountName)
       );
     }
     if (filters.accountType) {
@@ -242,7 +253,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     if (filters.companyGoalId) {
       baseQuery = query(
         baseQuery,
-        where("companyGoalId","==", filters.companyGoalId)
+        where("companyGoalId", "==", filters.companyGoalId)
       );
     }
     if (filters.hashtag) {
@@ -296,6 +307,10 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
 
     const snapshot = await getDocs(finalQuery);
     console.log("[FETCH] Documents fetched:", snapshot.size);
+
+    if (snapshot.size === 0) {
+      console.warn("[FILTER DEBUG] No documents matched these filters");
+    }
 
     const posts: PostWithID[] = snapshot.docs.map((doc) =>
       normalizePost({

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
-import { PostQueryFilters, UserType } from "../../utils/types";
+import { CompanyAccountType, PostQueryFilters, UserType } from "../../utils/types";
 import "./styles/enhancedFilterSideBar.css";
 import { fetchFilteredPostsBatch } from "../../thunks/postsThunks";
 import FilterChips from "./FilterChips";
@@ -35,6 +35,7 @@ import ProductTypeAutocomplete from "./ProductTypeAutoComplete";
 import BrandAutoComplete from "./BrandAutoComplete";
 import UserFilterAutocomplete from "./UserFilterAutocomplete";
 import { selectCompanyUsers } from "../../Slices/userSlice";
+import AccountNameAutocomplete from "./AccountNameAutocomplete";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -86,6 +87,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const [selectedProductType, setSelectedProductType] = useState<string | null>(
     null
   );
+  const [accountNameInput, setAccountNameInput] = useState("");
+  const [selectedAccount, setSelectedAccount] = useState<CompanyAccountType | null>(null);
+
   const [selectedFilterUser, setSelectedFilterUser] = useState<UserType | null>(
     null
   );
@@ -150,6 +154,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     setSelectedBrand(null);
     setSelectedProductType(null);
     setProductTypeInput("");
+    setAccountNameInput("");
     setActivePostSet("posts"); // ✨ resets the view
 
     setSelectedFilterUser(null);
@@ -319,6 +324,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   // };
 
   const handleApply = async () => {
+    console.log("filters: ", filters)
     const hash = getFilterHash(filters);
     console.log(`[FilterHash] Generated hash: ${hash}`);
     const cached = await getFilteredSet(filters);
@@ -493,12 +499,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           👤 User
         </button>
         <div className="filter-group">
-          {/* <input // this needs to be a user search input that fetches users from the server or from indexedDb or redux for the users company... but what do i do for a supplier?  i can probably figure that out later
-            placeholder="Search by user coming soon"
-            value={filters.postUserUid || ""}
-            onChange={(e) => handleChange("postUserUid", e.target.value)}
-            disabled
-          /> */}
           <UserFilterAutocomplete
             inputValue={selectedUserInput}
             selectedUserId={filters.postUserUid ?? null} // coalesce undefined → null
@@ -521,30 +521,38 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <button
           className="section-toggle"
           onClick={() => toggleSection("account")}
-          disabled
         >
-          🏪 Account Info search coming soon
+          🏪 Account Info search
         </button>
         <div className="filter-group">
-          <input // instead of account number we should probably search by account name
+          {/* <input // instead of account number we should probably search by account name
             placeholder="Store Account name"
             value={filters.accountName || ""}
             onChange={(e) => handleChange("accountName", e.target.value)}
+          /> */}
+          <AccountNameAutocomplete
+            inputValue={accountNameInput}
+            selectedValue={filters.accountName}
+            onInputChange={setAccountNameInput}
+            onSelect={(val) => handleChange("accountName", val)}
           />
           <input
-            placeholder="Type of Account"
+            placeholder="Type of Account search coming soon"
             value={filters.accountType || ""}
             onChange={(e) => handleChange("accountType", e.target.value)}
+            disabled
           />
           <input
-            placeholder="Chain Name"
+            placeholder="Chain Name search coming soon"
             value={filters.accountChain || ""}
             onChange={(e) => handleChange("accountChain", e.target.value)}
+            disabled
           />
           <input
-            placeholder="Chain Type (chain/independent)"
+            placeholder="Chain Type (chain/independent) search coming soon"
             value={filters.chainType || ""}
             onChange={(e) => handleChange("chainType", e.target.value)}
+            disabled
           />
         </div>
       </div>
