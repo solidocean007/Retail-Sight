@@ -189,17 +189,41 @@ export const PickStore: React.FC<PickStoreProps> = ({
     console.log("new post data:", post);
   };
 
+  console.log('post: ', post)
+
   // Handler for Account Selection
   const handleAccountSelect = (account: CompanyAccountType) => {
-    setPost((prevPost) => ({
-      ...prevPost,
-      account,
-      accountNumber: account.accountNumber,
-      address: account.accountAddress,
-      accountType: account.typeOfAccount,
-    }));
-    setSelectedCompanyAccount(account); // ✅ still good
-  };
+  const {
+    accountName,
+    accountAddress,
+    accountNumber,
+    salesRouteNums,
+    typeOfAccount,
+    chain,
+    chainType,
+  } = account;
+
+  setPost((prevPost) => ({
+    ...prevPost,
+    account: {
+      accountName,
+      accountAddress,
+      accountNumber,
+      salesRouteNums,
+      typeOfAccount,
+      chain,
+      chainType,
+    },
+    accountNumber,
+    address: accountAddress,
+    accountType: typeOfAccount,
+    chain,
+    chainType,
+  }));
+
+  setSelectedCompanyAccount(account);
+};
+
 
   const handleClearAccount = () => {
     setPost((prevPost) => ({

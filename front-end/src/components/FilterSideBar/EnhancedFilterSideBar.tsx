@@ -2,7 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
-import { CompanyAccountType, PostQueryFilters, UserType } from "../../utils/types";
+import {
+  CompanyAccountType,
+  PostQueryFilters,
+  UserType,
+} from "../../utils/types";
 import "./styles/enhancedFilterSideBar.css";
 import { fetchFilteredPostsBatch } from "../../thunks/postsThunks";
 import FilterChips from "./FilterChips";
@@ -36,6 +40,7 @@ import BrandAutoComplete from "./BrandAutoComplete";
 import UserFilterAutocomplete from "./UserFilterAutocomplete";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import AccountNameAutocomplete from "./AccountNameAutocomplete";
+import AccountTypeSelect from "./AccountTypeSelect";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -88,7 +93,9 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     null
   );
   const [accountNameInput, setAccountNameInput] = useState("");
-  const [selectedAccount, setSelectedAccount] = useState<CompanyAccountType | null>(null);
+  const [accountTypeInput, setAccountTypeInput] = useState("");
+  const [selectedAccount, setSelectedAccount] =
+    useState<CompanyAccountType | null>(null);
 
   const [selectedFilterUser, setSelectedFilterUser] = useState<UserType | null>(
     null
@@ -324,7 +331,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   // };
 
   const handleApply = async () => {
-    console.log("filters: ", filters)
+    console.log("filters: ", filters);
     const hash = getFilterHash(filters);
     console.log(`[FilterHash] Generated hash: ${hash}`);
     const cached = await getFilteredSet(filters);
@@ -536,11 +543,18 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             onInputChange={setAccountNameInput}
             onSelect={(val) => handleChange("accountName", val)}
           />
-          <input
+          {/* <input
             placeholder="Type of Account search coming soon"
             value={filters.accountType || ""}
             onChange={(e) => handleChange("accountType", e.target.value)}
             disabled
+          /> */}
+          <AccountTypeSelect
+            selectedValue={filters.accountType}
+            onSelect={(val) => {
+              setAccountTypeInput(val || "");
+              handleChange("accountType", val);
+            }}
           />
           <input
             placeholder="Chain Name search coming soon"

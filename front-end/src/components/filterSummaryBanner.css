@@ -2,8 +2,9 @@
 .filter-summary-banner {
   width: 100%;
   background-color: green;
-  color: var(--text-color);
+  color: white;
   font-size: smaller;
+  font-weight: bolder;
   display: flex;
   justify-content: space-between;
   align-items: center;

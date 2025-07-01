@@ -214,22 +214,25 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     //   );
     // }
     if (filters.accountName) {
-      console.log(
-        "[FILTER DEBUG] Filtering by accountName (raw match):",
-        filters.accountName
-      );
       baseQuery = query(
         baseQuery,
         where("accountName", "==", filters.accountName)
       );
     }
     if (filters.accountType) {
-      baseQuery = filterExactMatch(
-        "typeOfAccount",
-        filters.accountType ?? undefined,
-        baseQuery
+      baseQuery = query(
+        baseQuery,
+        where("accountType", "==", filters.accountType)
       );
     }
+   
+    // if (filters.accountType) {
+    //   baseQuery = filterExactMatch(
+    //     "typeOfAccount",
+    //     filters.accountType ?? undefined,
+    //     baseQuery
+    //   );
+    // }
     if (filters.accountChain) {
       baseQuery = filterExactMatch(
         "accountChain",
