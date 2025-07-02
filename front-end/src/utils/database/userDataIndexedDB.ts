@@ -4,7 +4,7 @@ import { openDB } from "./indexedDBOpen";
 
 const USER_DATA_STORE = "users"; // Name of the IndexedDB store for user data
 const USER_DATA_KEY = "currentUser"; // Assuming you use a single key for storing current user data
-const USERS_COMPANY_USERS = "usersCompanyEmployees";
+const USERS_COMPANY_USERS = "userCompanyEmployees";
 
 export const saveUserDataToIndexedDB = async (userData: UserType) => {
   const db = await openDB();
@@ -84,8 +84,8 @@ export const clearUserDataFromIndexedDB = async () => {
 
 export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
   const db = await openDB();
-  const transaction = db.transaction(["usersCompanyEmployees"], "readwrite");
-  const store = transaction.objectStore("usersCompanyEmployees");
+  const transaction = db.transaction(["userCompanyEmployees"], "readwrite");
+  const store = transaction.objectStore("userCompanyEmployees");
 
   return new Promise<void>((resolve, reject) => {
     let hasError = false;
@@ -130,7 +130,7 @@ export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
 export const getCompanyUsersFromIndexedDB = async (): Promise<UserType[]> => {
   const db = await openDB();
   const transaction = db.transaction([USERS_COMPANY_USERS], "readonly");
-  const store = transaction.objectStore("usersCompanyEmployees");
+  const store = transaction.objectStore("userCompanyEmployees");
   const request = store.getAll();
 
   return new Promise((resolve, reject) => {

@@ -20,7 +20,7 @@ const BeerCaseStackAnimation: React.FC<BeerCaseStackAnimationProps> = ({
   useEffect(() => {
     let sound: HTMLAudioElement | null = null;
     if (typeof Audio !== "undefined") {
-      sound = new Audio("/pop.mp3");
+      // sound = new Audio("/pop.mp3");
     }
 
     function createBox(index: number, col: number, row: number): HTMLDivElement {

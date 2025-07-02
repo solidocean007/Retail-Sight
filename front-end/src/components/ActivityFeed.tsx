@@ -197,6 +197,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       virtuosoRef.current?.scrollToIndex({ index: idx, align: "start" });
     }, 1000); // 🔧 tweak this value (500–1000ms) based on real-world test
 
+    if (idx === -1 && appliedFilters) {
+    console.warn("Post to scroll not found. Refetching...");
+    dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
+  }
+
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
 
@@ -265,7 +270,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                           if (posts.length > 0) {
                             addPostsToIndexedDB(posts);
                             // dispatch(appendPosts(posts));
-                            dispatch(mergeAndSetPosts(posts));
+                            dispatch(mergeAndSetPosts(posts.map(normalizePost)));
                             setHasMore(true);
                           } else {
                             setHasMore(false);

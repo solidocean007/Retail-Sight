@@ -123,7 +123,7 @@ useEffect(() => {
 
     const cachedPosts = await getPostsFromIndexedDB();
     if (cachedPosts?.length > 0) {
-      dispatch(mergeAndSetPosts(cachedPosts));
+      dispatch(mergeAndSetPosts(cachedPosts.map(normalizePost)));
     }
   };
 
