@@ -34,7 +34,6 @@ import { useDebouncedValue } from "../../hooks/useDebounce";
 import { normalizePost } from "../../utils/normalizePost";
 // import { clear } from "console";
 // import { Autocomplete, TextField } from "@mui/material";
-import { useBrandOptions } from "../../hooks/useBrandOptions";
 import ProductTypeAutocomplete from "./ProductTypeAutoComplete";
 import BrandAutoComplete from "./BrandAutoComplete";
 import UserFilterAutocomplete from "./UserFilterAutocomplete";

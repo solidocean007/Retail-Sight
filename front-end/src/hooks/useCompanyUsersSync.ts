@@ -7,7 +7,7 @@ import {
   saveCompanyUsersToIndexedDB,
 } from "../utils/database/userDataIndexedDB";
 import { db } from "../utils/firebase";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
 
 export default function useCompanyUsersSync() {
   const dispatch = useDispatch();
@@ -18,19 +18,38 @@ export default function useCompanyUsersSync() {
     let unsub = () => {};
 
     (async () => {
-      // 1️⃣ load cached
+      // 1️⃣ Load cached
       const cached = await getCompanyUsersFromIndexedDB();
       if (cached?.length) dispatch(setCompanyUsers(cached));
 
-      // 2️⃣ live Firestore listener
       const q = query(
         collection(db, "users"),
         where("companyId", "==", user.companyId)
       );
-      unsub = onSnapshot(q, (snap) => {
-        const users = snap.docs.map((d) => ({ ...(d.data() as any), uid: d.id }));
+
+      // 2️⃣ Manual one-time fetch fallback
+      try {
+        const snap = await getDocs(q);
+        const users = snap.docs.map((d) => ({
+          ...(d.data() as any),
+          uid: d.id,
+        }));
+        console.log("[UserSync] Fetched users manually:", users.length);
         dispatch(setCompanyUsers(users));
-        saveCompanyUsersToIndexedDB(users);
+        await saveCompanyUsersToIndexedDB(users);
+      } catch (err) {
+        console.warn("[UserSync] Manual fetch failed:", err);
+      }
+
+      // 3️⃣ Live snapshot listener (may fail silently on mobile)
+      unsub = onSnapshot(q, async (snap) => {
+        const users = snap.docs.map((d) => ({
+          ...(d.data() as any),
+          uid: d.id,
+        }));
+        console.log("[UserSync] Snapshot update:", users.length);
+        dispatch(setCompanyUsers(users));
+        await saveCompanyUsersToIndexedDB(users);
       });
     })();
 

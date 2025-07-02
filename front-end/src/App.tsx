@@ -24,8 +24,7 @@ import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUt
 import useSchemaVersion from "./hooks/useSchemaVersion";
 import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
-// import { fixPostUsers } from "./script";
-// import { backfillMissingAccountFields, logMissingAccountInfoReport } from "./script";
+
 
 function App(): React.JSX.Element {
   useSchemaVersion();
@@ -39,15 +38,6 @@ function App(): React.JSX.Element {
   // const salesRouteNum = user?.salesRouteNum;
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
-
-//   useEffect(() => {
-//   // logMissingAccountInfoReport();
-//   fixPostUsers();
-// }, []);
-
-// useEffect(() => {
-//   backfillMissingAccountFields();
-// }, []);
 
  useEffect(() => {
   if (!companyId) return;
