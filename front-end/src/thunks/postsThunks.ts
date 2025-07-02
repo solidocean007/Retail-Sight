@@ -186,6 +186,20 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     let baseQuery: Query<DocumentData> = collection(db, "posts");
     console.log("[FILTER DEBUG] Incoming filters:", filters);
 
+    // Date filtering
+    if (filters.dateRange?.startDate) {
+      const start = Timestamp.fromDate(new Date(filters.dateRange.startDate));
+      baseQuery = query(baseQuery, where("displayDate", ">=", start));
+    }
+
+    if (filters.dateRange?.endDate) {
+      // 🔧 Add time to include the entire end day
+      const end = Timestamp.fromDate(
+        new Date(`${filters.dateRange.endDate}T23:59:59.999Z`)
+      );
+      baseQuery = query(baseQuery, where("displayDate", "<=", end));
+    }
+
     if (filters.companyId) {
       baseQuery = filterExactMatch(
         "postUserCompanyId",
@@ -225,7 +239,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
         where("accountType", "==", filters.accountType)
       );
     }
-   
+
     // if (filters.accountType) {
     //   baseQuery = filterExactMatch(
     //     "typeOfAccount",

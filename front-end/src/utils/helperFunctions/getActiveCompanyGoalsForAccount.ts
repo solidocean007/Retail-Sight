@@ -4,7 +4,6 @@ export const getActiveCompanyGoalsForAccount = (
   accountNumber: string | number | undefined | null,
   goals: CompanyGoalWithIdType[]
 ): CompanyGoalWithIdType[] => {
-
   if (!accountNumber || !goals?.length) {
     console.warn("❌ No account number or no goals to evaluate");
     return [];
@@ -14,7 +13,7 @@ export const getActiveCompanyGoalsForAccount = (
 
   const result = goals.filter((goal) => {
     const start = new Date(goal.goalStartDate);
-    const end = new Date(goal.goalEndDate);
+    const end = new Date(`${goal.goalEndDate}T23:59:59.999Z`); // ✅ extend full day
     const accountList = goal.accountNumbersForThisGoal ?? [];
 
     const isActiveToday = start <= today && end >= today;
@@ -25,3 +24,4 @@ export const getActiveCompanyGoalsForAccount = (
 
   return result;
 };
+
