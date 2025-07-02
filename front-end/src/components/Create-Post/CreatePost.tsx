@@ -100,14 +100,16 @@ export const CreatePost = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setPost((prevPost) => ({
-      ...prevPost,
-      postedBy: onBehalf ?? null,
-      postedByFirstName: onBehalf?.firstName || null,
-      postedByLastName: onBehalf?.lastName || null,
-      postedByUid: onBehalf?.uid || null,
-    }));
-  }, [onBehalf]);
+  setPost((prevPost) => ({
+    ...prevPost,
+    postUser: onBehalf ?? userData, // 👤 Who the post is for
+    postedBy: userData ?? null,     // 🧑‍💻 Who is submitting the post
+    postedByFirstName: userData?.firstName || null,
+    postedByLastName: userData?.lastName || null,
+    postedByUid: userData?.uid || null,
+  }));
+}, [onBehalf, userData]);
+
 
   useEffect(() => {
     if (post.visibility === "supplier") {

@@ -5,14 +5,17 @@ import { GoalSubmissionType, PostInputType } from "../types";
 
 export const updateGoalWithSubmission = async (
   post: PostInputType,
-  postId: string,
+  postId: string
 ): Promise<void> => {
   try {
-    const actor = post.postedBy ?? post.postUser;
-  if (!actor) {
-    console.warn("No user to attribute Gallo-goal submission to – skipping update.");
-    return;
-  }
+    const actor = post.postUser;
+
+    if (!actor) {
+      console.warn(
+        "No user to attribute Gallo-goal submission to – skipping update."
+      );
+      return;
+    }
     const submission: GoalSubmissionType = {
       postId,
       submittedAt: new Date().toISOString(),
@@ -42,7 +45,7 @@ export const updateGoalWithSubmission = async (
         const updatedAccounts = goalData.accounts.map((account: any) =>
           account.oppId === post.oppId
             ? { ...account, submittedPost: submission } // Add `submittedPost` to the matching account
-            : account,
+            : account
         );
 
         await updateDoc(galloGoalsRef, { accounts: updatedAccounts });

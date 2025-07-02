@@ -99,7 +99,7 @@ export const useHandlePostSubmission = () => {
       const payload: FirestorePostPayload = buildPostPayload({
         ...post,
         imageUrl: "",
-        postUser: userData,
+        postUser: post.postUser ?? userData,
       });
 
       // 6. Write to Firestore
