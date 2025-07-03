@@ -1,4 +1,4 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "./utils/firebase"; // adjust path as needed
 
 // export async function logMissingAccountInfoReport() {
@@ -192,3 +192,184 @@ import { db } from "./utils/firebase"; // adjust path as needed
 //   }
 // }
 
+
+export async function auditPostDates() {
+  try {
+    const snapshot = await getDocs(collection(db, "posts"));
+    console.log(`[Audit] Found ${snapshot.size} posts in Firestore`);
+
+    let issuesFound = 0;
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const id = doc.id;
+
+      const displayDate = data.displayDate;
+      const timestamp = data.timestamp;
+
+      const isDisplayDateString = typeof displayDate === "string";
+      const isTimestampString = typeof timestamp === "string";
+
+      if (isDisplayDateString || isTimestampString) {
+        console.warn(`[Issue] Post ${id} has:`, {
+          ...(isDisplayDateString && { displayDate }),
+          ...(isTimestampString && { timestamp }),
+        });
+        issuesFound++;
+      }
+    });
+
+    if (issuesFound === 0) {
+      console.log("✅ No issues found. All displayDate/timestamp fields are Timestamps.");
+    } else {
+      console.warn(`🚨 Found ${issuesFound} posts with string dates.`);
+    }
+  } catch (err) {
+    console.error("[Audit] Failed to read posts:", err);
+  }
+}
+
+import {
+  writeBatch,
+  Timestamp,
+} from "firebase/firestore";
+
+function isValidDateString(value: any): boolean {
+  if (typeof value !== "string") return false;
+  const d = new Date(value);
+  return !isNaN(d.getTime());
+}
+
+export async function migratePostDates() {
+  const postsRef = collection(db, "posts");
+  const snapshot = await getDocs(postsRef);
+
+  console.log(`Found ${snapshot.size} posts. Starting migration...`);
+  let updatedCount = 0;
+  let skippedCount = 0;
+
+  let batch = writeBatch(db);
+  let batchCount = 0;
+
+  for (const doc of snapshot.docs) {
+    const data = doc.data();
+    let needsUpdate = false;
+
+    // Check and update displayDate
+    if (typeof data.displayDate === "string") {
+      if (isValidDateString(data.displayDate)) {
+        batch.update(doc.ref, {
+          displayDate: Timestamp.fromDate(new Date(data.displayDate)),
+        });
+        needsUpdate = true;
+      } else {
+        console.warn(
+          `[SKIPPED] Post ${doc.id} has invalid displayDate:`,
+          data.displayDate
+        );
+        skippedCount++;
+      }
+    }
+
+    // Check and update timestamp
+    if (typeof data.timestamp === "string") {
+      if (isValidDateString(data.timestamp)) {
+        batch.update(doc.ref, {
+          timestamp: Timestamp.fromDate(new Date(data.timestamp)),
+        });
+        needsUpdate = true;
+      } else {
+        console.warn(
+          `[SKIPPED] Post ${doc.id} has invalid timestamp:`,
+          data.timestamp
+        );
+        skippedCount++;
+      }
+    }
+
+    if (needsUpdate) {
+      updatedCount++;
+      batchCount++;
+      console.log(`[Update] Post ${doc.id}`);
+    }
+
+    // Commit every 450 updates to avoid batch limit
+    if (batchCount >= 450) {
+      await batch.commit();
+      console.log("🔥 Committed batch of 450 updates");
+      batch = writeBatch(db); // Start new batch
+      batchCount = 0;
+    }
+  }
+
+  // Commit any remaining updates
+  if (batchCount > 0) {
+    await batch.commit();
+    console.log("🔥 Final batch committed");
+  }
+
+  console.log(`✅ Migration complete. Updated ${updatedCount} posts.`);
+  console.warn(`🚨 Skipped ${skippedCount} posts due to invalid dates.`);
+}
+
+
+// function fixInvalidDateString(value: string): Date | null {
+//   const match = value.match(/T(\d{2}):(\d{2}):(\d{2})/);
+//   if (!match) return null; // Not even close to valid
+
+//   let hour = parseInt(match[1], 10);
+//   if (hour >= 24) {
+//     console.warn(`[FIX] Adjusting hour ${hour} -> ${hour % 24}`);
+//     hour = hour % 24;
+//     const fixed = value.replace(/T\d{2}/, `T${hour.toString().padStart(2, "0")}`);
+//     const fixedDate = new Date(fixed);
+//     return isNaN(fixedDate.getTime()) ? null : fixedDate;
+//   }
+
+//   const d = new Date(value);
+//   return isNaN(d.getTime()) ? null : d;
+// }
+
+// export async function fixSinglePost(postId: string) {
+//   const postRef = doc(db, "posts", postId);
+//   const snap = await getDoc(postRef);
+
+//   if (!snap.exists()) {
+//     console.error(`❌ Post ${postId} does not exist`);
+//     return;
+//   }
+
+//   const data = snap.data();
+//   let updatedFields: any = {};
+
+//   // Fix displayDate
+//   if (typeof data.displayDate === "string") {
+//     const fixedDate = fixInvalidDateString(data.displayDate);
+//     if (fixedDate) {
+//       updatedFields.displayDate = Timestamp.fromDate(fixedDate);
+//       console.log(`[Update] Fixed displayDate for ${postId}:`, fixedDate);
+//     } else {
+//       console.warn(`[SKIP] Unfixable displayDate for ${postId}:`, data.displayDate);
+//     }
+//   }
+
+//   // Fix timestamp
+//   if (typeof data.timestamp === "string") {
+//     const fixedTime = fixInvalidDateString(data.timestamp);
+//     if (fixedTime) {
+//       updatedFields.timestamp = Timestamp.fromDate(fixedTime);
+//       console.log(`[Update] Fixed timestamp for ${postId}:`, fixedTime);
+//     } else {
+//       console.warn(`[SKIP] Unfixable timestamp for ${postId}:`, data.timestamp);
+//     }
+//   }
+
+//   if (Object.keys(updatedFields).length > 0) {
+//     await updateDoc(postRef, updatedFields);
+//     console.log(`✅ Successfully updated post ${postId}`);
+//   } else {
+//     console.log(`⚠️ No updates applied to post ${postId}`);
+//   }
+// }
+
+// fixSinglePost("GIMl8WhFoKgGMyKHJ9B6");

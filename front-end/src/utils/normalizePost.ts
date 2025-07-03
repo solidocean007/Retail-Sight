@@ -1,4 +1,3 @@
-import { Timestamp } from "@firebase/firestore";
 import { PostWithID } from "../utils/types";
 
 export function normalizePost(post: any): PostWithID {
@@ -13,15 +12,17 @@ export function normalizePost(post: any): PostWithID {
           ...t,
           expiry: normalizeDate(t.expiry),
         }))
-      : [],
+      : (post.tokens ? (console.warn("[normalizePost] Unexpected tokens format:", post.tokens), []) : []),
   };
 }
 
 function normalizeDate(value: any): string | null {
-  if (!value) return null;
+  if (value === undefined || value === null) return null;
   if (typeof value === "string") return value;
   if (value instanceof Date) return value.toISOString();
   if (typeof value.toDate === "function") return value.toDate().toISOString();
+
+  console.warn("[normalizeDate] Unrecognized date format:", value);
   return null;
 }
 

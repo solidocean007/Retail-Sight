@@ -7,6 +7,7 @@ import {
   clearPostsInIndexedDB,
   clearStarTagPostsInIndexedDB,
   clearUserCreatedPostsInIndexedDB,
+  setLastSeenTimestamp,
 } from "../utils/database/indexedDBUtils";
 import { AppDispatch } from "../utils/store";
 import { clearPostsData } from "../Slices/postsSlice";
@@ -34,6 +35,7 @@ export async function resetApp(dispatch: AppDispatch) {
       clearIndexedDBStore("locations"),
       clearIndexedDBStore("collections"),
       clearIndexedDBStore("lastSeenTimestamp"),
+      setLastSeenTimestamp("1970-01-01T00:00:00.000Z"), // 🔥 Reset listener baseline
     ]);
 
     console.log("✅ IndexedDB cleared.");

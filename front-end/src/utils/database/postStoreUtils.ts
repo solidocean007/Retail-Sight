@@ -1,11 +1,75 @@
 // indexedDBUtils.ts
 import {
-  PostQueryFilters,
-  PostType,
-  PostWithID,
-} from "../types";
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
+} from "@firebase/firestore";
+import { PostQueryFilters, PostType, PostWithID } from "../types";
 import { openDB } from "./indexedDBOpen";
+import { db } from "../firebase";
 
+const refetchMemo = new Map<string, string>(); // companyId → lastCheckedDisplayDate
+
+
+export async function shouldRefetchPosts(
+  companyId: string,
+  newestCachedDate: string | null
+): Promise<boolean> {
+  try {
+    if (!companyId || !newestCachedDate) return true;
+
+    const lastChecked = refetchMemo.get(companyId);
+    if (lastChecked === newestCachedDate) {
+      console.log(`[Memo] Skipping shouldRefetch for ${companyId}`);
+      return false;
+    }
+
+    const postsRef = collection(db, "posts");
+
+    const [companySnap, publicSnap] = await Promise.all([
+      getDocs(
+        query(
+          postsRef,
+          where("postUserCompanyId", "==", companyId),
+          orderBy("displayDate", "desc"),
+          limit(1)
+        )
+      ),
+      getDocs(
+        query(
+          postsRef,
+          where("visibility", "==", "public"),
+          orderBy("displayDate", "desc"),
+          limit(1)
+        )
+      ),
+    ]);
+
+    const latestDates: Date[] = [];
+
+    if (!companySnap.empty) {
+      latestDates.push(new Date(companySnap.docs[0].data().displayDate));
+    }
+    if (!publicSnap.empty) {
+      latestDates.push(new Date(publicSnap.docs[0].data().displayDate));
+    }
+
+    const newestLocal = new Date(newestCachedDate);
+    const hasNewer = latestDates.some((d) => d > newestLocal);
+
+    if (!hasNewer) {
+      refetchMemo.set(companyId, newestCachedDate);
+    }
+
+    return hasNewer;
+  } catch (err) {
+    console.error("[shouldRefetch] Error:", err);
+    return true; // Safe default
+  }
+}
 
 // export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
 export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
@@ -36,7 +100,7 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
       request.onerror = () => {
         console.error(
           `Error adding post ${index} to IndexedDB:`,
-          request.error,
+          request.error
         );
         reject(request.error);
       };
@@ -70,7 +134,7 @@ export async function clearPostsInIndexedDB(): Promise<void> {
     transaction.onerror = () => {
       console.error(
         "Transaction not completed due to error: ",
-        transaction.error,
+        transaction.error
       );
       reject(transaction.error);
     };
@@ -79,7 +143,7 @@ export async function clearPostsInIndexedDB(): Promise<void> {
 
 // delete user created posts in indexedDB
 export async function deleteUserCreatedPostInIndexedDB(
-  postId: string,
+  postId: string
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["userCreatedPosts"], "readwrite");
@@ -114,14 +178,14 @@ export async function clearUserCreatedPostsInIndexedDB(): Promise<void> {
     clearRequest.onerror = () => {
       console.error(
         "Error clearing user created posts from IndexedDB:",
-        clearRequest.error,
+        clearRequest.error
       );
       reject(clearRequest.error);
     };
 
     transaction.oncomplete = () => {
       console.log(
-        "Transaction completed: All user created posts cleared from IndexedDB.",
+        "Transaction completed: All user created posts cleared from IndexedDB."
       );
       resolve();
     };
@@ -129,7 +193,7 @@ export async function clearUserCreatedPostsInIndexedDB(): Promise<void> {
     transaction.onerror = () => {
       console.error(
         "Transaction not completed due to error: ",
-        transaction.error,
+        transaction.error
       );
       reject(transaction.error);
     };
@@ -151,7 +215,7 @@ export async function updatePostInIndexedDB(post: PostWithID): Promise<void> {
 
 // Add a single post to IndexedDB
 export async function addNewlyCreatedPostToIndexedDB(
-  post: PostWithID,
+  post: PostWithID
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");
@@ -207,7 +271,7 @@ export async function getPostsFromIndexedDB(): Promise<PostWithID[]> {
 
 // Create a utility function that retrieves filtered posts from IndexedDB
 export async function getFilteredPostsFromIndexedDB(
-  filters: PostQueryFilters,
+  filters: PostQueryFilters
 ): Promise<PostWithID[]> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readonly");
@@ -260,7 +324,7 @@ export async function getFilteredPostsFromIndexedDB(
 // Utility function to store filtered posts in IndexedDB
 export async function storeFilteredPostsInIndexedDB(
   posts: PostWithID[],
-  filters: PostQueryFilters,
+  filters: PostQueryFilters
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");
@@ -297,7 +361,7 @@ export async function storeFilteredPostsInIndexedDB(
 
 // store latest posts in indexDB
 export async function storeLatestPostsInIndexedDB(
-  posts: PostType[],
+  posts: PostType[]
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["latestPosts"], "readwrite"); // Consider using a separate object store for latest posts
@@ -348,7 +412,7 @@ export async function getLatestPostsFromIndexedDB(): Promise<PostWithID[]> {
 
 // add hashtag posts to indexedDB
 export async function addHashtagPostsToIndexedDB(
-  posts: PostWithID[],
+  posts: PostWithID[]
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["hashtagPosts"], "readwrite");
@@ -376,7 +440,7 @@ export async function addHashtagPostsToIndexedDB(
 
 // add starTag posts to indexedDB
 export async function addStarTagPostsToIndexedDB(
-  posts: PostWithID[],
+  posts: PostWithID[]
 ): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["starTagPosts"], "readwrite");
@@ -397,7 +461,7 @@ export async function addStarTagPostsToIndexedDB(
       request.onerror = () => {
         console.error(
           "Error adding star tag posts to IndexedDB:",
-          request.error,
+          request.error
         );
         reject(request.error);
       };
@@ -419,7 +483,7 @@ export async function getHashtagPostsFromIndexedDB(): Promise<PostWithID[]> {
     getAllRequest.onerror = () => {
       console.error(
         "Error getting hashtag posts from IndexedDB:",
-        getAllRequest.error,
+        getAllRequest.error
       );
       reject(getAllRequest.error);
     };
@@ -440,7 +504,7 @@ export async function getStarTagPostsFromIndexedDB(): Promise<PostWithID[]> {
     getAllRequest.onerror = () => {
       console.error(
         "Error getting star tag posts from IndexedDB:",
-        getAllRequest.error,
+        getAllRequest.error
       );
       reject(getAllRequest.error);
     };
@@ -461,7 +525,7 @@ export async function clearHashtagPostsInIndexedDB(): Promise<void> {
     clearRequest.onerror = () => {
       console.error(
         "Error clearing hashtag posts from IndexedDB:",
-        clearRequest.error,
+        clearRequest.error
       );
       reject(clearRequest.error);
     };
@@ -482,7 +546,7 @@ export async function clearStarTagPostsInIndexedDB(): Promise<void> {
     clearRequest.onerror = () => {
       console.error(
         "Error clearing hashtag posts from IndexedDB:",
-        clearRequest.error,
+        clearRequest.error
       );
       reject(clearRequest.error);
     };

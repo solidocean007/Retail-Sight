@@ -47,6 +47,7 @@ import { useNavigate } from "react-router-dom";
 import { normalizePost } from "../utils/normalizePost";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import { getFilterHash } from "./FilterSideBar/utils/filterUtils";
+import { usePostsTest } from "../hooks/usePostsTest";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -108,10 +109,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
   // hook to load posts
-  usePosts(currentUserCompanyId, POSTS_BATCH_SIZE);
   const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  usePosts(currentUserCompanyId, POSTS_BATCH_SIZE);
 
   const scrollToTop = () => {
     virtuosoRef.current?.scrollToIndex({
@@ -120,6 +122,17 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       behavior: "smooth",
     });
   };
+
+  // const { testPosts, loading, error } = usePostsTest(currentUser?.companyId);
+
+  // useEffect(() => {
+  //   if (!loading && !error) {
+  //     console.log(
+  //       "[Test] Posts:",
+  //       testPosts.map((p) => p.displayDate)
+  //     );
+  //   }
+  // }, [testPosts, loading, error]);
 
   // this should only be responsible for scrolling to the top on a activePostsSet change
   const prevActivePostSet = useRef(activePostSet);
@@ -198,12 +211,23 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }, 1000); // 🔧 tweak this value (500–1000ms) based on real-world test
 
     if (idx === -1 && appliedFilters) {
-    console.warn("Post to scroll not found. Refetching...");
-    dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
-  }
+      console.warn("Post to scroll not found. Refetching...");
+      dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
+    }
 
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
+
+  console.log(
+    filteredPosts.map((post) => ({
+      id: post.id,
+      displayDate: post.displayDate,
+      displayDateType: typeof post.displayDate,
+      timestamp: post.timestamp,
+      timestampType: typeof post.timestamp,
+      visibility: post.visibility,
+    }))
+  );
 
   // console.log(postIdToScroll, "postIdToSCroll");
   return (
@@ -270,7 +294,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                           if (posts.length > 0) {
                             addPostsToIndexedDB(posts);
                             // dispatch(appendPosts(posts));
-                            dispatch(mergeAndSetPosts(posts.map(normalizePost)));
+                            dispatch(
+                              mergeAndSetPosts(posts.map(normalizePost))
+                            );
                             setHasMore(true);
                           } else {
                             setHasMore(false);

@@ -13,11 +13,7 @@ import {
 } from "firebase/firestore";
 import { useAppDispatch, RootState } from "../utils/store";
 import { PostWithID } from "../utils/types";
-import {
-  deletePost,
-  mergeAndSetPosts,
-  setPosts,
-} from "../Slices/postsSlice";
+import { deletePost, mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
 import {
   getPostsFromIndexedDB,
   addPostsToIndexedDB,
@@ -26,6 +22,7 @@ import {
   removePostFromIndexedDB,
   deleteUserCreatedPostInIndexedDB,
   updatePostInIndexedDB,
+  shouldRefetchPosts,
 } from "../utils/database/indexedDBUtils";
 import { db } from "../utils/firebase";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
@@ -36,20 +33,25 @@ const usePosts = (
   POSTS_BATCH_SIZE: number
 ) => {
   const dispatch = useAppDispatch();
-  const currentUser = useSelector(
-    (state: RootState) => state.user.currentUser
-  );
+  const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const [initialLoaded, setInitialLoaded] = useState(false);
 
   // 1️⃣ Initial load: IndexedDB or Firestore
   useEffect(() => {
     const loadInitialPosts = async (companyId: string) => {
       const cached = await getPostsFromIndexedDB();
-      if (cached.length > 0) {
-        dispatch(setPosts(cached));
+      const newestCachedDate = cached?.[0]?.displayDate || null;
+
+      const needsUpdate = await shouldRefetchPosts(companyId, newestCachedDate);
+
+      if (cached.length > 0 && !needsUpdate) {
+        dispatch(setPosts(cached.map(normalizePost)));
       } else {
         const action = await dispatch(
-          fetchInitialPostsBatch({ currentUserCompanyId: companyId, POSTS_BATCH_SIZE })
+          fetchInitialPostsBatch({
+            currentUserCompanyId: companyId,
+            POSTS_BATCH_SIZE,
+          })
         );
         if (fetchInitialPostsBatch.fulfilled.match(action)) {
           const posts = action.payload.posts.map(normalizePost);
@@ -57,6 +59,7 @@ const usePosts = (
           addPostsToIndexedDB(posts);
         }
       }
+
       setInitialLoaded(true);
     };
 
@@ -101,12 +104,12 @@ const usePosts = (
 
         snapshot.docChanges().forEach((change) => {
           const data = change.doc.data();
-          let tsValue: any = data.timestamp;
-          if (tsValue?.toDate) tsValue = tsValue.toDate();
-          else if (typeof tsValue === "string") tsValue = new Date(tsValue);
+          let dDValue: any = data.displayDate;
+          if (dDValue?.toDate) dDValue = dDValue.toDate();
+          else if (typeof dDValue === "string") dDValue = new Date(dDValue);
 
-          if (tsValue <= mostRecent) return;
-          mostRecent = tsValue;
+          if (dDValue <= mostRecent) return;
+          mostRecent = dDValue;
 
           if (change.type === "removed") {
             dispatch(deletePost(change.doc.id));
@@ -137,28 +140,28 @@ const usePosts = (
         }
       };
 
+      // 🔁 Listen for public posts
       unsubscribePublic = onSnapshot(
         query(
           collection(db, "posts"),
-          where("timestamp", ">", lastSeenTs),
+          where("displayDate", ">", lastSeenTs),
           where("visibility", "==", "public"),
-          orderBy("timestamp", "desc"),
+          orderBy("displayDate", "desc"),
           limit(POSTS_BATCH_SIZE)
         ),
         processDocChanges
       );
 
+      // 🔁 Listen for company posts
       if (currentUserCompanyId) {
         unsubscribeCompany = onSnapshot(
           query(
             collection(db, "posts"),
-            where("timestamp", ">", lastSeenTs),
-            where(
-              "postUserCompanyId",
-              "==",
-              currentUserCompanyId
-            ),
-            orderBy("timestamp", "desc"),
+            // where("timestamp", ">", lastSeenTs),
+            where("displayDate", ">", lastSeenTs),
+            where("postUserCompanyId", "==", currentUserCompanyId),
+            // orderBy("timestamp", "desc"),
+            orderBy("displayDate", "desc"),
             limit(POSTS_BATCH_SIZE)
           ),
           processDocChanges

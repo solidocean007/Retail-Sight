@@ -24,6 +24,7 @@ import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUt
 import useSchemaVersion from "./hooks/useSchemaVersion";
 import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
+import { auditPostDates, migratePostDates } from "./script";
 
 
 function App(): React.JSX.Element {
@@ -38,6 +39,12 @@ function App(): React.JSX.Element {
   // const salesRouteNum = user?.salesRouteNum;
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
+
+//   useEffect(() => {
+//   auditPostDates();
+//   // migratePostDates();
+// }, []);
+
 
  useEffect(() => {
   if (!companyId) return;
