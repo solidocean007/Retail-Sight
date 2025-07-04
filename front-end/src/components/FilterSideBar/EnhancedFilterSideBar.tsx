@@ -40,6 +40,7 @@ import UserFilterAutocomplete from "./UserFilterAutocomplete";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import AccountNameAutocomplete from "./AccountNameAutocomplete";
 import AccountTypeSelect from "./AccountTypeSelect";
+import ChainNameAutocomplete from "./ChainNameAutocomplete";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -93,8 +94,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   );
   const [accountNameInput, setAccountNameInput] = useState("");
   const [accountTypeInput, setAccountTypeInput] = useState("");
-  const [selectedAccount, setSelectedAccount] =
-    useState<CompanyAccountType | null>(null);
+  const [accountChainInput, setAccountChainInput] = useState("");
 
   const [selectedFilterUser, setSelectedFilterUser] = useState<UserType | null>(
     null
@@ -555,12 +555,20 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               handleChange("accountType", val);
             }}
           />
-          <input
+          {/* <input
             placeholder="Chain Name search coming soon"
             value={filters.accountChain || ""}
             onChange={(e) => handleChange("accountChain", e.target.value)}
             disabled
+          /> */}
+          <ChainNameAutocomplete
+            selectedValue={filters.accountChain}
+            onSelect={(val) => {
+              setAccountChainInput(val || "");
+              handleChange("accountChain", val);
+            }}
           />
+
           <input
             placeholder="Chain Type (chain/independent) search coming soon"
             value={filters.chainType || ""}

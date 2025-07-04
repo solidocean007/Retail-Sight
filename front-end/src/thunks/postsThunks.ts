@@ -248,12 +248,18 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     //   );
     // }
     if (filters.accountChain) {
-      baseQuery = filterExactMatch(
-        "accountChain",
-        filters.accountChain ?? undefined,
-        baseQuery
+      baseQuery = query(
+        baseQuery,
+        where("chain", "==", filters.accountChain)
       );
     }
+    // if (filters.accountChain) {
+    //   baseQuery = filterExactMatch(
+    //     "accountChain",
+    //     filters.accountChain ?? undefined,
+    //     baseQuery
+    //   );
+    // }
     if (filters.chainType) {
       baseQuery = filterExactMatch(
         "chainType",

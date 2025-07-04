@@ -218,18 +218,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
 
-  console.log(
-    filteredPosts.map((post) => ({
-      id: post.id,
-      displayDate: post.displayDate,
-      displayDateType: typeof post.displayDate,
-      timestamp: post.timestamp,
-      timestampType: typeof post.timestamp,
-      visibility: post.visibility,
-    }))
-  );
 
-  // console.log(postIdToScroll, "postIdToSCroll");
   return (
     <div className="activity-feed-box">
       {showLoader ? (

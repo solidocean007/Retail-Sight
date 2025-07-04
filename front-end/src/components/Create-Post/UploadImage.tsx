@@ -6,12 +6,7 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import heic2any from "heic2any";
 import { useState } from "react";
-import {
-  Photo,
-  PhotoAlbum,
-  PhotoAlbumOutlined,
-  PhotoAlbumRounded,
-} from "@mui/icons-material";
+import { Photo } from "@mui/icons-material";
 
 interface UploadImageProps {
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
@@ -31,70 +26,117 @@ export const UploadImage: React.FC<UploadImageProps> = ({
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    setSelectedFile(file);
 
     if (!file) {
       dispatch(showMessage("No file selected. Please choose an image."));
       return;
     }
 
-    const validImageTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "image/heic",
-      "image/heif",
-    ];
+    try {
+      // 🛡 Force file copy into memory immediately
+      const arrayBuffer = await file.arrayBuffer();
+      const copiedFile = new File([arrayBuffer], file.name, { type: file.type });
 
-    if (!validImageTypes.includes(file.type)) {
-      dispatch(showMessage("Unsupported file type. Please upload JPG or PNG."));
-      return;
-    }
+      if (!copiedFile || copiedFile.size === 0) {
+        throw new Error("File reference lost after selection.");
+      }
 
-    if (file.type.includes("heic") || file.type.includes("heif")) {
-      dispatch(showMessage("Converting HEIC image, please wait..."));
-      setIsConverting(true);
-      try {
+      // 🛡 Double check for stale gallery files
+      if (
+        typeof copiedFile.lastModified === "undefined" ||
+        copiedFile.size === 0
+      ) {
+        dispatch(
+          showMessage(
+            "This photo cannot be accessed. Try re-selecting it using 'Browse' or take a new photo."
+          )
+        );
+        return;
+      }
+
+      setSelectedFile(copiedFile);
+
+      const validImageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+      ];
+
+      if (!validImageTypes.includes(copiedFile.type)) {
+        dispatch(
+          showMessage("Unsupported file type. Please upload JPG or PNG.")
+        );
+        return;
+      }
+
+      // 🖼 Handle HEIC/HEIF conversion
+      if (
+        copiedFile.type.includes("heic") ||
+        copiedFile.type.includes("heif")
+      ) {
+        dispatch(showMessage("Converting HEIC image, please wait..."));
+        setIsConverting(true);
+
         const convertedBlob = await heic2any({
-          blob: file,
+          blob: copiedFile,
           toType: "image/jpeg",
         });
+
         const singleBlob = Array.isArray(convertedBlob)
           ? convertedBlob[0]
           : convertedBlob;
+
         const convertedFile = new File(
           [singleBlob],
           file.name.replace(/\.\w+$/, ".jpg"),
           { type: "image/jpeg" }
         );
 
-        setSelectedFile(convertedFile);
+        // 🛡 Force converted file into memory
+        const convertedArrayBuffer = await convertedFile.arrayBuffer();
+        const copiedConvertedFile = new File(
+          [convertedArrayBuffer],
+          convertedFile.name,
+          { type: convertedFile.type }
+        );
+
+        if (!copiedConvertedFile || copiedConvertedFile.size === 0) {
+          throw new Error("Converted file inaccessible.");
+        }
+
+        setSelectedFile(copiedConvertedFile);
+
         const reader = new FileReader();
         reader.onloadend = () => {
           setPost({ ...post, imageUrl: reader.result as string });
-          dispatch(showMessage("Image converted and selected successfully!"));
+          dispatch(
+            showMessage("Image converted and selected successfully!")
+          );
         };
-        reader.readAsDataURL(convertedFile);
-      } catch (error) {
-        console.error("Error converting HEIC/HEIF image:", error);
-        dispatch(
-          showMessage(
-            "Failed to convert HEIC/HEIF image. Please screenshot or save it as JPG/PNG and try again."
-          )
-        );
-      } finally {
-        setIsConverting(false);
+        reader.readAsDataURL(copiedConvertedFile);
         return;
       }
-    }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPost({ ...post, imageUrl: reader.result as string });
-      dispatch(showMessage("Image selected successfully!"));
-    };
-    reader.readAsDataURL(file);
+      // 🖼 Regular images
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPost({ ...post, imageUrl: reader.result as string });
+        dispatch(showMessage("Image selected successfully!"));
+      };
+      reader.readAsDataURL(copiedFile);
+    } catch (err: any) {
+      console.error("Error handling image selection:", err);
+      dispatch(
+        showMessage(
+          "This photo could not be accessed. Try re-selecting it using 'Browse' or take a new photo."
+        )
+      );
+    } finally {
+      setIsConverting(false);
+    }
   };
 
   return (

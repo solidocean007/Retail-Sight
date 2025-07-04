@@ -14,7 +14,7 @@ const AccountTypeSelect: React.FC<Props> = ({ selectedValue, onSelect }) => {
     (state: RootState) => state.allAccounts.accounts
   ) as CompanyAccountType[];
 
-  const { topFiveTypes, allTypes } = useMemo(() => {
+  const { topTwentyTypes, allTypes } = useMemo(() => {
     const counts = new Map<string, number>();
     allAccounts.forEach((acc) => {
       const type = acc.typeOfAccount?.trim();
@@ -26,7 +26,7 @@ const AccountTypeSelect: React.FC<Props> = ({ selectedValue, onSelect }) => {
     const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
 
     return {
-      topFiveTypes: sorted.slice(0, 20).map(([type]) => type),
+      topTwentyTypes: sorted.slice(0, 20).map(([type]) => type),
       allTypes: [...counts.keys()].sort(),
     };
   }, [allAccounts]);
@@ -38,7 +38,7 @@ const AccountTypeSelect: React.FC<Props> = ({ selectedValue, onSelect }) => {
     ? allTypes.filter((type) =>
         type.toLowerCase().includes(inputValue.toLowerCase())
       )
-    : topFiveTypes;
+    : topTwentyTypes;
 
   return (
     <Autocomplete
