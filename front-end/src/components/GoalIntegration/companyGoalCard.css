@@ -10,6 +10,13 @@
   color: var(--text-color);
 }
 
+.company-goal-card-start-end {
+  display: flex;
+  width: 100%;
+  max-width: 20rem;
+  justify-content: space-between;
+}
+
 .goal-progress-section {
   width: 100%;
   max-width: 400px;

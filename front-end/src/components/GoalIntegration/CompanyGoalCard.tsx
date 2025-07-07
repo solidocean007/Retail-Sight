@@ -184,6 +184,10 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   return (
     <div className="info-box-company-goal">
       <div className="company-goal-card-header">
+        <div className="company-goal-card-start-end">
+          <h5>Start: {goal.goalStartDate}</h5>
+          <h5>End: {goal.goalStartDate}</h5>
+        </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
           {onDelete && (

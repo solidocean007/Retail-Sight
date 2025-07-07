@@ -109,10 +109,11 @@ const CreateCompanyGoalView = () => {
   const filteredAccounts = useMemo(() => {
     return accounts.filter(
       (a) =>
-        (!filters.chains.length || filters.chains.some(
-          (selectedChain) => selectedChain.toLowerCase() === (a.chain || "").toLowerCase()
-        ))
-         &&
+        (!filters.chains.length ||
+          filters.chains.some(
+            (selectedChain) =>
+              selectedChain.toLowerCase() === (a.chain || "").toLowerCase()
+          )) &&
         (!filters.chainType || a.chainType === filters.chainType) &&
         (!filters.typeOfAccounts.length ||
           filters.typeOfAccounts.includes(a.typeOfAccount || "")) &&
@@ -218,50 +219,70 @@ const CreateCompanyGoalView = () => {
     );
   }, [accounts, selectedUserIds, normalizedCompanyUsers]);
 
-const handleCreateGoal = async () => {
-  if (!readyForCreation) {
-    alert("Please fill out all required fields.");
-    return;
-  }
+  const handleCreateGoal = async () => {
+    if (!readyForCreation) {
+      alert("Please fill out all required fields.");
+      return;
+    }
 
-  const accountNumbersForThisGoal =
-    goalTargetMode === "goalForAllAccounts"
-      ? accounts.map((acc) => acc.accountNumber.toString())
-      : goalTargetMode === "goalForSelectedAccounts"
-      ? selectedAccounts.map((acc) => acc.accountNumber.toString())
-      : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
+    if (!companyId) {
+      alert("Missing companyId. Cannot create goal.");
+      return;
+    }
 
-  const newGoal = {
-    companyId: companyId || "",
-    goalTitle,
-    goalDescription,
-    goalMetric,
-    goalValueMin: Number(goalValueMin),
-    goalStartDate,
-    goalEndDate,
-    accountNumbersForThisGoal,
-    perUserQuota: enforcePerUserQuota ? Number(perUserQuota) : undefined,
+    const accountNumbersForThisGoal =
+      goalTargetMode === "goalForAllAccounts"
+        ? accounts.map((acc) => acc.accountNumber.toString())
+        : goalTargetMode === "goalForSelectedAccounts"
+        ? selectedAccounts.map((acc) => acc.accountNumber.toString())
+        : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
+
+    const newGoal: any = {
+      companyId,
+      goalTitle,
+      goalDescription,
+      goalMetric,
+      goalValueMin: Number(goalValueMin),
+      goalStartDate,
+      goalEndDate,
+      accountNumbersForThisGoal,
+    };
+
+    if (enforcePerUserQuota && perUserQuota) {
+      newGoal.perUserQuota = Number(perUserQuota);
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await dispatch(
+        createCompanyGoalInFirestore({ goal: newGoal, currentUser })
+      );
+      console.log("Dispatch result:", result);
+
+      if (createCompanyGoalInFirestore.fulfilled.match(result)) {
+        alert("Goal created successfully!");
+        console.log("Created goal ID:", result.payload.id);
+
+        // Reset Form
+        setGoalTitle("");
+        setGoalDescription("");
+        setGoalMetric("");
+        setGoalValueMin(1);
+        setGoalStartDate("");
+        setGoalEndDate("");
+        setSelectedAccounts([]);
+        setSelectedUserIds([]);
+      } else {
+        console.error("Goal creation failed:", result.payload);
+        alert(`Failed to create goal: ${result.payload}`);
+      }
+    } catch (error: any) {
+      console.error("Unexpected error:", error);
+      alert("Error creating goal. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
-
-  setIsSaving(true);
-  try {
-    await dispatch(createCompanyGoalInFirestore({ goal: newGoal }));
-    alert("Goal created successfully!");
-    // Reset Form
-    setGoalTitle("");
-    setGoalDescription("");
-    setGoalMetric("");
-    setGoalValueMin(1);
-    setGoalStartDate("");
-    setGoalEndDate("");
-    setSelectedAccounts([]);
-    setSelectedUserIds([]);
-  } catch (error) {
-    alert("Error creating goal. Please try again.");
-  } finally {
-    setIsSaving(false);
-  }
-};
 
   return (
     <Container>
@@ -344,7 +365,7 @@ const handleCreateGoal = async () => {
               </Box>
             </Box>
           </Box>
-          <Box  display="flex" justifyContent="flex-start">
+          <Box display="flex" justifyContent="flex-start">
             <FormControlLabel
               control={
                 <Checkbox

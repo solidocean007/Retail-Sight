@@ -1,18 +1,22 @@
-import { useState } from "react";
-import { Typography, useMediaQuery } from "@mui/material";
+import { useState, useMemo } from "react";
+import {
+  Typography,
+  useMediaQuery,
+  Button,
+  Menu,
+  MenuItem,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useSelector } from "react-redux";
-import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
 import { useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
-import { useNavigate } from "react-router-dom";
-import "./allCompanyGoalsView.css";
-import CompanyGoalDetailsCard from "./CompanyGoalDetailsCard";
-import { CompanyGoalType } from "../../utils/types";
+import { CompanyGoalType, CompanyGoalWithIdType } from "../../utils/types";
 import CompanyGoalCard from "./CompanyGoalCard";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { updateCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
+import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
+import "./allCompanyGoalsView.css";
 
 const AllCompanyGoalsView = ({
   companyId,
@@ -22,22 +26,44 @@ const AllCompanyGoalsView = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [expandedGoals, setExpandedGoals] = useState<string[]>([]);
   const companyGoals = useSelector(selectAllCompanyGoals);
+  const [showArchived, setShowArchived] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "title">(
+    "newest"
+  );
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string>("");
 
-  const toggleGoalExpansion = (goalId: string) => {
-    setExpandedGoals((prevExpanded) =>
-      prevExpanded.includes(goalId)
-        ? prevExpanded.filter((id) => id !== goalId)
-        : [...prevExpanded, goalId],
-    );
+  // Split goals into active and archived
+  const today = new Date().toISOString();
+  const { activeGoals, archivedGoals } = useMemo(() => {
+    const active = companyGoals.filter((goal) => goal.goalEndDate >= today);
+    const archived = companyGoals.filter((goal) => goal.goalEndDate < today);
+    return { activeGoals: active, archivedGoals: archived };
+  }, [companyGoals, today]);
+
+  // Sort goals
+  const sortGoals = (goals: CompanyGoalWithIdType[]) => {
+    return [...goals].sort((a, b) => {
+      if (sortOrder === "newest") {
+        return b.goalStartDate.localeCompare(a.goalStartDate);
+      } else if (sortOrder === "oldest") {
+        return a.goalStartDate.localeCompare(b.goalStartDate);
+      } else if (sortOrder === "title") {
+        return a.goalTitle.localeCompare(b.goalTitle);
+      }
+      return 0;
+    });
   };
 
-  const openConfirmationDialog = (programId: string) => {
-    setSelectedGoalId(programId);
-    setIsConfirmationOpen(true);
+  const handleSortClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleSortSelect = (order: "newest" | "oldest" | "title") => {
+    setSortOrder(order);
+    setAnchorEl(null);
   };
 
   const handleDeleteCompanyGoal = async (goalId: string) => {
@@ -53,11 +79,11 @@ const AllCompanyGoalsView = ({
 
   const handleEditCompanyGoal = async (
     goalId: string,
-    updatedFields: Partial<CompanyGoalType>,
+    updatedFields: Partial<CompanyGoalType>
   ) => {
     try {
       await dispatch(
-        updateCompanyGoalInFirestore({ goalId, updatedFields }),
+        updateCompanyGoalInFirestore({ goalId, updatedFields })
       ).unwrap();
       dispatch(showMessage("Goal updated successfully."));
     } catch (error) {
@@ -76,33 +102,75 @@ const AllCompanyGoalsView = ({
         Company Goals
       </Typography>
 
-      {/* List of Goals */}
-      <div className="goals-list">
-        {companyGoals.map((goal, index: number) => {
-          // Normalize accounts for rendering
+      {/* Sort Button */}
+      <button onClick={handleSortClick} className="btn-outline">
+        Sort:{" "}
+        {sortOrder === "newest"
+          ? "Newest First"
+          : sortOrder === "oldest"
+          ? "Oldest First"
+          : "Title A-Z"}
+      </button>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
+        <MenuItem onClick={() => handleSortSelect("newest")}>
+          Newest First
+        </MenuItem>
+        <MenuItem onClick={() => handleSortSelect("oldest")}>
+          Oldest First
+        </MenuItem>
+        <MenuItem onClick={() => handleSortSelect("title")}>Title A-Z</MenuItem>
+      </Menu>
 
-          return (
-            // <CompanyGoalDetailsCard
-            //   key={goal.id}
-            //   goal={goal}
-            //   mobile={isMobile}
-            //   onDelete={openConfirmationDialog}
-            //   onEdit={(goalId, updatedFields) =>
-            //     handleEditCompanyGoal(goalId, updatedFields)
-            //   }
-            // />
-            <CompanyGoalCard
-              key={goal.id}
-              goal={goal}
-              mobile={isMobile}
-              onDelete={openConfirmationDialog}
-              onEdit={(goalId, updatedFields) =>
-                handleEditCompanyGoal(goalId, updatedFields)
-              }
-              />
-          );
-        })}
+      {/* Active Goals */}
+      <div className="goals-list">
+        {sortGoals(activeGoals).map((goal) => (
+          <CompanyGoalCard
+            key={goal.id}
+            goal={goal}
+            mobile={isMobile}
+            onDelete={() => {
+              setSelectedGoalId(goal.id);
+              setIsConfirmationOpen(true);
+            }}
+            onEdit={handleEditCompanyGoal}
+          />
+        ))}
       </div>
+
+      {/* Toggle Archived Goals */}
+      {archivedGoals.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="btn-outline"
+          >
+            {showArchived ? "Hide Archived Goals" : "Show Archived Goals"}
+          </button>
+
+          {showArchived && (
+            <div className="archived-goals-list">
+              {sortGoals(archivedGoals).map((goal) => (
+                <CompanyGoalCard
+                  key={goal.id}
+                  goal={goal}
+                  mobile={isMobile}
+                  onDelete={() => {
+                    setSelectedGoalId(goal.id);
+                    setIsConfirmationOpen(true);
+                  }}
+                  onEdit={handleEditCompanyGoal}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Delete Confirmation Dialog */}
       <CustomConfirmation
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}

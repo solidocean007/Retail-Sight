@@ -1,6 +1,12 @@
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  Timestamp,
+  where,
+} from "firebase/firestore";
 import { db } from "../firebase";
-import { CompanyGoalType } from "../types";
+import { CompanyGoalType, CompanyGoalWithIdType } from "../types";
 import {
   saveGoalsToIndexedDB,
   clearGoalsFromIndexedDB,
@@ -13,19 +19,27 @@ import {
 
 export const setupCompanyGoalsListener =
   (companyId: string) => (dispatch: any) => {
-    const q = query(collection(db, "companyGoals"), where("companyId", "==", companyId));
+    const q = query(
+      collection(db, "companyGoals"),
+      where("companyId", "==", companyId)
+    );
 
     dispatch(setCompanyGoalsLoading(true)); // ✅ start loading
-    dispatch(setCompanyGoalsError(null));   // ✅ clear error
+    dispatch(setCompanyGoalsError(null)); // ✅ clear error
 
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
         try {
-          const allCompanyGoals = snapshot.docs.map((doc) => ({
-            ...(doc.data() as CompanyGoalType),
-            id: doc.id,
-          }));
+          const allCompanyGoals = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              createdAt:
+                (data.createdAt as Timestamp)?.toDate().toISOString() || null,
+            } as CompanyGoalWithIdType;
+          });
 
           await clearGoalsFromIndexedDB("companyGoals");
           dispatch(setCompanyGoals([]));
@@ -47,4 +61,3 @@ export const setupCompanyGoalsListener =
 
     return () => unsubscribe();
   };
-

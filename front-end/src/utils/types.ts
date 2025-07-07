@@ -203,10 +203,13 @@ export type PostInputType = {
 
 export type PostWithID = PostType & { id: string };
 
-export type FirestorePostPayload = Omit<PostType, 'displayDate' | 'timestamp'> & {
+export type FirestorePostPayload = Omit<
+  PostType,
+  "displayDate" | "timestamp"
+> & {
   displayDate: Date | ReturnType<typeof serverTimestamp> | Timestamp;
-  timestamp:   Date | ReturnType<typeof serverTimestamp> | Timestamp;
-}
+  timestamp: Date | ReturnType<typeof serverTimestamp> | Timestamp;
+};
 
 export type PostQueryFilters = {
   companyId?: string | null;
@@ -376,6 +379,10 @@ export type CompanyGoalType = {
   goalValueMin: number;
   goalStartDate: string;
   goalEndDate: string;
+  createdAt: string; // ISO string
+  createdByUserId?: string; // optional
+  createdByFirstName?: string; // optional
+  createdByLastName?: string; // optional
   accountNumbersForThisGoal: string[]; // ✅ Full scope of accounts this goal applies to
   perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];

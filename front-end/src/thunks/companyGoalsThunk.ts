@@ -4,23 +4,36 @@ import {
   collection,
   deleteDoc,
   doc,
+  serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { CompanyGoalType } from "../utils/types";
+import { CompanyGoalType, UserType } from "../utils/types";
 
-export const createCompanyGoalInFirestore = createAsyncThunk<
-  void,
-  { goal: CompanyGoalType },
-  { rejectValue: string }
->("companyGoals/createCompanyGoal", async ({ goal }, { rejectWithValue }) => {
-  try {
-    const goalsCollection = collection(db, "companyGoals");
-    await addDoc(goalsCollection, goal);
-  } catch (err) {
-    return rejectWithValue("Failed to create company goal.");
+export const createCompanyGoalInFirestore = createAsyncThunk(
+  "companyGoals/create",
+  async ({ goal, currentUser }: { goal: CompanyGoalType, currentUser: UserType }, thunkAPI) => {
+    if (!goal.companyId) {
+      console.error("Missing companyId in goal creation");
+      return thunkAPI.rejectWithValue("Missing companyId");
+    }
+
+    try {
+      const goalRef = await addDoc(collection(db, "companyGoals"), {
+        ...goal,
+        createdAt: serverTimestamp(),
+        createdByUserId: currentUser.uid,
+        createdByFirstName: currentUser.firstName,
+        createdByLastName: currentUser.lastName,
+      });
+      console.log("Goal created with ID:", goalRef.id);
+      return { id: goalRef.id, ...goal };
+    } catch (err: any) {
+      console.error("Error creating goal:", err);
+      return thunkAPI.rejectWithValue(err.message);
+    }
   }
-});
+);
 
 // ✅ Update Goal
 export const updateCompanyGoalInFirestore = createAsyncThunk<
@@ -44,14 +57,11 @@ export const deleteCompanyGoalInFirestore = createAsyncThunk<
   void,
   { goalId: string },
   { rejectValue: string }
->(
-  "companyGoals/deleteCompanyGoal",
-  async ({ goalId }, { rejectWithValue }) => {
-    try {
-      const goalRef = doc(db, "companyGoals", goalId);
-      await deleteDoc(goalRef);
-    } catch (err) {
-      return rejectWithValue("Failed to delete company goal.");
-    }
+>("companyGoals/deleteCompanyGoal", async ({ goalId }, { rejectWithValue }) => {
+  try {
+    const goalRef = doc(db, "companyGoals", goalId);
+    await deleteDoc(goalRef);
+  } catch (err) {
+    return rejectWithValue("Failed to delete company goal.");
   }
-);
+});
