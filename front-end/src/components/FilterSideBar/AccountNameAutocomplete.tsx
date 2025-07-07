@@ -23,7 +23,7 @@ const AccountNameAutocomplete: React.FC<Props> = ({
     (state: RootState) => state.allAccounts.accounts
   ) as CompanyAccountType[];
 
-   const [open, setOpen] = useState<boolean>(false);
+  const [open, setOpen] = useState<boolean>(false);
 
   // const userAccounts = useSelector(
   //   (state: RootState) => state.userAccounts.accounts
@@ -39,22 +39,45 @@ const AccountNameAutocomplete: React.FC<Props> = ({
     return Array.from(set).sort();
   }, [allAccounts]);
 
-  // console.log("[AccountAutocomplete] allAccounts from Redux:", allAccounts);
-
-
   return (
     <Autocomplete
       options={accountNames}
       value={selectedValue ?? ""}
       inputValue={inputValue}
-      onInputChange={(_, val) => onInputChange(val)}
+      open={open}
+      onOpen={() => setOpen(inputValue.length > 0)}
+      onClose={() => setOpen(false)}
+      onInputChange={(_, val) => {
+        onInputChange(val);
+        setOpen(val.length > 0);
+      }}
       onChange={(_, val) => onSelect(val ?? null)}
+      filterOptions={(opts, { inputValue: iv }) =>
+        opts.filter((opt) => {
+          const normalizedOpt = normalize(opt);
+          const normalizedIv = normalize(iv);
+
+          // return true if all characters in normalizedIv appear in normalizedOpt in order
+          let i = 0;
+          for (const c of normalizedIv) {
+            i = normalizedOpt.indexOf(c, i);
+            if (i === -1) return false;
+            i++;
+          }
+          return true;
+        })
+      }
       renderInput={(params) => (
-        <TextField {...params} label="Account Name" placeholder="e.g. Walmart #123" />
+        <TextField
+          {...params}
+          label="Account Name"
+          placeholder="e.g. Walmart #123"
+        />
       )}
       fullWidth
       clearOnBlur={false}
       autoHighlight
+      // sx={{ "& .MuiInputBase-root": { padding: 0 } }} // Removes extra MUI padding
     />
   );
 };

@@ -18,6 +18,20 @@
   justify-content: flex-start;
 }
 
+
+/* .enhanced-sidebar select,
+.enhanced-sidebar input,
+.enhanced-sidebar .MuiAutocomplete-root {
+  width: 100%;
+  box-sizing: border-box;
+} */
+
+.enhanced-sidebar .MuiInputBase-root {
+  margin-left: 0px;
+  margin-right: 0px;
+}
+
+
 .filter-summary-banner-container {
   display: flex;
   width: 100%;
@@ -216,12 +230,14 @@
 }
 
 .dropdown {
+  width: 100%;
   padding: 0.5rem;
   border: 1px solid var(--input-border);
   border-radius: 6px;
   background-color: var(--input-background);
   color: var(--text-color);
   font-size: 1rem;
+
 }
 
 @media (min-width: 900px) {

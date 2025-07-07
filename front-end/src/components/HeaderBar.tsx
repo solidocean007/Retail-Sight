@@ -87,6 +87,9 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             Reset App
           </button>
         )}
+         {/* <button className="btn-outline danger-button" onClick={handleReset}>
+            Reset App
+          </button> */}
         {!currentUser ? (
           <button onClick={goToSignUpLogin}>Login</button>
         ) : (

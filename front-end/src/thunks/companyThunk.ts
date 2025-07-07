@@ -3,6 +3,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { setCompany } from "../Slices/companySlice";
 import { CompanyType } from "../utils/types";
+import { fetchCompanyConnections } from "../utils/helperFunctions/fetchCompanyConnections";
 
 export const loadCompany = createAsyncThunk(
   "company/loadCompany",
@@ -16,5 +17,26 @@ export const loadCompany = createAsyncThunk(
     } else {
       console.error("Company not found.");
     }
+  }
+);
+
+export const loadCompanyConnections = createAsyncThunk(
+  "company/loadCompanyConnections",
+  async (companyId: string, { dispatch }) => {
+    // 1️⃣ Load cached connections from IndexedDB
+    const cached = await getCompanyConnectionsFromIndexedDB(companyId);
+
+    if (cached) {
+      console.log("[IndexedDB] Loaded cached connections");
+      dispatch(setCompanyConnections(cached.connections));
+    }
+
+    // 2️⃣ Fetch fresh connections from Firestore
+    const freshConnections = await fetchCompanyConnections(companyId);
+
+    // Compare timestamps (if you want) and update cache
+    await storeCompanyConnectionsInIndexedDB(companyId, freshConnections);
+
+    return freshConnections;
   }
 );

@@ -261,11 +261,16 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     //   );
     // }
     if (filters.chainType) {
-      baseQuery = filterExactMatch(
-        "chainType",
-        filters.chainType ?? undefined,
-        baseQuery
+
+      baseQuery = query(
+        baseQuery,
+        where("chainType", "==", filters.chainType)
       );
+      // baseQuery = filterExactMatch(
+      //   "chainType",
+      //   filters.chainType ?? undefined,
+      //   baseQuery
+      // );
     }
     if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
       baseQuery = query(

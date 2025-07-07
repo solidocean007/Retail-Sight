@@ -41,6 +41,7 @@ import { selectCompanyUsers } from "../../Slices/userSlice";
 import AccountNameAutocomplete from "./AccountNameAutocomplete";
 import AccountTypeSelect from "./AccountTypeSelect";
 import ChainNameAutocomplete from "./ChainNameAutocomplete";
+import ChainTypeSelect from "./ChainTypeSelect";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -568,13 +569,17 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               handleChange("accountChain", val);
             }}
           />
+          <ChainTypeSelect
+            selectedValue={filters.chainType}
+            onSelect={(val) => handleChange("chainType", val)}
+          />
 
-          <input
+          {/* <input
             placeholder="Chain Type (chain/independent) search coming soon"
             value={filters.chainType || ""}
             onChange={(e) => handleChange("chainType", e.target.value)}
             disabled
-          />
+          /> */}
         </div>
       </div>
 

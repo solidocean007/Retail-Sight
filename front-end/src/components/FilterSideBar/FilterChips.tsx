@@ -55,11 +55,11 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
         </span>
       )}
 
-      {filters.chainType && (
+      {/* {filters.chainType && (
         <span className="chip" onClick={() => onRemove("chainType")}>
           Type: {filters.chainType} ✕
         </span>
-      )}
+      )} */}
       {/* {filters.channel && (
         <span className="chip" onClick={() => onRemove("channel")}>
           Channel: {filters.channel} ✕

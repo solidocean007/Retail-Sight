@@ -1,5 +1,5 @@
 const dbName = "myRetailAppDB";
-const dbVersion = 31;
+const dbVersion = 32;
 
 // db.createObjectStore("filteredSets", { keyPath: "id" });
 // Each record: { id: string, filters: PostQueryFilters, posts: PostWithID[], fetchedAt: string }
@@ -36,7 +36,8 @@ const objectStores: {
   { name: "companyGoals", options: { keyPath: "id" } },
   { name: "allGalloGoals", options: { keyPath: "id" } },
   { name: "allCompanySpecificGoals", options: { keyPath: "id" } },
-  { name: "companyProducts", options: { keyPath: "companyProductId" } }, // ✅ NEW
+  { name: "companyProducts", options: { keyPath: "companyProductId" } },
+  { name: "companyConnectionsStore", options: { keyPath: "companyId" } }, // ✅ NEW
 ];
 
 export function openDB(): Promise<IDBDatabase> {
@@ -70,4 +71,3 @@ export function openDB(): Promise<IDBDatabase> {
     };
   });
 }
-
