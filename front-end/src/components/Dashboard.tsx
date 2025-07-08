@@ -32,7 +32,6 @@ import UserProfileViewer from "./UserProfileViewer";
 import CollectionsViewer from "./CollectionsViewer";
 import TutorialViewer from "./TutorialViewer";
 import AccountManager from "./AccountManagement/AccountsManager.tsx";
-import MyGoals from "./MyGoals.tsx";
 // import {
 //   collection,
 //   deleteField,
@@ -56,6 +55,7 @@ import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import DashMenu from "./DashMenu.tsx";
 // import { updatePostsWithFreshAccounts } from "../script.ts";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
+import MyGoals from "./GoalIntegration/MyGoals.tsx";
 // import { useNavigate } from "react-router-dom";
 
 export const Dashboard = () => {

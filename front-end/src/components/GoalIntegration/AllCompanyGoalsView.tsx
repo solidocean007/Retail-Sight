@@ -17,6 +17,7 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { updateCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
 import "./allCompanyGoalsView.css";
+import ArchivedGoalsLayout from "./ArchivedGoalsLayout";
 
 const AllCompanyGoalsView = ({
   companyId,
@@ -144,14 +145,14 @@ const AllCompanyGoalsView = ({
       {/* Toggle Archived Goals */}
       {archivedGoals.length > 0 && (
         <>
-          <button
+          {/* <button
             onClick={() => setShowArchived(!showArchived)}
             className="btn-outline"
           >
             {showArchived ? "Hide Archived Goals" : "Show Archived Goals"}
-          </button>
+          </button> */}
 
-          {showArchived && (
+          {/* {showArchived && (
             <div className="archived-goals-list">
               {sortGoals(archivedGoals).map((goal) => (
                 <CompanyGoalCard
@@ -166,6 +167,12 @@ const AllCompanyGoalsView = ({
                 />
               ))}
             </div>
+          )} */}
+          {archivedGoals.length > 0 && (
+            <ArchivedGoalsLayout
+              archivedGoals={archivedGoals}
+              isMobile={isMobile}
+            />
           )}
         </>
       )}

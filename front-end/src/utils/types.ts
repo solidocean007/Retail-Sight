@@ -458,6 +458,7 @@ export type EnrichedGalloAccountType = GalloAccountType & {
   accountName?: string; // Optional, because not all Gallo accounts may have a Firestore match
   accountAddress?: string;
   salesRouteNums?: string[]; // Optional, same reason
+  salesPersonsName?: string;
 };
 
 export type AchievementPayloadType = {

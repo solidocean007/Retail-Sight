@@ -45,7 +45,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     useState<EnrichedGalloAccountType[]>(accounts);
   const [isAllSelected, setIsAllSelected] = useState(false);
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId,
+    (state: RootState) => state.user.currentUser?.companyId
   );
   const [searchAccounts, setSearchAccounts] = useState("");
   const [searchRoute, setSearchRoute] = useState("");
@@ -74,7 +74,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       searchRoute === "" ||
       (Array.isArray(account.salesRouteNums)
         ? account.salesRouteNums.some((num) =>
-            (num as unknown as string)?.toString().includes(searchRoute),
+            (num as unknown as string)?.toString().includes(searchRoute)
           )
         : (
             (account.salesRouteNums as unknown as string)?.toString() || ""
@@ -101,15 +101,14 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
 
   const handleCheckboxChange = (account: EnrichedGalloAccountType) => {
     const isSelected = selectedAccounts.some(
-      (selected) => selected.distributorAcctId === account.distributorAcctId,
+      (selected) => selected.distributorAcctId === account.distributorAcctId
     );
 
     if (isSelected) {
       setSelectedAccounts(
         selectedAccounts.filter(
-          (selected) =>
-            selected.distributorAcctId !== account.distributorAcctId,
-        ),
+          (selected) => selected.distributorAcctId !== account.distributorAcctId
+        )
       );
     } else {
       setSelectedAccounts([...selectedAccounts, account]);
@@ -128,7 +127,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
         selectedGoal,
         selectedProgram,
         selectedAccounts,
-        companyId || "",
+        companyId || ""
       );
       alert("Goal saved successfully!");
       onSaveComplete(); // Notify parent component
@@ -141,6 +140,21 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
 
   return (
     <TableContainer component={Paper} className="account-table">
+      <Box display="flex" justifyContent="flex-end" gap={2} mb={1}>
+        <Button
+          variant="outlined"
+          onClick={() => setSelectedAccounts(accounts)} // Select all
+        >
+          Select All
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() => setSelectedAccounts([])} // Deselect all
+        >
+          Deselect All
+        </Button>
+      </Box>
+
       <Typography
         variant="h6"
         className="account-title"
@@ -182,6 +196,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
             <TableCell>Account Name</TableCell>
             <TableCell>Account Address</TableCell>
             <TableCell>Sales Route #</TableCell>
+            <TableCell>Name</TableCell>
             <TableCell>Opp ID</TableCell>
           </TableRow>
         </TableHead>
@@ -192,7 +207,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                 <Checkbox
                   checked={selectedAccounts.some(
                     (selected) =>
-                      selected.distributorAcctId === account.distributorAcctId,
+                      selected.distributorAcctId === account.distributorAcctId
                   )}
                   onChange={() => handleCheckboxChange(account)}
                 />
@@ -204,6 +219,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                   ? account.salesRouteNums.join(", ")
                   : account.salesRouteNums || "N/A"}
               </TableCell>
+              <TableCell>{account.salesPersonsName}</TableCell>
+
               <TableCell>{account.oppId}</TableCell>
             </TableRow>
           ))}
