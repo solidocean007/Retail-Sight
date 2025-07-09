@@ -258,8 +258,8 @@ const goalsSlice = createSlice({
 
 // Actions
 // export const { setGalloGoals, addGalloGoal, setCompanyGoals, addCompanyGoal } =
-export const { setGalloGoals, addGalloGoal } =
-  goalsSlice.actions;
+// export const { setGalloGoals, addGalloGoal } =
+//   goalsSlice.actions;
 
 // Selectors
 // export const selectAllGalloGoals = (state: RootState) => state.goals.galloGoals;
@@ -292,23 +292,23 @@ export const { setGalloGoals, addGalloGoal } =
 //     ),
 // );
 
-export const selectUsersCompanyGoals = createSelector(
-  [
-    (state: RootState) => state.company.company?.goals || [],
-    (state: RootState) => state.user.currentUser?.uid,
-    (_: RootState, salesRouteNum?: string) => salesRouteNum,
-  ],
-  (allGoals, userId, salesRouteNum) => {
-    if (!userId) return [];
+// export const selectUsersCompanyGoals = createSelector(
+//   [
+//     (state: RootState) => state.company.company?.goals || [],
+//     (state: RootState) => state.user.currentUser?.uid,
+//     (_: RootState, salesRouteNum?: string) => salesRouteNum,
+//   ],
+//   (allGoals, userId, salesRouteNum) => {
+//     if (!userId) return [];
 
-    return allGoals.filter((goal) => {
-      // Match by salesRouteNum on accountNumbersForThisGoal
-      return goal.accountNumbersForThisGoal.some((accountNum) =>
-        accountNum === salesRouteNum
-      );
-    });
-  }
-);
+//     return allGoals.filter((goal) => {
+//       // Match by salesRouteNum on accountNumbersForThisGoal
+//       return goal.accountNumbersForThisGoal.some((accountNum) =>
+//         accountNum === salesRouteNum
+//       );
+//     });
+//   }
+// );
 
 
 export default goalsSlice.reducer;

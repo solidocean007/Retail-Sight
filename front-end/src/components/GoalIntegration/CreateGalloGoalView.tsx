@@ -49,9 +49,13 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   const [goals, setGoals] = useState<GalloGoalType[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<GalloGoalType | null>(null); // Track selected goal
   const [galloAccounts, setGalloAccounts] = useState<GalloAccountType[]>([]);
+
   const [enrichedAccounts, setEnrichedAccounts] = useState<GalloAccountType[]>(
     []
   );
+  const [unmatchedAccounts, setUnmatchedAccounts] = useState<
+    GalloAccountType[]
+  >([]);
   const [noProgramsMessage, setNoProgramsMessage] = useState("");
 
   const companyId = useSelector(
@@ -72,10 +76,6 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
 
   const baseUrl = isProduction ? baseUrlProduction : baseUrlDevelopment;
   const apiKey = isProduction ? productionApiKey : developmentApiKey;
-
-  // New variables for controlling sample size
-  const accountSampleSize = 3;
-  const isSampleMode = false;
 
   const onDateChangeHandler = (newDate: Dayjs | null) => {
     setStartDate(newDate);
@@ -171,43 +171,44 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   };
 
   const fetchAccounts = async () => {
-    setIsLoading(true);
-    if (!selectedProgram || !selectedGoal || !apiKey || !companyId) return;
+  setIsLoading(true);
+  if (!selectedProgram || !selectedGoal || !apiKey || !companyId) return;
 
-    try {
-      // Step 1: Fetch accounts from Gallo API
-      const galloAccounts = await fetchGalloAccounts(
-        apiKey,
-        selectedProgram.marketId,
-        selectedGoal.goalId
-      );
+  try {
+    const galloAccounts = await fetchGalloAccounts(
+      apiKey,
+      selectedProgram.marketId,
+      selectedGoal.goalId
+    );
 
-      // Extract distributorAcctIds to filter company accounts
-      const galloAccountIds = galloAccounts.map(
-        (account) => account.distributorAcctId
-      );
+    const galloAccountIds = galloAccounts.map(
+      (account) => account.distributorAcctId
+    );
 
-      // Step 2: Fetch only matching company accounts from Firestore
-      const companyAccounts = await fetchCompanyAccounts(
-        companyId,
-        galloAccountIds
-      );
+    const companyAccounts = await fetchCompanyAccounts(
+      companyId,
+      galloAccountIds
+    );
 
-      // Step 3: Directly enrich the Gallo accounts with company account details without additional matching
-      const enrichedAccounts = enrichAccounts(
-        galloAccounts,
-        companyAccounts,
-        companyUsers
-      );
+    const { enrichedAccounts, unmatchedAccounts } = enrichAccounts(
+      galloAccounts,
+      companyAccounts,
+      companyUsers
+    );
 
-      // Set state for enriched accounts
-      setEnrichedAccounts(enrichedAccounts);
-    } catch (error) {
-      console.error("Error fetching or enriching accounts:", error);
-    } finally {
-      setIsLoading(false);
+    setEnrichedAccounts(enrichedAccounts);
+    setUnmatchedAccounts(unmatchedAccounts);
+
+    if (unmatchedAccounts.length > 0) {
+      console.warn(`⚠️ ${unmatchedAccounts.length} unmatched accounts:`, unmatchedAccounts);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching or enriching accounts:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const fetchGalloAccounts = async (
     apiKey: string,
@@ -233,7 +234,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
         }
       );
       const data = await response.json();
-      return isSampleMode ? data.slice(0, accountSampleSize) : data;
+      return data;
     } catch (error) {
       console.error("Error fetching Gallo accounts:", error);
       return [];
@@ -290,22 +291,29 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
     galloAccounts: GalloAccountType[],
     companyAccounts: CompanyAccountType[],
     companyUsers: UserType[]
-  ): EnrichedGalloAccountType[] => {
-    return galloAccounts.map((galloAccount) => {
+  ): {
+    enrichedAccounts: EnrichedGalloAccountType[];
+    unmatchedAccounts: GalloAccountType[];
+  } => {
+    const unmatchedAccounts = galloAccounts.filter(
+      (galloAcc) =>
+        !companyAccounts.some(
+          (compAcc) => compAcc.accountNumber === galloAcc.distributorAcctId
+        )
+    );
+
+    const enrichedAccounts = galloAccounts.map((galloAccount) => {
       const matchingCompanyAccount = companyAccounts.find(
         (companyAccount) =>
           Number(companyAccount.accountNumber) ===
           Number(galloAccount.distributorAcctId)
       );
 
-      // Find salesperson for the matched account
       const salesPerson = companyUsers.find(
         (user) =>
           user.salesRouteNum &&
           matchingCompanyAccount?.salesRouteNums?.includes(user.salesRouteNum)
       );
-
-      console.log('salesPerson: ', salesPerson)
 
       return {
         ...galloAccount,
@@ -317,21 +325,23 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
           : "N/A",
       };
     });
+
+    return { enrichedAccounts, unmatchedAccounts };
   };
 
-  useEffect(() => {
-    if (matchedAccounts && galloAccounts) {
-      const enriched = galloAccounts.map((galloAccount) => {
-        const firestoreAccount = matchedAccounts.find(
-          (acc) => acc.accountNumber === galloAccount.distributorAcctId
-        );
-        return firestoreAccount
-          ? { ...galloAccount, ...firestoreAccount } // Merge Gallo and Firestore data
-          : galloAccount; // Use Gallo data if no match found
-      });
-      setEnrichedAccounts(enriched);
-    }
-  }, [matchedAccounts, galloAccounts]);
+  // useEffect(() => {
+  //   if (matchedAccounts && galloAccounts) {
+  //     const enriched = galloAccounts.map((galloAccount) => {
+  //       const firestoreAccount = matchedAccounts.find(
+  //         (acc) => acc.accountNumber === galloAccount.distributorAcctId
+  //       );
+  //       return firestoreAccount
+  //         ? { ...galloAccount, ...firestoreAccount } // Merge Gallo and Firestore data
+  //         : galloAccount; // Use Gallo data if no match found
+  //     });
+  //     setEnrichedAccounts(enriched);
+  //   }
+  // }, [matchedAccounts, galloAccounts]);
 
   const handleCancel = () => {
     setSelectedProgram(null);
@@ -424,6 +434,23 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
           >
             Fetch Accounts
           </Button>
+        )}
+        {unmatchedAccounts.length > 0 && ( // Cannot find name 'unmatchedAccounts'. Did you mean 'matchedAccounts'?
+          <Box
+            sx={{
+              // backgroundColor: "#fff3cd",
+              border: "1px solid #ffeeba",
+              borderRadius: "8px",
+              padding: "8px",
+              marginBottom: "16px",
+            }}
+          >
+            <Typography color="warning.main" variant="body2">
+              ⚠️ {unmatchedAccounts.length} account(s) from Gallo are not in
+              your Displaygram database. These accounts won’t be included when
+              saving the goal.
+            </Typography>
+          </Box>
         )}
         {enrichedAccounts.length > 0 && (
           <GalloAccountImportTable

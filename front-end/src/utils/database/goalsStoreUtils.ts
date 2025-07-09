@@ -53,6 +53,43 @@ export const saveGoalsToIndexedDB = async (
   });
 };
 
+export const saveSingleGalloGoalToIndexedDB = async (
+  goal: FireStoreGalloGoalDocType
+): Promise<void> => {
+  const db = await openDB();
+  const transaction = db.transaction(["allGalloGoals"], "readwrite");
+  const store = transaction.objectStore("allGalloGoals");
+
+  return new Promise<void>((resolve, reject) => {
+    if (!goal.goalDetails?.goalId) {
+      console.error("Cannot save goal: Missing goalDetails.goalId", goal);
+      reject(
+        new Error("Invalid goal: Missing goalDetails.goalId")
+      );
+      return;
+    }
+
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = (event) => {
+      console.error(
+        "Error saving single Gallo goal to IndexedDB:",
+        (event.target as IDBRequest).error
+      );
+      reject((event.target as IDBRequest).error);
+    };
+
+    const goalWithKey = {
+      ...goal,
+      id: goal.goalDetails.goalId, // Use the existing goalId as key
+    };
+
+    console.log("Saving single Gallo goal:", goalWithKey);
+    store.put(goalWithKey);
+  });
+};
+
+
+
 export const saveAllGalloGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[],
 ): Promise<void> => {

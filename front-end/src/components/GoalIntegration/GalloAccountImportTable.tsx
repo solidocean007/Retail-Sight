@@ -23,9 +23,13 @@ import {
   GalloProgramType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
-import { RootState } from "../../utils/store";
+import { RootState, useAppDispatch } from "../../utils/store";
 import "./galloAccountImportTable.css";
 import { createGalloGoal } from "../../utils/helperFunctions/createGalloGoal";
+import { addGalloGoal } from "../../Slices/galloGoalsSlice";
+import {
+  saveSingleGalloGoalToIndexedDB,
+} from "../../utils/database/goalsStoreUtils";
 
 interface AccountTableProps {
   accounts: EnrichedGalloAccountType[];
@@ -40,7 +44,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   selectedProgram,
   onSaveComplete,
 }) => {
-  const [isSaving, setIsSaving] = useState(false);
+  const dispatch = useAppDispatch();
+  const [isSaving, setIsSaving] = useState(false); // isSaving isnt used.  should we have a loading elemetn?
   const [selectedAccounts, setSelectedAccounts] =
     useState<EnrichedGalloAccountType[]>(accounts);
   const [isAllSelected, setIsAllSelected] = useState(false);
@@ -101,7 +106,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     }
   }, [selectedAccounts, accounts]);
 
-  const handleSelectAll = () => {
+  const handleSelectAll = () => { // unused? is this for toggling?
     if (isAllSelected) {
       setSelectedAccounts([]);
     } else {
@@ -131,20 +136,29 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       return;
     }
 
-    setIsSaving(true); // Start saving
+    setIsSaving(true);
+
     try {
-      await createGalloGoal(
+      const savedGoal = await createGalloGoal(
         selectedGoal,
         selectedProgram,
         selectedAccounts,
         companyId || ""
       );
+
+      console.log("✅ Saved Goal from Firestore:", savedGoal);
+
+      // Use saved shape for Redux and IndexedDB
+      dispatch(addGalloGoal(savedGoal));
+      await saveSingleGalloGoalToIndexedDB(savedGoal); 
+
       alert("Goal saved successfully!");
-      onSaveComplete(); // Notify parent component
+      onSaveComplete();
     } catch (err) {
+      console.error("Save error:", err);
       alert("Failed to save the goal. Please try again.");
     } finally {
-      setIsSaving(false); // End saving
+      setIsSaving(false);
     }
   };
 
@@ -156,7 +170,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     currentPage * rowsPerPage
   );
 
-  const totalPages = Math.ceil(filteredAccounts.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredAccounts.length / rowsPerPage); // unused? is it helpful for showing anything?
 
   const [selectedPage, setSelectedPage] = useState(1);
   const selectedPerPage = 10;
@@ -185,9 +199,11 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
         </Button>
         <Button
           onClick={() => {
-            setShowConfirmDialog(true);
-            // Save here
-            // performSave();
+            if (!selectedGoal || !selectedProgram) {
+              alert("Please select a goal and program before saving.");
+              return;
+            }
+            setShowConfirmDialog(true); // ✅ Open the dialog instead of saving immediately
           }}
           color="primary"
           variant="contained"

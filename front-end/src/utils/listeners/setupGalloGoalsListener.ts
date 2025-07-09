@@ -5,8 +5,8 @@ import {
   clearGoalsFromIndexedDB,
   saveGoalsToIndexedDB,
 } from "../database/indexedDBUtils";
-import { setGalloGoals } from "../../Slices/goalsSlice";
 import { FireStoreGalloGoalDocType } from "../types";
+import { setGalloGoals } from "../../Slices/galloGoalsSlice";
 
 export const setupGalloGoalsListener =
   (companyId: string) => (dispatch: any) => {

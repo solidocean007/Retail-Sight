@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { CompanyGoalType, FireStoreGalloGoalDocType } from "../../utils/types";
-import {
-  getAllGalloGoalsFromIndexedDB,
-  // getAllCompanyGoalsFromIndexedDB,
-  // getGalloGoalsFromIndexedDB,
-  saveAllGalloGoalsToIndexedDB,
-} from "../../utils/database/indexedDBUtils";
+// import {
+//   getAllGalloGoalsFromIndexedDB,
+//   // getAllCompanyGoalsFromIndexedDB,
+//   // getGalloGoalsFromIndexedDB,
+//   saveAllGalloGoalsToIndexedDB,
+// } from "../../utils/database/indexedDBUtils";
 import {
   Box,
   Typography,
@@ -22,11 +22,11 @@ import {
   Container,
 } from "@mui/material";
 import { useAppDispatch } from "../../utils/store";
-import {
-  FireStoreGalloGoalWithId,
-  selectAllGalloGoals,
-  // selectCompanyGoalsIsLoading,
-} from "../../Slices/goalsSlice";
+// import {
+//   FireStoreGalloGoalWithId,
+//   // selectAllGalloGoals,
+//   // selectCompanyGoalsIsLoading,
+// } from "../../Slices/goalsSlice";
 import { showMessage } from "../../Slices/snackbarSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -38,6 +38,8 @@ import { db } from "../../utils/firebase";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 import { useNavigate } from "react-router-dom";
+import { getAllGalloGoalsFromIndexedDB } from "../../utils/database/goalsStoreUtils";
+import { setGalloGoals } from "../../Slices/galloGoalsSlice";
 
 type SortOrder = "asc" | "desc";
 
@@ -56,10 +58,11 @@ export interface MappedProgramType {
 }
 
 const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
+  console.log('galloGoals: ', galloGoals)
   const dispatch = useAppDispatch();
   const companyId = useSelector(selectUser)?.companyId;
   const navigate = useNavigate();
-  const isLoading = useSelector(selectCompanyGoalsIsLoading);
+  // const isLoading = useSelector(selectCompanyGoalsIsLoading);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [sortColumn, setSortColumn] = useState<string>("accountName");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -98,46 +101,58 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
     toggleExpand(goalId); // Reuse the same logic for goals
   };
 
-  useEffect(() => {
-    const updatePrograms = () => {
-      const programsMap = galloGoals.reduce<Record<string, MappedProgramType>>(
-        (map, goal) => {
-          const {
-            programId,
-            programTitle,
-            programStartDate,
-            programEndDate,
-            programDisplayDate,
-          } = goal.programDetails;
+//  useEffect(() => {
+//   const updatePrograms = () => {
+//     const programsMap = galloGoals.reduce<Record<string, MappedProgramType>>(
+//       (map, goal) => {
+//         const {
+//           programId,
+//           programTitle,
+//           programStartDate,
+//           programEndDate,
+//           programDisplayDate,
+//         } = goal.programDetails;
 
-          if (!map[programId]) {
-            map[programId] = {
-              programId,
-              programTitle,
-              programStartDate,
-              programEndDate,
-              programDisplayDate,
-              goals: [],
-            };
-          }
+//         if (!map[programId]) {
+//           map[programId] = {
+//             programId,
+//             programTitle,
+//             programStartDate,
+//             programEndDate,
+//             programDisplayDate,
+//             goals: [],
+//           };
+//         }
 
-          map[programId].goals.push({
-            goalId: goal.goalDetails.goalId,
-            goal: goal.goalDetails.goal,
-            metric: goal.goalDetails.goalMetric, // Updated mapping
-            valueMin: goal.goalDetails.goalValueMin, // Updated mapping
-          });
+//         map[programId].goals.push({
+//           goalId: goal.goalDetails.goalId,
+//           goal: goal.goalDetails.goal,
+//           metric: goal.goalDetails.goalMetric,
+//           valueMin: goal.goalDetails.goalValueMin,
+//         });
 
-          return map;
-        },
-        {},
-      );
+//         return map;
+//       },
+//       {},
+//     );
 
-      setPrograms(Object.values(programsMap));
-    };
+//     setPrograms(Object.values(programsMap));
+//   };
 
-    updatePrograms();
-  }, [galloGoals]);
+//   updatePrograms();
+// }, [galloGoals]);
+
+useEffect(() => {
+  if (galloGoals.length === 0) {
+    getAllGalloGoalsFromIndexedDB().then((cachedGoals) => {
+      if (cachedGoals?.length) {
+        dispatch(setGalloGoals(cachedGoals));
+      }
+    });
+  }
+}, []);
+
+
 
   const handleDeleteGalloGoal = async (goalId: string) => {
     try {
@@ -227,14 +242,14 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
     });
   };
 
-  if (isLoading) {
-    return (
-      <Box textAlign="center" mt={4}>
-        <CircularProgress />
-        <Typography>Loading Gallo goals...</Typography>
-      </Box>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <Box textAlign="center" mt={4}>
+  //       <CircularProgress />
+  //       <Typography>Loading Gallo goals...</Typography>
+  //     </Box>
+  //   );
+  // }
 
   return (
     <Container>
