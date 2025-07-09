@@ -12,7 +12,11 @@ import { useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useNavigate } from "react-router-dom";
 import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
-import { CompanyMissionType, MissionType, PostInputType } from "../../utils/types";
+import {
+  CompanyMissionType,
+  MissionType,
+  PostInputType,
+} from "../../utils/types";
 import { mergeAndSetPosts } from "../../Slices/postsSlice";
 import { normalizePost } from "../../utils/normalizePost";
 
@@ -66,7 +70,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
 
   console.log("Final post before submit", post);
 
-
   // const handleSubmitClick = useCallback(async () => {
   //   if (!selectedFile || isSubmitting) return;
 
@@ -118,36 +121,35 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   // ]);
 
   // ReviewAndSubmit.tsx
-const handleSubmitClick = async () => {
-  if (!selectedFile) {
-    dispatch(showMessage("Please select an image before submitting."));
-    return;
-  }
+  const handleSubmitClick = async () => {
+    if (!selectedFile) {
+      dispatch(showMessage("Please select an image before submitting."));
+      return;
+    }
 
-  // setIsSubmitting(true);
-  setUploadProgress(0);
-  setIsUploading(true);
+    // setIsSubmitting(true);
+    setUploadProgress(0);
+    setIsUploading(true);
 
-  try {
-    const newPost = await handlePostSubmission(
-      post,
-      selectedFile,
-      setIsUploading,
-      setUploadProgress,
-      selectedCompanyMission,
-      apiKey,
-      navigate
-    );
-    dispatch(mergeAndSetPosts([normalizePost(newPost)]))
-    dispatch(showMessage("Post submitted successfully!"));
-  } catch (err: any) {
-    console.error("Upload failed:", err);
-    dispatch(showMessage(err.message || "An error occurred during upload."));
-  } finally {
-   navigate("/user-home-page");
-  }
-};
-
+    try {
+      const newPost = await handlePostSubmission(
+        post,
+        selectedFile,
+        setIsUploading,
+        setUploadProgress,
+        selectedCompanyMission,
+        apiKey,
+        navigate
+      );
+      dispatch(mergeAndSetPosts([normalizePost(newPost)]));
+      dispatch(showMessage("Post submitted successfully!"));
+    } catch (err: any) {
+      console.error("Upload failed:", err);
+      alert(err.message || "An error occurred during upload.");
+    } finally {
+      navigate("/user-home-page");
+    }
+  };
 
   return (
     <div className="review-and-submit">
@@ -186,11 +188,10 @@ const handleSubmitClick = async () => {
           onClick={handleSubmitClick}
         >
           {isUploading
-            ? `Uploading ${Math.round(uploadProgress)}%` 
+            ? `Uploading ${Math.round(uploadProgress)}%`
             : "Submit Post"}
         </Button>
       </Box>
     </div>
   );
 };
-

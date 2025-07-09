@@ -27,6 +27,9 @@ export const handleAccountsFileUpload = (
       ).trim();
       const customerName = row["accountName"]?.trim();
       const accountAddress = row["accountAddress"]?.trim();
+      const streetAddress = row["streetAddress"]?.trim();
+      const city = row["city"]?.trim();
+      const state = row["state"]?.trim();
       const typeOfAccount = row["typeOfAccount"]?.trim();
       const chain = row["chain"]?.trim();
       const chainType = row["chainType"]?.trim();
@@ -41,6 +44,9 @@ export const handleAccountsFileUpload = (
           accountNumber: customerNum,
           accountName: customerName,
           accountAddress,
+          streetAddress,
+          city,
+          state,
           salesRouteNums: [],
           typeOfAccount,
           chain: chain || undefined,

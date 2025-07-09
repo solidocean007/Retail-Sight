@@ -67,22 +67,22 @@ const useSchemaVersion = () => {
       const appConfigRef = collection(firestore, "appConfig");
 
       try {
-        console.log("🚀 Starting schema version check...");
+        // console.log("🚀 Starting schema version check...");
         const appConfigSnapshot = await getDocs(appConfigRef);
         let remoteVersion: string | null = null;
 
         appConfigSnapshot.forEach((doc) => {
           if (doc.exists()) {
             remoteVersion = doc.data().schemaVersion;
-            console.log(
-              "🌐 Remote schemaVersion from Firestore:",
-              remoteVersion,
-            );
+            // console.log(
+            //   "🌐 Remote schemaVersion from Firestore:",
+            //   remoteVersion,
+            // );
           }
         });
 
         const localVersion = await getLocalSchemaVersion();
-        console.log("💾 Local schemaVersion in IndexedDB:", localVersion);
+        // console.log("💾 Local schemaVersion in IndexedDB:", localVersion);
 
         if (!remoteVersion) {
           console.warn("⚠️ Remote schemaVersion is undefined or null.");
@@ -128,7 +128,7 @@ const useSchemaVersion = () => {
           // ✅ Set version regardless of fetch result
           await setLocalSchemaVersion(remoteVersion);
         } else {
-          console.log("✅ Schema version is up-to-date. No migration needed.");
+          // console.log("✅ Schema version is up-to-date. No migration needed.");
         }
       } catch (error) {
         console.error("❌ Error during schema check/migration:", error);

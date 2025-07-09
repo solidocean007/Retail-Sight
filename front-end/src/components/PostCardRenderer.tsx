@@ -50,7 +50,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
           if (entry.isIntersecting && onPostVisible) {
             onPostVisible(post.id, index); // Let parent know it’s visible
           }
-          console.log("Observed entry:", post.id, entry.isIntersecting);
+          // console.log("Observed entry:", post.id, entry.isIntersecting);
         });
       },
       {

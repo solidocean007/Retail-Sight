@@ -22,14 +22,14 @@ const useAllCompanyAccountsSync = () => {
       //   user.role === "admin" || user.role === "super-admin" || user.role === "developer";
       // if (!isPrivileged) return;
 
-      if (allAccounts.length > 0) {
-        console.log("[AccountSync] Accounts already in Redux, skipping fetch");
-        return;
-      }
+      // if (allAccounts.length > 0) {
+      //   console.log("[AccountSync] Accounts already in Redux, skipping fetch");
+      //   return;
+      // }
 
       const cached = await getAllCompanyAccountsFromIndexedDB();
       if (cached && cached.length > 0) {
-        console.log("[AccountSync] Loaded from IndexedDB:", cached.length);
+        // console.log("[AccountSync] Loaded from IndexedDB:", cached.length);
         dispatch(setAllAccounts(cached));
         return;
       }
@@ -40,7 +40,7 @@ const useAllCompanyAccountsSync = () => {
       dispatch(setAllAccounts(fresh));
       try {
         await saveAllCompanyAccountsToIndexedDB(fresh);
-        console.log("[AccountSync] Saved fresh accounts to IndexedDB");
+        // console.log("[AccountSync] Saved fresh accounts to IndexedDB");
       } catch (err) {
         console.warn("[AccountSync] Failed to save to IndexedDB:", err);
       }

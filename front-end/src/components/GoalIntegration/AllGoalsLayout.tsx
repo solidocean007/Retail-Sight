@@ -66,7 +66,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
 
   // const galloGoals = useSelector(selectAllGalloGoals);
   const companyGoals = useSelector(selectAllCompanyGoals);
-  console.log(companyGoals); // logs 5.. the last one is the one i want to check for duplicates but we could just check them all.  specifically checking for duplicate postIds in the submittedPosts
+  // console.log(companyGoals); // logs 5.. the last one is the one i want to check for duplicates but we could just check them all.  specifically checking for duplicate postIds in the submittedPosts
 
   // Compute duplicate reports once whenever goals change
   const duplicateReports: GoalDuplicateReport[] = useMemo(

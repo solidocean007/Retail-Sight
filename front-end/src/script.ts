@@ -1,5 +1,10 @@
-import { addDoc, collection, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "@firebase/firestore";
 import { db } from "./utils/firebase"; // adjust path as needed
+
+
+
+// export default backupAccounts;
+
 
 // export async function logMissingAccountInfoReport() {
 //   const snapshot = await getDocs(collection(db, "posts"));

@@ -305,12 +305,14 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
           matchingCompanyAccount?.salesRouteNums?.includes(user.salesRouteNum)
       );
 
+      console.log('salesPerson: ', salesPerson)
+
       return {
         ...galloAccount,
         accountName: matchingCompanyAccount?.accountName || "N/A",
         accountAddress: matchingCompanyAccount?.accountAddress || "N/A",
         salesRouteNums: matchingCompanyAccount?.salesRouteNums || ["N/A"],
-        salesPersonName: salesPerson
+        salesPersonsName: salesPerson
           ? `${salesPerson.firstName} ${salesPerson.lastName}`
           : "N/A",
       };

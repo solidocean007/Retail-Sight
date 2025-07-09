@@ -1,7 +1,8 @@
 // AccountManagement/AccountForm.tsx
 import React, { useState } from "react";
-import { CompanyAccountType, customerType } from "../../utils/types";
+import { CompanyAccountType } from "../../utils/types";
 import "./styles/accountForm.css";
+import { Box, Chip, TextField } from "@mui/material";
 
 interface AccountFormProps {
   isOpen: boolean;
@@ -11,7 +12,8 @@ interface AccountFormProps {
   editMode?: boolean;
 }
 
-const customerTypes: customerType[] = [
+// const customerTypes: customerType[] = [
+const customerTypes = [
   "Supermarket",
   "Supercenter",
   "Convenience",
@@ -47,17 +49,18 @@ const AccountForm: React.FC<AccountFormProps> = ({
       accountNumber: "",
       accountName: "",
       accountAddress: "",
+      streetAddress: "",
       salesRouteNums: [],
-      // city: "",
-      // zipCode: "",
+      city: "",
+      postalCode: "",
       typeOfAccount: undefined,
       chain: "",
       chainType: "independent",
-    },
+    }
   );
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -78,11 +81,12 @@ const AccountForm: React.FC<AccountFormProps> = ({
     e.preventDefault();
     if (
       !formData.accountNumber ||
-      !formData.accountName ||
-      !formData.salesRouteNums.length
+      !formData.accountName
+      // !formData.salesRouteNums.length
     ) {
       alert(
-        "Account number, name, and at least one route number are required.",
+        // "Account number, name, and at least one route number are required.",
+        "Account number and name are required."
       );
       return;
     }
@@ -95,7 +99,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
         <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
           {editMode ? "Edit Account" : "Add New Account"}
         </h2>
-
         <label>
           Account Number:
           <input
@@ -105,7 +108,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
             required
           />
         </label>
-
         <label>
           Account Name:
           <input
@@ -115,38 +117,78 @@ const AccountForm: React.FC<AccountFormProps> = ({
             required
           />
         </label>
-
         <label>
+          Address:
+          <input
+            name="streetAddress"
+            value={formData.streetAddress}
+            onChange={handleChange}
+          />
+        </label>
+        {/* <label>
           Address:
           <input
             name="accountAddress"
             value={formData.accountAddress}
             onChange={handleChange}
           />
-        </label>
+        </label> */}
 
         <label>
-          Sales Route Numbers (comma separated):
-          <input
-            value={formData.salesRouteNums.join(", ")}
-            onChange={handleSalesRouteChange}
-          />
+          Sales Route Numbers:
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {formData.salesRouteNums.map((route, index) => (
+              <Chip
+                key={index}
+                label={route}
+                onDelete={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    salesRouteNums: prev.salesRouteNums.filter(
+                      (_, i) => i !== index
+                    ),
+                  }))
+                }
+              />
+            ))}
+            <TextField
+              size="small"
+              placeholder="Add route number"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const target = e.target as HTMLInputElement;
+                  if (target.value.trim()) {
+                    e.preventDefault();
+                    const newRoute = target.value.trim();
+                    if (!formData.salesRouteNums.includes(newRoute)) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        salesRouteNums: [...prev.salesRouteNums, newRoute],
+                      }));
+                    }
+                    target.value = "";
+                  }
+                }
+              }}
+            />
+          </Box>
         </label>
-
-        {/* <label>
+        <label>
           City:
           <input name="city" value={formData.city} onChange={handleChange} />
         </label>
-
+        <label>
+          State:
+          <input name="state" value={formData.state} onChange={handleChange} />
+        </label>
         <label>
           Zip Code:
           <input
-            name="zipCode"
-            value={formData.zipCode}
+            name="postalCode"
+            value={formData.postalCode}
             onChange={handleChange}
           />
-        </label> */}
-
+        </label>
         <label>
           Type of Account
           <select
@@ -162,7 +204,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
             ))}
           </select>
         </label>
-
         <label>
           Chain Name:
           <input
@@ -171,7 +212,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
             onChange={handleChange}
           />
         </label>
-
         <label>
           Chain Type:
           <select
@@ -183,7 +223,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
             <option value="independent">Independent</option>
           </select>
         </label>
-
         <div className="form-actions">
           <button type="submit">{editMode ? "Save Changes" : "Save"}</button>
 

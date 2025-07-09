@@ -1,7 +1,5 @@
-// Split logic for better clarity
 import * as XLSX from "xlsx";
 import { CompanyAccountType } from "../../../utils/types";
-// import { normalizeCustomerType } from "./accountsHelper";
 
 // Fields that can be updated
 export type AccountUpdateFields = Partial<
@@ -9,6 +7,9 @@ export type AccountUpdateFields = Partial<
     CompanyAccountType,
     | "accountName"
     | "accountAddress"
+    | "streetAddress"
+    | "city"
+    | "state"
     | "typeOfAccount"
     | "chain"
     | "chainType"
@@ -39,26 +40,39 @@ const parseAccountsFromFile = (
           const accountNumber = String(row.accountNumber).trim();
           if (!accountNumber) return;
 
+          const existing = map.get(accountNumber);
+
+          const currentSalesRoutes = row.salesRouteNums
+            ? String(row.salesRouteNums)
+                .split(",")
+                .map((r) => r.trim())
+                .filter(Boolean)
+            : [];
+
+          const mergedSalesRoutes = Array.from(
+            new Set([
+              ...(existing?.salesRouteNums || []),
+              ...currentSalesRoutes,
+            ])
+          );
+
           const update: AccountUpdateFields = {
-            accountName: row.accountName?.trim() || undefined,
-            accountAddress: row.accountAddress?.trim() || undefined,
+            accountName: row.accountName?.trim() || existing?.accountName,
+            accountAddress: row.accountAddress?.trim() || existing?.accountAddress,
+            streetAddress: row.streetAddress?.trim() || existing?.streetAddress,
+            city: row.city?.trim() || existing?.city,
+            state: row.state?.trim() || existing?.state,
             typeOfAccount: row.typeOfAccount
-              ? // ? normalizeCustomerType(row.typeOfAccount)
-                row.typeOfAccount
-              : undefined,
-            chain: row.chain?.trim() || undefined,
+              ? row.typeOfAccount
+              : existing?.typeOfAccount,
+            chain: row.chain?.trim() || existing?.chain,
             chainType:
               row.chainType?.toLowerCase() === "independent"
                 ? "independent"
                 : row.chainType
-                  ? "chain"
-                  : undefined,
-            salesRouteNums: row.salesRouteNums
-              ? String(row.salesRouteNums)
-                  .split(",")
-                  .map((r) => r.trim())
-                  .filter(Boolean)
-              : undefined,
+                ? "chain"
+                : existing?.chainType,
+            salesRouteNums: mergedSalesRoutes,
           };
 
           map.set(accountNumber, update);
@@ -82,6 +96,9 @@ export const getAccountsForAdd = async (
     accountNumber: accNum,
     accountName: fields.accountName ?? "",
     accountAddress: fields.accountAddress ?? "",
+    streetAddress: fields.streetAddress ?? "",
+    city: fields.city ?? "",
+    state: fields.state ?? "",
     typeOfAccount: fields.typeOfAccount,
     chain: fields.chain ?? "",
     chainType: fields.chainType ?? "independent",
@@ -110,7 +127,7 @@ export const getAccountsForUpdate = async (
         new Set([
           ...(existing.salesRouteNums || []),
           ...(fields.salesRouteNums || []),
-        ]),
+        ])
       ),
     });
   }

@@ -58,6 +58,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -73,8 +75,14 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const [selectedAccount, setSelectedAccount] =
     useState<CompanyAccountType | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [routeFilter, setRouteFilter] = useState<string>(""); // new filter state
 
   const itemsPerPage = 15;
+
+  const handleTemplateModal = () => {
+    console.log("Toggling template modal");
+    setShowTemplateModal(!showTemplateModal);
+  };
 
   useEffect(() => {
     fetchAccounts();
@@ -107,7 +115,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const saveAccountsToFirestore = async (
-    mergedAccounts: CompanyAccountType[],
+    mergedAccounts: CompanyAccountType[]
   ) => {
     if (!user?.companyId) return;
 
@@ -123,8 +131,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           await updateDoc(accountsDocRef, {
             accounts: mergedAccounts.map((a) =>
               Object.fromEntries(
-                Object.entries(a).filter(([, v]) => v !== undefined),
-              ),
+                Object.entries(a).filter(([, v]) => v !== undefined)
+              )
             ),
           });
         } else {
@@ -167,18 +175,20 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         } catch (configErr) {
           console.warn(
             "Accounts saved, but failed to update customer types:",
-            configErr,
+            configErr
           );
           dispatch(
-            showMessage("Accounts saved, but failed to update customer types."),
+            showMessage("Accounts saved, but failed to update customer types.")
           );
         }
 
         const mode = getUploadMode();
         dispatch(
           showMessage(
-            `${pendingUpdates?.length || 0} account(s) ${mode === "initial" ? "added" : "updated"}.`,
-          ),
+            `${pendingUpdates?.length || 0} account(s) ${
+              mode === "initial" ? "added" : "updated"
+            }.`
+          )
         );
       }
     } catch (err) {
@@ -212,7 +222,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             "companies",
             user.companyId,
             "config",
-            "general",
+            "general"
           );
           const configSnap = await getDoc(configRef);
 
@@ -224,7 +234,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             await setDoc(
               configRef,
               { customerTypes: updatedTypes },
-              { merge: true },
+              { merge: true }
             );
 
             console.log(`Removed unused customer type: ${deletedType}`);
@@ -247,13 +257,20 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const handleUpdateAccounts = async (file: File) => {
     if (!user) return;
-    const updatedAccounts = await getAccountsForUpdate(file, accounts);
-    const map = new Map(accounts.map((a) => [a.accountNumber, a]));
-    updatedAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
-    setPendingUpdates(updatedAccounts);
-    setFileData(Array.from(map.values()));
-    setConfirmMessage(`Update ${updatedAccounts.length} existing account(s)?`);
-    setShowConfirm(true);
+    setIsUploading(true); // Start loading
+    try {
+      const updatedAccounts = await getAccountsForUpdate(file, accounts);
+      const map = new Map(accounts.map((a) => [a.accountNumber, a]));
+      updatedAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
+      setPendingUpdates(updatedAccounts);
+      setFileData(Array.from(map.values()));
+      setConfirmMessage(
+        `Update ${updatedAccounts.length} existing account(s)?`
+      );
+      setShowConfirm(true);
+    } finally {
+      setIsUploading(false); // End loading
+    }
   };
 
   const getUploadMode = (): UploadMode =>
@@ -269,10 +286,44 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const filteredAccounts = accounts.filter(
-    (a) =>
-      a.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.accountNumber.toString().includes(searchTerm),
-  );
+  (a) =>
+    (a.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.accountNumber.toString().includes(searchTerm)) &&
+    (routeFilter === "" ||
+      a.salesRouteNums?.some((route) =>
+        route.includes(routeFilter.trim())
+      ))
+);
+
+
+  async function backupAccounts(companyId: string) {
+    try {
+      if (!companyId) throw new Error("No companyId provided");
+
+      const companyRef = doc(db, "companies", companyId);
+      const companySnap = await getDoc(companyRef);
+      if (!companySnap.exists()) throw new Error("Company not found");
+
+      const { accountsId } = companySnap.data();
+      if (!accountsId) throw new Error("No accountsId for company");
+
+      const accountsRef = doc(db, "accounts", accountsId);
+      const accountsSnap = await getDoc(accountsRef);
+      if (!accountsSnap.exists())
+        throw new Error("Accounts document not found");
+
+      const accountsData = accountsSnap.data();
+
+      const dateStr = new Date().toISOString().split("T")[0];
+      const backupRef = doc(db, "accounts_backup", `backup_${dateStr}`);
+
+      await setDoc(backupRef, accountsData);
+
+      console.log("Backup completed successfully!");
+    } catch (err) {
+      console.warn("Backup skipped:", err);
+    }
+  }
 
   return (
     <Box className="account-manager-container account-manager">
@@ -282,6 +333,21 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
       {(isAdmin || isSuperAdmin) && (
         <>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              if (!user?.companyId) {
+                alert("No companyId found. Cannot backup accounts.");
+                return;
+              }
+              backupAccounts(user.companyId);
+            }}
+            sx={{ marginBottom: 2 }}
+          >
+            Backup Accounts
+          </Button>
+
           <Box
             className="account-instructions"
             sx={{ textAlign: "left", mb: 2 }}
@@ -308,7 +374,11 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             </Typography>
           </Box>
           <div className="account-management-buttons">
-            <Button variant="contained" sx={{ marginBottom: 2 }}>
+            <Button
+              variant="contained"
+              sx={{ marginBottom: 2 }}
+              onClick={handleTemplateModal}
+            >
               View Upload File Template
             </Button>
 
@@ -360,6 +430,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                   accountNumber: "",
                   accountName: "",
                   accountAddress: "",
+                  streetAddress: "",
+                  city: "",
+                  state: "",
                   salesRouteNums: [],
                   typeOfAccount: undefined,
                   chain: "",
@@ -383,6 +456,15 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         sx={{ marginBottom: 2 }}
       />
 
+      <TextField
+        label="Filter by Sales Route"
+        variant="outlined"
+        value={routeFilter}
+        onChange={(e) => setRouteFilter(e.target.value)}
+        sx={{ marginBottom: 2, marginLeft: 2 }}
+        placeholder="e.g., 45"
+      />
+
       <Pagination
         count={Math.ceil(filteredAccounts.length / itemsPerPage)}
         page={currentPage}
@@ -396,7 +478,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             <TableRow>
               <TableCell>Account Number</TableCell>
               <TableCell>Account Name</TableCell>
-              <TableCell>Address</TableCell>
+              <TableCell>accountAddress</TableCell>
+              <TableCell>streettAddress</TableCell>
+              <TableCell>city</TableCell>
+              <TableCell>state</TableCell>
               <TableCell>Type</TableCell>
               <TableCell>Chain</TableCell>
               <TableCell>Chain Type</TableCell>
@@ -408,13 +493,16 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             {filteredAccounts
               .slice(
                 (currentPage - 1) * itemsPerPage,
-                currentPage * itemsPerPage,
+                currentPage * itemsPerPage
               )
               .map((a, i) => (
                 <TableRow key={i}>
                   <TableCell>{a.accountNumber}</TableCell>
                   <TableCell>{a.accountName}</TableCell>
                   <TableCell>{a.accountAddress}</TableCell>
+                  <TableCell>{a.streetAddress}</TableCell>
+                  <TableCell>{a.city}</TableCell>
+                  <TableCell>{a.state}</TableCell>
                   <TableCell>{a.typeOfAccount || "-"}</TableCell>
                   <TableCell>{a.chain || "-"}</TableCell>
                   <TableCell>{a.chainType || "-"}</TableCell>
@@ -435,7 +523,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                         onClick={() => {
                           setPendingUpdates([a]);
                           setConfirmMessage(
-                            `Are you sure you want to delete "${a.accountName}"?`,
+                            `Are you sure you want to delete "${a.accountName}"?`
                           );
                           setShowConfirm(true);
                         }}
@@ -487,6 +575,26 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         open={showTemplateModal}
         onClose={() => setShowTemplateModal(false)}
       />
+      {isUploading && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Typography color="white" variant="h6">
+            Uploading accounts... Please wait
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };

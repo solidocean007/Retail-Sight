@@ -21,6 +21,9 @@ const mockAccounts = [
     accountNumber: "12345",
     accountName: "Food Mart #1",
     accountAddress: "123 Main St, Fayetteville, NC 28304",
+    streetAddress: "123 Main St",
+    city: "Fayetteville",
+    state: "NC",
     salesRouteNums: ["71"],
     typeOfAccount: "Grocery",
     chain: "Food Mart",
@@ -28,12 +31,7 @@ const mockAccounts = [
   },
   {
     accountNumber: "67890",
-    accountName: undefined,
-    accountAddress: undefined,
     salesRouteNums: ["72"],
-    typeOfAccount: undefined,
-    chain: undefined,
-    chainType: undefined,
   },
   {
     accountNumber: "67890",

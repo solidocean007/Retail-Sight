@@ -50,6 +50,13 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   const [searchAccounts, setSearchAccounts] = useState("");
   const [searchRoute, setSearchRoute] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [searchSalesperson, setSearchSalesperson] = useState("");
+
+  const handleSearchSalesperson = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSearchSalesperson(event.target.value);
+  };
 
   const handleSearchAccounts = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchAccounts(event.target.value);
@@ -61,26 +68,29 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   };
 
   const filteredAccounts = accounts.filter((account) => {
-    // Skip accounts without a name
     if (!account.accountName) return false;
 
-    // Check if account name matches search input
     const matchesAccountName = account.accountName
       .toLowerCase()
       .includes(searchAccounts.toLowerCase());
 
-    // Check if sales route number matches search input
     const matchesRoute =
       searchRoute === "" ||
       (Array.isArray(account.salesRouteNums)
         ? account.salesRouteNums.some((num) =>
             (num as unknown as string)?.toString().includes(searchRoute)
           )
-        : (
-            (account.salesRouteNums as unknown as string)?.toString() || ""
-          ).includes(searchRoute));
+        : ((account.salesRouteNums as unknown as string) ?? "").includes(
+            searchRoute
+          ));
 
-    return matchesAccountName && matchesRoute;
+    const matchesSalesperson =
+      searchSalesperson === "" ||
+      account.salesPersonsName
+        ?.toLowerCase()
+        .includes(searchSalesperson.toLowerCase());
+
+    return matchesAccountName && matchesRoute && matchesSalesperson;
   });
 
   useEffect(() => {
@@ -138,40 +148,123 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     }
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 25;
+
+  const paginatedAccounts = filteredAccounts.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredAccounts.length / rowsPerPage);
+
+  const [selectedPage, setSelectedPage] = useState(1);
+  const selectedPerPage = 10;
+
+  const paginatedSelectedAccounts = selectedAccounts.slice(
+    (selectedPage - 1) * selectedPerPage,
+    selectedPage * selectedPerPage
+  );
+
+  const totalSelectedPages = Math.ceil(
+    selectedAccounts.length / selectedPerPage
+  );
+
   return (
     <TableContainer component={Paper} className="account-table">
+      {/* Buttons */}
       <Box display="flex" justifyContent="flex-end" gap={2} mb={1}>
         <Button
           variant="outlined"
-          onClick={() => setSelectedAccounts(accounts)} // Select all
+          onClick={() => setSelectedAccounts(accounts)}
         >
           Select All
         </Button>
-        <Button
-          variant="outlined"
-          onClick={() => setSelectedAccounts([])} // Deselect all
-        >
+        <Button variant="outlined" onClick={() => setSelectedAccounts([])}>
           Deselect All
+        </Button>
+        <Button
+          onClick={() => {
+            setShowConfirmDialog(true);
+            // Save here
+            // performSave();
+          }}
+          color="primary"
+          variant="contained"
+        >
+          Confirm
         </Button>
       </Box>
 
-      <Typography
-        variant="h6"
-        className="account-title"
-      >{`${selectedAccounts.length} Accounts Selected`}</Typography>
-      <div className="account-actions">
-        <Button variant="contained" color="secondary" onClick={handleSelectAll}>
-          {isAllSelected ? "Deselect All" : "Select All"}
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setShowConfirmDialog(true)} // Open confirmation dialog
-          disabled={isSaving || selectedAccounts.length === 0}
-        >
-          {isSaving ? "Saving..." : "Save Goal"}
-        </Button>
-      </div>
+      {/* Selected Accounts Summary */}
+      <Box
+        sx={{
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          padding: "8px",
+          marginBottom: 2,
+          // backgroundColor: "var(--background)",
+        }}
+      >
+        <Typography variant="subtitle1" gutterBottom>
+          {isAllSelected
+            ? "All accounts selected"
+            : `${selectedAccounts.length} account(s) selected:`}
+        </Typography>
+
+        {!isAllSelected && selectedAccounts.length > 0 && (
+          <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
+            {paginatedSelectedAccounts.map((acc) => (
+              <Box
+                key={acc.distributorAcctId}
+                display="flex"
+                alignItems="center"
+                gap={1}
+                sx={{
+                  borderBottom: "1px solid #444",
+                  paddingY: 0.5,
+                }}
+              >
+                <Checkbox
+                  size="small"
+                  checked
+                  onChange={() => handleCheckboxChange(acc)}
+                />
+                <Typography variant="body2" noWrap>
+                  {acc.accountName} - {acc.salesPersonsName}
+                </Typography>
+              </Box>
+            ))}
+
+            {/* Pagination Controls */}
+            {totalSelectedPages > 1 && (
+              <Box display="flex" justifyContent="center" gap={2} mt={1}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={selectedPage === 1}
+                  onClick={() => setSelectedPage((prev) => prev - 1)}
+                >
+                  Previous
+                </Button>
+                <Typography variant="caption">
+                  Page {selectedPage} of {totalSelectedPages}
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={selectedPage === totalSelectedPages}
+                  onClick={() => setSelectedPage((prev) => prev + 1)}
+                >
+                  Next
+                </Button>
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
+
+      {/* Search Filters */}
       <Box display="flex" gap={2} sx={{ marginY: 2 }}>
         <TextField
           label="Search Account Name"
@@ -187,8 +280,16 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
           value={searchRoute}
           onChange={handleSearchRoute}
         />
+        <TextField
+          label="Search Salesperson Name"
+          variant="outlined"
+          fullWidth
+          value={searchSalesperson}
+          onChange={handleSearchSalesperson}
+        />
       </Box>
 
+      {/* Table */}
       <Table>
         <TableHead>
           <TableRow>
@@ -196,12 +297,12 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
             <TableCell>Account Name</TableCell>
             <TableCell>Account Address</TableCell>
             <TableCell>Sales Route #</TableCell>
-            <TableCell>Name</TableCell>
+            <TableCell>Salesperson</TableCell>
             <TableCell>Opp ID</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {filteredAccounts.map((account) => (
+          {paginatedAccounts.map((account) => (
             <TableRow key={account.oppId}>
               <TableCell>
                 <Checkbox
@@ -220,12 +321,37 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                   : account.salesRouteNums || "N/A"}
               </TableCell>
               <TableCell>{account.salesPersonsName}</TableCell>
-
               <TableCell>{account.oppId}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {/* Pagination */}
+      <Box display="flex" justifyContent="center" gap={2} mt={2}>
+        <Button
+          variant="outlined"
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((prev) => prev - 1)}
+        >
+          Previous
+        </Button>
+        <Typography variant="body2">
+          Page {currentPage} of{" "}
+          {Math.ceil(filteredAccounts.length / rowsPerPage)}
+        </Typography>
+        <Button
+          variant="outlined"
+          disabled={
+            currentPage === Math.ceil(filteredAccounts.length / rowsPerPage)
+          }
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+        >
+          Next
+        </Button>
+      </Box>
+
+      {/* Confirm Dialog */}
       <Dialog
         open={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
@@ -258,8 +384,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
           </Button>
           <Button
             onClick={() => {
-              setShowConfirmDialog(false); // Close dialog
-              handleCreateGalloGoal(); // Call save function
+              setShowConfirmDialog(false);
+              handleCreateGalloGoal();
             }}
             color="primary"
             variant="contained"

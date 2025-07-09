@@ -184,7 +184,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     batchSize?: number; // now unused
   }) => {
     let baseQuery: Query<DocumentData> = collection(db, "posts");
-    console.log("[FILTER DEBUG] Incoming filters:", filters);
+    // console.log("[FILTER DEBUG] Incoming filters:", filters);
 
     // Date filtering
     if (filters.dateRange?.startDate) {
@@ -331,14 +331,14 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     // const finalQuery = query(baseQuery, ...constraints);
 
     const finalQuery = baseQuery; // 👈 Just use filtered baseQuery
-    console.log("finalQuery (no sort/pagination):", finalQuery);
+    // console.log("finalQuery (no sort/pagination):", finalQuery);
 
     const snapshot = await getDocs(finalQuery);
-    console.log("[FETCH] Documents fetched:", snapshot.size);
+    // console.log("[FETCH] Documents fetched:", snapshot.size);
 
-    if (snapshot.size === 0) {
-      console.warn("[FILTER DEBUG] No documents matched these filters");
-    }
+    // if (snapshot.size === 0) {
+    //   console.warn("[FILTER DEBUG] No documents matched these filters");
+    // }
 
     const posts: PostWithID[] = snapshot.docs.map((doc) =>
       normalizePost({

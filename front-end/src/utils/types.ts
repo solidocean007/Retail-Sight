@@ -102,6 +102,7 @@ export interface PostType {
   accountNumber?: string;
   accountName?: string;
   accountAddress?: string;
+  // streetAddress?: string; // just added
   accountSalesRouteNums?: string[];
   accountType?: string;
   chain?: string;
@@ -446,9 +447,11 @@ export type CompanyAccountType = {
   accountNumber: string;
   accountName: string;
   accountAddress: string;
+  streetAddress: string; // just added
   salesRouteNums: string[];
-  // city?: string;
-  // zipCode?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
   typeOfAccount?: string;
   chain?: string; // e.g., "Food Lion" or "Walmart" or "Target"
   chainType?: "chain" | "independent"; // e.g., "Chain" or "Independent"

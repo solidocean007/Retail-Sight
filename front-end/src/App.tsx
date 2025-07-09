@@ -24,8 +24,6 @@ import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUt
 import useSchemaVersion from "./hooks/useSchemaVersion";
 import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
-import { auditPostDates, createCompanyConnection } from "./script";
-
 
 function App(): React.JSX.Element {
   useSchemaVersion();
@@ -40,19 +38,18 @@ function App(): React.JSX.Element {
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
- useEffect(() => {
-  if (!companyId) return;
-  ;(async () => {
-    try {
-      const cached = await getAllCompanyProductsFromIndexedDB();
-      if (cached.length) dispatch(setAllProducts(cached));
-      dispatch(fetchCompanyProducts(companyId));
-    } catch (err) {
-      console.error("Product load failed", err);
-    }
-  })();
-}, [dispatch, companyId]);
-
+  useEffect(() => {
+    if (!companyId) return;
+    (async () => {
+      try {
+        const cached = await getAllCompanyProductsFromIndexedDB();
+        if (cached.length) dispatch(setAllProducts(cached));
+        dispatch(fetchCompanyProducts(companyId));
+      } catch (err) {
+        console.error("Product load failed", err);
+      }
+    })();
+  }, [dispatch, companyId]);
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {
@@ -72,7 +69,6 @@ function App(): React.JSX.Element {
     }
   }, [user?.companyId, dispatch]);
 
-
   // 📡 Goal listeners
   useEffect(() => {
     if (!companyId) return;
@@ -86,8 +82,7 @@ function App(): React.JSX.Element {
     };
   }, [dispatch, companyId]);
 
- if (initializing) return <></>;
-
+  if (initializing) return <></>;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
