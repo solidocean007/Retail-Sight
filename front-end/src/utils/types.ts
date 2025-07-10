@@ -87,8 +87,6 @@ export interface PostTokenType {
 
 export interface PostType {
   // 🔍 Filtering Info
-  // category: CategoryType;
-  // channel: ChannelType;
   hashtags: string[];
   starTags: string[];
   productType?: string[];
@@ -154,9 +152,11 @@ export interface PostType {
   companyGoalId?: string | null;
   companyGoalTitle?: string | null;
   companyGoalDescription?: string | null;
-  galloGoalTitle?: string | null;
-  galloGoalDescription?: string | null;
-  oppId?: string | null;
+
+  // gallo goals
+  galloGoalTitle?: string;
+  galloGoalId?: string;
+  oppId?: string;
 
   // 🧾 Closure Info
   closedBy?: string;
@@ -184,12 +184,12 @@ export type PostInputType = {
   companyGoalTitle?: string | null;
   companyGoalDescription?: string | null;
 
-  galloGoalTitle?: string | null;
-  galloGoalDescription?: string | null;
+  galloGoalTitle?: string;
+  galloGoalId?: string;
   closedBy?: string | null;
   closedDate?: string;
   closedUnits?: string | number;
-  oppId?: string | null;
+  oppId?: string;
 
   // Raw arrays (not flattened)
   hashtags?: string[];

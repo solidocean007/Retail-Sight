@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../utils/store";
 import { selectUser } from "../Slices/userSlice";
-import { setupUserGalloGoalsListener } from "../utils/listeners/setupGalloGoalsListener";
 import {
   CircularProgress,
   Table,
@@ -17,32 +16,28 @@ import {
   Box,
 } from "@mui/material";
 import { RootState } from "../utils/store";
-// import "./myGalloGoals.css";
-import { CompanyAccountType } from "../utils/types";
-import {
-  selectGalloGoalsLoading,
-  selectUsersGalloGoals,
-} from "../Slices/goalsSlice";
+import "./myGalloGoals.css";
+// import { CompanyAccountType } from "../utils/types";
+import { selectGalloGoalsLoading, selectUsersGalloGoals } from "../Slices/galloGoalsSlice";
+
 
 const MyGalloGoals = () => {
   const loading = useSelector(selectGalloGoalsLoading);
-  const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const salesRouteNum = user?.salesRouteNum;
   const usersGalloGoals = useSelector((state: RootState) =>
     selectUsersGalloGoals(state, salesRouteNum),
   );
-  const companyId = user?.companyId;
   const [expandedPrograms, setExpandedPrograms] = useState<string[]>([]);
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
     {},
   );
 
-  const toggleProgramExpansion = (programTitle: string) => {
+  const toggleProgramExpansion = (programId: string) => {
     setExpandedPrograms((prev) =>
-      prev.includes(programTitle)
-        ? prev.filter((title) => title !== programTitle)
-        : [...prev, programTitle],
+      prev.includes(programId)
+        ? prev.filter((id) => id !== programId)
+        : [...prev, programId],
     );
   };
 
@@ -54,6 +49,15 @@ const MyGalloGoals = () => {
   };
 
   if (usersGalloGoals.length === 0) return;
+
+  if (!salesRouteNum) {
+  return (
+    <Typography color="error">
+      You do not have a sales route assigned.
+    </Typography>
+  );
+}
+
 
   return (
     <div className="my-gallo-goals-container">
@@ -102,7 +106,7 @@ const MyGalloGoals = () => {
                       <Button
                         onClick={() =>
                           toggleProgramExpansion(
-                            goal.programDetails.programTitle,
+                            goal.programDetails.programId,
                           )
                         }
                         variant="outlined"

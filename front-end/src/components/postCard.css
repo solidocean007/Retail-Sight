@@ -383,6 +383,39 @@
   }
 }
 
+.company-goal-banner {
+  background-color: var(--gold); /* already defined in your theme */
+  color: var(--company-goal-text-color); /* ensures contrast */
+  padding: 0.5rem;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 4px;
+  background-image: linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.05) 25%,
+      transparent 25%
+    ),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%);
+  background-size: 20px 20px;
+}
+
+.gallo-goal-banner {
+  background-color: #6a1b9a; /* rich purple */
+  color: #fff; /* white text for contrast */
+  padding: 0.5rem;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 4px;
+  background-image: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.05) 25%,
+      transparent 25%
+    ),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%);
+  background-size: 20px 20px;
+}
+
+
 
 @media (max-width: 1000px) {
   .image-new-comment-box .post-image {

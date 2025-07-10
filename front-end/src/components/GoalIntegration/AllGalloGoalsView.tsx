@@ -1,11 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { CompanyGoalType, FireStoreGalloGoalDocType } from "../../utils/types";
-// import {
-//   getAllGalloGoalsFromIndexedDB,
-//   // getAllCompanyGoalsFromIndexedDB,
-//   // getGalloGoalsFromIndexedDB,
-//   saveAllGalloGoalsToIndexedDB,
-// } from "../../utils/database/indexedDBUtils";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -22,24 +15,24 @@ import {
   Container,
 } from "@mui/material";
 import { useAppDispatch } from "../../utils/store";
-// import {
-//   FireStoreGalloGoalWithId,
-//   // selectAllGalloGoals,
-//   // selectCompanyGoalsIsLoading,
-// } from "../../Slices/goalsSlice";
 import { showMessage } from "../../Slices/snackbarSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { deleteGalloGoalFromFirestore } from "../../utils/helperFunctions/deleteGalloGoalFromFirestore";
-import { getCompanyUsersFromIndexedDB } from "../../utils/database/userDataIndexedDB";
 import "./allGoalsView.css";
 import { deleteDoc, doc } from "@firebase/firestore";
 import { db } from "../../utils/firebase";
 import { useSelector } from "react-redux";
-import { selectUser } from "../../Slices/userSlice";
+import { selectCompanyUsers } from "../../Slices/userSlice";
 import { useNavigate } from "react-router-dom";
 import { getAllGalloGoalsFromIndexedDB } from "../../utils/database/goalsStoreUtils";
-import { setGalloGoals } from "../../Slices/galloGoalsSlice";
+import {
+  selectAllGalloGoals,
+  selectGalloGoalsError,
+  selectGalloGoalsLoading,
+  setGalloGoals,
+} from "../../Slices/galloGoalsSlice";
+import CustomConfirmation from "../CustomConfirmation";
 
 type SortOrder = "asc" | "desc";
 
@@ -57,33 +50,81 @@ export interface MappedProgramType {
   }>;
 }
 
-const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
-  console.log('galloGoals: ', galloGoals)
+// const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
+const AllGalloGoalsView = () => {
   const dispatch = useAppDispatch();
-  const companyId = useSelector(selectUser)?.companyId;
+  const companyUsers = useSelector(selectCompanyUsers) || [];
   const navigate = useNavigate();
-  // const isLoading = useSelector(selectCompanyGoalsIsLoading);
+  const isLoading = useSelector(selectGalloGoalsLoading);
+  const error = useSelector(selectGalloGoalsError);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [sortColumn, setSortColumn] = useState<string>("accountName");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
   const [programs, setPrograms] = useState<MappedProgramType[]>([]);
+  const galloGoals = useSelector(selectAllGalloGoals);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [onConfirm, setOnConfirm] = useState<() => void>(() => () => {});
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+  const showConfirm = (message: string, action: () => void) => {
+    setConfirmMessage(message);
+    setOnConfirm(() => action);
+    setConfirmOpen(true);
+  };
 
   useEffect(() => {
-    const loadEmployees = async () => {
-      const employees = await getCompanyUsersFromIndexedDB();
-      const employeeMap: Record<string, string> = {};
-      employees.forEach((employee) => {
-        if (employee.salesRouteNum) {
-          employeeMap[employee.salesRouteNum] =
-            `${employee.firstName} ${employee.lastName}`;
-        }
-      });
-      setEmployeeMap(employeeMap);
-    };
+    if (!galloGoals || galloGoals.length === 0) {
+      setPrograms([]);
+      return;
+    }
 
-    loadEmployees();
-  }, []);
+    const programsMap = galloGoals.reduce<Record<string, MappedProgramType>>(
+      (map, goal) => {
+        const {
+          programId,
+          programTitle,
+          programStartDate,
+          programEndDate,
+          programDisplayDate,
+        } = goal.programDetails;
+
+        if (!map[programId]) {
+          map[programId] = {
+            programId,
+            programTitle,
+            programStartDate,
+            programEndDate,
+            programDisplayDate,
+            goals: [],
+          };
+        }
+
+        map[programId].goals.push({
+          goalId: goal.goalDetails.goalId,
+          goal: goal.goalDetails.goal,
+          metric: goal.goalDetails.goalMetric,
+          valueMin: goal.goalDetails.goalValueMin,
+        });
+
+        return map;
+      },
+      {}
+    );
+
+    setPrograms(Object.values(programsMap));
+  }, [galloGoals]);
+
+  const employeeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    companyUsers.forEach((user) => {
+      if (user.salesRouteNum) {
+        map[user.salesRouteNum] = `${user.firstName} ${user.lastName}`;
+      }
+    });
+    return map;
+  }, [companyUsers]);
 
   const toggleExpand = (id: string) => {
     setExpandedGoals((prev) => {
@@ -101,66 +142,33 @@ const AllGalloGoalsView = (galloGoals: FireStoreGalloGoalDocType[]) => {
     toggleExpand(goalId); // Reuse the same logic for goals
   };
 
-//  useEffect(() => {
-//   const updatePrograms = () => {
-//     const programsMap = galloGoals.reduce<Record<string, MappedProgramType>>(
-//       (map, goal) => {
-//         const {
-//           programId,
-//           programTitle,
-//           programStartDate,
-//           programEndDate,
-//           programDisplayDate,
-//         } = goal.programDetails;
+  useEffect(() => {
+    if (galloGoals.length === 0) {
+      getAllGalloGoalsFromIndexedDB().then((cachedGoals) => {
+        if (cachedGoals?.length) {
+          dispatch(setGalloGoals(cachedGoals));
+        }
+      });
+    }
+  }, []);
 
-//         if (!map[programId]) {
-//           map[programId] = {
-//             programId,
-//             programTitle,
-//             programStartDate,
-//             programEndDate,
-//             programDisplayDate,
-//             goals: [],
-//           };
-//         }
+  const handleDeleteGalloGoal = (goalId: string) => {
+    setConfirmMessage("Are you sure you want to delete this goal?");
+    setOnConfirm(() => () => confirmDeleteGalloGoal(goalId)); // Set the callback
+    setConfirmOpen(true); // Open the modal
+  };
 
-//         map[programId].goals.push({
-//           goalId: goal.goalDetails.goalId,
-//           goal: goal.goalDetails.goal,
-//           metric: goal.goalDetails.goalMetric,
-//           valueMin: goal.goalDetails.goalValueMin,
-//         });
-
-//         return map;
-//       },
-//       {},
-//     );
-
-//     setPrograms(Object.values(programsMap));
-//   };
-
-//   updatePrograms();
-// }, [galloGoals]);
-
-useEffect(() => {
-  if (galloGoals.length === 0) {
-    getAllGalloGoalsFromIndexedDB().then((cachedGoals) => {
-      if (cachedGoals?.length) {
-        dispatch(setGalloGoals(cachedGoals));
-      }
-    });
-  }
-}, []);
-
-
-
-  const handleDeleteGalloGoal = async (goalId: string) => {
+  const confirmDeleteGalloGoal = async (goalId: string) => {
+    setConfirmLoading(true);
     try {
       await deleteGalloGoalFromFirestore(goalId);
       dispatch(showMessage("Goal deleted successfully."));
     } catch (error) {
       console.error("Error deleting goal:", error);
       dispatch(showMessage("Failed to delete goal. Please try again."));
+    } finally {
+      setConfirmLoading(false);
+      setConfirmOpen(false);
     }
   };
 
@@ -175,33 +183,36 @@ useEffect(() => {
     }
   };
 
-  const handleDeleteProgram = async (programId: string) => {
-    try {
-      // Step 1: Fetch all goals associated with the programId
-      const programGoals = galloGoals.filter(
-        (goal) => goal.programDetails.programId === programId,
-      );
+  const handleDeleteProgram = (programId: string) => {
+    showConfirm(
+      "Are you sure you want to delete this program and all its goals?",
+      () => confirmDeleteProgram(programId)
+    );
+  };
 
+  const confirmDeleteProgram = async (programId: string) => {
+    try {
+      const programGoals = galloGoals.filter(
+        (goal) => goal.programDetails.programId === programId
+      );
       if (!programGoals.length) {
         console.warn(`No goals found for program ID: ${programId}`);
         return;
       }
 
-      // Step 2: Delete each goal from Firestore
-      const deletePromises = programGoals.map((goal) => {
-        const goalDocRef = doc(db, "galloGoals", goal.goalDetails.goalId); // Firestore document reference
-        return deleteDoc(goalDocRef);
-      });
+      const deletePromises = programGoals.map((goal) =>
+        deleteDoc(doc(db, "galloGoals", goal.goalDetails.goalId))
+      );
 
-      await Promise.all(deletePromises); // Wait for all deletions to complete
-
-      // Step 3: Notify the user
+      await Promise.all(deletePromises); // Wait for all deletions
       dispatch(
-        showMessage("Program and its associated goals deleted successfully."),
+        showMessage("Program and its associated goals deleted successfully.")
       );
     } catch (error) {
       console.error("Error deleting program:", error);
       dispatch(showMessage("Failed to delete program. Please try again."));
+    } finally {
+      setConfirmOpen(false); // Close modal
     }
   };
 
@@ -242,14 +253,22 @@ useEffect(() => {
     });
   };
 
-  // if (isLoading) {
-  //   return (
-  //     <Box textAlign="center" mt={4}>
-  //       <CircularProgress />
-  //       <Typography>Loading Gallo goals...</Typography>
-  //     </Box>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <Box textAlign="center" mt={4}>
+        <CircularProgress />
+        <Typography>Loading Gallo goals…</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box textAlign="center" mt={4}>
+        <Typography color="error">Error: {error}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Container>
@@ -332,7 +351,7 @@ useEffect(() => {
                               .filter(
                                 (goal) =>
                                   goal.programDetails.programId ===
-                                  program.programId,
+                                  program.programId
                               )
                               .map((goal) => (
                                 <React.Fragment key={goal.goalDetails.goalId}>
@@ -346,7 +365,7 @@ useEffect(() => {
                                         color="secondary"
                                         onClick={() =>
                                           handleDeleteGalloGoal(
-                                            goal.goalDetails.goalId,
+                                            goal.goalDetails.goalId
                                           )
                                         }
                                       >
@@ -370,19 +389,19 @@ useEffect(() => {
                                         }}
                                         onClick={() =>
                                           toggleExpandGoal(
-                                            goal.goalDetails.goalId,
+                                            goal.goalDetails.goalId
                                           )
                                         }
                                       >
                                         {expandedGoals.has(
-                                          goal.goalDetails.goalId,
+                                          goal.goalDetails.goalId
                                         ) ? (
                                           <ExpandLessIcon />
                                         ) : (
                                           <ExpandMoreIcon />
                                         )}
                                         {expandedGoals.has(
-                                          goal.goalDetails.goalId,
+                                          goal.goalDetails.goalId
                                         )
                                           ? "Collapse Accounts"
                                           : "Show Accounts"}
@@ -391,13 +410,13 @@ useEffect(() => {
                                   </TableRow>
 
                                   {expandedGoals.has(
-                                    goal.goalDetails.goalId,
+                                    goal.goalDetails.goalId
                                   ) && (
                                     <TableRow>
                                       <TableCell colSpan={2}>
                                         <Collapse
                                           in={expandedGoals.has(
-                                            goal.goalDetails.goalId,
+                                            goal.goalDetails.goalId
                                           )}
                                           timeout="auto"
                                           unmountOnExit
@@ -427,7 +446,7 @@ useEffect(() => {
                                                   <TableCell
                                                     onClick={() =>
                                                       handleSort(
-                                                        "accountAddress",
+                                                        "accountAddress"
                                                       )
                                                     }
                                                   >
@@ -444,7 +463,7 @@ useEffect(() => {
                                                   <TableCell
                                                     onClick={() =>
                                                       handleSort(
-                                                        "salesRouteNums",
+                                                        "salesRouteNums"
                                                       )
                                                     }
                                                   >
@@ -494,11 +513,11 @@ useEffect(() => {
                                                 {sortData(
                                                   goal.accounts,
                                                   sortColumn,
-                                                  sortOrder,
+                                                  sortOrder
                                                 ).map((account, index) => {
                                                   const hasSubmittedPost =
                                                     Boolean(
-                                                      account.submittedPostId,
+                                                      account.submittedPostId
                                                     ); // ✅ Check if post was submitted
 
                                                   return (
@@ -517,7 +536,7 @@ useEffect(() => {
                                                         </TableCell>
                                                         <TableCell>
                                                           {Array.isArray(
-                                                            account.salesRouteNums,
+                                                            account.salesRouteNums
                                                           )
                                                             ? account
                                                                 .salesRouteNums[0]
@@ -526,7 +545,7 @@ useEffect(() => {
                                                         </TableCell>
                                                         <TableCell>
                                                           {Array.isArray(
-                                                            account.salesRouteNums,
+                                                            account.salesRouteNums
                                                           )
                                                             ? employeeMap[
                                                                 account
@@ -555,7 +574,7 @@ useEffect(() => {
                                                               color="primary"
                                                               onClick={() =>
                                                                 navigate(
-                                                                  `/user-home-page?postId=${account.submittedPostId}`,
+                                                                  `/user-home-page?postId=${account.submittedPostId}`
                                                                 )
                                                               }
                                                             >
@@ -567,14 +586,14 @@ useEffect(() => {
 
                                                       {/* Nested Rows for Additional Route Numbers */}
                                                       {Array.isArray(
-                                                        account.salesRouteNums,
+                                                        account.salesRouteNums
                                                       ) &&
                                                         account.salesRouteNums
                                                           .slice(1)
                                                           .map(
                                                             (
                                                               routeNum: string,
-                                                              idx: string,
+                                                              idx: string
                                                             ) => (
                                                               <TableRow
                                                                 key={`${account.distributorAcctId}-${routeNum}-${idx}`}
@@ -594,7 +613,7 @@ useEffect(() => {
                                                                 <TableCell />
                                                                 <TableCell />
                                                               </TableRow>
-                                                            ),
+                                                            )
                                                           )}
                                                     </React.Fragment>
                                                   );
@@ -619,6 +638,15 @@ useEffect(() => {
           </TableBody>
         </Table>
       </Box>
+      <CustomConfirmation
+        isOpen={confirmOpen}
+        message={confirmMessage}
+        onConfirm={() => {
+          if (onConfirm) onConfirm();
+        }}
+        onClose={() => setConfirmOpen(false)}
+        loading={confirmLoading}
+      />
     </Container>
   );
 };

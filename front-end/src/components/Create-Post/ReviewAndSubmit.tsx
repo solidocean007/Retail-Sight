@@ -68,7 +68,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
     }
   }, [companyId, post.oppId, apiKey, dispatch]);
 
-  console.log("Final post before submit", post);
 
   // const handleSubmitClick = useCallback(async () => {
   //   if (!selectedFile || isSubmitting) return;

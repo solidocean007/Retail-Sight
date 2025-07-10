@@ -169,14 +169,18 @@ export const sendAchievementToGalloAxis = async (
     console.log("Raw Response from Vercel Function:", rawResponse);
 
     if (response.ok) {
-      // Handle successful response
-      if (!rawResponse) {
-        console.log("Achievement successfully sent!");
-        dispatch(showMessage("Achievement successfully sent to Gallo API!"));
-      } else {
-        console.log("Achievement response data:", rawResponse);
-        dispatch(showMessage("Achievement successfully sent to Gallo API!"));
-      }
+      // ✅ Success
+      dispatch(showMessage("Achievement successfully sent to Gallo API!"));
+    } else if (response.status === 403) {
+      // ✅ Treat Forbidden as soft success
+      console.warn(
+        "Gallo API returned 403 Forbidden, but treating as soft success since Gallo may have processed the payload."
+      );
+      dispatch(
+        showMessage(
+          "Gallo API responded with 403 Forbidden. We'll check with Gallo to confirm receipt, but your post has been saved."
+        )
+      );
     } else {
       // Handle error responses
       console.error(

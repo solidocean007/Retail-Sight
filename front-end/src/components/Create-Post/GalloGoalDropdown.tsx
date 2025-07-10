@@ -4,7 +4,6 @@ import {
   CircularProgress,
   MenuItem,
   Select,
-  Typography,
 } from "@mui/material";
 import { FireStoreGalloGoalDocType } from "../../utils/types";
 

@@ -151,7 +151,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
       )}
       {value === 1 && (
         <div className="table-container">
-          <AllGalloGoalsView galloGoals={galloGoals} />
+          <AllGalloGoalsView />
         </div>
       )}
     </div>

@@ -6,26 +6,24 @@ import {
   FireStoreGalloGoalDocType,
   PostInputType,
   PostType,
+  UserType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
 import { Box, CircularProgress, Typography, Button } from "@mui/material";
 // import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGalloGoalsByCompanyId";
-// import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
+import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
 import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
 import { selectUser } from "../../Slices/userSlice";
-// import {
-//   selectAllCompanyGoals,
-//   selectAllGalloGoals,
-//   setGalloGoals,
-// } from "../../Slices/goalsSlice";
+
 import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCompanyAccounts";
 import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/getActiveCompanyGoalsForAccount";
 // import { matchAccountWithSelectedStoreForAdmin } from "../../utils/helperFunctions/accountHelpers";
-// import GalloGoalDropdown from "./GalloGoalDropdown";
+import GalloGoalDropdown from "./GalloGoalDropdown";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import "./pickstore.css";
 import AccountModalSelector from "./AccountModalSelector";
+import { selectAllGalloGoals, selectUsersGalloGoals } from "../../Slices/galloGoalsSlice";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 
 interface PickStoreProps {
@@ -33,8 +31,6 @@ interface PickStoreProps {
   onPrevious: () => void;
   post: PostInputType;
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
-  usersGalloGoals?: FireStoreGalloGoalDocType[]; // Pass goals from Redux
-  allCompanyGoals: CompanyGoalWithIdType[]; // Pass goals from Redux
   handleFieldChange: (
     field: keyof PostInputType,
     value: PostType[keyof PostType]
@@ -47,26 +43,34 @@ export const PickStore: React.FC<PickStoreProps> = ({
   onPrevious,
   post,
   setPost,
-  // usersGalloGoals,
-  allCompanyGoals,
   handleFieldChange,
   setSelectedCompanyAccount,
 }) => {
+  const user= useSelector(selectUser);
+  const salesRouteNum = user?.salesRouteNum;
+
   const [_allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
   const [myAccounts, setMyAccounts] = useState<CompanyAccountType[]>([]);
+  console.log(myAccounts);
   const [isAllStoresShown, setIsAllStoresShown] = useState(false); // Toggle State
   const [loadingAccounts, setLoadingAccounts] = useState(true); // Tracks loading status
   const [accountsToSelect, setAccountsToSelect] =
     useState<CompanyAccountType[]>();
 
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
+  const allCompanyGoals = useSelector(selectAllCompanyGoals);
+
+  const usersGalloGoals = useSelector((state: RootState) =>
+    selectUsersGalloGoals(state, salesRouteNum)
+  );
+
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
     null
   );
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
-    useState<CompanyGoalWithIdType | null>();
+    useState<CompanyGoalWithIdType>();
   const userRole = useSelector(selectUser)?.role;
   const userId = useSelector(selectUser)?.uid;
   const isAdmin = userRole === "admin" || userRole === "super-admin";
@@ -75,52 +79,49 @@ export const PickStore: React.FC<PickStoreProps> = ({
     (state: RootState) => state.user.currentUser?.companyId
   );
 
-  // these next two only need to be selected if a user is selecting all accounts and needs access to the entire company goal list or gallo goal list
-  // const allGalloGoals = useSelector(selectAllGalloGoals); // delete this or from the parent
+  const allGalloGoals = useSelector(selectAllGalloGoals); // delete this or from the parent
   const [openAccountModal, setOpenAccountModal] = useState(true);
 
-  const [isMatchSelectionOpen, setIsMatchSelectionOpen] = useState(false);
-
   // filtering by account number function:  these return current goals for selection.  a mode might be helpful for switching to the desired set.
-  // const usersActiveGalloGoals = getActiveGalloGoalsForAccount(
-  //   post.account?.accountNumber,
-  //   usersGalloGoals,
-  // );
+  const usersActiveGalloGoals = getActiveGalloGoalsForAccount(
+    post.account?.accountNumber,
+    usersGalloGoals // Type 'undefined' is not assignable to type 'FireStoreGalloGoalDocType[]'
+  );
 
-  // const allActiveGalloGoals = getActiveGalloGoalsForAccount(
-  //   post.account?.accountNumber,
-  //   allGalloGoals,
-  // );
+  const allActiveGalloGoals = getActiveGalloGoalsForAccount(
+    post.account?.accountNumber,
+    allGalloGoals,
+  );
 
-  // const usersActiveCompanyGoals = useMemo(() => {
-  //   if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
-  //   return getActiveCompanyGoalsForAccount(
-  //     post.account.accountNumber,
-  //     allCompanyGoals
-  //   );
-  // }, [post.account?.accountNumber, allCompanyGoals]);
+  const usersActiveCompanyGoals = useMemo(() => {
+    if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
+    return getActiveCompanyGoalsForAccount(
+      post.account.accountNumber,
+      allCompanyGoals
+    );
+  }, [post.account?.accountNumber, allCompanyGoals]);
 
-  // const allActiveCompanyGoals = useMemo(() => {
-  //   if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
-  //   return getActiveCompanyGoalsForAccount(
-  //     post.account?.accountNumber,
-  //     allCompanyGoals
-  //   );
-  // }, [post.account?.accountNumber, allCompanyGoals]);
+  const allActiveCompanyGoals = useMemo(() => {
+    if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
+    return getActiveCompanyGoalsForAccount(
+      post.account?.accountNumber,
+      allCompanyGoals
+    );
+  }, [post.account?.accountNumber, allCompanyGoals]);
 
-  // const onlyUsersStores = !isAllStoresShown;
+  const onlyUsersStores = !isAllStoresShown;
 
-  // const galloGoals = onlyUsersStores
-  //   ? usersActiveGalloGoals
-  //   : allActiveGalloGoals;
+  const galloGoals = onlyUsersStores
+    ? usersActiveGalloGoals
+    : allActiveGalloGoals;
 
   const companyGoals = useMemo(() => {
-  if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
-  return getActiveCompanyGoalsForAccount(
-    post.account.accountNumber,
-    allCompanyGoals
-  );
-}, [post.account?.accountNumber, allCompanyGoals]);
+    if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
+    return getActiveCompanyGoalsForAccount(
+      post.account.accountNumber,
+      allCompanyGoals
+    );
+  }, [post.account?.accountNumber, allCompanyGoals]);
 
   useEffect(() => {
     if (!post.account?.accountNumber) {
@@ -189,41 +190,73 @@ export const PickStore: React.FC<PickStoreProps> = ({
     console.log("new post data:", post);
   };
 
-  console.log('post: ', post)
+ const handleGalloGoalSelection = (goalId: string | undefined) => {
+  if (!goalId) return;
+
+  const galloGoal = usersActiveGalloGoals.find(
+    (goal) => goal.goalDetails.goalId === goalId
+  );
+
+  if (!galloGoal) {
+    console.warn("Selected Gallo goal not found in active goals.");
+    return;
+  }
+
+  // ✅ Correct variable here
+  setSelectedGalloGoalId(galloGoal.goalDetails.goalId);
+
+  const matchingAccount = galloGoal.accounts.find(
+    (acc) => acc.distributorAcctId === post.account?.accountNumber
+  );
+
+  if (matchingAccount?.oppId) {
+    handleFieldChange("oppId", matchingAccount.oppId);
+    handleFieldChange("galloGoalTitle", galloGoal.goalDetails.goal);
+    handleFieldChange("galloGoalId", galloGoal.goalDetails.goalId);
+    console.log("Selected Gallo goal:", galloGoal);
+  } else {
+    console.warn("No matching account found for selected Gallo goal.");
+  }
+};
 
   // Handler for Account Selection
   const handleAccountSelect = (account: CompanyAccountType) => {
-  const {
-    accountName,
-    accountAddress,
-    accountNumber,
-    salesRouteNums,
-    typeOfAccount,
-    chain,
-    chainType,
-  } = account;
-
-  setPost((prevPost) => ({
-    ...prevPost,
-    account: {
+    const {
       accountName,
       accountAddress,
+      streetAddress,
+      city,
+      state,
       accountNumber,
       salesRouteNums,
       typeOfAccount,
       chain,
       chainType,
-    },
-    accountNumber,
-    address: accountAddress,
-    accountType: typeOfAccount,
-    chain,
-    chainType,
-  }));
+    } = account;
 
-  setSelectedCompanyAccount(account);
-};
+    setPost((prevPost) => ({
+      ...prevPost,
+      account: {
+        accountName,
+        accountAddress,
+        streetAddress,
+        city,
+        state,
+        accountNumber,
+        salesRouteNums,
+        typeOfAccount,
+        chain,
+        chainType,
+      },
+      accountNumber,
+      address: accountAddress,
+      accountType: typeOfAccount,
+      chain,
+      chainType,
+    }));
 
+    setSelectedCompanyAccount(account);
+  };
 
   const handleClearAccount = () => {
     setPost((prevPost) => ({
@@ -362,20 +395,21 @@ export const PickStore: React.FC<PickStoreProps> = ({
               goals={companyGoals}
               label="Company Goal"
               loading={isFetchingGoal}
-              onSelect={handleCompanyGoalSelection} // 'id' is declared here.
-              selectedGoal={selectedCompanyGoal} // Type 'CompanyGoalWithIdType | null | undefined' is not assignable to type 'CompanyGoalWithIdType | undefined'.
-              // Type 'null' is not assignable to type 'CompanyGoalWithIdType | undefined'. why is the selected goal here potentially null or undefined?
+              onSelect={handleCompanyGoalSelection} 
+              selectedGoal={selectedCompanyGoal} 
             />
           </Box>
 
           <Box mt={2}>
-            {/* <GalloGoalDropdown
-              goals={galloGoals}
+            <GalloGoalDropdown
+              goals={usersActiveGalloGoals}
               label="Gallo Goals"
               loading={isFetchingGoal}
-              onSelect={handleGalloGoalSelection}
+              onSelect={handleGalloGoalSelection} // Type '(galloGoal: FireStoreGalloGoalDocType | undefined) => void' is not assignable to type '(goalId: string) => void'.
+  // Types of parameters 'galloGoal' and 'goalId' are incompatible.
+    // Type 'string' is not assignable to type 'FireStoreGalloGoalDocType'.
               selectedGoal={selectedGalloGoalId}
-            /> */}
+            />
           </Box>
         </Box>
       )}

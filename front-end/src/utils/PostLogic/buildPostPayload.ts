@@ -7,8 +7,6 @@ import {
 } from "../types";
 import { extractHashtags, extractStarTags } from "../extractHashtags";
 
-
-
 export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
   const hashtags = extractHashtags(post.description ?? "");
   const starTags = extractStarTags(post.description ?? "");
@@ -20,7 +18,6 @@ export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
     .trim(); // Trim any leading/trailing spaces
 
   return {
-
     description: cleanedDescription || "",
     imageUrl: post.imageUrl || "",
     displayDate: new Date(),
@@ -34,11 +31,13 @@ export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
 
     account: account,
 
-
     // 🔗 Flattened account fields
     accountNumber: account?.accountNumber ?? "",
     accountName: account?.accountName ?? "",
     accountAddress: account?.accountAddress ?? "",
+    streetAddress: account?.streetAddress ?? "",
+    city: account?.city ?? "",
+    state: account?.state ?? "",
     accountSalesRouteNums: account?.salesRouteNums ?? [],
     accountType: account?.typeOfAccount ?? "",
     chain: account?.chain ?? "",
@@ -72,11 +71,20 @@ export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
     productType: post.productType ?? [],
     supplier: post.supplier ?? "",
 
-    // 🎯 Goal info
-    companyGoalId: post.companyGoalId ?? null,
-    companyGoalTitle: post.companyGoalTitle ?? null,
-    companyGoalDescription: post.companyGoalDescription ?? null,
-    oppId: post.oppId ?? null,
+    // 🎯 Company goal info
+    ...(post.companyGoalId && {
+      companyGoalId: post.companyGoalId,
+      companyGoalTitle: post.companyGoalTitle,
+    }),
+
+    // 🍇 Gallo goal info
+    ...(post.oppId && {
+      oppId: post.oppId,
+      galloGoalTitle: post.galloGoalTitle,
+      galloGoalId: post.galloGoalId,
+      closedBy: post.closedBy ?? null,
+      closedUnits: post.closedUnits ?? null,
+    }),
 
     likes: [],
     commentCount: 0,

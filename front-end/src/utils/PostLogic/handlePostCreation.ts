@@ -137,7 +137,6 @@ export const useHandlePostSubmission = () => {
         const achievementPayload = {
           oppId: post.oppId,
           galloGoalTitle: post.galloGoalTitle,
-          galloGoalDescription: post.galloGoalDescription,
           closedBy: post.closedBy ?? user.displayName ?? "",
           closedDate: post.closedDate || new Date().toISOString().split('T')[0],
           closedUnits: post.closedUnits || "0",

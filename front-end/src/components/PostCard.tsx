@@ -100,25 +100,22 @@ const PostCard: React.FC<PostCardProps> = ({
     useState<CompanyAccountType | null>(null);
   const [shouldHighlight, setShouldHighlight] = useState(false);
 
-useEffect(() => {
-  let startTimer: NodeJS.Timeout;
-  let stopTimer: NodeJS.Timeout;
+  useEffect(() => {
+    let startTimer: NodeJS.Timeout;
+    let stopTimer: NodeJS.Timeout;
 
-  if (postIdToScroll === post.id) {
-    startTimer = setTimeout(() => {
-      setShouldHighlight(true);
-      stopTimer = setTimeout(() => setShouldHighlight(false), 4000);
-    }, 600);
-  }
+    if (postIdToScroll === post.id) {
+      startTimer = setTimeout(() => {
+        setShouldHighlight(true);
+        stopTimer = setTimeout(() => setShouldHighlight(false), 4000);
+      }, 600);
+    }
 
-  return () => {
-    clearTimeout(startTimer);
-    clearTimeout(stopTimer);
-  };
-}, [postIdToScroll, post.id]);
-
-
-
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(stopTimer);
+    };
+  }, [postIdToScroll, post.id]);
 
   const handleImageClick = () => {
     // Assuming post.imageUrl is available and contains the 'resized' keyword
@@ -400,13 +397,18 @@ useEffect(() => {
           </div>
         )}
 
-        <div className={post.companyGoalId ? "company-goal-box" : ""}>
-          {post.companyGoalId
-            ? `Company goal: ${post.companyGoalTitle}` /* this renders null */
-            : post.oppId
-            ? `Gallo goal: ${post.galloGoalTitle}`
-            : ""}
-        </div>
+        {post.companyGoalId && (
+          <div className="company-goal-banner textured-background">
+            Company Goal: {post.companyGoalTitle}
+          </div>
+        )}
+
+        {post.oppId && (
+          <div className="gallo-goal-banner gallo-textured-background">
+            Gallo Goal: {post.galloGoalTitle}
+          </div>
+        )}
+
         {post.brands && post.brands.length > 0 && (
           <div className="brands-list">
             {post.brands.map((brand) => (

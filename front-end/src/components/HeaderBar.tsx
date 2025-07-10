@@ -82,11 +82,11 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           </div>
           <h5>{currentUser?.company}</h5>
         </div>
-        {currentUser?.role === "super-admin" && (
+        {/* {currentUser?.role === "super-admin" && (
           <button className="btn-outline danger-button" onClick={handleReset}>
             Reset App
           </button>
-        )}
+        )} */}
          <button className="btn-outline danger-button" onClick={handleReset}>
             Reset App
           </button>
