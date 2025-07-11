@@ -3,7 +3,7 @@ import { RootState, useAppDispatch } from "../utils/store";
 import { useNavigate } from "react-router-dom";
 import useProtectedAction from "../utils/useProtectedAction";
 import "./headerBar.css";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { showMessage } from "../Slices/snackbarSlice";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { Tooltip } from "@mui/material";
@@ -61,6 +61,11 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
     }
   };
 
+  useEffect(() => {
+    console.log("Local version:", localVersion);
+    console.log("Server version:", serverVersion);
+  }, [localVersion, serverVersion]);
+
   return (
     <>
       <div className="header-bar">
@@ -82,14 +87,14 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           </div>
           <h5>{currentUser?.company}</h5>
         </div>
-        {/* {currentUser?.role === "super-admin" && (
+        {localVersion !== serverVersion ? (
           <button className="btn-outline danger-button" onClick={handleReset}>
             Reset App
           </button>
-        )} */}
-         <button className="btn-outline danger-button" onClick={handleReset}>
-            Reset App
-          </button>
+        ) : (
+          <span className="up-to-date-message">✅ App is up to date</span>
+        )}
+
         {!currentUser ? (
           <button onClick={goToSignUpLogin}>Login</button>
         ) : (
@@ -104,8 +109,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             </div>
             <div
               className="hamburger-menu-button"
-               onClick={() => navigate("/dashboard")}
-
+              onClick={() => navigate("/dashboard")}
               aria-haspopup="true"
               aria-expanded={showMenuTab}
               // style={{ visibility: showMenuTab ? "hidden" : "visible" }}
@@ -115,7 +119,6 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           </div>
         )}
       </div>
-     
     </>
   );
 };

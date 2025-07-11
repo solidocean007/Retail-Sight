@@ -53,7 +53,7 @@ export async function resetApp(dispatch: AppDispatch) {
     sessionStorage.removeItem("schemaVersionSynced");
 
     // console.log("🔄 Reloading page...");
-    // window.location.reload();
+    window.location.reload();
   } catch (error) {
     console.error("❌ App reset failed:", error);
     dispatch(showMessage("❌ Failed to reset app. Check console for details."));

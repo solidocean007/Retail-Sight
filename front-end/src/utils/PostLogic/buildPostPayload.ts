@@ -83,7 +83,7 @@ export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
       galloGoalTitle: post.galloGoalTitle,
       galloGoalId: post.galloGoalId,
       closedBy: post.closedBy ?? null,
-      closedUnits: post.closedUnits ?? null,
+      closedUnits: post.totalCaseCount ?? null,
     }),
 
     likes: [],

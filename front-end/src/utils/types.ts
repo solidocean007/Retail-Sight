@@ -57,6 +57,7 @@ export interface UserType {
   companyId: string;
   salesRouteNum: string | undefined;
   phone: string | undefined; // from signup
+  status?: "active" | "inactive"; // ✅ optional for backward compatibility
 }
 
 // import { Timestamp } from "firebase/firestore";

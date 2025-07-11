@@ -109,6 +109,14 @@
  width: 200px;
 }
 
+.up-to-date-message {
+  width: 100%;
+  color: var(--text-color);
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+
 
 /* Responsive Breakpoints */
 

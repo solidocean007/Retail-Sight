@@ -1,19 +1,11 @@
-import React, { useEffect, useMemo } from "react";
-import { Box, TextField, Autocomplete } from "@mui/material";
+import React, { useMemo } from "react";
+import { Box, TextField, Autocomplete, createFilterOptions } from "@mui/material";
 import { useSelector } from "react-redux";
 import { PostInputType, UserType } from "../../utils/types";
 import {
   selectCompanyUsers,
   selectUser,
-  setCompanyUsers,
 } from "../../Slices/userSlice";
-import {
-  getCompanyUsersFromIndexedDB,
-  saveCompanyUsersToIndexedDB,
-} from "../../utils/database/userDataIndexedDB";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { db } from "../../utils/firebase";
-import { useAppDispatch } from "../../utils/store";
 
 interface Props {
   onBehalf: UserType | null;
@@ -29,47 +21,32 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
   setOnBehalf,
   handleFieldChange,
 }) => {
-  const dispatch = useAppDispatch();
   const userData = useSelector(selectUser)!; // this is the supervisor.. he should be set to postedBy
-  const companyId = userData.companyId!;
   const companyUsers = useSelector(selectCompanyUsers) || [];
 
-  // Load & cache company users
-  useEffect(() => {
-    if (!companyId) return;
-    (async () => {
-      const cached = await getCompanyUsersFromIndexedDB();
-      if (cached) dispatch(setCompanyUsers(cached));
-
-      const q = query(
-        collection(db, "users"),
-        where("companyId", "==", companyId)
-      );
-      const unsub = onSnapshot(q, async (snap) => {
-        const fresh = snap.docs.map(
-          (d) => ({ ...(d.data() as any), uid: d.id } as UserType)
-        );
-        if (JSON.stringify(fresh) !== JSON.stringify(cached)) {
-          dispatch(setCompanyUsers(fresh));
-          await saveCompanyUsersToIndexedDB(fresh);
-        }
-      });
-      return () => unsub();
-    })();
-  }, [companyId, dispatch]);
-
   // Build sorted list (including current user)
-  const options = useMemo(() => {
-    const all = [
-      userData,
-      ...companyUsers.filter((u) => u.uid !== userData.uid),
-    ];
-    return all.sort((a, b) => {
-      const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
-      const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
-      return nameA.localeCompare(nameB);
-    });
-  }, [companyUsers, userData]);
+ const options = useMemo(() => {
+  const filtered = companyUsers.filter(
+    (u) =>
+      u.status !== "inactive" && u.salesRouteNum && u.uid !== userData.uid
+  );
+
+  const all = userData.status !== "inactive" && userData.salesRouteNum
+    ? [userData, ...filtered]
+    : filtered;
+
+  return all.sort((a, b) => {
+    const nameA = `${a.firstName ?? ""} ${a.lastName ?? ""}`.toLowerCase();
+    const nameB = `${b.firstName ?? ""} ${b.lastName ?? ""}`.toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+}, [companyUsers, userData]);
+
+
+  const filter = createFilterOptions<UserType>({
+  stringify: (option) =>
+    `${option.firstName ?? ""} ${option.lastName ?? ""}`.toLowerCase(),
+});
 
   return (
     <Box
@@ -88,6 +65,7 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
             ? `${u.firstName} ${u.lastName} (You)`
             : `${u.firstName} ${u.lastName}`
         }
+        filterOptions={filter} // ✅ custom filtering
         value={onBehalf || userData}
         onChange={(_, selected) => {
           setOnBehalf(selected);

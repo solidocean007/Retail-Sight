@@ -139,7 +139,7 @@ export const useHandlePostSubmission = () => {
           galloGoalTitle: post.galloGoalTitle,
           closedBy: post.closedBy ?? user.displayName ?? "",
           closedDate: post.closedDate || new Date().toISOString().split('T')[0],
-          closedUnits: post.closedUnits || "0",
+          closedUnits: post.totalCaseCount || "0",
           photos: [{ file: resizedUrl }],
         };
         await sendAchievementToGalloAxis(
@@ -148,6 +148,12 @@ export const useHandlePostSubmission = () => {
           navigate,
           dispatch
         );
+        // console.log("payload: ",
+        //   achievementPayload,
+        //   apiKey,
+        //   // navigate,
+        //   // dispatch
+        // )
       }
 
       // 11. Create submitted mission
