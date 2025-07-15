@@ -13,7 +13,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import InfoIcon from "@mui/icons-material/Info";
 import { CompanyGoalWithIdType, CompanyAccountType } from "../../utils/types";
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
-import { selectCompanyUsers } from "../../Slices/userSlice";
+import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 import AccountTable from "../AccountTable";
 import UserTableForGoals from "../UserTableForGoals";
 import GoalViewerFilters from "../GoalViewerFilters";
@@ -42,6 +42,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   onEdit,
 }) => {
   const navigate = useNavigate();
+  const user = useSelector(selectUser);
   const isMobileScreen = useMediaQuery("(max-width: 600px)");
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const companyUsers = useSelector(selectCompanyUsers) || [];
@@ -114,7 +115,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     }
 
     return goal.submittedPosts.length;
-  }, [goal.submittedPosts, salesRouteNum, effectiveAccounts]); // this is rendering 48 now.  i had 44 in firestore then i edited 4 now i think i may have duplicates.  
+  }, [goal.submittedPosts, salesRouteNum, effectiveAccounts]); // this is rendering 48 now.  i had 44 in firestore then i edited 4 now i think i may have duplicates.
 
   const percentage = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
@@ -190,7 +191,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
-          {onDelete && (
+          {onDelete && user?.role === "admin" && (
             <Box display="flex" gap={1}>
               <Button
                 variant="outlined"
@@ -277,7 +278,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         <Typography variant="h6" sx={{ mt: 2 }}>
           User Progress
         </Typography>
-        <UserTableForGoals users={userBasedRows} goal={goal}/> 
+        <UserTableForGoals users={userBasedRows} goal={goal} />
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
         </Typography>

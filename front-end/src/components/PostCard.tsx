@@ -263,7 +263,8 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <>
-      <div
+    <div className="card-border">
+       <div
         className={`post-card-container ${
           shouldHighlight ? "shouldHighlight" : ""
         }`}
@@ -483,6 +484,8 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
         {user && <CommentSection post={post} />}
       </div>
+    </div>
+     
       <EditPostModal
         post={post}
         setSelectedCompanyAccount={setSelectedCompanyAccount}

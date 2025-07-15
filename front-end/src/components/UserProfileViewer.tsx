@@ -12,12 +12,13 @@ import {
   // TableCell,
 } from "@mui/material";
 import { useSelector } from "react-redux";
-import { RootState } from "../utils/store";
+import { RootState, useAppDispatch } from "../utils/store";
 import { UserType } from "../utils/types";
 import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
 import "./userProfileViewer.css";
 import UploadAvatar from "./UploadAvatar";
+import { resetApp } from "../utils/resetApp";
 
 // interface AccountDisplayCount {
 //   accountName: string;
@@ -28,16 +29,32 @@ import UploadAvatar from "./UploadAvatar";
 // const UserProfileViewer: React.FC<UserProfileViewerProps> = ({ user, accountDisplayData }) => {
 const UserProfileViewer: React.FC = () => {
   // const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [editingPicture, setEditingPicture] = useState(false);
   const user = useSelector(
     (state: RootState) => state.user.currentUser
   ) as UserType;
+
+  const handleReset = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to reset the app? This will clear all stored data."
+      )
+    ) {
+      await resetApp(dispatch);
+    }
+  };
 
   if (!user) return <Typography>Loading...</Typography>;
 
   return (
     <Container className="user-profile-container">
       <div className="user-info-section">
+        <div className="reset-app-box">
+          <button className="btn-outline danger-button" onClick={handleReset}>
+            Reset App
+          </button>
+        </div>
         <div className="avatar-box">
           <Avatar
             src={user.profileUrlThumbnail}

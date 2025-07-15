@@ -85,15 +85,20 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
               </Tooltip>
             </div>
           </div>
-          <h5>{currentUser?.company}</h5>
+          <div className="company-name-app-state">
+            <h5>{currentUser?.company}</h5>
+            {localVersion !== serverVersion ? (
+              <button
+                className="btn-outline danger-button"
+                onClick={handleReset}
+              >
+                Reset App
+              </button>
+            ) : (
+              <span className="up-to-date-message">✅ App is up to date</span>
+            )}
+          </div>
         </div>
-        {localVersion !== serverVersion ? (
-          <button className="btn-outline danger-button" onClick={handleReset}>
-            Reset App
-          </button>
-        ) : (
-          <span className="up-to-date-message">✅ App is up to date</span>
-        )}
 
         {!currentUser ? (
           <button onClick={goToSignUpLogin}>Login</button>

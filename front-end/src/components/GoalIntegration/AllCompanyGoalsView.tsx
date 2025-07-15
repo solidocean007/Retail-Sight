@@ -172,6 +172,11 @@ const AllCompanyGoalsView = ({
             <ArchivedGoalsLayout
               archivedGoals={archivedGoals}
               isMobile={isMobile}
+              onDelete={(goalId) => {
+                setSelectedGoalId(goalId);
+                setIsConfirmationOpen(true);
+              }}
+              onEdit={handleEditCompanyGoal}
             />
           )}
         </>

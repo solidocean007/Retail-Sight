@@ -139,11 +139,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
           </Tabs>
         )}
       </Box>
-      {/* {value === 0 && (
-        <div className="all-company-goals-view-container">
-          <AdminCompanyGoalsOverview goals={companyGoals} />
-        </div>
-      )} */}
+      
       {value === 0 && (
         <div className="all-company-goals-view-container">
           <AllCompanyGoalsView companyId={companyId} />

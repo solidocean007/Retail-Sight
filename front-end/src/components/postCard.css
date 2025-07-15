@@ -2,6 +2,12 @@
   padding: 10px;
 }
 
+.card-border {
+  padding: 3px;
+  background-color: var(--text-color);
+  border-radius: var(--card-radius);
+}
+
 .post-card-container {
   height: 100%;
   width: 100%;
