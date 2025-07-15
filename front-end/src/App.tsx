@@ -24,7 +24,7 @@ import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUt
 import useSchemaVersion from "./hooks/useSchemaVersion";
 import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
-import { auditPostDates, migratePostDates } from "./script";
+// import { auditPostDates, migratePostDates } from "./script";
 
 function App(): React.JSX.Element {
   useSchemaVersion();
@@ -40,8 +40,8 @@ function App(): React.JSX.Element {
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
   // useEffect(() => {
-  //   // auditPostDates();
-  //   // migratePostDates();
+  //   auditPostDates();
+  //   migratePostDates();
   // }, []);
 
   useEffect(() => {

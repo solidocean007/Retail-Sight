@@ -17,7 +17,7 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { updateCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
 import "./allCompanyGoalsView.css";
-import ArchivedGoalsLayout from "./ArchivedGoalsLayout";
+import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
 
 const AllCompanyGoalsView = ({
   companyId,

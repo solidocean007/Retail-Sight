@@ -17,7 +17,7 @@ import {
 } from "../../Slices/companyGoalsSlice";
 import CompanyGoalCard from "./CompanyGoalCard";
 import "./myCompanyGoals.css";
-import ArchivedGoalsLayout from "./ArchivedGoalsLayout";
+import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
 
 const MyCompanyGoals = () => {
   const theme = useTheme();

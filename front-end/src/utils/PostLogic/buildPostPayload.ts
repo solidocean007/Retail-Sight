@@ -1,11 +1,10 @@
 import {
-  PostType,
   CompanyAccountType,
-  UserType,
   PostInputType,
   FirestorePostPayload,
 } from "../types";
 import { extractHashtags, extractStarTags } from "../extractHashtags";
+import { Timestamp } from "@firebase/firestore";
 
 export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
   const hashtags = extractHashtags(post.description ?? "");
@@ -20,8 +19,8 @@ export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
   return {
     description: cleanedDescription || "",
     imageUrl: post.imageUrl || "",
-    displayDate: new Date(),
-    timestamp: new Date(),
+    displayDate: new Date(), // ill leave this for now.. post slice doesnt use it for ordering and merging
+     timestamp: Timestamp.now(),
     visibility: post.visibility as
       | "public"
       | "company"

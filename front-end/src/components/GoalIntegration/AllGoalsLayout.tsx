@@ -90,7 +90,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
         aria-labelledby={`simple-tab-${index}`}
         {...other}
       >
-        {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        {value === index && <Box sx={{ p: 8 }}>{children}</Box>}
       </div>
     );
   }
@@ -111,7 +111,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   };
 
   return (
-    <div className="all-goals-container">
+    <div className="all-goals-container" style={{padding: "5px"}}>
       <Box className="tabs-container">
         {isMobile ? (
           <Select

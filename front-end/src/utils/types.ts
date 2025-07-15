@@ -146,7 +146,7 @@ export interface PostType {
 
   // 🗓 Timing
   displayDate: string;
-  timestamp: string;
+  timestamp: Timestamp;
   visibility: "public" | "company" | "supplier" | "private";
 
   // 🎯 Goals

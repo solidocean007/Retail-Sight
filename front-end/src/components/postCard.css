@@ -252,9 +252,14 @@
 .store-address-box h5,
 .store-name-number h5,
 .store-name-number h3,
+.store-address-box h6,
 .created-On-Behalf h5,
 .likes-box h5 {
   margin: 0px;
+}
+
+.store-name-number h3 {
+  font-size: medium;
 }
 
 .store-details {

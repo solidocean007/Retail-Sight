@@ -32,7 +32,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
+      {value === index && <Box sx={{ backgroundColor: "var(--dashboard-card)", }}>{children}</Box>}
     </div>
   );
 }
@@ -60,7 +60,8 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
   return (
     <div>
       <Typography>All Goals Manager</Typography>
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+      {/* <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 0 }}> */}
+      <Box sx={{ borderBottom: 1, mb: 0 }}>
         {isMobile ? (
           <Select
             value={value}
@@ -79,26 +80,42 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
             aria-label="dashboard tabs"
             variant="scrollable"
             scrollButtons="auto"
+            sx={{
+              // borderBottom: "1px solid #ccc", // Separation under tabs
+              "& .MuiTab-root": {
+                borderTopLeftRadius: "12px",
+                borderTopRightRadius: "12px",
+                textTransform: "none", // prevent all caps
+                padding: "8px 16px",
+                marginRight: "8px",
+                marginBottom: "0px",
+                backgroundColor: "var(--tab-background)",
+                "&.Mui-selected": {
+                  backgroundColor: "var(--tab-background-selected)",
+                  border: "1px solid #ccc",
+                  borderBottom: "none", // remove overlap on active tab
+                },
+              },
+            }}
           >
             <Tab label="All Goals" {...a11yProps(0)} />
             <Tab label="Gallo Program Import" {...a11yProps(1)} />
             <Tab label="Company Goal Creation" {...a11yProps(2)} />
-            {/* <Tab label="New Company Goal Creation" {...a11yProps(3)} /> */}
           </Tabs>
         )}
       </Box>
-      <TabPanel value={value} index={0}>
-        <AllGoalsLayout companyId={companyId} />
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        <CreateGalloGoalView setValue={setValue} />
-      </TabPanel>
-      <TabPanel value={value} index={2}>
-        <CreateCompanyGoalView />
-      </TabPanel>
-      {/* <TabPanel value={value} index={3}>
-        <NewCreateCompanyGoalView />
-      </TabPanel> */}
+      <div>
+        <TabPanel value={value} index={0}>
+          <AllGoalsLayout companyId={companyId} />
+        </TabPanel>
+        <TabPanel value={value} index={1}>
+          <CreateGalloGoalView setValue={setValue} />
+        </TabPanel>
+        <TabPanel value={value} index={2}>
+          <CreateCompanyGoalView />
+        </TabPanel>
+      </div>
+
     </div>
   );
 };

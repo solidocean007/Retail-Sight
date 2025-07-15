@@ -15,7 +15,7 @@ import {
   UploadTask,
   UploadTaskSnapshot,
 } from "firebase/storage";
-import { DocumentReference, deleteDoc, updateDoc } from "firebase/firestore";
+import { DocumentReference, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { selectUser } from "../../Slices/userSlice";
 import { resizeImage } from "../../images/resizeImages";
@@ -120,7 +120,7 @@ export const useHandlePostSubmission = () => {
       // 8. Stamp image URL + timestamp
       await updateDoc(newDocRef, {
         imageUrl: resizedUrl,
-        timestamp: new Date(),
+        timestamp: Timestamp.now(),
       });
 
       // 9. Normalize and cache

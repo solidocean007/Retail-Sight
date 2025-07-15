@@ -1,5 +1,5 @@
 // CreatePost.tsx
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
@@ -12,7 +12,6 @@ import {
   Backdrop,
   Box,
   Container,
-  IconButton,
   Typography,
 } from "@mui/material";
 
@@ -43,21 +42,14 @@ import { RootState, useAppDispatch } from "../../utils/store";
 import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
-import {
-  selectAllCompanyGoals,
-  selectUsersCompanyGoals,
-} from "../../Slices/companyGoalsSlice";
-import { selectUsersGalloGoals } from "../../Slices/galloGoalsSlice";
+
 
 export const CreatePost = () => {
-  const dispatch = useAppDispatch();
   const userData = useSelector(selectUser);
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
   const [openMissionSelection, setOpenMissionSelection] = useState(false);
-
- 
 
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);

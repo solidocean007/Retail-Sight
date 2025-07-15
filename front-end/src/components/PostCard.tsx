@@ -341,7 +341,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   <h5>{formattedDate}</h5>
                 </div>
                 <div className="store-address-box">
-                  <h5>{post.account?.accountAddress}</h5>{" "}
+                  <h6>{post.account?.accountAddress}</h6>{" "}
                 </div>
               </div>
             </div>

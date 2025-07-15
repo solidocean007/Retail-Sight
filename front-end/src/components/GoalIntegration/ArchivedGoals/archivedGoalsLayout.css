@@ -1,0 +1,81 @@
+.archived-goals-container {
+  margin-top: 2rem;
+}
+
+.archived-year-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.archived-year-card:hover {
+  background: var(--hover-bg);
+}
+
+.archived-year-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.arrow {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.arrow.up {
+  transform: rotate(180deg);
+}
+
+.archived-months-row {
+  display: flex;
+  flex-wrap: wrap; /* allow wrapping only if absolutely needed */
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.archived-month-chip {
+  background-color: var(--chip-bg);
+  /* width: 200px; */
+  color: var(--chip-text);
+  border-radius: 16px;
+  padding: 0.25rem 0.75rem;
+  box-shadow: var(--chip-shadow);
+  transition: background-color 0.3s ease;
+}
+
+.archived-month-chip:hover {
+  background-color: var(--chip-hover-bg);
+}
+
+.archived-month-container {
+  /* width: 100%; */
+  margin-bottom: 1rem;
+}
+
+.archived-goal-cards {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.archived-month-chip.active {
+  background-color: var(--chip-active-bg);
+  color: var(--chip-active-text);
+  box-shadow: var(--chip-active-shadow);
+}
+
+.archived-goal-cards {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-left: 1rem; /* Indent under chip */
+}
