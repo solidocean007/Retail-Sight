@@ -2,6 +2,7 @@ import { useSelector } from "react-redux";
 import { NavigateFunction } from "react-router-dom";
 import {
   CompanyMissionType,
+  FireStoreGalloGoalDocType,
   FirestorePostPayload,
   PostInputType,
   PostWithID,
@@ -15,7 +16,12 @@ import {
   UploadTask,
   UploadTaskSnapshot,
 } from "firebase/storage";
-import { DocumentReference, Timestamp, deleteDoc, updateDoc } from "firebase/firestore";
+import {
+  DocumentReference,
+  Timestamp,
+  deleteDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { selectUser } from "../../Slices/userSlice";
 import { resizeImage } from "../../images/resizeImages";
@@ -29,13 +35,16 @@ import { getOptimizedSizes } from "./getOptimizedSizes";
 import { buildPostPayload } from "./buildPostPayload";
 import { addPostToFirestore } from "./updateFirestore";
 import { normalizePost } from "../normalizePost";
+import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 
 // Helper to wrap a Firebase storage upload task into a Promise
 function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
   return new Promise((resolve, reject) => {
     task.on(
-      'state_changed',
-      () => { /* progress handled externally */ },
+      "state_changed",
+      () => {
+        /* progress handled externally */
+      },
       (error) => reject(error),
       () => resolve(task.snapshot)
     );
@@ -53,8 +62,25 @@ export const useHandlePostSubmission = () => {
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     selectedCompanyMission: CompanyMissionType,
     apiKey: string,
-    navigate: NavigateFunction
+    navigate: NavigateFunction,
+    selectedGalloGoal?: FireStoreGalloGoalDocType | null,
   ): Promise<PostWithID> => {
+  // ) => {
+
+    //  console.log("🚨 handlePostSubmission blocked (no writes)");
+    //   console.log("📝 Post data:", post);
+    //   console.log("🥂 Selected Gallo goal:", selectedGalloGoal);
+
+    //   // 🔒 Temporarily stop here
+    //   console.warn("⚠️ Submission blocked. Remove this block to re-enable saving.");
+    //   return;
+
+
+
+
+
+
+
     if (!userData) throw new Error("User not authenticated");
     const user = auth.currentUser;
     if (!user) throw new Error("Auth missing");
@@ -66,27 +92,40 @@ export const useHandlePostSubmission = () => {
 
       // 2. Resize original and upload
       let originalUploadProgress = 0;
-      const originalBlob = await resizeImage(selectedFile, original[0], original[1]);
+      const originalBlob = await resizeImage(
+        selectedFile,
+        original[0],
+        original[1]
+      );
       const originalRef = storageRef(
         storage,
-        `images/${new Date().toISOString().split('T')[0]}/${user.uid}-${Date.now()}/original.jpg`
+        `images/${new Date().toISOString().split("T")[0]}/${
+          user.uid
+        }-${Date.now()}/original.jpg`
       );
       const origTask = uploadBytesResumable(originalRef, originalBlob);
-      origTask.on('state_changed', (snap) => {
-        originalUploadProgress = (snap.bytesTransferred / snap.totalBytes) * 100;
+      origTask.on("state_changed", (snap) => {
+        originalUploadProgress =
+          (snap.bytesTransferred / snap.totalBytes) * 100;
         setUploadProgress((originalUploadProgress + 0) / 2);
       });
       await uploadTaskAsPromise(origTask);
 
       // 3. Resize compressed and upload
       let resizedUploadProgress = 0;
-      const resizedBlob = await resizeImage(selectedFile, resized[0], resized[1]);
+      const resizedBlob = await resizeImage(
+        selectedFile,
+        resized[0],
+        resized[1]
+      );
       const resizedRef = storageRef(
         storage,
-        `images/${new Date().toISOString().split('T')[0]}/${user.uid}-${Date.now()}/resized.jpg`
+        `images/${new Date().toISOString().split("T")[0]}/${
+          user.uid
+        }-${Date.now()}/resized.jpg`
       );
       const resTask = uploadBytesResumable(resizedRef, resizedBlob);
-      resTask.on('state_changed', (snap) => {
+      resTask.on("state_changed", (snap) => {
         resizedUploadProgress = (snap.bytesTransferred / snap.totalBytes) * 100;
         setUploadProgress((originalUploadProgress + resizedUploadProgress) / 2);
       });
@@ -138,7 +177,7 @@ export const useHandlePostSubmission = () => {
           oppId: post.oppId,
           galloGoalTitle: post.galloGoalTitle,
           closedBy: post.closedBy ?? user.displayName ?? "",
-          closedDate: post.closedDate || new Date().toISOString().split('T')[0],
+          closedDate: post.closedDate || new Date().toISOString().split("T")[0],
           closedUnits: post.totalCaseCount || "0",
           photos: [{ file: resizedUrl }],
         };
@@ -148,12 +187,16 @@ export const useHandlePostSubmission = () => {
           navigate,
           dispatch
         );
-        // console.log("payload: ",
-        //   achievementPayload,
-        //   apiKey,
-        //   // navigate,
-        //   // dispatch
-        // )
+
+        if (selectedGalloGoal && post.account?.accountNumber) {
+          await dispatch(
+            markGalloAccountAsSubmitted({
+              goal: selectedGalloGoal,
+              accountNumber: post.account.accountNumber,
+              postId: postId,
+            })
+          );
+        }
       }
 
       // 11. Create submitted mission
@@ -170,7 +213,9 @@ export const useHandlePostSubmission = () => {
     } catch (error) {
       // Cleanup on any failure
       console.error("Error in post submission:", error);
-      showMessage(`Error adding post: ${error instanceof Error ? error.message : error}`);
+      showMessage(
+        `Error adding post: ${error instanceof Error ? error.message : error}`
+      );
       // Attempt to delete the Firestore doc if it exists
       // Note: newDocRef scoped inside try; you could track it above if needed
       try {

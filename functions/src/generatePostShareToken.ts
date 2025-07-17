@@ -30,7 +30,9 @@ export const generatePostShareToken = functions.https.onCall(
     }
 
     const shareToken = uuidv4();
-    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // ✅ 24-hour expiry
+    const tokenExpiry = new Date(
+      Date.now() + 24 * 60 * 60 * 1000
+    ).toISOString(); // ✅ 24-hour expiry
     const now = new Date().toISOString();
 
     try {
@@ -43,11 +45,11 @@ export const generatePostShareToken = functions.https.onCall(
 
       const existingData = docSnap.data();
       const existingTokens = Array.isArray(existingData?.tokens)
-        ? existingData.tokens
+        ? existingData?.tokens
         : [];
 
       const updatedTokens = [
-        ...existingTokens,
+        ...(existingTokens ?? []),
         {
           token: {
             sharedToken: shareToken,
@@ -77,4 +79,3 @@ export const generatePostShareToken = functions.https.onCall(
     }
   }
 );
-

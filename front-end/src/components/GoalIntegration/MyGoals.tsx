@@ -1,17 +1,45 @@
-// MyGoals.tsx
-import { Container, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { Tabs, Tab, Box, Typography, useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import MyCompanyGoals from "./MyCompanyGoals";
-// import MyGalloGoals from "./MyGalloGoals";
+import "./myGoals.css";
+import MyGalloGoals from "./MyGalloGoals";
 
 const MyGoals = () => {
+  const [tabIndex, setTabIndex] = useState(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabIndex(newValue);
+  };
+
   return (
-    <Container>
-      <Typography variant="h2" sx={{ flexGrow: 1, fontSize: "large" }}>
+    <Box className="my-goals-container">
+      <Typography
+        variant={isMobile ? "h5" : "h3"}
+        className="my-goals-title"
+        gutterBottom
+      >
         My Goals
       </Typography>
-      <MyCompanyGoals />
-      {/* <MyGalloGoals /> */}
-    </Container>
+
+      <Tabs
+        value={tabIndex}
+        onChange={handleTabChange}
+        variant={isMobile ? "fullWidth" : "standard"}
+        centered={!isMobile}
+        className="goals-tabs"
+      >
+        <Tab label="Company Goals" />
+        <Tab label="Gallo Programs" />
+      </Tabs>
+
+      <Box className="goals-content">
+        {tabIndex === 0 && <MyCompanyGoals />}
+        {tabIndex === 1 && <MyGalloGoals />}
+      </Box>
+    </Box>
   );
 };
 

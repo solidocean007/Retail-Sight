@@ -1,8 +1,13 @@
 import React from "react";
 import { Virtuoso } from "react-virtuoso";
 import { NavigateFunction } from "react-router-dom";
-import { CompanyAccountType, UserType } from "../utils/types";
+import {
+  CompanyAccountType,
+  CompanyGoalWithIdType,
+  UserType,
+} from "../utils/types";
 import "./accountTable.css";
+import { clearAllFilters } from "./FilterSideBar/utils/filterUtils";
 
 interface AccountWithStatus extends CompanyAccountType {
   submittedBy: UserType | null;
@@ -11,6 +16,7 @@ interface AccountWithStatus extends CompanyAccountType {
 }
 
 interface AccountTableProps {
+  goal?: CompanyGoalWithIdType;
   accounts: AccountWithStatus[];
   navigate: NavigateFunction;
   height?: number;
@@ -19,12 +25,25 @@ interface AccountTableProps {
 }
 
 const AccountTable: React.FC<AccountTableProps> = ({
+  goal,
   accounts,
   navigate,
   height = 500,
   rowHeight = 60,
   salesRouteNum,
 }) => {
+  const handleViewAccountPost = (postId: string) => {
+    const base = clearAllFilters();
+    const filters = {
+      ...base,
+      companyGoalId: goal?.id,
+      companyGoalTitle: goal?.goalTitle,
+    };
+
+    navigate("/user-home-page", {
+      state: { filters, postIdToScroll: postId },
+    });
+  };
   return (
     <div className="account-list-wrapper">
       <div className="account-list-scrollable">
@@ -83,9 +102,9 @@ const AccountTable: React.FC<AccountTableProps> = ({
                     <button
                       className="view-post-button"
                       onClick={() => {
-                        navigate("/user-home-page", {
-                          state: { postIdToScroll: acc.postId },
-                        });
+                        if (acc.postId) {
+                          handleViewAccountPost(acc.postId);
+                        }
                       }}
                       title="View Post"
                       aria-label="View Post"

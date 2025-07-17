@@ -211,13 +211,25 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }, 1000); // 🔧 tweak this value (500–1000ms) based on real-world test
 
     if (idx === -1 && appliedFilters) {
-      console.warn("Post to scroll not found. Refetching...");
-      dispatch(fetchFilteredPostsBatch({ filters: appliedFilters }));
+      console.warn("Post not found. Refetching...");
+      dispatch(fetchFilteredPostsBatch({ filters: appliedFilters })).then(
+        (action) => {
+          if (fetchFilteredPostsBatch.fulfilled.match(action)) {
+            const newPosts = action.payload.posts;
+            const newIdx = newPosts.findIndex((p) => p.id === postIdToScroll);
+            if (newIdx !== -1 && virtuosoRef.current) {
+              virtuosoRef.current.scrollToIndex({
+                index: newIdx,
+                align: "start",
+              });
+            }
+          }
+        }
+      );
     }
 
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
-
 
   return (
     <div className="activity-feed-box">

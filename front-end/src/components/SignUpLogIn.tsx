@@ -49,14 +49,14 @@ export const SignUpLogin = () => {
   const initialCompanyNameParam = searchParams.get("companyName") || "";
 
   const [emailParam, setEmailParam] = useState(
-    decodeURIComponent(initialEmailParam),
+    decodeURIComponent(initialEmailParam)
   );
   const [companyNameParam, setCompanyNameParam] = useState(
-    decodeURIComponent(initialCompanyNameParam),
+    decodeURIComponent(initialCompanyNameParam)
   );
   const [isEmailDisabled, setIsEmailDisabled] = useState(!!initialEmailParam);
   const [isCompanyDisabled, setIsCompanyDisabled] = useState(
-    !!initialCompanyNameParam,
+    !!initialCompanyNameParam
   );
 
   // useEffect to get parameters from url
@@ -140,6 +140,31 @@ export const SignUpLogin = () => {
     });
   }
 
+  const checkingIfUserExists = async (email: string) => {
+  try {
+    const response = await fetch(
+      "https://my-fetch-data-api.vercel.app/api/checkUserExists", // ✅ correct spelling
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer <optional-if-you-check-auth>",
+        },
+        body: JSON.stringify({ email }),
+      }
+    );
+
+    const result = await response.json();
+    console.log(result); // { exists: true, uid: "..." } or { exists: false }
+
+    return result.exists;
+  } catch (error) {
+    console.error("Error checking user existence:", error);
+    return false;
+  }
+};
+
+
   function formButtonMessage() {
     return isSignUp ? "switch to login" : "No account? Sign-up Now";
   }
@@ -164,7 +189,7 @@ export const SignUpLogin = () => {
       const validationErrors = validateUserInputs(userInputs);
       setErrorsOfInputs(validationErrors);
       const firstError = Object.values(validationErrors).find(
-        (error) => error !== "",
+        (error) => error !== ""
       );
 
       if (firstError) {
@@ -180,7 +205,7 @@ export const SignUpLogin = () => {
           "", // Company name will be set later
           phoneInput,
           passwordInput,
-          setSignUpError,
+          setSignUpError
         );
 
         if (authData && authData?.uid) {
@@ -189,7 +214,7 @@ export const SignUpLogin = () => {
           let companyData;
 
           const matchingCompany = await findMatchingCompany(
-            normalizedCompanyInput,
+            normalizedCompanyInput
           );
           if (matchingCompany) {
             companyData = {
@@ -214,7 +239,7 @@ export const SignUpLogin = () => {
           } else {
             companyData = await createNewCompany(
               normalizedCompanyInput,
-              authData.uid,
+              authData.uid
             );
           }
 
@@ -227,7 +252,7 @@ export const SignUpLogin = () => {
 
           // Fetch user data from Firestore
           const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid,
+            authData.uid
           )) as UserType;
           if (fetchedUserData) {
             // Assuming fetchedUserData is of UserType or you can map it to UserType
@@ -250,7 +275,7 @@ export const SignUpLogin = () => {
         if (authData && authData.uid) {
           // Fetch user data from Firestore or Firebase auth as required
           const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid,
+            authData.uid
           )) as UserType;
           if (fetchedUserData) {
             dispatch(setUser(fetchedUserData));
@@ -273,11 +298,29 @@ export const SignUpLogin = () => {
       return;
     }
 
+    const normalizedEmail = userInputs.emailInput.trim().toLowerCase();
+
     try {
-      await sendPasswordResetEmail(getAuth(), userInputs.emailInput);
+      const exists = await checkingIfUserExists(normalizedEmail);
+      if (!exists) {
+        dispatch(
+          showMessage(
+            "This email is not registered. Please check for typos or sign up."
+          )
+        );
+        return;
+      }
+
+      await sendPasswordResetEmail(getAuth(), normalizedEmail);
       dispatch(showMessage("Password reset email sent! Check your inbox."));
-    } catch (error) {
-      dispatch(showMessage("Error sending password reset email."));
+    } catch (error: any) {
+      if (error.code === "auth/invalid-email") {
+        dispatch(showMessage("Please enter a valid email address."));
+      } else {
+        dispatch(
+          showMessage("Unable to send reset email. Please try again later.")
+        );
+      }
       console.error("Password Reset Error:", error);
     }
   };

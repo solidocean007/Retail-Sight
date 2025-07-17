@@ -35,6 +35,13 @@ const MyCompanyGoals = () => {
   );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+   // 🆕 Manage expanded card
+  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+
+  const handleToggleExpand = (goalId: string) => {
+    setExpandedGoalId((prev) => (prev === goalId ? null : goalId));
+  };
+
   const today = new Date();
 
   const sortedGoals = useMemo(() => {
@@ -92,6 +99,8 @@ const MyCompanyGoals = () => {
           goal={goal}
           salesRouteNum={user?.salesRouteNum}
           mobile={isMobile}
+          expanded={expandedGoalId === goal.id} // 👈 controlled
+          onToggleExpand={handleToggleExpand} // 👈 controlled
         />
       ))}
     </Box>

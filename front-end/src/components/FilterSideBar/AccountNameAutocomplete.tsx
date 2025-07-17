@@ -41,6 +41,7 @@ const AccountNameAutocomplete: React.FC<Props> = ({
 
   return (
     <Autocomplete
+      freeSolo
       options={accountNames}
       value={selectedValue ?? ""}
       inputValue={inputValue}
@@ -77,7 +78,6 @@ const AccountNameAutocomplete: React.FC<Props> = ({
       fullWidth
       clearOnBlur={false}
       autoHighlight
-      // sx={{ "& .MuiInputBase-root": { padding: 0 } }} // Removes extra MUI padding
     />
   );
 };

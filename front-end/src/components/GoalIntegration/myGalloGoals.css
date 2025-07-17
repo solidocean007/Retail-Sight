@@ -1,0 +1,132 @@
+.my-gallo-goals-container {
+  padding: 1rem;
+}
+
+.gallo-goals-header {
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.programs-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Add space between programs */
+}
+
+.program-card {
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.program-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.program-title {
+  font-weight: 600;
+}
+
+.program-dates {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.goal-container {
+  padding: 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+}
+
+.goal-title {
+  font-weight: 500;
+}
+
+.goal-metrics {
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.accounts-table {
+  width: 100%;
+  border: 1px solid #ccc;
+}
+
+.account-row:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.submitted-status {
+  color: green;
+  font-weight: 500;
+}
+
+.not-submitted-status {
+  color: red;
+  font-weight: 500;
+}
+
+.toggle-btn {
+  margin-top: 0.5rem;
+}
+
+.no-sales-route,
+.no-goals-message {
+  text-align: center;
+  margin: 2rem 0;
+  color: #999;
+}
+
+/* Hide regular table headers on mobile */
+@media (max-width: 600px) {
+   .accounts-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: none;
+    margin-bottom: 2px;
+    color: #555;
+  }
+  
+  .accounts-table thead {
+    display: none;
+  }
+
+  .accounts-table,
+  .accounts-table tbody,
+  .accounts-table tr,
+  .accounts-table td {
+    display: block;
+    width: 100%;
+    text-align: left;
+    justify-content: start;
+  }
+
+  .accounts-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    padding: 8px;
+  }
+
+  .accounts-table td {
+    text-align: left;
+    padding: 4px 8px;
+    border: none;
+  }
+
+  .accounts-table .mobile-header {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 2px;
+    color: #555;
+  }
+}
+

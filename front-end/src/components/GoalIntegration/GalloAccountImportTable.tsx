@@ -26,10 +26,8 @@ import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import "./galloAccountImportTable.css";
 import { createGalloGoal } from "../../utils/helperFunctions/createGalloGoal";
-import { addGalloGoal } from "../../Slices/galloGoalsSlice";
-import {
-  saveSingleGalloGoalToIndexedDB,
-} from "../../utils/database/goalsStoreUtils";
+import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
+import { saveSingleGalloGoalToIndexedDB } from "../../utils/database/goalsStoreUtils";
 
 interface AccountTableProps {
   accounts: EnrichedGalloAccountType[];
@@ -106,7 +104,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     }
   }, [selectedAccounts, accounts]);
 
-  const handleSelectAll = () => { // unused? is this for toggling?
+  const handleSelectAll = () => {
+    // unused? is this for toggling?
     if (isAllSelected) {
       setSelectedAccounts([]);
     } else {
@@ -149,8 +148,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       console.log("✅ Saved Goal from Firestore:", savedGoal);
 
       // Use saved shape for Redux and IndexedDB
-      dispatch(addGalloGoal(savedGoal));
-      await saveSingleGalloGoalToIndexedDB(savedGoal); 
+      dispatch(addOrUpdateGalloGoal(savedGoal));
+      await saveSingleGalloGoalToIndexedDB(savedGoal);
 
       alert("Goal saved successfully!");
       onSaveComplete();
@@ -332,9 +331,10 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
               <TableCell>{account.accountName || "N/A"}</TableCell>
               <TableCell>{account.accountAddress || "N/A"}</TableCell>
               <TableCell>
-                {Array.isArray(account.salesRouteNums)
+                {Array.isArray(account.salesRouteNums) &&
+                account.salesRouteNums.length > 0
                   ? account.salesRouteNums.join(", ")
-                  : account.salesRouteNums || "N/A"}
+                  : "N/A"}
               </TableCell>
               <TableCell>{account.salesPersonsName}</TableCell>
               <TableCell>{account.oppId}</TableCell>

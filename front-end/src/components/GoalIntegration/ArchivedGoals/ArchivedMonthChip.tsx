@@ -1,6 +1,7 @@
 import { Box, Collapse, Chip } from "@mui/material";
 import { CompanyGoalWithIdType } from "../../../utils/types";
 import CompanyGoalCard from "../CompanyGoalCard";
+import { useState } from "react";
 
 interface ArchivedMonthSectionProps {
   month: string;
@@ -26,6 +27,11 @@ const ArchivedMonthSection = ({
   expanded,
   onToggle,
 }: ArchivedMonthSectionProps) => {
+  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+
+  const handleToggleExpand = (goalId: string) => {
+    setExpandedGoalId((prev) => (prev === goalId ? null : goalId));
+  };
   return (
     <Box className="archived-month-container">
       <Chip
@@ -43,6 +49,8 @@ const ArchivedMonthSection = ({
             <CompanyGoalCard
               key={goal.id}
               goal={goal}
+              expanded={expandedGoalId === goal.id}
+              onToggleExpand={handleToggleExpand}
               mobile={isMobile}
               onDelete={onDelete ? () => onDelete(goal.id) : undefined}
               salesRouteNum={salesRouteNum}

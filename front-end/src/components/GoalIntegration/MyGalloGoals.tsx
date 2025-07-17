@@ -1,0 +1,466 @@
+// import React, { useEffect, useState } from "react";
+// import { useSelector } from "react-redux";
+// import { useAppDispatch } from "../../utils/store";
+// import { selectUser } from "../../Slices/userSlice";
+// import {
+//   CircularProgress,
+//   Table,
+//   TableBody,
+//   TableCell,
+//   TableContainer,
+//   TableHead,
+//   TableRow,
+//   Button,
+//   Typography,
+//   Collapse,
+//   Box,
+// } from "@mui/material";
+// import { RootState } from "../../utils/store";
+// // import "./myGalloGoals.css";
+// // import { CompanyAccountType } from "../utils/types";
+// import { selectGalloGoalsLoading, selectUsersGalloGoals } from "../../Slices/galloGoalsSlice";
+
+// const MyGalloGoals = () => {
+//   const loading = useSelector(selectGalloGoalsLoading);
+//   const user = useSelector(selectUser);
+//   const salesRouteNum = user?.salesRouteNum;
+//   const usersGalloGoals = useSelector((state: RootState) =>
+//     selectUsersGalloGoals(state, salesRouteNum),
+//   );
+//   const [expandedPrograms, setExpandedPrograms] = useState<string[]>([]);
+//   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
+//     {},
+//   );
+//   // console.log("usersGalloGoals", usersGalloGoals);
+
+//   const toggleProgramExpansion = (programId: string) => {
+//     console.log("programId:", programId);
+//     console.log("programId type:", typeof(programId));
+//     setExpandedPrograms((prev) =>
+//       prev.includes(programId)
+//         ? prev.filter((id) => id !== programId)
+//         : [...prev, programId],
+//     );
+//   };
+
+//   const toggleGoalExpansion = (goalId: string) => {
+//     setExpandedGoals((prev) => ({
+//       ...prev,
+//       [goalId]: !prev[goalId], // Toggle the specific goal's state
+//     }));
+//   };
+
+//   if (usersGalloGoals.length === 0) return;
+
+//   if (!salesRouteNum) {
+//   return (
+//     <Typography color="error">
+//       You do not have a sales route assigned.
+//     </Typography>
+//   );
+// }
+
+//   return (
+//     <div className="my-gallo-goals-container">
+//       <Typography
+//         variant="h3"
+//         sx={{ flexGrow: 1, fontSize: "large" }}
+//         className="my-goals-title"
+//       >
+//         Gallo Programs
+//       </Typography>
+//       {loading ? (
+//         <CircularProgress />
+//       ) : (
+//         <TableContainer>
+//           <Table className="gallo-program-table">
+//             <TableHead>
+//               <TableRow>
+//                 <TableCell>Program Title</TableCell>
+//                 <TableCell>Start Date</TableCell>
+//                 <TableCell>End Date</TableCell>
+//                 <TableCell>Actions</TableCell>
+//               </TableRow>
+//             </TableHead>
+//             <TableBody>
+//               {/* Handle no Gallo goals case */}
+//               {usersGalloGoals.length === 0 && (
+//                 <TableRow>
+//                   <TableCell colSpan={4} align="center">
+//                     No Gallo goals available for your accounts at this time.
+//                   </TableCell>
+//                 </TableRow>
+//               )}
+
+//               {usersGalloGoals.map((goal, index) => (
+//                 <React.Fragment key={index}>
+//                   {/* Program Row */}
+//                   <TableRow>
+//                     <TableCell>{goal.programDetails.programTitle}</TableCell>
+//                     <TableCell>
+//                       {goal.programDetails.programStartDate || "N/A"}
+//                     </TableCell>
+//                     <TableCell>
+//                       {goal.programDetails.programEndDate || "N/A"}
+//                     </TableCell>
+//                     <TableCell>
+//                       <Button
+//                         onClick={() =>
+//                           toggleProgramExpansion(
+//                             goal.programDetails.programId,
+//                           )
+//                         }
+//                         variant="outlined"
+//                         size="small"
+//                       >
+//                         {expandedPrograms.includes(
+//                           goal.programDetails.programTitle,
+//                         )
+//                           ? "Collapse"
+//                           : "Show Goal"}
+//                       </Button>
+//                     </TableCell>
+//                   </TableRow>
+
+//                   {/* Expandable Goal Section */}
+//                   {expandedPrograms.includes(
+//                     goal.programDetails.programId,
+//                   ) && (
+//                     <React.Fragment>
+//                       <TableRow>
+//                         <TableCell colSpan={4}>
+//                           <Box display="flex" justifyContent="space-between">
+//                             <Typography variant="body1">
+//                               Goal: {goal.goalDetails.goal}
+//                             </Typography>
+//                             <Typography variant="body1">
+//                               Metric: {goal.goalDetails.goalMetric} | Min Value:{" "}
+//                               {goal.goalDetails.goalValueMin}
+//                             </Typography>
+//                             <Button
+//                               onClick={() =>
+//                                 toggleGoalExpansion(goal.goalDetails.goalId)
+//                               }
+//                               variant="outlined"
+//                               size="small"
+//                             >
+//                               {expandedGoals[goal.goalDetails.goalId]
+//                                 ? "Hide Accounts"
+//                                 : "Show Accounts"}
+//                             </Button>
+//                           </Box>
+//                         </TableCell>
+//                       </TableRow>
+
+//                       {/* Expandable Accounts Section */}
+//                       {expandedGoals[goal.goalDetails.goalId] && (
+//                         <TableRow>
+//                           <TableCell colSpan={4}>
+//                             <Collapse
+//                               in={expandedGoals[goal.goalDetails.goalId]}
+//                               timeout="auto"
+//                               unmountOnExit
+//                             >
+//                               <Box margin={2}>
+//                                 <Typography variant="h6">Accounts</Typography>
+//                                 <Table size="small">
+//                                   <TableHead>
+//                                     <TableRow>
+//                                       <TableCell>Account Name</TableCell>
+//                                       <TableCell>Account Address</TableCell>
+//                                       <TableCell>Account Number</TableCell>
+//                                       <TableCell>Post Status</TableCell>
+//                                     </TableRow>
+//                                   </TableHead>
+//                                   <TableBody>
+//                                     {goal.accounts.map(
+//                                       (account, accountIndex) => {
+//                                         const isPostSubmitted =
+//                                           !!account.submittedPostId; // Check if submittedPostId exists
+
+//                                         return (
+//                                           <TableRow key={accountIndex}>
+//                                             <TableCell>
+//                                               {account.accountName || "N/A"}
+//                                             </TableCell>
+//                                             <TableCell>
+//                                               {account.accountAddress || "N/A"}
+//                                             </TableCell>
+//                                             <TableCell>
+//                                               {account.distributorAcctId ||
+//                                                 "N/A"}
+//                                             </TableCell>
+//                                             <TableCell>
+//                                               {isPostSubmitted ? (
+//                                                 <Typography color="primary">
+//                                                   Submitted
+//                                                 </Typography>
+//                                               ) : (
+//                                                 <Typography color="error">
+//                                                   Not Submitted
+//                                                 </Typography>
+//                                               )}
+//                                             </TableCell>
+//                                             <TableCell>
+//                                               {isPostSubmitted ? (
+//                                                 <Button
+//                                                   variant="text"
+//                                                   color="primary"
+//                                                   // onClick={() =>
+//                                                   //   navigate(
+//                                                   //     `/post/${account.submittedPostId}`
+//                                                   //   )
+//                                                   // } // Add appropriate navigation logic
+//                                                 >
+//                                                   View Post
+//                                                 </Button>
+//                                               ) : (
+//                                                 <Typography color="error">
+//                                                   Not Submitted
+//                                                 </Typography>
+//                                               )}
+//                                             </TableCell>
+//                                             <TableCell>
+//                                               {isPostSubmitted ? (
+//                                                 <Typography color="primary">
+//                                                   Submitted
+//                                                 </Typography>
+//                                               ) : (
+//                                                 <Button
+//                                                   disabled={isPostSubmitted}
+//                                                   variant="contained"
+//                                                   color="primary"
+//                                                   // onClick={() =>
+//                                                   //   navigate(
+//                                                   //     `/create-post?goalId=${goal.goalDetails.goalId}&accountId=${account.distributorAcctId}`
+//                                                   //   )
+//                                                   // }
+//                                                 >
+//                                                   Create Post
+//                                                 </Button>
+//                                               )}
+//                                             </TableCell>
+//                                           </TableRow>
+//                                         );
+//                                       },
+//                                     )}
+//                                   </TableBody>
+//                                 </Table>
+//                               </Box>
+//                             </Collapse>
+//                           </TableCell>
+//                         </TableRow>
+//                       )}
+//                     </React.Fragment>
+//                   )}
+//                 </React.Fragment>
+//               ))}
+//             </TableBody>
+//           </Table>
+//         </TableContainer>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default MyGalloGoals;
+
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import {
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Typography,
+  Collapse,
+  Box,
+  Paper,
+} from "@mui/material";
+import { RootState } from "../../utils/store";
+import {
+  selectGalloGoalsLoading,
+  selectUsersGalloGoals,
+} from "../../Slices/galloGoalsSlice";
+import "./gallo-goals.css";
+
+const MyGalloGoals = () => {
+  const loading = useSelector(selectGalloGoalsLoading);
+  const user = useSelector((state: RootState) => state.user.currentUser);
+  const salesRouteNum = user?.salesRouteNum;
+  const usersGalloGoals = useSelector((state: RootState) =>
+    selectUsersGalloGoals(state, salesRouteNum)
+  );
+  const [expandedProgramId, setExpandedProgramId] = useState<string | null>(
+    null
+  );
+  const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const toggleProgramExpansion = (programId: string) => {
+    setExpandedProgramId(
+      (prev) => (prev === programId ? null : programId) // collapse if same, expand if different
+    );
+  };
+  const toggleGoalExpansion = (goalId: string) => {
+    setExpandedGoals((prev) => ({
+      ...prev,
+      [goalId]: !prev[goalId],
+    }));
+  };
+
+  if (!salesRouteNum) {
+    return (
+      <Typography color="error" className="no-sales-route">
+        You do not have a sales route assigned.
+      </Typography>
+    );
+  }
+
+  return (
+    <div className="my-gallo-goals-container">
+      <Typography variant="h4" className="gallo-goals-header">
+        Gallo Programs
+      </Typography>
+
+      {loading ? (
+        <Box textAlign="center" mt={4}>
+          <CircularProgress />
+          <Typography variant="body1">Loading your Gallo goals…</Typography>
+        </Box>
+      ) : usersGalloGoals.length === 0 ? (
+        <Typography className="no-goals-message">
+          No Gallo goals available for your accounts at this time.
+        </Typography>
+      ) : (
+        <Box className="programs-wrapper">
+          {usersGalloGoals.map((goal, index) => (
+            <Paper key={index} elevation={3} className="program-card">
+              {/* Program Header */}
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                className="program-header"
+              >
+                <Box>
+                  <Typography variant="h6" className="program-title">
+                    {goal.programDetails.programTitle}
+                  </Typography>
+                  <Typography variant="body2" className="program-dates">
+                    {goal.programDetails.programStartDate} -{" "}
+                    {goal.programDetails.programEndDate}
+                  </Typography>
+                </Box>
+                <Button
+                  onClick={() =>
+                    toggleProgramExpansion(goal.programDetails.programId)
+                  }
+                  variant="outlined"
+                  size="small"
+                >
+                  {expandedProgramId === goal.programDetails.programId
+                    ? "Close"
+                    : "Open"}
+                </Button>
+              </Box>
+
+              {/* Expandable Goals Section */}
+              <Collapse
+                in={expandedProgramId === goal.programDetails.programId}
+                timeout="auto"
+                unmountOnExit
+              >
+                <Box className="goal-container">
+                  <Typography variant="subtitle1" className="goal-title">
+                    Goal: {goal.goalDetails.goal}
+                  </Typography>
+                  <Typography variant="body2" className="goal-metrics">
+                    Metric: {goal.goalDetails.goalMetric} | Min Value:{" "}
+                    {goal.goalDetails.goalValueMin}
+                  </Typography>
+
+                  <Button
+                    onClick={() => toggleGoalExpansion(goal.goalDetails.goalId)}
+                    variant="outlined"
+                    size="small"
+                    className="toggle-btn"
+                  >
+                    {expandedGoals[goal.goalDetails.goalId]
+                      ? "Hide Accounts"
+                      : "Show Accounts"}
+                  </Button>
+
+                  <Collapse
+                    in={expandedGoals[goal.goalDetails.goalId]}
+                    timeout="auto"
+                    unmountOnExit
+                  >
+                    <Box mt={2}>
+                      <Table size="small" className="accounts-table">
+                        {window.innerWidth > 600 && (
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Account Name</TableCell>
+                              <TableCell>Account Address</TableCell>
+                              <TableCell>Account Number</TableCell>
+                              <TableCell>Status</TableCell>
+                            </TableRow>
+                          </TableHead>
+                        )}
+
+                        <TableBody>
+                          {goal.accounts.map((account, idx) => (
+                            <TableRow key={idx} className="account-row">
+                              <TableCell data-label="Account Name">
+                                <span className="mobile-header">
+                                  Account Name
+                                </span>
+                                {account.accountName || "N/A"}
+                              </TableCell>
+                              <TableCell data-label="Account Address">
+                                <span className="mobile-header">
+                                  Account Address
+                                </span>
+                                {account.accountAddress || "N/A"}
+                              </TableCell>
+                              <TableCell data-label="Account Number">
+                                <span className="mobile-header">
+                                  Account Number
+                                </span>
+                                {account.distributorAcctId || "N/A"}
+                              </TableCell>
+                              <TableCell data-label="Status">
+                                <span className="mobile-header">Status</span>
+                                {account.submittedPostId ? (
+                                  <Typography className="submitted-status">
+                                    Submitted
+                                  </Typography>
+                                ) : (
+                                  <Typography className="not-submitted-status">
+                                    Not Submitted
+                                  </Typography>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </Box>
+                  </Collapse>
+                </Box>
+              </Collapse>
+            </Paper>
+          ))}
+        </Box>
+      )}
+    </div>
+  );
+};
+
+export default MyGalloGoals;

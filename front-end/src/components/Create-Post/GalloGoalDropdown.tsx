@@ -11,7 +11,7 @@ interface GalloGoalDropdownProps {
   goals: FireStoreGalloGoalDocType[];
   label: string;
   loading: boolean;
-  onSelect: (goalId: string) => void;
+  onSelect: (goal: FireStoreGalloGoalDocType | undefined) => void;
   selectedGoal?: string | null;
 }
 
@@ -33,7 +33,12 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
           fullWidth
           variant="outlined"
           value={selectedGoal || "no-goal"}
-          onChange={(e) => onSelect(e.target.value)}
+          onChange={(e) => {
+            const goal = goals.find(
+              (g) => g.goalDetails.goalId === e.target.value
+            );
+            onSelect(goal); // 🆕 Pass the full goal object
+          }}
           displayEmpty
           disabled={goals.length === 0}
         >
@@ -55,5 +60,6 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
     </Box>
   );
 };
+
 
 export default GalloGoalDropdown;

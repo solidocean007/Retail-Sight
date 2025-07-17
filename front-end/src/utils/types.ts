@@ -438,8 +438,8 @@ export interface FireStoreGalloGoalDocType {
     distributorAcctId: string;
     accountName: string;
     accountAddress: string;
-    salesRouteNums?: string[];
-    marketId?: string;
+    salesRouteNums: string[];
+    marketId: string;
     submittedPostId?: string;
   }>;
 }
@@ -461,7 +461,7 @@ export type CompanyAccountType = {
 export type EnrichedGalloAccountType = GalloAccountType & {
   accountName?: string; // Optional, because not all Gallo accounts may have a Firestore match
   accountAddress?: string;
-  salesRouteNums?: string[]; // Optional, same reason
+  salesRouteNums: string[];
   salesPersonsName?: string;
 };
 

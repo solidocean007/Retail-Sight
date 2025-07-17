@@ -20,6 +20,7 @@ import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreatio
 import {
   CompanyAccountType,
   CompanyMissionType,
+  FireStoreGalloGoalDocType,
   MissionType,
   PostInputType,
   PostType,
@@ -77,6 +78,9 @@ export const CreatePost = () => {
     postUser: userData || null,
     account: null,
   }));
+
+  const [selectedGalloGoal, setSelectedGalloGoal] = useState<FireStoreGalloGoalDocType | null>(null);
+  
 
   const [selectedCompanyMission, setSelectedCompanyMission] =
     useState<CompanyMissionType>();
@@ -147,6 +151,7 @@ export const CreatePost = () => {
             setPost={setPost}
             handleFieldChange={handleFieldChange}
             setSelectedCompanyAccount={setSelectedCompanyAccount}
+            setSelectedGalloGoal={setSelectedGalloGoal}
           />
         );
       case 3:
@@ -184,6 +189,7 @@ export const CreatePost = () => {
             handlePostSubmission={handlePostSubmission}
             selectedCompanyMission={selectedCompanyMission}
             selectedMission={selectedMission}
+            selectedGalloGoal={selectedGalloGoal} // 🆕 Pass the selected Gallo goal
           />
         );
     }

@@ -1,0 +1,26 @@
+.my-goals-container {
+  margin: 1rem;
+}
+
+.my-goals-title {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.goals-tabs {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.goals-content {
+  padding: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .my-goals-title {
+    font-size: 1.2rem;
+  }
+  .goals-tabs {
+    flex-direction: column;
+  }
+}

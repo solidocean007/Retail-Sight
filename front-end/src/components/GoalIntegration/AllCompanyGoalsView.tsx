@@ -28,13 +28,20 @@ const AllCompanyGoalsView = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const companyGoals = useSelector(selectAllCompanyGoals);
-  const [showArchived, setShowArchived] = useState(false);
+  const [showArchived, setShowArchived] = useState(false); // this is unused now
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "title">(
     "newest"
   );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string>("");
+
+  // 🆕 Manage expanded card
+  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+
+  const handleToggleExpand = (goalId: string) => {
+    setExpandedGoalId((prev) => (prev === goalId ? null : goalId));
+  };
 
   // Split goals into active and archived
   const today = new Date().toISOString();
@@ -133,6 +140,8 @@ const AllCompanyGoalsView = ({
             key={goal.id}
             goal={goal}
             mobile={isMobile}
+            expanded={expandedGoalId === goal.id} // 👈 controlled
+            onToggleExpand={handleToggleExpand} // 👈 controlled
             onDelete={() => {
               setSelectedGoalId(goal.id);
               setIsConfirmationOpen(true);

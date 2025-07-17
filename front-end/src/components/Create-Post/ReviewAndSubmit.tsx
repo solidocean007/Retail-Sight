@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
 import {
   CompanyMissionType,
+  FireStoreGalloGoalDocType,
   MissionType,
   PostInputType,
 } from "../../utils/types";
@@ -36,6 +37,7 @@ interface ReviewAndSubmitProps {
   handlePostSubmission: any;
   selectedCompanyMission?: CompanyMissionType;
   selectedMission: MissionType | null;
+  selectedGalloGoal?: FireStoreGalloGoalDocType | null;
 }
 
 export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
@@ -51,6 +53,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   handlePostSubmission,
   selectedCompanyMission,
   selectedMission,
+  selectedGalloGoal,
 }) => {
   const [apiKey, setApiKey] = useState("");
   const dispatch = useAppDispatch();
@@ -67,7 +70,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         });
     }
   }, [companyId, post.oppId, apiKey, dispatch]);
-
 
   // const handleSubmitClick = useCallback(async () => {
   //   if (!selectedFile || isSubmitting) return;
@@ -138,7 +140,8 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         setUploadProgress,
         selectedCompanyMission,
         apiKey,
-        navigate
+        navigate,
+        selectedGalloGoal
       );
       dispatch(mergeAndSetPosts([normalizePost(newPost)]));
       dispatch(showMessage("Post submitted successfully!"));
