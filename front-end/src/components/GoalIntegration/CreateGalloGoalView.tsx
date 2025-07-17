@@ -276,10 +276,7 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
         (account) => galloAccountIds.includes(account.accountNumber) // Compare as strings
       );
 
-      // Return sample size if isSampleMode is enabled
-      return isSampleMode
-        ? filteredAccounts.slice(0, accountSampleSize)
-        : filteredAccounts;
+      return filteredAccounts;
     } catch (error) {
       console.error("Error fetching company accounts:", error);
       return [];

@@ -1,0 +1,122 @@
+/* ===== Shared Styles ===== */
+.gallo-goals-header {
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.programs-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.program-card {
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.program-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.program-title {
+  font-weight: 600;
+}
+
+.program-dates {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.goal-container {
+  padding: 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-top: 0.75rem;
+}
+
+.goal-title {
+  font-weight: 500;
+}
+
+.goal-metrics {
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.toggle-btn {
+  margin-top: 0.5rem;
+}
+
+.submitted-status {
+  color: green;
+  font-weight: 500;
+}
+
+.not-submitted-status {
+  color: red;
+  font-weight: 500;
+}
+
+.no-sales-route,
+.no-goals-message {
+  text-align: center;
+  margin: 2rem 0;
+  color: #999;
+}
+
+/* ===== Table Styles (MyGalloGoals & GalloProgramCard) ===== */
+.accounts-table {
+  width: 100%;
+  border: 1px solid #ccc;
+}
+
+.account-row:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* ===== Mobile Responsive Styles ===== */
+@media (max-width: 600px) {
+  .accounts-table thead {
+    display: none;
+  }
+
+  .accounts-table,
+  .accounts-table tbody,
+  .accounts-table tr,
+  .accounts-table td {
+    display: block;
+    width: 100%;
+    text-align: left;
+  }
+
+  .accounts-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    padding: 8px;
+  }
+
+  .accounts-table td {
+    padding: 4px 8px;
+    border: none;
+    position: relative;
+  }
+
+  .accounts-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: bold;
+    margin-bottom: 2px;
+    color: #555;
+  }
+}

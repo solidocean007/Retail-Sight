@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   Typography,
@@ -9,9 +9,8 @@ import {
   Tooltip,
   useMediaQuery,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import InfoIcon from "@mui/icons-material/Info";
-import { CompanyGoalWithIdType, CompanyAccountType } from "../../utils/types";
+import { CompanyGoalWithIdType } from "../../utils/types";
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 import AccountTable from "../AccountTable";
@@ -21,10 +20,11 @@ import EditCompanyGoalModal from "./EditCompanyGoalModal";
 import "./companyGoalCard.css";
 import { mapAccountsWithStatus } from "./utils/goalModeUtils";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
-import { selectUserAccounts } from "../../Slices/userAccountsSlice";
 
 interface CompanyGoalCardProps {
   goal: CompanyGoalWithIdType;
+  expanded: boolean;
+  onToggleExpand: (goalId: string) => void;
   salesRouteNum?: string; // 🔧 new
   mobile?: boolean;
   onDelete?: (id: string) => void;
@@ -37,6 +37,8 @@ interface CompanyGoalCardProps {
 const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   goal,
   salesRouteNum,
+  expanded,
+  onToggleExpand,
   mobile = false,
   onDelete,
   onEdit,
@@ -47,7 +49,6 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const companyUsers = useSelector(selectCompanyUsers) || [];
 
-  const [expanded, setExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSubmitted, setFilterSubmitted] = useState<
@@ -267,7 +268,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           <Button
             variant="outlined"
             size="small"
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => onToggleExpand(goal.id)}
           >
             {expanded ? "Hide submissions" : "Show submissions"}
           </Button>
@@ -289,10 +290,11 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           setFilterSubmitted={setFilterSubmitted}
         />
         <AccountTable
+          goal={goal}
           accounts={filteredAccountsWithStatus}
           navigate={navigate}
           height={500}
-          rowHeight={60}
+          rowHeight={50}
         />
       </Collapse>
 

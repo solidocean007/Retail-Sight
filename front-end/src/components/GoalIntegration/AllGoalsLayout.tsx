@@ -122,7 +122,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
           >
             {/* <MenuItem value={0}>Goals View</MenuItem> */}
             <MenuItem value={0}>Company Goals</MenuItem>
-            <MenuItem value={2}>Gallo Programs & Goals</MenuItem>
+            <MenuItem value={1}>Gallo Programs & Goals</MenuItem>
           </Select>
         ) : (
           <Tabs
