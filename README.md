@@ -14,6 +14,50 @@ Displaygram.com is a collaborative platform for sales teams, suppliers, and dist
 
 ---
 
+🆕 User Onboarding & Access Control
+
+- 🚪 Invite-Based Access (Preferred)
+
+- New users are invited by existing admins to join their company as either a Distributor or Supplier.
+
+- Invite links pre-fill company and user type during signup for seamless onboarding.
+
+- Users gain full access immediately after signup if invited.
+
+📝 Fallback: Request Access Form
+
+- If a user signs up without an invite, they must complete a Request Access form:
+
+- Select whether they are a Distributor or Supplier.
+
+- Provide company details and contact info.
+
+- Submit the form for review.
+
+- Request details are emailed to the platform admin and saved in Firestore for developer dashboard review.
+
+🎯 Free Tier Limitations
+
+- Distributors (Free Tier):
+
+- Up to 5 users.
+
+- 1 Supplier connection.
+
+- Limited access to goal tracking and post analytics.
+
+Suppliers (Free Tier):
+
+- 1 Distributor connection.
+
+- 1 user.
+
+- Limited dashboard insights and no bulk goal import.
+
+- Upgrade options will allow larger teams, multiple supplier/distributor connections, and advanced analytics.
+
+----
+
 ## 🛠 Technologies
 
 - **Frontend:** React + TypeScript (Vite for fast dev builds)
@@ -26,7 +70,7 @@ Displaygram.com is a collaborative platform for sales teams, suppliers, and dist
 
 ---
 
-## Future Plans
+## Future Plans as described in the new section above havent been really done yet. The info below kinda mirrors those.
 
 - redesign how companies and users are created.  Rethink how new users and companies join.  
 - Build a supplier side dashboard.  Allow suppliers to view posts from connected distributors that post brands they both have in  their portfolio.
