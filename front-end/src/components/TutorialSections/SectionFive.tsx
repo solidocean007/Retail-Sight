@@ -6,8 +6,8 @@ const SectionFive = () => {
       <h2>Finalizing and Uploading the Post:</h2>
       <ol>
         <li>
-          Select the visibility of the post (default: Company only, with an
-          option to change to public).
+          Select the visibility of the post (default: Netowrk, with an
+          option to change to Company Only).
         </li>
         <li>Click 'Submit Post' for uploading.</li>
         <li>

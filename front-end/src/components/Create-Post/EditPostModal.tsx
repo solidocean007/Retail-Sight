@@ -7,15 +7,13 @@ import {
   PostInputType,
   PostWithID,
   UserType,
+  VisibilityType,
 } from "../../utils/types";
 import { useDispatch, useSelector } from "react-redux";
 import { showMessage } from "../../Slices/snackbarSlice";
 import {
   doc,
-  collection,
   updateDoc,
-  arrayUnion,
-  arrayRemove,
   getDoc,
 } from "firebase/firestore";
 import { db } from "../../utils/firebase";
@@ -35,9 +33,6 @@ import {
 import { updatePostWithNewTimestamp } from "../../utils/PostLogic/updatePostWithNewTimestamp";
 import { extractHashtags, extractStarTags } from "../../utils/extractHashtags";
 import TotalCaseCount from "../TotalCaseCount";
-import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCompanyAccounts";
-import { RootState } from "../../utils/store";
-import AccountModalSelector from "./AccountModalSelector";
 import BrandsSelector from "../ProductsManagement/BrandsSelector";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
@@ -60,9 +55,9 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 }) => {
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
-  const [allAccountsForCompany, setAllAccountsForCompany] = useState<
-    CompanyAccountType[]
-  >([]);
+  // const [allAccountsForCompany, setAllAccountsForCompany] = useState<
+  //   CompanyAccountType[]
+  // >([]);
   const dispatch = useDispatch();
   const [description, setDescription] = useState<string>(
     post.description || ""
@@ -70,19 +65,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   const userData = useSelector(selectUser)!;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
-  const [postVisibility, setPostVisibility] = useState<
-    "public" | "company" | "supplier" | "private" | undefined
-  >("public");
+  const [postVisibility, setPostVisibility] = useState<VisibilityType>(post.visibility); // Argument of type 'string' is not assignable to parameter of type 'VisibilityType | (() => VisibilityType)'.
   const [updatedCaseCount, setUpdatedCaseCount] = useState(post.totalCaseCount);
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
-  const [openAccountModal, setOpenAccountModal] = useState(false);
-
-  const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
-  );
+ 
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
   const activeCompanyGoals = useMemo(() => {
     if (!post.account?.accountNumber || allCompanyGoals.length === 0) return [];
@@ -118,73 +107,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   useEffect(() => setEditablePost(post), [post]);
 
   useEffect(() => {
-    if (openAccountModal) {
-      const loadAllCompanyAccounts = async () => {
-        // setLoadingAccounts(true);
-        try {
-          const accounts = await fetchAllCompanyAccounts(companyId);
-          setAllAccountsForCompany(accounts);
-        } catch (error) {
-          console.error("Error fetching all company accounts:", error);
-        } finally {
-          // setLoadingAccounts(false);
-        }
-      };
-
-      loadAllCompanyAccounts();
-    } else {
-      // If toggled back to "My Stores", reset accounts
-      // setAccountsToSelect(myAccounts);
-    }
-  }, [openAccountModal, companyId]);
-
-  // Handler for Account Selection
-  const handleAccountSelect = async (account: CompanyAccountType) => {
-    try {
-      const postRef = doc(db, "posts", post.id);
-
-      await updateDoc(postRef, {
-        account: {
-          accountNumber: account.accountNumber,
-          accountName: account.accountName,
-          accountAddress: account.accountAddress,
-          salesRouteNums: account.salesRouteNums || [],
-        },
-      });
-
-      dispatch(
-        updatePost({
-          ...post,
-          account: {
-            accountNumber: account.accountNumber,
-            accountName: account.accountName,
-            accountAddress: account.accountAddress,
-            salesRouteNums: account.salesRouteNums || [],
-          },
-        })
-      );
-
-      await updatePostInIndexedDB({
-        ...post,
-        account: {
-          accountNumber: account.accountNumber,
-          accountName: account.accountName,
-          accountAddress: account.accountAddress,
-          salesRouteNums: account.salesRouteNums || [],
-        },
-      });
-
-      dispatch(showMessage("Account updated successfully!"));
-      setOpenAccountModal(false);
-    } catch (error) {
-      console.error("Error updating post account:", error);
-      dispatch(showMessage("Error updating account for post."));
-    }
-  };
-
-  useEffect(() => {
     setDescription(post?.description || "");
-    setPostVisibility(post?.visibility || "public");
+    setPostVisibility(post?.visibility || "network"); // Argument of type 'string' is not assignable to parameter of type 'SetStateAction<VisibilityType>'.
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
@@ -417,14 +341,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
           </div>
         </>
       </Dialog>
-      <AccountModalSelector
-        open={openAccountModal}
-        onClose={() => setOpenAccountModal(false)}
-        accounts={allAccountsForCompany}
-        onAccountSelect={handleAccountSelect}
-        isAllStoresShown={true}
-        setIsAllStoresShown={() => {}} // dummy function
-      />
     </>
   );
 };

@@ -19,13 +19,9 @@ export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
   return {
     description: cleanedDescription || "",
     imageUrl: post.imageUrl || "",
-    displayDate: new Date(), // ill leave this for now.. post slice doesnt use it for ordering and merging
-     timestamp: Timestamp.now(),
-    visibility: post.visibility as
-      | "public"
-      | "company"
-      | "supplier"
-      | "private",
+    displayDate: new Date(),
+    timestamp: Timestamp.now(),
+    visibility: post.visibility,
     totalCaseCount: post.totalCaseCount ?? 0,
 
     account: account,

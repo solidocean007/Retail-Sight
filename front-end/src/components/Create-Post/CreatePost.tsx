@@ -7,13 +7,7 @@ import { selectUser } from "../../Slices/userSlice";
 
 // import ChannelSelector from "./ChannelSelector";
 // import CategorySelector from "./CategorySelector";
-import {
-  AppBar,
-  Backdrop,
-  Box,
-  Container,
-  Typography,
-} from "@mui/material";
+import { AppBar, Backdrop, Box, Container, Typography } from "@mui/material";
 
 // import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
@@ -39,18 +33,15 @@ import { SetDisplayDetails } from "./SetDisplayDetails";
 import { DisplayDescription } from "./DisplayDescription";
 import { ReviewAndSubmit } from "./ReviewAndSubmit";
 import { showMessage } from "../../Slices/snackbarSlice";
-import { RootState, useAppDispatch } from "../../utils/store";
-import { MissionSelection } from "../MissionSelection/MissionSelection";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
 
-
 export const CreatePost = () => {
+  const navigate = useNavigate();
   const userData = useSelector(selectUser);
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
   const [uploadProgress, setUploadProgress] = useState(0); // same question?
-  const [openMissionSelection, setOpenMissionSelection] = useState(false);
 
   // Function to navigate to the next step
   const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
@@ -60,9 +51,7 @@ export const CreatePost = () => {
 
   const handlePostSubmission = useHandlePostSubmission();
   const companyId = userData?.companyId;
-
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
-
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
 
   const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
@@ -74,44 +63,24 @@ export const CreatePost = () => {
     description: "",
     imageUrl: "",
     totalCaseCount: 0,
-    visibility: "company",
+    visibility: "network",
     postUser: userData || null,
     account: null,
   }));
 
-  const [selectedGalloGoal, setSelectedGalloGoal] = useState<FireStoreGalloGoalDocType | null>(null);
-  
-
-  const [selectedCompanyMission, setSelectedCompanyMission] =
-    useState<CompanyMissionType>();
-  const [selectedMission, setSelectedMission] = useState<MissionType | null>(
-    null
-  );
-  const navigate = useNavigate();
+  const [selectedGalloGoal, setSelectedGalloGoal] =
+    useState<FireStoreGalloGoalDocType | null>(null);
 
   useEffect(() => {
-  setPost((prevPost) => ({
-    ...prevPost,
-    postUser: onBehalf ?? userData, // 👤 Who the post is for
-    postedBy: userData ?? null,     // 🧑‍💻 Who is submitting the post
-    postedByFirstName: userData?.firstName || null,
-    postedByLastName: userData?.lastName || null,
-    postedByUid: userData?.uid || null,
-  }));
-}, [onBehalf, userData]);
-
-
-  useEffect(() => {
-    if (post.visibility === "supplier") {
-      setOpenMissionSelection(true);
-    } else {
-      setOpenMissionSelection(false);
-    }
-  }, [post.visibility]);
-
-  const onClose = () => {
-    setOpenMissionSelection(false);
-  };
+    setPost((prevPost) => ({
+      ...prevPost,
+      postUser: onBehalf ?? userData, // 👤 Who the post is for
+      postedBy: userData ?? null, // 🧑‍💻 Who is submitting the post
+      postedByFirstName: userData?.firstName || null,
+      postedByLastName: userData?.lastName || null,
+      postedByUid: userData?.uid || null,
+    }));
+  }, [onBehalf, userData]);
 
   const handleTotalCaseCountChange = useCallback((caseCount: number) => {
     setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
@@ -127,8 +96,6 @@ export const CreatePost = () => {
     },
     []
   );
-
-  const supplierVisibility = post.visibility === "supplier";
 
   // Render different content based on the current step
   const renderStepContent = () => {
@@ -187,8 +154,6 @@ export const CreatePost = () => {
             selectedFile={selectedFile}
             setUploadProgress={setUploadProgress}
             handlePostSubmission={handlePostSubmission}
-            selectedCompanyMission={selectedCompanyMission}
-            selectedMission={selectedMission}
             selectedGalloGoal={selectedGalloGoal} // 🆕 Pass the selected Gallo goal
           />
         );
@@ -246,14 +211,6 @@ export const CreatePost = () => {
             />
           )}
           {renderStepContent()}
-          {supplierVisibility && (
-            <MissionSelection
-              open={openMissionSelection}
-              onClose={onClose}
-              setSelectedCompanyMission={setSelectedCompanyMission}
-              setSelectedMission={setSelectedMission}
-            />
-          )}
         </div>
       </Container>
     </>

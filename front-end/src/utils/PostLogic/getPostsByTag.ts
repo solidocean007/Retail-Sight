@@ -27,9 +27,9 @@ export const getPostsByTag = async (
     // Filter posts based on company ID and visibility
     const filteredPosts = posts.filter((post) => {
       // Return the post if it is public
-      if (post.visibility === "public") {
-        return true;
-      }
+      // if (post.visibility === "public") {
+      //   return true;
+      // }
 
       // If usersCompanyID is undefined, do not return non-public posts
       if (usersCompanyID === undefined) {

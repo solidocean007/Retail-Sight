@@ -86,6 +86,8 @@ export interface PostTokenType {
   token: { sharedToken: string; tokenExpiry?: string };
 }
 
+export type VisibilityType = "network" | "companyOnly";
+
 export interface PostType {
   // 🔍 Filtering Info
   hashtags: string[];
@@ -147,7 +149,8 @@ export interface PostType {
   // 🗓 Timing
   displayDate: string;
   timestamp: Timestamp;
-  visibility: "public" | "company" | "supplier" | "private";
+  visibility: string;
+  migratedVisibility?: VisibilityType;
 
   // 🎯 Goals
   companyGoalId?: string | null;
@@ -172,7 +175,7 @@ export type PostInputType = {
   description: string;
   imageUrl?: string;
   totalCaseCount: number;
-  visibility: string;
+  visibility: VisibilityType;
 
   postUser: UserType | null;
   account: CompanyAccountType | null;

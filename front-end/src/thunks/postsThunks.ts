@@ -25,13 +25,8 @@ import {
   startAfter,
   where,
   Timestamp,
-  QueryConstraint,
+  DocumentSnapshot,
 } from "firebase/firestore";
-import {
-  // getFilteredPostsFromIndexedDB,
-  storeLatestPostsInIndexedDB,
-  getLatestPostsFromIndexedDB,
-} from "../utils/database/indexedDBUtils";
 import { normalizePost } from "../utils/normalizePost";
 
 type FetchInitialPostsArgs = {
@@ -39,7 +34,7 @@ type FetchInitialPostsArgs = {
   currentUserCompanyId: string | undefined;
 };
 
-// just noting this function fetches but doesn't store to redux or indexedDb
+// okay lets confirm this will retireve all posts from posts network or company only for the user nothing more
 export const fetchInitialPostsBatch = createAsyncThunk(
   "posts/fetchInitial",
   async (
@@ -51,31 +46,22 @@ export const fetchInitialPostsBatch = createAsyncThunk(
 
       const postsQuery = query(
         postsCollectionRef,
+        where("postUserCompanyId", "==", currentUserCompanyId),
         orderBy("displayDate", "desc"),
         limit(POSTS_BATCH_SIZE) // ✅ limits Firestore read
       );
-      const querySnapshot = await getDocs(postsQuery);
 
+      const querySnapshot = await getDocs(postsQuery);
       const postsWithIds: PostWithID[] = querySnapshot.docs
         .map((doc) => {
           const postData: PostType = doc.data() as PostType;
           return normalizePost({ ...postData, id: doc.id });
         })
-        .filter((post) => {
-          const isPublic = post.visibility === "public";
-          const isCompanyPost =
-            post.visibility === "company" &&
-            post.postUserCompanyId === currentUserCompanyId;
-          const isSupplier = // add the posts where visibility is "supplier"
-            post.visibility === "supplier" &&
-            post.postUserCompanyId === currentUserCompanyId;
-          return isPublic || isCompanyPost || isSupplier;
-          // return isCompanyPost || isSupplier;
-        });
 
-      const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
+      const lastVisibleDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
 
-      return { posts: postsWithIds, lastVisible };
+
+      return { posts: postsWithIds, lastVisibleDoc };
     } catch (error) {
       console.error("Error fetching initial posts:", error);
       return rejectWithValue(error instanceof Error ? error.message : error);
@@ -84,95 +70,46 @@ export const fetchInitialPostsBatch = createAsyncThunk(
 );
 
 // Define a type for the thunk argument
-type FetchMorePostsArgs = {
-  lastVisible: string | null; // Use string to represent the last document ID
-  limit: number;
+interface FetchMorePostsArgs {
+  lastVisibleDoc: DocumentSnapshot | null; // Pass the actual last doc snapshot for pagination
+  POSTS_BATCH_SIZE: number;
   currentUserCompanyId: string | undefined;
-};
+}
 
 export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
-    { lastVisible, limit: batchSize, currentUserCompanyId }: FetchMorePostsArgs,
+    { lastVisibleDoc, POSTS_BATCH_SIZE, currentUserCompanyId }: FetchMorePostsArgs,
     { rejectWithValue }
   ) => {
     try {
-      if (!currentUserCompanyId) {
-        console.warn(
-          "⚠️ fetchMorePostsBatch called without a valid companyId."
-        );
-        return { posts: [], lastVisible: null };
-      }
-
       const postsCollectionRef = collection(db, "posts");
-      let postsQuery;
 
-      if (lastVisible) {
-        const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
-        if (!lastVisibleSnapshot.exists()) {
-          console.warn("⚠️ lastVisible document not found:", lastVisible);
-        }
+      const postsQuery = query(
+        postsCollectionRef,
+        where("postUserCompanyId", "==", currentUserCompanyId),
+        orderBy("displayDate", "desc"),
+        startAfter(lastVisibleDoc), // Firestore pagination
+        limit(POSTS_BATCH_SIZE)
+      );
 
-        postsQuery = query(
-          postsCollectionRef,
-          orderBy("displayDate", "desc"),
-          startAfter(lastVisibleSnapshot),
-          limit(batchSize)
-        );
-      } else {
-        postsQuery = query(
-          postsCollectionRef,
-          orderBy("displayDate", "desc"),
-          limit(batchSize)
-        );
-      }
+      const querySnapshot = await getDocs(postsQuery);
 
-      const snapshot = await getDocs(postsQuery);
+      const postsWithIds: PostWithID[] = querySnapshot.docs.map((doc) => {
+        const postData: PostType = doc.data() as PostType;
+        return normalizePost({ ...postData, id: doc.id });
+      });
 
-      const postsWithIds: PostWithID[] = snapshot.docs
-        .map((doc) => {
-          const data = doc.data() as PostType;
+      // Get the last visible document for next pagination call
+      const newLastVisibleDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
 
-          const isPublic = data.visibility === "public";
-          const isCompanyPost =
-            data.visibility === "company" &&
-            data.postUser?.companyId === currentUserCompanyId;
-          const isSupplierPost =
-            data.visibility === "supplier" &&
-            data.postUser?.companyId === currentUserCompanyId;
-
-          const include = isPublic || isCompanyPost || isSupplierPost;
-
-          return include ? normalizePost({ id: doc.id, ...data }) : null;
-        })
-        .filter((post): post is PostWithID => post !== null);
-
-      const newLastVisible =
-        snapshot.docs[snapshot.docs.length - 1]?.id || null;
-
-      return { posts: postsWithIds, lastVisible: newLastVisible };
+      return { posts: postsWithIds, lastVisibleDoc: newLastVisibleDoc };
     } catch (error) {
-      console.error("❌ Error in fetchMorePostsBatch:", error);
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-      return rejectWithValue("An unknown error occurred");
+      console.error("Error fetching more posts:", error);
+      return rejectWithValue(error instanceof Error ? error.message : error);
     }
   }
 );
-
-// type FetchFilteredPostsArgs = {
-//   filters: {
-//     channels: string[];
-//     categories: string[];
-//     states: string[];
-//     cities: string[];
-//     dateRange: { startDate: string | null; endDate: string | null };
-//   };
-//   currentHashtag: string | null;
-//   currentStarTag?: string | null;
-//   // should i rename currentHashtag to currentTag or also define a currentStarTag?
-// };
 
 export const fetchFilteredPostsBatch = createAsyncThunk(
   "posts/fetchPostsBatch",
@@ -220,13 +157,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
         baseQuery
       );
     }
-    // if (filters.accountName) {
-    //   baseQuery = filterExactMatch(
-    //     "accountName",
-    //     filters.accountName ?? undefined,
-    //     baseQuery
-    //   );
-    // }
+
     if (filters.accountName) {
       baseQuery = query(
         baseQuery,
@@ -239,38 +170,11 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
         where("accountType", "==", filters.accountType)
       );
     }
-
-    // if (filters.accountType) {
-    //   baseQuery = filterExactMatch(
-    //     "typeOfAccount",
-    //     filters.accountType ?? undefined,
-    //     baseQuery
-    //   );
-    // }
     if (filters.accountChain) {
-      baseQuery = query(
-        baseQuery,
-        where("chain", "==", filters.accountChain)
-      );
+      baseQuery = query(baseQuery, where("chain", "==", filters.accountChain));
     }
-    // if (filters.accountChain) {
-    //   baseQuery = filterExactMatch(
-    //     "accountChain",
-    //     filters.accountChain ?? undefined,
-    //     baseQuery
-    //   );
-    // }
     if (filters.chainType) {
-
-      baseQuery = query(
-        baseQuery,
-        where("chainType", "==", filters.chainType)
-      );
-      // baseQuery = filterExactMatch(
-      //   "chainType",
-      //   filters.chainType ?? undefined,
-      //   baseQuery
-      // );
+      baseQuery = query(baseQuery, where("chainType", "==", filters.chainType));
     }
     if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
       baseQuery = query(
@@ -311,11 +215,6 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       baseQuery = filterArrayContains("productType", val, baseQuery);
     }
 
-    // ❌ REMOVE: date filtering — these rely on displayDate index
-    // const { startDate, endDate } = filters.dateRange || {};
-    // if (startDate) baseQuery = query(baseQuery, where("displayDate", ">=", startDate));
-    // if (endDate) baseQuery = query(baseQuery, where("displayDate", "<=", endDate));
-
     // ✅ Optional: single state/city
     if (filters.states?.length === 1) {
       baseQuery = filterExactMatch("state", filters.states[0], baseQuery);
@@ -324,21 +223,10 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       baseQuery = filterExactMatch("city", filters.cities[0], baseQuery);
     }
 
-    // ❌ REMOVE: ordering, pagination
-    // const constraints: QueryConstraint[] = [orderBy("displayDate", "desc")];
-    // if (lastVisible) constraints.push(startAfter(lastVisible));
-    // constraints.push(limit(batchSize));
-    // const finalQuery = query(baseQuery, ...constraints);
-
     const finalQuery = baseQuery; // 👈 Just use filtered baseQuery
     // console.log("finalQuery (no sort/pagination):", finalQuery);
 
     const snapshot = await getDocs(finalQuery);
-    // console.log("[FETCH] Documents fetched:", snapshot.size);
-
-    // if (snapshot.size === 0) {
-    //   console.warn("[FILTER DEBUG] No documents matched these filters");
-    // }
 
     const posts: PostWithID[] = snapshot.docs.map((doc) =>
       normalizePost({
@@ -381,51 +269,6 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
   }
 );
 
-//   PostWithID[],
-//   void,
-//   { rejectValue: string }
-// >("posts/fetchLatest", async (_, { rejectWithValue }) => {
-//   try {
-//     // First, try to get the latest posts from IndexedDB
-//     const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
-
-//     if (cachedPosts.length > 0) {
-//       return cachedPosts; // Return cached posts to avoid Firestore reads
-//     } else {
-//       // Fetch from Firestore as fallback
-//       const postsCollectionRef = collection(db, "posts");
-//       const baseQuery = query(
-//         postsCollectionRef,
-//         orderBy("timestamp", "desc"),
-//         limit(10)
-//       );
-
-//       console.log("fetchLatestPosts read");
-//       const postSnapshot = await getDocs(baseQuery);
-
-//       if (postSnapshot.empty) {
-//         return [];
-//       }
-
-//       const posts: PostWithID[] = postSnapshot.docs.map((doc) => ({
-//         ...(doc.data() as PostType),
-//         id: doc.id,
-//       }));
-
-//       // Optionally, store the fetched posts in IndexedDB
-//       await storeLatestPostsInIndexedDB(posts); // Assume this function exists
-
-//       return posts;
-//     }
-//   } catch (error) {
-//     console.error("Error fetching latest posts:", error);
-//     return rejectWithValue("Error fetching latest posts.");
-//   }
-// });
-
-// Define a type for the thunk argument
-
-// Define the arguments for the fetchPostsByIds thunk
 
 type FetchPostsByIdsArgs = {
   postIds: string[] | string; // This allows either a single string or an array of strings

@@ -1,16 +1,10 @@
 // ActivityFeed.tsx
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
-import store, { RootState } from "../utils/store";
+import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
 import {
   getPostsByStarTag,
@@ -22,32 +16,16 @@ import {
   fetchMorePostsBatch,
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
-import {
-  addPostsToIndexedDB,
-  getFilteredSet,
-  getPostsFromIndexedDB,
-  shouldRefetch,
-  storeFilteredSet,
-  // clearHashtagPostsInIndexedDB,
-  // clearPostsInIndexedDB,
-  // clearStarTagPostsInIndexedDB,
-  // clearUserCreatedPostsInIndexedDB,
-} from "../utils/database/indexedDBUtils";
-import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
-import usePosts from "../hooks/usePosts";
+import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
+import { mergeAndSetPosts } from "../Slices/postsSlice";
 import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
-// import FilterSummaryBanner from "./FilterSummaryBanner";
-// import {
-//   getFilterHash,
-//   getFilterSummaryText,
-// } from "./FilterSideBar/utils/filterUtils";
+
 import { PostQueryFilters } from "../utils/types";
-import { useNavigate } from "react-router-dom";
 import { normalizePost } from "../utils/normalizePost";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
-import { getFilterHash } from "./FilterSideBar/utils/filterUtils";
-import { usePostsTest } from "../hooks/usePostsTest";
+import { DocumentSnapshot } from "@firebase/firestore";
+import useDistributorPosts from "../hooks/useDistributorPosts";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -71,16 +49,10 @@ interface ActivityFeedProps {
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   virtuosoRef,
-  // currentHashtag,
   setCurrentHashtag,
-  // currentStarTag,
-  // setCurrentStarTag,
-  clearSearch,
   activePostSet,
   setActivePostSet,
-  // isSearchActive,
   setIsSearchActive,
-  // clearInput,
   postIdToScroll,
   setPostIdToScroll,
   toggleFilterMenu,
@@ -92,9 +64,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const filteredCount = useSelector(
-    (s: RootState) => s.posts.filteredPostCount
-  );
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
@@ -109,11 +78,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
   // hook to load posts
-  const [lastVisible, setLastVisible] = useState<string | null>(null);
+  const [lastVisibleDoc, setLastVisibleDoc] = useState<DocumentSnapshot | null>(
+    null
+  );
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  usePosts(currentUserCompanyId, POSTS_BATCH_SIZE);
+  useDistributorPosts(currentUserCompanyId, POSTS_BATCH_SIZE, setLastVisibleDoc);
 
   const scrollToTop = () => {
     virtuosoRef.current?.scrollToIndex({
@@ -123,18 +94,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     });
   };
 
-  // const { testPosts, loading, error } = usePostsTest(currentUser?.companyId);
-
-  // useEffect(() => {
-  //   if (!loading && !error) {
-  //     console.log(
-  //       "[Test] Posts:",
-  //       testPosts.map((p) => p.displayDate)
-  //     );
-  //   }
-  // }, [testPosts, loading, error]);
-
-  // this should only be responsible for scrolling to the top on a activePostsSet change
   const prevActivePostSet = useRef(activePostSet);
   useEffect(() => {
     if (activePostSet !== prevActivePostSet.current) {
@@ -151,39 +110,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     return () => clearTimeout(timeout);
   }, []);
-
-  // const getActivityItemHeight = (windowWidth: number) => {
-  //   if (windowWidth <= 500) {
-  //     return 700;
-  //   } else if (windowWidth <= 600) {
-  //     return 750;
-  //   } else if (windowWidth <= 700) {
-  //     return 750;
-  //   } else if (windowWidth <= 800) {
-  //     return 800;
-  //   } else if (windowWidth <= 900) {
-  //     return 850;
-  //   } else {
-  //     return 900;
-  //   }
-  // };
-
-  // const itemHeight = getActivityItemHeight(windowWidth);
-
-  // if (showLoader) {
-  //   return (
-  //     <div
-  //       style={{
-  //         height: "100vh",
-  //         display: "flex",
-  //         justifyContent: "center",
-  //         alignItems: "center",
-  //       }}
-  //     >
-  //       <BeerCaseStackAnimation minDuration={1000} />
-  //     </div>
-  //   );
-  // }
 
   if (hasLoadedOnce && displayPosts.length === 0) {
     return <NoResults />;
@@ -281,26 +207,25 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                     setLoadingMore(true);
                     dispatch(
                       fetchMorePostsBatch({
-                        lastVisible,
-                        limit: POSTS_BATCH_SIZE,
+                        lastVisibleDoc,
+                        POSTS_BATCH_SIZE,
                         currentUserCompanyId,
                       })
                     )
                       .then((action) => {
                         if (fetchMorePostsBatch.fulfilled.match(action)) {
-                          const { posts, lastVisible: newLastVisible } =
+                          const { posts, lastVisibleDoc: newLastDoc } =
                             action.payload;
-                          setLastVisible(newLastVisible);
 
                           if (posts.length > 0) {
-                            addPostsToIndexedDB(posts);
-                            // dispatch(appendPosts(posts));
                             dispatch(
                               mergeAndSetPosts(posts.map(normalizePost))
                             );
+                            addPostsToIndexedDB(posts); // Cache posts
+                            setLastVisibleDoc(newLastDoc); // Set for next batch
                             setHasMore(true);
                           } else {
-                            setHasMore(false);
+                            setHasMore(false); // No more posts
                           }
                         }
                       })

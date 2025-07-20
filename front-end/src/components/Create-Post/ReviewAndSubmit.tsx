@@ -17,9 +17,11 @@ import {
   FireStoreGalloGoalDocType,
   MissionType,
   PostInputType,
+  VisibilityType,
 } from "../../utils/types";
 import { mergeAndSetPosts } from "../../Slices/postsSlice";
 import { normalizePost } from "../../utils/normalizePost";
+import { DisplayDescription } from "./DisplayDescription";
 
 interface ReviewAndSubmitProps {
   companyId?: string;
@@ -36,7 +38,6 @@ interface ReviewAndSubmitProps {
   setUploadProgress: React.Dispatch<React.SetStateAction<number>>;
   handlePostSubmission: any;
   selectedCompanyMission?: CompanyMissionType;
-  selectedMission: MissionType | null;
   selectedGalloGoal?: FireStoreGalloGoalDocType | null;
 }
 
@@ -52,7 +53,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   setUploadProgress,
   handlePostSubmission,
   selectedCompanyMission,
-  selectedMission,
   selectedGalloGoal,
 }) => {
   const [apiKey, setApiKey] = useState("");
@@ -71,57 +71,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
     }
   }, [companyId, post.oppId, apiKey, dispatch]);
 
-  // const handleSubmitClick = useCallback(async () => {
-  //   if (!selectedFile || isSubmitting) return;
-
-  //   setIsSubmitting(true);
-  //   setUploadProgress(0);        // reset bar at start
-  //   setIsUploading(true);
-
-  //   try {
-  //     await handlePostSubmission(
-  //       post,
-  //       selectedFile,
-  //       setIsUploading,
-  //       setUploadProgress,
-  //       selectedCompanyMission,
-  //       apiKey,
-  //       navigate
-  //     );
-
-  //     // only reach here if upload + Firestore writes succeeded
-  //     dispatch(showMessage("Post submitted successfully!"));
-  //     setUploadProgress(100);    // force 100% for UI
-  //     setTimeout(() => {
-  //       setIsUploading(false);
-  //       navigate("/user-home-page");
-  //     }, 800);
-  //   } catch (error: any) {
-  //     console.error("Error during post submission:", error);
-  //     dispatch(
-  //       showMessage(
-  //         error.message || "An unknown error occurred during post submission."
-  //       )
-  //     );
-  //     setUploadProgress(0);      // reset on failure
-  //   } finally {
-  //     setIsSubmitting(false);
-  //     // no automatic reset here anymore :contentReference[oaicite:0]{index=0}
-  //   }
-  // }, [
-  //   apiKey,
-  //   dispatch,
-  //   handlePostSubmission,
-  //   isSubmitting,
-  //   navigate,
-  //   post,
-  //   selectedCompanyMission,
-  //   selectedFile,
-  //   setUploadProgress,
-  //   setIsUploading,
-  // ]);
-
-  // ReviewAndSubmit.tsx
   const handleSubmitClick = async () => {
     if (!selectedFile) {
       dispatch(showMessage("Please select an image before submitting."));
@@ -159,24 +108,18 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         <h4>Back</h4>
       </button>
 
-      {selectedMission && (
-        <Box mt={2}>
-          <Typography variant="h6">
-            Selected Mission: {selectedMission.missionTitle}
-          </Typography>
-        </Box>
-      )}
-
       <Box mt={2}>
         <Typography variant="h6">Post Visibility</Typography>
         <Select
           fullWidth
           variant="outlined"
-          value={post.visibility || "public"}
-          onChange={(e) => handleFieldChange("visibility", e.target.value)}
+          value={post.visibility || "network"}
+          onChange={(e) =>
+            handleFieldChange("visibility", e.target.value as VisibilityType)
+          }
         >
-          <MenuItem value="public">Public</MenuItem>
-          <MenuItem value="company">Company Only</MenuItem>
+          <MenuItem value="network">Network</MenuItem>
+          <MenuItem value="companyOnly">Company Only</MenuItem>
         </Select>
       </Box>
 
@@ -193,6 +136,12 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
             ? `Uploading ${Math.round(uploadProgress)}%`
             : "Submit Post"}
         </Button>
+        {/* <DisplayDescription
+          post={post}
+          onNext={() => {}}
+          onPrevious={onPrevious}
+          handleFieldChange={handleFieldChange}
+        /> */}
       </Box>
     </div>
   );
