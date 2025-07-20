@@ -1,97 +1,139 @@
+import { useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  Button,
+  CircularProgress,
+  Container,
+  Tabs,
+  Tab,
+  Box,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { selectUser } from "../Slices/userSlice";
 import useFetchCompaniesWithUsers from "../hooks/useFetchCompaniesWithUsers";
 import UserList from "./UserList";
-import { useNavigate } from "react-router-dom";
-import "./developerDashboard.css";
+import GenerateApiKeyComponent from "./ApiKeyLogic/ApiKeyModal";
 import { DeveloperDashboardHelmet } from "../utils/helmetConfigurations";
 import {
   deleteUserAuthAndFirestore,
   updateSelectedUser,
 } from "../DeveloperAdminFunctions/developerAdminFunctions";
 import { UserType } from "../utils/types";
-import { Button, CircularProgress, Container } from "@mui/material";
-import { useState } from "react";
-import GenerateApiKeyComponent from "./ApiKeyLogic/ApiKeyModal";
+import "./developerDashboard.css";
 
 const DeveloperDashboard = () => {
+  const navigate = useNavigate();
   const dashboardUser = useSelector(selectUser);
   const isDeveloper = dashboardUser?.role === "developer";
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
+
   const { companies, loading, error } = useFetchCompaniesWithUsers(
-    dashboardUser?.role,
+    dashboardUser?.role
   );
-  const navigate = useNavigate();
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  if (loading) return <CircularProgress />;
-  if (error) return <div>Error: {error.message}</div>;
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
   const handleDeleteUser = async (userId: string) => {
     await deleteUserAuthAndFirestore(userId);
   };
 
   const handleEditUser = async (adminId: string, user: UserType) => {
-    // Call updateUser function here
     await updateSelectedUser(adminId, user);
   };
 
+  if (loading) return <CircularProgress />;
+  if (error) return <div>Error: {error.message}</div>;
+
   return (
-    <Container className="developer-dashboard-container">
+    <Container className="developer-dashboard-container" sx={{ display: 'flex', flexDirection: 'column'}}>
       <DeveloperDashboardHelmet />
-      <aside className="developer-dashboard-sidebar">
-        {/* Navigation links */}
-      </aside>
-      <main className="developer-dashboard-main">
-        <header className="developer-dashboard-header">
-          <div className="developer-dashboard-user-details">
-            <h3>Developer Dashboard</h3>
-            <p>{`${dashboardUser?.firstName} ${dashboardUser?.lastName} Role: ${dashboardUser?.role}`}</p>
-          </div>
-          <div className="dashboard-controls">
-            <button className="add-user-btn">Add Users</button>
-            <button className="home-btn" onClick={() => navigate("/")}>
-              Home
-            </button>
-          </div>
-          {isDeveloper && <Button onClick={handleOpenModal}>Api key</Button>}
-        </header>
-        <section className="developer-dashboard-content">
-          {companies.map((company) => (
-            <div key={company.id} className="card">
-              <h2>{company.companyName}</h2>
-              <UserList
-                users={company.superAdminDetails}
-                onEdit={handleEditUser}
-                onDelete={handleDeleteUser}
-              />
-              <UserList
-                users={company.adminDetails}
-                onEdit={handleEditUser}
-                onDelete={handleDeleteUser}
-              />
-              <UserList
-                users={company.employeeDetails}
-                onEdit={handleEditUser}
-                onDelete={handleDeleteUser}
-              />
-              <UserList
-                users={company.pendingDetails}
-                onEdit={handleEditUser}
-                onDelete={handleDeleteUser}
-              />
-              {/* Additional UserList components for other roles */}
-            </div>
-          ))}
-        </section>
-      </main>
+      <header className="developer-dashboard-header">
+        <h2>Developer Dashboard</h2>
+        <p>{`${dashboardUser?.firstName} ${dashboardUser?.lastName} | Role: ${dashboardUser?.role}`}</p>
+        <div className="dashboard-header-actions">
+          <Button variant="outlined" onClick={() => navigate("/")}>Home</Button>
+          {isDeveloper && (
+            <Button variant="contained" onClick={handleOpenModal}>
+              API Key
+            </Button>
+          )}
+        </div>
+      </header>
+
+      <Tabs
+        value={tabIndex}
+        onChange={(_, newIndex) => setTabIndex(newIndex)}
+        indicatorColor="primary"
+        textColor="primary"
+        variant="fullWidth"
+        className="developer-dashboard-tabs"
+      >
+        <Tab label="Users" />
+        <Tab label="Notifications" />
+        <Tab label="API Keys" />
+      </Tabs>
+
+      <Box className="developer-dashboard-content">
+        {tabIndex === 0 && (
+          <section className="user-management-section">
+            {companies.map((company) => (
+              <Accordion key={company.id}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography variant="h6">{company.companyName}</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <UserList
+                    users={company.superAdminDetails}
+                    onEdit={handleEditUser}
+                    onDelete={handleDeleteUser}
+                  />
+                  <UserList
+                    users={company.adminDetails}
+                    onEdit={handleEditUser}
+                    onDelete={handleDeleteUser}
+                  />
+                  <UserList
+                    users={company.employeeDetails}
+                    onEdit={handleEditUser}
+                    onDelete={handleDeleteUser}
+                  />
+                  <UserList
+                    users={company.pendingDetails}
+                    onEdit={handleEditUser}
+                    onDelete={handleDeleteUser}
+                  />
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </section>
+        )}
+
+        {tabIndex === 1 && (
+          <section className="notifications-section">
+            <h3>Notifications</h3>
+            <p>Here you can send and manage notifications.</p>
+            {/* 📣 We’ll add NotificationTable and NotificationForm components here later */}
+          </section>
+        )}
+
+        {tabIndex === 2 && (
+          <section className="api-keys-section">
+            <h3>API Keys</h3>
+            <p>Manage API keys for company integrations.</p>
+            <Button variant="contained" onClick={handleOpenModal}>
+              Generate API Key
+            </Button>
+          </section>
+        )}
+      </Box>
+
       <GenerateApiKeyComponent open={isModalOpen} onClose={handleCloseModal} />
     </Container>
   );

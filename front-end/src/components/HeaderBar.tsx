@@ -106,7 +106,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           <div className="header-details">
             <div className="header-buttons">
               <div className="menu-buttons">
-                <button onClick={handleDashboardClick}>Dashboard</button>
+                <button onClick={handleDashboardClick}>{`${currentUser.role} Dashboard`}</button>
               </div>
               <div className="capture-display-btn">
                 <button onClick={handleCreatePostClick}>Create Display</button>
@@ -114,7 +114,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
             </div>
             <div
               className="hamburger-menu-button"
-              onClick={() => navigate("/dashboard")}
+              onClick={handleDashboardClick}
               aria-haspopup="true"
               aria-expanded={showMenuTab}
               // style={{ visibility: showMenuTab ? "hidden" : "visible" }}
