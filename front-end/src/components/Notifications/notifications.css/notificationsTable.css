@@ -1,0 +1,98 @@
+/* notificationsTable.css (redesigned to use existing App.css + theme.css styles) */
+
+.notifications-table-container {
+  background-color: var(--background-body);
+  color: var(--text-color);
+  padding: 1rem;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.table-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--header-title);
+}
+
+.search-input {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--btn-border-radius);
+  background-color: var(--input-background);
+  color: var(--input-text-color);
+  width: 250px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.notifications-table {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--divider-color);
+}
+
+.table-row {
+  display: flex;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--divider-color);
+  transition: background-color 0.2s ease;
+}
+
+.table-header-row {
+  font-weight: 600;
+  background-color: var(--dashboard-card);
+}
+
+.table-row:hover {
+  background-color: var(--sidebar-hover-bg);
+}
+
+.table-cell {
+  flex: 1;
+  padding: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Reuse existing App.css button styles */
+.btn-view {
+  @apply btn;
+}
+
+.btn-resend {
+  @apply btn-secondary;
+}
+
+.btn-delete {
+  @apply btn-error;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+.error-text {
+  color: var(--btn-error-bg);
+  text-align: center;
+  font-weight: bold;
+}

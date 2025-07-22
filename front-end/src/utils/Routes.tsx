@@ -4,7 +4,6 @@ import { SignUpLogin } from "../components/SignUpLogIn";
 import { UserHomePage } from "../components/UserHomePage";
 import { CreatePost } from "../components/Create-Post/CreatePost";
 import { Dashboard } from "../components/Dashboard";
-import DeveloperDashboard from "../components/DeveloperDashboard";
 import About from "../components/About/About";
 import Features from "../components/Features";
 import ContactUs from "../components/ContactUs";
@@ -16,6 +15,7 @@ import ViewCollection from "../components/ViewCollection";
 import { PageNotFound } from "../components/ErrorPages/PageNotFound";
 import { AccessDenied } from "../components/ErrorPages/AccessDenied";
 import { ViewSharedPost } from "../components/ViewSharedPost";
+import DeveloperDashboard from "../components/DeveloperDashboard/DeveloperDashboard";
 
 export const AppRoutes = () => {
   return (
@@ -27,7 +27,7 @@ export const AppRoutes = () => {
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-service" element={<TermsOfService />} />
       <Route path="/help-support" element={<HelpSupport />} />
-      <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
+      <Route path="/developer-dashboard" element={<DeveloperDashboard/>} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
       <Route path="/user-home-page" element={<UserHomePage />} />
       <Route path="/create-post" element={<CreatePost />} />

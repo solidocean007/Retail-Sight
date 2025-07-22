@@ -2,7 +2,7 @@
 import { useSelector } from "react-redux";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
-import { selectCompanyUsers, selectUser, setCompanyUsers } from "../Slices/userSlice";
+import { selectCompanyUsers, selectUser, setCompanyUsers } from "../Slices/userSlice.ts";
 // import {
 //   getCompanyUsersFromIndexedDB,
 //   saveCompanyUsersToIndexedDB,
@@ -12,10 +12,10 @@ import {
   // CompanyAccountType,
   DashboardModeType,
   // UserType,
-} from "../utils/types";
+} from "../utils/types.ts";
 // import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
-import { DashboardHelmet } from "../utils/helmetConfigurations";
+import { DashboardHelmet } from "../utils/helmetConfigurations.tsx";
 // import TeamsViewer from "./TeamsViewer";
 import {
   AppBar,
@@ -27,10 +27,10 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import EmployeesViewer from "./EmployeesViewer";
-import UserProfileViewer from "./UserProfileViewer";
-import CollectionsViewer from "./CollectionsViewer";
-import TutorialViewer from "./TutorialViewer";
+import EmployeesViewer from "./EmployeesViewer.tsx";
+import UserProfileViewer from "./UserProfileViewer.tsx";
+import CollectionsViewer from "./CollectionsViewer.tsx";
+import TutorialViewer from "./TutorialViewer.tsx";
 import AccountManager from "./AccountManagement/AccountsManager.tsx";
 // import {
 //   collection,

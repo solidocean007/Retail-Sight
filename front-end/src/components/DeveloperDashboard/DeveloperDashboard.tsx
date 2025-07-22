@@ -14,17 +14,18 @@ import {
   Typography
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { selectUser } from "../Slices/userSlice";
-import useFetchCompaniesWithUsers from "../hooks/useFetchCompaniesWithUsers";
-import UserList from "./UserList";
-import GenerateApiKeyComponent from "./ApiKeyLogic/ApiKeyModal";
-import { DeveloperDashboardHelmet } from "../utils/helmetConfigurations";
+import { selectUser } from "../../Slices/userSlice";
+import useFetchCompaniesWithUsers from "../../hooks/useFetchCompaniesWithUsers";
+import UserList from "./../UserList";
+import GenerateApiKeyComponent from "./../ApiKeyLogic/ApiKeyModal";
+import { DeveloperDashboardHelmet } from "../../utils/helmetConfigurations";
 import {
   deleteUserAuthAndFirestore,
   updateSelectedUser,
-} from "../DeveloperAdminFunctions/developerAdminFunctions";
-import { UserType } from "../utils/types";
-import "./developerDashboard.css";
+} from "../../DeveloperAdminFunctions/developerAdminFunctions";
+import { UserType } from "../../utils/types";
+// import "./developerDashboard.css";
+import NotificationsTable from "../Notifications/NotificationsTable";
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const DeveloperDashboard = () => {
   };
 
   if (loading) return <CircularProgress />;
-  if (error) return <div>Error: {error.message}</div>;
+  // if (error) return <div>Error: {error.message}</div>;
 
   return (
     <Container className="developer-dashboard-container" sx={{ display: 'flex', flexDirection: 'column'}}>
@@ -119,6 +120,7 @@ const DeveloperDashboard = () => {
           <section className="notifications-section">
             <h3>Notifications</h3>
             <p>Here you can send and manage notifications.</p>
+            <NotificationsTable />
             {/* 📣 We’ll add NotificationTable and NotificationForm components here later */}
           </section>
         )}
