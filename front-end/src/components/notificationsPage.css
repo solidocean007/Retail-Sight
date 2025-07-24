@@ -1,0 +1,36 @@
+/* notificationsPage.css */
+
+.notifications-page {
+  padding: 1rem;
+  background-color: var(--background-body);
+  min-height: 100vh;
+}
+
+.notifications-page h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-item {
+  animation: fadeIn 0.25s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

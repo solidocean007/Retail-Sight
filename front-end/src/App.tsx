@@ -17,13 +17,15 @@ import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsLi
 import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { loadCompany } from "./thunks/companyThunk";
+import { loadCompany } from "./thunks/companyConnectionThunk";
 import { fetchCompanyProducts } from "./thunks/productThunks";
 import { setAllProducts } from "./Slices/productsSlice";
 import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
 import useSchemaVersion from "./hooks/useSchemaVersion";
 import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
+import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
+import { setupNotificationListener } from "./utils/listeners/setupNotificationListener";
 // import { auditPostDates, migratePostDates } from "./script";
 
 function App(): React.JSX.Element {
@@ -51,6 +53,7 @@ function App(): React.JSX.Element {
         const cached = await getAllCompanyProductsFromIndexedDB();
         if (cached.length) dispatch(setAllProducts(cached));
         dispatch(fetchCompanyProducts(companyId));
+        dispatch(fetchCurrentCompany(user.companyId));
       } catch (err) {
         console.error("Product load failed", err);
       }
@@ -77,7 +80,10 @@ function App(): React.JSX.Element {
 
   // 📡 Goal listeners
   useEffect(() => {
-    if (!companyId) return;
+    if (!companyId || !currentUser?.companyId) return;
+     const unsubscribeNotifications = dispatch(
+      setupNotificationListener(currentUser.companyId)
+    );
     const unsubscribeCompanyGoals = dispatch(
       setupCompanyGoalsListener(companyId)
     );
@@ -85,8 +91,10 @@ function App(): React.JSX.Element {
     return () => {
       unsubscribeCompanyGoals();
       unsubscribeGalloGoals();
+      unsubscribeNotifications();
     };
   }, [dispatch, companyId]);
+
 
   if (initializing) return <></>;
 

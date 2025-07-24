@@ -31,7 +31,7 @@ import UserMultiSelector from "./UserMultiSelector";
 import AccountMultiSelector from "./AccountMultiSelector";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
-import { selectCompany } from "../../Slices/companySlice";
+import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -46,7 +46,7 @@ const CreateCompanyGoalView = () => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const companyId = currentUser?.companyId;
   const companyUsers = useSelector(selectCompanyUsers);
-  const usersCompany = useSelector(selectCompany);
+  const usersCompany = useSelector(selectCurrentCompany);;
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);

@@ -9,6 +9,7 @@ import {
   query,
   orderBy,
   onSnapshot,
+  arrayUnion,
 } from "firebase/firestore";
 import {
   setNotifications,
@@ -45,24 +46,44 @@ export const fetchCompanyNotifications = createAsyncThunk(
   }
 );
 
-// Send a new notification
+interface SendNotificationPayload {
+  companyId: string;
+  notification: NotificationType;
+  recipientUserIds?: string[]; // ✅ optional
+}
+
 export const sendNotification = createAsyncThunk(
   "notifications/sendNotification",
   async (
-    { companyId, notification }: { companyId: string; notification: NotificationType },
+    { companyId, notification, recipientUserIds }: SendNotificationPayload,
     { dispatch }
   ) => {
     try {
       const docRef = await addDoc(
         collection(db, `notifications/${companyId}/items`),
-        notification
+        {
+          ...notification,
+          recipientUserIds: recipientUserIds || [],
+        }
       );
       dispatch(addNotification({ ...notification, id: docRef.id }));
     } catch (err: any) {
+      console.error("Error sending notification:", err);
       dispatch(setError(err.message));
     }
   }
 );
+
+export const markNotificationRead = createAsyncThunk(
+  "notifications/markRead",
+  async ({ companyId, notificationId, uid }: { companyId: string; notificationId: string; uid: string }) => {
+    const ref = doc(db, `notifications/${companyId}/items`, notificationId);
+    await updateDoc(ref, { readBy: arrayUnion(uid) });
+  }
+);
+
+
+
 
 // Delete a notification
 export const removeNotification = createAsyncThunk(

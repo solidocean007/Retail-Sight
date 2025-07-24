@@ -1,37 +1,48 @@
 // usersThunks.ts
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { UserType } from "../utils/types";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../utils/firebase";
+import { UserType } from "../utils/types";
 
-const userCache: {
-  [companyId: string]: { timestamp: number; data: UserType[] };
-} = {};
+const STALE_MS = 60_000; // 1 minute
 
+type UserWithId = UserType & { id: string };
+
+const userCache: Record<
+  string,
+  { timestamp: number; data: UserWithId[] }
+> = {};
+
+// ─────────────────────────────────────────────
 export const fetchCompanyUsersFromFirestore = createAsyncThunk<
-  UserType[],
+  UserWithId[],
   string,
   { rejectValue: string }
 >("user/fetchCompanyUsers", async (companyId, { rejectWithValue }) => {
-  const currentTime = new Date().getTime();
-  const cacheEntry = userCache[companyId];
+  const now = Date.now();
+  const entry = userCache[companyId];
 
-  if (cacheEntry && currentTime - cacheEntry.timestamp < 60000) {
-    console.log("Returning cached data");
-    return cacheEntry.data;
+  if (entry && now - entry.timestamp < STALE_MS) {
+    return entry.data; // cached
   }
 
   try {
     const usersQuery = query(
       collection(db, "users"),
-      where("companyId", "==", companyId),
+      where("companyId", "==", companyId)
     );
-    const querySnapshot = await getDocs(usersQuery);
-    const users = querySnapshot.docs.map((doc) => doc.data() as UserType);
-    userCache[companyId] = { timestamp: currentTime, data: users }; // Update cache with new data
+
+    const snap = await getDocs(usersQuery);
+    const users: UserWithId[] = snap.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as UserType),
+    }));
+
+    userCache[companyId] = { timestamp: now, data: users };
     return users;
-  } catch (error) {
-    console.error("Error fetching company users:", error);
-    return rejectWithValue("Failed to fetch company users");
+  } catch (err) {
+    const msg =
+      err instanceof Error ? err.message : "Failed to fetch company users";
+    return rejectWithValue(msg);
   }
 });

@@ -1,4 +1,5 @@
-import { useState } from "react";
+// DeveloperDashboard.tsx (Patched)
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,132 +12,202 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Typography
+  Typography,
+  Stack,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
 import { selectUser } from "../../Slices/userSlice";
-import useFetchCompaniesWithUsers from "../../hooks/useFetchCompaniesWithUsers";
-import UserList from "./../UserList";
-import GenerateApiKeyComponent from "./../ApiKeyLogic/ApiKeyModal";
+import {
+  fetchCompaniesWithUsers,
+  selectCompaniesLoading,
+  selectCompaniesWithUsers,
+} from "../../Slices/allCompaniesSlice";
+import { useAppDispatch } from "../../utils/store";
+
+import UserList from "../UserList";
+import GenerateApiKeyComponent from "../ApiKeyLogic/ApiKeyModal";
 import { DeveloperDashboardHelmet } from "../../utils/helmetConfigurations";
 import {
   deleteUserAuthAndFirestore,
   updateSelectedUser,
 } from "../../DeveloperAdminFunctions/developerAdminFunctions";
-import { UserType } from "../../utils/types";
-// import "./developerDashboard.css";
 import NotificationsTable from "../Notifications/NotificationsTable";
+import { UserType } from "../../utils/types";
+import CustomConfirmation from "../CustomConfirmation";
+import LogOutButton from "../LogOutButton";
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
   const dashboardUser = useSelector(selectUser);
   const isDeveloper = dashboardUser?.role === "developer";
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const dispatch = useAppDispatch();
+  const companies = useSelector(selectCompaniesWithUsers);
+  const loading = useSelector(selectCompaniesLoading);
+
   const [tabIndex, setTabIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { companies, loading, error } = useFetchCompaniesWithUsers(
-    dashboardUser?.role
-  );
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [targetUserId, setTargetUserId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
+  // Ask for confirmation before deleting user
+  const askDelete = (uid: string): Promise<void> => {
+    setTargetUserId(uid);
+    setConfirmOpen(true);
+    return Promise.resolve(); // 👈 resolves immediately
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!targetUserId) return;
+    setDeleting(true);
+    try {
+      await deleteUserAuthAndFirestore(targetUserId);
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+    } finally {
+      setDeleting(false);
+      setConfirmOpen(false);
+      setTargetUserId(null);
+    }
+  };
+
+  const handleEditUser = async (adminId: string, user: UserType) =>
+    updateSelectedUser(adminId, user);
+
+  useEffect(() => {
+    if (!companies.length && !loading) {
+      dispatch(fetchCompaniesWithUsers());
+    }
+  }, [companies.length, loading, dispatch]);
+
+  const handleRefresh = () => dispatch(fetchCompaniesWithUsers());
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const handleDeleteUser = async (userId: string) => {
-    await deleteUserAuthAndFirestore(userId);
-  };
-
-  const handleEditUser = async (adminId: string, user: UserType) => {
-    await updateSelectedUser(adminId, user);
-  };
-
-  if (loading) return <CircularProgress />;
-  // if (error) return <div>Error: {error.message}</div>;
-
   return (
-    <Container className="developer-dashboard-container" sx={{ display: 'flex', flexDirection: 'column'}}>
+    <Container sx={{ display: "flex", flexDirection: "column" }}>
       <DeveloperDashboardHelmet />
-      <header className="developer-dashboard-header">
-        <h2>Developer Dashboard</h2>
-        <p>{`${dashboardUser?.firstName} ${dashboardUser?.lastName} | Role: ${dashboardUser?.role}`}</p>
-        <div className="dashboard-header-actions">
-          <Button variant="outlined" onClick={() => navigate("/")}>Home</Button>
+
+      {/* ─────────────────── HEADER ─────────────────── */}
+      <header>
+        <Typography variant="h4">Developer Dashboard</Typography>
+        <Typography variant="subtitle2">
+          {dashboardUser?.firstName} {dashboardUser?.lastName} — Role:{" "}
+          {dashboardUser?.role} uid: {dashboardUser?.uid}
+        </Typography>
+        <LogOutButton />
+
+        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+          <Button variant="outlined" onClick={() => navigate("/")}>
+            Home
+          </Button>
+
+          <Button
+            variant="outlined"
+            onClick={handleRefresh}
+            disabled={loading}
+            startIcon={loading && <CircularProgress size={16} />}
+          >
+            Refresh
+          </Button>
+
           {isDeveloper && (
             <Button variant="contained" onClick={handleOpenModal}>
               API Key
             </Button>
           )}
-        </div>
+        </Stack>
       </header>
 
-      <Tabs
-        value={tabIndex}
-        onChange={(_, newIndex) => setTabIndex(newIndex)}
-        indicatorColor="primary"
-        textColor="primary"
-        variant="fullWidth"
-        className="developer-dashboard-tabs"
-      >
-        <Tab label="Users" />
-        <Tab label="Notifications" />
-        <Tab label="API Keys" />
-      </Tabs>
+      {/* ─────────────────── LOADING STATE ─────────────────── */}
+      {loading && !companies.length ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          {/* ─────────────────── TABS ─────────────────── */}
+          <Tabs
+            value={tabIndex}
+            onChange={(_, v) => setTabIndex(v)}
+            indicatorColor="primary"
+            textColor="primary"
+            variant="fullWidth"
+            sx={{ mt: 3 }}
+          >
+            <Tab label="Users" />
+            <Tab label="Notifications" />
+            <Tab label="API Keys" />
+          </Tabs>
 
-      <Box className="developer-dashboard-content">
-        {tabIndex === 0 && (
-          <section className="user-management-section">
-            {companies.map((company) => (
-              <Accordion key={company.id}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="h6">{company.companyName}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <UserList
-                    users={company.superAdminDetails}
-                    onEdit={handleEditUser}
-                    onDelete={handleDeleteUser}
-                  />
-                  <UserList
-                    users={company.adminDetails}
-                    onEdit={handleEditUser}
-                    onDelete={handleDeleteUser}
-                  />
-                  <UserList
-                    users={company.employeeDetails}
-                    onEdit={handleEditUser}
-                    onDelete={handleDeleteUser}
-                  />
-                  <UserList
-                    users={company.pendingDetails}
-                    onEdit={handleEditUser}
-                    onDelete={handleDeleteUser}
-                  />
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </section>
-        )}
+          {/* ─────────────────── TAB CONTENT ─────────────────── */}
+          <Box sx={{ mt: 2 }}>
+            {tabIndex === 0 && (
+              <>
+                {companies.map((company) => (
+                  <Accordion key={company.id}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="h6">
+                        {company.companyName}
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {[
+                        "superAdminDetails",
+                        "adminDetails",
+                        "employeeDetails",
+                        "pendingDetails",
+                      ].map((key) => (
+                        <UserList
+                          key={key}
+                          users={
+                            company[key as keyof typeof company] as UserType[]
+                          }
+                          onDelete={askDelete} // Type '(uid: string) => void' is not assignable to type '(userId: string) => Promise<void>'.
+                          // Type 'void' is not assignable to type 'Promise<void>'.
+                          onEdit={handleEditUser}
+                        />
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </>
+            )}
 
-        {tabIndex === 1 && (
-          <section className="notifications-section">
-            <h3>Notifications</h3>
-            <p>Here you can send and manage notifications.</p>
-            <NotificationsTable />
-            {/* 📣 We’ll add NotificationTable and NotificationForm components here later */}
-          </section>
-        )}
+            {tabIndex === 1 && (
+              <Box>
+                <Typography variant="h6" mb={1}>
+                  Notifications
+                </Typography>
+                <NotificationsTable />
+              </Box>
+            )}
 
-        {tabIndex === 2 && (
-          <section className="api-keys-section">
-            <h3>API Keys</h3>
-            <p>Manage API keys for company integrations.</p>
-            <Button variant="contained" onClick={handleOpenModal}>
-              Generate API Key
-            </Button>
-          </section>
-        )}
-      </Box>
+            {tabIndex === 2 && (
+              <Box>
+                <Typography variant="h6" mb={1}>
+                  API Keys
+                </Typography>
+                <Button variant="contained" onClick={handleOpenModal}>
+                  Generate API Key
+                </Button>
+              </Box>
+            )}
+          </Box>
+        </>
+      )}
 
       <GenerateApiKeyComponent open={isModalOpen} onClose={handleCloseModal} />
+      <CustomConfirmation
+        isOpen={confirmOpen}
+        message="Permanently delete this user? This can’t be undone."
+        onConfirm={handleConfirmDelete}
+        onClose={() => setConfirmOpen(false)}
+        loading={deleting}
+      />
     </Container>
   );
 };

@@ -1,0 +1,11 @@
+.notification-dropdown {
+  position: absolute;
+  top: 50px; /* adjust based on header height */
+  right: 10px;
+  width: 300px;
+  max-height: 400px;
+  background: var(--menu-background-color);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--card-radius);
+  z-index: 1000;
+}

@@ -3,7 +3,7 @@
 import { serverTimestamp, Timestamp } from "firebase/firestore";
 // import { ChannelType } from "../components/Create-Post/ChannelSelector";
 // import { CategoryType } from "../components/Create-Post/CategorySelector";
-
+export type PriorityType = "high" | "normal" | "Low";
 export type NotificationType = {
   id: string;
   title: string;
@@ -12,7 +12,7 @@ export type NotificationType = {
   sentBy: UserType;
   recipientsIds: string[];
   readBy: string[]; // tracks who has opened it
-  priority: "high" | "normal" | "low";
+  priority: PriorityType;
   pinned: boolean;
 };
 
@@ -29,6 +29,29 @@ export type CompanyType = {
   accountsId: string | null;
   goals: CompanyGoalWithIdType[];
 };
+
+export interface CompanyTypeWithId extends CompanyType {
+  id: string;
+}
+
+export interface CompanyWithUsersAndId extends CompanyTypeWithId {
+  users: UserType[];
+  superAdminDetails: UserType[];
+  adminDetails: UserType[];
+  employeeDetails: UserType[];
+  pendingDetails: UserType[];
+  otherDetails?: UserType[]; // Optional for future use or undefined roles
+}
+
+export interface CompanyConnectionType {
+  id: string;
+  fromCompanyId: string;
+  toCompanyId: string;
+  status: "approved" | "pending" | "rejected";
+  integration: string;
+  integrationLevel: "full" | "read-only";
+  createdAt: string; // or Firestore Timestamp if not normalized yet
+}
 
 export type TUserInputType = {
   firstNameInput: string;

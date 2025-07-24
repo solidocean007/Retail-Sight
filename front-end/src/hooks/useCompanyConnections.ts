@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { selectCompanyConnections } from "../slices/companySlice";
+import { selectCompanyConnections } from "../Slices/companyConnectionSlice";
 
 export const useCompanyConnections = () => {
   const connections = useSelector(selectCompanyConnections);

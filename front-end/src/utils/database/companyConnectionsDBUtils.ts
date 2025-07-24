@@ -1,4 +1,4 @@
-import { CompanyConnectionType } from "../../Slices/companySlice";
+import { CompanyConnectionType } from "../../Slices/companyConnectionSlice";
 import { openDB } from "./indexedDBOpen";
 
 

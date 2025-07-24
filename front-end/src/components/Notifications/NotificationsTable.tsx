@@ -15,7 +15,7 @@ import {
   TextField,
 } from "@mui/material";
 import DeveloperNotificationForm from "./DeveloperNotificationForm";
-import "./notificationsTable.css";
+import "./notifications/notificationsTable.css";
 import { NotificationType } from "../../utils/types";
 
 const DeveloperNotificationsTable: React.FC = () => {
@@ -64,7 +64,7 @@ const DeveloperNotificationsTable: React.FC = () => {
       </div>
 
       {/* Abstracted Notification Form with Audience Picker */}
-      <NotificationForm isDeveloper={currentUser?.role === "developer"} />
+      <DeveloperNotificationForm isDeveloper={currentUser?.role === "developer"} />
 
       <TableContainer component={Paper} style={{ marginTop: "1rem" }}>
         <Table>

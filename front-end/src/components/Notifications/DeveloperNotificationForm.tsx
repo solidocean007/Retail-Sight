@@ -12,31 +12,56 @@ import {
   Chip,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
-import { CompanyType, UserType, NotificationType } from "../../utils/types";
+import {
+  CompanyType,
+  UserType,
+  NotificationType,
+  PriorityType,
+  CompanyTypeWithId,
+} from "../../utils/types";
+import { Timestamp } from "firebase/firestore";
+import {
+  selectAllCompanies,
+  selectCompaniesWithUsers,
+} from "../../Slices/allCompaniesSlice";
 
 interface DeveloperNotificationFormProps {
   isDeveloper: boolean;
 }
 
-const DeveloperNotificationForm: React.FC<DeveloperNotificationFormProps> = ({ isDeveloper }) => {
+const DeveloperNotificationForm: React.FC<DeveloperNotificationFormProps> = ({
+  isDeveloper,
+}) => {
   const dispatch = useAppDispatch();
-  const companies = useSelector((state: RootState) => state.company.);
-  const users = useSelector((state: RootState) => state.user.allUsers);
+  const companies = useSelector(selectCompaniesWithUsers);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [priority, setPriority] = useState("Normal");
+  const [priority, setPriority] = useState<PriorityType>("normal");
   const [audienceType, setAudienceType] = useState("all"); // all, companies, users
-  const [selectedCompanies, setSelectedCompanies] = useState<CompanyType[]>([]);
+  const [selectedCompanies, setSelectedCompanies] = useState<
+    CompanyTypeWithId[]
+  >([]);
   const [selectedUsers, setSelectedUsers] = useState<UserType[]>([]);
 
+  const allUsers: UserType[] = React.useMemo(
+    () =>
+      companies.flatMap((company) => [
+        ...company.superAdminDetails,
+        ...company.adminDetails,
+        ...company.employeeDetails,
+        ...company.pendingDetails,
+      ]),
+    [companies]
+  );
+
   const handleSendNotification = () => {
-    if (!title || !message) return;
+    if (!title || !message || !currentUser) return;
 
     const recipientCompanyIds =
       audienceType === "companies"
-        ? selectedCompanies.map((c) => c.id) // id doesnt exist on company type
+        ? selectedCompanies.map((c) => c.id)
         : audienceType === "all"
         ? []
         : Array.from(new Set(selectedUsers.map((u) => u.companyId)));
@@ -45,12 +70,12 @@ const DeveloperNotificationForm: React.FC<DeveloperNotificationFormProps> = ({ i
       audienceType === "users" ? selectedUsers.map((u) => u.uid) : [];
 
     const notification: NotificationType = {
-      id: "", // Firestore generates
+      id: "", // Firestore will generate
       title,
       message,
-      priority, // Type 'string' is not assignable to type '"high" | "normal" | "low
-      sentAt: new Date(), // Type 'Date' is missing the following properties from type 'Timestamp': seconds, nanoseconds, toDate, toMillis, isEqual
-      sentBy: currentUser?.uid || "system", // Type 'string' is not assignable to type 'UserType'.ts(2322)
+      priority,
+      sentAt: Timestamp.fromDate(new Date()),
+      sentBy: currentUser,
       recipientsIds: recipientCompanyIds,
       readBy: [],
       pinned: false,
@@ -58,15 +83,16 @@ const DeveloperNotificationForm: React.FC<DeveloperNotificationFormProps> = ({ i
 
     dispatch(
       sendNotification({
-        companyId: currentUser?.companyId || "global",
+        companyId: currentUser.companyId || "global",
         notification,
-        recipientUserIds, // Object literal may only specify known properties, and 'recipientUserIds' does not exist in type '{ companyId: string; notification: NotificationType; }'
+        recipientUserIds:
+          audienceType === "users" ? recipientUserIds : undefined,
       })
     );
 
     setTitle("");
     setMessage("");
-    setPriority("Normal");
+    setPriority("normal");
     setSelectedCompanies([]);
     setSelectedUsers([]);
   };
@@ -98,11 +124,11 @@ const DeveloperNotificationForm: React.FC<DeveloperNotificationFormProps> = ({ i
         <Select
           labelId="priority-label"
           value={priority}
-          onChange={(e) => setPriority(e.target.value)}
+          onChange={(e) => setPriority(e.target.value as PriorityType)}
         >
-          <MenuItem value="High">High</MenuItem>
-          <MenuItem value="Normal">Normal</MenuItem>
-          <MenuItem value="Low">Low</MenuItem>
+          <MenuItem value="high">High</MenuItem>
+          <MenuItem value="normal">Normal</MenuItem>
+          <MenuItem value="low">Low</MenuItem>
         </Select>
       </FormControl>
 
@@ -133,12 +159,16 @@ const DeveloperNotificationForm: React.FC<DeveloperNotificationFormProps> = ({ i
               <Chip
                 label={option.companyName}
                 {...getTagProps({ index })}
-                key={option.id} // id doesn't exist on company type
+                key={option.id}
               />
             ))
           }
           renderInput={(params) => (
-            <TextField {...params} variant="outlined" label="Select Companies" />
+            <TextField
+              {...params}
+              variant="outlined"
+              label="Select Companies"
+            />
           )}
           style={{ marginBottom: "0.5rem" }}
         />
@@ -147,7 +177,7 @@ const DeveloperNotificationForm: React.FC<DeveloperNotificationFormProps> = ({ i
       {audienceType === "users" && (
         <Autocomplete
           multiple
-          options={users}
+          options={allUsers}
           getOptionLabel={(option) => `${option.firstName} ${option.lastName}`}
           value={selectedUsers}
           onChange={(event, value) => setSelectedUsers(value)}

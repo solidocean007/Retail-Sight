@@ -16,6 +16,7 @@ import { PageNotFound } from "../components/ErrorPages/PageNotFound";
 import { AccessDenied } from "../components/ErrorPages/AccessDenied";
 import { ViewSharedPost } from "../components/ViewSharedPost";
 import DeveloperDashboard from "../components/DeveloperDashboard/DeveloperDashboard";
+import NotificationsPage from "../components/NotificationsPage";
 
 export const AppRoutes = () => {
   return (
@@ -28,6 +29,7 @@ export const AppRoutes = () => {
       <Route path="/terms-service" element={<TermsOfService />} />
       <Route path="/help-support" element={<HelpSupport />} />
       <Route path="/developer-dashboard" element={<DeveloperDashboard/>} />
+      <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
       <Route path="/user-home-page" element={<UserHomePage />} />
       <Route path="/create-post" element={<CreatePost />} />

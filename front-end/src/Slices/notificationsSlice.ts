@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { NotificationType } from "../utils/types";
+import { RootState } from "../utils/store";
 
 interface NotificationsState {
   notifications: NotificationType[];
@@ -20,8 +21,13 @@ const notificationsSlice = createSlice({
     setNotifications(state, action: PayloadAction<NotificationType[]>) {
       state.notifications = action.payload;
     },
-    addNotification(state, action: PayloadAction<NotificationType>) {
-      state.notifications.unshift(action.payload); // newest first
+    addNotification: (state, action) => {
+      const exists = state.notifications.find(
+        (n) => n.id === action.payload.id
+      );
+      if (!exists) {
+        state.notifications.unshift(action.payload);
+      }
     },
     updateNotification(state, action: PayloadAction<NotificationType>) {
       const index = state.notifications.findIndex(
@@ -34,7 +40,19 @@ const notificationsSlice = createSlice({
         (n) => n.id !== action.payload
       );
     },
-    markAsRead(state, action: PayloadAction<{ notificationId: string; userId: string }>) {
+    removeNotification: (state, action) => {
+      state.notifications = state.notifications.filter(
+        (n) => n.id !== action.payload
+      );
+    },
+    togglePinNotification: (state, action) => {
+      const notif = state.notifications.find((n) => n.id === action.payload);
+      if (notif) notif.pinned = !notif.pinned;
+    },
+    markAsRead(
+      state,
+      action: PayloadAction<{ notificationId: string; userId: string }>
+    ) {
       const notif = state.notifications.find(
         (n) => n.id === action.payload.notificationId
       );
@@ -50,6 +68,16 @@ const notificationsSlice = createSlice({
     },
   },
 });
+
+
+
+export const selectAllNotifications = (state: RootState) => state.notifications.notifications;
+export const selectUnreadNotifications = (state: RootState) => {
+  const uid = state.user.currentUser?.uid;
+  if (!uid) return [];
+  return state.notifications.notifications.filter((n) => !n.readBy?.includes(uid));
+};
+
 
 export const {
   setNotifications,

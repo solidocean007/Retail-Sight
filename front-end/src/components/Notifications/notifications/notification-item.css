@@ -1,0 +1,45 @@
+/* notificationItem.css */
+.notification-item {
+  background: var(--card-outline, #fff);
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: var(--card-shadow, 0 2px 6px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.notification-item.unread {
+  background-color: var(--gray-100);
+  font-weight: 600;
+  border-left: 4px solid var(--primary-blue, #3b82f6);
+}
+
+.notification-item.read {
+  background-color: var(--gray-200);
+  opacity: 0.6;
+}
+
+.notification-title {
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: var(--text-color, #000);
+}
+
+.notification-message {
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: var(--text-color, #333);
+}
+
+.notification-timestamp {
+  font-size: 12px;
+  color: var(--gray-600);
+  text-align: right;
+}
+
+/* Swipe Dismissal Animation (optional trigger class) */
+.notification-item.dismissed {
+  transform: translateX(-100%);
+  opacity: 0;
+}

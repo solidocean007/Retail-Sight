@@ -6,17 +6,24 @@ import "./headerBar.css";
 import { useEffect, useRef, useState } from "react";
 import { showMessage } from "../Slices/snackbarSlice";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
-import { Tooltip } from "@mui/material";
+import { Badge, IconButton, Tooltip } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { resetApp } from "../utils/resetApp";
 import { useAppConfigSync } from "../hooks/useAppConfigSync";
+import { selectUnreadNotifications } from "../Slices/notificationsSlice";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import NotificationDropdown from "./Notifications/NotificationDropdown";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
   const { localVersion, serverVersion } = useAppConfigSync();
-
+  const [showNotificationDropdown, setShowNotificationDropdown] =
+    useState(false);
   const dispatch = useAppDispatch();
   const { currentUser } = useSelector((state: RootState) => state.user);
   const [showMenuTab, setShowMenuTab] = useState(false);
+  const unreadNotifications = useSelector(selectUnreadNotifications);
+  const unreadCount = unreadNotifications.length;
+
   // const [localVersion, setLocalVersion] = useState<string | null>("Loading...");
   // const [serverVersion, setServerVersion] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -37,6 +44,14 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
         navigate("/developer-dashboard");
       else showMessage("Not Logged in.");
     });
+  };
+
+  const handleNotificationViewer = () => {
+    if (window.innerWidth < 768) {
+      navigate("/notifications"); // 👈 Full-page for mobile
+    } else {
+      setShowNotificationDropdown(true); // 👈 Coming up next
+    }
   };
 
   const handleMenuOptionSelect = (option: string) => {
@@ -106,7 +121,9 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
           <div className="header-details">
             <div className="header-buttons">
               <div className="menu-buttons">
-                <button onClick={handleDashboardClick}>{`${currentUser.role} Dashboard`}</button>
+                <button
+                  onClick={handleDashboardClick}
+                >{`${currentUser.role} Dashboard`}</button>
               </div>
               <div className="capture-display-btn">
                 <button onClick={handleCreatePostClick}>Create Display</button>
@@ -120,6 +137,18 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
               // style={{ visibility: showMenuTab ? "hidden" : "visible" }}
             >
               ☰
+            </div>
+            <div className="notification-box">
+              <IconButton onClick={handleNotificationViewer}>
+                <Badge badgeContent={unreadCount} color="secondary">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+              {showNotificationDropdown && (
+                <NotificationDropdown
+                  onClose={() => setShowNotificationDropdown(false)}
+                />
+              )}
             </div>
           </div>
         )}

@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { setCompany } from "../Slices/companySlice";
+// import { setCompany } from "../Slices/companyConnectionSlice";
 import { CompanyType } from "../utils/types";
 import { fetchCompanyConnections } from "../utils/helperFunctions/fetchCompanyConnections";
 

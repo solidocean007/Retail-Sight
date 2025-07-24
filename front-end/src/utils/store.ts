@@ -13,11 +13,13 @@ import { useDispatch as _useDispatch } from "react-redux";
 import teamsSlice from "../Slices/teamsSlice";
 import missionsSlice from "../Slices/missionsSlice";
 // import goalsSlice from "../Slices/goalsSlice";
-import companySlice from "../Slices/companySlice"
+import companyConnectionsSlice from "../Slices/companyConnectionSlice"
+import allCompaniesSlice from "../Slices/allCompaniesSlice"
 import companyGoalsSlice from "../Slices/companyGoalsSlice"
 import galloGoalsSlice from "../Slices/galloGoalsSlice"
 import productsSlice from "../Slices/productsSlice"
 import notificationsSlice from "../Slices/notificationsSlice"
+import currentCompanySlice from "../Slices/currentCompanySlice"
 
 const store = configureStore({
   reducer: {
@@ -31,7 +33,9 @@ const store = configureStore({
     missions: missionsSlice,
     userAccounts: userAccountsSlice,
     allAccounts: allAccountsSlice,
-    company: companySlice,
+    currentCompany: currentCompanySlice,
+    allCompanies: allCompaniesSlice,
+    companyConnections: companyConnectionsSlice,
     companyGoals: companyGoalsSlice,  // 🆕 First-party company goals
     galloGoals: galloGoalsSlice,      // 🆕 Third-party Gallo goals
     companyProducts: productsSlice,
