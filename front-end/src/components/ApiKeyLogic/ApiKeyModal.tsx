@@ -39,16 +39,12 @@ const ApiKeyModal = ({
   open: boolean;
   onClose: () => void;
 }) => {
+  const dashboardUser = useSelector(selectUser);
   const [apiKey, setApiKey] = useState<string>("");
   const [permissions, setPermissions] = useState<
     PermissionsType["permissions"] | null
   >(null);
-  const dashboardUser = useSelector(selectUser);
   const [loadingKey, setLoadingKey] = useState(false);
-
-  if (!dashboardUser) {
-    return null;
-  }
 
   const fetchApiKey = async () => {
     const functions = getFunctions();
@@ -102,10 +98,14 @@ const ApiKeyModal = ({
         },
         (err) => {
           console.error("Failed to copy API Key to clipboard: ", err);
-        },
+        }
       );
     }
   };
+
+  if (!dashboardUser) {
+    return null;
+  }
 
   return (
     <Modal open={open} onClose={onClose}>

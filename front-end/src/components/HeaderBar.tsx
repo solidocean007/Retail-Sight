@@ -144,10 +144,13 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
+
               {showNotificationDropdown && (
-                <NotificationDropdown
-                  onClose={() => setShowNotificationDropdown(false)}
-                />
+                <div style={{ position: "relative" }}>
+                  <NotificationDropdown
+                    onClose={() => setShowNotificationDropdown(false)}
+                  />
+                </div>
               )}
             </div>
           </div>

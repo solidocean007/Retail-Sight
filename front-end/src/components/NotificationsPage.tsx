@@ -1,5 +1,5 @@
 // Pages/NotificationsPage.tsx
-import React from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import "./notificationsPage.css";
 import { RootState, useAppDispatch } from "../utils/store";
@@ -8,33 +8,60 @@ import {
   selectAllNotifications,
 } from "../Slices/notificationsSlice";
 import NotificationItem from "./Notifications/NotificationItem";
-import { removeNotification } from "../thunks/notificationsThunks";
+import { useNavigate } from "react-router-dom";
+// import { markAllNotificationsRead } from "../Slices/notificationsSlice"; // <-- Create this thunk
+import ViewNotificationModal from "./Notifications/ViewNotificationModal";
+import { NotificationType } from "../utils/types";
 
 const NotificationsPage: React.FC = () => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const notifications = useSelector(selectAllNotifications);
+  const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(null);
 
   if (!currentUser) return null;
+
+  const handleMarkAllRead = () => {
+    notifications.forEach((notif) => {
+      if (!notif.readBy?.includes(currentUser.uid)) {
+        dispatch(
+          markAsRead({ notificationId: notif.id, userId: currentUser.uid })
+        );
+      }
+    });
+  };
 
   return (
     <div className="notifications-page">
       <h2>All Notifications</h2>
-      <div className="notifications-list">
-        {notifications.map((notif) => (
-          <NotificationItem
-            key={notif.id}
-            notification={notif}
-            currentUserId={currentUser.uid}
-            onClick={() => {
-              if (!notif.readBy?.includes(currentUser.uid)) {
-                dispatch(markAsRead({ notificationId: notif.id, userId: currentUser.uid }));
-              }
-              dispatch(removeNotification({ companyId: currentUser.companyId, notificationId: notif.id })); // Argument of type 'AsyncThunkAction<void, { companyId: string; notificationId: string; }, AsyncThunkConfig>' is not assignable to parameter of type 'AnyAction'.ts(2345)
-            }}
-          />
-        ))}
+      <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+        <button onClick={() => navigate("/")}>Go Home</button>
+        <button onClick={handleMarkAllRead}>Mark All Read</button>
       </div>
+
+      {notifications.map((notif) => (
+        <NotificationItem
+          key={notif.id}
+          notification={notif}
+          currentUserId={currentUser.uid}
+          onClick={() => {
+            if (!notif.readBy?.includes(currentUser.uid)) {
+              dispatch(
+                markAsRead({
+                  notificationId: notif.id,
+                  userId: currentUser.uid,
+                })
+              );
+            }
+          }}
+        />
+      ))}
+      <ViewNotificationModal
+        open={!!selectedNotif}
+        onClose={() => setSelectedNotif(null)}
+        notification={selectedNotif}
+      />
     </div>
   );
 };

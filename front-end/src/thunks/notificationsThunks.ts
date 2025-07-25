@@ -8,8 +8,9 @@ import {
   doc,
   query,
   orderBy,
-  onSnapshot,
   arrayUnion,
+  setDoc,
+  Timestamp,
 } from "firebase/firestore";
 import {
   setNotifications,
@@ -17,56 +18,85 @@ import {
   deleteNotification,
   setLoading,
   setError,
-// } from "../Slices/notificationsSlice";
 } from "../Slices/notificationsSlice";
 import { NotificationType } from "../utils/types";
 import { db } from "../utils/firebase";
 
-// Fetch notifications for a company
+//
+// 🔁 1. Fetch All Notifications for a Company
+//
 export const fetchCompanyNotifications = createAsyncThunk(
   "notifications/fetchCompanyNotifications",
   async (companyId: string, { dispatch }) => {
     try {
       dispatch(setLoading(true));
+
       const q = query(
-        collection(db, `notifications/${companyId}/items`),
+        collection(db, "notifications"),
         orderBy("sentAt", "desc")
       );
       const snapshot = await getDocs(q);
+
       const notifications: NotificationType[] = [];
-      snapshot.forEach((docSnap) =>
-        notifications.push({ id: docSnap.id, ...docSnap.data() } as NotificationType)
-      );
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as NotificationType;
+
+        // 🔍 Only include notifications where this company is a recipient
+        const isTargeted =
+          (!data.recipientCompanyIds &&
+            !data.recipientUserIds &&
+            !data.recipientRoles) || // global
+          data.recipientCompanyIds?.includes(companyId);
+
+        if (isTargeted) {
+          notifications.push(data);
+        }
+      });
+
       dispatch(setNotifications(notifications));
-      dispatch(setLoading(false));
     } catch (err: any) {
       dispatch(setError(err.message));
+    } finally {
       dispatch(setLoading(false));
     }
   }
 );
 
-interface SendNotificationPayload {
-  companyId: string;
-  notification: NotificationType;
-  recipientUserIds?: string[]; // ✅ optional
-}
+//
+// 📩 2. Send Notification (Flat collection)
+//
 
 export const sendNotification = createAsyncThunk(
   "notifications/sendNotification",
   async (
-    { companyId, notification, recipientUserIds }: SendNotificationPayload,
+    { notification }: { notification: NotificationType },
     { dispatch }
   ) => {
     try {
-      const docRef = await addDoc(
-        collection(db, `notifications/${companyId}/items`),
-        {
-          ...notification,
-          recipientUserIds: recipientUserIds || [],
-        }
-      );
-      dispatch(addNotification({ ...notification, id: docRef.id }));
+      const docRef = doc(collection(db, "notifications"));
+
+      const newNotif: NotificationType = {
+        ...notification,
+        id: docRef.id,
+        recipientCompanyIds: notification.recipientCompanyIds || [],
+        recipientUserIds: notification.recipientUserIds || [],
+        recipientRoles: notification.recipientRoles || [],
+      };
+
+      // Save to Firestore
+      await setDoc(docRef, newNotif);
+
+      // 🔧 Normalize `sentAt` before dispatching to Redux
+      const normalizedNotification = {
+        ...newNotif,
+        sentAt:
+          newNotif.sentAt instanceof Timestamp
+            ? newNotif.sentAt.toDate()
+            : newNotif.sentAt,
+      };
+
+      dispatch(addNotification(normalizedNotification));
     } catch (err: any) {
       console.error("Error sending notification:", err);
       dispatch(setError(err.message));
@@ -74,26 +104,25 @@ export const sendNotification = createAsyncThunk(
   }
 );
 
+//
+// ✅ 3. Mark as Read
+//
 export const markNotificationRead = createAsyncThunk(
   "notifications/markRead",
-  async ({ companyId, notificationId, uid }: { companyId: string; notificationId: string; uid: string }) => {
-    const ref = doc(db, `notifications/${companyId}/items`, notificationId);
+  async ({ notificationId, uid }: { notificationId: string; uid: string }) => {
+    const ref = doc(db, `notifications/${notificationId}`);
     await updateDoc(ref, { readBy: arrayUnion(uid) });
   }
 );
 
-
-
-
-// Delete a notification
+//
+// ❌ 4. Remove Notification
+//
 export const removeNotification = createAsyncThunk(
   "notifications/removeNotification",
-  async (
-    { companyId, notificationId }: { companyId: string; notificationId: string },
-    { dispatch }
-  ) => {
+  async ({ notificationId }: { notificationId: string }, { dispatch }) => {
     try {
-      await deleteDoc(doc(db, `notifications/${companyId}/items/${notificationId}`));
+      await deleteDoc(doc(db, `notifications/${notificationId}`));
       dispatch(deleteNotification(notificationId));
     } catch (err: any) {
       dispatch(setError(err.message));

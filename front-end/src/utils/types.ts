@@ -4,17 +4,25 @@ import { serverTimestamp, Timestamp } from "firebase/firestore";
 // import { ChannelType } from "../components/Create-Post/ChannelSelector";
 // import { CategoryType } from "../components/Create-Post/CategorySelector";
 export type PriorityType = "high" | "normal" | "Low";
+
 export type NotificationType = {
   id: string;
   title: string;
   message: string;
   sentAt: Timestamp;
-  sentBy: UserType;
-  recipientsIds: string[];
-  readBy: string[]; // tracks who has opened it
+  scheduledAt?: Timestamp | null; // optional future delivery
+  sentBy: UserType | "system";
+
+  recipientCompanyIds?: string[]; // ✅ specific companies
+  recipientUserIds?: string[];    // ✅ specific users
+  recipientRoles?: string[];      // ✅ company roles (admin, employee)
+
+  readBy: string[];
   priority: PriorityType;
   pinned: boolean;
+  type?: "like" | "comment" | "system" | "reminder"; // ✅ Optional but useful
 };
+
 
 export type CompanyType = {
   lastUpdated: string;

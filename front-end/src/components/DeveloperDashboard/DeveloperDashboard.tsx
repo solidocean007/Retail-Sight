@@ -32,10 +32,12 @@ import {
   deleteUserAuthAndFirestore,
   updateSelectedUser,
 } from "../../DeveloperAdminFunctions/developerAdminFunctions";
-import NotificationsTable from "../Notifications/NotificationsTable";
+import NotificationsTable from "../Notifications/DeveloperNotificationsTable";
 import { UserType } from "../../utils/types";
 import CustomConfirmation from "../CustomConfirmation";
 import LogOutButton from "../LogOutButton";
+import DeveloperNotificationForm from "../Notifications/DeveloperNotificationForm";
+import DeveloperNotificationsTable from "../Notifications/DeveloperNotificationsTable";
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
@@ -43,7 +45,7 @@ const DeveloperDashboard = () => {
   const isDeveloper = dashboardUser?.role === "developer";
 
   const dispatch = useAppDispatch();
-  const companies = useSelector(selectCompaniesWithUsers);
+  const allCompaniesAndUsers = useSelector(selectCompaniesWithUsers);
   const loading = useSelector(selectCompaniesLoading);
 
   const [tabIndex, setTabIndex] = useState(0);
@@ -78,10 +80,10 @@ const DeveloperDashboard = () => {
     updateSelectedUser(adminId, user);
 
   useEffect(() => {
-    if (!companies.length && !loading) {
+    if (!allCompaniesAndUsers.length && !loading) {
       dispatch(fetchCompaniesWithUsers());
     }
-  }, [companies.length, loading, dispatch]);
+  }, [allCompaniesAndUsers.length, loading, dispatch]);
 
   const handleRefresh = () => dispatch(fetchCompaniesWithUsers());
   const handleOpenModal = () => setIsModalOpen(true);
@@ -123,7 +125,7 @@ const DeveloperDashboard = () => {
       </header>
 
       {/* ─────────────────── LOADING STATE ─────────────────── */}
-      {loading && !companies.length ? (
+      {loading && !allCompaniesAndUsers.length ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
         </Box>
@@ -147,7 +149,7 @@ const DeveloperDashboard = () => {
           <Box sx={{ mt: 2 }}>
             {tabIndex === 0 && (
               <>
-                {companies.map((company) => (
+                {allCompaniesAndUsers.map((company) => (
                   <Accordion key={company.id}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="h6">
@@ -182,7 +184,13 @@ const DeveloperDashboard = () => {
                 <Typography variant="h6" mb={1}>
                   Notifications
                 </Typography>
-                <NotificationsTable />
+                {/* Abstracted Notification Form with Audience Picker */}
+                <DeveloperNotificationForm
+                  // isDeveloper={dashboardUser?.role === "developer"}
+                  currentUser={dashboardUser as UserType}
+                  allCompaniesAndUsers={allCompaniesAndUsers}
+                />
+                <DeveloperNotificationsTable allCompaniesAndUsers={allCompaniesAndUsers} />
               </Box>
             )}
 
@@ -200,7 +208,7 @@ const DeveloperDashboard = () => {
         </>
       )}
 
-      <GenerateApiKeyComponent open={isModalOpen} onClose={handleCloseModal} />
+      {/* <GenerateApiKeyComponent open={isModalOpen} onClose={handleCloseModal} /> */}
       <CustomConfirmation
         isOpen={confirmOpen}
         message="Permanently delete this user? This can’t be undone."

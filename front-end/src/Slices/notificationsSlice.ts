@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { NotificationType } from "../utils/types";
 import { RootState } from "../utils/store";
 
@@ -40,11 +40,6 @@ const notificationsSlice = createSlice({
         (n) => n.id !== action.payload
       );
     },
-    removeNotification: (state, action) => {
-      state.notifications = state.notifications.filter(
-        (n) => n.id !== action.payload
-      );
-    },
     togglePinNotification: (state, action) => {
       const notif = state.notifications.find((n) => n.id === action.payload);
       if (notif) notif.pinned = !notif.pinned;
@@ -72,11 +67,14 @@ const notificationsSlice = createSlice({
 
 
 export const selectAllNotifications = (state: RootState) => state.notifications.notifications;
-export const selectUnreadNotifications = (state: RootState) => {
-  const uid = state.user.currentUser?.uid;
-  if (!uid) return [];
-  return state.notifications.notifications.filter((n) => !n.readBy?.includes(uid));
-};
+export const selectNotifications = (state: RootState) => state.notifications.notifications;
+export const selectCurrentUserId = (state: RootState) => state.user.currentUser?.uid;
+
+export const selectUnreadNotifications = createSelector(
+  [selectNotifications, selectCurrentUserId],
+  (notifications, userId) =>
+    notifications.filter((notif) => !notif.readBy?.includes(userId ?? ""))
+);
 
 
 export const {

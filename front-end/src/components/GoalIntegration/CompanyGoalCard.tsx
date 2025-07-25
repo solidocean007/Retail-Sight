@@ -192,7 +192,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
-          {onDelete && user?.role === "admin" && (
+          {onDelete && user?.role === "admin" || user?.role === "super-admin" && (
             <Box display="flex" gap={1}>
               <Button
                 variant="outlined"

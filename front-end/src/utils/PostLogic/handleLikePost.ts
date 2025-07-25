@@ -1,40 +1,55 @@
 // handleLikePost.ts
-import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, arrayRemove, Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
-import { PostWithID } from "../types";
+import { NotificationType, PostWithID } from "../types";
 import { updatePost } from "../../Slices/postsSlice";
 import { updatePostInIndexedDB } from "../database/indexedDBUtils";
 import { AppDispatch } from "../store";
 import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
+import { sendNotification } from "../../thunks/notificationsThunks";
 
 // handleLikePost.ts
 export const handleLikePost = async (
   post: PostWithID,
-  userId: string,
+  user: UserType, // ⬅️ now passing full user
   liked: boolean,
-  dispatch: AppDispatch,
+  dispatch: AppDispatch
 ) => {
   try {
-    // Update the timestamp of the post
     await updatePostWithNewTimestamp(post.id);
 
-    // Update the likes array
-    const updatedLikes = liked ? arrayUnion(userId) : arrayRemove(userId);
+    const updatedLikes = liked ? arrayUnion(user.uid) : arrayRemove(user.uid);
     await updateDoc(doc(db, "posts", post.id), { likes: updatedLikes });
 
-    // Prepare the updated post object for Redux and IndexedDB
+    if (liked && user.uid !== post.postUser.uid) {
+      const notif: NotificationType = {
+        id: "",
+        title: "New Like on Your Post",
+        message: `${user.firstName} ${user.lastName} liked your post about ${
+          post.accountName || "a store"
+        }.`,
+        sentAt: Timestamp.now(),
+        sentBy: "system",
+        recipientUserIds: [post.postUser.uid],
+        recipientCompanyIds: [],
+        recipientRoles: [],
+        readBy: [],
+        priority: "Low",
+        pinned: false,
+        type: "like",
+      };
+
+      dispatch(sendNotification({ notification: notif }));
+    }
+
     const updatedPost = {
       ...post,
       likes: liked
-        ? [...(post.likes || []), userId]
-        : (post.likes || []).filter((uid) => uid !== userId),
-      // Assume the timestamp update was successful
+        ? [...(post.likes || []), user.uid]
+        : (post.likes || []).filter((uid) => uid !== user.uid),
     };
 
-    // Dispatch to Redux
     dispatch(updatePost(updatedPost));
-
-    // Update in IndexedDB
     await updatePostInIndexedDB(updatedPost);
   } catch (error) {
     console.error("Error updating likes:", error);

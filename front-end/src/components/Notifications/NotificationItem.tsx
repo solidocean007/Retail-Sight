@@ -16,6 +16,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 }) => {
   const isUnread = !notification.readBy?.includes(currentUserId);
   const [dismissed, setDismissed] = useState(false);
+  const priorityClass = notification.priority?.toLowerCase() || "normal";
 
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
@@ -41,7 +42,9 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
   return (
     <div
-      className={`notification-item ${isUnread ? "unread" : "read"} ${dismissed ? "dismissed" : ""}`}
+      className={`notification-item ${priorityClass} ${
+        isUnread ? "unread" : "read"
+      } ${dismissed ? "dismissed" : ""}`}
       onClick={onClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}

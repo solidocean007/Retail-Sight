@@ -162,7 +162,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const onLikePostButtonClick = async () => {
     try {
       const newLikedByUser = !likedByUser;
-      await handleLikePost(post, currentUserUid, newLikedByUser, dispatch);
+      if (user) {
+        await handleLikePost(post, user, newLikedByUser, dispatch);
+      }
     } catch (error) {
       console.error("Failed to update like status:", error);
     }
@@ -263,91 +265,91 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <>
-    <div className="card-border">
-       <div
-        className={`post-card-container ${
-          shouldHighlight ? "shouldHighlight" : ""
-        }`}
-        style={{ position: "relative" }}
-      >
-        <div className="post-header">
-          <div className="visibility">
-            <div className="view-box">
-              <p>view: {post.visibility}</p>
-              <div className="post-card-controls">
-                <button
-                  aria-label="settings"
-                  aria-controls="post-card-menu"
-                  aria-haspopup="true"
-                  onClick={handleVertIconClick}
-                >
-                  <MoreVert />
-                </button>
-                <div>
-                  {Boolean(anchorEl) && (
-                    <Menu
-                      id="post-card-menu"
-                      anchorEl={anchorEl}
-                      open={true}
-                      onClose={() => setAnchorEl(null)}
-                    >
-                      <MenuItem
-                        onClick={() => handleShare()}
-                        disabled={isSharing}
+      <div className="card-border">
+        <div
+          className={`post-card-container ${
+            shouldHighlight ? "shouldHighlight" : ""
+          }`}
+          style={{ position: "relative" }}
+        >
+          <div className="post-header">
+            <div className="visibility">
+              <div className="view-box">
+                <p>view: {post.visibility}</p>
+                <div className="post-card-controls">
+                  <button
+                    aria-label="settings"
+                    aria-controls="post-card-menu"
+                    aria-haspopup="true"
+                    onClick={handleVertIconClick}
+                  >
+                    <MoreVert />
+                  </button>
+                  <div>
+                    {Boolean(anchorEl) && (
+                      <Menu
+                        id="post-card-menu"
+                        anchorEl={anchorEl}
+                        open={true}
+                        onClose={() => setAnchorEl(null)}
                       >
-                        {isSharing ? <CircularProgress size={20} /> : "Share"}
-                      </MenuItem>
-                      {(user?.uid === post.postUser?.uid ||
-                        user?.role === "admin" ||
-                        user?.role === "super-admin") && (
                         <MenuItem
-                          onClick={() => {
-                            setAnchorEl(null); // Close menu completely
-                            setIsEditModalOpen(true); // Open edit modal
-                          }}
+                          onClick={() => handleShare()}
+                          disabled={isSharing}
                         >
-                          Update Post
+                          {isSharing ? <CircularProgress size={20} /> : "Share"}
                         </MenuItem>
-                      )}
-                      <MenuItem
-                        onClick={() => setIsAddToCollectionModalOpen(true)}
-                      >
-                        Add to Collections
-                      </MenuItem>
-                    </Menu>
-                  )}
-                </div>
-                <Dialog
-                  open={isAddToCollectionModalOpen}
-                  onClose={() => setIsAddToCollectionModalOpen(false)}
-                >
-                  <AddPostToCollectionModal
-                    post={post}
+                        {(user?.uid === post.postUser?.uid ||
+                          user?.role === "admin" ||
+                          user?.role === "super-admin") && (
+                          <MenuItem
+                            onClick={() => {
+                              setAnchorEl(null); // Close menu completely
+                              setIsEditModalOpen(true); // Open edit modal
+                            }}
+                          >
+                            Update Post
+                          </MenuItem>
+                        )}
+                        <MenuItem
+                          onClick={() => setIsAddToCollectionModalOpen(true)}
+                        >
+                          Add to Collections
+                        </MenuItem>
+                      </Menu>
+                    )}
+                  </div>
+                  <Dialog
+                    open={isAddToCollectionModalOpen}
                     onClose={() => setIsAddToCollectionModalOpen(false)}
-                  />
-                </Dialog>
+                  >
+                    <AddPostToCollectionModal
+                      post={post}
+                      onClose={() => setIsAddToCollectionModalOpen(false)}
+                    />
+                  </Dialog>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="post-header-top"></div>
-          <div className="header-bottom">
-            <div className="details-date">
-              <div className="store-details">
-                {" "}
-                {/* i need to eventually add store names to the filters*/}
-                <div className="store-name-number">
-                  <h3>{post.account?.accountName} </h3>
+            <div className="post-header-top"></div>
+            <div className="header-bottom">
+              <div className="details-date">
+                <div className="store-details">
+                  {" "}
+                  {/* i need to eventually add store names to the filters*/}
+                  <div className="store-name-number">
+                    <h3>{post.account?.accountName} </h3>
 
-                  <h5>{formattedDate}</h5>
-                </div>
-                <div className="store-address-box">
-                  <h6>{post.account?.accountAddress}</h6>{" "}
+                    <h5>{formattedDate}</h5>
+                  </div>
+                  <div className="store-address-box">
+                    <h6>{post.account?.accountAddress}</h6>{" "}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="post-user-details">
-              <div className="avatar-name">
-                {/* <div
+              <div className="post-user-details">
+                <div className="avatar-name">
+                  {/* <div
                   className="post-user-avatar"
                   onClick={handleOnUserNameClick} // type mismatch here
                   style={{ cursor: "pointer" }}
@@ -365,127 +367,127 @@ const PostCard: React.FC<PostCardProps> = ({
                   )}
                 </div> */}
 
-                <div className="post-user-name">
-                  <p>
-                    <a href="#" onClick={handleOnUserNameClick}>
-                      {post.postUser?.firstName && post.postUser?.lastName
-                        ? `${post.postUser.firstName} ${post.postUser.lastName}`
-                        : "Unknown User"}
-                    </a>
-                  </p>
+                  <div className="post-user-name">
+                    <p>
+                      <a href="#" onClick={handleOnUserNameClick}>
+                        {post.postUser?.firstName && post.postUser?.lastName
+                          ? `${post.postUser.firstName} ${post.postUser.lastName}`
+                          : "Unknown User"}
+                      </a>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="created-On-Behalf">
+                  {createdOnBehalf && (
+                    <h5>
+                      Created by: {post.postedBy?.firstName}{" "}
+                      {post.postedBy?.lastName}
+                    </h5>
+                  )}
+                </div>
+
+                <div className="user-company-box">
+                  <p>company: {post.postUser?.company}</p>{" "}
+                  {/* this matches the saved post but not the future account object.  should it do either or both?*/}
                 </div>
               </div>
+            </div>
+          </div>
+          {!post.account && (
+            <div className="missing-account-banner">
+              🚨 Missing Account Info — Please Edit
+            </div>
+          )}
 
-              <div className="created-On-Behalf">
-                {createdOnBehalf && (
-                  <h5>
-                    Created by: {post.postedBy?.firstName}{" "}
-                    {post.postedBy?.lastName}
-                  </h5>
+          {post.companyGoalId && (
+            <div className="company-goal-banner textured-background">
+              Company Goal: {post.companyGoalTitle}
+            </div>
+          )}
+
+          {post.oppId && (
+            <div className="gallo-goal-banner gallo-textured-background">
+              Gallo Goal: {post.galloGoalTitle}
+            </div>
+          )}
+
+          {post.brands && post.brands.length > 0 && (
+            <div className="brands-list">
+              {post.brands.map((brand) => (
+                <Chip key={brand} label={brand} size="small" />
+              ))}
+            </div>
+          )}
+          {/* {post.id} */}
+          <div className="description-image">
+            <div className="like-quantity-row">
+              <h4>
+                {/* {post.productType} */}
+                {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
+              </h4>
+              <div className="likes-box">
+                <button
+                  className="like-button"
+                  onClick={handleLikePostButtonClick}
+                  disabled={!user}
+                >
+                  {likedByUser ? "❤️" : "🤍"}
+                </button>
+                {likesCount === 0 ? null : likesCount === 1 ? (
+                  <h5>{likesCount} like</h5>
+                ) : (
+                  <h5>{likesCount} likes</h5>
                 )}
               </div>
-
-              <div className="user-company-box">
-                <p>company: {post.postUser?.company}</p>{" "}
-                {/* this matches the saved post but not the future account object.  should it do either or both?*/}
-              </div>
             </div>
-          </div>
-        </div>
-        {!post.account && (
-          <div className="missing-account-banner">
-            🚨 Missing Account Info — Please Edit
-          </div>
-        )}
-
-        {post.companyGoalId && (
-          <div className="company-goal-banner textured-background">
-            Company Goal: {post.companyGoalTitle}
-          </div>
-        )}
-
-        {post.oppId && (
-          <div className="gallo-goal-banner gallo-textured-background">
-            Gallo Goal: {post.galloGoalTitle}
-          </div>
-        )}
-
-        {post.brands && post.brands.length > 0 && (
-          <div className="brands-list">
-            {post.brands.map((brand) => (
-              <Chip key={brand} label={brand} size="small" />
-            ))}
-          </div>
-        )}
-        {/* {post.id} */}
-        <div className="description-image">
-          <div className="like-quantity-row">
-            <h4>
-              {/* {post.productType} */}
-              {post.totalCaseCount > 0 && ` quantity: ${post.totalCaseCount}`}
-            </h4>
-            <div className="likes-box">
-              <button
-                className="like-button"
-                onClick={handleLikePostButtonClick}
-                disabled={!user}
-              >
-                {likedByUser ? "❤️" : "🤍"}
-              </button>
-              {likesCount === 0 ? null : likesCount === 1 ? (
-                <h5>{likesCount} like</h5>
-              ) : (
-                <h5>{likesCount} likes</h5>
-              )}
-            </div>
-          </div>
-          <div className="hash-tag-container">
-            {/* Display hashtags above the image */}
-            <PostDescription
-              description={post.description}
-              getPostsByTag={getPostsByTag}
-              getPostsByStarTag={getPostsByStarTag}
-              setCurrentHashtag={setCurrentHashtag}
-              setActivePostSet={setActivePostSet}
-              setIsSearchActive={setIsSearchActive}
-            />
-          </div>
-          <div className="activity-post-image-box">
-            {post.imageUrl && (
-              <BlurUpImage
-                lowResSrc={getLowResUrl(post.imageUrl)}
-                fullResSrc={post.imageUrl}
-                alt="Post image"
-                openImageModal={handleImageClick}
+            <div className="hash-tag-container">
+              {/* Display hashtags above the image */}
+              <PostDescription
+                description={post.description}
+                getPostsByTag={getPostsByTag}
+                getPostsByStarTag={getPostsByStarTag}
+                setCurrentHashtag={setCurrentHashtag}
+                setActivePostSet={setActivePostSet}
+                setIsSearchActive={setIsSearchActive}
               />
-            )}
-            {/* <img
+            </div>
+            <div className="activity-post-image-box">
+              {post.imageUrl && (
+                <BlurUpImage
+                  lowResSrc={getLowResUrl(post.imageUrl)}
+                  fullResSrc={post.imageUrl}
+                  alt="Post image"
+                  openImageModal={handleImageClick}
+                />
+              )}
+              {/* <img
               src={post.imageUrl}
               alt="Post image"
               className="post-image"
               onClick={handleImageClick}
             /> */}
-          </div>
-
-          {commentCount > 0 && (
-            <div className="comment-button-container">
-              {commentCount > 0 && (
-                <button
-                  className="view-comment-button"
-                  onClick={openCommentModal}
-                >
-                  {showAllComments
-                    ? "Hide Comments"
-                    : `${commentCount} Comments`}
-                </button>
-              )}
             </div>
-          )}
+
+            {commentCount > 0 && (
+              <div className="comment-button-container">
+                {commentCount > 0 && (
+                  <button
+                    className="view-comment-button"
+                    onClick={openCommentModal}
+                  >
+                    {showAllComments
+                      ? "Hide Comments"
+                      : `${commentCount} Comments`}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          {user && <CommentSection post={post} />}
         </div>
-        {user && <CommentSection post={post} />}
       </div>
-    </div>
-     
+
       <EditPostModal
         post={post}
         setSelectedCompanyAccount={setSelectedCompanyAccount}

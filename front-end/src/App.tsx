@@ -25,13 +25,13 @@ import useSchemaVersion from "./hooks/useSchemaVersion";
 import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
 import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
-import { setupNotificationListener } from "./utils/listeners/setupNotificationListener";
+import { setupNotificationListenersForUser } from "./utils/listeners/setupNotificationListenersForUser";
 // import { auditPostDates, migratePostDates } from "./script";
 
 function App(): React.JSX.Element {
-  useSchemaVersion();
-  useCompanyUsersSync();
-  useAllCompanyAccountsSync();
+  // useSchemaVersion();
+  // useCompanyUsersSync();
+  // useAllCompanyAccountsSync();
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
@@ -78,22 +78,23 @@ function App(): React.JSX.Element {
     }
   }, [user?.companyId, dispatch]);
 
-  // 📡 Goal listeners
+  // 📡 Realtime listeners for goals and notifications
   useEffect(() => {
+    // return
     if (!companyId || !currentUser?.companyId) return;
      const unsubscribeNotifications = dispatch(
-      setupNotificationListener(currentUser.companyId)
+      setupNotificationListenersForUser(currentUser)
     );
     const unsubscribeCompanyGoals = dispatch(
       setupCompanyGoalsListener(companyId)
     );
-    const unsubscribeGalloGoals = dispatch(setupGalloGoalsListener(companyId));
+    // const unsubscribeGalloGoals = dispatch(setupGalloGoalsListener(companyId));
     return () => {
       unsubscribeCompanyGoals();
-      unsubscribeGalloGoals();
+      // unsubscribeGalloGoals();
       unsubscribeNotifications();
     };
-  }, [dispatch, companyId]);
+  }, [dispatch, currentUser]);
 
 
   if (initializing) return <></>;

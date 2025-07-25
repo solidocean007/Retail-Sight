@@ -43,3 +43,15 @@
   transform: translateX(-100%);
   opacity: 0;
 }
+
+/* Add this to notification-item.css */
+.notification-item.high {
+  border-left: 6px solid red;
+}
+.notification-item.normal {
+  border-left: 6px solid orange;
+}
+.notification-item.low {
+  border-left: 6px solid green;
+}
+

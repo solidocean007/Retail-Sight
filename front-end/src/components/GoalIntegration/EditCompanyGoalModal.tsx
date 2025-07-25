@@ -43,6 +43,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const [goalDescription, setGoalDescription] = useState(goal.goalDescription);
   const [goalMetric, setGoalMetric] = useState(goal.goalMetric);
   const [goalValueMin, setGoalValueMin] = useState(goal.goalValueMin);
+  const [perUserQuota, setPerUserQuota] = useState(goal.perUserQuota);
   const [goalStartDate, setGoalStartDate] = useState(goal.goalStartDate);
   const [goalEndDate, setGoalEndDate] = useState(goal.goalEndDate);
 
@@ -69,6 +70,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalValueMin,
       goalStartDate,
       goalEndDate,
+      perUserQuota,
     }),
     [
       accountNumbersForThisGoal,
@@ -78,6 +80,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalValueMin,
       goalStartDate,
       goalEndDate,
+      perUserQuota,
     ]
   );
 
@@ -88,6 +91,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalDescription: goal.goalDescription,
       goalMetric: goal.goalMetric,
       goalValueMin: goal.goalValueMin,
+      goalQuotaMin: goal.perUserQuota,
       goalStartDate: goal.goalStartDate,
       goalEndDate: goal.goalEndDate,
     }),
@@ -146,6 +150,14 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
             onChange={(e) => setGoalValueMin(Number(e.target.value))}
             fullWidth
           />
+          <TextField
+            label="Goal Quota"
+            type="number"
+            value={perUserQuota}
+            onChange={(e) => setPerUserQuota(Number(e.target.value))}
+            fullWidth
+          />
+
           <TextField
             label="Start Date"
             type="date"

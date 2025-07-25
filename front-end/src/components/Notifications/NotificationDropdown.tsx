@@ -8,7 +8,9 @@ import NotificationItem from "./NotificationItem";
 import "./notifications/notification-dropdown.css";
 import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
 
-const NotificationDropdown: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+const NotificationDropdown: React.FC<{ onClose: () => void }> = ({
+  onClose,
+}) => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const notifications = useSelector(selectAllNotifications);
@@ -19,7 +21,12 @@ const NotificationDropdown: React.FC<{ onClose: () => void }> = ({ onClose }) =>
   if (!currentUser) return null;
 
   return (
-    <div className="notification-dropdown" ref={dropdownRef}>
+    <div
+      className="notification-dropdown"
+      ref={dropdownRef}
+      role="dialog"
+      aria-label="Notifications"
+    >
       <div className="dropdown-header">
         <h4>Notifications</h4>
         <button onClick={onClose}>×</button>
@@ -35,7 +42,12 @@ const NotificationDropdown: React.FC<{ onClose: () => void }> = ({ onClose }) =>
               currentUserId={currentUser.uid}
               onClick={() => {
                 if (!notif.readBy?.includes(currentUser.uid)) {
-                  dispatch(markAsRead({ notificationId: notif.id, userId: currentUser.uid }));
+                  dispatch(
+                    markAsRead({
+                      notificationId: notif.id,
+                      userId: currentUser.uid,
+                    })
+                  );
                 }
               }}
             />

@@ -8,6 +8,7 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { setAllAccounts } from "../Slices/allAccountsSlice";
 import { RootState } from "../utils/store";
+import { showMessage } from "../Slices/snackbarSlice";
 
 const useAllCompanyAccountsSync = () => {
   const dispatch = useAppDispatch();
@@ -18,36 +19,31 @@ const useAllCompanyAccountsSync = () => {
     const loadAccounts = async () => {
       if (!user?.companyId) return;
 
-      // const isPrivileged =
-      //   user.role === "admin" || user.role === "super-admin" || user.role === "developer";
-      // if (!isPrivileged) return;
-
-      // if (allAccounts.length > 0) {
-      //   console.log("[AccountSync] Accounts already in Redux, skipping fetch");
-      //   return;
-      // }
-
       const cached = await getAllCompanyAccountsFromIndexedDB();
       if (cached && cached.length > 0) {
-        // console.log("[AccountSync] Loaded from IndexedDB:", cached.length);
         dispatch(setAllAccounts(cached));
         return;
       }
 
       const fresh = await fetchAllCompanyAccounts(user.companyId);
-      if (fresh.length === 0) return;
+      if (!fresh || fresh.length === 0) {
+        dispatch(setAllAccounts([]));
+        dispatch(showMessage("No accounts have been imported for this company yet."));
+        return;
+      }
 
       dispatch(setAllAccounts(fresh));
+
       try {
         await saveAllCompanyAccountsToIndexedDB(fresh);
-        // console.log("[AccountSync] Saved fresh accounts to IndexedDB");
       } catch (err) {
         console.warn("[AccountSync] Failed to save to IndexedDB:", err);
       }
     };
 
     loadAccounts();
-  }, [user?.companyId, user?.role, dispatch, allAccounts.length]);
+  }, [user?.companyId, dispatch]);
 };
 
 export default useAllCompanyAccountsSync;
+
