@@ -1,7 +1,7 @@
 // App.tsx
 import Snackbar from "@mui/material/Snackbar";
 import { useSelector } from "react-redux";
-import { hideMessage } from "./Slices/snackbarSlice";
+import { hideMessage, nextMessage } from "./Slices/snackbarSlice";
 import "./App.css";
 import { BrowserRouter as Router } from "react-router-dom";
 import { RootState, useAppDispatch } from "./utils/store";
@@ -82,7 +82,7 @@ function App(): React.JSX.Element {
   useEffect(() => {
     // return
     if (!companyId || !currentUser?.companyId) return;
-     const unsubscribeNotifications = dispatch(
+    const unsubscribeNotifications = dispatch(
       setupNotificationListenersForUser(currentUser)
     );
     const unsubscribeCompanyGoals = dispatch(
@@ -96,7 +96,6 @@ function App(): React.JSX.Element {
     };
   }, [dispatch, currentUser]);
 
-
   if (initializing) return <></>;
 
   return (
@@ -108,12 +107,16 @@ function App(): React.JSX.Element {
           <AppRoutes />
         </Router>
         <Snackbar
-          message={snackbar.message}
+          message={snackbar.current?.text}
           open={snackbar.open}
-          onClose={() => dispatch(hideMessage())}
-          autoHideDuration={3000}
+          onClose={() => {
+            dispatch(hideMessage());
+            setTimeout(() => dispatch(nextMessage()), 300); // Cannot find name 'nextMessage'. Did you mean 'onmessage'?
+          }}
+          autoHideDuration={snackbar.current?.duration ?? 4000}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         />
+
         {!initializing && currentUser && <UserModal />}
       </ThemeProvider>
     </LocalizationProvider>

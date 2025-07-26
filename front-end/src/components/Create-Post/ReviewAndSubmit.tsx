@@ -140,11 +140,9 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         setUploadProgress,
         selectedCompanyMission,
         apiKey,
-        navigate,
         selectedGalloGoal
       );
       dispatch(mergeAndSetPosts([normalizePost(newPost)]));
-      dispatch(showMessage("Post submitted successfully!"));
     } catch (err: any) {
       console.error("Upload failed:", err);
       alert(err.message || "An error occurred during upload.");

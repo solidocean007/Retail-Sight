@@ -7,17 +7,15 @@ import { showMessage } from "../../Slices/snackbarSlice";
 // const galloBaseUrl = import.meta.env.REACT_APP_GALLO_BASE_URL;
 const galloBaseUrl = "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
 
-
 export const sendAchievementToGalloAxis = async (
   payload: AchievementPayloadType,
   apiKey: string,
-  navigate: NavigateFunction,
-  dispatch: (action: any) => void,
+  dispatch: (action: any) => void
 ): Promise<void> => {
   try {
     if (!galloBaseUrl) {
       throw new Error(
-        "Gallo base URL is not defined in environment variables.",
+        "Gallo base URL is not defined in environment variables."
       );
     }
 
@@ -62,7 +60,7 @@ export const sendAchievementToGalloAxis = async (
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(vercelPayload),
-      },
+      }
     );
 
     const rawResponse = await response.text(); // Always read the response once
@@ -84,12 +82,12 @@ export const sendAchievementToGalloAxis = async (
     } else {
       // Handle error responses
       console.error(
-        `Failed to send achievement: ${response.status} - ${rawResponse}`,
+        `Failed to send achievement: ${response.status} - ${rawResponse}`
       );
       dispatch(
         showMessage(
-          `Failed to send achievement: ${response.status} - ${rawResponse}`,
-        ),
+          `Failed to send achievement: ${response.status} - ${rawResponse}`
+        )
       );
       throw new Error(rawResponse);
     }
@@ -100,13 +98,9 @@ export const sendAchievementToGalloAxis = async (
     } else {
       console.error("An unknown error occurred:", error);
       dispatch(
-        showMessage("An unknown error occurred while sending the achievement."),
+        showMessage("An unknown error occurred while sending the achievement.")
       );
     }
     throw error; // Re-throw to allow upstream handling
-  } finally {
-    setTimeout(() => {
-      navigate("/user-home-page");
-    }, 1000);
   }
 };
