@@ -1,9 +1,11 @@
 // ReviewAndSubmit.tsx
 import React, { useEffect, useState, useCallback } from "react";
 import {
+  Backdrop,
   Box,
   Button,
   CircularProgress,
+  LinearProgress,
   MenuItem,
   Select,
   Typography,
@@ -20,6 +22,7 @@ import {
 } from "../../utils/types";
 import { mergeAndSetPosts } from "../../Slices/postsSlice";
 import { normalizePost } from "../../utils/normalizePost";
+import LoadingIndicator from "./LoadingIndicator";
 
 interface ReviewAndSubmitProps {
   companyId?: string;
@@ -35,8 +38,6 @@ interface ReviewAndSubmitProps {
   selectedFile: File | null;
   setUploadProgress: React.Dispatch<React.SetStateAction<number>>;
   handlePostSubmission: any;
-  selectedCompanyMission?: CompanyMissionType;
-  selectedMission: MissionType | null;
   selectedGalloGoal?: FireStoreGalloGoalDocType | null;
 }
 
@@ -51,13 +52,12 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
   selectedFile,
   setUploadProgress,
   handlePostSubmission,
-  selectedCompanyMission,
-  selectedMission,
   selectedGalloGoal,
 }) => {
   const [apiKey, setApiKey] = useState("");
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [uploadStatusText, setUploadStatusText] = useState("");
 
   // load external API key once
   useEffect(() => {
@@ -138,7 +138,7 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
         selectedFile,
         setIsUploading,
         setUploadProgress,
-        selectedCompanyMission,
+        setUploadStatusText,
         apiKey,
         selectedGalloGoal
       );
@@ -156,14 +156,6 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
       <button className="create-post-btn" onClick={onPrevious}>
         <h4>Back</h4>
       </button>
-
-      {selectedMission && (
-        <Box mt={2}>
-          <Typography variant="h6">
-            Selected Mission: {selectedMission.missionTitle}
-          </Typography>
-        </Box>
-      )}
 
       <Box mt={2}>
         <Typography variant="h6">Post Visibility</Typography>
@@ -192,6 +184,20 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
             : "Submit Post"}
         </Button>
       </Box>
+      <Backdrop
+        open={isUploading}
+        sx={{ color: "#fff", zIndex: (t) => t.zIndex.drawer + 1 }}
+      >
+        <Box textAlign="center">
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            {uploadStatusText}
+          </Typography>
+          <LoadingIndicator progress={uploadProgress} />
+          <Typography variant="body2" sx={{ mt: 2, fontWeight: "bold" }}>
+            {Math.round(uploadProgress)}%
+          </Typography>
+        </Box>
+      </Backdrop>
     </div>
   );
 };

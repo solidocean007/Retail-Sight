@@ -78,15 +78,7 @@ export const CreatePost = () => {
     postUser: userData || null,
     account: null,
   }));
-
   const [selectedGalloGoal, setSelectedGalloGoal] = useState<FireStoreGalloGoalDocType | null>(null);
-  
-
-  const [selectedCompanyMission, setSelectedCompanyMission] =
-    useState<CompanyMissionType>();
-  const [selectedMission, setSelectedMission] = useState<MissionType | null>(
-    null
-  );
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -99,19 +91,6 @@ export const CreatePost = () => {
     postedByUid: userData?.uid || null,
   }));
 }, [onBehalf, userData]);
-
-
-  useEffect(() => {
-    if (post.visibility === "supplier") {
-      setOpenMissionSelection(true);
-    } else {
-      setOpenMissionSelection(false);
-    }
-  }, [post.visibility]);
-
-  const onClose = () => {
-    setOpenMissionSelection(false);
-  };
 
   const handleTotalCaseCountChange = useCallback((caseCount: number) => {
     setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
@@ -127,8 +106,6 @@ export const CreatePost = () => {
     },
     []
   );
-
-  const supplierVisibility = post.visibility === "supplier";
 
   // Render different content based on the current step
   const renderStepContent = () => {
@@ -187,8 +164,6 @@ export const CreatePost = () => {
             selectedFile={selectedFile}
             setUploadProgress={setUploadProgress}
             handlePostSubmission={handlePostSubmission}
-            selectedCompanyMission={selectedCompanyMission}
-            selectedMission={selectedMission}
             selectedGalloGoal={selectedGalloGoal} // 🆕 Pass the selected Gallo goal
           />
         );
@@ -210,20 +185,7 @@ export const CreatePost = () => {
     <>
       <CreatePostHelmet />
       <Container disableGutters className="create-post-container">
-        {isUploading && (
-          <Backdrop
-            open
-            sx={{ color: "#fff", zIndex: (t) => t.zIndex.drawer + 1 }}
-          >
-            <Box textAlign="center">
-              <LoadingIndicator progress={uploadProgress} />
-
-              <Typography variant="h4" sx={{ mt: 2, fontWeight: "bold" }}>
-                Uploading… {Math.round(uploadProgress)}%
-              </Typography>
-            </Box>
-          </Backdrop>
-        )}
+        
 
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
@@ -246,14 +208,7 @@ export const CreatePost = () => {
             />
           )}
           {renderStepContent()}
-          {supplierVisibility && (
-            <MissionSelection
-              open={openMissionSelection}
-              onClose={onClose}
-              setSelectedCompanyMission={setSelectedCompanyMission}
-              setSelectedMission={setSelectedMission}
-            />
-          )}
+         
         </div>
       </Container>
     </>

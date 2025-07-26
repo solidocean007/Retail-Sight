@@ -182,6 +182,7 @@ export interface PostType {
   // 📸 Post Content
   description: string;
   imageUrl?: string;
+  originalImageUrl?: string;
   photos?: { file: string }[];
   totalCaseCount: number;
   commentCount: number;
@@ -214,6 +215,7 @@ export interface PostType {
 export type PostInputType = {
   description: string;
   imageUrl?: string;
+  originalImageUrl?: string;
   totalCaseCount: number;
   visibility: string;
 

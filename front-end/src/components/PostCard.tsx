@@ -120,7 +120,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const handleImageClick = () => {
     // Assuming post.imageUrl is available and contains the 'resized' keyword
     if (post.imageUrl) {
-      const originalImageUrl = post.imageUrl.replace("resized", "original");
+      const originalImageUrl = post.originalImageUrl || post.imageUrl;
+
       setFullSizeImageUrl(originalImageUrl);
       setIsImageModalOpen(true);
     }

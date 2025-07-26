@@ -57,6 +57,7 @@ export const useHandlePostSubmission = () => {
     selectedFile: File,
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
+    setUploadStatusText: React.Dispatch<React.SetStateAction<string>>,
     apiKey: string,
     selectedGalloGoal?: FireStoreGalloGoalDocType | null
   ): Promise<PostWithID> => {
@@ -65,7 +66,7 @@ export const useHandlePostSubmission = () => {
     if (!user) throw new Error("Auth missing");
 
     setIsUploading(true);
-    dispatch(showMessage("📸 Optimizing image..."));
+    setUploadStatusText("📸 Optimizing image...");
 
     let newDocRef: DocumentReference | undefined;
     try {
@@ -74,6 +75,11 @@ export const useHandlePostSubmission = () => {
 
       const { original, resized } = await getOptimizedSizes(selectedFile);
 
+      // ✅ Use one consistent timestamp for folder
+      const dateString = new Date().toISOString().split("T")[0];
+      const folderId = `${user.uid}-${Date.now()}`;
+
+      // 🔄 ORIGINAL IMAGE
       const originalBlob = await resizeImage(
         selectedFile,
         original[0],
@@ -83,9 +89,7 @@ export const useHandlePostSubmission = () => {
 
       const originalRef = storageRef(
         storage,
-        `images/${new Date().toISOString().split("T")[0]}/${
-          user.uid
-        }-${Date.now()}/original.jpg`
+        `images/${dateString}/${folderId}/original.jpg`
       );
       const origTask = uploadBytesResumable(originalRef, originalBlob);
 
@@ -94,7 +98,9 @@ export const useHandlePostSubmission = () => {
         setUploadProgress((totalTransferred / totalBytes) * 100);
       });
       await uploadTaskAsPromise(origTask);
+      const originalUrl = await getDownloadURL(originalRef);
 
+      // 🔄 RESIZED IMAGE
       const resizedBlob = await resizeImage(
         selectedFile,
         resized[0],
@@ -104,24 +110,22 @@ export const useHandlePostSubmission = () => {
 
       const resizedRef = storageRef(
         storage,
-        `images/${new Date().toISOString().split("T")[0]}/${
-          user.uid
-        }-${Date.now()}/resized.jpg`
+        `images/${dateString}/${folderId}/resized.jpg`
       );
       const resTask = uploadBytesResumable(resizedRef, resizedBlob);
 
-      dispatch(showMessage("☁️ Uploading resized image..."));
+      setUploadStatusText("☁️ Uploading images...");
       resTask.on("state_changed", (snap) => {
         totalTransferred = originalBlob.size + snap.bytesTransferred;
         setUploadProgress((totalTransferred / totalBytes) * 100);
       });
       const resSnapshot = await uploadTaskAsPromise(resTask);
-
       const resizedUrl = await getDownloadURL(resSnapshot.ref);
 
+      // 📄 Prepare Firestore payload
       const payload: FirestorePostPayload = buildPostPayload({
         ...post,
-        imageUrl: "",
+        imageUrl: "", // placeholder
         postUser: post.postUser ?? userData,
       });
 
@@ -129,12 +133,13 @@ export const useHandlePostSubmission = () => {
       const postId = newDocRef.id;
 
       if (post.companyGoalId || post.oppId) {
-        dispatch(showMessage("🎯 Updating related goal..."));
+        setUploadStatusText("🎯 Updating related goal...");
         await updateGoalWithSubmission(post, postId);
       }
 
       await updateDoc(newDocRef, {
         imageUrl: resizedUrl,
+        originalImageUrl: originalUrl,
         timestamp: Timestamp.now(),
       });
 
@@ -142,6 +147,7 @@ export const useHandlePostSubmission = () => {
         ...payload,
         id: postId,
         imageUrl: resizedUrl,
+        originalImageUrl: originalUrl,
       });
 
       dispatch(addNewPost(finalPost));
