@@ -5,9 +5,9 @@ import {
   arrayRemove,
   getDoc,
 } from "firebase/firestore";
-import { ref, deleteObject, getStorage } from "firebase/storage";
+import { ref, deleteObject } from "firebase/storage";
 import { PostWithID } from "../types";
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 import {
   deleteUserCreatedPostInIndexedDB,
   removePostFromIndexedDB,
@@ -19,7 +19,7 @@ interface userDeletePostProps {
 }
 
 export const userDeletePost = async ({ post }: userDeletePostProps) => {
-  const storage = getStorage();
+  // const storage = getStorage();
 
   try {
     // ✅ Update timestamp of post that is being changed

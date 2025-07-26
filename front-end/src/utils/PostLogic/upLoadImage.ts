@@ -1,12 +1,12 @@
 // upLoadImage.ts
 import {
-  getStorage,
   ref,
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
 import Compressor from "compressorjs";
 import { resizeImage } from "../../images/resizeImages";
+import { storage } from "../firebase";
 
 export const uploadImageToStorage = (
   uid: string,
@@ -48,7 +48,7 @@ const handleFirebaseUpload = async (
 
   const imageFileName = `${uid}-${Date.now()}.webp`; // Note the .webp extension
   const imagePath = `images/${formattedDate}/${uid}/${imageFileName}`;
-  const storage = getStorage();
+  // const storage = getStorage();
   const storageRef = ref(storage, imagePath);
 
   const uploadTask = uploadBytesResumable(storageRef, file);

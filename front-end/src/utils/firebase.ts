@@ -24,18 +24,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Storage
-// const storage = getStorage(app);
-
-let storage: ReturnType<typeof getStorage> | null = null;
-
-try {
-  if (typeof window !== "undefined") {
-    storage = getStorage(app);
-  }
-} catch (e) {
-  console.warn("Firebase Storage is not available:", e);
-}
-
+const storage = getStorage(app);
 
 // Get a reference to the auth service
 const auth = getAuth(app);

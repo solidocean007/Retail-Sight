@@ -1,5 +1,6 @@
 // utils/uploadUserAvatar.ts
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebase";
 
 /**
  * Uploads both original and cropped avatar images.
@@ -15,7 +16,7 @@ export const uploadUserAvatar = async (
   profileUrlOriginal: string;
   profileUrlThumbnail: string;
 }> => {
-  const storage = getStorage();
+  // const storage = getStorage();
 
   // Reference paths
   const originalRef = ref(storage, `userImages/${userId}/original.jpg`);
