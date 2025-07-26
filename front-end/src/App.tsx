@@ -29,9 +29,9 @@ import { setupNotificationListenersForUser } from "./utils/listeners/setupNotifi
 // import { auditPostDates, migratePostDates } from "./script";
 
 function App(): React.JSX.Element {
-  // useSchemaVersion();
-  // useCompanyUsersSync();
-  // useAllCompanyAccountsSync();
+  useSchemaVersion();
+  useCompanyUsersSync();
+  useAllCompanyAccountsSync();
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
@@ -53,7 +53,7 @@ function App(): React.JSX.Element {
         const cached = await getAllCompanyProductsFromIndexedDB();
         if (cached.length) dispatch(setAllProducts(cached));
         dispatch(fetchCompanyProducts(companyId));
-        dispatch(fetchCurrentCompany(user.companyId));
+        dispatch(fetchCurrentCompany(user.companyId)); // this is a new line
       } catch (err) {
         console.error("Product load failed", err);
       }

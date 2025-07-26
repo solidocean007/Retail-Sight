@@ -32,7 +32,6 @@ import {
   deleteUserAuthAndFirestore,
   updateSelectedUser,
 } from "../../DeveloperAdminFunctions/developerAdminFunctions";
-import NotificationsTable from "../Notifications/DeveloperNotificationsTable";
 import { UserType } from "../../utils/types";
 import CustomConfirmation from "../CustomConfirmation";
 import LogOutButton from "../LogOutButton";

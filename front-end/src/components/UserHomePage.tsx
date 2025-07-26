@@ -52,8 +52,6 @@ export const UserHomePage = () => {
     [lastFilters, companyUsers]
   );
 
-  console.log('user: ', user);
-
   // at top of UserHomePage.tsx
   const location = useLocation();
   const { filters: initialFilters, postIdToScroll: initialScrollId } =
