@@ -18,7 +18,9 @@ interface userDeletePostProps {
   post: PostWithID;
 }
 
-export const userDeletePost = async ({ post }: userDeletePostProps) => {
+export const 
+
+userDeletePost = async ({ post }: userDeletePostProps) => {
   // const storage = getStorage();
 
   try {

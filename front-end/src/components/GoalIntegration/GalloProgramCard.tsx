@@ -31,6 +31,7 @@ const GalloProgramCard: React.FC<ProgramCardProps> = ({
   );
 
   const handleViewGoalPost = (postId: string) => {
+    console.log("👀 Gallo View button clicked", postId);
     onViewPostModal(postId);
   };
 

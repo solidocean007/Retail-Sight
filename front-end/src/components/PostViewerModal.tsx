@@ -18,6 +18,7 @@ import { db } from "../utils/firebase";
 import PostCard from "./PostCard"; // or your renderer
 
 interface PostViewerModalProps {
+  key: () => void;
   postId: string;
   open: boolean;
   onClose: () => void;
@@ -25,6 +26,7 @@ interface PostViewerModalProps {
 }
 
 const PostViewerModal: React.FC<PostViewerModalProps> = ({
+  key,
   postId,
   open,
   onClose,
@@ -40,8 +42,14 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
+    console.log("📦 Modal received postId:", postId);
+  }, [postId]);
+
+  useEffect(() => {
+    
     const fetchPost = async () => {
       if (cachedPost) {
+        console.log("using cached post to display modal: ", postId);
         setPost(cachedPost);
         setLoading(false);
       } else {
@@ -49,6 +57,7 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
           const docRef = doc(db, "posts", postId);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
+            console.log("fetching post to display modal: ", postId);
             setPost({ ...(docSnap.data() as PostWithID), id: postId });
           }
         } catch (err) {
@@ -60,6 +69,7 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
     };
 
     if (open) {
+      setPost(null);
       setLoading(true);
       fetchPost();
     }
