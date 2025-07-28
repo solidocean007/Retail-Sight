@@ -1,6 +1,41 @@
 import { collection, doc, getDoc, getDocs, setDoc } from "@firebase/firestore";
 import { db } from "./utils/firebase"; // adjust path as needed
 
+import {
+  query,
+  where,
+  updateDoc,
+} from "firebase/firestore";
+
+// UIDs and info
+// const OLD_UID = "3VwmlHNu0dZZJFM9AgkUI0qyUbu2";
+// const NEW_UID = "QU5bbMlifjPU4bVpaj2gMooI4673";
+// const NEW_EMAIL = "bneal@heaylwholesale.com"; // replace with actual
+// const NEW_COMPANY_ID = "3WOAwgj3l3bnvHqE4lV3"; // assuming same
+// const NEW_COMPANY_NAME = "Healy wholesale Inc";
+
+// 🔁 Main Migration Logic
+// export async function migratePostsToWorkAccount() {
+//   const postsRef = collection(db, "posts"); // Change to your posts collection path
+//   const q = query(postsRef, where("postUserUid", "==", OLD_UID));
+//   const snapshot = await getDocs(q);
+
+//   for (const docSnap of snapshot.docs) {
+//     const postRef = doc(db, "posts", docSnap.id);
+//     await updateDoc(postRef, {
+//       "postUser.uid": NEW_UID,
+//       "postUser.email": NEW_EMAIL,
+//       "postUserUid": NEW_UID,
+//       "postUserEmail": NEW_EMAIL,
+//     });
+
+//     console.log(`✅ Updated post ${docSnap.id}`);
+//   }
+
+//   console.log("🎉 Migration complete.");
+// }
+
+
 
 
 // export default backupAccounts;

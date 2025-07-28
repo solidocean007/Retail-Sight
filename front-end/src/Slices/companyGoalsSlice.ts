@@ -35,20 +35,18 @@ const companyGoalsSlice = createSlice({
   },
 });
 
-export const {
-  setCompanyGoals,
-  setCompanyGoalsLoading,
-  setCompanyGoalsError,
-} = companyGoalsSlice.actions;
+export const { setCompanyGoals, setCompanyGoalsLoading, setCompanyGoalsError } =
+  companyGoalsSlice.actions;
 
 export default companyGoalsSlice.reducer;
 
 //
 // Selectors
 //
-export const selectAllCompanyGoals = (state: RootState) =>
-  state.companyGoals.goals;
-
+export const selectAllCompanyGoals = createSelector(
+  (state: RootState) => state.companyGoals.goals,
+  (goals) => goals.filter((goal) => !goal.deleted)
+);
 export const selectCompanyGoalsIsLoading = (state: RootState) =>
   state.companyGoals.isLoading;
 
@@ -88,17 +86,16 @@ export const makeSelectUsersCompanyGoals = (salesRouteNum?: string) =>
 
       return allGoals.filter((goal: CompanyGoalWithIdType) => {
         const matchingAccounts = goal.accountNumbersForThisGoal
-          .map(accountId =>
-            allAccounts.find(acc => acc.accountNumber.toString() === accountId)
+          .map((accountId) =>
+            allAccounts.find(
+              (acc) => acc.accountNumber.toString() === accountId
+            )
           )
           .filter(Boolean) as CompanyAccountType[];
 
-        return matchingAccounts.some(account =>
+        return matchingAccounts.some((account) =>
           (account.salesRouteNums || []).includes(salesRouteNum)
         );
       });
     }
   );
-
-
-

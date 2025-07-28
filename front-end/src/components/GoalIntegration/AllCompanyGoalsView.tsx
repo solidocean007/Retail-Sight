@@ -154,29 +154,6 @@ const AllCompanyGoalsView = ({
       {/* Toggle Archived Goals */}
       {archivedGoals.length > 0 && (
         <>
-          {/* <button
-            onClick={() => setShowArchived(!showArchived)}
-            className="btn-outline"
-          >
-            {showArchived ? "Hide Archived Goals" : "Show Archived Goals"}
-          </button> */}
-
-          {/* {showArchived && (
-            <div className="archived-goals-list">
-              {sortGoals(archivedGoals).map((goal) => (
-                <CompanyGoalCard
-                  key={goal.id}
-                  goal={goal}
-                  mobile={isMobile}
-                  onDelete={() => {
-                    setSelectedGoalId(goal.id);
-                    setIsConfirmationOpen(true);
-                  }}
-                  onEdit={handleEditCompanyGoal}
-                />
-              ))}
-            </div>
-          )} */}
           {archivedGoals.length > 0 && (
             <ArchivedGoalsLayout
               archivedGoals={archivedGoals}

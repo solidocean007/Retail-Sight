@@ -9,8 +9,20 @@ interface UserRowType {
   uid: string;
   firstName: string;
   lastName: string;
-  submissions: { postId: string; storeName: string; submittedAt: string }[];
+
+  submissions: {
+    postId: string;
+    storeName: string;
+    submittedAt: string;
+  }[];
+
   userCompletionPercentage: number;
+
+  unsubmittedAccounts: {
+    accountName: string;
+    accountAddress: string;
+    accountNumber: string;
+  }[];
 }
 
 const UserTableForGoals = ({
@@ -26,7 +38,7 @@ const UserTableForGoals = ({
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
 
   const handleViewGoalPost = (postId: string) => {
-    console.log('postId: ', postId)
+    console.log("postId: ", postId);
     const base = clearAllFilters();
     const filters = {
       ...base,
@@ -94,7 +106,7 @@ const UserTableForGoals = ({
               <td className="user-table-count">{idx + 1}</td>
               <td>
                 <div className="user-info-cell">
-                  <div className="user-name-cell">{`${user.lastName}, ${user.firstName}`}</div>
+                  <div className="user-name-cell">{`${user.lastName}, ${user.firstName}`} {user.uid}</div>
                   <div
                     className={getCompletionClass(
                       user.userCompletionPercentage
@@ -103,24 +115,42 @@ const UserTableForGoals = ({
                     {user.userCompletionPercentage}%
                   </div>
                 </div>
-                <div className="submissions-wrapper">
-                  {user.submissions.length > 0
-                    ? user.submissions.map((sub, subIdx) => (
-                        <div key={subIdx} className="submission-item">
-                          <div className="store-name">{sub.storeName}</div>
-                          <div className="submitted-at">
-                            {new Date(sub.submittedAt).toLocaleString()}
-                          </div>
 
-                          <button
-                            onClick={() => handleViewGoalPost(sub.postId)}
-                          >
-                            View
-                          </button>
+                <div className="submissions-wrapper">
+                  {user.submissions.length > 0 ? (
+                    user.submissions.map((sub, subIdx) => (
+                      <div key={subIdx} className="submission-item">
+                        <div className="store-name">{sub.storeName}</div>
+                        <div className="submitted-at">
+                          {new Date(sub.submittedAt).toLocaleString()}
                         </div>
-                      ))
-                    : "—"}
+                        <button onClick={() => handleViewGoalPost(sub.postId)}>
+                          View
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div>— No submissions</div>
+                  )}
                 </div>
+
+                {/* Expandable section for unsubmitted accounts */}
+                {user.unsubmittedAccounts.length > 0 && (
+                  <details className="unsubmitted-details">
+                    <summary className="unsubmitted-summary">
+                      {user.unsubmittedAccounts.length} unsubmitted account
+                      {user.unsubmittedAccounts.length > 1 ? "s" : ""}
+                    </summary>
+                    <ul className="unsubmitted-list">
+                      {user.unsubmittedAccounts.map((acc) => (
+                        <li key={acc.accountNumber}>
+                          <strong>{acc.accountName}</strong> —{" "}
+                          {acc.accountAddress}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
               </td>
             </tr>
           ))}

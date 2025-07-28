@@ -3,8 +3,10 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
@@ -12,7 +14,10 @@ import { CompanyGoalType, UserType } from "../utils/types";
 
 export const createCompanyGoalInFirestore = createAsyncThunk(
   "companyGoals/create",
-  async ({ goal, currentUser }: { goal: CompanyGoalType, currentUser: UserType }, thunkAPI) => {
+  async (
+    { goal, currentUser }: { goal: CompanyGoalType; currentUser: UserType },
+    thunkAPI
+  ) => {
     if (!goal.companyId) {
       console.error("Missing companyId in goal creation");
       return thunkAPI.rejectWithValue("Missing companyId");
@@ -36,19 +41,26 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
 );
 
 // ✅ Update Goal
-export const updateCompanyGoalInFirestore = createAsyncThunk<
-  void,
-  { goalId: string; updatedFields: Partial<CompanyGoalType> },
-  { rejectValue: string }
->(
-  "companyGoals/updateCompanyGoal",
-  async ({ goalId, updatedFields }, { rejectWithValue }) => {
-    try {
-      const goalRef = doc(db, "companyGoals", goalId);
-      await updateDoc(goalRef, updatedFields);
-    } catch (err) {
-      return rejectWithValue("Failed to update company goal.");
+export const updateCompanyGoalInFirestore = createAsyncThunk(
+  "companyGoals/updateGoal",
+  async ({
+    goalId,
+    updatedFields,
+  }: {
+    goalId: string;
+    updatedFields: Partial<CompanyGoalType>;
+  }) => {
+    const docRef = doc(db, "companyGoals", goalId);
+
+    // 🔧 Cast to allow FieldValue inside updateDoc only
+    const cleanedFields: Record<string, any> = { ...updatedFields };
+
+    if (cleanedFields.perUserQuota === 0) {
+      cleanedFields.perUserQuota = deleteField(); // ✅ now allowed
     }
+
+    await updateDoc(docRef, cleanedFields);
+    return { goalId, updatedFields };
   }
 );
 
@@ -60,7 +72,7 @@ export const deleteCompanyGoalInFirestore = createAsyncThunk<
 >("companyGoals/deleteCompanyGoal", async ({ goalId }, { rejectWithValue }) => {
   try {
     const goalRef = doc(db, "companyGoals", goalId);
-    await deleteDoc(goalRef);
+    await updateDoc(goalRef, { deleted: true });
   } catch (err) {
     return rejectWithValue("Failed to delete company goal.");
   }

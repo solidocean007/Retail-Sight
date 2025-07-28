@@ -383,14 +383,13 @@ const PostCard: React.FC<PostCardProps> = ({
                   {createdOnBehalf && (
                     <h5>
                       Created by: {post.postedBy?.firstName}{" "}
-                      {post.postedBy?.lastName}
+                      {post.postedBy?.lastName} 
                     </h5>
                   )}
                 </div>
 
                 <div className="user-company-box">
                   <p>company: {post.postUser?.company}</p>{" "}
-                  {/* this matches the saved post but not the future account object.  should it do either or both?*/}
                 </div>
               </div>
             </div>

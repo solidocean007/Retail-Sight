@@ -134,25 +134,6 @@ export const Dashboard = () => {
   // but if we flip into mobile, leave whatever state we were in
 }, [isLargeScreen]);
 
-  // useEffect(() => {
-  //   const loadAllCompanyAccounts = async () => {
-  //     if (!user?.companyId || user.role === "employee") return;
-
-  //     const accounts = await fetchAllCompanyAccounts(user.companyId);
-  //     if (!accounts.length) return;
-
-  //     dispatch(setAllAccounts(accounts)); // ⬅️ Save to Redux
-
-  //     try {
-  //       await saveAllCompanyAccountsToIndexedDB(accounts); // ⬅️ Optional: Save for offline use
-  //     } catch (err) {
-  //       console.warn("Could not save accounts to IndexedDB", err);
-  //     }
-  //   };
-
-  //   loadAllCompanyAccounts();
-  // }, [user?.companyId, user?.role, dispatch]);
-
   return (
     <div className="dashboard-container">
       <DashboardHelmet />

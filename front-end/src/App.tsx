@@ -26,6 +26,7 @@ import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
 import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
 import { setupNotificationListenersForUser } from "./utils/listeners/setupNotificationListenersForUser";
+import { auditPostDates } from "./script";
 // import { auditPostDates, migratePostDates } from "./script";
 
 function App(): React.JSX.Element {
@@ -42,8 +43,8 @@ function App(): React.JSX.Element {
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
   // useEffect(() => {
-  //   auditPostDates();
-  //   migratePostDates();
+  //   // auditPostDates();
+  //   // migratePostDates();
   // }, []);
 
   useEffect(() => {

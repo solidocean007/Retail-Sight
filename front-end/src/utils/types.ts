@@ -431,8 +431,9 @@ export type CompanyGoalType = {
   createdByFirstName?: string; // optional
   createdByLastName?: string; // optional
   accountNumbersForThisGoal: string[]; // ✅ Full scope of accounts this goal applies to
-  perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
+  perUserQuota?: number;// ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
+  deleted: boolean;
 };
 
 export type CompanyGoalWithIdType = CompanyGoalType & { id: string };

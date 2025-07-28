@@ -9,6 +9,8 @@ import {
   Divider,
   Box,
   TextField,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import {
   CompanyGoalType,
@@ -43,7 +45,8 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const [goalDescription, setGoalDescription] = useState(goal.goalDescription);
   const [goalMetric, setGoalMetric] = useState(goal.goalMetric);
   const [goalValueMin, setGoalValueMin] = useState(goal.goalValueMin);
-  const [perUserQuota, setPerUserQuota] = useState(goal.perUserQuota);
+  const [perUserQuota, setPerUserQuota] = useState(goal.perUserQuota ?? 0);
+  const [lastValidQuota, setLastValidQuota] = useState(goal.perUserQuota ?? 1);
   const [goalStartDate, setGoalStartDate] = useState(goal.goalStartDate);
   const [goalEndDate, setGoalEndDate] = useState(goal.goalEndDate);
 
@@ -91,7 +94,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalDescription: goal.goalDescription,
       goalMetric: goal.goalMetric,
       goalValueMin: goal.goalValueMin,
-      goalQuotaMin: goal.perUserQuota,
+      perUserQuota: goal.perUserQuota,
       goalStartDate: goal.goalStartDate,
       goalEndDate: goal.goalEndDate,
     }),
@@ -104,12 +107,12 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   );
 
   const handleSave = () => {
-    if (!isModified) {
-      alert("No changes detected.");
-      return;
+    const cleanedGoal: Partial<CompanyGoalType> = { ...updatedGoal };
+    if (updatedGoal.perUserQuota === 0) {
+      delete cleanedGoal.perUserQuota;
     }
 
-    onSave(updatedGoal);
+    onSave(cleanedGoal);
     onClose();
   };
 
@@ -119,6 +122,15 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     setAccountNumbersForThisGoal(
       updatedAccounts.map((acc) => acc.accountNumber.toString())
     );
+  };
+
+  const handleQuotaToggle = (checked: boolean) => {
+    if (checked) {
+      setPerUserQuota(lastValidQuota); // restore
+    } else {
+      setLastValidQuota(perUserQuota > 0 ? perUserQuota : 1);
+      setPerUserQuota(0); // disable
+    }
   };
 
   return (
@@ -150,13 +162,29 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
             onChange={(e) => setGoalValueMin(Number(e.target.value))}
             fullWidth
           />
-          <TextField
-            label="Goal Quota"
-            type="number"
-            value={perUserQuota}
-            onChange={(e) => setPerUserQuota(Number(e.target.value))}
-            fullWidth
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={perUserQuota !== 0}
+                onChange={(e) => handleQuotaToggle(e.target.checked)}
+              />
+            }
+            label="Require submissions per user"
           />
+
+          {perUserQuota !== 0 && (
+            <TextField
+              label="Goal Quota"
+              type="number"
+              value={perUserQuota}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setPerUserQuota(value < 1 ? 1 : value); // prevent setting to 0 manually
+              }}
+              // fullWidth
+              helperText="Each user must submit this many posts"
+            />
+          )}
 
           <TextField
             label="Start Date"

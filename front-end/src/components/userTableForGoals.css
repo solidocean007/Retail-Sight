@@ -138,3 +138,28 @@
     font-size: 0.75rem;
   }
 }
+
+.unsubmitted-details {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid var(--primary-blue);
+}
+
+.unsubmitted-summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--primary-blue);
+  margin-bottom: 4px;
+}
+
+.unsubmitted-list {
+  list-style-type: disc;
+  margin-left: 20px;
+  padding-left: 0;
+  font-size: 0.9rem;
+}
+
+.unsubmitted-list li {
+  margin-bottom: 4px;
+}
+

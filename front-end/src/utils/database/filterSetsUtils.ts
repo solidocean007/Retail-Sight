@@ -94,25 +94,6 @@ export async function purgeDeletedPostFromFilteredSets(postId: string) {
   });
 }
 
-// export async function shouldRefetch(
-//   filters: PostQueryFilters,
-//   latestClientPosts: PostWithID[] // pass in from Redux
-// ): Promise<boolean> {
-//   const fetchedAt = await getFetchDate(filters);
-//   if (!fetchedAt) return true;
-
-//   if (!Array.isArray(latestClientPosts) || latestClientPosts.length === 0) {
-//     return true; // no local posts to compare against
-//   }
-
-//   const newestLocalPost = latestClientPosts.reduce((latest, post) => {
-//     const date = new Date(post.displayDate || post.timestamp || 0);
-//     const latestDate = new Date(latest.displayDate || latest.timestamp || 0);
-//     return date > latestDate ? post : latest;
-//   }, latestClientPosts[0]);
-
-//   return new Date(newestLocalPost.displayDate || newestLocalPost.timestamp || 0) > new Date(fetchedAt);
-// }
 
 export async function shouldRefetch(
   filters: PostQueryFilters,
@@ -126,3 +107,36 @@ export async function shouldRefetch(
   const newestRawDate = new Date(newestRawIso);
   return newestRawDate > fetchedAt;
 }
+
+export async function updatePostInFilteredSets(updatedPost: PostWithID): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction("filteredSets", "readwrite");
+  const store = tx.objectStore("filteredSets");
+
+  const keysReq = store.getAllKeys();
+
+  await new Promise<void>((resolve, reject) => {
+    keysReq.onsuccess = () => {
+      const allKeys = keysReq.result;
+
+      allKeys.forEach((key) => {
+        const getReq = store.get(key);
+        getReq.onsuccess = () => {
+          const record = getReq.result;
+          if (!record || !Array.isArray(record.posts)) return;
+
+          const index = record.posts.findIndex((p: PostWithID) => p.id === updatedPost.id);
+          if (index !== -1) {
+            record.posts[index] = updatedPost;
+            store.put(record, key);
+          }
+        };
+      });
+
+      resolve();
+    };
+
+    keysReq.onerror = () => reject(keysReq.error);
+  });
+}
+

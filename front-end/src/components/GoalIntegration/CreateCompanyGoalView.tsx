@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import {
   CompanyAccountType,
+  CompanyGoalType,
   GoalTargetMode,
   // customerType,
 } from "../../utils/types";
@@ -237,7 +238,7 @@ const CreateCompanyGoalView = () => {
         ? selectedAccounts.map((acc) => acc.accountNumber.toString())
         : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
 
-    const newGoal: any = {
+    const newGoal: CompanyGoalType = {
       companyId,
       goalTitle,
       goalDescription,
@@ -246,6 +247,8 @@ const CreateCompanyGoalView = () => {
       goalStartDate,
       goalEndDate,
       accountNumbersForThisGoal,
+      createdAt: new Date().toISOString(),
+      deleted: false,
     };
 
     if (enforcePerUserQuota && perUserQuota) {

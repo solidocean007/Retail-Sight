@@ -30,6 +30,7 @@ import {
   deleteUserCreatedPostInIndexedDB,
   purgeDeletedPostFromFilteredSets,
   removePostFromIndexedDB,
+  updatePostInFilteredSets,
   updatePostInIndexedDB,
 } from "../../utils/database/indexedDBUtils";
 import { updatePostWithNewTimestamp } from "../../utils/PostLogic/updatePostWithNewTimestamp";
@@ -140,46 +141,19 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   // Handler for Account Selection
   const handleAccountSelect = async (account: CompanyAccountType) => {
-    try {
-      const postRef = doc(db, "posts", post.id);
+    setEditablePost((prev) => ({
+      ...prev,
+      account: {
+        accountNumber: account.accountNumber,
+        accountName: account.accountName,
+        accountAddress: account.accountAddress,
+        salesRouteNums: account.salesRouteNums || [],
+        streetAddress: account.streetAddress || "",
+      },
+    }));
 
-      await updateDoc(postRef, {
-        account: {
-          accountNumber: account.accountNumber,
-          accountName: account.accountName,
-          accountAddress: account.accountAddress,
-          salesRouteNums: account.salesRouteNums || [],
-        },
-      });
-
-      dispatch(
-        updatePost({
-          ...post,
-          account: {
-            accountNumber: account.accountNumber,
-            accountName: account.accountName,
-            accountAddress: account.accountAddress,
-            salesRouteNums: account.salesRouteNums || [],
-          },
-        })
-      );
-
-      await updatePostInIndexedDB({
-        ...post,
-        account: {
-          accountNumber: account.accountNumber,
-          accountName: account.accountName,
-          accountAddress: account.accountAddress,
-          salesRouteNums: account.salesRouteNums || [],
-        },
-      });
-
-      dispatch(showMessage("Account updated successfully!"));
-      setOpenAccountModal(false);
-    } catch (error) {
-      console.error("Error updating post account:", error);
-      dispatch(showMessage("Error updating account for post."));
-    }
+    dispatch(showMessage("Account selected. Don't forget to save!"));
+    setOpenAccountModal(false);
   };
 
   useEffect(() => {
@@ -258,6 +232,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       // C) sync Redux + IndexedDB, close modal, toast
       dispatch(updatePost(updatedPost));
       await updatePostInIndexedDB(updatedPost);
+      await updatePostInFilteredSets(post);
+
       handleCloseEditModal();
       dispatch(showMessage("Post edited successfully!"));
     } catch (err) {

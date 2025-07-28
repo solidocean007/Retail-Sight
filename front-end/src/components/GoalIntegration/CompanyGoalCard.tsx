@@ -154,6 +154,21 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       const userSubmissions = (goal.submittedPosts || []).filter(
         (post) => post.submittedBy?.uid === user.uid
       );
+      const submittedAccountIds = new Set(
+        userSubmissions.map((post) => post.account.accountNumber.toString())
+      );
+
+      const userAccounts = matchedAccounts.filter((acc) =>
+        (acc.salesRouteNums || []).includes(user.salesRouteNum || "")
+      );
+
+      const unsubmittedAccounts = userAccounts
+        .filter((acc) => !submittedAccountIds.has(acc.accountNumber.toString()))
+        .map((acc) => ({
+          accountName: acc.accountName,
+          accountAddress: acc.accountAddress,
+          accountNumber: acc.accountNumber.toString(),
+        }));
 
       const submissionCount = userSubmissions.length;
       const quota = goal.perUserQuota || 1;
@@ -164,17 +179,18 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
       return {
         uid: user.uid,
-        firstName: user.firstName || "", // ✅ ensure it's a string
-        lastName: user.lastName || "", // ✅ ensure it's a string
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
         submissions: userSubmissions.map((post) => ({
           postId: post.postId,
           submittedAt: post.submittedAt,
           storeName: post.account.accountName,
         })),
+        unsubmittedAccounts,
         userCompletionPercentage: completionPercentage,
       };
     });
-  }, [usersForGoal, goal.submittedPosts, goal.perUserQuota]);
+  }, [usersForGoal, goal.submittedPosts, goal.perUserQuota, matchedAccounts]);
 
   const percentageOfGoal =
     goal.perUserQuota && salesRouteNumsForGoal.length > 0
@@ -192,25 +208,30 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
-          {onDelete && user?.role === "admin" || user?.role === "super-admin" && (
-            <Box display="flex" gap={1}>
-              <Button
-                variant="outlined"
-                size="small"
-                className="delete-button"
-                onClick={() => onDelete(goal.id)}
-              >
-                Delete
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setIsEditModalOpen(true)}
-              >
-                Edit
-              </Button>
-            </Box>
-          )}
+          {(onDelete && user?.role === "admin") ||
+            (user?.role === "super-admin" && (
+              <Box display="flex" gap={1}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  className="delete-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onDelete) onDelete(goal.id);
+                  }}
+                >
+                  Delete
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  Edit
+                </Button>
+              </Box>
+            ))}
         </div>
       </div>
       <div className="info-layout-row">

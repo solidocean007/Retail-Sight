@@ -21,7 +21,8 @@ export const setupCompanyGoalsListener =
   (companyId: string) => (dispatch: any) => {
     const q = query(
       collection(db, "companyGoals"),
-      where("companyId", "==", companyId)
+      where("companyId", "==", companyId),
+      where("deleted", "==", false) // ✅ Only listen to non-deleted goals
     );
 
     dispatch(setCompanyGoalsLoading(true)); // ✅ start loading
