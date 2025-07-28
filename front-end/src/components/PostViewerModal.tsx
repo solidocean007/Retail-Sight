@@ -46,7 +46,6 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
   }, [postId]);
 
   useEffect(() => {
-    
     const fetchPost = async () => {
       if (cachedPost) {
         console.log("using cached post to display modal: ", postId);
@@ -81,61 +80,65 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
       onClose={onClose}
       scroll="body"
       maxWidth={false}
-      BackdropProps={{
-        sx: {
-          backgroundColor: "rgba(0, 0, 0, 0.7)", // ✅ darker overlay
+      slotProps={{
+        backdrop: {
+          sx: {
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+          },
         },
-      }}
-      PaperProps={{
-        sx: {
-          p: 0,
-          backgroundColor: "transparent",
-          boxShadow: "none",
-          overflow: "visible",
+        paper: {
+          sx: {
+            backgroundColor: "transparent",
+            boxShadow: "none",
+            overflow: "visible",
+          },
         },
       }}
     >
-      <DialogTitle
+      {/* 🔒 Fixed Close Button (outside scrollable content) */}
+      <Box
         sx={{
-          backgroundColor: "var(--dashboard-header-background)",
-          px: 2,
-          py: 1,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          position: "fixed",
+          top: "16px",
+          right: "24px",
+          zIndex: 1401, // > Modal backdrop (default 1200) and Dialog paper (1300)
+          pointerEvents: "none", // prevent Box itself from blocking clicks
         }}
       >
-        View Post
-        <IconButton onClick={onClose}>
+        <IconButton
+          onClick={onClose}
+          aria-label="Close"
+          sx={{
+            pointerEvents: "auto", // only the button is clickable
+            backgroundColor: "rgba(0,0,0,0.6)",
+            color: "#fff",
+          }}
+        >
           <CloseIcon />
         </IconButton>
-      </DialogTitle>
+      </Box>
 
+      {/* 💬 Scrollable Content */}
       <DialogContent
-        dividers={false}
         sx={{
           p: 0,
-          overflowY: "auto",
-          backgroundColor: "transparent",
-          maxHeight: "90vh", // ✅ ensures scroll area is bounded to screen
-          display: "flex",
-          justifyContent: "center",
+          overflow: "auto",
+           maxHeight: "90vh",
         }}
       >
-        {loading ? (
-          <Box sx={{ p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : post ? (
-          <Box
-            sx={{
-              width: "100%",
-              maxWidth: isMobile ? "100%" : "660px", // ⬅️ card width max
-              borderRadius: "12px",
-              overflow: "hidden",
-              mx: "auto",
-            }}
-          >
+        <Box
+          sx={{
+            mx: "auto",
+            maxWidth: 660,
+            width: "100%",
+            background: "transparent",
+          }}
+        >
+          {loading ? (
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <CircularProgress />
+            </Box>
+          ) : post ? (
             <PostCard
               id={post.id}
               post={post}
@@ -143,12 +146,12 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
               style={{}}
               postIdToScroll={post.id}
             />
-          </Box>
-        ) : (
-          <Box p={2}>
-            <p>Post not found.</p>
-          </Box>
-        )}
+          ) : (
+            <Box p={2}>
+              <p>Post not found.</p>
+            </Box>
+          )}
+        </Box>
       </DialogContent>
     </Dialog>
   );
