@@ -15,6 +15,7 @@ interface ArchivedMonthSectionProps {
   ) => void;
   expanded: boolean;
   onToggle: () => void;
+  onViewPostModal?: (postId: string) => void;
 }
 
 const ArchivedMonthSection = ({
@@ -26,6 +27,7 @@ const ArchivedMonthSection = ({
   onEdit,
   expanded,
   onToggle,
+  onViewPostModal
 }: ArchivedMonthSectionProps) => {
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
 
@@ -55,6 +57,7 @@ const ArchivedMonthSection = ({
               onDelete={onDelete ? () => onDelete(goal.id) : undefined}
               salesRouteNum={salesRouteNum}
               onEdit={onEdit}
+              onViewPostModal={onViewPostModal}
             />
           ))}
         </Box>

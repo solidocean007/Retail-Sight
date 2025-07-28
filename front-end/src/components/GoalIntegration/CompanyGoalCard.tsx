@@ -32,6 +32,7 @@ interface CompanyGoalCardProps {
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
   ) => void;
+  onViewPostModal?: (postId: string) => void; // 👈 new prop for viewing posts
 }
 
 const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
@@ -42,6 +43,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   mobile = false,
   onDelete,
   onEdit,
+  onViewPostModal,
 }) => {
   const navigate = useNavigate();
   const user = useSelector(selectUser);
@@ -300,7 +302,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         <Typography variant="h6" sx={{ mt: 2 }}>
           User Progress
         </Typography>
-        <UserTableForGoals users={userBasedRows} goal={goal} />
+        <UserTableForGoals users={userBasedRows} goal={goal}  onViewPostModal={onViewPostModal} />
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
         </Typography>

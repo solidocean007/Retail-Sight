@@ -21,8 +21,10 @@ import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
 
 const AllCompanyGoalsView = ({
   companyId,
+  onViewPostModal,
 }: {
   companyId: string | undefined;
+  onViewPostModal: (postId: string) => void;
 }) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -147,6 +149,7 @@ const AllCompanyGoalsView = ({
               setIsConfirmationOpen(true);
             }}
             onEdit={handleEditCompanyGoal}
+            onViewPostModal={onViewPostModal} // 👈 pass the callback
           />
         ))}
       </div>
@@ -163,6 +166,7 @@ const AllCompanyGoalsView = ({
                 setIsConfirmationOpen(true);
               }}
               onEdit={handleEditCompanyGoal}
+              onViewPostModal={onViewPostModal} // 👈 pass the callback
             />
           )}
         </>

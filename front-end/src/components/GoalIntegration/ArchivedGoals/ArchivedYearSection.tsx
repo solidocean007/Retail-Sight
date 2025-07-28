@@ -13,6 +13,7 @@ interface ArchivedYearSectionProps {
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
   ) => void;
+  onViewPostModal?: (postId: string) => void;
 }
 
 const ArchivedYearSection = ({
@@ -22,6 +23,7 @@ const ArchivedYearSection = ({
   onDelete,
   salesRouteNum,
   onEdit,
+  onViewPostModal
 }: ArchivedYearSectionProps) => {
   const [expanded, setExpanded] = useState(false);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
@@ -63,6 +65,7 @@ const ArchivedYearSection = ({
                 onEdit={onEdit}
                 expanded={expandedMonth === month}
                 onToggle={() => toggleMonth(month)}
+                onViewPostModal={onViewPostModal} // 👈 pass the callback
               />
             ))}
         </Box>

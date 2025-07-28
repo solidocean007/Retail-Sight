@@ -46,9 +46,10 @@ function a11yProps(index: number) {
 
 interface GoalManagerProps {
   companyId: string | undefined;
+  onViewPostModal: (postId: string) => void;
 }
 
-const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
+const GoalManager: React.FC<GoalManagerProps> = ({ companyId, onViewPostModal }) => {
   const [value, setValue] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -106,7 +107,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
       </Box>
       <div>
         <TabPanel value={value} index={0}>
-          <AllGoalsLayout companyId={companyId} />
+          <AllGoalsLayout companyId={companyId} onViewPostModal={onViewPostModal} />
         </TabPanel>
         <TabPanel value={value} index={1}>
           <CreateGalloGoalView setValue={setValue} />

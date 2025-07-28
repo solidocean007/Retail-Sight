@@ -35,7 +35,7 @@
   align-items: center;
   font-size: small;
   max-width: 20%;
-  padding-right: 2rem;
+  padding-right: 5px;
 }
 
 .header-buttons {
@@ -54,7 +54,15 @@
   z-index: 5;
   font-size: 30px;
   color: var(--button-text-color);
-  margin-right: 1rem;
+  margin-right: .5rem;
+}
+
+.notification-box {
+  height: 30px;
+  width: 30px;
+  display: flex;
+  justify-items: center;
+  align-items: center;
 }
 
 .title-and-version {

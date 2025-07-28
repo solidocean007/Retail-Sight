@@ -51,7 +51,7 @@ import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
 
 interface PostCardProps {
   id: string;
-  currentUserUid: string;
+  currentUserUid: string | undefined;
   post: PostWithID;
   style: React.CSSProperties;
   getPostsByTag?: (

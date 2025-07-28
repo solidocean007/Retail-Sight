@@ -6,7 +6,7 @@ import "./headerBar.css";
 import { useEffect, useRef, useState } from "react";
 import { showMessage } from "../Slices/snackbarSlice";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
-import { Badge, IconButton, Tooltip } from "@mui/material";
+import { Badge, IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { resetApp } from "../utils/resetApp";
 import { useAppConfigSync } from "../hooks/useAppConfigSync";
@@ -15,7 +15,9 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
 
 const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
+  const mobile = useMediaQuery("(max-width: 900px)");
   const { localVersion, serverVersion } = useAppConfigSync();
+  const upToDate = localVersion === serverVersion;
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
   const dispatch = useAppDispatch();
@@ -87,7 +89,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
         <div className="website-title" onClick={() => navigate("/")}>
           <div className="title-and-version">
             <h1>Displaygram</h1>
-            <div className="version-info">
+            {!mobile && <div className="version-info">
               <Tooltip
                 title={`Local version: ${localVersion}${
                   serverVersion ? ` | Latest: ${serverVersion}` : ""
@@ -98,7 +100,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
                   <InfoIcon fontSize="small" style={{ marginLeft: "4px" }} />
                 </span>
               </Tooltip>
-            </div>
+            </div>}
           </div>
           <div className="company-name-app-state">
             <h5>{currentUser?.company}</h5>
@@ -106,6 +108,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
               <button
                 className="btn-outline danger-button"
                 onClick={handleReset}
+                disabled={!upToDate}
               >
                 Reset App
               </button>
@@ -139,7 +142,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
               ☰
             </div>
             <div className="notification-box">
-              <IconButton onClick={handleNotificationViewer}>
+              <IconButton onClick={handleNotificationViewer} sx={mobile ? {padding:"4px"} : {} }>
                 <Badge badgeContent={unreadCount} color="secondary">
                   <NotificationsIcon />
                 </Badge>

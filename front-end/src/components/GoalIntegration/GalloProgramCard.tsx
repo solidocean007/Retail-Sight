@@ -17,16 +17,22 @@ import "./gallo-goals.css";
 interface ProgramCardProps {
   program: any; // Replace with proper type if available
   employeeMap: Record<string, string>;
+  onViewPostModal: (id:string) => void;
 }
 
 const GalloProgramCard: React.FC<ProgramCardProps> = ({
   program,
   employeeMap,
+  onViewPostModal,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
     {}
   );
+
+  const handleViewGoalPost = (postId: string) => {
+    onViewPostModal(postId);
+  };
 
   const toggleGoalExpansion = (goalId: string) => {
     setExpandedGoals((prev) => ({
@@ -116,9 +122,13 @@ const GalloProgramCard: React.FC<ProgramCardProps> = ({
                         </TableCell>
                         <TableCell data-label="Status">
                           {account.submittedPostId ? (
-                            <Typography className="submitted-status">
-                              Submitted
-                            </Typography>
+                            <button
+                              onClick={() =>
+                                handleViewGoalPost(account.submittedPostId)
+                              }
+                            >
+                              View
+                            </button>
                           ) : (
                             <Typography className="not-submitted-status">
                               Not Submitted

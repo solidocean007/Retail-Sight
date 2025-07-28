@@ -18,7 +18,6 @@ import { CompanyGoalWithIdType } from "../../utils/types";
 import AllGalloGoalsView from "./AllGalloGoalsView";
 import { selectAllGalloGoals } from "../../Slices/galloGoalsSlice";
 
-
 export interface GoalDuplicateReport {
   goalId: string;
   duplicatePostIds: string[];
@@ -45,13 +44,18 @@ export function findDuplicateSubmissions(
         ? { goalId: goal.id, duplicatePostIds: duplicates }
         : null;
     })
-    .filter(
-      (report): report is GoalDuplicateReport => report !== null
-    );
+    .filter((report): report is GoalDuplicateReport => report !== null);
 }
 
+interface AllGoalsLayoutProps {
+  companyId: string | undefined;
+  onViewPostModal: (id: string) => void;
+}
 
-const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
+const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
+  companyId,
+  onViewPostModal,
+}) => {
   const [value, setValue] = useState(0);
   const theme = useTheme(); // Correct usage of `useTheme`
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Accessing breakpoints safely
@@ -71,7 +75,6 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
       console.warn("Goals with duplicate submissions:", duplicateReports);
     }
   }, [duplicateReports]);
-
 
   interface TabPanelProps {
     children?: React.ReactNode;
@@ -111,7 +114,7 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
   };
 
   return (
-    <div className="all-goals-container" style={{padding: "5px"}}>
+    <div className="all-goals-container" style={{ padding: "5px" }}>
       <Box className="tabs-container">
         {isMobile ? (
           <Select
@@ -134,20 +137,23 @@ const AllGoalsLayout = ({ companyId }: { companyId: string | undefined }) => {
             scrollButtons="auto"
           >
             {/* <Tab label="Goals View" {...a11yProps(0)} /> */}
-            <Tab label="Company Goals" {...a11yProps(1)} />
-            <Tab label="Gallo Programs & Goals" {...a11yProps(2)} />
+            <Tab label="Company Goals" {...a11yProps(0)} />
+            <Tab label="Gallo Programs & Goals" {...a11yProps(1)} />
           </Tabs>
         )}
       </Box>
-      
+
       {value === 0 && (
         <div className="all-company-goals-view-container">
-          <AllCompanyGoalsView companyId={companyId} />
+          <AllCompanyGoalsView
+            companyId={companyId}
+            onViewPostModal={onViewPostModal}
+          />
         </div>
       )}
       {value === 1 && (
         <div className="table-container">
-          <AllGalloGoalsView />
+          <AllGalloGoalsView onViewPostModal={onViewPostModal} />
         </div>
       )}
     </div>

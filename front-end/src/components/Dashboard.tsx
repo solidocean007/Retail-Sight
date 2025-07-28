@@ -2,7 +2,11 @@
 import { useSelector } from "react-redux";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
-import { selectCompanyUsers, selectUser, setCompanyUsers } from "../Slices/userSlice.ts";
+import {
+  selectCompanyUsers,
+  selectUser,
+  setCompanyUsers,
+} from "../Slices/userSlice.ts";
 // import {
 //   getCompanyUsersFromIndexedDB,
 //   saveCompanyUsersToIndexedDB,
@@ -56,10 +60,12 @@ import DashMenu from "./DashMenu.tsx";
 // import { updatePostsWithFreshAccounts } from "../script.ts";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 import MyGoals from "./GoalIntegration/MyGoals.tsx";
+import PostViewerModal from "./PostViewerModal.tsx";
 // import { useNavigate } from "react-router-dom";
 
 export const Dashboard = () => {
-  // const navigate = useNavigate();
+  const [viewPostModalId, setViewPostModalId] = useState<string | null>(null);
+
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
   // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
@@ -126,13 +132,13 @@ export const Dashboard = () => {
       setDrawerOpen(open);
     };
 
- useEffect(() => {
-  // if we flip into desktop view, open the drawer
-  if (isLargeScreen) {
-    setDrawerOpen(true);
-  }
-  // but if we flip into mobile, leave whatever state we were in
-}, [isLargeScreen]);
+  useEffect(() => {
+    // if we flip into desktop view, open the drawer
+    if (isLargeScreen) {
+      setDrawerOpen(true);
+    }
+    // but if we flip into mobile, leave whatever state we were in
+  }, [isLargeScreen]);
 
   return (
     <div className="dashboard-container">
@@ -191,7 +197,7 @@ export const Dashboard = () => {
         sx={{
           marginLeft: isLargeScreen ? `${drawerWidth}px` : 0,
           padding: 0,
-          height: "100%"
+          height: "100%",
         }}
       >
         {/* {dashboardMode === "TeamMode" && (
@@ -203,20 +209,23 @@ export const Dashboard = () => {
         {dashboardMode === "ProductsMode" && (
           <ProductsManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
-        {dashboardMode === "MyGoalsMode" && <MyGoals />}
-        {dashboardMode === "UsersMode" && (
-          <EmployeesViewer
-          />
-        )}
+        {dashboardMode === "MyGoalsMode" && <MyGoals onViewPostModal={(postId) => setViewPostModalId(postId)} />}
+        {dashboardMode === "UsersMode" && <EmployeesViewer />}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
         {dashboardMode === "GoalManagerMode" && (
-          <GoalManager companyId={companyId} />
+          <GoalManager companyId={companyId} onViewPostModal={(postId) => setViewPostModalId(postId)} />
         )}
         {dashboardMode === "CollectionsMode" && (
           <CollectionsViewer setDashboardMode={setDashboardMode} />
         )}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
+      <PostViewerModal
+        postId={viewPostModalId ?? ""}
+        open={!!viewPostModalId}
+        onClose={() => setViewPostModalId(null)}
+        currentUserUid={user?.uid}
+      />
     </div>
   );
 };

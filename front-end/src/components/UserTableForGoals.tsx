@@ -28,9 +28,11 @@ interface UserRowType {
 const UserTableForGoals = ({
   users,
   goal,
+  onViewPostModal,
 }: {
   users: UserRowType[];
   goal: CompanyGoalWithIdType;
+  onViewPostModal: (postId: string) => void;
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,17 +40,7 @@ const UserTableForGoals = ({
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
 
   const handleViewGoalPost = (postId: string) => {
-    console.log("postId: ", postId);
-    const base = clearAllFilters();
-    const filters = {
-      ...base,
-      companyGoalId: goal.id,
-      companyGoalTitle: goal.goalTitle,
-    };
-
-    navigate("/user-home-page", {
-      state: { filters, postIdToScroll: postId },
-    });
+    onViewPostModal(postId);
   };
 
   const sortedFilteredUsers = useMemo(() => {
@@ -106,7 +98,7 @@ const UserTableForGoals = ({
               <td className="user-table-count">{idx + 1}</td>
               <td>
                 <div className="user-info-cell">
-                  <div className="user-name-cell">{`${user.lastName}, ${user.firstName}`} {user.uid}</div>
+                  <div className="user-name-cell">{`${user.lastName}, ${user.firstName}`}</div>
                   <div
                     className={getCompletionClass(
                       user.userCompletionPercentage

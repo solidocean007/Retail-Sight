@@ -19,7 +19,12 @@ import CompanyGoalCard from "./CompanyGoalCard";
 import "./myCompanyGoals.css";
 import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
 
-const MyCompanyGoals = () => {
+interface MyCompanyGoalsProps {
+  onViewPostModal: (postId: string) => void;
+}
+
+const MyCompanyGoals: React.FC<MyCompanyGoalsProps> = ({ onViewPostModal }) => {
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const user = useSelector(selectUser);
@@ -101,6 +106,7 @@ const MyCompanyGoals = () => {
           mobile={isMobile}
           expanded={expandedGoalId === goal.id} // 👈 controlled
           onToggleExpand={handleToggleExpand} // 👈 controlled
+          onViewPostModal={onViewPostModal} // 👈 pass the callback 
         />
       ))}
     </Box>

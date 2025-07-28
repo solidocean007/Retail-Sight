@@ -89,10 +89,10 @@ function App(): React.JSX.Element {
     const unsubscribeCompanyGoals = dispatch(
       setupCompanyGoalsListener(companyId)
     );
-    // const unsubscribeGalloGoals = dispatch(setupGalloGoalsListener(companyId));
+    const unsubscribeGalloGoals = dispatch(setupGalloGoalsListener(companyId));
     return () => {
       unsubscribeCompanyGoals();
-      // unsubscribeGalloGoals();
+      unsubscribeGalloGoals();
       unsubscribeNotifications();
     };
   }, [dispatch, currentUser]);

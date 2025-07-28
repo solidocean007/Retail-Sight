@@ -13,6 +13,7 @@ interface ArchivedGoalsLayoutProps {
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
   ) => void;
+  onViewPostModal?: (postId: string) => void;
 }
 
 const ArchivedGoalsLayout = ({
@@ -21,6 +22,7 @@ const ArchivedGoalsLayout = ({
   salesRouteNum,
   onDelete,
   onEdit,
+  onViewPostModal,
 }: ArchivedGoalsLayoutProps) => {
   const groupedGoals = useMemo(() => {
     return archivedGoals.reduce<
@@ -51,6 +53,7 @@ const ArchivedGoalsLayout = ({
             salesRouteNum={salesRouteNum}
             onDelete={onDelete}
             onEdit={onEdit}
+            onViewPostModal={onViewPostModal}
           />
         ))}
     </Box>

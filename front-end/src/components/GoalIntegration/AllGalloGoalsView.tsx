@@ -6,11 +6,12 @@ import { useMemo } from "react";
 import "./gallo-goals.css";
 import GalloProgramCard from "./GalloProgramCard";
 
-const AllGalloGoalsView = () => {
+const AllGalloGoalsView = ({onViewPostModal}:{ onViewPostModal:(id:string) => void}) => {
   const galloGoals = useSelector(selectAllGalloGoals);
   const isLoading = useSelector(selectGalloGoalsLoading);
   const error = useSelector(selectGalloGoalsError);
   const companyUsers = useSelector(selectCompanyUsers) || [];
+
 
   const employeeMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -37,6 +38,7 @@ const AllGalloGoalsView = () => {
     return Object.values(map);
   }, [galloGoals]);
 
+
   if (isLoading) {
     return (
       <Box textAlign="center" mt={4}>
@@ -62,7 +64,7 @@ const AllGalloGoalsView = () => {
 
       <Box className="programs-wrapper">
         {programsMap.map((program) => (
-          <GalloProgramCard key={program.programId} program={program} employeeMap={employeeMap} />
+          <GalloProgramCard key={program.programId} program={program} employeeMap={employeeMap} onViewPostModal={onViewPostModal} />
         ))}
       </Box>
     </Container>
