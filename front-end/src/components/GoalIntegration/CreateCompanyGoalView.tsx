@@ -689,7 +689,7 @@ const CreateCompanyGoalView = () => {
               )}
             </>
           )}
-          <Box
+          {goalTitle.length > 1 && goalDescription.length > 1 && (<Box
             mt={2}
             p={3}
             border="1px solid #ccc"
@@ -747,7 +747,7 @@ const CreateCompanyGoalView = () => {
                 {isSaving ? "Creating..." : "Create Goal"}
               </Button>
             </Box>
-          </Box>
+          </Box>)}
 
           <UserMultiSelector
             users={eligibleUsersForCurrentScope}
