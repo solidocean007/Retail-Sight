@@ -2,7 +2,6 @@ import {
   deleteDoc,
   doc,
   updateDoc,
-  arrayRemove,
   getDoc,
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
@@ -18,16 +17,12 @@ interface userDeletePostProps {
   post: PostWithID;
 }
 
-export const 
-
-userDeletePost = async ({ post }: userDeletePostProps) => {
-  // const storage = getStorage();
-
+export const userDeletePost = async ({ post }: userDeletePostProps) => {
   try {
-    // ✅ Update timestamp of post that is being changed
+    // ✅ Update timestamp
     await updatePostWithNewTimestamp(post.id);
 
-    // ✅ Delete post document from 'posts' collection
+    // ✅ Delete post document
     const postRef = doc(db, "posts", post.id);
     await deleteDoc(postRef);
 
@@ -35,54 +30,64 @@ userDeletePost = async ({ post }: userDeletePostProps) => {
     await removePostFromIndexedDB(post.id);
     await deleteUserCreatedPostInIndexedDB(post.id);
 
-    // ✅ Delete post's image from Firebase Storage
+    // ✅ Delete image from Firebase Storage
     if (post.imageUrl) {
       const imageRef = ref(storage, post.imageUrl);
-      await deleteObject(imageRef);
+      try {
+        await deleteObject(imageRef);
+      } catch (err) {
+        console.warn(`⚠️ Could not delete image: ${post.imageUrl}`, err);
+      }
     }
 
-    // // ✅ Remove post ID from 'channels' collection
-    // if (post.channel) {
-    //   const channelRef = doc(db, "channels", post.channel);
-    //   await updateDoc(channelRef, {
-    //     postIds: arrayRemove(post.id),
-    //   });
-    // }
-
-    // // ✅ Remove post ID from 'categories' collection
-    // if (post.category) {
-    //   const categoryRef = doc(db, "categories", post.category);
-    //   await updateDoc(categoryRef, {
-    //     postIds: arrayRemove(post.id),
-    //   });
-    // }
-
-    // ✅ 🔥 Now clean up from goal's submittedPosts if applicable
+    // ✅ Remove from company goal
     if (post.companyGoalId) {
       const goalRef = doc(db, "companyGoals", post.companyGoalId);
       const goalSnap = await getDoc(goalRef);
 
       if (goalSnap.exists()) {
         const goalData = goalSnap.data();
-        const updatedSubmittedPosts = (goalData.submittedPosts || []).filter(
-          (submission: any) => submission.postId !== post.id,
+        const submitted: any[] = Array.isArray(goalData.submittedPosts)
+          ? goalData.submittedPosts
+          : [];
+
+        const updatedSubmittedPosts = submitted.filter(
+          (s) => s.postId !== post.id
         );
 
-        await updateDoc(goalRef, {
-          submittedPosts: updatedSubmittedPosts,
-        });
+        await updateDoc(goalRef, { submittedPosts: updatedSubmittedPosts });
 
         console.log(
-          `✅ Removed post ${post.id} from company goal ${post.companyGoalId}`,
+          `✅ Removed post ${post.id} from company goal ${post.companyGoalId}`
         );
       } else {
         console.warn(
-          `⚠️ Goal ${post.companyGoalId} not found while cleaning submittedPosts`,
+          `⚠️ Company goal ${post.companyGoalId} not found during cleanup`
         );
+      }
+    }
+
+    // ✅ Remove from gallo goal
+    if (post.oppId) {
+      const galloGoalRef = doc(db, "galloGoals", post.oppId);
+      const galloGoalSnap = await getDoc(galloGoalRef);
+
+      if (galloGoalSnap.exists()) {
+        const goalData = galloGoalSnap.data();
+        const submitted: any[] = Array.isArray(goalData.submittedPosts)
+          ? goalData.submittedPosts
+          : [];
+
+        const updated = submitted.filter((s) => s.postId !== post.id);
+        await updateDoc(galloGoalRef, { submittedPosts: updated });
+
+        console.log(`🧼 Removed post ${post.id} from gallo goal ${post.oppId}`);
+      } else {
+        console.warn(`⚠️ Gallo goal ${post.oppId} not found during cleanup`);
       }
     }
   } catch (error) {
     console.error("❌ Error deleting post:", error);
-    throw error; // Rethrow to handle in UI or retry
+    throw error;
   }
 };
