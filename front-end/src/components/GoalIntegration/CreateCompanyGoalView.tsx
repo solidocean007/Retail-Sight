@@ -47,7 +47,7 @@ const CreateCompanyGoalView = () => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const companyId = currentUser?.companyId;
   const companyUsers = useSelector(selectCompanyUsers);
-  const usersCompany = useSelector(selectCurrentCompany);;
+  const usersCompany = useSelector(selectCurrentCompany);
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
@@ -64,8 +64,8 @@ const CreateCompanyGoalView = () => {
   const [goalValueMin, setGoalValueMin] = useState(1);
   const [goalStartDate, setGoalStartDate] = useState("");
   const [goalEndDate, setGoalEndDate] = useState("");
-  const [goalTargetMode, setGoalTargetMode] =
-    useState<GoalTargetMode>("goalForAllAccounts");
+  const [accountScope, setAccountScope] = useState<"all" | "selected">("all");
+
   const [savedFilterSets, setSavedFilterSets] = useState<
     Record<string, SavedFilterSet>
   >({});
@@ -127,10 +127,10 @@ const CreateCompanyGoalView = () => {
 
   useEffect(() => {
     // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
-    if (goalTargetMode === "goalForSelectedAccounts") {
+    if (accountScope === "selected") {
       setSelectedAccounts(filteredAccounts);
     }
-  }, [filteredAccounts, goalTargetMode]);
+  }, [filteredAccounts, accountScope]);
 
   const readyForCreation: boolean =
     goalTitle.trim().length > 0 &&
@@ -220,6 +220,18 @@ const CreateCompanyGoalView = () => {
     );
   }, [accounts, selectedUserIds, normalizedCompanyUsers]);
 
+  const eligibleUsersForCurrentScope = useMemo(() => {
+    const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
+
+    const routeNums = new Set(
+      scopedAccounts.flatMap((a) => a.salesRouteNums || [])
+    );
+
+    return normalizedCompanyUsers.filter(
+      (user) => user.salesRouteNum && routeNums.has(user.salesRouteNum)
+    );
+  }, [accountScope, accounts, selectedAccounts, normalizedCompanyUsers]);
+
   const handleCreateGoal = async () => {
     if (!readyForCreation) {
       alert("Please fill out all required fields.");
@@ -231,12 +243,38 @@ const CreateCompanyGoalView = () => {
       return;
     }
 
-    const accountNumbersForThisGoal =
-      goalTargetMode === "goalForAllAccounts"
-        ? accounts.map((acc) => acc.accountNumber.toString())
-        : goalTargetMode === "goalForSelectedAccounts"
-        ? selectedAccounts.map((acc) => acc.accountNumber.toString())
-        : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
+    const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
+
+    const userPool =
+      selectedUserIds.length > 0
+        ? normalizedCompanyUsers.filter((u) => selectedUserIds.includes(u.uid))
+        : normalizedCompanyUsers;
+
+    const userAssignments: Record<string, string[]> = {};
+
+    scopedAccounts.forEach((account) => {
+      if (!account.salesRouteNums || account.salesRouteNums.length === 0)
+        return;
+
+      const matchingUserIds = userPool
+        .filter(
+          (user) =>
+            user.salesRouteNum &&
+            account.salesRouteNums.includes(user.salesRouteNum)
+        )
+        .map((user) => user.uid);
+
+      if (matchingUserIds.length > 0) {
+        userAssignments[account.accountNumber.toString()] = matchingUserIds;
+      }
+    });
+
+    // const accountNumbersForThisGoal =
+    //   accountScope === "all"
+    //     ? accounts.map((acc) => acc.accountNumber.toString())
+    //     : accountScope === "selected"
+    //     ? selectedAccounts.map((acc) => acc.accountNumber.toString())
+    //     : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
 
     const newGoal: CompanyGoalType = {
       companyId,
@@ -246,7 +284,10 @@ const CreateCompanyGoalView = () => {
       goalValueMin: Number(goalValueMin),
       goalStartDate,
       goalEndDate,
-      accountNumbersForThisGoal,
+      accountNumbersForThisGoal: scopedAccounts.map((a) =>
+        a.accountNumber.toString()
+      ),
+      userAssignments,
       createdAt: new Date().toISOString(),
       deleted: false,
     };
@@ -400,33 +441,28 @@ const CreateCompanyGoalView = () => {
           </Box>
 
           <FormControl component="fieldset">
-            <Typography variant="subtitle1">Target Audience</Typography>
+            <Typography variant="subtitle1">Accounts Scope</Typography>
             <RadioGroup
-              value={goalTargetMode}
+              value={accountScope}
               onChange={(e) =>
-                setGoalTargetMode(e.target.value as GoalTargetMode)
+                setAccountScope(e.target.value as "all" | "selected")
               }
               row
             >
               <FormControlLabel
-                value="goalForAllAccounts"
+                value="all"
                 control={<Radio />}
                 label="All Accounts"
               />
               <FormControlLabel
-                value="goalForSelectedAccounts"
+                value="selected"
                 control={<Radio />}
                 label="Selected Accounts"
-              />
-              <FormControlLabel
-                value="goalForSelectedUsers"
-                control={<Radio />}
-                label="Selected Users"
               />
             </RadioGroup>
           </FormControl>
 
-          {goalTargetMode === "goalForSelectedAccounts" && (
+          {accountScope === "selected" && (
             <>
               <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
                 {/* Chain Multi-Select */}
@@ -592,6 +628,15 @@ const CreateCompanyGoalView = () => {
                         <Chip
                           key={uid}
                           label={`User: ${name}`}
+                          color={
+                            filteredAccounts.some((account) =>
+                              account.salesRouteNums?.includes(
+                                user?.salesRouteNum || ""
+                              )
+                            )
+                              ? "default" // ✅ Has matching account
+                              : "error" // ❌ No matching account
+                          }
                           onDelete={() =>
                             setFilters({
                               ...filters,
@@ -644,37 +689,73 @@ const CreateCompanyGoalView = () => {
               )}
             </>
           )}
-          <Box mt={2} p={2} border="1px solid #ccc" borderRadius="8px">
-            <Typography variant="subtitle1">Summary:</Typography>
-            <Typography variant="body2" mt={1}>
-              You are assigning this goal to{" "}
-              <strong>
-                {goalTargetMode === "goalForAllAccounts"
-                  ? "all accounts"
-                  : goalTargetMode === "goalForSelectedAccounts"
-                  ? `${selectedAccounts.length} selected account(s)`
-                  : `${selectedUserIds.length} selected user(s)`}
-              </strong>
-              .
+          <Box
+            mt={2}
+            p={3}
+            border="1px solid #ccc"
+            borderRadius="8px"
+            bgcolor="#f9f9f9"
+            sx={{
+              textAlign: "left", // 👈 Left-align text
+              lineHeight: 1.6, // 👈 Slightly more readable spacing
+              fontSize: "0.95rem",
+              maxWidth: "800px", // Optional: limit width for readability
+              marginX: "auto", // 👈 Center the box horizontally
+            }}
+          >
+            <Typography variant="subtitle1" gutterBottom>
+              Summary
             </Typography>
+
+            <Typography variant="body2">
+              You are about to create a goal titled{" "}
+              <strong>"{goalTitle || "Untitled Goal"}"</strong>
+              {goalDescription && `, described as "${goalDescription}"`}. This
+              goal requires each assigned user to contribute a minimum of{" "}
+              <strong>{goalValueMin}</strong> {goalMetric}, and will be active
+              from <strong>{goalStartDate || "?"}</strong> to{" "}
+              <strong>{goalEndDate || "?"}</strong>. It will be assigned to{" "}
+              <strong>{selectedUserIds.length}</strong> user
+              {selectedUserIds.length !== 1 ? "s" : ""} across{" "}
+              {accountScope === "all"
+                ? `all ${accounts.length} accounts`
+                : `${selectedAccounts.length} selected account${
+                    selectedAccounts.length !== 1 ? "s" : ""
+                  }`}
+              .
+              {enforcePerUserQuota &&
+                ` Each user must complete at least ${perUserQuota} submission${
+                  Number(perUserQuota) > 1 ? "s" : ""
+                } during the goal period.`}
+            </Typography>
+
             {enforcePerUserQuota && (
               <Typography variant="body2" mt={1}>
-                Each selected user must submit at least{" "}
-                <strong>{perUserQuota}</strong> submission
-                {Number(perUserQuota) > 1 ? "s" : ""}
+                Each user must complete at least <strong>{perUserQuota}</strong>{" "}
+                submission{Number(perUserQuota) > 1 ? "s" : ""} during the goal
+                period.
               </Typography>
             )}
+
+            <Box display="flex" justifyContent="flex-end" mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleCreateGoal}
+                disabled={!readyForCreation || isSaving}
+              >
+                {isSaving ? "Creating..." : "Create Goal"}
+              </Button>
+            </Box>
           </Box>
 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleCreateGoal}
-            disabled={!readyForCreation || isSaving}
-          >
-            {isSaving ? "Creating..." : "Create Goal"}
-          </Button>
-          {goalTargetMode === "goalForSelectedAccounts" && (
+          <UserMultiSelector
+            users={eligibleUsersForCurrentScope}
+            selectedUserIds={selectedUserIds}
+            setSelectedUserIds={setSelectedUserIds}
+          />
+
+          {accountScope === "selected" && (
             <>
               <Typography variant="body2" sx={{ mt: 1 }}>
                 {filteredAccounts.length} account
@@ -689,7 +770,7 @@ const CreateCompanyGoalView = () => {
             </>
           )}
 
-          {goalTargetMode === "goalForSelectedUsers" && (
+          {accountScope === "selected" && (
             <>
               <Typography variant="body2" sx={{ mt: 1 }}>
                 {accountsForSelectedUsers.length} account
@@ -697,12 +778,6 @@ const CreateCompanyGoalView = () => {
                 selected user
                 {selectedUserIds.length > 1 ? "s" : ""}
               </Typography>
-
-              <UserMultiSelector
-                users={normalizedCompanyUsers}
-                selectedUserIds={selectedUserIds}
-                setSelectedUserIds={setSelectedUserIds}
-              />
             </>
           )}
         </Box>

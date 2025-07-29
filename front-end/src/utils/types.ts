@@ -431,6 +431,9 @@ export type CompanyGoalType = {
   createdByFirstName?: string; // optional
   createdByLastName?: string; // optional
   accountNumbersForThisGoal: string[]; // ✅ Full scope of accounts this goal applies to
+  userAssignments?: {
+    [accountNumber: string]: string[];
+  }
   perUserQuota?: number;// ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
   deleted: boolean;
@@ -488,6 +491,9 @@ export interface FireStoreGalloGoalDocType {
     marketId: string;
     submittedPostId?: string;
   }>;
+  userAssignments?: {
+    [accountNumber: string]: string[];
+  }
 }
 
 export type CompanyAccountType = {
