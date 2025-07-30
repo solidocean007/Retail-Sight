@@ -27,6 +27,7 @@ import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
 import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
 import { setupNotificationListenersForUser } from "./utils/listeners/setupNotificationListenersForUser";
 import { auditPostDates } from "./script";
+import { setupNotificationListenersForCompany } from "./utils/listeners/setupNotificationListenerForCompany";
 // import { auditPostDates, migratePostDates } from "./script";
 
 function App(): React.JSX.Element {
@@ -37,6 +38,7 @@ function App(): React.JSX.Element {
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const user = useSelector((state: RootState) => state.user.currentUser);
+  console.log('user: ', user)
   const companyId = user?.companyId;
   // const salesRouteNum = user?.salesRouteNum;
   const { currentUser, initializing } = useFirebaseAuth();
@@ -83,9 +85,12 @@ function App(): React.JSX.Element {
   useEffect(() => {
     // return
     if (!companyId || !currentUser?.companyId) return;
-    const unsubscribeNotifications = dispatch(
+    const unsubscribeNotificationsForUser = dispatch(
       setupNotificationListenersForUser(currentUser)
     );
+    const unsubscribeNotificationsForCompany = dispatch(
+      setupNotificationListenersForCompany(currentUser)
+    )
     const unsubscribeCompanyGoals = dispatch(
       setupCompanyGoalsListener(companyId)
     );
@@ -93,7 +98,8 @@ function App(): React.JSX.Element {
     return () => {
       unsubscribeCompanyGoals();
       unsubscribeGalloGoals();
-      unsubscribeNotifications();
+      unsubscribeNotificationsForUser();
+      unsubscribeNotificationsForCompany();
     };
   }, [dispatch, currentUser]);
 

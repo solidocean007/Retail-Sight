@@ -1,15 +1,19 @@
-import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction, createSelector } from "@reduxjs/toolkit";
 import { NotificationType } from "../utils/types";
 import { RootState } from "../utils/store";
 
 interface NotificationsState {
-  notifications: NotificationType[];
+  userNotifications: NotificationType[];
+  companyNotifications: NotificationType[];
+  roleNotifications: NotificationType[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: NotificationsState = {
-  notifications: [],
+  userNotifications: [],
+  companyNotifications: [],
+  roleNotifications: [],
   loading: false,
   error: null,
 };
@@ -18,43 +22,53 @@ const notificationsSlice = createSlice({
   name: "notifications",
   initialState,
   reducers: {
-    setNotifications(state, action: PayloadAction<NotificationType[]>) {
-      state.notifications = action.payload;
+    // 🔄 Replace all notifications of each type
+    setUserNotifications(state, action: PayloadAction<NotificationType[]>) {
+      state.userNotifications = action.payload;
     },
-    addNotification: (state, action) => {
-      const exists = state.notifications.find(
-        (n) => n.id === action.payload.id
-      );
-      if (!exists) {
-        state.notifications.unshift(action.payload);
-      }
+    setCompanyNotifications(state, action: PayloadAction<NotificationType[]>) {
+      state.companyNotifications = action.payload;
     },
-    updateNotification(state, action: PayloadAction<NotificationType>) {
-      const index = state.notifications.findIndex(
-        (n) => n.id === action.payload.id
-      );
-      if (index !== -1) state.notifications[index] = action.payload;
+    setRoleNotifications(state, action: PayloadAction<NotificationType[]>) {
+      state.roleNotifications = action.payload;
     },
+
+    // ➕ Add a single notification to the right group
+    addUserNotification(state, action: PayloadAction<NotificationType>) {
+      state.userNotifications.unshift(action.payload);
+    },
+    addCompanyNotification(state, action: PayloadAction<NotificationType>) {
+      state.companyNotifications.unshift(action.payload);
+    },
+    addRoleNotification(state, action: PayloadAction<NotificationType>) {
+      state.roleNotifications.unshift(action.payload);
+    },
+
+    // 🗑️ Remove by ID from all groups
     deleteNotification(state, action: PayloadAction<string>) {
-      state.notifications = state.notifications.filter(
-        (n) => n.id !== action.payload
-      );
+      const id = action.payload;
+      state.userNotifications = state.userNotifications.filter((n) => n.id !== id);
+      state.companyNotifications = state.companyNotifications.filter((n) => n.id !== id);
+      state.roleNotifications = state.roleNotifications.filter((n) => n.id !== id);
     },
-    togglePinNotification: (state, action) => {
-      const notif = state.notifications.find((n) => n.id === action.payload);
-      if (notif) notif.pinned = !notif.pinned;
-    },
+
+    // ✅ Mark as read
     markAsRead(
       state,
       action: PayloadAction<{ notificationId: string; userId: string }>
     ) {
-      const notif = state.notifications.find(
-        (n) => n.id === action.payload.notificationId
-      );
-      if (notif && !notif.readBy.includes(action.payload.userId)) {
-        notif.readBy.push(action.payload.userId);
-      }
+      const { notificationId, userId } = action.payload;
+      const mark = (list: NotificationType[]) => {
+        const notif = list.find((n) => n.id === notificationId);
+        if (notif && !notif.readBy.includes(userId)) {
+          notif.readBy.push(userId);
+        }
+      };
+      mark(state.userNotifications);
+      mark(state.companyNotifications);
+      mark(state.roleNotifications);
     },
+
     setLoading(state, action: PayloadAction<boolean>) {
       state.loading = action.payload;
     },
@@ -64,27 +78,43 @@ const notificationsSlice = createSlice({
   },
 });
 
-
-
-export const selectAllNotifications = (state: RootState) => state.notifications.notifications;
-export const selectNotifications = (state: RootState) => state.notifications.notifications;
-export const selectCurrentUserId = (state: RootState) => state.user.currentUser?.uid;
-
-export const selectUnreadNotifications = createSelector(
-  [selectNotifications, selectCurrentUserId],
-  (notifications, userId) =>
-    notifications.filter((notif) => !notif.readBy?.includes(userId ?? ""))
-);
-
-
 export const {
-  setNotifications,
-  addNotification,
-  updateNotification,
+  setUserNotifications,
+  setCompanyNotifications,
+  setRoleNotifications,
+  addUserNotification,
+  addCompanyNotification,
+  addRoleNotification,
   deleteNotification,
   markAsRead,
   setLoading,
   setError,
 } = notificationsSlice.actions;
-
 export default notificationsSlice.reducer;
+
+//
+// 📦 Selectors
+//
+
+export const selectUserNotifications = (state: RootState) =>
+  state.notifications.userNotifications;
+
+export const selectCompanyNotifications = (state: RootState) =>
+  state.notifications.companyNotifications;
+
+export const selectRoleNotifications = (state: RootState) =>
+  state.notifications.roleNotifications;
+
+export const selectAllNotifications = createSelector(
+  [selectUserNotifications, selectCompanyNotifications, selectRoleNotifications],
+  (user, company, role) => [...user, ...company, ...role]
+);
+
+export const selectCurrentUserId = (state: RootState) =>
+  state.user.currentUser?.uid;
+
+export const selectUnreadNotifications = createSelector(
+  [selectAllNotifications, selectCurrentUserId],
+  (notifications, uid) =>
+    notifications.filter((n) => !n.readBy?.includes(uid ?? ""))
+);

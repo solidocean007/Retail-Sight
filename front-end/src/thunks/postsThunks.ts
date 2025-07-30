@@ -4,10 +4,11 @@ import {
   PostQueryFilters,
   PostType,
   PostWithID,
+  UserType,
 } from "../utils/types";
 import {
   filterExactMatch,
-  filterInMatch,
+  // filterInMatch,
   filterArrayContains,
 } from "../filters/postFilterServices"; // adjust path as needed
 import { createAsyncThunk } from "@reduxjs/toolkit";
@@ -25,35 +26,34 @@ import {
   startAfter,
   where,
   Timestamp,
-  QueryConstraint,
+  // QueryConstraint,
 } from "firebase/firestore";
-import {
-  // getFilteredPostsFromIndexedDB,
-  storeLatestPostsInIndexedDB,
-  getLatestPostsFromIndexedDB,
-} from "../utils/database/indexedDBUtils";
+
 import { normalizePost } from "../utils/normalizePost";
+
 
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
-  currentUserCompanyId: string | undefined;
+  currentUser: UserType | null;
 };
 
-// just noting this function fetches but doesn't store to redux or indexedDb
 export const fetchInitialPostsBatch = createAsyncThunk(
   "posts/fetchInitial",
   async (
-    { POSTS_BATCH_SIZE, currentUserCompanyId }: FetchInitialPostsArgs,
+    { POSTS_BATCH_SIZE, currentUser }: FetchInitialPostsArgs,
     { rejectWithValue }
   ) => {
     try {
+      const isDeveloper = currentUser?.role === "developer";
+      const companyId = currentUser?.companyId;
       const postsCollectionRef = collection(db, "posts");
 
       const postsQuery = query(
         postsCollectionRef,
         orderBy("displayDate", "desc"),
-        limit(POSTS_BATCH_SIZE) // ✅ limits Firestore read
+        limit(POSTS_BATCH_SIZE)
       );
+
       const querySnapshot = await getDocs(postsQuery);
 
       const postsWithIds: PostWithID[] = querySnapshot.docs
@@ -62,15 +62,14 @@ export const fetchInitialPostsBatch = createAsyncThunk(
           return normalizePost({ ...postData, id: doc.id });
         })
         .filter((post) => {
+          if (isDeveloper) return true;
+
           const isPublic = post.visibility === "public";
           const isCompanyPost =
             post.visibility === "company" &&
-            post.postUserCompanyId === currentUserCompanyId;
-          const isSupplier = // add the posts where visibility is "supplier"
-            post.visibility === "supplier" &&
-            post.postUserCompanyId === currentUserCompanyId;
-          return isPublic || isCompanyPost || isSupplier;
-          // return isCompanyPost || isSupplier;
+            post.postUserCompanyId === companyId;
+
+          return isPublic || isCompanyPost;
         });
 
       const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
@@ -85,19 +84,23 @@ export const fetchInitialPostsBatch = createAsyncThunk(
 
 // Define a type for the thunk argument
 type FetchMorePostsArgs = {
-  lastVisible: string | null; // Use string to represent the last document ID
+  lastVisible: string | null;
   limit: number;
-  currentUserCompanyId: string | undefined;
+  currentUser: UserType | null;
 };
 
 export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
-    { lastVisible, limit: batchSize, currentUserCompanyId }: FetchMorePostsArgs,
+    { lastVisible, limit: batchSize, currentUser }: FetchMorePostsArgs,
     { rejectWithValue }
   ) => {
+    const isDeveloper = currentUser?.role === "developer";
+    console.log('currentUser: ', currentUser)
+    const companyId = currentUser?.companyId;
+    console.log(companyId);
     try {
-      if (!currentUserCompanyId) {
+      if (!companyId) {
         console.warn(
           "⚠️ fetchMorePostsBatch called without a valid companyId."
         );
@@ -132,24 +135,22 @@ export const fetchMorePostsBatch = createAsyncThunk(
       const postsWithIds: PostWithID[] = snapshot.docs
         .map((doc) => {
           const data = doc.data() as PostType;
+          if (isDeveloper) return normalizePost({ id: doc.id, ...data });
 
           const isPublic = data.visibility === "public";
           const isCompanyPost =
             data.visibility === "company" &&
-            data.postUser?.companyId === currentUserCompanyId;
-          const isSupplierPost =
-            data.visibility === "supplier" &&
-            data.postUser?.companyId === currentUserCompanyId;
+            data.postUserCompanyId === companyId;
 
-          const include = isPublic || isCompanyPost || isSupplierPost;
-
-          return include ? normalizePost({ id: doc.id, ...data }) : null;
+          return isPublic || isCompanyPost
+            ? normalizePost({ id: doc.id, ...data })
+            : null;
         })
+
         .filter((post): post is PostWithID => post !== null);
 
       const newLastVisible =
         snapshot.docs[snapshot.docs.length - 1]?.id || null;
-
       return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
       console.error("❌ Error in fetchMorePostsBatch:", error);
@@ -248,10 +249,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     //   );
     // }
     if (filters.accountChain) {
-      baseQuery = query(
-        baseQuery,
-        where("chain", "==", filters.accountChain)
-      );
+      baseQuery = query(baseQuery, where("chain", "==", filters.accountChain));
     }
     // if (filters.accountChain) {
     //   baseQuery = filterExactMatch(
@@ -261,11 +259,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     //   );
     // }
     if (filters.chainType) {
-
-      baseQuery = query(
-        baseQuery,
-        where("chainType", "==", filters.chainType)
-      );
+      baseQuery = query(baseQuery, where("chainType", "==", filters.chainType));
       // baseQuery = filterExactMatch(
       //   "chainType",
       //   filters.chainType ?? undefined,
@@ -355,6 +349,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
   }
 );
 
+// this function isnt being used:
 export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
   "posts/fetchUserPosts",
   async (userId, { rejectWithValue }) => {
@@ -380,50 +375,6 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
     }
   }
 );
-
-//   PostWithID[],
-//   void,
-//   { rejectValue: string }
-// >("posts/fetchLatest", async (_, { rejectWithValue }) => {
-//   try {
-//     // First, try to get the latest posts from IndexedDB
-//     const cachedPosts = await getLatestPostsFromIndexedDB(); // Assume this function exists
-
-//     if (cachedPosts.length > 0) {
-//       return cachedPosts; // Return cached posts to avoid Firestore reads
-//     } else {
-//       // Fetch from Firestore as fallback
-//       const postsCollectionRef = collection(db, "posts");
-//       const baseQuery = query(
-//         postsCollectionRef,
-//         orderBy("timestamp", "desc"),
-//         limit(10)
-//       );
-
-//       console.log("fetchLatestPosts read");
-//       const postSnapshot = await getDocs(baseQuery);
-
-//       if (postSnapshot.empty) {
-//         return [];
-//       }
-
-//       const posts: PostWithID[] = postSnapshot.docs.map((doc) => ({
-//         ...(doc.data() as PostType),
-//         id: doc.id,
-//       }));
-
-//       // Optionally, store the fetched posts in IndexedDB
-//       await storeLatestPostsInIndexedDB(posts); // Assume this function exists
-
-//       return posts;
-//     }
-//   } catch (error) {
-//     console.error("Error fetching latest posts:", error);
-//     return rejectWithValue("Error fetching latest posts.");
-//   }
-// });
-
-// Define a type for the thunk argument
 
 // Define the arguments for the fetchPostsByIds thunk
 

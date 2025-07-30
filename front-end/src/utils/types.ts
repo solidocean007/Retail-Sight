@@ -3,39 +3,65 @@
 import { serverTimestamp, Timestamp } from "firebase/firestore";
 // import { ChannelType } from "../components/Create-Post/ChannelSelector";
 // import { CategoryType } from "../components/Create-Post/CategorySelector";
-export type PriorityType = "high" | "normal" | "Low";
+export type NotificationAudienceType =
+  | "user"
+  | "company"
+  | "role"
+  | "global";
+
+export type NotificationCategory =
+  | "like"
+  | "comment"
+  | "system"
+  | "reminder"
+  | "goal"
+  | "announcement";
+
+export type PriorityType = "high" | "normal" | "low";
 
 export type NotificationType = {
   id: string;
   title: string;
   message: string;
   sentAt: Timestamp;
-  scheduledAt?: Timestamp | null; // optional future delivery
-  sentBy: UserType | "system";
+  scheduledAt?: Timestamp | null;
 
-  recipientCompanyIds?: string[]; // ✅ specific companies
-  recipientUserIds?: string[];    // ✅ specific users
-  recipientRoles?: string[];      // ✅ company roles (admin, employee)
+  sentBy: UserType | "system";
+  postId?: string;
+
+  // 🧠 New fields for clearer targeting
+  recipientUserIds?: string[];
+  recipientCompanyIds?: string[];
+  recipientRoles?: string[];
+
+  audience?: NotificationAudienceType; // optional tag for UI and logic hints
+
+  relatedPostId?: string;
+  relatedGoalId?: string;
+  relatedAccountNumber?: string; // optional tie to a store/account
 
   readBy: string[];
-  priority: PriorityType;
   pinned: boolean;
-  type?: "like" | "comment" | "system" | "reminder"; // ✅ Optional but useful
+  priority: PriorityType;
+  type?: NotificationCategory;
 };
 
 
+
 export type CompanyType = {
+  id?: string;
   lastUpdated: string;
   companyName: string;
   altCompanyNames: string[];
   superAdminsUsers: string[];
-  adminsUsers: string[];
-  employeeUsers: string[];
-  statusPendingUsers: string[];
-  companyVerified: boolean;
-  createdAt: string;
-  accountsId: string | null;
-  goals: CompanyGoalWithIdType[];
+  adminsUsers?: string[];
+  employeeUsers?: string[];
+  statusPendingUsers?: string[];
+  companyVerified?: boolean;
+  createdAt?: string;
+  accountsId?: string | null;
+  goals?: CompanyGoalWithIdType[];
+  companyType: 'owner' | 'distributor' | 'supplier'
 };
 
 export interface CompanyTypeWithId extends CompanyType {

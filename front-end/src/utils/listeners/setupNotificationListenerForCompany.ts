@@ -10,23 +10,23 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { AppDispatch } from "../store";
-import { setUserNotifications } from "../../Slices/notificationsSlice";
+import { setCompanyNotifications } from "../../Slices/notificationsSlice";
 import { NotificationType, UserType } from "../types";
 
-export const setupNotificationListenersForUser = (user: UserType) => {
+export const setupNotificationListenersForCompany = (user: UserType) => {
   return (dispatch: AppDispatch) => {
     const unsubscribers: Unsubscribe[] = [];
-    const userNotifications: Record<string, NotificationType> = {};
+    const companyNotifications: Record<string, NotificationType> = {};
 
-    const dispatchUserNotifications = () => {
-      dispatch(setUserNotifications(Object.values(userNotifications)));
+    const dispatchCompanyNotifications = () => {
+      dispatch(setCompanyNotifications(Object.values(companyNotifications)));
     };
 
     const baseRef = collection(db, "notifications");
 
-    const userQuery = query(
+    const companyQuery = query(
       baseRef,
-      where("recipientUserIds", "array-contains", user.uid),
+      where("recipientCompanyIds", "array-contains", user.companyId),
       orderBy("sentAt", "desc")
     );
 
@@ -35,7 +35,7 @@ export const setupNotificationListenersForUser = (user: UserType) => {
         const doc = change.doc;
         const raw = doc.data();
 
-        const notification: NotificationType = {
+         const notification: NotificationType = {
           id: doc.id,
           title: raw.title,
           message: raw.message,
@@ -54,16 +54,16 @@ export const setupNotificationListenersForUser = (user: UserType) => {
         };
 
         if (change.type === "removed") {
-          delete userNotifications[doc.id];
+          delete companyNotifications[doc.id];
         } else {
-          userNotifications[doc.id] = notification;
+          companyNotifications[doc.id] = notification;
         }
       });
 
-      dispatchUserNotifications();
+      dispatchCompanyNotifications();
     };
 
-    unsubscribers.push(onSnapshot(userQuery, handleSnapshot));
+    unsubscribers.push(onSnapshot(companyQuery, handleSnapshot));
 
     return () => unsubscribers.forEach((unsub) => unsub());
   };

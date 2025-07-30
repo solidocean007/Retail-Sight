@@ -34,6 +34,7 @@ const usePosts = (
 ) => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const isDeveloper = currentUser?.role === "developer";
   const [initialLoaded, setInitialLoaded] = useState(false);
 
   // 1️⃣ Initial load: IndexedDB or Firestore
@@ -49,8 +50,8 @@ const usePosts = (
       } else {
         const action = await dispatch(
           fetchInitialPostsBatch({
-            currentUserCompanyId: companyId,
             POSTS_BATCH_SIZE,
+            currentUser,
           })
         );
         if (fetchInitialPostsBatch.fulfilled.match(action)) {
@@ -157,10 +158,10 @@ const usePosts = (
         unsubscribeCompany = onSnapshot(
           query(
             collection(db, "posts"),
-            // where("timestamp", ">", lastSeenTs),
             where("displayDate", ">", lastSeenTs),
-            where("postUserCompanyId", "==", currentUserCompanyId),
-            // orderBy("timestamp", "desc"),
+            ...(isDeveloper
+              ? []
+              : [where("companyId", "==", currentUser?.companyId)]),
             orderBy("displayDate", "desc"),
             limit(POSTS_BATCH_SIZE)
           ),
