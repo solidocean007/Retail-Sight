@@ -111,13 +111,20 @@ export const sendNotification = createAsyncThunk(
 
       await setDoc(docRef, newNotif);
 
-      // Redux-safe version
+      // Redux-safe version... this must not be a safe version.
       const normalizedNotification = {
-        ...newNotif,
+        ...notification, // Use the original, which should include postId
+        id: docRef.id,
         sentAt:
-          newNotif.sentAt instanceof Timestamp
-            ? newNotif.sentAt.toDate().toISOString()
-            : newNotif.sentAt, // assume already string
+          notification.sentAt instanceof Timestamp
+            ? notification.sentAt.toDate().toISOString()
+            : typeof notification.sentAt === "string"
+            ? notification.sentAt
+            : Timestamp.now().toDate().toISOString(), // fallback
+        recipientCompanyIds: notification.recipientCompanyIds || [],
+        recipientUserIds: notification.recipientUserIds || [],
+        recipientRoles: notification.recipientRoles || [],
+        postId: notification.postId || "", // make sure this field is explicitly passed
       };
 
       // 🔀 Dispatch to correct notification group(s)

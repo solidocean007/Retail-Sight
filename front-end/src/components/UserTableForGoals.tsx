@@ -32,7 +32,7 @@ const UserTableForGoals = ({
 }: {
   users: UserRowType[];
   goal: CompanyGoalWithIdType;
-  onViewPostModal: (postId: string) => void;
+  onViewPostModal: (postId: string) => void | undefined;
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");

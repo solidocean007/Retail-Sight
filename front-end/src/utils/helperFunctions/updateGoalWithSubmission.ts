@@ -12,7 +12,7 @@ export const updateGoalWithSubmission = async (
 
     if (!actor) {
       console.warn(
-        "No user to attribute Gallo-goal submission to – skipping update."
+        "No user to attribute goal submission to – skipping update."
       );
       return;
     }
@@ -25,6 +25,7 @@ export const updateGoalWithSubmission = async (
         accountName: "",
         accountAddress: "",
         salesRouteNums: [],
+        streetAddress: "",
       }, // ✅ If somehow missing, fallback to empty
     };
 

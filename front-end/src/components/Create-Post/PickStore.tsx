@@ -20,16 +20,18 @@ import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCom
 import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/getActiveCompanyGoalsForAccount";
 // import { matchAccountWithSelectedStoreForAdmin } from "../../utils/helperFunctions/accountHelpers";
 import GalloGoalDropdown from "./GalloGoalDropdown";
-import CompanyGoalDropdown from "./CompanyGoalMultiSelector";
+import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import "./pickstore.css";
 import AccountModalSelector from "./AccountModalSelector";
+
+
+
 
 import {
   selectAllGalloGoals,
   selectUsersGalloGoals,
 } from "../../Slices/galloGoalsSlice";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
-import CompanyGoalMultiSelector from "./CompanyGoalMultiSelector";
 
 interface PickStoreProps {
   onNext: () => void;
@@ -72,12 +74,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
     selectUsersGalloGoals(state, salesRouteNum)
   );
 
+
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
     null
   );
 
-  const [selectedCompanyGoals, setSelectedCompanyGoals] =
-    useState<CompanyGoalWithIdType[]>();
+  const [selectedCompanyGoal, setSelectedCompanyGoal] =
+    useState<CompanyGoalWithIdType>();
   const userRole = useSelector(selectUser)?.role;
   const userId = useSelector(selectUser)?.uid;
   const isAdmin = userRole === "admin" || userRole === "super-admin";
@@ -166,27 +169,18 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }
   }, [isAllStoresShown, companyId, myAccounts]);
 
-  const handleCompanyGoalsSelection = (
-    goals: CompanyGoalWithIdType[] | undefined
+  const handleCompanyGoalSelection = (
+    goal: CompanyGoalWithIdType | undefined
   ) => {
-    if (!goals) {
+    if (!goal) {
       console.warn("No goal selected.");
       return;
     }
 
-    setSelectedCompanyGoals(goals);
-    handleFieldChange(
-      "companyGoalIds",
-      goals.map((goal) => goal.id)
-    );
-    handleFieldChange(
-      "companyGoalDescriptions",
-      goals.map((goal) => goal.goalDescription)
-    ); // same
-    handleFieldChange(
-      "companyGoalTitles",
-      goals.map((goal) => goal.goalTitle)
-    ); // same
+    setSelectedCompanyGoal(goal); // Update state with the selected goal object
+    handleFieldChange("companyGoalId", goal.id); // Set the goal ID
+    handleFieldChange("companyGoalDescription", goal.goalDescription); // Set the goal description
+    handleFieldChange("companyGoalTitle", goal.goalTitle); // i just added this
     console.log("new post data:", post);
   };
 
@@ -197,7 +191,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     if (!galloGoal) return;
 
     setSelectedGalloGoalId(galloGoal.goalDetails.goalId);
-    setSelectedGalloGoal(galloGoal);
+    setSelectedGalloGoal(galloGoal); // 🆕 Save the full object directly
 
     const matchingAccount = galloGoal.accounts.find(
       (acc) => acc.distributorAcctId === post.account?.accountNumber
@@ -261,7 +255,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     }));
     setSelectedCompanyAccount(null);
     setSelectedGalloGoalId(null);
-    setSelectedCompanyGoals(undefined);
+    setSelectedCompanyGoal(undefined);
   };
 
   // if (loadingAccounts || !post.account?.accountNumber || !companyGoals.length) {
@@ -367,12 +361,15 @@ export const PickStore: React.FC<PickStoreProps> = ({
           <Typography variant="body2" color="textSecondary">
             {post.account.accountAddress}
           </Typography>
-          {selectedCompanyGoals &&
-            selectedCompanyGoals.map((goal) => (
-              <Typography key={goal.id} variant="body2" color="primary" mt={1}>
-                Goal: {goal.goalTitle}
-              </Typography>
-            ))}
+          {selectedCompanyGoal && (
+            <Typography variant="body2" color="primary" mt={1}>
+              Goal:{" "}
+              {
+                companyGoals.find((goal) => goal.id === selectedCompanyGoal.id)
+                  ?.goalTitle
+              }
+            </Typography>
+          )}
         </Box>
       )}
 
@@ -381,12 +378,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
       {post.account && (
         <Box mt={3}>
           <Box mt={2}>
-            <CompanyGoalMultiSelector
+            <CompanyGoalDropdown
               goals={companyGoals}
               label="Company Goals"
               loading={isFetchingGoal}
-              selectedGoals={selectedCompanyGoals}
-              onChange={handleCompanyGoalsSelection}
+              onSelect={handleCompanyGoalSelection}
+              selectedGoal={selectedCompanyGoal}
             />
           </Box>
 

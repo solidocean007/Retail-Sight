@@ -317,7 +317,8 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         <UserTableForGoals
           users={userBasedRows}
           goal={goal}
-          onViewPostModal={onViewPostModal}
+          onViewPostModal={onViewPostModal} // Type '((postId: string) => void) | undefined' is not assignable to type '(postId: string) => void | undefined'.
+  // Type 'undefined' is not assignable to type '(postId: string) => void | undefined'.
         />
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress

@@ -37,6 +37,16 @@
   margin: 5px;
 }
 
+.edit-post-info-banner {
+  background-color: #fffbe6;
+  color: #333;
+  padding: 0.75rem 1rem;
+  border: 1px solid #f0c36d;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
 .image-container {
   margin-top: 10px;
 }

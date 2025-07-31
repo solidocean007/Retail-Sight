@@ -17,6 +17,7 @@ import {
   arrayUnion,
   arrayRemove,
   getDoc,
+  addDoc,
 } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { deletePost, updatePost } from "../../Slices/postsSlice";
@@ -46,6 +47,10 @@ import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/get
 import { useIsDirty } from "../../hooks/useIsDirty";
 import { selectUser } from "../../Slices/userSlice";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
+import CustomConfirmation from "../CustomConfirmation";
+import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
+import GoalChangeConfirmation from "./GoalChangeConfirmation";
+import { duplicatePostWithNewGoal } from "../../utils/PostLogic/dupilcatePostWithNewGoal";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -59,6 +64,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   isOpen,
   setIsEditModalOpen,
 }) => {
+  const handlePostSubmission = useHandlePostSubmission();
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
@@ -68,6 +74,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
+  const [showGoalChangeConfirm, setShowGoalChangeConfirm] = useState(false);
 
   const userData = useSelector(selectUser)!;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
@@ -92,9 +99,9 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       allCompanyGoals
     );
   }, [post.account?.accountNumber, allCompanyGoals]);
-
-  const [selectedCompanyGoals, setSelectedCompanyGoals] = useState<
-    CompanyGoalWithIdType[] | undefined
+  const [originalGoalId] = useState(post.companyGoalId); // capture on mount
+  const [selectedCompanyGoal, setSelectedCompanyGoal] = useState<
+    CompanyGoalWithIdType | undefined
   >(allCompanyGoals.find((g) => g.id === post.companyGoalId));
 
   const isDirty = useIsDirty(
@@ -102,7 +109,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       description: post.description,
       totalCaseCount: post.totalCaseCount,
       brands: post.brands || [],
-      companyGoalIds: post.companyGoalIds,
+      companyGoalId: post.companyGoalId,
       productType: post.productType || [],
       postUserUid: post.postUserUid,
     },
@@ -110,7 +117,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       description,
       totalCaseCount: updatedCaseCount,
       brands: editablePost.brands || [],
-      companyGoalIds: selectedCompanyGoals?.id ?? null, // string|null
+      companyGoalId: selectedCompanyGoal?.id ?? null, // string|null
       productType: editablePost.productType || [],
       postUserUid: onBehalf?.uid ?? post.postUserUid,
     }
@@ -177,8 +184,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       account: updatedPost.account,
       brands: updatedPost.brands ?? [],
       productType: updatedPost.productType ?? [],
-      companyGoalIds: selectedCompanyGoals.map((g) => g.id),
-      companyGoalTitles: selectedCompanyGoals.map((g) => g.goalTitle),
+      companyGoalId: selectedCompanyGoal?.id ?? null,
+      companyGoalTitle: selectedCompanyGoal?.goalTitle ?? null,
 
       // overwrite postUser → actor
       postUser: actor,
@@ -207,20 +214,27 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
       // B) if there's a goal selected, pull its array, filter out this postId,
       //    then re-push a single fresh entry with the correct actor
-      for (const goal of selectedCompanyGoals) {
-  const goalRef = doc(db, "companyGoals", goal.id);
-  const snap = await getDoc(goalRef);
-  const existing: any[] = snap.data()?.submittedPosts || [];
-  const filtered = existing.filter((e) => e.postId !== updatedPost.id);
-  filtered.push({
-    postId: updatedPost.id,
-    account: updatedPost.account,
-    submittedBy: actor,
-    submittedAt: updatedPost.displayDate,
-  });
-  await updateDoc(goalRef, { submittedPosts: filtered });
-}
+      if (selectedCompanyGoal?.id) {
+        const goalRef = doc(db, "companyGoals", selectedCompanyGoal.id);
 
+        // load existing array
+        const snap = await getDoc(goalRef);
+        const existing: any[] = snap.data()?.submittedPosts || [];
+
+        // remove any old entries for this post
+        const filtered = existing.filter((e) => e.postId !== updatedPost.id);
+
+        // push a single fresh one
+        filtered.push({
+          postId: updatedPost.id,
+          account: updatedPost.account,
+          submittedBy: actor, // full user object
+          submittedAt: updatedPost.displayDate,
+        });
+
+        // overwrite the array in Firestore
+        await updateDoc(goalRef, { submittedPosts: filtered });
+      }
 
       // C) sync Redux + IndexedDB, close modal, toast
       dispatch(updatePost(updatedPost));
@@ -236,6 +250,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   };
 
   const handleSave = () => {
+    if (selectedCompanyGoal?.id !== post.companyGoalId) {
+      setShowGoalChangeConfirm(true);
+      return;
+    }
     const extractedHashtags = extractHashtags(description);
     const extractedStarTags = extractStarTags(description);
 
@@ -351,6 +369,20 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 sx={{ mb: 2 }}
               />
+              {selectedCompanyGoal?.id == originalGoalId && (
+                <div className="edit-post-info-banner">
+                  <strong>Heads up:</strong>
+                  You can change the company goal for this post, or add a
+                  company goal if it applies to more than one.
+                </div>
+              )}
+              {selectedCompanyGoal?.id !== originalGoalId && (
+                <div className="edit-post-info-banner">
+                  <strong>Heads up:</strong>
+                  You’ll be asked whether to update this post or create a new
+                  one when you save changes.
+                </div>
+              )}
 
               <CompanyGoalDropdown
                 goals={activeCompanyGoals}
@@ -393,6 +425,33 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         onAccountSelect={handleAccountSelect}
         isAllStoresShown={true}
         setIsAllStoresShown={() => {}} // dummy function
+      />
+      <GoalChangeConfirmation
+        isOpen={showGoalChangeConfirm}
+        onClose={() => setShowGoalChangeConfirm(false)}
+        onReplace={() => {
+          // Just patch the goal ID and title directly
+          const updatedPost = {
+            ...editablePost,
+            companyGoalId: selectedCompanyGoal?.id || null,
+            companyGoalTitle: selectedCompanyGoal?.goalTitle || null,
+          };
+          handleSavePost(updatedPost);
+          setShowGoalChangeConfirm(false);
+        }}
+        onDuplicate={async () => {
+          if (!selectedCompanyGoal) return;
+
+          await duplicatePostWithNewGoal(
+            editablePost,
+            selectedCompanyGoal.id,
+            selectedCompanyGoal.goalTitle,
+            dispatch
+          );
+
+          setShowGoalChangeConfirm(false);
+          setIsEditModalOpen(false);
+        }}
       />
     </>
   );

@@ -10,12 +10,19 @@ import { Badge, IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { resetApp } from "../utils/resetApp";
 import { useAppConfigSync } from "../hooks/useAppConfigSync";
-import { selectUnreadNotifications } from "../Slices/notificationsSlice";
+import { selectAllNotifications, selectUnreadNotifications } from "../Slices/notificationsSlice";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
 
-const HeaderBar = ({ toggleFilterMenu, openPostViewer }: { toggleFilterMenu: () => void, openPostViewer: (postId: string) => void  }) => {
+const HeaderBar = ({
+  toggleFilterMenu,
+  openPostViewer,
+}: {
+  toggleFilterMenu: () => void;
+  openPostViewer: (postId: string) => void;
+}) => {
   const mobile = useMediaQuery("(max-width: 900px)");
+  const notifications = useSelector(selectAllNotifications);
   const { localVersion, serverVersion } = useAppConfigSync();
   const upToDate = localVersion === serverVersion;
   const [showNotificationDropdown, setShowNotificationDropdown] =
@@ -49,6 +56,10 @@ const HeaderBar = ({ toggleFilterMenu, openPostViewer }: { toggleFilterMenu: () 
   };
 
   const handleNotificationViewer = () => {
+    if (notifications.length === 0) {
+      dispatch(showMessage("No notifications right now."));
+      return;
+    }
     if (window.innerWidth < 768) {
       navigate("/notifications"); // 👈 Full-page for mobile
     } else {
@@ -89,18 +100,20 @@ const HeaderBar = ({ toggleFilterMenu, openPostViewer }: { toggleFilterMenu: () 
         <div className="website-title" onClick={() => navigate("/")}>
           <div className="title-and-version">
             <h1>Displaygram</h1>
-            {!mobile && <div className="version-info">
-              <Tooltip
-                title={`Local version: ${localVersion}${
-                  serverVersion ? ` | Latest: ${serverVersion}` : ""
-                }`}
-              >
-                <span className="version-text">
-                  v{localVersion}
-                  <InfoIcon fontSize="small" style={{ marginLeft: "4px" }} />
-                </span>
-              </Tooltip>
-            </div>}
+            {!mobile && (
+              <div className="version-info">
+                <Tooltip
+                  title={`Local version: ${localVersion}${
+                    serverVersion ? ` | Latest: ${serverVersion}` : ""
+                  }`}
+                >
+                  <span className="version-text">
+                    v{localVersion}
+                    <InfoIcon fontSize="small" style={{ marginLeft: "4px" }} />
+                  </span>
+                </Tooltip>
+              </div>
+            )}
           </div>
           <div className="company-name-app-state">
             <h5>{currentUser?.company}</h5>
@@ -142,7 +155,10 @@ const HeaderBar = ({ toggleFilterMenu, openPostViewer }: { toggleFilterMenu: () 
               ☰
             </div>
             <div className="notification-box">
-              <IconButton onClick={handleNotificationViewer} sx={mobile ? {padding:"4px"} : {} }>
+              <IconButton
+                onClick={handleNotificationViewer}
+                sx={mobile ? { padding: "4px" } : {}}
+              >
                 <Badge badgeContent={unreadCount} color="secondary">
                   <NotificationsIcon />
                 </Badge>

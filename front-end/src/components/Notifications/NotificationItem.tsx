@@ -9,12 +9,14 @@ interface NotificationItemProps {
   currentUserId: string;
   onClick?: () => void;
   openPostViewer?: () => void;
+  onDelete?: () => void; // 👈 add this
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
   currentUserId,
   onClick,
+  onDelete,
 }) => {
   const isUnread = !notification.readBy?.includes(currentUserId);
   const [dismissed, setDismissed] = useState(false);
@@ -29,16 +31,30 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     touchEndX.current = e.changedTouches[0].screenX;
-    if (
-      touchStartX.current !== null &&
-      touchEndX.current !== null &&
-      touchStartX.current - touchEndX.current > 50
-    ) {
-      // Swipe left detected
+
+    if (touchStartX.current === null || touchEndX.current === null) return;
+
+    const diff = touchEndX.current - touchStartX.current;
+
+    if (diff < -50) {
+      // Swipe left → Dismiss
       setDismissed(true);
       setTimeout(() => {
         onClick?.();
-      }, 300); // match CSS animation duration
+      }, 300);
+    }
+
+    if (diff > 50) {
+      // Swipe right → Delete only if read
+      if (!notification.readBy?.includes(currentUserId)) {
+        alert("Mark as read before deleting.");
+        return;
+      }
+
+      setDismissed(true);
+      setTimeout(() => {
+        onDelete?.(); // 👈 needs to be passed from parent
+      }, 300);
     }
   };
 
@@ -54,12 +70,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     >
       <div className="notification-title">{notification.title}</div>
       <div className="notification-message">{notification.message}</div>
+      {isUnread && <div className="swipe-tip">Swipe to manage</div>}
 
       <div className="notification-timestamp">
         {new Date(
           notification.sentAt instanceof Timestamp
             ? notification.sentAt.toDate()
-            : notification.sentAt 
+            : notification.sentAt
         ).toLocaleString()}
       </div>
     </div>

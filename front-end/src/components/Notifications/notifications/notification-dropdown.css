@@ -2,10 +2,41 @@
   position: absolute;
   top: 50px; /* adjust based on header height */
   right: 10px;
-  width: 300px;
-  max-height: 400px;
+  width: 460px;
+  max-height: 90vw;
+  padding: 1rem;
   background: var(--menu-background-color);
   box-shadow: var(--card-shadow);
   border-radius: var(--card-radius);
   z-index: 1000;
 }
+
+.notification-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: stretch;
+}
+
+.notification-action {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.notification-action:hover {
+  opacity: 1;
+}
+
+.notification-action.dismiss {
+  color: #888;
+}
+
+.notification-action.delete {
+  color: #c00;
+}
+

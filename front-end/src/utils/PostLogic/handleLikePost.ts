@@ -81,6 +81,8 @@ export const handleLikePost = async (
         : (post.likes || []).filter((uid) => uid !== user.uid),
     };
 
+    
+
     dispatch(updatePost(updatedPost));
     await updatePostInIndexedDB(updatedPost);
   } catch (error) {
