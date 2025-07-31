@@ -14,7 +14,7 @@ import { selectUnreadNotifications } from "../Slices/notificationsSlice";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
 
-const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
+const HeaderBar = ({ toggleFilterMenu, openPostViewer }: { toggleFilterMenu: () => void, openPostViewer: (postId: string) => void  }) => {
   const mobile = useMediaQuery("(max-width: 900px)");
   const { localVersion, serverVersion } = useAppConfigSync();
   const upToDate = localVersion === serverVersion;
@@ -152,6 +152,7 @@ const HeaderBar = ({ toggleFilterMenu }: { toggleFilterMenu: () => void }) => {
                 <div style={{ position: "relative" }}>
                   <NotificationDropdown
                     onClose={() => setShowNotificationDropdown(false)}
+                    openPostViewer={openPostViewer}
                   />
                 </div>
               )}

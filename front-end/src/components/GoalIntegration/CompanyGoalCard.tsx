@@ -173,11 +173,23 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         }));
 
       const submissionCount = userSubmissions.length;
-      const quota = goal.perUserQuota || 1;
-      const completionPercentage = Math.min(
-        Math.round((submissionCount / quota) * 100),
-        100
-      );
+      let completionPercentage = 0;
+
+      if (goal.perUserQuota && goal.perUserQuota > 0) {
+        completionPercentage = Math.min(
+          Math.round((submissionCount / goal.perUserQuota) * 100),
+          100
+        );
+      } else {
+        // No quota → use % of accounts assigned that were submitted
+        const totalAccounts = userAccounts.length;
+        const submittedCount = totalAccounts - unsubmittedAccounts.length;
+
+        completionPercentage =
+          totalAccounts > 0
+            ? Math.round((submittedCount / totalAccounts) * 100)
+            : 0;
+      }
 
       return {
         uid: user.uid,
@@ -206,7 +218,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       <div className="company-goal-card-header">
         <div className="company-goal-card-start-end">
           <h5>Start: {goal.goalStartDate}</h5>
-          <h5>End: {goal.goalStartDate}</h5>
+          <h5>End: {goal.goalEndDate}</h5>
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
@@ -302,7 +314,11 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         <Typography variant="h6" sx={{ mt: 2 }}>
           User Progress
         </Typography>
-        <UserTableForGoals users={userBasedRows} goal={goal}  onViewPostModal={onViewPostModal} />
+        <UserTableForGoals
+          users={userBasedRows}
+          goal={goal}
+          onViewPostModal={onViewPostModal}
+        />
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
         </Typography>

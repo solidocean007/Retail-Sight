@@ -46,7 +46,7 @@ const AllCompanyGoalsView = ({
   };
 
   // Split goals into active and archived
-  const today = new Date().toISOString();
+  const today = new Date().toISOString().split("T")[0]; // "2025-07-30"
   const { activeGoals, archivedGoals } = useMemo(() => {
     const active = companyGoals.filter((goal) => goal.goalEndDate >= today);
     const archived = companyGoals.filter((goal) => goal.goalEndDate < today);

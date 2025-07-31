@@ -53,7 +53,7 @@ const DeveloperNotificationForm = ({
       title,
       message,
       priority,
-      sentAt: Timestamp.fromDate(new Date()),
+      sentAt: Timestamp.now(),
       sentBy: currentUser,
       recipientCompanyIds: audienceCompanies.map((c) => c.id),
       recipientUserIds: audienceUsers.map((u) => u.uid),

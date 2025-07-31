@@ -18,11 +18,11 @@ import { db } from "../utils/firebase";
 import PostCard from "./PostCard"; // or your renderer
 
 interface PostViewerModalProps {
-  key: () => void;
+  key: string | null;
   postId: string;
   open: boolean;
   onClose: () => void;
-  currentUserUid: string;
+  currentUserUid: string | undefined;
 }
 
 const PostViewerModal: React.FC<PostViewerModalProps> = ({

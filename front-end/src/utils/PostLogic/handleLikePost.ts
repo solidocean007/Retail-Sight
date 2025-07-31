@@ -18,29 +18,6 @@ import { AppDispatch } from "../store";
 import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 import { sendNotification } from "../../thunks/notificationsThunks";
 
-// ✅ Helper: Check if a similar notification already exists
-const shouldSendNotification = async ({
-  senderId,
-  recipientId,
-  postId,
-  type,
-}: {
-  senderId: string;
-  recipientId: string;
-  postId: string;
-  type: string;
-}) => {
-  const notifQuery = query(
-    collection(db, "notifications"),
-    where("senderId", "==", senderId),
-    where("recipientUserIds", "array-contains", recipientId),
-    where("postId", "==", postId),
-    where("type", "==", type)
-  );
-  const snap = await getDocs(notifQuery);
-  return snap.empty;
-};
-
 export const handleLikePost = async (
   post: PostWithID,
   user: UserType,
@@ -57,35 +34,27 @@ export const handleLikePost = async (
     const isSelf = user.uid === recipientId;
 
     // ✅ LIKE
+    // Only send a notification if the user is not liking their own post
     if (liked && !isSelf) {
-      const shouldSend = await shouldSendNotification({
-        senderId: user.uid,
-        recipientId,
-        postId: post.id,
+      const notif: NotificationType = {
+        id: "",
+        title: "New Like on Your Post",
+        message: `${user.firstName} ${user.lastName} liked your post about ${
+          post.accountName || "a store"
+        }.`,
+        sentAt: Timestamp.now(),
+        sentBy: user,
+        recipientUserIds: [recipientId],
+        recipientCompanyIds: [],
+        recipientRoles: [],
+        readBy: [],
+        priority: "low",
+        pinned: false,
         type: "like",
-      });
+        postId: post.id,
+      };
 
-      if (shouldSend) {
-        const notif: NotificationType = {
-          id: "",
-          title: "New Like on Your Post",
-          message: `${user.firstName} ${user.lastName} liked your post about ${
-            post.accountName || "a store"
-          }.`,
-          sentAt: Timestamp.now(),
-          sentBy: user,
-          recipientUserIds: [recipientId],
-          recipientCompanyIds: [],
-          recipientRoles: [],
-          readBy: [],
-          priority: "low",
-          pinned: false,
-          type: "like",
-          postId: post.id,
-        };
-
-        dispatch(sendNotification({ notification: notif }));
-      }
+      dispatch(sendNotification({ notification: notif }));
     }
 
     // ✅ UNLIKE: Delete related notification
@@ -93,14 +62,14 @@ export const handleLikePost = async (
       const snap = await getDocs(
         query(
           collection(db, "notifications"),
-          where("senderId", "==", user.uid),
+          where("sentBy.uid", "==", user.uid),
           where("recipientUserIds", "array-contains", recipientId),
           where("postId", "==", post.id),
           where("type", "==", "like")
         )
       );
-      snap.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
+      snap.forEach(async (notifDoc) => {
+        await deleteDoc(notifDoc.ref);
       });
     }
 

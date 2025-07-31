@@ -46,6 +46,7 @@ import "./viewSharedPost.css";
 import LinkShareModal from "./LinkShareModal";
 import BlurUpImage from "./BlurUpImage";
 import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
+import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -209,14 +210,11 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleLikeComment = async (commentId: string, likes: string[]) => {
+  const handleLikeComment = async (comment: CommentType ,likes: string[]) => {
     if (user?.uid && !likes.includes(user.uid)) {
       await updatePostWithNewTimestamp(post.id);
       try {
-        const commentRef = doc(db, "comments", commentId);
-        const updatedLikes = [...likes, user.uid];
-        await updateDoc(commentRef, { likes: updatedLikes });
-        // Update state or dispatch Redux action as needed
+        handleCommentLike({ comment, post, user, liked: true });
       } catch (error) {
         console.error("Error updating like in Firestore:", error);
       }
@@ -419,7 +417,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {/* {post.id} */}
+          {post.id}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>

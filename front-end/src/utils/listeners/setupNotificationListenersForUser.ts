@@ -7,6 +7,7 @@ import {
   Unsubscribe,
   DocumentData,
   QuerySnapshot,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { AppDispatch } from "../store";
@@ -39,7 +40,7 @@ export const setupNotificationListenersForUser = (user: UserType) => {
           id: doc.id,
           title: raw.title,
           message: raw.message,
-          sentAt: raw.sentAt?.toDate ? raw.sentAt.toDate() : raw.sentAt,
+          sentAt: Timestamp.now(),
           scheduledAt: raw.scheduledAt?.toDate
             ? raw.scheduledAt.toDate()
             : raw.scheduledAt || null,

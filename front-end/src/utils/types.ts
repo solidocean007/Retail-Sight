@@ -23,7 +23,7 @@ export type NotificationType = {
   id: string;
   title: string;
   message: string;
-  sentAt: Timestamp;
+  sentAt: Timestamp | string;
   scheduledAt?: Timestamp | null;
 
   sentBy: UserType | "system";
@@ -44,6 +44,7 @@ export type NotificationType = {
   pinned: boolean;
   priority: PriorityType;
   type?: NotificationCategory;
+  commentId?: string;
 };
 
 

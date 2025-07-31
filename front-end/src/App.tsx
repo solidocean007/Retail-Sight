@@ -38,7 +38,6 @@ function App(): React.JSX.Element {
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const user = useSelector((state: RootState) => state.user.currentUser);
-  console.log('user: ', user)
   const companyId = user?.companyId;
   // const salesRouteNum = user?.salesRouteNum;
   const { currentUser, initializing } = useFirebaseAuth();

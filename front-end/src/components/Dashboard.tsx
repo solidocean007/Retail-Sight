@@ -36,36 +36,14 @@ import UserProfileViewer from "./UserProfileViewer.tsx";
 import CollectionsViewer from "./CollectionsViewer.tsx";
 import TutorialViewer from "./TutorialViewer.tsx";
 import AccountManager from "./AccountManagement/AccountsManager.tsx";
-// import {
-//   collection,
-//   deleteField,
-//   doc,
-//   getDoc,
-//   getDocs,
-//   onSnapshot,
-//   query,
-//   setDoc,
-//   updateDoc,
-//   where,
-// } from "@firebase/firestore";
-// import { db } from "../utils/firebase.ts";
 import GoalManager from "./GoalIntegration/GoalManager.tsx";
-// import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts.ts";
-// import {
-//   selectAllCompanyAccounts,
-//   setAllAccounts,
-// } from "../Slices/allAccountsSlice.ts";
-// import { saveAllCompanyAccountsToIndexedDB } from "../utils/database/indexedDBUtils.ts";
 import DashMenu from "./DashMenu.tsx";
-// import { updatePostsWithFreshAccounts } from "../script.ts";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 import MyGoals from "./GoalIntegration/MyGoals.tsx";
 import PostViewerModal from "./PostViewerModal.tsx";
-// import { useNavigate } from "react-router-dom";
 
 export const Dashboard = () => {
   const [viewPostModalId, setViewPostModalId] = useState<string | null>(null);
-
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
   // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
@@ -221,6 +199,7 @@ export const Dashboard = () => {
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
       <PostViewerModal
+        key={viewPostModalId}
         postId={viewPostModalId ?? ""}
         open={!!viewPostModalId}
         onClose={() => setViewPostModalId(null)}

@@ -29,6 +29,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchFilteredPostsBatch } from "../thunks/postsThunks";
 import { normalizePost } from "../utils/normalizePost";
+import PostViewerModal from "./PostViewerModal";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
@@ -51,6 +52,13 @@ export const UserHomePage = () => {
     () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
     [lastFilters, companyUsers]
   );
+  const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  const [postViewerOpen, setPostViewerOpen] = useState(false);
+
+  const openPostViewer = (postId: string) => {
+    setPostIdToView(postId);
+    setPostViewerOpen(true);
+  };
 
   // at top of UserHomePage.tsx
   const location = useLocation();
@@ -60,17 +68,18 @@ export const UserHomePage = () => {
       postIdToScroll?: string;
     }) || {};
 
-const hasSetInitialScroll = useRef(false);
-useEffect(() => {
-  if (hasSetInitialScroll.current) return;
-  const state = location.state as { filters?: PostQueryFilters; postIdToScroll?: string };
-  if (state?.postIdToScroll) {
-    setPostIdToScroll(state.postIdToScroll);
-    hasSetInitialScroll.current = true;
-  }
-}, [location.state]);
-
-
+  const hasSetInitialScroll = useRef(false);
+  useEffect(() => {
+    if (hasSetInitialScroll.current) return;
+    const state = location.state as {
+      filters?: PostQueryFilters;
+      postIdToScroll?: string;
+    };
+    if (state?.postIdToScroll) {
+      setPostIdToScroll(state.postIdToScroll);
+      hasSetInitialScroll.current = true;
+    }
+  }, [location.state]);
 
   // 1) When we get new filters, load the full set
   useEffect(() => {
@@ -168,7 +177,7 @@ useEffect(() => {
       <UserHomePageHelmet />
       <div className="user-home-page-container">
         <div className="header-bar-container">
-          <HeaderBar toggleFilterMenu={toggleFilterMenu} />
+          <HeaderBar toggleFilterMenu={toggleFilterMenu} openPostViewer={openPostViewer} />
         </div>
         <div className="mobile-home-page-actions">
           {activePostSet === "filteredPosts" && filteredCount > 0 ? (
@@ -236,6 +245,13 @@ useEffect(() => {
             />
           </div>
         </div>
+        <PostViewerModal
+          key={postIdToView}
+          postId={postIdToView || ""}
+          open={postViewerOpen}
+          onClose={() => setPostViewerOpen(false)}
+          currentUserUid={user?.uid}
+        />
       </div>
     </>
   );

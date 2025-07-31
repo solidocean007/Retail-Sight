@@ -2,11 +2,13 @@
 import React, { useRef, useState } from "react";
 import { NotificationType } from "../../utils/types";
 import "./notifications/notification-item.css";
+import { Timestamp } from "@firebase/firestore";
 
 interface NotificationItemProps {
   notification: NotificationType;
   currentUserId: string;
   onClick?: () => void;
+  openPostViewer?: () => void;
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({
@@ -48,11 +50,17 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       onClick={onClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      style={{ cursor: "pointer" }} // 👈 Add this
     >
       <div className="notification-title">{notification.title}</div>
       <div className="notification-message">{notification.message}</div>
+
       <div className="notification-timestamp">
-        {new Date(notification.sentAt.seconds * 1000).toLocaleString()}
+        {new Date(
+          notification.sentAt instanceof Timestamp
+            ? notification.sentAt.toDate()
+            : notification.sentAt 
+        ).toLocaleString()}
       </div>
     </div>
   );

@@ -1,17 +1,19 @@
 // components/Notifications/NotificationDropdown.tsx
 import React, { useRef } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../../utils/store";
-import { markAsRead } from "../../Slices/notificationsSlice";
+import { useSelector } from "react-redux";
+import { RootState, useAppDispatch } from "../../utils/store";
 import { selectAllNotifications } from "../../Slices/notificationsSlice";
 import NotificationItem from "./NotificationItem";
 import "./notifications/notification-dropdown.css";
 import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
+import { markNotificationRead } from "../../thunks/notificationsThunks";
 
-const NotificationDropdown: React.FC<{ onClose: () => void }> = ({
-  onClose,
-}) => {
-  const dispatch = useDispatch();
+const NotificationDropdown: React.FC<{
+  onClose: () => void;
+  openPostViewer: (postId: string) => void;
+}> = ({ onClose, openPostViewer }) => {
+  const dispatch = useAppDispatch(); // ✅ thunk-aware
+
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const notifications = useSelector(selectAllNotifications);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -43,12 +45,13 @@ const NotificationDropdown: React.FC<{ onClose: () => void }> = ({
               onClick={() => {
                 if (!notif.readBy?.includes(currentUser.uid)) {
                   dispatch(
-                    markAsRead({
+                    markNotificationRead({
                       notificationId: notif.id,
-                      userId: currentUser.uid,
+                      uid: currentUser.uid,
                     })
                   );
                 }
+                if (notif.postId) openPostViewer(notif.postId); // 👈 NEW
               }}
             />
           ))
