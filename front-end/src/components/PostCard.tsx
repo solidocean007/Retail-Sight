@@ -135,7 +135,8 @@ const PostCard: React.FC<PostCardProps> = ({
 
   // Extract the likes count and likedByUser status from the updated post object
   const likesCount = updatedPost?.likes?.length || 0;
-  const likedByUser = updatedPost?.likes?.includes(currentUserUid) || false;
+  const likedByUser =
+    !!currentUserUid && updatedPost?.likes?.includes(currentUserUid);
 
   const openCommentModal = async () => {
     setIsCommentModalOpen(true);
@@ -210,7 +211,7 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleLikeComment = async (comment: CommentType ,likes: string[]) => {
+  const handleLikeComment = async (comment: CommentType, likes: string[]) => {
     if (user?.uid && !likes.includes(user.uid)) {
       await updatePostWithNewTimestamp(post.id);
       try {
@@ -381,7 +382,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   {createdOnBehalf && (
                     <h5>
                       Created by: {post.postedBy?.firstName}{" "}
-                      {post.postedBy?.lastName} 
+                      {post.postedBy?.lastName}
                     </h5>
                   )}
                 </div>
@@ -417,7 +418,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {post.id}
+          {/* {post.id} */}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>

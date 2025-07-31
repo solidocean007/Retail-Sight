@@ -93,8 +93,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     );
   }, [post.account?.accountNumber, allCompanyGoals]);
 
-  const [selectedCompanyGoal, setSelectedCompanyGoal] = useState<
-    CompanyGoalWithIdType | undefined
+  const [selectedCompanyGoals, setSelectedCompanyGoals] = useState<
+    CompanyGoalWithIdType[] | undefined
   >(allCompanyGoals.find((g) => g.id === post.companyGoalId));
 
   const isDirty = useIsDirty(
@@ -102,7 +102,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       description: post.description,
       totalCaseCount: post.totalCaseCount,
       brands: post.brands || [],
-      companyGoalId: post.companyGoalId,
+      companyGoalIds: post.companyGoalIds,
       productType: post.productType || [],
       postUserUid: post.postUserUid,
     },
@@ -110,7 +110,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       description,
       totalCaseCount: updatedCaseCount,
       brands: editablePost.brands || [],
-      companyGoalId: selectedCompanyGoal?.id ?? null, // string|null
+      companyGoalIds: selectedCompanyGoals?.id ?? null, // string|null
       productType: editablePost.productType || [],
       postUserUid: onBehalf?.uid ?? post.postUserUid,
     }
@@ -177,8 +177,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       account: updatedPost.account,
       brands: updatedPost.brands ?? [],
       productType: updatedPost.productType ?? [],
-      companyGoalId: selectedCompanyGoal?.id ?? null,
-      companyGoalTitle: selectedCompanyGoal?.goalTitle ?? null,
+      companyGoalIds: selectedCompanyGoals.map((g) => g.id),
+      companyGoalTitles: selectedCompanyGoals.map((g) => g.goalTitle),
 
       // overwrite postUser → actor
       postUser: actor,
@@ -207,27 +207,20 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
       // B) if there's a goal selected, pull its array, filter out this postId,
       //    then re-push a single fresh entry with the correct actor
-      if (selectedCompanyGoal?.id) {
-        const goalRef = doc(db, "companyGoals", selectedCompanyGoal.id);
+      for (const goal of selectedCompanyGoals) {
+  const goalRef = doc(db, "companyGoals", goal.id);
+  const snap = await getDoc(goalRef);
+  const existing: any[] = snap.data()?.submittedPosts || [];
+  const filtered = existing.filter((e) => e.postId !== updatedPost.id);
+  filtered.push({
+    postId: updatedPost.id,
+    account: updatedPost.account,
+    submittedBy: actor,
+    submittedAt: updatedPost.displayDate,
+  });
+  await updateDoc(goalRef, { submittedPosts: filtered });
+}
 
-        // load existing array
-        const snap = await getDoc(goalRef);
-        const existing: any[] = snap.data()?.submittedPosts || [];
-
-        // remove any old entries for this post
-        const filtered = existing.filter((e) => e.postId !== updatedPost.id);
-
-        // push a single fresh one
-        filtered.push({
-          postId: updatedPost.id,
-          account: updatedPost.account,
-          submittedBy: actor, // full user object
-          submittedAt: updatedPost.displayDate,
-        });
-
-        // overwrite the array in Firestore
-        await updateDoc(goalRef, { submittedPosts: filtered });
-      }
 
       // C) sync Redux + IndexedDB, close modal, toast
       dispatch(updatePost(updatedPost));
