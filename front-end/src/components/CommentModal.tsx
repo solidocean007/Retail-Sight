@@ -11,10 +11,10 @@ interface CommentModalProps {
   isOpen: boolean;
   onClose: () => void;
   post: PostType;
-  comments: CommentType[]; // Use CommentType[] directly if it includes the necessary fields
-  onLikeComment: (commentId: string, likes: string[]) => void;
+  comments: CommentType[];
+  onLikeComment: (comment: CommentType, likes: string[]) => void;
   onDeleteComment: (commentId: string) => void;
-  likedByUser: boolean;
+  likedByUser: boolean | undefined;
 }
 
 const CommentModal: React.FC<CommentModalProps> = ({

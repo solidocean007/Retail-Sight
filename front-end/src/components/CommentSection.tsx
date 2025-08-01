@@ -37,56 +37,61 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
   };
 
   const commentSubmit = async () => {
-  if (newComment.length > 0 && user) {
-    await updatePostWithNewTimestamp(post.id);
-    try {
-      const commentToAdd: CommentType = {
-        text: newComment,
-        userName: userFullName || "Anonymous",
-        userId: user.uid,
-        postId: post.id,
-        timestamp: Timestamp.now(),
-        likes: [],
-      };
-
-      await addDoc(collection(db, "comments"), commentToAdd);
-
-      // Update comment count
-      const postRef = doc(db, "posts", post.id);
-      await updateDoc(postRef, { commentCount: increment(1) });
-
-      // Update Redux and IndexedDB
-      const updatedPost = { ...post, commentCount: post.commentCount + 1 };
-      dispatch(updatePost(updatedPost));
-      await updatePostInIndexedDB(updatedPost);
-
-      // 🛎️ Send notification to post author (unless the commenter is the author)
-      if (user.uid !== post.postUser.uid) {
-        const notif: NotificationType = {
-          id: "", // Will be set in Firestore
-          title: "New Comment on Your Post",
-          message: `${userFullName} commented: "${newComment}"`,
-          sentAt: Timestamp.now(),
-          sentBy: "system", // 🔐 matches your NotificationType
-          recipientUserIds: [post.postUser.uid],
-          recipientCompanyIds: [],
-          recipientRoles: [],
-          readBy: [],
-          priority: "normal",
-          pinned: false,
-          type: "comment",
+    if (newComment.length > 0 && user) {
+      try {
+        const commentToAdd: CommentType = {
+          text: newComment,
+          userName: userFullName || "Anonymous",
+          userId: user.uid,
+          postId: post.id,
+          timestamp: Timestamp.now(),
+          likes: [],
         };
 
-        dispatch(sendNotification({ notification: notif }));
+        const docRef = await addDoc(collection(db, "comments"), commentToAdd);
+
+        // ✅ Write commentId to the newly created document
+        await updateDoc(docRef, {
+          commentId: docRef.id,
+        });
+
+        // Update comment count
+        const postRef = doc(db, "posts", post.id);
+        await updateDoc(postRef, { commentCount: increment(1) });
+
+        // Update Redux and IndexedDB
+        const updatedPost = { ...post, commentCount: post.commentCount + 1 };
+        dispatch(updatePost(updatedPost));
+        await updatePostInIndexedDB(updatedPost);
+
+        // 🛎️ Send notification to post author (unless the commenter is the author)
+        if (user.uid !== post.postUser.uid) {
+          const notif: NotificationType = {
+            id: "",
+            title: "New Comment on Your Post",
+            message: `${userFullName}: "${newComment}"`,
+            sentAt: Timestamp.now(),
+            sentBy: user,
+            recipientUserIds: [post.postUser.uid],
+            recipientCompanyIds: [],
+            recipientRoles: [],
+            readBy: [],
+            priority: "normal",
+            pinned: false,
+            type: "comment",
+            postId: post.id,
+          };
+
+          dispatch(sendNotification({ notification: notif }));
+        }
+        await updatePostWithNewTimestamp(post.id);
+
+        setNewComment("");
+      } catch (error) {
+        console.error("Failed to add comment in Firestore:", error);
       }
-
-      setNewComment("");
-    } catch (error) {
-      console.error("Failed to add comment in Firestore:", error);
     }
-  }
-};
-
+  };
 
   const handleCommentSubmit = () => {
     protectedAction(() => {
@@ -110,7 +115,13 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
           onChange={commentChange}
           placeholder="New comment"
         />
-        <button type="submit">Submit</button>
+        <button
+          type="submit"
+          className="btn-outline"
+          disabled={!newComment.trim()}
+        >
+          Submit
+        </button>
       </form>
     </div>
   );

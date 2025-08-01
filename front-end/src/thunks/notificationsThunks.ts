@@ -99,7 +99,8 @@ export const sendNotification = createAsyncThunk(
   ) => {
     try {
       const docRef = doc(collection(db, "notifications"));
-
+      // the thunk takes it and alters again.  it puts the notification.id on it.  it puts other things on it that seem to
+      // sustain like companyIds recipientuserids and setAt but not the postId.. but postId is optional so i see why its left off here
       const newNotif: NotificationType = {
         ...notification,
         id: docRef.id,
@@ -107,50 +108,51 @@ export const sendNotification = createAsyncThunk(
         recipientUserIds: notification.recipientUserIds || [],
         recipientRoles: notification.recipientRoles || [],
         sentAt: notification.sentAt || Timestamp.now(),
+        postId: notification.postId ?? "", // ✅ ensure it's preserved in Firestore
       };
 
       await setDoc(docRef, newNotif);
 
-      // Redux-safe version... this must not be a safe version.
-      const normalizedNotification = {
-        ...notification, // Use the original, which should include postId
-        id: docRef.id,
-        sentAt:
-          notification.sentAt instanceof Timestamp
-            ? notification.sentAt.toDate().toISOString()
-            : typeof notification.sentAt === "string"
-            ? notification.sentAt
-            : Timestamp.now().toDate().toISOString(), // fallback
-        recipientCompanyIds: notification.recipientCompanyIds || [],
-        recipientUserIds: notification.recipientUserIds || [],
-        recipientRoles: notification.recipientRoles || [],
-        postId: notification.postId || "", // make sure this field is explicitly passed
-      };
+      // // Redux-safe version... this must not be a safe version.
+      // const normalizedNotification = {
+      //   ...newNotif,
+      //   id: docRef.id,
+      //   sentAt:
+      //     newNotif.sentAt instanceof Timestamp
+      //       ? newNotif.sentAt.toDate().toISOString()
+      //       : typeof newNotif.sentAt === "string"
+      //       ? newNotif.sentAt
+      //       : Timestamp.now().toDate().toISOString(),
+      //   recipientCompanyIds: notification.recipientCompanyIds || [],
+      //   recipientUserIds: notification.recipientUserIds || [],
+      //   recipientRoles: notification.recipientRoles || [],
+      //   postId: notification.postId || "", // make sure this field is explicitly passed
+      // };
 
-      // 🔀 Dispatch to correct notification group(s)
-      const { recipientUserIds, recipientCompanyIds, recipientRoles } =
-        normalizedNotification;
+      // // 🔀 Dispatch to correct notification group(s)
+      // const { recipientUserIds, recipientCompanyIds, recipientRoles } =
+      //   normalizedNotification;
 
-      if (recipientUserIds && recipientUserIds.length > 0) {
-        dispatch(addUserNotification(normalizedNotification));
-      }
+      // if (recipientUserIds && recipientUserIds.length > 0) {
+      //   dispatch(addUserNotification(normalizedNotification));
+      // }
 
-      if (recipientCompanyIds && recipientCompanyIds.length > 0) {
-        dispatch(addCompanyNotification(normalizedNotification));
-      }
+      // if (recipientCompanyIds && recipientCompanyIds.length > 0) {
+      //   dispatch(addCompanyNotification(normalizedNotification));
+      // }
 
-      if (recipientRoles && recipientRoles.length > 0) {
-        dispatch(addRoleNotification(normalizedNotification));
-      }
+      // if (recipientRoles && recipientRoles.length > 0) {
+      //   dispatch(addRoleNotification(normalizedNotification));
+      // }
 
-      // 📢 Global fallback (no target specified)
-      if (
-        (recipientUserIds?.length ?? 0) === 0 &&
-        (recipientCompanyIds?.length ?? 0) === 0 &&
-        (recipientRoles?.length ?? 0) === 0
-      ) {
-        dispatch(addCompanyNotification(normalizedNotification));
-      }
+      // // 📢 Global fallback (no target specified)
+      // if (
+      //   (recipientUserIds?.length ?? 0) === 0 &&
+      //   (recipientCompanyIds?.length ?? 0) === 0 &&
+      //   (recipientRoles?.length ?? 0) === 0
+      // ) {
+      //   dispatch(addCompanyNotification(normalizedNotification));
+      // }
     } catch (err: any) {
       console.error("Error sending notification:", err);
       dispatch(setError(err.message));

@@ -12,7 +12,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useAppDispatch, RootState } from "../utils/store";
-import { PostWithID } from "../utils/types";
+import { PostType, PostWithID } from "../utils/types";
 import { deletePost, mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
 import {
   getPostsFromIndexedDB,
@@ -104,13 +104,13 @@ const usePosts = (
         const updates: PostWithID[] = [];
 
         snapshot.docChanges().forEach((change) => {
-          const data = change.doc.data();
-          let dDValue: any = data.displayDate;
-          if (dDValue?.toDate) dDValue = dDValue.toDate();
-          else if (typeof dDValue === "string") dDValue = new Date(dDValue);
+          const data = change.doc.data() as PostType;
+          let updatedAt: any = data.timestamp; // i changed tSValue = displayDate to what we have here.. is this the listener?
+          if (updatedAt?.toDate) updatedAt = updatedAt.toDate();
+          else if (typeof updatedAt === "string") updatedAt = new Date(updatedAt);
 
-          if (dDValue <= mostRecent) return;
-          mostRecent = dDValue;
+          if (updatedAt <= mostRecent) return;
+          mostRecent = updatedAt;
 
           if (change.type === "removed") {
             dispatch(deletePost(change.doc.id));
@@ -145,9 +145,9 @@ const usePosts = (
       unsubscribePublic = onSnapshot(
         query(
           collection(db, "posts"),
-          where("displayDate", ">", lastSeenTs),
+          where("timestamp", ">", lastSeenTs),
           where("visibility", "==", "public"),
-          orderBy("displayDate", "desc"),
+          orderBy("displayDate", "desc"), // keep the order chronological
           limit(POSTS_BATCH_SIZE)
         ),
         processDocChanges
@@ -158,11 +158,11 @@ const usePosts = (
         unsubscribeCompany = onSnapshot(
           query(
             collection(db, "posts"),
-            where("displayDate", ">", lastSeenTs),
+            where("timestamp", ">", lastSeenTs),
             ...(isDeveloper
               ? []
               : [where("companyId", "==", currentUser?.companyId)]),
-            orderBy("displayDate", "desc"),
+            orderBy("displayDate", "desc"), // keep chronological
             limit(POSTS_BATCH_SIZE)
           ),
           processDocChanges

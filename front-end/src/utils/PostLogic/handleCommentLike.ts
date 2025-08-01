@@ -28,7 +28,6 @@ export const handleCommentLike = async ({
   liked: boolean;
 }) => {
   const commentId = comment.commentId;
-  await updatePostWithNewTimestamp(post.id);
   const commentRef = doc(db, "comments", commentId);
   const isSelf = user.uid === comment.userId;
 
@@ -74,11 +73,12 @@ export const handleCommentLike = async ({
           where("type", "==", "like")
         )
       );
-
       snap.forEach(async (docSnap) => {
         await deleteDoc(docSnap.ref);
       });
     }
+    // ✅ 4. Always update post timestamp for listeners
+    await updatePostWithNewTimestamp(post.id);
   } catch (error) {
     console.error("Failed to like/unlike comment:", error);
   }

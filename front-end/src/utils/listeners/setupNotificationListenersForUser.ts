@@ -34,25 +34,23 @@ export const setupNotificationListenersForUser = (user: UserType) => {
     const handleSnapshot = (snapshot: QuerySnapshot<DocumentData>) => {
       snapshot.docChanges().forEach((change) => {
         const doc = change.doc;
-        const raw = doc.data();
+        const raw = structuredClone(doc.data()); // 🔐 safer clone for Redux
 
-        const notification: NotificationType = {
+
+        const notification = {
+          ...raw,
           id: doc.id,
-          title: raw.title,
-          message: raw.message,
-          sentAt: Timestamp.now(),
-          scheduledAt: raw.scheduledAt?.toDate
-            ? raw.scheduledAt.toDate()
-            : raw.scheduledAt || null,
-          sentBy: raw.sentBy,
-          recipientCompanyIds: raw.recipientCompanyIds || [],
-          recipientUserIds: raw.recipientUserIds || [],
-          recipientRoles: raw.recipientRoles || [],
-          readBy: raw.readBy || [],
-          priority: raw.priority || "normal",
-          pinned: raw.pinned || false,
-          type: raw.type || "system",
-        };
+          sentAt:
+            raw.sentAt?.toDate instanceof Function
+              ? raw.sentAt.toDate().toISOString()
+              : typeof raw.sentAt === "string"
+              ? raw.sentAt
+              : new Date().toISOString(),
+          scheduledAt:
+            raw.scheduledAt?.toDate instanceof Function
+              ? raw.scheduledAt.toDate()
+              : raw.scheduledAt || null,
+        } as NotificationType;
 
         if (change.type === "removed") {
           delete userNotifications[doc.id];

@@ -184,28 +184,22 @@ const PostCard: React.FC<PostCardProps> = ({
   }
 
   const handleDeleteComment = async (commentId: string) => {
-    await updatePostWithNewTimestamp(post.id);
     try {
-      // Decrement the commentCount for the relevant post in Firestore
       const postRef = doc(db, "posts", post.id);
       await updateDoc(postRef, { commentCount: increment(-1) });
 
       const commentRef = doc(db, "comments", commentId);
       await deleteDoc(commentRef);
 
-      // Update the post object locally to reflect the new comment count
       const updatedPost = { ...post, commentCount: post.commentCount - 1 };
-
-      // Update Redux
       dispatch(updatePost(updatedPost));
-
-      // Update IndexedDB
       await updatePostInIndexedDB(updatedPost);
 
-      // Remove the comment from local state
       setComments(
         comments.filter((comment) => comment.commentId !== commentId)
       );
+
+      await updatePostWithNewTimestamp(post.id); // ✅ Only if everything else worked
     } catch (error) {
       console.error("Failed to delete comment:", error);
     }
@@ -213,14 +207,20 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const handleLikeComment = async (comment: CommentType, likes: string[]) => {
     if (user?.uid && !likes.includes(user.uid)) {
-      await updatePostWithNewTimestamp(post.id);
       try {
-        handleCommentLike({ comment, post, user, liked: true });
+        await handleCommentLike({ comment, post, user, liked: true });
+        await updatePostWithNewTimestamp(post.id); // ✅ Wait for like to finish
       } catch (error) {
         console.error("Error updating like in Firestore:", error);
       }
     }
   };
+
+  useEffect(() => {
+    if (comments.length === 0) {
+      setIsCommentModalOpen(false);
+    }
+  }, [comments]);
 
   const handleOnUserNameClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault(); // Call this if you need to prevent the default action

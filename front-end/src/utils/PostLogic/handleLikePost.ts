@@ -25,7 +25,6 @@ export const handleLikePost = async (
   dispatch: AppDispatch
 ) => {
   try {
-    await updatePostWithNewTimestamp(post.id);
     const postRef = doc(db, "posts", post.id);
     const updatedLikes = liked ? arrayUnion(user.uid) : arrayRemove(user.uid);
     await updateDoc(postRef, { likes: updatedLikes });
@@ -34,7 +33,7 @@ export const handleLikePost = async (
     const isSelf = user.uid === recipientId;
 
     // ✅ LIKE
-    // Only send a notification if the user is not liking their own post
+    // this build a notification
     if (liked && !isSelf) {
       const notif: NotificationType = {
         id: "",
@@ -54,7 +53,9 @@ export const handleLikePost = async (
         postId: post.id,
       };
 
+      // this is sending it through the thunk
       dispatch(sendNotification({ notification: notif }));
+
     }
 
     // ✅ UNLIKE: Delete related notification
@@ -71,6 +72,7 @@ export const handleLikePost = async (
       snap.forEach(async (notifDoc) => {
         await deleteDoc(notifDoc.ref);
       });
+
     }
 
     // ✅ Local state update
@@ -85,6 +87,8 @@ export const handleLikePost = async (
 
     dispatch(updatePost(updatedPost));
     await updatePostInIndexedDB(updatedPost);
+    await updatePostWithNewTimestamp(post.id);
+
   } catch (error) {
     console.error("Error updating likes:", error);
   }

@@ -26,7 +26,6 @@ import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
 import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
 import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
 import { setupNotificationListenersForUser } from "./utils/listeners/setupNotificationListenersForUser";
-import { auditPostDates } from "./script";
 import { setupNotificationListenersForCompany } from "./utils/listeners/setupNotificationListenerForCompany";
 // import { auditPostDates, migratePostDates } from "./script";
 
@@ -43,10 +42,10 @@ function App(): React.JSX.Element {
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  // useEffect(() => {
-  //   // auditPostDates();
-  //   // migratePostDates();
-  // }, []);
+  useEffect(() => {
+    // auditPostDates();
+    // migratePostDates();
+  }, []);
 
   useEffect(() => {
     if (!companyId) return;

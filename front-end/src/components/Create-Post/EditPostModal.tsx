@@ -369,19 +369,26 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 sx={{ mb: 2 }}
               />
-              {selectedCompanyGoal?.id == originalGoalId && (
-                <div className="edit-post-info-banner">
-                  <strong>Heads up:</strong>
-                  You can change the company goal for this post, or add a
-                  company goal if it applies to more than one.
-                </div>
-              )}
-              {selectedCompanyGoal?.id !== originalGoalId && (
-                <div className="edit-post-info-banner">
-                  <strong>Heads up:</strong>
-                  You’ll be asked whether to update this post or create a new
-                  one when you save changes.
-                </div>
+
+              {activeCompanyGoals.length > 0 && (
+                <>
+                  {selectedCompanyGoal?.id == originalGoalId && (
+                    <div className="edit-post-info-banner">
+                      <strong>Heads up:</strong>
+                      If you change the goal you can save this post with it or
+                      have the option to duplicate this post with an additional
+                      goal.
+                    </div>
+                  )}
+                  {selectedCompanyGoal &&
+                    selectedCompanyGoal?.id !== originalGoalId && (
+                      <div className="edit-post-info-banner">
+                        <strong>Heads up:</strong>
+                        You’ll be asked whether to update this post or create a
+                        new one when you save changes.
+                      </div>
+                    )}
+                </>
               )}
 
               <CompanyGoalDropdown
