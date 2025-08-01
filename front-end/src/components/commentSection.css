@@ -16,18 +16,24 @@
   background-color: var(--button-background);
 }
 
-.comment-section-box input {
+.comment-form input {
   border: 1px solid black;
   width: 100%;
-  margin: 0px;
-  padding: 0px;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+  max-width: 700px;
   flex-grow: 1;
   padding: 10px;
+  border-radius: var(--card-radius);
+
 }
 
 .comment-form {
   display: flex;
   flex-direction: row;
+  width: 90%;
+  max-width: 500px;
+
 }
 
 /* For the like button */

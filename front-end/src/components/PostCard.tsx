@@ -205,8 +205,8 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleLikeComment = async (comment: CommentType, likes: string[]) => {
-    if (user?.uid && !likes.includes(user.uid)) {
+  const handleLikeComment = async (comment: CommentType, likes: string[] | undefined) => {
+    if (user?.uid && !likes?.includes(user.uid)) {
       try {
         await handleCommentLike({ comment, post, user, liked: true });
         await updatePostWithNewTimestamp(post.id); // ✅ Wait for like to finish

@@ -105,9 +105,10 @@ const usePosts = (
 
         snapshot.docChanges().forEach((change) => {
           const data = change.doc.data() as PostType;
-          let updatedAt: any = data.timestamp; // i changed tSValue = displayDate to what we have here.. is this the listener?
+          let updatedAt: any = data.timestamp;
           if (updatedAt?.toDate) updatedAt = updatedAt.toDate();
-          else if (typeof updatedAt === "string") updatedAt = new Date(updatedAt);
+          else if (typeof updatedAt === "string")
+            updatedAt = new Date(updatedAt);
 
           if (updatedAt <= mostRecent) return;
           mostRecent = updatedAt;
@@ -127,11 +128,6 @@ const usePosts = (
         });
 
         if (updates.length) {
-          updates.sort(
-            (a, b) =>
-              new Date(b.displayDate).getTime() -
-              new Date(a.displayDate).getTime()
-          );
           dispatch(mergeAndSetPosts(updates));
           updates.forEach((p) => updatePostInIndexedDB(p));
         }
@@ -147,7 +143,7 @@ const usePosts = (
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTs),
           where("visibility", "==", "public"),
-          orderBy("displayDate", "desc"), // keep the order chronological
+          orderBy("timestamp", "desc"),
           limit(POSTS_BATCH_SIZE)
         ),
         processDocChanges
@@ -161,8 +157,8 @@ const usePosts = (
             where("timestamp", ">", lastSeenTs),
             ...(isDeveloper
               ? []
-              : [where("companyId", "==", currentUser?.companyId)]),
-            orderBy("displayDate", "desc"), // keep chronological
+              : [where("postUserCompanyId", "==", currentUserCompanyId)]),
+            orderBy("timestamp", "desc"),
             limit(POSTS_BATCH_SIZE)
           ),
           processDocChanges

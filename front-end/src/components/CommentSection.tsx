@@ -113,8 +113,11 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
           type="text"
           value={newComment}
           onChange={commentChange}
-          placeholder="New comment"
+          placeholder={`Comment as ${user?.firstName ?? ""} ${
+            user?.lastName ?? ""
+          }`}
         />
+
         <button
           type="submit"
           className="btn-outline"
