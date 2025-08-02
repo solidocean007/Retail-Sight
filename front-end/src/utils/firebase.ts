@@ -11,7 +11,8 @@ import { getStorage } from "firebase/storage";
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  // apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
   authDomain: "retail-sight.firebaseapp.com",
   projectId: "retail-sight",
   storageBucket: "retail-sight.appspot.com",
