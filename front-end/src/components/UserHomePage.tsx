@@ -30,6 +30,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { fetchFilteredPostsBatch } from "../thunks/postsThunks";
 import { normalizePost } from "../utils/normalizePost";
 import PostViewerModal from "./PostViewerModal";
+import TuneIcon from "@mui/icons-material/Tune";
+import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
+import { Fab } from "@mui/material";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
@@ -177,7 +180,10 @@ export const UserHomePage = () => {
       <UserHomePageHelmet />
       <div className="user-home-page-container">
         <div className="header-bar-container">
-          <HeaderBar toggleFilterMenu={toggleFilterMenu} openPostViewer={openPostViewer} />
+          <HeaderBar
+            toggleFilterMenu={toggleFilterMenu}
+            openPostViewer={openPostViewer}
+          />
         </div>
         <div className="mobile-home-page-actions">
           {activePostSet === "filteredPosts" && filteredCount > 0 ? (
@@ -188,19 +194,23 @@ export const UserHomePage = () => {
               fetchedAt={fetchedAt} // Type 'Record<string, string>' is not assignable to type 'string'.
             />
           ) : (
-            <div className="activity-feed-header-bar">
-              <button
+            <div className="activity-feed-header-bar icon-bar">
+              <Fab
                 onClick={toggleFilterMenu}
-                className="btn-outline filter-menu-toggle"
+                className="icon-button"
+                title="Filters"
+                style={{ position: "fixed", top: "3.25rem", left: "1.5rem" }}
               >
-                Filters
-              </button>
-              <button
+                <TuneIcon />
+              </Fab>
+              <Fab
+                color="primary"
+                aria-label="create"
                 onClick={() => navigate("/create-post")}
-                className="btn-outline filter-menu-toggle"
+                style={{ position: "fixed", top: "3.25rem", right: "1.5rem" }}
               >
-                Create Display
-              </button>
+                <AddAPhotoIcon />
+              </Fab>
             </div>
           )}
         </div>

@@ -121,7 +121,7 @@ const HeaderBar = ({
               <button
                 className="btn-outline danger-button"
                 onClick={handleReset}
-                disabled={!upToDate}
+                disabled={upToDate}
               >
                 Reset App
               </button>
