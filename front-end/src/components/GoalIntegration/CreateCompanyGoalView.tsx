@@ -712,7 +712,7 @@ const CreateCompanyGoalView = () => {
                 </div>
               )}
 
-              {availableAccounts.length > 0 && (
+              {availableAccounts.length > 0 ? (
                 <div className="accounts-selection-box">
                   <Typography variant="h5" sx={{ mt: 4 }}>
                     {`Available Accounts ${
@@ -728,6 +728,10 @@ const CreateCompanyGoalView = () => {
                     setSelectedAccounts={setSelectedAccounts}
                   />
                 </div>
+              ) : (
+                <Typography variant="body2" sx={{ mt: 2, fontStyle: "italic" }}>
+                  All accounts have been selected.
+                </Typography>
               )}
             </>
           )}
