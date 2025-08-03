@@ -586,7 +586,7 @@ const CreateCompanyGoalView = () => {
                       />
                     ))}
                   </div>
-                  <div className="sales-people-container">
+                  {/* <div className="sales-people-container">
                     {filters.userIds.map((uid) => {
                       const user = normalizedCompanyUsers.find(
                         (u) => u.uid === uid
@@ -599,6 +599,40 @@ const CreateCompanyGoalView = () => {
                         <Chip
                           key={uid}
                           label={`User: ${name}`}
+                          onDelete={() =>
+                            setFilters({
+                              ...filters,
+                              userIds: filters.userIds.filter(
+                                (id) => id !== uid
+                              ),
+                            })
+                          }
+                        />
+                      );
+                    })}
+                  </div> */}
+                   <div className="sales-people-container">
+                    {filters.userIds.map((uid) => {
+                      const user = normalizedCompanyUsers.find(
+                        (u) => u.uid === uid
+                      );
+                      const name = user
+                        ? `${user.firstName} ${user.lastName}`
+                        : "Unknown User";
+
+                      return (
+                        <Chip
+                          key={uid}
+                          label={`User: ${name}`}
+                          color={
+                            filteredAccounts.some((account) =>
+                              account.salesRouteNums?.includes(
+                                user?.salesRouteNum || ""
+                              )
+                            )
+                              ? "default" // ✅ Has matching account
+                              : "error" // ❌ No matching account
+                          }
                           onDelete={() =>
                             setFilters({
                               ...filters,
