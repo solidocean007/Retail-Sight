@@ -784,7 +784,7 @@ const CreateCompanyGoalView = () => {
                 </div>
               )}
 
-              { > 0 ? (
+              {availableAccounts.length > 0 ? (
                 <div className="accounts-selection-box">
                   <Typography variant="h5" sx={{ mt: 4 }}>
                     {`Available Accounts ${
