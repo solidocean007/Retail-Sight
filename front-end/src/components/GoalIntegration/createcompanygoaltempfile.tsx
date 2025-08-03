@@ -79,8 +79,6 @@ const CreateCompanyGoalView = () => {
 
   type SavedFilterSet = typeof filters;
 
-  // const selectedAccountObjects = selectedAccounts;
-
   const normalizedCompanyUsers = useMemo(() => {
     return (companyUsers || []).map((user) => ({
       ...user,
@@ -126,19 +124,17 @@ const CreateCompanyGoalView = () => {
     );
   }, [accounts, filters]);
 
-  // useEffect(() => {
-  //   // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
-  //   if (goalTargetMode === "goalForSelectedAccounts") {
-  //     setSelectedAccounts(filteredAccounts);
-  //   }
-  // }, [filteredAccounts, goalTargetMode]);
-
   useEffect(() => {
     // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
     if (accountScope === "selected") {
       setSelectedAccounts(filteredAccounts);
     }
   }, [filteredAccounts, accountScope]);
+
+
+
+
+
 
   const readyForCreation: boolean =
     goalTitle.trim().length > 0 &&
@@ -336,78 +332,6 @@ const CreateCompanyGoalView = () => {
     }
   };
 
-  // const handleCreateGoal = async () => {
-  //   if (!readyForCreation) {
-  //     alert("Please fill out all required fields.");
-  //     return;
-  //   }
-
-  //   if (!companyId) {
-  //     alert("Missing companyId. Cannot create goal.");
-  //     return;
-  //   }
-
-  //   const accountNumbersForThisGoal =
-  //     goalTargetMode === "goalForAllAccounts"
-  //       ? accounts.map((acc) => acc.accountNumber.toString())
-  //       : goalTargetMode === "goalForSelectedAccounts"
-  //       ? selectedAccounts.map((acc) => acc.accountNumber.toString())
-  //       : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
-
-  //   const newGoal: CompanyGoalType = {
-  //     companyId,
-  //     goalTitle,
-  //     goalDescription,
-  //     goalMetric,
-  //     goalValueMin: Number(goalValueMin),
-  //     goalStartDate,
-  //     goalEndDate,
-  //     accountNumbersForThisGoal,
-  //     createdAt: new Date().toISOString(),
-  //     deleted: false,
-  //   };
-
-  //   if (enforcePerUserQuota && perUserQuota) {
-  //     newGoal.perUserQuota = Number(perUserQuota);
-  //   }
-
-  //   setIsSaving(true);
-  //   try {
-  //     const result = await dispatch(
-  //       createCompanyGoalInFirestore({ goal: newGoal, currentUser })
-  //     );
-  //     console.log("Dispatch result:", result);
-
-  //     if (createCompanyGoalInFirestore.fulfilled.match(result)) {
-  //       alert("Goal created successfully!");
-  //       console.log("Created goal ID:", result.payload.id);
-
-  //       // Reset Form
-  //       setGoalTitle("");
-  //       setGoalDescription("");
-  //       setGoalMetric("");
-  //       setGoalValueMin(1);
-  //       setGoalStartDate("");
-  //       setGoalEndDate("");
-  //       setSelectedAccounts([]);
-  //       setSelectedUserIds([]);
-  //     } else {
-  //       console.error("Goal creation failed:", result.payload);
-  //       alert(`Failed to create goal: ${result.payload}`);
-  //     }
-  //   } catch (error: any) {
-  //     console.error("Unexpected error:", error);
-  //     alert("Error creating goal. Please try again.");
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
-
-  const availableAccounts = filteredAccounts.filter(
-    (acc) =>
-      !selectedAccounts.some((sel) => sel.accountNumber === acc.accountNumber)
-  );
-
   return (
     <Container>
       <Box mb={4}>
@@ -433,9 +357,7 @@ const CreateCompanyGoalView = () => {
               type="date"
               value={goalStartDate}
               onChange={(e) => setGoalStartDate(e.target.value)}
-              InputLabelProps={{
-                shrink: true,
-              }} /*inputprops are depracated, also this field is too wide on the screen, same for end date */
+              InputLabelProps={{ shrink: true }}
               fullWidth
             />
             <TextField
@@ -523,7 +445,7 @@ const CreateCompanyGoalView = () => {
           </Box>
 
           <FormControl component="fieldset">
-            <Typography variant="subtitle1">Target Audience</Typography>
+            <Typography variant="subtitle1">Accounts Scope</Typography>
             <RadioGroup
               value={accountScope}
               onChange={(e) =>
@@ -833,14 +755,27 @@ const CreateCompanyGoalView = () => {
             </Box>
           )}
 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleCreateGoal}
-            disabled={!readyForCreation || isSaving}
-          >
-            {isSaving ? "Creating..." : "Create Goal"}
-          </Button>
+          <UserMultiSelector
+            users={eligibleUsersForCurrentScope}
+            selectedUserIds={selectedUserIds}
+            setSelectedUserIds={setSelectedUserIds}
+          />
+
+          {accountScope === "selected" && (
+            <>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {filteredAccounts.length} account
+                {filteredAccounts.length !== 1 ? "s" : ""} match current filters
+              </Typography>
+
+              <AccountMultiSelector
+                allAccounts={filteredAccounts}
+                selectedAccounts={selectedAccounts}
+                setSelectedAccounts={setSelectedAccounts}
+              />
+            </>
+          )}
+
           {accountScope === "selected" && (
             <>
               <Typography variant="body2" sx={{ mt: 1 }}>
@@ -849,66 +784,6 @@ const CreateCompanyGoalView = () => {
                 selected user
                 {selectedUserIds.length > 1 ? "s" : ""}
               </Typography>
-
-              <UserMultiSelector
-                users={eligibleUsersForCurrentScope}
-                selectedUserIds={selectedUserIds}
-                setSelectedUserIds={setSelectedUserIds}
-              />
-            </>
-          )}
-          {accountScope === "selected" && (
-            <>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                {filteredAccounts.length} account
-                {filteredAccounts.length !== 1 ? "s" : ""} match current filters
-              </Typography>
-
-              {selectedAccounts.length === 0 ? (
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  sx={{ mb: 2 }} // spacing below before scroll box
-                >
-                  Please select accounts from the table below
-                </Typography>
-              ) : (
-                <Typography variant="h5" sx={{ mt: 4 }}>
-                  Selected Accounts
-                </Typography>
-              )}
-
-              {selectedAccounts.length > 0 && (
-                <div className="accounts-selection-box">
-                  <AccountMultiSelector
-                    allAccounts={selectedAccounts}
-                    selectedAccounts={selectedAccounts}
-                    setSelectedAccounts={setSelectedAccounts}
-                  />
-                </div>
-              )}
-
-              {availableAccounts.length > 0 ? (
-                <div className="accounts-selection-box">
-                  <Typography variant="h5" sx={{ mt: 4 }}>
-                    {`Available Accounts ${
-                      filteredAccounts.length < accounts.length
-                        ? "(Filtered)"
-                        : ""
-                    }`}
-                  </Typography>
-
-                  <AccountMultiSelector
-                    allAccounts={availableAccounts}
-                    selectedAccounts={selectedAccounts}
-                    setSelectedAccounts={setSelectedAccounts}
-                  />
-                </div>
-              ) : (
-                <Typography variant="body2" sx={{ mt: 2, fontStyle: "italic" }}>
-                  All accounts have been selected.
-                </Typography>
-              )}
             </>
           )}
         </Box>
