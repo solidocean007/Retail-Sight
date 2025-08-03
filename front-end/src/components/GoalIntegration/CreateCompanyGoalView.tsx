@@ -685,27 +685,65 @@ const CreateCompanyGoalView = () => {
               )}
             </>
           )}
-          <Box mt={2} p={2} border="1px solid #ccc" borderRadius="8px">
-            <Typography variant="subtitle1">Summary:</Typography>
-            <Typography variant="body2" mt={1}>
-              You are assigning this goal to{" "}
-              <strong>
-                {goalTargetMode === "goalForAllAccounts"
-                  ? "all accounts"
-                  : goalTargetMode === "goalForSelectedAccounts"
-                  ? `${selectedAccounts.length} selected account(s)`
-                  : `${selectedUserIds.length} selected user(s)`}
-              </strong>
-              .
+           {goalTitle.length > 1 && goalDescription.length > 1 && (<Box
+            mt={2}
+            p={3}
+            border="1px solid #ccc"
+            borderRadius="8px"
+            bgcolor="#f9f9f9"
+            sx={{
+              textAlign: "left", // 👈 Left-align text
+              lineHeight: 1.6, // 👈 Slightly more readable spacing
+              fontSize: "0.95rem",
+              maxWidth: "800px", // Optional: limit width for readability
+              marginX: "auto", // 👈 Center the box horizontally
+            }}
+          >
+            <Typography variant="subtitle1" gutterBottom>
+              Summary
             </Typography>
+
+            <Typography variant="body2">
+              You are about to create a goal titled{" "}
+              <strong>"{goalTitle || "Untitled Goal"}"</strong>
+              {goalDescription && `, described as "${goalDescription}"`}. This
+              goal requires each assigned user to contribute a minimum of{" "}
+              <strong>{goalValueMin}</strong> {goalMetric}, and will be active
+              from <strong>{goalStartDate || "?"}</strong> to{" "}
+              <strong>{goalEndDate || "?"}</strong>. It will be assigned to{" "}
+              <strong>{selectedUserIds.length}</strong> user
+              {selectedUserIds.length !== 1 ? "s" : ""} across{" "}
+              {accountScope === "all"
+                ? `all ${accounts.length} accounts`
+                : `${selectedAccounts.length} selected account${
+                    selectedAccounts.length !== 1 ? "s" : ""
+                  }`}
+              .
+              {enforcePerUserQuota &&
+                ` Each user must complete at least ${perUserQuota} submission${
+                  Number(perUserQuota) > 1 ? "s" : ""
+                } during the goal period.`}
+            </Typography>
+
             {enforcePerUserQuota && (
               <Typography variant="body2" mt={1}>
-                Each selected user must submit at least{" "}
-                <strong>{perUserQuota}</strong> submission
-                {Number(perUserQuota) > 1 ? "s" : ""}
+                Each user must complete at least <strong>{perUserQuota}</strong>{" "}
+                submission{Number(perUserQuota) > 1 ? "s" : ""} during the goal
+                period.
               </Typography>
             )}
-          </Box>
+
+            <Box display="flex" justifyContent="flex-end" mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleCreateGoal}
+                disabled={!readyForCreation || isSaving}
+              >
+                {isSaving ? "Creating..." : "Create Goal"}
+              </Button>
+            </Box>
+          </Box>)}
 
           <Button
             variant="contained"
