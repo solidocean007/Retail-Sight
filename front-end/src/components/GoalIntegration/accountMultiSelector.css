@@ -39,18 +39,44 @@
 }
 
 .account-selector-scroll-container {
-  max-height: 420px;
   overflow-y: auto;
-  margin-top: 0.5rem;
+  max-height: 750px;
   border: 1px solid #ddd;
   border-radius: 4px;
+}
+
+.account-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: var();
+  z-index: 1;
 }
 
 .account-selector-summary {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #333;
+  color: var(--text-color);
   margin-top: 1rem;
+}
+
+.account-search-input {
+  width: 100%;
+  max-width: 500px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: var(--text-color);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.account-search-input::placeholder {
+  color: var(--text-color);
+}
+
+.account-search-input:focus {
+  border-color: #1976d2; /* MUI primary blue */
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
 }
 
 @media (max-width: 768px) {

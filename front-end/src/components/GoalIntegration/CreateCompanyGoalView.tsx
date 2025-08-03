@@ -47,7 +47,7 @@ const CreateCompanyGoalView = () => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const companyId = currentUser?.companyId;
   const companyUsers = useSelector(selectCompanyUsers);
-  const usersCompany = useSelector(selectCurrentCompany);;
+  const usersCompany = useSelector(selectCurrentCompany);
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
@@ -77,6 +77,8 @@ const CreateCompanyGoalView = () => {
     typeOfAccounts: [] as string[],
     userIds: [] as string[],
   });
+
+  const selectedAccountObjects = selectedAccounts;
 
   type SavedFilterSet = typeof filters;
 
@@ -286,6 +288,11 @@ const CreateCompanyGoalView = () => {
       setIsSaving(false);
     }
   };
+
+  const availableAccounts = filteredAccounts.filter(
+    (acc) =>
+      !selectedAccounts.some((sel) => sel.accountNumber === acc.accountNumber)
+  );
 
   return (
     <Container>
@@ -681,11 +688,47 @@ const CreateCompanyGoalView = () => {
                 {filteredAccounts.length !== 1 ? "s" : ""} match current filters
               </Typography>
 
-              <AccountMultiSelector
-                allAccounts={filteredAccounts}
-                selectedAccounts={selectedAccounts}
-                setSelectedAccounts={setSelectedAccounts}
-              />
+              {selectedAccountObjects.length === 0 ? (
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  sx={{ mb: 2 }} // spacing below before scroll box
+                >
+                  Please select accounts from the table below
+                </Typography>
+              ) : (
+                <Typography variant="h5" sx={{ mt: 4 }}>
+                  Selected Accounts
+                </Typography>
+              )}
+
+              {selectedAccountObjects.length > 0 && (
+                <div className="accounts-selection-box">
+                  <AccountMultiSelector
+                    allAccounts={selectedAccountObjects}
+                    selectedAccounts={selectedAccountObjects}
+                    setSelectedAccounts={setSelectedAccounts}
+                  />
+                </div>
+              )}
+
+              {availableAccounts.length > 0 && (
+                <div className="accounts-selection-box">
+                  <Typography variant="h5" sx={{ mt: 4 }}>
+                    {`Available Accounts ${
+                      filteredAccounts.length < accounts.length
+                        ? "(Filtered)"
+                        : ""
+                    }`}
+                  </Typography>
+
+                  <AccountMultiSelector
+                    allAccounts={availableAccounts}
+                    selectedAccounts={selectedAccounts}
+                    setSelectedAccounts={setSelectedAccounts}
+                  />
+                </div>
+              )}
             </>
           )}
 

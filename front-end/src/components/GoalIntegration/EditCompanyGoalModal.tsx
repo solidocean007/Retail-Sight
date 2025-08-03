@@ -49,6 +49,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const [lastValidQuota, setLastValidQuota] = useState(goal.perUserQuota ?? 1);
   const [goalStartDate, setGoalStartDate] = useState(goal.goalStartDate);
   const [goalEndDate, setGoalEndDate] = useState(goal.goalEndDate);
+  const [searchSelected, setSearchSelected] = useState("");
 
   const hasSubmissions = false;
 
@@ -56,13 +57,19 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     setAccountNumbersForThisGoal(goal.accountNumbersForThisGoal || []);
   }, [goal]);
 
-  const selectedAccountObjects = useMemo(
-    () =>
-      allAccounts.filter((acc) =>
-        accountNumbersForThisGoal.includes(acc.accountNumber.toString())
-      ),
-    [allAccounts, accountNumbersForThisGoal]
-  );
+  const selectedAccountObjects = useMemo(() => {
+    return allAccounts.filter((acc) =>
+      accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+    );
+  }, [allAccounts, accountNumbersForThisGoal]);
+
+  const filteredSelectedAccounts = useMemo(() => {
+    return selectedAccountObjects.filter(
+      (acc) =>
+        acc.accountName.toLowerCase().includes(searchSelected.toLowerCase()) ||
+        acc.accountNumber.toString().includes(searchSelected)
+    );
+  }, [selectedAccountObjects, searchSelected]);
 
   const updatedGoal: Partial<CompanyGoalType> = useMemo(
     () => ({
@@ -213,15 +220,62 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
             />
           </Box>
         </Box>
-
         <Divider sx={{ my: 2 }} />
-
         <Typography variant="subtitle1" sx={{ mb: 1 }}>
           Select Target Accounts
         </Typography>
+
+        <TextField
+          label="Search Selected Accounts"
+          value={searchSelected}
+          onChange={(e) => setSearchSelected(e.target.value)}
+          fullWidth
+          sx={{ mb: 2 }}
+        />
+        <Box
+          sx={{
+            maxHeight: 250,
+            overflowY: "auto",
+            border: "1px solid #ccc",
+            borderRadius: 1,
+            p: 1,
+            mb: 2,
+          }}
+        >
+          {filteredSelectedAccounts.length === 0 ? (
+            <Typography variant="body2" color="textSecondary">
+              No matching selected accounts
+            </Typography>
+          ) : (
+            filteredSelectedAccounts.map((acc) => (
+              <Box
+                key={acc.accountNumber}
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                p={0.5}
+                borderBottom="1px solid #eee"
+              >
+                <Typography variant="body2">{acc.accountName}</Typography>
+                <Button
+                  size="small"
+                  color="error"
+                  onClick={() =>
+                    setAccountNumbersForThisGoal((prev) =>
+                      prev.filter((id) => id !== acc.accountNumber.toString())
+                    )
+                  }
+                >
+                  ×
+                </Button>
+              </Box>
+            ))
+          )}
+        </Box>
+
         <AccountMultiSelector
           allAccounts={allAccounts}
-          selectedAccounts={selectedAccountObjects}
+          selectedAccounts={filteredSelectedAccounts}
           setSelectedAccounts={handleAccountSelectionChange}
         />
       </DialogContent>

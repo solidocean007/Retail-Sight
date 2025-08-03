@@ -1,6 +1,5 @@
 // AccountMultiSelector.tsx
-// AccountMultiSelector.tsx
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -11,7 +10,8 @@ import {
   TableBody,
   Checkbox,
   Typography,
-  Pagination,
+  Button,
+  InputBase,
 } from "@mui/material";
 import { CompanyAccountType } from "../../utils/types";
 import "./accountMultiSelector.css";
@@ -27,10 +27,10 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
   allAccounts,
   selectedAccounts,
   setSelectedAccounts,
-  itemsPerPage = 10,
+  itemsPerPage = 20,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const filteredAccounts = allAccounts.filter(
     (account) =>
@@ -38,70 +38,88 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
       account.accountNumber?.toString().includes(searchTerm)
   );
 
+  const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
   const paginatedAccounts = filteredAccounts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage
   );
 
-  const handleAccountSelection = (account: CompanyAccountType) => {
-    const exists = selectedAccounts.some(
+  const allFilteredSelected = filteredAccounts.every((acc) =>
+    selectedAccounts.some((sel) => sel.accountNumber === acc.accountNumber)
+  );
+
+  const someFilteredSelected =
+    filteredAccounts.some((acc) =>
+      selectedAccounts.some((sel) => sel.accountNumber === acc.accountNumber)
+    ) && !allFilteredSelected;
+
+  const handleAccountToggle = (account: CompanyAccountType) => {
+    const isSelected = selectedAccounts.some(
       (a) => a.accountNumber === account.accountNumber
     );
-    if (exists) {
-      setSelectedAccounts(
-        selectedAccounts.filter(
-          (a) => a.accountNumber !== account.accountNumber
-        )
-      );
-    } else {
-      setSelectedAccounts([...selectedAccounts, account]);
-    }
+    setSelectedAccounts(
+      isSelected
+        ? selectedAccounts.filter(
+            (a) => a.accountNumber !== account.accountNumber
+          )
+        : [...selectedAccounts, account]
+    );
   };
 
-  const handleSelectAll = () => {
-    const allSelected = selectedAccounts.length === filteredAccounts.length;
-    if (allSelected) {
-      setSelectedAccounts([]);
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const toAdd = filteredAccounts.filter(
+        (acc) =>
+          !selectedAccounts.some(
+            (sel) => sel.accountNumber === acc.accountNumber
+          )
+      );
+      setSelectedAccounts([...selectedAccounts, ...toAdd]);
     } else {
-      setSelectedAccounts(filteredAccounts);
+      const filteredIds = filteredAccounts.map((a) => a.accountNumber);
+      setSelectedAccounts(
+        selectedAccounts.filter(
+          (acc) => !filteredIds.includes(acc.accountNumber)
+        )
+      );
     }
   };
 
   return (
     <Box className="account-multi-selector">
-      {selectedAccounts.length > 0 && (
-        <Typography variant="body2" sx={{ mb: 1 }}>
-          {selectedAccounts.length} account
-          {selectedAccounts.length > 1 ? "s" : ""} selected
-        </Typography>
-      )}
-
-      <TextField
-        label="Search accounts to add to goal"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        fullWidth
-        className="search-input"
-      />
-
-      <Box className="select-all-row">
-        <Checkbox
-          indeterminate={
-            selectedAccounts.length > 0 &&
-            selectedAccounts.length < filteredAccounts.length
-          }
-          checked={selectedAccounts.length === filteredAccounts.length}
-          onChange={handleSelectAll}
+      {/* Top Controls */}
+      <Box
+        sx={{ px: 2, py: 1, borderBottom: "1px solid #eee", maxWidth: "500px" }}
+      >
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search accounts to add to goal"
+          className="account-search-input"
         />
-        <Typography>
-          {selectedAccounts.length === filteredAccounts.length
-            ? "Deselect All"
-            : "Select All"}
-        </Typography>
+
+        <Box display="flex" alignItems="center" mt={1}>
+          <Checkbox
+            indeterminate={someFilteredSelected}
+            checked={allFilteredSelected}
+            onChange={handleSelectAll}
+          />
+          <Typography variant="body2">
+            {allFilteredSelected ? "Deselect All" : "Select All"}
+          </Typography>
+        </Box>
       </Box>
 
-      <Box sx={{ maxHeight: 400, overflowY: "auto" }}>
-        <Table className="account-table">
+      {/* Scrollable Table */}
+      <Box
+        sx={{
+          maxHeight: 400,
+          overflowY: "auto",
+          borderTop: "1px solid #eee",
+        }}
+      >
+        <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
               <TableCell>Select</TableCell>
@@ -121,7 +139,7 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
                     checked={selectedAccounts.some(
                       (a) => a.accountNumber === account.accountNumber
                     )}
-                    onChange={() => handleAccountSelection(account)}
+                    onChange={() => handleAccountToggle(account)}
                   />
                 </TableCell>
                 <TableCell>{account.accountName || "-"}</TableCell>
@@ -138,12 +156,34 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
         </Table>
       </Box>
 
-      <Pagination
-        count={Math.ceil(filteredAccounts.length / itemsPerPage)}
-        page={currentPage}
-        onChange={(_, page) => setCurrentPage(page)}
-        className="pagination-control"
-      />
+      {/* Pagination */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          py: 1,
+          borderTop: "1px solid #eee",
+        }}
+      >
+        <Button
+          onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+          disabled={currentPage === 0}
+        >
+          ◀
+        </Button>
+        <Typography sx={{ mx: 2 }}>
+          Page {currentPage + 1} of {totalPages}
+        </Typography>
+        <Button
+          onClick={() =>
+            setCurrentPage((p) => (p + 1 < totalPages ? p + 1 : totalPages - 1))
+          }
+          disabled={currentPage + 1 >= totalPages}
+        >
+          ▶
+        </Button>
+      </Box>
     </Box>
   );
 };

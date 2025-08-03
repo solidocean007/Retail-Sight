@@ -53,21 +53,23 @@
 
 .scroll-to-top-btn {
   position: absolute;
-  top: 1rem;
-  right: 1.5rem;
-  background-color: var(--menu-background-color);
+  top: 3rem;
+  right: .7rem;
+  font-weight: bold;
+  /* background-color: var(--menu-background-color); */
+  background-color: transparent;
   color: var(--text-color);
   border: none;
   border-radius: 50%;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  height: 30px;
+  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
+  /* height: 30px; */
   width: 30px;
   cursor: pointer;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease;
+  /* transition: background-color 0.2s ease; */
 }
 
 .scroll-to-top-btn:hover {

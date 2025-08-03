@@ -47,6 +47,7 @@ import { useNavigate } from "react-router-dom";
 import { normalizePost } from "../utils/normalizePost";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import { getFilterHash } from "./FilterSideBar/utils/filterUtils";
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -338,7 +339,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           aria-label="Scroll to top"
           onClick={scrollToTop}
         >
-          <span className="arrow-icon">↑</span>
+          <KeyboardArrowUpIcon />
         </button>
       )}
     </div>
