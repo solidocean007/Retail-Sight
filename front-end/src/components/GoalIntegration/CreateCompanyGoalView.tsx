@@ -18,12 +18,7 @@ import {
   InputLabel,
   Checkbox,
 } from "@mui/material";
-import {
-  CompanyAccountType,
-  CompanyGoalType,
-  GoalTargetMode,
-  // customerType,
-} from "../../utils/types";
+import { CompanyAccountType, CompanyGoalType } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
@@ -33,6 +28,13 @@ import AccountMultiSelector from "./AccountMultiSelector";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges"; // MUI's target icon
+
+import dayjs from "dayjs";
+import "./createCompanyGoalView.css";
+import GoalTitleInput from "./GoalTitleInput";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -92,21 +94,32 @@ const CreateCompanyGoalView = () => {
     }));
   }, [companyUsers]);
 
-  const getUserIdForAccount = (
+  const getUserIdsForAccount = (
     account: CompanyAccountType,
     users: { uid: string; salesRouteNum?: string }[]
-  ): string | null => {
-    if (!account.salesRouteNums || !account.salesRouteNums.length) return null;
+  ): string[] => {
+    if (!account.salesRouteNums || account.salesRouteNums.length === 0)
+      return [];
 
-    for (const routeNum of account.salesRouteNums) {
-      const match = users.find(
-        (u) => u.salesRouteNum && u.salesRouteNum === routeNum
-      );
-      if (match) return match.uid;
-    }
-
-    return null;
+    return users
+      .filter(
+        (user) =>
+          user.salesRouteNum &&
+          account.salesRouteNums.includes(user.salesRouteNum)
+      )
+      .map((user) => user.uid);
   };
+
+  const userIdsByAccount = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const account of accounts) {
+      map[account.accountNumber] = getUserIdsForAccount(
+        account,
+        normalizedCompanyUsers
+      );
+    }
+    return map;
+  }, [accounts, normalizedCompanyUsers]);
 
   const filteredAccounts = useMemo(() => {
     return accounts.filter(
@@ -120,18 +133,11 @@ const CreateCompanyGoalView = () => {
         (!filters.typeOfAccounts.length ||
           filters.typeOfAccounts.includes(a.typeOfAccount || "")) &&
         (!filters.userIds.length ||
-          filters.userIds.includes(
-            getUserIdForAccount(a, normalizedCompanyUsers) || ""
+          userIdsByAccount[a.accountNumber]?.some((id) =>
+            filters.userIds.includes(id)
           ))
     );
-  }, [accounts, filters]);
-
-  // useEffect(() => {
-  //   // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
-  //   if (goalTargetMode === "goalForSelectedAccounts") {
-  //     setSelectedAccounts(filteredAccounts);
-  //   }
-  // }, [filteredAccounts, goalTargetMode]);
+  }, [accounts, filters, userIdsByAccount]);
 
   useEffect(() => {
     // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
@@ -139,6 +145,18 @@ const CreateCompanyGoalView = () => {
       setSelectedAccounts(filteredAccounts);
     }
   }, [filteredAccounts, accountScope]);
+
+  useEffect(() => {
+    if (accountScope === "selected") {
+      const autoSelectedUserIds = new Set<string>();
+      filteredAccounts.forEach((account) => {
+        getUserIdsForAccount(account, normalizedCompanyUsers).forEach((uid) =>
+          autoSelectedUserIds.add(uid)
+        );
+      });
+      setSelectedUserIds(Array.from(autoSelectedUserIds));
+    }
+  }, [accountScope, filteredAccounts, normalizedCompanyUsers]);
 
   const readyForCreation: boolean =
     goalTitle.trim().length > 0 &&
@@ -336,77 +354,21 @@ const CreateCompanyGoalView = () => {
     }
   };
 
-  // const handleCreateGoal = async () => {
-  //   if (!readyForCreation) {
-  //     alert("Please fill out all required fields.");
-  //     return;
-  //   }
+  const availableAccounts = useMemo(() => {
+    return filteredAccounts.filter(
+      (acc) =>
+        !selectedAccounts.some((sel) => sel.accountNumber === acc.accountNumber)
+    );
+  }, [filteredAccounts, selectedAccounts]);
 
-  //   if (!companyId) {
-  //     alert("Missing companyId. Cannot create goal.");
-  //     return;
-  //   }
-
-  //   const accountNumbersForThisGoal =
-  //     goalTargetMode === "goalForAllAccounts"
-  //       ? accounts.map((acc) => acc.accountNumber.toString())
-  //       : goalTargetMode === "goalForSelectedAccounts"
-  //       ? selectedAccounts.map((acc) => acc.accountNumber.toString())
-  //       : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
-
-  //   const newGoal: CompanyGoalType = {
-  //     companyId,
-  //     goalTitle,
-  //     goalDescription,
-  //     goalMetric,
-  //     goalValueMin: Number(goalValueMin),
-  //     goalStartDate,
-  //     goalEndDate,
-  //     accountNumbersForThisGoal,
-  //     createdAt: new Date().toISOString(),
-  //     deleted: false,
-  //   };
-
-  //   if (enforcePerUserQuota && perUserQuota) {
-  //     newGoal.perUserQuota = Number(perUserQuota);
-  //   }
-
-  //   setIsSaving(true);
-  //   try {
-  //     const result = await dispatch(
-  //       createCompanyGoalInFirestore({ goal: newGoal, currentUser })
-  //     );
-  //     console.log("Dispatch result:", result);
-
-  //     if (createCompanyGoalInFirestore.fulfilled.match(result)) {
-  //       alert("Goal created successfully!");
-  //       console.log("Created goal ID:", result.payload.id);
-
-  //       // Reset Form
-  //       setGoalTitle("");
-  //       setGoalDescription("");
-  //       setGoalMetric("");
-  //       setGoalValueMin(1);
-  //       setGoalStartDate("");
-  //       setGoalEndDate("");
-  //       setSelectedAccounts([]);
-  //       setSelectedUserIds([]);
-  //     } else {
-  //       console.error("Goal creation failed:", result.payload);
-  //       alert(`Failed to create goal: ${result.payload}`);
-  //     }
-  //   } catch (error: any) {
-  //     console.error("Unexpected error:", error);
-  //     alert("Error creating goal. Please try again.");
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
-
-  const availableAccounts = filteredAccounts.filter(
-    (acc) =>
-      !selectedAccounts.some((sel) => sel.accountNumber === acc.accountNumber)
-  );
+  useEffect(() => {
+    if (!goalStartDate) {
+      setGoalStartDate(dayjs().format("YYYY-MM-DD"));
+    }
+    if (!goalEndDate) {
+      setGoalEndDate(dayjs().endOf("month").format("YYYY-MM-DD"));
+    }
+  }, []);
 
   return (
     <Container>
@@ -416,36 +378,50 @@ const CreateCompanyGoalView = () => {
         </Typography>
 
         <Box display="flex" flexDirection="column" gap={3}>
-          <TextField
-            label="Goal Title"
-            value={goalTitle}
-            onChange={(e) => setGoalTitle(e.target.value)}
-          />
-          <TextField
-            label="Goal Description"
-            value={goalDescription}
-            onChange={(e) => setGoalDescription(e.target.value)}
-          />
+          <div className="goal-form-group">
+            <GoalTitleInput value={goalTitle} setValue={setGoalTitle} />
+          </div>
+
+          <div className="goal-form-group">
+            <label htmlFor="goalDescription">Goal Description</label>
+            <textarea
+              id="goalDescription"
+              value={goalDescription}
+              onChange={(e) => setGoalDescription(e.target.value)}
+              className="custom-textarea"
+              rows={4}
+              placeholder="Describe what success looks like for this goal..."
+            />
+          </div>
 
           <Box display="flex" gap={2}>
-            <TextField
-              label="Start Date"
-              type="date"
-              value={goalStartDate}
-              onChange={(e) => setGoalStartDate(e.target.value)}
-              InputLabelProps={{
-                shrink: true,
-              }} /*inputprops are depracated, also this field is too wide on the screen, same for end date */
-              fullWidth
-            />
-            <TextField
-              label="End Date"
-              type="date"
-              value={goalEndDate}
-              onChange={(e) => setGoalEndDate(e.target.value)}
-              InputLabelProps={{ shrink: true }} // depracated
-              fullWidth
-            />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Box display="flex" gap={3} justifyContent="start">
+                <Box display="flex" flexDirection="column" alignItems="center">
+                  <TextField
+                    type="date"
+                    label="Start Date"
+                    value={goalStartDate}
+                    onChange={(e) => setGoalStartDate(e.target.value)}
+                    size="small"
+                    sx={{ width: 160 }}
+                    inputProps={{ min: "2023-01-01" }}
+                  />
+                </Box>
+
+                <Box display="flex" flexDirection="column" alignItems="center">
+                  <TextField
+                    type="date"
+                    label="End Date"
+                    value={goalEndDate}
+                    onChange={(e) => setGoalEndDate(e.target.value)}
+                    size="small"
+                    sx={{ width: 160 }}
+                    inputProps={{ min: goalStartDate }}
+                  />
+                </Box>
+              </Box>
+            </LocalizationProvider>
           </Box>
 
           <Box display="flex" justifyContent="flex-start">
@@ -773,31 +749,35 @@ const CreateCompanyGoalView = () => {
           )}
           {goalTitle.length > 1 && goalDescription.length > 1 && (
             <Box
-              mt={2}
+              mt={3}
               p={3}
-              border="1px solid #ccc"
-              borderRadius="8px"
-              bgcolor="#f9f9f9"
+              border="1px solid #555"
+              borderRadius="12px"
+              bgcolor="background.paper"
+              boxShadow={3}
               sx={{
-                textAlign: "left", // 👈 Left-align text
-                lineHeight: 1.6, // 👈 Slightly more readable spacing
+                textAlign: "left",
+                lineHeight: 1.6,
                 fontSize: "0.95rem",
-                maxWidth: "800px", // Optional: limit width for readability
-                marginX: "auto", // 👈 Center the box horizontally
+                maxWidth: "800px",
+                marginX: "auto",
+                position: "relative",
               }}
             >
-              <Typography variant="subtitle1" gutterBottom>
-                Summary
-              </Typography>
+              <Box display="flex" alignItems="center" gap={1} mb={1}>
+                <TrackChangesIcon sx={{ color: "primary.main" }} />
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Summary
+                </Typography>
+              </Box>
 
               <Typography variant="body2">
                 You are about to create a goal titled{" "}
-                <strong>"{goalTitle || "Untitled Goal"}"</strong>
-                {goalDescription && `, described as "${goalDescription}"`}. This
-                goal requires each assigned user to contribute a minimum of{" "}
-                <strong>{goalValueMin}</strong> {goalMetric}, and will be active
-                from <strong>{goalStartDate || "?"}</strong> to{" "}
-                <strong>{goalEndDate || "?"}</strong>. It will be assigned to{" "}
+                <strong>"{goalTitle}"</strong>, described as "{goalDescription}
+                ". This goal requires each assigned user to contribute a minimum
+                of <strong>{goalValueMin}</strong> {goalMetric}, and will be
+                active from <strong>{goalStartDate}</strong> to{" "}
+                <strong>{goalEndDate}</strong>. It will be assigned to{" "}
                 <strong>{selectedUserIds.length}</strong> user
                 {selectedUserIds.length !== 1 ? "s" : ""} across{" "}
                 {accountScope === "all"
@@ -806,10 +786,6 @@ const CreateCompanyGoalView = () => {
                       selectedAccounts.length !== 1 ? "s" : ""
                     }`}
                 .
-                {enforcePerUserQuota &&
-                  ` Each user must complete at least ${perUserQuota} submission${
-                    Number(perUserQuota) > 1 ? "s" : ""
-                  } during the goal period.`}
               </Typography>
 
               {enforcePerUserQuota && (
@@ -821,34 +797,29 @@ const CreateCompanyGoalView = () => {
               )}
 
               <Box display="flex" justifyContent="flex-end" mt={2}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleCreateGoal}
-                  disabled={!readyForCreation || isSaving}
-                >
-                  {isSaving ? "Creating..." : "Create Goal"}
-                </Button>
+                <button className="button-primary" onClick={handleCreateGoal}>
+                  Create Goal
+                </button>
               </Box>
             </Box>
           )}
 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleCreateGoal}
-            disabled={!readyForCreation || isSaving}
-          >
-            {isSaving ? "Creating..." : "Create Goal"}
-          </Button>
           {accountScope === "selected" && (
             <>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                {accountsForSelectedUsers.length} account
-                {accountsForSelectedUsers.length !== 1 ? "s" : ""} assigned to
-                selected user
-                {selectedUserIds.length > 1 ? "s" : ""}
-              </Typography>
+              {accountScope === "selected" ? (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  {filteredAccounts.length} account
+                  {filteredAccounts.length !== 1 ? "s" : ""} currently match
+                  selected filters
+                </Typography>
+              ) : (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  {accountsForSelectedUsers.length} account
+                  {accountsForSelectedUsers.length !== 1 ? "s" : ""} are
+                  assigned to selected user
+                  {selectedUserIds.length !== 1 ? "s" : ""}
+                </Typography>
+              )}
 
               <UserMultiSelector
                 users={eligibleUsersForCurrentScope}
@@ -860,8 +831,8 @@ const CreateCompanyGoalView = () => {
           {accountScope === "selected" && (
             <>
               <Typography variant="body2" sx={{ mt: 1 }}>
-                {filteredAccounts.length} account
-                {filteredAccounts.length !== 1 ? "s" : ""} match current filters
+                Showing {filteredAccounts.length} of {accounts.length} total
+                accounts.
               </Typography>
 
               {selectedAccounts.length === 0 ? (

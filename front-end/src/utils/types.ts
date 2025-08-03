@@ -440,10 +440,10 @@ export type GalloGoalType = {
   goalBenchValue: string;
 };
 
-export type GoalTargetMode =
-  | "goalForAllAccounts"
-  | "goalForSelectedAccounts"
-  | "goalForSelectedUsers";
+// export type GoalTargetMode =
+//   | "goalForAllAccounts"
+//   | "goalForSelectedAccounts"
+//   | "goalForSelectedUsers";
 
 export type CompanyGoalType = {
   companyId: string;
@@ -458,6 +458,9 @@ export type CompanyGoalType = {
   createdByFirstName?: string; // optional
   createdByLastName?: string; // optional
   accountNumbersForThisGoal: string[]; // ✅ Full scope of accounts this goal applies to
+  userAssignments?: {
+    [accountNumber: string]: string[];
+  }
   perUserQuota?: number;// ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
   deleted: boolean;

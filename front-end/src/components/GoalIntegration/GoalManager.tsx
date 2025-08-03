@@ -93,6 +93,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId, onViewPostModal })
                 backgroundColor: "var(--tab-background)",
                 "&.Mui-selected": {
                   backgroundColor: "var(--tab-background-selected)",
+                  color: "var(--color-selected)",
                   border: "1px solid #ccc",
                   borderBottom: "none", // remove overlap on active tab
                 },

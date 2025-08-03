@@ -95,7 +95,7 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search accounts to add to goal"
+          placeholder="Search accounts..."
           className="account-search-input"
         />
 

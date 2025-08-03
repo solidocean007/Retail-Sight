@@ -104,6 +104,7 @@
   --card-outline: var(--gray-800);
 
   --text-color: var(--gray-900);
+  --text-on-button: black;
   --company-goal-text-color: var(--gray-900);
   --header-title: var(--gray-900);
 
@@ -145,60 +146,6 @@
   --btn-error-text-color: #fff;
 }
 
-[data-theme="light2"] {
-  --background-body: var(--gray-50);
-  --background-pop-out-body: var(--gray-100);
-  --post-card-background: var(--post-card-animated-gradient-light);
-  --header-background: var(--post-card-animated-gradient-light);
-  --dashboard-header-background: var(--gray-100);
-
-  --dashboard-card: var(--gray-50);
-  --card-outline: var(--gray-300);
-
-  --text-color: var(--gray-900);
-  --company-goal-text-color: var(--gray-900);
-  --header-title: var(--gray-800);
-  --link-color: var(--primary-blue-dark);
-  --link-hover-color: var(--primary-blue);
-
-  --button-background: var(--primary-blue-light);
-  --button-background-hover: var(--primary-blue);
-  --button-text-color: var(--gray-900);
-
-  --outlined-button-bg: transparent;
-  --outlined-button-border: var(--primary-blue);
-  --outlined-button-hover: var(--gray-200);
-
-  --input-background: var(--gray-100);
-  --input-text-color: var(--gray-900);
-  --input-border: var(--gray-300);
-
-  --form-background-color: var(--gray-100);
-
-  --menu-background-color: var(--white);
-  --alt-menu-background-color: var(--gray-50);
-  --footer-background-color: var(--gray-100);
-  --sidebar-background-color: var(--gray-50);
-  --drawer-background: var(--gray-50);
-  --switch-color: var(--primary-blue-dark);
-
-  --border-color: var(--gray-300);
-  --sidebar-active-item: var(--primary-blue-dark);
-  --sidebar-hover-bg: var(--gray-200);
-
-  --divider-color: var(--gray-400);
-
-  --btn-primary-bg: var(--primary-blue-light);
-  --btn-primary-hover: var(--primary-blue);
-  --btn-secondary-bg: var(--gray-100);
-  --btn-secondary-hover: var(--gray-200);
-
-  --btn-error-bg: #d32f2f;
-  --btn-error-hover: #e53935;
-  --btn-error-text-color: var(--white);
-}
-
-
 /* ============================
        🌙 Dark Theme
      ============================ */
@@ -209,13 +156,14 @@
   --header-background: var(--post-card-animated-gradient-dark);
   --dashboard-header-background: var(--gray-800);
   --tab-background: var(--gray-800);
-  --tab-background-selected: var(--dark-blue-5);
+  --tab-background-selected: var(--light-blue-2);
 
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);
 
   /* --text-color: var(--gray-100); */
   --text-color: var(--gray-100);
+  --text-on-button: white;
   --company-goal-text-color: var(--gray-900);
   --header-title: var(--white);
   --link-color: #93c5fd; /* Light-blue-300 (Tailwind-ish) */
@@ -248,7 +196,8 @@
 
   --divider-color: #444; /* Darker gray for dark mode */
 
-  --btn-primary-bg: var(--primary-blue);
+  --btn-primary-bg: var(--gold);
+  --text-primary-button: var(--gray-800);
   --btn-primary-hover: var(--primary-blue-dark);
   --btn-secondary-bg: var(--gray-700);
   --btn-secondary-hover: var(--gray-600);
@@ -257,61 +206,6 @@
   --btn-error-hover: #7b1f1f;
   --btn-error-text-color: #fff;
 }
-
-[data-theme="dark2"] {
-  --background-body: var(--gray-900);
-  --background-pop-out-body: var(--gray-800);
-  --post-card-background: var(--post-card-animated-gradient-dark);
-  --header-background: var(--post-card-animated-gradient-dark);
-  --dashboard-header-background: var(--gray-800);
-
-
-  --dashboard-card: var(--bgColor-muted);
-  --card-outline: var(--gray-600);
-
-  --text-color: var(--gray-100);
-  --company-goal-text-color: var(--gray-100);
-  --header-title: var(--white);
-  --link-color: var(--primary-blue);
-  --link-hover-color: var(--primary-blue-dark);
-
-  --button-background: var(--primary-blue);
-  --button-background-hover: var(--primary-blue-dark);
-  --button-text-color: var(--white);
-
-  --outlined-button-bg: transparent;
-  --outlined-button-border: var(--gray-100);
-  --outlined-button-hover: var(--gray-800);
-
-  --input-background: var(--gray-800);
-  --input-text-color: var(--gray-100);
-  --input-border: var(--gray-700);
-
-  --form-background-color: var(--gray-800);
-
-  --menu-background-color: var(--gray-800);
-  --alt-menu-background-color: var(--gray-900);
-  --footer-background-color: var(--gray-800);
-  --sidebar-background-color: var(--gray-800);
-  --drawer-background: var(--gray-800);
-  --switch-color: var(--primary-blue);
-
-  --border-color: var(--gray-700);
-  --sidebar-active-item: var(--primary-blue);
-  --sidebar-hover-bg: var(--gray-700);
-
-  --divider-color: var(--gray-600);
-
-  --btn-primary-bg: var(--primary-blue);
-  --btn-primary-hover: var(--primary-blue-dark);
-  --btn-secondary-bg: var(--gray-700);
-  --btn-secondary-hover: var(--gray-600);
-
-  --btn-error-bg: #9c1f1f;
-  --btn-error-hover: #b22222;
-  --btn-error-text-color: var(--white);
-}
-
 
 /* 🎨 Light Theme Scrollbar */
 [data-theme="light"] ::-webkit-scrollbar {

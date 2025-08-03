@@ -20,13 +20,39 @@ button {
   box-shadow: var(--button-shadow)
 }
 /* — Primary / Save */
-.btn {
+.button-primary {
   background-color: var(--btn-primary-bg);
-  color: var(--btn-text-color);
+  color: var(--text-primary-button);
+  border: none;
+  padding: 0.65rem 1.2rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
 }
-.btn:hover {
-  background-color: var(--btn-primary-hover);
+
+.button-primary:hover {
+  opacity: 0.9;
 }
+
+.button-outline {
+  background-color: transparent;
+  color: var(--button-bg);
+  border: 2px solid var(--button-bg);
+  padding: 0.65rem 1.2rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, color 0.2s;
+}
+
+.button-outline:hover {
+  background-color: var(--button-bg);
+  color: #fff;
+}
+
 
 /* — Secondary (if needed) */
 .btn-secondary {
