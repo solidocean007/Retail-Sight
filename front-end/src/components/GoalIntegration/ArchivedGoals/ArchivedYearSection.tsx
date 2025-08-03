@@ -14,6 +14,8 @@ interface ArchivedYearSectionProps {
     updatedFields: Partial<CompanyGoalWithIdType>
   ) => void;
   onViewPostModal?: (postId: string) => void;
+  expandedGoalId: string | null;
+  setExpandedGoalId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const ArchivedYearSection = ({
@@ -23,7 +25,9 @@ const ArchivedYearSection = ({
   onDelete,
   salesRouteNum,
   onEdit,
-  onViewPostModal
+  onViewPostModal,
+  expandedGoalId,
+  setExpandedGoalId,
 }: ArchivedYearSectionProps) => {
   const [expanded, setExpanded] = useState(false);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
@@ -35,10 +39,7 @@ const ArchivedYearSection = ({
   };
 
   return (
-    <Box
-      className="archived-year-card"
-      onClick={() => setExpanded(!expanded)}
-    >
+    <Box className="archived-year-card" onClick={() => setExpanded(!expanded)}>
       <Box className="archived-year-header">
         <Typography variant="h6">
           {year} Archived Goals ({totalGoals})
@@ -66,6 +67,8 @@ const ArchivedYearSection = ({
                 expanded={expandedMonth === month}
                 onToggle={() => toggleMonth(month)}
                 onViewPostModal={onViewPostModal} // 👈 pass the callback
+                expandedGoalId={expandedGoalId}
+                setExpandedGoalId={setExpandedGoalId}
               />
             ))}
         </Box>

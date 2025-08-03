@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import { CompanyGoalWithIdType } from "../../../utils/types";
 import ArchivedYearSection from "./ArchivedYearSection";
@@ -24,17 +24,36 @@ const ArchivedGoalsLayout = ({
   onEdit,
   onViewPostModal,
 }: ArchivedGoalsLayoutProps) => {
+  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+
   const groupedGoals = useMemo(() => {
     return archivedGoals.reduce<
       Record<string, Record<string, CompanyGoalWithIdType[]>>
     >((acc, goal) => {
-      const date = new Date(goal.goalEndDate);
-      const year = date.getFullYear().toString();
-      const month = date.toLocaleString("default", { month: "long" });
+      const start = new Date(goal.goalStartDate);
+      const end = new Date(goal.goalEndDate);
 
-      if (!acc[year]) acc[year] = {};
-      if (!acc[year][month]) acc[year][month] = [];
-      acc[year][month].push(goal);
+      // Defensive check: skip invalid date ranges
+      if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+        return acc;
+      }
+
+      const current = new Date(start);
+
+      while (current <= end) {
+        const year = current.getFullYear().toString();
+        const month = current.toLocaleString("default", { month: "long" });
+
+        if (!acc[year]) acc[year] = {};
+        if (!acc[year][month]) acc[year][month] = [];
+
+        const alreadyExists = acc[year][month].some((g) => g.id === goal.id);
+        if (!alreadyExists) {
+          acc[year][month].push(goal);
+        }
+
+        current.setMonth(current.getMonth() + 1);
+      }
 
       return acc;
     }, {});
@@ -54,6 +73,8 @@ const ArchivedGoalsLayout = ({
             onDelete={onDelete}
             onEdit={onEdit}
             onViewPostModal={onViewPostModal}
+            expandedGoalId={expandedGoalId}
+            setExpandedGoalId={setExpandedGoalId}
           />
         ))}
     </Box>

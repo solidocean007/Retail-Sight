@@ -12,10 +12,14 @@ interface ArchivedMonthSectionProps {
   onEdit?: (
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
+    
   ) => void;
   expanded: boolean;
   onToggle: () => void;
   onViewPostModal?: (postId: string) => void;
+  expandedGoalId: string | null;
+setExpandedGoalId: React.Dispatch<React.SetStateAction<string | null>>;
+
 }
 
 const ArchivedMonthSection = ({
@@ -27,9 +31,10 @@ const ArchivedMonthSection = ({
   onEdit,
   expanded,
   onToggle,
-  onViewPostModal
+  onViewPostModal,
+  expandedGoalId,
+  setExpandedGoalId,
 }: ArchivedMonthSectionProps) => {
-  const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
 
   const handleToggleExpand = (goalId: string) => {
     setExpandedGoalId((prev) => (prev === goalId ? null : goalId));

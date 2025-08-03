@@ -303,7 +303,10 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           <Button
             variant="outlined"
             size="small"
-            onClick={() => onToggleExpand(goal.id)}
+            onClick={(e) => {
+              e.stopPropagation(); // ✅ Prevents collapsing the year accidentally
+              onToggleExpand(goal.id);
+            }}
           >
             {expanded ? "Hide submissions" : "Show submissions"}
           </Button>
@@ -318,7 +321,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           users={userBasedRows}
           goal={goal}
           onViewPostModal={onViewPostModal} // Type '((postId: string) => void) | undefined' is not assignable to type '(postId: string) => void | undefined'.
-  // Type 'undefined' is not assignable to type '(postId: string) => void | undefined'.
+          // Type 'undefined' is not assignable to type '(postId: string) => void | undefined'.
         />
         <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
