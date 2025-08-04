@@ -18,7 +18,6 @@ import { db } from "../utils/firebase";
 import PostCard from "./PostCard"; // or your renderer
 
 interface PostViewerModalProps {
-  key: string | null;
   postId: string;
   open: boolean;
   onClose: () => void;
@@ -26,7 +25,6 @@ interface PostViewerModalProps {
 }
 
 const PostViewerModal: React.FC<PostViewerModalProps> = ({
-  key,
   postId,
   open,
   onClose,

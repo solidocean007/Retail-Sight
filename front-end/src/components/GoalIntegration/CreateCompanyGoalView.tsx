@@ -35,6 +35,8 @@ import TrackChangesIcon from "@mui/icons-material/TrackChanges"; // MUI's target
 import dayjs from "dayjs";
 import "./createCompanyGoalView.css";
 import GoalTitleInput from "./GoalTitleInput";
+import ChainMultiSelect from "./FilterMultiSelect";
+import FilterMultiSelect from "./FilterMultiSelect";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -523,30 +525,17 @@ const CreateCompanyGoalView = () => {
           {accountScope === "selected" && (
             <>
               <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
-                {/* Chain Multi-Select */}
-                <FormControl sx={{ minWidth: 200 }}>
-                  <InputLabel id="chain-label">Chain</InputLabel>
-                  <Select
-                    labelId="chain-label"
-                    multiple
-                    value={filters.chains}
-                    onChange={(e) =>
-                      setFilters({
-                        ...filters,
-                        chains: e.target.value as unknown as string[],
-                      })
-                    }
-                    renderValue={(selected) => `${selected.length} selected`}
-                  >
-                    {chainNames.map((name) => (
-                      <MenuItem key={name} value={name}>
-                        {name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                {/* Chain Filter */}
+                <FilterMultiSelect
+                  label="Chain"
+                  options={chainNames}
+                  selected={filters.chains}
+                  onChange={(newChains) =>
+                    setFilters((prev) => ({ ...prev, chains: newChains }))
+                  }
+                />
 
-                {/* Chain Type Single Select */}
+                {/* Chain Type - Single Select (still TextField) */}
                 <TextField
                   select
                   label="Chain Type"
@@ -555,58 +544,55 @@ const CreateCompanyGoalView = () => {
                     setFilters({ ...filters, chainType: e.target.value })
                   }
                   sx={{ minWidth: 160 }}
+                  size="small"
                 >
                   <MenuItem value="">All</MenuItem>
                   <MenuItem value="chain">Chain</MenuItem>
                   <MenuItem value="independent">Independent</MenuItem>
                 </TextField>
 
-                {/* Type of Account Multi-Select */}
-                <FormControl sx={{ minWidth: 200 }}>
-                  <InputLabel id="type-label">Type of Account</InputLabel>
-                  <Select
-                    labelId="type-label"
-                    multiple
-                    value={filters.typeOfAccounts}
-                    onChange={(e) =>
-                      setFilters({
-                        ...filters,
-                        typeOfAccounts: e.target.value as unknown as string[],
-                      })
-                    }
-                    renderValue={(selected) => `${selected.length} selected`}
-                  >
-                    {customerTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                {/* Type of Account */}
+                <FilterMultiSelect
+                  label="Type of Account"
+                  options={customerTypes}
+                  selected={filters.typeOfAccounts}
+                  onChange={(newTypes) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      typeOfAccounts: newTypes,
+                    }))
+                  }
+                />
 
-                {/* Salesperson Multi-Select */}
-                <FormControl sx={{ minWidth: 200 }}>
-                  <InputLabel id="user-label">Salesperson</InputLabel>
-                  <Select
-                    labelId="user-label"
-                    multiple
-                    value={filters.userIds}
-                    onChange={(e) =>
-                      setFilters({
-                        ...filters,
-                        userIds: e.target.value as unknown as string[],
-                      })
-                    }
-                    renderValue={(selected) => `${selected.length} selected`}
-                  >
-                    {normalizedCompanyUsers.map((user) => (
-                      <MenuItem key={user.uid} value={user.uid}>
-                        {user.firstName} {user.lastName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                {/* Salesperson */}
+                <FilterMultiSelect
+                  label="Salesperson"
+                  options={normalizedCompanyUsers.map(
+                    (u) => `${u.firstName} ${u.lastName}`
+                  )}
+                  selected={filters.userIds.map((id) =>
+                    `${
+                      normalizedCompanyUsers.find((u) => u.uid === id)
+                        ?.firstName || ""
+                    } ${
+                      normalizedCompanyUsers.find((u) => u.uid === id)
+                        ?.lastName || ""
+                    }`.trim()
+                  )}
+                  onChange={(selectedNames) => {
+                    const userIds = selectedNames
+                      .map(
+                        (name) =>
+                          normalizedCompanyUsers.find(
+                            (u) => `${u.firstName} ${u.lastName}` === name
+                          )?.uid
+                      )
+                      .filter(Boolean) as string[];
+                    setFilters((prev) => ({ ...prev, userIds }));
+                  }}
+                />
 
+                {/* Clear Button */}
                 <Button
                   variant="outlined"
                   size="large"

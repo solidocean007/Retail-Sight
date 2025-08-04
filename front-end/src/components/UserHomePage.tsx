@@ -255,13 +255,15 @@ export const UserHomePage = () => {
             />
           </div>
         </div>
-        <PostViewerModal
-          key={postIdToView}
-          postId={postIdToView || ""}
-          open={postViewerOpen}
-          onClose={() => setPostViewerOpen(false)}
-          currentUserUid={user?.uid}
-        />
+        {postViewerOpen && postIdToView && (
+          <PostViewerModal
+            key={postIdToView} // ✅ here is fine
+            postId={postIdToView}
+            open={postViewerOpen}
+            onClose={() => setPostViewerOpen(false)}
+            currentUserUid={user?.uid}
+          />
+        )}
       </div>
     </>
   );
