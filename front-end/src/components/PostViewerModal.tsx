@@ -40,10 +40,6 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
-    console.log("📦 Modal received postId:", postId);
-  }, [postId]);
-
-  useEffect(() => {
     const fetchPost = async () => {
       if (cachedPost) {
         console.log("using cached post to display modal: ", postId);

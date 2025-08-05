@@ -12,6 +12,36 @@ Displaygram.com is a collaborative platform for sales teams, suppliers, and dist
 - 🧑‍🤝‍🧑 **Team Collaboration:** Users can view and interact with posts from others in their company or supplier network.
 - 🔐 **Permissions & Roles:** Role-based access for admins, sales reps, and suppliers to control what each user sees and can do.
 
+🔁 Real-Time Collaboration
+💬 Commenting System: Users can add, like, and delete comments on posts. Comment modals show timestamps and dynamically update.
+
+❤️ Like Comments: Tap the heart to show appreciation. Liked by you = ❤️, otherwise 🤍.
+
+👥 User Attribution: Comment usernames are clickable for deeper insights.
+
+📊 Advanced Goal Tracking
+📈 Track post submissions across accounts and users.
+
+🧮 Auto-calculates completion percentage.
+
+🎯 Set per-user submission quotas.
+
+🗂 Admin view of user and account progress via toggleable tables.
+
+🧠 Smart Account Management
+🔍 Use the multi-account selector to assign goals to specific stores.
+
+📦 Paginated, searchable account tables for fast setup.
+
+✅ Select/deselect all accounts with one click.
+
+🖼 Post Detail Viewer
+🔎 View full post details in a blur-up modal.
+
+💬 Interact with comments in-context from the post view.
+
+⚡ Cached and lazy-loaded for performance.
+
 ---
 
 🆕 User Onboarding & Access Control

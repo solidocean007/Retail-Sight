@@ -24,7 +24,6 @@ const ViewNotificationModal: React.FC<Props> = ({
   openPostViewer,
 }) => {
   if (!notification) return null;
-  console.log(notification.postId)
   const formatDate = (date: any) =>
     date instanceof Date
       ? date.toLocaleString()
