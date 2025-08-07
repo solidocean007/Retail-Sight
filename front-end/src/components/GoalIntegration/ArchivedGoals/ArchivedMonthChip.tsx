@@ -1,9 +1,12 @@
 import { Box, Collapse, Chip } from "@mui/material";
 import { CompanyGoalWithIdType } from "../../../utils/types";
 import CompanyGoalCard from "../CompanyGoalCard";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import PostViewerModal from "../../PostViewerModal";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../utils/store";
 
-interface ArchivedMonthSectionProps {
+interface ArchivedMonthChipProps {
   month: string;
   goals: CompanyGoalWithIdType[];
   isMobile?: boolean;
@@ -12,17 +15,15 @@ interface ArchivedMonthSectionProps {
   onEdit?: (
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
-    
   ) => void;
   expanded: boolean;
   onToggle: () => void;
-  onViewPostModal?: (postId: string) => void;
+  onViewPostModal?: (postId: string, scrollRef?: HTMLElement) => void;
   expandedGoalId: string | null;
-setExpandedGoalId: React.Dispatch<React.SetStateAction<string | null>>;
-
+  setExpandedGoalId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-const ArchivedMonthSection = ({
+const ArchivedMonthChip = ({
   month,
   goals,
   isMobile,
@@ -34,7 +35,29 @@ const ArchivedMonthSection = ({
   onViewPostModal,
   expandedGoalId,
   setExpandedGoalId,
-}: ArchivedMonthSectionProps) => {
+}: ArchivedMonthChipProps) => {
+  const scrollTargetRef = useRef<HTMLElement | null>(null);
+  const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  const [postViewerOpen, setPostViewerOpen] = useState(false);
+  const currentUser = useSelector((state: RootState) => state.user.currentUser);
+
+  const openPostViewer = (postId: string, target?: HTMLElement) => {
+    if (target) scrollTargetRef.current = target;
+    setPostIdToView(postId);
+    setPostViewerOpen(true);
+  };
+
+  const closePostViewer = () => {
+    setPostViewerOpen(false);
+    setTimeout(() => {
+      if (scrollTargetRef.current) {
+        scrollTargetRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }, 100); // Give DOM a moment to stabilize
+  };
 
   const handleToggleExpand = (goalId: string) => {
     setExpandedGoalId((prev) => (prev === goalId ? null : goalId));
@@ -62,13 +85,20 @@ const ArchivedMonthSection = ({
               onDelete={onDelete ? () => onDelete(goal.id) : undefined}
               salesRouteNum={salesRouteNum}
               onEdit={onEdit}
-              onViewPostModal={onViewPostModal}
+              onViewPostModal={openPostViewer}
             />
           ))}
         </Box>
       </Collapse>
+      <PostViewerModal
+        key={postIdToView}
+        postId={postIdToView || ""}
+        open={postViewerOpen}
+        onClose={closePostViewer}
+        currentUserUid={currentUser?.uid}
+      />
     </Box>
   );
 };
 
-export default ArchivedMonthSection;
+export default ArchivedMonthChip;

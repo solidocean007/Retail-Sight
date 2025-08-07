@@ -43,7 +43,6 @@ import MyGoals from "./GoalIntegration/MyGoals.tsx";
 import PostViewerModal from "./PostViewerModal.tsx";
 
 export const Dashboard = () => {
-  const [viewPostModalId, setViewPostModalId] = useState<string | null>(null);
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
   // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
@@ -187,24 +186,18 @@ export const Dashboard = () => {
         {dashboardMode === "ProductsMode" && (
           <ProductsManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
-        {dashboardMode === "MyGoalsMode" && <MyGoals onViewPostModal={(postId) => setViewPostModalId(postId)} />}
+        {dashboardMode === "MyGoalsMode" && <MyGoals  />}
         {dashboardMode === "UsersMode" && <EmployeesViewer />}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
         {dashboardMode === "GoalManagerMode" && (
-          <GoalManager companyId={companyId} onViewPostModal={(postId) => setViewPostModalId(postId)} />
+          <GoalManager companyId={companyId} />
         )}
         {dashboardMode === "CollectionsMode" && (
           <CollectionsViewer setDashboardMode={setDashboardMode} />
         )}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
-      <PostViewerModal
-        key={viewPostModalId}
-        postId={viewPostModalId ?? ""}
-        open={!!viewPostModalId}
-        onClose={() => setViewPostModalId(null)}
-        currentUserUid={user?.uid}
-      />
+     
     </div>
   );
 };

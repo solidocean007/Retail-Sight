@@ -9,6 +9,7 @@ interface DirtyCheckParams {
   companyGoalId: string | null;
   productType: string[];
   postUserUid: string;
+  accountNumber: string;
 }
 
 /**
@@ -17,7 +18,13 @@ interface DirtyCheckParams {
 export function useIsDirty(
   original: Pick<
     PostWithID,
-    "description" | "totalCaseCount" | "brands" | "companyGoalId" | "productType" | "postUserUid"
+    | "description"
+    | "totalCaseCount"
+    | "brands"
+    | "companyGoalId"
+    | "productType"
+    | "postUserUid"
+    | "accountNumber"
   >,
   edited: DirtyCheckParams
 ) {
@@ -32,7 +39,10 @@ export function useIsDirty(
     const origBrands = original.brands ?? [];
     const aBrands = [...edited.brands].sort();
     const bBrands = [...origBrands].sort();
-    if (aBrands.length !== bBrands.length || aBrands.some((v, i) => v !== bBrands[i]))
+    if (
+      aBrands.length !== bBrands.length ||
+      aBrands.some((v, i) => v !== bBrands[i])
+    )
       return true;
 
     // 4) Company goal changed?
@@ -43,11 +53,17 @@ export function useIsDirty(
     const origTypes = original.productType ?? [];
     const aTypes = [...edited.productType].sort();
     const bTypes = [...origTypes].sort();
-    if (aTypes.length !== bTypes.length || aTypes.some((v, i) => v !== bTypes[i]))
+    if (
+      aTypes.length !== bTypes.length ||
+      aTypes.some((v, i) => v !== bTypes[i])
+    )
       return true;
 
-     // ---- NEW: postUser changed? ----
+    // ---- NEW: postUser changed? ----
     if (edited.postUserUid !== original.postUserUid) return true;
+
+    // 👉 missing piece:
+    if (edited.accountNumber !== original.accountNumber) return true;
 
     // nothing changed
     return false;
@@ -58,7 +74,8 @@ export function useIsDirty(
     JSON.stringify(original.brands ?? []),
     original.companyGoalId,
     JSON.stringify(original.productType ?? []),
-     original.postUserUid,  
+    original.postUserUid,
+    original.accountNumber,
 
     // edited deps
     edited.description,
@@ -67,5 +84,6 @@ export function useIsDirty(
     edited.companyGoalId,
     JSON.stringify(edited.productType),
     edited.postUserUid,
+    edited.accountNumber,
   ]);
 }

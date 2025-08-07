@@ -49,12 +49,10 @@ export function findDuplicateSubmissions(
 
 interface AllGoalsLayoutProps {
   companyId: string | undefined;
-  onViewPostModal: (id: string) => void;
 }
 
 const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
   companyId,
-  onViewPostModal,
 }) => {
   const [value, setValue] = useState(0);
   const theme = useTheme(); // Correct usage of `useTheme`
@@ -63,6 +61,7 @@ const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
   const galloGoals = useSelector(selectAllGalloGoals);
   const companyGoals = useSelector(selectAllCompanyGoals);
 
+ 
   // Compute duplicate reports once whenever goals change
   const duplicateReports: GoalDuplicateReport[] = useMemo(
     () => findDuplicateSubmissions(companyGoals),
@@ -147,13 +146,12 @@ const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
         <div className="all-company-goals-view-container">
           <AllCompanyGoalsView
             companyId={companyId}
-            onViewPostModal={onViewPostModal}
           />
         </div>
       )}
       {value === 1 && (
         <div className="table-container">
-          <AllGalloGoalsView onViewPostModal={onViewPostModal} />
+          <AllGalloGoalsView  />
         </div>
       )}
     </div>

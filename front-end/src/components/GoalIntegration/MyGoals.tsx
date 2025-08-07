@@ -6,10 +6,10 @@ import "./myGoals.css";
 import MyGalloGoals from "./MyGalloGoals";
 
 interface MyGoalsProps {
-  onViewPostModal: (postId: string) => void;
+  // onViewPostModal: (postId: string) => void;
 }
 
-const MyGoals: React.FC<MyGoalsProps> = ({ onViewPostModal }) => {
+const MyGoals: React.FC<MyGoalsProps> = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -40,8 +40,8 @@ const MyGoals: React.FC<MyGoalsProps> = ({ onViewPostModal }) => {
       </Tabs>
 
       <Box className="goals-content">
-        {tabIndex === 0 && <MyCompanyGoals onViewPostModal={onViewPostModal} />}
-        {tabIndex === 1 && <MyGalloGoals onViewPostModal={onViewPostModal} />}
+        {tabIndex === 0 && <MyCompanyGoals />}
+        {tabIndex === 1 && <MyGalloGoals />}
       </Box>
     </Box>
   );

@@ -87,12 +87,16 @@
 
 /* Mobile responsiveness */
 @media only screen and (max-width: 600px) {
+   .input-container {
+    padding: 1rem;
+  }
   .edit-post-modal-container {
     padding: 15px;
   }
 
   .description-input,
   .select-input {
+    margin-top: 1rem;
     font-size: 14px;
   }
 

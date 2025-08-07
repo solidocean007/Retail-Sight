@@ -1,17 +1,34 @@
 import { useSelector } from "react-redux";
 import { Box, Typography, CircularProgress, Container } from "@mui/material";
-import { selectAllGalloGoals, selectGalloGoalsLoading, selectGalloGoalsError } from "../../Slices/galloGoalsSlice";
+import {
+  selectAllGalloGoals,
+  selectGalloGoalsLoading,
+  selectGalloGoalsError,
+} from "../../Slices/galloGoalsSlice";
 import { selectCompanyUsers } from "../../Slices/userSlice";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import "./gallo-goals.css";
 import GalloProgramCard from "./GalloProgramCard";
+import PostViewerModal from "../PostViewerModal";
+import { RootState } from "../../utils/store";
 
-const AllGalloGoalsView = ({onViewPostModal}:{ onViewPostModal:(id:string) => void}) => {
+const AllGalloGoalsView = () => {
+  const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const galloGoals = useSelector(selectAllGalloGoals);
   const isLoading = useSelector(selectGalloGoalsLoading);
   const error = useSelector(selectGalloGoalsError);
   const companyUsers = useSelector(selectCompanyUsers) || [];
+  const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  const [postViewerOpen, setPostViewerOpen] = useState(false);
 
+  const openPostViewer = (postId: string) => {
+    setPostIdToView(postId);
+    setPostViewerOpen(true);
+  };
+
+  const closePostViewer = () => {
+    setPostViewerOpen(false);
+  };
 
   const employeeMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -38,7 +55,6 @@ const AllGalloGoalsView = ({onViewPostModal}:{ onViewPostModal:(id:string) => vo
     return Object.values(map);
   }, [galloGoals]);
 
-
   if (isLoading) {
     return (
       <Box textAlign="center" mt={4}>
@@ -64,9 +80,22 @@ const AllGalloGoalsView = ({onViewPostModal}:{ onViewPostModal:(id:string) => vo
 
       <Box className="programs-wrapper">
         {programsMap.map((program) => (
-          <GalloProgramCard key={program.programId} program={program} employeeMap={employeeMap} onViewPostModal={onViewPostModal} />
+          <GalloProgramCard
+            key={program.programId}
+            program={program}
+            employeeMap={employeeMap}
+            onViewPostModal={openPostViewer}
+
+          />
         ))}
       </Box>
+      <PostViewerModal
+        key={postIdToView}
+        postId={postIdToView || ""}
+        open={postViewerOpen}
+        onClose={() => setPostViewerOpen(false)}
+        currentUserUid={currentUser?.uid}
+      />
     </Container>
   );
 };

@@ -20,12 +20,9 @@ import {
   selectUsersGalloGoals,
 } from "../../Slices/galloGoalsSlice";
 import "./gallo-goals.css";
+import PostViewerModal from "../PostViewerModal";
 
-interface MyGalloGoalsProps {
-  onViewPostModal: (postId: string) => void;
-}
-
-const MyGalloGoals: React.FC<MyGalloGoalsProps> = ({ onViewPostModal }) => {
+const MyGalloGoals: React.FC = () => {
   const loading = useSelector(selectGalloGoalsLoading);
   const user = useSelector((state: RootState) => state.user.currentUser);
   const salesRouteNum = user?.salesRouteNum;
@@ -33,15 +30,31 @@ const MyGalloGoals: React.FC<MyGalloGoalsProps> = ({ onViewPostModal }) => {
     selectUsersGalloGoals(state, salesRouteNum)
   );
 
-  const [expandedProgramId, setExpandedProgramId] = useState<string | null>(null);
-  const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>({});
+  const [expandedProgramId, setExpandedProgramId] = useState<string | null>(
+    null
+  );
+  const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  const [postViewerOpen, setPostViewerOpen] = useState(false);
+
+  const openPostViewer = (postId: string) => {
+    setPostIdToView(postId);
+    setPostViewerOpen(true);
+  };
+
+  const closePostViewer = () => {
+    setPostViewerOpen(false);
+  };
 
   const toggleProgramExpansion = (programId: string) => {
-    setExpandedProgramId(prev => (prev === programId ? null : programId));
+    setExpandedProgramId((prev) => (prev === programId ? null : programId));
   };
 
   const toggleGoalExpansion = (goalId: string) => {
-    setExpandedGoals(prev => ({
+    setExpandedGoals((prev) => ({
       ...prev,
       [goalId]: !prev[goalId],
     }));
@@ -91,11 +104,15 @@ const MyGalloGoals: React.FC<MyGalloGoalsProps> = ({ onViewPostModal }) => {
                   </Typography>
                 </Box>
                 <Button
-                  onClick={() => toggleProgramExpansion(goal.programDetails.programId)}
+                  onClick={() =>
+                    toggleProgramExpansion(goal.programDetails.programId)
+                  }
                   variant="outlined"
                   size="small"
                 >
-                  {expandedProgramId === goal.programDetails.programId ? "Close" : "Open"}
+                  {expandedProgramId === goal.programDetails.programId
+                    ? "Close"
+                    : "Open"}
                 </Button>
               </Box>
 
@@ -120,7 +137,9 @@ const MyGalloGoals: React.FC<MyGalloGoalsProps> = ({ onViewPostModal }) => {
                     size="small"
                     className="toggle-btn"
                   >
-                    {expandedGoals[goal.goalDetails.goalId] ? "Hide Accounts" : "Show Accounts"}
+                    {expandedGoals[goal.goalDetails.goalId]
+                      ? "Hide Accounts"
+                      : "Show Accounts"}
                   </Button>
 
                   <Collapse
@@ -146,15 +165,21 @@ const MyGalloGoals: React.FC<MyGalloGoalsProps> = ({ onViewPostModal }) => {
                           {goal.accounts.map((account, idx) => (
                             <TableRow key={idx} className="account-row">
                               <TableCell data-label="Account Name">
-                                <span className="mobile-header">Account Name</span>
+                                <span className="mobile-header">
+                                  Account Name
+                                </span>
                                 {account.accountName || "N/A"}
                               </TableCell>
                               <TableCell data-label="Account Address">
-                                <span className="mobile-header">Account Address</span>
+                                <span className="mobile-header">
+                                  Account Address
+                                </span>
                                 {account.accountAddress || "N/A"}
                               </TableCell>
                               <TableCell data-label="Account Number">
-                                <span className="mobile-header">Account Number</span>
+                                <span className="mobile-header">
+                                  Account Number
+                                </span>
                                 {account.distributorAcctId || "N/A"}
                               </TableCell>
                               <TableCell data-label="Status">
@@ -174,7 +199,9 @@ const MyGalloGoals: React.FC<MyGalloGoalsProps> = ({ onViewPostModal }) => {
                                   <Button
                                     variant="contained"
                                     size="small"
-                                    onClick={() => onViewPostModal(account.submittedPostId!)}
+                                    onClick={() =>
+                                      openPostViewer(account.submittedPostId!)
+                                    }
                                   >
                                     View
                                   </Button>
@@ -192,6 +219,13 @@ const MyGalloGoals: React.FC<MyGalloGoalsProps> = ({ onViewPostModal }) => {
           ))}
         </Box>
       )}
+      <PostViewerModal
+        key={postIdToView}
+        postId={postIdToView || ""}
+        open={postViewerOpen}
+        onClose={closePostViewer}
+        currentUserUid={user?.uid}
+      />
     </div>
   );
 };

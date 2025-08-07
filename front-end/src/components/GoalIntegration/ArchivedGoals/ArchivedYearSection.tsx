@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Collapse, Typography } from "@mui/material";
 import { CompanyGoalWithIdType } from "../../../utils/types";
-import ArchivedMonthSection from "./ArchivedMonthChip";
+import ArchivedMonthChip from "./ArchivedMonthChip";
 
 interface ArchivedYearSectionProps {
   year: string;
@@ -13,9 +13,10 @@ interface ArchivedYearSectionProps {
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
   ) => void;
-  onViewPostModal?: (postId: string) => void;
   expandedGoalId: string | null;
   setExpandedGoalId: React.Dispatch<React.SetStateAction<string | null>>;
+  // onViewPostModal?: (postId: string) => void;
+
 }
 
 const ArchivedYearSection = ({
@@ -25,9 +26,9 @@ const ArchivedYearSection = ({
   onDelete,
   salesRouteNum,
   onEdit,
-  onViewPostModal,
   expandedGoalId,
   setExpandedGoalId,
+  // onViewPostModal,
 }: ArchivedYearSectionProps) => {
   const [expanded, setExpanded] = useState(false);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
@@ -56,7 +57,7 @@ const ArchivedYearSection = ({
                 new Date(`${monthA} 1, ${year}`).getTime()
             )
             .map(([month, goals]) => (
-              <ArchivedMonthSection
+              <ArchivedMonthChip
                 key={month}
                 month={month}
                 goals={goals}
@@ -66,7 +67,7 @@ const ArchivedYearSection = ({
                 onEdit={onEdit}
                 expanded={expandedMonth === month}
                 onToggle={() => toggleMonth(month)}
-                onViewPostModal={onViewPostModal} // 👈 pass the callback
+                // onViewPostModal={onViewPostModal} // 👈 pass the callback
                 expandedGoalId={expandedGoalId}
                 setExpandedGoalId={setExpandedGoalId}
               />

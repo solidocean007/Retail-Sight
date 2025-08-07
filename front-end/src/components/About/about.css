@@ -13,7 +13,9 @@
 .about-navigation {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
 }
 
 .nav-button,
@@ -25,11 +27,12 @@
   cursor: pointer;
   border-radius: 5px;
   transition: background-color 0.3s ease;
+  box-shadow: var(--button-shadow);
 }
 
 .nav-button:hover,
 .cta-button:hover {
-  background-color: var(--sky-blue);
+  background-color: var(--btn-primary-hover);
 }
 
 .about-content {
@@ -40,6 +43,25 @@
   margin-top: 20px;
 }
 
+.about-content h2 {
+  margin-top: 2rem;
+}
+.about-content ul {
+  margin-bottom: 2rem;
+}
+
+.about-content li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+.about-content p:first-of-type {
+  margin-bottom: 1rem;
+}
+
+
+
 @media (max-width: 768px) {
   .about-container {
     width: auto;
@@ -48,6 +70,7 @@
 
   .about-navigation {
     flex-direction: column;
+    gap: 0.5rem;
   }
 
   .nav-button,

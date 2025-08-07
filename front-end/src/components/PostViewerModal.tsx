@@ -72,7 +72,8 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
-      scroll="body"
+      scroll="paper"
+      disableRestoreFocus // ✅ This prevents focus from jumping back to trigger
       maxWidth={false}
       slotProps={{
         backdrop: {

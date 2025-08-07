@@ -27,52 +27,66 @@ const About = () => {
           </button>
         </nav>
         <section className="about-content">
-          <h1>The Objective</h1>
+          <h1>What Is Displaygram?</h1>
           <p>
-            At Displaygram, we're driven by a singular mission: to empower
-            retail professionals with a state-of-the-art platform for managing,
-            sharing, and optimizing retail displays. Our platform is
-            meticulously crafted to transform how retail businesses visualize
-            success and bring their products to life.
+            Displaygram is a modern platform built to streamline{" "}
+            <strong>retail display execution</strong>,
+            <strong> photo archiving</strong>, and{" "}
+            <strong>brand collaboration</strong>. Designed for distributors,
+            suppliers, and field teams, it turns your retail successes into a
+            shareable, trackable, and searchable library of results.
           </p>
+
           <p>
-            From the bustling city storefronts to the intimate boutique shops,
-            Displaygram offers an unparalleled toolset designed to amplify your
-            display's impact. We believe in the power of visual storytelling,
-            and our platform is your canvas for creating immersive and engaging
-            retail experiences.
+            Whether you're capturing a great beer stack, verifying a new wine
+            set, or checking planogram compliance — Displaygram makes it easy to{" "}
+            <strong>
+              submit photos, document execution, assign tasks, and track goals
+            </strong>
+            .
           </p>
+
+          <h2>What Makes Displaygram Different?</h2>
+          <ul>
+            <li>
+              <strong>📸 Photo Archiving with Context:</strong> Every display
+              submission is geo-tagged, timestamped, and linked to a specific
+              product, store, and brand goal.
+            </li>
+            <li>
+              <strong>✅ Field Accountability:</strong> Managers can review,
+              grade, and comment on submissions. Know what’s happening in real
+              time.
+            </li>
+            <li>
+              <strong>🎯 Brand-Aligned Goals:</strong> Import supplier programs
+              or create your own initiatives to guide field focus and track
+              progress.
+            </li>
+            <li>
+              <strong>🔐 Smart Visibility Controls:</strong> Posts can be shared
+              within your company, across supplier-distributor relationships, or
+              kept private.
+            </li>
+          </ul>
+
+          <h2>Built for Distributors and Suppliers</h2>
           <p>
-            Every feature, from our intuitive interface to our robust analytics,
-            is engineered with your needs in mind. Whether you're a seasoned
-            merchandiser or new to the world of retail, Displaygram is your
-            partner in crafting displays that not only capture attention but
-            also drive results.
+            Whether you’re a beer rep, a sales manager, or a supplier partner —
+            Displaygram helps your team{" "}
+            <strong>
+              stay aligned, celebrate wins, and drive in-store performance
+            </strong>
+            . Field reps gain clarity on what’s expected. Admins and suppliers
+            gain visibility and proof of execution.
           </p>
-          <article className="about-features">
-            <h2>Why Displaygram?</h2>
-            <ul>
-              <li>
-                <strong>Collaborative Environment:</strong> Build a community
-                with fellow merchandisers, share insights, and learn from the
-                best practices of industry leaders.
-              </li>
-              {/* <li>
-                <strong>Advanced Analytics:</strong> Measure the performance of your displays with actionable data that helps refine your approach and strategy.
-              </li> */}
-              <li>
-                <strong>Seamless Archiving:</strong> Keep a detailed history of
-                your displays, ensuring that your hard work is preserved and can
-                be referenced at any time.
-              </li>
-            </ul>
-          </article>
+
           <aside className="about-cta">
-            <h2>Join Our Vision</h2>
+            <h2>Start Your Archive Today</h2>
             <p>
-              Embrace the future of retail display management with Displaygram.
-              Join a community that's reshaping the industry and setting new
-              standards for excellence.
+              Sign up for free and start capturing your retail success. Join
+              your team or request access to unlock full visibility and
+              collaboration.
             </p>
             <button className="cta-button" onClick={handleSignUpClick}>
               Create Your Account

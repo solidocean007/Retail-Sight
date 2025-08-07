@@ -14,7 +14,7 @@ const SplashPage = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const numberOfSections = 6;
   const sectionRefs = Array.from({ length: numberOfSections }, () =>
-    useRef<HTMLElement | null>(null),
+    useRef<HTMLElement | null>(null)
   );
 
   const toggleMenu = () => {
@@ -132,12 +132,26 @@ const SplashPage = () => {
             <div className="second-content">
               <h3>The Objective</h3>
               <p>
-                Capture in-store displays. Upload images along with critical
-                details like product names and quantities. Share with your team
-                in real-time. Opt for company-exclusive visibility or share your
-                success broadly with unique star tags. It’s your choice, your
+                Displaygram helps teams{" "}
+                <strong>capture, archive, and evaluate</strong> retail
+                execution. Field reps upload photos of store displays along with
+                product details, location, and timing — creating a permanent
+                visual history your entire team can learn from.
+              </p>
+              <p>
+                Managers and suppliers can <strong>grade performance</strong>,{" "}
+                <strong>assign tasks</strong>, and{" "}
+                <strong>track goal completion</strong> in real time. Whether
+                it’s verifying planogram compliance, launching promotional sets,
+                or simply celebrating great work — Displaygram makes execution
+                visible and actionable.
+              </p>
+              <p>
+                Keep submissions private to your company, or share highlights
+                across your brand network using tags and connections. You’re in
                 control.
               </p>
+
               <div className="content-button-box">
                 <Link to="/about" className="enter-site-btn">
                   Learn More
@@ -183,11 +197,22 @@ const SplashPage = () => {
             id="pricing"
           >
             <div className="hero-content-left fourth-insert">
-              <h3>Pricing:</h3>
+              <h3>Get Started Instantly - or Request Full Access</h3>
               <p>
-                Our platform is committed to providing value at no cost to you.
-                Premium features may become available in the future.
+                Displaygram is <strong>free to explore</strong> for all
+                companies with limited access.
               </p>
+              <ul>
+                <li>✔️ Sign up instantly — no credit card required</li>
+                <li>✔️ Create and view posts within your company</li>
+                <li>🔒 Request verification to unlock:</li>
+                <ul>
+                  <li>– Cross-company visibility</li>
+                  <li>– Goal tracking</li>
+                  <li>– Supplier-distributor collaboration</li>
+                </ul>
+              </ul>
+
               <div className="content-button-box">
                 <Link to="/sign-up-login" className="enter-site-btn">
                   Join for free

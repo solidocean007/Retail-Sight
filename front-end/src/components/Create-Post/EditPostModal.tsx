@@ -48,7 +48,6 @@ import { useIsDirty } from "../../hooks/useIsDirty";
 import { selectUser } from "../../Slices/userSlice";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import CustomConfirmation from "../CustomConfirmation";
-import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
 import GoalChangeConfirmation from "./GoalChangeConfirmation";
 import { duplicatePostWithNewGoal } from "../../utils/PostLogic/dupilcatePostWithNewGoal";
 
@@ -64,9 +63,9 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   isOpen,
   setIsEditModalOpen,
 }) => {
-  const handlePostSubmission = useHandlePostSubmission();
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
+
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
@@ -84,6 +83,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [updatedCaseCount, setUpdatedCaseCount] = useState(post.totalCaseCount);
 
   const handleCloseEditModal = () => {
+    setEditablePost(post);
     setIsEditModalOpen(false);
   };
   const [openAccountModal, setOpenAccountModal] = useState(false);
@@ -92,13 +92,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     (state: RootState) => state.user.currentUser?.companyId
   );
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
+
   const activeCompanyGoals = useMemo(() => {
-    if (!post.account?.accountNumber || allCompanyGoals.length === 0) return [];
-    return getActiveCompanyGoalsForAccount(
-      post.account.accountNumber,
-      allCompanyGoals
-    );
-  }, [post.account?.accountNumber, allCompanyGoals]);
+    const acct = editablePost.account?.accountNumber;
+    if (!acct || allCompanyGoals.length === 0) return [];
+    return getActiveCompanyGoalsForAccount(acct, allCompanyGoals);
+  }, [editablePost.account?.accountNumber, allCompanyGoals]);
+
   const [originalGoalId] = useState(post.companyGoalId); // capture on mount
   const [selectedCompanyGoal, setSelectedCompanyGoal] = useState<
     CompanyGoalWithIdType | undefined
@@ -112,14 +112,16 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       companyGoalId: post.companyGoalId,
       productType: post.productType || [],
       postUserUid: post.postUserUid,
+      accountNumber: post.account?.accountNumber ?? "", // ✅ enforce string
     },
     {
       description,
       totalCaseCount: updatedCaseCount,
       brands: editablePost.brands || [],
-      companyGoalId: selectedCompanyGoal?.id ?? null, // string|null
+      companyGoalId: selectedCompanyGoal?.id ?? null,
       productType: editablePost.productType || [],
       postUserUid: onBehalf?.uid ?? post.postUserUid,
+      accountNumber: editablePost.account?.accountNumber ?? "", // ✅ enforce string
     }
   );
 
@@ -158,7 +160,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         streetAddress: account.streetAddress || "",
       },
     }));
-
     dispatch(showMessage("Account selected. Don't forget to save!"));
     setOpenAccountModal(false);
   };
@@ -182,6 +183,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       hashtags: updatedPost.hashtags,
       starTags: updatedPost.starTags,
       account: updatedPost.account,
+      accountAddress: updatedPost.accountAddress,
+      accountName: updatedPost.accountName,
+      accountNumber: updatedPost.accountNumber,
+      chain: updatedPost.chain,
+      chainType: updatedPost.chainType,
+      city: updatedPost.city,
       brands: updatedPost.brands ?? [],
       productType: updatedPost.productType ?? [],
       companyGoalId: selectedCompanyGoal?.id ?? null,
@@ -196,7 +203,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       postUserProfileUrlOriginal: actor.profileUrlOriginal ?? "",
       postUserEmail: actor.email,
       postUserCompanyName: actor.company,
-      postUserSalesRouteNum: actor.salesRouteNum,
+      postUserSalesRouteNum: actor.salesRouteNum ?? null,
+
       postUserPhone: actor.phone,
       postUserRole: actor.role,
 
@@ -258,7 +266,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     const extractedStarTags = extractStarTags(description);
 
     const updatedPost: PostWithID = {
-      ...post,
+      ...editablePost,
       description,
       visibility: postVisibility ?? post.visibility,
       totalCaseCount: updatedCaseCount,
@@ -339,17 +347,32 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                   handleFieldChange={handleFieldChange}
                 />
               )}
-              {post.account && (
-                <Chip
-                  label={post.account.accountName}
-                  size="small"
-                  sx={{
-                    mb: 2,
-                    backgroundColor: "var(--gray-100)",
-                    color: "var(--text-color)",
+              {editablePost.account && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.5rem",
+                    marginBottom: "0.5rem",
                   }}
-                />
+                >
+                  <button
+                    className="btn-outline"
+                    onClick={() => setOpenAccountModal(true)}
+                  >
+                    <Chip
+                      label={editablePost.account.accountName}
+                      size="small"
+                      sx={{
+                        backgroundColor: "var(--gray-100)",
+                        color: "var(--text-color)",
+                      }}
+                    />
+                  </button>
+                </div>
               )}
+
               {isDirty && (
                 <button className="btn btn-primary" onClick={handleSave}>
                   Save Changes

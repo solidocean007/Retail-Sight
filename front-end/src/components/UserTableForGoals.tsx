@@ -32,15 +32,15 @@ const UserTableForGoals = ({
 }: {
   users: UserRowType[];
   goal: CompanyGoalWithIdType;
-  onViewPostModal: (postId: string) => void | undefined;
+  onViewPostModal: (postId: string, target?: HTMLElement) => void;
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   type SortMode = "completion-desc" | "completion-asc" | "alphabetical";
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
 
-  const handleViewGoalPost = (postId: string) => {
-    onViewPostModal(postId);
+  const handleViewGoalPost = (postId: string, ref: HTMLElement) => {
+    onViewPostModal(postId, ref);
   };
 
   const sortedFilteredUsers = useMemo(() => {
@@ -116,7 +116,11 @@ const UserTableForGoals = ({
                         <div className="submitted-at">
                           {new Date(sub.submittedAt).toLocaleString()}
                         </div>
-                        <button onClick={() => handleViewGoalPost(sub.postId)}>
+                        <button
+                          onClick={(e) =>
+                            handleViewGoalPost(sub.postId, e.currentTarget)
+                          }
+                        >
                           View
                         </button>
                       </div>
@@ -129,7 +133,10 @@ const UserTableForGoals = ({
                 {/* Expandable section for unsubmitted accounts */}
                 {user.unsubmittedAccounts.length > 0 && (
                   <details className="unsubmitted-details">
-                    <summary className="unsubmitted-summary">
+                    <summary
+                      className="unsubmitted-summary"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {user.unsubmittedAccounts.length} unsubmitted account
                       {user.unsubmittedAccounts.length > 1 ? "s" : ""}
                     </summary>

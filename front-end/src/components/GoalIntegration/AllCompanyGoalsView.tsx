@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useSelector } from "react-redux";
-import { useAppDispatch } from "../../utils/store";
+import { RootState, useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
 import { CompanyGoalType, CompanyGoalWithIdType } from "../../utils/types";
@@ -18,15 +18,15 @@ import { updateCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 import { deleteCompanyGoalFromFirestore } from "../../utils/helperFunctions/deleteCompanyGoalFromFirestore";
 import "./allCompanyGoalsView.css";
 import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
+import PostViewerModal from "../PostViewerModal";
 
 const AllCompanyGoalsView = ({
   companyId,
-  onViewPostModal,
 }: {
   companyId: string | undefined;
-  onViewPostModal: (postId: string) => void;
 }) => {
   const dispatch = useAppDispatch();
+  const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const companyGoals = useSelector(selectAllCompanyGoals);
@@ -37,6 +37,18 @@ const AllCompanyGoalsView = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string>("");
+
+  const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  const [postViewerOpen, setPostViewerOpen] = useState(false);
+
+  const openPostViewer = (postId: string) => {
+    setPostIdToView(postId);
+    setPostViewerOpen(true);
+  };
+
+  const closePostViewer = () => {
+    setPostViewerOpen(false);
+  };
 
   // 🆕 Manage expanded card
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
@@ -166,7 +178,6 @@ const AllCompanyGoalsView = ({
                 setIsConfirmationOpen(true);
               }}
               onEdit={handleEditCompanyGoal}
-              onViewPostModal={onViewPostModal} // 👈 pass the callback
             />
           )}
         </>
@@ -178,6 +189,13 @@ const AllCompanyGoalsView = ({
         onClose={() => setIsConfirmationOpen(false)}
         onConfirm={() => handleDeleteCompanyGoal(selectedGoalId)}
         message="Are you sure you want to delete this goal?"
+      />
+      <PostViewerModal
+        key={postIdToView}
+        postId={postIdToView || ""}
+        open={postViewerOpen}
+        onClose={() => setPostViewerOpen(false)}
+        currentUserUid={currentUser?.uid}
       />
     </div>
   );

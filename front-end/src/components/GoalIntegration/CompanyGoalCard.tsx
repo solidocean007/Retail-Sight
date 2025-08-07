@@ -13,12 +13,12 @@ import InfoIcon from "@mui/icons-material/Info";
 import { CompanyGoalWithIdType } from "../../utils/types";
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
-import AccountTable from "../AccountTable";
+// import AccountTable from "../AccountTable";
 import UserTableForGoals from "../UserTableForGoals";
-import GoalViewerFilters from "../GoalViewerFilters";
+// import GoalViewerFilters from "../GoalViewerFilters";
 import EditCompanyGoalModal from "./EditCompanyGoalModal";
 import "./companyGoalCard.css";
-import { mapAccountsWithStatus } from "./utils/goalModeUtils";
+// import { mapAccountsWithStatus } from "./utils/goalModeUtils";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
 
 interface CompanyGoalCardProps {
@@ -32,7 +32,7 @@ interface CompanyGoalCardProps {
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
   ) => void;
-  onViewPostModal?: (postId: string) => void; // 👈 new prop for viewing posts
+  onViewPostModal: (postId: string, target?: HTMLElement) => void;
 }
 
 const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
@@ -52,10 +52,10 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const companyUsers = useSelector(selectCompanyUsers) || [];
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterSubmitted, setFilterSubmitted] = useState<
-    "all" | "submitted" | "not-submitted"
-  >("all");
+  // const [searchTerm, setSearchTerm] = useState("");
+  // const [filterSubmitted, setFilterSubmitted] = useState<
+  //   "all" | "submitted" | "not-submitted"
+  // >("all");
 
   // ✅ Resolve relevant accounts for this goal
   const effectiveAccounts = useMemo(() => {
@@ -70,31 +70,31 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       : allMatching;
   }, [allCompanyAccounts, goal.accountNumbersForThisGoal, salesRouteNum]);
 
-  const accountsWithStatus = useMemo(
-    () => mapAccountsWithStatus(goal, effectiveAccounts),
-    [goal, effectiveAccounts]
-  );
+  // const accountsWithStatus = useMemo(
+  //   () => mapAccountsWithStatus(goal, effectiveAccounts),
+  //   [goal, effectiveAccounts]
+  // );
 
-  const filteredAccountsWithStatus = useMemo(
-    () =>
-      accountsWithStatus.filter((account) => {
-        const matchesSearch =
-          account.accountName
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          account.accountNumber.toString().includes(searchTerm);
+  // const filteredAccountsWithStatus = useMemo(
+  //   () =>
+  //     accountsWithStatus.filter((account) => {
+  //       const matchesSearch =
+  //         account.accountName
+  //           .toLowerCase()
+  //           .includes(searchTerm.toLowerCase()) ||
+  //         account.accountNumber.toString().includes(searchTerm);
 
-        const hasSubmitted = !!account.postId; // 👈 derive dynamically
+  //       const hasSubmitted = !!account.postId; // 👈 derive dynamically
 
-        const matchesFilter =
-          filterSubmitted === "all" ||
-          (filterSubmitted === "submitted" && hasSubmitted) ||
-          (filterSubmitted === "not-submitted" && !hasSubmitted);
+  //       const matchesFilter =
+  //         filterSubmitted === "all" ||
+  //         (filterSubmitted === "submitted" && hasSubmitted) ||
+  //         (filterSubmitted === "not-submitted" && !hasSubmitted);
 
-        return matchesSearch && matchesFilter;
-      }),
-    [accountsWithStatus, searchTerm, filterSubmitted]
-  );
+  //       return matchesSearch && matchesFilter;
+  //     }),
+  //   [accountsWithStatus, searchTerm, filterSubmitted]
+  // );
 
   const handleGoalUpdate = (updatedFields: Partial<CompanyGoalWithIdType>) => {
     if (onEdit) onEdit(goal.id, updatedFields);
@@ -320,10 +320,9 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         <UserTableForGoals
           users={userBasedRows}
           goal={goal}
-          onViewPostModal={onViewPostModal} // Type '((postId: string) => void) | undefined' is not assignable to type '(postId: string) => void | undefined'.
-          // Type 'undefined' is not assignable to type '(postId: string) => void | undefined'.
+          onViewPostModal={(postId, ref) => onViewPostModal(postId, ref)}
         />
-        <Typography variant="h6" sx={{ mt: 2 }}>
+        {/* <Typography variant="h6" sx={{ mt: 2 }}>
           Account Progress
         </Typography>
         <GoalViewerFilters
@@ -331,14 +330,14 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           setSearchTerm={setSearchTerm}
           filterSubmitted={filterSubmitted}
           setFilterSubmitted={setFilterSubmitted}
-        />
-        <AccountTable
+        /> */}
+        {/* <AccountTable
           goal={goal}
           accounts={filteredAccountsWithStatus}
           navigate={navigate}
           height={500}
           rowHeight={50}
-        />
+        /> */}
       </Collapse>
 
       <EditCompanyGoalModal

@@ -3,6 +3,9 @@ import { Box } from "@mui/material";
 import { CompanyGoalWithIdType } from "../../../utils/types";
 import ArchivedYearSection from "./ArchivedYearSection";
 import "./archivedGoalsLayout.css";
+import PostViewerModal from "../../PostViewerModal";
+import { RootState } from "../../../utils/store";
+import { useSelector } from "react-redux";
 
 interface ArchivedGoalsLayoutProps {
   archivedGoals: CompanyGoalWithIdType[];
@@ -13,7 +16,6 @@ interface ArchivedGoalsLayoutProps {
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
   ) => void;
-  onViewPostModal?: (postId: string) => void;
 }
 
 const ArchivedGoalsLayout = ({
@@ -22,9 +24,10 @@ const ArchivedGoalsLayout = ({
   salesRouteNum,
   onDelete,
   onEdit,
-  onViewPostModal,
 }: ArchivedGoalsLayoutProps) => {
+  const currentUser = useSelector((state: RootState) => state.user.currentUser); // ✅ Required for modal
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+ 
 
   const groupedGoals = useMemo(() => {
     return archivedGoals.reduce<
@@ -72,11 +75,12 @@ const ArchivedGoalsLayout = ({
             salesRouteNum={salesRouteNum}
             onDelete={onDelete}
             onEdit={onEdit}
-            onViewPostModal={onViewPostModal}
             expandedGoalId={expandedGoalId}
             setExpandedGoalId={setExpandedGoalId}
+            // onViewPostModal={openPostViewer}
           />
         ))}
+      
     </Box>
   );
 };

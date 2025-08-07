@@ -18,13 +18,9 @@ import {
 import CompanyGoalCard from "./CompanyGoalCard";
 import "./myCompanyGoals.css";
 import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
+import PostViewerModal from "../PostViewerModal";
 
-interface MyCompanyGoalsProps {
-  onViewPostModal: (postId: string) => void;
-}
-
-const MyCompanyGoals: React.FC<MyCompanyGoalsProps> = ({ onViewPostModal }) => {
-
+const MyCompanyGoals: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const user = useSelector(selectUser);
@@ -35,12 +31,25 @@ const MyCompanyGoals: React.FC<MyCompanyGoalsProps> = ({ onViewPostModal }) => {
   );
 
   const [showArchived, setShowArchived] = useState(false);
+
+  const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  const [postViewerOpen, setPostViewerOpen] = useState(false);
+
+  const openPostViewer = (postId: string) => {
+    setPostIdToView(postId);
+    setPostViewerOpen(true);
+  };
+
+  const closePostViewer = () => {
+    setPostViewerOpen(false);
+  };
+
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "title">(
     "newest"
   );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-   // 🆕 Manage expanded card
+  // 🆕 Manage expanded card
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
 
   const handleToggleExpand = (goalId: string) => {
@@ -99,15 +108,16 @@ const MyCompanyGoals: React.FC<MyCompanyGoalsProps> = ({ onViewPostModal }) => {
         {title}
       </Typography>
       {goals.map((goal) => (
-        <CompanyGoalCard
-          key={goal.id}
-          goal={goal}
-          salesRouteNum={user?.salesRouteNum}
-          mobile={isMobile}
-          expanded={expandedGoalId === goal.id} // 👈 controlled
-          onToggleExpand={handleToggleExpand} // 👈 controlled
-          onViewPostModal={onViewPostModal} // 👈 pass the callback 
-        />
+       <CompanyGoalCard
+  key={goal.id}
+  goal={goal}
+  salesRouteNum={user?.salesRouteNum}
+  mobile={isMobile}
+  expanded={expandedGoalId === goal.id}
+  onToggleExpand={handleToggleExpand}
+  onViewPostModal={openPostViewer} // ✅ Use the actual function
+/>
+
       ))}
     </Box>
   );
@@ -163,30 +173,22 @@ const MyCompanyGoals: React.FC<MyCompanyGoalsProps> = ({ onViewPostModal }) => {
           {sortedGoals.upcomingGoals.length > 0 &&
             renderSection("Upcoming Goals", sortedGoals.upcomingGoals)}
 
-          {/* Archived Goals Toggle */}
-          {/* {sortedGoals.pastGoals.length > 0 && (
-            <>
-              <Button
-                onClick={() => setShowArchived(!showArchived)}
-                variant="text"
-                size="small"
-                sx={{ mt: 2 }}
-              >
-                {showArchived ? "Hide Past Goals" : "Show Past Goals"}
-              </Button>
-              {showArchived &&
-                renderSection("Past Goals", sortedGoals.pastGoals)}
-            </>
-          )} */}
           {archivedGoals.length > 0 && (
             <ArchivedGoalsLayout
               archivedGoals={archivedGoals}
               isMobile={isMobile}
-               salesRouteNum={user?.salesRouteNum}
+              salesRouteNum={user?.salesRouteNum}
             />
           )}
         </>
       )}
+      <PostViewerModal
+        key={postIdToView}
+        postId={postIdToView || ""}
+        open={postViewerOpen}
+        onClose={closePostViewer}
+        currentUserUid={user?.uid}
+      />
     </div>
   );
 };
