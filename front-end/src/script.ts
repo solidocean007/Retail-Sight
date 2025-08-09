@@ -7,6 +7,34 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
+
+export async function findMismatchedAccountNumbers() {
+  const postsRef = collection(db, "posts");
+  const snapshot = await getDocs(postsRef);
+
+  const mismatches: any[] = [];
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    const topLevelAccNum = data.accountNumber || null;
+    const nestedAccNum = data.account?.accountNumber || null;
+
+    if (topLevelAccNum !== nestedAccNum) {
+      mismatches.push({
+        id: doc.id,
+        topLevelAccNum,
+        nestedAccNum,
+      });
+    }
+  });
+
+  console.log(`Found ${mismatches.length} mismatches:`);
+  console.table(mismatches);
+}
+
+
+
+
 // UIDs and info
 // const OLD_UID = "3VwmlHNu0dZZJFM9AgkUI0qyUbu2";
 // const NEW_UID = "QU5bbMlifjPU4bVpaj2gMooI4673";

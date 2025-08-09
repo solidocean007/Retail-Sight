@@ -205,7 +205,10 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleLikeComment = async (comment: CommentType, likes: string[] | undefined) => {
+  const handleLikeComment = async (
+    comment: CommentType,
+    likes: string[] | undefined
+  ) => {
     if (user?.uid && !likes?.includes(user.uid)) {
       try {
         await handleCommentLike({ comment, post, user, liked: true });
@@ -427,16 +430,23 @@ const PostCard: React.FC<PostCardProps> = ({
               </h4>
               <div className="likes-box">
                 <button
-                  className="like-button"
+                  className="like-heart like-button"
                   onClick={handleLikePostButtonClick}
                   disabled={!user}
                 >
                   {likedByUser ? "❤️" : "🤍"}
                 </button>
-                {likesCount === 0 ? null : likesCount === 1 ? (
-                  <h5>{likesCount} like</h5>
-                ) : (
-                  <h5>{likesCount} likes</h5>
+
+                {likesCount > 0 && (
+                  <div
+                    className={`likes-count-badge ${
+                      likesCount >= 10 ? "is-double" : ""
+                    } ${likesCount >= 100 ? "is-triple" : ""}`}
+                    aria-label={`${likesCount} likes`}
+                    title={`${likesCount} likes`}
+                  >
+                    <h6>{likesCount >= 100 ? "99+" : likesCount}</h6>
+                  </div>
                 )}
               </div>
             </div>

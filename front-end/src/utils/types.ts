@@ -3,11 +3,7 @@
 import { serverTimestamp, Timestamp } from "firebase/firestore";
 // import { ChannelType } from "../components/Create-Post/ChannelSelector";
 // import { CategoryType } from "../components/Create-Post/CategorySelector";
-export type NotificationAudienceType =
-  | "user"
-  | "company"
-  | "role"
-  | "global";
+export type NotificationAudienceType = "user" | "company" | "role" | "global";
 
 export type NotificationCategory =
   | "like"
@@ -47,8 +43,6 @@ export type NotificationType = {
   commentId?: string;
 };
 
-
-
 export type CompanyType = {
   id?: string;
   lastUpdated: string;
@@ -62,7 +56,18 @@ export type CompanyType = {
   createdAt?: string;
   accountsId?: string | null;
   goals?: CompanyGoalWithIdType[];
-  companyType: 'owner' | 'distributor' | 'supplier'
+  companyType: "owner" | "distributor" | "supplier";
+
+  // new fields in branch: fix-creating-new-company
+  verified: boolean;
+  tier: "free" | "pro" | "enterprise";
+  limits: {
+    maxUsers: number;
+    maxConnections: number;
+    features: Record<string, boolean>;
+  };
+  usersCount: number;
+  connectionsCount: number;
 };
 
 export interface CompanyTypeWithId extends CompanyType {
@@ -77,6 +82,20 @@ export interface CompanyWithUsersAndId extends CompanyTypeWithId {
   pendingDetails: UserType[];
   otherDetails?: UserType[]; // Optional for future use or undefined roles
 }
+
+// i just made this for this branch.. not sure if the shape is right.. i guess its how we get 
+// started 
+export type ConnectionRequest = {
+  emailLower: string;
+  userType: "distributor" | "supplier";
+  companyNameNormalized: string;
+  companyId: string | null;
+  uid: string;
+  status: "pending" | "approved" | "denied";
+  createdAt: Date;
+  decidedAt?: Date;
+  decidedBy?: Date;
+};
 
 export interface CompanyConnectionType {
   id: string;
@@ -93,6 +112,7 @@ export type TUserInputType = {
   lastNameInput: string;
   emailInput: string;
   companyInput: string;
+  companyTypeInput: string;
   phoneInput: string;
   passwordInput: string;
   verifyPasswordInput: string;
@@ -125,7 +145,7 @@ export interface UserType {
   email: string | undefined; // from signup
   company: string;
   companyId: string;
-  salesRouteNum: string | undefined;
+  salesRouteNum?: string | undefined;
   phone: string | undefined; // from signup
   status?: "active" | "inactive"; // ✅ optional for backward compatibility
 }
@@ -460,8 +480,8 @@ export type CompanyGoalType = {
   accountNumbersForThisGoal: string[]; // ✅ Full scope of accounts this goal applies to
   userAssignments?: {
     [accountNumber: string]: string[];
-  }
-  perUserQuota?: number;// ✅ Minimum required submissions per user (if defined)
+  };
+  perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
   deleted: boolean;
 };

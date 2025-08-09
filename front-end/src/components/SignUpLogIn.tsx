@@ -41,12 +41,17 @@ export const SignUpLogin = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-
+  // New state in SignUpLogIn.tsx
+  const [userType, setUserType] = useState<"distributor" | "supplier" | "">("");
   // Directly initialize emailParam and companyNameParam from URL
   const searchParams = new URLSearchParams(location.search);
 
-  const initialEmailParam = searchParams.get("email") || "";
-  const initialCompanyNameParam = searchParams.get("companyName") || "";
+  const initialEmailParam = (searchParams.get("email") || "")
+    .trim()
+    .toLowerCase();
+  const initialCompanyNameParam = (searchParams.get("companyName") || "")
+    .trim()
+    .toLowerCase();
 
   const [emailParam, setEmailParam] = useState(
     decodeURIComponent(initialEmailParam)
@@ -66,8 +71,8 @@ export const SignUpLogin = () => {
     const companyName = searchParams.get("companyName") || "";
     const mode = searchParams.get("mode");
 
-    setEmailParam(email);
-    setCompanyNameParam(companyName);
+    setEmailParam(email.trim().toLowerCase());
+    setCompanyNameParam(companyName.trim().toLowerCase());
 
     if (email || companyName) {
       setUserInputs((prevState) => ({
@@ -98,6 +103,7 @@ export const SignUpLogin = () => {
     lastNameInput: "",
     emailInput: emailParam,
     companyInput: companyNameParam,
+    companyTypeInput: "",
     phoneInput: "",
     passwordInput: "",
     verifyPasswordInput: "",
@@ -134,6 +140,7 @@ export const SignUpLogin = () => {
       lastNameInput: "",
       emailInput: "",
       companyInput: "",
+      companyTypeInput: "",
       phoneInput: "",
       passwordInput: "",
       verifyPasswordInput: "",
@@ -141,29 +148,28 @@ export const SignUpLogin = () => {
   }
 
   const checkingIfUserExists = async (email: string) => {
-  try {
-    const response = await fetch(
-      "https://my-fetch-data-api.vercel.app/api/checkUserExists", // ✅ correct spelling
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer <optional-if-you-check-auth>",
-        },
-        body: JSON.stringify({ email }),
-      }
-    );
+    try {
+      const response = await fetch(
+        "https://my-fetch-data-api.vercel.app/api/checkUserExists", // ✅ correct spelling
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer <optional-if-you-check-auth>",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
 
-    const result = await response.json();
-    console.log(result); // { exists: true, uid: "..." } or { exists: false }
+      const result = await response.json();
+      console.log(result); // { exists: true, uid: "..." } or { exists: false }
 
-    return result.exists;
-  } catch (error) {
-    console.error("Error checking user existence:", error);
-    return false;
-  }
-};
-
+      return result.exists;
+    } catch (error) {
+      console.error("Error checking user existence:", error);
+      return false;
+    }
+  };
 
   function formButtonMessage() {
     return isSignUp ? "switch to login" : "No account? Sign-up Now";
@@ -177,120 +183,142 @@ export const SignUpLogin = () => {
     lastNameInput,
     emailInput,
     companyInput,
+    companyTypeInput,
     phoneInput,
     passwordInput,
   } = userInputs;
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // prevent refresh
-    setTriedSubmit(true); // set tried attempt to true
+const onSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setTriedSubmit(true);
 
-    if (isSignUp) {
-      const validationErrors = validateUserInputs(userInputs);
-      setErrorsOfInputs(validationErrors);
-      const firstError = Object.values(validationErrors).find(
-        (error) => error !== ""
+  if (isSignUp) {
+    // 1) Validate
+    const validationErrors = validateUserInputs(userInputs);
+    if (!userType) validationErrors.companyInputError ||= "Select distributor or supplier.";
+    setErrorsOfInputs(validationErrors);
+    const firstError = Object.values(validationErrors).find((e) => e);
+    if (firstError) {
+      dispatch(showMessage(`Bad data input: ${firstError}`));
+      return;
+    }
+
+    try {
+      // 2) Normalize
+      const emailNormalized = emailInput.trim().toLowerCase();
+      const companyNormalized = normalizeCompanyInput(companyInput);
+      const phoneNormalized = (phoneInput || "").replace(/\D+/g, "");
+
+      // 3) Create Auth user + base pending user doc
+      const authUser = await handleSignUp(
+        firstNameInput,
+        lastNameInput,
+        emailNormalized,
+        phoneNormalized,
+        passwordInput,
+        userType,                 // ✅ new arg
+        "status-pending",         // ✅ default pending
+        setSignUpError
       );
 
-      if (firstError) {
-        dispatch(showMessage(`Bad data input: ${firstError}`));
-        return; // Stop the process if there's a validation error
+      if (!authUser?.uid) throw new Error("User creation failed");
+
+      // 4) Company resolve/create (seed free + unverified)
+      const existing = await findMatchingCompany(companyNormalized);
+      let companyId = existing?.id ?? "";
+      let companyName = existing?.companyName ?? companyNormalized;
+
+      if (!existing) {
+        const created = await createNewCompany(companyNormalized, authUser.uid, {
+          verified: false,
+          tier: "free",
+          limits: userType === "supplier"
+            ? { maxUsers: 1, maxConnections: 1 }
+            : { maxUsers: 5, maxConnections: 1 },
+        });
+        companyId = created?.companyId;
+        companyName = created?.companyName || companyNormalized;
       }
-      try {
-        // Proceed with user sign-up with the determined company data
-        const authData = await handleSignUp(
-          firstNameInput,
-          lastNameInput,
-          emailInput,
-          "", // Company name will be set later
-          phoneInput,
-          passwordInput,
-          setSignUpError
-        );
 
-        if (authData && authData?.uid) {
-          // Assuming validation passed, proceed with company check
-          const normalizedCompanyInput = normalizeCompanyInput(companyInput);
-          let companyData;
-
-          const matchingCompany = await findMatchingCompany(
-            normalizedCompanyInput
-          );
-          if (matchingCompany) {
-            companyData = {
-              companyName: matchingCompany.companyName,
-              companyId: matchingCompany.id,
-            };
-
-            // If there was an emailParam, the user signed up through an invite link
-            if (initialEmailParam.length > 0) {
-              // Update the invite status to "fulfilled"
-              console.log("initialEmailParam: ", initialEmailParam);
-              const inviteRef = doc(db, "invites", initialEmailParam);
-              try {
-                await updateDoc(inviteRef, {
-                  status: "fulfilled",
-                  fulfilledAt: new Date(),
-                });
-              } catch (updateError) {
-                console.log("error updating invite", updateError);
-              }
-            }
-          } else {
-            companyData = await createNewCompany(
-              normalizedCompanyInput,
-              authData.uid
-            );
-          }
-
-          // Now update the user's Firestore document with the company information
-          const updateData = {
-            company: companyData?.companyName,
-            companyId: companyData?.companyId,
-          };
-          await updateUsersCompany(authData.uid, updateData); // Function to update Firestore user document
-
-          // Fetch user data from Firestore
-          const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid
-          )) as UserType;
-          if (fetchedUserData) {
-            // Assuming fetchedUserData is of UserType or you can map it to UserType
-            dispatch(setUser(fetchedUserData)); // dispatch the full user object
-            dispatch(showMessage(`Sign-up successful`));
-            navigate("/user-home-page");
-          } else {
-            // Handle the case where user data does not exist in Firestore
-            dispatch(setUser(null));
-          }
+      // 5) Invite fulfillment (keeps your behavior)
+      if (initialEmailParam.length > 0) {
+        try {
+          const inviteRef = doc(db, "invites", initialEmailParam);
+          await updateDoc(inviteRef, { status: "fulfilled", fulfilledAt: new Date() });
+        } catch (updateError) {
+          console.log("error updating invite", updateError);
         }
-      } catch (error) {
-        dispatch(showMessage(`Sign-up error: ${error}`));
       }
-    } else {
+
+      // 6) Update user with company attachment (still pending/trial)
+      await updateUsersCompany(authUser.uid, {
+        company: companyName,
+        companyId,
+        role: "status-pending",
+        status: "trial",
+        verified: false,
+        tier: "free",
+        userType, // store on user too for convenience
+        emailLower: emailNormalized,
+      });
+
+      // 7) Create access request so admins/dev can approve
+      //    (Company may be unverified; this gives you a queue.)
       try {
-        // begin login.
-        const authData = await handleLogin(emailInput, passwordInput);
+        const { addDoc, collection, serverTimestamp } = await import("firebase/firestore");
+        await addDoc(collection(db, "accessRequests"), {
+          uid: authUser.uid,
+          emailLower: emailNormalized,
+          userType,
+          companyId: companyId || null,
+          companyNameNormalized: companyNormalized,
+          status: "pending",
+          createdAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.error("Failed to create access request", err);
+      }
 
-        if (authData && authData.uid) {
-          // Fetch user data from Firestore or Firebase auth as required
-          const fetchedUserData = (await fetchUserDocFromFirestore(
-            authData.uid
-          )) as UserType;
-          if (fetchedUserData) {
-            dispatch(setUser(fetchedUserData));
-          }
+      // 8) Load user into Redux (optional but keeps UX smooth)
+      try {
+        const freshUser = (await fetchUserDocFromFirestore(authUser.uid)) as UserType;
+        dispatch(setUser(freshUser || null));
+      } catch {}
+
+      dispatch(showMessage("Sign-up successful — pending approval."));
+      navigate("/trial"); // ✅ NEW: send them to the Trial/Pending dashboard
+    } catch (error) {
+      console.error(error);
+      dispatch(showMessage(`Sign-up error: ${String(error)}`));
+    } finally {
+      resetForm();
+    }
+    return;
+  }
+
+  // === LOGIN PATH ===
+  try {
+    const authData = await handleLogin(emailInput.trim().toLowerCase(), passwordInput);
+    if (authData?.uid) {
+      const fetched = (await fetchUserDocFromFirestore(authData.uid)) as UserType;
+      if (fetched) {
+        dispatch(setUser(fetched));
+        // 🚦 If still pending/trial, send to trial page
+        if (fetched.role === "status-pending" || fetched.status === "trial" || !fetched.verified) {
+          navigate("/trial");
+        } else {
+          navigate("/");
         }
-
-        dispatch(showMessage(`Login successful`));
-        navigate("/");
-      } catch (error) {
-        dispatch(showMessage(`Login error:  ${error}`));
       }
     }
-    console.log("Resetting form");
+    dispatch(showMessage(`Login successful`));
+  } catch (error) {
+    dispatch(showMessage(`Login error:  ${error}`));
+  } finally {
     resetForm();
-  };
+  }
+};
+
 
   const handleResetPassword = async () => {
     if (!userInputs.emailInput) {
@@ -426,6 +454,47 @@ export const SignUpLogin = () => {
                       triedSubmit && errorsOfInputs.companyInputError.length > 0
                     }
                   />
+
+                  {/* Replace the placeholder "company-type" div with this: */}
+                  <div style={{ margin: "8px 0 4px" }}>
+                    <Typography variant="caption">I am a:</Typography>
+                    <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="userType"
+                          value="distributor"
+                          checked={userType === "distributor"}
+                          onChange={() => setUserType("distributor")}
+                        />
+                        Distributor
+                      </label>
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="userType"
+                          value="supplier"
+                          checked={userType === "supplier"}
+                          onChange={() => setUserType("supplier")}
+                        />
+                        Supplier
+                      </label>
+                    </div>
+                  </div>
 
                   <TextField
                     className="signup-textfield"

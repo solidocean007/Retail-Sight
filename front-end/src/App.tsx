@@ -42,10 +42,6 @@ function App(): React.JSX.Element {
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  useEffect(() => {
-    // auditPostDates();
-    // migratePostDates();
-  }, []);
 
   useEffect(() => {
     if (!companyId) return;
@@ -88,7 +84,7 @@ function App(): React.JSX.Element {
     );
     const unsubscribeNotificationsForCompany = dispatch(
       setupNotificationListenersForCompany(currentUser)
-    )
+    );
     const unsubscribeCompanyGoals = dispatch(
       setupCompanyGoalsListener(companyId)
     );

@@ -255,6 +255,7 @@ const EmployeesViewer = () => {
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Phone</TableCell>
+              <TableCell>UID</TableCell>
               <TableCell>Sales Route #</TableCell>
               <TableCell>Role</TableCell>
               <TableCell>Status</TableCell>
@@ -274,6 +275,7 @@ const EmployeesViewer = () => {
                 <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.phone}</TableCell>
+                <TableCell>{user.uid}</TableCell>
                 <TableCell>
                   {editMode[user.uid] ? (
                     <TextField

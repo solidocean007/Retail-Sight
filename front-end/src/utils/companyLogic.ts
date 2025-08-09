@@ -26,25 +26,72 @@ export const findMatchingCompany = async (normalizedInput: string) => {
   }
 };
 
-export const createNewCompany = async (companyName: string, userId: string) => {
-  const timeNow = new Date().toISOString();
-  const normalizedCompanyName = normalizeCompanyInput(companyName);
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "../utils/firebase";
+import { normalizeCompanyInput } from "./companyLogic";
+
+// optional: define a type for clarity
+type CompanyLimits = { maxUsers: number; maxConnections: number };
+type NewCompanyOptions = {
+  tier?: "free" | "pro" | "enterprise";
+  limits?: CompanyLimits;
+  verified?: boolean;                 // canonical new field
+  companyVerified?: boolean;          // legacy (kept for compatibility)
+  userTypeHint?: "distributor" | "supplier"; // to pick sensible free limits
+  extra?: Record<string, any>;        // future-proofing for one-offs
+};
+
+export const createNewCompany = async (
+  companyName: string,
+  userId: string,
+  options: NewCompanyOptions = {}
+) => {
+  const {
+    userTypeHint,
+    tier = "free",
+    verified = false,
+    companyVerified = false, // keep legacy mirror; prefer `verified` going forward
+    limits = userTypeHint === "supplier"
+      ? { maxUsers: 1, maxConnections: 1 }
+      : { maxUsers: 5, maxConnections: 1 },
+    extra = {},
+  } = options;
+
+  const companyNameNormalized = normalizeCompanyInput(companyName);
+  const nowISO = new Date().toISOString();
+
   const newCompanyData = {
-    lastUpdated: timeNow, // begin to track the last time it was updated
-    companyName: companyName,
-    altCompanyNames: [normalizedCompanyName], // Initialize with the companyName lower case without spaces
-    adminsUsers: [userId], // Set the creator as the first admin
+    // ---- canonical fields (new)
+    companyName,                          // as entered
+    companyNameNormalized,                // normalized for lookups
+    verified,                             // new canonical verification flag
+    tier,                                 // "free" | "pro" | "enterprise"
+    limits,                               // { maxUsers, maxConnections }
+    usersCount: 1,                        // creator will be first user (even if pending)
+    connectionsCount: 0,
+
+    createdBy: userId,
+    createdAt: serverTimestamp(),
+    lastUpdated: serverTimestamp(),
+
+    // ---- legacy fields (kept so you don't break existing code)
+    altCompanyNames: [companyNameNormalized],
+    adminsUsers: [userId],                // you may later flip to provisional
     employeeUsers: [],
-    statusPendingUsers: [],
-    companyVerified: false,
-    createdAt: timeNow,
+    statusPendingUsers: [],               // consider deprecating after you rely on accessRequests
+    companyVerified: companyVerified,     // legacy mirror of `verified`
+    createdAtISO: nowISO,                 // your old string field (ok to keep during transition)
+
+    // ---- safe extensibility (future flags, branding, etc.)
+    ...extra,
   };
 
   try {
     const docRef = await addDoc(collection(db, "companies"), newCompanyData);
-    return { id: docRef.id, ...newCompanyData, companyId: docRef.id };
+    // Return a consistent shape (id + companyId both present)
+    return { id: docRef.id, companyId: docRef.id, ...newCompanyData };
   } catch (error) {
     console.error("Error creating new company: ", error);
-    // Additional error handling as needed
+    throw error;
   }
 };

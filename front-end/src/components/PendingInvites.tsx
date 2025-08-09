@@ -11,6 +11,8 @@ import {
 } from "firebase/firestore";
 import "./pendingInvites.css";
 import isUserEmailRegistered from "../utils/userData/isUserEmailRegistered";
+import { useSelector } from "react-redux";
+import { RootState } from "../utils/store";
 
 interface Invite {
   id: string;
@@ -21,6 +23,7 @@ interface Invite {
 const PendingInvites = () => {
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const companyUsers = useSelector((state: RootState)=> state.user.companyUsers);
 
   useEffect(() => {
     const fetchPendingInvites = async () => {
@@ -38,7 +41,15 @@ const PendingInvites = () => {
           ...doc.data(),
         })) as Invite[];
 
-        setInvites(fetchedInvites);
+        // Filter invites to exclude those whose email matches any company user's email
+        const filteredInvites = fetchedInvites.filter(
+          (invite) =>
+            !companyUsers?.some(
+              (user: { email: string }) => user.email.toLowerCase() === invite.email.toLowerCase() //  Type 'string | undefined' is not assignable to type 'string'.
+            )
+        );
+
+        setInvites(filteredInvites);
       } catch (error) {
         console.error("Error fetching pending invites:", error);
       } finally {
@@ -72,7 +83,7 @@ const PendingInvites = () => {
           <thead>
             <tr>
               <th>Email</th>
-              <th>Company</th>
+              <th>inviteId</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -80,7 +91,7 @@ const PendingInvites = () => {
             {invites.map((invite) => (
               <tr key={invite.id}>
                 <td>{invite.email}</td>
-                <td>{invite.companyName || "N/A"}</td>
+                <td>{invite.id || "N/A"}</td>
                 <td>
                   <button
                     className="cancel-button"

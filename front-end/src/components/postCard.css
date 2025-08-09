@@ -245,17 +245,63 @@
   height: 25px;
 }
 
-.like-button button {
-  box-shadow: none;
-}
-
 .store-address-box h5,
 .store-name-number h5,
 .store-name-number h3,
 .store-address-box h6,
 .created-On-Behalf h5,
-.likes-box h5 {
+.like-heart h5 {
   margin: 0px;
+}
+
+.like-heart {
+  position: relative;
+}
+
+.likes-box {
+  position: relative;
+}
+
+.likes-count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 18px;
+  height: 18px; /* 1–9: perfect circle */
+  border-radius: 50%;
+
+  background: var(--primary-blue);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  box-shadow: var(--card-shadow);
+}
+
+.likes-count-badge h6 {
+  /* kill default margins */
+  margin: 0;
+  line-height: 1;
+}
+
+/* 10–99: pill */
+.likes-count-badge.is-double {
+  width: auto;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px; /* expands horizontally */
+  border-radius: 999px; /* pill */
+}
+
+/* 100+: a smidge wider (shows 99+) */
+.likes-count-badge.is-triple {
+  min-width: 26px;
+  padding: 0 6px;
 }
 
 .store-name-number h3 {
@@ -371,9 +417,15 @@
 }
 
 @keyframes flashHighlight {
-  0%   { background-color: #fff3cd; }
-  50%  { background-color: #ffeeba; }
-  100% { background-color: transparent; }
+  0% {
+    background-color: #fff3cd;
+  }
+  50% {
+    background-color: #ffeeba;
+  }
+  100% {
+    background-color: transparent;
+  }
 }
 
 @keyframes flashHighlight {
@@ -425,8 +477,6 @@
     linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%);
   background-size: 20px 20px;
 }
-
-
 
 @media (max-width: 1000px) {
   .image-new-comment-box .post-image {
