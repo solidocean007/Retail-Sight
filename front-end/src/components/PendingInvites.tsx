@@ -7,10 +7,8 @@ import {
   getDocs,
   deleteDoc,
   doc,
-  updateDoc,
 } from "firebase/firestore";
 import "./pendingInvites.css";
-import isUserEmailRegistered from "../utils/userData/isUserEmailRegistered";
 import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
 
@@ -23,7 +21,7 @@ interface Invite {
 const PendingInvites = () => {
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const companyUsers = useSelector((state: RootState)=> state.user.companyUsers);
+  const companyUsers = useSelector((s: RootState) => s.user.companyUsers) ?? [];
 
   useEffect(() => {
     const fetchPendingInvites = async () => {
@@ -31,7 +29,7 @@ const PendingInvites = () => {
         // Fetch pending invites
         const invitesQuery = query(
           collection(db, "invites"),
-          where("status", "==", "pending"),
+          where("status", "==", "pending")
         );
         const invitesSnapshot = await getDocs(invitesQuery);
 
@@ -45,7 +43,9 @@ const PendingInvites = () => {
         const filteredInvites = fetchedInvites.filter(
           (invite) =>
             !companyUsers?.some(
-              (user: { email: string }) => user.email.toLowerCase() === invite.email.toLowerCase() //  Type 'string | undefined' is not assignable to type 'string'.
+              (user: { email?: string }) =>
+                (user.email ?? "").toLowerCase() ===
+                (invite.email ?? "").toLowerCase()
             )
         );
 
@@ -64,7 +64,7 @@ const PendingInvites = () => {
     try {
       await deleteDoc(doc(db, "invites", inviteId));
       setInvites((prevInvites) =>
-        prevInvites.filter((invite) => invite.id !== inviteId),
+        prevInvites.filter((invite) => invite.id !== inviteId)
       );
     } catch (error) {
       console.error("Error cancelling invite:", error);

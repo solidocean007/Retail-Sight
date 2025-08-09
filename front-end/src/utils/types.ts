@@ -147,7 +147,8 @@ export interface UserType {
   companyId: string;
   salesRouteNum?: string | undefined;
   phone: string | undefined; // from signup
-  status?: "active" | "inactive"; // ✅ optional for backward compatibility
+  status?: "active" | "inactive" | "trial"; // ✅ optional for backward compatibility
+  verified?: boolean;
 }
 
 // import { Timestamp } from "firebase/firestore";

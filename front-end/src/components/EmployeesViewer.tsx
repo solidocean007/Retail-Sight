@@ -32,7 +32,7 @@ import CustomConfirmation from "./CustomConfirmation";
 
 const EmployeesViewer = () => {
   const dispatch = useAppDispatch();
-  const localUsers = useSelector(selectCompanyUsers) || [];
+  const localUsers = (useSelector(selectCompanyUsers) ?? []) as UserType[];
   const currentUser = useSelector(selectUser);
   const isSuperAdmin = currentUser?.role === "super-admin";
   const isEmployee = currentUser?.role === "employee";
@@ -52,8 +52,6 @@ const EmployeesViewer = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const sortedUsers: UserType[] = [...localUsers].sort((a, b) => {
-    // Type 'UserType[] | null' must have a '[Symbol.iterator]()' method that returns an iterator.
-    // give yourself a non-undefined string to compare
     const aLast = a.lastName ?? "";
     const bLast = b.lastName ?? "";
 

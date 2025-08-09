@@ -16,7 +16,7 @@ interface FirebaseError extends Error {
 }
 
 type RoleType = "admin" | "super-admin" | "employee" | "status-pending";
-type UserTypeChoice = "distributor" | "supplier";
+type UserTypeChoice = "distributor" | "supplier" | "";
 
 export const handleSignUp = async (
   firstNameInput: string,
@@ -68,7 +68,7 @@ export const handleSignUp = async (
         role,
         status: "trial", // Type '"trial"' is not assignable to type '"active" | "inactive" | undefined'.ts
         verified: false,
-        userType,
+        userType, // 'userType' does not exist in type 'UserType'.
         tier: "free",
         company: "",
         companyId: "",

@@ -191,7 +191,7 @@ export const UserHomePage = () => {
               filteredCount={filteredCount}
               filterText={filterText}
               onClear={clearSearch}
-              fetchedAt={fetchedAt} // Type 'Record<string, string>' is not assignable to type 'string'.
+              fetchedAt={fetchedAt}
             />
           ) : (
             <div className="activity-feed-header-bar icon-bar">

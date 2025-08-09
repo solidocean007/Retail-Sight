@@ -1,5 +1,5 @@
 // companyLogic.ts
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { CompanyType } from "./types";
 
@@ -25,10 +25,6 @@ export const findMatchingCompany = async (normalizedInput: string) => {
     return null;
   }
 };
-
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "../utils/firebase";
-import { normalizeCompanyInput } from "./companyLogic";
 
 // optional: define a type for clarity
 type CompanyLimits = { maxUsers: number; maxConnections: number };

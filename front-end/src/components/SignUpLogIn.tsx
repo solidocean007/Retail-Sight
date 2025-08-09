@@ -33,7 +33,14 @@ import {
 } from "../utils/companyLogic";
 import { updateSelectedUser as updateUsersCompany } from "../DeveloperAdminFunctions/developerAdminFunctions";
 import { SignUpLoginHelmet } from "../utils/helmetConfigurations";
-import { doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { db } from "../utils/firebase";
 // import { useStyles } from "../utils/PostLogic/makeStyles";
 
@@ -188,137 +195,168 @@ export const SignUpLogin = () => {
     passwordInput,
   } = userInputs;
 
-const onSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setTriedSubmit(true);
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTriedSubmit(true);
 
-  if (isSignUp) {
-    // 1) Validate
-    const validationErrors = validateUserInputs(userInputs);
-    if (!userType) validationErrors.companyInputError ||= "Select distributor or supplier.";
-    setErrorsOfInputs(validationErrors);
-    const firstError = Object.values(validationErrors).find((e) => e);
-    if (firstError) {
-      dispatch(showMessage(`Bad data input: ${firstError}`));
+    if (isSignUp) {
+      // 1) Validate
+      const validationErrors = validateUserInputs(userInputs);
+      if (!userType)
+        validationErrors.companyInputError ||=
+          "Select distributor or supplier.";
+      setErrorsOfInputs(validationErrors);
+      const firstError = Object.values(validationErrors).find((e) => e);
+      if (firstError) {
+        dispatch(showMessage(`Bad data input: ${firstError}`));
+        return;
+      }
+
+      try {
+        // 2) Normalize
+        const emailNormalized = emailInput.trim().toLowerCase();
+        const companyNormalized = normalizeCompanyInput(companyInput);
+        const phoneNormalized = (phoneInput || "").replace(/\D+/g, "");
+
+        // 3) Create Auth user + base pending user doc
+        const authUser = await handleSignUp(
+          firstNameInput,
+          lastNameInput,
+          emailNormalized,
+          phoneNormalized,
+          passwordInput,
+          userType, // ✅ new arg
+          "status-pending", // ✅ default pending
+          setSignUpError
+        );
+
+        if (!authUser?.uid) throw new Error("User creation failed");
+
+        // 4) Company resolve/create (seed free + unverified)
+        const existing = await findMatchingCompany(companyNormalized);
+        let companyId = existing?.id ?? "";
+        let companyName = existing?.companyName ?? companyNormalized;
+
+        if (!existing) {
+          const created = await createNewCompany(
+            companyNormalized,
+            authUser.uid,
+            {
+              verified: false,
+              tier: "free",
+              limits:
+                userType === "supplier"
+                  ? { maxUsers: 1, maxConnections: 1 }
+                  : { maxUsers: 5, maxConnections: 1 },
+            }
+          );
+          companyId = created?.companyId;
+          companyName = created?.companyName || companyNormalized;
+        }
+
+        // 5) Invite fulfillment (keeps your behavior)
+        if (initialEmailParam.length > 0) {
+          try {
+            const q = query(
+              collection(db, "invites"),
+              where("email", "==", initialEmailParam),
+              where("status", "==", "pending")
+            );
+            const snap = await getDocs(q);
+            await Promise.all(
+              snap.docs.map((d) =>
+                updateDoc(doc(db, "invites", d.id), {
+                  status: "fulfilled",
+                  fulfilledAt: new Date(),
+                })
+              )
+            );
+          } catch (updateError) {
+            console.log("error updating invite", updateError);
+          }
+        }
+
+        // 6) Update user with company attachment (still pending/trial)
+        await updateUsersCompany(authUser.uid, {
+          company: companyName,
+          companyId,
+          role: "status-pending",
+          status: "trial",
+          verified: false,
+          tier: "free",
+          userType, // store on user too for convenience
+          emailLower: emailNormalized,
+        });
+
+        // 7) Create access request so admins/dev can approve
+        //    (Company may be unverified; this gives you a queue.)
+        try {
+          const { addDoc, collection, serverTimestamp } = await import(
+            "firebase/firestore"
+          );
+          await addDoc(collection(db, "accessRequests"), {
+            uid: authUser.uid,
+            emailLower: emailNormalized,
+            userType,
+            companyId: companyId || null,
+            companyNameNormalized: companyNormalized,
+            status: "pending",
+            createdAt: serverTimestamp(),
+          });
+        } catch (err) {
+          console.error("Failed to create access request", err);
+        }
+
+        // 8) Load user into Redux (optional but keeps UX smooth)
+        try {
+          const freshUser = (await fetchUserDocFromFirestore(
+            authUser.uid
+          )) as UserType;
+          dispatch(setUser(freshUser || null));
+        } catch {}
+
+        dispatch(showMessage("Sign-up successful — pending approval."));
+        navigate("/trial"); // ✅ NEW: send them to the Trial/Pending dashboard
+      } catch (error) {
+        console.error(error);
+        dispatch(showMessage(`Sign-up error: ${String(error)}`));
+      } finally {
+        resetForm();
+      }
       return;
     }
 
+    // === LOGIN PATH ===
     try {
-      // 2) Normalize
-      const emailNormalized = emailInput.trim().toLowerCase();
-      const companyNormalized = normalizeCompanyInput(companyInput);
-      const phoneNormalized = (phoneInput || "").replace(/\D+/g, "");
-
-      // 3) Create Auth user + base pending user doc
-      const authUser = await handleSignUp(
-        firstNameInput,
-        lastNameInput,
-        emailNormalized,
-        phoneNormalized,
-        passwordInput,
-        userType,                 // ✅ new arg
-        "status-pending",         // ✅ default pending
-        setSignUpError
+      const authData = await handleLogin(
+        emailInput.trim().toLowerCase(),
+        passwordInput
       );
-
-      if (!authUser?.uid) throw new Error("User creation failed");
-
-      // 4) Company resolve/create (seed free + unverified)
-      const existing = await findMatchingCompany(companyNormalized);
-      let companyId = existing?.id ?? "";
-      let companyName = existing?.companyName ?? companyNormalized;
-
-      if (!existing) {
-        const created = await createNewCompany(companyNormalized, authUser.uid, {
-          verified: false,
-          tier: "free",
-          limits: userType === "supplier"
-            ? { maxUsers: 1, maxConnections: 1 }
-            : { maxUsers: 5, maxConnections: 1 },
-        });
-        companyId = created?.companyId;
-        companyName = created?.companyName || companyNormalized;
-      }
-
-      // 5) Invite fulfillment (keeps your behavior)
-      if (initialEmailParam.length > 0) {
-        try {
-          const inviteRef = doc(db, "invites", initialEmailParam);
-          await updateDoc(inviteRef, { status: "fulfilled", fulfilledAt: new Date() });
-        } catch (updateError) {
-          console.log("error updating invite", updateError);
+      if (authData?.uid) {
+        const fetched = (await fetchUserDocFromFirestore(
+          authData.uid
+        )) as UserType;
+        if (fetched) {
+          dispatch(setUser(fetched));
+          // 🚦 If still pending/trial, send to trial page
+          if (
+            fetched.role === "status-pending" ||
+            fetched.status === "trial" ||
+            !fetched.verified
+          ) {
+            navigate("/trial");
+          } else {
+            navigate("/");
+          }
         }
       }
-
-      // 6) Update user with company attachment (still pending/trial)
-      await updateUsersCompany(authUser.uid, {
-        company: companyName,
-        companyId,
-        role: "status-pending",
-        status: "trial",
-        verified: false,
-        tier: "free",
-        userType, // store on user too for convenience
-        emailLower: emailNormalized,
-      });
-
-      // 7) Create access request so admins/dev can approve
-      //    (Company may be unverified; this gives you a queue.)
-      try {
-        const { addDoc, collection, serverTimestamp } = await import("firebase/firestore");
-        await addDoc(collection(db, "accessRequests"), {
-          uid: authUser.uid,
-          emailLower: emailNormalized,
-          userType,
-          companyId: companyId || null,
-          companyNameNormalized: companyNormalized,
-          status: "pending",
-          createdAt: serverTimestamp(),
-        });
-      } catch (err) {
-        console.error("Failed to create access request", err);
-      }
-
-      // 8) Load user into Redux (optional but keeps UX smooth)
-      try {
-        const freshUser = (await fetchUserDocFromFirestore(authUser.uid)) as UserType;
-        dispatch(setUser(freshUser || null));
-      } catch {}
-
-      dispatch(showMessage("Sign-up successful — pending approval."));
-      navigate("/trial"); // ✅ NEW: send them to the Trial/Pending dashboard
+      dispatch(showMessage(`Login successful`));
     } catch (error) {
-      console.error(error);
-      dispatch(showMessage(`Sign-up error: ${String(error)}`));
+      dispatch(showMessage(`Login error:  ${error}`));
     } finally {
       resetForm();
     }
-    return;
-  }
-
-  // === LOGIN PATH ===
-  try {
-    const authData = await handleLogin(emailInput.trim().toLowerCase(), passwordInput);
-    if (authData?.uid) {
-      const fetched = (await fetchUserDocFromFirestore(authData.uid)) as UserType;
-      if (fetched) {
-        dispatch(setUser(fetched));
-        // 🚦 If still pending/trial, send to trial page
-        if (fetched.role === "status-pending" || fetched.status === "trial" || !fetched.verified) {
-          navigate("/trial");
-        } else {
-          navigate("/");
-        }
-      }
-    }
-    dispatch(showMessage(`Login successful`));
-  } catch (error) {
-    dispatch(showMessage(`Login error:  ${error}`));
-  } finally {
-    resetForm();
-  }
-};
-
+  };
 
   const handleResetPassword = async () => {
     if (!userInputs.emailInput) {
