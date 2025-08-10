@@ -101,7 +101,7 @@ const EmployeesViewer = () => {
     const inviteFunction = httpsCallable(functions, "sendInvite");
     const inviteDocRef = doc(collection(db, "invites"));
     const timestamp = new Date().toISOString();
-    const inviteLink = `${
+    const inviteLink = `${ // i need to fix this link to go to /request-access with prefilled variables right?
       window.location.origin
     }/sign-up-login?companyName=${encodeURIComponent(
       currentUser.company

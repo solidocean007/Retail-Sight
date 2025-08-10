@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+  // Helper functions
+    function isDeveloper() {
+      return request.auth.token.role == "developer";
+    }
+
+    function isAdmin() {
+      return request.auth.token.role == "admin" || 
+             request.auth.token.role == "super-admin";
+    }
+
+    function isInCompany(companyId) {
+      return request.auth.token.companyId == companyId;
+    }
+
+    function isOwnCompany(companyId) {
+      return isAdmin() && request.auth.token.companyId == companyId;
+    }
+
+    function isUpdatingReadByOnly() {
+      // Allow user to update only their own UID in readBy array
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
+    }
+    
+    
+  
+  	//Gate developer-only data 
+    match /developerData/{docId} {
+  		allow read, write: if
+    		request.auth != null &&
+    		get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "developer" &&
+    		get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == "displaygram.com";
+		}
+    
+    // Notifications collection
+    match /notifications/{companyId}/items/{notificationId} {
+
+      // READ: Allow users in the company to read notifications
+      allow get, list: if isInCompany(companyId);
+
+      // WRITE: 
+      // Developer can write to any company
+      // Admins can write only to their own company
+      allow create: if isDeveloper() || (isAdmin() && isOwnCompany(companyId));
+
+      // UPDATE: 
+      // Only developer can update (e.g., pin or edit notifications)
+      // Users can only update `readBy` to mark as read
+      allow update: if isDeveloper() || 
+                    (isInCompany(companyId) && isUpdatingReadByOnly());
+
+      // DELETE: Only developer
+      allow delete: if isDeveloper();
+    }
+
+  
+  	// Allow users to read only their own doc but not write to it.
+  	match /users/{userId} {
+  		allow read: if request.auth.uid == userId; // Only let users read their own doc
+  		allow update: if
+  			request.auth.uid == userId &&
+  			!( "role" in request.resource.data ) && // 🔒 block role changes
+  			!( "companyId" in request.resource.data ); // 🔒 block company changes
+		}
+
+
+    // Allow public read access to posts marked as public or allow authenticated access.  this only allows writes to company posts of the user.  what if we want to allow a user to comment on another companies posts
+    // perhaps another set of rules further down?
+    match /posts/{postId} {
+      allow read: if resource.data.visibility == "public" || request.auth != null;
+     	allow write: if
+  			request.auth != null &&
+  			get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == resource.data.companyId;
+    }
+    
+    // Allow cross-company engagement via comments.  Review the match logic change i made here
+    match /comments/{commentId} {
+  		allow read: if true; // or only for signed-in users
+  		allow write: if request.auth != null && 
+      request.resource.data.userId == request.auth.uid;
+		}
+
+
+    // Restrict collections to owners or users listed in sharedWith array
+    match /collections/{collectionId} {
+      allow read: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid ||
+        (resource.data.sharedWith != null && request.auth.uid in resource.data.sharedWith)
+      );
+    }
+
+    
+        // Public read access for app configuration
+    match /appConfig/{docId} {
+      allow read: if true;
+    }
+
+
+    // Default catch-all rule for any other document.  i dont have time to define rules for all collections right now.. and dont want to limit writes during this time
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

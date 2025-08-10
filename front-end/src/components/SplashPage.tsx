@@ -1,7 +1,7 @@
 // SplashPage.tsx
 import { useNavigate } from "react-router-dom";
 import "./splashPage.css"; // Make sure this reflects the styles below
-import { MutableRefObject, useEffect, useState } from "react";
+import {useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { useRef } from "react";
@@ -55,7 +55,7 @@ const SplashPage = () => {
               <li
                 onClick={() => {
                   // handleLoginClick();
-                  navigate("/sign-up-login");
+                  navigate("/signup");
                 }}
               >
                 Login
@@ -214,7 +214,7 @@ const SplashPage = () => {
               </ul>
 
               <div className="content-button-box">
-                <Link to="/sign-up-login" className="enter-site-btn">
+                <Link to="/signup" className="enter-site-btn">
                   Join for free
                 </Link>
               </div>
@@ -227,11 +227,11 @@ const SplashPage = () => {
               <p>
                 Your security is our priority. Passwords are protected by
                 Firebase, Google's trusted authentication service. Images are
-                securely stored in Firestore, ensuring your data rests on
+                securely stored in Firebase Storage, ensuring your data rests on
                 reliable, world-class infrastructure.
               </p>
               <div className="content-button-box">
-                <Link to="/sign-up-login" className="enter-site-btn">
+                <Link to="/signup" className="enter-site-btn">
                   Sign Up Now
                 </Link>
               </div>
@@ -251,7 +251,7 @@ const SplashPage = () => {
                 Elevate your team’s performance, share your retail story today.
               </p>
               <div className="content-button-box">
-                <Link to="/sign-up-login" className="enter-site-btn">
+                <Link to="/signup" className="enter-site-btn">
                   Sign Up Now
                 </Link>
               </div>

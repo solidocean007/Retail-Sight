@@ -17,6 +17,8 @@ import { AccessDenied } from "../components/ErrorPages/AccessDenied";
 import { ViewSharedPost } from "../components/ViewSharedPost";
 import DeveloperDashboard from "../components/DeveloperDashboard/DeveloperDashboard";
 import NotificationsPage from "../components/NotificationsPage";
+import LoginForm from "../components/Auth/LoginForm";
+import SignupRequestForm from "../components/Auth/SignUpRequestForm";
 
 export const AppRoutes = () => {
   return (
@@ -31,6 +33,10 @@ export const AppRoutes = () => {
       <Route path="/developer-dashboard" element={<DeveloperDashboard/>} />
       <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/sign-up-login" element={<SignUpLogin />} />
+      <Route path="/login" element={<LoginForm />} />
+      <Route path="/signup" element={<SignupRequestForm />} />
+      <Route path="/request-access" element={<SignupRequestForm />} />
+      {/* <Route path="/invite/:inviteId" element={<InviteAcceptForm />} /> */}
       <Route path="/user-home-page" element={<UserHomePage />} />
       <Route path="/create-post" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />

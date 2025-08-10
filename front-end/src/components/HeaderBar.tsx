@@ -19,7 +19,7 @@ const HeaderBar = ({
   openPostViewer,
 }: {
   toggleFilterMenu: () => void;
-  openPostViewer: (postId: string) => void;
+  openPostViewer?: (postId: string) => void;
 }) => {
   const mobile = useMediaQuery("(max-width: 900px)");
   const notifications = useSelector(selectAllNotifications);
@@ -41,7 +41,7 @@ const HeaderBar = ({
 
   useOutsideAlerter(menuRef, () => setShowMenuTab(false));
 
-  const goToSignUpLogin = () => navigate("/sign-up-login");
+  const goToSignUpLogin = () => navigate("/sign-up-login"); // i ll need to think about where this should take someone?  this page or signup? or login?
   const handleCreatePostClick = () =>
     protectedAction(() => navigate("/create-post"));
   const handleTutorialClick = () =>

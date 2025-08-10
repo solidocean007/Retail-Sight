@@ -7,7 +7,7 @@ const About = () => {
   const navigate = useNavigate();
 
   const handleSignUpClick = () => {
-    navigate("/sign-up-login");
+    navigate("/signup");
   };
 
   return (

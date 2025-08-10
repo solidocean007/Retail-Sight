@@ -80,7 +80,7 @@ export const ViewSharedPost = () => {
         <Button
           variant="contained"
           color="secondary"
-          onClick={() => navigate("/sign-up-login?mode=signup")}
+          onClick={() => navigate("/signup")}
         >
           Join Displaygram to Share Your Own!
         </Button>
@@ -106,7 +106,7 @@ export const ViewSharedPost = () => {
               variant="contained"
               color="secondary"
               className="cta-learn-button"
-              onClick={() => navigate("/sign-up-login?mode=signup")}
+              onClick={() => navigate("/signup")}
             >
               Learn More & Get Started
             </Button>
@@ -132,7 +132,7 @@ export const ViewSharedPost = () => {
             <Button
               variant="contained"
               color="secondary"
-              onClick={() => navigate("/sign-up-login?mode=signup")}
+              onClick={() => navigate("/signup")}
             >
               Join Displaygram to Share Your Own!
             </Button>

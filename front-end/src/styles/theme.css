@@ -80,7 +80,7 @@
   --btn-error-hover: rgba(211, 47, 47, 0.8);
   --btn-error-text-color: var(--white);
 
-  --btn-text-color: var(--button-text-color); /* already set per theme */
+  --btn-text-color: var(--text-on-button); /* already set per theme */
   --btn-border-radius: 8px;
   --btn-padding: 0.75rem 1.5rem;
 }
@@ -246,13 +246,9 @@
   color: var(--text-color) !important;
 }
 
-a {
-  color: var(--link-color);
-}
+a { color: var(--link-color); }
+a:hover { color: var(--link-hover-color); }
 
-a {
-  color: var(--link-hover-color);
-}
 
 /* Tables */
 table {

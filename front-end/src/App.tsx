@@ -42,6 +42,9 @@ function App(): React.JSX.Element {
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
+  useEffect(()=> {
+  },[])
+
 
   useEffect(() => {
     if (!companyId) return;

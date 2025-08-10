@@ -40,7 +40,6 @@ import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import DashMenu from "./DashMenu.tsx";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 import MyGoals from "./GoalIntegration/MyGoals.tsx";
-import PostViewerModal from "./PostViewerModal.tsx";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -52,7 +51,10 @@ export const Dashboard = () => {
   const companyId = user?.companyId;
   // const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
   const [drawerOpen, setDrawerOpen] = useState(true);
-
+  // Note from chat:
+  // Dashboard default mode race: const isEmployee = user?.role === "employee"; 
+  // runs before the user is known, so the initial dashboardMode defaults to the 
+  // non‑employee branch and never re-derives after the user loads.
   // Placeholder for role check. Replace 'user.role' with the actual role property.
   const isEmployee = user?.role === "employee";
   // const isEmployee = true;
@@ -135,7 +137,7 @@ export const Dashboard = () => {
           >
             <Typography
               variant="h1"
-              component="div"
+              component="h1"
               sx={{
                 flexGrow: 1,
                 fontSize: "40px",

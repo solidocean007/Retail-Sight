@@ -5,7 +5,7 @@ const Features = () => {
   const navigate = useNavigate();
 
   const handleSignUpClick = () => {
-    navigate("/sign-up-login");
+    navigate("/signup-login");
   };
 
   return (

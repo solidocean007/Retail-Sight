@@ -54,7 +54,7 @@ interface PostCardProps {
   id: string;
   currentUserUid: string | undefined;
   post: PostWithID;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
   getPostsByTag?: (
     hashTag: string,
     companyID?: string
@@ -511,7 +511,6 @@ const PostCard: React.FC<PostCardProps> = ({
         comments={comments}
         onLikeComment={handleLikeComment}
         onDeleteComment={handleDeleteComment}
-        likedByUser={likedByUser}
       />
       <ImageModal
         isOpen={isImageModalOpen}

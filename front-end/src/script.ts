@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc } from "@firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, setDoc } from "@firebase/firestore";
 import { db } from "./utils/firebase"; // adjust path as needed
 
 import {
@@ -32,6 +32,21 @@ export async function findMismatchedAccountNumbers() {
   console.table(mismatches);
 }
 
+export async function testEmail() {
+  try {
+    await addDoc(collection(db, "mail"), {
+      to: ["clintonWilliams007@gmail.com"], // array of recipients
+      message: {
+        subject: "Test Email from Firestore Trigger",
+        text: "If you are reading this, your extension works!",
+        html: "<h1>Firestore Trigger Email Test</h1><p>This is a test email.</p>"
+      }
+    });
+    console.log("Test email document written to 'mail' collection");
+  } catch (err) {
+    console.error("Error adding test email:", err);
+  }
+}
 
 
 

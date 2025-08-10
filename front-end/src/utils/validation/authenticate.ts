@@ -68,11 +68,8 @@ export const handleSignUp = async (
         role,
         status: "trial", // Type '"trial"' is not assignable to type '"active" | "inactive" | undefined'.ts
         verified: false,
-        userType, // 'userType' does not exist in type 'UserType'.
-        tier: "free",
         company: "",
         companyId: "",
-        createdAt: serverTimestamp(),
       };
 
       await setDoc(doc(collection(db, "users"), uid), {

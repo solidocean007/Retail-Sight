@@ -15,8 +15,10 @@ import { NotificationType } from "../../utils/types";
 
 const NotificationDropdown: React.FC<{
   onClose: () => void;
-  openPostViewer: (postId: string) => void;
-}> = ({ onClose, openPostViewer }) => {
+  openPostViewer?: (postId: string) => void;
+}> = ({ onClose, 
+  openPostViewer
+ }) => {
   const dispatch = useAppDispatch(); // ✅ thunk-aware
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -74,7 +76,7 @@ const NotificationDropdown: React.FC<{
                       })
                     );
                   }
-                  if (notif.postId) openPostViewer(notif.postId);
+                  if (notif.postId && openPostViewer) openPostViewer(notif.postId);
                   // Open modal to view full details
                   setSelectedNotif(notif);
                 }}

@@ -319,13 +319,13 @@ export const SignUpLoginHelmet = () => (
       name="keywords"
       content="Displaygram sign up, Displaygram login, create account, access dashboard, join Displaygram"
     />
-    <link rel="canonical" href="https://displaygram.com/sign-up-login" />
+    <link rel="canonical" href="https://displaygram.com/signup" />
     <meta property="og:title" content="Sign Up or Log In to Displaygram" />
     <meta
       property="og:description"
       content="Join Displaygram today to manage, archive, and share your retail displays. Start by creating an account or logging in here."
     />
-    <meta property="og:url" content="https://displaygram.com/sign-up-login" />
+    <meta property="og:url" content="https://displaygram.com/signup" />
     <meta property="og:type" content="website" />
     <meta
       property="og:image"
@@ -341,7 +341,7 @@ export const SignUpLoginHelmet = () => (
       name="twitter:image"
       content="https://firebasestorage.googleapis.com/path-to-your-sign-up-login-twitter-image.jpg"
     />
-    <meta name="twitter:url" content="https://displaygram.com/sign-up-login" />
+    <meta name="twitter:url" content="https://displaygram.com/signup" />
   </Helmet>
 );
 
