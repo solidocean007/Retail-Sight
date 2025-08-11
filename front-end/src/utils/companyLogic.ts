@@ -29,7 +29,7 @@ export const findMatchingCompany = async (normalizedInput: string) => {
 // optional: define a type for clarity
 type CompanyLimits = { maxUsers: number; maxConnections: number };
 type NewCompanyOptions = {
-  tier?: "free" | "pro" | "enterprise";
+  tier?: "freeLimited" | "pro" | "enterprise" | "freeNoLimits";
   limits?: CompanyLimits;
   verified?: boolean;                 // canonical new field
   companyVerified?: boolean;          // legacy (kept for compatibility)
@@ -48,7 +48,8 @@ export const createNewCompany = async (
     verified = false,
     companyVerified = false, // keep legacy mirror; prefer `verified` going forward
     limits = userTypeHint === "supplier"
-      ? { maxUsers: 1, maxConnections: 1 }
+      ? { maxUsers: 1, maxConnections: 1 } // these fields should be set eventually by me in my developer dashboard.. so when we write the cloud function these fields given now can be
+      // defaults
       : { maxUsers: 5, maxConnections: 1 },
     extra = {},
   } = options;
