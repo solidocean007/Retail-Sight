@@ -123,10 +123,7 @@ export default function RequestAccessForm() {
     return (
       <div className="auth-page">
         {currentUser && (
-          <div
-            className="auth-alert"
-            style={{ background: "#ffefc1", padding: "1em" }}
-          >
+          <div className="auth-alert">
             <strong>You are already logged in</strong> as{" "}
             <b>{currentUser.email}</b>.
             <br />

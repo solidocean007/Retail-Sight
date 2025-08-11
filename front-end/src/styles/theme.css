@@ -18,10 +18,12 @@
   --primary-blue: #3b82f6;
   --primary-blue-dark: #2563eb;
   --gold: #ffd700; /* ✅ Now valid */
-
+  
   /* Backgrounds */
   --background-body: var(--gray-50);
   --input-background: var(--white);
+  --alert-background: red;
+  --alert-text-color: white;
 
   /* Buttons */
   --outlined-button-border: var(--primary-blue);

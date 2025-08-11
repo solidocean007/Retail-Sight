@@ -172,12 +172,12 @@ form {
 
 /* Alert */
 .auth-alert {
+  background-color: var(--alert-background);
   margin: 0.75rem 0 1rem;
   padding: 0.75rem 1rem;
   border-radius: 10px;
-  background: rgba(220, 38, 38, 0.12);
   border: 1px solid rgba(220, 38, 38, 0.35);
-  color: #ffb3b3;
+  color: var(--alert-text-color);
   font-size: 0.95rem;
 }
 

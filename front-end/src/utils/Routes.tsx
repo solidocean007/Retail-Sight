@@ -1,6 +1,6 @@
 // Routes.tsx
 import { Route, Routes } from "react-router-dom";
-import { SignUpLogin } from "../components/SignUpLogIn";
+// import { SignUpLogin } from "../components/SignUpLogIn";
 import { UserHomePage } from "../components/UserHomePage";
 import { CreatePost } from "../components/Create-Post/CreatePost";
 import { Dashboard } from "../components/Dashboard";
@@ -20,6 +20,7 @@ import NotificationsPage from "../components/NotificationsPage";
 import LoginForm from "../components/Auth/LoginForm";
 // import SignupRequestForm from "../components/Auth/SignUpRequestForm";
 import RequestAccessForm from "../components/Auth/RequestAccessForm";
+import { Navigate } from "react-router-dom"; // add this import
 
 export const AppRoutes = () => {
   return (
@@ -31,12 +32,11 @@ export const AppRoutes = () => {
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-service" element={<TermsOfService />} />
       <Route path="/help-support" element={<HelpSupport />} />
-      <Route path="/developer-dashboard" element={<DeveloperDashboard/>} />
+      <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/notifications" element={<NotificationsPage />} />
-      <Route path="/sign-up-login" element={<SignUpLogin />} />
+      <Route path="/sign-up-login" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginForm />} />
-      {/* <Route path="/signup" element={<SignupRequestForm />} /> */}
-      {/* <Route path="/request-access" element={<SignupRequestForm />} /> */}
+      <Route path="/signup" element={<RequestAccessForm />} />
       <Route path="/request-access" element={<RequestAccessForm />} />
       {/* <Route path="/invite/:inviteId" element={<InviteAcceptForm />} /> */}
       <Route path="/user-home-page" element={<UserHomePage />} />
