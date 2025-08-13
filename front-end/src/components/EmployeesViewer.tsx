@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { UserType } from "../utils/types";
-import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, Timestamp, where } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useSelector } from "react-redux";
 import {
@@ -29,6 +29,8 @@ import PendingInvites from "./PendingInvites";
 import { getFunctions, httpsCallable } from "@firebase/functions";
 import { useAppDispatch } from "../utils/store";
 import CustomConfirmation from "./CustomConfirmation";
+import { checkUserExists } from "../utils/validation/checkUserExists";
+import { showMessage } from "../Slices/snackbarSlice";
 
 const EmployeesViewer = () => {
   const dispatch = useAppDispatch();
@@ -74,61 +76,104 @@ const EmployeesViewer = () => {
     }
   };
 
-  const handleInviteSubmit = async (e: React.FormEvent) => {
+const handleInviteSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  const normalizedEmail = inviteEmail.toLowerCase().trim();
+  const normalizedEmail = inviteEmail.trim().toLowerCase();
+  if (!normalizedEmail || !currentUser) {
+    setFeedbackMessage("Missing email or user context");
+    return;
+  }
 
-  if (!inviteEmail || !currentUser) {
-    return setFeedbackMessage("Missing email or user context");
+  // Optional: quick client-side short circuit using local list
+  if (Array.isArray(localUsers)) {
+    const alreadyInList = localUsers.some(
+      (u) => (u.email || "").toLowerCase() === normalizedEmail
+    );
+    if (alreadyInList) {
+      const msg = "This user is already in your company.";
+      setFeedbackMessage(msg);
+      dispatch(showMessage(msg));
+      return;
+    }
   }
 
   try {
-    // 🔥 Check if a user already exists with this email
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("email", "==", normalizedEmail));
-    const snapshot = await getDocs(q);
-
-    if (!snapshot.empty) {
-      setFeedbackMessage(
-        "A user with this email already exists. They can log in or reset their password."
-      );
+    // 1) Prevent duplicate pending invites to the same email/company
+    const dupQ = query(
+      collection(db, "invites"),
+      where("inviteeEmail", "==", normalizedEmail),
+      where("companyId", "==", currentUser.companyId),
+      where("status", "==", "pending")
+    );
+    const dupSnap = await getDocs(dupQ);
+    if (!dupSnap.empty) {
+      const msg = "An invite is already pending for this email.";
+      setFeedbackMessage(msg);
+      dispatch(showMessage(msg));
       return;
     }
 
-    // 📤 Continue sending invite
-    const functions = getFunctions();
-    const inviteFunction = httpsCallable(functions, "sendInvite");
+    // 2) Authoritative existence check in Firebase Auth (Vercel function)
+    let exists = false;
+    let existingUid: string | undefined = undefined;
+    try {
+      const resp = await checkUserExists(normalizedEmail);
+      exists = !!resp?.exists;
+      existingUid = resp?.uid;
+    } catch {
+      // If the API is down, you can still proceed with an invite
+      // (or bail out; up to your policy)
+    }
+
+    // If they already exist AND already belong to this company, stop
+    if (exists && existingUid) {
+      const uSnap = await getDoc(doc(db, "users", existingUid));
+      if (uSnap.exists() && uSnap.data()?.companyId === currentUser.companyId) {
+        const msg = "User is already a member of this company.";
+        setFeedbackMessage(msg);
+        dispatch(showMessage(msg));
+        return;
+      }
+      // Otherwise you can still invite them to join this company.
+    }
+
+    // 3) Create invite doc
     const inviteDocRef = doc(collection(db, "invites"));
-    const timestamp = new Date().toISOString();
-    const inviteLink = `${ // i need to fix this link to go to /request-access with prefilled variables right?
-      window.location.origin
-    }/sign-up-login?companyName=${encodeURIComponent(
-      currentUser.company
-    )}&email=${encodeURIComponent(normalizedEmail)}&mode=signup`;
+    const inviteId = inviteDocRef.id;
+    const inviteLink = `${window.location.origin}/accept-invite/${inviteId}`;
 
-    await inviteFunction({
-      email: normalizedEmail,
-      inviter: `${currentUser.firstName} ${currentUser.lastName}`,
-      inviteLink,
-    });
-
-    await setDoc(inviteDocRef, {
+    const payload = {
+      inviteId,
       companyId: currentUser.companyId,
-      email: normalizedEmail,
-      inviter: `${currentUser.firstName} ${currentUser.lastName}`,
-      link: inviteLink,
+      companyName: currentUser.company, // or currentCompanyName
+      inviterUid: currentUser.uid,
+      inviterName: `${currentUser.firstName} ${currentUser.lastName}`,
+      inviterEmail: currentUser.email,
+      inviteeEmail: normalizedEmail,
+      role: "employee",
       status: "pending",
-      timestamp,
-    });
+      createdAt: serverTimestamp(),
+      expiresAt: Timestamp.fromDate(
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      ), // 7 days; optional
+      link: inviteLink,
+    };
 
-    setFeedbackMessage("Invite sent successfully!");
+    await setDoc(inviteDocRef, payload);
+
+    const msg = "Invite sent successfully!";
+    setFeedbackMessage(msg);
+    dispatch(showMessage(msg));
     setInviteEmail("");
-  } catch (error) {
-    console.error("Invite error:", error);
-    setFeedbackMessage("Error sending invite.");
+  } catch (err: any) {
+    console.error(err);
+    const msg = err?.message || "Error sending invite.";
+    setFeedbackMessage(msg);
+    dispatch(showMessage(msg));
   }
 };
+
 
 
   const handleEditChange = (

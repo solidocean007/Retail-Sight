@@ -21,6 +21,7 @@ import LoginForm from "../components/Auth/LoginForm";
 // import SignupRequestForm from "../components/Auth/SignUpRequestForm";
 import RequestAccessForm from "../components/Auth/RequestAccessForm";
 import { Navigate } from "react-router-dom"; // add this import
+import InviteAcceptForm from "../components/Auth/InviteAcceptForm";
 
 export const AppRoutes = () => {
   return (
@@ -38,7 +39,7 @@ export const AppRoutes = () => {
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<RequestAccessForm />} />
       <Route path="/request-access" element={<RequestAccessForm />} />
-      {/* <Route path="/invite/:inviteId" element={<InviteAcceptForm />} /> */}
+      <Route path="/accept-invite/:inviteId" element={<InviteAcceptForm />} />
       <Route path="/user-home-page" element={<UserHomePage />} />
       <Route path="/create-post" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />

@@ -47,8 +47,8 @@ export type CompanyType = {
   id?: string;
   lastUpdated: string;
   companyName: string;
-  altCompanyNames: string[];
-  superAdminsUsers: string[];
+  altCompanyNames?: string[];
+  superAdminsUsers?: string[];
   adminsUsers?: string[];
   employeeUsers?: string[];
   statusPendingUsers?: string[];
@@ -64,10 +64,7 @@ export type CompanyType = {
   limits: {
     maxUsers: number;
     maxConnections: number;
-    features: Record<string, boolean>;
   };
-  usersCount: number;
-  connectionsCount: number;
 };
 
 export interface CompanyTypeWithId extends CompanyType {

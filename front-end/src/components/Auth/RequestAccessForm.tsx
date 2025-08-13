@@ -9,6 +9,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
+import { getApiBaseUrl } from "../../utils/getApiBase";
 
 type UserTypeHint = "distributor" | "supplier";
 
@@ -27,15 +28,46 @@ export default function RequestAccessForm() {
     notes: "",
   });
   const [password, setPassword] = useState(""); // if you prefer passwordless, replace with email link flow
+  const [verifyPassword, setVerifyPassword] = useState(""); // if you prefer passwordless, replace with email link flow
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
+    null
+  );
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
   const navigate = useNavigate();
 
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+
+    if (value.length < 8) {
+      setPasswordError("Password must be at least 8 characters.");
+    } else {
+      setPasswordError(null);
+    }
+
+    // Also check if confirmation matches
+    if (verifyPassword && value !== verifyPassword) {
+      setVerifyPasswordError("Passwords do not match.");
+    } else {
+      setVerifyPasswordError(null);
+    }
+  };
+
+  const handleVerifyPasswordChange = (value: string) => {
+    setVerifyPassword(value);
+
+    if (password && value !== password) {
+      setVerifyPasswordError("Passwords do not match.");
+    } else {
+      setVerifyPasswordError(null);
+    }
+  };
+
   useEffect(() => {
     const auth = getAuth();
-    console.log(currentUser);
-
     return onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
     });
@@ -51,20 +83,27 @@ export default function RequestAccessForm() {
     setForm((f) => ({ ...f, [name]: value }));
 
   // utils/apiBase.ts
-  function getApiBaseUrl() {
-    if (import.meta.env.DEV) {
-      // Local dev — point to your deployed Vercel API
-      return "https://my-fetch-data-api.vercel.app/api";
-    }
-    // Production/preview — can just use relative path
-    return "/api";
-  }
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+
     try {
+      if (passwordError || verifyPasswordError) {
+        throw new Error("Please fix the password errors before submitting.");
+      }
+      // ✅ Password checks before anything else
+      if (!password || !verifyPassword) {
+        throw new Error("Please enter and confirm your password.");
+      }
+      if (password !== verifyPassword) {
+        throw new Error("Passwords do not match.");
+      }
+      if (password.length < 8) {
+        throw new Error("Password must be at least 8 characters long.");
+      }
       const auth = getAuth();
       const currentUser = auth.currentUser;
 
@@ -74,8 +113,9 @@ export default function RequestAccessForm() {
         const cred = await createUserWithEmailAndPassword(
           auth,
           form.workEmail.trim().toLowerCase(),
-          password || crypto.randomUUID().slice(0, 12) // optional: generate temp pwd if you don't want a visible field
+          password
         );
+
         uid = cred.user.uid;
       }
 
@@ -127,7 +167,6 @@ export default function RequestAccessForm() {
             <strong>You are already logged in</strong> as{" "}
             <b>{currentUser.email}</b>.
             <br />
-            Continuing will tie this request to your existing account.
             <br />
             If you meant to sign up with a new email,{" "}
             <button onClick={handleLogout}>log out first</button>.
@@ -237,9 +276,26 @@ export default function RequestAccessForm() {
             className="auth-input"
             placeholder="••••••••"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => handlePasswordChange(e.target.value)}
             autoComplete="new-password"
           />
+          {passwordError && <div className="auth-error">{passwordError}</div>}
+
+          <label className="auth-label" htmlFor="verify-password">
+            Verify Password
+          </label>
+          <input
+            id="verify-password"
+            type="password"
+            className="auth-input"
+            placeholder="••••••••"
+            value={verifyPassword}
+            onChange={(e) => handleVerifyPasswordChange(e.target.value)}
+            autoComplete="new-password"
+          />
+          {verifyPasswordError && (
+            <div className="auth-error">{verifyPasswordError}</div>
+          )}
 
           <label className="auth-label" htmlFor="phone">
             Phone (optional)
@@ -247,7 +303,7 @@ export default function RequestAccessForm() {
           <input
             id="phone"
             className="auth-input"
-            placeholder="555-555-5555"
+            placeholder="555-867-5309"
             value={form.phone}
             onChange={(e) => setField("phone", e.target.value)}
             autoComplete="tel"
@@ -266,7 +322,16 @@ export default function RequestAccessForm() {
           />
 
           <div className="auth-actions">
-            <button className="btn auth-submit" disabled={submitting}>
+            <button
+              className="btn auth-submit"
+              disabled={
+                submitting ||
+                !!passwordError ||
+                !!verifyPasswordError ||
+                password.length === 0 ||
+                verifyPassword.length === 0
+              }
+            >
               {submitting && !error ? "Submitting…" : "Submit request"}
             </button>
           </div>
