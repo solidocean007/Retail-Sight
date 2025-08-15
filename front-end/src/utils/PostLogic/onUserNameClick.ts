@@ -1,15 +1,18 @@
 // onUserNameClick.ts
-import { PostType } from "../types";
+import { PostWithID } from "../types";
 import { AppDispatch } from "../store";
 import { openUserModal } from "../../Slices/userModalSlice";
 
-export const onUserNameClick = (post: PostType, dispatch: AppDispatch) => {
-  // Ensure that the post object contains the necessary user fields
-  if (post.postUserName && post.postUserEmail) {
-    const userData = {
-      userName: post.postUserName,
-      userEmail: post.postUserEmail,
-    };
-    dispatch(openUserModal(userData));
-  }
+export const onUserNameClick = (post: PostWithID, dispatch: AppDispatch) => {
+  if (!post.postUserFirstName || !post.postUserLastName || !post.postUserEmail) return;
+
+  const userData = {
+    fullName: `${post.postUserFirstName} ${post.postUserLastName}`,
+    userEmail: post.postUserEmail,
+    postId: post.id,
+    storeName: post.account?.accountName || "a display",
+    displayDate: post.displayDate || "",
+  };
+
+  dispatch(openUserModal(userData)); 
 };

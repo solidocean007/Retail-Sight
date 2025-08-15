@@ -6,7 +6,11 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
 } from "firebase/auth";
+import { useAppDispatch } from "../../utils/store";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { checkUserExists } from "../../utils/validation/checkUserExists";
 
 interface LoginFormProps {
   defaultRedirect?: string;
@@ -25,6 +29,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
   defaultRedirect = "/user-home-page",
   enableGoogle = true,
 }) => {
+  const dispatch = useAppDispatch();
+  const [submittedReset, setSubmittedReset] = useState(false);
+
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +73,40 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      dispatch(showMessage("Please enter your email."));
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    try {
+      const exists = await checkUserExists(normalizedEmail);
+      if (!exists) {
+        dispatch(
+          showMessage(
+            "This email is not registered. Please check for typos or sign up."
+          )
+        );
+        return;
+      }
+
+      await sendPasswordResetEmail(getAuth(), normalizedEmail);
+      dispatch(showMessage("Password reset email sent! Check your inbox."));
+      setSubmittedReset(true);
+    } catch (error: any) {
+      if (error.code === "auth/invalid-email") {
+        dispatch(showMessage("Please enter a valid email address."));
+      } else {
+        dispatch(
+          showMessage("Unable to send reset email. Please try again later.")
+        );
+      }
+      console.error("Password Reset Error:", error);
+    }
+  };
+
   return (
     <main className="auth-page" role="main" aria-labelledby="login-title">
       <div className="auth-card">
@@ -85,6 +126,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
             aria-live="assertive"
           >
             {err}
+          </div>
+        )}
+        {submittedReset && (
+          <div className="auth-banner">
+            ✅ Password reset email sent. Check your inbox and follow the link
+            to set a new password.
           </div>
         )}
 
@@ -161,10 +208,18 @@ const LoginForm: React.FC<LoginFormProps> = ({
             )}
           </div>
 
-          <nav className="auth-links" aria-label="Account help">
-            <Link to="/forgot-password" className="auth-link">
+          <nav
+            className="auth-links"
+            aria-label="Account help"
+            onClick={handleResetPassword}
+          >
+            <button
+              type="button"
+              className="auth-link reset-password-link"
+              onClick={handleResetPassword}
+            >
               Forgot password?
-            </Link>
+            </button>
           </nav>
 
           <div className="auth-divider" role="separator" aria-hidden="true">
@@ -176,10 +231,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
             <Link to="/request-access" className="auth-link">
               Request access
             </Link>{" "}
-            <span>or</span>{" "}
+            {/* <span>or</span>{" "}
             <Link to="/use-invite" className="auth-link">
               use an invite link
-            </Link>
+            </Link> */}
           </footer>
         </form>
       </div>

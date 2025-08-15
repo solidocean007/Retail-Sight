@@ -3,9 +3,7 @@ import { useSelector } from "react-redux";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
 import {
-  selectCompanyUsers,
   selectUser,
-  setCompanyUsers,
 } from "../Slices/userSlice.ts";
 // import {
 //   getCompanyUsersFromIndexedDB,

@@ -7,11 +7,26 @@
   }
 }
 
+.user-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(0, 0, 0, 0.4); /* Dim background */
+  display: flex;
+  justify-content: center;
+  align-items: center; /* ⬅️ Center vertically */
+  z-index: 1000; /* Ensure it's on top */
+  animation: fadeIn 0.3s ease;
+}
+
 .user-modal {
   /* height: 400px; */
   height: auto;
   border-radius: 10px;
-  background-color: whitesmoke;
+  background-color: var(--user-modal-background);
+  color: var(--text-color);
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
   position: relative; /* To position close button and other absolute elements */
@@ -31,13 +46,21 @@
 
 .close {
   position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   top: 10px;
   right: 10px;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 14px;
   background: none;
   border: none;
-  color: #aaa;
+  border-radius: 50%;
+  padding: 5px;
+  height: 30px;
+  width: 30px;
+  color: var(--text-color);
   transition: color 0.2s ease;
 }
 
@@ -45,7 +68,7 @@
   color: #777;
 }
 
-.modal h2 {
+user-modal h2 {
   margin-top: 0; /* Adjust according to your preference */
   font-size: 24px;
   color: #333;
@@ -62,4 +85,19 @@
 .user-email a {
   text-decoration: none; /* Remove underline */
   transition: color 0.2s ease;
+}
+
+.cta-email-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-blue);
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+.cta-email-button:hover {
+  background-color: var(--primary-blue-dark);
 }

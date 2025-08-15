@@ -1,39 +1,44 @@
 // userModalSlice.ts
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../utils/store";
 
-interface UserModalState {
+interface UserModalPayload {
+  fullName: string;
+  userEmail: string;
+  postId: string;
+  storeName: string;
+  displayDate: string;
+}
+
+interface UserModalState extends Partial<UserModalPayload> {
   isUserModalOpen: boolean;
-  userName: string | null;
-  userEmail: string | null;
 }
 
 const initialState: UserModalState = {
   isUserModalOpen: false,
-  userName: null,
-  userEmail: null,
+  fullName: "",
+  userEmail: "",
+  postId: "",
+  storeName: "",
+  displayDate: "",
 };
 
 const userModalSlice = createSlice({
   name: "userModal",
   initialState,
   reducers: {
-    openUserModal: (
-      state,
-      action: PayloadAction<{ userName: string; userEmail: string }>,
-    ) => {
-      state.isUserModalOpen = true;
-      state.userName = action.payload.userName;
-      state.userEmail = action.payload.userEmail; // Type '{ postUserName: string | undefined; postUserId: string | undefined; postUserCompany: string | undefined; postUserEmail: string | undefined; }' is missing the following properties from type 'WritableDraft<UserType>': uid, firstName, lastName, email, and 2 more.ts(2740)
+    openUserModal: (state, action: PayloadAction<UserModalPayload>) => {
+      return {
+        ...state,
+        isUserModalOpen: true,
+        ...action.payload,
+      };
     },
     closeUserModal: (state) => {
       state.isUserModalOpen = false;
-      state.userName = null;
-      state.userEmail = null;
     },
-    clearUserModal: (state) => {
-      state.userEmail = null;
-      state.userName = null;
+    clearUserModal: () => {
+      return { ...initialState };
     },
   },
 });
@@ -43,7 +48,16 @@ export const { openUserModal, closeUserModal, clearUserModal } =
 
 export const selectIsUserModalOpen = (state: RootState) =>
   state.userModal.isUserModalOpen;
-export const selectUserName = (state: RootState) => state.userModal.userName;
-export const selectUserEmail = (state: RootState) => state.userModal.userEmail;
+
+export const selectUserModalData = createSelector(
+  (state: RootState) => state.userModal,
+  (userModal) => ({
+    fullName: userModal.fullName,
+    userEmail: userModal.userEmail,
+    postId: userModal.postId,
+    storeName: userModal.storeName,
+    displayDate: userModal.displayDate,
+  })
+);
 
 export default userModalSlice.reducer;

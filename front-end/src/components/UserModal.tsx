@@ -2,38 +2,47 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   closeUserModal,
   selectIsUserModalOpen,
-  selectUserEmail,
-  selectUserName,
+  selectUserModalData,
 } from "../Slices/userModalSlice";
+import { useRef } from "react";
 import "./userModal.css";
+import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 
 const UserModal = () => {
   const dispatch = useDispatch();
-  const userName = useSelector(selectUserName);
-  const userEmail = useSelector(selectUserEmail);
-  const isUserModalOpen = useSelector(selectIsUserModalOpen);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const isOpen = useSelector(selectIsUserModalOpen);
+  const { postId, userEmail, fullName } = useSelector(selectUserModalData);
 
-  const handleClose = () => {
-    dispatch(closeUserModal());
-  };
+  useOutsideAlerter(modalRef, () => dispatch(closeUserModal()));
 
-  if (!isUserModalOpen) return null;
+  if (!isOpen || !postId || !userEmail || !fullName) return null;
+
+  const postLink = `${window.location.origin}/view-post/${postId}`;
+  const mailBody = `Hi ${fullName},\n\nNice work on your recent post! Just wanted to reach out and say thanks for sharing your display.\n\nYou can view it here: ${postLink}\n\nBest,\n[Your Name]`;
+
+  const mailtoLink = `mailto:${userEmail}?subject=${encodeURIComponent("Nice job on your display!")}&body=${encodeURIComponent(mailBody)}`;
 
   return (
     <div className="user-modal-overlay">
-      <div className="user-modal">
-        <button className="close" onClick={handleClose}>
+      <div className="user-modal" ref={modalRef}>
+        <button className="close" onClick={() => dispatch(closeUserModal())}>
           <span>&times;</span>
         </button>
-        {/* <span className="close" onClick={handleClose}>&times;</span> */}
-        <h2>{userName}</h2>
-        {/* <p className="user-company">{userData?.postUserCompany}</p> */}
+        <h2>{fullName}</h2>
         <p className="user-email">
           <a href={`mailto:${userEmail}`}>{userEmail}</a>
         </p>
+        <p style={{ marginTop: "0.5rem" }}>
+          Want to encourage or thank them directly?
+        </p>
+        <a className="cta-email-button" href={mailtoLink}>
+          Send them a message
+        </a>
       </div>
     </div>
   );
 };
 
 export default UserModal;
+

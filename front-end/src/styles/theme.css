@@ -8,6 +8,7 @@
   --gray-200: #e2e8f0; /* ✅ Cooler, replaces #e5e7eb */
   --gray-300: #d1d5db;
   --gray-600: #4b5563;
+  --gray-700: #374151;
   --gray-800: #1f2937;
   --gray-900: #111827;
 
@@ -18,11 +19,15 @@
   --primary-blue: #3b82f6;
   --primary-blue-dark: #2563eb;
   --gold: #ffd700; /* ✅ Now valid */
-  
+  --pale-aqua: #e0f7fa;
+  --deep-navy: #012a4a;
+
   /* Backgrounds */
   --background-body: var(--gray-50);
   --input-background: var(--white);
+  --user-modal-background: var(--muted-steel);
   --alert-background: red;
+
   --alert-text-color: white;
 
   /* Buttons */
@@ -39,36 +44,42 @@
   --bgColor-muted: #151b23;
 
   /* Gradients — Light Theme */
-  --light-blue-1: rgba(100, 116, 139, 0.95);
-  --light-blue-2: rgba(107, 124, 147, 0.92);
-  --light-blue-3: rgba(113, 131, 158, 0.88);
-  --light-blue-4: rgba(88, 106, 135, 0.85);
-  --light-blue-5: rgba(74, 91, 118, 0.82);
+  --muted-steel: rgba(100, 116, 139, 0.95);
+  --blue-gray: rgba(107, 124, 147, 0.92);
+  --soft-denim: rgba(113, 131, 158, 0.88);
+  --medium-slate-blue: rgba(88, 106, 135, 0.85);
+  --dusk-blue: rgba(74, 91, 118, 0.82);
 
   --post-card-animated-gradient-light: linear-gradient(
     200deg,
-    var(--light-blue-1) 0%,
-    var(--light-blue-2) 20%,
-    var(--light-blue-3) 55%,
-    var(--light-blue-4) 70%,
-    var(--light-blue-5) 100%
+    var(--muted-steel) 0%,
+    var(--blue-gray) 20%,
+    var(--soft-denim) 55%,
+    var(--medium-slate-blue) 70%,
+    var(--dusk-blue) 100%
   );
 
   /* Gradients — Dark Theme */
-  --dark-blue-1: #1a237e;
-  --dark-blue-2: #283593;
-  --dark-blue-3: #3949ab;
-  --dark-blue-4: #5c6bc0;
-  --dark-blue-5: #7986cb;
+  --deep-abyss: #0b1120; /* very dark blue-black */
+  --shadow-slate: #172133; /* cool and slightly purple-toned */
+  --midnight-indigo: #24304a; /* deep muted blue */
+  --moody-navy: #32435f; /* slightly more blue but still dark */
+  --faded-cadet: #4b5c78; /* soft blue-gray highlight */
 
   --post-card-animated-gradient-dark: linear-gradient(
     200deg,
-    #0f172a 0%,
-    #1e293b 20%,
-    #334155 55%,
-    #475569 70%,
-    #64748b 100%
+    var(--deep-abyss) 0%,
+    var(--shadow-slate) 20%,
+    var(--midnight-indigo) 55%,
+    var(--moody-navy) 70%,
+    var(--faded-cadet) 100%
   );
+
+  --link-color: var(--gray-700);
+  --link-hover-color: var(--gray-900);
+
+  --auth-footer-background: var(--light-blue);
+  --auth-footer-text: var(--dark-blue);
 
   --divider-color: #ccc; /* Light gray for light mode */
 
@@ -101,6 +112,7 @@
   --dashboard-header-background: var(--gray-200); /* works */
   --tab-background: var(--background-body);
   --tab-background-selected: var(--gray-200);
+  --user-modal-background: var(--muted-steel);
 
   --dashboard-card: var(--gray-200);
   --card-outline: var(--gray-800);
@@ -110,8 +122,8 @@
   --company-goal-text-color: var(--gray-900);
   --header-title: var(--gray-900);
 
-  --link-color: #228b22; /* Forest green */
-  --link-hover-color: #2ecc71; /* Brighter green */
+  --link-color: var(--gray-300);
+  --link-hover-color: var(--gray-700);
 
   --button-background: transparent;
   --button-background-hover: var(--gray-800);
@@ -130,6 +142,9 @@
   --menu-background-color: var(--white);
   --alt-menu-background-color: var(--gray-100);
   --footer-background-color: var(--gray-100);
+
+  --auth-footer-background: var(--pale-aqua);
+  --auth-footer-text: var(--deep-navy);
   --sidebar-background-color: var(--gray-100);
   --drawer-background: #ffffff;
   --switch-color: var(--gray-900);
@@ -159,6 +174,7 @@
   --dashboard-header-background: var(--gray-800);
   --tab-background: var(--gray-800);
   --tab-background-selected: var(--light-blue-2);
+  --user-modal-background: var(--deep-abyss);
 
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);
@@ -169,7 +185,7 @@
   --company-goal-text-color: var(--gray-900);
   --header-title: var(--white);
   --link-color: #93c5fd; /* Light-blue-300 (Tailwind-ish) */
-  --link-hover-color: #60a5fa; /* Slightly brighter */
+  --link-hover-color: var(--primary-blue); /* Slightly brighter */
 
   --button-background: var(--primary-blue);
   --button-background-hover: var(--primary-blue-dark);
@@ -188,6 +204,10 @@
   --menu-background-color: var(--gray-800);
   --alt-menu-background-color: var(--gray-900);
   --footer-background-color: var(--gray-800);
+
+  --auth-footer-background: var(--deep-navy);
+  --auth-footer-text: var(--pale-aqua);
+
   --sidebar-background-color: var(--gray-800);
   --drawer-background: #2c3148;
   --switch-color: #facc15;
@@ -248,9 +268,12 @@
   color: var(--text-color) !important;
 }
 
-a { color: var(--link-color); }
-a:hover { color: var(--link-hover-color); }
-
+a {
+  color: var(--link-color);
+}
+a:hover {
+  color: var(--link-hover-color);
+}
 
 /* Tables */
 table {

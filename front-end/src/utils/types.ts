@@ -135,6 +135,8 @@ export interface UserType {
     | "developer"
     | "supervisor";
   uid: string; // from Firebase
+  createdAt: string | null;
+  updatedAt: string | null;
   firstName: string | undefined; // from signup
   lastName: string | undefined; // from signup
   profileUrlThumbnail?: string;

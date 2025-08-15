@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser, selectCompanyUsers, setCompanyUsers } from "../Slices/userSlice";
 import {
@@ -7,64 +7,59 @@ import {
 } from "../utils/database/userDataIndexedDB";
 import { db } from "../utils/firebase";
 import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
+import { normalizeTimestamps } from "../utils/normalizeTimestamps";
 
 export default function useCompanyUsersSync() {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
-  const companyUsers = useSelector(selectCompanyUsers); // ✅ read from Redux
+  const companyUsers = useSelector(selectCompanyUsers);
+  const usersRef = useRef(companyUsers);
+  useEffect(() => { usersRef.current = companyUsers; }, [companyUsers]);
 
   useEffect(() => {
     if (!user?.companyId) return;
     let unsub = () => {};
 
     (async () => {
-      // 🚫 Skip everything if Redux already has users
-      if ((companyUsers || []).length > 0) {
-        // console.log("[UserSync] Redux already has users, skipping initial load");
-        return;
-      }
-
-      // 1️⃣ Try loading from IndexedDB
+      // If Redux already has users, you can skip the initial fetch, but keep the live listener.
       const cached = await getCompanyUsersFromIndexedDB();
-      if (cached?.length) {
-        // console.log("[UserSync] Loaded cached users:", cached.length);
-        dispatch(setCompanyUsers(cached));
+      if (cached?.length && (!companyUsers || companyUsers.length === 0)) {
+        const normalized = normalizeTimestamps(cached);
+        dispatch(setCompanyUsers(normalized));
       }
 
-      const q = query(
-        collection(db, "users"),
-        where("companyId", "==", user.companyId)
-      );
+      const q = query(collection(db, "users"), where("companyId", "==", user.companyId));
 
-      // 2️⃣ Manual fallback fetch from Firestore (only if cache was empty)
-      if (!cached?.length) {
+      // Manual fetch only if Redux & cache were empty
+      if ((!companyUsers || companyUsers.length === 0) && (!cached || cached.length === 0)) {
         try {
           const snap = await getDocs(q);
           const users = snap.docs.map((d) => ({ ...(d.data() as any), uid: d.id }));
-          // console.log("[UserSync] Fetched from Firestore:", users.length);
-          dispatch(setCompanyUsers(users));
-          await saveCompanyUsersToIndexedDB(users);
+          const normalized = normalizeTimestamps(users);
+          dispatch(setCompanyUsers(normalized));
+          await saveCompanyUsersToIndexedDB(normalized); // <-- save normalized
         } catch (err) {
           console.warn("[UserSync] Manual fetch failed:", err);
         }
       }
 
-      // 3️⃣ Real-time sync: update on add/delete/change
+      // Real-time
       unsub = onSnapshot(q, async (snap) => {
         const fresh = snap.docs.map((d) => ({ ...(d.data() as any), uid: d.id }));
-        // console.log("[UserSync] Snapshot update:", fresh.length);
+        const normalized = normalizeTimestamps(fresh);
 
-        // Only update if something changed
-        const currentUids = new Set(companyUsers?.map((u) => u.uid));
-        const newUids = new Set(fresh.map((u) => u.uid));
-        const changed = fresh.length !== companyUsers?.length ||
-          [...newUids].some((uid) => !currentUids.has(uid));
+        // compare with latest Redux (via ref)
+        const curr = usersRef.current ?? [];
+        const currIds = new Set(curr.map((u: any) => u.uid));
+        const freshIds = new Set(normalized.map((u: any) => u.uid));
+
+        const changed =
+          normalized.length !== curr.length ||
+          [...freshIds].some((id) => !currIds.has(id));
 
         if (changed) {
-          dispatch(setCompanyUsers(fresh));
-          await saveCompanyUsersToIndexedDB(fresh);
-        } else {
-          // console.log("[UserSync] No change in users, skipping update");
+          dispatch(setCompanyUsers(normalized));
+          await saveCompanyUsersToIndexedDB(normalized); // <-- save normalized
         }
       });
     })();

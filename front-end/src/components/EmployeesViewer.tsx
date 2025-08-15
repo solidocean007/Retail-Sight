@@ -31,6 +31,7 @@ import { useAppDispatch } from "../utils/store";
 import CustomConfirmation from "./CustomConfirmation";
 import { checkUserExists } from "../utils/validation/checkUserExists";
 import { showMessage } from "../Slices/snackbarSlice";
+import { normalizeTimestamps } from "../utils/normalizeTimestamps";
 
 const EmployeesViewer = () => {
   const dispatch = useAppDispatch();
@@ -206,7 +207,7 @@ const handleInviteSubmit = async (e: React.FormEvent) => {
           u // 'localUsers' is possibly 'null'
         ) => (u.uid === userId ? updatedUser : u)
       );
-      dispatch(setCompanyUsers(updatedUsers));
+      dispatch(setCompanyUsers(normalizeTimestamps(updatedUsers)));
       await updateUserRoleInIndexedDB(userId, updatedUser.role);
       handleEditToggle(userId);
     } catch (err) {
@@ -231,7 +232,7 @@ const handleInviteSubmit = async (e: React.FormEvent) => {
           ? { ...u, status: "inactive" as "inactive" }
           : u
       );
-      dispatch(setCompanyUsers(updatedUsers));
+      dispatch(setCompanyUsers(normalizeTimestamps(updatedUsers)));
 
       // Success feedback
       setFeedbackMessage(

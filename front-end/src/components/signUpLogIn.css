@@ -11,6 +11,16 @@
   padding-bottom: 50px; /* Also helps mobile layout */
 }
 
+.auth-banner {
+  background-color: #e6f4ea;
+  color: #256029;
+  border: 1px solid #b7e1cd;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
 .sign-up-container {
   display: flex;
   flex-direction: column;
@@ -231,7 +241,8 @@ form {
 .auth-links {
   margin-top: 0.25rem;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+
 }
 .auth-link {
   color: var(--link-color);
@@ -261,6 +272,19 @@ form {
   text-align: center;
   font-size: 0.95rem;
   opacity: 0.9;
+}
+
+.auth-form footer {
+  background-color: var(--auth-footer-background);
+  color: var(--auth-footer-text);
+}
+
+.auth-form link:hover {
+  color: var()
+}
+
+.auth-form footer {
+  text-decoration: underline;
 }
 
 /* Mobile comfort */

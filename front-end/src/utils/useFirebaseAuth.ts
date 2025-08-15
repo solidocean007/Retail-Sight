@@ -8,6 +8,21 @@ import { fetchUserDocFromFirestore } from "./userData/fetchUserDocFromFirestore"
 import { RootState } from "./store";
 import { UserType } from "./types";
 
+// import { Timestamp } from "firebase/firestore";
+
+const toIso = (val: any) =>
+  val?.toDate ? val.toDate().toISOString() : val || null;
+
+function normalizeUserData(raw: UserType) {
+  if (!raw) return raw;
+  return {
+    ...raw,
+    createdAt: toIso(raw.createdAt),
+    updatedAt: toIso(raw.updatedAt),
+    userTypeHint: undefined,
+  };
+}
+
 export const useFirebaseAuth = () => {
   const dispatch = useDispatch();
   // Select the current user from the Redux store
@@ -27,7 +42,7 @@ export const useFirebaseAuth = () => {
             user.uid,
           )) as UserType;
           if (userDataFromFirestore) {
-            dispatch(setUser(userDataFromFirestore));
+            dispatch(setUser(normalizeUserData(userDataFromFirestore)));
           } else {
             // Handle the case where user data does not exist in Firestore
             dispatch(setUser(null));

@@ -3,6 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { UserType } from "../utils/types";
+import { normalizeTimestamps } from "../utils/normalizeTimestamps"; // 👈 central helper
 
 const STALE_MS = 60_000; // 1 minute
 
@@ -33,10 +34,9 @@ export const fetchCompanyUsersFromFirestore = createAsyncThunk<
     );
 
     const snap = await getDocs(usersQuery);
-    const users: UserWithId[] = snap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as UserType),
-    }));
+    const users: UserWithId[] = snap.docs.map((d) =>
+      normalizeTimestamps({ id: d.id, ...(d.data() as UserType) })
+    );
 
     userCache[companyId] = { timestamp: now, data: users };
     return users;
@@ -46,3 +46,4 @@ export const fetchCompanyUsersFromFirestore = createAsyncThunk<
     return rejectWithValue(msg);
   }
 });
+

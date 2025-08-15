@@ -8,7 +8,6 @@ import { RootState, useAppDispatch } from "./utils/store";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
-import UserModal from "./components/UserModal";
 import { AppRoutes } from "./utils/Routes";
 import { getTheme } from "./theme";
 import React, { useCallback, useEffect, useState } from "react";
@@ -27,6 +26,7 @@ import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
 import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
 import { setupNotificationListenersForUser } from "./utils/listeners/setupNotificationListenersForUser";
 import { setupNotificationListenersForCompany } from "./utils/listeners/setupNotificationListenerForCompany";
+import UserModal from "./components/UserModal";
 // import { auditPostDates, migratePostDates } from "./script";
 
 function App(): React.JSX.Element {
@@ -42,9 +42,7 @@ function App(): React.JSX.Element {
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  useEffect(()=> {
-  },[])
-
+  useEffect(() => {}, []);
 
   useEffect(() => {
     if (!companyId) return;
