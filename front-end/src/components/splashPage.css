@@ -17,6 +17,9 @@
   padding: 1rem 2rem;
   background-color: #002b45; /* Dark header background */
   width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .logo-box {
@@ -372,6 +375,29 @@ footer a:hover {
 
 /* Responsive styles for screens less than or equal to 768px wide (tablets). */
 @media (max-width: 750px) {
+   .top-nav {
+    position: relative; /* anchor for abs menu */
+  }
+
+    .top-nav ul {
+    position: absolute;
+    top: 100%;                 /* appear below the bar, not at 0 */
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: center;
+    transform: translateY(-100%);   /* hidden offscreen */
+    background-color: #002b45;
+    z-index: 1001;
+    transition: transform 0.3s ease-in-out;
+    pointer-events: none;           /* 👈 don't intercept clicks when hidden */
+  }
+
+  .top-nav ul.isMenuOpen {
+    transform: translateY(0);
+    pointer-events: auto;           /* 👈 clickable when opened */
+  }
+  
   .first-content,
   .fifth-content {
     width: 100%; /* Full width on smaller screens */

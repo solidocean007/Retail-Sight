@@ -12,10 +12,6 @@ const SplashPage = () => {
   const authLoaded = user !== undefined;
   const navigate = useNavigate();
   const [isMenuOpen, setMenuOpen] = useState(false);
-  const sectionRefs = useMemo(
-    () => Array.from({ length: 6 }, () => React.createRef<HTMLElement>()),
-    []
-  );
 
   useEffect(() => {
     if (authLoaded && user) navigate("/user-home-page");
@@ -25,11 +21,16 @@ const SplashPage = () => {
     setMenuOpen(!isMenuOpen);
   };
 
-  useEffect(() => {
-    const onHashChange = () => setMenuOpen(false);
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
+  const handleAnchor = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault(); // always do our own scroll, even if hash matches
+    setMenuOpen(false);
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      // update the URL without reloading or double hashchange loops
+      history.replaceState(null, "", `#${id}`);
+    }
+  };
 
   return (
     <>
@@ -53,25 +54,28 @@ const SplashPage = () => {
           <div className="navbar">
             <ul id="splash-nav" className={isMenuOpen ? "isMenuOpen" : ""}>
               <li>
-                <Link to="/login">Login</Link>
+                {/* <Link to="/login" onClick={() => setMenuOpen(false)}> */}
+                <Link to="/login">
+                  Login
+                </Link>
               </li>
               <li>
-                <a href="#objective" onClick={toggleMenu}>
+                <a href="#objective" onClick={handleAnchor("objective")}>
                   Objective
                 </a>
               </li>
               <li>
-                <a href="#features" onClick={toggleMenu}>
+                <a href="#features" onClick={handleAnchor("features")}>
                   Features
                 </a>
               </li>
               <li>
-                <a href="#pricing" onClick={toggleMenu}>
+                <a href="#pricing" onClick={handleAnchor("pricing")}>
                   Pricing
                 </a>
               </li>
               <li>
-                <a href="#security" onClick={toggleMenu}>
+                <a href="#security" onClick={handleAnchor("security")}>
                   Security
                 </a>
               </li>
@@ -124,7 +128,6 @@ const SplashPage = () => {
 
           <section
             id="objective"
-            ref={sectionRefs[1]}
             className="second-section"
           >
             <div className="second-content">
@@ -164,7 +167,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section id="features" ref={sectionRefs[2]} className="section-three">
+          <section id="features" className="section-three">
             <div className="hero-content-left">
               <div className="features-image-box">
                 <img
@@ -193,11 +196,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section
-            ref={sectionRefs[3]}
-            className="hero-content hero-full fourth-block"
-            id="pricing"
-          >
+          <section className="hero-content hero-full fourth-block" id="pricing">
             <div className="hero-content-left fourth-insert">
               <h3>Get Started Instantly - or Request Full Access</h3>
               <p>
@@ -223,7 +222,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section id="security" ref={sectionRefs[4]} className="fifth-section">
+          <section id="security" className="fifth-section">
             <div className="fifth-content">
               <h3>Security and Compliance</h3>
               <p>
@@ -250,7 +249,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section ref={sectionRefs[5]} className="last-block">
+          <section className="last-block">
             <div className="last-block">
               <h3>Start Now</h3>
               <p>
