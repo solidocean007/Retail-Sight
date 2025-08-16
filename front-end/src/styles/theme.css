@@ -16,6 +16,7 @@
   --black: #000000;
 
   /* Brand & Accent */
+  --primary-dark-blue: #0944a3;
   --primary-blue: #3b82f6;
   --primary-blue-dark: #2563eb;
   --gold: #ffd700; /* ✅ Now valid */
@@ -75,8 +76,8 @@
     var(--faded-cadet) 100%
   );
 
-  --link-color: var(--gray-700);
-  --link-hover-color: var(--gray-900);
+  --link-color: var(--primary-blue);
+  --link-hover-color: var(--primary-dark-blue);
 
   --auth-footer-background: var(--light-blue);
   --auth-footer-text: var(--dark-blue);
@@ -122,8 +123,8 @@
   --company-goal-text-color: var(--gray-900);
   --header-title: var(--gray-900);
 
-  --link-color: var(--gray-300);
-  --link-hover-color: var(--gray-700);
+  --link-color: var(--primary-blue);
+  --link-hover-color: var(--primary-dark-blue);
 
   --button-background: transparent;
   --button-background-hover: var(--gray-800);

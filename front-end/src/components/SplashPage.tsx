@@ -1,39 +1,35 @@
 // SplashPage.tsx
 import { useNavigate } from "react-router-dom";
 import "./splashPage.css"; // Make sure this reflects the styles below
-import {useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
-import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { SplashPageHelmet } from "../utils/helmetConfigurations";
 
 const SplashPage = () => {
   const user = useSelector(selectUser);
+  const authLoaded = user !== undefined;
   const navigate = useNavigate();
   const [isMenuOpen, setMenuOpen] = useState(false);
-  const numberOfSections = 6;
-  const sectionRefs = Array.from({ length: numberOfSections }, () =>
-    useRef<HTMLElement | null>(null)
+  const sectionRefs = useMemo(
+    () => Array.from({ length: 6 }, () => React.createRef<HTMLElement>()),
+    []
   );
+
+  useEffect(() => {
+    if (authLoaded && user) navigate("/user-home-page");
+  }, [authLoaded, user, navigate]);
 
   const toggleMenu = () => {
     setMenuOpen(!isMenuOpen);
   };
 
-  const scrollToRef = (index: number) => {
-    sectionRefs[index].current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
-
-  // skip this page if a user is already logged in
   useEffect(() => {
-    if (user) {
-      navigate("/user-home-page");
-    }
-  }, [user, navigate]);
+    const onHashChange = () => setMenuOpen(false);
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   return (
     <>
@@ -45,58 +41,52 @@ const SplashPage = () => {
             <Link to="/">
               <img
                 src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
-                alt="blue-background"
+                alt="Displaygram logo"
+                width={140}
+                height={40}
+                decoding="async"
+                loading="eager"
               />
-              <h1>Displaygram</h1>
+              <span className="brand">Displaygram</span>
             </Link>
           </div>
           <div className="navbar">
-            <ul className={isMenuOpen ? "isMenuOpen" : ""}>
-              <li
-                onClick={() => {
-                  // handleLoginClick();
-                  navigate("/signup");
-                }}
-              >
-                Login
+            <ul id="splash-nav" className={isMenuOpen ? "isMenuOpen" : ""}>
+              <li>
+                <Link to="/login">Login</Link>
               </li>
-              <li
-                onClick={() => {
-                  toggleMenu();
-                  scrollToRef(1);
-                }}
-              >
-                The Objective
+              <li>
+                <a href="#objective" onClick={toggleMenu}>
+                  Objective
+                </a>
               </li>
-              <li
-                onClick={() => {
-                  toggleMenu();
-                  scrollToRef(2);
-                }}
-              >
-                Features
+              <li>
+                <a href="#features" onClick={toggleMenu}>
+                  Features
+                </a>
               </li>
-              <li
-                onClick={() => {
-                  toggleMenu();
-                  scrollToRef(3);
-                }}
-              >
-                Pricing
+              <li>
+                <a href="#pricing" onClick={toggleMenu}>
+                  Pricing
+                </a>
               </li>
-              <li
-                onClick={() => {
-                  toggleMenu();
-                  scrollToRef(4);
-                }}
-              >
-                Security
+              <li>
+                <a href="#security" onClick={toggleMenu}>
+                  Security
+                </a>
               </li>
             </ul>
           </div>
 
-          <div className="splash-menu-button" onClick={toggleMenu}>
-            <button>{isMenuOpen ? "✕" : "☰"}</button>
+          <div className="splash-menu-button">
+            <button
+              onClick={toggleMenu}
+              aria-expanded={isMenuOpen}
+              aria-controls="splash-nav"
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {isMenuOpen ? "✕" : "☰"}
+            </button>
           </div>
         </nav>
         <main className="splash-main">
@@ -105,6 +95,10 @@ const SplashPage = () => {
               <img
                 src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2FabstractImageinsert.png?alt=media&token=2951defe-f44f-425c-b9f9-4c6cd8edbd60"
                 alt=""
+                width={720}
+                height={480} // any consistent pair that matches your design ratio
+                loading="lazy"
+                decoding="async"
               />
             </div>
 
@@ -121,14 +115,18 @@ const SplashPage = () => {
                 excellence – accessible anytime, by your whole team.
               </p>
               <div className="content-button-box">
-                <Link to="/user-home-page" className="enter-site-btn">
+                <Link to="/request-access" className="enter-site-btn">
                   Start Now
                 </Link>
               </div>
             </div>
           </section>
 
-          <section ref={sectionRefs[1]} className="second-section">
+          <section
+            id="objective"
+            ref={sectionRefs[1]}
+            className="second-section"
+          >
             <div className="second-content">
               <h3>The Objective</h3>
               <p>
@@ -166,7 +164,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section ref={sectionRefs[2]} className="section-three">
+          <section id="features" ref={sectionRefs[2]} className="section-three">
             <div className="hero-content-left">
               <div className="features-image-box">
                 <img
@@ -174,6 +172,10 @@ const SplashPage = () => {
                   // src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                   src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-products.jpg?alt=media&token=67eb96e6-1a55-482d-92c3-5b3901ce4b3e"
                   alt=""
+                  width={1200}
+                  height={800} // any consistent pair that matches your design ratio
+                  loading="lazy"
+                  decoding="async"
                 />
                 <Link to="/features" className="features-button enter-site-btn">
                   See Our Features
@@ -186,7 +188,7 @@ const SplashPage = () => {
                 Find displays that matter to you. Our intuitive filters allow
                 you to search by location, retail channel, or product category.
                 Whatever you are looking for, find exactly what you need — from
-                beer to bread and everything in between..
+                beer to bread and everything in between.
               </p>
             </div>
           </section>
@@ -214,14 +216,14 @@ const SplashPage = () => {
               </ul>
 
               <div className="content-button-box">
-                <Link to="/signup" className="enter-site-btn">
+                <Link to="/request-access" className="enter-site-btn">
                   Join for free
                 </Link>
               </div>
             </div>
           </section>
 
-          <section ref={sectionRefs[4]} className="fifth-section">
+          <section id="security" ref={sectionRefs[4]} className="fifth-section">
             <div className="fifth-content">
               <h3>Security and Compliance</h3>
               <p>
@@ -231,7 +233,7 @@ const SplashPage = () => {
                 reliable, world-class infrastructure.
               </p>
               <div className="content-button-box">
-                <Link to="/signup" className="enter-site-btn">
+                <Link to="/request-access" className="enter-site-btn">
                   Sign Up Now
                 </Link>
               </div>
@@ -240,6 +242,10 @@ const SplashPage = () => {
               <img
                 src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fearthdesign.png?alt=media&token=65c60866-6c35-4587-997b-a07042b900df"
                 alt="secure earth"
+                width={600}
+                height={600}
+                loading="lazy"
+                decoding="async"
               />
             </div>
           </section>
@@ -251,7 +257,7 @@ const SplashPage = () => {
                 Elevate your team’s performance, share your retail story today.
               </p>
               <div className="content-button-box">
-                <Link to="/signup" className="enter-site-btn">
+                <Link to="/request-access" className="enter-site-btn">
                   Sign Up Now
                 </Link>
               </div>

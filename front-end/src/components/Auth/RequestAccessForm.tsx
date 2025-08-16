@@ -84,7 +84,6 @@ export default function RequestAccessForm() {
 
   // utils/apiBase.ts
 
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -340,14 +339,10 @@ export default function RequestAccessForm() {
             <span>or</span>
           </div>
           <div className="auth-footnote">
-            Already have an invite?{" "}
-            <Link to="/use-invite" className="auth-link">
-              Use your invite link
-            </Link>{" "}
-            or{" "}
-            <Link to="/login" className="auth-link">
-              log in
-            </Link>
+            Already have an invite? Just click the link in your email to get
+            started.
+            <br />
+            Otherwise, <Link to="/login">log in</Link>.
           </div>
         </form>
         <button className="btn-clear" onClick={handleClearForm}>
