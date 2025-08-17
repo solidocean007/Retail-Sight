@@ -7,24 +7,26 @@
   justify-content: flex-start;
   align-items: center;
   text-align: center;
-  width: 100vw;
+  width: 100%;
 }
 
 .top-nav {
+  position: sticky;
+  position: -webkit-sticky; /* Safari/iOS */
+  top: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
   background-color: #002b45; /* Dark header background */
   width: 100%;
-  position: sticky;
-  top: 0;
   z-index: 1000;
 }
 
 .logo-box {
   display: flex;
   align-items: center;
+  color: white;
 }
 
 .logo-box h1 {
@@ -84,9 +86,7 @@
   position: absolute;
   right: -20px; /* Align arrow to the right */
   opacity: 0; /* Hidden by default */
-  transition:
-    opacity 0.3s,
-    transform 0.3s ease;
+  transition: opacity 0.3s, transform 0.3s ease;
 }
 
 /* Show arrow on hover */
@@ -112,7 +112,7 @@
 .first-section,
 .fifth-section {
   position: relative;
-  width: 100vw;
+  width: 100%;
   color: #ffffff;
 }
 
@@ -319,8 +319,8 @@
   font-size: 1rem;
   color: #fff;
   background-color: #007bff; /* Bootstrap primary color for the button */
-  border: None;
-  border-radius: 5 px;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
   width: 10rem;
@@ -328,19 +328,6 @@
 
 .enter-site-btn:hover {
   background-color: #0056b3; /* Darken button on hover */
-}
-
-.splash-menu ul {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  position: absolute;
-  top: 0;
-  width: 100%;
-  background-color: #002b45;
 }
 
 /* Display the menu when 'isMenuOpen' is true */
@@ -359,8 +346,8 @@ footer {
   padding: 1rem 0;
   font-size: 0.9em;
   text-align: center;
-  background-color: #002b45; /* Match the header /
-  color: #ffffff; / Footer text color */
+  background-color: #002b45; /* Match the header */
+  color: #ffffff; /* Footer text color */
 }
 
 footer a {
@@ -375,29 +362,25 @@ footer a:hover {
 
 /* Responsive styles for screens less than or equal to 768px wide (tablets). */
 @media (max-width: 750px) {
-   .top-nav {
-    position: relative; /* anchor for abs menu */
-  }
-
-    .top-nav ul {
+  .top-nav ul {
     position: absolute;
-    top: 100%;                 /* appear below the bar, not at 0 */
+    top: 100%; /* appear below the bar, not at 0 */
     left: 0;
     right: 0;
     flex-direction: column;
     align-items: center;
-    transform: translateY(-100%);   /* hidden offscreen */
+    transform: translateY(-100%); /* hidden offscreen */
     background-color: #002b45;
     z-index: 1001;
     transition: transform 0.3s ease-in-out;
-    pointer-events: none;           /* 👈 don't intercept clicks when hidden */
+    pointer-events: none; /* 👈 don't intercept clicks when hidden */
   }
 
   .top-nav ul.isMenuOpen {
     transform: translateY(0);
-    pointer-events: auto;           /* 👈 clickable when opened */
+    pointer-events: auto; /* 👈 clickable when opened */
   }
-  
+
   .first-content,
   .fifth-content {
     width: 100%; /* Full width on smaller screens */
@@ -475,10 +458,6 @@ footer a:hover {
     font-size: 0.8rem;
   }
 
-  .top-nav {
-    position: relative;
-  }
-
   .top-nav .isMenuOpen {
     transform: translateY(0); /* Bring the menu on screen */
   }
@@ -489,7 +468,7 @@ footer a:hover {
     flex-direction: column; /* Stack items vertically */
     align-items: center;
     position: absolute;
-    top: 0rem; /* Directly below the nav bar */
+    top: 0rem;
     left: 0;
     transform: translateY(-100%); /* Hide the menu offscreen */
     width: 100%;

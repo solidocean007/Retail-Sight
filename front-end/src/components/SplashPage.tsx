@@ -32,73 +32,81 @@ const SplashPage = () => {
     }
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 750 && isMenuOpen) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isMenuOpen]);
+
   return (
     <>
       <SplashPageHelmet />
-
-      <div className="splash-container">
-        <nav className="top-nav">
-          <div className="logo-box">
-            <Link to="/">
-              <img
-                src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
-                alt="Displaygram logo"
-                width={140}
-                height={40}
-                decoding="async"
-                loading="eager"
-              />
-              <span className="brand">Displaygram</span>
-            </Link>
-          </div>
-          <div className="navbar">
-            <ul id="splash-nav" className={isMenuOpen ? "isMenuOpen" : ""}>
-              <li>
-                {/* <Link to="/login" onClick={() => setMenuOpen(false)}> */}
-                <Link to="/login">
+      <nav className="top-nav">
+        <div className="logo-box">
+          <Link to="/">
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
+              alt="Displaygram logo"
+              width={140}
+              height={40}
+              decoding="async"
+              loading="eager"
+            />
+            <span className="brand">Displaygram</span>
+          </Link>
+        </div>
+        <div className="navbar">
+          <ul id="splash-nav" className={isMenuOpen ? "isMenuOpen" : ""}>
+            <li>
+              <Link to="/login" onClick={() => setMenuOpen(false)}>
                   Login
                 </Link>
-              </li>
-              <li>
-                <a href="#objective" onClick={handleAnchor("objective")}>
-                  Objective
-                </a>
-              </li>
-              <li>
-                <a href="#features" onClick={handleAnchor("features")}>
-                  Features
-                </a>
-              </li>
-              <li>
-                <a href="#pricing" onClick={handleAnchor("pricing")}>
-                  Pricing
-                </a>
-              </li>
-              <li>
-                <a href="#security" onClick={handleAnchor("security")}>
-                  Security
-                </a>
-              </li>
-            </ul>
-          </div>
+            </li>
+            <li>
+              <a href="#objective" onClick={handleAnchor("objective")}>
+                Objective
+              </a>
+            </li>
+            <li>
+              <a href="#features" onClick={handleAnchor("features")}>
+                Features
+              </a>
+            </li>
+            <li>
+              <a href="#pricing" onClick={handleAnchor("pricing")}>
+                Pricing
+              </a>
+            </li>
+            <li>
+              <a href="#security" onClick={handleAnchor("security")}>
+                Security
+              </a>
+            </li>
+          </ul>
+        </div>
 
-          <div className="splash-menu-button">
-            <button
-              onClick={toggleMenu}
-              aria-expanded={isMenuOpen}
-              aria-controls="splash-nav"
-              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            >
-              {isMenuOpen ? "✕" : "☰"}
-            </button>
-          </div>
-        </nav>
+        <div className="splash-menu-button">
+          <button
+            onClick={toggleMenu}
+            aria-expanded={isMenuOpen}
+            aria-controls="splash-nav"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {isMenuOpen ? "✕" : "☰"}
+          </button>
+        </div>
+      </nav>
+      <div className="splash-container">
         <main className="splash-main">
           <section className="first-section">
             <div className="first-image-box">
               <img
                 src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2FabstractImageinsert.png?alt=media&token=2951defe-f44f-425c-b9f9-4c6cd8edbd60"
-                alt=""
+                alt="abstract retail"
                 width={720}
                 height={480} // any consistent pair that matches your design ratio
                 loading="lazy"
@@ -126,10 +134,7 @@ const SplashPage = () => {
             </div>
           </section>
 
-          <section
-            id="objective"
-            className="second-section"
-          >
+          <section id="objective" className="second-section">
             <div className="second-content">
               <h3>The Objective</h3>
               <p>
@@ -162,7 +167,7 @@ const SplashPage = () => {
             <div className="second-image-box">
               <img
                 src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-line-drawing-edited_200x200.png?alt=media&token=055681ef-0cd1-4049-9dd5-57d935e30b6b"
-                alt=""
+                alt="grocery line drawing"
               />
             </div>
           </section>
@@ -174,7 +179,7 @@ const SplashPage = () => {
                   className="features-image"
                   // src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                   src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fgrocery-products.jpg?alt=media&token=67eb96e6-1a55-482d-92c3-5b3901ce4b3e"
-                  alt=""
+                  alt="grocery products"
                   width={1200}
                   height={800} // any consistent pair that matches your design ratio
                   loading="lazy"
