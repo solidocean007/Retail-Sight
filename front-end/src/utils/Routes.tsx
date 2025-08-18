@@ -47,7 +47,7 @@ export const AppRoutes = () => {
         path="/view-collection/:collectionId"
         element={<ViewCollection />}
       />
-      <Route path="/view-shared-post" element={<ViewSharedPost />} />
+      <Route path="/view-shared-post/:postId" element={<ViewSharedPost />} />
       <Route path="/access-denied" element={<AccessDenied />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -20,6 +20,7 @@
   --primary-blue: #3b82f6;
   --primary-blue-dark: #2563eb;
   --gold: #ffd700; /* ✅ Now valid */
+  --dark-gold: #a18801;
   --pale-aqua: #e0f7fa;
   --deep-navy: #012a4a;
 
@@ -76,8 +77,8 @@
     var(--faded-cadet) 100%
   );
 
-  --link-color: var(--primary-blue);
-  --link-hover-color: var(--primary-dark-blue);
+  --link-color: var(--gold);
+  --link-hover-color: var(--dark-gold);
 
   --auth-footer-background: var(--light-blue);
   --auth-footer-text: var(--dark-blue);
@@ -123,8 +124,8 @@
   --company-goal-text-color: var(--gray-900);
   --header-title: var(--gray-900);
 
-  --link-color: var(--primary-blue);
-  --link-hover-color: var(--primary-dark-blue);
+  --link-color: var(--gold);
+  --link-hover-color: var(--dark-gold);
 
   --button-background: transparent;
   --button-background-hover: var(--gray-800);

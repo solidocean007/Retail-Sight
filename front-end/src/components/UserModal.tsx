@@ -18,10 +18,18 @@ const UserModal = () => {
 
   if (!isOpen || !postId || !userEmail || !fullName) return null;
 
-  const postLink = `${window.location.origin}/view-post/${postId}`;
-  const mailBody = `Hi ${fullName},\n\nNice work on your recent post! Just wanted to reach out and say thanks for sharing your display.\n\nYou can view it here: ${postLink}\n\nBest,\n[Your Name]`;
+  const baseURL =
+    process.env.NODE_ENV === "production"
+      ? "https://displaygram.com"
+      : window.location.origin;
 
-  const mailtoLink = `mailto:${userEmail}?subject=${encodeURIComponent("Nice job on your display!")}&body=${encodeURIComponent(mailBody)}`;
+  const postLink = `${baseURL}/view-shared-post/${postId}`;
+
+  const mailBody = `Hi ${fullName},\n\nThanks for sharing your display.\n\n ${postLink}\n\nBest,\n[Your Name]`;
+
+  const mailtoLink = `mailto:${userEmail}?subject=${encodeURIComponent(
+    "Nice job on your display!"
+  )}&body=${encodeURIComponent(mailBody)}`;
 
   return (
     <div className="user-modal-overlay">
@@ -37,7 +45,7 @@ const UserModal = () => {
           Want to encourage or thank them directly?
         </p>
         <a className="cta-email-button" href={mailtoLink}>
-          Send them a message
+          Send a message
         </a>
       </div>
     </div>
@@ -45,4 +53,3 @@ const UserModal = () => {
 };
 
 export default UserModal;
-
