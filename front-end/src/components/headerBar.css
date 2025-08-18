@@ -43,6 +43,17 @@
   gap: 1rem;
 }
 
+.dashboard-btn {
+  font-size: smaller;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-blue);
+  background: transparent;
+  color: var(--primary-blue);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
 .menu-buttons,
 .capture-display-btn {
   display: none;

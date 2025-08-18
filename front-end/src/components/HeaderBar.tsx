@@ -137,12 +137,13 @@ const HeaderBar = ({
           <div className="header-details">
             <div className="header-buttons">
               <div className="menu-buttons">
-                <button
+                <button className="btn-secondary"
                   onClick={handleDashboardClick}
-                >{`${currentUser.role} Dashboard`}</button>
+                // >{`${currentUser.role} Dashboard`}</button>
+                >{`Dashboard`}</button>
               </div>
               <div className="capture-display-btn">
-                <button onClick={handleCreatePostClick}>Create Display</button>
+                <button className="button-primary" onClick={handleCreatePostClick}>Create</button>
               </div>
             </div>
             <div

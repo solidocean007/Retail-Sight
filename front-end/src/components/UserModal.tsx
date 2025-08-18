@@ -23,7 +23,7 @@ const UserModal = () => {
       ? "https://displaygram.com"
       : window.location.origin;
 
-  const postLink = `${baseURL}/view-shared-post/${postId}`;
+  const postLink = `${baseURL}/view-post-by-link/${postId}`;
 
   const mailBody = `Hi ${fullName},\n\nThanks for sharing your display.\n\n ${postLink}\n\nBest,\n[Your Name]`;
 

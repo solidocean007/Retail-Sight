@@ -22,6 +22,7 @@ import LoginForm from "../components/Auth/LoginForm";
 import RequestAccessForm from "../components/Auth/RequestAccessForm";
 import { Navigate } from "react-router-dom"; // add this import
 import InviteAcceptForm from "../components/Auth/InviteAcceptForm";
+import ViewPostByLink from "../components/ViewPostByLink";
 
 export const AppRoutes = () => {
   return (
@@ -47,7 +48,8 @@ export const AppRoutes = () => {
         path="/view-collection/:collectionId"
         element={<ViewCollection />}
       />
-      <Route path="/view-shared-post/:postId" element={<ViewSharedPost />} />
+      <Route path="/view-shared-post/:postId/:token" element={<ViewSharedPost />} />
+      <Route path="/view-post-by-link/:postId" element={<ViewPostByLink />} />
       <Route path="/access-denied" element={<AccessDenied />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
