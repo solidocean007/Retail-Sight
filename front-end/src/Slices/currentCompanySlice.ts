@@ -4,16 +4,32 @@ import { CompanyType } from "../utils/types";
 import { db } from "../utils/firebase";
 import { RootState } from "../utils/store";
 
+// small helper
+const toIso = (v: any) =>
+  v?.toDate?.() ? v.toDate().toISOString()
+  : v instanceof Date ? v.toISOString()
+  : typeof v === "string" ? v
+  : null;
+
 // 🔌 one-off fetch by ID
 export const fetchCurrentCompany = createAsyncThunk<
-  CompanyType & { id: string },
+  (CompanyType & { id: string }),
   string,
   { rejectValue: string }
 >("currentCompany/fetch", async (companyId, { rejectWithValue }) => {
   try {
     const snap = await getDoc(doc(db, "companies", companyId));
     if (!snap.exists()) throw new Error("Company not found");
-    return { id: snap.id, ...(snap.data() as CompanyType) };
+
+    const data = snap.data() as any;
+    const { createdAt, lastUpdated, ...rest } = data;
+
+    return {
+      id: snap.id,
+      ...rest,
+      createdAt: toIso(createdAt),   // ✅ ISO string or null
+      lastUpdated: toIso(lastUpdated),
+    } as CompanyType & { id: string };
   } catch (e: any) {
     return rejectWithValue(e.message);
   }

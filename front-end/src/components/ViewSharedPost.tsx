@@ -99,7 +99,7 @@ export const ViewSharedPost = () => {
               variant="contained"
               color="secondary"
               className="cta-learn-button"
-              onClick={() => navigate("/sign-up-login?mode=signup")}
+              onClick={() => navigate("/request-access")}
             >
               Learn More & Get Started
             </Button>

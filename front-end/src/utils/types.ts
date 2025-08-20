@@ -43,27 +43,38 @@ export type NotificationType = {
   commentId?: string;
 };
 
+export type BusinessType = 'distributor' | 'supplier';
+export type AccessStatus = 'active' | 'suspended';
 export type CompanyType = {
   id?: string;
-  lastUpdated: string;
+  lastUpdated: string | null;
   companyName: string;
-  altCompanyNames?: string[];
-  superAdminsUsers?: string[];
-  adminsUsers?: string[];
-  employeeUsers?: string[];
-  statusPendingUsers?: string[];
-  companyVerified?: boolean;
-  createdAt?: string;
-  accountsId?: string | null;
+  primaryContact?: { name?: string; email?: string; phone?: string };
+  altCompanyNames?: string[]; // not necessary
+  superAdminsUsers?: string[]; // not necessary
+  adminsUsers?: string[]; // not necessary
+  employeeUsers?: string[]; // not necessary
+  statusPendingUsers?: string[]; // not necessary
+  companyVerified?: boolean; // not necessary
+  createdAt?: string | null;
+  accountsId?: string | null; // this is null to begin with but after onboarding i think
   goals?: CompanyGoalWithIdType[];
-  companyType: "owner" | "distributor" | "supplier";
+  companyType: BusinessType; // my the developer is the owner of displaygram
 
   // new fields in branch: fix-creating-new-company
   verified: boolean;
-  tier: "free" | "pro" | "enterprise";
+  accessStatus?: AccessStatus;
+  tier: "free" | "pro" | "enterprise"; // not even sure what enterprise is for.  maybe different prices for different tiers
   limits: {
+    // this i understand well.  i have an idea that companies will have user and connection limits for their paid or free plans
     maxUsers: number;
     maxConnections: number;
+  };
+  counts?: {
+    usersTotal?: number;
+    usersPending?: number;
+    connectionsApproved?: number;
+    connectionsPending?: number;
   };
 };
 
@@ -80,8 +91,8 @@ export interface CompanyWithUsersAndId extends CompanyTypeWithId {
   otherDetails?: UserType[]; // Optional for future use or undefined roles
 }
 
-// i just made this for this branch.. not sure if the shape is right.. i guess its how we get 
-// started 
+// i just made this for this branch.. not sure if the shape is right.. i guess its how we get
+// started
 export type ConnectionRequest = {
   emailLower: string;
   userType: "distributor" | "supplier";
@@ -299,10 +310,12 @@ export type PostWithID = PostType & { id: string };
 
 export type FirestorePostPayload = Omit<
   PostType,
-  "displayDate" | "timestamp"
+  "displayDate" | "timestamp" | "createdAt" | "updatedAt"
 > & {
   displayDate: Date | ReturnType<typeof serverTimestamp> | Timestamp;
   timestamp: Date | ReturnType<typeof serverTimestamp> | Timestamp;
+  createdAt: Date | ReturnType<typeof serverTimestamp> | Timestamp;
+  updatedAt: Date | ReturnType<typeof serverTimestamp> | Timestamp;
 };
 
 export type PostQueryFilters = {

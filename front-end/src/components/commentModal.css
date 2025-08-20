@@ -72,6 +72,7 @@
 
 .comment-actions {
   display: flex;
+  align-items: flex-end;
   gap: 0.5rem;
   margin-top: 0.25rem;
 }
@@ -83,7 +84,8 @@
   background: none;
   cursor: pointer;
   margin-right: 10px;
-  width: 100px;
+  width: 30px;
+  height: 40px;
 }
 
 /* Styles for tablets */

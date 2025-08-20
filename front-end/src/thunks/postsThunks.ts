@@ -241,30 +241,14 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       );
     }
 
-    // if (filters.accountType) {
-    //   baseQuery = filterExactMatch(
-    //     "typeOfAccount",
-    //     filters.accountType ?? undefined,
-    //     baseQuery
-    //   );
-    // }
+   
     if (filters.accountChain) {
       baseQuery = query(baseQuery, where("chain", "==", filters.accountChain));
     }
-    // if (filters.accountChain) {
-    //   baseQuery = filterExactMatch(
-    //     "accountChain",
-    //     filters.accountChain ?? undefined,
-    //     baseQuery
-    //   );
-    // }
+  
     if (filters.chainType) {
       baseQuery = query(baseQuery, where("chainType", "==", filters.chainType));
-      // baseQuery = filterExactMatch(
-      //   "chainType",
-      //   filters.chainType ?? undefined,
-      //   baseQuery
-      // );
+     
     }
     if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
       baseQuery = query(

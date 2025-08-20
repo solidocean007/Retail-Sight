@@ -2,6 +2,7 @@ import {
   createAsyncThunk,
   createSlice,
   createSelector,
+  PayloadAction,
 } from "@reduxjs/toolkit";
 import { RootState } from "../utils/store";
 import { db } from "../utils/firebase";
@@ -20,6 +21,24 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { markGalloAccountAsSubmitted } from "../thunks/galloGoalsThunk";
+
+const toIso = (v: any) =>
+  v?.toDate?.()
+    ? v.toDate().toISOString()
+    : v instanceof Date
+    ? v.toISOString()
+    : typeof v === "string"
+    ? v
+    : v;
+
+const normalizeDeep = (val: any): any =>
+  Array.isArray(val)
+    ? val.map(normalizeDeep)
+    : val && typeof val === "object"
+    ? Object.fromEntries(
+        Object.entries(val).map(([k, v]) => [k, normalizeDeep(v)])
+      )
+    : toIso(val);
 
 // Extended Type with ID
 export interface FireStoreGalloGoalWithId extends FireStoreGalloGoalDocType {
@@ -54,7 +73,7 @@ export const fetchAllGalloGoals = createAsyncThunk<
         query(collection(db, "galloGoals"), where("companyId", "==", companyId))
       );
       return snapshot.docs.map((docSnap) => ({
-        ...(docSnap.data() as FireStoreGalloGoalDocType),
+        ...(normalizeDeep(docSnap.data()) as FireStoreGalloGoalDocType),
         id: docSnap.id,
       }));
     } catch (error) {
@@ -88,7 +107,10 @@ export const fetchUserGalloGoals = createAsyncThunk<
       );
 
       return snapshot.docs
-        .map((docSnap) => docSnap.data() as FireStoreGalloGoalDocType)
+        .map(
+          (docSnap) =>
+            normalizeDeep(docSnap.data()) as FireStoreGalloGoalDocType
+        )
         .filter((goal) =>
           goal.accounts.some((acc) =>
             accountNumbers.includes(acc.distributorAcctId.toString())
@@ -113,7 +135,10 @@ const galloGoalsSlice = createSlice({
     // addGalloGoal(state, action) {
     //   state.galloGoals.push(action.payload);
     // },
-    addOrUpdateGalloGoal: (state, action) => {
+    addOrUpdateGalloGoal: (
+      state,
+      action: PayloadAction<FireStoreGalloGoalWithId>
+    ) => {
       const updatedGoal = action.payload;
       const index = state.galloGoals.findIndex(
         (goal) => goal.goalDetails.goalId === updatedGoal.goalDetails.goalId
@@ -145,11 +170,12 @@ const galloGoalsSlice = createSlice({
           action.payload || "Failed to fetch Gallo goals.";
       })
       .addCase(markGalloAccountAsSubmitted.fulfilled, (state, action) => {
-        const updatedData = action.payload;
-
+        const updatedData = normalizeDeep(
+          action.payload
+        ) as FireStoreGalloGoalWithId;
         state.galloGoals = state.galloGoals.map((goal) =>
           goal.goalDetails.goalId === updatedData.goalDetails.goalId
-            ? { ...updatedData, id: goal.id } // ✅ preserve existing Firestore document ID
+            ? { ...updatedData, id: goal.id }
             : goal
         );
       })

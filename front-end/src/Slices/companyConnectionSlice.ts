@@ -33,6 +33,8 @@ const companyConnectionSlice = createSlice({
      */
     clearCompanyConnections(state) {
       state.connections = [];
+      state.isConnectionsLoading = false;
+      state.connectionsError = null;
     },
   },
   extraReducers: (builder) => {
@@ -49,7 +51,8 @@ const companyConnectionSlice = createSlice({
         }
       )
       .addCase(loadCompanyConnections.rejected, (state, action) => {
-        state.connectionsError = action.error.message || "Failed to load connections";
+        state.connectionsError =
+          action.error.message || "Failed to load connections";
         state.isConnectionsLoading = false;
       });
   },
@@ -57,15 +60,14 @@ const companyConnectionSlice = createSlice({
 
 // ───────────────────────────────────────── Selectors ───────────────────────────
 export const selectCompanyConnections = (state: RootState) =>
-  state.companyConnection.connections;
+  state.companyConnections.connections;
 
-export const selectHasIntegration = (integrationName: string) => (state: RootState) =>
-  state.companyConnection.connections.some(
-    (c) => c.integration === integrationName && c.status === "approved"
-  );
+export const selectHasIntegration =
+  (integrationName: string) => (state: RootState) =>
+    state.companyConnections.connections.some(
+      (c) => c.integration === integrationName && c.status === "approved"
+    );
 
-export const {
-  clearCompanyConnections,
-} = companyConnectionSlice.actions;
+export const { clearCompanyConnections } = companyConnectionSlice.actions;
 
 export default companyConnectionSlice.reducer;

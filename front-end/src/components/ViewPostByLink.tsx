@@ -79,6 +79,7 @@ export const ViewPostByLink = () => {
   return (
     <div className=" view-shared-post-page">
       <HeaderBar toggleFilterMenu={() => {}} />
+        <button className="btn-secondary" onClick={()=>navigate("/user-home-page")}>Home</button>
 
       <div className="view-shared-post-container">
         <MemoizedPostCard

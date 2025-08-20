@@ -11,6 +11,7 @@
   box-shadow: var(--card-shadow);
   padding: 0.2rem 0.5rem;
   border-radius: var(--card-radius);
+  margin-bottom: 20px;
 }
 
 .website-title {
@@ -34,8 +35,9 @@
   justify-content: flex-end;
   align-items: center;
   font-size: small;
-  max-width: 20%;
+  max-width: 50%;
   padding-right: 5px;
+  margin-right: 15px;
 }
 
 .header-buttons {

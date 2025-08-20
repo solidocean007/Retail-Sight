@@ -1,15 +1,11 @@
 // components/Auth/RequestAccessForm.tsx
 import { useEffect, useState } from "react";
-import {
-  getAuth,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { getApiBaseUrl } from "../../utils/getApiBase";
+import { AccessRequestDraft } from "../DeveloperDashboard/deverloperTypes";
 
 type UserTypeHint = "distributor" | "supplier";
 
@@ -18,17 +14,17 @@ const COMPANY_TYPES: UserTypeHint[] = ["distributor", "supplier"];
 export default function RequestAccessForm() {
   const dispatch = useAppDispatch();
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<AccessRequestDraft>({
+    workEmail: "",
     firstName: "",
     lastName: "",
-    workEmail: "",
-    companyName: "",
-    userTypeHint: "distributor" as UserTypeHint,
     phone: "",
     notes: "",
+    userTypeHint: "distributor" as UserTypeHint,
+    companyName: "",
   });
-  const [password, setPassword] = useState(""); // if you prefer passwordless, replace with email link flow
-  const [verifyPassword, setVerifyPassword] = useState(""); // if you prefer passwordless, replace with email link flow
+  const [password, setPassword] = useState("");
+  const [verifyPassword, setVerifyPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
     null
@@ -36,7 +32,6 @@ export default function RequestAccessForm() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<any>(null);
   const navigate = useNavigate();
 
   const handlePasswordChange = (value: string) => {
@@ -84,16 +79,16 @@ export default function RequestAccessForm() {
 
   // utils/apiBase.ts
 
-  const submit = async (e: React.FormEvent) => {
+  const submitAccessRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
 
     try {
+      // ✅ Validate passwords first
       if (passwordError || verifyPasswordError) {
         throw new Error("Please fix the password errors before submitting.");
       }
-      // ✅ Password checks before anything else
       if (!password || !verifyPassword) {
         throw new Error("Please enter and confirm your password.");
       }
@@ -103,39 +98,41 @@ export default function RequestAccessForm() {
       if (password.length < 8) {
         throw new Error("Password must be at least 8 characters long.");
       }
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
 
-      let uid = currentUser?.uid;
-      if (!uid) {
-        // create the account now (unverified, free tier)
-        const cred = await createUserWithEmailAndPassword(
-          auth,
-          form.workEmail.trim().toLowerCase(),
-          password
-        );
-
-        uid = cred.user.uid;
-      }
-
+      // ✅ Call backend
       const resp = await fetch(`${getApiBaseUrl()}/createCompanyOrRequest`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" }, // no bearer required
-        body: JSON.stringify({ ...form, uid }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, password }),
       });
 
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
+        if (
+          resp.status === 409 &&
+          data?.code === "company_exists_requires_invite"
+        ) {
+          const msg =
+            "This company already exists on Displaygram. Joining is invite-only. Please ask a company admin to send you an invite link.";
+          setError(msg);
+          dispatch(showMessage(msg));
+          return; // stop here
+        }
         throw new Error(data.error || `Request failed (${resp.status})`);
       }
 
-      const data = await resp.json();
-      setResult(data); // { mode: "created" | "matched", companyId, requestId }
-      // optional: route them to a “You’re in (pending)” page
-      dispatch(
-        showMessage("✅ Your request has been submitted. We'll review it soon.")
-      );
-      navigate("/user-home-page");
+      // ✅ Success
+      const { ok } = await resp.json();
+
+      if (ok) {
+        dispatch(
+          showMessage(
+            "✅ Your request has been submitted. We'll review it soon."
+          )
+        );
+        // optionally: store companyId/requestId if you want
+        navigate("/login"); // redirect to login after request
+      }
     } catch (err: any) {
       const errorMsg = err?.message || "❌ Request failed.";
       setError(errorMsg);
@@ -147,13 +144,13 @@ export default function RequestAccessForm() {
 
   const handleClearForm = () => {
     setForm({
+      workEmail: "",
       firstName: "",
       lastName: "",
-      workEmail: "",
-      companyName: "",
-      userTypeHint: "distributor" as UserTypeHint,
       phone: "",
       notes: "",
+      userTypeHint: "distributor" as UserTypeHint,
+      companyName: "",
     });
     setError(null);
   };
@@ -191,7 +188,7 @@ export default function RequestAccessForm() {
           </div>
         )}
 
-        <form className="auth-form" onSubmit={submit} noValidate>
+        <form className="auth-form" onSubmit={submitAccessRequest} noValidate>
           <label className="auth-label" htmlFor="firstName">
             First name
           </label>
@@ -242,6 +239,12 @@ export default function RequestAccessForm() {
             autoComplete="organization"
             required
           />
+          {error?.includes("invite‑only") && (
+            <div className="auth-hint">
+              Already part of this company? Ask your admin to invite you or use
+              your invite email.
+            </div>
+          )}
 
           <label className="auth-label" htmlFor="companyType">
             Company type
@@ -265,7 +268,6 @@ export default function RequestAccessForm() {
             ))}
           </select>
 
-          {/* If you want password-based right now (otherwise remove this field and use email-link) */}
           <label className="auth-label" htmlFor="password">
             Password
           </label>

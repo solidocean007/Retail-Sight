@@ -2,7 +2,7 @@
 
 ## Description
 
-Displaygram.com is a collaborative platform for sales teams, suppliers, and distributors to capture, archive, and share retail display images. It enables companies to create and manage goals for specific stores, allowing team members to submit posts tied to those goals. Suppliers can view posts from connected distributors for shared brands in their portfolio, with robust role-based permissions ensuring each user sees only the relevant data. The platform supports dynamic account management, goal importing (e.g., Gallo API), and company-specific user onboarding to make field execution visible across an entire network.
+Displaygram.com is a collaborative platform for sales teams, suppliers, and distributors to capture, archive, and share retail display images. It enables companies to create and manage goals for specific stores, allowing team members to submit posts tied to those goals. Suppliers can view posts from connected distributors for shared brands in their portfolio, with robust role-based permissions ensuring each user sees only the relevant data. The platform supports dynamic account management, goal importing (e.g., Gallo API), and company-specific user onboarding to make field execution visible across an entire network.  Suppliers can view posts from connected distributors for shared brands in their portfolio, with robust role-based permissions ensuring each user sees only the relevant data. Team members and partners can also provide direct feedback and start discussions on individual displays, helping capture not only the ‘what’ but also the ‘why’ of execution.
 
 ## 🌟 Key Features
 
@@ -11,6 +11,8 @@ Displaygram.com is a collaborative platform for sales teams, suppliers, and dist
 - 🎯 **Goal Tracking:** Attach posts to company or supplier goals (e.g., Gallo wine programs) for streamlined reporting.
 - 🧑‍🤝‍🧑 **Team Collaboration:** Users can view and interact with posts from others in their company or supplier network.
 - 🔐 **Permissions & Roles:** Role-based access for admins, sales reps, and suppliers to control what each user sees and can do.
+- 💬 **Feedback & Discussion**: Posts can receive direct comments from teammates, suppliers, or distributors. This enables real-time feedback, Q&A, and discussion on each display.
+- 🎁 **Recognition & Rewards** (Planned): Companies may optionally attach prizes, shout-outs, or incentives to displays that meet goals or stand out for creativity.
 
 🔁 Real-Time Collaboration
 💬 Commenting System: Users can add, like, and delete comments on posts. Comment modals show timestamps and dynamically update.

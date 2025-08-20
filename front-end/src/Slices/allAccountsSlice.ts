@@ -8,7 +8,6 @@ export const loadMatchingAccounts = createAsyncThunk<
   CompanyAccountType[],
   { distributorIds: string[]; accountId: string } // Accepts distributorIds and companyId
 >("accounts/loadMatchingAccounts", async ({ distributorIds, accountId }) => {
-  // Property 'accountId' does not exist on type '{ distributorIds: string[]; companyId: string; }
   const allAccounts = await fetchAllAccountsFromFirestore(accountId);
   // Filter accounts that match the distributor account IDs
   return allAccounts.filter((account) =>

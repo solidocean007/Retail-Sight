@@ -37,6 +37,7 @@ import CustomConfirmation from "../CustomConfirmation";
 import LogOutButton from "../LogOutButton";
 import DeveloperNotificationForm from "../Notifications/DeveloperNotificationForm";
 import DeveloperNotificationsTable from "../Notifications/DeveloperNotificationsTable";
+import CompanyOnboardingAdmin from "./CompanyOnboardingAdmin";
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
@@ -139,6 +140,7 @@ const DeveloperDashboard = () => {
             variant="fullWidth"
             sx={{ mt: 3 }}
           >
+            <Tab label="Company Manager" />
             <Tab label="Users" />
             <Tab label="Notifications" />
             <Tab label="API Keys" />
@@ -147,6 +149,11 @@ const DeveloperDashboard = () => {
           {/* ─────────────────── TAB CONTENT ─────────────────── */}
           <Box sx={{ mt: 2 }}>
             {tabIndex === 0 && (
+              <>
+                <CompanyOnboardingAdmin />
+              </>
+            )}
+            {tabIndex === 1 && (
               <>
                 {allCompaniesAndUsers.map((company) => (
                   <Accordion key={company.id}>
@@ -178,7 +185,7 @@ const DeveloperDashboard = () => {
               </>
             )}
 
-            {tabIndex === 1 && (
+            {tabIndex === 2 && (
               <Box>
                 <Typography variant="h6" mb={1}>
                   Notifications
@@ -193,7 +200,7 @@ const DeveloperDashboard = () => {
               </Box>
             )}
 
-            {tabIndex === 2 && (
+            {tabIndex === 3 && (
               <Box>
                 <Typography variant="h6" mb={1}>
                   API Keys
