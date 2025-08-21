@@ -27,6 +27,7 @@ import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
 import { setupNotificationListenersForUser } from "./utils/listeners/setupNotificationListenersForUser";
 import { setupNotificationListenersForCompany } from "./utils/listeners/setupNotificationListenerForCompany";
 import UserModal from "./components/UserModal";
+// import { logTimestamps } from "./script";
 // import { auditPostDates, migratePostDates } from "./script";
 
 function App(): React.JSX.Element {
@@ -42,7 +43,9 @@ function App(): React.JSX.Element {
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  useEffect(() => {}, []);
+  // useEffect(() => {
+  //   logTimestamps();
+  // }, []);
 
   useEffect(() => {
     if (!companyId) return;

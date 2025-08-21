@@ -1,11 +1,24 @@
 // components/Auth/InviteAcceptForm.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
+
+const toIso = (v: any): string =>
+  v?.toDate?.()
+    ? v.toDate().toISOString()
+    : v instanceof Date
+    ? v.toISOString()
+    : typeof v === "string"
+    ? v
+    : new Date().toISOString();
 
 export default function InviteAcceptForm() {
   const { inviteId } = useParams();
@@ -19,7 +32,9 @@ export default function InviteAcceptForm() {
   const [password, setPassword] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(null);
+  const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
+    null
+  );
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -47,7 +62,9 @@ export default function InviteAcceptForm() {
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
-    setPasswordError(value.length < 8 ? "Password must be at least 8 characters." : null);
+    setPasswordError(
+      value.length < 8 ? "Password must be at least 8 characters." : null
+    );
     if (verifyPassword && value !== verifyPassword) {
       setVerifyPasswordError("Passwords do not match.");
     } else {
@@ -57,7 +74,9 @@ export default function InviteAcceptForm() {
 
   const handleVerifyPasswordChange = (value: string) => {
     setVerifyPassword(value);
-    setVerifyPasswordError(password && value !== password ? "Passwords do not match." : null);
+    setVerifyPasswordError(
+      password && value !== password ? "Passwords do not match." : null
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,31 +90,47 @@ export default function InviteAcceptForm() {
       // Try creating the user (if not already exists)
       let userCred;
       try {
-        userCred = await createUserWithEmailAndPassword(auth, invite.email, password);
+        userCred = await createUserWithEmailAndPassword(
+          auth,
+          invite.email,
+          password
+        );
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
-          userCred = await signInWithEmailAndPassword(auth, invite.email, password);
+          userCred = await signInWithEmailAndPassword(
+            auth,
+            invite.email,
+            password
+          );
         } else {
           throw err;
         }
       }
 
-      // Add to Firestore `users`
-      await updateDoc(doc(db, "users", userCred.user.uid), {
-        uid: userCred.user.uid,
-        email: invite.email,
-        firstName: invite.firstName,
-        lastName: invite.lastName,
-        companyId: invite.companyId,
-        role: invite.role || "employee",
-        createdAt: invite.createdAt || new Date().toISOString(),
-      });
+      const nowIso = new Date().toISOString();
+      const createdAtIso = toIso(invite.createdAt);
 
-      // Mark invite as accepted
+      // Add to Firestore `users`
+      await setDoc(
+        doc(db, "users", userCred.user.uid),
+        {
+          uid: userCred.user.uid,
+          email: invite.email,
+          firstName: invite.firstName,
+          lastName: invite.lastName,
+          companyId: invite.companyId,
+          role: invite.role || "employee",
+          createdAt: createdAtIso, // ✅ always ISO string
+          updatedAt: nowIso, // ✅ add this if you want an updatedAt
+        },
+        { merge: true }
+      );
+
+      // Mark invite as accepted (strings)
       await updateDoc(doc(db, "invites", inviteId!), {
         accepted: true,
         acceptedBy: userCred.user.uid,
-        acceptedAt: new Date().toISOString(),
+        acceptedAt: nowIso, // ✅ string
       });
 
       dispatch(showMessage("✅ Invite accepted. Welcome!"));
@@ -120,8 +155,15 @@ export default function InviteAcceptForm() {
           {invite.role || "employee"}.
         </p>
         <form onSubmit={handleSubmit}>
-          <div>Email: <strong>{invite.email}</strong></div>
-          <div>Name: <strong>{invite.firstName} {invite.lastName}</strong></div>
+          <div>
+            Email: <strong>{invite.email}</strong>
+          </div>
+          <div>
+            Name:{" "}
+            <strong>
+              {invite.firstName} {invite.lastName}
+            </strong>
+          </div>
 
           <label>Password</label>
           <input
@@ -137,9 +179,13 @@ export default function InviteAcceptForm() {
             value={verifyPassword}
             onChange={(e) => handleVerifyPasswordChange(e.target.value)}
           />
-          {verifyPasswordError && <div className="auth-error">{verifyPasswordError}</div>}
+          {verifyPasswordError && (
+            <div className="auth-error">{verifyPasswordError}</div>
+          )}
 
-          <button disabled={submitting || !!passwordError || !!verifyPasswordError}>
+          <button
+            disabled={submitting || !!passwordError || !!verifyPasswordError}
+          >
             {submitting ? "Accepting…" : "Accept Invite"}
           </button>
         </form>
