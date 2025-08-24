@@ -6,7 +6,6 @@ import {
   FireStoreGalloGoalDocType,
   PostInputType,
   PostType,
-  UserType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
@@ -24,18 +23,14 @@ import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import "./pickstore.css";
 import AccountModalSelector from "./AccountModalSelector";
 
-
-
-
 import {
   selectAllGalloGoals,
   selectUsersGalloGoals,
 } from "../../Slices/galloGoalsSlice";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
+import { useIntegrations } from "../../hooks/useIntegrations";
 
 interface PickStoreProps {
-  onNext: () => void;
-  onPrevious: () => void;
   post: PostInputType;
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   handleFieldChange: (
@@ -47,8 +42,6 @@ interface PickStoreProps {
 }
 
 export const PickStore: React.FC<PickStoreProps> = ({
-  onNext,
-  onPrevious,
   post,
   setPost,
   handleFieldChange,
@@ -57,6 +50,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
 }) => {
   const user = useSelector(selectUser);
   const salesRouteNum = user?.salesRouteNum;
+  const { isEnabled } = useIntegrations();
+  const galloEnabled = isEnabled("gallo");
 
   const [_allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
@@ -74,16 +69,14 @@ export const PickStore: React.FC<PickStoreProps> = ({
     selectUsersGalloGoals(state, salesRouteNum)
   );
 
-
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
     null
   );
 
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalWithIdType>();
-  const userRole = useSelector(selectUser)?.role;
-  const userId = useSelector(selectUser)?.uid;
-  const isAdmin = userRole === "admin" || userRole === "super-admin";
+  // const userRole = useSelector(selectUser)?.role;
+  // const isAdmin = userRole === "admin" || userRole === "super-admin";
   // const isEmployee = userRole === "employee";
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
@@ -92,22 +85,26 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const allGalloGoals = useSelector(selectAllGalloGoals);
   const [openAccountModal, setOpenAccountModal] = useState(true);
 
-  // filtering by account number function:  these return current goals for selection.  a mode might be helpful for switching to the desired set.
-  const usersActiveGalloGoals = getActiveGalloGoalsForAccount(
-    post.account?.accountNumber,
-    usersGalloGoals // Type 'undefined' is not assignable to type 'FireStoreGalloGoalDocType[]'
-  );
-
-  const allActiveGalloGoals = getActiveGalloGoalsForAccount(
-    post.account?.accountNumber,
-    allGalloGoals
-  );
-
   const onlyUsersStores = !isAllStoresShown;
 
-  const galloGoals = onlyUsersStores
-    ? usersActiveGalloGoals
-    : allActiveGalloGoals;
+  // filtering by account number function:  these return current goals for selection.  a mode might be helpful for switching to the desired set.
+  // Derivations only if enabled:
+  const usersActiveGalloGoals = galloEnabled
+    ? getActiveGalloGoalsForAccount(
+        post.account?.accountNumber,
+        usersGalloGoals
+      )
+    : [];
+
+  const allActiveGalloGoals = galloEnabled
+    ? getActiveGalloGoalsForAccount(post.account?.accountNumber, allGalloGoals)
+    : [];
+
+  const galloGoals = galloEnabled
+    ? onlyUsersStores
+      ? usersActiveGalloGoals
+      : allActiveGalloGoals
+    : [];
 
   const companyGoals = useMemo(() => {
     if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
@@ -273,15 +270,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
         px={3}
         className="pick-store-navigation-buttons"
       >
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={onPrevious}
-          sx={{ minWidth: "80px" }}
-        >
-          Back
-        </Button>
-
         {post.account && (
           <Button
             variant="contained"
@@ -292,16 +280,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
             Clear
           </Button>
         )}
-
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={onNext}
-          disabled={!post.account}
-          sx={{ minWidth: "80px" }}
-        >
-          Next
-        </Button>
       </Box>
       <Box className="store-selection">
         <Button
@@ -387,15 +365,17 @@ export const PickStore: React.FC<PickStoreProps> = ({
             />
           </Box>
 
-          <Box mt={2}>
-            <GalloGoalDropdown
-              goals={galloGoals}
-              label="Gallo Goals"
-              loading={isFetchingGoal}
-              onSelect={handleGalloGoalSelection}
-              selectedGoal={selectedGalloGoalId}
-            />
-          </Box>
+          {galloEnabled && (
+            <Box mt={2}>
+              <GalloGoalDropdown
+                goals={galloGoals}
+                label="Gallo Goals"
+                loading={isFetchingGoal}
+                onSelect={handleGalloGoalSelection}
+                selectedGoal={selectedGalloGoalId}
+              />
+            </Box>
+          )}
         </Box>
       )}
 

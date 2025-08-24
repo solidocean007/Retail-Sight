@@ -9,7 +9,7 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AllCompanyGoalsView from "./AllCompanyGoalsView";
 import "./allGoalsLayout.css";
 import { useSelector } from "react-redux";
@@ -17,6 +17,7 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { CompanyGoalWithIdType } from "../../utils/types";
 import AllGalloGoalsView from "./AllGalloGoalsView";
 import { selectAllGalloGoals } from "../../Slices/galloGoalsSlice";
+import { useIntegrations } from "../../hooks/useIntegrations";
 
 export interface GoalDuplicateReport {
   goalId: string;
@@ -51,17 +52,38 @@ interface AllGoalsLayoutProps {
   companyId: string | undefined;
 }
 
-const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
-  companyId,
-}) => {
+const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({ companyId }) => {
+  const { isEnabled } = useIntegrations();
+  const galloEnabled = isEnabled("gallo");
   const [value, setValue] = useState(0);
   const theme = useTheme(); // Correct usage of `useTheme`
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Accessing breakpoints safely
-
-  const galloGoals = useSelector(selectAllGalloGoals);
   const companyGoals = useSelector(selectAllCompanyGoals);
 
- 
+  const tabs = useMemo(
+    () => [
+      {
+        key: "company",
+        label: "Company Goals",
+        panel: <AllCompanyGoalsView companyId={companyId} />,
+      },
+      ...(galloEnabled
+        ? [
+            {
+              key: "gallo",
+              label: "Gallo Programs & Goals",
+              panel: <AllGalloGoalsView />,
+            },
+          ]
+        : []),
+    ],
+    [galloEnabled, companyId]
+  );
+
+  useEffect(() => {
+    if (value >= tabs.length) setValue(0);
+  }, [tabs.length, value]);
+
   // Compute duplicate reports once whenever goals change
   const duplicateReports: GoalDuplicateReport[] = useMemo(
     () => findDuplicateSubmissions(companyGoals),
@@ -118,42 +140,45 @@ const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
         {isMobile ? (
           <Select
             value={value}
-            onChange={handleSelectChange}
+            onChange={(e) => setValue(Number(e.target.value))}
             fullWidth
             displayEmpty
           >
-            {/* <MenuItem value={0}>Goals View</MenuItem> */}
-            <MenuItem value={0}>Company Goals</MenuItem>
-            <MenuItem value={1}>Gallo Programs & Goals</MenuItem>
+            {tabs.map((t, i) => (
+              <MenuItem key={t.key} value={i}>
+                {t.label}
+              </MenuItem>
+            ))}
           </Select>
         ) : (
           <Tabs
             value={value}
-            onChange={handleChange}
-            aria-label="All Goals View Tabs"
-            className="tabs"
+            onChange={(_, i) => setValue(i)}
             variant="scrollable"
             scrollButtons="auto"
           >
-            {/* <Tab label="Goals View" {...a11yProps(0)} /> */}
-            <Tab label="Company Goals" {...a11yProps(0)} />
-            <Tab label="Gallo Programs & Goals" {...a11yProps(1)} />
+            {tabs.map((t, i) => (
+              <Tab
+                key={t.key}
+                label={t.label}
+                id={`simple-tab-${i}`}
+                aria-controls={`simple-tabpanel-${i}`}
+              />
+            ))}
           </Tabs>
         )}
       </Box>
 
-      {value === 0 && (
-        <div className="all-company-goals-view-container">
-          <AllCompanyGoalsView
-            companyId={companyId}
-          />
+      {tabs.map((t, i) => (
+        <div
+          role="tabpanel"
+          hidden={value !== i}
+          id={`simple-tabpanel-${i}`}
+          key={t.key}
+        >
+          {value === i && <Box sx={{ p: 8 }}>{t.panel}</Box>}
         </div>
-      )}
-      {value === 1 && (
-        <div className="table-container">
-          <AllGalloGoalsView  />
-        </div>
-      )}
+      ))}
     </div>
   );
 };

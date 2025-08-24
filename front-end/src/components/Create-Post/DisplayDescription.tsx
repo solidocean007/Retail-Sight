@@ -3,9 +3,7 @@ import { PostInputType } from "../../utils/types";
 import "./displayDescription.css";
 
 interface DisplayDescriptionProps {
-  post: PostInputType;
-  onNext: () => void;
-  onPrevious: () => void;
+  post: PostInputType,
   handleFieldChange: (
     field: keyof PostInputType,
     value: PostInputType[keyof PostInputType],
@@ -14,8 +12,6 @@ interface DisplayDescriptionProps {
 
 export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
   post,
-  onNext,
-  onPrevious,
   handleFieldChange,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -41,9 +37,7 @@ export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
 
   return (
     <div className="display-description">
-      <button className="create-post-btn" onClick={onPrevious}>
-        Back
-      </button>
+     
       <div className="display-description-instructions">
         <h2>Display Description</h2>
         <h3>Optional</h3>
@@ -74,9 +68,7 @@ export const DisplayDescription: React.FC<DisplayDescriptionProps> = ({
           color="primary"
         ></textarea>
       </div>
-      <button className="create-post-btn" onClick={onNext}>
-        <h4>Next</h4>
-      </button>
+     
     </div>
   );
 };

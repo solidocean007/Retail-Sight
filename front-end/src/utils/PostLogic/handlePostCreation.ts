@@ -58,7 +58,7 @@ export const useHandlePostSubmission = () => {
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     setUploadStatusText: React.Dispatch<React.SetStateAction<string>>,
-    apiKey: string,
+    apiKey?: string,
     selectedGalloGoal?: FireStoreGalloGoalDocType | null
   ): Promise<PostWithID> => {
     if (!userData) throw new Error("User not authenticated");
@@ -153,7 +153,7 @@ export const useHandlePostSubmission = () => {
       dispatch(addNewPost(finalPost));
       await addPostsToIndexedDB([finalPost]);
 
-      if (post.oppId) {
+      if (post.oppId && apiKey) {
         dispatch(showMessage("📤 Sending achievement to Gallo Axis..."));
         const achievementPayload = {
           oppId: post.oppId,

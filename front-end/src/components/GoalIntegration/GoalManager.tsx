@@ -9,10 +9,11 @@ import {
   useTheme,
   Typography,
 } from "@mui/material";
-import CreateGalloGoalView from "./CreateGalloGoalView";
 import CreateCompanyGoalView from "./CreateCompanyGoalView";
 import AllGoalsLayout from "./AllGoalsLayout";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useIntegrations } from "../../hooks/useIntegrations";
+const CreateGalloGoalView = React.lazy(() => import("./CreateGalloGoalView"));
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -31,16 +32,11 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ backgroundColor: "var(--dashboard-card)", }}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ backgroundColor: "var(--dashboard-card)" }}>{children}</Box>
+      )}
     </div>
   );
-}
-
-function a11yProps(index: number) {
-  return {
-    id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
-  };
 }
 
 interface GoalManagerProps {
@@ -48,13 +44,43 @@ interface GoalManagerProps {
 }
 
 const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
+  const { isEnabled } = useIntegrations();
+  const galloEnabled = isEnabled("gallo");
   const [value, setValue] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
+  const tabs = [
+    {
+      key: "all",
+      label: "All Goals",
+      panel: <AllGoalsLayout companyId={companyId} />,
+    },
+    ...(galloEnabled
+      ? [
+          {
+            key: "gallo",
+            label: "Gallo Program Import",
+            panel: (
+              <React.Suspense
+                fallback={<div style={{ padding: 8 }}>Loading…</div>}
+              >
+                <CreateGalloGoalView setValue={setValue} />
+              </React.Suspense>
+            ),
+          },
+        ]
+      : []),
+    {
+      key: "company",
+      label: "Company Goal Creation",
+      panel: <CreateCompanyGoalView />,
+    },
+  ];
+
+  useEffect(() => {
+    if (value >= tabs.length) setValue(0);
+  }, [tabs.length, value]);
 
   return (
     <div>
@@ -66,17 +92,17 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
             value={value}
             onChange={(e) => setValue(Number(e.target.value))}
             fullWidth
-            displayEmpty
           >
-            <MenuItem value={0}>All Goals</MenuItem>
-            <MenuItem value={1}>Gallo Program Import</MenuItem>
-            <MenuItem value={2}>Company Goal Creation</MenuItem>
+            {tabs.map((t, i) => (
+              <MenuItem key={t.key} value={i}>
+                {t.label}
+              </MenuItem>
+            ))}
           </Select>
         ) : (
           <Tabs
             value={value}
-            onChange={handleChange}
-            aria-label="dashboard tabs"
+            onChange={(_, i) => setValue(i)}
             variant="scrollable"
             scrollButtons="auto"
             sx={{
@@ -98,24 +124,56 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
               },
             }}
           >
-            <Tab label="All Goals" {...a11yProps(0)} />
-            <Tab label="Gallo Program Import" {...a11yProps(1)} />
-            <Tab label="Company Goal Creation" {...a11yProps(2)} />
+            {tabs.map((t, i) => (
+              <Tab
+                key={t.key}
+                label={t.label}
+                id={`simple-tab-${i}`}
+                aria-controls={`simple-tabpanel-${i}`}
+              />
+            ))}
           </Tabs>
+
+          // <Tabs
+          //   value={value}
+          //   onChange={handleChange}
+          //   aria-label="dashboard tabs"
+          //   variant="scrollable"
+          //   scrollButtons="auto"
+          //   sx={{
+          //     // borderBottom: "1px solid #ccc", // Separation under tabs
+          //     "& .MuiTab-root": {
+          //       borderTopLeftRadius: "12px",
+          //       borderTopRightRadius: "12px",
+          //       textTransform: "none", // prevent all caps
+          //       padding: "8px 16px",
+          //       marginRight: "8px",
+          //       marginBottom: "0px",
+          //       backgroundColor: "var(--tab-background)",
+          //       "&.Mui-selected": {
+          //         backgroundColor: "var(--tab-background-selected)",
+          //         color: "var(--color-selected)",
+          //         border: "1px solid #ccc",
+          //         borderBottom: "none", // remove overlap on active tab
+          //       },
+          //     },
+          //   }}
+          // >
+          //   <Tab label="All Goals" {...a11yProps(0)} />
+          //   {galloEnabled && (
+          //     <Tab label="Gallo Program Import" {...a11yProps(1)} />
+          //   )}
+          //   <Tab label="Company Goal Creation" {...a11yProps(2)} />
+          // </Tabs>
         )}
       </Box>
       <div>
-        <TabPanel value={value} index={0}>
-          <AllGoalsLayout companyId={companyId} />
-        </TabPanel>
-        <TabPanel value={value} index={1}>
-          <CreateGalloGoalView setValue={setValue} />
-        </TabPanel>
-        <TabPanel value={value} index={2}>
-          <CreateCompanyGoalView />
-        </TabPanel>
+        {tabs.map((t, i) => (
+          <TabPanel key={t.key} value={value} index={i}>
+            {t.panel}
+          </TabPanel>
+        ))}
       </div>
-
     </div>
   );
 };

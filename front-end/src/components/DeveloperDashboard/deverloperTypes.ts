@@ -1,6 +1,6 @@
 // src/components/DeveloperDashboard
 
-import { BusinessType } from "../../utils/types";
+import { BusinessType, IntegrationsMap } from "../../utils/types";
 
 // utils/types.ts
 export interface CompanyCounts {
@@ -33,6 +33,7 @@ export interface CompanyDoc {
     hasProductsOrBrands?: boolean;
     hasGoalsOrQuotas?: boolean;
   };
+  integrations?: IntegrationsMap;
   onboardingScore?: number;
   accessStatus?: "off" | "limited" | "on";
   connections?: {
@@ -63,6 +64,7 @@ export interface CompanyNormalized {
     accounts: number;
     goalsActive: number;
   };
+  integrations?: IntegrationsMap;
   onboarding: {
     hasMinUsers?: boolean;
     hasAccounts?: boolean;

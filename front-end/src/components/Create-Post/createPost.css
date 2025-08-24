@@ -18,10 +18,27 @@
   height: 100%;
 }
 
+.create-post-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .create-post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+}
+
+.create-post-navigation {
+  display: flex;
+  justify-content: space-between;
+  background: "var(--dashboard-card)";
+  width: 100%;;
+  align-items: center;
+  margin: 10px 0;
   width: 100%;
 }
 

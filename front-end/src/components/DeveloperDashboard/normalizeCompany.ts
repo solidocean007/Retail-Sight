@@ -1,4 +1,8 @@
-import { CompanyCounts, CompanyDoc, CompanyNormalized } from "./deverloperTypes";
+import {
+  CompanyCounts,
+  CompanyDoc,
+  CompanyNormalized,
+} from "./deverloperTypes";
 
 function toISO(ts: any): string | undefined {
   if (!ts) return undefined;
@@ -8,7 +12,8 @@ function toISO(ts: any): string | undefined {
   return undefined;
 }
 
-const EMPTY_COUNTS: CompanyCounts = { // this isnt used
+const EMPTY_COUNTS: CompanyCounts = {
+  // this isnt used
   usersTotal: 0,
   usersPending: 0,
   connectionsApproved: 0,
@@ -19,7 +24,10 @@ const EMPTY_COUNTS: CompanyCounts = { // this isnt used
   goalsActive: 0,
 };
 
-export function normalizeCompany(id: string, raw: CompanyDoc): CompanyNormalized {
+export function normalizeCompany(
+  id: string,
+  raw: CompanyDoc
+): CompanyNormalized {
   const verified = raw.companyVerified ?? raw.verified ?? false;
 
   const steps = [
@@ -58,6 +66,7 @@ export function normalizeCompany(id: string, raw: CompanyDoc): CompanyNormalized
     },
     onboarding: raw.onboarding ?? {},
     onboardingScore: computedScore,
+    integrations: raw.integrations ?? {}, // <-- add this
     accessStatus: raw.accessStatus ?? (verified ? "limited" : "off"),
     connections: {
       approvedWith: raw.connections?.approvedWith ?? [],

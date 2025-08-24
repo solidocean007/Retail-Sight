@@ -25,6 +25,7 @@ import {
 } from "../Slices/notificationsSlice";
 import { NotificationType } from "../utils/types";
 import { db } from "../utils/firebase";
+import { normalizeNotification } from "../utils/normalize";
 
 //
 // 🔁 1. Fetch All Notifications for a Company
@@ -46,32 +47,23 @@ export const fetchCompanyNotifications = createAsyncThunk(
       const roleNotifs: NotificationType[] = [];
 
       snapshot.forEach((docSnap) => {
-        const data = docSnap.data() as NotificationType;
-        const normalizedFetchedNotification: NotificationType = {
-          ...data,
-          id: docSnap.id,
-          sentAt:
-            data.sentAt instanceof Timestamp
-              ? data.sentAt.toDate().toISOString()
-              : data.sentAt, // assume already string
-        };
+        const normalized = normalizeNotification(docSnap.data(), docSnap.id);
 
         const { recipientUserIds, recipientCompanyIds, recipientRoles } =
-          normalizedFetchedNotification;
+          normalized;
 
         if (
-          !recipientUserIds?.length &&
-          !recipientCompanyIds?.length &&
-          !recipientRoles?.length
+          (!recipientUserIds || recipientUserIds.length === 0) &&
+          (!recipientCompanyIds || recipientCompanyIds.length === 0) &&
+          (!recipientRoles || recipientRoles.length === 0)
         ) {
-          // Global → Treat as company-wide
-          companyNotifs.push(normalizedFetchedNotification);
+          companyNotifs.push(normalized); // global
         } else if (recipientCompanyIds?.includes(companyId)) {
-          companyNotifs.push(normalizedFetchedNotification);
+          companyNotifs.push(normalized);
         } else if (recipientRoles?.length) {
-          roleNotifs.push(normalizedFetchedNotification);
+          roleNotifs.push(normalized);
         } else {
-          userNotifs.push(normalizedFetchedNotification);
+          userNotifs.push(normalized);
         }
       });
 
@@ -89,8 +81,6 @@ export const fetchCompanyNotifications = createAsyncThunk(
 
 //
 // 📩 2. Send Notification (Flat collection)
-//
-
 export const sendNotification = createAsyncThunk(
   "notifications/sendNotification",
   async (
@@ -98,64 +88,61 @@ export const sendNotification = createAsyncThunk(
     { dispatch }
   ) => {
     try {
+      // 1) Create an ID up front
       const docRef = doc(collection(db, "notifications"));
-      // the thunk takes it and alters again.  it puts the notification.id on it.  it puts other things on it that seem to
-      // sustain like companyIds recipientuserids and setAt but not the postId.. but postId is optional so i see why its left off here
-      const newNotif: NotificationType = {
+
+      // 2) Firestore payload (OK to use Timestamp here)
+      const firestorePayload: NotificationType = {
         ...notification,
         id: docRef.id,
-        recipientCompanyIds: notification.recipientCompanyIds || [],
-        recipientUserIds: notification.recipientUserIds || [],
-        recipientRoles: notification.recipientRoles || [],
-        sentAt: notification.sentAt || Timestamp.now(),
-        postId: notification.postId ?? "", // ✅ ensure it's preserved in Firestore
+        recipientCompanyIds: notification.recipientCompanyIds ?? [],
+        recipientUserIds: notification.recipientUserIds ?? [],
+        recipientRoles: notification.recipientRoles ?? [],
+        sentAt:
+          notification.sentAt instanceof Timestamp
+            ? notification.sentAt
+            : notification.sentAt
+            ? Timestamp.fromDate(new Date(notification.sentAt as any))
+            : Timestamp.now(),
+        postId: notification.postId ?? "",
       };
 
-      await setDoc(docRef, newNotif);
+      // 3) Write to Firestore
+      await setDoc(docRef, firestorePayload);
 
-      // // Redux-safe version... this must not be a safe version.
-      // const normalizedNotification = {
-      //   ...newNotif,
-      //   id: docRef.id,
-      //   sentAt:
-      //     newNotif.sentAt instanceof Timestamp
-      //       ? newNotif.sentAt.toDate().toISOString()
-      //       : typeof newNotif.sentAt === "string"
-      //       ? newNotif.sentAt
-      //       : Timestamp.now().toDate().toISOString(),
-      //   recipientCompanyIds: notification.recipientCompanyIds || [],
-      //   recipientUserIds: notification.recipientUserIds || [],
-      //   recipientRoles: notification.recipientRoles || [],
-      //   postId: notification.postId || "", // make sure this field is explicitly passed
-      // };
+      // 4) Normalize for Redux (must be serializable)
+      const normalized = normalizeNotification(firestorePayload);
 
-      // // 🔀 Dispatch to correct notification group(s)
-      // const { recipientUserIds, recipientCompanyIds, recipientRoles } =
-      //   normalizedNotification;
+      // 5) Dispatch to the correct buckets
+      const {
+        recipientUserIds,
+        recipientCompanyIds,
+        recipientRoles,
+      } = normalized;
 
-      // if (recipientUserIds && recipientUserIds.length > 0) {
-      //   dispatch(addUserNotification(normalizedNotification));
-      // }
+      let dispatched = false;
 
-      // if (recipientCompanyIds && recipientCompanyIds.length > 0) {
-      //   dispatch(addCompanyNotification(normalizedNotification));
-      // }
+      if (recipientUserIds && recipientUserIds.length > 0) {
+        dispatch(addUserNotification(normalized));
+        dispatched = true;
+      }
+      if (recipientCompanyIds && recipientCompanyIds.length > 0) {
+        dispatch(addCompanyNotification(normalized));
+        dispatched = true;
+      }
+      if (recipientRoles && recipientRoles.length > 0) {
+        dispatch(addRoleNotification(normalized));
+        dispatched = true;
+      }
 
-      // if (recipientRoles && recipientRoles.length > 0) {
-      //   dispatch(addRoleNotification(normalizedNotification));
-      // }
-
-      // // 📢 Global fallback (no target specified)
-      // if (
-      //   (recipientUserIds?.length ?? 0) === 0 &&
-      //   (recipientCompanyIds?.length ?? 0) === 0 &&
-      //   (recipientRoles?.length ?? 0) === 0
-      // ) {
-      //   dispatch(addCompanyNotification(normalizedNotification));
-      // }
+      // Global fallback: no audience specified → company-wide feed
+      if (!dispatched) {
+        dispatch(addCompanyNotification(normalized));
+      }
     } catch (err: any) {
       console.error("Error sending notification:", err);
-      dispatch(setError(err.message));
+      dispatch(setError(err.message || "Failed to send notification"));
+      throw err;
     }
   }
 );

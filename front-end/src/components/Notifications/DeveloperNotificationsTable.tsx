@@ -26,9 +26,8 @@ const DeveloperNotificationsTable: React.FC<
   DeveloperNotificationsTableProps
 > = ({ allCompaniesAndUsers }) => {
   const dispatch = useAppDispatch();
-  const { notifications, loading, error } = useSelector(
-    (state: RootState) => state.notifications
-  );
+  const { userNotifications, companyNotifications, loading, error } =
+    useSelector((state: RootState) => state.notifications);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
@@ -44,7 +43,7 @@ const DeveloperNotificationsTable: React.FC<
     }
   }, [dispatch, currentUser?.companyId, currentUser?.role]);
 
-  const filteredNotifications = notifications.filter(
+  const filteredNotifications = userNotifications.filter(
     (notification: NotificationType) =>
       notification.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -96,10 +95,26 @@ const DeveloperNotificationsTable: React.FC<
                 </TableCell>
                 <TableCell>{notif.priority || "Normal"}</TableCell>
                 <TableCell>
-                  {notif.sentAt instanceof Date
-                    ? notif.sentAt.toLocaleString()
-                    : new Date(notif.sentAt.seconds * 1000).toLocaleString()}
+                  {(() => {
+                    const sentAt = notif.sentAt;
+
+                    if (sentAt instanceof Date) {
+                      return sentAt.toLocaleString();
+                    }
+
+                    if (typeof sentAt === "string") {
+                      return new Date(sentAt).toLocaleString();
+                    }
+
+                    if (sentAt && "seconds" in sentAt) {
+                      // Firestore Timestamp
+                      return new Date(sentAt.seconds * 1000).toLocaleString();
+                    }
+
+                    return "—"; // fallback
+                  })()}
                 </TableCell>
+
                 <TableCell className="actions-cell">
                   <Button
                     size="small"

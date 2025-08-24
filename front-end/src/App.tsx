@@ -27,6 +27,7 @@ import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
 import { setupNotificationListenersForUser } from "./utils/listeners/setupNotificationListenersForUser";
 import { setupNotificationListenersForCompany } from "./utils/listeners/setupNotificationListenerForCompany";
 import UserModal from "./components/UserModal";
+import { useIntegrations } from "./hooks/useIntegrations";
 // import { logTimestamps } from "./script";
 // import { auditPostDates, migratePostDates } from "./script";
 
@@ -43,9 +44,8 @@ function App(): React.JSX.Element {
   const { currentUser, initializing } = useFirebaseAuth();
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  // useEffect(() => {
-  //   logTimestamps();
-  // }, []);
+  const { isEnabled } = useIntegrations();
+  const galloEnabled = isEnabled("gallo");
 
   useEffect(() => {
     if (!companyId) return;
@@ -83,21 +83,23 @@ function App(): React.JSX.Element {
   useEffect(() => {
     // return
     if (!companyId || !currentUser?.companyId) return;
-    const unsubscribeNotificationsForUser = dispatch(
-      setupNotificationListenersForUser(currentUser)
-    );
-    const unsubscribeNotificationsForCompany = dispatch(
-      setupNotificationListenersForCompany(currentUser)
-    );
-    const unsubscribeCompanyGoals = dispatch(
-      setupCompanyGoalsListener(companyId)
-    );
-    const unsubscribeGalloGoals = dispatch(setupGalloGoalsListener(companyId));
+    const unsubs: Array<() => void> = [];
+
+    // always-on listeners
+    unsubs.push(dispatch(setupNotificationListenersForUser(currentUser)));
+    unsubs.push(dispatch(setupNotificationListenersForCompany(currentUser)));
+    unsubs.push(dispatch(setupCompanyGoalsListener(companyId)));
+
+    // only when this company has the gallo integration enabled
+    if (galloEnabled) {
+      unsubs.push(dispatch(setupGalloGoalsListener(companyId)));
+    }
+
     return () => {
-      unsubscribeCompanyGoals();
-      unsubscribeGalloGoals();
-      unsubscribeNotificationsForUser();
-      unsubscribeNotificationsForCompany();
+      for (const u of unsubs)
+        try {
+          u && u();
+        } catch {}
     };
   }, [dispatch, currentUser]);
 

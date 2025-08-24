@@ -43,8 +43,19 @@ export type NotificationType = {
   commentId?: string;
 };
 
-export type BusinessType = 'distributor' | 'supplier';
-export type AccessStatus = 'active' | 'suspended';
+export type BusinessType = "distributor" | "supplier";
+export type AccessStatus = "active" | "suspended";
+
+export type ProviderKey = "gallo" | "manualGoals"; // extend later
+
+export type IntegrationConfig = {
+  enabled: boolean;
+  apiKeyId?: string; // reference/id (not the raw secret)
+  settings?: Record<string, unknown>;
+};
+
+export type IntegrationsMap = Partial<Record<ProviderKey, IntegrationConfig>>;
+
 export type CompanyType = {
   id?: string;
   lastUpdated: string | null;
@@ -70,6 +81,10 @@ export type CompanyType = {
     maxUsers: number;
     maxConnections: number;
   };
+  // 🔁 replace array with a provider map
+  integrations?: IntegrationsMap;
+
+  // not sure about this object here.
   counts?: {
     usersTotal?: number;
     usersPending?: number;

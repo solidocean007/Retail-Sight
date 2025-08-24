@@ -11,8 +11,13 @@ import "./gallo-goals.css";
 import GalloProgramCard from "./GalloProgramCard";
 import PostViewerModal from "../PostViewerModal";
 import { RootState } from "../../utils/store";
+import { useIntegrations } from "../../hooks/useIntegrations";
+import { useNavigate } from "react-router-dom";
 
 const AllGalloGoalsView = () => {
+  const navigate = useNavigate();
+  const { isEnabled } = useIntegrations();
+  const galloEnabled = isEnabled("gallo");
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const galloGoals = useSelector(selectAllGalloGoals);
   const isLoading = useSelector(selectGalloGoalsLoading);
@@ -72,6 +77,15 @@ const AllGalloGoalsView = () => {
     );
   }
 
+  if (!galloEnabled) {
+    return (
+      <Box textAlign="center" mt={4}>
+        <Typography color="error">Gallo Integrations not enabled</Typography>
+        <button onClick={() => navigate("/user-home-page")}>Home</button>
+      </Box>
+    );
+  }
+
   return (
     <Container>
       <Typography variant="h4" className="gallo-goals-header">
@@ -85,7 +99,6 @@ const AllGalloGoalsView = () => {
             program={program}
             employeeMap={employeeMap}
             onViewPostModal={openPostViewer}
-
           />
         ))}
       </Box>

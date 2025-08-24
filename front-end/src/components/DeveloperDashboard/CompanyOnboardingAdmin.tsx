@@ -12,13 +12,14 @@ import { collection, onSnapshot, query } from "firebase/firestore";
 import CompanyDrawer from "./CompanyDrawer";
 import { db } from "../../utils/firebase";
 import { normalizeCompany } from "./normalizeCompany";
+import IntegrationsManager from "./IntegrationsManager";
 
 type Row = {
   id: string;
   companyName: string;
   companyVerified: boolean;
   tier: "free" | "pro" | "enterprise";
-    primaryContact?: { name?: string; email?: string; phone?: string };
+  primaryContact?: { name?: string; email?: string; phone?: string };
   counts: {
     usersTotal: number;
     usersPending: number;
@@ -42,7 +43,7 @@ export default function CompanyOnboardingAdmin() {
   useEffect(() => {
     const q = query(collection(db, "companies"));
     return onSnapshot(q, (snap) => {
-      setRows(snap.docs.map((d) => normalizeCompany(d.id, d.data()))); 
+      setRows(snap.docs.map((d) => normalizeCompany(d.id, d.data())));
       setLoading(false);
     });
   }, []);
@@ -116,6 +117,19 @@ export default function CompanyOnboardingAdmin() {
           />
         );
       },
+    },
+    // inside columns in CompanyOnboardingAdmin
+    {
+      field: "integrations",
+      headerName: "Integrations",
+      flex: 1,
+      sortable: false,
+      renderCell: (params) => (
+        <IntegrationsManager
+          companyId={params.row.id}
+          value={(params.row as any).integrations} // pass current map if you add it to normalizeCompany
+        />
+      ),
     },
   ];
 

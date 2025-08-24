@@ -1,5 +1,5 @@
 // CreatePost.tsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import { Timestamp } from "firebase/firestore";
@@ -7,21 +7,13 @@ import { selectUser } from "../../Slices/userSlice";
 
 // import ChannelSelector from "./ChannelSelector";
 // import CategorySelector from "./CategorySelector";
-import {
-  AppBar,
-  Backdrop,
-  Box,
-  Container,
-  Typography,
-} from "@mui/material";
+import { AppBar, Box, Container } from "@mui/material";
 
 // import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
 import {
   CompanyAccountType,
-  CompanyMissionType,
   FireStoreGalloGoalDocType,
-  MissionType,
   PostInputType,
   PostType,
   UserType,
@@ -31,7 +23,6 @@ import {
 // import { SupplierType } from "./SupplierSelector";
 // import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
-import LoadingIndicator from "./LoadingIndicator";
 import { CreatePostHelmet } from "../../utils/helmetConfigurations";
 import { UploadImage } from "./UploadImage";
 import { PickStore } from "./PickStore";
@@ -39,31 +30,31 @@ import { SetDisplayDetails } from "./SetDisplayDetails";
 import { DisplayDescription } from "./DisplayDescription";
 import { ReviewAndSubmit } from "./ReviewAndSubmit";
 import { showMessage } from "../../Slices/snackbarSlice";
-import { RootState, useAppDispatch } from "../../utils/store";
-import { MissionSelection } from "../MissionSelection/MissionSelection";
+import { useAppDispatch } from "../../utils/store";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
-
+import { useIntegrations } from "../../hooks/useIntegrations";
+import { mergeAndSetPosts } from "../../Slices/postsSlice";
+import { normalizePost } from "../../utils/normalizePost";
+import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
 
 export const CreatePost = () => {
   const userData = useSelector(selectUser);
+  const dispatch = useAppDispatch();
+  const companyId = userData?.companyId;
+  const { isEnabled } = useIntegrations();
+  const galloEnabled = isEnabled("gallo");
+  const [galloAxisApiKey, setGalloAxisApiKey] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
-  const [isUploading, setIsUploading] = useState(false); // should i keep these here or move them to ReviewAndSubmit?
-  const [uploadProgress, setUploadProgress] = useState(0); // same question?
-  const [openMissionSelection, setOpenMissionSelection] = useState(false);
-
-  // Function to navigate to the next step
-  const goToNextStep = () => setCurrentStep((prevStep) => prevStep + 1);
-
-  // Function to navigate to the previous step
-  const goToPreviousStep = () => setCurrentStep((prevStep) => prevStep - 1);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatusText, setUploadStatusText] = useState("");
 
   const handlePostSubmission = useHandlePostSubmission();
-  const companyId = userData?.companyId;
 
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null); // does this belong here?  should i pass selectedFile to UploadImage?
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [selectedCompanyAccount, setSelectedCompanyAccount] = // selectedCompanyAccount isnt used...
     useState<CompanyAccountType | null>(null);
@@ -78,19 +69,20 @@ export const CreatePost = () => {
     postUser: userData || null,
     account: null,
   }));
-  const [selectedGalloGoal, setSelectedGalloGoal] = useState<FireStoreGalloGoalDocType | null>(null);
+  const [selectedGalloGoal, setSelectedGalloGoal] =
+    useState<FireStoreGalloGoalDocType | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-  setPost((prevPost) => ({
-    ...prevPost,
-    postUser: onBehalf ?? userData, // 👤 Who the post is for
-    postedBy: userData ?? null,     // 🧑‍💻 Who is submitting the post
-    postedByFirstName: userData?.firstName || null,
-    postedByLastName: userData?.lastName || null,
-    postedByUid: userData?.uid || null,
-  }));
-}, [onBehalf, userData]);
+    setPost((prevPost) => ({
+      ...prevPost,
+      postUser: onBehalf ?? userData, // 👤 Who the post is for
+      postedBy: userData ?? null, // 🧑‍💻 Who is submitting the post
+      postedByFirstName: userData?.firstName || null,
+      postedByLastName: userData?.lastName || null,
+      postedByUid: userData?.uid || null,
+    }));
+  }, [onBehalf, userData]);
 
   const handleTotalCaseCountChange = useCallback((caseCount: number) => {
     setPost((prev) => ({ ...prev, totalCaseCount: caseCount }));
@@ -107,6 +99,27 @@ export const CreatePost = () => {
     []
   );
 
+  const isStep1Valid = !!selectedFile; // UploadImage picked a file
+  const isStep2Valid = !!post.account; // PickStore chose an account
+  const isStep3Valid =
+    (post.brands?.length || 0) > 0 && (post.productType?.length || 0) > 0; // SetDisplayDetails
+  const isStep4Valid = true; // DisplayDescription is optional
+
+  const canGoNext = useMemo(() => {
+    switch (currentStep) {
+      case 1:
+        return isStep1Valid;
+      case 2:
+        return isStep2Valid;
+      case 3:
+        return isStep3Valid;
+      case 4:
+        return isStep4Valid;
+      default:
+        return true; // Review/Submit step swaps to Submit
+    }
+  }, [currentStep, isStep1Valid, isStep2Valid, isStep3Valid, isStep4Valid]);
+
   // Render different content based on the current step
   const renderStepContent = () => {
     switch (currentStep) {
@@ -116,14 +129,11 @@ export const CreatePost = () => {
             setSelectedFile={setSelectedFile}
             post={post}
             setPost={setPost}
-            onNext={goToNextStep}
           />
         );
       case 2:
         return (
           <PickStore
-            onNext={goToNextStep}
-            onPrevious={goToPreviousStep}
             post={post}
             setPost={setPost}
             handleFieldChange={handleFieldChange}
@@ -134,8 +144,6 @@ export const CreatePost = () => {
       case 3:
         return (
           <SetDisplayDetails
-            onNext={goToNextStep}
-            onPrevious={goToPreviousStep}
             post={post}
             setPost={setPost}
             handleTotalCaseCountChange={handleTotalCaseCountChange}
@@ -145,26 +153,19 @@ export const CreatePost = () => {
         return (
           <DisplayDescription
             post={post}
-            onNext={goToNextStep}
-            onPrevious={goToPreviousStep}
             handleFieldChange={handleFieldChange}
           />
         );
-      // Additional cases for other steps
       default:
         return (
           <ReviewAndSubmit
             companyId={companyId}
             post={post}
-            onPrevious={goToPreviousStep}
             handleFieldChange={handleFieldChange}
             isUploading={isUploading}
             setIsUploading={setIsUploading}
             uploadProgress={uploadProgress}
-            selectedFile={selectedFile}
-            setUploadProgress={setUploadProgress}
-            handlePostSubmission={handlePostSubmission}
-            selectedGalloGoal={selectedGalloGoal} // 🆕 Pass the selected Gallo goal
+            uploadStatusText={uploadStatusText}
           />
         );
     }
@@ -181,12 +182,62 @@ export const CreatePost = () => {
     // justifyContent: "space-between",
     flexDirection: { sm: "row", md: "row" },
   };
+
+  const handleSubmitClick = async () => {
+    if (!selectedFile) {
+      dispatch(showMessage("Please select an image before submitting."));
+      return;
+    }
+
+    // setIsSubmitting(true);
+    setUploadProgress(0);
+    setIsUploading(true);
+
+    try {
+      // 🔒 Gate gallo args right here
+      const galloApiKey = galloEnabled ? galloAxisApiKey : undefined;
+      const galloGoal = galloEnabled ? selectedGalloGoal : undefined;
+      const newPost = await handlePostSubmission(
+        post,
+        selectedFile,
+        setIsUploading,
+        setUploadProgress,
+        setUploadStatusText,
+        galloApiKey,
+        galloGoal
+      );
+      dispatch(mergeAndSetPosts([normalizePost(newPost)]));
+      navigate("/user-home-page");
+    } catch (err: any) {
+      console.error("Upload failed:", err);
+      alert(err.message || "An error occurred during upload.");
+    } 
+  };
+
+  // ❗ reset apiKey if feature is turned off while component is mounted
+  useEffect(() => {
+    if (!galloEnabled && galloAxisApiKey) setGalloAxisApiKey("");
+  }, [galloEnabled, galloAxisApiKey]);
+
+  // fetch external API key only when needed (and enabled)
+  useEffect(() => {
+    // needs: feature on, company present, an oppId present, and we don't already have a key
+    if (!galloEnabled) return;
+    if (!companyId || !post.oppId) return;
+    if (galloAxisApiKey) return;
+
+    fetchExternalApiKey(companyId, "galloApiKey")
+      .then((key) => setGalloAxisApiKey(key))
+      .catch(() => {
+        console.error("Failed to fetch API key");
+        dispatch(showMessage("Failed to fetch API key."));
+      });
+  }, [galloEnabled, companyId, post.oppId, galloAxisApiKey, dispatch]);
+
   return (
     <>
       <CreatePostHelmet />
       <Container disableGutters className="create-post-container">
-        
-
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
             <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
@@ -207,8 +258,34 @@ export const CreatePost = () => {
               handleFieldChange={handleFieldChange}
             />
           )}
+          {/* Sticky footer */}
+          <div className="create-post-navigation">
+            <button
+              className="btn-secondary"
+              onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
+              disabled={currentStep === 1 || isUploading}
+            >
+              Back
+            </button>
+
+            <button
+              type="button"
+              className={canGoNext ? "button-primary" : "btn-disabled"}
+              onClick={() => {
+                if (currentStep < 5) setCurrentStep((s) => s + 1);
+                else handleSubmitClick();
+              }}
+              disabled={isUploading || (currentStep < 5 && !canGoNext)}
+            >
+              {currentStep < 5
+                ? "Next"
+                : isUploading
+                ? `Uploading ${Math.round(uploadProgress)}%`
+                : "Submit"}
+            </button>
+          </div>
+
           {renderStepContent()}
-         
         </div>
       </Container>
     </>

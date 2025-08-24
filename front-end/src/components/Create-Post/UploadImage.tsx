@@ -1,4 +1,4 @@
-import { Button, CircularProgress } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { PostInputType } from "../../utils/types";
 import "./uploadimage.css";
@@ -12,14 +12,12 @@ interface UploadImageProps {
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
   post: PostInputType;
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
-  onNext: () => void;
 }
 
 export const UploadImage: React.FC<UploadImageProps> = ({
   setSelectedFile,
   post,
   setPost,
-  onNext,
 }) => {
   const dispatch = useAppDispatch();
   const [isConverting, setIsConverting] = useState(false);
@@ -35,7 +33,9 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     try {
       // 🛡 Force file copy into memory immediately
       const arrayBuffer = await file.arrayBuffer();
-      const copiedFile = new File([arrayBuffer], file.name, { type: file.type });
+      const copiedFile = new File([arrayBuffer], file.name, {
+        type: file.type,
+      });
 
       if (!copiedFile || copiedFile.size === 0) {
         throw new Error("File reference lost after selection.");
@@ -112,9 +112,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         const reader = new FileReader();
         reader.onloadend = () => {
           setPost({ ...post, imageUrl: reader.result as string });
-          dispatch(
-            showMessage("Image converted and selected successfully!")
-          );
+          dispatch(showMessage("Image converted and selected successfully!"));
         };
         reader.readAsDataURL(copiedConvertedFile);
         return;
@@ -177,14 +175,6 @@ export const UploadImage: React.FC<UploadImageProps> = ({
 
       {post.imageUrl && (
         <>
-          <button
-            className="create-post-btn"
-            onClick={onNext}
-            disabled={isConverting}
-          >
-            <h4>Next</h4>
-          </button>
-
           <div className="image-box">
             <img src={post.imageUrl} alt="Post" className="post-image" />
           </div>
