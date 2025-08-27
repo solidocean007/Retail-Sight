@@ -14,29 +14,22 @@ module.exports = {
     "prettier",
   ],
   parser: "@typescript-eslint/parser",
-  parserOptions: {
-    project: ["tsconfig.json", "tsconfig.dev.json"],
+   parserOptions: {
+    project: "./tsconfig.json",  // ✅ move it here
     sourceType: "module",
   },
-  ignorePatterns: [
-    "/lib/**/*", // Ignore built files.
-  ],
   plugins: ["@typescript-eslint", "import", "prettier"],
+  ignorePatterns: [
+    ".eslintrc.js",
+    "/lib/**/*",
+  ],
   rules: {
     quotes: ["error", "double"],
-    "import/no-unresolved": 0,
     indent: ["error", 2],
     "linebreak-style": ["error", "unix"],
     "max-len": ["error", { code: 120 }],
-    "prettier/prettier": ["error"], // Add this line
-    curly: ["error", "all"], // Add this line for curly brace spacing
-  },
-  overrides: [
-    {
-      files: ["functions/**/*.ts"],
-      parserOptions: {
-        project: ["./functions/tsconfig.json"],
-      },
-    },
-  ],
+    "prettier/prettier": ["error"],
+    curly: ["error", "all"],
+    "import/no-unresolved": 0,
+  }
 };

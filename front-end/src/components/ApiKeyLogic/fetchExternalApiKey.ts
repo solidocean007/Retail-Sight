@@ -19,6 +19,7 @@ const fetchExternalApiKey = async (
       );
 
       if (externalApiKey) {
+        console.log(externalApiKey, " : externalApiKey found")
         return externalApiKey.key; // Return the actual key value
       } else {
         console.error(

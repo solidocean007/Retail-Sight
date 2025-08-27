@@ -28,6 +28,7 @@ import { setupNotificationListenersForUser } from "./utils/listeners/setupNotifi
 import { setupNotificationListenersForCompany } from "./utils/listeners/setupNotificationListenerForCompany";
 import UserModal from "./components/UserModal";
 import { useIntegrations } from "./hooks/useIntegrations";
+import { getFunctions, httpsCallable } from "firebase/functions";
 // import { logTimestamps } from "./script";
 // import { auditPostDates, migratePostDates } from "./script";
 
@@ -60,6 +61,13 @@ function App(): React.JSX.Element {
       }
     })();
   }, [dispatch, companyId]);
+
+  const functions = getFunctions(undefined, "us-central1");
+  const ping = httpsCallable(functions, "ping");
+
+  ping().then((res) => {
+    console.log("Ping result:", res.data);
+  });
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {

@@ -50,7 +50,7 @@ const ApiKeyModal = ({
     const functions = getFunctions();
     const getApiKey = httpsCallable(functions, "getApiKey");
     try {
-      const result = await getApiKey({ companyId: dashboardUser.companyId });
+      const result = await getApiKey({ companyId: dashboardUser?.companyId });
       const { apiKey, permissions } = result.data as ApiKeyResponse;
       setApiKey(apiKey);
       setPermissions(permissions);
@@ -71,7 +71,7 @@ const ApiKeyModal = ({
         posts: { canRead: true, canWrite: true },
       };
       const result = await generateApiKey({
-        companyId: dashboardUser.companyId,
+        companyId: dashboardUser?.companyId,
         permissions,
       });
       const { apiKey } = result.data as ApiKeyResponse;
