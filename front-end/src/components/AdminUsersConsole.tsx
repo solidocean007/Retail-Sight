@@ -28,7 +28,13 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import PersonAddAlt1RoundedIcon from "@mui/icons-material/PersonAddAlt1Rounded";
-import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridActionsCellItem,
+  GridColDef,
+  GridValueGetter,
+  GridValueFormatter,
+} from "@mui/x-data-grid";
 import {
   collection,
   query,
@@ -62,7 +68,7 @@ interface InviteRow {
   email: string;
   role: string;
   salesRoute?: string | number;
-  sentAt?: any;
+  createdAt?: any;
   status?: string;
 }
 
@@ -103,13 +109,21 @@ export default function AdminUsersConsole() {
     const unsub = onSnapshot(
       query(
         collection(db, `companies/${companyId}/invites`),
-        orderBy("sentAt", "desc")
+        orderBy("createdAt", "desc")
       ),
       (snap) => {
         setInvites(
-          snap.docs.map(
-            (d) => ({ id: d.id, __refPath: d.ref.path, ...d.data() } as any)
-          )
+          snap.docs.map((d) => {
+            const data = d.data();
+            return {
+              id: d.id,
+              email: data.inviteeEmail, // ✅ Map inviteeEmail to email field
+              __refPath: d.ref.path,
+              ...data,
+              createdAt: data.createdAt,
+              role: data.role || "employee",
+            };
+          }) as InviteRow[]
         );
         setLoadingInvites(false);
       }
@@ -362,11 +376,15 @@ export default function AdminUsersConsole() {
 
       { field: "salesRoute", headerName: "Sales Route #", flex: 1 },
       {
-        field: "sentAt",
-        headerName: "Sent At",
-        flex: 1,
-        valueFormatter: (params: { value: any }) =>
-          params.value?.toDate ? params.value.toDate().toLocaleString() : "",
+        field: "createdAt",
+        headerName: "Created At",
+        flex: 1.2,
+        renderCell: (params) => {
+          const ts = (params.row as InviteRow).createdAt;
+          const date =
+            ts && typeof ts.toDate === "function" ? ts.toDate() : undefined;
+          return date ? date.toLocaleString() : "";
+        },
       },
       {
         field: "actions",
@@ -504,7 +522,7 @@ export default function AdminUsersConsole() {
               </AccordionDetails>
             </Accordion>
 
-            <DataGrid
+            <DataGrid<InviteRow>
               autoHeight
               disableRowSelectionOnClick
               rows={invites}
