@@ -38,6 +38,7 @@ import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import DashMenu from "./DashMenu.tsx";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 import MyGoals from "./GoalIntegration/MyGoals.tsx";
+import AdminUsersConsole from "./AdminUsersConsole.tsx";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -95,6 +96,7 @@ export const Dashboard = () => {
     setSelectedMode(mode);
     setDashboardMode(mode); // ✅ now the render logic responds!
     setDrawerOpen(false);
+    console.log(mode)
   };
 
   const toggleDrawer =
@@ -188,6 +190,7 @@ export const Dashboard = () => {
         )}
         {dashboardMode === "MyGoalsMode" && <MyGoals  />}
         {dashboardMode === "UsersMode" && <EmployeesViewer />}
+        {dashboardMode === "UsersMode2" && <AdminUsersConsole />}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
         {dashboardMode === "GoalManagerMode" && (
           <GoalManager companyId={companyId} />

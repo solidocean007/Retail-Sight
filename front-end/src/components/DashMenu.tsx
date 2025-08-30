@@ -129,6 +129,13 @@ const DashMenu = ({
             <ListItemText primary="Users" />
           </ListItemButton>
           <ListItemButton
+            selected={selectedMode === "UsersMode2"}
+            onClick={() => onMenuClick("UsersMode2")}
+          >
+            <PeopleAltIcon sx={{ mr: 1 }} />
+            <ListItemText primary="Users2" />
+          </ListItemButton>
+          <ListItemButton
             selected={selectedMode === "GoalManagerMode"}
             onClick={() => onMenuClick("GoalManagerMode")}
           >

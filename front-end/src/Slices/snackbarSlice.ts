@@ -3,7 +3,9 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface SnackbarMessage {
   text: string;
   duration?: number;
+  severity?: "success" | "error" | "info" | "warning";
 }
+
 
 interface SnackbarState {
   queue: SnackbarMessage[];

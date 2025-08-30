@@ -6,7 +6,7 @@ import "./App.css";
 import { BrowserRouter as Router } from "react-router-dom";
 import { RootState, useAppDispatch } from "./utils/store";
 import { ThemeToggle } from "./components/ThemeToggle";
-import { ThemeProvider, CssBaseline } from "@mui/material";
+import { ThemeProvider, CssBaseline, Alert } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 import { AppRoutes } from "./utils/Routes";
 import { getTheme } from "./theme";
@@ -62,12 +62,7 @@ function App(): React.JSX.Element {
     })();
   }, [dispatch, companyId]);
 
-  const functions = getFunctions(undefined, "us-central1");
-  const ping = httpsCallable(functions, "ping");
-
-  ping().then((res) => {
-    console.log("Ping result:", res.data);
-  });
+  // const functions = getFunctions(undefined, "us-central1");
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {
@@ -121,16 +116,25 @@ function App(): React.JSX.Element {
         <Router>
           <AppRoutes />
         </Router>
-        <Snackbar
-          message={snackbar.current?.text}
-          open={snackbar.open}
-          onClose={() => {
-            dispatch(hideMessage());
-            setTimeout(() => dispatch(nextMessage()), 300); // Cannot find name 'nextMessage'. Did you mean 'onmessage'?
-          }}
-          autoHideDuration={snackbar.current?.duration ?? 4000}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        />
+        {snackbar.current && (
+          <Snackbar
+            open={snackbar.open}
+            onClose={() => {
+              dispatch(hideMessage());
+              setTimeout(() => dispatch(nextMessage()), 300);
+            }}
+            autoHideDuration={snackbar.current.duration ?? 4000}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert
+              severity={snackbar.current.severity || "info"}
+              sx={{ width: "100%" }}
+              onClose={() => dispatch(hideMessage())}
+            >
+              {snackbar.current.text}
+            </Alert>
+          </Snackbar>
+        )}
 
         {!initializing && currentUser && <UserModal />}
       </ThemeProvider>

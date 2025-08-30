@@ -12,14 +12,24 @@ import "./pendingInvites.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
 
-interface Invite {
+interface InviteType {
   id: string;
-  email: string;
-  companyName: string;
+  companyId: string;
+  createdAt: string;
+  expiresAt: string;
+  inviteId: string;
+  inviteeEmail: string;
+  inviteeEmailLower: string;
+  inviterEmail: string;
+  inviterName: string;
+  inviterUid: string;
+  link: string;
+  role: string;
+  status: string;
 }
 
 const PendingInvites = () => {
-  const [invites, setInvites] = useState<Invite[]>([]);
+  const [invites, setInvites] = useState<InviteType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const companyUsers = useSelector((s: RootState) => s.user.companyUsers) ?? [];
 
@@ -83,15 +93,15 @@ const PendingInvites = () => {
           <thead>
             <tr>
               <th>Email</th>
-              <th>inviteId</th>
+
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {invites.map((invite) => (
               <tr key={invite.id}>
-                <td>{invite.email}</td>
-                <td>{invite.id || "N/A"}</td>
+                <td>{invite.inviteeEmail}</td>
+
                 <td>
                   <button
                     className="cancel-button"

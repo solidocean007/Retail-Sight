@@ -600,6 +600,7 @@ export type AchievementPayloadType = {
 export type DashboardModeType =
   | "TeamMode"
   | "UsersMode"
+  | "UsersMode2"
   | "AccountsMode"
   | "ProductsMode"
   | "MyGoalsMode"
