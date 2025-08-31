@@ -5,6 +5,10 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  AuthCredential,
+  signInWithPopup,
+  linkWithCredential,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
@@ -21,13 +25,15 @@ const toIso = (v: any): string =>
     : new Date().toISOString();
 
 export default function InviteAcceptForm() {
-  const { inviteId } = useParams();
+  const { inviteId, companyId } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const [invite, setInvite] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const [password, setPassword] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
@@ -41,7 +47,9 @@ export default function InviteAcceptForm() {
     if (!inviteId) return;
     (async () => {
       try {
-        const snap = await getDoc(doc(db, "invites", inviteId));
+        const snap = await getDoc(
+          doc(db, `companies/${companyId}/invites/${inviteId}`)
+        );
         if (!snap.exists()) {
           setError("Invite not found or already used.");
         } else {
@@ -59,6 +67,79 @@ export default function InviteAcceptForm() {
       }
     })();
   }, [inviteId]);
+
+  const [pendingLink, setPendingLink] = useState<{
+    email: string;
+    cred: AuthCredential;
+  } | null>(null);
+
+  const handleGoogleSignIn = async () => {
+    if (!invite) return; // Add this line to avoid runtime errors
+
+    setSubmitting(true);
+    setError(null);
+    const auth = getAuth();
+    const provider = new GoogleAuthProvider();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      if (user.email?.toLowerCase() !== invite.inviteeEmail.toLowerCase()) {
+        await auth.signOut(); // clean up auth record
+        throw new Error(
+          "Signed-in Google account does not match invited email."
+        );
+      }
+
+      const nowIso = new Date().toISOString();
+      const createdAtIso = toIso(invite.createdAt);
+
+      // Create Firestore user
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          uid: user.uid,
+          email: user.email,
+          firstName,
+          lastName,
+          companyId: invite.companyId,
+          role: invite.role || "employee",
+          createdAt: createdAtIso,
+          updatedAt: nowIso,
+        },
+        { merge: true }
+      );
+
+      // Mark invite as accepted
+      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
+        accepted: true,
+        acceptedBy: user.uid,
+        acceptedAt: nowIso,
+        status: "accepted",
+      });
+
+      dispatch(showMessage("✅ Invite accepted with Google!"));
+      navigate("/user-home-page");
+    } catch (e: any) {
+      if (e.code === "auth/account-exists-with-different-credential") {
+        const cred = GoogleAuthProvider.credentialFromError(e);
+        const email = e.customData?.email;
+        if (cred && email) {
+          setPendingLink({ email, cred });
+          setError(
+            "This email has a password login. Please enter password to link Google."
+          );
+        } else {
+          setError("An account already exists for this email.");
+        }
+      } else {
+        setError(e.message || "Google sign-in failed.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
@@ -82,26 +163,37 @@ export default function InviteAcceptForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordError || verifyPasswordError) return;
+    if (firstName.trim().length === 0 || lastName.trim().length === 0) return;
     setSubmitting(true);
     setError(null);
 
     try {
       const auth = getAuth();
-      // Try creating the user (if not already exists)
       let userCred;
       try {
         userCred = await createUserWithEmailAndPassword(
           auth,
-          invite.email,
+          invite.inviteeEmail,
           password
         );
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
           userCred = await signInWithEmailAndPassword(
             auth,
-            invite.email,
+            invite.inviteeEmail,
             password
           );
+
+          // ✅ Link Google if pending after sign-in
+          if (
+            pendingLink &&
+            auth.currentUser?.email?.toLowerCase() ===
+              pendingLink.email.toLowerCase()
+          ) {
+            await linkWithCredential(auth.currentUser, pendingLink.cred);
+            dispatch(showMessage("✅ Google account linked."));
+            setPendingLink(null);
+          }
         } else {
           throw err;
         }
@@ -110,27 +202,25 @@ export default function InviteAcceptForm() {
       const nowIso = new Date().toISOString();
       const createdAtIso = toIso(invite.createdAt);
 
-      // Add to Firestore `users`
       await setDoc(
         doc(db, "users", userCred.user.uid),
         {
           uid: userCred.user.uid,
-          email: invite.email,
-          firstName: invite.firstName,
-          lastName: invite.lastName,
+          email: invite.inviteeEmail,
+          firstName,
+          lastName,
           companyId: invite.companyId,
           role: invite.role || "employee",
-          createdAt: createdAtIso, // ✅ always ISO string
-          updatedAt: nowIso, // ✅ add this if you want an updatedAt
+          createdAt: createdAtIso,
+          updatedAt: nowIso,
         },
         { merge: true }
       );
 
-      // Mark invite as accepted (strings)
-      await updateDoc(doc(db, "invites", inviteId!), {
+      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
         accepted: true,
         acceptedBy: userCred.user.uid,
-        acceptedAt: nowIso, // ✅ string
+        acceptedAt: nowIso,
       });
 
       dispatch(showMessage("✅ Invite accepted. Welcome!"));
@@ -154,20 +244,42 @@ export default function InviteAcceptForm() {
           You’ve been invited to join <strong>{invite.companyName}</strong> as{" "}
           {invite.role || "employee"}.
         </p>
-        <form onSubmit={handleSubmit}>
-          <div>
-            Email: <strong>{invite.email}</strong>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <label>First Name</label>
+          <input
+            type="text"
+            className="auth-input"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+
+          <label>Last Name</label>
+          <input
+            type="text"
+            className="auth-input"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+
+          <div className="auth-email">
+            Email: <strong>{invite.inviteeEmail}</strong>
           </div>
-          <div>
-            Name:{" "}
-            <strong>
-              {invite.firstName} {invite.lastName}
-            </strong>
-          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="btn-google"
+            disabled={submitting}
+          >
+            Continue with Google
+          </button>
 
           <label>Password</label>
           <input
             type="password"
+            className="auth-input"
             value={password}
             onChange={(e) => handlePasswordChange(e.target.value)}
           />
@@ -176,6 +288,7 @@ export default function InviteAcceptForm() {
           <label>Verify Password</label>
           <input
             type="password"
+            className="auth-input"
             value={verifyPassword}
             onChange={(e) => handleVerifyPasswordChange(e.target.value)}
           />
@@ -184,6 +297,8 @@ export default function InviteAcceptForm() {
           )}
 
           <button
+            type="submit"
+            className="auth-submit"
             disabled={submitting || !!passwordError || !!verifyPasswordError}
           >
             {submitting ? "Accepting…" : "Accept Invite"}

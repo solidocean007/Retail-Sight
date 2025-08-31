@@ -17,7 +17,7 @@ button {
   border-radius: var(--btn-border-radius);
   padding: var(--btn-padding);
   transition: background-color 0.2s ease, color 0.2s ease;
-  box-shadow: var(--button-shadow)
+  box-shadow: var(--button-shadow);
 }
 /* — Primary / Save */
 .button-primary {
@@ -30,6 +30,9 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .button-primary:hover {
@@ -52,7 +55,6 @@ button {
   background-color: var(--button-bg);
   color: #fff;
 }
-
 
 /* — Secondary (if needed) */
 .btn-secondary {
@@ -166,7 +168,7 @@ tr:nth-child(even) {
 }
 
 @media (max-width: 480px) {
-   h1 {
+  h1 {
     font-size: 20px; /* Even smaller font size for mobile screens */
   }
 

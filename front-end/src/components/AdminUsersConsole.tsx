@@ -135,13 +135,47 @@ export default function AdminUsersConsole() {
     const normalizedEmail = inviteEmail.trim().toLowerCase();
     if (!normalizedEmail || !companyId) return;
 
+    // Optional: skip if user already exists in local list
+    const alreadyInList = localUsers?.some(
+      (u) => (u.email || "").toLowerCase() === normalizedEmail
+    );
+    if (alreadyInList) {
+      dispatch(
+        showMessage({ text: "User already in your company.", severity: "info" })
+      );
+      return;
+    }
+
     try {
       const functions = getFunctions();
+
+      // ✅ Check if user already exists in Firebase Auth
+      const checkUserExists = httpsCallable(functions, "checkUserExists");
+      const response = await checkUserExists({ email: normalizedEmail });
+      const { exists, uid } = response.data as {
+        exists: boolean;
+        uid?: string;
+      };
+
+      // Optional: Check Firestore for company match
+      if (exists && uid) {
+        const userDoc = await getDoc(doc(db, "users", uid));
+        if (userDoc.exists() && userDoc.data()?.companyId === companyId) {
+          dispatch(
+            showMessage({
+              text: "User is already a member of this company.",
+              severity: "info",
+            })
+          );
+          return;
+        }
+      }
+
+      // ✅ Send the invite
       const createInviteAndEmail = httpsCallable(
         functions,
         "createInviteAndEmail"
       );
-
       const BASE_URL =
         (import.meta as any).env?.VITE_APP_PUBLIC_URL || window.location.origin;
 
@@ -370,7 +404,6 @@ export default function AdminUsersConsole() {
 
   const inviteColumns = useMemo<GridColDef<InviteRow>[]>(
     () => [
-      { field: "id", headerName: "inviteId", flex: 1 },
       { field: "email", headerName: "Email", flex: 1.2 },
       { field: "role", headerName: "Role", flex: 1 },
 

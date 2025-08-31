@@ -40,7 +40,7 @@ export const AppRoutes = () => {
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<RequestAccessForm />} />
       <Route path="/request-access" element={<RequestAccessForm />} />
-      <Route path="/accept-invite/:inviteId" element={<InviteAcceptForm />} />
+      <Route path="/accept-invite/:companyId/:inviteId" element={<InviteAcceptForm />} />
       <Route path="/user-home-page" element={<UserHomePage />} />
       <Route path="/create-post" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />

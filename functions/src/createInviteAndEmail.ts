@@ -72,7 +72,7 @@ export const createInviteAndEmail = onCall<CreateInvitePayload>(async (req) => {
   const inviteRef = db.collection(`companies/${companyId}/invites`).doc();
 
   const inviteId = inviteRef.id;
-  const inviteLink = `${baseUrl}/accept-invite/${inviteId}`;
+  const inviteLink = `${baseUrl}/accept-invite/${companyId}/${inviteId}`;
 
   // dedupe via mutex doc
   const mutexRef = db.doc(`invitesMutex/${emailLower}_${companyId}`);

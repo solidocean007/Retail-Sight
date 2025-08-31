@@ -1,5 +1,5 @@
 // Pages/NotificationsPage.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import "./notificationsPage.css";
 import { RootState, useAppDispatch } from "../utils/store";
@@ -16,6 +16,7 @@ import {
   markNotificationRead,
   removeNotification,
 } from "../thunks/notificationsThunks";
+import PostViewerModal from "./PostViewerModal";
 
 const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,8 +26,15 @@ const NotificationsPage: React.FC = () => {
   const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
     null
   );
+  const [postIdToView, setPostIdToView] = useState<string | null>(null);
 
   if (!currentUser) return null;
+
+  useEffect(()=> {
+    if(notifications.length === 0) {
+      navigate("/");
+    } 
+  },[notifications])
 
   const handleMarkAllRead = () => {
     notifications.forEach((notif) => {
@@ -46,38 +54,66 @@ const NotificationsPage: React.FC = () => {
       <h2>All Notifications</h2>
       <div className="notification-hint-banner">
         <p>
-          <strong>Swipe left</strong> to dismiss. <strong>Swipe right</strong>{" "}
-          to delete — must be read first.
+          <span role="img" aria-label="left">
+            👈
+          </span>{" "}
+          <strong>Swipe left</strong> to dismiss.
+          <span role="img" aria-label="right">
+            👉
+          </span>{" "}
+          <strong>Swipe right</strong> to delete.
         </p>
       </div>
 
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
-        <button onClick={() => navigate("/")}>Go Home</button>
-        <button onClick={handleMarkAllRead}>Mark All Read</button>
+      <div className="notifications-actions">
+        <button className="button-outline" onClick={() => navigate("/")}>
+          Close
+        </button>
+        <button className="button-primary" onClick={handleMarkAllRead}>
+          Mark All Read
+        </button>
       </div>
 
-      {notifications.map((notif) => (
-        <NotificationItem
-          key={notif.id}
-          notification={notif}
-          currentUserId={currentUser.uid}
-          onClick={() => {
-            if (!notif.readBy?.includes(currentUser.uid)) {
-              dispatch(
-                markNotificationRead({
-                  notificationId: notif.id,
-                  uid: currentUser.uid,
-                })
-              );
-            }
-            // Open modal to view full details
-            setSelectedNotif(notif);
-          }}
-          onDelete={() => {
-            dispatch(removeNotification({ notificationId: notif.id }));
-          }}
+      {notifications.length > 0 && (
+        <div className="notifications-card">
+          {notifications.map((notif) => (
+            <NotificationItem
+              key={notif.id}
+              notification={notif}
+              currentUserId={currentUser.uid}
+              onClick={() => {
+                if (!notif.readBy?.includes(currentUser.uid)) {
+                  dispatch(
+                    markNotificationRead({
+                      notificationId: notif.id,
+                      uid: currentUser.uid,
+                    })
+                  );
+                }
+
+                if (notif.postId) {
+                  setPostIdToView(notif.postId);
+                } else {
+                  setSelectedNotif(notif);
+                }
+              }}
+              onDelete={() => {
+                dispatch(removeNotification({ notificationId: notif.id }));
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {postIdToView && (
+        <PostViewerModal
+          key={postIdToView}
+          postId={postIdToView}
+          open={!!postIdToView}
+          onClose={() => setPostIdToView(null)}
+          currentUserUid={currentUser?.uid}
         />
-      ))}
+      )}
 
       <ViewNotificationModal
         open={!!selectedNotif}

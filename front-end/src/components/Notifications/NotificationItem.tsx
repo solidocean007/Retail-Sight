@@ -63,7 +63,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       className={`notification-item ${priorityClass} ${
         isUnread ? "unread" : "read"
       } ${dismissed ? "dismissed" : ""}`}
-      onClick={onClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       style={{ cursor: "pointer" }} // 👈 Add this
@@ -79,6 +78,17 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             : notification.sentAt
         ).toLocaleString()}
       </div>
+      {notification.postId && (
+        <button
+          className="button-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onClick) onClick();
+          }}
+        >
+          View Post
+        </button>
+      )}
     </div>
   );
 };
