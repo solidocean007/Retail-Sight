@@ -38,7 +38,7 @@ import GoalManager from "./GoalIntegration/GoalManager.tsx";
 import DashMenu from "./DashMenu.tsx";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 import MyGoals from "./GoalIntegration/MyGoals.tsx";
-import AdminUsersConsole from "./AdminUsersConsole.tsx";
+import AdminUsersConsole from "../AdminDashboard/AdminUsersConsole.tsx";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");

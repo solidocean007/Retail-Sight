@@ -15,6 +15,17 @@
   --white: #ffffff;
   --black: #000000;
 
+  /* pill status colors */
+  --status-active-color: #1a7f37;
+  --status-active-bg: rgba(26, 127, 55, 0.1);
+
+  --status-pending-color: #b26a00;
+  --status-pending-bg: rgba(178, 106, 0, 0.1);
+
+  --status-inactive-color: #666;
+  --status-inactive-border: #999;
+  --status-inactive-bg: rgba(120, 120, 120, 0.1);
+
   /* Brand & Accent */
   --primary-dark-blue: #0944a3;
   --primary-blue: #3b82f6;
@@ -116,6 +127,17 @@
   --tab-background-selected: var(--gray-200);
   --user-modal-background: var(--muted-steel);
 
+  /* pill status colors */
+  --status-active-color: #1a7f37;
+  --status-active-bg: rgba(26, 127, 55, 0.1);
+
+  --status-pending-color: #b26a00;
+  --status-pending-bg: rgba(178, 106, 0, 0.1);
+
+  --status-inactive-color: #666;
+  --status-inactive-border: #999;
+  --status-inactive-bg: rgba(120, 120, 120, 0.1);
+
   --dashboard-card: var(--gray-200);
   --card-outline: var(--gray-800);
 
@@ -177,6 +199,10 @@
   --tab-background: var(--gray-800);
   --tab-background-selected: var(--light-blue-2);
   --user-modal-background: var(--deep-abyss);
+
+  --status-active-bg: rgba(26, 127, 55, 0.25);
+  --status-pending-bg: rgba(178, 106, 0, 0.25);
+  --status-inactive-bg: rgba(150, 150, 150, 0.15);
 
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);

@@ -172,7 +172,7 @@ export interface UserType {
   companyId: string;
   salesRouteNum?: string | undefined;
   phone: string | undefined; // from signup
-  status?: "active" | "inactive" | "trial"; // ✅ optional for backward compatibility
+  status?: "active" | "inactive" | "pending"; // ✅ optional for backward compatibility
   verified?: boolean;
 }
 
