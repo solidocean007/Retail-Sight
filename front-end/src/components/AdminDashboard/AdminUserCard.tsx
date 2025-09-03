@@ -1,10 +1,10 @@
 import { doc, updateDoc } from "firebase/firestore";
 import AdminUserRowActions from "./AdminUserRowActions";
 import { AdminUserRow } from "./AdminUsersConsole";
-import { db } from "../utils/firebase";
-import { showMessage } from "../Slices/snackbarSlice";
-import { useAppDispatch } from "../utils/store";
-import { UserType } from "../utils/types";
+import { db } from "../../utils/firebase";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { useAppDispatch } from "../../utils/store";
+import { UserType } from "../../utils/types";
 import "./adminUsersConsole.css";
 
 // ---- Small helpers ----

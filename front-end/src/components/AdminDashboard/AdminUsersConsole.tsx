@@ -60,16 +60,16 @@ import {
   selectCompanyUsers,
   selectUser,
   setCompanyUsers,
-} from "../Slices/userSlice";
-import { UserType } from "../utils/types";
-import { db } from "../utils/firebase";
+} from "../../Slices/userSlice";
+import { UserType } from "../../utils/types";
+import { db } from "../../utils/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import CustomConfirmation from "../components/CustomConfirmation";
-import { showMessage } from "../Slices/snackbarSlice";
-import { useAppDispatch } from "../utils/store";
-import { normalizeTimestamps } from "../utils/normalizeTimestamps";
+import CustomConfirmation from "../CustomConfirmation";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { useAppDispatch } from "../../utils/store";
+import { normalizeTimestamps } from "../../utils/normalizeTimestamps";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
-import { useDebouncedValue } from "../hooks/useDebounce";
+import { useDebouncedValue } from "../../hooks/useDebounce";
 
 export interface InviteRow {
   id: string;
@@ -91,6 +91,7 @@ export type AdminUserRow = {
   role: string;
   company: string;
   status: "active" | "inactive" | "pending";
+  reportsTo: string;
   createdAt?: string; // normalized string date in your app
   lastActive?: string;
 };
@@ -107,6 +108,7 @@ export default function AdminUsersConsole() {
 
   const isMobile = useMediaQuery("(max-width: 768px)");
   const localUsers = (useSelector(selectCompanyUsers) ?? []) as UserType[];
+  const activeUsers = localUsers.filter((u) => u.status === "active");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -262,7 +264,7 @@ export default function AdminUsersConsole() {
   };
 
   // Save incl. status ✅
-  const handleSaveUser = async () => {
+  const handleSaveUser = async () => { // should we define this as a usertype return?
     if (!editRow) return;
     try {
       await updateDoc(doc(db, "users", editRow.uid), {
@@ -272,6 +274,7 @@ export default function AdminUsersConsole() {
         phone: editRow.phone ?? null,
         salesRouteNum: editRow.salesRouteNum ?? null,
         role: editRow.role,
+        reportsTo: editRow.reportsTo ?? "",
         status: editRow.status ?? "active", // 👈 include status
       });
 
@@ -402,6 +405,7 @@ export default function AdminUsersConsole() {
       { field: "email", headerName: "Email", flex: 1.2 },
       { field: "phone", headerName: "Phone", flex: 1 },
       { field: "salesRouteNum", headerName: "Sales Route #", flex: 1 },
+      { field: "reportsTo", headerName: "Supervisor", flex: 1 },
       { field: "role", headerName: "Role", flex: 1 },
       {
         field: "status",
@@ -589,6 +593,7 @@ export default function AdminUsersConsole() {
                     phone: r.phone ?? "",
                     company: r.company ?? "—",
                     status: r.status ?? "active",
+                    reportsTo: r.reportsTo ?? "",
                     createdAt: r.createdAt ?? undefined, // ✅ fixes the error
                     lastActive: r.updatedAt ?? undefined, // ✅ if you’re mapping that too
                   }}

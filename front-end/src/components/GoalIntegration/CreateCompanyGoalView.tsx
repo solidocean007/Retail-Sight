@@ -18,7 +18,11 @@ import {
   InputLabel,
   Checkbox,
 } from "@mui/material";
-import { CompanyAccountType, CompanyGoalType } from "../../utils/types";
+import {
+  CompanyAccountType,
+  CompanyGoalType,
+  UserType,
+} from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
@@ -52,7 +56,12 @@ const CreateCompanyGoalView = () => {
   const companyId = currentUser?.companyId;
   const usersCompany = useSelector(selectCurrentCompany);
   const companyUsers = useSelector(selectCompanyUsers);
-  const activeCompanyUsers = companyUsers?.filter((u) => u.status === "active");
+  const activeCompanyUsers = useMemo(
+    () =>
+      (companyUsers ?? []).filter((u) => (u.status ?? "active") === "active"),
+    [companyUsers]
+  );
+
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
@@ -65,6 +74,9 @@ const CreateCompanyGoalView = () => {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
+  const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(
+    "sales"
+  );
   const [goalMetric, setGoalMetric] = useState("cases");
   const [goalValueMin, setGoalValueMin] = useState(1);
   const [goalStartDate, setGoalStartDate] = useState("");
@@ -94,8 +106,25 @@ const CreateCompanyGoalView = () => {
       email: user.email || "",
       role: user.role || "",
       salesRouteNum: user.salesRouteNum || "",
+      reportsTo: user.reportsTo || "",
     }));
   }, [companyUsers]);
+
+  const reportsToMap = useMemo(() => {
+    const map = new Map<string, string>(); // repUid -> supervisorUid
+    normalizedCompanyUsers.forEach((u) => {
+      if (u.reportsTo) map.set(u.uid, u.reportsTo);
+    });
+    return map;
+  }, [normalizedCompanyUsers]);
+
+  const supervisorsByUid = useMemo(() => {
+    const sup = new Map<string, (typeof normalizedCompanyUsers)[number]>();
+    normalizedCompanyUsers.forEach((u) => {
+      if (u.role === "supervisor") sup.set(u.uid, u);
+    });
+    return sup;
+  }, [normalizedCompanyUsers]);
 
   const getUserIdsForAccount = (
     account: CompanyAccountType,
@@ -248,6 +277,18 @@ const CreateCompanyGoalView = () => {
     );
   }, [accounts, selectedUserIds, normalizedCompanyUsers]);
 
+  const eligibleUsersForCurrentScope = useMemo(() => {
+  const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
+  const routeNums = new Set(scopedAccounts.flatMap(a => a.salesRouteNums || []));
+  const reps = normalizedCompanyUsers.filter(u => u.salesRouteNum && routeNums.has(u.salesRouteNum));
+  if (assigneeType === "sales") return reps;
+
+  // supervisors who manage at least one of those reps
+  const supervisorUids = new Set(reps.map(r => reportsToMap.get(r.uid)).filter(Boolean) as string[]);
+  return normalizedCompanyUsers.filter(u => supervisorUids.has(u.uid));
+}, [accountScope, accounts, selectedAccounts, normalizedCompanyUsers, assigneeType, reportsToMap]);
+
+
   const { eligibleUsersForCurrentScope, numberOfAffectedUsers } =
     useMemo(() => {
       const scopedAccounts =
@@ -285,23 +326,43 @@ const CreateCompanyGoalView = () => {
         : normalizedCompanyUsers;
 
     const userAssignments: Record<string, string[]> = {};
+     const allAssignedUserIds = new Set<string>();
 
-    scopedAccounts.forEach((account) => {
-      if (!account.salesRouteNums || account.salesRouteNums.length === 0)
-        return;
+   for (const account of scopedAccounts) {
+    const routeNums = new Set(account.salesRouteNums || []);
+    if (!routeNums.size) continue;
 
-      const matchingUserIds = userPool
-        .filter(
-          (user) =>
-            user.salesRouteNum &&
-            account.salesRouteNums.includes(user.salesRouteNum)
-        )
-        .map((user) => user.uid);
-
-      if (matchingUserIds.length > 0) {
-        userAssignments[account.accountNumber.toString()] = matchingUserIds;
+    if (assigneeType === "sales") {
+      const repIds = userPool
+        .filter(u => u.salesRouteNum && routeNums.has(u.salesRouteNum))
+        .map(u => u.uid);
+      if (repIds.length) {
+        userAssignments[String(account.accountNumber)] = repIds;
+        repIds.forEach(id => allAssignedUserIds.add(id));
       }
-    });
+    } else {
+      // SUPERVISOR assignment: map reps -> supervisors
+      const repIdsForAccount = normalizedCompanyUsers
+        .filter(u => u.salesRouteNum && routeNums.has(u.salesRouteNum))
+        .map(u => u.uid);
+
+      const supervisorIds = Array.from(new Set(
+        repIdsForAccount
+          .map(repId => reportsToMap.get(repId))
+          .filter(uid => !!uid && supervisorsByUid.has(uid!)) as string[]
+      ));
+
+      // Optionally intersect with the selected pool if you want to respect manual picks:
+      const finalSupervisorIds = selectedUserIds.length
+        ? supervisorIds.filter(id => selectedUserIds.includes(id))
+        : supervisorIds;
+
+      if (finalSupervisorIds.length) {
+        userAssignments[String(account.accountNumber)] = finalSupervisorIds;
+        finalSupervisorIds.forEach(id => allAssignedUserIds.add(id));
+      }
+    }
+  }
 
     const newGoal: CompanyGoalType = {
       companyId,
@@ -527,6 +588,27 @@ const CreateCompanyGoalView = () => {
                   value="selected"
                   control={<Radio />}
                   label="Selected Accounts"
+                />
+              </RadioGroup>
+            </FormControl>
+            <FormControl component="fieldset" sx={{ mt: 1 }}>
+              <Typography variant="subtitle1">Assign To</Typography>
+              <RadioGroup
+                value={assigneeType}
+                onChange={(e) =>
+                  setAssigneeType(e.target.value as "sales" | "supervisor")
+                }
+                row
+              >
+                <FormControlLabel
+                  value="sales"
+                  control={<Radio />}
+                  label="Sales Reps"
+                />
+                <FormControlLabel
+                  value="supervisor"
+                  control={<Radio />}
+                  label="Supervisors"
                 />
               </RadioGroup>
             </FormControl>

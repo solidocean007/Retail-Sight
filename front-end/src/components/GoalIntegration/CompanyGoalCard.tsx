@@ -71,30 +71,19 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       : allMatching;
   }, [allCompanyAccounts, goal.accountNumbersForThisGoal, salesRouteNum]);
 
-  // const accountsWithStatus = useMemo(
-  //   () => mapAccountsWithStatus(goal, effectiveAccounts),
-  //   [goal, effectiveAccounts]
-  // );
-
-  // const filteredAccountsWithStatus = useMemo(
-  //   () =>
-  //     accountsWithStatus.filter((account) => {
-  //       const matchesSearch =
-  //         account.accountName
-  //           .toLowerCase()
-  //           .includes(searchTerm.toLowerCase()) ||
-  //         account.accountNumber.toString().includes(searchTerm);
-
-  //       const hasSubmitted = !!account.postId; // 👈 derive dynamically
-
-  //       const matchesFilter =
-  //         filterSubmitted === "all" ||
-  //         (filterSubmitted === "submitted" && hasSubmitted) ||
-  //         (filterSubmitted === "not-submitted" && !hasSubmitted);
-
-  //       return matchesSearch && matchesFilter;
-  //     }),
-  //   [accountsWithStatus, searchTerm, filterSubmitted]
+  // NEW: when the goal is user-targeted, the assigned users are explicit
+  const assignedUserIds = useMemo(() => {
+    if (
+      goal.targetMode === "goalForSelectedUsers" &&
+      goal.userAssignments?.length
+    ) {
+      return goal.userAssignments;
+    }
+    // fallback: union of assignment values (legacy)
+    return Array.from(
+      new Set(Object.values(goal.userAssignments || {}).flat())
+    );
+  }, [goal]);
   // );
 
   const handleGoalUpdate = (updatedFields: Partial<CompanyGoalWithIdType>) => {
@@ -143,14 +132,24 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     );
   }, [matchedAccounts, salesRouteNum]);
 
+  // Replace your current usersForGoal with:
   const usersForGoal = useMemo(() => {
-    const routeFiltered = activeCompanyUsers.filter((user) =>
-      salesRouteNumsForGoal.includes(user.salesRouteNum || "")
+    if (goal.targetMode === "goalForSelectedUsers") {
+      return companyUsers.filter((u) => assignedUserIds.includes(u.uid)); // This expression is not callable.
+  // Not all constituents of type 'string[] | ((searchElement: string, fromIndex?: number | undefined) => boolean)' are callable.
+    // Type 'string[]' has no call signatures.
+    }
+    // existing route-based derivation for sales goals
+    const matchedAccounts = allCompanyAccounts.filter((acc) =>
+      goal.accountNumbersForThisGoal.includes(String(acc.accountNumber))
     );
-    return salesRouteNum
-      ? routeFiltered.filter((u) => u.salesRouteNum === salesRouteNum)
-      : routeFiltered;
-  }, [activeCompanyUsers, salesRouteNum, salesRouteNumsForGoal]);
+    const salesRouteNumsForGoal = Array.from(
+      new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
+    );
+    return companyUsers.filter((u) =>
+      salesRouteNumsForGoal.includes(u.salesRouteNum || "")
+    );
+  }, [goal, companyUsers, allCompanyAccounts, assignedUserIds]);
 
   const userBasedRows = useMemo(() => {
     return usersForGoal.map((user) => {
@@ -323,7 +322,6 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           goal={goal}
           onViewPostModal={(postId, ref) => onViewPostModal(postId, ref)}
         />
-      
       </Collapse>
 
       <EditCompanyGoalModal

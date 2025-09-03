@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useAppDispatch } from "../utils/store";
+import { useAppDispatch } from "../../utils/store";
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../utils/firebase";
-import { showMessage } from "../Slices/snackbarSlice";
+import { db } from "../../utils/firebase";
+import { showMessage } from "../../Slices/snackbarSlice";
 import { EditNotifications } from "@mui/icons-material";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";

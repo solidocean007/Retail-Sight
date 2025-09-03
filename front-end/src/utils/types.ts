@@ -161,6 +161,7 @@ export interface UserType {
     | "developer"
     | "supervisor";
   uid: string; // from Firebase
+  reportsTo?: string;
   createdAt: string | null;
   updatedAt: string | null;
   firstName: string | undefined; // from signup
@@ -496,6 +497,8 @@ export type GalloGoalType = {
 export type CompanyGoalType = {
   companyId: string;
   goalTitle: string;
+  targetRole?: "sales" | "supervisor";
+  targetMode?: "goalForSelectedUsers" | "goalForAccounts"
   goalDescription: string;
   goalMetric: string;
   goalValueMin: number;
