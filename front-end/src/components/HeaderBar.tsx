@@ -150,7 +150,7 @@ const HeaderBar = ({
               className="hamburger-menu-button"
               onClick={handleDashboardClick}
               aria-haspopup="true"
-              aria-expanded={showMenuTab}
+              aria-expanded={showMenuTab} // Elements must only use supported ARIA attributes: ARIA attribute is not allowed: aria-expanded="{expression}"
               // style={{ visibility: showMenuTab ? "hidden" : "visible" }}
             >
               ☰

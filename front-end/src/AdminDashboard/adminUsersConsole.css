@@ -1,3 +1,38 @@
+.cell-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.user-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.user-search-input {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-color);
+  width: 220px;
+}
+
+.clear-search-button {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: .75rem;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 2px 7px;
+  margin: 2px
+}
+
 .status-pill {
   display: flex;
   align-items: center;
@@ -144,4 +179,3 @@
   gap: 0.5rem;
   opacity: 0.7;
 }
-

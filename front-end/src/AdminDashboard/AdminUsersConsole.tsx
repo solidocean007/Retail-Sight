@@ -69,6 +69,7 @@ import { showMessage } from "../Slices/snackbarSlice";
 import { useAppDispatch } from "../utils/store";
 import { normalizeTimestamps } from "../utils/normalizeTimestamps";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
+import { useDebouncedValue } from "../hooks/useDebounce";
 
 export interface InviteRow {
   id: string;
@@ -106,6 +107,9 @@ export default function AdminUsersConsole() {
 
   const isMobile = useMediaQuery("(max-width: 768px)");
   const localUsers = (useSelector(selectCompanyUsers) ?? []) as UserType[];
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
   const companyId = useSelector(selectUser)?.companyId;
 
   const [invites, setInvites] = useState<InviteRow[]>([]);
@@ -296,9 +300,21 @@ export default function AdminUsersConsole() {
   ];
 
   const filteredUsers = useMemo(() => {
-    if (statusFilter === "all") return localUsers;
-    return localUsers.filter((u) => (u.status ?? "active") === statusFilter);
-  }, [localUsers, statusFilter]);
+    const base =
+      statusFilter === "all"
+        ? localUsers
+        : localUsers.filter((u) => (u.status ?? "active") === statusFilter);
+
+    const query = debouncedSearch.toLowerCase().trim();
+
+    if (!query) return base;
+
+    return base.filter((u) =>
+      [u.firstName, u.lastName, u.email, u.phone]
+        .filter(Boolean)
+        .some((field) => field!.toLowerCase().includes(query))
+    );
+  }, [localUsers, statusFilter, debouncedSearch]);
 
   const handleSetAllToActive = () => {
     setConfirmation({
@@ -392,9 +408,11 @@ export default function AdminUsersConsole() {
         headerName: "Status",
         flex: 0.6,
         minWidth: 120,
-        renderCell: (
-          params: GridRenderCellParams<any, AdminUserRow["status"]>
-        ) => <StatusPill value={params.value as any} />,
+        renderCell: (params) => (
+          <div className="cell-center">
+            <StatusPill value={params.value as any} />
+          </div>
+        ),
       },
       {
         field: "actions",
@@ -535,6 +553,24 @@ export default function AdminUsersConsole() {
                   Set All Active
                 </Button>
               )}
+            <div className="user-search-wrapper">
+              <input
+                name="user-search"
+                type="text"
+                className="user-search-input"
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  className="clear-search-button"
+                  onClick={() => setSearchQuery("")}
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </Stack>
 
           {/* PHONE: switch to card list for true responsiveness */}

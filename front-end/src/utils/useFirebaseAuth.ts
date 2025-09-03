@@ -19,7 +19,6 @@ function normalizeUserData(raw: UserType) {
     ...raw,
     createdAt: toIso(raw.createdAt),
     updatedAt: toIso(raw.updatedAt),
-    userTypeHint: undefined,
   };
 }
 
