@@ -161,7 +161,7 @@ const AllCompanyGoalsView = ({
               setIsConfirmationOpen(true);
             }}
             onEdit={handleEditCompanyGoal}
-            onViewPostModal={onViewPostModal} // 👈 pass the callback
+            onViewPostModal={openPostViewer} // 👈 pass the callback ...Cannot find name 'onViewPostModal'.
           />
         ))}
       </div>

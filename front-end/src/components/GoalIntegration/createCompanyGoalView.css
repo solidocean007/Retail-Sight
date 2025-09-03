@@ -1,3 +1,30 @@
+/* Default: single column */
+
+.goal-create-layout {
+  display: block;
+}
+
+/* When a summary is present, switch to 2 columns */
+.goal-create-layout:has(.goal-summary-panel) {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 340px);
+  gap: 24px;
+  align-items: start;
+}
+
+/* Sticky summary */
+.goal-summary-panel {
+  position: sticky;
+  top: 80px;                /* adjust for your header height */
+  align-self: start;
+  background: var(--dashboard-card);
+  border: 1px solid var(--card-outline);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  color: var(--text-color);
+  padding: 1rem;
+}
+
 .goal-form-group {
   display: flex;
   flex-direction: column;
@@ -49,4 +76,16 @@
 .types-of-account-container,
 .sales-people-container {
   display: flex;
+}
+
+/* Mobile: stack and disable sticky */
+@media (max-width: 768px) {
+  .goal-create-layout:has(.goal-summary-panel) {
+    display: block;
+  }
+  .goal-summary-panel {
+    position: static;
+    top: auto;
+    margin-top: 1rem;
+  }
 }

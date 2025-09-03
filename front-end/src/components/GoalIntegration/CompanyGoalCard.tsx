@@ -50,6 +50,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const isMobileScreen = useMediaQuery("(max-width: 600px)");
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const companyUsers = useSelector(selectCompanyUsers) || [];
+  const activeCompanyUsers = companyUsers.filter((u) => u.status === "active");
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   // const [searchTerm, setSearchTerm] = useState("");
@@ -143,13 +144,13 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   }, [matchedAccounts, salesRouteNum]);
 
   const usersForGoal = useMemo(() => {
-    const routeFiltered = companyUsers.filter((user) =>
+    const routeFiltered = activeCompanyUsers.filter((user) =>
       salesRouteNumsForGoal.includes(user.salesRouteNum || "")
     );
     return salesRouteNum
       ? routeFiltered.filter((u) => u.salesRouteNum === salesRouteNum)
       : routeFiltered;
-  }, [companyUsers, salesRouteNum, salesRouteNumsForGoal]);
+  }, [activeCompanyUsers, salesRouteNum, salesRouteNumsForGoal]);
 
   const userBasedRows = useMemo(() => {
     return usersForGoal.map((user) => {
@@ -217,8 +218,8 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     <div className="info-box-company-goal">
       <div className="company-goal-card-header">
         <div className="company-goal-card-start-end">
-          <h5>Start: {goal.goalStartDate}</h5>
-          <h5>End: {goal.goalEndDate}</h5>
+          <h5>Starts: {goal.goalStartDate}</h5>
+          <h5>Ends: {goal.goalEndDate}</h5>
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
@@ -322,22 +323,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           goal={goal}
           onViewPostModal={(postId, ref) => onViewPostModal(postId, ref)}
         />
-        {/* <Typography variant="h6" sx={{ mt: 2 }}>
-          Account Progress
-        </Typography>
-        <GoalViewerFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filterSubmitted={filterSubmitted}
-          setFilterSubmitted={setFilterSubmitted}
-        /> */}
-        {/* <AccountTable
-          goal={goal}
-          accounts={filteredAccountsWithStatus}
-          navigate={navigate}
-          height={500}
-          rowHeight={50}
-        /> */}
+      
       </Collapse>
 
       <EditCompanyGoalModal
@@ -345,7 +331,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         onClose={() => setIsEditModalOpen(false)}
         goal={goal}
         allAccounts={allCompanyAccounts}
-        companyUsers={companyUsers}
+        companyUsers={activeCompanyUsers}
         onSave={handleGoalUpdate}
       />
     </div>

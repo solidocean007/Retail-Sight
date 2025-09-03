@@ -50,8 +50,9 @@ const CreateCompanyGoalView = () => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const companyId = currentUser?.companyId;
-  const companyUsers = useSelector(selectCompanyUsers);
   const usersCompany = useSelector(selectCurrentCompany);
+  const companyUsers = useSelector(selectCompanyUsers);
+  const activeCompanyUsers = companyUsers?.filter((u) => u.status === "active");
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
@@ -86,7 +87,7 @@ const CreateCompanyGoalView = () => {
   // const selectedAccountObjects = selectedAccounts;
 
   const normalizedCompanyUsers = useMemo(() => {
-    return (companyUsers || []).map((user) => ({
+    return (activeCompanyUsers || []).map((user) => ({
       ...user,
       firstName: user.firstName || "",
       lastName: user.lastName || "",
@@ -233,7 +234,6 @@ const CreateCompanyGoalView = () => {
     fetchAccounts();
   }, [companyId]);
 
-  // i think this can be removed.. wait it should be used.. whatever users are selected all of their account ids would be added to the accountNumberForThisGoal array
   const accountsForSelectedUsers = useMemo(() => {
     if (!selectedUserIds.length) return [];
     return accounts.filter((account) =>
@@ -248,17 +248,23 @@ const CreateCompanyGoalView = () => {
     );
   }, [accounts, selectedUserIds, normalizedCompanyUsers]);
 
-  const eligibleUsersForCurrentScope = useMemo(() => {
-    const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
+  const { eligibleUsersForCurrentScope, numberOfAffectedUsers } =
+    useMemo(() => {
+      const scopedAccounts =
+        accountScope === "all" ? accounts : selectedAccounts;
+      const routeNums = new Set(
+        scopedAccounts.flatMap((a) => a.salesRouteNums || [])
+      );
 
-    const routeNums = new Set(
-      scopedAccounts.flatMap((a) => a.salesRouteNums || [])
-    );
+      const eligibleUsers = normalizedCompanyUsers.filter(
+        (user) => user.salesRouteNum && routeNums.has(user.salesRouteNum)
+      );
 
-    return normalizedCompanyUsers.filter(
-      (user) => user.salesRouteNum && routeNums.has(user.salesRouteNum)
-    );
-  }, [accountScope, accounts, selectedAccounts, normalizedCompanyUsers]);
+      return {
+        eligibleUsersForCurrentScope: eligibleUsers,
+        numberOfAffectedUsers: eligibleUsers.length,
+      };
+    }, [accountScope, accounts, selectedAccounts, normalizedCompanyUsers]);
 
   const handleCreateGoal = async () => {
     if (!readyForCreation) {
@@ -296,13 +302,6 @@ const CreateCompanyGoalView = () => {
         userAssignments[account.accountNumber.toString()] = matchingUserIds;
       }
     });
-
-    // const accountNumbersForThisGoal =
-    //   accountScope === "all"
-    //     ? accounts.map((acc) => acc.accountNumber.toString())
-    //     : accountScope === "selected"
-    //     ? selectedAccounts.map((acc) => acc.accountNumber.toString())
-    //     : accountsForSelectedUsers.map((acc) => acc.accountNumber.toString());
 
     const newGoal: CompanyGoalType = {
       companyId,
@@ -372,503 +371,522 @@ const CreateCompanyGoalView = () => {
     }
   }, []);
 
+  const hasSummary = goalTitle.length > 1 && goalDescription.length > 1;
+
   return (
     <Container>
       <Box mb={4}>
         <Typography variant="h5" gutterBottom>
           Create a New Goal
         </Typography>
+        <div className="goal-create-layout">
+          <Box display="flex" flexDirection="column" gap={3}>
+            <div className="goal-form-group">
+              <GoalTitleInput value={goalTitle} setValue={setGoalTitle} />
+            </div>
 
-        <Box display="flex" flexDirection="column" gap={3}>
-          <div className="goal-form-group">
-            <GoalTitleInput value={goalTitle} setValue={setGoalTitle} />
-          </div>
+            <div className="goal-form-group">
+              <label htmlFor="goalDescription">Goal Description</label>
+              <textarea
+                id="goalDescription"
+                value={goalDescription}
+                onChange={(e) => setGoalDescription(e.target.value)}
+                className="custom-textarea"
+                rows={4}
+                placeholder="Describe what success looks like for this goal..."
+              />
+            </div>
 
-          <div className="goal-form-group">
-            <label htmlFor="goalDescription">Goal Description</label>
-            <textarea
-              id="goalDescription"
-              value={goalDescription}
-              onChange={(e) => setGoalDescription(e.target.value)}
-              className="custom-textarea"
-              rows={4}
-              placeholder="Describe what success looks like for this goal..."
-            />
-          </div>
+            <Box display="flex" gap={2}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <Box display="flex" gap={3} justifyContent="start">
+                  <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                  >
+                    <TextField
+                      type="date"
+                      label="Start Date"
+                      value={goalStartDate}
+                      onChange={(e) => setGoalStartDate(e.target.value)}
+                      size="small"
+                      sx={{ width: 160 }}
+                      inputProps={{ min: "2023-01-01" }}
+                    />
+                  </Box>
 
-          <Box display="flex" gap={2}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <Box display="flex" gap={3} justifyContent="start">
-                <Box display="flex" flexDirection="column" alignItems="center">
-                  <TextField
-                    type="date"
-                    label="Start Date"
-                    value={goalStartDate}
-                    onChange={(e) => setGoalStartDate(e.target.value)}
-                    size="small"
-                    sx={{ width: 160 }}
-                    inputProps={{ min: "2023-01-01" }}
-                  />
+                  <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                  >
+                    <TextField
+                      type="date"
+                      label="End Date"
+                      value={goalEndDate}
+                      onChange={(e) => setGoalEndDate(e.target.value)}
+                      size="small"
+                      sx={{ width: 160 }}
+                      inputProps={{ min: goalStartDate }}
+                    />
+                  </Box>
                 </Box>
+              </LocalizationProvider>
+            </Box>
 
-                <Box display="flex" flexDirection="column" alignItems="center">
+            <Box display="flex" justifyContent="flex-start">
+              <Box sx={{ width: 200 }}>
+                <Typography variant="h6">Goal Metric</Typography>
+                <ToggleButtonGroup
+                  value={goalMetric}
+                  exclusive
+                  onChange={(_e, val) => val && setGoalMetric(val)}
+                  aria-label="Goal Metric"
+                >
+                  <ToggleButton value="cases">Cases</ToggleButton>
+                  <ToggleButton value="bottles">Bottles</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+              <Box>
+                <Typography variant="h6">Minimum Value</Typography>
+                <Box display="flex" alignItems="center">
+                  <Button
+                    variant="outlined"
+                    onClick={() =>
+                      setGoalValueMin((prev) => Math.max(1, prev - 1))
+                    }
+                  >
+                    -
+                  </Button>
                   <TextField
-                    type="date"
-                    label="End Date"
-                    value={goalEndDate}
-                    onChange={(e) => setGoalEndDate(e.target.value)}
-                    size="small"
-                    sx={{ width: 160 }}
-                    inputProps={{ min: goalStartDate }}
+                    type="number"
+                    value={goalValueMin}
+                    onChange={(e) =>
+                      setGoalValueMin(Math.max(1, Number(e.target.value)))
+                    }
+                    size="medium"
+                    sx={{ width: 100, mx: 1 }}
+                    inputProps={{ min: 1 }} // 'inputProps' is deprecated.
                   />
+                  <Button
+                    variant="outlined"
+                    onClick={() => setGoalValueMin((prev) => prev + 1)}
+                  >
+                    +
+                  </Button>
                 </Box>
               </Box>
-            </LocalizationProvider>
-          </Box>
-
-          <Box display="flex" justifyContent="flex-start">
-            <Box sx={{ width: 200 }}>
-              <Typography variant="h6">Goal Metric</Typography>
-              <ToggleButtonGroup
-                value={goalMetric}
-                exclusive
-                onChange={(_e, val) => val && setGoalMetric(val)}
-                aria-label="Goal Metric"
-              >
-                <ToggleButton value="cases">Cases</ToggleButton>
-                <ToggleButton value="bottles">Bottles</ToggleButton>
-              </ToggleButtonGroup>
             </Box>
-            <Box>
-              <Typography variant="h6">Minimum Value</Typography>
-              <Box display="flex" alignItems="center">
-                <Button
-                  variant="outlined"
-                  onClick={() =>
-                    setGoalValueMin((prev) => Math.max(1, prev - 1))
-                  }
-                >
-                  -
-                </Button>
+            <Box display="flex" justifyContent="flex-start">
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={enforcePerUserQuota}
+                    onChange={(e) => setEnforcePerUserQuota(e.target.checked)}
+                  />
+                }
+                label="Require a minimum number of submissions per user"
+              />
+
+              {enforcePerUserQuota && (
                 <TextField
+                  label="Per User Quota"
                   type="number"
-                  value={goalValueMin}
-                  onChange={(e) =>
-                    setGoalValueMin(Math.max(1, Number(e.target.value)))
-                  }
-                  size="medium"
-                  sx={{ width: 100, mx: 1 }}
-                  inputProps={{ min: 1 }} // 'inputProps' is deprecated.
-                />
-                <Button
-                  variant="outlined"
-                  onClick={() => setGoalValueMin((prev) => prev + 1)}
-                >
-                  +
-                </Button>
-              </Box>
-            </Box>
-          </Box>
-          <Box display="flex" justifyContent="flex-start">
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={enforcePerUserQuota}
-                  onChange={(e) => setEnforcePerUserQuota(e.target.checked)}
-                />
-              }
-              label="Require a minimum number of submissions per user"
-            />
-
-            {enforcePerUserQuota && (
-              <TextField
-                label="Per User Quota"
-                type="number"
-                value={perUserQuota}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "") {
-                    setPerUserQuota(""); // Allow blank state
-                  } else {
-                    const numericValue = Number(value);
-                    setPerUserQuota(isNaN(numericValue) ? 0 : numericValue);
-                  }
-                }}
-                helperText="Example: Require 3 submissions per user"
-                sx={{ mt: 1 }}
-              />
-            )}
-          </Box>
-
-          <FormControl component="fieldset">
-            <Typography variant="subtitle1">Target Audience</Typography>
-            <RadioGroup
-              value={accountScope}
-              onChange={(e) =>
-                setAccountScope(e.target.value as "all" | "selected")
-              }
-              row
-            >
-              <FormControlLabel
-                value="all"
-                control={<Radio />}
-                label="All Accounts"
-              />
-              <FormControlLabel
-                value="selected"
-                control={<Radio />}
-                label="Selected Accounts"
-              />
-            </RadioGroup>
-          </FormControl>
-
-          {accountScope === "selected" && (
-            <>
-              <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
-                {/* Chain Filter */}
-                <FilterMultiSelect
-                  label="Chain"
-                  options={chainNames}
-                  selected={filters.chains}
-                  onChange={(newChains) =>
-                    setFilters((prev) => ({ ...prev, chains: newChains }))
-                  }
-                />
-
-                {/* Chain Type - Single Select (still TextField) */}
-                <TextField
-                  select
-                  label="Chain Type"
-                  value={filters.chainType}
-                  onChange={(e) =>
-                    setFilters({ ...filters, chainType: e.target.value })
-                  }
-                  sx={{ minWidth: 160 }}
-                  size="small"
-                >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="chain">Chain</MenuItem>
-                  <MenuItem value="independent">Independent</MenuItem>
-                </TextField>
-
-                {/* Type of Account */}
-                <FilterMultiSelect
-                  label="Type of Account"
-                  options={customerTypes}
-                  selected={filters.typeOfAccounts}
-                  onChange={(newTypes) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      typeOfAccounts: newTypes,
-                    }))
-                  }
-                />
-
-                {/* Salesperson */}
-                <FilterMultiSelect
-                  label="Salesperson"
-                  options={normalizedCompanyUsers.map(
-                    (u) => `${u.firstName} ${u.lastName}`
-                  )}
-                  selected={filters.userIds.map((id) =>
-                    `${
-                      normalizedCompanyUsers.find((u) => u.uid === id)
-                        ?.firstName || ""
-                    } ${
-                      normalizedCompanyUsers.find((u) => u.uid === id)
-                        ?.lastName || ""
-                    }`.trim()
-                  )}
-                  onChange={(selectedNames) => {
-                    const userIds = selectedNames
-                      .map(
-                        (name) =>
-                          normalizedCompanyUsers.find(
-                            (u) => `${u.firstName} ${u.lastName}` === name
-                          )?.uid
-                      )
-                      .filter(Boolean) as string[];
-                    setFilters((prev) => ({ ...prev, userIds }));
+                  value={perUserQuota}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") {
+                      setPerUserQuota(""); // Allow blank state
+                    } else {
+                      const numericValue = Number(value);
+                      setPerUserQuota(isNaN(numericValue) ? 0 : numericValue);
+                    }
                   }}
+                  helperText="Example: Require 3 submissions per user"
+                  sx={{ mt: 1 }}
                 />
+              )}
+            </Box>
 
-                {/* Clear Button */}
-                <Button
-                  variant="outlined"
-                  size="large"
-                  onClick={() =>
-                    setFilters({
-                      chains: [],
-                      chainType: "",
-                      typeOfAccounts: [],
-                      userIds: [],
-                    })
-                  }
-                >
-                  Clear Filters
-                </Button>
-              </Box>
+            <FormControl component="fieldset">
+              <Typography variant="subtitle1">Target Audience</Typography>
+              <RadioGroup
+                value={accountScope}
+                onChange={(e) =>
+                  setAccountScope(e.target.value as "all" | "selected")
+                }
+                row
+              >
+                <FormControlLabel
+                  value="all"
+                  control={<Radio />}
+                  label="All Accounts"
+                />
+                <FormControlLabel
+                  value="selected"
+                  control={<Radio />}
+                  label="Selected Accounts"
+                />
+              </RadioGroup>
+            </FormControl>
 
-              {(filters.chains.length > 0 ||
-                filters.chainType ||
-                filters.typeOfAccounts.length > 0 ||
-                filters.userIds) && (
-                <Box
-                  display="flex"
-                  gap={2}
-                  flexWrap="wrap"
-                  sx={{ mb: 1, mt: 1 }}
-                >
-                  <div className="chains-container">
-                    {filters.chains.map((c) => (
-                      <Chip
-                        key={c}
-                        label={`Chain: ${c}`}
-                        onDelete={() =>
-                          setFilters({
-                            ...filters,
-                            chains: filters.chains.filter((x) => x !== c),
-                          })
-                        }
-                      />
-                    ))}
-                  </div>
-                  <div className="chain-type-container">
-                    {filters.chainType && (
-                      <Chip
-                        label={`Chain Type: ${filters.chainType}`}
-                        onDelete={() =>
-                          setFilters({ ...filters, chainType: "" })
-                        }
-                      />
+            {accountScope === "selected" && (
+              <>
+                <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+                  {/* Chain Filter */}
+                  <FilterMultiSelect
+                    label="Chain"
+                    options={chainNames}
+                    selected={filters.chains}
+                    onChange={(newChains) =>
+                      setFilters((prev) => ({ ...prev, chains: newChains }))
+                    }
+                  />
+
+                  {/* Chain Type - Single Select (still TextField) */}
+                  <TextField
+                    select
+                    label="Chain Type"
+                    value={filters.chainType}
+                    onChange={(e) =>
+                      setFilters({ ...filters, chainType: e.target.value })
+                    }
+                    sx={{ minWidth: 160 }}
+                    size="small"
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    <MenuItem value="chain">Chain</MenuItem>
+                    <MenuItem value="independent">Independent</MenuItem>
+                  </TextField>
+
+                  {/* Type of Account */}
+                  <FilterMultiSelect
+                    label="Type of Account"
+                    options={customerTypes}
+                    selected={filters.typeOfAccounts}
+                    onChange={(newTypes) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        typeOfAccounts: newTypes,
+                      }))
+                    }
+                  />
+
+                  {/* Salesperson */}
+                  <FilterMultiSelect
+                    label="Salesperson"
+                    options={normalizedCompanyUsers.map(
+                      (u) => `${u.firstName} ${u.lastName}`
                     )}
-                  </div>
-                  <div className="types-of-account-container">
-                    {filters.typeOfAccounts.map((t) => (
-                      <Chip
-                        key={t}
-                        label={`Type: ${t}`}
-                        onDelete={() =>
-                          setFilters({
-                            ...filters,
-                            typeOfAccounts: filters.typeOfAccounts.filter(
-                              (x) => x !== t
-                            ),
-                          })
-                        }
-                      />
-                    ))}
-                  </div>
-                  <div className="sales-people-container">
-                    {filters.userIds.map((uid) => {
-                      const user = normalizedCompanyUsers.find(
-                        (u) => u.uid === uid
-                      );
-                      const name = user
-                        ? `${user.firstName} ${user.lastName}`
-                        : "Unknown User";
+                    selected={filters.userIds.map((id) =>
+                      `${
+                        normalizedCompanyUsers.find((u) => u.uid === id)
+                          ?.firstName || ""
+                      } ${
+                        normalizedCompanyUsers.find((u) => u.uid === id)
+                          ?.lastName || ""
+                      }`.trim()
+                    )}
+                    onChange={(selectedNames) => {
+                      const userIds = selectedNames
+                        .map(
+                          (name) =>
+                            normalizedCompanyUsers.find(
+                              (u) => `${u.firstName} ${u.lastName}` === name
+                            )?.uid
+                        )
+                        .filter(Boolean) as string[];
+                      setFilters((prev) => ({ ...prev, userIds }));
+                    }}
+                  />
 
-                      return (
+                  {/* Clear Button */}
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={() =>
+                      setFilters({
+                        chains: [],
+                        chainType: "",
+                        typeOfAccounts: [],
+                        userIds: [],
+                      })
+                    }
+                  >
+                    Clear Filters
+                  </Button>
+                </Box>
+
+                {(filters.chains.length > 0 ||
+                  filters.chainType ||
+                  filters.typeOfAccounts.length > 0 ||
+                  filters.userIds) && (
+                  <Box
+                    display="flex"
+                    gap={2}
+                    flexWrap="wrap"
+                    sx={{ mb: 1, mt: 1 }}
+                  >
+                    <div className="chains-container">
+                      {filters.chains.map((c) => (
                         <Chip
-                          key={uid}
-                          label={`User: ${name}`}
-                          color={
-                            filteredAccounts.some((account) =>
-                              account.salesRouteNums?.includes(
-                                user?.salesRouteNum || ""
-                              )
-                            )
-                              ? "default" // ✅ Has matching account
-                              : "error" // ❌ No matching account
-                          }
+                          key={c}
+                          label={`Chain: ${c}`}
                           onDelete={() =>
                             setFilters({
                               ...filters,
-                              userIds: filters.userIds.filter(
-                                (id) => id !== uid
+                              chains: filters.chains.filter((x) => x !== c),
+                            })
+                          }
+                        />
+                      ))}
+                    </div>
+                    <div className="chain-type-container">
+                      {filters.chainType && (
+                        <Chip
+                          label={`Chain Type: ${filters.chainType}`}
+                          onDelete={() =>
+                            setFilters({ ...filters, chainType: "" })
+                          }
+                        />
+                      )}
+                    </div>
+                    <div className="types-of-account-container">
+                      {filters.typeOfAccounts.map((t) => (
+                        <Chip
+                          key={t}
+                          label={`Type: ${t}`}
+                          onDelete={() =>
+                            setFilters({
+                              ...filters,
+                              typeOfAccounts: filters.typeOfAccounts.filter(
+                                (x) => x !== t
                               ),
                             })
                           }
                         />
-                      );
-                    })}
-                  </div>
-                </Box>
-              )}
+                      ))}
+                    </div>
+                    <div className="sales-people-container">
+                      {filters.userIds.map((uid) => {
+                        const user = normalizedCompanyUsers.find(
+                          (u) => u.uid === uid
+                        );
+                        const name = user
+                          ? `${user.firstName} ${user.lastName}`
+                          : "Unknown User";
 
-              <Box display="flex" gap={2} alignItems="center" mt={2}>
-                <TextField
-                  label="Save Filter Set As"
-                  value={filterSetName}
-                  onChange={(e) => setFilterSetName(e.target.value)}
-                  size="small"
-                />
-                <Button variant="outlined" onClick={saveCurrentFilterSet}>
-                  Save Filters
-                </Button>
-              </Box>
-
-              {Object.keys(savedFilterSets).length > 0 && (
-                <Box mt={1}>
-                  <Typography variant="caption">Saved Filters:</Typography>
-                  <Box display="flex" gap={1} flexWrap="wrap" mt={0.5}>
-                    {Object.entries(savedFilterSets).map(([name, set]) => (
-                      <Chip
-                        key={name}
-                        label={name}
-                        onClick={() => setFilters(set)}
-                        onDelete={() => {
-                          const updated = { ...savedFilterSets };
-                          delete updated[name];
-                          setSavedFilterSets(updated);
-                          localStorage.setItem(
-                            "displaygram_filter_sets",
-                            JSON.stringify(updated)
-                          );
-                        }}
-                      />
-                    ))}
+                        return (
+                          <Chip
+                            key={uid}
+                            label={`User: ${name}`}
+                            color={
+                              filteredAccounts.some((account) =>
+                                account.salesRouteNums?.includes(
+                                  user?.salesRouteNum || ""
+                                )
+                              )
+                                ? "default" // ✅ Has matching account
+                                : "error" // ❌ No matching account
+                            }
+                            onDelete={() =>
+                              setFilters({
+                                ...filters,
+                                userIds: filters.userIds.filter(
+                                  (id) => id !== uid
+                                ),
+                              })
+                            }
+                          />
+                        );
+                      })}
+                    </div>
                   </Box>
+                )}
+
+                <Box display="flex" gap={2} alignItems="center" mt={2}>
+                  <TextField
+                    label="Save Filter Set As"
+                    value={filterSetName}
+                    onChange={(e) => setFilterSetName(e.target.value)}
+                    size="small"
+                  />
+                  <Button variant="outlined" onClick={saveCurrentFilterSet}>
+                    Save Filters
+                  </Button>
                 </Box>
-              )}
-            </>
-          )}
-          {goalTitle.length > 1 && goalDescription.length > 1 && (
-            <Box
-              mt={3}
-              p={3}
-              border="1px solid #555"
-              borderRadius="12px"
-              bgcolor="background.paper"
-              boxShadow={3}
-              sx={{
-                textAlign: "left",
-                lineHeight: 1.6,
-                fontSize: "0.95rem",
-                maxWidth: "800px",
-                marginX: "auto",
-                position: "relative",
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1} mb={1}>
-                <TrackChangesIcon sx={{ color: "primary.main" }} />
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Summary
-                </Typography>
-              </Box>
 
-              <Typography variant="body2">
-                You are about to create a goal titled{" "}
-                <strong>"{goalTitle}"</strong>, described as "{goalDescription}
-                ". This goal requires each assigned user to contribute a minimum
-                of <strong>{goalValueMin}</strong> {goalMetric}, and will be
-                active from <strong>{goalStartDate}</strong> to{" "}
-                <strong>{goalEndDate}</strong>. It will be assigned to{" "}
-                <strong>{selectedUserIds.length}</strong> user
-                {selectedUserIds.length !== 1 ? "s" : ""} across{" "}
-                {accountScope === "all"
-                  ? `all ${accounts.length} accounts`
-                  : `${selectedAccounts.length} selected account${
-                      selectedAccounts.length !== 1 ? "s" : ""
-                    }`}
-                .
-              </Typography>
+                {Object.keys(savedFilterSets).length > 0 && (
+                  <Box mt={1}>
+                    <Typography variant="caption">Saved Filters:</Typography>
+                    <Box display="flex" gap={1} flexWrap="wrap" mt={0.5}>
+                      {Object.entries(savedFilterSets).map(([name, set]) => (
+                        <Chip
+                          key={name}
+                          label={name}
+                          onClick={() => setFilters(set)}
+                          onDelete={() => {
+                            const updated = { ...savedFilterSets };
+                            delete updated[name];
+                            setSavedFilterSets(updated);
+                            localStorage.setItem(
+                              "displaygram_filter_sets",
+                              JSON.stringify(updated)
+                            );
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </>
+            )}
 
-              {enforcePerUserQuota && (
-                <Typography variant="body2" mt={1}>
-                  Each user must complete at least{" "}
-                  <strong>{perUserQuota}</strong> submission
-                  {Number(perUserQuota) > 1 ? "s" : ""} during the goal period.
-                </Typography>
-              )}
-
-              <Box display="flex" justifyContent="flex-end" mt={2}>
-                <button className="button-primary" onClick={handleCreateGoal}>
-                  Create Goal
-                </button>
-              </Box>
-            </Box>
-          )}
-
-          {accountScope === "selected" && (
-            <>
-              {accountScope === "selected" ? (
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  {filteredAccounts.length} account
-                  {filteredAccounts.length !== 1 ? "s" : ""} currently match
-                  selected filters
-                </Typography>
-              ) : (
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  {accountsForSelectedUsers.length} account
-                  {accountsForSelectedUsers.length !== 1 ? "s" : ""} are
-                  assigned to selected user
-                  {selectedUserIds.length !== 1 ? "s" : ""}
-                </Typography>
-              )}
-
-              <UserMultiSelector
-                users={eligibleUsersForCurrentScope}
-                selectedUserIds={selectedUserIds}
-                setSelectedUserIds={setSelectedUserIds}
-              />
-            </>
-          )}
-          {accountScope === "selected" && (
-            <>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Showing {filteredAccounts.length} of {accounts.length} total
-                accounts.
-              </Typography>
-
-              {selectedAccounts.length === 0 ? (
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  sx={{ mb: 2 }} // spacing below before scroll box
-                >
-                  Please select accounts from the table below
-                </Typography>
-              ) : (
-                <Typography variant="h5" sx={{ mt: 4 }}>
-                  Selected Accounts
-                </Typography>
-              )}
-
-              {selectedAccounts.length > 0 && (
-                <div className="accounts-selection-box">
-                  <AccountMultiSelector
-                    allAccounts={selectedAccounts}
-                    selectedAccounts={selectedAccounts}
-                    setSelectedAccounts={setSelectedAccounts}
-                  />
-                </div>
-              )}
-
-              {availableAccounts.length > 0 ? (
-                <div className="accounts-selection-box">
-                  <Typography variant="h5" sx={{ mt: 4 }}>
-                    {`Available Accounts ${
-                      filteredAccounts.length < accounts.length
-                        ? "(Filtered)"
-                        : ""
-                    }`}
+            {accountScope === "selected" && (
+              <>
+                {accountScope === "selected" ? (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {filteredAccounts.length} account
+                    {filteredAccounts.length !== 1 ? "s" : ""} currently match
+                    selected filters
                   </Typography>
+                ) : (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {accountsForSelectedUsers.length} account
+                    {accountsForSelectedUsers.length !== 1 ? "s" : ""} are
+                    assigned to selected user
+                    {selectedUserIds.length !== 1 ? "s" : ""}
+                  </Typography>
+                )}
 
-                  <AccountMultiSelector
-                    allAccounts={availableAccounts}
-                    selectedAccounts={selectedAccounts}
-                    setSelectedAccounts={setSelectedAccounts}
-                  />
-                </div>
-              ) : (
-                <Typography variant="body2" sx={{ mt: 2, fontStyle: "italic" }}>
-                  All accounts have been selected.
+                <UserMultiSelector
+                  users={eligibleUsersForCurrentScope}
+                  selectedUserIds={selectedUserIds}
+                  setSelectedUserIds={setSelectedUserIds}
+                />
+              </>
+            )}
+            {accountScope === "selected" && (
+              <>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Showing {filteredAccounts.length} of {accounts.length} total
+                  accounts.
                 </Typography>
-              )}
-            </>
+
+                {selectedAccounts.length === 0 ? (
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{ mb: 2 }} // spacing below before scroll box
+                  >
+                    Please select accounts from the table below
+                  </Typography>
+                ) : (
+                  <Typography variant="h5" sx={{ mt: 4 }}>
+                    Selected Accounts
+                  </Typography>
+                )}
+
+                {selectedAccounts.length > 0 && (
+                  <div className="accounts-selection-box">
+                    <AccountMultiSelector
+                      allAccounts={selectedAccounts}
+                      selectedAccounts={selectedAccounts}
+                      setSelectedAccounts={setSelectedAccounts}
+                    />
+                  </div>
+                )}
+
+                {availableAccounts.length > 0 ? (
+                  <div className="accounts-selection-box">
+                    <Typography variant="h5" sx={{ mt: 4 }}>
+                      {`Available Accounts ${
+                        filteredAccounts.length < accounts.length
+                          ? "(Filtered)"
+                          : ""
+                      }`}
+                    </Typography>
+
+                    <AccountMultiSelector
+                      allAccounts={availableAccounts}
+                      selectedAccounts={selectedAccounts}
+                      setSelectedAccounts={setSelectedAccounts}
+                    />
+                  </div>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    sx={{ mt: 2, fontStyle: "italic" }}
+                  >
+                    All accounts have been selected.
+                  </Typography>
+                )}
+              </>
+            )}
+          </Box>
+          {hasSummary && (
+            <aside className="goal-summary-panel">
+              <Box
+                mt={3}
+                p={3}
+                border="1px solid #555"
+                borderRadius="12px"
+                bgcolor="background.paper"
+                boxShadow={3}
+                sx={{
+                  textAlign: "left",
+                  lineHeight: 1.6,
+                  fontSize: "0.95rem",
+                  maxWidth: "800px",
+                  marginX: "auto",
+                  position: "relative",
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <TrackChangesIcon sx={{ color: "primary.main" }} />
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    Summary
+                  </Typography>
+                </Box>
+
+                <Typography variant="body2">
+                  You are about to create a goal titled{" "}
+                  <strong>"{goalTitle}"</strong>, described as "
+                  {goalDescription}
+                  ". This goal requires each assigned user to contribute a
+                  minimum of <strong>{goalValueMin}</strong> {goalMetric}, and
+                  will be active from <strong>{goalStartDate}</strong> to{" "}
+                  <strong>{goalEndDate}</strong>. This goal will be assigned to{" "}
+                  <strong>{numberOfAffectedUsers}</strong> user
+                  {numberOfAffectedUsers !== 1 ? "s" : ""} across{" "}
+                  {accountScope === "all"
+                    ? `${accounts.length} account${
+                        accounts.length !== 1 ? "s" : ""
+                      }`
+                    : `${selectedAccounts.length} selected account${
+                        selectedAccounts.length !== 1 ? "s" : ""
+                      }`}
+                </Typography>
+
+                {enforcePerUserQuota && (
+                  <Typography variant="body2" mt={1}>
+                    Each user must complete at least{" "}
+                    <strong>{perUserQuota}</strong> submission
+                    {Number(perUserQuota) > 1 ? "s" : ""} during the goal
+                    period.
+                  </Typography>
+                )}
+
+                <Box display="flex" justifyContent="flex-end" mt={2}>
+                  <button className="button-primary" onClick={handleCreateGoal}>
+                    Create Goal
+                  </button>
+                </Box>
+              </Box>
+            </aside>
           )}
-        </Box>
+        </div>
       </Box>
     </Container>
   );
