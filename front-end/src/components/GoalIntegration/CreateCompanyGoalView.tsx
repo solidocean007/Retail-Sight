@@ -277,18 +277,6 @@ const CreateCompanyGoalView = () => {
     );
   }, [accounts, selectedUserIds, normalizedCompanyUsers]);
 
-  const eligibleUsersForCurrentScope = useMemo(() => {
-  const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
-  const routeNums = new Set(scopedAccounts.flatMap(a => a.salesRouteNums || []));
-  const reps = normalizedCompanyUsers.filter(u => u.salesRouteNum && routeNums.has(u.salesRouteNum));
-  if (assigneeType === "sales") return reps;
-
-  // supervisors who manage at least one of those reps
-  const supervisorUids = new Set(reps.map(r => reportsToMap.get(r.uid)).filter(Boolean) as string[]);
-  return normalizedCompanyUsers.filter(u => supervisorUids.has(u.uid));
-}, [accountScope, accounts, selectedAccounts, normalizedCompanyUsers, assigneeType, reportsToMap]);
-
-
   const { eligibleUsersForCurrentScope, numberOfAffectedUsers } =
     useMemo(() => {
       const scopedAccounts =
@@ -297,15 +285,151 @@ const CreateCompanyGoalView = () => {
         scopedAccounts.flatMap((a) => a.salesRouteNums || [])
       );
 
-      const eligibleUsers = normalizedCompanyUsers.filter(
-        (user) => user.salesRouteNum && routeNums.has(user.salesRouteNum)
+      const reps = normalizedCompanyUsers.filter(
+        (u) => u.salesRouteNum && routeNums.has(u.salesRouteNum)
+      );
+
+      if (assigneeType === "sales") {
+        return {
+          eligibleUsersForCurrentScope: reps,
+          numberOfAffectedUsers: reps.length,
+        };
+      }
+
+      // supervisors who manage at least one of those reps
+      const supervisorUids = new Set(
+        reps.map((r) => reportsToMap.get(r.uid)).filter(Boolean) as string[]
+      );
+
+      const supervisors = normalizedCompanyUsers.filter((u) =>
+        supervisorUids.has(u.uid)
       );
 
       return {
-        eligibleUsersForCurrentScope: eligibleUsers,
-        numberOfAffectedUsers: eligibleUsers.length,
+        eligibleUsersForCurrentScope: supervisors,
+        numberOfAffectedUsers: reps.length,
       };
-    }, [accountScope, accounts, selectedAccounts, normalizedCompanyUsers]);
+    }, [
+      accountScope,
+      accounts,
+      selectedAccounts,
+      normalizedCompanyUsers,
+      assigneeType,
+      reportsToMap,
+    ]);
+
+  // const handleCreateGoal = async () => {
+  //   if (!readyForCreation) {
+  //     alert("Please fill out all required fields.");
+  //     return;
+  //   }
+
+  //   if (!companyId) {
+  //     alert("Missing companyId. Cannot create goal.");
+  //     return;
+  //   }
+
+  //   const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
+
+  //   const userPool =
+  //     selectedUserIds.length > 0
+  //       ? normalizedCompanyUsers.filter((u) => selectedUserIds.includes(u.uid))
+  //       : normalizedCompanyUsers;
+
+  //   const userAssignments: Record<string, string[]> = {};
+  //   const allAssignedUserIds = new Set<string>();
+
+  //   for (const account of scopedAccounts) {
+  //     const routeNums = new Set(account.salesRouteNums || []);
+  //     if (!routeNums.size) continue;
+
+  //     if (assigneeType === "sales") {
+  //       const repIds = userPool
+  //         .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
+  //         .map((u) => u.uid);
+  //       if (repIds.length) {
+  //         userAssignments[String(account.accountNumber)] = repIds;
+  //         repIds.forEach((id) => allAssignedUserIds.add(id));
+  //       }
+  //     } else {
+  //       // SUPERVISOR assignment: map reps -> supervisors
+  //       const repIdsForAccount = normalizedCompanyUsers
+  //         .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
+  //         .map((u) => u.uid);
+
+  //       const supervisorIds = Array.from(
+  //         new Set(
+  //           repIdsForAccount
+  //             .map((repId) => reportsToMap.get(repId))
+  //             .filter((uid) => !!uid && supervisorsByUid.has(uid!)) as string[]
+  //         )
+  //       );
+
+  //       // Optionally intersect with the selected pool if you want to respect manual picks:
+  //       const finalSupervisorIds = selectedUserIds.length
+  //         ? supervisorIds.filter((id) => selectedUserIds.includes(id))
+  //         : supervisorIds;
+
+  //       if (finalSupervisorIds.length) {
+  //         userAssignments[String(account.accountNumber)] = finalSupervisorIds;
+  //         finalSupervisorIds.forEach((id) => allAssignedUserIds.add(id));
+  //       }
+  //     }
+  //   }
+
+  //   const newGoal: CompanyGoalType = {
+  //     companyId,
+  //     goalTitle,
+  //     goalDescription,
+  //     goalMetric,
+  //     goalValueMin: Number(goalValueMin),
+  //     goalStartDate,
+  //     goalEndDate,
+  //     accountNumbersForThisGoal: scopedAccounts.map((a) =>
+  //       a.accountNumber.toString()
+  //     ),
+  //     userAssignments,
+  //     createdAt: new Date().toISOString(),
+  //     deleted: false,
+  //   };
+
+  //   if (enforcePerUserQuota && perUserQuota) {
+  //     newGoal.perUserQuota = Number(perUserQuota);
+  //   }
+
+  //   setIsSaving(true);
+  //   try {
+  //   console.log(newGoal)
+
+  //     const result = await dispatch(
+  //       createCompanyGoalInFirestore({ goal: newGoal, currentUser })
+  //     );
+  //     console.log("Dispatch result:", result);
+
+  //     if (createCompanyGoalInFirestore.fulfilled.match(result)) {
+  //       alert("Goal created successfully!");
+  //       console.log("Created goal ID:", result.payload.id);
+
+  //       // Reset Form
+  //       setGoalTitle("");
+  //       setGoalDescription("");
+  //       setGoalMetric("");
+  //       setGoalValueMin(1);
+  //       setGoalStartDate("");
+  //       setGoalEndDate("");
+  //       setSelectedAccounts([]);
+  //       setSelectedUserIds([]);
+  //     } else {
+  //       console.error("Goal creation failed:", result.payload);
+  //       alert(`Failed to create goal: ${result.payload}`);
+  //     }
+  //   } catch (error: any) {
+  //     console.error("Unexpected error:", error);
+  //     alert("Error creating goal. Please try again.");
+  //   } finally {
+  //     setIsSaving(false);
+  //   }
+  // };
 
   const handleCreateGoal = async () => {
     if (!readyForCreation) {
@@ -326,43 +450,64 @@ const CreateCompanyGoalView = () => {
         : normalizedCompanyUsers;
 
     const userAssignments: Record<string, string[]> = {};
-     const allAssignedUserIds = new Set<string>();
+    const allAssignedUserIds = new Set<string>();
 
-   for (const account of scopedAccounts) {
-    const routeNums = new Set(account.salesRouteNums || []);
-    if (!routeNums.size) continue;
+    for (const account of scopedAccounts) {
+      const routeNums = new Set(account.salesRouteNums || []);
+      if (!routeNums.size) continue;
 
-    if (assigneeType === "sales") {
-      const repIds = userPool
-        .filter(u => u.salesRouteNum && routeNums.has(u.salesRouteNum))
-        .map(u => u.uid);
-      if (repIds.length) {
-        userAssignments[String(account.accountNumber)] = repIds;
-        repIds.forEach(id => allAssignedUserIds.add(id));
-      }
-    } else {
-      // SUPERVISOR assignment: map reps -> supervisors
-      const repIdsForAccount = normalizedCompanyUsers
-        .filter(u => u.salesRouteNum && routeNums.has(u.salesRouteNum))
-        .map(u => u.uid);
+      if (assigneeType === "sales") {
+        const repIds = userPool
+          .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
+          .map((u) => u.uid);
+        if (repIds.length) {
+          userAssignments[String(account.accountNumber)] = repIds;
+          repIds.forEach((id) => allAssignedUserIds.add(id));
+        }
+      } else {
+        const repIdsForAccount = normalizedCompanyUsers
+          .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
+          .map((u) => u.uid);
 
-      const supervisorIds = Array.from(new Set(
-        repIdsForAccount
-          .map(repId => reportsToMap.get(repId))
-          .filter(uid => !!uid && supervisorsByUid.has(uid!)) as string[]
-      ));
+        console.log("Found repIds for this account:", repIdsForAccount);
 
-      // Optionally intersect with the selected pool if you want to respect manual picks:
-      const finalSupervisorIds = selectedUserIds.length
-        ? supervisorIds.filter(id => selectedUserIds.includes(id))
-        : supervisorIds;
+        console.log(
+          "Supervisors for these reps:",
+          repIdsForAccount.map((repId) => reportsToMap.get(repId))
+        ); // this sometimes logs either one of the two uids
 
-      if (finalSupervisorIds.length) {
-        userAssignments[String(account.accountNumber)] = finalSupervisorIds;
-        finalSupervisorIds.forEach(id => allAssignedUserIds.add(id));
+        const supervisorIds = Array.from(
+          new Set(
+            repIdsForAccount
+              .map((repId) => reportsToMap.get(repId))
+              .filter((uid): uid is string => {
+                // keep only valid UIDs of existing users
+                return (
+                  !!uid && normalizedCompanyUsers.some((u) => u.uid === uid)
+                );
+              })
+          )
+        );
+
+        console.log("After filtering valid supervisors:", supervisorIds); // okay this logs the supervisor id now as its found
+
+        const selectedSupervisors = selectedUserIds.filter((id) =>
+          supervisorsByUid.has(id)
+        );
+
+        const finalSupervisorIds =
+          selectedSupervisors.length > 0
+            ? supervisorIds.filter((id) => selectedSupervisors.includes(id))
+            : supervisorIds;
+
+        console.log("finalSupervisorIds: ", finalSupervisorIds); // this never logs
+
+        if (finalSupervisorIds.length) {
+          userAssignments[String(account.accountNumber)] = finalSupervisorIds;
+          finalSupervisorIds.forEach((id) => allAssignedUserIds.add(id));
+        }
       }
     }
-  }
 
     const newGoal: CompanyGoalType = {
       companyId,
@@ -384,36 +529,11 @@ const CreateCompanyGoalView = () => {
       newGoal.perUserQuota = Number(perUserQuota);
     }
 
-    setIsSaving(true);
-    try {
-      const result = await dispatch(
-        createCompanyGoalInFirestore({ goal: newGoal, currentUser })
-      );
-      console.log("Dispatch result:", result);
+    // ✅ LOG THE GOAL AND SKIP SAVING
+    console.log("[LOGGING GOAL OBJECT ONLY]", newGoal);
+    return; // ⛔️ don't dispatch or mutate anything else
 
-      if (createCompanyGoalInFirestore.fulfilled.match(result)) {
-        alert("Goal created successfully!");
-        console.log("Created goal ID:", result.payload.id);
-
-        // Reset Form
-        setGoalTitle("");
-        setGoalDescription("");
-        setGoalMetric("");
-        setGoalValueMin(1);
-        setGoalStartDate("");
-        setGoalEndDate("");
-        setSelectedAccounts([]);
-        setSelectedUserIds([]);
-      } else {
-        console.error("Goal creation failed:", result.payload);
-        alert(`Failed to create goal: ${result.payload}`);
-      }
-    } catch (error: any) {
-      console.error("Unexpected error:", error);
-      alert("Error creating goal. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
+    // Everything below this point is skipped
   };
 
   const availableAccounts = useMemo(() => {

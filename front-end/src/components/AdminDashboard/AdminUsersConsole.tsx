@@ -70,6 +70,7 @@ import { useAppDispatch } from "../../utils/store";
 import { normalizeTimestamps } from "../../utils/normalizeTimestamps";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
+import { User } from "firebase/auth";
 
 export interface InviteRow {
   id: string;
@@ -108,6 +109,7 @@ export default function AdminUsersConsole() {
 
   const isMobile = useMediaQuery("(max-width: 768px)");
   const localUsers = (useSelector(selectCompanyUsers) ?? []) as UserType[];
+  // console.log(localUsers)
   const activeUsers = localUsers.filter((u) => u.status === "active");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
@@ -264,7 +266,8 @@ export default function AdminUsersConsole() {
   };
 
   // Save incl. status ✅
-  const handleSaveUser = async () => { // should we define this as a usertype return?
+  const handleSaveUser = async () => {
+    // should we define this as a usertype return?
     if (!editRow) return;
     try {
       await updateDoc(doc(db, "users", editRow.uid), {
@@ -398,14 +401,30 @@ export default function AdminUsersConsole() {
     }
   };
 
-  const userColumns = useMemo<GridColDef[]>(
+  const userColumns = useMemo<GridColDef<UserType>[]>(
     () => [
       { field: "firstName", headerName: "First Name", flex: 1 },
       { field: "lastName", headerName: "Last Name", flex: 1 },
       { field: "email", headerName: "Email", flex: 1.2 },
       { field: "phone", headerName: "Phone", flex: 1 },
       { field: "salesRouteNum", headerName: "Sales Route #", flex: 1 },
-      { field: "reportsTo", headerName: "Supervisor", flex: 1 },
+      {
+        field: "reportsTo",
+        headerName: "Supervisor",
+        flex: 1,
+        renderCell: (params: any) => {
+          const reportsToUid = String(params.row?.reportsTo ?? "").trim();
+          const supervisor = localUsers.find((u) => u.uid === reportsToUid);
+
+          return (
+            <span style={{ color: supervisor ? "inherit" : "orange" }}>
+              {supervisor
+                ? `${supervisor.firstName} ${supervisor.lastName}`
+                : reportsToUid || "Unassigned"}
+            </span>
+          );
+        },
+      },
       { field: "role", headerName: "Role", flex: 1 },
       {
         field: "status",
@@ -603,7 +622,7 @@ export default function AdminUsersConsole() {
           ) : (
             // TABLET & DESKTOP: DataGrid with horizontal scroll if needed
             <Box sx={{ width: "100%", height: 600, overflowX: "auto" }}>
-              <DataGrid
+              <DataGrid<UserType>
                 rows={filteredUsers}
                 getRowHeight={() => 60} // default is 52 — bump to 56 or 60
                 columns={userColumns}
@@ -764,6 +783,27 @@ export default function AdminUsersConsole() {
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel id="edit-reports-to">Supervisor</InputLabel>
+              <Select
+                labelId="edit-reports-to"
+                value={editRow?.reportsTo || ""}
+                onChange={(e) =>
+                  setEditRow((r) =>
+                    r ? { ...r, reportsTo: e.target.value } : r
+                  )
+                }
+              >
+                <MenuItem value="">— None —</MenuItem>
+                {activeUsers
+                  .filter((u) => u.uid !== editRow?.uid) // exclude self
+                  .map((user) => (
+                    <MenuItem key={user.uid} value={user.uid}>
+                      {user.firstName} {user.lastName} ({user.role})
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
           </Stack>
