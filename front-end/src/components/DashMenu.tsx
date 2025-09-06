@@ -100,13 +100,13 @@ const DashMenu = ({
           <Typography variant="subtitle1" className="menu-section-title">
             Admin
           </Typography>
-          {/* <ListItemButton
+          <ListItemButton
             selected={selectedMode === "TeamMode"}
             onClick={() => onMenuClick("TeamMode")}
           >
             <GroupIcon sx={{ mr: 1 }} />
             <ListItemText primary="Teams" />
-          </ListItemButton> */}
+          </ListItemButton>
           <ListItemButton
             selected={selectedMode === "AccountsMode"}
             onClick={() => onMenuClick("AccountsMode")}

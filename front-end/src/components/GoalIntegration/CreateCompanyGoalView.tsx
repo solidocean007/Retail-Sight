@@ -41,6 +41,7 @@ import "./createCompanyGoalView.css";
 import GoalTitleInput from "./GoalTitleInput";
 import ChainMultiSelect from "./FilterMultiSelect";
 import FilterMultiSelect from "./FilterMultiSelect";
+import CustomConfirmation from "../CustomConfirmation";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -61,6 +62,8 @@ const CreateCompanyGoalView = () => {
       (companyUsers ?? []).filter((u) => (u.status ?? "active") === "active"),
     [companyUsers]
   );
+  const [draftGoal, setDraftGoal] = useState<CompanyGoalType | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
@@ -318,7 +321,7 @@ const CreateCompanyGoalView = () => {
       reportsToMap,
     ]);
 
-  // const handleCreateGoal = async () => {
+  // const OldhandleCreateGoal = async () => {
   //   if (!readyForCreation) {
   //     alert("Please fill out all required fields.");
   //     return;
@@ -431,12 +434,152 @@ const CreateCompanyGoalView = () => {
   //   }
   // };
 
+  // const handleCreateGoal = async () => {
+  //   if (!readyForCreation) {
+  //     alert("Please fill out all required fields.");
+  //     return;
+  //   }
+
+  //   if (!companyId) {
+  //     alert("Missing companyId. Cannot create goal.");
+  //     return;
+  //   }
+
+  //   const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
+
+  //   const userPool =
+  //     selectedUserIds.length > 0
+  //       ? normalizedCompanyUsers.filter((u) => selectedUserIds.includes(u.uid))
+  //       : normalizedCompanyUsers;
+
+  //   const userAssignments: Record<string, string[]> = {};
+  //   const allAssignedUserIds = new Set<string>();
+
+  //   for (const account of scopedAccounts) {
+  //     const routeNums = new Set(account.salesRouteNums || []);
+  //     if (!routeNums.size) continue;
+
+  //     if (assigneeType === "sales") {
+  //       const repIds = userPool
+  //         .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
+  //         .map((u) => u.uid);
+  //       if (repIds.length) {
+  //         userAssignments[String(account.accountNumber)] = repIds; // i dont think i need to do this.  i just need to set
+  //         repIds.forEach((id) => allAssignedUserIds.add(id));
+  //       }
+  //     } else {
+  //       const repIdsForAccount = normalizedCompanyUsers
+  //         .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
+  //         .map((u) => u.uid);
+
+  //       console.log("Found repIds for this account:", repIdsForAccount);
+
+  //       console.log(
+  //         "Supervisors for these reps:",
+  //         repIdsForAccount.map((repId) => reportsToMap.get(repId))
+  //       ); // this sometimes logs either one of the two uids
+
+  //       const supervisorIds = Array.from(
+  //         new Set(
+  //           repIdsForAccount
+  //             .map((repId) => reportsToMap.get(repId))
+  //             .filter((uid): uid is string => {
+  //               // keep only valid UIDs of existing users
+  //               return (
+  //                 !!uid && normalizedCompanyUsers.some((u) => u.uid === uid)
+  //               );
+  //             })
+  //         )
+  //       );
+
+  //       const allSupervisorUids = new Set(
+  //         normalizedCompanyUsers
+  //           .filter((u) =>
+  //             normalizedCompanyUsers.some((r) => r.reportsTo === u.uid)
+  //           )
+  //           .map((u) => u.uid)
+  //       );
+  //       const selectedSupervisors = selectedUserIds.filter((id) =>
+  //         allSupervisorUids.has(id)
+  //       );
+
+  //       const finalSupervisorIds = selectedSupervisors.length
+  //         ? supervisorIds.filter((id) => selectedSupervisors.includes(id))
+  //         : supervisorIds;
+
+  //       if (finalSupervisorIds.length) {
+  //         userAssignments[String(account.accountNumber)] = finalSupervisorIds;
+  //         finalSupervisorIds.forEach((id) => allAssignedUserIds.add(id));
+  //       }
+  //     }
+  //   }
+
+  //   const newGoal: CompanyGoalType = {
+  //     companyId,
+  //     goalTitle,
+  //     targetRole: assigneeType,
+  //     goalDescription,
+  //     goalMetric,
+  //     goalValueMin: Number(goalValueMin),
+  //     goalStartDate,
+  //     goalEndDate,
+  //     createdAt: new Date().toISOString(),
+  //     deleted: false,
+  //     ...(assigneeType === "supervisor"
+  //       ? { userAssignments }
+  //       : {
+  //           accountNumbersForThisGoal: scopedAccounts.map((a) =>
+  //             a.accountNumber.toString()
+  //           ),
+  //         }),
+  //     ...(enforcePerUserQuota && perUserQuota
+  //       ? { perUserQuota: Number(perUserQuota) }
+  //       : {}),
+  //   };
+
+  //   if (enforcePerUserQuota && perUserQuota) {
+  //     newGoal.perUserQuota = Number(perUserQuota);
+  //   }
+
+  //   setIsSaving(true);
+  //   try {
+  //     console.log(newGoal);
+
+  //     const result = await dispatch(
+  //       createCompanyGoalInFirestore({ goal: newGoal, currentUser })
+  //     );
+  //     console.log("Dispatch result:", result);
+
+  //     if (createCompanyGoalInFirestore.fulfilled.match(result)) {
+  //       alert("Goal created successfully!");
+  //       console.log("Created goal ID:", result.payload.id);
+
+  //       // Reset Form
+  //       setGoalTitle("");
+  //       setGoalDescription("");
+  //       setGoalMetric("");
+  //       setGoalValueMin(1);
+  //       setGoalStartDate("");
+  //       setGoalEndDate("");
+  //       setSelectedAccounts([]);
+  //       setSelectedUserIds([]);
+  //     } else {
+  //       console.error("Goal creation failed:", result.payload);
+  //       alert(`Failed to create goal: ${result.payload}`);
+  //     }
+  //   } catch (error: any) {
+  //     console.error("Unexpected error:", error);
+  //     alert("Error creating goal. Please try again.");
+  //   } finally {
+  //     setIsSaving(false);
+  //   }
+  // };
+
   const handleCreateGoal = async () => {
     if (!readyForCreation) {
       alert("Please fill out all required fields.");
       return;
     }
-
     if (!companyId) {
       alert("Missing companyId. Cannot create goal.");
       return;
@@ -461,7 +604,6 @@ const CreateCompanyGoalView = () => {
           .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
           .map((u) => u.uid);
         if (repIds.length) {
-          userAssignments[String(account.accountNumber)] = repIds;
           repIds.forEach((id) => allAssignedUserIds.add(id));
         }
       } else {
@@ -469,19 +611,11 @@ const CreateCompanyGoalView = () => {
           .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
           .map((u) => u.uid);
 
-        console.log("Found repIds for this account:", repIdsForAccount);
-
-        console.log(
-          "Supervisors for these reps:",
-          repIdsForAccount.map((repId) => reportsToMap.get(repId))
-        ); // this sometimes logs either one of the two uids
-
         const supervisorIds = Array.from(
           new Set(
             repIdsForAccount
               .map((repId) => reportsToMap.get(repId))
               .filter((uid): uid is string => {
-                // keep only valid UIDs of existing users
                 return (
                   !!uid && normalizedCompanyUsers.some((u) => u.uid === uid)
                 );
@@ -489,18 +623,20 @@ const CreateCompanyGoalView = () => {
           )
         );
 
-        console.log("After filtering valid supervisors:", supervisorIds); // okay this logs the supervisor id now as its found
-
+        const allSupervisorUids = new Set(
+          normalizedCompanyUsers
+            .filter((u) =>
+              normalizedCompanyUsers.some((r) => r.reportsTo === u.uid)
+            )
+            .map((u) => u.uid)
+        );
         const selectedSupervisors = selectedUserIds.filter((id) =>
-          supervisorsByUid.has(id)
+          allSupervisorUids.has(id)
         );
 
-        const finalSupervisorIds =
-          selectedSupervisors.length > 0
-            ? supervisorIds.filter((id) => selectedSupervisors.includes(id))
-            : supervisorIds;
-
-        console.log("finalSupervisorIds: ", finalSupervisorIds); // this never logs
+        const finalSupervisorIds = selectedSupervisors.length
+          ? supervisorIds.filter((id) => selectedSupervisors.includes(id))
+          : supervisorIds;
 
         if (finalSupervisorIds.length) {
           userAssignments[String(account.accountNumber)] = finalSupervisorIds;
@@ -512,28 +648,28 @@ const CreateCompanyGoalView = () => {
     const newGoal: CompanyGoalType = {
       companyId,
       goalTitle,
+      targetRole: assigneeType,
       goalDescription,
       goalMetric,
       goalValueMin: Number(goalValueMin),
       goalStartDate,
       goalEndDate,
-      accountNumbersForThisGoal: scopedAccounts.map((a) =>
-        a.accountNumber.toString()
-      ),
-      userAssignments,
       createdAt: new Date().toISOString(),
       deleted: false,
+      ...(assigneeType === "supervisor"
+        ? { userAssignments }
+        : {
+            accountNumbersForThisGoal: scopedAccounts.map((a) =>
+              a.accountNumber.toString()
+            ),
+          }),
+      ...(enforcePerUserQuota && perUserQuota
+        ? { perUserQuota: Number(perUserQuota) }
+        : {}),
     };
 
-    if (enforcePerUserQuota && perUserQuota) {
-      newGoal.perUserQuota = Number(perUserQuota);
-    }
-
-    // ✅ LOG THE GOAL AND SKIP SAVING
-    console.log("[LOGGING GOAL OBJECT ONLY]", newGoal);
-    return; // ⛔️ don't dispatch or mutate anything else
-
-    // Everything below this point is skipped
+    setDraftGoal(newGoal);
+    setShowConfirmModal(true); // ✅ Open the confirmation modal
   };
 
   const availableAccounts = useMemo(() => {
@@ -553,6 +689,38 @@ const CreateCompanyGoalView = () => {
   }, []);
 
   const hasSummary = goalTitle.length > 1 && goalDescription.length > 1;
+
+  const confirmGoalCreation = async () => {
+    if (!draftGoal || !currentUser) return;
+
+    setIsSaving(true);
+    try {
+      const result = await dispatch(
+        createCompanyGoalInFirestore({ goal: draftGoal, currentUser })
+      );
+
+      if (createCompanyGoalInFirestore.fulfilled.match(result)) {
+        alert("Goal created!");
+        setGoalTitle("");
+        setGoalDescription("");
+        setGoalMetric("");
+        setGoalValueMin(1);
+        setGoalStartDate("");
+        setGoalEndDate("");
+        setSelectedAccounts([]);
+        setSelectedUserIds([]);
+      } else {
+        alert(`Error: ${result.payload}`);
+      }
+    } catch (err) {
+      console.error("Goal creation error:", err);
+      alert("Something went wrong.");
+    } finally {
+      setIsSaving(false);
+      setShowConfirmModal(false);
+      setDraftGoal(null);
+    }
+  };
 
   return (
     <Container>
@@ -1082,7 +1250,7 @@ const CreateCompanyGoalView = () => {
 
                 <Box display="flex" justifyContent="flex-end" mt={2}>
                   <button className="button-primary" onClick={handleCreateGoal}>
-                    Create Goal
+                    Review Goal
                   </button>
                 </Box>
               </Box>
@@ -1090,6 +1258,12 @@ const CreateCompanyGoalView = () => {
           )}
         </div>
       </Box>
+      <CustomConfirmation
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        goal={draftGoal}
+        onConfirm={confirmGoalCreation}
+      />
     </Container>
   );
 };

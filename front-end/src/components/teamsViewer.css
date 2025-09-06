@@ -1,69 +1,77 @@
 .team-container {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+
+.team-title {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
 }
 
 .teams-viewer {
   display: flex;
-  flex-direction: column;
-  align-items: start;
-  padding-left: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 1400px;
 }
 
-.team {
+.team-card {
+  background-color: var(--dashboard-card);
+  border-radius: 12px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  min-width: 250px;
+  max-width: 320px;
+  flex: 1 1 300px;
+}
+
+.team-header {
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-strong);
+}
+
+.team-members {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.team-member {
+  font-size: 0.95rem;
+  padding: 0.3rem 0;
   display: flex;
   flex-direction: column;
-  background-color: whitesmoke;
-  padding: 5px;
-  border-radius: 5px;
+  border-bottom: 1px solid var(--divider-light);
 }
 
-/* Mobile devices */
-@media (max-width: 320px) {
-  /* Styles for small smartphones */
+.team-member:last-child {
+  border-bottom: none;
 }
 
-@media (min-width: 321px) and (max-width: 375px) {
-  /* Styles for medium smartphones */
+.route-num {
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
-@media (min-width: 376px) and (max-width: 414px) {
-  /* Styles for large smartphones */
+.team select {
+  color: transparent;        /* Hide text */
+  text-shadow: 0 0 0 #000;   /* Force black arrow to remain */
+  background-color: white;
+  border-radius: 4px;
+  padding: 4px 8px;
+  width: 100%;
 }
 
-/* Filling the gap for devices between 414px and 600px */
-@media (min-width: 415px) {
-  /* Styles for devices in this range */
-  .teams-viewer {
-    flex-direction: row;
-    justify-content: space-around;
-  }
+.unassigned-team {
+  background-color: #ffe4e1;
+  border: 1px solid #ff7f7f;
 }
 
-/* Tablets */
-@media (min-width: 600px) and (max-width: 768px) {
-  /* Styles for small tablets in portrait */
-  .top-of-activity-feed .onboarding-tutorial-intro-box {
-    font-size: smaller;
-  }
-}
 
-@media (min-width: 769px) and (max-width: 899px) {
-}
-
-/* Laptops and Desktops */
-@media (min-width: 1025px) and (max-width: 1366px) {
-  /* Styles for small to medium screens */
-
-  .post-content-filter {
-    margin-right: 40px;
-  }
-}
-
-@media (min-width: 1367px) and (max-width: 1920px) {
-  /* Styles for large screens */
-}
-
-@media (min-width: 1921px) {
-  /* Styles for extra-large screens */
-}

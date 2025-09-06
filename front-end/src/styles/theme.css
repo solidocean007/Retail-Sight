@@ -119,10 +119,8 @@
   --background-pop-out-body: var(--gray-50);
   --post-card-background: var(--post-card-animated-gradient-light);
   --header-background: var(--post-card-animated-gradient-light);
-  --dashboard-header-background: var(
-    --post-card-animated-gradient-light
-  ); /* doesn't work */
-  --dashboard-header-background: var(--gray-200); /* works */
+  --dashboard-header-background: var(--post-card-animated-gradient-light);
+  --dashboard-header-background: var(--gray-200);
   --tab-background: var(--background-body);
   --tab-background-selected: var(--gray-200);
   --user-modal-background: var(--muted-steel);

@@ -39,6 +39,7 @@ import DashMenu from "./DashMenu.tsx";
 import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 import MyGoals from "./GoalIntegration/MyGoals.tsx";
 import AdminUsersConsole from "./AdminDashboard/AdminUsersConsole.tsx";
+import TeamsViewer from "./TeamsViewer.tsx";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -179,9 +180,9 @@ export const Dashboard = () => {
           height: "100%",
         }}
       >
-        {/* {dashboardMode === "TeamMode" && (
-          <TeamsViewer localUsers={companyUsers} />
-        )} */}
+        {dashboardMode === "TeamMode" && (
+          <TeamsViewer />
+        )}
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}

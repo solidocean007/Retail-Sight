@@ -508,7 +508,7 @@ export type CompanyGoalType = {
   createdByUserId?: string; // optional
   createdByFirstName?: string; // optional
   createdByLastName?: string; // optional
-  accountNumbersForThisGoal: string[]; // ✅ Full scope of accounts this goal applies to
+  accountNumbersForThisGoal?: string[]; // ✅ Full scope of accounts this goal applies to
   userAssignments?: {
     [accountNumber: string]: string[];
   };
