@@ -7,7 +7,7 @@ interface CustomConfirmationProps {
   message?: string;
   onConfirm: () => void;
   onClose: () => void;
-  goal?: CompanyGoalType;
+  goal?: CompanyGoalType | null;
   loading?: boolean;
 }
 

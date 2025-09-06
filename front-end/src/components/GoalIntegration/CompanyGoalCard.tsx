@@ -240,7 +240,14 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       : 0;
 
   return (
-    <div className="info-box-company-goal">
+    <div
+      className={`info-box-company-goal ${
+        goal.targetRole === "supervisor" ? "supervisor-goal" : ""
+      }`}
+    >
+      {goal.targetRole && (
+        <div className="goal-targetRole">{goal.targetRole} goal</div>
+      )}
       <div className="company-goal-card-header">
         <div className="company-goal-card-start-end">
           <h5>Starts: {goal.goalStartDate}</h5>

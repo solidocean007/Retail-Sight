@@ -310,7 +310,7 @@ const CreateCompanyGoalView = () => {
 
       return {
         eligibleUsersForCurrentScope: supervisors,
-        numberOfAffectedUsers: reps.length,
+        numberOfAffectedUsers: supervisors.length,
       };
     }, [
       accountScope,
@@ -721,6 +721,7 @@ const CreateCompanyGoalView = () => {
       setDraftGoal(null);
     }
   };
+
 
   return (
     <Container>

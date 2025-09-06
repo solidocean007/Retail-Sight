@@ -142,6 +142,9 @@
   --text-color: var(--gray-900);
   --text-on-button: black;
   --company-goal-text-color: var(--gray-900);
+
+  --company-goal-card-background: var(--primary-blue);
+  --company-supervisor-goal-card-background: var(--primary-blue-dark);
   --header-title: var(--gray-900);
 
   --link-color: var(--gold);
@@ -209,6 +212,8 @@
   --text-color: var(--gray-100);
   --text-on-button: white;
   --company-goal-text-color: var(--gray-900);
+  --company-goal-card-background: var(--primary-blue-dark);
+  --company-supervisor-goal-card-background: var(--primary-dark-blue);
   --header-title: var(--white);
   --link-color: #93c5fd; /* Light-blue-300 (Tailwind-ish) */
   --link-hover-color: var(--primary-blue); /* Slightly brighter */

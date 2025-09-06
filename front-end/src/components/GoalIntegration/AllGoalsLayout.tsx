@@ -176,7 +176,7 @@ const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({ companyId }) => {
           id={`simple-tabpanel-${i}`}
           key={t.key}
         >
-          {value === i && <Box sx={{ p: 8 }}>{t.panel}</Box>}
+          {value === i && <Box sx={{ p: 1 }}>{t.panel}</Box>}
         </div>
       ))}
     </div>

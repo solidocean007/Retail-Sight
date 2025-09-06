@@ -2,12 +2,22 @@
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  background-color: var(--dashboard-card);
+  background-color: var(--company-goal-card-background);
   border-radius: 12px;
   border: 1px solid var(--card-outline);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 1rem;
   color: var(--text-color);
+}
+
+ .supervisor-goal {
+  background-color: var(--company-supervisor-goal-card-background);
+}
+
+.goal-targetRole {
+  display: flex;
+  width: 100%;
+  font-size: larger;
 }
 
 .company-goal-card-start-end {
