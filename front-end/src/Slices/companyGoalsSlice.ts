@@ -59,43 +59,65 @@ export const selectCompanyGoalsLastUpdated = (state: RootState) =>
 export const selectUsersCompanyGoals = createSelector(
   [
     selectAllCompanyGoals,
-    (state: RootState) => state.user.currentUser?.salesRouteNum,
+    (state: RootState) => state.user.currentUser,
     (state: RootState) => state.allAccounts.accounts || [],
   ],
-  (allGoals, userSalesRouteNum, allAccounts) => {
-    if (!userSalesRouteNum) return [];
+  (allGoals, currentUser, allAccounts) => {
+    if (!currentUser) return [];
 
-    // Get all accountNumbers tied to the user's salesRouteNum
-    const matchingAccountNumbers = allAccounts
-      .filter((acc) => acc.salesRouteNums?.includes(userSalesRouteNum))
-      .map((acc) => acc.accountNumber.toString());
+    const { salesRouteNum, uid } = currentUser;
 
-    return allGoals.filter((goal) =>
-      goal.accountNumbersForThisGoal.some((accNum) =>
-        matchingAccountNumbers.includes(accNum)
-      )
-    );
+    return allGoals.filter((goal) => {
+      if (goal.targetRole === "sales" && salesRouteNum) {
+        const matchingAccountNumbers = allAccounts
+          .filter((acc) => acc.salesRouteNums?.includes(salesRouteNum))
+          .map((acc) => acc.accountNumber.toString());
+
+        return goal.accountNumbersForThisGoal?.some((accNum) =>
+          matchingAccountNumbers.includes(accNum)
+        );
+      }
+
+      if (goal.targetRole === "supervisor" && uid) {
+        const assignedUids = Object.values(goal.userAssignments || {}).flat();
+        return assignedUids.includes(uid);
+      }
+d
+      return false;
+    });
   }
 );
 
-export const makeSelectUsersCompanyGoals = (salesRouteNum?: string) =>
+export const makeSelectUsersCompanyGoals = (
+  salesRouteNum?: string,
+  userId?: string
+) =>
   createSelector(
     [selectAllCompanyGoals, selectAllCompanyAccounts],
     (allGoals, allAccounts) => {
-      if (!salesRouteNum) return [];
+      if (!salesRouteNum && !userId) return [];
 
       return allGoals.filter((goal: CompanyGoalWithIdType) => {
-        const matchingAccounts = goal.accountNumbersForThisGoal
-          .map((accountId) =>
-            allAccounts.find(
-              (acc) => acc.accountNumber.toString() === accountId
+        if (goal.targetRole === "sales" && salesRouteNum) {
+          const matchingAccounts = (goal.accountNumbersForThisGoal || [])
+            .map((accountId) =>
+              allAccounts.find(
+                (acc) => acc.accountNumber.toString() === accountId
+              )
             )
-          )
-          .filter(Boolean) as CompanyAccountType[];
+            .filter(Boolean) as CompanyAccountType[];
 
-        return matchingAccounts.some((account) =>
-          (account.salesRouteNums || []).includes(salesRouteNum)
-        );
+          return matchingAccounts.some((account) =>
+            (account.salesRouteNums || []).includes(salesRouteNum)
+          );
+        }
+
+        if (goal.targetRole === "supervisor" && userId) {
+          const assignedUids = Object.values(goal.userAssignments || {}).flat();
+          return assignedUids.includes(userId);
+        }
+
+        return false;
       });
     }
   );

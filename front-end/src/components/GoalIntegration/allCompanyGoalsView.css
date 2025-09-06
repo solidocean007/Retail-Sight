@@ -13,6 +13,10 @@
   margin-bottom: 1rem;
 }
 
+.goals-list {
+  max-width: 900px;
+}
+
 .goals-container {
   display: flex;
   flex-direction: column;

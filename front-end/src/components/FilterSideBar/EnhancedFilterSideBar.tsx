@@ -420,7 +420,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       <div className="filter-actions">
         {/* {filtersSet && filtersChanged && ( */}
         {filtersSet && (
-          <button className="btn" onClick={handleApply}>
+          <button className="btn-secondary" onClick={handleApply}>
             Apply Filters
           </button>
         )}

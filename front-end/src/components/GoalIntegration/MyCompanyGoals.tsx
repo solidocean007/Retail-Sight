@@ -27,7 +27,7 @@ const MyCompanyGoals: React.FC = () => {
   const loading = useSelector(selectCompanyGoalsIsLoading);
 
   const userCompanyGoals = useSelector(
-    makeSelectUsersCompanyGoals(user?.salesRouteNum)
+    makeSelectUsersCompanyGoals(user?.salesRouteNum, user?.uid)
   );
 
   const [showArchived, setShowArchived] = useState(false);

@@ -36,16 +36,16 @@
   padding-right: 4px;
   text-align: start;
 
-  width: 2rem;
-  min-width: 2rem;
-  max-width: 2rem;
+  width: 1rem;
+  min-width: 1rem;
+  max-width: 1rem;
 }
 
 .user-table th,
 .user-table td {
   border: 1px solid #ddd;
   padding: 8px;
-  padding-right: 2rem;
+  padding-right: 1rem;
   text-align: left;
 }
 

@@ -61,7 +61,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   // ✅ Resolve relevant accounts for this goal
   const effectiveAccounts = useMemo(() => {
     const allMatching = allCompanyAccounts.filter((acc) =>
-      goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+      goal.accountNumbersForThisGoal?.includes(acc.accountNumber.toString())
     );
 
     return salesRouteNum
@@ -114,7 +114,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
   const matchedAccounts = useMemo(() => {
     const base = allCompanyAccounts.filter((acc) =>
-      goal.accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+      goal.accountNumbersForThisGoal?.includes(acc.accountNumber.toString())
     );
 
     return salesRouteNum
@@ -132,37 +132,58 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     );
   }, [matchedAccounts, salesRouteNum]);
 
-  // Replace your current usersForGoal with:
   const usersForGoal = useMemo(() => {
-    if (goal.targetMode === "goalForSelectedUsers") {
-      return companyUsers.filter((u) => assignedUserIds.includes(u.uid)); // This expression is not callable.
-  // Not all constituents of type 'string[] | ((searchElement: string, fromIndex?: number | undefined) => boolean)' are callable.
-    // Type 'string[]' has no call signatures.
+    if (goal.targetRole === "supervisor") {
+      // Supervisor goal → userAssignments are supervisors
+      const assignedSupervisorUids = Object.values(goal.userAssignments || {})
+        .flat()
+        .filter((uid, i, arr) => arr.indexOf(uid) === i); // dedupe
+
+      return companyUsers.filter((u) => assignedSupervisorUids.includes(u.uid));
     }
-    // existing route-based derivation for sales goals
+
+    // Sales goal → route-based resolution
     const matchedAccounts = allCompanyAccounts.filter((acc) =>
-      goal.accountNumbersForThisGoal.includes(String(acc.accountNumber))
+      goal.accountNumbersForThisGoal?.includes(String(acc.accountNumber))
     );
-    const salesRouteNumsForGoal = Array.from(
-      new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
+    const salesRouteNums = new Set(
+      matchedAccounts.flatMap((acc) => acc.salesRouteNums || [])
     );
     return companyUsers.filter((u) =>
-      salesRouteNumsForGoal.includes(u.salesRouteNum || "")
+      salesRouteNums.has(u.salesRouteNum || "")
     );
-  }, [goal, companyUsers, allCompanyAccounts, assignedUserIds]);
+  }, [goal, companyUsers, allCompanyAccounts]);
 
   const userBasedRows = useMemo(() => {
     return usersForGoal.map((user) => {
-      const userSubmissions = (goal.submittedPosts || []).filter(
-        (post) => post.submittedBy?.uid === user.uid
-      );
+      const isSupervisor = goal.targetRole === "supervisor";
+
+      const userSubmissions = (goal.submittedPosts || []).filter((post) => {
+        if (isSupervisor) {
+          // Get all reps who report to this supervisor
+          const repUids = companyUsers
+            .filter((u) => u.reportsTo === user.uid)
+            .map((u) => u.uid);
+          return repUids.includes(post.submittedBy?.uid || "");
+        } else {
+          return post.submittedBy?.uid === user.uid;
+        }
+      });
+
       const submittedAccountIds = new Set(
         userSubmissions.map((post) => post.account.accountNumber.toString())
       );
 
-      const userAccounts = matchedAccounts.filter((acc) =>
-        (acc.salesRouteNums || []).includes(user.salesRouteNum || "")
-      );
+      const userAccounts = matchedAccounts.filter((acc) => {
+        const accountKey = acc.accountNumber.toString();
+        if (isSupervisor) {
+          const assignedSupervisors = goal.userAssignments?.[accountKey] || [];
+          return assignedSupervisors.includes(user.uid);
+        } else {
+          const routeNums = acc.salesRouteNums || [];
+          return routeNums.includes(user.salesRouteNum || "");
+        }
+      });
 
       const unsubmittedAccounts = userAccounts
         .filter((acc) => !submittedAccountIds.has(acc.accountNumber.toString()))
@@ -181,7 +202,6 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           100
         );
       } else {
-        // No quota → use % of accounts assigned that were submitted
         const totalAccounts = userAccounts.length;
         const submittedCount = totalAccounts - unsubmittedAccounts.length;
 
@@ -204,7 +224,13 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         userCompletionPercentage: completionPercentage,
       };
     });
-  }, [usersForGoal, goal.submittedPosts, goal.perUserQuota, matchedAccounts]);
+  }, [
+    usersForGoal,
+    goal.submittedPosts,
+    goal.perUserQuota,
+    companyUsers,
+    allCompanyAccounts,
+  ]);
 
   const percentageOfGoal =
     goal.perUserQuota && salesRouteNumsForGoal.length > 0

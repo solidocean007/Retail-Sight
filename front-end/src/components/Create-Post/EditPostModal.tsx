@@ -92,14 +92,23 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     (state: RootState) => state.user.currentUser?.companyId
   );
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
-
-  const activeCompanyGoals = useMemo(() => {
-    const acct = editablePost.account?.accountNumber;
-    if (!acct || allCompanyGoals.length === 0) return [];
-    return getActiveCompanyGoalsForAccount(acct, allCompanyGoals);
-  }, [editablePost.account?.accountNumber, allCompanyGoals]);
-
   const [originalGoalId] = useState(post.companyGoalId); // capture on mount
+
+
+const activeCompanyGoals = useMemo(() => {
+  const acct = editablePost.account?.accountNumber;
+  if (!acct || allCompanyGoals.length === 0) return [];
+
+  const active = getActiveCompanyGoalsForAccount(acct, allCompanyGoals);
+
+  // Include original goal if missing from active list
+  const originalGoal = allCompanyGoals.find((g) => g.id === originalGoalId);
+  const isOriginalMissing = originalGoal && !active.some((g) => g.id === originalGoalId);
+
+  return isOriginalMissing ? [...active, originalGoal] : active;
+}, [editablePost.account?.accountNumber, allCompanyGoals, originalGoalId]);
+
+
   const [selectedCompanyGoal, setSelectedCompanyGoal] = useState<
     CompanyGoalWithIdType | undefined
   >(allCompanyGoals.find((g) => g.id === post.companyGoalId));
@@ -365,7 +374,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                       label={editablePost.account.accountName}
                       size="small"
                       sx={{
-                        backgroundColor: "var(--gray-100)",
+                        // backgroundColor: "var(--gray-100)",
                         color: "var(--text-color)",
                       }}
                     />
@@ -441,7 +450,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 initialValue={post.totalCaseCount}
               />
 
-              <button className="btn btn-error" onClick={handleDeletePostClick}>
+              <button className="btn-error" onClick={handleDeletePostClick}>
                 Delete Post
               </button>
             </div>
