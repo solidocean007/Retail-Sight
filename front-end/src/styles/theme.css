@@ -41,6 +41,12 @@
   --user-modal-background: var(--muted-steel);
   --alert-background: red;
 
+  --company-goal-card-accent: linear-gradient(
+    145deg,
+    var(--muted-steel),
+    var(--primary-blue)
+  );
+
   --alert-text-color: white;
 
   /* Buttons */
@@ -143,8 +149,12 @@
   --text-on-button: black;
   --company-goal-text-color: var(--gray-900);
 
-  --company-goal-card-background: var(--primary-blue);
-  --company-supervisor-goal-card-background: var(--primary-blue-dark);
+  --company-goal-card-accent: linear-gradient(
+    145deg,
+    var(--muted-steel),
+    var(--primary-blue)
+  );
+
   --header-title: var(--gray-900);
 
   --link-color: var(--gold);
@@ -213,7 +223,11 @@
   --text-on-button: white;
   --company-goal-text-color: var(--gray-900);
   --company-goal-card-background: var(--primary-blue-dark);
-  --company-supervisor-goal-card-background: var(--primary-dark-blue);
+  --company-goal-card-accent: linear-gradient(
+    145deg,
+    var(--muted-steel),
+    var(--primary-blue)
+  );
   --header-title: var(--white);
   --link-color: #93c5fd; /* Light-blue-300 (Tailwind-ish) */
   --link-hover-color: var(--primary-blue); /* Slightly brighter */

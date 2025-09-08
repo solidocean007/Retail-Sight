@@ -149,9 +149,9 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     const salesRouteNums = new Set(
       matchedAccounts.flatMap((acc) => acc.salesRouteNums || [])
     );
-    return companyUsers.filter((u) =>
-      salesRouteNums.has(u.salesRouteNum || "")
-    );
+    return salesRouteNum
+      ? companyUsers.filter((u) => u.salesRouteNum === salesRouteNum)
+      : companyUsers.filter((u) => salesRouteNums.has(u.salesRouteNum || ""));
   }, [goal, companyUsers, allCompanyAccounts]);
 
   const userBasedRows = useMemo(() => {
