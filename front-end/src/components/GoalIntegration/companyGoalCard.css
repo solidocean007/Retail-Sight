@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  background-color: var(--company-goal-card-background);
+  background-image: var(--company-goal-card-background);
   border-radius: 12px;
   border: 1px solid var(--card-outline);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -10,8 +10,30 @@
   color: var(--text-color);
 }
 
- .supervisor-goal {
-  background-color: var(--company-supervisor-goal-card-background);
+.supervisor-goal {
+  position: relative; /* Create positioning context */
+  overflow: hidden; /* Prevent ::before from leaking out */
+  background-image: var(--company-supervisor-goal-card-background);
+  background-size: cover;
+  background-position: center;
+  border-radius: var(--card-radius);
+  padding: 1rem;
+  box-shadow: var(--card-shadow);
+}
+
+.supervisor-goal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2); /* Optional visual overlay */
+  z-index: 0; /* Below content */
+  border-radius: var(--card-radius);
+  pointer-events: none;
+}
+
+.supervisor-goal > * {
+  position: relative;
+  z-index: 1;
 }
 
 .goal-badge {
