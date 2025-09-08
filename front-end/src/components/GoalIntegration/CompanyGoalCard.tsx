@@ -51,6 +51,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const activeCompanyUsers = companyUsers.filter((u) => u.status === "active");
+  const isSupervisor = goal.targetRole === "supervisor";
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   // const [searchTerm, setSearchTerm] = useState("");
@@ -242,11 +243,11 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   return (
     <div
       className={`info-box-company-goal ${
-        goal.targetRole === "supervisor" ? "supervisor-goal" : ""
+        isSupervisor ? "supervisor-goal" : ""
       }`}
     >
       {goal.targetRole && (
-        <div className="goal-targetRole">{goal.targetRole} goal</div>
+        <div className={`goal-badge ${isSupervisor ? `badge--supervisor`:""}`}>{goal.targetRole} goal</div>
       )}
       <div className="company-goal-card-header">
         <div className="company-goal-card-start-end">

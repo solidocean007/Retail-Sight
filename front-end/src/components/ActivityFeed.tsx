@@ -47,7 +47,7 @@ import { useNavigate } from "react-router-dom";
 import { normalizePost } from "../utils/normalizePost";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import { getFilterHash } from "./FilterSideBar/utils/filterUtils";
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -242,7 +242,12 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             alignItems: "center",
           }}
         >
-          <BeerCaseStackAnimation minDuration={1000} />
+          <BeerCaseStackAnimation
+            minDuration={4000}
+            maxStagger={2200}
+            dropMs={900}
+            loop
+          />
         </div>
       ) : (
         <Virtuoso

@@ -37,12 +37,21 @@
 }
 
 .goal-badge {
-  padding: 0.3rem 0.6rem;
+ display: inline-block;
+  padding: 0.25em 0.5em;
   font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 1rem;
-  color: var(--badge-text);
-  text-transform: uppercase;
+  font-weight: bold;
+  color: white;
+  background-color: var(--primary-blue);
+  border-radius: 9999px; /* pill shape */
+  text-transform: capitalize;
+  width: 150px;
+  letter-spacing: 1px;
+}
+
+.badge--supervisor {
+  background-color: var(--gold);
+  color: var(--gray-900);
 }
 
 .goal-targetRole {

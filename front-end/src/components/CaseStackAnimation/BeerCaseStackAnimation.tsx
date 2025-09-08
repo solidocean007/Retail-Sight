@@ -1,100 +1,108 @@
-import React, { useEffect, useRef } from "react";
-import "./BeerCaseStackAnimation.css";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import "./beerCaseStackAnimation.css";
 
-interface BeerCaseStackAnimationProps {
-  minDuration?: number; // in milliseconds
-}
+type Props = {
+  /** Minimum time for one full cycle (ms). Should be >= maxStagger + dropMs. */
+  minDuration?: number;
+  /** Max random start delay per pixel (ms). Bigger = more “rain”. */
+  maxStagger?: number;
+  /** Duration of the CSS drop animation (ms). Must match CSS keyframes timing. */
+  dropMs?: number;
+  /** Whether to loop the animation. */
+  loop?: boolean;
+  /** Grid size of the rectangle (NxN). */
+  gridSize?: number;
+};
 
-const BeerCaseStackAnimation: React.FC<BeerCaseStackAnimationProps> = ({
-  minDuration = 1500,
+const D_PATTERN = [
+  "1111110",
+  "1000011",
+  "1000011",
+  "1000011",
+  "1111110",
+]; // 5 rows x 7 cols; "0" = hole (negative space)
+
+const BeerCaseStackAnimation: React.FC<Props> = ({
+  minDuration = 3500,
+  maxStagger = 2000,
+  dropMs = 800,
+  loop = true,
+  gridSize = 15,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
-  const cols = 4;
-  const rows = 5;
-  const delayBetweenBoxes = 120;
-  const boxWidth = 75;
-  const boxHeight = 50;
-  const verticalSpacing = 55;
-  const totalBoxes = cols * rows;
+  const [cycleKey, setCycleKey] = useState(0);
+
+  // Build pixel grid once per cycle
+  const pixels = useMemo(() => {
+    const items: JSX.Element[] = [];
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        // center the 5x7 “D” mask in the grid
+        const dR = r - Math.floor((gridSize - D_PATTERN.length) / 2);
+        const dC = c - Math.floor((gridSize - D_PATTERN[0].length) / 2);
+        const insideMask =
+          dR >= 0 &&
+          dR < D_PATTERN.length &&
+          dC >= 0 &&
+          dC < D_PATTERN[0].length;
+
+        // holes where mask has "0"
+        const isHole = insideMask && D_PATTERN[dR][dC] === "0";
+
+        items.push(
+          <div
+            key={`${cycleKey}-${r}-${c}`}
+            className="pixel"
+            data-hole={isHole ? "1" : "0"}
+            style={{ backgroundColor: isHole ? "transparent" : "var(--box-color)" }}
+          />
+        );
+      }
+    }
+    return items;
+  }, [cycleKey, gridSize]);
 
   useEffect(() => {
-    let sound: HTMLAudioElement | null = null;
-    if (typeof Audio !== "undefined") {
-      // sound = new Audio("/pop.mp3");
-    }
+    const root = stackRef.current;
+    if (!root) return;
 
-    function createBox(index: number, col: number, row: number): HTMLDivElement {
-      const box = document.createElement("div");
-      box.classList.add("box");
-      box.style.left = `${col * (boxWidth + 5)}px`;
-      box.style.top = `${row * verticalSpacing}px`;
-      box.style.opacity = "0";
-
-      const dropDistance = 100;
-      const animationDelay = row * cols * delayBetweenBoxes + col * delayBetweenBoxes;
-
-      const animation = box.animate(
-        [
-          { transform: `translateY(-${dropDistance}px)`, opacity: 0 },
-          { transform: `translateY(0px)`, opacity: 1 },
-          { transform: `translateY(-10px)` },
-          { transform: `translateY(3px)` },
-          { transform: `translateY(0px)` }
-        ],
-        {
-          duration: 3000,
-          delay: animationDelay,
-          easing: "ease-out",
-          fill: "forwards"
-        }
-      );
-
-      animation.onfinish = () => {
-        box.style.opacity = "1";
-      };
-
-      if (sound) {
-        setTimeout(() => sound?.play().catch(() => {}), animationDelay + 700);
-      }
-
-      return box;
-    }
-
-    function animateStack() {
-      const stack = stackRef.current;
-      if (!stack) return;
-      stack.innerHTML = "";
-      const boxes: HTMLDivElement[] = [];
-
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const index = r * cols + c;
-          const box = createBox(index, c, r);
-          stack.appendChild(box);
-          boxes.push(box);
-        }
-      }
-
+    const px = Array.from(root.querySelectorAll<HTMLDivElement>(".pixel"));
+    // Stagger each pixel and trigger its CSS animation
+    px.forEach((el) => {
+      const delay = Math.random() * maxStagger;
+      const isHole = el.dataset.hole === "1";
+      // Holes stay transparent (no .show), but we still delay so the timing feels uniform
       setTimeout(() => {
-        let delay = 0;
-        for (let j = totalBoxes - 1; j >= 0; j--) {
-          const box = boxes[j];
-          setTimeout(() => {
-            box.classList.add(j % 2 === 0 ? "exit-left" : "exit-right");
-          }, delay);
-          delay += 80;
-        }
-      }, 7000);
+        if (!isHole) el.classList.add("show");
+      }, delay);
+    });
 
-      setTimeout(() => {
-        animateStack(); // loop again
-      }, Math.max(minDuration, 10000));
-    }
+    const sceneMs = Math.max(minDuration, maxStagger + dropMs + 200); // small buffer
+    if (!loop) return;
 
-    animateStack();
-  }, [minDuration]);
+    const t = setTimeout(() => {
+      // reset cycle: remove .show by re-keying the grid
+      setCycleKey((k) => k + 1);
+    }, sceneMs);
 
-  return <div className="stack" ref={stackRef}></div>;
+    return () => clearTimeout(t);
+  }, [cycleKey, loop, maxStagger, minDuration, dropMs]);
+
+  return (
+    <div
+      className="stack"
+      ref={stackRef}
+      style={{
+        // auto-fit square: tweak as you like or make it a prop
+        width: 300,
+        height: 300,
+        gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+        gridTemplateRows: `repeat(${gridSize}, 1fr)`,
+      }}
+    >
+      {pixels}
+    </div>
+  );
 };
 
 export default BeerCaseStackAnimation;

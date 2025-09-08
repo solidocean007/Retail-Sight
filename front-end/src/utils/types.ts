@@ -575,7 +575,7 @@ export type CompanyAccountType = {
   accountNumber: string;
   accountName: string;
   accountAddress: string;
-  streetAddress: string; // just added
+  streetAddress: string;
   salesRouteNums: string[];
   city?: string;
   state?: string;
