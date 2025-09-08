@@ -49,6 +49,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
   setSelectedGalloGoal,
 }) => {
   const user = useSelector(selectUser);
+  const { accounts: allAccounts, loading: accountsLoading } = useSelector(
+    (s: RootState) => s.allAccounts
+  );
   const salesRouteNum = user?.salesRouteNum;
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");

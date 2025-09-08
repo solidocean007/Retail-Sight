@@ -13,7 +13,7 @@ import { showMessage } from "../Slices/snackbarSlice";
 const useAllCompanyAccountsSync = () => {
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);
-  const allAccounts = useSelector((state: RootState) => state.allAccounts.accounts);
+  // const allAccounts = useSelector((state: RootState) => state.allAccounts.accounts);
 
   useEffect(() => {
     const loadAccounts = async () => {

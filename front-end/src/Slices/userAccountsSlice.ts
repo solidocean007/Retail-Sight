@@ -28,7 +28,7 @@ const userAccountsSlice = createSlice({
   name: "userAccounts",
   initialState,
   reducers: {
-    setReduxAccounts: (state, action: PayloadAction<CompanyAccountType[]>) => {
+    setUserAccounts: (state, action: PayloadAction<CompanyAccountType[]>) => {
       state.accounts = action.payload as CompanyAccountType[];
     },
     clearReduxAccounts: (state) => {
@@ -52,7 +52,7 @@ const userAccountsSlice = createSlice({
 });
 
 // Export actions and selector
-export const { setReduxAccounts, clearReduxAccounts } =
+export const { setUserAccounts, clearReduxAccounts, setLoadingUserAccounts } =
   userAccountsSlice.actions;
 export const selectUserAccounts = (state: RootState) =>
   state.userAccounts.accounts; // 'state.userAccounts' is of type 'unknown'

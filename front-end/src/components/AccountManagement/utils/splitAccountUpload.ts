@@ -88,6 +88,14 @@ const parseAccountsFromFile = (
   });
 };
 
+type AccountDiff = {
+  accountNumber: string;
+  fieldsChanged: string[];
+  old: CompanyAccountType;
+  updated: CompanyAccountType;
+};
+
+
 export const getAccountsForAdd = async (
   file: File,
 ): Promise<CompanyAccountType[]> => {
@@ -106,31 +114,59 @@ export const getAccountsForAdd = async (
   }));
 };
 
-export const getAccountsForUpdate = async (
-  file: File,
-  existingAccounts: CompanyAccountType[],
-): Promise<CompanyAccountType[]> => {
-  const raw = await parseAccountsFromFile(file);
-  const map = new Map(existingAccounts.map((a) => [a.accountNumber, a]));
-  const updates: CompanyAccountType[] = [];
+// export const getAccountsForUpdate = async (
+//   file: File,
+//   existingAccounts: CompanyAccountType[],
+// ): Promise<CompanyAccountType[]> => {
+//   const raw = await parseAccountsFromFile(file);
+//   const map = new Map(existingAccounts.map((a) => [a.accountNumber, a]));
+//   const updates: CompanyAccountType[] = [];
 
-  for (const [accNum, fields] of Object.entries(raw)) {
-    const existing = map.get(accNum);
-    if (!existing) continue;
+//   for (const [accNum, fields] of Object.entries(raw)) {
+//     const existing = map.get(accNum);
+//     if (!existing) continue;
 
-    updates.push({
-      ...existing,
-      ...Object.fromEntries(
-        Object.entries(fields).filter(([, v]) => v !== undefined),
-      ),
-      salesRouteNums: Array.from(
-        new Set([
-          ...(existing.salesRouteNums || []),
-          ...(fields.salesRouteNums || []),
-        ])
-      ),
-    });
+//     updates.push({
+//       ...existing,
+//       ...Object.fromEntries(
+//         Object.entries(fields).filter(([, v]) => v !== undefined),
+//       ),
+//       salesRouteNums: Array.from(
+//         new Set([
+//           ...(existing.salesRouteNums || []),
+//           ...(fields.salesRouteNums || []),
+//         ])
+//       ),
+//     });
+//   }
+
+//   return updates;
+// };
+
+export async function getAccountsForUpdate(file: File, existingAccounts: CompanyAccountType[]) {
+  const uploaded = await parseAccountsFromFile(file);
+  const existingMap = new Map(existingAccounts.map(a => [a.accountNumber, a]));
+  const updates = [];
+
+  for (let u of uploaded) { // 
+    const current = existingMap.get(u.accountNumber);
+    if (!current) continue;
+
+    const changes = {};
+    let changed = false;
+
+    for (let key in u) {
+      if (u[key] !== undefined && JSON.stringify(u[key]) !== JSON.stringify(current[key])) {
+        changes[key] = u[key];
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      updates.push({ ...current, ...changes });
+    }
   }
 
   return updates;
-};
+}
+
