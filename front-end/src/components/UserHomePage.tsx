@@ -18,7 +18,7 @@ import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import { PostQueryFilters, PostWithID } from "../utils/types";
 import { selectCompanyUsers, selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
-import { setReduxAccounts } from "../Slices/userAccountsSlice";
+import { setUsersAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
 import EnhancedFilterSidebar from "./FilterSideBar/EnhancedFilterSideBar";
 import {
@@ -160,7 +160,7 @@ export const UserHomePage = () => {
           );
           if (fetchedAccounts.length > 0) {
             setUsersAccounts(fetchedAccounts);
-            dispatch(setReduxAccounts(fetchedAccounts));
+            dispatch(setUsersAccounts(fetchedAccounts));
 
             await addAccountsToIndexedDB(fetchedAccounts);
           }

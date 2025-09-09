@@ -17,8 +17,8 @@ export type AccountUpdateFields = Partial<
   >
 >;
 
-const parseAccountsFromFile = (
-  file: File,
+export const parseAccountsFromFile = (
+  file: File
 ): Promise<Record<string, AccountUpdateFields>> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -58,7 +58,8 @@ const parseAccountsFromFile = (
 
           const update: AccountUpdateFields = {
             accountName: row.accountName?.trim() || existing?.accountName,
-            accountAddress: row.accountAddress?.trim() || existing?.accountAddress,
+            accountAddress:
+              row.accountAddress?.trim() || existing?.accountAddress,
             streetAddress: row.streetAddress?.trim() || existing?.streetAddress,
             city: row.city?.trim() || existing?.city,
             state: row.state?.trim() || existing?.state,
@@ -95,9 +96,8 @@ type AccountDiff = {
   updated: CompanyAccountType;
 };
 
-
 export const getAccountsForAdd = async (
-  file: File,
+  file: File
 ): Promise<CompanyAccountType[]> => {
   const raw = await parseAccountsFromFile(file);
   return Object.entries(raw).map(([accNum, fields]) => ({
@@ -114,59 +114,54 @@ export const getAccountsForAdd = async (
   }));
 };
 
-// export const getAccountsForUpdate = async (
-//   file: File,
-//   existingAccounts: CompanyAccountType[],
-// ): Promise<CompanyAccountType[]> => {
-//   const raw = await parseAccountsFromFile(file);
-//   const map = new Map(existingAccounts.map((a) => [a.accountNumber, a]));
-//   const updates: CompanyAccountType[] = [];
 
-//   for (const [accNum, fields] of Object.entries(raw)) {
-//     const existing = map.get(accNum);
-//     if (!existing) continue;
+export const getAccountsForUpdate = async (
+  file: File,
+  existingAccounts: CompanyAccountType[]
+): Promise<CompanyAccountType[]> => {
+  const parsed = await parseAccountsFromFile(file); // { [accountNumber]: AccountUpdateFields }
 
-//     updates.push({
-//       ...existing,
-//       ...Object.fromEntries(
-//         Object.entries(fields).filter(([, v]) => v !== undefined),
-//       ),
-//       salesRouteNums: Array.from(
-//         new Set([
-//           ...(existing.salesRouteNums || []),
-//           ...(fields.salesRouteNums || []),
-//         ])
-//       ),
-//     });
-//   }
-
-//   return updates;
-// };
-
-export async function getAccountsForUpdate(file: File, existingAccounts: CompanyAccountType[]) {
-  const uploaded = await parseAccountsFromFile(file);
   const existingMap = new Map(existingAccounts.map(a => [a.accountNumber, a]));
-  const updates = [];
+  const updates: CompanyAccountType[] = [];
 
-  for (let u of uploaded) { // 
-    const current = existingMap.get(u.accountNumber);
-    if (!current) continue;
+  for (const [accNum, incoming] of Object.entries(parsed)) {
+    const existing = existingMap.get(accNum);
+    if (!existing) continue;
 
-    const changes = {};
-    let changed = false;
+    let hasChanges = false;
+    const updated: CompanyAccountType = { ...existing };
 
-    for (let key in u) {
-      if (u[key] !== undefined && JSON.stringify(u[key]) !== JSON.stringify(current[key])) {
-        changes[key] = u[key];
-        changed = true;
+    (Object.keys(incoming) as (keyof AccountUpdateFields)[]).forEach((key) => {
+      const newValue = incoming[key];
+      const oldValue = existing[key];
+
+      // Normalize salesRouteNums to arrays of strings
+      const normalizedNew =
+        key === "salesRouteNums" && Array.isArray(newValue)
+          ? newValue.map(String)
+          : newValue;
+
+      const normalizedOld =
+        key === "salesRouteNums" && Array.isArray(oldValue)
+          ? oldValue.map(String)
+          : oldValue;
+
+      if (
+        normalizedNew !== undefined &&
+        JSON.stringify(normalizedNew) !== JSON.stringify(normalizedOld)
+      ) {
+        updated[key] = normalizedNew as any;
+        hasChanges = true;
       }
-    }
+    });
 
-    if (changed) {
-      updates.push({ ...current, ...changes });
+    if (hasChanges) {
+      updates.push(updated);
     }
   }
 
   return updates;
-}
+};
+
+
 

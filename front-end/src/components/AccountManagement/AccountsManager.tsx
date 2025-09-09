@@ -37,12 +37,14 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import {
   getAccountsForAdd,
   getAccountsForUpdate,
+  parseAccountsFromFile,
 } from "./utils/splitAccountUpload";
 import CustomConfirmation from "../CustomConfirmation";
 import AccountForm from "./AccountForm";
 import UploadTemplateModal from "./UploadTemplateModal";
 import "./styles/accountsManager.css";
 import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
+import { getAccountDiffs } from "./utils/getAccountDiffs";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -257,6 +259,12 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const handleUpdateAccounts = async (file: File) => {
     if (!user) return;
+    const parsed = await parseAccountsFromFile(file);
+    const diffs = getAccountDiffs(parsed, existingAccounts);
+
+
+
+    
     setIsUploading(true); // Start loading
     try {
       const updatedAccounts = await getAccountsForUpdate(file, accounts);
@@ -286,15 +294,12 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const filteredAccounts = accounts.filter(
-  (a) =>
-    (a.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.accountNumber.toString().includes(searchTerm)) &&
-    (routeFilter === "" ||
-      a.salesRouteNums?.some((route) =>
-        route.includes(routeFilter.trim())
-      ))
-);
-
+    (a) =>
+      (a.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        a.accountNumber.toString().includes(searchTerm)) &&
+      (routeFilter === "" ||
+        a.salesRouteNums?.some((route) => route.includes(routeFilter.trim())))
+  );
 
   async function backupAccounts(companyId: string) {
     try {
