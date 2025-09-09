@@ -44,7 +44,8 @@ import AccountForm from "./AccountForm";
 import UploadTemplateModal from "./UploadTemplateModal";
 import "./styles/accountsManager.css";
 import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
-import { getAccountDiffs } from "./utils/getAccountDiffs";
+import UploadReviewModal from "./UploadReviewModal";
+import { AccountDiff, getAccountDiffs } from "./utils/getAccountDiffs";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -70,6 +71,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     CompanyAccountType[] | null
   >(null);
   const [fileData, setFileData] = useState<CompanyAccountType[]>([]);
+  const [accountDiffs, setAccountDiffs] = useState<AccountDiff[]>([]);
+  const [showDiffModal, setShowDiffModal] = useState(false);
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openAddAccountModal, setOpenAddAccountModal] = useState(false);
@@ -258,28 +262,58 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const handleUpdateAccounts = async (file: File) => {
-    if (!user) return;
-    const parsed = await parseAccountsFromFile(file);
-    const diffs = getAccountDiffs(parsed, existingAccounts);
-
-
-
-    
-    setIsUploading(true); // Start loading
     try {
-      const updatedAccounts = await getAccountsForUpdate(file, accounts);
-      const map = new Map(accounts.map((a) => [a.accountNumber, a]));
-      updatedAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
-      setPendingUpdates(updatedAccounts);
-      setFileData(Array.from(map.values()));
-      setConfirmMessage(
-        `Update ${updatedAccounts.length} existing account(s)?`
-      );
-      setShowConfirm(true);
-    } finally {
-      setIsUploading(false); // End loading
+      const parsed = await parseAccountsFromFile(file);
+      const diffs = getAccountDiffs(parsed, accounts); // or userAccounts if scoped
+
+      if (diffs.length === 0) {
+        dispatch(showMessage("No changes found."));
+        return;
+      }
+
+      setAccountDiffs(diffs);
+      setShowDiffModal(true);
+    } catch (err) {
+      console.error("Failed to process file", err);
+      dispatch(showMessage("Error processing file."));
     }
   };
+
+  const handleConfirmDiffUpload = async (selectedDiffs: AccountDiff[]) => {
+    setShowDiffModal(false);
+
+    try {
+      const accountsToUpdate = selectedDiffs.map((d) => d.updated);
+      // TODO: batch save to Firestore
+      // await saveUpdatedAccountsToFirestore(accountsToUpdate);
+
+      dispatch(showMessage(`${accountsToUpdate.length} accounts updated.`));
+    } catch (err) {
+      console.error("Error saving updates:", err);
+      dispatch(showMessage("Failed to save account updates."));
+    }
+  };
+
+  // const handleUpdateAccounts = async (file: File) => {
+  //   if (!user) return;
+  //   const parsed = await parseAccountsFromFile(file);
+  //   const diffs = getAccountDiffs(parsed, existingAccounts);
+
+  //   setIsUploading(true); // Start loading
+  //   try {
+  //     const updatedAccounts = await getAccountsForUpdate(file, accounts);
+  //     const map = new Map(accounts.map((a) => [a.accountNumber, a]));
+  //     updatedAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
+  //     setPendingUpdates(updatedAccounts);
+  //     setFileData(Array.from(map.values()));
+  //     setConfirmMessage(
+  //       `Update ${updatedAccounts.length} existing account(s)?`
+  //     );
+  //     setShowConfirm(true);
+  //   } finally {
+  //     setIsUploading(false); // End loading
+  //   }
+  // };
 
   const getUploadMode = (): UploadMode =>
     accounts.length === 0 ? "initial" : "update";
@@ -599,6 +633,13 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             Uploading accounts... Please wait
           </Typography>
         </Box>
+      )}
+      {showDiffModal && (
+        <UploadReviewModal
+          diffs={accountDiffs}
+          onClose={() => setShowDiffModal(false)}
+          onConfirm={handleConfirmDiffUpload}
+        />
       )}
     </Box>
   );
