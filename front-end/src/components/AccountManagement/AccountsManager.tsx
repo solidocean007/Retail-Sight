@@ -46,6 +46,7 @@ import "./styles/accountsManager.css";
 import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
 import UploadReviewModal from "./UploadReviewModal";
 import { AccountDiff, getAccountDiffs } from "./utils/getAccountDiffs";
+import AccountsBackup from "./AccountsBackup";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -60,6 +61,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
+  const companyId = user?.companyId;
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -255,9 +257,25 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const handleAddAccounts = async (file: File) => {
     if (!user) return;
     const newAccounts = await getAccountsForAdd(file);
-    setPendingUpdates(newAccounts);
-    setFileData([...accounts, ...newAccounts]);
-    setConfirmMessage(`Add ${newAccounts.length} new account(s)?`);
+
+    // Filter to only accounts that don't already exist
+    const existingAccountNumbers = new Set(
+      accounts.map((a) => a.accountNumber)
+    );
+    const trulyNewAccounts = newAccounts.filter(
+      (a) => !existingAccountNumbers.has(a.accountNumber)
+    );
+
+    if (trulyNewAccounts.length === 0) {
+      dispatch(showMessage("No new accounts found in uploaded file."));
+      return;
+    }
+
+    setPendingUpdates(trulyNewAccounts);
+    setFileData([...accounts, ...trulyNewAccounts]);
+    setConfirmMessage(
+      `Add ${trulyNewAccounts.length} completely new account(s)?`
+    );
     setShowConfirm(true);
   };
 
@@ -283,14 +301,18 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setShowDiffModal(false);
 
     try {
-      const accountsToUpdate = selectedDiffs.map((d) => d.updated);
-      // TODO: batch save to Firestore
-      // await saveUpdatedAccountsToFirestore(accountsToUpdate);
+      const updates = selectedDiffs.map((d) => d.updated);
+      const map = new Map(accounts.map((a) => [a.accountNumber, a]));
 
-      dispatch(showMessage(`${accountsToUpdate.length} accounts updated.`));
+      updates.forEach((acc) => map.set(acc.accountNumber, acc));
+      const merged = Array.from(map.values());
+
+      await saveAccountsToFirestore(merged);
+
+      dispatch(showMessage(`${updates.length} account(s) updated.`));
     } catch (err) {
       console.error("Error saving updates:", err);
-      dispatch(showMessage("Failed to save account updates."));
+      dispatch(showMessage("Failed to update accounts."));
     }
   };
 
@@ -335,35 +357,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         a.salesRouteNums?.some((route) => route.includes(routeFilter.trim())))
   );
 
-  async function backupAccounts(companyId: string) {
-    try {
-      if (!companyId) throw new Error("No companyId provided");
-
-      const companyRef = doc(db, "companies", companyId);
-      const companySnap = await getDoc(companyRef);
-      if (!companySnap.exists()) throw new Error("Company not found");
-
-      const { accountsId } = companySnap.data();
-      if (!accountsId) throw new Error("No accountsId for company");
-
-      const accountsRef = doc(db, "accounts", accountsId);
-      const accountsSnap = await getDoc(accountsRef);
-      if (!accountsSnap.exists())
-        throw new Error("Accounts document not found");
-
-      const accountsData = accountsSnap.data();
-
-      const dateStr = new Date().toISOString().split("T")[0];
-      const backupRef = doc(db, "accounts_backup", `backup_${dateStr}`);
-
-      await setDoc(backupRef, accountsData);
-
-      console.log("Backup completed successfully!");
-    } catch (err) {
-      console.warn("Backup skipped:", err);
-    }
-  }
-
   return (
     <Box className="account-manager-container account-manager">
       <Typography variant="h2" gutterBottom>
@@ -372,20 +365,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
       {(isAdmin || isSuperAdmin) && (
         <>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => {
-              if (!user?.companyId) {
-                alert("No companyId found. Cannot backup accounts.");
-                return;
-              }
-              backupAccounts(user.companyId);
-            }}
-            sx={{ marginBottom: 2 }}
-          >
-            Backup Accounts
-          </Button>
+          <AccountsBackup companyId={companyId} />
 
           <Box
             className="account-instructions"
@@ -412,58 +392,67 @@ const AccountManager: React.FC<AccountManagerProps> = ({
               account.
             </Typography>
           </Box>
-          <div className="account-management-buttons">
-            <Button
-              variant="contained"
-              sx={{ marginBottom: 2 }}
-              onClick={handleTemplateModal}
-            >
+          <div
+            className="account-management-buttons"
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "12px",
+              marginBottom: "16px",
+            }}
+          >
+            <button className="btn-outline" onClick={handleTemplateModal}>
               View Upload File Template
-            </Button>
+            </button>
 
-            <Tooltip title="Upload CSV or Excel to create accounts">
-              <Button
-                variant="contained"
-                component="label"
-                sx={{ marginBottom: 2 }}
-              >
-                {accounts.length
-                  ? "Add more Accounts"
-                  : "Upload Initial Accounts"}
-                <input
-                  hidden
-                  type="file"
-                  accept=".csv, .xlsx, .xls"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleAddAccounts(file);
-                  }}
-                />
-              </Button>
-            </Tooltip>
+            <label
+              className="button-primary"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              {accounts.length
+                ? "Upload New Accounts"
+                : "Upload Initial Accounts"}
+              <input
+                type="file"
+                accept=".csv, .xlsx, .xls"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleAddAccounts(file);
+                }}
+                style={{ display: "none" }}
+              />
+            </label>
 
-            <Tooltip title="Upload CSV or Excel to update existing accounts">
-              <Button
-                variant="contained"
-                component="label"
-                sx={{ marginBottom: 2 }}
+            <label
+              className={`button-primary ${
+                accounts.length === 0 ? "btn-disabled" : ""
+              }`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                cursor: accounts.length === 0 ? "not-allowed" : "pointer",
+                opacity: accounts.length === 0 ? 0.6 : 1,
+              }}
+            >
+              Update Accounts
+              <input
+                type="file"
+                accept=".csv, .xlsx, .xls"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpdateAccounts(file);
+                }}
                 disabled={accounts.length === 0}
-              >
-                Update Accounts
-                <input
-                  hidden
-                  type="file"
-                  accept=".csv, .xlsx, .xls"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleUpdateAccounts(file);
-                  }}
-                />
-              </Button>
-            </Tooltip>
+                style={{ display: "none" }}
+              />
+            </label>
 
-            <Button
-              variant="contained"
+            <button
+              className="button-primary"
               onClick={() => {
                 setNewAccount({
                   accountNumber: "",
@@ -479,10 +468,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                 });
                 setOpenAddAccountModal(true);
               }}
-              sx={{ marginBottom: 2 }}
             >
               Quickly Add Single Account
-            </Button>
+            </button>
           </div>
         </>
       )}

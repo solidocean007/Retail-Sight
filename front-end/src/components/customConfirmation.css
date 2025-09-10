@@ -38,13 +38,13 @@
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 20px;
-  color: #333;
+  color: var(--text-color);
 }
 
 .custom-confirmation-message {
   font-size: 1rem;
   margin-bottom: 30px;
-  color: #555;
+  color: var(--text-color);
 }
 
 .custom-confirmation-actions {

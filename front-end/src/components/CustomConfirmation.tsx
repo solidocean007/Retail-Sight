@@ -24,7 +24,7 @@ const CustomConfirmation: React.FC<CustomConfirmationProps> = ({
   return (
   <div className="custom-confirmation-backdrop">
     <div className="custom-confirmation-modal">
-      <div className="custom-confirmation-title">Confirm Goal Creation</div>
+      <div className="custom-confirmation-title">Confirm</div>
 
       {goal ? (
         <div className="goal-preview">
