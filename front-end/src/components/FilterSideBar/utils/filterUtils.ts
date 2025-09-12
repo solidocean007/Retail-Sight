@@ -58,10 +58,7 @@ export function removeFilterField(
   valueToRemove?: string
 ): PostQueryFilters {
   if (field === "dateRange") {
-    return {
-      ...filters,
-      dateRange: { startDate: null, endDate: null },
-    };
+    return { ...filters, dateRange: { startDate: null, endDate: null } };
   }
 
   const current = filters[field];
@@ -73,31 +70,40 @@ export function removeFilterField(
     };
   }
 
-  return {
-    ...filters,
-    [field]: null,
-  };
+  // Reset based on type
+  if (Array.isArray(current)) {
+    return { ...filters, [field]: [] };
+  }
+
+  if (typeof current === "object") {
+    return { ...filters, [field]: null }; // for objects like strings or nullables
+  }
+
+  return { ...filters, [field]: null };
 }
 
 export function clearAllFilters(): PostQueryFilters {
   return {
+    companyId: null,
+    postUserUid: null,
+    accountNumber: null,
+    accountName: null,
+    accountType: null,
+    accountChain: null,
+    chainType: null,
     hashtag: null,
     starTag: null,
     brand: null,
     productType: null,
-    accountName: null,
-    postUserUid: null,
     companyGoalId: null,
     companyGoalTitle: null,
-    dateRange: { startDate: null, endDate: null },
-    companyId: null,
     states: [],
     cities: [],
-    accountType: null,
-    accountChain: null,
-    chainType: null,
+    dateRange: { startDate: null, endDate: null },
+    minCaseCount: null, // 👈 add missing
   };
 }
+
 
 let lastFilters: PostQueryFilters | null = null;
 let lastPosts: PostWithID[] | null = null;

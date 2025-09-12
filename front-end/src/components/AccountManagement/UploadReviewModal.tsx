@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,12 +8,17 @@ import {
   IconButton,
   Box,
   Typography,
-  Collapse,
-  Divider,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Checkbox,
 } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { AccountDiff } from "./utils/getAccountDiffs";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { AccountDiff } from "./utils/getAccountDiffs";
+import "./uploadReviewModal.css";
 
 interface UploadReviewModalProps {
   diffs: AccountDiff[];
@@ -26,103 +31,140 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
   onClose,
   onConfirm,
 }) => {
-  const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
-  const [expandedRowId, setExpandedRowId] = React.useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
 
-  const toggleExpand = (id: string) => {
-    setExpandedRowId((prev) => (prev === id ? null : id));
+  // Expand all rows by default
+  useEffect(() => {
+    const allIds = new Set(diffs.map((d) => d.accountNumber));
+    setExpandedRowIds(allIds);
+  }, [diffs]);
+
+  useEffect(() => {
+    const allIds = diffs.map((d) => d.accountNumber);
+    setSelectedIds(allIds);
+  }, [diffs]);
+
+  const toggleRow = (id: string) => {
+    setExpandedRowIds((prev) => {
+      const newSet = new Set(prev);
+      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+      return newSet;
+    });
   };
 
-  const columns: GridColDef[] = [
-    {
-      field: "expand",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <IconButton
-          onClick={(e) => {
-            e.stopPropagation(); // prevent row selection trigger
-            toggleExpand(params.row.id);
-          }}
-        >
-          <ExpandMoreIcon
-            style={{
-              transform:
-                expandedRowId === params.row.id
-                  ? "rotate(180deg)"
-                  : "rotate(0deg)",
-              transition: "transform 0.2s",
-            }}
-          />
-        </IconButton>
-      ),
-    },
-    { field: "accountNumber", headerName: "Account #", width: 130 },
-    {
-      field: "changes",
-      headerName: "Fields Changed",
-      flex: 1,
-      renderCell: (params) => params.value.join(", "),
-    },
-    {
-      field: "routeChange",
-      headerName: "Route Numbers",
-      flex: 1,
-      renderCell: (params) => {
-        const route = params.row.routeNumChange;
-        return route
-          ? `${route.old.join(", ")} → ${route.new.join(", ")}`
-          : "—";
-      },
-    },
-  ];
-
-  const rows = diffs.map((diff) => ({
-    id: diff.accountNumber,
-    accountNumber: diff.accountNumber,
-    changes: diff.fieldsChanged,
-    routeNumChange: diff.routeNumChange,
-    diff,
-  }));
-
-  const selectedDiff = diffs.find((d) => d.accountNumber === expandedRowId);
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   return (
     <Dialog open fullWidth maxWidth="md" onClose={onClose}>
-      <DialogTitle>Review Account Changes ({rows.length})</DialogTitle>
+      <DialogTitle>Review Account Changes ({diffs.length})</DialogTitle>
+      <Button
+        size="small"
+        onClick={() => {
+          if (selectedIds.length === diffs.length) {
+            setSelectedIds([]); // Deselect all
+          } else {
+            setSelectedIds(diffs.map((d) => d.accountNumber)); // Select all
+          }
+        }}
+      >
+        {selectedIds.length === diffs.length ? "Deselect All" : "Select All"}
+      </Button>
       <DialogContent>
-        <div style={{ height: 400 }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            checkboxSelection
-            disableRowSelectionOnClick
-            onRowSelectionModelChange={(model: (string | number)[]) => {
-              setSelectedRows(model.map(String));
-            }}
-            onRowClick={(params) => toggleExpand(params.row.id)}
-          />
-        </div>
+        <TableContainer>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}
+          ></Box>
 
-        {selectedDiff && (
-          <>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="subtitle1" gutterBottom>
-              Detailed Changes for Account #{selectedDiff.accountNumber}
-            </Typography>
-            <Box sx={{ pl: 2 }}>
-              {selectedDiff.fieldsChanged.map((field) => (
-                <Typography key={field} variant="body2" sx={{ mb: 1 }}>
-                  <strong>{field}:</strong>{" "}
-                  {JSON.stringify(selectedDiff.old[field])} →{" "}
-                  {JSON.stringify(selectedDiff.updated[field])}
-                </Typography>
-              ))}
-            </Box>
-          </>
-        )}
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell />
+                <TableCell>Account #</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Fields Changed</TableCell>
+                <TableCell>Route Change</TableCell>
+                <TableCell>Select</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {diffs.map((diff) => {
+                const {
+                  accountNumber,
+                  updated,
+                  fieldsChanged,
+                  routeNumChange,
+                } = diff;
+                const isExpanded = expandedRowIds.has(accountNumber);
+                const isSelected = selectedIds.includes(accountNumber);
+
+                return (
+                  <React.Fragment key={accountNumber}>
+                    <TableRow>
+                      <TableCell>
+                        <IconButton onClick={() => toggleRow(accountNumber)}>
+                          <ExpandMoreIcon
+                            style={{
+                              transform: isExpanded
+                                ? "rotate(180deg)"
+                                : "rotate(0deg)",
+                              transition: "transform 0.2s",
+                            }}
+                          />
+                        </IconButton>
+                      </TableCell>
+                      <TableCell>{accountNumber}</TableCell>
+                      <TableCell>
+                        {updated.accountName || "(Unnamed)"}
+                      </TableCell>
+                      <TableCell>{fieldsChanged.join(", ")}</TableCell>
+                      <TableCell>
+                        {routeNumChange
+                          ? `${routeNumChange.old.join(
+                              ", "
+                            )} → ${routeNumChange.new.join(", ")}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={() => toggleSelect(accountNumber)}
+                        />
+                      </TableCell>
+                    </TableRow>
+
+                    {isExpanded && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          sx={{ bgcolor: "var(--gray-50)" }}
+                        >
+                          <Box sx={{ pl: 4, py: 1 }}>
+                            {fieldsChanged.map((field) => (
+                              <Typography
+                                key={field}
+                                variant="body2"
+                                sx={{ mb: 0.5 }}
+                              >
+                                <strong>{field}:</strong>{" "}
+                                {JSON.stringify(diff.old[field])} →{" "}
+                                {JSON.stringify(diff.updated[field])}
+                              </Typography>
+                            ))}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </DialogContent>
 
       <DialogActions>
@@ -131,13 +173,13 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
           variant="contained"
           onClick={() => {
             const selected = diffs.filter((d) =>
-              selectedRows.includes(d.accountNumber)
+              selectedIds.includes(d.accountNumber)
             );
             onConfirm(selected);
           }}
-          disabled={selectedRows.length === 0}
+          disabled={selectedIds.length === 0}
         >
-          Confirm Update ({selectedRows.length})
+          Confirm Update ({selectedIds.length})
         </Button>
       </DialogActions>
     </Dialog>

@@ -10,18 +10,25 @@ export const getActiveCompanyGoalsForAccount = (
   }
 
   const today = new Date();
+  const accountKey = String(accountNumber);
 
-  const result = goals.filter((goal) => {
+  return goals.filter((goal) => {
     const start = new Date(goal.goalStartDate);
-    const end = new Date(`${goal.goalEndDate}T23:59:59.999Z`); // ✅ extend full day
-    const accountList = goal.accountNumbersForThisGoal ?? [];
-
+    const end = new Date(`${goal.goalEndDate}T23:59:59.999Z`); // ✅ full-day support
     const isActiveToday = start <= today && end >= today;
-    const accountMatch = accountList.includes(String(accountNumber));
 
-    return isActiveToday && accountMatch;
+    if (!isActiveToday) return false;
+
+    if (goal.targetRole === "supervisor") {
+      // ✅ supervisor goal: account must be in userAssignments
+      return (
+        !!goal.userAssignments &&
+        Array.isArray(goal.userAssignments[accountKey])
+      );
+    }
+
+    // ✅ sales goal: account must be in accountNumbersForThisGoal
+    return goal.accountNumbersForThisGoal?.includes(accountKey);
   });
-
-  return result;
 };
 

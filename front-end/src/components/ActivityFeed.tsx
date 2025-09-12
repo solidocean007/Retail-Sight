@@ -1,6 +1,5 @@
 // ActivityFeed.tsx
 import React, {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -10,7 +9,7 @@ import { Virtuoso } from "react-virtuoso";
 import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
-import store, { RootState } from "../utils/store";
+import { RootState } from "../utils/store";
 import { useAppDispatch } from "../utils/store";
 import {
   getPostsByStarTag,
@@ -24,16 +23,8 @@ import {
 import "./activityFeed.css";
 import {
   addPostsToIndexedDB,
-  getFilteredSet,
-  getPostsFromIndexedDB,
-  shouldRefetch,
-  storeFilteredSet,
-  // clearHashtagPostsInIndexedDB,
-  // clearPostsInIndexedDB,
-  // clearStarTagPostsInIndexedDB,
-  // clearUserCreatedPostsInIndexedDB,
 } from "../utils/database/indexedDBUtils";
-import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
+import { mergeAndSetPosts } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
@@ -43,10 +34,8 @@ import NoResults from "./NoResults";
 //   getFilterSummaryText,
 // } from "./FilterSideBar/utils/filterUtils";
 import { PostQueryFilters } from "../utils/types";
-import { useNavigate } from "react-router-dom";
 import { normalizePost } from "../utils/normalizePost";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
-import { getFilterHash } from "./FilterSideBar/utils/filterUtils";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 const POSTS_BATCH_SIZE = 5;
@@ -75,7 +64,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   setCurrentHashtag,
   // currentStarTag,
   // setCurrentStarTag,
-  clearSearch,
+  // clearSearch,
   activePostSet,
   setActivePostSet,
   // isSearchActive,
@@ -83,7 +72,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   // clearInput,
   postIdToScroll,
   setPostIdToScroll,
-  toggleFilterMenu,
+  // toggleFilterMenu,
   appliedFilters,
 }) => {
   const dispatch = useAppDispatch();
@@ -123,17 +112,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     });
   };
 
-  // const { testPosts, loading, error } = usePostsTest(currentUser?.companyId);
-
-  // useEffect(() => {
-  //   if (!loading && !error) {
-  //     console.log(
-  //       "[Test] Posts:",
-  //       testPosts.map((p) => p.displayDate)
-  //     );
-  //   }
-  // }, [testPosts, loading, error]);
-
   // this should only be responsible for scrolling to the top on a activePostsSet change
   const prevActivePostSet = useRef(activePostSet);
   useEffect(() => {
@@ -151,39 +129,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     return () => clearTimeout(timeout);
   }, []);
-
-  // const getActivityItemHeight = (windowWidth: number) => {
-  //   if (windowWidth <= 500) {
-  //     return 700;
-  //   } else if (windowWidth <= 600) {
-  //     return 750;
-  //   } else if (windowWidth <= 700) {
-  //     return 750;
-  //   } else if (windowWidth <= 800) {
-  //     return 800;
-  //   } else if (windowWidth <= 900) {
-  //     return 850;
-  //   } else {
-  //     return 900;
-  //   }
-  // };
-
-  // const itemHeight = getActivityItemHeight(windowWidth);
-
-  // if (showLoader) {
-  //   return (
-  //     <div
-  //       style={{
-  //         height: "100vh",
-  //         display: "flex",
-  //         justifyContent: "center",
-  //         alignItems: "center",
-  //       }}
-  //     >
-  //       <BeerCaseStackAnimation minDuration={1000} />
-  //     </div>
-  //   );
-  // }
 
   if (hasLoadedOnce && displayPosts.length === 0) {
     return <NoResults />;

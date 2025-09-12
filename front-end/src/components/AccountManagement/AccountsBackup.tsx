@@ -20,6 +20,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import CustomConfirmation from "../CustomConfirmation";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { useAppDispatch } from "../../utils/store";
 
 interface BackupMeta {
   id: string;
@@ -30,15 +32,55 @@ interface BackupMeta {
 }
 interface AccountsBackupProps {
   companyId: string | undefined;
+  backupAccounts: (companyId: string | undefined) => Promise<void>;
 }
 
-const AccountsBackup: React.FC<AccountsBackupProps> = ({ companyId }) => {
+const AccountsBackup: React.FC<AccountsBackupProps> = ({
+  companyId,
+  backupAccounts,
+}) => {
+  const dispatch = useAppDispatch();
   const [backups, setBackups] = useState<BackupMeta[]>([]);
   const [selectedBackup, setSelectedBackup] = useState<BackupMeta | null>(null);
   const [search, setSearch] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [showBackUps, setShowBackUps] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState<BackupMeta | null>(null);
+  const [loadingRestore, setLoadingRestore] = useState(false);
+
+  const handleRestoreBackup = (backup: BackupMeta) => {
+    setConfirmRestore(backup); // triggers confirmation modal
+  };
+
+  const confirmRestoreBackup = async () => {
+    if (!confirmRestore || !companyId) return;
+    setLoadingRestore(true);
+
+    try {
+      const companyRef = doc(db, "companies", companyId);
+      const companySnap = await getDoc(companyRef);
+      if (!companySnap.exists()) throw new Error("Company not found");
+
+      const { accountsId } = companySnap.data();
+      if (!accountsId) throw new Error("No accountsId for company");
+
+      const accountsRef = doc(db, "accounts", accountsId);
+
+      await updateDoc(accountsRef, {
+        accounts: confirmRestore.data,
+      });
+
+      console.log(`✅ Restored accounts from ${confirmRestore.createdAt}`);
+      setConfirmRestore(null);
+      setSelectedBackup(null);
+      await fetchBackups(); // optional, in case anything changed
+    } catch (err) {
+      console.error("Failed to restore backup:", err);
+    } finally {
+      setLoadingRestore(false);
+    }
+  };
 
   const fetchBackups = async () => {
     const snapshot = await getDocs(collection(db, "accounts_backup"));
@@ -72,6 +114,7 @@ const AccountsBackup: React.FC<AccountsBackupProps> = ({ companyId }) => {
         deleted: true,
       });
       setBackups((prev) => prev.filter((b) => b.id !== confirmDeleteId));
+      dispatch(showMessage("Accounts successfully restored."));
     } catch (err) {
       console.error("Failed to soft delete backup:", err);
     } finally {
@@ -115,6 +158,25 @@ const AccountsBackup: React.FC<AccountsBackupProps> = ({ companyId }) => {
         </Button>
       ),
     },
+    {
+      field: "restore",
+      headerName: "Restore",
+      sortable: false,
+      flex: 1,
+      renderCell: (params) => {
+        const backup = backups.find((b) => b.id === params.row.id);
+        if (!backup) return null;
+
+        return (
+          <button
+            className="btn-outline"
+            onClick={() => handleRestoreBackup(backup)}
+          >
+            Restore
+          </button>
+        );
+      },
+    },
   ];
 
   const rows = backups.map((b) => ({
@@ -147,36 +209,6 @@ const AccountsBackup: React.FC<AccountsBackupProps> = ({ companyId }) => {
       return combined.includes(search.toLowerCase());
     }) || [];
 
-  async function backupAccounts(companyId: string | undefined) {
-    try {
-      if (!companyId) throw new Error("No companyId provided");
-
-      const companyRef = doc(db, "companies", companyId);
-      const companySnap = await getDoc(companyRef);
-      if (!companySnap.exists()) throw new Error("Company not found");
-
-      const { accountsId } = companySnap.data();
-      if (!accountsId) throw new Error("No accountsId for company");
-
-      const accountsRef = doc(db, "accounts", accountsId);
-      const accountsSnap = await getDoc(accountsRef);
-      if (!accountsSnap.exists())
-        throw new Error("Accounts document not found");
-
-      const accountsData = accountsSnap.data();
-
-      const dateStr = new Date().toISOString().split("T")[0];
-      const backupRef = doc(db, "accounts_backup", `backup_${dateStr}`);
-
-      await setDoc(backupRef, accountsData);
-      await fetchBackups(); // refreshes list
-
-      console.log("Backup completed successfully!");
-    } catch (err) {
-      console.warn("Backup skipped:", err);
-    }
-  }
-
   return (
     <Box sx={{ mt: 4 }}>
       <Typography variant="h6" gutterBottom>
@@ -184,9 +216,12 @@ const AccountsBackup: React.FC<AccountsBackupProps> = ({ companyId }) => {
           {showBackUps === false ? "Show backup accounts" : "Close"}
         </button>
       </Typography>
-      <button onClick={() => backupAccounts(companyId)}>Backup Accounts</button>
       {showBackUps && (
         <Box sx={{ height: 200, width: "100%" }}>
+          <button onClick={() => backupAccounts(companyId)}>
+            Backup Accounts
+          </button>
+
           <DataGrid
             rows={rows}
             columns={columns}
@@ -236,6 +271,14 @@ This will mark it as deleted.`}
         onClose={() => setConfirmDeleteId(null)}
         onConfirm={handleConfirmDelete}
         loading={loadingDelete}
+      />
+      <CustomConfirmation
+        isOpen={!!confirmRestore}
+        message={`Restore to backup from ${confirmRestore?.createdAt}? 
+This will replace your current accounts.`}
+        onClose={() => setConfirmRestore(null)}
+        onConfirm={confirmRestoreBackup}
+        loading={loadingRestore}
       />
     </Box>
   );

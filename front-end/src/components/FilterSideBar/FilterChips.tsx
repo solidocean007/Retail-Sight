@@ -1,5 +1,5 @@
 // FilterChips.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { PostQueryFilters } from "../../utils/types";
 import "./styles/filterChips.css"; // create this if needed
 import { useSelector } from "react-redux";
@@ -12,9 +12,23 @@ interface FilterChipsProps {
 
 const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
   const companyUsers = useSelector(selectCompanyUsers) ?? [];
+
+  const hasAnyFilter = Object.entries(filters).some(([key, val]) => {
+    if (Array.isArray(val)) return val.length > 0;
+    if (typeof val === "object" && val !== null && "startDate" in val) {
+      return val.startDate || val.endDate;
+    }
+    return !!val;
+  });
+
+  if (!hasAnyFilter) {
+    return <div className="active-filters-chip-row" />; // empty row
+  }
+
   const user =
     filters.postUserUid &&
     companyUsers.find((u) => u.uid === filters.postUserUid);
+  console.log(filters)
   return (
     <div className="active-filters-chip-row">
       {filters.hashtag && (

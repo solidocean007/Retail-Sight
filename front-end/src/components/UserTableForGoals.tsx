@@ -9,6 +9,7 @@ interface UserRowType {
   uid: string;
   firstName: string;
   lastName: string;
+  isInactive: boolean;
 
   submissions: {
     postId: string;
@@ -98,7 +99,16 @@ const UserTableForGoals = ({
               <td className="user-table-count">{idx + 1}</td>
               <td>
                 <div className="user-info-cell">
-                  <div className="user-name-cell">{`${user.lastName}, ${user.firstName}`}</div>
+                  <div className="user-name-cell">
+                    {user.isInactive ? (
+                      <span className="inactive-label">
+                        Inactive Salesman (accounts need reassignment)
+                      </span>
+                    ) : (
+                      `${user.lastName}, ${user.firstName}`
+                    )}
+                  </div>
+
                   <div
                     className={getCompletionClass(
                       user.userCompletionPercentage
@@ -145,6 +155,7 @@ const UserTableForGoals = ({
                         <li key={acc.accountNumber}>
                           <strong>{acc.accountName}</strong> —{" "}
                           {acc.accountAddress}
+                          {acc.accountNumber}
                         </li>
                       ))}
                     </ul>

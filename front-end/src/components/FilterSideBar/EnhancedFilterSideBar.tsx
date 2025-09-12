@@ -153,23 +153,25 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
   }, [initialFilters]);
 
-  const handleClearFilters = () => {
-    const empty = clearAllFilters();
-    setFilters(empty); // ✨ clears your filter object
-    setLastAppliedFilters(empty); // ✨ clears the chips/banner
-    setBrandInput(""); // clears the text
+  const resetInputs = () => {
+    setBrandInput("");
     setSelectedBrand(null);
     setSelectedProductType(null);
     setProductTypeInput("");
     setAccountNameInput("");
-    setActivePostSet("posts"); // ✨ resets the view
-
     setSelectedFilterUser(null);
     setSelectedUserInput("");
-    handleChange("postUserUid", null);
+    setTagInput("");
+  };
 
-    // ✨ RESET THE REDUX SLICE:
-    dispatch(setFilteredPosts(allPosts)); // reset filteredPosts & count
+  const handleClearFilters = () => {
+    const empty = clearAllFilters();
+    setFilters(empty);
+    setLastAppliedFilters(empty);
+    resetInputs();
+    setActivePostSet("posts");
+
+    dispatch(setFilteredPosts(allPosts));
     dispatch(setFilteredPostFetchedAt(null));
   };
 
@@ -225,56 +227,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
   }, [currentHashtag, currentStarTag]);
 
-  // useEffect(() => {
-  //   const activeFiltersCount = Object.entries(debouncedFilters).filter(
-  //     ([_, val]) => {
-  //       if (Array.isArray(val)) return val.length > 0;
-  //       if (typeof val === "object" && val !== null && "startDate" in val) {
-  //         return val.startDate || val.endDate;
-  //       }
-  //       return !!val;
-  //     }
-  //   ).length;
-
-  //   if (activeFiltersCount === 0) {
-  //     setActivePostSet("posts");
-  //   }
-  // }, [debouncedFilters, setActivePostSet]);
-
-  // useEffect(() => {
-  //   const timeout = setTimeout(() => {
-  //     const activeFiltersCount = Object.entries(filters).filter(
-  //       ([_key, val]) => {
-  //         if (Array.isArray(val)) return val.length > 0;
-  //         if (typeof val === "object" && val !== null && "startDate" in val) {
-  //           return val.startDate || val.endDate;
-  //         }
-  //         return !!val;
-  //       }
-  //     ).length;
-
-  //     if (activeFiltersCount === 0) {
-  //       setActivePostSet("posts");
-  //     }
-  //   }, 150);
-
-  //   return () => clearTimeout(timeout);
-  // }, [filters, setActivePostSet]);
-
-  // useEffect(() => {
-  //   const activeFiltersCount = Object.entries(filters).filter(([_key, val]) => {
-  //     if (Array.isArray(val)) return val.length > 0;
-  //     if (typeof val === "object" && val !== null && "startDate" in val) {
-  //       return val.startDate || val.endDate;
-  //     }
-  //     return !!val;
-  //   }).length;
-
-  //   if (activeFiltersCount === 0) {
-  //     setActivePostSet("posts");
-  //   }
-  // }, [filters, dispatch]);
-
   const handleChange = (field: keyof PostQueryFilters, value: any) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
@@ -312,23 +264,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       setLastAppliedFilters(updatedFilters);
     }
   };
-
-  // const handleApply = async () => {
-  //   // skip getFilteredSet / shouldRefetch entirely:
-  //   // console.log(filters)
-  //   // console.log("[BypassCache] always fetching…");
-  //   const result = await dispatch(fetchFilteredPostsBatch({ filters }));
-  //   if (fetchFilteredPostsBatch.fulfilled.match(result)) {
-  //     const fresh = result.payload.posts.map(normalizePost);
-  //     console.log("[BypassCache] fetched", fresh.length, "posts");
-  //     dispatch(setFilteredPosts(fresh));
-  //     dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
-  //     await storeFilteredSet(filters, fresh);
-  //     setActivePostSet("filteredPosts");
-  //     setLastAppliedFilters(filters);
-  //     onFiltersApplied?.(filters);
-  //   }
-  // };
 
   const handleApply = async () => {
     console.log("filters: ", filters);
@@ -387,7 +322,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       setTagInput("");
     }
   }, [filters.brand, filters.productType, filters.hashtag, filters.starTag]);
-
+console.log(activePostSet)
+console.log(filteredPostCount)
   return (
     <div className="enhanced-sidebar side-bar-box">
       {/* {activePostSet === "filteredPosts" && filteredPosts.length > 0 && ( */}
@@ -395,7 +331,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <div className="filter-summary-banner-container">
           <FilterSummaryBanner
             filteredCount={filteredPostCount}
-            filterText={getFilterSummaryText(lastAppliedFilters, companyUsers)} //  Type 'null' is not assignable to type 'PostQueryFilters'
+            filterText={getFilterSummaryText(lastAppliedFilters, companyUsers)}
             onClear={handleClearFilters}
             fetchedAt={fetchedAt}
           />
@@ -418,16 +354,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         )}
       </div>
       <div className="filter-actions">
-        {/* {filtersSet && filtersChanged && ( */}
-        {filtersSet && (
+        {filtersSet && filtersChanged && (
           <button className="btn-secondary" onClick={handleApply}>
             Apply Filters
           </button>
         )}
         {filtersSet && (
           <button
-            className="btn-secondary"
-            // onClick={() => setFilters(clearAllFilters())}
+            className={!filtersSet ? "btn-disabled" : "btn-secondary"}
             onClick={handleClearFilters}
             disabled={!filtersSet}
           >

@@ -29,6 +29,11 @@
   margin-top: 8px;
 }
 
+.inactive-label {
+  color: var(--status-inactive-color);
+  font-style: italic;
+}
+
 .user-table-count {
   display: flex;
   font-size: 0.875rem;

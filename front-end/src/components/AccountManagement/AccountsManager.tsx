@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -36,7 +36,6 @@ import {
 import { showMessage } from "../../Slices/snackbarSlice";
 import {
   getAccountsForAdd,
-  getAccountsForUpdate,
   parseAccountsFromFile,
 } from "./utils/splitAccountUpload";
 import CustomConfirmation from "../CustomConfirmation";
@@ -63,10 +62,14 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false); // setIsUploading isnt used
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [lastUploadedFileName, setLastUploadedFileName] = useState<
+    string | null
+  >(null);
 
   const [confirmMessage, setConfirmMessage] = useState("");
   const [pendingUpdates, setPendingUpdates] = useState<
@@ -74,9 +77,15 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   >(null);
   const [fileData, setFileData] = useState<CompanyAccountType[]>([]);
   const [accountDiffs, setAccountDiffs] = useState<AccountDiff[]>([]);
+  const [pendingUploadMode, setPendingUploadMode] = useState<
+    "add" | "update" | null
+  >(null);
+
   const [showDiffModal, setShowDiffModal] = useState(false);
 
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showBackupPrompt, setShowBackupPrompt] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openAddAccountModal, setOpenAddAccountModal] = useState(false);
   const [newAccount, setNewAccount] = useState<CompanyAccountType | null>(null);
@@ -84,6 +93,42 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     useState<CompanyAccountType | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [routeFilter, setRouteFilter] = useState<string>(""); // new filter state
+
+  const addInputRef = useRef<HTMLInputElement>(null);
+  const updateInputRef = useRef<HTMLInputElement>(null);
+
+  const promptAddUpload = () => {
+    setPendingUploadMode("add");
+    setShowBackupPrompt(true);
+  };
+
+  const promptUpdateUpload = () => {
+    setPendingUploadMode("update");
+    setShowBackupPrompt(true);
+  };
+
+  const handleBackupConfirm = async () => {
+    await backupAccounts(companyId);
+    setShowBackupPrompt(false);
+
+    if (pendingUploadMode === "add") {
+      addInputRef.current?.click();
+    } else if (pendingUploadMode === "update") {
+      updateInputRef.current?.click();
+    }
+    setPendingUploadMode(null);
+  };
+
+  const handleBackupDecline = () => {
+    setShowBackupPrompt(false);
+
+    if (pendingUploadMode === "add") {
+      addInputRef.current?.click();
+    } else if (pendingUploadMode === "update") {
+      updateInputRef.current?.click();
+    }
+    setPendingUploadMode(null);
+  };
 
   const itemsPerPage = 15;
 
@@ -254,7 +299,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     }
   };
 
-  const handleAddAccounts = async (file: File) => {
+  const actuallyAddAccounts = async (file: File) => {
     if (!user) return;
     const newAccounts = await getAccountsForAdd(file);
 
@@ -279,9 +324,13 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setShowConfirm(true);
   };
 
-  const handleUpdateAccounts = async (file: File) => {
+  const actuallyUpdateAccounts = async (file: File) => {
+    console.log("📁 File selected:", file.name);
+
     try {
       const parsed = await parseAccountsFromFile(file);
+      console.log("✅ Parsed accounts:", parsed.length);
+
       const diffs = getAccountDiffs(parsed, accounts); // or userAccounts if scoped
 
       if (diffs.length === 0) {
@@ -316,26 +365,35 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     }
   };
 
-  // const handleUpdateAccounts = async (file: File) => {
-  //   if (!user) return;
-  //   const parsed = await parseAccountsFromFile(file);
-  //   const diffs = getAccountDiffs(parsed, existingAccounts);
+  async function backupAccounts(companyId: string | undefined) {
+    try {
+      if (!companyId) throw new Error("No companyId provided");
 
-  //   setIsUploading(true); // Start loading
-  //   try {
-  //     const updatedAccounts = await getAccountsForUpdate(file, accounts);
-  //     const map = new Map(accounts.map((a) => [a.accountNumber, a]));
-  //     updatedAccounts.forEach((acc) => map.set(acc.accountNumber, acc));
-  //     setPendingUpdates(updatedAccounts);
-  //     setFileData(Array.from(map.values()));
-  //     setConfirmMessage(
-  //       `Update ${updatedAccounts.length} existing account(s)?`
-  //     );
-  //     setShowConfirm(true);
-  //   } finally {
-  //     setIsUploading(false); // End loading
-  //   }
-  // };
+      const companyRef = doc(db, "companies", companyId);
+      const companySnap = await getDoc(companyRef);
+      if (!companySnap.exists()) throw new Error("Company not found");
+
+      const { accountsId } = companySnap.data();
+      if (!accountsId) throw new Error("No accountsId for company");
+
+      const accountsRef = doc(db, "accounts", accountsId);
+      const accountsSnap = await getDoc(accountsRef);
+      if (!accountsSnap.exists())
+        throw new Error("Accounts document not found");
+
+      const accountsData = accountsSnap.data();
+
+      const dateStr = new Date().toISOString().split("T")[0];
+      const backupRef = doc(db, "accounts_backup", `backup_${dateStr}`);
+
+      await setDoc(backupRef, accountsData);
+      // await fetchBackups(); // refreshes list
+
+      console.log("Backup completed successfully!");
+    } catch (err) {
+      console.warn("Backup skipped:", err);
+    }
+  }
 
   const getUploadMode = (): UploadMode =>
     accounts.length === 0 ? "initial" : "update";
@@ -357,6 +415,30 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         a.salesRouteNums?.some((route) => route.includes(routeFilter.trim())))
   );
 
+  const handleCloseDiffModal = () => {
+    setShowDiffModal(false);
+    setAccountDiffs([]);
+    setFileData([]);
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !pendingUploadMode) return;
+    setLastUploadedFileName(file.name);
+
+    // Clear pendingUploadMode
+    setPendingUploadMode(null);
+
+    if (pendingUploadMode === "add") {
+      actuallyAddAccounts(file);
+    } else {
+      actuallyUpdateAccounts(file);
+    }
+
+    // Reset the input so it can re-trigger on same file later
+    e.target.value = "";
+  };
+
   return (
     <Box className="account-manager-container account-manager">
       <Typography variant="h2" gutterBottom>
@@ -365,7 +447,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
       {(isAdmin || isSuperAdmin) && (
         <>
-          <AccountsBackup companyId={companyId} />
+          <AccountsBackup
+            companyId={companyId}
+            backupAccounts={backupAccounts}
+          />
 
           <Box
             className="account-instructions"
@@ -405,51 +490,33 @@ const AccountManager: React.FC<AccountManagerProps> = ({
               View Upload File Template
             </button>
 
-            <label
-              className="button-primary"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                cursor: "pointer",
-              }}
-            >
-              {accounts.length
-                ? "Upload New Accounts"
-                : "Upload Initial Accounts"}
-              <input
-                type="file"
-                accept=".csv, .xlsx, .xls"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleAddAccounts(file);
-                }}
-                style={{ display: "none" }}
-              />
-            </label>
+            <button className="button-primary" onClick={promptAddUpload}>
+              Upload New Accounts
+            </button>
 
-            <label
-              className={`button-primary ${
-                accounts.length === 0 ? "btn-disabled" : ""
-              }`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                cursor: accounts.length === 0 ? "not-allowed" : "pointer",
-                opacity: accounts.length === 0 ? 0.6 : 1,
-              }}
+            <input
+              ref={addInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              style={{ display: "none" }}
+              onChange={handleFileSelected}
+            />
+
+            <button
+              className="button-primary"
+              disabled={accounts.length === 0}
+              onClick={promptUpdateUpload}
             >
               Update Accounts
-              <input
-                type="file"
-                accept=".csv, .xlsx, .xls"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleUpdateAccounts(file);
-                }}
-                disabled={accounts.length === 0}
-                style={{ display: "none" }}
-              />
-            </label>
+            </button>
+
+            <input
+              ref={updateInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              style={{ display: "none" }}
+              onChange={handleFileSelected}
+            />
 
             <button
               className="button-primary"
@@ -506,7 +573,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
               <TableCell>Account Number</TableCell>
               <TableCell>Account Name</TableCell>
               <TableCell>accountAddress</TableCell>
-              <TableCell>streettAddress</TableCell>
+              <TableCell>streetAddress</TableCell>
               <TableCell>city</TableCell>
               <TableCell>state</TableCell>
               <TableCell>Type</TableCell>
@@ -597,6 +664,12 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         message={confirmMessage}
         loading={isSubmitting}
       />
+      <CustomConfirmation
+        isOpen={showBackupPrompt}
+        message="Would you like to back up current accounts before uploading?"
+        onClose={handleBackupDecline}
+        onConfirm={handleBackupConfirm}
+      />
 
       <UploadTemplateModal
         open={showTemplateModal}
@@ -625,7 +698,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       {showDiffModal && (
         <UploadReviewModal
           diffs={accountDiffs}
-          onClose={() => setShowDiffModal(false)}
+          onClose={handleCloseDiffModal}
           onConfirm={handleConfirmDiffUpload}
         />
       )}

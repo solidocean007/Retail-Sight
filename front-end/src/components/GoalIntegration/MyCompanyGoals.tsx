@@ -108,16 +108,15 @@ const MyCompanyGoals: React.FC = () => {
         {title}
       </Typography>
       {goals.map((goal) => (
-       <CompanyGoalCard
-  key={goal.id}
-  goal={goal}
-  salesRouteNum={user?.salesRouteNum}
-  mobile={isMobile}
-  expanded={expandedGoalId === goal.id}
-  onToggleExpand={handleToggleExpand}
-  onViewPostModal={openPostViewer} // ✅ Use the actual function
-/>
-
+        <CompanyGoalCard
+          key={goal.id}
+          goal={goal}
+          salesRouteNum={user?.salesRouteNum}
+          mobile={isMobile}
+          expanded={expandedGoalId === goal.id}
+          onToggleExpand={handleToggleExpand}
+          onViewPostModal={openPostViewer} // ✅ Use the actual function
+        />
       ))}
     </Box>
   );

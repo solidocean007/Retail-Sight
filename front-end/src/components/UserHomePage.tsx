@@ -18,12 +18,9 @@ import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import { PostQueryFilters, PostWithID } from "../utils/types";
 import { selectCompanyUsers, selectUser } from "../Slices/userSlice";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
-import { setUsersAccounts } from "../Slices/userAccountsSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
 import EnhancedFilterSidebar from "./FilterSideBar/EnhancedFilterSideBar";
 import {
-  getFilterHash,
-  // getFilterHash,
   getFilterSummaryText,
 } from "./FilterSideBar/utils/filterUtils";
 import { useLocation, useNavigate } from "react-router-dom";
