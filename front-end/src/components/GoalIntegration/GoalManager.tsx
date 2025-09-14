@@ -14,6 +14,7 @@ import AllGoalsLayout from "./AllGoalsLayout";
 import React, { useEffect, useState } from "react";
 import { useIntegrations } from "../../hooks/useIntegrations";
 import GalloIntegration from "./GalloIntegration";
+import CreateCompanyGoalViewCopy from "./CreateCompanyGoalViewCopy";
 const CreateGalloGoalView = React.lazy(() => import("./CreateGalloGoalView"));
 
 interface TabPanelProps {
@@ -145,38 +146,6 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
               />
             ))}
           </Tabs>
-
-          // <Tabs
-          //   value={value}
-          //   onChange={handleChange}
-          //   aria-label="dashboard tabs"
-          //   variant="scrollable"
-          //   scrollButtons="auto"
-          //   sx={{
-          //     // borderBottom: "1px solid #ccc", // Separation under tabs
-          //     "& .MuiTab-root": {
-          //       borderTopLeftRadius: "12px",
-          //       borderTopRightRadius: "12px",
-          //       textTransform: "none", // prevent all caps
-          //       padding: "8px 16px",
-          //       marginRight: "8px",
-          //       marginBottom: "0px",
-          //       backgroundColor: "var(--tab-background)",
-          //       "&.Mui-selected": {
-          //         backgroundColor: "var(--tab-background-selected)",
-          //         color: "var(--color-selected)",
-          //         border: "1px solid #ccc",
-          //         borderBottom: "none", // remove overlap on active tab
-          //       },
-          //     },
-          //   }}
-          // >
-          //   <Tab label="All Goals" {...a11yProps(0)} />
-          //   {galloEnabled && (
-          //     <Tab label="Gallo Program Import" {...a11yProps(1)} />
-          //   )}
-          //   <Tab label="Company Goal Creation" {...a11yProps(2)} />
-          // </Tabs>
         )}
       </Box>
       <div>

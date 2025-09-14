@@ -120,6 +120,7 @@ const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
             <TableCell>Select</TableCell>
             <TableCell>Name</TableCell>
             <TableCell>Email</TableCell>
+            <TableCell>Route #</TableCell>
             <TableCell>Role</TableCell>
           </TableRow>
         </TableHead>
@@ -134,6 +135,7 @@ const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
               </TableCell>
               <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
               <TableCell>{user.email}</TableCell>
+              <TableCell>{user.salesRouteNum}</TableCell>
               <TableCell>{user.role}</TableCell>
             </TableRow>
           ))}

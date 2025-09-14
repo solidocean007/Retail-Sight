@@ -146,12 +146,13 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   });
 
   useEffect(() => {
-    if (initialFilters) {
-      setFilters(initialFilters);
-      setLastAppliedFilters(initialFilters);
-      setActivePostSet("filteredPosts");
+    if (activePostSet === "posts") {
+      const cleared = clearAllFilters();
+      setFilters(cleared);
+      setLastAppliedFilters(cleared);
+      resetInputs(); // also clears local UI inputs
     }
-  }, [initialFilters]);
+  }, [activePostSet]);
 
   const resetInputs = () => {
     setBrandInput("");
@@ -322,8 +323,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       setTagInput("");
     }
   }, [filters.brand, filters.productType, filters.hashtag, filters.starTag]);
-console.log(activePostSet)
-console.log(filteredPostCount)
+  console.log(activePostSet);
+  console.log(filteredPostCount);
   return (
     <div className="enhanced-sidebar side-bar-box">
       {/* {activePostSet === "filteredPosts" && filteredPosts.length > 0 && ( */}

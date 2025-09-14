@@ -61,13 +61,15 @@ export const selectUsersCompanyGoals = createSelector(
     selectAllCompanyGoals,
     (state: RootState) => state.user.currentUser,
     (state: RootState) => state.allAccounts.accounts || [],
+    (state: RootState) => state.user.companyUsers || [], // need supervisors + reps
   ],
-  (allGoals, currentUser, allAccounts) => {
+  (allGoals, currentUser, allAccounts, companyUsers) => {
     if (!currentUser) return [];
 
-    const { salesRouteNum, uid } = currentUser;
+    const { salesRouteNum, uid, role } = currentUser;
 
     return allGoals.filter((goal) => {
+      // 🔹 Sales employee logic
       if (goal.targetRole === "sales" && salesRouteNum) {
         const matchingAccountNumbers = allAccounts
           .filter((acc) => acc.salesRouteNums?.includes(salesRouteNum))
@@ -78,11 +80,28 @@ export const selectUsersCompanyGoals = createSelector(
         );
       }
 
-      if (goal.targetRole === "supervisor" && uid) {
-        const assignedUids = Object.values(goal.userAssignments || {}).flat();
-        return assignedUids.includes(uid);
+      // 🔹 Supervisor logic
+      if (goal.targetRole === "supervisor" && role === "supervisor") {
+        const repsReportingToMe = companyUsers.filter(
+          (u) => u.reportsTo === uid && u.salesRouteNum
+        );
+        const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
+
+        // Get all accounts covered by this goal
+        const matchingAccounts = (goal.accountNumbersForThisGoal || [])
+          .map((accountId) =>
+            allAccounts.find(
+              (acc) => acc.accountNumber.toString() === accountId
+            )
+          )
+          .filter(Boolean) as CompanyAccountType[];
+
+        // Overlap check
+        return matchingAccounts.some((acc) =>
+          acc.salesRouteNums?.some((rn) => myRepsRouteNums.includes(rn))
+        );
       }
-d
+
       return false;
     });
   }
@@ -90,14 +109,16 @@ d
 
 export const makeSelectUsersCompanyGoals = (
   salesRouteNum?: string,
-  userId?: string
+  userId?: string,
+  role?: string
 ) =>
   createSelector(
-    [selectAllCompanyGoals, selectAllCompanyAccounts],
-    (allGoals, allAccounts) => {
+    [selectAllCompanyGoals, selectAllCompanyAccounts, (state: RootState) => state.user.companyUsers || []],
+    (allGoals, allAccounts, companyUsers) => {
       if (!salesRouteNum && !userId) return [];
 
       return allGoals.filter((goal: CompanyGoalWithIdType) => {
+        // 🔹 Sales
         if (goal.targetRole === "sales" && salesRouteNum) {
           const matchingAccounts = (goal.accountNumbersForThisGoal || [])
             .map((accountId) =>
@@ -112,12 +133,28 @@ export const makeSelectUsersCompanyGoals = (
           );
         }
 
-        if (goal.targetRole === "supervisor" && userId) {
-          const assignedUids = Object.values(goal.userAssignments || {}).flat();
-          return assignedUids.includes(userId);
+        // 🔹 Supervisor
+        if (goal.targetRole === "supervisor" && role === "supervisor" && userId) {
+          const repsReportingToMe = companyUsers.filter(
+            (u) => u.reportsTo === userId && u.salesRouteNum
+          );
+          const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
+
+          const matchingAccounts = (goal.accountNumbersForThisGoal || [])
+            .map((accountId) =>
+              allAccounts.find(
+                (acc) => acc.accountNumber.toString() === accountId
+              )
+            )
+            .filter(Boolean) as CompanyAccountType[];
+
+          return matchingAccounts.some((acc) =>
+            acc.salesRouteNums?.some((rn) => myRepsRouteNums.includes(rn))
+          );
         }
 
         return false;
       });
     }
   );
+

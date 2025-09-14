@@ -5,7 +5,7 @@ import { getCompletionClass } from "../utils/helperFunctions/getCompletionClass"
 import { CompanyGoalWithIdType, PostQueryFilters } from "../utils/types";
 import { clearAllFilters } from "./FilterSideBar/utils/filterUtils";
 
-interface UserRowType {
+export interface UserRowType {
   uid: string;
   firstName: string;
   lastName: string;
@@ -155,7 +155,7 @@ const UserTableForGoals = ({
                         <li key={acc.accountNumber}>
                           <strong>{acc.accountName}</strong> —{" "}
                           {acc.accountAddress}
-                          {acc.accountNumber}
+                          {/* {acc.accountNumber} */}
                         </li>
                       ))}
                     </ul>

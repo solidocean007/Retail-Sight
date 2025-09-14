@@ -509,9 +509,6 @@ export type CompanyGoalType = {
   createdByFirstName?: string; // optional
   createdByLastName?: string; // optional
   accountNumbersForThisGoal?: string[]; // ✅ Full scope of accounts this goal applies to
-  userAssignments?: {
-    [accountNumber: string]: string[];
-  };
   perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
   deleted: boolean;
@@ -523,7 +520,7 @@ export type GoalSubmissionType = {
   postId: string;
   account: CompanyAccountType;
   submittedBy: UserType;
-  submittedAt: string;
+  submittedAt: string | Timestamp;
 };
 
 // export type GoalSubmissionType = {

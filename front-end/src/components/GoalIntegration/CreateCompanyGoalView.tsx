@@ -27,7 +27,6 @@ import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
 import { doc, getDoc } from "@firebase/firestore";
-import UserMultiSelector from "./UserMultiSelector";
 import AccountMultiSelector from "./AccountMultiSelector";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
@@ -42,6 +41,7 @@ import GoalTitleInput from "./GoalTitleInput";
 import ChainMultiSelect from "./FilterMultiSelect";
 import FilterMultiSelect from "./FilterMultiSelect";
 import CustomConfirmation from "../CustomConfirmation";
+import ConfirmGoalModal from "./ConfirmGoalModal";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -71,10 +71,7 @@ const CreateCompanyGoalView = () => {
   const [perUserQuota, setPerUserQuota] = useState<number | string>("1");
   const [isSaving, setIsSaving] = useState(false);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
-  const [selectedAccounts, setSelectedAccounts] = useState<
-    CompanyAccountType[]
-  >([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
   const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(
@@ -89,17 +86,25 @@ const CreateCompanyGoalView = () => {
     Record<string, SavedFilterSet>
   >({});
   const [filterSetName, setFilterSetName] = useState("");
+  const [accountNumbersForThisGoal, setAccountNumbersForThisGoal] = useState<
+    string[]
+  >([]);
 
   const [filters, setFilters] = useState({
     chains: [] as string[],
     chainType: "",
     typeOfAccounts: [] as string[],
-    userIds: [] as string[],
+    userIds: [] as string[], // Sales reps
+    supervisorIds: [] as string[], // Supervisors
   });
 
   type SavedFilterSet = typeof filters;
 
-  // const selectedAccountObjects = selectedAccounts;
+  // useEffect(() => {
+  //   if (accounts.length > 0 && selectedAccounts.length === 0) {
+  //     setSelectedAccounts(accounts);
+  //   }
+  // }, [accounts, selectedAccounts]);
 
   const normalizedCompanyUsers = useMemo(() => {
     return (activeCompanyUsers || []).map((user) => ({
@@ -122,6 +127,7 @@ const CreateCompanyGoalView = () => {
   }, [normalizedCompanyUsers]);
 
   const supervisorsByUid = useMemo(() => {
+    // should i use this for my selector?
     const sup = new Map<string, (typeof normalizedCompanyUsers)[number]>();
     normalizedCompanyUsers.forEach((u) => {
       if (u.role === "supervisor") sup.set(u.uid, u);
@@ -161,8 +167,7 @@ const CreateCompanyGoalView = () => {
       (a) =>
         (!filters.chains.length ||
           filters.chains.some(
-            (selectedChain) =>
-              selectedChain.toLowerCase() === (a.chain || "").toLowerCase()
+            (c) => c.toLowerCase() === (a.chain || "").toLowerCase()
           )) &&
         (!filters.chainType || a.chainType === filters.chainType) &&
         (!filters.typeOfAccounts.length ||
@@ -170,28 +175,21 @@ const CreateCompanyGoalView = () => {
         (!filters.userIds.length ||
           userIdsByAccount[a.accountNumber]?.some((id) =>
             filters.userIds.includes(id)
-          ))
+          )) &&
+        (!filters.supervisorIds.length ||
+          userIdsByAccount[a.accountNumber]?.some((repUid) => {
+            const supUid = reportsToMap.get(repUid);
+            return supUid && filters.supervisorIds.includes(supUid);
+          }))
     );
-  }, [accounts, filters, userIdsByAccount]);
+  }, [accounts, filters, userIdsByAccount, reportsToMap]);
 
-  useEffect(() => {
-    // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
-    if (accountScope === "selected") {
-      setSelectedAccounts(filteredAccounts);
-    }
-  }, [filteredAccounts, accountScope]);
-
-  useEffect(() => {
-    if (accountScope === "selected") {
-      const autoSelectedUserIds = new Set<string>();
-      filteredAccounts.forEach((account) => {
-        getUserIdsForAccount(account, normalizedCompanyUsers).forEach((uid) =>
-          autoSelectedUserIds.add(uid)
-        );
-      });
-      setSelectedUserIds(Array.from(autoSelectedUserIds));
-    }
-  }, [accountScope, filteredAccounts, normalizedCompanyUsers]);
+  // useEffect(() => {
+  //   // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
+  //   if (accountScope === "selected") {
+  //     setSelectedAccounts(filteredAccounts);
+  //   }
+  // }, [filteredAccounts, accountScope]);
 
   const readyForCreation: boolean =
     goalTitle.trim().length > 0 &&
@@ -246,6 +244,7 @@ const CreateCompanyGoalView = () => {
         if (!accountsId) return;
         const accountsDocRef = doc(db, "accounts", accountsId);
         const snapshot = await getDoc(accountsDocRef);
+        console.log("fetched accounts snapshot!");
         if (snapshot.exists()) {
           const data = snapshot.data();
           const formatted = (data.accounts as CompanyAccountType[]).map(
@@ -266,24 +265,16 @@ const CreateCompanyGoalView = () => {
     fetchAccounts();
   }, [companyId]);
 
-  const accountsForSelectedUsers = useMemo(() => {
-    if (!selectedUserIds.length) return [];
-    return accounts.filter((account) =>
-      selectedUserIds.some((uid) =>
-        normalizedCompanyUsers.find(
-          (user) =>
-            user.uid === uid &&
-            user.salesRouteNum &&
-            account.salesRouteNums?.includes(user.salesRouteNum)
-        )
-      )
-    );
-  }, [accounts, selectedUserIds, normalizedCompanyUsers]);
-
   const { eligibleUsersForCurrentScope, numberOfAffectedUsers } =
     useMemo(() => {
+      // 🔹 Build scoped accounts from either "all" or the accountNumbersForThisGoal array
       const scopedAccounts =
-        accountScope === "all" ? accounts : selectedAccounts;
+        accountScope === "all"
+          ? accounts
+          : accounts.filter((a) =>
+              accountNumbersForThisGoal.includes(a.accountNumber.toString())
+            );
+
       const routeNums = new Set(
         scopedAccounts.flatMap((a) => a.salesRouteNums || [])
       );
@@ -299,7 +290,7 @@ const CreateCompanyGoalView = () => {
         };
       }
 
-      // supervisors who manage at least one of those reps
+      // 🔹 supervisors who manage at least one of those reps
       const supervisorUids = new Set(
         reps.map((r) => reportsToMap.get(r.uid)).filter(Boolean) as string[]
       );
@@ -315,265 +306,11 @@ const CreateCompanyGoalView = () => {
     }, [
       accountScope,
       accounts,
-      selectedAccounts,
+      accountNumbersForThisGoal,
       normalizedCompanyUsers,
       assigneeType,
       reportsToMap,
     ]);
-
-  // const OldhandleCreateGoal = async () => {
-  //   if (!readyForCreation) {
-  //     alert("Please fill out all required fields.");
-  //     return;
-  //   }
-
-  //   if (!companyId) {
-  //     alert("Missing companyId. Cannot create goal.");
-  //     return;
-  //   }
-
-  //   const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
-
-  //   const userPool =
-  //     selectedUserIds.length > 0
-  //       ? normalizedCompanyUsers.filter((u) => selectedUserIds.includes(u.uid))
-  //       : normalizedCompanyUsers;
-
-  //   const userAssignments: Record<string, string[]> = {};
-  //   const allAssignedUserIds = new Set<string>();
-
-  //   for (const account of scopedAccounts) {
-  //     const routeNums = new Set(account.salesRouteNums || []);
-  //     if (!routeNums.size) continue;
-
-  //     if (assigneeType === "sales") {
-  //       const repIds = userPool
-  //         .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
-  //         .map((u) => u.uid);
-  //       if (repIds.length) {
-  //         userAssignments[String(account.accountNumber)] = repIds;
-  //         repIds.forEach((id) => allAssignedUserIds.add(id));
-  //       }
-  //     } else {
-  //       // SUPERVISOR assignment: map reps -> supervisors
-  //       const repIdsForAccount = normalizedCompanyUsers
-  //         .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
-  //         .map((u) => u.uid);
-
-  //       const supervisorIds = Array.from(
-  //         new Set(
-  //           repIdsForAccount
-  //             .map((repId) => reportsToMap.get(repId))
-  //             .filter((uid) => !!uid && supervisorsByUid.has(uid!)) as string[]
-  //         )
-  //       );
-
-  //       // Optionally intersect with the selected pool if you want to respect manual picks:
-  //       const finalSupervisorIds = selectedUserIds.length
-  //         ? supervisorIds.filter((id) => selectedUserIds.includes(id))
-  //         : supervisorIds;
-
-  //       if (finalSupervisorIds.length) {
-  //         userAssignments[String(account.accountNumber)] = finalSupervisorIds;
-  //         finalSupervisorIds.forEach((id) => allAssignedUserIds.add(id));
-  //       }
-  //     }
-  //   }
-
-  //   const newGoal: CompanyGoalType = {
-  //     companyId,
-  //     goalTitle,
-  //     goalDescription,
-  //     goalMetric,
-  //     goalValueMin: Number(goalValueMin),
-  //     goalStartDate,
-  //     goalEndDate,
-  //     accountNumbersForThisGoal: scopedAccounts.map((a) =>
-  //       a.accountNumber.toString()
-  //     ),
-  //     userAssignments,
-  //     createdAt: new Date().toISOString(),
-  //     deleted: false,
-  //   };
-
-  //   if (enforcePerUserQuota && perUserQuota) {
-  //     newGoal.perUserQuota = Number(perUserQuota);
-  //   }
-
-  //   setIsSaving(true);
-  //   try {
-  //   console.log(newGoal)
-
-  //     const result = await dispatch(
-  //       createCompanyGoalInFirestore({ goal: newGoal, currentUser })
-  //     );
-  //     console.log("Dispatch result:", result);
-
-  //     if (createCompanyGoalInFirestore.fulfilled.match(result)) {
-  //       alert("Goal created successfully!");
-  //       console.log("Created goal ID:", result.payload.id);
-
-  //       // Reset Form
-  //       setGoalTitle("");
-  //       setGoalDescription("");
-  //       setGoalMetric("");
-  //       setGoalValueMin(1);
-  //       setGoalStartDate("");
-  //       setGoalEndDate("");
-  //       setSelectedAccounts([]);
-  //       setSelectedUserIds([]);
-  //     } else {
-  //       console.error("Goal creation failed:", result.payload);
-  //       alert(`Failed to create goal: ${result.payload}`);
-  //     }
-  //   } catch (error: any) {
-  //     console.error("Unexpected error:", error);
-  //     alert("Error creating goal. Please try again.");
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
-
-  // const handleCreateGoal = async () => {
-  //   if (!readyForCreation) {
-  //     alert("Please fill out all required fields.");
-  //     return;
-  //   }
-
-  //   if (!companyId) {
-  //     alert("Missing companyId. Cannot create goal.");
-  //     return;
-  //   }
-
-  //   const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
-
-  //   const userPool =
-  //     selectedUserIds.length > 0
-  //       ? normalizedCompanyUsers.filter((u) => selectedUserIds.includes(u.uid))
-  //       : normalizedCompanyUsers;
-
-  //   const userAssignments: Record<string, string[]> = {};
-  //   const allAssignedUserIds = new Set<string>();
-
-  //   for (const account of scopedAccounts) {
-  //     const routeNums = new Set(account.salesRouteNums || []);
-  //     if (!routeNums.size) continue;
-
-  //     if (assigneeType === "sales") {
-  //       const repIds = userPool
-  //         .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
-  //         .map((u) => u.uid);
-  //       if (repIds.length) {
-  //         userAssignments[String(account.accountNumber)] = repIds; // i dont think i need to do this.  i just need to set
-  //         repIds.forEach((id) => allAssignedUserIds.add(id));
-  //       }
-  //     } else {
-  //       const repIdsForAccount = normalizedCompanyUsers
-  //         .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
-  //         .map((u) => u.uid);
-
-  //       console.log("Found repIds for this account:", repIdsForAccount);
-
-  //       console.log(
-  //         "Supervisors for these reps:",
-  //         repIdsForAccount.map((repId) => reportsToMap.get(repId))
-  //       ); // this sometimes logs either one of the two uids
-
-  //       const supervisorIds = Array.from(
-  //         new Set(
-  //           repIdsForAccount
-  //             .map((repId) => reportsToMap.get(repId))
-  //             .filter((uid): uid is string => {
-  //               // keep only valid UIDs of existing users
-  //               return (
-  //                 !!uid && normalizedCompanyUsers.some((u) => u.uid === uid)
-  //               );
-  //             })
-  //         )
-  //       );
-
-  //       const allSupervisorUids = new Set(
-  //         normalizedCompanyUsers
-  //           .filter((u) =>
-  //             normalizedCompanyUsers.some((r) => r.reportsTo === u.uid)
-  //           )
-  //           .map((u) => u.uid)
-  //       );
-  //       const selectedSupervisors = selectedUserIds.filter((id) =>
-  //         allSupervisorUids.has(id)
-  //       );
-
-  //       const finalSupervisorIds = selectedSupervisors.length
-  //         ? supervisorIds.filter((id) => selectedSupervisors.includes(id))
-  //         : supervisorIds;
-
-  //       if (finalSupervisorIds.length) {
-  //         userAssignments[String(account.accountNumber)] = finalSupervisorIds;
-  //         finalSupervisorIds.forEach((id) => allAssignedUserIds.add(id));
-  //       }
-  //     }
-  //   }
-
-  //   const newGoal: CompanyGoalType = {
-  //     companyId,
-  //     goalTitle,
-  //     targetRole: assigneeType,
-  //     goalDescription,
-  //     goalMetric,
-  //     goalValueMin: Number(goalValueMin),
-  //     goalStartDate,
-  //     goalEndDate,
-  //     createdAt: new Date().toISOString(),
-  //     deleted: false,
-  //     ...(assigneeType === "supervisor"
-  //       ? { userAssignments }
-  //       : {
-  //           accountNumbersForThisGoal: scopedAccounts.map((a) =>
-  //             a.accountNumber.toString()
-  //           ),
-  //         }),
-  //     ...(enforcePerUserQuota && perUserQuota
-  //       ? { perUserQuota: Number(perUserQuota) }
-  //       : {}),
-  //   };
-
-  //   if (enforcePerUserQuota && perUserQuota) {
-  //     newGoal.perUserQuota = Number(perUserQuota);
-  //   }
-
-  //   setIsSaving(true);
-  //   try {
-  //     console.log(newGoal);
-
-  //     const result = await dispatch(
-  //       createCompanyGoalInFirestore({ goal: newGoal, currentUser })
-  //     );
-  //     console.log("Dispatch result:", result);
-
-  //     if (createCompanyGoalInFirestore.fulfilled.match(result)) {
-  //       alert("Goal created successfully!");
-  //       console.log("Created goal ID:", result.payload.id);
-
-  //       // Reset Form
-  //       setGoalTitle("");
-  //       setGoalDescription("");
-  //       setGoalMetric("");
-  //       setGoalValueMin(1);
-  //       setGoalStartDate("");
-  //       setGoalEndDate("");
-  //       setSelectedAccounts([]);
-  //       setSelectedUserIds([]);
-  //     } else {
-  //       console.error("Goal creation failed:", result.payload);
-  //       alert(`Failed to create goal: ${result.payload}`);
-  //     }
-  //   } catch (error: any) {
-  //     console.error("Unexpected error:", error);
-  //     alert("Error creating goal. Please try again.");
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
 
   const handleCreateGoal = async () => {
     if (!readyForCreation) {
@@ -585,65 +322,12 @@ const CreateCompanyGoalView = () => {
       return;
     }
 
-    const scopedAccounts = accountScope === "all" ? accounts : selectedAccounts;
-
-    const userPool =
-      selectedUserIds.length > 0
-        ? normalizedCompanyUsers.filter((u) => selectedUserIds.includes(u.uid))
-        : normalizedCompanyUsers;
-
-    const userAssignments: Record<string, string[]> = {};
-    const allAssignedUserIds = new Set<string>();
-
-    for (const account of scopedAccounts) {
-      const routeNums = new Set(account.salesRouteNums || []);
-      if (!routeNums.size) continue;
-
-      if (assigneeType === "sales") {
-        const repIds = userPool
-          .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
-          .map((u) => u.uid);
-        if (repIds.length) {
-          repIds.forEach((id) => allAssignedUserIds.add(id));
-        }
-      } else {
-        const repIdsForAccount = normalizedCompanyUsers
-          .filter((u) => u.salesRouteNum && routeNums.has(u.salesRouteNum))
-          .map((u) => u.uid);
-
-        const supervisorIds = Array.from(
-          new Set(
-            repIdsForAccount
-              .map((repId) => reportsToMap.get(repId))
-              .filter((uid): uid is string => {
-                return (
-                  !!uid && normalizedCompanyUsers.some((u) => u.uid === uid)
-                );
-              })
-          )
-        );
-
-        const allSupervisorUids = new Set(
-          normalizedCompanyUsers
-            .filter((u) =>
-              normalizedCompanyUsers.some((r) => r.reportsTo === u.uid)
-            )
-            .map((u) => u.uid)
-        );
-        const selectedSupervisors = selectedUserIds.filter((id) =>
-          allSupervisorUids.has(id)
-        );
-
-        const finalSupervisorIds = selectedSupervisors.length
-          ? supervisorIds.filter((id) => selectedSupervisors.includes(id))
-          : supervisorIds;
-
-        if (finalSupervisorIds.length) {
-          userAssignments[String(account.accountNumber)] = finalSupervisorIds;
-          finalSupervisorIds.forEach((id) => allAssignedUserIds.add(id));
-        }
-      }
-    }
+    const scopedAccounts =
+      accountScope === "all"
+        ? accounts
+        : accounts.filter((a) =>
+            accountNumbersForThisGoal.includes(a.accountNumber.toString())
+          );
 
     const newGoal: CompanyGoalType = {
       companyId,
@@ -656,28 +340,33 @@ const CreateCompanyGoalView = () => {
       goalEndDate,
       createdAt: new Date().toISOString(),
       deleted: false,
-      ...(assigneeType === "supervisor"
-        ? { userAssignments }
-        : {
-            accountNumbersForThisGoal: scopedAccounts.map((a) =>
-              a.accountNumber.toString()
-            ),
-          }),
+      accountNumbersForThisGoal: scopedAccounts.map((a) =>
+        a.accountNumber.toString()
+      ),
       ...(enforcePerUserQuota && perUserQuota
         ? { perUserQuota: Number(perUserQuota) }
         : {}),
     };
 
     setDraftGoal(newGoal);
-    setShowConfirmModal(true); // ✅ Open the confirmation modal
+    setShowConfirmModal(true);
   };
 
-  const availableAccounts = useMemo(() => {
-    return filteredAccounts.filter(
-      (acc) =>
-        !selectedAccounts.some((sel) => sel.accountNumber === acc.accountNumber)
-    );
-  }, [filteredAccounts, selectedAccounts]);
+  useEffect(() => {
+    if (accountScope !== "selected") return;
+
+    setAccountNumbersForThisGoal((prev) => {
+      const inView = new Set(
+        filteredAccounts.map((a) => a.accountNumber.toString())
+      );
+
+      // First time in "selected" mode -> select everything in view
+      if (prev.length === 0) return Array.from(inView);
+
+      // Otherwise, KEEP ONLY what’s still visible; do NOT auto-add new items
+      return prev.filter((id) => inView.has(id));
+    });
+  }, [accountScope, filteredAccounts]);
 
   useEffect(() => {
     if (!goalStartDate) {
@@ -708,7 +397,6 @@ const CreateCompanyGoalView = () => {
         setGoalStartDate("");
         setGoalEndDate("");
         setSelectedAccounts([]);
-        setSelectedUserIds([]);
       } else {
         alert(`Error: ${result.payload}`);
       }
@@ -722,6 +410,38 @@ const CreateCompanyGoalView = () => {
     }
   };
 
+  // 🔹 Compute counts for confirmation modal
+  // 🔹 Compute counts for confirmation modal
+  const scopedAccounts =
+    accountScope === "all"
+      ? accounts
+      : accounts.filter((a) =>
+          accountNumbersForThisGoal.includes(a.accountNumber.toString())
+        );
+
+  const routeNums = new Set(
+    scopedAccounts.flatMap((a) => a.salesRouteNums || [])
+  );
+
+  const repsForScope = normalizedCompanyUsers.filter(
+    (u) => u.salesRouteNum && routeNums.has(u.salesRouteNum)
+  );
+
+  let supervisorsForScope: typeof normalizedCompanyUsers = [];
+
+  if (assigneeType === "supervisor") {
+    const supervisorUids = new Set(
+      repsForScope.map((r) => r.reportsTo).filter(Boolean) as string[]
+    );
+    supervisorsForScope = normalizedCompanyUsers.filter((u) =>
+      supervisorUids.has(u.uid)
+    );
+  }
+
+  const affectedAccountsCount = scopedAccounts.length;
+  const affectedSalesCount = assigneeType === "sales" ? repsForScope.length : 0;
+  const affectedSupervisorsCount =
+    assigneeType === "supervisor" ? supervisorsForScope.length : 0;
 
   return (
     <Container>
@@ -858,49 +578,50 @@ const CreateCompanyGoalView = () => {
                 />
               )}
             </Box>
-
-            <FormControl component="fieldset">
-              <Typography variant="subtitle1">Target Audience</Typography>
-              <RadioGroup
-                value={accountScope}
-                onChange={(e) =>
-                  setAccountScope(e.target.value as "all" | "selected")
-                }
-                row
-              >
-                <FormControlLabel
-                  value="all"
-                  control={<Radio />}
-                  label="All Accounts"
-                />
-                <FormControlLabel
-                  value="selected"
-                  control={<Radio />}
-                  label="Selected Accounts"
-                />
-              </RadioGroup>
-            </FormControl>
-            <FormControl component="fieldset" sx={{ mt: 1 }}>
-              <Typography variant="subtitle1">Assign To</Typography>
-              <RadioGroup
-                value={assigneeType}
-                onChange={(e) =>
-                  setAssigneeType(e.target.value as "sales" | "supervisor")
-                }
-                row
-              >
-                <FormControlLabel
-                  value="sales"
-                  control={<Radio />}
-                  label="Sales Reps"
-                />
-                <FormControlLabel
-                  value="supervisor"
-                  control={<Radio />}
-                  label="Supervisors"
-                />
-              </RadioGroup>
-            </FormControl>
+            <div className="target-accounts-and-roles">
+              <FormControl component="fieldset">
+                <Typography variant="subtitle1">Target Accounts</Typography>
+                <RadioGroup
+                  value={accountScope}
+                  onChange={(e) =>
+                    setAccountScope(e.target.value as "all" | "selected")
+                  }
+                  row
+                >
+                  <FormControlLabel
+                    value="all"
+                    control={<Radio />}
+                    label="All Accounts"
+                  />
+                  <FormControlLabel
+                    value="selected"
+                    control={<Radio />}
+                    label="Selected Accounts"
+                  />
+                </RadioGroup>
+              </FormControl>
+              <FormControl component="fieldset">
+                <Typography variant="subtitle1">Assign To</Typography>
+                <RadioGroup
+                  value={assigneeType}
+                  onChange={(e) =>
+                    setAssigneeType(e.target.value as "sales" | "supervisor")
+                  }
+                  row
+                >
+                  <FormControlLabel
+                    value="sales"
+                    control={<Radio />}
+                    label="Sales Reps"
+                  />
+                  <FormControlLabel
+                    value="supervisor"
+                    control={<Radio />}
+                    label="Supervisors"
+                  />
+                </RadioGroup>
+              </FormControl>
+            </div>
 
             {accountScope === "selected" && (
               <>
@@ -971,6 +692,35 @@ const CreateCompanyGoalView = () => {
                       setFilters((prev) => ({ ...prev, userIds }));
                     }}
                   />
+                  {/* Salesperson */}
+                  <FilterMultiSelect
+                    label="Supervisor"
+                    options={normalizedCompanyUsers
+                      .filter((u) => u.role === "supervisor")
+                      .map((u) => `${u.firstName} ${u.lastName}`)}
+                    selected={filters.supervisorIds.map((id) =>
+                      `${
+                        normalizedCompanyUsers.find((u) => u.uid === id)
+                          ?.firstName || ""
+                      } ${
+                        normalizedCompanyUsers.find((u) => u.uid === id)
+                          ?.lastName || ""
+                      }`.trim()
+                    )}
+                    onChange={(selectedNames) => {
+                      const supervisorIds = selectedNames
+                        .map(
+                          (name) =>
+                            normalizedCompanyUsers.find(
+                              (u) =>
+                                `${u.firstName} ${u.lastName}` === name &&
+                                u.role === "supervisor"
+                            )?.uid
+                        )
+                        .filter(Boolean) as string[];
+                      setFilters((prev) => ({ ...prev, supervisorIds }));
+                    }}
+                  />
 
                   {/* Clear Button */}
                   <Button
@@ -982,6 +732,7 @@ const CreateCompanyGoalView = () => {
                         chainType: "",
                         typeOfAccounts: [],
                         userIds: [],
+                        supervisorIds: [],
                       })
                     }
                   >
@@ -992,13 +743,15 @@ const CreateCompanyGoalView = () => {
                 {(filters.chains.length > 0 ||
                   filters.chainType ||
                   filters.typeOfAccounts.length > 0 ||
-                  filters.userIds) && (
+                  filters.userIds ||
+                  filters.supervisorIds.length > 0) && (
                   <Box
                     display="flex"
                     gap={2}
                     flexWrap="wrap"
                     sx={{ mb: 1, mt: 1 }}
                   >
+                    Filters applied:
                     <div className="chains-container">
                       {filters.chains.map((c) => (
                         <Chip
@@ -1039,40 +792,85 @@ const CreateCompanyGoalView = () => {
                         />
                       ))}
                     </div>
-                    <div className="sales-people-container">
-                      {filters.userIds.map((uid) => {
-                        const user = normalizedCompanyUsers.find(
-                          (u) => u.uid === uid
-                        );
-                        const name = user
-                          ? `${user.firstName} ${user.lastName}`
-                          : "Unknown User";
+                    {filters.userIds.length > 0 && (
+                      <Box
+                        className="sales-people-container"
+                        sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
+                      >
+                        <Typography variant="subtitle2" sx={{ mr: 1 }}>
+                          Salespeople:
+                        </Typography>
+                        {filters.userIds.map((uid) => {
+                          const user = normalizedCompanyUsers.find(
+                            (u) => u.uid === uid
+                          );
+                          const name = user
+                            ? `${user.firstName} ${user.lastName}`
+                            : "Unknown User";
 
-                        return (
-                          <Chip
-                            key={uid}
-                            label={`User: ${name}`}
-                            color={
-                              filteredAccounts.some((account) =>
-                                account.salesRouteNums?.includes(
-                                  user?.salesRouteNum || ""
+                          return (
+                            <Chip
+                              key={uid}
+                              label={`User: ${name}`}
+                              color={
+                                filteredAccounts.some((account) =>
+                                  account.salesRouteNums?.includes(
+                                    user?.salesRouteNum || ""
+                                  )
                                 )
-                              )
-                                ? "default" // ✅ Has matching account
-                                : "error" // ❌ No matching account
-                            }
-                            onDelete={() =>
-                              setFilters({
-                                ...filters,
-                                userIds: filters.userIds.filter(
-                                  (id) => id !== uid
-                                ),
-                              })
-                            }
-                          />
-                        );
-                      })}
-                    </div>
+                                  ? "default"
+                                  : "error"
+                              }
+                              onDelete={() =>
+                                setFilters({
+                                  ...filters,
+                                  userIds: filters.userIds.filter(
+                                    (id) => id !== uid
+                                  ),
+                                })
+                              }
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                    {filters.supervisorIds.length > 0 && (
+                      <Box
+                        className="supervisors-container"
+                        sx={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 1,
+                          mt: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle2" sx={{ mr: 1 }}>
+                          Supervisors:
+                        </Typography>
+                        {filters.supervisorIds.map((uid) => {
+                          const sup = normalizedCompanyUsers.find(
+                            (u) => u.uid === uid
+                          );
+                          const name = sup
+                            ? `${sup.firstName} ${sup.lastName}`
+                            : "Unknown Supervisor";
+                          return (
+                            <Chip
+                              key={uid}
+                              label={`Supervisor: ${name}`}
+                              onDelete={() =>
+                                setFilters({
+                                  ...filters,
+                                  supervisorIds: filters.supervisorIds.filter(
+                                    (id) => id !== uid
+                                  ),
+                                })
+                              }
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
                   </Box>
                 )}
 
@@ -1114,42 +912,14 @@ const CreateCompanyGoalView = () => {
               </>
             )}
 
+            {/* new accounts view showing them combined */}
             {accountScope === "selected" && (
               <>
-                {accountScope === "selected" ? (
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {filteredAccounts.length} account
-                    {filteredAccounts.length !== 1 ? "s" : ""} currently match
-                    selected filters
-                  </Typography>
-                ) : (
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {accountsForSelectedUsers.length} account
-                    {accountsForSelectedUsers.length !== 1 ? "s" : ""} are
-                    assigned to selected user
-                    {selectedUserIds.length !== 1 ? "s" : ""}
-                  </Typography>
-                )}
-
-                <UserMultiSelector
-                  users={eligibleUsersForCurrentScope}
-                  selectedUserIds={selectedUserIds}
-                  setSelectedUserIds={setSelectedUserIds}
-                />
-              </>
-            )}
-            {accountScope === "selected" && (
-              <>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  Showing {filteredAccounts.length} of {accounts.length} total
-                  accounts.
-                </Typography>
-
-                {selectedAccounts.length === 0 ? (
+                {accountNumbersForThisGoal.length === 0 ? (
                   <Typography
                     variant="body2"
                     color="textSecondary"
-                    sx={{ mb: 2 }} // spacing below before scroll box
+                    sx={{ mb: 2 }}
                   >
                     Please select accounts from the table below
                   </Typography>
@@ -1159,40 +929,19 @@ const CreateCompanyGoalView = () => {
                   </Typography>
                 )}
 
-                {selectedAccounts.length > 0 && (
-                  <div className="accounts-selection-box">
-                    <AccountMultiSelector
-                      allAccounts={selectedAccounts}
-                      selectedAccounts={selectedAccounts}
-                      setSelectedAccounts={setSelectedAccounts}
-                    />
-                  </div>
-                )}
-
-                {availableAccounts.length > 0 ? (
-                  <div className="accounts-selection-box">
-                    <Typography variant="h5" sx={{ mt: 4 }}>
-                      {`Available Accounts ${
-                        filteredAccounts.length < accounts.length
-                          ? "(Filtered)"
-                          : ""
-                      }`}
-                    </Typography>
-
-                    <AccountMultiSelector
-                      allAccounts={availableAccounts}
-                      selectedAccounts={selectedAccounts}
-                      setSelectedAccounts={setSelectedAccounts}
-                    />
-                  </div>
-                ) : (
-                  <Typography
-                    variant="body2"
-                    sx={{ mt: 2, fontStyle: "italic" }}
-                  >
-                    All accounts have been selected.
-                  </Typography>
-                )}
+                <AccountMultiSelector
+                  allAccounts={filteredAccounts}
+                  selectedAccounts={accounts.filter((acc) =>
+                    accountNumbersForThisGoal.includes(
+                      acc.accountNumber.toString()
+                    )
+                  )}
+                  setSelectedAccounts={(updated) =>
+                    setAccountNumbersForThisGoal(
+                      updated.map((a) => a.accountNumber.toString())
+                    )
+                  }
+                />
               </>
             )}
           </Box>
@@ -1235,8 +984,8 @@ const CreateCompanyGoalView = () => {
                     ? `${accounts.length} account${
                         accounts.length !== 1 ? "s" : ""
                       }`
-                    : `${selectedAccounts.length} selected account${
-                        selectedAccounts.length !== 1 ? "s" : ""
+                    : `${accountNumbersForThisGoal.length} selected account${
+                        accountNumbersForThisGoal.length !== 1 ? "s" : ""
                       }`}
                 </Typography>
 
@@ -1259,11 +1008,14 @@ const CreateCompanyGoalView = () => {
           )}
         </div>
       </Box>
-      <CustomConfirmation
+      <ConfirmGoalModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         goal={draftGoal}
         onConfirm={confirmGoalCreation}
+        affectedAccountsCount={affectedAccountsCount}
+        affectedSalesCount={affectedSalesCount}
+        affectedSupervisorsCount={affectedSupervisorsCount}
       />
     </Container>
   );

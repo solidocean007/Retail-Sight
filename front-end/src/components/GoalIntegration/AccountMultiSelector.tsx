@@ -1,8 +1,7 @@
 // AccountMultiSelector.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
-  TextField,
   Table,
   TableHead,
   TableRow,
@@ -11,15 +10,15 @@ import {
   Checkbox,
   Typography,
   Button,
-  InputBase,
 } from "@mui/material";
-import { CompanyAccountType } from "../../utils/types";
+import { CompanyAccountType, UserType } from "../../utils/types";
 import "./accountMultiSelector.css";
 
 interface AccountMultiSelectorProps {
   allAccounts: CompanyAccountType[];
   selectedAccounts: CompanyAccountType[];
   setSelectedAccounts: (updatedAccounts: CompanyAccountType[]) => void;
+  companyUsers?: UserType[] | null; // 🔹 to resolve supervisor names
   itemsPerPage?: number;
 }
 
@@ -27,6 +26,7 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
   allAccounts,
   selectedAccounts,
   setSelectedAccounts,
+  companyUsers,
   itemsPerPage = 20,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,14 +53,21 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
       selectedAccounts.some((sel) => sel.accountNumber === acc.accountNumber)
     ) && !allFilteredSelected;
 
+  useEffect(() => {
+    // If nothing is selected yet, default to selecting all accounts
+    if (allAccounts.length > 0 && selectedAccounts.length === 0) {
+      setSelectedAccounts(allAccounts);
+    }
+  }, [allAccounts, selectedAccounts, setSelectedAccounts]);
+
   const handleAccountToggle = (account: CompanyAccountType) => {
     const isSelected = selectedAccounts.some(
-      (a) => a.accountNumber === account.accountNumber
+      (a) => String(a.accountNumber) === String(account.accountNumber)
     );
     setSelectedAccounts(
       isSelected
         ? selectedAccounts.filter(
-            (a) => a.accountNumber !== account.accountNumber
+            (a) => String(a.accountNumber) !== String(account.accountNumber)
           )
         : [...selectedAccounts, account]
     );
@@ -85,9 +92,24 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
     }
   };
 
+  // 🔹 Helper: resolve supervisor names for each account
+  const getSupervisorNames = (account: CompanyAccountType): string => {
+  if (!companyUsers) return "-";
+  const reps = companyUsers.filter(
+    (u) => u.salesRouteNum && account.salesRouteNums?.includes(u.salesRouteNum)
+  );
+  const supIds = Array.from(new Set(reps.map((r) => r.reportsTo).filter(Boolean)));
+  const supNames = supIds
+    .map((id) => {
+      const sup = companyUsers.find((u) => u.uid === id);
+      return sup ? `${sup.firstName} ${sup.lastName}` : "Unknown";
+    });
+  return supNames.length ? supNames.join(", ") : "-";
+};
+
+
   return (
     <Box className="account-multi-selector">
-      {/* Top Controls */}
       <Box
         sx={{ px: 2, py: 1, borderBottom: "1px solid #eee", maxWidth: "500px" }}
       >
@@ -129,6 +151,7 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
               <TableCell>Type</TableCell>
               <TableCell>Chain</TableCell>
               <TableCell>Chain Type</TableCell>
+              <TableCell>Supervisor(s)</TableCell> {/* 🔹 New column */}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -137,7 +160,9 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
                 <TableCell>
                   <Checkbox
                     checked={selectedAccounts.some(
-                      (a) => a.accountNumber === account.accountNumber
+                      (a) =>
+                        String(a.accountNumber) ===
+                        String(account.accountNumber)
                     )}
                     onChange={() => handleAccountToggle(account)}
                   />
@@ -150,6 +175,9 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
                 <TableCell>{account.typeOfAccount || "-"}</TableCell>
                 <TableCell>{account.chain || "-"}</TableCell>
                 <TableCell>{account.chainType || "-"}</TableCell>
+                <TableCell>
+                  {getSupervisorNames(account)}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

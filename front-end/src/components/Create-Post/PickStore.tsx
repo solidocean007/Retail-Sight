@@ -13,7 +13,7 @@ import { Box, CircularProgress, Typography, Button } from "@mui/material";
 // import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGalloGoalsByCompanyId";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
 import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
-import { selectUser } from "../../Slices/userSlice";
+import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 
 import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCompanyAccounts";
 import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/getActiveCompanyGoalsForAccount";
@@ -49,9 +49,11 @@ export const PickStore: React.FC<PickStoreProps> = ({
   setSelectedGalloGoal,
 }) => {
   const user = useSelector(selectUser);
-  // const { accounts: allAccounts, loading: accountsLoading } = useSelector(
-  //   (s: RootState) => s.allAccounts
-  // );
+  const companyUsers = useSelector(selectCompanyUsers) || [];
+  const isAdminOrAbove =
+  user?.role === "admin" ||
+  user?.role === "super-admin";
+
   const salesRouteNum = user?.salesRouteNum;
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
@@ -110,12 +112,50 @@ export const PickStore: React.FC<PickStoreProps> = ({
     : [];
 
   const companyGoals = useMemo(() => {
-    if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
-    return getActiveCompanyGoalsForAccount(
-      post.account.accountNumber,
-      allCompanyGoals
-    );
-  }, [post.account?.accountNumber, allCompanyGoals]);
+  if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
+  return getActiveCompanyGoalsForAccount(
+    post.account.accountNumber,
+    allCompanyGoals
+  );
+}, [post.account?.accountNumber, allCompanyGoals]);
+
+const goalsForAccount = useMemo(() => {
+  if (!post.account) return []; // guard early
+
+  const { accountNumber, salesRouteNums = [] } = post.account;
+
+  return companyGoals.filter((goal) => {
+    // 🟢 Sales employees only see sales goals
+    if (user?.role === "employee" && goal.targetRole === "sales") {
+      return goal.accountNumbersForThisGoal?.includes(accountNumber.toString());
+    }
+
+    // 🟢 Supervisors only see supervisor goals tied to their reps' accounts
+    if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
+      // find all reps reporting to this supervisor
+      const repsReportingToMe = companyUsers.filter(
+        (u) => u.reportsTo === user?.uid && u.salesRouteNum
+      );
+
+      const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
+
+      // check overlap between account route nums and my reps' route nums
+      const overlap = salesRouteNums.some((rn) =>
+        myRepsRouteNums.includes(rn)
+      );
+
+      return overlap && goal.accountNumbersForThisGoal?.includes(accountNumber.toString());
+    }
+
+    // 🟢 Admins/super-admins see all goals
+    if (isAdminOrAbove) {
+      return goal.accountNumbersForThisGoal?.includes(accountNumber.toString());
+    }
+
+    return false;
+  });
+}, [companyGoals, post.account, user?.role, companyUsers, user?.uid, isAdminOrAbove]);
+
 
   useEffect(() => {
     if (!post.account?.accountNumber) {
@@ -360,7 +400,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         <Box mt={3}>
           <Box mt={2}>
             <CompanyGoalDropdown
-              goals={companyGoals}
+              goals={goalsForAccount}
               label="Company Goals"
               loading={isFetchingGoal}
               onSelect={handleCompanyGoalSelection}

@@ -1,3 +1,4 @@
+// EditCompanyGoalModal.tsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Dialog,
@@ -38,9 +39,9 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   companyUsers,
   onSave,
 }) => {
-  const [accountNumbersForThisGoal, setAccountNumbersForThisGoal] = useState(
-    goal.accountNumbersForThisGoal || []
-  );
+  const [accountNumbersForThisGoal, setAccountNumbersForThisGoal] = useState<
+    string[]
+  >(goal.accountNumbersForThisGoal || []);
   const [goalTitle, setGoalTitle] = useState(goal.goalTitle);
   const [goalDescription, setGoalDescription] = useState(goal.goalDescription);
   const [goalMetric, setGoalMetric] = useState(goal.goalMetric);
@@ -51,17 +52,17 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const [goalEndDate, setGoalEndDate] = useState(goal.goalEndDate);
   const [searchSelected, setSearchSelected] = useState("");
 
-  const hasSubmissions = false;
-
   useEffect(() => {
     setAccountNumbersForThisGoal(goal.accountNumbersForThisGoal || []);
   }, [goal]);
 
+  const selectedAccountNumbers = accountNumbersForThisGoal;
+
   const selectedAccountObjects = useMemo(() => {
     return allAccounts.filter((acc) =>
-      accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+      selectedAccountNumbers.includes(acc.accountNumber.toString())
     );
-  }, [allAccounts, accountNumbersForThisGoal]);
+  }, [allAccounts, selectedAccountNumbers]);
 
   const filteredSelectedAccounts = useMemo(() => {
     return selectedAccountObjects.filter(
@@ -71,9 +72,18 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     );
   }, [selectedAccountObjects, searchSelected]);
 
+  // 🔹 Handle account selection changes
+  const handleAccountSelectionChange = (
+    updatedAccounts: CompanyAccountType[]
+  ) => {
+    const updatedNumbers = updatedAccounts.map((acc) =>
+      acc.accountNumber.toString()
+    );
+    setAccountNumbersForThisGoal(updatedNumbers);
+  };
+
   const updatedGoal: Partial<CompanyGoalType> = useMemo(
     () => ({
-      accountNumbersForThisGoal,
       goalTitle,
       goalDescription,
       goalMetric,
@@ -81,9 +91,9 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalStartDate,
       goalEndDate,
       perUserQuota,
+      accountNumbersForThisGoal,
     }),
     [
-      accountNumbersForThisGoal,
       goalTitle,
       goalDescription,
       goalMetric,
@@ -91,12 +101,12 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalStartDate,
       goalEndDate,
       perUserQuota,
+      accountNumbersForThisGoal,
     ]
   );
 
   const currentGoalComparable = useMemo(
     () => ({
-      accountNumbersForThisGoal: goal.accountNumbersForThisGoal || [],
       goalTitle: goal.goalTitle,
       goalDescription: goal.goalDescription,
       goalMetric: goal.goalMetric,
@@ -104,6 +114,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       perUserQuota: goal.perUserQuota,
       goalStartDate: goal.goalStartDate,
       goalEndDate: goal.goalEndDate,
+      accountNumbersForThisGoal: goal.accountNumbersForThisGoal || [],
     }),
     [goal]
   );
@@ -118,17 +129,8 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     if (updatedGoal.perUserQuota === 0) {
       delete cleanedGoal.perUserQuota;
     }
-
     onSave(cleanedGoal);
     onClose();
-  };
-
-  const handleAccountSelectionChange = (
-    updatedAccounts: CompanyAccountType[]
-  ) => {
-    setAccountNumbersForThisGoal(
-      updatedAccounts.map((acc) => acc.accountNumber.toString())
-    );
   };
 
   const handleQuotaToggle = (checked: boolean) => {
@@ -144,6 +146,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Edit Goal</DialogTitle>
       <DialogContent>
+        {/* 📝 Form Fields */}
         <Box
           mb={3}
           display="grid"
@@ -178,21 +181,17 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
             }
             label="Require submissions per user"
           />
-
           {perUserQuota !== 0 && (
             <TextField
               label="Goal Quota"
               type="number"
               value={perUserQuota}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                setPerUserQuota(value < 1 ? 1 : value); // prevent setting to 0 manually
-              }}
-              // fullWidth
+              onChange={(e) =>
+                setPerUserQuota(Math.max(1, Number(e.target.value)))
+              }
               helperText="Each user must submit this many posts"
             />
           )}
-
           <TextField
             label="Start Date"
             type="date"
@@ -220,11 +219,13 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
             />
           </Box>
         </Box>
+
         <Divider sx={{ my: 2 }} />
+
+        {/* 🔍 Selected Accounts */}
         <Typography variant="subtitle1" sx={{ mb: 1 }}>
           Select Target Accounts
         </Typography>
-
         <TextField
           label="Search Selected Accounts"
           value={searchSelected}
@@ -232,6 +233,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
           fullWidth
           sx={{ mb: 2 }}
         />
+
         <Box
           sx={{
             maxHeight: 250,
@@ -260,11 +262,12 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
                 <Button
                   size="small"
                   color="error"
-                  onClick={() =>
-                    setAccountNumbersForThisGoal((prev) =>
-                      prev.filter((id) => id !== acc.accountNumber.toString())
-                    )
-                  }
+                  onClick={() => {
+                    const updated = selectedAccountObjects.filter(
+                      (sel) => sel.accountNumber !== acc.accountNumber
+                    );
+                    handleAccountSelectionChange(updated);
+                  }}
                 >
                   ×
                 </Button>
@@ -273,9 +276,10 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
           )}
         </Box>
 
+        {/* 📋 Full Account Selector */}
         <AccountMultiSelector
           allAccounts={allAccounts}
-          selectedAccounts={filteredSelectedAccounts}
+          selectedAccounts={selectedAccountObjects}
           setSelectedAccounts={handleAccountSelectionChange}
         />
       </DialogContent>

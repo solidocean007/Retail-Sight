@@ -34,6 +34,11 @@
   max-width: 600px;
 }
 
+.target-accounts-and-roles {
+  display: flex;
+  align-items: center;
+}
+
 .custom-input {
   padding: 10px 12px;
   font-size: 1rem;
