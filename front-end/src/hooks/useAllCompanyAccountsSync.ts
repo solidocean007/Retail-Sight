@@ -10,14 +10,14 @@ import { setAllAccounts } from "../Slices/allAccountsSlice";
 import { RootState } from "../utils/store";
 import { showMessage } from "../Slices/snackbarSlice";
 
-const useAllCompanyAccountsSync = () => {
+const useAllCompanyAccountsSync = (enabled=true) => {
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);
   // const allAccounts = useSelector((state: RootState) => state.allAccounts.accounts);
 
   useEffect(() => {
+    if (!enabled || !user?.companyId) return;
     const loadAccounts = async () => {
-      if (!user?.companyId) return;
 
       const cached = await getAllCompanyAccountsFromIndexedDB();
       if (cached && cached.length > 0) {
@@ -42,7 +42,7 @@ const useAllCompanyAccountsSync = () => {
     };
 
     loadAccounts();
-  }, [user?.companyId, dispatch]);
+  }, [user?.companyId, dispatch, enabled]);
 };
 
 export default useAllCompanyAccountsSync;

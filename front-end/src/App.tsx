@@ -28,18 +28,19 @@ import { setupNotificationListenersForUser } from "./utils/listeners/setupNotifi
 import { setupNotificationListenersForCompany } from "./utils/listeners/setupNotificationListenerForCompany";
 import UserModal from "./components/UserModal";
 import { useIntegrations } from "./hooks/useIntegrations";
-import { getFunctions, httpsCallable } from "firebase/functions";
-// import { logTimestamps } from "./script";
-// import { auditPostDates, migratePostDates } from "./script";
+import useUserAccountsSync from "./hooks/useUserAccountsSync";
 
 function App(): React.JSX.Element {
+  const user = useSelector((state: RootState) => state.user.currentUser);
+
   useSchemaVersion();
   useCompanyUsersSync();
-  useAllCompanyAccountsSync();
+  useUserAccountsSync();
+  useAllCompanyAccountsSync(user?.role === "admin" || user?.role === "super-admin");
+
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
-  const user = useSelector((state: RootState) => state.user.currentUser);
   const companyId = user?.companyId;
   // const salesRouteNum = user?.salesRouteNum;
   const { currentUser, initializing } = useFirebaseAuth();

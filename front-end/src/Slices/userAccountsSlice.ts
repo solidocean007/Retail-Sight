@@ -1,15 +1,36 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { CompanyAccountType } from "../utils/types";
-import { getUserAccountsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import {
+  getUserAccountsFromIndexedDB,
+  saveUserAccountsToIndexedDB,
+} from "../utils/database/indexedDBUtils";
 import { RootState } from "../utils/store";
+import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 
-// Thunk to load accounts from IndexedDB
-export const loadUserAccounts = createAsyncThunk<CompanyAccountType[]>(
-  "userAccounts/loadUserAccounts",
-  async () => {
-    const accounts = await getUserAccountsFromIndexedDB();
-    return accounts;
-  },
+// The async thunk
+export const loadUserAccounts = createAsyncThunk(
+  "userAccounts/load",
+  async (
+    {
+      companyId,
+      salesRouteNum,
+    }: { companyId: string; salesRouteNum: string },
+    thunkAPI
+  ) => {
+    try {
+      const cached = await getUserAccountsFromIndexedDB();
+      if (cached?.length > 0) return cached;
+
+      const fresh = await fetchUsersAccounts(companyId, salesRouteNum);
+
+      await saveUserAccountsToIndexedDB(fresh);
+      return fresh;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(
+        err?.message || "Failed to load user accounts"
+      );
+    }
+  }
 );
 
 interface UserAccountsState {
@@ -31,7 +52,7 @@ const userAccountsSlice = createSlice({
     setUserAccounts: (state, action: PayloadAction<CompanyAccountType[]>) => {
       state.accounts = action.payload as CompanyAccountType[];
     },
-    clearReduxAccounts: (state) => {
+    clearUserAccounts: (state) => {
       state.accounts = [];
     },
   },
@@ -39,25 +60,29 @@ const userAccountsSlice = createSlice({
     builder
       .addCase(loadUserAccounts.pending, (state) => {
         state.loading = "pending";
+        state.error = null;
       })
-      .addCase(loadUserAccounts.fulfilled, (state, action) => {
-        state.accounts = action.payload;
-        state.loading = "succeeded";
-      })
+      .addCase(
+        loadUserAccounts.fulfilled,
+        (state, action: PayloadAction<CompanyAccountType[]>) => {
+          state.loading = "succeeded";
+          state.accounts = action.payload;
+        }
+      )
       .addCase(loadUserAccounts.rejected, (state, action) => {
-        state.error = action.error.message || "Failed to load user accounts";
         state.loading = "failed";
+        state.error = action.payload as string;
       });
   },
 });
 
 // Export actions and selector
-export const { setUserAccounts, clearReduxAccounts, setLoadingUserAccounts } =
-  userAccountsSlice.actions;
+export const { setUserAccounts, clearUserAccounts } = userAccountsSlice.actions;
+
 export const selectUserAccounts = (state: RootState) =>
-  state.userAccounts.accounts; // 'state.userAccounts' is of type 'unknown'
+  state.userAccounts.accounts; 
 export const selectUserAccountsLoading = (state: RootState) =>
-  state.userAccounts.loading; // 'state.userAccounts' is of type 'unknown'.
+  state.userAccounts.loading;
 
 // Export the reducer
 export default userAccountsSlice.reducer;

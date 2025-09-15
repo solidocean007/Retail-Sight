@@ -9,15 +9,12 @@ import { fetchLocationOptions } from "../Slices/locationSlice";
 import HeaderBar from "./HeaderBar";
 import { UserHomePageHelmet } from "../utils/helmetConfigurations";
 import {
-  addAccountsToIndexedDB,
   getFilteredSet,
   getPostsFromIndexedDB,
-  getUserAccountsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts, setFilteredPosts } from "../Slices/postsSlice";
 import { PostQueryFilters, PostWithID } from "../utils/types";
 import { selectCompanyUsers, selectUser } from "../Slices/userSlice";
-import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import FilterSummaryBanner from "./FilterSummaryBanner";
 import EnhancedFilterSidebar from "./FilterSideBar/EnhancedFilterSideBar";
 import {
@@ -44,8 +41,6 @@ export const UserHomePage = () => {
   const [activePostSet, setActivePostSet] = useState("posts");
   const [clearInput, setClearInput] = useState(false);
   const user = useSelector(selectUser);
-  const companyId = user?.companyId;
-  const [usersAccounts, setUsersAccounts] = useState<any[]>([]);
   const [isClosing, setIsClosing] = useState(false);
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
   const filterText = useMemo(
@@ -139,38 +134,6 @@ export const UserHomePage = () => {
   useEffect(() => {
     dispatch(fetchLocationOptions());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (!user || !companyId) return;
-
-    const fetchUserAccounts = async (companyId: string) => {
-      try {
-        const userAccounts = await getUserAccountsFromIndexedDB();
-
-        if (
-          (!userAccounts || userAccounts.length === 0) &&
-          user.salesRouteNum
-        ) {
-          const fetchedAccounts = await fetchUsersAccounts(
-            companyId,
-            user.salesRouteNum
-          );
-          if (fetchedAccounts.length > 0) {
-            setUsersAccounts(fetchedAccounts);
-            dispatch(setUsersAccounts(fetchedAccounts));
-
-            await addAccountsToIndexedDB(fetchedAccounts);
-          }
-        } else {
-          setUsersAccounts(userAccounts);
-        }
-      } catch (error) {
-        console.error("Error fetching user accounts:", error);
-      }
-    };
-
-    fetchUserAccounts(companyId);
-  }, [user, companyId]);
 
   return (
     <>

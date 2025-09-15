@@ -8,11 +8,15 @@ import {
   PostType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
-import { RootState } from "../../utils/store";
+import { RootState, useAppDispatch } from "../../utils/store";
 import { Box, CircularProgress, Typography, Button } from "@mui/material";
 // import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGalloGoalsByCompanyId";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
-import { getUserAccountsFromIndexedDB } from "../../utils/database/indexedDBUtils";
+import {
+  getAllCompanyAccountsFromIndexedDB,
+  getUserAccountsFromIndexedDB,
+  saveAllCompanyAccountsToIndexedDB,
+} from "../../utils/database/indexedDBUtils";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 
 import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCompanyAccounts";
@@ -29,6 +33,7 @@ import {
 } from "../../Slices/galloGoalsSlice";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { useIntegrations } from "../../hooks/useIntegrations";
+import { setAllAccounts } from "../../Slices/allAccountsSlice";
 
 interface PickStoreProps {
   post: PostInputType;
@@ -48,24 +53,27 @@ export const PickStore: React.FC<PickStoreProps> = ({
   setSelectedCompanyAccount,
   setSelectedGalloGoal,
 }) => {
+  const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyUsers = useSelector(selectCompanyUsers) || [];
-  const isAdminOrAbove =
-  user?.role === "admin" ||
-  user?.role === "super-admin";
+  const isAdminOrAbove = user?.role === "admin" || user?.role === "super-admin";
 
   const salesRouteNum = user?.salesRouteNum;
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
 
-  const [_allAccountsForCompany, setAllAccountsForCompany] = useState<
-    CompanyAccountType[]
-  >([]);
-  const [myAccounts, setMyAccounts] = useState<CompanyAccountType[]>([]);
+  const allCompanyAccounts = useSelector(
+    (state: RootState) => state.allAccounts.accounts
+  );
+  const userAccounts = useSelector(
+    (state: RootState) => state.userAccounts.accounts
+  );
   const [isAllStoresShown, setIsAllStoresShown] = useState(false); // Toggle State
+
+  const combinedAccounts = useMemo(() => {
+    return isAllStoresShown ? allCompanyAccounts : userAccounts;
+  }, [isAllStoresShown, allCompanyAccounts, userAccounts]);
   const [loadingAccounts, setLoadingAccounts] = useState(true); // Tracks loading status
-  const [accountsToSelect, setAccountsToSelect] =
-    useState<CompanyAccountType[]>();
 
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
@@ -80,9 +88,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalWithIdType>();
-  // const userRole = useSelector(selectUser)?.role;
-  // const isAdmin = userRole === "admin" || userRole === "super-admin";
-  // const isEmployee = userRole === "employee";
+
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
@@ -92,8 +98,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
   const onlyUsersStores = !isAllStoresShown;
 
-  // filtering by account number function:  these return current goals for selection.  a mode might be helpful for switching to the desired set.
-  // Derivations only if enabled:
   const usersActiveGalloGoals = galloEnabled
     ? getActiveGalloGoalsForAccount(
         post.account?.accountNumber,
@@ -112,50 +116,63 @@ export const PickStore: React.FC<PickStoreProps> = ({
     : [];
 
   const companyGoals = useMemo(() => {
-  if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
-  return getActiveCompanyGoalsForAccount(
-    post.account.accountNumber,
-    allCompanyGoals
-  );
-}, [post.account?.accountNumber, allCompanyGoals]);
+    if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
+    return getActiveCompanyGoalsForAccount(
+      post.account.accountNumber,
+      allCompanyGoals
+    );
+  }, [post.account?.accountNumber, allCompanyGoals]);
 
-const goalsForAccount = useMemo(() => {
-  if (!post.account) return []; // guard early
+  const goalsForAccount = useMemo(() => {
+    if (!post.account) return []; // guard early
 
-  const { accountNumber, salesRouteNums = [] } = post.account;
+    const { accountNumber, salesRouteNums = [] } = post.account;
 
-  return companyGoals.filter((goal) => {
-    // 🟢 Sales employees only see sales goals
-    if (user?.role === "employee" && goal.targetRole === "sales") {
-      return goal.accountNumbersForThisGoal?.includes(accountNumber.toString());
-    }
+    return companyGoals.filter((goal) => {
+      // 🟢 Sales employees only see sales goals
+      if (user?.role === "employee" && goal.targetRole === "sales") {
+        return goal.accountNumbersForThisGoal?.includes(
+          accountNumber.toString()
+        );
+      }
 
-    // 🟢 Supervisors only see supervisor goals tied to their reps' accounts
-    if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
-      // find all reps reporting to this supervisor
-      const repsReportingToMe = companyUsers.filter(
-        (u) => u.reportsTo === user?.uid && u.salesRouteNum
-      );
+      // 🟢 Supervisors only see supervisor goals tied to their reps' accounts
+      if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
+        // find all reps reporting to this supervisor
+        const repsReportingToMe = companyUsers.filter(
+          (u) => u.reportsTo === user?.uid && u.salesRouteNum
+        );
 
-      const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
+        const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
 
-      // check overlap between account route nums and my reps' route nums
-      const overlap = salesRouteNums.some((rn) =>
-        myRepsRouteNums.includes(rn)
-      );
+        // check overlap between account route nums and my reps' route nums
+        const overlap = salesRouteNums.some((rn) =>
+          myRepsRouteNums.includes(rn)
+        );
 
-      return overlap && goal.accountNumbersForThisGoal?.includes(accountNumber.toString());
-    }
+        return (
+          overlap &&
+          goal.accountNumbersForThisGoal?.includes(accountNumber.toString())
+        );
+      }
 
-    // 🟢 Admins/super-admins see all goals
-    if (isAdminOrAbove) {
-      return goal.accountNumbersForThisGoal?.includes(accountNumber.toString());
-    }
+      // 🟢 Admins/super-admins see all goals
+      if (isAdminOrAbove) {
+        return goal.accountNumbersForThisGoal?.includes(
+          accountNumber.toString()
+        );
+      }
 
-    return false;
-  });
-}, [companyGoals, post.account, user?.role, companyUsers, user?.uid, isAdminOrAbove]);
-
+      return false;
+    });
+  }, [
+    companyGoals,
+    post.account,
+    user?.role,
+    companyUsers,
+    user?.uid,
+    isAdminOrAbove,
+  ]);
 
   useEffect(() => {
     if (!post.account?.accountNumber) {
@@ -163,51 +180,29 @@ const goalsForAccount = useMemo(() => {
     }
   }, [post.account?.accountNumber]);
 
-  // load users accounts
   useEffect(() => {
-    const loadMyAccounts = async () => {
-      setLoadingAccounts(true); // Start loading
-      try {
-        // Fetch User-Specific Accounts (My Stores)
-        const userAccounts = await getUserAccountsFromIndexedDB();
-        if (userAccounts.length > 0) {
-          setMyAccounts(userAccounts);
-        } else {
-          // fetch this users accounts
-          // do i have an accountsSlice? to get accounts from?
-        }
-      } catch (error) {
-        console.error("Error loading users accounts:", error);
-      } finally {
-        setLoadingAccounts(false); // End loading
+    const shouldFetchAllAccounts = isAllStoresShown;
+
+    if (!shouldFetchAllAccounts) return;
+
+    const fetchAccounts = async () => {
+      setLoadingAccounts(true); // ✅ start spinner
+
+      const cached = await getAllCompanyAccountsFromIndexedDB();
+      if (cached.length > 0) {
+        dispatch(setAllAccounts(cached));
+        setLoadingAccounts(false); // ✅ stop spinner after cache
+        return;
       }
+
+      const fresh = await fetchAllCompanyAccounts(user?.companyId);
+      dispatch(setAllAccounts(fresh));
+      await saveAllCompanyAccountsToIndexedDB(fresh);
+      setLoadingAccounts(false); // ✅ stop spinner after fetch
     };
 
-    loadMyAccounts();
-  }, [companyId]);
-
-  // load all company accounts
-  useEffect(() => {
-    if (isAllStoresShown) {
-      const loadAllCompanyAccounts = async () => {
-        setLoadingAccounts(true);
-        try {
-          const accounts = await fetchAllCompanyAccounts(companyId);
-          setAllAccountsForCompany(accounts);
-          setAccountsToSelect(accounts); // Set accounts to select
-        } catch (error) {
-          console.error("Error fetching all company accounts:", error);
-        } finally {
-          setLoadingAccounts(false);
-        }
-      };
-
-      loadAllCompanyAccounts();
-    } else {
-      // If toggled back to "My Stores", reset accounts
-      setAccountsToSelect(myAccounts);
-    }
-  }, [isAllStoresShown, companyId, myAccounts]);
+    fetchAccounts();
+  }, [isAllStoresShown, user?.role, user?.companyId, dispatch]);
 
   const handleCompanyGoalSelection = (
     goal: CompanyGoalWithIdType | undefined
@@ -298,9 +293,9 @@ const goalsForAccount = useMemo(() => {
     setSelectedCompanyGoal(undefined);
   };
 
-  // if (loadingAccounts || !post.account?.accountNumber || !companyGoals.length) {
-  //   return <CircularProgress />;
-  // }
+  if (loadingAccounts || !post.account?.accountNumber || !companyGoals.length) {
+    return <CircularProgress />;
+  }
 
   return (
     <div className="pick-store">
@@ -425,7 +420,7 @@ const goalsForAccount = useMemo(() => {
       <AccountModalSelector
         open={openAccountModal}
         onClose={() => setOpenAccountModal(false)}
-        accounts={accountsToSelect}
+        accounts={combinedAccounts}
         onAccountSelect={handleAccountSelect}
         isAllStoresShown={isAllStoresShown}
         setIsAllStoresShown={setIsAllStoresShown}

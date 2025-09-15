@@ -16,7 +16,7 @@ import {
 } from "firebase/firestore";
 import { FireStoreGalloGoalDocType } from "../utils/types";
 import {
-  addAccountsToIndexedDB,
+  saveUserAccountsToIndexedDB,
   getUserAccountsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
@@ -95,7 +95,7 @@ export const fetchUserGalloGoals = createAsyncThunk<
       let userAccounts = await getUserAccountsFromIndexedDB();
       if (!userAccounts.length) {
         userAccounts = await fetchUsersAccounts(companyId, salesRouteNum);
-        if (userAccounts.length) await addAccountsToIndexedDB(userAccounts);
+        if (userAccounts.length) await saveUserAccountsToIndexedDB(userAccounts);
         else return [];
       }
 

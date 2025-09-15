@@ -190,22 +190,40 @@ const userBasedRows = useMemo(() => {
     goal.accountNumbersForThisGoal?.includes(acc.accountNumber.toString())
   );
 
-  // Build rows for each user
+  // If a specific salesRouteNum is passed → filter just that user
+  if (salesRouteNum) {
+    const currentUser = companyUsers.find((u) => u.salesRouteNum === salesRouteNum);
+    if (!currentUser) return [];
+
+    const accountsForUser =
+      goal.targetRole === "sales"
+        ? accountsForGoal.filter((acc) =>
+            (acc.salesRouteNums || []).includes(salesRouteNum)
+          )
+        : accountsForGoal.filter((acc) =>
+            (acc.salesRouteNums || []).some((rn) =>
+              companyUsers.some(
+                (rep) => rep.salesRouteNum === rn && rep.reportsTo === currentUser.uid
+              )
+            )
+          );
+
+    return [{ user: currentUser, accounts: accountsForUser }];
+  }
+
+  // Default: build rows for all relevant users
   return usersForGoal.map((u) => {
     let accountsForUser: CompanyAccountType[] = [];
 
     if (goal.targetRole === "sales") {
-      // sales → accounts directly tied to their salesRouteNum
       accountsForUser = accountsForGoal.filter((acc) =>
         (acc.salesRouteNums || []).includes(u.salesRouteNum || "")
       );
     } else if (goal.targetRole === "supervisor") {
-      // supervisor → collect all accounts covered by their reps
       const reps = companyUsers.filter(
         (rep) => rep.reportsTo === u.uid && rep.salesRouteNum
       );
       const repRouteNums = reps.map((r) => r.salesRouteNum);
-
       accountsForUser = accountsForGoal.filter((acc) =>
         (acc.salesRouteNums || []).some((rn) => repRouteNums.includes(rn))
       );
@@ -219,8 +237,8 @@ const userBasedRows = useMemo(() => {
   allCompanyAccounts,
   usersForGoal,
   companyUsers,
+  salesRouteNum,
 ]);
-
 
 
 const userRows: UserRowType[] = userBasedRows.map(({ user, accounts }) => {
@@ -295,7 +313,7 @@ const submissions = postsForUser.map((p) => ({
       <div className="company-goal-card-header">
         <div className="company-goal-card-start-end">
           <h5>Starts: {goal.goalStartDate}</h5>
-          <h5>{goal.id}</h5>
+          {/* <h5>{goal.id}</h5> */}
           <h5>Ends: {goal.goalEndDate}</h5>
         </div>
         <div className="info-title-row">

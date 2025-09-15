@@ -59,7 +59,7 @@ export const getAllCompanyAccountsFromIndexedDB = async (): Promise<
   });
 };
 
-export async function addAccountsToIndexedDB(
+export async function saveUserAccountsToIndexedDB(
   accounts: CompanyAccountType[],
 ): Promise<void> {
   const db = await openDB();
