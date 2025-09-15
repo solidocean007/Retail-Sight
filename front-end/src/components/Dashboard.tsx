@@ -40,6 +40,7 @@ import ProductsManager from "./ProductsManagement/ProductsManager.tsx";
 import MyGoals from "./GoalIntegration/MyGoals.tsx";
 import AdminUsersConsole from "./AdminDashboard/AdminUsersConsole.tsx";
 import TeamsViewer from "./TeamsViewer.tsx";
+import MyAccounts from "./MyAccounts.tsx";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -193,6 +194,7 @@ export const Dashboard = () => {
         {dashboardMode === "UsersMode" && <EmployeesViewer />}
         {dashboardMode === "UsersMode2" && <AdminUsersConsole />}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
+        {dashboardMode === "MyAccountsMode" && user && <MyAccounts />}
         {dashboardMode === "GoalManagerMode" && (
           <GoalManager companyId={companyId} />
         )}

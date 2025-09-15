@@ -31,7 +31,6 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
   isAllStoresShown,
   setIsAllStoresShown,
 }) => {
-  
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -70,14 +69,14 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
       </DialogTitle>
       <Box display="flex" justifyContent="center" mb={2}>
         <Button
-          variant={!isAllStoresShown ? "contained" : "outlined"}
+          variant={isAllStoresShown ? "contained" : "outlined"}
           onClick={() => setIsAllStoresShown(false)}
           sx={{ mx: 1 }}
         >
           My Stores
         </Button>
         <Button
-          variant={isAllStoresShown ? "contained" : "outlined"}
+          variant={!isAllStoresShown ? "contained" : "outlined"}
           onClick={() => setIsAllStoresShown(true)}
           sx={{ mx: 1 }}
         >
@@ -88,6 +87,20 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
       <DialogContent>
         <Autocomplete
           options={accounts}
+          filterOptions={(options, { inputValue }) =>
+            inputValue.length < 2
+              ? [] // hide list until 2+ chars
+              : options.filter((acc) =>
+                  `${acc.accountName} ${acc.accountAddress}`
+                    .toLowerCase()
+                    .includes(inputValue.toLowerCase())
+                )
+          }
+          noOptionsText={
+            <span style={{ opacity: 0.7, fontSize: "0.9rem" }}>
+              Start typing to search accounts
+            </span>
+          }
           getOptionLabel={(account) =>
             `${account.accountName} - ${account.accountAddress}`
           }
@@ -104,6 +117,7 @@ const AccountModalSelector: React.FC<AccountModalSelectorProps> = ({
             <TextField
               {...params}
               label="Search account"
+              placeholder="Type at least 2 letters..."
               variant="outlined"
               sx={{
                 mt: 1,

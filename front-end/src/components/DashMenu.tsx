@@ -82,6 +82,13 @@ const DashMenu = ({
           <ListItemText primary="Profile" />
         </ListItemButton>
         <ListItemButton
+          selected={selectedMode === "MyAccountsMode"}
+          onClick={() => onMenuClick("MyAccountsMode")}
+        >
+          <StoreIcon sx={{ mr: 1 }} />
+          <ListItemText primary="MyAccounts" />
+        </ListItemButton>
+        <ListItemButton
           selected={selectedMode === "CollectionsMode"}
           onClick={() => onMenuClick("CollectionsMode")}
         >
@@ -121,7 +128,7 @@ const DashMenu = ({
             <Inventory2 sx={{ mr: 1 }} />
             <ListItemText primary="Products" />
           </ListItemButton>
-        
+
           <ListItemButton
             selected={selectedMode === "UsersMode2"}
             onClick={() => onMenuClick("UsersMode2")}

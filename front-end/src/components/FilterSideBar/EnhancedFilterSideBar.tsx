@@ -323,8 +323,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       setTagInput("");
     }
   }, [filters.brand, filters.productType, filters.hashtag, filters.starTag]);
-  console.log(activePostSet);
-  console.log(filteredPostCount);
+  
   return (
     <div className="enhanced-sidebar side-bar-box">
       {/* {activePostSet === "filteredPosts" && filteredPosts.length > 0 && ( */}

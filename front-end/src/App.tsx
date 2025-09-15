@@ -36,7 +36,7 @@ function App(): React.JSX.Element {
   useSchemaVersion();
   useCompanyUsersSync();
   useUserAccountsSync();
-  useAllCompanyAccountsSync(user?.role === "admin" || user?.role === "super-admin");
+  useAllCompanyAccountsSync(user?.role === "admin" || user?.role === "super-admin" || user?.role == "supervisor");
 
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);

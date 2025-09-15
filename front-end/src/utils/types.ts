@@ -603,6 +603,7 @@ export type DashboardModeType =
   | "UsersMode2"
   | "AccountsMode"
   | "ProductsMode"
+  | "MyAccountsMode"
   | "MyGoalsMode"
   | "ProfileMode"
   | "IntegrationMode"

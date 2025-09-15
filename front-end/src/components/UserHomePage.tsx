@@ -159,7 +159,7 @@ export const UserHomePage = () => {
                 onClick={toggleFilterMenu}
                 className="icon-button"
                 title="Filters"
-                style={{ position: "fixed", top: "3.25rem", left: "1.5rem" }}
+                style={{ position: "fixed", top: "3.25rem", left: "5.5rem" }}
               >
                 <TuneIcon />
               </Fab>
@@ -167,7 +167,7 @@ export const UserHomePage = () => {
                 color="primary"
                 aria-label="create"
                 onClick={() => navigate("/create-post")}
-                style={{ position: "fixed", top: "3.25rem", right: "1.5rem" }}
+                style={{ position: "fixed", top: "3.25rem", right: "5.5rem" }}
               >
                 <AddAPhotoIcon />
               </Fab>

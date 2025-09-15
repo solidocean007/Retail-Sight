@@ -68,7 +68,16 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const userAccounts = useSelector(
     (state: RootState) => state.userAccounts.accounts
   );
-  const [isAllStoresShown, setIsAllStoresShown] = useState(false); // Toggle State
+  const [isAllStoresShown, setIsAllStoresShown] = useState(() => {
+    if (
+      user?.role === "supervisor" ||
+      user?.role === "admin" ||
+      user?.role === "super-admin"
+    ) {
+      return true; // default supervisors/admins to All Stores
+    }
+    return false; // sales reps start in My Stores
+  });
 
   const combinedAccounts = useMemo(() => {
     return isAllStoresShown ? allCompanyAccounts : userAccounts;
@@ -183,7 +192,11 @@ export const PickStore: React.FC<PickStoreProps> = ({
   useEffect(() => {
     const shouldFetchAllAccounts = isAllStoresShown;
 
-    if (!shouldFetchAllAccounts) return;
+    if (!shouldFetchAllAccounts) {
+      // 🟢 Supervisor or users without route accounts
+      setLoadingAccounts(false);
+      return;
+    }
 
     const fetchAccounts = async () => {
       setLoadingAccounts(true); // ✅ start spinner
@@ -293,7 +306,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     setSelectedCompanyGoal(undefined);
   };
 
-  if (loadingAccounts || !post.account?.accountNumber || !companyGoals.length) {
+  if (loadingAccounts) {
     return <CircularProgress />;
   }
 
@@ -341,7 +354,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
           Select Account
         </Button>
       </Box>
-
       {!post.account?.accountNumber && (
         <Box className="toggle-section" mt={3}>
           <Box className="toggle-wrapper" mt={2}>

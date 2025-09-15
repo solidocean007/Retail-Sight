@@ -24,10 +24,11 @@ const MyCompanyGoals: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const user = useSelector(selectUser);
+  console.log(user)
   const loading = useSelector(selectCompanyGoalsIsLoading);
 
   const userCompanyGoals = useSelector(
-    makeSelectUsersCompanyGoals(user?.salesRouteNum, user?.uid)
+    makeSelectUsersCompanyGoals(user?.salesRouteNum, user?.uid, user?.role)
   );
 
   const [showArchived, setShowArchived] = useState(false);

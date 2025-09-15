@@ -2,6 +2,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../utils/store";
 import { CompanyAccountType, CompanyGoalWithIdType } from "../utils/types";
 import { selectAllCompanyAccounts } from "./allAccountsSlice";
+import { selectUserAccounts } from "./userAccountsSlice";
 
 interface CompanyGoalsState {
   goals: CompanyGoalWithIdType[];
@@ -113,28 +114,44 @@ export const makeSelectUsersCompanyGoals = (
   role?: string
 ) =>
   createSelector(
-    [selectAllCompanyGoals, selectAllCompanyAccounts, (state: RootState) => state.user.companyUsers || []],
-    (allGoals, allAccounts, companyUsers) => {
-      if (!salesRouteNum && !userId) return [];
+    [
+      selectAllCompanyGoals,
+      (state: RootState) =>
+        role === "supervisor" || role === "admin" || role === "super-admin"
+          ? selectAllCompanyAccounts(state) // supervisors+admins need all accounts
+          : selectUserAccounts(state), // sales reps just need their slice
+      (state: RootState) => state.user.companyUsers || [],
+    ],
+    (allGoals, relevantAccounts, companyUsers) => {
+      if (!salesRouteNum && !userId) {
+        console.log("⛔ No salesRouteNum or userId, returning []");
+        return [];
+      }
 
       return allGoals.filter((goal: CompanyGoalWithIdType) => {
         // 🔹 Sales
         if (goal.targetRole === "sales" && salesRouteNum) {
           const matchingAccounts = (goal.accountNumbersForThisGoal || [])
             .map((accountId) =>
-              allAccounts.find(
+              relevantAccounts.find(
                 (acc) => acc.accountNumber.toString() === accountId
               )
             )
             .filter(Boolean) as CompanyAccountType[];
 
-          return matchingAccounts.some((account) =>
+          const match = matchingAccounts.some((account) =>
             (account.salesRouteNums || []).includes(salesRouteNum)
           );
+
+          return match;
         }
 
         // 🔹 Supervisor
-        if (goal.targetRole === "supervisor" && role === "supervisor" && userId) {
+        if (
+          goal.targetRole === "supervisor" &&
+          role === "supervisor" &&
+          userId
+        ) {
           const repsReportingToMe = companyUsers.filter(
             (u) => u.reportsTo === userId && u.salesRouteNum
           );
@@ -142,19 +159,20 @@ export const makeSelectUsersCompanyGoals = (
 
           const matchingAccounts = (goal.accountNumbersForThisGoal || [])
             .map((accountId) =>
-              allAccounts.find(
+              relevantAccounts.find(
                 (acc) => acc.accountNumber.toString() === accountId
               )
             )
             .filter(Boolean) as CompanyAccountType[];
 
-          return matchingAccounts.some((acc) =>
+          const match = matchingAccounts.some((acc) =>
             acc.salesRouteNums?.some((rn) => myRepsRouteNums.includes(rn))
           );
+
+          return match;
         }
 
         return false;
       });
     }
   );
-
