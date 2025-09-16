@@ -38,6 +38,9 @@ import LogOutButton from "../LogOutButton";
 import DeveloperNotificationForm from "../Notifications/DeveloperNotificationForm";
 import DeveloperNotificationsTable from "../Notifications/DeveloperNotificationsTable";
 import CompanyOnboardingAdmin from "./CompanyOnboardingAdmin";
+import { CreateTestCompanyModal } from "./CreateTestCompanyModal";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../../utils/firebase";
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
@@ -50,6 +53,7 @@ const DeveloperDashboard = () => {
 
   const [tabIndex, setTabIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateTestCompanyModalOpen, setIsCreateTestCompanyModalOpen] = useState(false);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
@@ -92,7 +96,6 @@ const DeveloperDashboard = () => {
   return (
     <Container sx={{ display: "flex", flexDirection: "column" }}>
       <DeveloperDashboardHelmet />
-
       {/* ─────────────────── HEADER ─────────────────── */}
       <header>
         <Typography variant="h4">Developer Dashboard</Typography>
@@ -123,7 +126,6 @@ const DeveloperDashboard = () => {
           )}
         </Stack>
       </header>
-
       {/* ─────────────────── LOADING STATE ─────────────────── */}
       {loading && !allCompaniesAndUsers.length ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -132,6 +134,14 @@ const DeveloperDashboard = () => {
       ) : (
         <>
           {/* ─────────────────── TABS ─────────────────── */}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setIsCreateTestCompanyModalOpen(true)}
+          >
+            Create Test Company
+          </Button>
+
           <Tabs
             value={tabIndex}
             onChange={(_, v) => setTabIndex(v)}
@@ -196,7 +206,9 @@ const DeveloperDashboard = () => {
                   currentUser={dashboardUser as UserType}
                   allCompaniesAndUsers={allCompaniesAndUsers}
                 />
-                <DeveloperNotificationsTable allCompaniesAndUsers={allCompaniesAndUsers} />
+                <DeveloperNotificationsTable
+                  allCompaniesAndUsers={allCompaniesAndUsers}
+                />
               </Box>
             )}
 
@@ -213,7 +225,6 @@ const DeveloperDashboard = () => {
           </Box>
         </>
       )}
-
       {/* <GenerateApiKeyComponent open={isModalOpen} onClose={handleCloseModal} /> */}
       <CustomConfirmation
         isOpen={confirmOpen}
@@ -221,6 +232,19 @@ const DeveloperDashboard = () => {
         onConfirm={handleConfirmDelete}
         onClose={() => setConfirmOpen(false)}
         loading={deleting}
+      />
+      // inside DeveloperDashboard component
+      <CreateTestCompanyModal
+        open={isCreateTestCompanyModalOpen}
+        onClose={handleCloseModal}
+        onCreate={async (companyData) => {
+          try {
+            await addDoc(collection(db, "companies"), companyData);
+            handleRefresh();
+          } catch (err) {
+            console.error("Error creating test company:", err);
+          }
+        }}
       />
     </Container>
   );

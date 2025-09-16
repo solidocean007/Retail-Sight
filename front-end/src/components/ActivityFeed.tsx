@@ -198,7 +198,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         <Virtuoso
           ref={virtuosoRef}
           increaseViewportBy={500}
-          style={{ height: 800, width: "100%" }} // is this necessary?
+          style={{ height: 1000, width: "100%" }} // is this necessary?
           data={displayPosts}
           // defaultItemHeight={itemHeight}
           itemContent={(index, post) => {

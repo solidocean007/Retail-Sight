@@ -115,6 +115,7 @@ const HeaderBar = ({
               </div>
             )}
           </div>
+          {currentUser?.uid}
           <div className="company-name-app-state">
             <h5>{currentUser?.company}</h5>
             {localVersion !== serverVersion ? (
