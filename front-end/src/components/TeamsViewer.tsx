@@ -50,7 +50,11 @@ const TeamsViewer = () => {
 
   return (
     <div className="team-container">
-      <h2 style={{ textAlign: "center" }}>Company Teams</h2>
+      {supervisors.length > 0 ? <h2 style={{ textAlign: "center" }}>Company Teams</h2> : (
+        <Typography variant="h6" gutterBottom style={{ textAlign: "center" }}>
+          No supervisors found for this company yet.
+        </Typography>
+      )}
       <div className="teams-viewer">
         {supervisors.map((supervisor) => (
           <Card key={supervisor.uid} className="team">

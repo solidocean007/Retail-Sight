@@ -164,7 +164,7 @@ const MyCompanyGoals: React.FC = () => {
         <CircularProgress />
       ) : userCompanyGoals.length === 0 ? (
         <Typography variant="body1" sx={{ mt: 2 }}>
-          No company goals found for your route.
+          No company goals found for you.
         </Typography>
       ) : (
         <>

@@ -21,9 +21,13 @@ const MyAccounts: React.FC = () => {
 
   return (
     <Box p={3}>
-      <Typography variant="h5" gutterBottom>
+     {accounts.length > 0 ? <Typography variant="h5" gutterBottom>
         My Accounts
-      </Typography>
+      </Typography> : (
+        <Typography variant="h6" gutterBottom>
+          No accounts have been imported for your user yet.
+        </Typography>
+      )}
 
       <TextField
         label="Search"

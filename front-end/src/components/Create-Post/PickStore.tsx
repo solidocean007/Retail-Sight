@@ -34,6 +34,7 @@ import {
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { useIntegrations } from "../../hooks/useIntegrations";
 import { setAllAccounts } from "../../Slices/allAccountsSlice";
+import ManualAccountForm from "./ManualAccountForm";
 
 interface PickStoreProps {
   post: PostInputType;
@@ -57,7 +58,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const user = useSelector(selectUser);
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const isAdminOrAbove = user?.role === "admin" || user?.role === "super-admin";
-
+  const [openManualAccountForm, setOpenManualAccountForm] = useState(false);
   const salesRouteNum = user?.salesRouteNum;
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
@@ -103,7 +104,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   );
 
   const allGalloGoals = useSelector(selectAllGalloGoals);
-  const [openAccountModal, setOpenAccountModal] = useState(true);
+  const [openAccountModal, setOpenAccountModal] = useState(false);
 
   const onlyUsersStores = !isAllStoresShown;
 
@@ -184,10 +185,24 @@ export const PickStore: React.FC<PickStoreProps> = ({
   ]);
 
   useEffect(() => {
-    if (!post.account?.accountNumber) {
-      setOpenAccountModal(true);
+    if (!loadingAccounts) {
+      if (combinedAccounts.length === 0) {
+        // 🛑 No accounts → open manual form, keep modal closed
+        setOpenManualAccountForm(true);
+        setOpenAccountModal(false);
+      } else if (!post.account?.accountNumber) {
+        // ✅ Accounts exist but none selected → open modal
+        setOpenAccountModal(true);
+      }
     }
-  }, [post.account?.accountNumber]);
+  }, [loadingAccounts, combinedAccounts.length, post.account?.accountNumber]);
+
+  // open manual account form if no accounts exist
+  useEffect(() => {
+    if (!loadingAccounts && combinedAccounts.length === 0) {
+      setOpenManualAccountForm(true);
+    }
+  }, [loadingAccounts, combinedAccounts.length]);
 
   useEffect(() => {
     const shouldFetchAllAccounts = isAllStoresShown;
@@ -333,26 +348,29 @@ export const PickStore: React.FC<PickStoreProps> = ({
         )}
       </Box>
       <Box className="store-selection">
-        <Button
-          onClick={() => setOpenAccountModal(true)}
-          variant="contained"
-          size="large"
-          fullWidth
-          sx={{
-            maxWidth: 400,
-            mx: "auto",
-            my: 1,
-            fontWeight: 600,
-            fontSize: "1rem",
-            backgroundColor: "#1976d2", // brighter blue
-            color: "#fff",
-            "&:hover": {
-              backgroundColor: "#1565c0",
-            },
-          }}
-        >
-          Select Account
-        </Button>
+        {combinedAccounts.length > 0 && (
+          <Button
+            onClick={() => setOpenAccountModal(true)}
+            variant="contained"
+            size="large"
+            fullWidth
+            disabled={!combinedAccounts?.length}
+            sx={{
+              maxWidth: 400,
+              mx: "auto",
+              my: 1,
+              fontWeight: 600,
+              fontSize: "1rem",
+              backgroundColor: "#1976d2", // brighter blue
+              color: "#fff",
+              "&:hover": {
+                backgroundColor: "#1565c0",
+              },
+            }}
+          >
+            Select Account
+          </Button>
+        )}
       </Box>
       {!post.account?.accountNumber && (
         <Box className="toggle-section" mt={3}>
@@ -429,14 +447,23 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Box>
       )}
 
-      <AccountModalSelector
-        open={openAccountModal}
-        onClose={() => setOpenAccountModal(false)}
-        accounts={combinedAccounts}
-        onAccountSelect={handleAccountSelect}
-        isAllStoresShown={isAllStoresShown}
-        setIsAllStoresShown={setIsAllStoresShown}
-      />
+      {!combinedAccounts?.length && (
+        <ManualAccountForm
+          open={openManualAccountForm}
+          onSave={handleAccountSelect}
+        />
+      )}
+
+      {combinedAccounts.length > 0 && (
+        <AccountModalSelector
+          open={openAccountModal}
+          onClose={() => setOpenAccountModal(false)}
+          accounts={combinedAccounts}
+          onAccountSelect={handleAccountSelect}
+          isAllStoresShown={isAllStoresShown}
+          setIsAllStoresShown={setIsAllStoresShown}
+        />
+      )}
     </div>
   );
 };
