@@ -8,7 +8,7 @@ import { useProductTypeOptions } from "../../hooks/useProductTypeOptions";
 
 export interface BrandsSelectorProps {
   selectedBrands: string[];
-  selectedProductType: string[];             // matches your PostType.productType[]
+  selectedProductType: string[]; // matches your PostType.productType[]
   onChange: (brands: string[], productType: string[]) => void;
 }
 
@@ -21,67 +21,59 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
 }) => {
   const companyProducts = useSelector(selectAllProducts);
 
-
   // all available brands in the company
-const brandOptions = useBrandOptions()
-const derivedProductTypes  = useProductTypeOptions(selectedBrands)
+  const brandOptions = useBrandOptions();
+  const derivedProductTypes = useProductTypeOptions(selectedBrands);
 
-
-  // product‐type *options* for the current selectedBrands
-  // const derivedProductTypes = useMemo(() => {
-  //   const types = companyProducts
-  //     .filter((p) => p.brand && selectedBrands.includes(p.brand))
-  //     .map((p) => p.productType?.toLowerCase() ?? "")
-  //     .filter(Boolean);
-  //   return Array.from(new Set(types)).sort();
-  // }, [companyProducts, selectedBrands]);
+  // If a selected brand has no known types, fallback to empty but let freeSolo input work
+  const availableTypes =
+    derivedProductTypes.length > 0 ? derivedProductTypes : [];
 
   // whenever you pick a new set of brands:
-const handleBrandsChange = (_: any, newBrands: string[]) => {
-  // 2️⃣ Cap at MAX_BRANDS
-  const capped = newBrands.slice(0, MAX_BRANDS);
+  const handleBrandsChange = (_: any, newBrands: string[]) => {
+    // 2️⃣ Cap at MAX_BRANDS
+    const capped = newBrands.slice(0, MAX_BRANDS);
 
-  // 3️⃣ Build the raw derived list of productTypes for these brands
-  const derived = Array.from(
-    new Set(
-      companyProducts
-        .filter((p) => {
-          const include = p.brand && capped.includes(p.brand);
-          return include;
-        })
-        .map((p) => {
-          const t = p.productType?.toLowerCase() ?? "";
-          return t;
-        })
-        .filter((t) => {
-          const keep = Boolean(t);
-          if (!keep) console.log("    – filtered out empty type");
-          return keep;
-        })
-    )
-  ).sort();
+    // 3️⃣ Build the raw derived list of productTypes for these brands
+    const derived = Array.from(
+      new Set(
+        companyProducts
+          .filter((p) => {
+            const include = p.brand && capped.includes(p.brand);
+            return include;
+          })
+          .map((p) => {
+            const t = p.productType?.toLowerCase() ?? "";
+            return t;
+          })
+          .filter((t) => {
+            const keep = Boolean(t);
+            if (!keep) console.log("    – filtered out empty type");
+            return keep;
+          })
+      )
+    ).sort();
 
-  let defaultTypes: string[];
-  const foundBeer = derived.some((t) => {
-    const match = t.includes("beer");
-    return match;
-  });
-  const foundWine = derived.some((t) => {
-    const match = t.includes("wine");
-    return match;
-  });
+    let defaultTypes: string[];
+    const foundBeer = derived.some((t) => {
+      const match = t.includes("beer");
+      return match;
+    });
+    const foundWine = derived.some((t) => {
+      const match = t.includes("wine");
+      return match;
+    });
 
-  if (foundBeer) {
-    defaultTypes = ["beer pkg"];
-  } else if (foundWine) {
-    defaultTypes = ["wine unfortified"];
-  } else {
-    defaultTypes = derived;
-  }
-  // 5️⃣ Emit the new brands + defaultTypes back to parent
-  onChange(capped, defaultTypes);
-};
-
+    if (foundBeer) {
+      defaultTypes = ["beer pkg"];
+    } else if (foundWine) {
+      defaultTypes = ["wine unfortified"];
+    } else {
+      defaultTypes = derived;
+    }
+    // 5️⃣ Emit the new brands + defaultTypes back to parent
+    onChange(capped, defaultTypes);
+  };
 
   // let the user override/tweak the productType list
   const handleTypesChange = (_: any, types: string[]) => {
@@ -104,7 +96,19 @@ const handleBrandsChange = (_: any, newBrands: string[]) => {
         renderTags={(value, getTagProps) =>
           value.map((option, index) => {
             const { key, ...tagProps } = getTagProps({ index });
-            return <Chip key={option} label={option} {...tagProps} />;
+            const isCustom = !companyProducts.some(
+              (p) => p.brand?.toLowerCase() === option.toLowerCase()
+            );
+
+            return (
+              <Chip
+                key={option}
+                label={isCustom ? `${option} (Custom)` : option}
+                color={isCustom ? "warning" : "default"}
+                variant={isCustom ? "outlined" : "filled"}
+                {...tagProps}
+              />
+            );
           })
         }
         renderInput={(params) => (
@@ -128,7 +132,7 @@ const handleBrandsChange = (_: any, newBrands: string[]) => {
         openOnFocus
         autoHighlight
         filterSelectedOptions
-        options={derivedProductTypes}
+        options={availableTypes}
         value={selectedProductType}
         onChange={handleTypesChange}
         renderInput={(params) => (
@@ -145,6 +149,3 @@ const handleBrandsChange = (_: any, newBrands: string[]) => {
 };
 
 export default BrandsSelector;
-
-
-

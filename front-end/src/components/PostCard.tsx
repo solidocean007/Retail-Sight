@@ -449,6 +449,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   </div>
                 )}
               </div>
+              {post.id}
             </div>
             <div className="hash-tag-container">
               {/* Display hashtags above the image */}
