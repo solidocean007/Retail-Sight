@@ -29,6 +29,7 @@ import { setupNotificationListenersForCompany } from "./utils/listeners/setupNot
 import UserModal from "./components/UserModal";
 import { useIntegrations } from "./hooks/useIntegrations";
 import useUserAccountsSync from "./hooks/useUserAccountsSync";
+import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
 
 function App(): React.JSX.Element {
   const user = useSelector((state: RootState) => state.user.currentUser);
@@ -37,6 +38,7 @@ function App(): React.JSX.Element {
   useCompanyUsersSync();
   useUserAccountsSync();
   useAllCompanyAccountsSync(user?.role === "admin" || user?.role === "super-admin" || user?.role == "supervisor");
+  useCustomAccountsSync(); // ✅ Sync custom manual accounts
 
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);

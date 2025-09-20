@@ -28,7 +28,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
   const user =
     filters.postUserUid &&
     companyUsers.find((u) => u.uid === filters.postUserUid);
-  console.log(filters)
+    
   return (
     <div className="active-filters-chip-row">
       {filters.hashtag && (

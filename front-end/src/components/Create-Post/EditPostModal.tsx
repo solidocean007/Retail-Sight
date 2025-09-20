@@ -267,7 +267,9 @@ const activeCompanyGoals = useMemo(() => {
   };
 
   const handleSave = () => {
-    if (selectedCompanyGoal?.id !== post.companyGoalId) {
+    const hadOriginalGoal = !!post.companyGoalId;
+
+    if (hadOriginalGoal && selectedCompanyGoal?.id !== post.companyGoalId) {
       setShowGoalChangeConfirm(true);
       return;
     }
@@ -329,6 +331,7 @@ const activeCompanyGoals = useMemo(() => {
     setEditablePost((prev) => ({ ...prev, [field]: value }));
   };
 
+  const hadOriginalGoal = !!originalGoalId;
   return (
     <>
       <Dialog
@@ -402,7 +405,7 @@ const activeCompanyGoals = useMemo(() => {
                 sx={{ mb: 2 }}
               />
 
-              {activeCompanyGoals.length > 0 && (
+              {activeCompanyGoals.length > 0 && hadOriginalGoal && (
                 <>
                   {selectedCompanyGoal?.id == originalGoalId && (
                     <div className="edit-post-info-banner">

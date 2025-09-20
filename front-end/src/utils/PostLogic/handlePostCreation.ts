@@ -33,6 +33,7 @@ import { buildPostPayload } from "./buildPostPayload";
 import { addPostToFirestore } from "./updateFirestore";
 import { normalizePost } from "../normalizePost";
 import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
+import { createManualAccountThunk } from "../../thunks/manulAccountsThunk";
 
 // Helper to wrap a Firebase storage upload task into a Promise
 function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
@@ -131,6 +132,10 @@ export const useHandlePostSubmission = () => {
 
       newDocRef = await addPostToFirestore(db, payload);
       const postId = newDocRef.id;
+
+      if (post.account?.typeOfAccount === "manual") {
+        await dispatch(createManualAccountThunk(post.account));
+      }
 
       if (post.companyGoalId || post.oppId) {
         setUploadStatusText("🎯 Updating related goal...");

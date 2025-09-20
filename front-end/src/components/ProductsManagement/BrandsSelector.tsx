@@ -1,5 +1,5 @@
 // src/components/ProductsManagement/BrandsSelector.tsx
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Autocomplete, TextField, Chip, FormControl } from "@mui/material";
 import { selectAllProducts } from "../../Slices/productsSlice";
@@ -20,6 +20,8 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   onChange,
 }) => {
   const companyProducts = useSelector(selectAllProducts);
+  const [brandInput, setBrandInput] = useState("");
+  const [typeInput, setTypeInput] = useState("");
 
   // all available brands in the company
   const brandOptions = useBrandOptions();
@@ -88,11 +90,24 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
         freeSolo
         options={brandOptions}
         value={selectedBrands}
+        inputValue={brandInput}
+        onInputChange={(_, newInput) => setBrandInput(newInput)}
         onChange={handleBrandsChange}
         getOptionDisabled={(opt) =>
           selectedBrands.length >= MAX_BRANDS && !selectedBrands.includes(opt)
         }
         limitTags={MAX_BRANDS}
+        onBlur={() => {
+          const trimmed = brandInput.trim();
+          if (
+            trimmed &&
+            !selectedBrands.includes(trimmed) &&
+            selectedBrands.length < MAX_BRANDS
+          ) {
+            handleBrandsChange(null, [...selectedBrands, trimmed]);
+          }
+          setBrandInput("");
+        }}
         renderTags={(value, getTagProps) =>
           value.map((option, index) => {
             const { key, ...tagProps } = getTagProps({ index });
@@ -134,7 +149,16 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
         filterSelectedOptions
         options={availableTypes}
         value={selectedProductType}
+        inputValue={typeInput}
+        onInputChange={(_, newInput) => setTypeInput(newInput)}
         onChange={handleTypesChange}
+        onBlur={() => {
+          const trimmed = typeInput.trim();
+          if (trimmed && !selectedProductType.includes(trimmed)) {
+            handleTypesChange(null, [...selectedProductType, trimmed]);
+          }
+          setTypeInput("");
+        }}
         renderInput={(params) => (
           <TextField
             {...params}

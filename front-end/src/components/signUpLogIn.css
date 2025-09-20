@@ -258,6 +258,11 @@ form {
   color: var(--link-color);
   text-decoration: none;
 }
+
+.reset-password-link {
+  background-color: var(--reset-button-background);
+}
+
 .auth-link:hover {
   color: var(--link-hover-color);
 }

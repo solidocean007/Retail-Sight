@@ -202,8 +202,9 @@
   --alt-menu-background-color: var(--gray-100);
   --footer-background-color: var(--gray-100);
 
-  --auth-footer-background: var(--pale-aqua);
+  --auth-footer-background: var(--soft-denim);
   --auth-footer-text: var(--deep-navy);
+  --reset-button-background: var(--soft-denim);
   --sidebar-background-color: var(--gray-100);
   --drawer-background: #ffffff;
   --switch-color: var(--gray-900);
@@ -280,6 +281,7 @@
 
   --auth-footer-background: var(--deep-navy);
   --auth-footer-text: var(--pale-aqua);
+  --reset-button-background: var(--faded-cadet);
 
   --sidebar-background-color: var(--gray-800);
   --drawer-background: #2c3148;

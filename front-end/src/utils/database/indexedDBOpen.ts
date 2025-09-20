@@ -1,5 +1,5 @@
 const dbName = "myRetailAppDB";
-const dbVersion = 32;
+const dbVersion = 33;
 
 // db.createObjectStore("filteredSets", { keyPath: "id" });
 // Each record: { id: string, filters: PostQueryFilters, posts: PostWithID[], fetchedAt: string }
@@ -32,6 +32,7 @@ const objectStores: {
   { name: "lastSeenTimestamp", options: {} },
   { name: "userAccounts_v2", options: { keyPath: "accountNumber" } },
   { name: "allUsersCompanyAccounts", options: { keyPath: "accountNumber" } },
+  { name: "customAccounts", options: { keyPath: "accountNumber" } },
   { name: "galloGoals", options: { keyPath: "id" } },
   { name: "companyGoals", options: { keyPath: "id" } },
   { name: "allGalloGoals", options: { keyPath: "id" } },

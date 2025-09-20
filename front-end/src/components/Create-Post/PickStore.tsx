@@ -62,6 +62,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const salesRouteNum = user?.salesRouteNum;
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
+  const [manualAccountAdded, setManualAccountAdded] = useState(false);
 
   const allCompanyAccounts = useSelector(
     (state: RootState) => state.allAccounts.accounts
@@ -304,11 +305,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
       chain,
       chainType,
     }));
-
+    setManualAccountAdded(true);
     setSelectedCompanyAccount(account);
   };
 
   const handleClearAccount = () => {
+    setManualAccountAdded(false);
     setPost((prevPost) => ({
       ...prevPost,
       account: null,
@@ -372,7 +374,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           </Button>
         )}
       </Box>
-      {!post.account?.accountNumber && (
+      {!post.account?.accountNumber && combinedAccounts.length > 0 && (
         <Box className="toggle-section" mt={3}>
           <Box className="toggle-wrapper" mt={2}>
             <Typography
@@ -447,7 +449,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Box>
       )}
 
-      {!combinedAccounts?.length && (
+      {!combinedAccounts?.length && !manualAccountAdded && (
         <ManualAccountForm
           open={openManualAccountForm}
           onSave={handleAccountSelect}
