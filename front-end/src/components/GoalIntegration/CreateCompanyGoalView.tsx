@@ -40,7 +40,6 @@ import "./createCompanyGoalView.css";
 import GoalTitleInput from "./GoalTitleInput";
 import ChainMultiSelect from "./FilterMultiSelect";
 import FilterMultiSelect from "./FilterMultiSelect";
-import CustomConfirmation from "../CustomConfirmation";
 import ConfirmGoalModal from "./ConfirmGoalModal";
 
 const defaultCustomerTypes: string[] = [
@@ -184,13 +183,6 @@ const CreateCompanyGoalView = () => {
     );
   }, [accounts, filters, userIdsByAccount, reportsToMap]);
 
-  // useEffect(() => {
-  //   // Auto-select all accounts matching filters if goalTargetMode is 'goalForSelectedAccounts'
-  //   if (accountScope === "selected") {
-  //     setSelectedAccounts(filteredAccounts);
-  //   }
-  // }, [filteredAccounts, accountScope]);
-
   const readyForCreation: boolean =
     goalTitle.trim().length > 0 &&
     goalDescription.trim().length > 0 &&
@@ -235,7 +227,7 @@ const CreateCompanyGoalView = () => {
       });
   }, [companyId]);
 
-  useEffect(() => {
+  useEffect(() => { // i think if this useEffect doesnt return accounts then we need to ui to the user 'hey if you want goals you need to impport your accounts.. custom accounts aint gonna cut it"
     const fetchAccounts = async () => {
       if (!companyId) return;
       try {
@@ -396,7 +388,7 @@ const CreateCompanyGoalView = () => {
         setGoalValueMin(1);
         setGoalStartDate("");
         setGoalEndDate("");
-        setSelectedAccounts([]);
+        // setSelectedAccounts([]);
       } else {
         alert(`Error: ${result.payload}`);
       }

@@ -40,6 +40,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -253,19 +255,27 @@ const LoginForm: React.FC<LoginFormProps> = ({
             <label className="auth-label" htmlFor="password">
               Password
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              className="auth-input"
-              placeholder="••••••••"
-              value={pw}
-              onChange={(e) => setPw(e.target.value)}
-              autoComplete="current-password"
-              required
-              aria-invalid={!!err}
-              aria-describedby={err ? "form-error" : undefined}
-            />
+            <div className="auth-password-wrapper">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                className="auth-input"
+                placeholder="••••••••"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="auth-toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
           </fieldset>
 
           <div className="auth-actions">
