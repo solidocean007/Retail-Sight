@@ -266,6 +266,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onChange={(e) => setPw(e.target.value)}
                 autoComplete="current-password"
                 required
+                style={{marginTop: 0}}
               />
               <button
                 type="button"

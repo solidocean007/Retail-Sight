@@ -31,7 +31,12 @@ Displaygram.com is a collaborative platform for sales teams, suppliers, and dist
 🗂 Admin view of user and account progress via toggleable tables.
 
 🧠 Smart Account Management
-🔍 Use the multi-account selector to assign goals to specific stores.
+
+🔍 Use the multi-account selector to assign goals to stores across your company.
+
+📝 If no accounts exist, users can manually create one on the fly — not ideal, but useful in a pinch.
+
+⚠️ Built-in fuzzy matching helps prevent accidental duplicates when entering store info.
 
 📦 Paginated, searchable account tables for fast setup.
 
