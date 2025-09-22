@@ -27,6 +27,13 @@ function normalizeField(value: string | undefined): string {
   return value?.trim().toLowerCase() || "";
 }
 
+export const normalizeAccount = (raw: any, docId: string): CompanyAccountType => ({
+  ...(raw as CompanyAccountType),
+  accountNumber: docId,
+  createdAt: raw.createdAt?.toDate?.().toISOString() ?? null,
+  updatedAt: raw.updatedAt?.toDate?.().toISOString() ?? null,
+});
+
 export const createManualAccountThunk =
   (account: CompanyAccountType): AppThunk =>
   async (dispatch, getState) => {
@@ -107,10 +114,11 @@ export const fetchManualAccountsThunk =
       const snapshot = await getDocs(
         collection(db, `companies/${companyId}/customAccounts`)
       );
-      const accounts: CompanyAccountType[] = snapshot.docs.map((doc) => ({
-        ...(doc.data() as CompanyAccountType),
-        accountNumber: doc.id,
-      }));
+      console.log('fetchManualAccountsThunk - fetched docs:', snapshot.size);
+      const accounts: CompanyAccountType[] = snapshot.docs.map((doc) =>
+        normalizeAccount(doc.data(), doc.id)
+      );
+      console.log('fetchManualAccountsThunk - normalized accounts:', accounts);
       dispatch(setCustomAccounts(accounts));
     } catch (err: any) {
       dispatch(setError(err.message || "Failed to fetch manual accounts"));

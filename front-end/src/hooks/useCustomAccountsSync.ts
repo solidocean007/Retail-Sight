@@ -15,6 +15,7 @@ import {
   getCustomAccountsFromIndexedDB,
   saveCustomAccountsToIndexedDB,
 } from "../utils/database/customAccountsStoreUtils";
+import { normalizeAccount } from "../thunks/manulAccountsThunk";
 
 export const useCustomAccountsSync = () => {
   const dispatch = useAppDispatch();
@@ -28,6 +29,7 @@ export const useCustomAccountsSync = () => {
       dispatch(setLoading(true));
       try {
         const cached = await getCustomAccountsFromIndexedDB();
+        console.log(cached);
         if (cached.length) dispatch(setCustomAccounts(cached));
       } catch (err: any) {
         console.error("Failed to load custom accounts from IndexedDB", err);
@@ -39,10 +41,9 @@ export const useCustomAccountsSync = () => {
     const unsub = onSnapshot(
       collection(db, `companies/${companyId}/customAccounts`),
       (snapshot) => {
-        const docs: CompanyAccountType[] = snapshot.docs.map((doc) => ({
-          ...(doc.data() as CompanyAccountType),
-          accountNumber: doc.id,
-        }));
+        const docs: CompanyAccountType[] = snapshot.docs.map((doc) =>
+          normalizeAccount(doc.data(), doc.id)
+        );
 
         dispatch(setCustomAccounts(docs));
         saveCustomAccountsToIndexedDB(docs);

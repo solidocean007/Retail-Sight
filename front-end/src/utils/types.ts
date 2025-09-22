@@ -580,6 +580,8 @@ export type CompanyAccountType = {
   typeOfAccount?: string;
   chain?: string; // e.g., "Food Lion" or "Walmart" or "Target"
   chainType?: "chain" | "independent"; // e.g., "Chain" or "Independent"
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type EnrichedGalloAccountType = GalloAccountType & {
