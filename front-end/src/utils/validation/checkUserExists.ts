@@ -1,14 +1,14 @@
-import { getApiBaseUrl } from "../getApiBase";
+// utils/validation/checkUserExists.ts
+import { getFunctions, httpsCallable } from "firebase/functions";
 
-// utils/api.ts
-export async function checkUserExists(email: string) {
-  const resp = await fetch(`${getApiBaseUrl()}/checkUserExists`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    // include auth if your API checks it:
-    // headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ email }),
-  });
-  if (!resp.ok) throw new Error(`checkUserExists failed (${resp.status})`);
-  return resp.json() as Promise<{ exists: boolean; uid?: string }>;
+export async function checkUserExists(email: string): Promise<boolean> {
+  const functions = getFunctions();
+  const fn = httpsCallable<{ email: string }, { exists: boolean }>(
+    functions,
+    "checkUserExists" // 👈 name matches your deployed Gen2 function
+  );
+
+  const res = await fn({ email });
+  return res.data.exists;
 }
+

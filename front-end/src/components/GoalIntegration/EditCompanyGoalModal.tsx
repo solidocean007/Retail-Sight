@@ -12,6 +12,7 @@ import {
   TextField,
   Checkbox,
   FormControlLabel,
+  Chip,
 } from "@mui/material";
 import {
   CompanyGoalType,
@@ -142,146 +143,186 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     }
   };
 
+  // const handleRemoveFromSelected = (accNum: string | number) => {
+  //   setSelectedAccountsObjects((prev) =>
+  //     prev.filter((a) => String(a.accountNumber) !== String(accNum))
+  //   );
+  // };
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Edit Goal</DialogTitle>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{ className: "goal-modal" }}
+    >
+      <DialogTitle className="goal-modal__title">Edit Company Goal</DialogTitle>
+
+      <DialogContent dividers className="goal-modal-content">
         {/* 📝 Form Fields */}
-        <Box
-          mb={3}
-          display="grid"
-          gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }}
-          gap={2}
-        >
-          <TextField
-            label="Title"
-            value={goalTitle}
-            onChange={(e) => setGoalTitle(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="Metric"
-            value={goalMetric}
-            onChange={(e) => setGoalMetric(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="Minimum Value"
-            type="number"
-            value={goalValueMin}
-            onChange={(e) => setGoalValueMin(Number(e.target.value))}
-            fullWidth
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={perUserQuota !== 0}
-                onChange={(e) => handleQuotaToggle(e.target.checked)}
-              />
-            }
-            label="Require submissions per user"
-          />
-          {perUserQuota !== 0 && (
+        <section>
+          <header className="goal-modal-section-head">
+            <h3>Goal basics</h3>
+            <span className="muted">Update the goal parameters.</span>
+          </header>
+          <Box
+            mt={1}
+            mb={3}
+            display="grid"
+            gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }}
+            gap={2}
+          >
             <TextField
-              label="Goal Quota"
-              type="number"
-              value={perUserQuota}
-              onChange={(e) =>
-                setPerUserQuota(Math.max(1, Number(e.target.value)))
-              }
-              helperText="Each user must submit this many posts"
-            />
-          )}
-          <TextField
-            label="Start Date"
-            type="date"
-            value={goalStartDate}
-            onChange={(e) => setGoalStartDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
-          />
-          <TextField
-            label="End Date"
-            type="date"
-            value={goalEndDate}
-            onChange={(e) => setGoalEndDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
-          />
-          <Box gridColumn="1 / -1">
-            <TextField
-              label="Description"
-              value={goalDescription}
-              onChange={(e) => setGoalDescription(e.target.value)}
+              label="Title"
+              value={goalTitle}
+              onChange={(e) => setGoalTitle(e.target.value)}
               fullWidth
-              multiline
-              rows={3}
             />
+            <TextField
+              label="Metric"
+              value={goalMetric}
+              onChange={(e) => setGoalMetric(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Minimum Value"
+              type="number"
+              value={goalValueMin}
+              onChange={(e) => setGoalValueMin(Number(e.target.value))}
+              fullWidth
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={perUserQuota !== 0}
+                  onChange={(e) => handleQuotaToggle(e.target.checked)}
+                />
+              }
+              label="Require submissions per user"
+            />
+            {perUserQuota !== 0 && (
+              <TextField
+                label="Goal Quota"
+                type="number"
+                value={perUserQuota}
+                onChange={(e) =>
+                  setPerUserQuota(Math.max(1, Number(e.target.value)))
+                }
+                helperText="Each user must submit this many posts"
+              />
+            )}
+            <TextField
+              label="Start Date"
+              type="date"
+              value={goalStartDate}
+              onChange={(e) => setGoalStartDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            <TextField
+              label="End Date"
+              type="date"
+              value={goalEndDate}
+              onChange={(e) => setGoalEndDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            <Box gridColumn="1 / -1">
+              <TextField
+                label="Description"
+                value={goalDescription}
+                onChange={(e) => setGoalDescription(e.target.value)}
+                fullWidth
+                multiline
+                rows={3}
+              />
+            </Box>
           </Box>
-        </Box>
+        </section>
 
         <Divider sx={{ my: 2 }} />
 
-        {/* 🔍 Selected Accounts */}
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Select Target Accounts
-        </Typography>
-        <TextField
-          label="Search Selected Accounts"
-          value={searchSelected}
-          onChange={(e) => setSearchSelected(e.target.value)}
-          fullWidth
-          sx={{ mb: 2 }}
-        />
+        <section>
+          <header className="goal-modal__section-head">
+            <h3>Accounts on this goal</h3>
+            <span className="muted">
+              These accounts are already linked to the goal.
+            </span>
+          </header>
 
-        <Box
-          sx={{
-            maxHeight: 250,
-            overflowY: "auto",
-            border: "1px solid #ccc",
-            borderRadius: 1,
-            p: 1,
-            mb: 2,
-          }}
-        >
-          {filteredSelectedAccounts.length === 0 ? (
-            <Typography variant="body2" color="textSecondary">
-              No matching selected accounts
-            </Typography>
-          ) : (
-            filteredSelectedAccounts.map((acc) => (
-              <Box
-                key={acc.accountNumber}
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                p={0.5}
-                borderBottom="1px solid #eee"
-              >
-                <Typography variant="body2">{acc.accountName}</Typography>
-                <Button
-                  size="small"
-                  color="error"
-                  onClick={() => {
-                    const updated = selectedAccountObjects.filter(
-                      (sel) => sel.accountNumber !== acc.accountNumber
-                    );
-                    handleAccountSelectionChange(updated);
-                  }}
+          <div className="toolbar">
+            <div className="pill">Total: {selectedAccountObjects.length}</div>
+            <TextField
+              label="Search Selected Accounts"
+              value={searchSelected}
+              onChange={(e) => setSearchSelected(e.target.value)}
+              fullWidth
+              sx={{ mb: 2 }}
+            />
+          </div>
+
+          <Box
+            sx={{
+              maxHeight: 250,
+              overflowY: "auto",
+              border: "1px solid #ccc",
+              borderRadius: 1,
+              p: 1,
+              mb: 2,
+            }}
+          >
+            {filteredSelectedAccounts.length === 0 ? (
+              <Typography variant="body2" color="textSecondary">
+                No matching selected accounts
+              </Typography>
+            ) : (
+              filteredSelectedAccounts.map((acc) => (
+                <Box
+                  key={acc.accountNumber}
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  p={0.5}
+                  borderBottom="1px solid #eee"
                 >
-                  ×
-                </Button>
-              </Box>
-            ))
-          )}
-        </Box>
+                  <Typography variant="body2">{acc.accountName}</Typography>
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={() => {
+                      const updated = selectedAccountObjects.filter(
+                        (sel) => sel.accountNumber !== acc.accountNumber
+                      );
+                      handleAccountSelectionChange(updated);
+                    }}
+                  >
+                    ×
+                  </Button>
+                </Box>
+              ))
+            )}
+          </Box>
+        </section>
+
+        {/* ADD MORE */}
+        <section className="goal-modal__section">
+          <header className="goal-modal__section-head">
+            <h3>Add more accounts</h3>
+            <span className="muted">
+              Search your company accounts below. Items already on the goal are
+              pre-checked.
+            </span>
+          </header>
+
+          <AccountMultiSelector
+            allAccounts={allAccounts}
+            selectedAccounts={selectedAccountObjects}
+            setSelectedAccounts={handleAccountSelectionChange}
+          />
+        </section>
 
         {/* 📋 Full Account Selector */}
-        <AccountMultiSelector
-          allAccounts={allAccounts}
-          selectedAccounts={selectedAccountObjects}
-          setSelectedAccounts={handleAccountSelectionChange}
-        />
       </DialogContent>
 
       <DialogActions>

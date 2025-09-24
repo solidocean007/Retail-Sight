@@ -75,25 +75,26 @@ const LoginForm: React.FC<LoginFormProps> = ({
     setSubmitting(true);
     setErr(null);
     try {
-      const res = await signInWithPopup(auth, google);
+      await signInWithPopup(auth, google);
 
+      // Handle stored redirect early and exit
       const storedRedirect = localStorage.getItem("postRedirect");
       if (storedRedirect) {
         localStorage.removeItem("postRedirect");
         navigate(storedRedirect);
         return;
-      } else {
-        navigate("/"); // or whatever your default is
       }
 
-      // TODO: call your post-auth gating/merge here (create user doc, check company, etc.)
+      // If you have any post-auth linking/merging, run it here
+      // (e.g. create user doc, assign company, etc.)
+
+      // ✅ Navigate once at the end
       navigate(redirectTo);
     } catch (e: any) {
       if (e.code === "auth/account-exists-with-different-credential") {
         const cred = GoogleAuthProvider.credentialFromError(e);
         const emailFromErr = (e.customData?.email || "").toLowerCase();
         if (cred && emailFromErr) {
-          // Ask user to sign in with email/password; we’ll auto-link afterward
           setPendingLink({ email: emailFromErr, cred });
           setErr(
             "This email already has a password login. Please sign in with your password to link Google."
@@ -126,13 +127,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
       const normalizedEmail = email.trim().toLowerCase();
       await signInWithEmailAndPassword(auth, normalizedEmail, pw);
 
+      // Handle stored redirect early and exit
       const storedRedirect = localStorage.getItem("postRedirect");
       if (storedRedirect) {
         localStorage.removeItem("postRedirect");
         navigate(storedRedirect);
         return;
-      } else {
-        navigate("/"); // or whatever your default is
       }
 
       // If user started with Google and we staged a pending credential,
@@ -147,7 +147,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         dispatch(showMessage("Google has been linked to your account."));
       }
 
-      // TODO: call your post-auth gating/merge here
+      // ✅ Navigate last
       navigate(redirectTo);
     } catch (e: any) {
       setErr(ERROR_MAP[e.code] || "Sign-in failed. Please try again.");
@@ -161,29 +161,54 @@ const LoginForm: React.FC<LoginFormProps> = ({
       dispatch(showMessage("Please enter your email."));
       return;
     }
+
     const normalizedEmail = email.trim().toLowerCase();
     try {
       const exists = await checkUserExists(normalizedEmail);
       if (!exists) {
         dispatch(
           showMessage(
-            "This email is not registered. Please check for typos or sign up."
+            "This email isn’t registered. Check for typos or request access."
           )
         );
         return;
       }
+
+      // ✅ If the account is Google-only, don’t “send” a reset that won’t help
+      const methods = await fetchSignInMethodsForEmail(
+        getAuth(),
+        normalizedEmail
+      );
+      const hasPassword = methods.includes("password");
+      if (!hasPassword) {
+        dispatch(
+          showMessage(
+            "This account signs in with Google. Use “Continue with Google” instead."
+          )
+        );
+        return;
+      }
+
       await sendPasswordResetEmail(getAuth(), normalizedEmail);
-      dispatch(showMessage("Password reset email sent! Check your inbox."));
+      dispatch(
+        showMessage("Password reset sent! (Check your inbox and spam/junk.)")
+      );
       setSubmittedReset(true);
     } catch (error: any) {
+      console.error("Password Reset Error:", error.code, error.message);
       if (error.code === "auth/invalid-email") {
         dispatch(showMessage("Please enter a valid email address."));
+      } else if (error.code === "auth/user-not-found") {
+        dispatch(showMessage("No account found for this email."));
+      } else if (error.code === "auth/operation-not-allowed") {
+        dispatch(
+          showMessage("Email/Password sign-in is disabled for this project.")
+        );
       } else {
         dispatch(
           showMessage("Unable to send reset email. Please try again later.")
         );
       }
-      console.error("Password Reset Error:", error);
     }
   };
 
@@ -266,13 +291,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onChange={(e) => setPw(e.target.value)}
                 autoComplete="current-password"
                 required
-                style={{marginTop: 0}}
+                style={{ marginTop: 0 }}
               />
               <button
                 type="button"
                 className="auth-toggle-password"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
               >
                 {showPassword ? "🙈" : "👁️"}
               </button>

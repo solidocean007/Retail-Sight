@@ -407,13 +407,51 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setShowConfirm(true);
   };
 
-  const filteredAccounts = accounts.filter(
-    (a) =>
-      (a.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.accountNumber.toString().includes(searchTerm)) &&
-      (routeFilter === "" ||
-        a.salesRouteNums?.some((route) => route.includes(routeFilter.trim())))
-  );
+  // Utility: normalize strings (lowercase, collapse spaces)
+  // Normalize helper
+  // Utility: normalize strings (lowercase, collapse spaces)
+  // Utility: normalize strings (lowercase, strip punctuation, strip spaces)
+  const normalize = (val: any) =>
+    String(val ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const filteredAccounts = accounts.filter((a) => {
+    const query = normalize(searchTerm);
+
+    const searchable = normalize(
+      [
+        a.accountNumber,
+        a.accountName,
+        a.accountAddress,
+        a.streetAddress,
+        a.city,
+        a.state,
+        a.typeOfAccount,
+        a.chain,
+        a.chainType,
+        (a.salesRouteNums || []).join(" "),
+      ].join(" ")
+    );
+
+    // search: AND over tokens; if query empty, pass
+    const matchesSearch =
+      !query || query.split(" ").every((token) => searchable.includes(token));
+
+    // route: substring match on any route; if filter empty, pass
+    const routeQ = routeFilter.trim().toLowerCase();
+    const matchesRoute =
+      !routeQ ||
+      (a.salesRouteNums || []).some((r) =>
+        String(r).toLowerCase().includes(routeQ)
+      );
+
+    return matchesSearch && matchesRoute;
+  });
+
+  
 
   const handleCloseDiffModal = () => {
     setShowDiffModal(false);

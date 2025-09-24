@@ -1,4 +1,7 @@
 /* editCompanyGoalModal.css */
+.goal-modal-content h3 {
+  margin: 0;
+}
 
 .MuiDialogContent-root {
   max-height: 70vh;

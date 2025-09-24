@@ -1,5 +1,5 @@
 // AccountMultiSelector.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Table,
@@ -32,11 +32,40 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
-  const filteredAccounts = allAccounts.filter(
-    (account) =>
-      account.accountName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      account.accountNumber?.toString().includes(searchTerm)
-  );
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm]);
+
+  const normalize = (val: any) =>
+    String(val ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "") // strip punctuation, keep spaces
+      .replace(/\s+/g, " ") // collapse spaces
+      .trim();
+
+  const filteredAccounts = useMemo(() => {
+    const q = normalize(searchTerm);
+
+    return allAccounts.filter((a) => {
+      const searchable = normalize(
+        [
+          a.accountNumber,
+          a.accountName,
+          a.accountAddress,
+          a.streetAddress,
+          a.city,
+          a.state,
+          a.typeOfAccount,
+          a.chain,
+          a.chainType,
+          (a.salesRouteNums || []).join(" "),
+        ].join(" ")
+      );
+
+      // If no query, pass; else every query word must appear somewhere
+      return !q || q.split(" ").every((token) => searchable.includes(token));
+    });
+  }, [allAccounts, searchTerm]);
 
   const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
   const paginatedAccounts = filteredAccounts.slice(
@@ -94,19 +123,20 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
 
   // 🔹 Helper: resolve supervisor names for each account
   const getSupervisorNames = (account: CompanyAccountType): string => {
-  if (!companyUsers) return "-";
-  const reps = companyUsers.filter(
-    (u) => u.salesRouteNum && account.salesRouteNums?.includes(u.salesRouteNum)
-  );
-  const supIds = Array.from(new Set(reps.map((r) => r.reportsTo).filter(Boolean)));
-  const supNames = supIds
-    .map((id) => {
+    if (!companyUsers) return "-";
+    const reps = companyUsers.filter(
+      (u) =>
+        u.salesRouteNum && account.salesRouteNums?.includes(u.salesRouteNum)
+    );
+    const supIds = Array.from(
+      new Set(reps.map((r) => r.reportsTo).filter(Boolean))
+    );
+    const supNames = supIds.map((id) => {
       const sup = companyUsers.find((u) => u.uid === id);
       return sup ? `${sup.firstName} ${sup.lastName}` : "Unknown";
     });
-  return supNames.length ? supNames.join(", ") : "-";
-};
-
+    return supNames.length ? supNames.join(", ") : "-";
+  };
 
   return (
     <Box className="account-multi-selector">
@@ -175,9 +205,7 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
                 <TableCell>{account.typeOfAccount || "-"}</TableCell>
                 <TableCell>{account.chain || "-"}</TableCell>
                 <TableCell>{account.chainType || "-"}</TableCell>
-                <TableCell>
-                  {getSupervisorNames(account)}
-                </TableCell>
+                <TableCell>{getSupervisorNames(account)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
