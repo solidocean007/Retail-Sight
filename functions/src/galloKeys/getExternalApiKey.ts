@@ -3,26 +3,37 @@ import { onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 
 type GetKeyData = {
-  name: string; // e.g. "galloApiKey"
+  name: string; // e.g. "galloApiKeyDev" or "galloApiKeyProd"
 };
 
 export const getExternalApiKey = onCall<GetKeyData>(async (request) => {
   const uid = request.auth?.uid;
-  const companyId = request.auth?.token?.companyId;
-  const role = request.auth?.token?.role;
-
-  if (!uid || !companyId) {
-    throw new Error("Not authenticated or missing companyId");
+  if (!uid) {
+    throw new Error("Not authenticated");
   }
 
-  // optional: restrict who can read raw keys
+  // 🔎 Look up user doc in Firestore to get companyId
+  const userSnap = await admin.firestore().doc(`users/${uid}`).get();
+  if (!userSnap.exists) {
+    throw new Error(`User document not found for uid ${uid}`);
+  }
+
+  const companyId = userSnap.data()?.companyId;
+  if (!companyId) {
+    throw new Error("User missing companyId");
+  }
+
+  // ✅ Only allow super-admins and developers to fetch full keys
+  const role = request.auth?.token?.role;
   if (role !== "developer" && role !== "super-admin") {
     throw new Error("Permission denied");
   }
 
   const { name } = request.data;
-  if (!name) throw new Error("Missing key name");
-
+  if (!name) {
+    throw new Error("Missing key name");
+  }
+  // 🔎 Pull from apiKeys/{companyId}
   const docRef = admin.firestore().doc(`apiKeys/${companyId}`);
   const snap = await docRef.get();
   if (!snap.exists) {

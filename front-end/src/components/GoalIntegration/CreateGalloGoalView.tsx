@@ -79,13 +79,13 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   const baseUrl = isProduction ? baseUrlProduction : baseUrlDevelopment;
   // const apiKey = isProduction ? productionApiKey : developmentApiKey;
 
-  useEffect(() => {
-  if (!companyId) return;
-  const apiKeyName = isProduction ? "galloApiKeyProd" : "galloApiKeyDev";
-  getExternalApiKey({ name: apiKeyName })
-    .then((res: any) => setApiKey(res.data.key))
-    .catch((err) => console.error("Failed to fetch key", err));
-}, [companyId, isProduction]);
+//   useEffect(() => {
+//   if (!companyId) return;
+//   const apiKeyName = isProduction ? "galloApiKeyProd" : "galloApiKeyDev";
+//   getExternalApiKey({ name: apiKeyName })
+//     .then((res: any) => setApiKey(res.data.key))
+//     .catch((err) => console.error("Failed to fetch key", err));
+// }, [companyId, isProduction]);
 
   const onDateChangeHandler = (newDate: Dayjs | null) => {
     setStartDate(newDate);

@@ -231,170 +231,174 @@ const EmployeesViewer = () => {
   };
 
   return (
-    <Container disableGutters>
-      {(isAdmin || isDeveloper || isSuperAdmin) && (
-        <Box my={2}>
-          <Button variant="contained" onClick={toggleInvites}>
-            {showPendingInvites
-              ? "Hide Pending Invites"
-              : "Show Pending Invites"}
-          </Button>
-          {showPendingInvites && (
-            <Box mt={2}>
-              <form
-                onSubmit={handleInviteSubmit}
-                style={{ display: "flex", gap: "1rem", alignItems: "center" }}
-              >
-                <TextField
-                  label="Employee Email"
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  required
-                  size="small"
-                />
-                <Button type="submit" variant="contained" color="primary">
-                  Send Invite
-                </Button>
-              </form>
-              {feedbackMessage && (
-                <Typography color="secondary" variant="body2">
-                  {feedbackMessage}
-                </Typography>
-              )}
-              <PendingInvites />
-            </Box>
-          )}
-        </Box>
-      )}
+    <div className="employees-viewer">
+      <Container disableGutters>
+        {(isAdmin || isDeveloper || isSuperAdmin) && (
+          <Box my={2}>
+            <Button variant="contained" onClick={toggleInvites}>
+              {showPendingInvites
+                ? "Hide Pending Invites"
+                : "Show Pending Invites"}
+            </Button>
+            {showPendingInvites && (
+              <Box mt={2}>
+                <form
+                  onSubmit={handleInviteSubmit}
+                  style={{ display: "flex", gap: "1rem", alignItems: "center" }}
+                >
+                  <TextField
+                    label="Employee Email"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    required
+                    size="small"
+                  />
+                  <Button type="submit" variant="contained" color="primary">
+                    Send Invite
+                  </Button>
+                </form>
+                {feedbackMessage && (
+                  <Typography color="secondary" variant="body2">
+                    {feedbackMessage}
+                  </Typography>
+                )}
+                <PendingInvites />
+              </Box>
+            )}
+          </Box>
+        )}
 
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: "var(--card-radius)",
-          boxShadow: "var(--card-shadow)",
-        }}
-      >
-        <Table className="mui-themed-table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
+        <TableContainer
+          component={Paper}
+          sx={{
+            borderRadius: "var(--card-radius)",
+            boxShadow: "var(--card-shadow)",
+          }}
+        >
+          <Table className="mui-themed-table">
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Phone</TableCell>
 
-              <TableCell>Sales Route #</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {sortedUsers.map((user) => (
-              <TableRow
-                key={user.uid}
-                style={{
-                  opacity: user.status === "inactive" ? 0.25 : 1,
-                  textDecoration:
-                    user.status === "inactive" ? "line-through" : "none",
-                }}
-              >
-                <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.phone}</TableCell>
-                <TableCell>
-                  {editMode[user.uid] ? (
-                    <TextField
-                      value={editedUsers[user.uid]?.salesRouteNum ?? ""}
-                      onChange={(e) =>
-                        handleEditChange(
-                          user.uid,
-                          "salesRouteNum",
-                          e.target.value
-                        )
-                      }
-                      size="small"
-                      sx={{ width: "clamp(120px, 20vw, 200px)" }} // Or 100%, or a responsive value
-                    />
-                  ) : (
-                    user.salesRouteNum || "N/A"
-                  )}
-                </TableCell>
-                <TableCell>
-                  {editMode[user.uid] && isSuperAdmin ? (
-                    <Select
-                      value={editedUsers[user.uid]?.role ?? ""}
-                      onChange={(e) =>
-                        handleEditChange(user.uid, "role", e.target.value)
-                      }
-                      size="small"
-                      sx={{ width: "clamp(120px, 20vw, 200px)" }}
-                    >
-                      <MenuItem value="admin">Admin</MenuItem>
-                      <MenuItem value="employee">Employee</MenuItem>
-                      <MenuItem value="super-admin">Super Admin</MenuItem>
-                      <MenuItem value="developer">Developer</MenuItem>
-                      <MenuItem value="status-pending">Status Pending</MenuItem>
-                    </Select>
-                  ) : (
-                    user.role
-                  )}
-                </TableCell>
-                <TableCell>{user.status}</TableCell>
-
-                <TableCell>
-                  {editMode[user.uid] ? (
-                    <>
-                      <Button
-                        variant="contained"
+                <TableCell>Sales Route #</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sortedUsers.map((user) => (
+                <TableRow
+                  key={user.uid}
+                  style={{
+                    opacity: user.status === "inactive" ? 0.25 : 1,
+                    textDecoration:
+                      user.status === "inactive" ? "line-through" : "none",
+                  }}
+                >
+                  <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.phone}</TableCell>
+                  <TableCell>
+                    {editMode[user.uid] ? (
+                      <TextField
+                        value={editedUsers[user.uid]?.salesRouteNum ?? ""}
+                        onChange={(e) =>
+                          handleEditChange(
+                            user.uid,
+                            "salesRouteNum",
+                            e.target.value
+                          )
+                        }
                         size="small"
-                        onClick={() => handleSubmitEdit(user.uid)}
+                        sx={{ width: "clamp(120px, 20vw, 200px)" }} // Or 100%, or a responsive value
+                      />
+                    ) : (
+                      user.salesRouteNum || "N/A"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {editMode[user.uid] && isSuperAdmin ? (
+                      <Select
+                        value={editedUsers[user.uid]?.role ?? ""}
+                        onChange={(e) =>
+                          handleEditChange(user.uid, "role", e.target.value)
+                        }
+                        size="small"
+                        sx={{ width: "clamp(120px, 20vw, 200px)" }}
                       >
-                        Save
-                      </Button>
+                        <MenuItem value="admin">Admin</MenuItem>
+                        <MenuItem value="employee">Employee</MenuItem>
+                        <MenuItem value="super-admin">Super Admin</MenuItem>
+                        <MenuItem value="developer">Developer</MenuItem>
+                        <MenuItem value="status-pending">
+                          Status Pending
+                        </MenuItem>
+                      </Select>
+                    ) : (
+                      user.role
+                    )}
+                  </TableCell>
+                  <TableCell>{user.status}</TableCell>
+
+                  <TableCell>
+                    {editMode[user.uid] ? (
+                      <>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => handleSubmitEdit(user.uid)}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={() => handleEditToggle(user.uid)}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         variant="text"
                         size="small"
                         onClick={() => handleEditToggle(user.uid)}
                       >
-                        Cancel
+                        Edit
                       </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="text"
-                      size="small"
-                      onClick={() => handleEditToggle(user.uid)}
+                    )}
+                    <button
+                      className="delete-btn"
+                      onClick={() => {
+                        setUserToDelete(user);
+                        setConfirmDeleteOpen(true);
+                      }}
+                      disabled={isEmployee}
                     >
-                      Edit
-                    </Button>
-                  )}
-                  <button
-                    className="delete-btn"
-                    onClick={() => {
-                      setUserToDelete(user);
-                      setConfirmDeleteOpen(true);
-                    }}
-                    disabled={isEmployee}
-                  >
-                    delete
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <CustomConfirmation
-        isOpen={confirmDeleteOpen}
-        message={`Are you sure you want to deactivate ${userToDelete?.firstName} ${userToDelete?.lastName}?`}
-        onConfirm={handleConfirmDelete}
-        onClose={() => {
-          setConfirmDeleteOpen(false);
-          setUserToDelete(null);
-        }}
-        loading={deleteLoading}
-      />
-    </Container>
+                      delete
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <CustomConfirmation
+          isOpen={confirmDeleteOpen}
+          message={`Are you sure you want to deactivate ${userToDelete?.firstName} ${userToDelete?.lastName}?`}
+          onConfirm={handleConfirmDelete}
+          onClose={() => {
+            setConfirmDeleteOpen(false);
+            setUserToDelete(null);
+          }}
+          loading={deleteLoading}
+        />
+      </Container>
+    </div>
   );
 };
 
