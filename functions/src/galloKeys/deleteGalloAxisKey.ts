@@ -5,7 +5,9 @@ import * as admin from "firebase-admin";
 export const deleteGalloAxisKey = onCall<{ env: "prod" | "dev" }>(
   async (req) => {
     const uid = req.auth?.uid;
-    if (!uid) throw new Error("Not authenticated");
+    if (!uid) {
+      throw new Error("Not authenticated");
+    }
 
     // 🔎 lookup companyId
     const userSnap = await admin.firestore().doc(`users/${uid}`).get();

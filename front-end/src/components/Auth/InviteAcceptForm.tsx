@@ -9,11 +9,15 @@ import {
   AuthCredential,
   signInWithPopup,
   linkWithCredential,
+  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { IconButton } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const toIso = (v: any): string =>
   v?.toDate?.()
@@ -30,6 +34,8 @@ export default function InviteAcceptForm() {
   const navigate = useNavigate();
 
   const [invite, setInvite] = useState<any>(null);
+  const [signInMethods, setSignInMethods] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -37,6 +43,7 @@ export default function InviteAcceptForm() {
 
   const [password, setPassword] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
     null
@@ -50,14 +57,59 @@ export default function InviteAcceptForm() {
         const snap = await getDoc(
           doc(db, `companies/${companyId}/invites/${inviteId}`)
         );
+
         if (!snap.exists()) {
           setError("Invite not found or already used.");
         } else {
           const data = snap.data();
+
           if (data.accepted) {
             setError("This invite has already been accepted.");
           } else {
-            setInvite(data);
+            try {
+              const functions = getFunctions();
+              const checkUserExists = httpsCallable(
+                functions,
+                "checkUserExists"
+              );
+              const res = await checkUserExists({
+                email: data.inviteeEmail,
+                companyId,
+              });
+
+              const { exists, signInMethods } = res.data as {
+                exists: boolean;
+                signInMethods: string[];
+              };
+
+              setSignInMethods(signInMethods || []);
+
+              if (
+                exists &&
+                signInMethods.length &&
+                !signInMethods.includes("password")
+              ) {
+                setError(
+                  "This account uses Google sign-in. Please continue with Google instead of creating a password."
+                );
+              } else {
+                if (!exists) {
+                  setInvite(data); // brand new user, allow password
+                } else if (!signInMethods.includes("password")) {
+                  setError("Google-only …");
+                } else {
+                  setInvite(data); // existing user with password
+                }
+              }
+            } catch (err: any) {
+              if (err.code === "failed-precondition") {
+                setError(
+                  "This email is already associated with another company. Please contact support to transfer accounts."
+                );
+              } else {
+                setError("Unable to validate invite. Please try again later.");
+              }
+            }
           }
         }
       } catch (err) {
@@ -66,7 +118,7 @@ export default function InviteAcceptForm() {
         setLoading(false);
       }
     })();
-  }, [inviteId]);
+  }, [inviteId, companyId]);
 
   const [pendingLink, setPendingLink] = useState<{
     email: string;
@@ -267,42 +319,72 @@ export default function InviteAcceptForm() {
             Email: <strong>{invite.inviteeEmail}</strong>
           </div>
 
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            className="btn-google"
-            disabled={submitting}
-          >
-            Continue with Google
-          </button>
-
-          <label>Password</label>
-          <input
-            type="password"
-            className="auth-input"
-            value={password}
-            onChange={(e) => handlePasswordChange(e.target.value)}
-          />
-          {passwordError && <div className="auth-error">{passwordError}</div>}
-
-          <label>Verify Password</label>
-          <input
-            type="password"
-            className="auth-input"
-            value={verifyPassword}
-            onChange={(e) => handleVerifyPasswordChange(e.target.value)}
-          />
-          {verifyPasswordError && (
-            <div className="auth-error">{verifyPasswordError}</div>
+          {(!signInMethods.length || signInMethods.includes("google.com")) && (
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="btn-google"
+              disabled={submitting}
+            >
+              Continue with Google
+            </button>
           )}
 
-          <button
-            type="submit"
-            className="auth-submit"
-            disabled={submitting || !!passwordError || !!verifyPasswordError}
-          >
-            {submitting ? "Accepting…" : "Accept Invite"}
-          </button>
+          {/* Show password fields if account is new OR supports password */}
+          {(!signInMethods.length || signInMethods.includes("password")) && (
+            <>
+              <label>Password</label>
+              <div className="auth-password-wrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="auth-input"
+                  value={password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                />
+                <IconButton
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </div>
+
+              {passwordError && (
+                <div className="auth-error">{passwordError}</div>
+              )}
+
+              <label>Verify Password</label>
+              <div className="auth-password-wrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="auth-input"
+                  value={verifyPassword}
+                  onChange={(e) => handleVerifyPasswordChange(e.target.value)}
+                />
+                {verifyPasswordError && (
+                  <div className="auth-error">{verifyPasswordError}</div>
+                )}
+                <IconButton
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </div>
+
+              <button
+                type="submit"
+                className="auth-submit"
+                disabled={
+                  submitting || !!passwordError || !!verifyPasswordError
+                }
+              >
+                {submitting ? "Accepting…" : "Accept Invite"}
+              </button>
+            </>
+          )}
         </form>
       </div>
     </div>

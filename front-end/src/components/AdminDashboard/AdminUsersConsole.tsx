@@ -134,7 +134,6 @@ export default function AdminUsersConsole() {
   } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
-
   useEffect(() => {
     if (!db || !companyId) return;
     const unsub = onSnapshot(
@@ -162,73 +161,72 @@ export default function AdminUsersConsole() {
     return () => unsub();
   }, [db, companyId]);
 
-  const handleSendInvite = async () => {
-    const normalizedEmail = inviteEmail.trim().toLowerCase();
-    if (!normalizedEmail || !companyId) return;
+ const handleSendInvite = async () => {
+  const normalizedEmail = inviteEmail.trim().toLowerCase();
+  if (!normalizedEmail || !companyId) return;
 
-    // Optional: skip if user already exists in local list
-    const alreadyInList = localUsers?.some(
-      (u) => (u.email || "").toLowerCase() === normalizedEmail
+  // Optional: skip if user already exists in local list
+  const alreadyInList = localUsers?.some(
+    (u) => (u.email || "").toLowerCase() === normalizedEmail
+  );
+  if (alreadyInList) {
+    dispatch(
+      showMessage({ text: "User already in your company.", severity: "info" })
     );
-    if (alreadyInList) {
+    return;
+  }
+
+  try {
+    const functions = getFunctions();
+
+    // ✅ Check user existence & company membership in one place
+    const checkUserExists = httpsCallable(functions, "checkUserExists");
+    const response = await checkUserExists({ 
+      email: normalizedEmail, 
+      companyId 
+    });
+
+    const { exists } = response.data as { exists: boolean };
+
+    if (exists) {
+      // If the function didn’t throw, it means the user is either:
+      // – brand new (no company yet), or
+      // – already in THIS company (which is fine, but you might skip sending)
       dispatch(
-        showMessage({ text: "User already in your company.", severity: "info" })
+        showMessage({
+          text: "User is already registered or eligible. Sending invite...",
+          severity: "info",
+        })
       );
-      return;
     }
 
-    try {
-      const functions = getFunctions();
+    // ✅ Send the invite
+    const createInviteAndEmail = httpsCallable(functions, "createInviteAndEmail");
+    const BASE_URL =
+      (import.meta as any).env?.VITE_APP_PUBLIC_URL || window.location.origin;
 
-      // ✅ Check if user already exists in Firebase Auth
-      const checkUserExists = httpsCallable(functions, "checkUserExists");
-      const response = await checkUserExists({ email: normalizedEmail });
-      const { exists, uid } = response.data as {
-        exists: boolean;
-        uid?: string;
-      };
+    await createInviteAndEmail({
+      email: normalizedEmail,
+      role: inviteRole,
+      baseUrl: BASE_URL,
+    });
 
-      // Optional: Check Firestore for company match
-      if (exists && uid) {
-        const userDoc = await getDoc(doc(db, "users", uid));
-        if (userDoc.exists() && userDoc.data()?.companyId === companyId) {
-          dispatch(
-            showMessage({
-              text: "User is already a member of this company.",
-              severity: "info",
-            })
-          );
-          return;
-        }
-      }
+    dispatch(showMessage({ text: "Invite sent!", severity: "success" }));
+    setInviteEmail("");
+    setInviteRole("employee");
+    setInviteRoute("");
+  } catch (err: any) {
+    const code = err?.code || err?.message;
+    const friendly =
+      code === "failed-precondition"
+        ? "This user already belongs to another company."
+        : code === "functions/already-exists"
+        ? "An invite is already pending for this email."
+        : "Error sending invite.";
+    dispatch(showMessage({ text: friendly, severity: "error" }));
+  }
+};
 
-      // ✅ Send the invite
-      const createInviteAndEmail = httpsCallable(
-        functions,
-        "createInviteAndEmail"
-      );
-      const BASE_URL =
-        (import.meta as any).env?.VITE_APP_PUBLIC_URL || window.location.origin;
-
-      await createInviteAndEmail({
-        email: normalizedEmail,
-        role: inviteRole,
-        baseUrl: BASE_URL,
-      });
-
-      dispatch(showMessage({ text: "Invite sent!", severity: "success" }));
-      setInviteEmail("");
-      setInviteRole("employee");
-      setInviteRoute("");
-    } catch (err: any) {
-      const code = err?.code || err?.message;
-      const friendly =
-        code === "functions/already-exists"
-          ? "An invite is already pending for this email."
-          : "Error sending invite.";
-      dispatch(showMessage({ text: friendly, severity: "error" }));
-    }
-  };
 
   const handleRevokeInvite = (invite: InviteRow) => {
     setConfirmation({
