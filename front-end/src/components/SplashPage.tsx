@@ -22,13 +22,18 @@ const SplashPage = () => {
   };
 
   const handleAnchor = (id: string) => (e: React.MouseEvent) => {
-    e.preventDefault(); // always do our own scroll, even if hash matches
+    e.preventDefault();
     setMenuOpen(false);
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      // update the URL without reloading or double hashchange loops
+      const yOffset = -80; // adjust for your sticky nav height
+      const y = el.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
       history.replaceState(null, "", `#${id}`);
+    }
+    if (!el) {
+      window.location.hash = id;
+      return;
     }
   };
 
@@ -63,8 +68,8 @@ const SplashPage = () => {
           <ul id="splash-nav" className={isMenuOpen ? "isMenuOpen" : ""}>
             <li>
               <Link to="/login" onClick={() => setMenuOpen(false)}>
-                  Login
-                </Link>
+                Login
+              </Link>
             </li>
             <li>
               <a href="#objective" onClick={handleAnchor("objective")}>
