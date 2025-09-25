@@ -7,12 +7,21 @@ import {
   Button,
   CircularProgress,
   Switch,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  DialogActions,
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
-
+import { getFunctions, httpsCallable } from "firebase/functions";
 import DateSelector from "./DateSelector";
 import ProgramTable from "./ProgramTable";
 import GoalTable from "./GoalTable";
@@ -32,35 +41,66 @@ import { useSelector } from "react-redux";
 
 type KeyStatus = {
   prod?: { exists: boolean; lastFour?: string; updatedAt?: any };
-  dev?:  { exists: boolean; lastFour?: string; updatedAt?: any };
+  dev?: { exists: boolean; lastFour?: string; updatedAt?: any };
 };
 
 interface GalloIntegrationProps {
   setValue: (newValue: number) => void; // tab switcher from parent
 }
 
-/**
- * authedFetch:
- * Grabs the current user's Firebase ID token and sends it as an Authorization Bearer.
- * Your Vercel API checks/uses this token server-side to identify the user/company securely.
- * (A UID from Redux alone is not verifiable by the server; the token is.)
- */
-async function authedFetch(path: string, init: RequestInit = {}) {
-  const user = getAuth().currentUser;
-  if (!user) throw new Error("Not signed in.");
-  const token = await user.getIdToken();
-  const headers = {
-    ...(init.headers || {}),
-    Authorization: `Bearer ${token}`,
-  };
-  return fetch(path, { ...init, headers });
-}
-
 const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
-  // ---- UI state ------------------------------------------------------------
+  const [apiKey, setApiKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isProduction, setIsProduction] = useState(true);
-  const env = useMemo<"prod" | "dev">(() => (isProduction ? "prod" : "dev"), [isProduction]);
+  // const [isProduction, setIsProduction] = useState(true);
+  const [selectedEnv, setSelectedEnv] = useState<"prod" | "dev">("dev");
+  const [newKey, setNewKey] = useState("");
+  const [openKeyModal, setOpenKeyModal] = useState(false);
+  const [openDeleteKeyModal, setOpenDeleteKeyModal] = useState(false);
+  const [modalEnv, setModalEnv] = useState<"prod" | "dev">("dev");
+  const [modalKey, setModalKey] = useState("");
+
+  const isProduction = selectedEnv === "prod";
+
+  useEffect(() => {
+    const fetchClaims = async () => {
+      const user = getAuth().currentUser;
+      if (user) {
+        const tokenResult = await user.getIdTokenResult(true); // force refresh
+        console.log("Custom claims:", tokenResult.claims);
+      }
+    };
+
+    fetchClaims();
+  }, []);
+
+  useEffect(() => {
+    const fetchKey = async () => {
+      try {
+        const functions = getFunctions();
+        const getExternalApiKey = httpsCallable<
+          { name: string },
+          { key: string }
+        >(functions, "getExternalApiKey");
+
+        const keyName = isProduction ? "galloApiKeyProd" : "galloApiKeyDev";
+        const res = await getExternalApiKey({ name: keyName });
+        const key = (res.data as any).key;
+        setApiKey(key);
+        console.log("Fetched Gallo Axis key:", key.slice(-4));
+      } catch (err) {
+        console.error("Failed to fetch Gallo Axis key:", err);
+        setApiKey(null);
+      }
+    };
+    fetchKey();
+  }, [isProduction]);
+
+  // ---- UI state ------------------------------------------------------------
+
+  // const env = useMemo<"prod" | "dev">(
+  //   () => (isProduction ? "prod" : "dev"),
+  //   [isProduction]
+  // );
 
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
   const [noProgramsMessage, setNoProgramsMessage] = useState("");
@@ -69,24 +109,47 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
   const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null);
 
   const [programs, setPrograms] = useState<GalloProgramType[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<GalloProgramType | null>(null);
+  const [selectedProgram, setSelectedProgram] =
+    useState<GalloProgramType | null>(null);
 
   const [goals, setGoals] = useState<GalloGoalType[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<GalloGoalType | null>(null);
 
-  const [enrichedAccounts, setEnrichedAccounts] = useState<EnrichedGalloAccountType[]>([]);
-  const [unmatchedAccounts, setUnmatchedAccounts] = useState<GalloAccountType[]>([]);
+  const [enrichedAccounts, setEnrichedAccounts] = useState<
+    EnrichedGalloAccountType[]
+  >([]);
+  const [unmatchedAccounts, setUnmatchedAccounts] = useState<
+    GalloAccountType[]
+  >([]);
 
   // ---- Store data ----------------------------------------------------------
-  const companyId = useSelector((s: RootState) => s.user.currentUser?.companyId);
+  const companyId = useSelector(
+    (s: RootState) => s.user.currentUser?.companyId
+  );
   const companyUsers = useSelector((s: RootState) => s.user.companyUsers || []);
 
   // ---- Key status (both prod & dev) ---------------------------------------
   useEffect(() => {
-    authedFetch("/api/gallo/key-status")
-      .then((r) => r.json())
-      .then(setKeyStatus)
-      .catch((e) => console.error("key-status error:", e));
+    const fetchStatus = async () => {
+      try {
+        const functions = getFunctions();
+        const getExternalApiKeyStatus = httpsCallable<
+          { integration: string },
+          {
+            prod: { exists: boolean; lastFour?: string; updatedAt?: any };
+            dev: { exists: boolean; lastFour?: string; updatedAt?: any };
+          }
+        >(functions, "getExternalApiKeyStatus");
+
+        const res = await getExternalApiKeyStatus({ integration: "galloAxis" });
+        setKeyStatus(res.data);
+        console.log("Gallo Axis key status:", res.data);
+      } catch (err) {
+        console.error("getExternalApiKeyStatus error:", err);
+      }
+    };
+
+    fetchStatus();
   }, []);
 
   // ---- Handlers ------------------------------------------------------------
@@ -95,55 +158,101 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
     setNoProgramsMessage("");
   };
 
-  const refreshKeyStatus = async () => {
-    const s = await authedFetch("/api/gallo/key-status").then((x) => x.json());
-    setKeyStatus(s);
-  };
-
-  const setOrRotateKey = async () => {
-    const envInput = window.prompt("env? prod/dev", isProduction ? "prod" : "dev");
-    if (!envInput) return;
-    const normalized = envInput.trim().toLowerCase();
-    if (normalized !== "prod" && normalized !== "dev") return alert("Invalid env. Use prod or dev.");
-    const key = window.prompt(`Paste ${normalized} Gallo API key`);
-    if (!key) return;
-    const r = await authedFetch("/api/gallo/upsert-key", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ env: normalized, key }),
-    });
-    if (!r.ok) {
-      console.error(await r.json());
-      return alert("Failed to set key.");
+  const setOrRotateKey = async (env: "prod" | "dev", key: string) => {
+    if (!key) {
+      alert("Please enter a key value.");
+      return;
     }
-    refreshKeyStatus();
+    try {
+      const functions = getFunctions();
+      const upsertGalloAxisKey = httpsCallable<
+        { env: "prod" | "dev"; key: string },
+        { success: boolean }
+      >(functions, "upsertGalloAxisKey");
+
+      const res = await upsertGalloAxisKey({ env, key });
+      if (res.data.success) {
+        console.log("✅ Key upserted successfully");
+        await refreshKeyStatus();
+      } else {
+        alert("Failed to set key.");
+      }
+    } catch (err) {
+      console.error("setOrRotateKey error:", err);
+      alert("Error setting key. Check console for details.");
+    }
   };
 
-  const deleteKey = async () => {
-    const envInput = window.prompt("Delete which env? prod/dev", "dev");
-    if (!envInput) return;
-    const normalized = envInput.trim().toLowerCase();
-    if (normalized !== "prod" && normalized !== "dev") return alert("Invalid env.");
-    if (!confirm(`Delete ${normalized} key?`)) return;
-    await authedFetch("/api/gallo/delete-key", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ env: normalized }),
-    });
-    refreshKeyStatus();
+  const deleteKey = async (env: "prod" | "dev") => {
+    try {
+      const functions = getFunctions();
+      const deleteGalloAxisKey = httpsCallable<
+        { env: "prod" | "dev" },
+        { success: boolean }
+      >(functions, "deleteGalloAxisKey");
+
+      const res = await deleteGalloAxisKey({ env });
+      if (res.data.success) {
+        console.log("✅ Key deleted successfully");
+        await refreshKeyStatus();
+      } else {
+        alert("Failed to delete key.");
+      }
+    } catch (err) {
+      console.error("deleteKey error:", err);
+      alert("Error deleting key. Check console for details.");
+    }
+  };
+
+  const refreshKeyStatus = async () => {
+    try {
+      const functions = getFunctions();
+      const getExternalApiKeyStatus = httpsCallable<
+        { integration: string },
+        {
+          prod: { exists: boolean; lastFour?: string; updatedAt?: any };
+          dev: { exists: boolean; lastFour?: string; updatedAt?: any };
+        }
+      >(functions, "getExternalApiKeyStatus");
+
+      const res = await getExternalApiKeyStatus({ integration: "galloAxis" });
+      setKeyStatus(res.data);
+    } catch (err) {
+      console.error("refreshKeyStatus error:", err);
+    }
   };
 
   // ---- Gallo API calls via Vercel proxy -----------------------------------
   const fetchPrograms = async () => {
+    if (!companyId || !apiKey) return;
     setIsLoading(true);
+    setNoProgramsMessage("");
+
+    const baseUrl = isProduction
+      ? "https://q2zgrnmnvl.execute-api.us-west-2.amazonaws.com"
+      : "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
+
+    const startDateUnix = startDate?.unix()?.toString() ?? "";
+    const url = `${baseUrl}/healy/programs?startDate=${startDateUnix}`;
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+    };
+
     try {
-      const startDateUnix = startDate?.unix()?.toString() ?? "";
-      const r = await authedFetch("/api/gallo/proxy", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ endpoint: "programs", env, qs: { startDate: startDateUnix } }),
-      });
-      const data: GalloProgramType[] = await r.json();
+      const response = await fetch(
+        "https://my-fetch-data-api.vercel.app/api/fetchData",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...requestOptions, baseUrl: url }),
+        }
+      );
+
+      const data: GalloProgramType[] = await response.json();
       setPrograms(data);
       setSelectedProgram(null);
       setGoals([]);
@@ -152,11 +261,9 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
       setUnmatchedAccounts([]);
       if (!Array.isArray(data) || data.length === 0) {
         setNoProgramsMessage("No programs found for the selected start date.");
-      } else {
-        setNoProgramsMessage("");
       }
-    } catch (e) {
-      console.error("fetchPrograms error:", e);
+    } catch (err) {
+      console.error("Error fetching programs:", err);
       setNoProgramsMessage("Failed to load programs.");
     } finally {
       setIsLoading(false);
@@ -164,44 +271,74 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
   };
 
   const fetchGoals = async () => {
-    if (!selectedProgram) return;
+    if (!selectedProgram || !apiKey) return;
     setIsLoading(true);
+
+    const baseUrl = isProduction
+      ? "https://q2zgrnmnvl.execute-api.us-west-2.amazonaws.com"
+      : "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
+
+    const url = `${baseUrl}/healy/goals?programId=${selectedProgram.programId}&marketId=${selectedProgram.marketId}`;
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+    };
+
     try {
-      const { programId, marketId } = selectedProgram;
-      const r = await authedFetch("/api/gallo/proxy", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ endpoint: "goals", env, qs: { programId, marketId } }),
-      });
-      const data: GalloGoalType[] = await r.json();
+      const response = await fetch(
+        "https://my-fetch-data-api.vercel.app/api/fetchData",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...requestOptions, baseUrl: url }),
+        }
+      );
+
+      const data: GalloGoalType[] = await response.json();
       setGoals(data);
       setSelectedGoal(null);
       setEnrichedAccounts([]);
       setUnmatchedAccounts([]);
-    } catch (e) {
-      console.error("fetchGoals error:", e);
+    } catch (err) {
+      console.error("Error fetching goals:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   const fetchAccounts = async () => {
-    if (!selectedProgram || !selectedGoal || !companyId) return;
+    if (!selectedProgram || !selectedGoal || !companyId || !apiKey) return;
     setIsLoading(true);
-    try {
-      // 1) Pull from Gallo
-      const r = await authedFetch("/api/gallo/proxy", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          endpoint: "accounts",
-          env,
-          qs: { marketId: selectedProgram.marketId, goalId: selectedGoal.goalId },
-        }),
-      });
-      const galloAccs: GalloAccountType[] = await r.json();
 
-      // 2) Pull your company accounts
+    const baseUrl = isProduction
+      ? "https://q2zgrnmnvl.execute-api.us-west-2.amazonaws.com"
+      : "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
+
+    const url = `${baseUrl}/healy/accounts?marketId=${selectedProgram.marketId}&goalId=${selectedGoal.goalId}`;
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+    };
+
+    try {
+      const response = await fetch(
+        "https://my-fetch-data-api.vercel.app/api/fetchData",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...requestOptions, baseUrl: url }),
+        }
+      );
+
+      const galloAccs: GalloAccountType[] = await response.json();
+
+      // 2) Pull company accounts
       const galloIds = galloAccs.map((a) => String(a.distributorAcctId));
       const companyAccs = await fetchCompanyAccounts(companyId, galloIds);
 
@@ -213,12 +350,8 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
       );
       setEnrichedAccounts(enrichedAccounts);
       setUnmatchedAccounts(unmatchedAccounts);
-
-      if (unmatchedAccounts.length > 0) {
-        console.warn(`⚠️ ${unmatchedAccounts.length} unmatched accounts`, unmatchedAccounts);
-      }
-    } catch (e) {
-      console.error("fetchAccounts error:", e);
+    } catch (err) {
+      console.error("Error fetching accounts:", err);
     } finally {
       setIsLoading(false);
     }
@@ -247,7 +380,9 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
         })
       ) as CompanyAccountType[];
 
-      return allAccounts.filter((a) => galloAccountIds.includes(String(a.accountNumber)));
+      return allAccounts.filter((a) =>
+        galloAccountIds.includes(String(a.accountNumber))
+      );
     } catch (e) {
       console.error("fetchCompanyAccounts error:", e);
       return [];
@@ -263,7 +398,10 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
     unmatchedAccounts: GalloAccountType[];
   } => {
     const unmatchedAccounts = galloAccounts.filter(
-      (g) => !companyAccounts.some((c) => String(c.accountNumber) === String(g.distributorAcctId))
+      (g) =>
+        !companyAccounts.some(
+          (c) => String(c.accountNumber) === String(g.distributorAcctId)
+        )
     );
 
     const enrichedAccounts = galloAccounts.map((g) => {
@@ -271,14 +409,17 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
         (c) => Number(c.accountNumber) === Number(g.distributorAcctId)
       );
       const salesPerson = users.find(
-        (u) => u.salesRouteNum && match?.salesRouteNums?.includes(u.salesRouteNum)
+        (u) =>
+          u.salesRouteNum && match?.salesRouteNums?.includes(u.salesRouteNum)
       );
       return {
         ...g,
         accountName: match?.accountName || "N/A",
         accountAddress: match?.accountAddress || "N/A",
         salesRouteNums: match?.salesRouteNums || ["N/A"],
-        salesPersonsName: salesPerson ? `${salesPerson.firstName} ${salesPerson.lastName}` : "N/A",
+        salesPersonsName: salesPerson
+          ? `${salesPerson.firstName} ${salesPerson.lastName}`
+          : "N/A",
       } as EnrichedGalloAccountType;
     });
 
@@ -299,95 +440,284 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
   // ---- Render --------------------------------------------------------------
   return (
     <Container>
-      <Box>
-        {/* Env switch */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-          <Typography sx={{ fontWeight: isProduction ? "bold" : "normal" }}>Production</Typography>
-          <Switch checked={isProduction} onChange={() => setIsProduction((v) => !v)} />
-          <Typography sx={{ fontWeight: !isProduction ? "bold" : "normal" }}>Development</Typography>
-        </Box>
-
-        {/* Key manager */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-          <Typography variant="body2">
-            Gallo keys — prod: {keyStatus?.prod?.exists ? `••••${keyStatus.prod.lastFour}` : "none"},
-            dev: {keyStatus?.dev?.exists ? `••••${keyStatus.dev.lastFour}` : "none"}
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {/* 🔑 Key Management Section */}
+        <Box
+          sx={{
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            p: 2,
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            🔑 Gallo Axis Key Management
           </Typography>
-          <Button size="small" onClick={setOrRotateKey}>Set/Rotate</Button>
-          <Button size="small" color="error" onClick={deleteKey}>Delete</Button>
-        </Box>
 
-        {/* Date + actions */}
-        <Box sx={{ display: "flex", width: "90%", justifyContent: "space-between", mb: 2 }}>
-          <DateSelector
-            startDate={startDate}
-            onDateChange={onDateChangeHandler}
-            onFetchPrograms={fetchPrograms}
-          />
-          {(programs.length > 0 || goals.length > 0 || enrichedAccounts.length > 0) && (
-            <Button variant="contained" color="secondary" onClick={handleCancel}>
-              Cancel
-            </Button>
-          )}
-        </Box>
+          {/* Env toggle */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+            <Typography
+              sx={{
+                fontWeight: !isProduction ? "bold" : "normal",
+                color: !isProduction ? "text.secondary" : "text.disabled",
+              }}
+            >
+              Development
+            </Typography>
 
-        {/* Programs */}
-        {noProgramsMessage ? (
-          <Typography color="error" variant="body1">{noProgramsMessage}</Typography>
-        ) : (
-          <ProgramTable
-            programs={programs}
-            selectedProgram={selectedProgram}
-            onSelectProgram={setSelectedProgram}
-          />
-        )}
+            <Switch
+              checked={isProduction}
+              onChange={() => setSelectedEnv(isProduction ? "dev" : "prod")}
+              color="primary"
+            />
 
-        {programs.length > 0 && (
-          <Button variant="contained" color="primary" onClick={fetchGoals} disabled={!selectedProgram}>
-            Search Goals
-          </Button>
-        )}
-
-        {/* Goals */}
-        {goals.length > 0 && (
-          <GoalTable goals={goals} selectedGoal={selectedGoal} onSelectGoal={setSelectedGoal} />
-        )}
-
-        {goals.length > 0 && (
-          <Button variant="contained" color="primary" onClick={fetchAccounts} disabled={!selectedGoal}>
-            Fetch Accounts
-          </Button>
-        )}
-
-        {/* Warnings / Results */}
-        {unmatchedAccounts.length > 0 && (
-          <Box sx={{ border: "1px solid #ffeeba", borderRadius: "8px", p: 1.5, mb: 2 }}>
-            <Typography color="warning.main" variant="body2">
-              ⚠️ {unmatchedAccounts.length} account(s) from Gallo are not in your Displaygram database.
-              These won’t be included when saving the goal.
+            <Typography
+              sx={{
+                fontWeight: isProduction ? "bold" : "normal",
+                color: isProduction ? "primary.main" : "text.secondary",
+              }}
+            >
+              Production
             </Typography>
           </Box>
-        )}
 
-        {enrichedAccounts.length > 0 && (
-          <GalloAccountImportTable
-            accounts={enrichedAccounts}
-            selectedGoal={selectedGoal}
-            selectedProgram={selectedProgram}
-            onSaveComplete={() => setValue(0)}
-          />
-        )}
+          {/* Key status */}
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Current Keys — prod:{" "}
+            {keyStatus?.prod?.exists
+              ? `••••${keyStatus.prod.lastFour}`
+              : "none"}
+            , dev:{" "}
+            {keyStatus?.dev?.exists ? `••••${keyStatus.dev.lastFour}` : "none"}
+          </Typography>
+
+          {/* Key actions */}
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                setModalEnv(selectedEnv);
+                setOpenKeyModal(true);
+              }}
+            >
+              Set/Rotate
+            </Button>
+
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => setOpenDeleteKeyModal(true)}
+            >
+              Delete Key
+            </Button>
+          </Box>
+        </Box>
+
+        {/* 📅 Program Import Section */}
+        <Box
+          sx={{
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            p: 2,
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            📅 Program Import
+          </Typography>
+
+          {/* Date + actions */}
+          <Box
+            sx={{
+              display: "flex",
+              width: "100%",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
+            <DateSelector
+              startDate={startDate}
+              onDateChange={onDateChangeHandler}
+              onFetchPrograms={fetchPrograms}
+            />
+            {(programs.length > 0 ||
+              goals.length > 0 ||
+              enrichedAccounts.length > 0) && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+            )}
+          </Box>
+
+          {/* Programs */}
+          {noProgramsMessage ? (
+            <Typography color="error" variant="body1">
+              {noProgramsMessage}
+            </Typography>
+          ) : (
+            <ProgramTable
+              programs={programs}
+              selectedProgram={selectedProgram}
+              onSelectProgram={setSelectedProgram}
+            />
+          )}
+
+          {programs.length > 0 && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={fetchGoals}
+              disabled={!selectedProgram}
+            >
+              Search Goals
+            </Button>
+          )}
+
+          {/* Goals */}
+          {goals.length > 0 && (
+            <GoalTable
+              goals={goals}
+              selectedGoal={selectedGoal}
+              onSelectGoal={setSelectedGoal}
+            />
+          )}
+
+          {goals.length > 0 && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={fetchAccounts}
+              disabled={!selectedGoal}
+            >
+              Fetch Accounts
+            </Button>
+          )}
+
+          {/* Warnings / Results */}
+          {unmatchedAccounts.length > 0 && (
+            <Box
+              sx={{
+                border: "1px solid #ffeeba",
+                borderRadius: "8px",
+                p: 1.5,
+                mb: 2,
+                backgroundColor: "#fff8e1",
+              }}
+            >
+              <Typography color="warning.main" variant="body2">
+                ⚠️ {unmatchedAccounts.length} account(s) from Gallo are not in
+                your Displaygram database. These won’t be included when saving
+                the goal.
+              </Typography>
+            </Box>
+          )}
+
+          {enrichedAccounts.length > 0 && (
+            <GalloAccountImportTable
+              accounts={enrichedAccounts}
+              selectedGoal={selectedGoal}
+              selectedProgram={selectedProgram}
+              onSaveComplete={() => setValue(0)}
+            />
+          )}
+        </Box>
       </Box>
 
       {/* Loading Overlay */}
       {isLoading && (
-        <Box sx={{
-          position: "fixed", inset: 0, display: "flex", justifyContent: "center",
-          alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999
-        }}>
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            zIndex: 9999,
+          }}
+        >
           <CircularProgress color="inherit" />
         </Box>
       )}
+      <Dialog
+        open={openDeleteKeyModal}
+        onClose={() => setOpenDeleteKeyModal(false)}
+      >
+        <DialogTitle>Delete Gallo Axis API Key</DialogTitle>
+        <DialogContent>
+          <Typography color="error" sx={{ mb: 2 }}>
+            ⚠️ Deleting the {selectedEnv.toUpperCase()} key will break all
+            program imports for that environment until a new key is set. This
+            action cannot be undone.
+          </Typography>
+          <Typography variant="body2">
+            Are you sure you want to delete the{" "}
+            <strong>{selectedEnv.toUpperCase()}</strong> key?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteKeyModal(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              await deleteKey(selectedEnv); // pass env into your delete handler
+              setOpenDeleteKeyModal(false);
+            }}
+          >
+            Delete Key
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={openKeyModal} onClose={() => setOpenKeyModal(false)}>
+        <DialogTitle>Set or Rotate Gallo Axis API Key</DialogTitle>
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+        >
+          <Typography variant="body2" color="warning.main">
+            ⚠️ Rotating this key will immediately replace the existing{" "}
+            {modalEnv.toUpperCase()} key.
+          </Typography>
+
+          <FormControl fullWidth>
+            <InputLabel id="env-label">Environment</InputLabel>
+            <Select
+              labelId="env-label"
+              value={modalEnv}
+              onChange={(e) => setModalEnv(e.target.value as "prod" | "dev")}
+            >
+              <MenuItem value="prod">Production</MenuItem>
+              <MenuItem value="dev">Development</MenuItem>
+            </Select>
+          </FormControl>
+
+          <TextField
+            fullWidth
+            label={`Enter ${modalEnv} API Key`}
+            type="password"
+            value={modalKey}
+            onChange={(e) => setModalKey(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenKeyModal(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              await setOrRotateKey(modalEnv, modalKey);
+              setOpenKeyModal(false);
+              setModalKey("");
+            }}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

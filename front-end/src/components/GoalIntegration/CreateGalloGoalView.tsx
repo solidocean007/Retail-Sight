@@ -39,6 +39,7 @@ interface CreateGalloGoalViewProps {
 const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   setValue,
 }) => {
+  const [apiKey, setApiKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isProduction, setIsProdution] = useState(true);
   const [productionApiKey, setProductionApiKey] = useState("");
@@ -72,10 +73,19 @@ const CreateGalloGoalView: React.FC<CreateGalloGoalViewProps> = ({
   const baseUrlDevelopment =
     "https://6w7u156vcb.execute-api.us-west-2.amazonaws.com";
 
-  const developmentApiKey = "hFu935h2k71ONztCRr98Q69OkMJDbI9818Z7HRRj"; // temp get development programs
+ const apiKeyName = isProduction ? "galloApiKeyProd" : "galloApiKeyDev";
+// const apiKey = await getExternalApiKey({ name: apiKeyName });
 
   const baseUrl = isProduction ? baseUrlProduction : baseUrlDevelopment;
-  const apiKey = isProduction ? productionApiKey : developmentApiKey;
+  // const apiKey = isProduction ? productionApiKey : developmentApiKey;
+
+//   useEffect(() => {
+//   if (!companyId) return;
+//   const apiKeyName = isProduction ? "galloApiKeyProd" : "galloApiKeyDev";
+//   getExternalApiKey({ name: apiKeyName })
+//     .then((res: any) => setApiKey(res.data.key))
+//     .catch((err) => console.error("Failed to fetch key", err));
+// }, [companyId, isProduction]);
 
   const onDateChangeHandler = (newDate: Dayjs | null) => {
     setStartDate(newDate);

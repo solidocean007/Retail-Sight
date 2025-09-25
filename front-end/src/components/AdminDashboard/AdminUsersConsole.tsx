@@ -70,7 +70,6 @@ import { useAppDispatch } from "../../utils/store";
 import { normalizeTimestamps } from "../../utils/normalizeTimestamps";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
-import { User } from "firebase/auth";
 
 export interface InviteRow {
   id: string;
@@ -134,6 +133,7 @@ export default function AdminUsersConsole() {
     onConfirm: () => void;
   } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+
 
   useEffect(() => {
     if (!db || !companyId) return;
@@ -270,6 +270,16 @@ export default function AdminUsersConsole() {
     // should we define this as a usertype return?
     if (!editRow) return;
     try {
+      const functions = getFunctions();
+      const enforceLimit = httpsCallable(functions, "enforceSuperAdminLimit");
+
+      // ask backend if this is allowed
+      await enforceLimit({
+        companyId,
+        uid: editRow.uid,
+        newRole: editRow.role,
+      });
+
       await updateDoc(doc(db, "users", editRow.uid), {
         firstName: editRow.firstName ?? null,
         lastName: editRow.lastName ?? null,
@@ -283,9 +293,10 @@ export default function AdminUsersConsole() {
 
       dispatch(showMessage({ text: "User updated.", severity: "success" }));
     } catch (e: any) {
-      dispatch(
-        showMessage({ text: e.message ?? "Update failed.", severity: "error" })
-      );
+      const msg = e.message?.includes("super-admins")
+        ? e.message
+        : e.message ?? "Update failed.";
+      dispatch(showMessage({ text: msg, severity: "error" }));
     } finally {
       const updatedUser = { ...editRow };
       const updatedUsers = localUsers.map((u) =>
