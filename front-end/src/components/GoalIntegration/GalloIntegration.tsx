@@ -48,33 +48,18 @@ interface GalloIntegrationProps {
   setValue: (newValue: number) => void; // tab switcher from parent
 }
 
-/**
- * authedFetch:
- * Grabs the current user's Firebase ID token and sends it as an Authorization Bearer.
- * Your Vercel API checks/uses this token server-side to identify the user/company securely.
- * (A UID from Redux alone is not verifiable by the server; the token is.)
- */
-async function authedFetch(path: string, init: RequestInit = {}) {
-  const user = getAuth().currentUser;
-  console.log("Current user:", user);
-  if (!user) throw new Error("Not signed in.");
-  const token = await user.getIdToken();
-  const headers = {
-    ...(init.headers || {}),
-    Authorization: `Bearer ${token}`,
-  };
-  return fetch(path, { ...init, headers });
-}
-
 const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isProduction, setIsProduction] = useState(true);
+  // const [isProduction, setIsProduction] = useState(true);
   const [selectedEnv, setSelectedEnv] = useState<"prod" | "dev">("dev");
   const [newKey, setNewKey] = useState("");
   const [openKeyModal, setOpenKeyModal] = useState(false);
+  const [openDeleteKeyModal, setOpenDeleteKeyModal] = useState(false);
   const [modalEnv, setModalEnv] = useState<"prod" | "dev">("dev");
   const [modalKey, setModalKey] = useState("");
+
+  const isProduction = selectedEnv === "prod";
 
   useEffect(() => {
     const fetchClaims = async () => {
@@ -112,10 +97,10 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
 
   // ---- UI state ------------------------------------------------------------
 
-  const env = useMemo<"prod" | "dev">(
-    () => (isProduction ? "prod" : "dev"),
-    [isProduction]
-  );
+  // const env = useMemo<"prod" | "dev">(
+  //   () => (isProduction ? "prod" : "dev"),
+  //   [isProduction]
+  // );
 
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
   const [noProgramsMessage, setNoProgramsMessage] = useState("");
@@ -198,8 +183,7 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
     }
   };
 
-  const deleteKey = async () => {
-    if (!confirm(`Delete ${selectedEnv} key?`)) return;
+  const deleteKey = async (env: "prod" | "dev") => {
     try {
       const functions = getFunctions();
       const deleteGalloAxisKey = httpsCallable<
@@ -207,7 +191,7 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
         { success: boolean }
       >(functions, "deleteGalloAxisKey");
 
-      const res = await deleteGalloAxisKey({ env: selectedEnv });
+      const res = await deleteGalloAxisKey({ env });
       if (res.data.success) {
         console.log("✅ Key deleted successfully");
         await refreshKeyStatus();
@@ -474,24 +458,26 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
             <Typography
               sx={{
-                fontWeight: isProduction ? "bold" : "normal",
-                color: isProduction ? "primary.main" : "text.secondary",
-              }}
-            >
-              Production
-            </Typography>
-            <Switch
-              checked={isProduction}
-              onChange={() => setIsProduction((v) => !v)}
-              color="primary"
-            />
-            <Typography
-              sx={{
                 fontWeight: !isProduction ? "bold" : "normal",
                 color: !isProduction ? "text.secondary" : "text.disabled",
               }}
             >
               Development
+            </Typography>
+
+            <Switch
+              checked={isProduction}
+              onChange={() => setSelectedEnv(isProduction ? "dev" : "prod")}
+              color="primary"
+            />
+
+            <Typography
+              sx={{
+                fontWeight: isProduction ? "bold" : "normal",
+                color: isProduction ? "primary.main" : "text.secondary",
+              }}
+            >
+              Production
             </Typography>
           </Box>
 
@@ -510,17 +496,20 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
             <Button
               variant="contained"
               size="small"
-              onClick={() => setOpenKeyModal(true)}
+              onClick={() => {
+                setModalEnv(selectedEnv);
+                setOpenKeyModal(true);
+              }}
             >
               Set/Rotate
             </Button>
+
             <Button
-              variant="outlined"
-              size="small"
+              variant="contained"
               color="error"
-              onClick={deleteKey}
+              onClick={() => setOpenDeleteKeyModal(true)}
             >
-              Delete
+              Delete Key
             </Button>
           </Box>
         </Box>
@@ -655,7 +644,10 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
           <CircularProgress color="inherit" />
         </Box>
       )}
-      <Dialog open={openDeleteModal} onClose={() => setOpenDeleteModal(false)}>
+      <Dialog
+        open={openDeleteKeyModal}
+        onClose={() => setOpenDeleteKeyModal(false)}
+      >
         <DialogTitle>Delete Gallo Axis API Key</DialogTitle>
         <DialogContent>
           <Typography color="error" sx={{ mb: 2 }}>
@@ -669,13 +661,13 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDeleteModal(false)}>Cancel</Button>
+          <Button onClick={() => setOpenDeleteKeyModal(false)}>Cancel</Button>
           <Button
             variant="contained"
             color="error"
             onClick={async () => {
               await deleteKey(selectedEnv); // pass env into your delete handler
-              setOpenDeleteModal(false);
+              setOpenDeleteKeyModal(false);
             }}
           >
             Delete Key
