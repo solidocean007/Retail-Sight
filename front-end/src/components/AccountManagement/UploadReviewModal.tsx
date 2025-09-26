@@ -15,15 +15,25 @@ import {
   TableRow,
   TableCell,
   Checkbox,
+  Chip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { AccountDiff } from "./utils/getAccountDiffs";
+import { CompanyAccountType } from "../../utils/types";
 import "./uploadReviewModal.css";
 
+export type UnifiedDiff = {
+  type: "new" | "update";
+  accountNumber: string;
+  updated: CompanyAccountType;
+  old?: CompanyAccountType;
+  fieldsChanged: (keyof CompanyAccountType)[]; // ✅ strict typing
+  routeNumChange?: { old: string[]; new: string[] };
+};
+
 interface UploadReviewModalProps {
-  diffs: AccountDiff[];
+  diffs: UnifiedDiff[];
   onClose: () => void;
-  onConfirm: (selected: AccountDiff[]) => void;
+  onConfirm: (selected: UnifiedDiff[]) => void;
 }
 
 const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
@@ -34,15 +44,9 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
 
-  // Expand all rows by default
   useEffect(() => {
-    const allIds = new Set(diffs.map((d) => d.accountNumber));
-    setExpandedRowIds(allIds);
-  }, [diffs]);
-
-  useEffect(() => {
-    const allIds = diffs.map((d) => d.accountNumber);
-    setSelectedIds(allIds);
+    setExpandedRowIds(new Set(diffs.map((d) => d.accountNumber)));
+    setSelectedIds(diffs.map((d) => d.accountNumber)); // preselect all
   }, [diffs]);
 
   const toggleRow = (id: string) => {
@@ -66,28 +70,26 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
         size="small"
         onClick={() => {
           if (selectedIds.length === diffs.length) {
-            setSelectedIds([]); // Deselect all
+            setSelectedIds([]);
           } else {
-            setSelectedIds(diffs.map((d) => d.accountNumber)); // Select all
+            setSelectedIds(diffs.map((d) => d.accountNumber));
           }
         }}
       >
         {selectedIds.length === diffs.length ? "Deselect All" : "Select All"}
       </Button>
+
       <DialogContent>
         <TableContainer>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}
-          ></Box>
-
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell />
                 <TableCell>Account #</TableCell>
                 <TableCell>Name</TableCell>
+                <TableCell>Type</TableCell>
                 <TableCell>Fields Changed</TableCell>
-                <TableCell>Route Change</TableCell>
+                <TableCell>Routes</TableCell>
                 <TableCell>Select</TableCell>
               </TableRow>
             </TableHead>
@@ -96,8 +98,10 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
                 const {
                   accountNumber,
                   updated,
-                  fieldsChanged,
+                  fieldsChanged = [],
                   routeNumChange,
+                  type,
+                  old,
                 } = diff;
                 const isExpanded = expandedRowIds.has(accountNumber);
                 const isSelected = selectedIds.includes(accountNumber);
@@ -121,13 +125,24 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
                       <TableCell>
                         {updated.accountName || "(Unnamed)"}
                       </TableCell>
-                      <TableCell>{fieldsChanged.join(", ")}</TableCell>
                       <TableCell>
-                        {routeNumChange
+                        <Chip
+                          label={type === "new" ? "New" : "Update"}
+                          color={type === "new" ? "success" : "warning"}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {type === "update" && fieldsChanged.length > 0
+                          ? fieldsChanged.join(", ")
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {type === "update" && routeNumChange
                           ? `${routeNumChange.old.join(
                               ", "
                             )} → ${routeNumChange.new.join(", ")}`
-                          : "—"}
+                          : (updated.salesRouteNums || []).join(", ")}
                       </TableCell>
                       <TableCell>
                         <Checkbox
@@ -137,28 +152,26 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
                       </TableCell>
                     </TableRow>
 
-                    {isExpanded && (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          sx={{ bgcolor: "var(--gray-50)" }}
-                        >
-                          <Box sx={{ pl: 4, py: 1 }}>
-                            {fieldsChanged.map((field) => (
-                              <Typography
-                                key={field}
-                                variant="body2"
-                                sx={{ mb: 0.5 }}
-                              >
-                                <strong>{field}:</strong>{" "}
-                                {JSON.stringify(diff.old[field])} →{" "}
-                                {JSON.stringify(diff.updated[field])}
-                              </Typography>
-                            ))}
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    {isExpanded &&
+                      type === "update" &&
+                      fieldsChanged.length > 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={7}
+                            sx={{ bgcolor: "var(--gray-50)" }}
+                          >
+                            <Box sx={{ pl: 4, py: 1 }}>
+                              {fieldsChanged.map((key) => (
+                                <Typography key={key}>
+                                  <strong>{key}:</strong>{" "}
+                                  {JSON.stringify(old?.[key])} →{" "}
+                                  {JSON.stringify(updated[key])}
+                                </Typography>
+                              ))}
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      )}
                   </React.Fragment>
                 );
               })}
@@ -179,7 +192,7 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
           }}
           disabled={selectedIds.length === 0}
         >
-          Confirm Update ({selectedIds.length})
+          Confirm ({selectedIds.length})
         </Button>
       </DialogActions>
     </Dialog>

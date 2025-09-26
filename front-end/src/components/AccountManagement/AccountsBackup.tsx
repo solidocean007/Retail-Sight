@@ -33,11 +33,13 @@ interface BackupMeta {
 interface AccountsBackupProps {
   companyId: string | undefined;
   backupAccounts: (companyId: string | undefined) => Promise<void>;
+  refreshTrigger: number;
 }
 
 const AccountsBackup: React.FC<AccountsBackupProps> = ({
   companyId,
   backupAccounts,
+  refreshTrigger,
 }) => {
   const dispatch = useAppDispatch();
   const [backups, setBackups] = useState<BackupMeta[]>([]);
@@ -101,10 +103,9 @@ const AccountsBackup: React.FC<AccountsBackupProps> = ({
     results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     setBackups(results);
   };
-
   useEffect(() => {
-    fetchBackups();
-  }, []);
+    if (companyId) fetchBackups();
+  }, [companyId, refreshTrigger]); // 👈 re-run when flag changes
 
   const handleConfirmDelete = async () => {
     if (!confirmDeleteId) return;

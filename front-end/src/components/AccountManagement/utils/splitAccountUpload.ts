@@ -89,7 +89,7 @@ export const parseAccountsFromFile = (
   });
 };
 
-type AccountDiff = {
+export type AccountDiff = {
   accountNumber: string;
   fieldsChanged: string[];
   old: CompanyAccountType;
@@ -161,6 +161,26 @@ export const getAccountsForUpdate = async (
   }
 
   return updates;
+};
+
+export type AccountChangeType = "new" | "update";
+
+export type UnifiedAccountChange = {
+  type: AccountChangeType;
+  account: CompanyAccountType;
+};
+
+export const getAccountsForAddOrUpdate = async (
+  file: File,
+  existingAccounts: CompanyAccountType[]
+): Promise<UnifiedAccountChange[]> => {
+  const newAccounts = await getAccountsForAdd(file);
+  const updatedAccounts = await getAccountsForUpdate(file, existingAccounts);
+
+  return [
+    ...newAccounts.map((a) => ({ type: "new" as const, account: a })),
+    ...updatedAccounts.map((a) => ({ type: "update" as const, account: a })),
+  ];
 };
 
 

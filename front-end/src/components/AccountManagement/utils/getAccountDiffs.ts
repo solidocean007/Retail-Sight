@@ -1,82 +1,97 @@
-// utils/accountDiffUtils.ts
-
 import { CompanyAccountType } from "../../../utils/types";
-import { AccountUpdateFields } from "./splitAccountUpload";
+import { UnifiedDiff } from "../UploadReviewModal";
 
-export type UpdateMode = "replace"; // more modes later (like "merge") if needed
-
-export type AccountDiff = {
-  accountNumber: string;
-  old: CompanyAccountType;
-  incoming: AccountUpdateFields;
-  fieldsChanged: (keyof AccountUpdateFields)[];
-  routeNumChange?: {
-    old: string[];
-    new: string[];
-    mode: UpdateMode;
-  };
-  updated: CompanyAccountType; // preview of final result
-};
+// Fields we care about when checking updates
+const FIELDS_TO_CHECK: (keyof CompanyAccountType)[] = [
+  "accountName",
+  "accountAddress",
+  "streetAddress",
+  "city",
+  "state",
+  "typeOfAccount",
+  "chain",
+  "chainType",
+  "salesRouteNums",
+];
 
 export function getAccountDiffs(
-  parsed: Record<string, AccountUpdateFields>,
+  parsed: Record<string, Partial<CompanyAccountType>>,
   existingAccounts: CompanyAccountType[]
-): AccountDiff[] {
-  const diffs: AccountDiff[] = [];
-
-  const existingMap = new Map(
-    existingAccounts.map((acc) => [acc.accountNumber, acc])
-  );
+): UnifiedDiff[] {
+  const existingMap = new Map(existingAccounts.map((a) => [a.accountNumber, a]));
+  const diffs: UnifiedDiff[] = [];
 
   for (const [accNum, incoming] of Object.entries(parsed)) {
     const existing = existingMap.get(accNum);
-    if (!existing) continue;
 
+    // 🆕 New account
+    if (!existing) {
+      const newAccount: CompanyAccountType = {
+        accountNumber: accNum,
+        accountName: incoming.accountName ?? "",
+        accountAddress: incoming.accountAddress ?? "",
+        streetAddress: incoming.streetAddress ?? "",
+        city: incoming.city ?? "",
+        state: incoming.state ?? "",
+        typeOfAccount: incoming.typeOfAccount,
+        chain: incoming.chain ?? "",
+        chainType: incoming.chainType ?? "independent",
+        salesRouteNums: (incoming.salesRouteNums || []).map(String),
+      };
+
+      diffs.push({
+        type: "new",
+        accountNumber: accNum,
+        updated: newAccount,
+        fieldsChanged: [], // ✅ always include this
+      });
+      continue;
+    }
+
+    // ✏️ Existing account: check for changes
+    let fieldsChanged: (keyof CompanyAccountType)[] = [];
+    let routeNumChange: { old: string[]; new: string[] } | undefined;
     const updated: CompanyAccountType = { ...existing };
-    const fieldsChanged: (keyof AccountUpdateFields)[] = [];
 
-    (Object.keys(incoming) as (keyof AccountUpdateFields)[]).forEach((key) => {
-      const newVal = incoming[key];
-      const oldVal = existing[key];
+    FIELDS_TO_CHECK.forEach((field) => {
+      const newValue = incoming[field];
+      const oldValue = existing[field];
 
+      // Normalize arrays
       const normNew =
-        key === "salesRouteNums" && Array.isArray(newVal)
-          ? newVal.map(String)
-          : newVal;
+        field === "salesRouteNums" && Array.isArray(newValue)
+          ? newValue.map(String)
+          : newValue;
 
       const normOld =
-        key === "salesRouteNums" && Array.isArray(oldVal)
-          ? oldVal.map(String)
-          : oldVal;
+        field === "salesRouteNums" && Array.isArray(oldValue)
+          ? oldValue.map(String)
+          : oldValue;
 
-      const isDifferent =
+      if (
         normNew !== undefined &&
-        JSON.stringify(normNew) !== JSON.stringify(normOld);
+        JSON.stringify(normNew) !== JSON.stringify(normOld)
+      ) {
+        updated[field] = normNew as any;
+        fieldsChanged.push(field);
 
-      if (isDifferent) {
-        updated[key] = normNew as any;
-        fieldsChanged.push(key);
+        if (field === "salesRouteNums") {
+          routeNumChange = {
+            old: (normOld as string[]) || [],
+            new: (normNew as string[]) || [],
+          };
+        }
       }
     });
 
     if (fieldsChanged.length > 0) {
-      const routeNumChange =
-        fieldsChanged.includes("salesRouteNums") &&
-        Array.isArray(incoming.salesRouteNums)
-          ? {
-              old: existing.salesRouteNums || [],
-              new: incoming.salesRouteNums,
-              mode: "replace" as const,
-            }
-          : undefined;
-
       diffs.push({
+        type: "update",
         accountNumber: accNum,
         old: existing,
-        incoming,
+        updated,
         fieldsChanged,
         routeNumChange,
-        updated,
       });
     }
   }

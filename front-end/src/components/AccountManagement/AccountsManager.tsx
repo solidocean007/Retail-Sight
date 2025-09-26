@@ -35,16 +35,19 @@ import {
 } from "../../utils/database/indexedDBUtils";
 import { showMessage } from "../../Slices/snackbarSlice";
 import {
+  AccountDiff,
   getAccountsForAdd,
+  getAccountsForAddOrUpdate,
   parseAccountsFromFile,
+  // parseAccountsFromFile,
 } from "./utils/splitAccountUpload";
 import CustomConfirmation from "../CustomConfirmation";
 import AccountForm from "./AccountForm";
 import UploadTemplateModal from "./UploadTemplateModal";
 import "./styles/accountsManager.css";
 import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
-import UploadReviewModal from "./UploadReviewModal";
-import { AccountDiff, getAccountDiffs } from "./utils/getAccountDiffs";
+import UploadReviewModal, { UnifiedDiff } from "./UploadReviewModal";
+import { getAccountDiffs } from "./utils/getAccountDiffs";
 import AccountsBackup from "./AccountsBackup";
 
 interface AccountManagerProps {
@@ -67,16 +70,13 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [lastUploadedFileName, setLastUploadedFileName] = useState<
-    string | null
-  >(null);
+  const [accountDiffs, setAccountDiffs] = useState<UnifiedDiff[]>([]);
 
   const [confirmMessage, setConfirmMessage] = useState("");
   const [pendingUpdates, setPendingUpdates] = useState<
     CompanyAccountType[] | null
   >(null);
   const [fileData, setFileData] = useState<CompanyAccountType[]>([]);
-  const [accountDiffs, setAccountDiffs] = useState<AccountDiff[]>([]);
   const [pendingUploadMode, setPendingUploadMode] = useState<
     "add" | "update" | null
   >(null);
@@ -85,7 +85,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [showBackupPrompt, setShowBackupPrompt] = useState(false);
-
+  const [refreshBackupsFlag, setRefreshBackupsFlag] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openAddAccountModal, setOpenAddAccountModal] = useState(false);
   const [newAccount, setNewAccount] = useState<CompanyAccountType | null>(null);
@@ -96,6 +96,53 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const addInputRef = useRef<HTMLInputElement>(null);
   const updateInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAccountsUpload = async (file: File) => {
+    try {
+      const parsed = await parseAccountsFromFile(file);
+      console.log("✅ Parsed rows:", Object.keys(parsed).length);
+
+      const diffs = getAccountDiffs(parsed, accounts); // now returns UnifiedDiff[]
+      console.log("🔍 Diffs:", diffs);
+
+      if (diffs.length === 0) {
+        dispatch(showMessage("No changes found."));
+        return;
+      }
+
+      setAccountDiffs(diffs);
+      setShowDiffModal(true);
+    } catch (err) {
+      console.error("❌ Failed to process file", err);
+      dispatch(showMessage("Error processing file."));
+    }
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    handleAccountsUpload(file);
+    e.target.value = ""; // reset so same file can retrigger
+  };
+
+  const handleConfirmDiffUpload = async (selectedDiffs: UnifiedDiff[]) => {
+    setShowDiffModal(false);
+
+    try {
+      const updates = selectedDiffs.map((d) => d.updated);
+      const map = new Map(accounts.map((a) => [a.accountNumber, a]));
+
+      updates.forEach((acc) => map.set(acc.accountNumber, acc));
+
+      const merged = Array.from(map.values());
+      await saveAccountsToFirestore(merged);
+
+      dispatch(showMessage(`${updates.length} account(s) processed.`));
+    } catch (err) {
+      console.error("Error saving updates:", err);
+      dispatch(showMessage("Failed to update accounts."));
+    }
+  };
 
   const promptAddUpload = () => {
     setPendingUploadMode("add");
@@ -116,7 +163,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     } else if (pendingUploadMode === "update") {
       updateInputRef.current?.click();
     }
-    setPendingUploadMode(null);
   };
 
   const handleBackupDecline = () => {
@@ -127,7 +173,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     } else if (pendingUploadMode === "update") {
       updateInputRef.current?.click();
     }
-    setPendingUploadMode(null);
   };
 
   const itemsPerPage = 15;
@@ -328,40 +373,23 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     console.log("📁 File selected:", file.name);
 
     try {
-      const parsed = await parseAccountsFromFile(file);
-      console.log("✅ Parsed accounts:", parsed.length);
+      const changes = await getAccountsForAddOrUpdate(file, accounts);
 
-      const diffs = getAccountDiffs(parsed, accounts); // or userAccounts if scoped
+      console.log("✅ Parsed changes:", changes.length, changes.slice(0, 3));
 
-      if (diffs.length === 0) {
+      if (changes.length === 0) {
         dispatch(showMessage("No changes found."));
+        setAccountDiffs([]);
+        setShowDiffModal(true);
         return;
       }
 
-      setAccountDiffs(diffs);
+      // 🚩 Now you pass `changes` to the diff modal
+      setAccountDiffs(changes); // Type 'UnifiedAccountChange[]' is not assignable to type 'AccountDiff[]'
       setShowDiffModal(true);
     } catch (err) {
-      console.error("Failed to process file", err);
+      console.error("❌ Failed to process file", err);
       dispatch(showMessage("Error processing file."));
-    }
-  };
-
-  const handleConfirmDiffUpload = async (selectedDiffs: AccountDiff[]) => {
-    setShowDiffModal(false);
-
-    try {
-      const updates = selectedDiffs.map((d) => d.updated);
-      const map = new Map(accounts.map((a) => [a.accountNumber, a]));
-
-      updates.forEach((acc) => map.set(acc.accountNumber, acc));
-      const merged = Array.from(map.values());
-
-      await saveAccountsToFirestore(merged);
-
-      dispatch(showMessage(`${updates.length} account(s) updated.`));
-    } catch (err) {
-      console.error("Error saving updates:", err);
-      dispatch(showMessage("Failed to update accounts."));
     }
   };
 
@@ -387,9 +415,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       const backupRef = doc(db, "accounts_backup", `backup_${dateStr}`);
 
       await setDoc(backupRef, accountsData);
-      // await fetchBackups(); // refreshes list
-
-      console.log("Backup completed successfully!");
+      setRefreshBackupsFlag((f) => f + 1); // 🔄 bump flag
+      dispatch(showMessage("Accounts backup completed successfully."));
     } catch (err) {
       console.warn("Backup skipped:", err);
     }
@@ -451,30 +478,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     return matchesSearch && matchesRoute;
   });
 
-  
-
   const handleCloseDiffModal = () => {
     setShowDiffModal(false);
     setAccountDiffs([]);
     setFileData([]);
-  };
-
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !pendingUploadMode) return;
-    setLastUploadedFileName(file.name);
-
-    // Clear pendingUploadMode
-    setPendingUploadMode(null);
-
-    if (pendingUploadMode === "add") {
-      actuallyAddAccounts(file);
-    } else {
-      actuallyUpdateAccounts(file);
-    }
-
-    // Reset the input so it can re-trigger on same file later
-    e.target.value = "";
   };
 
   return (
@@ -488,6 +495,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           <AccountsBackup
             companyId={companyId}
             backupAccounts={backupAccounts}
+            refreshTrigger={refreshBackupsFlag}
           />
 
           <Box
@@ -528,24 +536,11 @@ const AccountManager: React.FC<AccountManagerProps> = ({
               View Upload File Template
             </button>
 
-            <button className="button-primary" onClick={promptAddUpload}>
-              Upload New Accounts
-            </button>
-
-            <input
-              ref={addInputRef}
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              style={{ display: "none" }}
-              onChange={handleFileSelected}
-            />
-
             <button
               className="button-primary"
-              disabled={accounts.length === 0}
-              onClick={promptUpdateUpload}
+              onClick={() => updateInputRef.current?.click()}
             >
-              Update Accounts
+              Upload Accounts
             </button>
 
             <input
@@ -596,6 +591,11 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         sx={{ marginBottom: 2, marginLeft: 2 }}
         placeholder="e.g., 45"
       />
+
+      <Typography variant="body2" sx={{ marginTop: 1 }}>
+        {filteredAccounts.length} account
+        {filteredAccounts.length !== 1 ? "s" : ""} found.
+      </Typography>
 
       <Pagination
         count={Math.ceil(filteredAccounts.length / itemsPerPage)}
