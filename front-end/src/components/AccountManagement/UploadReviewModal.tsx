@@ -44,6 +44,90 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
 
+  // inside UploadReviewModal
+
+  const newDiffs = diffs.filter((d) => d.type === "new");
+  const updateDiffs = diffs.filter((d) => d.type === "update");
+
+  const totalNew = newDiffs.length;
+  const totalUpdates = updateDiffs.length;
+
+  const renderDiffRow = (diff: UnifiedDiff) => {
+    const {
+      accountNumber,
+      updated,
+      fieldsChanged = [],
+      routeNumChange,
+      type,
+      old,
+    } = diff;
+    const isExpanded = expandedRowIds.has(accountNumber);
+    const isSelected = selectedIds.includes(accountNumber);
+
+    return (
+      <React.Fragment key={accountNumber}>
+        <TableRow>
+          <TableCell>
+            {type === "update" && fieldsChanged.length > 0 && (
+              <IconButton onClick={() => toggleRow(accountNumber)}>
+                <ExpandMoreIcon
+                  style={{
+                    transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s",
+                  }}
+                />
+              </IconButton>
+            )}
+          </TableCell>
+          <TableCell>{accountNumber}</TableCell>
+          <TableCell>{updated.accountName || "(Unnamed)"}</TableCell>
+          <TableCell>
+            <Chip
+              label={type === "new" ? "New" : "Update"}
+              color={type === "new" ? "success" : "warning"}
+              size="small"
+            />
+          </TableCell>
+          <TableCell>
+            {type === "update" && fieldsChanged.length > 0
+              ? fieldsChanged.join(", ")
+              : type === "new"
+              ? "All fields new"
+              : "—"}
+          </TableCell>
+          <TableCell>
+            {type === "update" && routeNumChange
+              ? `${routeNumChange.old.join(", ")} → ${routeNumChange.new.join(
+                  ", "
+                )}`
+              : (updated.salesRouteNums || []).join(", ")}
+          </TableCell>
+          <TableCell>
+            <Checkbox
+              checked={isSelected}
+              onChange={() => toggleSelect(accountNumber)}
+            />
+          </TableCell>
+        </TableRow>
+
+        {isExpanded && type === "update" && fieldsChanged.length > 0 && (
+          <TableRow>
+            <TableCell colSpan={7} sx={{ bgcolor: "var(--gray-50)" }}>
+              <Box sx={{ pl: 4, py: 1 }}>
+                {fieldsChanged.map((key) => (
+                  <Typography key={key}>
+                    <strong>{key}:</strong> {JSON.stringify(old?.[key])} →{" "}
+                    {JSON.stringify(updated[key])}
+                  </Typography>
+                ))}
+              </Box>
+            </TableCell>
+          </TableRow>
+        )}
+      </React.Fragment>
+    );
+  };
+
   useEffect(() => {
     setExpandedRowIds(new Set(diffs.map((d) => d.accountNumber)));
     setSelectedIds(diffs.map((d) => d.accountNumber)); // preselect all
@@ -62,7 +146,7 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
-
+  console.log("diffs: ", diffs);
   return (
     <Dialog open fullWidth maxWidth="md" onClose={onClose}>
       <DialogTitle>Review Account Changes ({diffs.length})</DialogTitle>
@@ -80,6 +164,13 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
       </Button>
 
       <DialogContent>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+            Found {totalNew} new account{totalNew !== 1 ? "s" : ""}
+            {" + "}
+            {totalUpdates} update{totalUpdates !== 1 ? "s" : ""}
+          </Typography>
+        </Box>
         <TableContainer>
           <Table>
             <TableHead>
@@ -94,87 +185,29 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {diffs.map((diff) => {
-                const {
-                  accountNumber,
-                  updated,
-                  fieldsChanged = [],
-                  routeNumChange,
-                  type,
-                  old,
-                } = diff;
-                const isExpanded = expandedRowIds.has(accountNumber);
-                const isSelected = selectedIds.includes(accountNumber);
+              {newDiffs.length > 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    sx={{ bgcolor: "var(--gray-100)", fontWeight: "bold" }}
+                  >
+                    🆕 New Accounts ({newDiffs.length})
+                  </TableCell>
+                </TableRow>
+              )}
+              {newDiffs.map(renderDiffRow)}
 
-                return (
-                  <React.Fragment key={accountNumber}>
-                    <TableRow>
-                      <TableCell>
-                        <IconButton onClick={() => toggleRow(accountNumber)}>
-                          <ExpandMoreIcon
-                            style={{
-                              transform: isExpanded
-                                ? "rotate(180deg)"
-                                : "rotate(0deg)",
-                              transition: "transform 0.2s",
-                            }}
-                          />
-                        </IconButton>
-                      </TableCell>
-                      <TableCell>{accountNumber}</TableCell>
-                      <TableCell>
-                        {updated.accountName || "(Unnamed)"}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={type === "new" ? "New" : "Update"}
-                          color={type === "new" ? "success" : "warning"}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {type === "update" && fieldsChanged.length > 0
-                          ? fieldsChanged.join(", ")
-                          : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {type === "update" && routeNumChange
-                          ? `${routeNumChange.old.join(
-                              ", "
-                            )} → ${routeNumChange.new.join(", ")}`
-                          : (updated.salesRouteNums || []).join(", ")}
-                      </TableCell>
-                      <TableCell>
-                        <Checkbox
-                          checked={isSelected}
-                          onChange={() => toggleSelect(accountNumber)}
-                        />
-                      </TableCell>
-                    </TableRow>
-
-                    {isExpanded &&
-                      type === "update" &&
-                      fieldsChanged.length > 0 && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={7}
-                            sx={{ bgcolor: "var(--gray-50)" }}
-                          >
-                            <Box sx={{ pl: 4, py: 1 }}>
-                              {fieldsChanged.map((key) => (
-                                <Typography key={key}>
-                                  <strong>{key}:</strong>{" "}
-                                  {JSON.stringify(old?.[key])} →{" "}
-                                  {JSON.stringify(updated[key])}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                  </React.Fragment>
-                );
-              })}
+              {updateDiffs.length > 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    sx={{ bgcolor: "var(--gray-100)", fontWeight: "bold" }}
+                  >
+                    ✏️ Updated Accounts ({updateDiffs.length})
+                  </TableCell>
+                </TableRow>
+              )}
+              {updateDiffs.map(renderDiffRow)}
             </TableBody>
           </Table>
         </TableContainer>

@@ -96,9 +96,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
     { rejectWithValue }
   ) => {
     const isDeveloper = currentUser?.role === "developer";
-    console.log('currentUser: ', currentUser)
     const companyId = currentUser?.companyId;
-    console.log(companyId);
     try {
       if (!companyId) {
         console.warn(

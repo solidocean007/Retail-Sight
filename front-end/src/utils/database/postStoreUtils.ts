@@ -80,8 +80,6 @@ export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     // Handle the successful completion of the transaction
     transaction.oncomplete = () => {
-      console.log("[CACHE] Storing", posts.length, "posts in IndexedDB");
-
       resolve();
     };
 
