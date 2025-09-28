@@ -323,7 +323,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       setTagInput("");
     }
   }, [filters.brand, filters.productType, filters.hashtag, filters.starTag]);
-  
+
   return (
     <div className="enhanced-sidebar side-bar-box">
       {/* {activePostSet === "filteredPosts" && filteredPosts.length > 0 && ( */}
@@ -382,17 +382,33 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             placeholder="Search by #hashtag or *starTag"
             value={tagInput}
             onChange={(e) => {
-              const value = e.target.value;
+              let value = e.target.value.trim();
+
+              // Auto prepend "#" unless user typed "#" or "*"
+              if (
+                !value.startsWith("#") &&
+                !value.startsWith("*") &&
+                value !== ""
+              ) {
+                value = `#${value}`;
+              }
+
+              // Normalize hashtags: lowercase + trim
+              const normalized = value.startsWith("#")
+                ? `#${value.slice(1).toLowerCase().trim()}`
+                : value.startsWith("*")
+                ? `*${value.slice(1).toLowerCase().trim()}`
+                : value;
+
               setTagInput(value);
 
-              if (value.startsWith("#")) {
-                handleChange("hashtag", value);
+              if (normalized.startsWith("#")) {
+                handleChange("hashtag", normalized);
                 handleChange("starTag", null);
-              } else if (value.startsWith("*")) {
-                handleChange("starTag", value);
+              } else if (normalized.startsWith("*")) {
+                handleChange("starTag", normalized);
                 handleChange("hashtag", null);
               } else {
-                // Just store user input locally — no filter change yet
                 handleChange("hashtag", null);
                 handleChange("starTag", null);
               }

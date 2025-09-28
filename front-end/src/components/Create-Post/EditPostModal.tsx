@@ -63,6 +63,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   isOpen,
   setIsEditModalOpen,
 }) => {
+  console.log("post in EditPostModal: ", post.id, post);
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
 
@@ -94,20 +95,19 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
   const [originalGoalId] = useState(post.companyGoalId); // capture on mount
 
+  const activeCompanyGoals = useMemo(() => {
+    const acct = editablePost.account?.accountNumber;
+    if (!acct || allCompanyGoals.length === 0) return [];
 
-const activeCompanyGoals = useMemo(() => {
-  const acct = editablePost.account?.accountNumber;
-  if (!acct || allCompanyGoals.length === 0) return [];
+    const active = getActiveCompanyGoalsForAccount(acct, allCompanyGoals);
 
-  const active = getActiveCompanyGoalsForAccount(acct, allCompanyGoals);
+    // Include original goal if missing from active list
+    const originalGoal = allCompanyGoals.find((g) => g.id === originalGoalId);
+    const isOriginalMissing =
+      originalGoal && !active.some((g) => g.id === originalGoalId);
 
-  // Include original goal if missing from active list
-  const originalGoal = allCompanyGoals.find((g) => g.id === originalGoalId);
-  const isOriginalMissing = originalGoal && !active.some((g) => g.id === originalGoalId);
-
-  return isOriginalMissing ? [...active, originalGoal] : active;
-}, [editablePost.account?.accountNumber, allCompanyGoals, originalGoalId]);
-
+    return isOriginalMissing ? [...active, originalGoal] : active;
+  }, [editablePost.account?.accountNumber, allCompanyGoals, originalGoalId]);
 
   const [selectedCompanyGoal, setSelectedCompanyGoal] = useState<
     CompanyGoalWithIdType | undefined
@@ -168,6 +168,15 @@ const activeCompanyGoals = useMemo(() => {
         salesRouteNums: account.salesRouteNums || [],
         streetAddress: account.streetAddress || "",
       },
+      // keep flattened fields in sync too
+      accountNumber: account.accountNumber,
+      accountName: account.accountName,
+      accountAddress: account.accountAddress,
+      streetAddress: account.streetAddress || "",
+      city: account.city || "",
+      state: account.state || "",
+      chain: account.chain || "",
+      chainType: account.chainType || "",
     }));
     dispatch(showMessage("Account selected. Don't forget to save!"));
     setOpenAccountModal(false);
@@ -179,11 +188,9 @@ const activeCompanyGoals = useMemo(() => {
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
-    // 1) Decide who “owns” this submission now
-    const actor = onBehalf ?? post.postUser; // full UserType
-    const creator = userData; // who actually clicked Save
+    const actor = onBehalf ?? post.postUser;
+    const creator = userData;
 
-    // 2) Prepare your post‐fields
     const postRef = doc(db, "posts", updatedPost.id);
     const updatedFields = {
       description: updatedPost.description,
@@ -213,7 +220,6 @@ const activeCompanyGoals = useMemo(() => {
       postUserEmail: actor.email,
       postUserCompanyName: actor.company,
       postUserSalesRouteNum: actor.salesRouteNum ?? null,
-
       postUserPhone: actor.phone,
       postUserRole: actor.role,
 
@@ -225,38 +231,27 @@ const activeCompanyGoals = useMemo(() => {
     };
 
     try {
-      // A) update the post itself
+      // A) update Firestore
       await updateDoc(postRef, updatedFields);
       await updatePostWithNewTimestamp(updatedPost.id);
 
-      // B) if there's a goal selected, pull its array, filter out this postId,
-      //    then re-push a single fresh entry with the correct actor
+      // B) if goal changed, update its submittedPosts
       if (selectedCompanyGoal?.id) {
         const goalRef = doc(db, "companyGoals", selectedCompanyGoal.id);
-
-        // load existing array
         const snap = await getDoc(goalRef);
         const existing: any[] = snap.data()?.submittedPosts || [];
-
-        // remove any old entries for this post
         const filtered = existing.filter((e) => e.postId !== updatedPost.id);
-
-        // push a single fresh one
         filtered.push({
           postId: updatedPost.id,
           account: updatedPost.account,
-          submittedBy: actor, // full user object
+          submittedBy: actor,
           submittedAt: updatedPost.displayDate,
         });
-
-        // overwrite the array in Firestore
         await updateDoc(goalRef, { submittedPosts: filtered });
       }
 
-      // C) sync Redux + IndexedDB, close modal, toast
-      dispatch(updatePost(updatedPost));
-      await updatePostInIndexedDB(updatedPost);
-      await updatePostInFilteredSets(post);
+      // ✅ Don’t manually dispatch/update caches anymore
+      // Firestore snapshot will propagate changes to Redux + IndexedDB + filteredSets
 
       handleCloseEditModal();
       dispatch(showMessage("Post edited successfully!"));
@@ -300,16 +295,12 @@ const activeCompanyGoals = useMemo(() => {
         from: "EditPostModal",
       });
 
+      // 🔥 Delete from Firestore (and Storage, if your logic handles images)
       await userDeletePost({ post });
       console.log("✅ Finished Firestore + Storage deletion for:", post.id);
 
-      await removePostFromIndexedDB(post.id);
-      await purgeDeletedPostFromFilteredSets(post.id);
-
-      await deleteUserCreatedPostInIndexedDB(post.id);
-
-      dispatch(deletePost(post.id));
-      console.log("🧹 Dispatched Redux delete for:", post.id);
+      // ✅ No local Redux/IndexedDB/filteredSets updates here
+      // Firestore snapshot (usePosts) will propagate removals everywhere
 
       handleCloseEditModal();
       dispatch(showMessage("Post deleted successfully!"));

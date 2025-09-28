@@ -23,15 +23,14 @@ const CreatePostOnBehalfOfOtherUser: React.FC<Props> = ({
 }) => {
   const userData = useSelector(selectUser)!; // this is the supervisor.. he should be set to postedBy
   const companyUsers = useSelector(selectCompanyUsers) || [];
-
   // Build sorted list (including current user)
  const options = useMemo(() => {
   const filtered = companyUsers.filter(
     (u) =>
-      u.status !== "inactive" && u.salesRouteNum && u.uid !== userData.uid
+      u.status !== "inactive" && u.uid !== userData.uid
   );
 
-  const all = userData.status !== "inactive" && userData.salesRouteNum
+  const all = userData.status !== "inactive"
     ? [userData, ...filtered]
     : filtered;
 

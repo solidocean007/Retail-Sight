@@ -1,4 +1,7 @@
-import { getFilterHash } from "../../components/FilterSideBar/utils/filterUtils";
+import {
+  doesPostMatchFilter,
+  getFilterHash,
+} from "../../components/FilterSideBar/utils/filterUtils";
 import { PostQueryFilters, PostWithID } from "../types";
 import { openDB } from "./indexedDBOpen";
 
@@ -76,14 +79,14 @@ export async function purgeDeletedPostFromFilteredSets(postId: string) {
           const record = getReq.result;
           if (!record || !Array.isArray(record.posts)) return;
 
-          const filtered = record.posts.filter(
-            (p: PostWithID) => p.id !== postId
-          );
+          const filtered = record.posts.filter((p: PostWithID) => p.id !== postId);
+
           if (filtered.length !== record.posts.length) {
             if (filtered.length === 0) {
+              // if no posts remain for this filter, just drop the set
               store.delete(key);
             } else {
-              store.put({ ...record, posts: filtered }, key);
+              store.put({ ...record, posts: filtered });
             }
           }
         };
@@ -108,7 +111,7 @@ export async function shouldRefetch(
   return newestRawDate > fetchedAt;
 }
 
-export async function updatePostInFilteredSets(updatedPost: PostWithID): Promise<void> {
+export async function updatePostInFilteredSets(updatedPost: PostWithID) {
   const db = await openDB();
   const tx = db.transaction("filteredSets", "readwrite");
   const store = tx.objectStore("filteredSets");
@@ -116,27 +119,40 @@ export async function updatePostInFilteredSets(updatedPost: PostWithID): Promise
   const keysReq = store.getAllKeys();
 
   await new Promise<void>((resolve, reject) => {
-    keysReq.onsuccess = () => {
+    keysReq.onsuccess = async () => {
       const allKeys = keysReq.result;
-
-      allKeys.forEach((key) => {
+      for (const key of allKeys) {
         const getReq = store.get(key);
         getReq.onsuccess = () => {
           const record = getReq.result;
           if (!record || !Array.isArray(record.posts)) return;
 
-          const index = record.posts.findIndex((p: PostWithID) => p.id === updatedPost.id);
-          if (index !== -1) {
-            record.posts[index] = updatedPost;
-            store.put(record, key);
+          const posts: PostWithID[] = record.posts;
+          const matchesOld = posts.some((p) => p.id === updatedPost.id);
+          const stillQualifies = doesPostMatchFilter(
+            updatedPost,
+            record.filters
+          );
+
+          let newPosts = posts;
+
+          if (matchesOld && stillQualifies) {
+            newPosts = posts.map((p) =>
+              p.id === updatedPost.id ? updatedPost : p
+            );
+          } else if (matchesOld && !stillQualifies) {
+            newPosts = posts.filter((p) => p.id !== updatedPost.id);
+          } else if (!matchesOld && stillQualifies) {
+            newPosts = [...posts, updatedPost];
+          }
+
+          if (newPosts !== posts) {
+            store.put({ ...record, posts: newPosts });
           }
         };
-      });
-
+      }
       resolve();
     };
-
     keysReq.onerror = () => reject(keysReq.error);
   });
 }
-

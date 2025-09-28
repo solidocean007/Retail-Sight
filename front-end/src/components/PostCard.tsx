@@ -498,12 +498,14 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
       </div>
 
-      <EditPostModal
-        post={post}
-        setSelectedCompanyAccount={setSelectedCompanyAccount}
-        isOpen={isEditModalOpen}
-        setIsEditModalOpen={setIsEditModalOpen}
-      />
+      {isEditModalOpen && (
+        <EditPostModal
+          post={post}
+          setSelectedCompanyAccount={setSelectedCompanyAccount}
+          isOpen={isEditModalOpen}
+          setIsEditModalOpen={setIsEditModalOpen}
+        />
+      )}
 
       <CommentModal
         isOpen={isCommentModalOpen}

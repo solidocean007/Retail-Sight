@@ -27,6 +27,10 @@ import {
 import { db } from "../utils/firebase";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { normalizePost } from "../utils/normalizePost";
+import {
+  updatePostInFilteredSets,
+  purgeDeletedPostFromFilteredSets,
+} from "../utils/database/indexedDBUtils";
 
 const usePosts = (
   currentUserCompanyId: string | undefined,
@@ -103,33 +107,37 @@ const usePosts = (
         let mostRecent = lastSeenDate;
         const updates: PostWithID[] = [];
 
-        snapshot.docChanges().forEach((change) => {
+        for (const change of snapshot.docChanges()) {
           const data = change.doc.data() as PostType;
           let updatedAt: any = data.timestamp;
           if (updatedAt?.toDate) updatedAt = updatedAt.toDate();
           else if (typeof updatedAt === "string")
             updatedAt = new Date(updatedAt);
 
-          if (updatedAt <= mostRecent) return;
+          if (updatedAt <= mostRecent) continue;
           mostRecent = updatedAt;
 
           if (change.type === "removed") {
             dispatch(deletePost(change.doc.id));
             removePostFromIndexedDB(change.doc.id);
             deleteUserCreatedPostInIndexedDB(change.doc.id);
+            await purgeDeletedPostFromFilteredSets(change.doc.id); // ✅ now valid
           } else if (
             (change.type === "added" || change.type === "modified") &&
             data.imageUrl
           ) {
-            updates.push(
-              normalizePost({ id: change.doc.id, ...data } as PostWithID)
-            );
+            const normalized = normalizePost({
+              id: change.doc.id,
+              ...data,
+            } as PostWithID);
+            updates.push(normalized);
+            await updatePostInIndexedDB(normalized);
+            await updatePostInFilteredSets(normalized); // ✅ now valid
           }
-        });
+        }
 
         if (updates.length) {
           dispatch(mergeAndSetPosts(updates));
-          updates.forEach((p) => updatePostInIndexedDB(p));
         }
 
         if (mostRecent > lastSeenDate) {

@@ -275,3 +275,12 @@ export function getFilterHash(filters: PostQueryFilters): string {
   const jsonString = JSON.stringify(sorted);
   return btoa(jsonString);
 }
+
+
+export function doesPostMatchFilter(
+  post: PostWithID,
+  filter: PostQueryFilters
+): boolean {
+  // locallyFilterPosts expects an array
+  return locallyFilterPosts([post], filter).length > 0;
+}
