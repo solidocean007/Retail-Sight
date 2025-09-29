@@ -34,8 +34,9 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
           value={post.visibility || "public"}
           onChange={(e) => handleFieldChange("visibility", e.target.value)}
         >
-          <MenuItem value="public">Public</MenuItem>
-          <MenuItem value="company">Company Only</MenuItem>
+          {/* <MenuItem value="public">Public</MenuItem> */}
+          <MenuItem value="network">Network</MenuItem>
+          <MenuItem value="companyOnly">Company Only</MenuItem>
         </Select>
       </Box>
 

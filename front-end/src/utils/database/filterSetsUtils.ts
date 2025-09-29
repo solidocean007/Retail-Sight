@@ -4,6 +4,7 @@ import {
 } from "../../components/FilterSideBar/utils/filterUtils";
 import { PostQueryFilters, PostWithID } from "../types";
 import { openDB } from "./indexedDBOpen";
+import { getLastSeenTimestamp } from "./indexedDBUtils";
 
 export async function storeFilteredSet(
   filters: PostQueryFilters,
@@ -155,4 +156,25 @@ export async function updatePostInFilteredSets(updatedPost: PostWithID) {
     };
     keysReq.onerror = () => reject(keysReq.error);
   });
+}
+
+
+/**
+ * Decide if we should refetch a timeline feed (distributor, supplier, highlighted).
+ * @param key cache key (e.g. "company:abc")
+ * @param newestIso ISO string from the newest cached post
+ */
+export async function shouldRefetchTimeline(
+  key: string,
+  newestIso: string | null
+): Promise<boolean> {
+  if (!newestIso) return true;
+
+  const lastSeen = await getLastSeenTimestamp(key);
+  if (!lastSeen) return true;
+
+  const newest = new Date(newestIso);
+  const last = new Date(parseInt(lastSeen, 10));
+
+  return newest > last;
 }

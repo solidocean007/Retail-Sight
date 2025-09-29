@@ -1,13 +1,19 @@
-import { addDoc, collection, doc, getDoc, getDocs, setDoc } from "@firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteField,
+  doc,
+  DocumentData,
+  FieldValue,
+  getDoc,
+  getDocs,
+  QueryDocumentSnapshot,
+  setDoc,
+} from "@firebase/firestore";
 import { db } from "./utils/firebase"; // adjust path as needed
 
-import {
-  query,
-  where,
-  updateDoc,
-} from "firebase/firestore";
+import { query, where, updateDoc } from "firebase/firestore";
 import fs from "fs";
-
 
 export async function auditPostDates() {
   try {
@@ -36,7 +42,9 @@ export async function auditPostDates() {
     });
 
     if (issuesFound === 0) {
-      console.log("✅ No issues found. All displayDate/timestamp fields are Timestamps.");
+      console.log(
+        "✅ No issues found. All displayDate/timestamp fields are Timestamps."
+      );
     } else {
       console.warn(`🚨 Found ${issuesFound} posts with string dates.`);
     }
@@ -45,10 +53,7 @@ export async function auditPostDates() {
   }
 }
 
-import {
-  writeBatch,
-  Timestamp,
-} from "firebase/firestore";
+import { writeBatch, Timestamp } from "firebase/firestore";
 import path from "path";
 import { fstat } from "fs";
 
@@ -130,9 +135,8 @@ export async function migratePostDates() {
   console.warn(`🚨 Skipped ${skippedCount} posts due to invalid dates.`);
 }
 
-
 // src/debug/logTimestamps.ts
-import {  Timestamp as FSTimestamp } from "firebase/firestore";
+import { Timestamp as FSTimestamp } from "firebase/firestore";
 
 // Collections to scan by default
 const DEFAULT_COLLECTIONS = [
@@ -156,7 +160,10 @@ type FieldFinding = {
 };
 
 const isFSTimestamp = (v: any): v is FSTimestamp =>
-  !!v && typeof v === "object" && typeof v.toDate === "function" && typeof v.toMillis === "function";
+  !!v &&
+  typeof v === "object" &&
+  typeof v.toDate === "function" &&
+  typeof v.toMillis === "function";
 
 const isJsDate = (v: any): v is Date => v instanceof Date;
 
@@ -177,14 +184,19 @@ function findTimestampsDeep(value: any, basePath: string, out: FieldFinding[]) {
       kind: isFSTimestamp(value) ? "Firestore.Timestamp" : "Date",
       iso: toIso(value),
       ...(isFSTimestamp(value)
-        ? { seconds: (value as any).seconds, nanoseconds: (value as any).nanoseconds }
+        ? {
+            seconds: (value as any).seconds,
+            nanoseconds: (value as any).nanoseconds,
+          }
         : {}),
     });
     return;
   }
 
   if (Array.isArray(value)) {
-    value.forEach((item, i) => findTimestampsDeep(item, `${basePath}[${i}]`, out));
+    value.forEach((item, i) =>
+      findTimestampsDeep(item, `${basePath}[${i}]`, out)
+    );
     return;
   }
 
@@ -208,7 +220,8 @@ export async function logTimestamps(
 ) {
   console.group("🔎 Firestore Timestamp scan");
   console.log("Collections:", collections.join(", "));
-  if (maxDocsPerCollection > 0) console.log("MAX_DOCS per collection:", maxDocsPerCollection);
+  if (maxDocsPerCollection > 0)
+    console.log("MAX_DOCS per collection:", maxDocsPerCollection);
 
   for (const col of collections) {
     console.group(`→ ${col}`);
@@ -219,7 +232,8 @@ export async function logTimestamps(
       let totalFieldFindings = 0;
 
       for (const docSnap of snap.docs) {
-        if (maxDocsPerCollection > 0 && processed++ >= maxDocsPerCollection) break;
+        if (maxDocsPerCollection > 0 && processed++ >= maxDocsPerCollection)
+          break;
 
         const data = docSnap.data();
         const findings: FieldFinding[] = [];
@@ -229,15 +243,23 @@ export async function logTimestamps(
           docsWithFindings++;
           totalFieldFindings += findings.length;
 
-          console.groupCollapsed(`📄 ${col}/${docSnap.id} — ${findings.length} field(s)`);
+          console.groupCollapsed(
+            `📄 ${col}/${docSnap.id} — ${findings.length} field(s)`
+          );
           findings.forEach((f) => {
-            console.log(`${f.fieldPath} → ${f.kind}`, { iso: f.iso, seconds: f.seconds, nanoseconds: f.nanoseconds });
+            console.log(`${f.fieldPath} → ${f.kind}`, {
+              iso: f.iso,
+              seconds: f.seconds,
+              nanoseconds: f.nanoseconds,
+            });
           });
           console.groupEnd();
         }
       }
 
-      console.log(`Summary for ${col}: ${totalFieldFindings} field(s) across ${docsWithFindings} doc(s).`);
+      console.log(
+        `Summary for ${col}: ${totalFieldFindings} field(s) across ${docsWithFindings} doc(s).`
+      );
     } catch (err) {
       console.error(`Failed scanning ${col}:`, err);
     }
@@ -248,4 +270,185 @@ export async function logTimestamps(
 
 // expose to window for easy calling from DevTools
 // (safe no-op in Node; only matters in the browser)
-;(window as any).logTimestamps = logTimestamps;
+(window as any).logTimestamps = logTimestamps;
+
+export async function migrateVisibility() {
+  const postsRef = collection(db, "posts");
+  const snap = await getDocs(postsRef);
+
+  let updated = 0;
+
+  for (const doc of snap.docs) {
+    const data = doc.data();
+    const updates: any = {};
+
+    // 1. Handle migratedVisibility
+    if (data.migratedVisibility) {
+      updates.visibility = data.migratedVisibility;
+      updates.migratedVisibility = deleteField();
+    }
+
+    // 2. Normalize visibility
+    if (data.visibility === "company" || data.visibility === "public") {
+      updates.visibility = "network";
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await updateDoc(doc.ref, updates);
+      console.log(`[Update] ${doc.id}`, updates);
+      updated++;
+    }
+  }
+
+  console.log(`✅ Migration done. Updated ${updated} posts.`);
+}
+
+// scripts/auditCompanyId.ts
+
+// utils/auditCompanyIdClient.ts
+
+export type CompanyIdAuditResult = {
+  counts: {
+    topLevel: number;
+    nested: number;
+    flat: number;
+    missing: number;
+    total: number;
+  };
+  sample: {
+    topLevel: string[];
+    nested: string[];
+    flat: string[];
+    missing: string[];
+  };
+};
+
+export async function auditCompanyIdClient(): Promise<CompanyIdAuditResult> {
+  const snap = await getDocs(collection(db, "posts"));
+
+  let topLevel = 0;
+  let nested = 0;
+  let flat = 0;
+  let missing = 0;
+
+  const sample = {
+    topLevel: [] as string[],
+    nested: [] as string[],
+    flat: [] as string[],
+    missing: [] as string[],
+  };
+
+  snap.forEach((docSnap) => {
+    const d = docSnap.data() as any;
+
+    if (d.companyId) {
+      topLevel++;
+      if (sample.topLevel.length < 10) sample.topLevel.push(docSnap.id);
+    }
+
+    if (d.postUser?.companyId) {
+      nested++;
+      if (sample.nested.length < 10) sample.nested.push(docSnap.id);
+    }
+
+    if (d.postUserCompanyId) {
+      flat++;
+      if (sample.flat.length < 10) sample.flat.push(docSnap.id);
+    }
+
+    if (!d.companyId && !d.postUser?.companyId && !d.postUserCompanyId) {
+      missing++;
+      if (sample.missing.length < 10) sample.missing.push(docSnap.id);
+    }
+  });
+
+  const result: CompanyIdAuditResult = {
+    counts: {
+      topLevel,
+      nested,
+      flat,
+      missing,
+      total: snap.size,
+    },
+    sample,
+  };
+
+  console.group("📊 CompanyId audit");
+  console.log(`Top-level companyId: ${topLevel}`);
+  console.log(`Nested postUser.companyId: ${nested}`);
+  console.log(`Flat postUserCompanyId: ${flat}`);
+  console.log(`Missing all: ${missing}`);
+  console.log(`Total posts: ${snap.size}`);
+  console.groupEnd();
+
+  return result;
+}
+
+// Optional: expose to DevTools for quick use
+// (safe in browser; no-op in SSR/Node)
+try {
+  (window as any).auditCompanyIdClient = auditCompanyIdClient;
+} catch {}
+
+// utils/migrations/migrateTopLevelCompanyId.ts
+
+// type PostDoc = QueryDocumentSnapshot<DocumentData>;
+
+// export async function migrateTopLevelCompanyId() {
+//   const snap = await getDocs(collection(db, "posts"));
+//   console.log(`Found ${snap.size} posts. Starting migration...`);
+
+//   let updated = 0;
+//   let alreadyHad = 0;
+//   let missingAll = 0;
+
+//   let batch = writeBatch(db);
+//   let ops = 0;
+
+//   const docs: PostDoc[] = snap.docs as PostDoc[];
+
+//   for (const docSnap of docs) {
+//     const data = docSnap.data() as any;
+
+//     if (
+//       data.companyId &&
+//       typeof data.companyId === "string" &&
+//       data.companyId.trim()
+//     ) {
+//       alreadyHad++;
+//       continue;
+//     }
+
+//     const candidate: string | undefined =
+//       (typeof data.postUserCompanyId === "string" &&
+//         data.postUserCompanyId.trim()) ||
+//       (typeof data.postUser?.companyId === "string" &&
+//         data.postUser.companyId.trim()) ||
+//       undefined;
+
+//     if (!candidate) {
+//       missingAll++;
+//       continue;
+//     }
+
+//     batch.update(docSnap.ref, { companyId: candidate });
+//     updated++;
+//     ops++;
+
+//     // Commit every ~450 ops (limit is 500)
+//     if (ops >= 450) {
+//       await batch.commit();
+//       console.log(`Committed a batch of ${ops} updates...`);
+//       batch = writeBatch(db);
+//       ops = 0;
+//     }
+//   }
+
+//   if (ops > 0) {
+//     await batch.commit();
+//     console.log(`Committed final batch of ${ops} updates.`);
+//   }
+
+//   console.log("✅ Migration complete.");
+//   console.log({ updated, alreadyHad, missingAll, total: snap.size });
+// }

@@ -7,42 +7,10 @@ import {
   fetchMorePostsBatch,
   fetchUserCreatedPosts,
 } from "../thunks/postsThunks";
+import { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
 import { normalizePost } from "../utils/normalizePost";
-
-type CursorType = string;
-
-// New state shape including loading and error states
-interface PostsState {
-  posts: PostWithID[];
-  filteredPosts: PostWithID[];
-  filteredPostCount: number;
-  filteredPostFetchedAt: string | null;
-  userPosts: PostWithID[];
-  loading: boolean;
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
-  lastVisible: CursorType | null;
-  lastVisibleFiltered: CursorType | null;
-  hashtagPosts: PostWithID[];
-  starTagPosts: PostWithID[];
-}
-
-const initialState: PostsState = {
-  posts: [],
-  filteredPosts: [],
-  filteredPostCount: 0,
-  filteredPostFetchedAt: null,
-  userPosts: [],
-  loading: false,
-  status: "idle",
-  error: null,
-  lastVisible: "",
-  lastVisibleFiltered: "",
-  hashtagPosts: [],
-  starTagPosts: [],
-};
 
 export const sortPostsByDate = (posts: PostWithID[]) => {
   return posts.sort((a, b) => {
@@ -56,25 +24,53 @@ export const setFilteredPostFetchedAt = createAction<string | null>(
   "posts/setFilteredPostFetchedAt"
 );
 
+type CursorType = string | null;
+
+interface PostsState {
+  posts: PostWithID[];
+  filteredPosts: PostWithID[];
+  filteredPostCount: number;
+  filteredPostFetchedAt: string | null;
+  userPosts: PostWithID[];
+  loading: boolean;
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: string | null;
+  lastVisible: CursorType;
+  lastVisibleFiltered: CursorType;
+  hashtagPosts: PostWithID[];
+  starTagPosts: PostWithID[];
+}
+
+const initialState: PostsState = {
+  posts: [],
+  filteredPosts: [],
+  filteredPostCount: 0,
+  filteredPostFetchedAt: null,
+  userPosts: [],
+  loading: false,
+  status: "idle",
+  error: null,
+  lastVisible: null,
+  lastVisibleFiltered: null,
+  hashtagPosts: [],
+  starTagPosts: [],
+};
+
 const postsSlice = createSlice({
   name: "posts",
   initialState,
   reducers: {
-    // Adjusted to the correct state.posts property
     setPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.posts = sortPostsByDate(action.payload.map(normalizePost));
     },
     setFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.filteredPosts = sortPostsByDate(action.payload.map(normalizePost));
     },
-    // Add setUserPosts reducer function
     setUserPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.userPosts = sortPostsByDate(action.payload);
     },
-    // Adjusted to the correct state.posts property
     deletePost: (state, action: PayloadAction<string>) => {
       const postIdToDelete = action.payload;
-
       const keysToClean = [
         "posts",
         "filteredPosts",
@@ -82,16 +78,16 @@ const postsSlice = createSlice({
         "hashtagPosts",
         "starTagPosts",
       ] as const;
-
       keysToClean.forEach((key) => {
         state[key] = state[key].filter((post) => post.id !== postIdToDelete);
       });
     },
     appendPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      state.posts = [...state.posts, ...action.payload.map(normalizePost)];
-      // should i search for this instance of appendPosts to see if its causing the pop to top?
+      state.posts = sortPostsByDate([
+        ...state.posts,
+        ...action.payload.map(normalizePost),
+      ]);
     },
-    // Adjusted to the correct state.posts property
     updatePost: (state, action: PayloadAction<PostWithID>) => {
       state.posts = state.posts.map((post) =>
         post.id === action.payload.id ? action.payload : post
@@ -103,7 +99,6 @@ const postsSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-    // Instead of storing the whole DocumentSnapshot, you can store just the ID, or necessary data.
     setLastVisible: (state, action: PayloadAction<string | null>) => {
       state.lastVisible = action.payload;
     },
@@ -114,50 +109,21 @@ const postsSlice = createSlice({
       state.posts.push(action.payload);
     },
     mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      const newPosts = action.payload;
       const existingIds = new Set(state.posts.map((p) => p.id));
-
       const merged = [
         ...state.posts,
-        ...newPosts.filter((p) => !existingIds.has(p.id)),
+        ...action.payload.filter((p) => !existingIds.has(p.id)),
       ];
-
-      const toTime = (val: any): number => {
-        if (val instanceof Date) return val.getTime();
-        const d = new Date(val);
-        return isNaN(d.getTime()) ? 0 : d.getTime();
-      };
-
-      state.posts = merged.sort((a, b) => {
-        return (
-          toTime(b.displayDate || b.timestamp) -
-          toTime(a.displayDate || a.timestamp)
-        );
-      });
+      state.posts = sortPostsByDate(merged);
     },
     mergeAndSetFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      const newFilteredPosts = action.payload;
-      console.log("[REDUX] Merging", action.payload.length, "posts");
-
-      // Merge new filtered posts with existing filtered posts without duplicates
-      const mergedFilteredPosts = [
+      const merged = [
         ...state.filteredPosts,
-        ...newFilteredPosts,
-      ].reduce((acc: PostWithID[], post) => {
-        if (!acc.find((p) => p.id === post.id)) {
-          acc.push(post);
-        }
-        return acc;
-      }, []);
-
-      // Sort filtered posts by displayDate, from newest to oldest
-      mergedFilteredPosts.sort((a, b) => {
-        const dateA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
-        const dateB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      state.filteredPosts = mergedFilteredPosts;
+        ...action.payload.filter(
+          (newPost) => !state.filteredPosts.find((p) => p.id === newPost.id)
+        ),
+      ];
+      state.filteredPosts = sortPostsByDate(merged);
     },
     appendFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.filteredPosts.push(...action.payload.map(normalizePost));
@@ -173,7 +139,6 @@ const postsSlice = createSlice({
     setStarTagPosts(state, action) {
       state.starTagPosts = sortPostsByDate(action.payload);
     },
-    // Reducer to clear post-related data
     clearPostsData: (state) => {
       state.posts = [];
       state.filteredPosts = [];
@@ -182,7 +147,6 @@ const postsSlice = createSlice({
       state.lastVisibleFiltered = null;
       state.hashtagPosts = [];
       state.starTagPosts = [];
-      // Any other state properties that should be reset can go here
     },
   },
   extraReducers: (builder) => {
@@ -195,35 +159,13 @@ const postsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || "Error fetching posts";
       })
-      // .addCase(fetchLatestPosts.pending, (state) => {
-      //   state.loading = true;
-      //   state.error = null;
-      // })
-      // .addCase(
-      //   fetchLatestPosts.fulfilled,
-      //   (state, action: PayloadAction<PostWithID[]>) => {
-      //     state.loading = false;
-      //     // Directly append PostWithID[] to the state.posts
-      //     state.posts = [...state.posts, ...action.payload];
-      //     state.lastVisible =
-      //       action.payload.length > 0
-      //         ? action.payload[action.payload.length - 1].id
-      //         : state.lastVisible;
-      //   }
-      // )
-      // .addCase(fetchLatestPosts.rejected, (state, action) => {
-      //   // Handle any errors if the fetch fails
-      //   state.loading = false;
-      //   state.error = action.error.message || "Error fetching latest posts";
-      // })
       .addCase(fetchInitialPostsBatch.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchInitialPostsBatch.fulfilled, (state, action) => {
         state.loading = false;
-        // put your first page into state.posts, e.g.
         state.posts = action.payload.posts;
-        state.lastVisible = action.payload.lastVisible;
+        state.lastVisible = action.payload.lastVisible?.id ?? null;
       })
       .addCase(
         fetchFilteredPostsBatch.fulfilled,
@@ -251,7 +193,6 @@ const postsSlice = createSlice({
       .addCase(setFilteredPostFetchedAt, (state, action) => {
         state.filteredPostFetchedAt = action.payload;
       })
-
       .addCase(fetchInitialPostsBatch.rejected, (state, action) => {
         state.error = action.error.message || "Error fetching initial posts";
         state.loading = false;
@@ -262,17 +203,14 @@ const postsSlice = createSlice({
       .addCase(fetchMorePostsBatch.fulfilled, (state, action) => {
         const newPosts = action.payload.posts;
         const existingIds = new Set(state.posts.map((p) => p.id));
-
         newPosts.forEach((post) => {
           if (!existingIds.has(post.id)) {
             state.posts.push(post);
           }
         });
-
-        state.lastVisible = action.payload.lastVisible;
+        state.lastVisible = action.payload.lastVisible?.id ?? null;
         state.loading = false;
       })
-
       .addCase(fetchMorePostsBatch.rejected, (state, action) => {
         state.error = action.error.message || "Error fetching more posts";
         state.loading = false;

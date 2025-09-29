@@ -26,6 +26,7 @@ import {
   startAfter,
   where,
   Timestamp,
+  QueryDocumentSnapshot,
   // QueryConstraint,
 } from "firebase/firestore";
 
@@ -48,31 +49,41 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       const companyId = currentUser?.companyId;
       const postsCollectionRef = collection(db, "posts");
 
+      // ✅ Always order by displayDate
       const postsQuery = query(
         postsCollectionRef,
+        ...(companyId
+          ? [
+              where("companyId", "==", companyId),
+              where("visibility", "in", ["companyOnly", "network"]),
+            ]
+          : []),
         orderBy("displayDate", "desc"),
         limit(POSTS_BATCH_SIZE)
       );
 
-      const querySnapshot = await getDocs(postsQuery);
+      const snapshot = await getDocs(postsQuery);
 
-      const postsWithIds: PostWithID[] = querySnapshot.docs
-        .map((doc) => {
-          const postData: PostType = doc.data() as PostType;
-          return normalizePost({ ...postData, id: doc.id });
-        })
-        .filter((post) => {
-          if (isDeveloper) return true;
+      const postsWithIds: PostWithID[] = snapshot.docs
+        .map((docSnap) => {
+          const data = docSnap.data() as PostType;
+          if (isDeveloper) return normalizePost({ id: docSnap.id, ...data });
 
-          const isPublic = post.visibility === "public";
+          const isPublic = data.visibility === "public";
           const isCompanyPost =
-            post.visibility === "company" &&
-            post.postUserCompanyId === companyId;
+            data.visibility === "companyOnly" && data.companyId === companyId;
 
-          return isPublic || isCompanyPost;
-        });
+          return isPublic || isCompanyPost
+            ? normalizePost({ id: docSnap.id, ...data })
+            : null;
+        })
+        .filter((p): p is PostWithID => p !== null);
 
-      const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
+      // ✅ return lastVisible as a QueryDocumentSnapshot
+      const lastVisible =
+        snapshot.docs.length > 0
+          ? snapshot.docs[snapshot.docs.length - 1]
+          : null;
 
       return { posts: postsWithIds, lastVisible };
     } catch (error) {
@@ -82,83 +93,74 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   }
 );
 
-// Define a type for the thunk argument
-type FetchMorePostsArgs = {
-  lastVisible: string | null;
+
+interface FetchMorePostsArgs {
+  lastVisibleSnap: QueryDocumentSnapshot<DocumentData> | null;
   limit: number;
   currentUser: UserType | null;
-};
+}
 
 export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
-    { lastVisible, limit: batchSize, currentUser }: FetchMorePostsArgs,
+    { lastVisibleSnap, limit: batchSize, currentUser }: FetchMorePostsArgs,
     { rejectWithValue }
   ) => {
-    const isDeveloper = currentUser?.role === "developer";
-    const companyId = currentUser?.companyId;
+    console.log("fetchMorePostsBatch called with:", { lastVisibleSnap, batchSize });
     try {
-      if (!companyId) {
-        console.warn(
-          "⚠️ fetchMorePostsBatch called without a valid companyId."
-        );
+      if (!currentUser?.companyId) {
+        console.warn("⚠️ fetchMorePostsBatch called without companyId.");
         return { posts: [], lastVisible: null };
       }
 
+      const isDeveloper = currentUser.role === "developer";
+      const companyId = currentUser.companyId;
+
       const postsCollectionRef = collection(db, "posts");
-      let postsQuery;
 
-      if (lastVisible) {
-        const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
-        if (!lastVisibleSnapshot.exists()) {
-          console.warn("⚠️ lastVisible document not found:", lastVisible);
-        }
-
-        postsQuery = query(
-          postsCollectionRef,
-          orderBy("displayDate", "desc"),
-          startAfter(lastVisibleSnapshot),
-          limit(batchSize)
-        );
-      } else {
-        postsQuery = query(
-          postsCollectionRef,
-          orderBy("displayDate", "desc"),
-          limit(batchSize)
-        );
-      }
+      // 🔑 build query with pagination
+      let postsQuery = query(
+        postsCollectionRef,
+        where("companyId", "==", companyId),
+        where("visibility", "in", ["companyOnly", "network"]),
+        orderBy("displayDate", "desc"),
+         startAfter(lastVisibleSnap),   // 👈 use snapshot here
+        limit(batchSize)
+      );
 
       const snapshot = await getDocs(postsQuery);
 
       const postsWithIds: PostWithID[] = snapshot.docs
-        .map((doc) => {
-          const data = doc.data() as PostType;
-          if (isDeveloper) return normalizePost({ id: doc.id, ...data });
+        .map((docSnap) => {
+          const data = docSnap.data() as PostType;
+          if (isDeveloper) return normalizePost({ id: docSnap.id, ...data });
 
           const isPublic = data.visibility === "public";
           const isCompanyPost =
-            data.visibility === "company" &&
-            data.postUserCompanyId === companyId;
+            data.visibility === "companyOnly" && data.companyId === companyId;
 
           return isPublic || isCompanyPost
-            ? normalizePost({ id: doc.id, ...data })
+            ? normalizePost({ id: docSnap.id, ...data })
             : null;
         })
+        .filter((p): p is PostWithID => p !== null);
 
-        .filter((post): post is PostWithID => post !== null);
-
+      // ✅ return the actual snapshot cursor, not just the id
       const newLastVisible =
-        snapshot.docs[snapshot.docs.length - 1]?.id || null;
+        snapshot.docs.length > 0
+          ? snapshot.docs[snapshot.docs.length - 1]
+          : null;
+
       return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
       console.error("❌ Error in fetchMorePostsBatch:", error);
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-      return rejectWithValue("An unknown error occurred");
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Unknown error"
+      );
     }
   }
 );
+
 
 // type FetchFilteredPostsArgs = {
 //   filters: {
@@ -219,13 +221,6 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
         baseQuery
       );
     }
-    // if (filters.accountName) {
-    //   baseQuery = filterExactMatch(
-    //     "accountName",
-    //     filters.accountName ?? undefined,
-    //     baseQuery
-    //   );
-    // }
     if (filters.accountName) {
       baseQuery = query(
         baseQuery,
@@ -325,7 +320,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
 
     return {
       posts,
-      lastVisible: snapshot.docs.at(-1)?.id ?? null,
+       lastVisible: snapshot.docs[snapshot.docs.length - 1] ?? null,
       count: snapshot.size,
     };
   }

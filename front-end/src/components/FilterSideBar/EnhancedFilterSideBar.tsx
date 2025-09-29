@@ -20,7 +20,7 @@ import {
 import FilterSummaryBanner from "../FilterSummaryBanner";
 import {
   // mergeAndSetFilteredPosts,
-  setFilteredPostFetchedAt,
+  setFilteredPostFetchedAt, // no longer there
   setFilteredPosts,
 } from "../../Slices/postsSlice";
 import {

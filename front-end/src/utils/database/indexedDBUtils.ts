@@ -1,10 +1,10 @@
 // indexedDBUtils.ts
-export * from './postStoreUtils';
-export * from './accountStoreUtils';
-export * from './filterSetsUtils';
-export * from './goalsStoreUtils';
-export * from './collectionStoreUtils';
-export * from './productStoreUtils';
+export * from "./postStoreUtils";
+export * from "./accountStoreUtils";
+export * from "./filterSetsUtils";
+export * from "./goalsStoreUtils";
+export * from "./collectionStoreUtils";
+export * from "./productStoreUtils";
 import { openDB } from "./indexedDBOpen";
 
 // store locations in indexedDB
@@ -87,44 +87,39 @@ export async function getLocationsFromIndexedDB(): Promise<{
     getAllRequest.onerror = () => {
       console.error(
         "Error fetching locations from IndexedDB:",
-        getAllRequest.error,
+        getAllRequest.error
       );
       reject(getAllRequest.error);
     };
   });
 }
 
-export async function getLastSeenTimestamp(): Promise<string | undefined> {
+export async function getLastSeenTimestamp(
+  key: string
+): Promise<string | undefined> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction("lastSeenTimestamp", "readonly");
-    const store = transaction.objectStore("lastSeenTimestamp");
-    const request = store.get("timestamp");
+    const tx = db.transaction("lastSeenTimestamp", "readonly");
+    const store = tx.objectStore("lastSeenTimestamp");
+    const request = store.get(key);
 
-    request.onerror = () => {
-      reject(request.error);
-    };
-
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
   });
 }
 
-export async function setLastSeenTimestamp(timestamp: string): Promise<void> {
+export async function setLastSeenTimestamp(
+  key: string,
+  timestamp: string
+): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction("lastSeenTimestamp", "readwrite");
-    const store = transaction.objectStore("lastSeenTimestamp");
-    const request = store.put(timestamp, "timestamp");
+    const tx = db.transaction("lastSeenTimestamp", "readwrite");
+    const store = tx.objectStore("lastSeenTimestamp");
+    const request = store.put(timestamp, key);
 
-    request.onerror = () => {
-      reject(request.error);
-    };
-
-    request.onsuccess = () => {
-      resolve();
-    };
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
   });
 }
 
@@ -165,9 +160,3 @@ export async function closeAndDeleteIndexedDB(): Promise<void> {
     throw new Error("Failed to delete the IndexedDB database.");
   }
 }
-
-
-
-
-
-

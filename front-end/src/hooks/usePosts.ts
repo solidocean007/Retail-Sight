@@ -1,186 +1,194 @@
-import { useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+// hooks/usePosts.ts
+import { useEffect, useRef, useState } from "react";
 import {
-  QuerySnapshot,
-  Timestamp,
   collection,
-  getDocs,
-  limit,
   onSnapshot,
   orderBy,
   query,
   where,
+  getDocs,
+  limit,
+  Timestamp,
+  QueryDocumentSnapshot,
+  DocumentData,
 } from "firebase/firestore";
-import { useAppDispatch, RootState } from "../utils/store";
-import { PostType, PostWithID } from "../utils/types";
-import { deletePost, mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
-import {
-  getPostsFromIndexedDB,
-  addPostsToIndexedDB,
-  getLastSeenTimestamp,
-  setLastSeenTimestamp,
-  removePostFromIndexedDB,
-  deleteUserCreatedPostInIndexedDB,
-  updatePostInIndexedDB,
-  shouldRefetchPosts,
-} from "../utils/database/indexedDBUtils";
 import { db } from "../utils/firebase";
-import { fetchInitialPostsBatch } from "../thunks/postsThunks";
-import { normalizePost } from "../utils/normalizePost";
+import { useAppDispatch } from "../utils/store";
 import {
-  updatePostInFilteredSets,
-  purgeDeletedPostFromFilteredSets,
+  mergeAndSetPosts,
+  setLastVisible,
+  setPosts,
+} from "../Slices/postsSlice";
+import {
+  addPostsToIndexedDB,
+  getPostsFromIndexedDB,
+  shouldRefetch,
+  getFetchDate,
+  storeFilteredSet,
+  shouldRefetchTimeline,
 } from "../utils/database/indexedDBUtils";
+import { normalizePost } from "../utils/normalizePost";
+import { PostWithID, PostQueryFilters } from "../utils/types";
 
-const usePosts = (
-  currentUserCompanyId: string | undefined,
-  POSTS_BATCH_SIZE: number
-) => {
+function getTimestampKey(mode: UsePostsMode): string {
+  switch (mode.type) {
+    case "distributor":
+      return `company:${mode.distributorId}`;
+    case "supplierNetwork":
+      return `supplier:${mode.supplierId}`;
+    case "highlighted":
+      return `highlighted:${mode.supplierId}`;
+    default:
+      return "timeline:default";
+  }
+}
+
+type UsePostsMode =
+  | { type: "distributor"; distributorId: string }
+  | { type: "supplierNetwork"; supplierId: string }
+  | { type: "highlighted"; supplierId: string };
+
+interface UsePostsOptions {
+  mode: UsePostsMode;
+  batchSize?: number;
+  filters?: PostQueryFilters;
+}
+
+interface UsePostsResult {
+  lastVisibleSnap: QueryDocumentSnapshot<DocumentData> | null; // local snapshot for pagination
+  lastVisibleId: string | null; // string stored in Redux/debug
+}
+
+function usePosts(companyId?: string, batchSize?: number): UsePostsResult;
+function usePosts(options: UsePostsOptions): UsePostsResult;
+
+function usePosts(arg1?: any, arg2?: any) {
   const dispatch = useAppDispatch();
-  const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const isDeveloper = currentUser?.role === "developer";
-  const [initialLoaded, setInitialLoaded] = useState(false);
+  const unsubscribeRef = useRef<() => void>();
+  const [lastVisibleSnap, setLastVisibleSnap] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
 
-  // 1️⃣ Initial load: IndexedDB or Firestore
+  // Normalize args
+  const opts: UsePostsOptions | null =
+    typeof arg1 === "string"
+      ? arg1
+        ? {
+            mode: { type: "distributor", distributorId: arg1 },
+            batchSize: arg2,
+          }
+        : null
+      : arg1 ?? null;
+
+  const batchSize = opts?.batchSize ?? 10;
+
   useEffect(() => {
-    const loadInitialPosts = async (companyId: string) => {
-      const cached = await getPostsFromIndexedDB();
-      const newestCachedDate = cached?.[0]?.displayDate || null;
+    if (!opts?.mode) return;
+    const { mode } = opts;
+    const key = getTimestampKey(mode);
 
-      const needsUpdate = await shouldRefetchPosts(companyId, newestCachedDate);
+    let cancelled = false;
+
+    async function loadAndListen() {
+      // --- 1️⃣ Try IndexedDB first
+      const cached = await getPostsFromIndexedDB();
+      const newestCachedIso = cached?.[0]?.displayDate || null;
+      const needsUpdate = await shouldRefetchTimeline(key, newestCachedIso);
 
       if (cached.length > 0 && !needsUpdate) {
         dispatch(setPosts(cached.map(normalizePost)));
       } else {
-        const action = await dispatch(
-          fetchInitialPostsBatch({
-            POSTS_BATCH_SIZE,
-            currentUser,
-          })
-        );
-        if (fetchInitialPostsBatch.fulfilled.match(action)) {
-          const posts = action.payload.posts.map(normalizePost);
-          dispatch(setPosts(posts));
-          addPostsToIndexedDB(posts);
-        }
-      }
-
-      setInitialLoaded(true);
-    };
-
-    const loadPublic = async () => {
-      const snap = await getDocs(
-        query(
-          collection(db, "posts"),
-          where("visibility", "==", "public"),
-          orderBy("displayDate", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        )
-      );
-      const publicPosts = snap.docs.map((doc) =>
-        normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
-      );
-      dispatch(setPosts(publicPosts));
-      setInitialLoaded(true);
-    };
-
-    if (!currentUser) {
-      loadPublic();
-    } else if (currentUserCompanyId) {
-      loadInitialPosts(currentUserCompanyId);
-    }
-  }, [currentUser, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE]);
-
-  // 2️⃣ Real-time listeners: only after initial load
-  useEffect(() => {
-    if (!initialLoaded) return;
-    let unsubscribePublic: () => void = () => {};
-    let unsubscribeCompany: () => void = () => {};
-
-    const setupListeners = async () => {
-      const lastSeenISO =
-        (await getLastSeenTimestamp()) || new Date(0).toISOString();
-      const lastSeenDate = new Date(lastSeenISO);
-      const lastSeenTs = Timestamp.fromDate(lastSeenDate);
-
-      const processDocChanges = async (snapshot: QuerySnapshot) => {
-        let mostRecent = lastSeenDate;
-        const updates: PostWithID[] = [];
-
-        for (const change of snapshot.docChanges()) {
-          const data = change.doc.data() as PostType;
-          let updatedAt: any = data.timestamp;
-          if (updatedAt?.toDate) updatedAt = updatedAt.toDate();
-          else if (typeof updatedAt === "string")
-            updatedAt = new Date(updatedAt);
-
-          if (updatedAt <= mostRecent) continue;
-          mostRecent = updatedAt;
-
-          if (change.type === "removed") {
-            dispatch(deletePost(change.doc.id));
-            removePostFromIndexedDB(change.doc.id);
-            deleteUserCreatedPostInIndexedDB(change.doc.id);
-            await purgeDeletedPostFromFilteredSets(change.doc.id); // ✅ now valid
-          } else if (
-            (change.type === "added" || change.type === "modified") &&
-            data.imageUrl
-          ) {
-            const normalized = normalizePost({
-              id: change.doc.id,
-              ...data,
-            } as PostWithID);
-            updates.push(normalized);
-            await updatePostInIndexedDB(normalized);
-            await updatePostInFilteredSets(normalized); // ✅ now valid
-          }
-        }
-
-        if (updates.length) {
-          dispatch(mergeAndSetPosts(updates));
-        }
-
-        if (mostRecent > lastSeenDate) {
-          await setLastSeenTimestamp(mostRecent.toISOString());
-        }
-      };
-
-      // 🔁 Listen for public posts
-      unsubscribePublic = onSnapshot(
-        query(
-          collection(db, "posts"),
-          where("timestamp", ">", lastSeenTs),
-          where("visibility", "==", "public"),
-          orderBy("timestamp", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        ),
-        processDocChanges
-      );
-
-      // 🔁 Listen for company posts
-      if (currentUserCompanyId) {
-        unsubscribeCompany = onSnapshot(
-          query(
+        // --- 2️⃣ Fetch from Firestore if needed
+        let q;
+        if (mode.type === "distributor") {
+          q = query(
             collection(db, "posts"),
-            where("timestamp", ">", lastSeenTs),
-            ...(isDeveloper
-              ? []
-              : [where("postUserCompanyId", "==", currentUserCompanyId)]),
-            orderBy("timestamp", "desc"),
-            limit(POSTS_BATCH_SIZE)
-          ),
-          processDocChanges
+            where("companyId", "==", mode.distributorId),
+            where("visibility", "in", ["companyOnly", "network"]),
+            orderBy("displayDate", "desc"),
+            limit(batchSize)
+          );
+        } else if (mode.type === "highlighted") {
+          q = query(
+            collection(db, "posts"),
+            where("highlightedBySuppliers", "array-contains", mode.supplierId),
+            orderBy("displayDate", "desc"),
+            limit(batchSize)
+          );
+        } else if (mode.type === "supplierNetwork") {
+          q = query(
+            collection(db, "posts"),
+            where("sharedWithSuppliers", "array-contains", mode.supplierId),
+            orderBy("displayDate", "desc"),
+            limit(batchSize)
+          );
+        }
+
+        const snap = q ? await getDocs(q) : null;
+        if (snap && !snap.empty) {
+          const newLast = snap.docs[snap.docs.length - 1];
+          setLastVisibleSnap(newLast); // keep snapshot locally
+          dispatch(setLastVisible(newLast.id)); // save only ID to Redux
+          const posts = snap.docs.map((d) =>
+            normalizePost({ id: d.id, ...d.data() } as PostWithID)
+          );
+          dispatch(setPosts(posts));
+          await addPostsToIndexedDB(posts);
+        }
+      }
+
+      if (cancelled) return;
+
+      // --- 3️⃣ Realtime listener
+      let qRealtime;
+      if (mode.type === "distributor") {
+        qRealtime = query(
+          collection(db, "posts"),
+          where("companyId", "==", mode.distributorId),
+          where("visibility", "in", ["companyOnly", "network"]),
+          orderBy("displayDate", "desc"),
+          limit(batchSize)
+        );
+      } else if (mode.type === "highlighted") {
+        qRealtime = query(
+          collection(db, "posts"),
+          where("highlightedBySuppliers", "array-contains", mode.supplierId),
+          orderBy("displayDate", "desc"),
+          limit(batchSize)
+        );
+      } else if (mode.type === "supplierNetwork") {
+        qRealtime = query(
+          collection(db, "posts"),
+          where("sharedWithSuppliers", "array-contains", mode.supplierId),
+          orderBy("displayDate", "desc"),
+          limit(batchSize)
         );
       }
-    };
 
-    setupListeners();
+      if (qRealtime) {
+        unsubscribeRef.current = onSnapshot(qRealtime, (snap) => {
+          const posts = snap.docs.map((d) =>
+            normalizePost({ id: d.id, ...d.data() } as PostWithID)
+          );
+          if (posts.length > 0) {
+            dispatch(mergeAndSetPosts(posts));
+            addPostsToIndexedDB(posts);
+          }
+        });
+      }
+    } // <-- CLOSE loadAndListen here ✅
+
+    loadAndListen();
 
     return () => {
-      unsubscribePublic();
-      unsubscribeCompany();
+      cancelled = true;
+      if (unsubscribeRef.current) unsubscribeRef.current();
     };
-  }, [initialLoaded, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE]);
-};
+  }, [opts?.mode, batchSize, dispatch]);
+
+  return {
+    lastVisibleSnap,
+    lastVisibleId: lastVisibleSnap?.id ?? null, // 👈 add this
+  };
+}
 
 export default usePosts;

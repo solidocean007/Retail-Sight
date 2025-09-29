@@ -21,7 +21,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { deletePost, updatePost } from "../../Slices/postsSlice";
-import { Chip, Dialog, Typography } from "@mui/material";
+import { Chip, Dialog, MenuItem, Select, Typography } from "@mui/material";
 import "./editPostModal.css";
 
 import { Button, TextField } from "@mui/material";
@@ -79,7 +79,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const userData = useSelector(selectUser)!;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [postVisibility, setPostVisibility] = useState<
-    "public" | "company" | "supplier" | "private" | undefined
+    "public" | "companyOnly" | "network" | undefined
   >("public");
   const [updatedCaseCount, setUpdatedCaseCount] = useState(post.totalCaseCount);
 
@@ -184,7 +184,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   useEffect(() => {
     setDescription(post?.description || "");
-    setPostVisibility(post?.visibility || "public");
+    setPostVisibility(post?.visibility || "companyOnly");
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
@@ -443,6 +443,21 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 handleTotalCaseCountChange={setUpdatedCaseCount}
                 initialValue={post.totalCaseCount}
               />
+
+              <Select
+                fullWidth
+                variant="outlined"
+                value={postVisibility}
+                onChange={(e) => {
+                  setPostVisibility(
+                    e.target.value as "network" | "companyOnly"
+                  );
+                  handleFieldChange("visibility", e.target.value);
+                }}
+              >
+                <MenuItem value="network">Network</MenuItem>
+                <MenuItem value="companyOnly">Company Only</MenuItem>
+              </Select>
 
               <button className="btn-error" onClick={handleDeletePostClick}>
                 Delete Post

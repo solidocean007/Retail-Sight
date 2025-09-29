@@ -1,10 +1,5 @@
 // ActivityFeed.tsx
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
@@ -21,9 +16,7 @@ import {
   fetchMorePostsBatch,
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
-import {
-  addPostsToIndexedDB,
-} from "../utils/database/indexedDBUtils";
+import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
@@ -37,6 +30,7 @@ import { PostQueryFilters } from "../utils/types";
 import { normalizePost } from "../utils/normalizePost";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -77,8 +71,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [showLoader, setShowLoader] = useState(false);
-
+  const [lastVisible, setLastVisible] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  // initial load cursor from usePosts
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const filteredCount = useSelector(
@@ -96,13 +93,26 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   ]);
   // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const currentUserCompanyId = currentUser?.companyId;
   // hook to load posts
-  const [lastVisible, setLastVisible] = useState<string | null>(null);
+  // const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  // lastVisible is no longer managed here, comes directly from usePosts
 
-  usePosts(currentUserCompanyId, POSTS_BATCH_SIZE);
+  const { lastVisible: initialCursor } = usePosts(
+    currentUser?.companyId,
+    POSTS_BATCH_SIZE
+  );
+
+  useEffect(() => {
+    if (displayPosts.length > 0) setHasLoadedOnce(true);
+  }, [displayPosts]);
+
+  useEffect(() => {
+    if (initialCursor) {
+      setLastVisible(initialCursor);
+    }
+  }, [initialCursor]);
 
   const scrollToTop = () => {
     virtuosoRef.current?.scrollToIndex({
@@ -227,28 +237,29 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           endReached={
             activePostSet === "posts"
               ? () => {
-                  if (!loadingMore && hasMore) {
+                  if (!loadingMore && hasMore && lastVisible) {
                     setLoadingMore(true);
                     dispatch(
                       fetchMorePostsBatch({
-                        lastVisible,
+                        lastVisible, // now the proper snapshot
                         limit: POSTS_BATCH_SIZE,
                         currentUser,
                       })
                     )
                       .then((action) => {
                         if (fetchMorePostsBatch.fulfilled.match(action)) {
-                          const { posts, lastVisible: newLastVisible } =
+                          const { posts, lastVisible: newCursor } =
                             action.payload;
-                          setLastVisible(newLastVisible);
 
                           if (posts.length > 0) {
                             addPostsToIndexedDB(posts);
-                            // dispatch(appendPosts(posts));
                             dispatch(
                               mergeAndSetPosts(posts.map(normalizePost))
                             );
                             setHasMore(true);
+                            if (newCursor) {
+                              setLastVisible(newCursor); // keep cursor for next page
+                            }
                           } else {
                             setHasMore(false);
                           }

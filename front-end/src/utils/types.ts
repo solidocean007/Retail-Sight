@@ -218,7 +218,8 @@ export interface PostType {
   accountNumber?: string;
   accountName?: string;
   accountAddress?: string;
-  // streetAddress?: string; // just added
+  companyId?: string; // just added this
+  streetAddress?: string;
   accountSalesRouteNums?: string[];
   accountType?: string;
   chain?: string;
@@ -265,7 +266,7 @@ export interface PostType {
   // 🗓 Timing
   displayDate: string;
   timestamp: Timestamp;
-  visibility: "public" | "company" | "supplier" | "private";
+  visibility: "public" | "companyOnly" | "network" | "public";
 
   // 🎯 Goals
   companyGoalId?: string | null;
