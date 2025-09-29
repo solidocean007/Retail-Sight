@@ -246,7 +246,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                     setLoadingMore(true);
                     dispatch(
                       fetchMorePostsBatch({
-                        lastVisibleSnap, // Object literal may only specify known properties, and 'lastVisible' does not exist in type 'FetchMorePostsArgs'
+                        lastVisibleSnap,
                         limit: POSTS_BATCH_SIZE,
                         currentUser,
                       })
@@ -255,7 +255,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                         if (fetchMorePostsBatch.fulfilled.match(action)) {
                           const { posts, lastVisible: newCursor } =
                             action.payload;
+                            console.log("Fetched more posts:", posts.length, newCursor)
 
+                            //fyi  my main branch setLasVisible(newLastVisible) right here in the endReached
                           if (posts.length > 0) {
                             addPostsToIndexedDB(posts);
                             dispatch(
@@ -263,9 +265,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                             );
                             setHasMore(true);
                             if (newCursor) {
-                              setLastVisibleSnap(newCursor); // keep cursor for next page
+                              setLastVisibleSnap(newCursor);
                             }
                           } else {
+                            console.log("posts.length: ", posts.length)
                             setHasMore(false);
                           }
                         }

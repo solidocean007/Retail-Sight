@@ -157,10 +157,11 @@ export const fetchMorePostsBatch = createAsyncThunk(
           ? snapshot.docs[snapshot.docs.length - 1]
           : null;
 
-      return {
-        posts: postsWithIds,
-        lastVisible: newLastVisible ? newLastVisible.id : null, // ✅ only ID
-      };
+     return {
+  posts: postsWithIds,
+  lastVisible: newLastVisible, // 👈 actual QueryDocumentSnapshot
+};
+
     } catch (error) {
       console.error("❌ Error in fetchMorePostsBatch:", error);
       return rejectWithValue(

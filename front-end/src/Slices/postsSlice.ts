@@ -209,7 +209,10 @@ const postsSlice = createSlice({
         ];
         state.posts = sortPostsByDate(merged);
 
-        state.lastVisible = action.payload.lastVisible; // it's already a string | null
+        state.lastVisible = action.payload.lastVisible
+          ? action.payload.lastVisible.id
+          : null;
+
         state.loading = false;
       })
 
