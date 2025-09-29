@@ -99,10 +99,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [hasMore, setHasMore] = useState(true);
   // lastVisible is no longer managed here, comes directly from usePosts
 
-  const { lastVisibleSnap: initialCursor } = usePosts(
-    currentUser?.companyId,
-    POSTS_BATCH_SIZE
-  );
+  const { lastVisibleSnap: initialCursor } = usePosts({
+    mode: { type: "distributor", distributorId: currentUser?.companyId ?? "" },
+    batchSize: POSTS_BATCH_SIZE,
+  });
 
   useEffect(() => {
     if (displayPosts.length > 0) setHasLoadedOnce(true);
@@ -239,36 +239,42 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
               ? () => {
                   if (!loadingMore && hasMore && lastVisibleSnap) {
                     console.log(
-                      "🔔 endReached fired, lastVisibleSnap:",
-                      lastVisibleSnap
+                      "🔔 endReached fired, cursor:",
+                      lastVisibleSnap.id
                     );
 
                     setLoadingMore(true);
                     dispatch(
                       fetchMorePostsBatch({
-                        lastVisibleSnap,
+                        lastVisibleSnap, // 👈 pass the snapshot, not the string
                         limit: POSTS_BATCH_SIZE,
                         currentUser,
                       })
                     )
                       .then((action) => {
                         if (fetchMorePostsBatch.fulfilled.match(action)) {
-                          const { posts, lastVisible: newCursor } =
+                          const { posts, lastVisibleId: newCursorId } =
                             action.payload;
-                            console.log("Fetched more posts:", posts.length, newCursor)
+                          console.log(
+                            "Fetched more posts:",
+                            posts.length,
+                            newCursorId
+                          );
 
-                            //fyi  my main branch setLasVisible(newLastVisible) right here in the endReached
                           if (posts.length > 0) {
                             addPostsToIndexedDB(posts);
                             dispatch(
                               mergeAndSetPosts(posts.map(normalizePost))
                             );
                             setHasMore(true);
-                            if (newCursor) {
-                              setLastVisibleSnap(newCursor);
+
+                            // update local cursor for next page
+                            if (action.meta.arg.lastVisibleSnap) {
+                              setLastVisibleSnap(
+                                action.meta.arg.lastVisibleSnap
+                              );
                             }
                           } else {
-                            console.log("posts.length: ", posts.length)
                             setHasMore(false);
                           }
                         }
