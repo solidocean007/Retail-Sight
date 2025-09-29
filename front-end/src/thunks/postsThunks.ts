@@ -32,7 +32,6 @@ import {
 
 import { normalizePost } from "../utils/normalizePost";
 
-
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
   currentUser: UserType | null;
@@ -93,7 +92,6 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   }
 );
 
-
 interface FetchMorePostsArgs {
   lastVisibleSnap: QueryDocumentSnapshot<DocumentData> | null;
   limit: number;
@@ -106,7 +104,11 @@ export const fetchMorePostsBatch = createAsyncThunk(
     { lastVisibleSnap, limit: batchSize, currentUser }: FetchMorePostsArgs,
     { rejectWithValue }
   ) => {
-    console.log("fetchMorePostsBatch called with:", { lastVisibleSnap, batchSize });
+    console.log("fetchMorePostsBatch called with:", {
+      lastVisibleSnap,
+      batchSize,
+    });
+
     try {
       if (!currentUser?.companyId) {
         console.warn("⚠️ fetchMorePostsBatch called without companyId.");
@@ -118,17 +120,22 @@ export const fetchMorePostsBatch = createAsyncThunk(
 
       const postsCollectionRef = collection(db, "posts");
 
-      // 🔑 build query with pagination
       let postsQuery = query(
         postsCollectionRef,
         where("companyId", "==", companyId),
-        where("visibility", "in", ["companyOnly", "network"]),
+        where("migratedVisibility", "==", "network"),
         orderBy("displayDate", "desc"),
-         startAfter(lastVisibleSnap),   // 👈 use snapshot here
+        startAfter(lastVisibleSnap),
         limit(batchSize)
       );
 
       const snapshot = await getDocs(postsQuery);
+
+      // 🔎 Debug log
+      console.log(
+        `📦 fetchMorePostsBatch → ${snapshot.size} docs returned`,
+        snapshot.docs.map((d) => d.id)
+      );
 
       const postsWithIds: PostWithID[] = snapshot.docs
         .map((docSnap) => {
@@ -145,13 +152,15 @@ export const fetchMorePostsBatch = createAsyncThunk(
         })
         .filter((p): p is PostWithID => p !== null);
 
-      // ✅ return the actual snapshot cursor, not just the id
       const newLastVisible =
         snapshot.docs.length > 0
           ? snapshot.docs[snapshot.docs.length - 1]
           : null;
 
-      return { posts: postsWithIds, lastVisible: newLastVisible };
+      return {
+        posts: postsWithIds,
+        lastVisible: newLastVisible ? newLastVisible.id : null, // ✅ only ID
+      };
     } catch (error) {
       console.error("❌ Error in fetchMorePostsBatch:", error);
       return rejectWithValue(
@@ -160,7 +169,6 @@ export const fetchMorePostsBatch = createAsyncThunk(
     }
   }
 );
-
 
 // type FetchFilteredPostsArgs = {
 //   filters: {
@@ -234,14 +242,12 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       );
     }
 
-   
     if (filters.accountChain) {
       baseQuery = query(baseQuery, where("chain", "==", filters.accountChain));
     }
-  
+
     if (filters.chainType) {
       baseQuery = query(baseQuery, where("chainType", "==", filters.chainType));
-     
     }
     if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
       baseQuery = query(
@@ -320,7 +326,7 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
 
     return {
       posts,
-       lastVisible: snapshot.docs[snapshot.docs.length - 1] ?? null,
+      lastVisible: snapshot.docs[snapshot.docs.length - 1] ?? null,
       count: snapshot.size,
     };
   }

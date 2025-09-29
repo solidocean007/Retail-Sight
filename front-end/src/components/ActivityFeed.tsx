@@ -71,7 +71,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [showLoader, setShowLoader] = useState(false);
-  const [lastVisible, setLastVisible] =
+  const [lastVisibleSnap, setLastVisibleSnap] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
@@ -99,7 +99,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [hasMore, setHasMore] = useState(true);
   // lastVisible is no longer managed here, comes directly from usePosts
 
-  const { lastVisible: initialCursor } = usePosts(
+  const { lastVisibleSnap: initialCursor } = usePosts(
     currentUser?.companyId,
     POSTS_BATCH_SIZE
   );
@@ -110,7 +110,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   useEffect(() => {
     if (initialCursor) {
-      setLastVisible(initialCursor);
+      setLastVisibleSnap(initialCursor);
     }
   }, [initialCursor]);
 
@@ -237,11 +237,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           endReached={
             activePostSet === "posts"
               ? () => {
-                  if (!loadingMore && hasMore && lastVisible) {
+                  if (!loadingMore && hasMore && lastVisibleSnap) {
+                    console.log(
+                      "🔔 endReached fired, lastVisibleSnap:",
+                      lastVisibleSnap
+                    );
+
                     setLoadingMore(true);
                     dispatch(
                       fetchMorePostsBatch({
-                        lastVisible, // now the proper snapshot
+                        lastVisibleSnap, // Object literal may only specify known properties, and 'lastVisible' does not exist in type 'FetchMorePostsArgs'
                         limit: POSTS_BATCH_SIZE,
                         currentUser,
                       })
@@ -258,7 +263,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                             );
                             setHasMore(true);
                             if (newCursor) {
-                              setLastVisible(newCursor); // keep cursor for next page
+                              setLastVisibleSnap(newCursor); // keep cursor for next page
                             }
                           } else {
                             setHasMore(false);

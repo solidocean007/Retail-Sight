@@ -116,6 +116,7 @@ const postsSlice = createSlice({
       ];
       state.posts = sortPostsByDate(merged);
     },
+
     mergeAndSetFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
       const merged = [
         ...state.filteredPosts,
@@ -201,16 +202,17 @@ const postsSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchMorePostsBatch.fulfilled, (state, action) => {
-        const newPosts = action.payload.posts;
         const existingIds = new Set(state.posts.map((p) => p.id));
-        newPosts.forEach((post) => {
-          if (!existingIds.has(post.id)) {
-            state.posts.push(post);
-          }
-        });
-        state.lastVisible = action.payload.lastVisible?.id ?? null;
+        const merged = [
+          ...state.posts,
+          ...action.payload.posts.filter((p) => !existingIds.has(p.id)),
+        ];
+        state.posts = sortPostsByDate(merged);
+
+        state.lastVisible = action.payload.lastVisible; // it's already a string | null
         state.loading = false;
       })
+
       .addCase(fetchMorePostsBatch.rejected, (state, action) => {
         state.error = action.error.message || "Error fetching more posts";
         state.loading = false;

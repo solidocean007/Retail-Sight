@@ -392,63 +392,63 @@ try {
 
 // utils/migrations/migrateTopLevelCompanyId.ts
 
-// type PostDoc = QueryDocumentSnapshot<DocumentData>;
+type PostDoc = QueryDocumentSnapshot<DocumentData>;
 
-// export async function migrateTopLevelCompanyId() {
-//   const snap = await getDocs(collection(db, "posts"));
-//   console.log(`Found ${snap.size} posts. Starting migration...`);
+export async function migrateTopLevelCompanyId() {
+  const snap = await getDocs(collection(db, "posts"));
+  console.log(`Found ${snap.size} posts. Starting migration...`);
 
-//   let updated = 0;
-//   let alreadyHad = 0;
-//   let missingAll = 0;
+  let updated = 0;
+  let alreadyHad = 0;
+  let missingAll = 0;
 
-//   let batch = writeBatch(db);
-//   let ops = 0;
+  let batch = writeBatch(db);
+  let ops = 0;
 
-//   const docs: PostDoc[] = snap.docs as PostDoc[];
+  const docs: PostDoc[] = snap.docs as PostDoc[];
 
-//   for (const docSnap of docs) {
-//     const data = docSnap.data() as any;
+  for (const docSnap of docs) {
+    const data = docSnap.data() as any;
 
-//     if (
-//       data.companyId &&
-//       typeof data.companyId === "string" &&
-//       data.companyId.trim()
-//     ) {
-//       alreadyHad++;
-//       continue;
-//     }
+    if (
+      data.companyId &&
+      typeof data.companyId === "string" &&
+      data.companyId.trim()
+    ) {
+      alreadyHad++;
+      continue;
+    }
 
-//     const candidate: string | undefined =
-//       (typeof data.postUserCompanyId === "string" &&
-//         data.postUserCompanyId.trim()) ||
-//       (typeof data.postUser?.companyId === "string" &&
-//         data.postUser.companyId.trim()) ||
-//       undefined;
+    const candidate: string | undefined =
+      (typeof data.postUserCompanyId === "string" &&
+        data.postUserCompanyId.trim()) ||
+      (typeof data.postUser?.companyId === "string" &&
+        data.postUser.companyId.trim()) ||
+      undefined;
 
-//     if (!candidate) {
-//       missingAll++;
-//       continue;
-//     }
+    if (!candidate) {
+      missingAll++;
+      continue;
+    }
 
-//     batch.update(docSnap.ref, { companyId: candidate });
-//     updated++;
-//     ops++;
+    batch.update(docSnap.ref, { companyId: candidate });
+    updated++;
+    ops++;
 
-//     // Commit every ~450 ops (limit is 500)
-//     if (ops >= 450) {
-//       await batch.commit();
-//       console.log(`Committed a batch of ${ops} updates...`);
-//       batch = writeBatch(db);
-//       ops = 0;
-//     }
-//   }
+    // Commit every ~450 ops (limit is 500)
+    if (ops >= 450) {
+      await batch.commit();
+      console.log(`Committed a batch of ${ops} updates...`);
+      batch = writeBatch(db);
+      ops = 0;
+    }
+  }
 
-//   if (ops > 0) {
-//     await batch.commit();
-//     console.log(`Committed final batch of ${ops} updates.`);
-//   }
+  if (ops > 0) {
+    await batch.commit();
+    console.log(`Committed final batch of ${ops} updates.`);
+  }
 
-//   console.log("✅ Migration complete.");
-//   console.log({ updated, alreadyHad, missingAll, total: snap.size });
-// }
+  console.log("✅ Migration complete.");
+  console.log({ updated, alreadyHad, missingAll, total: snap.size });
+}
