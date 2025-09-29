@@ -282,15 +282,14 @@ export async function migrateVisibility() {
     const data = doc.data();
     const updates: any = {};
 
-    // 1. Handle migratedVisibility
-    if (data.migratedVisibility) {
-      updates.visibility = data.migratedVisibility;
-      updates.migratedVisibility = deleteField();
+    // 1. Always add migratedVisibility if missing
+    if (!data.migratedVisibility) {
+      updates.migratedVisibility = "network";
     }
 
-    // 2. Normalize visibility
-    if (data.visibility === "company" || data.visibility === "public") {
-      updates.visibility = "network";
+    // 2. Normalize visibility back to company
+    if (data.visibility === "network" || data.visibility === "companyOnly") {
+      updates.visibility = "company";
     }
 
     if (Object.keys(updates).length > 0) {
@@ -302,6 +301,7 @@ export async function migrateVisibility() {
 
   console.log(`✅ Migration done. Updated ${updated} posts.`);
 }
+
 
 // scripts/auditCompanyId.ts
 

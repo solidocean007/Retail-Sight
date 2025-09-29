@@ -103,7 +103,7 @@ function usePosts(arg1?: any, arg2?: any) {
           q = query(
             collection(db, "posts"),
             where("companyId", "==", mode.distributorId),
-            where("visibility", "in", ["companyOnly", "network"]),
+            where("migratedVisibility", "in", ["companyOnly", "network"]),
             orderBy("displayDate", "desc"),
             limit(batchSize)
           );
@@ -144,7 +144,7 @@ function usePosts(arg1?: any, arg2?: any) {
         qRealtime = query(
           collection(db, "posts"),
           where("companyId", "==", mode.distributorId),
-          where("visibility", "in", ["companyOnly", "network"]),
+          where("migratedVisibility", "in", ["companyOnly", "network"]),
           orderBy("displayDate", "desc"),
           limit(batchSize)
         );
