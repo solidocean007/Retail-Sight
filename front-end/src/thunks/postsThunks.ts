@@ -78,13 +78,17 @@ export const fetchInitialPostsBatch = createAsyncThunk(
         })
         .filter((p): p is PostWithID => p !== null);
 
-      // ✅ return lastVisible as a QueryDocumentSnapshot
-      const lastVisible =
+      // ✅ return lastVisible as a string
+
+      const newLastVisible =
         snapshot.docs.length > 0
           ? snapshot.docs[snapshot.docs.length - 1]
           : null;
 
-      return { posts: postsWithIds, lastVisible };
+      return {
+        posts: postsWithIds,
+        lastVisibleId: newLastVisible ? newLastVisible.id : null, // ✅ string only
+      };
     } catch (error) {
       console.error("Error fetching initial posts:", error);
       return rejectWithValue(error instanceof Error ? error.message : error);
@@ -98,21 +102,19 @@ interface FetchMorePostsArgs {
   currentUser: UserType | null;
 }
 
-export const fetchMorePostsBatch = createAsyncThunk(
+export const fetchMorePostsBatch = createAsyncThunk<
+  { posts: PostWithID[]; lastVisibleId: string | null }, // ✅ consistent return type
+  FetchMorePostsArgs
+>(
   "posts/fetchMore",
   async (
-    { lastVisibleSnap, limit: batchSize, currentUser }: FetchMorePostsArgs,
+    { lastVisibleSnap, limit: batchSize, currentUser },
     { rejectWithValue }
   ) => {
-    console.log("fetchMorePostsBatch called with:", {
-      lastVisibleSnap,
-      batchSize,
-    });
-
     try {
       if (!currentUser?.companyId) {
         console.warn("⚠️ fetchMorePostsBatch called without companyId.");
-        return { posts: [], lastVisible: null };
+        return { posts: [], lastVisibleId: null }; // ✅ matches return type
       }
 
       const isDeveloper = currentUser.role === "developer";
@@ -146,7 +148,11 @@ export const fetchMorePostsBatch = createAsyncThunk(
           const isCompanyPost =
             data.visibility === "companyOnly" && data.companyId === companyId;
 
-          return isPublic || isCompanyPost
+          const isMigratedNetwork =
+            data.migratedVisibility === "network" &&
+            data.companyId === companyId;
+
+          return isDeveloper || isPublic || isCompanyPost || isMigratedNetwork
             ? normalizePost({ id: docSnap.id, ...data })
             : null;
         })
@@ -157,11 +163,10 @@ export const fetchMorePostsBatch = createAsyncThunk(
           ? snapshot.docs[snapshot.docs.length - 1]
           : null;
 
-     return {
-  posts: postsWithIds,
-  lastVisible: newLastVisible, // 👈 actual QueryDocumentSnapshot
-};
-
+      return {
+        posts: postsWithIds,
+        lastVisibleId: newLastVisible ? newLastVisible.id : null, // ✅ string only
+      };
     } catch (error) {
       console.error("❌ Error in fetchMorePostsBatch:", error);
       return rejectWithValue(

@@ -267,6 +267,7 @@ export interface PostType {
   displayDate: string;
   timestamp: Timestamp;
   visibility: "public" | "companyOnly" | "network" | "public";
+  migratedVisibility?: "public" | "companyOnly" | "network"; // for migration purposes
 
   // 🎯 Goals
   companyGoalId?: string | null;

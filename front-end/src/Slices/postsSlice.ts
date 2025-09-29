@@ -108,13 +108,35 @@ const postsSlice = createSlice({
     addNewPost: (state, action: PayloadAction<PostWithID>) => {
       state.posts.push(action.payload);
     },
+    // mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
+    //   const existingIds = new Set(state.posts.map((p) => p.id));
+    //   const merged = [
+    //     ...state.posts,
+    //     ...action.payload.filter((p) => !existingIds.has(p.id)),
+    //   ];
+    //   state.posts = sortPostsByDate(merged);
+    // },
     mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
+      const newPosts = action.payload;
       const existingIds = new Set(state.posts.map((p) => p.id));
+
       const merged = [
         ...state.posts,
-        ...action.payload.filter((p) => !existingIds.has(p.id)),
+        ...newPosts.filter((p) => !existingIds.has(p.id)),
       ];
-      state.posts = sortPostsByDate(merged);
+
+      const toTime = (val: any): number => {
+        if (val instanceof Date) return val.getTime();
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+      };
+
+      state.posts = merged.sort((a, b) => {
+        return (
+          toTime(b.displayDate || b.timestamp) -
+          toTime(a.displayDate || a.timestamp)
+        );
+      });
     },
 
     mergeAndSetFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
@@ -166,7 +188,7 @@ const postsSlice = createSlice({
       .addCase(fetchInitialPostsBatch.fulfilled, (state, action) => {
         state.loading = false;
         state.posts = action.payload.posts;
-        state.lastVisible = action.payload.lastVisible?.id ?? null;
+        state.lastVisible = action.payload.lastVisibleId;
       })
       .addCase(
         fetchFilteredPostsBatch.fulfilled,
@@ -209,10 +231,7 @@ const postsSlice = createSlice({
         ];
         state.posts = sortPostsByDate(merged);
 
-        state.lastVisible = action.payload.lastVisible
-          ? action.payload.lastVisible.id
-          : null;
-
+        state.lastVisible = action.payload.lastVisibleId; // ✅ no undefined
         state.loading = false;
       })
 
