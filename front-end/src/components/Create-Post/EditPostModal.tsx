@@ -78,6 +78,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   const userData = useSelector(selectUser)!;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
+  const [useOnBehalf, setUseOnBehalf] = useState(false);
   const [postVisibility, setPostVisibility] = useState<
     "public" | "company" | "supplier" | "private" | undefined
   >("public");
@@ -188,11 +189,17 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
-    const actor = onBehalf ?? post.postUser;
-    const creator = userData;
-
     const postRef = doc(db, "posts", updatedPost.id);
-    const updatedFields = {
+    const snap = await getDoc(postRef);
+    const existing = snap.data() || {};
+
+    const creator = userData; // supervisor/editor
+    const actor = useOnBehalf && onBehalf ? onBehalf : post.postUser;
+
+    const ownershipCorrection =
+      useOnBehalf && onBehalf && onBehalf.uid !== post.postUserUid;
+
+    const updatedFields: any = {
       description: updatedPost.description,
       visibility: updatedPost.visibility,
       totalCaseCount: updatedPost.totalCaseCount,
@@ -210,48 +217,67 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       companyGoalId: selectedCompanyGoal?.id ?? null,
       companyGoalTitle: selectedCompanyGoal?.goalTitle ?? null,
 
-      // overwrite postUser → actor
-      postUser: actor,
-      postUserUid: actor.uid,
-      postUserFirstName: actor.firstName,
-      postUserLastName: actor.lastName,
-      postUserProfileUrlThumbnail: actor.profileUrlThumbnail ?? "",
-      postUserProfileUrlOriginal: actor.profileUrlOriginal ?? "",
-      postUserEmail: actor.email,
-      postUserCompanyName: actor.company,
-      postUserSalesRouteNum: actor.salesRouteNum ?? null,
-      postUserPhone: actor.phone,
-      postUserRole: actor.role,
-
-      // stamp who clicked save
-      postedBy: creator,
-      postedByUid: creator.uid,
-      postedByFirstName: creator.firstName,
-      postedByLastName: creator.lastName,
+      // audit trail
+      lastEditedByUid: creator.uid,
+      lastEditedByFirstName: creator.firstName,
+      lastEditedByLastName: creator.lastName,
+      lastEditedAt: new Date().toISOString(),
     };
 
+    if (ownershipCorrection) {
+      // ✅ Supervisor switched post to another user
+      updatedFields.postUser = actor;
+      updatedFields.postUserUid = actor.uid;
+      updatedFields.postUserFirstName = actor.firstName;
+      updatedFields.postUserLastName = actor.lastName;
+      updatedFields.postUserEmail = actor.email;
+      updatedFields.postUserCompanyName = actor.company;
+      updatedFields.postUserSalesRouteNum = actor.salesRouteNum ?? null;
+      updatedFields.postUserRole = actor.role;
+
+      // ✅ Redefine the creator to the supervisor doing it on behalf
+      updatedFields.createdByUid = creator.uid;
+      updatedFields.createdByFirstName = creator.firstName;
+      updatedFields.createdByLastName = creator.lastName;
+      updatedFields.createdAt = existing.createdAt || new Date().toISOString();
+    } else {
+      // Preserve existing creator if present
+      if (existing.createdByUid) {
+        updatedFields.createdByUid = existing.createdByUid;
+        updatedFields.createdByFirstName = existing.createdByFirstName;
+        updatedFields.createdByLastName = existing.createdByLastName;
+        updatedFields.createdAt = existing.createdAt;
+      } else {
+        // Backfill if missing
+        updatedFields.createdByUid = post.postUserUid;
+        updatedFields.createdByFirstName = post.postUserFirstName;
+        updatedFields.createdByLastName = post.postUserLastName;
+        updatedFields.createdAt = post.displayDate || new Date().toISOString();
+      }
+    }
+
     try {
-      // A) update Firestore
       await updateDoc(postRef, updatedFields);
       await updatePostWithNewTimestamp(updatedPost.id);
 
-      // B) if goal changed, update its submittedPosts
+      // Update goal submittedPosts array
       if (selectedCompanyGoal?.id) {
         const goalRef = doc(db, "companyGoals", selectedCompanyGoal.id);
         const snap = await getDoc(goalRef);
-        const existing: any[] = snap.data()?.submittedPosts || [];
-        const filtered = existing.filter((e) => e.postId !== updatedPost.id);
+        const existingPosts: any[] = snap.data()?.submittedPosts || [];
+
+        const filtered = existingPosts.filter(
+          (e) => e.postId !== updatedPost.id
+        );
         filtered.push({
           postId: updatedPost.id,
           account: updatedPost.account,
           submittedBy: actor,
           submittedAt: updatedPost.displayDate,
         });
+
         await updateDoc(goalRef, { submittedPosts: filtered });
       }
-
-      // ✅ Don’t manually dispatch/update caches anymore
-      // Firestore snapshot will propagate changes to Redux + IndexedDB + filteredSets
 
       handleCloseEditModal();
       dispatch(showMessage("Post edited successfully!"));
@@ -342,8 +368,20 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                 ×
               </Button>
             </div>
+            {authToCreateOnBehalf && (
+              <div className="onbehalf-toggle">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={useOnBehalf}
+                    onChange={(e) => setUseOnBehalf(e.target.checked)}
+                  />
+                  Edit on behalf of another user
+                </label>
+              </div>
+            )}
             <div className="edit-post-top">
-              {authToCreateOnBehalf && (
+              {authToCreateOnBehalf && useOnBehalf && (
                 <CreatePostOnBehalfOfOtherUser
                   onBehalf={onBehalf}
                   setOnBehalf={setOnBehalf}
