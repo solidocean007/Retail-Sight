@@ -31,7 +31,6 @@ import {
 
 import { normalizePost } from "../utils/normalizePost";
 
-
 type FetchInitialPostsArgs = {
   POSTS_BATCH_SIZE: number;
   currentUser: UserType | null;
@@ -45,7 +44,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   ) => {
     try {
       const isDeveloper = currentUser?.role === "developer";
-      const companyId = currentUser?.companyId;
+      const currentUserCompanyId = currentUser?.companyId;
       const postsCollectionRef = collection(db, "posts");
 
       const postsQuery = query(
@@ -64,12 +63,14 @@ export const fetchInitialPostsBatch = createAsyncThunk(
         .filter((post) => {
           if (isDeveloper) return true;
 
-          const isPublic = post.visibility === "public";
-          const isCompanyPost =
-            post.visibility === "company" &&
-            post.postUserCompanyId === companyId;
+          const isNetwork =
+            post.migratedVisibility === "network" &&
+            post.companyId === currentUserCompanyId;
+          const isCompanyOnlyPost =
+            post.migratedVisibility === "companyOnly" &&
+            post.postUserCompanyId === currentUserCompanyId;
 
-          return isPublic || isCompanyPost;
+          return isNetwork || isCompanyOnlyPost;
         });
 
       const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
@@ -135,12 +136,13 @@ export const fetchMorePostsBatch = createAsyncThunk(
           const data = doc.data() as PostType;
           if (isDeveloper) return normalizePost({ id: doc.id, ...data });
 
-          const isPublic = data.visibility === "public";
-          const isCompanyPost =
-            data.visibility === "company" &&
+          const isNetwork =
+            data.migratedVisibility === "network" && data.companyId === companyId;
+          const isCompanyOnlyPost =
+            data.migratedVisibility === "companyOnly" &&
             data.postUserCompanyId === companyId;
 
-          return isPublic || isCompanyPost
+          return isNetwork || isCompanyOnlyPost
             ? normalizePost({ id: doc.id, ...data })
             : null;
         })
@@ -239,14 +241,12 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       );
     }
 
-   
     if (filters.accountChain) {
       baseQuery = query(baseQuery, where("chain", "==", filters.accountChain));
     }
-  
+
     if (filters.chainType) {
       baseQuery = query(baseQuery, where("chainType", "==", filters.chainType));
-     
     }
     if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
       baseQuery = query(

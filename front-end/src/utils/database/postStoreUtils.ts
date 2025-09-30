@@ -29,11 +29,12 @@ export async function shouldRefetchPosts(
 
     const postsRef = collection(db, "posts");
 
-    const [companySnap, publicSnap] = await Promise.all([
+    const [networkSnap, companyOnlySnap] = await Promise.all([
       getDocs(
         query(
           postsRef,
-          where("postUserCompanyId", "==", companyId),
+          where("companyId", "==", companyId),
+          where("migratedVisibility", "==", "network"),
           orderBy("displayDate", "desc"),
           limit(1)
         )
@@ -41,7 +42,8 @@ export async function shouldRefetchPosts(
       getDocs(
         query(
           postsRef,
-          where("visibility", "==", "public"),
+          where("migratedVisibility", "==", "companyOnly"),
+          where("companyId", "==", companyId),
           orderBy("displayDate", "desc"),
           limit(1)
         )
@@ -50,11 +52,11 @@ export async function shouldRefetchPosts(
 
     const latestDates: Date[] = [];
 
-    if (!companySnap.empty) {
-      latestDates.push(new Date(companySnap.docs[0].data().displayDate));
+    if (!networkSnap.empty) {
+      latestDates.push(new Date(networkSnap.docs[0].data().displayDate));
     }
-    if (!publicSnap.empty) {
-      latestDates.push(new Date(publicSnap.docs[0].data().displayDate));
+    if (!companyOnlySnap.empty) {
+      latestDates.push(new Date(companyOnlySnap.docs[0].data().displayDate));
     }
 
     const newestLocal = new Date(newestCachedDate);

@@ -211,6 +211,7 @@ export interface PostType {
   productNames?: string[];
   brands?: string[];
   supplier?: string;
+  companyId: string;
 
   account: CompanyAccountType;
 
@@ -265,7 +266,8 @@ export interface PostType {
   // 🗓 Timing
   displayDate: string;
   timestamp: Timestamp;
-  visibility: "public" | "company" | "supplier" | "private";
+  visibility: "public" | "companyOnly" | "network" ;
+  migratedVisibility: "public" | "companyOnly" | "network" ;
 
   // 🎯 Goals
   companyGoalId?: string | null;
