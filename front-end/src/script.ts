@@ -249,3 +249,33 @@ export async function logTimestamps(
 // expose to window for easy calling from DevTools
 // (safe no-op in Node; only matters in the browser)
 ;(window as any).logTimestamps = logTimestamps;
+
+
+
+export async function migrateCompanyNameUsers() {
+  const usersRef = collection(db, "users");
+  const snap = await getDocs(usersRef);
+
+  let updated = 0;
+  let batch = writeBatch(db);
+
+  for (const d of snap.docs) {
+    const data = d.data();
+
+    if (data.company && !data.companyName) {
+      batch.update(d.ref, { companyName: data.company });
+      updated++;
+
+      // commit every 500 updates
+      if (updated % 500 === 0) {
+        await batch.commit();
+        batch = writeBatch(db);
+        console.log(`✅ Committed ${updated} so far...`);
+      }
+    }
+  }
+
+  // commit remaining ops
+  await batch.commit();
+  console.log(`🎉 Migration done. Updated ${updated} users.`);
+}
