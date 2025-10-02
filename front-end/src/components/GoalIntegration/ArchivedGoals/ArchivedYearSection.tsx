@@ -16,7 +16,6 @@ interface ArchivedYearSectionProps {
   expandedGoalId: string | null;
   setExpandedGoalId: React.Dispatch<React.SetStateAction<string | null>>;
   // onViewPostModal?: (postId: string) => void;
-
 }
 
 const ArchivedYearSection = ({
@@ -28,23 +27,28 @@ const ArchivedYearSection = ({
   onEdit,
   expandedGoalId,
   setExpandedGoalId,
-  // onViewPostModal,
-}: ArchivedYearSectionProps) => {
+}: // onViewPostModal,
+ArchivedYearSectionProps) => {
   const [expanded, setExpanded] = useState(false);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
-
-  const totalGoals = Object.values(months).flat().length;
 
   const toggleMonth = (month: string) => {
     setExpandedMonth(expandedMonth === month ? null : month);
   };
 
+  const uniqueGoalCount = new Set(
+    Object.values(months)
+      .flat()
+      .map((g) => g.id)
+  ).size;
+
   return (
     <Box className="archived-year-card" onClick={() => setExpanded(!expanded)}>
       <Box className="archived-year-header">
         <Typography variant="h6">
-          {year} Archived Goals ({totalGoals})
+          {year} Archived Goals ({uniqueGoalCount})
         </Typography>
+
         <span className={`arrow ${expanded ? "up" : "down"}`}>▼</span>
       </Box>
 

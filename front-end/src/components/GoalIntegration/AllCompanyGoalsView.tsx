@@ -30,6 +30,7 @@ const AllCompanyGoalsView = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const companyGoals = useSelector(selectAllCompanyGoals);
+  console.log("All Company Goals:", companyGoals);
   const [showArchived, setShowArchived] = useState(false); // this is unused now
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "title">(
     "newest"
