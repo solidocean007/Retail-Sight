@@ -19,19 +19,18 @@ import CompanyGoalCard from "./CompanyGoalCard";
 import "./myCompanyGoals.css";
 import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
 import PostViewerModal from "../PostViewerModal";
+import { RootState } from "../../utils/store";
 
 const MyCompanyGoals: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const user = useSelector(selectUser);
-  console.log(user)
   const loading = useSelector(selectCompanyGoalsIsLoading);
-
+  const allGoals = useSelector((state: RootState) => state.companyGoals.goals);
+  // Right after getting the selector value
   const userCompanyGoals = useSelector(
     makeSelectUsersCompanyGoals(user?.salesRouteNum, user?.uid, user?.role)
   );
-
-  const [showArchived, setShowArchived] = useState(false);
 
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
@@ -91,6 +90,7 @@ const MyCompanyGoals: React.FC = () => {
       pastGoals: sortGoals(past),
     };
   }, [userCompanyGoals, sortOrder, today]);
+
 
   const archivedGoals = sortedGoals.pastGoals;
 
