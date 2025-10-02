@@ -640,29 +640,22 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                   <TableCell>{a.chainType || "-"}</TableCell>
                   <TableCell>{(a.salesRouteNums || []).join(", ")}</TableCell>
                   <TableCell>
-                    <Tooltip title="Edit this account">
-                      <Button
-                        size="small"
-                        onClick={() => setSelectedAccount(a)}
-                      >
-                        Edit
-                      </Button>
-                    </Tooltip>
-                    <Tooltip title="Delete this account">
-                      <Button
-                        size="small"
-                        color="error"
-                        onClick={() => {
-                          setPendingUpdates([a]);
-                          setConfirmMessage(
-                            `Are you sure you want to delete "${a.accountName}"?`
-                          );
-                          setShowConfirm(true);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </Tooltip>
+                    <Button size="small" onClick={() => setSelectedAccount(a)}>
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => {
+                        setPendingUpdates([a]);
+                        setConfirmMessage(
+                          `Are you sure you want to delete "${a.accountName}"?`
+                        );
+                        setShowConfirm(true);
+                      }}
+                    >
+                      Delete
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

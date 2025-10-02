@@ -155,6 +155,8 @@ export default function InviteAcceptForm() {
           email: user.email,
           firstName,
           lastName,
+          company: invite.companyName, // 👈 add this
+          companyName: invite.companyName, // 👈 add this
           companyId: invite.companyId,
           role: invite.role || "employee",
           createdAt: createdAtIso,
@@ -261,6 +263,8 @@ export default function InviteAcceptForm() {
           email: invite.inviteeEmail,
           firstName,
           lastName,
+          company: invite.companyName, // 👈 add this
+          companyName: invite.companyName, // 👈 add this
           companyId: invite.companyId,
           role: invite.role || "employee",
           createdAt: createdAtIso,

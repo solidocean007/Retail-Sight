@@ -268,15 +268,15 @@ export default function AdminUsersConsole() {
     // should we define this as a usertype return?
     if (!editRow) return;
     try {
-      const functions = getFunctions();
-      const enforceLimit = httpsCallable(functions, "enforceSuperAdminLimit");
+      // const functions = getFunctions();
+      // const enforceLimit = httpsCallable(functions, "enforceSuperAdminLimit");
 
-      // ask backend if this is allowed
-      await enforceLimit({
-        companyId,
-        uid: editRow.uid,
-        newRole: editRow.role,
-      });
+      // // ask backend if this is allowed
+      // await enforceLimit({
+      //   companyId,
+      //   uid: editRow.uid,
+      //   newRole: editRow.role,
+      // });
 
       await updateDoc(doc(db, "users", editRow.uid), {
         firstName: editRow.firstName ?? null,
@@ -414,6 +414,7 @@ export default function AdminUsersConsole() {
     () => [
       { field: "firstName", headerName: "First Name", flex: 1 },
       { field: "lastName", headerName: "Last Name", flex: 1 },
+      { field: "uid", headerName: "id", flex: 1 },
       { field: "email", headerName: "Email", flex: 1.2 },
       { field: "phone", headerName: "Phone", flex: 1 },
       { field: "salesRouteNum", headerName: "Sales Route #", flex: 1 },
