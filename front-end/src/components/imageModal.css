@@ -12,7 +12,6 @@
 }
 
 .image-modal-content {
-  /* background: #fff; */
   padding: 10px;
   border-radius: 5px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -24,7 +23,8 @@
   align-items: center;
 }
 
-.blur-up-image-wrapper {
+/* Wrapper for images inside modal */
+.image-modal-content .blur-up-image-wrapper {
   position: relative;
   max-width: 100%;
   max-height: 100%;
@@ -34,7 +34,8 @@
   align-items: center;
 }
 
-.blur-up-image {
+/* Shared modal image styles */
+.image-modal-content .blur-up-image {
   max-width: 100%;
   max-height: 90vh;
   object-fit: contain;
@@ -42,8 +43,8 @@
   transition: opacity 0.5s ease;
 }
 
-
-.low-res {
+/* Low-res inside modal */
+.image-modal-content .low-res {
   filter: blur(5px);
   transform: scale(1.05);
   position: absolute;
@@ -51,24 +52,26 @@
   left: 0;
 }
 
-.full-res {
+/* Hi-res inside modal */
+.image-modal-content .full-res {
   position: relative;
 }
 
-.hidden {
+/* Visibility helpers (scoped) */
+.image-modal-content .hidden {
   opacity: 0;
 }
 
-.visible {
+.image-modal-content .visible {
   opacity: 1;
 }
 
-.close-modal {
+/* Close button inside modal */
+.image-modal-content .close-modal {
   display: flex;
   position: absolute;
   top: 8px;
   right: 8px;
-  /* background: transparent; */
   background-color: var(--border-color);
   border: none;
   color: #444;
@@ -82,6 +85,6 @@
   justify-content: center;
 }
 
-.close-modal:hover {
+.image-modal-content .close-modal:hover {
   color: #000;
 }

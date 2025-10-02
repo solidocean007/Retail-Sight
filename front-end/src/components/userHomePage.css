@@ -32,7 +32,7 @@
 }
 
 .icon-button {
-  background: none;
+  background: var();
   border: none;
   cursor: pointer;
   padding: 8px;

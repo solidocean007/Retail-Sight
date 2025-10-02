@@ -144,10 +144,12 @@
   margin-bottom: 0;
 }
 
+
 .description-image .post-image {
-  max-height: 370px;
-  width: auto; /* ensures the image scales with its height */
+  /* max-height: 370px; */
+  /* width: auto; ensures the image scales with its height */
 }
+
 
 .post-header {
   margin: 0px 2px;
@@ -468,27 +470,12 @@
   }
 }
 @media (max-width: 670px) {
-  .post-card img.post-image {
-    max-height: 335px;
-  }
-
   .post-user-name,
   .user-company-box {
     font-size: small;
   }
 }
 
-@media (max-width: 470px) {
-  .post-card img.post-image {
-    max-height: 300px;
-  }
-}
 
-@media (min-width: 1200px) {
-  .post-card img.post-image,
-  .description-image .post-image {
-    max-height: 600px;
-    width: auto;
-    max-width: 100%;
-  }
-}
+
+

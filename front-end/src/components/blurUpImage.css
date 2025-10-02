@@ -1,23 +1,57 @@
 .blur-up-image-wrapper {
   position: relative;
-  max-width: 100%;
-  width: auto;
-  /* aspect-ratio: 4 / 3; */
+  width: 100%;
+  aspect-ratio: 4 / 3; /* or dynamically set ratio if you know it */
   overflow: hidden;
-  margin-left: auto;
-  margin-right: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+.blur-up-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+
+/* Constrain heights responsively */
+.blur-up-image-wrapper img {
+  max-height: 370px;
+}
+
+@media (max-width: 670px) {
+  .blur-up-image-wrapper img {
+    max-height: 335px;
+  }
+}
+
+@media (max-width: 470px) {
+  .post-card img.post-image {
+    max-height: 300px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .blur-up-image-wrapper img {
+    max-height: 600px;
+  }
+}
+
+/* Low-res only */
 .low-res {
   filter: blur(10px);
   transform: scale(1.05);
   z-index: 1;
 }
 
+/* Hi-res only */
 .full-res {
   z-index: 2;
+  transition: opacity 0.5s ease;
 }
-
 
 .hidden {
   opacity: 0;
@@ -26,3 +60,4 @@
 .visible {
   opacity: 1;
 }
+
