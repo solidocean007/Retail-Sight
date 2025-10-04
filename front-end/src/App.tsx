@@ -30,7 +30,7 @@ import UserModal from "./components/UserModal";
 import { useIntegrations } from "./hooks/useIntegrations";
 import useUserAccountsSync from "./hooks/useUserAccountsSync";
 import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
-import { migrateVisibility } from "./script";
+// import { migrateVisibility } from "./script";
 // import { migrateCompanyNameUsers } from "./script";
 
 function App(): React.JSX.Element {
@@ -57,11 +57,11 @@ function App(): React.JSX.Element {
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
 
-  useEffect(() => {
-    // migrateCompanyNameUsers();
-    migrateVisibility();
+  // useEffect(() => {
+  //   // migrateCompanyNameUsers();
+  //   // migrateVisibility();
   
-  }, []);
+  // }, []);
 
   useEffect(() => {
     if (!companyId) return;
