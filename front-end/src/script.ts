@@ -1,13 +1,15 @@
-import { addDoc, collection, doc, getDoc, getDocs, setDoc } from "@firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "@firebase/firestore";
 import { db } from "./utils/firebase"; // adjust path as needed
 
-import {
-  query,
-  where,
-  updateDoc,
-} from "firebase/firestore";
+import { query, where, updateDoc } from "firebase/firestore";
 import fs from "fs";
-
 
 export async function auditPostDates() {
   try {
@@ -36,7 +38,9 @@ export async function auditPostDates() {
     });
 
     if (issuesFound === 0) {
-      console.log("✅ No issues found. All displayDate/timestamp fields are Timestamps.");
+      console.log(
+        "✅ No issues found. All displayDate/timestamp fields are Timestamps."
+      );
     } else {
       console.warn(`🚨 Found ${issuesFound} posts with string dates.`);
     }
@@ -45,10 +49,7 @@ export async function auditPostDates() {
   }
 }
 
-import {
-  writeBatch,
-  Timestamp,
-} from "firebase/firestore";
+import { writeBatch, Timestamp } from "firebase/firestore";
 import path from "path";
 import { fstat } from "fs";
 
@@ -130,9 +131,8 @@ export async function migratePostDates() {
   console.warn(`🚨 Skipped ${skippedCount} posts due to invalid dates.`);
 }
 
-
 // src/debug/logTimestamps.ts
-import {  Timestamp as FSTimestamp } from "firebase/firestore";
+import { Timestamp as FSTimestamp } from "firebase/firestore";
 
 // Collections to scan by default
 const DEFAULT_COLLECTIONS = [
@@ -156,7 +156,10 @@ type FieldFinding = {
 };
 
 const isFSTimestamp = (v: any): v is FSTimestamp =>
-  !!v && typeof v === "object" && typeof v.toDate === "function" && typeof v.toMillis === "function";
+  !!v &&
+  typeof v === "object" &&
+  typeof v.toDate === "function" &&
+  typeof v.toMillis === "function";
 
 const isJsDate = (v: any): v is Date => v instanceof Date;
 
@@ -177,14 +180,19 @@ function findTimestampsDeep(value: any, basePath: string, out: FieldFinding[]) {
       kind: isFSTimestamp(value) ? "Firestore.Timestamp" : "Date",
       iso: toIso(value),
       ...(isFSTimestamp(value)
-        ? { seconds: (value as any).seconds, nanoseconds: (value as any).nanoseconds }
+        ? {
+            seconds: (value as any).seconds,
+            nanoseconds: (value as any).nanoseconds,
+          }
         : {}),
     });
     return;
   }
 
   if (Array.isArray(value)) {
-    value.forEach((item, i) => findTimestampsDeep(item, `${basePath}[${i}]`, out));
+    value.forEach((item, i) =>
+      findTimestampsDeep(item, `${basePath}[${i}]`, out)
+    );
     return;
   }
 
@@ -208,7 +216,8 @@ export async function logTimestamps(
 ) {
   console.group("🔎 Firestore Timestamp scan");
   console.log("Collections:", collections.join(", "));
-  if (maxDocsPerCollection > 0) console.log("MAX_DOCS per collection:", maxDocsPerCollection);
+  if (maxDocsPerCollection > 0)
+    console.log("MAX_DOCS per collection:", maxDocsPerCollection);
 
   for (const col of collections) {
     console.group(`→ ${col}`);
@@ -219,7 +228,8 @@ export async function logTimestamps(
       let totalFieldFindings = 0;
 
       for (const docSnap of snap.docs) {
-        if (maxDocsPerCollection > 0 && processed++ >= maxDocsPerCollection) break;
+        if (maxDocsPerCollection > 0 && processed++ >= maxDocsPerCollection)
+          break;
 
         const data = docSnap.data();
         const findings: FieldFinding[] = [];
@@ -229,15 +239,23 @@ export async function logTimestamps(
           docsWithFindings++;
           totalFieldFindings += findings.length;
 
-          console.groupCollapsed(`📄 ${col}/${docSnap.id} — ${findings.length} field(s)`);
+          console.groupCollapsed(
+            `📄 ${col}/${docSnap.id} — ${findings.length} field(s)`
+          );
           findings.forEach((f) => {
-            console.log(`${f.fieldPath} → ${f.kind}`, { iso: f.iso, seconds: f.seconds, nanoseconds: f.nanoseconds });
+            console.log(`${f.fieldPath} → ${f.kind}`, {
+              iso: f.iso,
+              seconds: f.seconds,
+              nanoseconds: f.nanoseconds,
+            });
           });
           console.groupEnd();
         }
       }
 
-      console.log(`Summary for ${col}: ${totalFieldFindings} field(s) across ${docsWithFindings} doc(s).`);
+      console.log(
+        `Summary for ${col}: ${totalFieldFindings} field(s) across ${docsWithFindings} doc(s).`
+      );
     } catch (err) {
       console.error(`Failed scanning ${col}:`, err);
     }
@@ -248,9 +266,7 @@ export async function logTimestamps(
 
 // expose to window for easy calling from DevTools
 // (safe no-op in Node; only matters in the browser)
-;(window as any).logTimestamps = logTimestamps;
-
-
+(window as any).logTimestamps = logTimestamps;
 
 export async function migrateCompanyNameUsers() {
   const usersRef = collection(db, "users");
@@ -278,4 +294,34 @@ export async function migrateCompanyNameUsers() {
   // commit remaining ops
   await batch.commit();
   console.log(`🎉 Migration done. Updated ${updated} users.`);
+}
+
+export async function migrateVisibility() {
+  const postsRef = collection(db, "posts");
+  const snap = await getDocs(postsRef);
+
+  let updated = 0;
+
+  for (const doc of snap.docs) {
+    const data = doc.data();
+    const updates: any = {};
+
+    // 1. Always add migratedVisibility if missing
+    if (!data.migratedVisibility) {
+      updates.migratedVisibility = "network";
+    }
+
+    // 2. Normalize visibility back to company
+    if (data.visibility === "network" || data.visibility === "companyOnly") {
+      updates.visibility = "company";
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await updateDoc(doc.ref, updates);
+      console.log(`[Update] ${doc.id}`, updates);
+      updated++;
+    }
+  }
+
+  console.log(`✅ Migration done. Updated ${updated} posts.`);
 }

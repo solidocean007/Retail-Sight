@@ -30,6 +30,7 @@ import UserModal from "./components/UserModal";
 import { useIntegrations } from "./hooks/useIntegrations";
 import useUserAccountsSync from "./hooks/useUserAccountsSync";
 import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
+import { migrateVisibility } from "./script";
 // import { migrateCompanyNameUsers } from "./script";
 
 function App(): React.JSX.Element {
@@ -58,6 +59,7 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     // migrateCompanyNameUsers();
+    migrateVisibility();
   
   }, []);
 

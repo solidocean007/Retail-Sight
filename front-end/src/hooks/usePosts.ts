@@ -265,10 +265,9 @@ const usePosts = (
         query(
           collection(db, "posts"),
           where("companyId", "==", currentUserCompanyId || null),
-          where("migratedVisibility", "in", [
-            "companyOnly",
-            "network",
-          ]),
+
+          where("migratedVisibility", "in", ["companyOnly", "network"]),
+
           orderBy("displayDate", "desc"),
           limit(POSTS_BATCH_SIZE)
         )
