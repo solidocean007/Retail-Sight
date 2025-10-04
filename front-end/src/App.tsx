@@ -56,9 +56,10 @@ function App(): React.JSX.Element {
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
 
-  // useEffect(() => {
-  //   migrateCompanyNameUsers();
-  // }, []);
+  useEffect(() => {
+    // migrateCompanyNameUsers();
+  
+  }, []);
 
   useEffect(() => {
     if (!companyId) return;

@@ -264,8 +264,11 @@ const usePosts = (
       const snap = await getDocs(
         query(
           collection(db, "posts"),
-          where("migratedVisibility", "in", ["companyOnly", "network"]),
           where("companyId", "==", currentUserCompanyId || null),
+          where("migratedVisibility", "in", [
+            "companyOnly",
+            "network",
+          ]),
           orderBy("displayDate", "desc"),
           limit(POSTS_BATCH_SIZE)
         )
@@ -304,7 +307,8 @@ const usePosts = (
 
           let updatedAt: any = data.timestamp;
           if (updatedAt?.toDate) updatedAt = updatedAt.toDate();
-          else if (typeof updatedAt === "string") updatedAt = new Date(updatedAt);
+          else if (typeof updatedAt === "string")
+            updatedAt = new Date(updatedAt);
 
           if (updatedAt <= mostRecent) continue;
           mostRecent = updatedAt;
