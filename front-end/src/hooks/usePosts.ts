@@ -42,12 +42,10 @@ const usePosts = (
 
   // 1️⃣ Initial load: IndexedDB or Firestore
   useEffect(() => {
-    if (!currentUserCompanyId) return;
-
     const loadInitialPosts = async (companyId: string) => {
       const cached = await getPostsFromIndexedDB();
-      console.log("Cached posts: ", cached);
       const newestCachedDate = cached?.[0]?.displayDate || null;
+
       const needsUpdate = await shouldRefetchPosts(companyId, newestCachedDate);
 
       if (cached.length > 0 && !needsUpdate) {
@@ -61,22 +59,42 @@ const usePosts = (
         );
         if (fetchInitialPostsBatch.fulfilled.match(action)) {
           const posts = action.payload.posts.map(normalizePost);
-          console.log(posts)
           dispatch(setPosts(posts));
-          await addPostsToIndexedDB(posts);
+          addPostsToIndexedDB(posts);
         }
       }
+
       setInitialLoaded(true);
     };
 
-    loadInitialPosts(currentUserCompanyId);
-  }, [currentUserCompanyId, currentUser, dispatch, POSTS_BATCH_SIZE]);
+    const loadPublic = async () => {
+      const snap = await getDocs(
+        query(
+          collection(db, "posts"),
+          where("visibility", "==", "public"),
+          orderBy("displayDate", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        )
+      );
+      const publicPosts = snap.docs.map((doc) =>
+        normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+      );
+      dispatch(setPosts(publicPosts));
+      setInitialLoaded(true);
+    };
 
-  // 2️⃣ Catch-up + real-time listeners
+    if (!currentUser) {
+      loadPublic();
+    } else if (currentUserCompanyId) {
+      loadInitialPosts(currentUserCompanyId);
+    }
+  }, [currentUser, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE]);
+
+  // 2️⃣ Real-time listeners: only after initial load
   useEffect(() => {
-    if (!initialLoaded || !currentUserCompanyId) return;
-    let unsubCompany: () => void = () => {};
-    let unsubShared: () => void = () => {};
+    if (!initialLoaded) return;
+    let unsubscribePublic: () => void = () => {};
+    let unsubscribeCompany: () => void = () => {};
 
     const setupListeners = async () => {
       const lastSeenISO =
@@ -102,7 +120,7 @@ const usePosts = (
             dispatch(deletePost(change.doc.id));
             removePostFromIndexedDB(change.doc.id);
             deleteUserCreatedPostInIndexedDB(change.doc.id);
-            await purgeDeletedPostFromFilteredSets(change.doc.id);
+            await purgeDeletedPostFromFilteredSets(change.doc.id); // ✅ now valid
           } else if (
             (change.type === "added" || change.type === "modified") &&
             data.imageUrl
@@ -113,39 +131,55 @@ const usePosts = (
             } as PostWithID);
             updates.push(normalized);
             await updatePostInIndexedDB(normalized);
-            await updatePostInFilteredSets(normalized);
+            await updatePostInFilteredSets(normalized); // ✅ now valid
           }
         }
 
-        if (updates.length) dispatch(mergeAndSetPosts(updates));
-        if (mostRecent > lastSeenDate)
+        if (updates.length) {
+          dispatch(mergeAndSetPosts(updates));
+        }
+
+        if (mostRecent > lastSeenDate) {
           await setLastSeenTimestamp(mostRecent.toISOString());
+        }
       };
 
-      // 🔹 Company posts (own company)
-      unsubCompany = onSnapshot(
+      // 🔁 Listen for public posts
+      unsubscribePublic = onSnapshot(
         query(
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTs),
-          ...(isDeveloper ? [] : [where("companyId", "==", currentUserCompanyId)]),
-          where("migratedVisibility", "in", ["companyOnly", "network"]),
+          where("visibility", "==", "public"),
           orderBy("timestamp", "desc"),
           limit(POSTS_BATCH_SIZE)
         ),
         processDocChanges
       );
 
-      // 🔹 Shared posts (network)
-     
+      // 🔁 Listen for company posts
+      if (currentUserCompanyId) {
+        unsubscribeCompany = onSnapshot(
+          query(
+            collection(db, "posts"),
+            where("timestamp", ">", lastSeenTs),
+            ...(isDeveloper
+              ? []
+              : [where("postUserCompanyId", "==", currentUserCompanyId)]),
+            orderBy("timestamp", "desc"),
+            limit(POSTS_BATCH_SIZE)
+          ),
+          processDocChanges
+        );
+      }
     };
 
     setupListeners();
 
     return () => {
-      unsubCompany();
-      unsubShared();
+      unsubscribePublic();
+      unsubscribeCompany();
     };
-  }, [initialLoaded, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE, isDeveloper]);
+  }, [initialLoaded, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE]);
 };
 
 export default usePosts;
