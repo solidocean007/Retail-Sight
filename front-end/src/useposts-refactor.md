@@ -88,6 +88,6 @@ interface UsePostsOptions {
 ✅ Next Step:  
 - Create new branch:  
   ```bash
-  git checkout -b feature/useposts-unified
+  git checkout -b feature/useposts-network-migration
   ```
 - Create new chat with the above outline pinned.  
