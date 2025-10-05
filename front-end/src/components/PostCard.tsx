@@ -278,7 +278,7 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="post-header">
             <div className="visibility">
               <div className="view-box">
-                <p>view: {post.visibility}</p>
+                <p>view: {post.migratedVisibility}</p>
                 <div className="post-card-controls">
                   <button
                     aria-label="settings"
