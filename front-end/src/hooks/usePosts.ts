@@ -136,16 +136,7 @@ const usePosts = (
       );
 
       // 🔹 Shared posts (network)
-      unsubShared = onSnapshot(
-        query(
-          collection(db, "posts"),
-          where("timestamp", ">", lastSeenTs),
-          where("sharedWithCompanies", "array-contains", currentUserCompanyId),
-          orderBy("timestamp", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        ),
-        processDocChanges
-      );
+     
     };
 
     setupListeners();

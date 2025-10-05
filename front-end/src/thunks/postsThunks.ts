@@ -51,17 +51,22 @@ export const fetchInitialPostsBatch = createAsyncThunk(
 
       if (isDeveloper) {
         // Developers see everything
-        postsQuery = query(postsRef, orderBy("displayDate", "desc"), limit(POSTS_BATCH_SIZE));
-      } else if (currentUserCompanyId) {
-        // Company admins / regular users
         postsQuery = query(
           postsRef,
+          orderBy("displayDate", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        );
+      } else if (currentUserCompanyId) {
+        // Company feed only (companyOnly + network)
+        postsQuery = query(
+          postsRef,
+          where("companyId", "==", currentUserCompanyId),
           where("migratedVisibility", "in", ["companyOnly", "network"]),
           orderBy("displayDate", "desc"),
           limit(POSTS_BATCH_SIZE)
         );
       } else {
-        // Public viewer fallback
+        // Public fallback
         postsQuery = query(
           postsRef,
           where("visibility", "==", "public"),
@@ -71,30 +76,19 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       }
 
       const snap = await getDocs(postsQuery);
-      const postsRaw = snap.docs.map((d) => normalizePost({ id: d.id, ...d.data() } as PostWithID));
+      const posts = snap.docs.map((doc) =>
+        normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+      );
 
-      // Client-side filter to match role and sharedWith logic
-      const filtered = postsRaw.filter((post) => {
-        if (isDeveloper) return true;
-
-        const visibleToCompany =
-          post.companyId === currentUserCompanyId ||
-          post.sharedWithCompanies?.includes(currentUserCompanyId); // Argument of type 'string | undefined' is not assignable to parameter of type 'string'. Type 'undefined' is not assignable to type 'string'?
-
-        const isNetwork = post.migratedVisibility === "network";
-        const isCompanyOnly = post.migratedVisibility === "companyOnly";
-
-        return visibleToCompany && (isNetwork || isCompanyOnly);
-      });
-
-      const lastVisible = filtered[filtered.length - 1]?.id;
-      return { posts: filtered, lastVisible };
+      const lastVisible = posts[posts.length - 1]?.id;
+      return { posts, lastVisible };
     } catch (err) {
       console.error("Error fetching initial posts:", err);
       return rejectWithValue(err instanceof Error ? err.message : String(err));
     }
   }
 );
+
 
 
 // Define a type for the thunk argument
