@@ -12,15 +12,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { showMessage } from "../../Slices/snackbarSlice";
 import {
   doc,
-  collection,
   updateDoc,
-  arrayUnion,
-  arrayRemove,
   getDoc,
-  addDoc,
 } from "firebase/firestore";
 import { db } from "../../utils/firebase";
-import { deletePost, updatePost } from "../../Slices/postsSlice";
 import { Chip, Dialog, Typography } from "@mui/material";
 import "./editPostModal.css";
 
@@ -300,7 +295,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     const updatedPost: PostWithID = {
       ...editablePost,
       description,
-      visibility: postVisibility ?? post.visibility,
+      // visibility: postVisibility ?? post.visibility,
       totalCaseCount: updatedCaseCount,
       hashtags: extractedHashtags,
       starTags: extractedStarTags,
@@ -322,7 +317,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       });
 
       // 🔥 Delete from Firestore (and Storage, if your logic handles images)
-      await userDeletePost({ post });
+      await userDeletePost({ post, dispatch });
       console.log("✅ Finished Firestore + Storage deletion for:", post.id);
 
       // ✅ No local Redux/IndexedDB/filteredSets updates here
