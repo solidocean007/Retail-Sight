@@ -44,52 +44,37 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   ) => {
     try {
       const isDeveloper = currentUser?.role === "developer";
-      const currentUserCompanyId = currentUser?.companyId;
+      const companyId = currentUser?.companyId;
       const postsRef = collection(db, "posts");
 
-      let postsQuery;
+      // build query (company posts only)
+      const q = isDeveloper
+        ? query(
+            postsRef,
+            orderBy("displayDate", "desc"),
+            limit(POSTS_BATCH_SIZE)
+          )
+        : query(
+            postsRef,
+            where("companyId", "==", companyId),
+            where("migratedVisibility", "in", ["companyOnly", "network"]),
+            orderBy("displayDate", "desc"),
+            limit(POSTS_BATCH_SIZE)
+          );
 
-      if (isDeveloper) {
-        // Developers see everything
-        postsQuery = query(
-          postsRef,
-          orderBy("displayDate", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        );
-      } else if (currentUserCompanyId) {
-        // Company feed only (companyOnly + network)
-        postsQuery = query(
-          postsRef,
-          where("companyId", "==", currentUserCompanyId),
-          where("migratedVisibility", "in", ["companyOnly", "network"]),
-          orderBy("displayDate", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        );
-      } else {
-        // Public fallback
-        postsQuery = query(
-          postsRef,
-          where("visibility", "==", "public"),
-          orderBy("displayDate", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        );
-      }
-
-      const snap = await getDocs(postsQuery);
+      const snap = await getDocs(q);
       const posts = snap.docs.map((doc) =>
         normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
       );
 
-      const lastVisible = posts[posts.length - 1]?.id;
-      return { posts, lastVisible };
+      const newLastVisible = posts[posts.length - 1]?.displayDate ?? null;
+      return { posts, lastVisibleDisplayDate: newLastVisible };
     } catch (err) {
       console.error("Error fetching initial posts:", err);
       return rejectWithValue(err instanceof Error ? err.message : String(err));
     }
   }
 );
-
-
 
 // Define a type for the thunk argument
 type FetchMorePostsArgs = {
@@ -106,6 +91,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
   ) => {
     const isDeveloper = currentUser?.role === "developer";
     const companyId = currentUser?.companyId;
+
     try {
       if (!companyId) {
         console.warn(
@@ -114,24 +100,23 @@ export const fetchMorePostsBatch = createAsyncThunk(
         return { posts: [], lastVisible: null };
       }
 
-      const postsCollectionRef = collection(db, "posts");
+      const postsRef = collection(db, "posts");
       let postsQuery;
 
       if (lastVisible) {
-        const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
-        if (!lastVisibleSnapshot.exists()) {
-          console.warn("⚠️ lastVisible document not found:", lastVisible);
-        }
-
         postsQuery = query(
-          postsCollectionRef,
+          postsRef,
+          where("companyId", "==", companyId),
+          where("migratedVisibility", "in", ["companyOnly", "network"]),
           orderBy("displayDate", "desc"),
-          startAfter(lastVisibleSnapshot),
+          startAfter(new Date(lastVisible)),
           limit(batchSize)
         );
       } else {
         postsQuery = query(
-          postsCollectionRef,
+          postsRef,
+          where("companyId", "==", companyId),
+          where("migratedVisibility", "in", ["companyOnly", "network"]),
           orderBy("displayDate", "desc"),
           limit(batchSize)
         );
@@ -139,33 +124,17 @@ export const fetchMorePostsBatch = createAsyncThunk(
 
       const snapshot = await getDocs(postsQuery);
 
-      const postsWithIds: PostWithID[] = snapshot.docs
-        .map((doc) => {
-          const data = doc.data() as PostType;
-          if (isDeveloper) return normalizePost({ id: doc.id, ...data });
+      const posts = snapshot.docs.map((doc) =>
+        normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+      );
 
-          const isNetwork =
-            data.migratedVisibility === "network" && data.companyId === companyId;
-          const isCompanyOnlyPost =
-            data.migratedVisibility === "companyOnly" &&
-            data.postUserCompanyId === companyId;
-
-          return isNetwork || isCompanyOnlyPost
-            ? normalizePost({ id: doc.id, ...data })
-            : null;
-        })
-
-        .filter((post): post is PostWithID => post !== null);
-
-      const newLastVisible =
-        snapshot.docs[snapshot.docs.length - 1]?.id || null;
-      return { posts: postsWithIds, lastVisible: newLastVisible };
+      const newLastVisible = posts[posts.length - 1]?.displayDate ?? null;
+      return { posts, lastVisibleDisplayDate: newLastVisible };
     } catch (error) {
       console.error("❌ Error in fetchMorePostsBatch:", error);
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-      return rejectWithValue("An unknown error occurred");
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Unknown error"
+      );
     }
   }
 );
