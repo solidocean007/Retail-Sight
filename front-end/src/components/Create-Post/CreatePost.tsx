@@ -65,7 +65,8 @@ export const CreatePost = () => {
     description: "",
     imageUrl: "",
     totalCaseCount: 0,
-    visibility: "company",
+    // visibility: "company",
+    migratedVisibility: "network",
     postUser: userData || null,
     account: null,
   }));

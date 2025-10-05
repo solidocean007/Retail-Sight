@@ -219,7 +219,7 @@ export interface PostType {
   accountNumber?: string;
   accountName?: string;
   accountAddress?: string;
-  // streetAddress?: string; // just added
+  streetAddress?: string;
   accountSalesRouteNums?: string[];
   accountType?: string;
   chain?: string;
@@ -266,7 +266,7 @@ export interface PostType {
   // 🗓 Timing
   displayDate: string;
   timestamp: Timestamp;
-  visibility: "public" | "companyOnly" | "network" ;
+  visibility?: "public" | "company"  ;
   migratedVisibility: "public" | "companyOnly" | "network" ;
   sharedWithCompanies?: string[];
 
@@ -294,7 +294,8 @@ export type PostInputType = {
   imageUrl?: string;
   originalImageUrl?: string;
   totalCaseCount: number;
-  visibility: string;
+  visibility?: string;
+  migratedVisibility?: string;
 
   postUser: UserType | null;
   account: CompanyAccountType | null;
