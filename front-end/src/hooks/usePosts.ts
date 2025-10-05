@@ -149,7 +149,7 @@ const usePosts = (
     };
 
     setupListeners();
-s
+
     return () => {
       unsubCompany();
       unsubShared();
