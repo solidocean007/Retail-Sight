@@ -1,93 +1,71 @@
 # 🪝 usePosts Refactor Plan
+
 **Goal:** Unify distributor & supplier feeds, fix missed posts (catch-up), and support filters without breaking current UX.
 
 ---
 
-## 🔹 1. Define Hook API
+## 🔹 1. Hook Layer
+
 ```ts
-type UsePostsMode =
-  | { type: "company"; companyId: string }
-  | { type: "supplierNetwork"; supplierId: string }
-  | { type: "highlighted"; supplierId: string };
+| Task                                                       | Status | Notes                                                                                                    |
+| ---------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| Refactor `usePosts` to load IndexedDB → Firestore fallback | ☑️     | Done. Uses cache + `fetchInitialPostsBatch`.                                                             |
+| Add real-time listener for `companyOnly` + `network` posts | ☑️     | Done with unified listener + cleanup.                                                                    |
+| Allow developers to see *all* posts (ignore filters)       | ☑️     | Implemented in `usePosts`.                                                                               |
+| Keep `loadPublic` fallback for unauthenticated or testing  | ☑️     | Implemented in current branch.                                                                           |
+| Create new `useSharedPosts()` hook                         | ⬜      | Will query `where("sharedWithCompanies", "array-contains", companyId)` and join metadata from `/shares`. |
+| Add `useSharedPosts` IndexedDB cache (optional)            | ⬜      | For offline continuity.                                                                                  |
 
-interface UsePostsOptions {
-  mode: UsePostsMode;
-  batchSize?: number;             // default: 10
-  filters?: PostQueryFilters;     // optional
-}
-```
-
-- Keep backward-compatibility with current usage:  
-  `usePosts(companyId, batchSize)` → maps to `{ type: "company", companyId }`.
 
 ---
 
-## 🔹 2. Implement Catch-Up Fetch
-- On mount or resume:
-  1. Get `lastSeenTimestamp` from IndexedDB.  
-  2. Fetch all posts newer than that, in batches, until empty.  
-  3. Merge into Redux + IndexedDB.  
-  4. Update `lastSeenTimestamp`.  
+## 🔹 2. Thunk & Data Fetching
 
-- Ensures no posts are lost if device was dormant.
+| Task                                                            | Status | Notes                                                         |
+| --------------------------------------------------------------- | ------ | ------------------------------------------------------------- |
+| Update `fetchInitialPostsBatch` to support `migratedVisibility` | ☑️     | Matches `usePosts` filtering.                                 |
+| Replace snapshot cursor with serializable `displayDate`         | ☑️     | Implemented; no serialization warnings.                       |
+| Add pagination support (`fetchMorePostsBatch`)                  | ☑️     | Working; pagination stable.                                   |
+| Create new thunks for `fetchSharedPostsBatch`                   | ⬜      | Mirrors existing thunks but queries by `sharedWithCompanies`. |
+| Optionally normalize and store `sharedMeta` in Redux            | ⬜      | Derived from `/shares` subcollection.                         |
 
----
-
-## 🔹 3. Attach Realtime Listener
-- After catch-up, subscribe with `onSnapshot`.  
-- Branch query by `mode`:
-  - **Company:** `where("companyId", "==", companyId)` + `visibility in ["companyOnly","network"]`.  
-  - **Supplier Network:**  
-    - Look up active connections (`supplierId == current`).  
-    - For each distributor connection, query posts where `companyId == distributorId`, `visibility == "network"`, and `brands array-contains-any connection.sharedBrands`.  
-  - **Highlighted:** `where("highlightedBySuppliers", "array-contains", supplierId)`.  
 
 ---
 
-## 🔹 4. Merge & Store
-- Normalize posts (`normalizePost`).  
-- Dispatch to Redux (`mergeAndSetPosts`).  
-- Store in IndexedDB (`addPostsToIndexedDB`).  
-- Maintain separate caches for filtered sets.
+## 🔹 3. Firestore Schema
+
+| Task                                                    | Status | Notes                                                                        |
+| ------------------------------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| Add `sharedWithCompanies` array on each post            | ☑️     | Implemented in Firestore rules.                                              |
+| Add `sharedSummary` object (totalShares, lastSharedAt)  | ⬜      | Optional metadata for quick analytics.                                       |
+| Create `/posts/{postId}/shares/{shareId}` subcollection | ⬜      | Holds detailed share metadata.                                               |
+| Ensure share docs contain reason + sharedBy fields      | ⬜      | `{ sharedByCompanyId, sharedByUserName, reason, sharedAt, targetCompanyId }` |
+| Index `sharedWithCompanies` for fast lookups            | ⬜      | Add Firestore composite index once data exists.                              |
+
 
 ---
 
-## 🔹 5. Support Filters
-- Expose:
-  - `posts`: current live feed.  
-  - `applyFilters(filters: PostQueryFilters)`: re-run batched fetch, swap in filtered set.  
-  - `resetFilters()`: return to live feed.  
+## 🔹 4. Cloud Functions
 
-- Re-use `EnhancedFilterSidebar` → no major changes needed.
-
----
-
-## 🔹 6. Update ActivityFeed
-- Replace current call:  
-  ```ts
-  usePosts(currentUserCompanyId, POSTS_BATCH_SIZE);
-  ```
-- With:  
-  ```ts
-  usePosts({ mode: { type: "company", companyId: currentUserCompanyId }, batchSize: POSTS_BATCH_SIZE });
-  ```
-- Keep old signature working during transition.
+| Function                          | Purpose                                                                                                                   | Status |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `onSharePost`                     | Trigger on `/posts/{postId}/shares/{shareId}` creation — updates parent post’s `sharedWithCompanies` and `sharedSummary`. | ⬜      |
+| `sharePostWithCompany` (callable) | Validates user’s permissions and writes the `/shares` doc.                                                                | ⬜      |
+| `onPostDelete` (optional)         | Removes subcollection shares if a post is deleted.                                                                        | ⬜      |
 
 ---
 
-## 🔹 7. QA Checklist
-- **Dormant device**: wake → fetches all missed posts.  
-- **Distributor feed**: still works, no missing posts.  
-- **Supplier feed**: mock a connection → only sees posts with overlapping brands.  
-- **Highlight feed**: supplier highlights → distributor sees it.  
-- **Filters**: sidebar still applies correctly.  
-- **Backwards compatibility**: no crashes in existing ActivityFeed.  
+## 🔹 5. UI / Routes
+
+| Task                                                     | Status | Notes                                               |
+| -------------------------------------------------------- | ------ | --------------------------------------------------- |
+| Add `/shared` route and component for shared feed        | ⬜      | Uses `useSharedPosts`.                              |
+| Update `PostCard` to render shared metadata banner       | ⬜      | Displays “Shared by X (User Y) — Reason: Z”.        |
+| Add share action (supplier dashboard → share post modal) | ⬜      | Triggers callable `sharePostWithCompany`.           |
+| Show share analytics in supplier dashboard               | ⬜      | Based on `sharedSummary` or `shares` subcollection. |
+
 
 ---
 
-✅ Next Step:  
-- Create new branch:  
-  ```bash
-  git checkout -b feature/useposts-network-migration
-  ```
-- Create new chat with the above outline pinned.  
+✅ Next Step:
+
