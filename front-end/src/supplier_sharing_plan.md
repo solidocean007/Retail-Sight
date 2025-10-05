@@ -12,7 +12,7 @@ posts/{postId} {
   companyId: string;                // Distributor who created the post
   visibility: "companyOnly" | "network";
   brands: string[];                 // e.g., ["voodoo ranger"]
-  sharedWith: string[];            // Company IDs (suppliers or distributors)
+  sharedWithCompanies: string[];            // Company IDs (suppliers or distributors)
   highlightedBySuppliers?: string[]; // Optional: who marked it
   ...otherFields
 }
@@ -23,7 +23,7 @@ posts/{postId} {
 postSharesAudit/{auditId} {
   postId: string;
   sharedBy: string;         // Company ID (supplier or dist)
-  sharedWith: string[];     // Array of company IDs
+  sharedWithCompanies: string[];     // Array of company IDs
   timestamp: Timestamp;
   action: "highlight" | "initial-share";
 }
@@ -33,11 +33,11 @@ postSharesAudit/{auditId} {
 
 ## 🔁 2. IndexedDB Sync Strategy
 
-- Any time `sharedWith` is updated:
+- Any time `sharedWithCompanies` is updated:
   - Call `updatePostInIndexedDB(updatedPost)`
   - Also update Redux store with `updatePost()`
 - When fetching posts:
-  - Check both `companyId == user.companyId` and `sharedWith` contains `user.companyId`
+  - Check both `companyId == user.companyId` and `sharedWithCompanies` contains `user.companyId`
 
 ---
 
@@ -45,32 +45,32 @@ postSharesAudit/{auditId} {
 
 ### 🔹 `onPostCreate`
 - Trigger: `onCreate` of posts
-- Purpose: Add connected suppliers to `sharedWith` if brand matches
+- Purpose: Add connected suppliers to `sharedWithCompanies` if brand matches
 - Logic:
   1. Read connected suppliers for `post.companyId`
   2. Check which suppliers have overlapping brands
-  3. Append `supplierId` to `sharedWith`
+  3. Append `supplierId` to `sharedWithCompanies`
 
 ### 🔹 `sharePostWithCompanies`
 - Callable function (supplier-triggered)
 - Input: `postId`, `distributorIds[]`
 - Checks:
   - Auth user is supplier
-  - They are in the `sharedWith` already
+  - They are in the `sharedWithCompanies` already
 - Actions:
-  - Append `distributorIds[]` to `sharedWith` of post
+  - Append `distributorIds[]` to `sharedWithCompanies` of post
   - Write to `postSharesAudit`
 
 ### 🔹 (Optional) `onConnectionCreated`
 - On connection approval:
-  - Backfill `sharedWith` on past posts that match brands
+  - Backfill `sharedWithCompanies` on past posts that match brands
 
 ---
 
 ## 🔐 4. Firestore Rules
 ```js
 match /posts/{postId} {
-  allow read: if request.auth.token.companyId in resource.data.sharedWith
+  allow read: if request.auth.token.companyId in resource.data.sharedWithCompanies
                || request.auth.token.companyId == resource.data.companyId;
 
   allow update: if isPostOwner() || isSharingSupplier();
@@ -82,7 +82,7 @@ match /posts/{postId} {
 
   function isSharingSupplier() {
     return request.auth.token.role == "supplier" &&
-           request.resource.data.sharedWith.hasAny([request.auth.token.companyId]);
+           request.resource.data.sharedWithCompanies.hasAny([request.auth.token.companyId]);
   }
 }
 ```
@@ -114,7 +114,7 @@ connections/{connectionId} {
 
 ## 🧠 6. Supplier Dashboard Features
 - View:
-  - Posts shared with you via `sharedWith`
+  - Posts shared with you via `sharedWithCompanies`
   - Posts you’ve highlighted (filtered by `highlightedBySuppliers`)
   - Posts shared by you (from `postSharesAudit`)
 - Actions:
@@ -125,7 +125,7 @@ connections/{connectionId} {
 ---
 
 ## 🛠 7. Next Steps
-- [ ] Implement `sharedWith` logic in `usePosts`
+- [ ] Implement `sharedWithCompanies` logic in `usePosts`
 - [ ] Write `sharePostWithCompanies` callable
 - [ ] Set up `postSharesAudit` writes
 - [ ] Update IndexedDB post syncing

@@ -46,6 +46,7 @@ const usePosts = (
 
     const loadInitialPosts = async (companyId: string) => {
       const cached = await getPostsFromIndexedDB();
+      console.log("Cached posts: ", cached);
       const newestCachedDate = cached?.[0]?.displayDate || null;
       const needsUpdate = await shouldRefetchPosts(companyId, newestCachedDate);
 
@@ -60,6 +61,7 @@ const usePosts = (
         );
         if (fetchInitialPostsBatch.fulfilled.match(action)) {
           const posts = action.payload.posts.map(normalizePost);
+          console.log(posts)
           dispatch(setPosts(posts));
           await addPostsToIndexedDB(posts);
         }
@@ -138,7 +140,7 @@ const usePosts = (
         query(
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTs),
-          where("sharedWith", "array-contains", currentUserCompanyId),
+          where("sharedWithCompanies", "array-contains", currentUserCompanyId),
           orderBy("timestamp", "desc"),
           limit(POSTS_BATCH_SIZE)
         ),
@@ -147,7 +149,7 @@ const usePosts = (
     };
 
     setupListeners();
-
+s
     return () => {
       unsubCompany();
       unsubShared();

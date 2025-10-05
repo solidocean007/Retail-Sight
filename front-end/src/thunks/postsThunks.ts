@@ -45,43 +45,57 @@ export const fetchInitialPostsBatch = createAsyncThunk(
     try {
       const isDeveloper = currentUser?.role === "developer";
       const currentUserCompanyId = currentUser?.companyId;
-      const postsCollectionRef = collection(db, "posts");
+      const postsRef = collection(db, "posts");
 
-      const postsQuery = query(
-        postsCollectionRef,
-        orderBy("displayDate", "desc"),
-        limit(POSTS_BATCH_SIZE)
-      );
+      let postsQuery;
 
-      const querySnapshot = await getDocs(postsQuery);
+      if (isDeveloper) {
+        // Developers see everything
+        postsQuery = query(postsRef, orderBy("displayDate", "desc"), limit(POSTS_BATCH_SIZE));
+      } else if (currentUserCompanyId) {
+        // Company admins / regular users
+        postsQuery = query(
+          postsRef,
+          where("migratedVisibility", "in", ["companyOnly", "network"]),
+          orderBy("displayDate", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        );
+      } else {
+        // Public viewer fallback
+        postsQuery = query(
+          postsRef,
+          where("visibility", "==", "public"),
+          orderBy("displayDate", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        );
+      }
 
-      const postsWithIds: PostWithID[] = querySnapshot.docs
-        .map((doc) => {
-          const postData: PostType = doc.data() as PostType;
-          return normalizePost({ ...postData, id: doc.id });
-        })
-        .filter((post) => {
-          if (isDeveloper) return true;
+      const snap = await getDocs(postsQuery);
+      const postsRaw = snap.docs.map((d) => normalizePost({ id: d.id, ...d.data() } as PostWithID));
 
-          const isNetwork =
-            post.migratedVisibility === "network" &&
-            post.companyId === currentUserCompanyId;
-          const isCompanyOnlyPost =
-            post.migratedVisibility === "companyOnly" &&
-            post.postUserCompanyId === currentUserCompanyId;
+      // Client-side filter to match role and sharedWith logic
+      const filtered = postsRaw.filter((post) => {
+        if (isDeveloper) return true;
 
-          return isNetwork || isCompanyOnlyPost;
-        });
+        const visibleToCompany =
+          post.companyId === currentUserCompanyId ||
+          post.sharedWithCompanies?.includes(currentUserCompanyId); // Argument of type 'string | undefined' is not assignable to parameter of type 'string'. Type 'undefined' is not assignable to type 'string'?
 
-      const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
+        const isNetwork = post.migratedVisibility === "network";
+        const isCompanyOnly = post.migratedVisibility === "companyOnly";
 
-      return { posts: postsWithIds, lastVisible };
-    } catch (error) {
-      console.error("Error fetching initial posts:", error);
-      return rejectWithValue(error instanceof Error ? error.message : error);
+        return visibleToCompany && (isNetwork || isCompanyOnly);
+      });
+
+      const lastVisible = filtered[filtered.length - 1]?.id;
+      return { posts: filtered, lastVisible };
+    } catch (err) {
+      console.error("Error fetching initial posts:", err);
+      return rejectWithValue(err instanceof Error ? err.message : String(err));
     }
   }
 );
+
 
 // Define a type for the thunk argument
 type FetchMorePostsArgs = {
