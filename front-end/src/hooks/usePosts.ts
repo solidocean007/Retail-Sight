@@ -266,7 +266,8 @@ const usePosts = (
           collection(db, "posts"),
           where("companyId", "==", currentUserCompanyId || null),
 
-          where("migratedVisibility", "in", ["companyOnly", "network"]),
+          // where("migratedVisibility", "in", ["companyOnly", "network"]),
+          where("migratedVisibility", "==", "network"),
 
           orderBy("displayDate", "desc"),
           limit(POSTS_BATCH_SIZE)
@@ -345,7 +346,8 @@ const usePosts = (
           collection(db, "posts"),
           where("timestamp", ">", lastSeenTs),
           where("companyId", "==", currentUserCompanyId),
-          where("migratedVisibility", "in", ["companyOnly", "network"]),
+          // where("migratedVisibility", "in", ["companyOnly", "network"]),
+          where("migratedVisibility", "==", "network"),
           orderBy("timestamp", "desc"),
           limit(POSTS_BATCH_SIZE)
         ),
