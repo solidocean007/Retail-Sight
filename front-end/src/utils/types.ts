@@ -281,7 +281,7 @@ export interface PostType {
   oppId?: string;
 
   // 🧾 Closure Info
-  closedBy?: string;
+  closedBy?: string | null | undefined;
   closedDate?: string;
   closedUnits?: string | number;
 
@@ -310,7 +310,7 @@ export type PostInputType = {
 
   galloGoalTitle?: string;
   galloGoalId?: string;
-  closedBy?: string | null;
+  closedBy?: string | null | undefined;
   closedDate?: string;
   closedUnits?: string | number;
   oppId?: string;

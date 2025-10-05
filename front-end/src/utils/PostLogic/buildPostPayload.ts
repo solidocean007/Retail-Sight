@@ -27,7 +27,6 @@ return {
   createdAt: Timestamp.now(),
   updatedAt: Timestamp.now(),
 
-  visibility: post.visibility as "public" | "company" ,
   migratedVisibility: post.migratedVisibility as
     | "public"
     | "companyOnly"
@@ -86,7 +85,7 @@ return {
     oppId: post.oppId,
     galloGoalTitle: post.galloGoalTitle,
     galloGoalId: post.galloGoalId,
-    closedBy: post.closedBy. ?? null,
+    closedBy: post.closedBy ?? null,
     closedUnits: post.totalCaseCount ?? null,
   }),
 
