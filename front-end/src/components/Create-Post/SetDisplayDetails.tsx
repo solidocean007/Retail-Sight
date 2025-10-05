@@ -38,9 +38,6 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
     [setPost]
   );
 
-  console.log("selected brands: ", brands);
-  console.log("selected types: ", productTypes);
-
   return (
     <div className="setDisplayDetails">
       <section className="property-zone">

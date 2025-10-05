@@ -211,6 +211,7 @@ export interface PostType {
   productNames?: string[];
   brands?: string[];
   supplier?: string;
+  companyId: string;
 
   account: CompanyAccountType;
 
@@ -218,7 +219,7 @@ export interface PostType {
   accountNumber?: string;
   accountName?: string;
   accountAddress?: string;
-  // streetAddress?: string; // just added
+  streetAddress?: string;
   accountSalesRouteNums?: string[];
   accountType?: string;
   chain?: string;
@@ -265,7 +266,9 @@ export interface PostType {
   // 🗓 Timing
   displayDate: string;
   timestamp: Timestamp;
-  visibility: "public" | "company" | "supplier" | "private";
+  visibility?: "public" | "company"  ;
+  migratedVisibility: "public" | "companyOnly" | "network" ;
+  sharedWithCompanies?: string[];
 
   // 🎯 Goals
   companyGoalId?: string | null;
@@ -278,7 +281,7 @@ export interface PostType {
   oppId?: string;
 
   // 🧾 Closure Info
-  closedBy?: string;
+  closedBy?: string | null | undefined;
   closedDate?: string;
   closedUnits?: string | number;
 
@@ -291,7 +294,8 @@ export type PostInputType = {
   imageUrl?: string;
   originalImageUrl?: string;
   totalCaseCount: number;
-  visibility: string;
+  visibility?: string;
+  migratedVisibility?: string;
 
   postUser: UserType | null;
   account: CompanyAccountType | null;
@@ -306,7 +310,7 @@ export type PostInputType = {
 
   galloGoalTitle?: string;
   galloGoalId?: string;
-  closedBy?: string | null;
+  closedBy?: string | null | undefined;
   closedDate?: string;
   closedUnits?: string | number;
   oppId?: string;

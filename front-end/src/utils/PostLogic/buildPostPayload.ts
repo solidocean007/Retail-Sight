@@ -16,77 +16,82 @@ export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
     ?.replace(/(#|[*])\s+/g, "$1") // Remove spaces after # or *
     .trim(); // Trim any leading/trailing spaces
 
-  return {
-    description: cleanedDescription || "",
-    imageUrl: post.imageUrl || "",
-    displayDate: new Date(), // ill leave this for now.. post slice doesnt use it for ordering and merging
-     timestamp: Timestamp.now(),
-    visibility: post.visibility as
-      | "public"
-      | "company"
-      | "supplier"
-      | "private",
-    totalCaseCount: post.totalCaseCount ?? 0,
+return {
+  description: cleanedDescription || "",
+  companyId: post.postUser?.companyId || "",
+  imageUrl: post.imageUrl || "",
 
-    account: account,
+  // 🕓 Required Firestore timestamp fields
+  displayDate: new Date(),
+  timestamp: Timestamp.now(),
+  createdAt: Timestamp.now(),
+  updatedAt: Timestamp.now(),
 
-    // 🔗 Flattened account fields
-    accountNumber: account?.accountNumber ?? "",
-    accountName: account?.accountName ?? "",
-    accountAddress: account?.accountAddress ?? "",
-    streetAddress: account?.streetAddress ?? "",
-    city: account?.city ?? "",
-    state: account?.state ?? "",
-    accountSalesRouteNums: account?.salesRouteNums ?? [],
-    accountType: account?.typeOfAccount ?? "",
-    chain: account?.chain ?? "",
-    chainType: account?.chainType ?? "",
+  migratedVisibility: post.migratedVisibility as
+    | "public"
+    | "companyOnly"
+    | "network",
 
-    postUser: post.postUser!,
+  totalCaseCount: post.totalCaseCount ?? 0,
+  account,
 
-    // 🔗 Flattened user fields
-    postUserUid: post.postUser?.uid ?? "",
-    postUserRole: post.postUser?.role ?? "employee",
-    postUserFirstName: post.postUser?.firstName ?? "",
-    postUserLastName: post.postUser?.lastName ?? "",
-    postUserProfileUrlThumbnail: post.postUser?.profileUrlThumbnail ?? "",
-    postUserProfileUrlOriginal: post.postUser?.profileUrlOriginal ?? "",
-    postUserEmail: post.postUser?.email ?? "",
-    postUserPhone: post.postUser?.phone ?? "",
-    postUserCompanyName: post.postUser?.company || "",
-    postUserCompanyId: post.postUser?.companyId ?? "",
-    postUserSalesRouteNum: post.postUser?.salesRouteNum ?? "",
+  // 🔗 Flattened account fields
+  accountNumber: account?.accountNumber ?? "",
+  accountName: account?.accountName ?? "",
+  accountAddress: account?.accountAddress ?? "",
+  streetAddress: account?.streetAddress ?? "",
+  city: account?.city ?? "",
+  state: account?.state ?? "",
+  accountSalesRouteNums: account?.salesRouteNums ?? [],
+  accountType: account?.typeOfAccount ?? "",
+  chain: account?.chain ?? "",
+  chainType: account?.chainType ?? "",
 
-    // ✅ Optional owner context
-    postedBy: post.postedBy ?? null,
-    postedByFirstName: post.postedBy?.firstName ?? null,
-    postedByLastName: post.postedBy?.lastName ?? null,
-    postedByUid: post.postedBy?.uid ?? null,
+  // 🔗 Flattened user fields
+  postUser: post.postUser!,
+  postUserUid: post.postUser?.uid ?? "",
+  postUserRole: post.postUser?.role ?? "employee",
+  postUserFirstName: post.postUser?.firstName ?? "",
+  postUserLastName: post.postUser?.lastName ?? "",
+  postUserProfileUrlThumbnail: post.postUser?.profileUrlThumbnail ?? "",
+  postUserProfileUrlOriginal: post.postUser?.profileUrlOriginal ?? "",
+  postUserEmail: post.postUser?.email ?? "",
+  postUserPhone: post.postUser?.phone ?? "",
+  postUserCompanyName: post.postUser?.company || "",
+  postUserCompanyId: post.postUser?.companyId ?? "",
+  postUserSalesRouteNum: post.postUser?.salesRouteNum ?? "",
 
-    hashtags,
-    starTags,
-    brands: post.brands ?? [],
-    productNames: post.productNames ?? [],
-    productType: post.productType ?? [],
-    supplier: post.supplier ?? "",
+  // ✅ Optional owner context
+  postedBy: post.postedBy ?? null,
+  postedByFirstName: post.postedBy?.firstName ?? null,
+  postedByLastName: post.postedBy?.lastName ?? null,
+  postedByUid: post.postedBy?.uid ?? null,
 
-    // 🎯 Company goal info
-    ...(post.companyGoalId && {
-      companyGoalId: post.companyGoalId,
-      companyGoalTitle: post.companyGoalTitle,
-    }),
+  hashtags,
+  starTags,
+  brands: post.brands ?? [],
+  productNames: post.productNames ?? [],
+  productType: post.productType ?? [],
+  supplier: post.supplier ?? "",
 
-    // 🍇 Gallo goal info
-    ...(post.oppId && {
-      oppId: post.oppId,
-      galloGoalTitle: post.galloGoalTitle,
-      galloGoalId: post.galloGoalId,
-      closedBy: post.closedBy ?? null,
-      closedUnits: post.totalCaseCount ?? null,
-    }),
+  // 🎯 Company goal info
+  ...(post.companyGoalId && {
+    companyGoalId: post.companyGoalId,
+    companyGoalTitle: post.companyGoalTitle,
+  }),
 
-    likes: [],
-    commentCount: 0,
-    tokens: [],
-  } as FirestorePostPayload;
+  // 🍇 Gallo goal info
+  ...(post.oppId && {
+    oppId: post.oppId,
+    galloGoalTitle: post.galloGoalTitle,
+    galloGoalId: post.galloGoalId,
+    closedBy: post.closedBy ?? null,
+    closedUnits: post.totalCaseCount ?? null,
+  }),
+
+  likes: [],
+  commentCount: 0,
+  tokens: [],
+} satisfies FirestorePostPayload;
+
 };

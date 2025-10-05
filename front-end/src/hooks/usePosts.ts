@@ -23,14 +23,12 @@ import {
   deleteUserCreatedPostInIndexedDB,
   updatePostInIndexedDB,
   shouldRefetchPosts,
+  updatePostInFilteredSets,
+  purgeDeletedPostFromFilteredSets,
 } from "../utils/database/indexedDBUtils";
 import { db } from "../utils/firebase";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
 import { normalizePost } from "../utils/normalizePost";
-import {
-  updatePostInFilteredSets,
-  purgeDeletedPostFromFilteredSets,
-} from "../utils/database/indexedDBUtils";
 
 const usePosts = (
   currentUserCompanyId: string | undefined,
@@ -41,59 +39,74 @@ const usePosts = (
   const isDeveloper = currentUser?.role === "developer";
   const [initialLoaded, setInitialLoaded] = useState(false);
 
-  // 1️⃣ Initial load: IndexedDB or Firestore
-  useEffect(() => {
-    const loadInitialPosts = async (companyId: string) => {
-      const cached = await getPostsFromIndexedDB();
-      const newestCachedDate = cached?.[0]?.displayDate || null;
+  // 1️⃣ INITIAL LOAD — IndexedDB first, Firestore fallback
+useEffect(() => {
+  const loadInitialPosts = async (companyId: string) => {
+    const cached = await getPostsFromIndexedDB();
+    const newestCachedDate = cached?.[0]?.displayDate || null;
+    const needsUpdate = await shouldRefetchPosts(companyId, newestCachedDate);
 
-      const needsUpdate = await shouldRefetchPosts(companyId, newestCachedDate);
-
-      if (cached.length > 0 && !needsUpdate) {
-        dispatch(setPosts(cached.map(normalizePost)));
-      } else {
-        const action = await dispatch(
-          fetchInitialPostsBatch({
-            POSTS_BATCH_SIZE,
-            currentUser,
-          })
-        );
-        if (fetchInitialPostsBatch.fulfilled.match(action)) {
-          const posts = action.payload.posts.map(normalizePost);
-          dispatch(setPosts(posts));
-          addPostsToIndexedDB(posts);
-        }
+    if (cached.length > 0 && !needsUpdate) {
+      dispatch(setPosts(cached.map(normalizePost)));
+    } else {
+      const action = await dispatch(
+        fetchInitialPostsBatch({ POSTS_BATCH_SIZE, currentUser })
+      );
+      if (fetchInitialPostsBatch.fulfilled.match(action)) {
+        const posts = action.payload.posts.map(normalizePost);
+        dispatch(setPosts(posts));
+        await addPostsToIndexedDB(posts);
       }
-
-      setInitialLoaded(true);
-    };
-
-    const loadPublic = async () => {
-      const snap = await getDocs(
-        query(
-          collection(db, "posts"),
-          where("visibility", "==", "public"),
-          orderBy("displayDate", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        )
-      );
-      const publicPosts = snap.docs.map((doc) =>
-        normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
-      );
-      dispatch(setPosts(publicPosts));
-      setInitialLoaded(true);
-    };
-
-    if (!currentUser) {
-      loadPublic();
-    } else if (currentUserCompanyId) {
-      loadInitialPosts(currentUserCompanyId);
     }
-  }, [currentUser, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE]);
 
-  // 2️⃣ Real-time listeners: only after initial load
+    setInitialLoaded(true);
+  };
+
+  const loadDeveloperPosts = async () => {
+    const snap = await getDocs(
+      query(collection(db, "posts"), orderBy("displayDate", "desc"), limit(POSTS_BATCH_SIZE))
+    );
+    const allPosts = snap.docs.map((doc) =>
+      normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+    );
+    dispatch(setPosts(allPosts));
+    await addPostsToIndexedDB(allPosts);
+    setInitialLoaded(true);
+  };
+
+  const loadPublic = async () => {
+    const snap = await getDocs(
+      query(
+        collection(db, "posts"),
+        where("visibility", "==", "public"),
+        orderBy("displayDate", "desc"),
+        limit(POSTS_BATCH_SIZE)
+      )
+    );
+    const publicPosts = snap.docs.map((doc) =>
+      normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+    );
+    dispatch(setPosts(publicPosts));
+    setInitialLoaded(true);
+  };
+
+  // ✅ Wrapper async IIFE
+  (async () => {
+    if (isDeveloper) {
+      await loadDeveloperPosts();
+    } else if (currentUserCompanyId) {
+      await loadInitialPosts(currentUserCompanyId);
+    } else {
+      await loadPublic();
+    }
+  })();
+}, [currentUserCompanyId, currentUser, dispatch, POSTS_BATCH_SIZE, isDeveloper]);
+
+
+  // 2️⃣ REAL-TIME LISTENERS — only after initial load
   useEffect(() => {
-    if (!initialLoaded) return;
+    if (!initialLoaded || !currentUserCompanyId) return;
+
     let unsubscribePublic: () => void = () => {};
     let unsubscribeCompany: () => void = () => {};
 
@@ -110,6 +123,7 @@ const usePosts = (
         for (const change of snapshot.docChanges()) {
           const data = change.doc.data() as PostType;
           let updatedAt: any = data.timestamp;
+
           if (updatedAt?.toDate) updatedAt = updatedAt.toDate();
           else if (typeof updatedAt === "string")
             updatedAt = new Date(updatedAt);
@@ -121,7 +135,7 @@ const usePosts = (
             dispatch(deletePost(change.doc.id));
             removePostFromIndexedDB(change.doc.id);
             deleteUserCreatedPostInIndexedDB(change.doc.id);
-            await purgeDeletedPostFromFilteredSets(change.doc.id); // ✅ now valid
+            await purgeDeletedPostFromFilteredSets(change.doc.id);
           } else if (
             (change.type === "added" || change.type === "modified") &&
             data.imageUrl
@@ -132,46 +146,40 @@ const usePosts = (
             } as PostWithID);
             updates.push(normalized);
             await updatePostInIndexedDB(normalized);
-            await updatePostInFilteredSets(normalized); // ✅ now valid
+            await updatePostInFilteredSets(normalized);
           }
         }
 
-        if (updates.length) {
-          dispatch(mergeAndSetPosts(updates));
-        }
-
-        if (mostRecent > lastSeenDate) {
+        if (updates.length) dispatch(mergeAndSetPosts(updates));
+        if (mostRecent > lastSeenDate)
           await setLastSeenTimestamp(mostRecent.toISOString());
-        }
       };
 
-      // 🔁 Listen for public posts
-      unsubscribePublic = onSnapshot(
-        query(
-          collection(db, "posts"),
-          where("timestamp", ">", lastSeenTs),
-          where("visibility", "==", "public"),
-          orderBy("timestamp", "desc"),
-          limit(POSTS_BATCH_SIZE)
-        ),
-        processDocChanges
-      );
-
-      // 🔁 Listen for company posts
-      if (currentUserCompanyId) {
-        unsubscribeCompany = onSnapshot(
+      // 🔁 Developer listens to *all posts*
+      if (isDeveloper) {
+        unsubscribePublic = onSnapshot(
           query(
             collection(db, "posts"),
             where("timestamp", ">", lastSeenTs),
-            ...(isDeveloper
-              ? []
-              : [where("postUserCompanyId", "==", currentUserCompanyId)]),
             orderBy("timestamp", "desc"),
             limit(POSTS_BATCH_SIZE)
           ),
           processDocChanges
         );
       }
+
+      // 🔁 Company posts: both "companyOnly" and "network"
+      unsubscribeCompany = onSnapshot(
+        query(
+          collection(db, "posts"),
+          where("timestamp", ">", lastSeenTs),
+          where("companyId", "==", currentUserCompanyId),
+          where("migratedVisibility", "in", ["companyOnly", "network"]),
+          orderBy("timestamp", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        ),
+        processDocChanges
+      );
     };
 
     setupListeners();
@@ -180,7 +188,13 @@ const usePosts = (
       unsubscribePublic();
       unsubscribeCompany();
     };
-  }, [initialLoaded, currentUserCompanyId, dispatch, POSTS_BATCH_SIZE]);
+  }, [
+    initialLoaded,
+    currentUserCompanyId,
+    dispatch,
+    POSTS_BATCH_SIZE,
+    isDeveloper,
+  ]);
 };
 
 export default usePosts;
