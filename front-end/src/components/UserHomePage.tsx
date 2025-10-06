@@ -159,7 +159,7 @@ export const UserHomePage = () => {
                 onClick={toggleFilterMenu}
                 className="icon-button"
                 title="Filters"
-                style={{ position: "fixed", top: "3.25rem", left: "5.5rem" }}
+                style={{ position: "fixed", top: "3.25rem", left: "2.5rem" }}
               >
                 <TuneIcon />
               </Fab>
