@@ -17,9 +17,7 @@ import { PostQueryFilters, PostWithID } from "../utils/types";
 import { selectCompanyUsers, selectUser } from "../Slices/userSlice";
 import FilterSummaryBanner from "./FilterSummaryBanner";
 import EnhancedFilterSidebar from "./FilterSideBar/EnhancedFilterSideBar";
-import {
-  getFilterSummaryText,
-} from "./FilterSideBar/utils/filterUtils";
+import { getFilterSummaryText } from "./FilterSideBar/utils/filterUtils";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchFilteredPostsBatch } from "../thunks/postsThunks";
 import { normalizePost } from "../utils/normalizePost";
@@ -27,6 +25,7 @@ import PostViewerModal from "./PostViewerModal";
 import TuneIcon from "@mui/icons-material/Tune";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { Fab } from "@mui/material";
+import SharedFeed from "./SharedFeed";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
@@ -47,6 +46,7 @@ export const UserHomePage = () => {
     () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
     [lastFilters, companyUsers]
   );
+  const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
 
@@ -175,24 +175,48 @@ export const UserHomePage = () => {
           )}
         </div>
         <div className="home-page-content">
+          {/* insert tabs to switch to sharedFeed.tsx */}
+          <div className="feed-tabs">
+            <button
+              className={activePostSet === "posts" ? "active" : ""}
+              onClick={() => setActivePostSet("posts")}
+            >
+              Company Feed
+            </button>
+            <button
+              className={activePostSet === "shared" ? "active" : ""}
+              onClick={() => setActivePostSet("shared")}
+            >
+              Shared Feed
+            </button>
+          </div>
+
           <div className="activity-feed-container">
-            <ActivityFeed
-              virtuosoRef={virtuosoRef}
-              currentHashtag={currentHashtag}
-              setCurrentHashtag={setCurrentHashtag}
-              currentStarTag={currentStarTag}
-              setCurrentStarTag={setCurrentStarTag}
-              clearSearch={clearSearch}
-              activePostSet={activePostSet}
-              setActivePostSet={setActivePostSet}
-              isSearchActive={isSearchActive}
-              setIsSearchActive={setIsSearchActive}
-              clearInput={clearInput}
-              postIdToScroll={postIdToScroll}
-              setPostIdToScroll={setPostIdToScroll}
-              toggleFilterMenu={toggleFilterMenu}
-              appliedFilters={lastFilters}
-            />
+            {activePostSet === "shared" ? (
+              <SharedFeed
+                currentUserUid={user?.uid}
+                openPostViewer={openPostViewer}
+                virtuosoRef={virtuosoRef}
+              />
+            ) : (
+              <ActivityFeed
+                virtuosoRef={virtuosoRef}
+                currentHashtag={currentHashtag}
+                setCurrentHashtag={setCurrentHashtag}
+                currentStarTag={currentStarTag}
+                setCurrentStarTag={setCurrentStarTag}
+                clearSearch={clearSearch}
+                activePostSet={activePostSet}
+                setActivePostSet={setActivePostSet}
+                isSearchActive={isSearchActive}
+                setIsSearchActive={setIsSearchActive}
+                clearInput={clearInput}
+                postIdToScroll={postIdToScroll}
+                setPostIdToScroll={setPostIdToScroll}
+                toggleFilterMenu={toggleFilterMenu}
+                appliedFilters={lastFilters}
+              />
+            )}
           </div>
 
           <div

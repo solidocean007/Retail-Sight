@@ -12,9 +12,14 @@ import { mergeAndSetPosts } from "../Slices/postsSlice";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { normalizePost } from "../utils/normalizePost";
-import { getPostsByTag, getPostsByStarTag } from "../utils/PostLogic/getPostsByTag";
+import {
+  getPostsByTag,
+  getPostsByStarTag,
+} from "../utils/PostLogic/getPostsByTag";
 import "./activityFeed.css";
 import { useSharedPosts } from "../hooks/useSharedPosts";
+import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
+import { addSharedPosts } from "../Slices/sharedPostsSlice";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -39,12 +44,16 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   const [showLoader, setShowLoader] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
 
   // 🔹 Custom hook: get shared posts visible to this company
-  const { posts: sharedPosts, fetchMore, hasMore, loading } = useSharedPosts(currentUserCompanyId, POSTS_BATCH_SIZE);
+  const {
+    posts: sharedPosts,
+    fetchMore,
+    hasMore,
+    loading,
+  } = useSharedPosts(currentUserCompanyId, POSTS_BATCH_SIZE);
 
   // Auto-scroll handling
   const hasAutoScrolled = useRef(false);
@@ -78,7 +87,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
 
   // Fallback
   if (!loading && sharedPosts.length === 0) {
-    return <NoResults message="No shared posts yet." />;
+    return <NoResults />;
   }
 
   const scrollToTop = () => {
@@ -139,25 +148,71 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
           endReached={() => {
             if (!loadingMore && hasMore) {
               setLoadingMore(true);
-              fetchMore()
-                .then(() => {
-                  dispatch(mergeAndSetPosts(sharedPosts.map(normalizePost)));
-                  addPostsToIndexedDB(sharedPosts);
+
+              dispatch(
+                fetchMoreSharedPostsBatch({
+                  companyId: currentUserCompanyId!,
+                  lastVisible,
+                  limit: POSTS_BATCH_SIZE,
+                })
+              )
+                .then((action) => {
+                  if (fetchMoreSharedPostsBatch.fulfilled.match(action)) {
+                    const {
+                      posts,
+                      lastVisible: newCursor,
+                      hasMore: moreAvailable,
+                    } = action.payload;
+                    setLastVisible(newCursor);
+                    setHasMore(moreAvailable);
+                    dispatch(addSharedPosts(posts));
+                  }
                 })
                 .finally(() => setLoadingMore(false));
             }
           }}
           components={{
-            Footer: () =>
-              loadingMore ? (
-                <div style={{ textAlign: "center", padding: "1rem" }}>
-                  <CircularProgress size={24} />
-                </div>
-              ) : (
-                <div style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}>
-                  🚩 End of shared posts
-                </div>
-              ),
+            Footer: () => {
+              // 🔹 Show animation while fetching next batch
+              if (loadingMore) {
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      padding: "2rem 0",
+                    }}
+                  >
+                    <BeerCaseStackAnimation
+                      minDuration={2500}
+                      maxStagger={1800}
+                      dropMs={800}
+                      loop={false}
+                    />
+                  </div>
+                );
+              }
+
+              // 🔹 Shared feed doesn’t use filters (yet)
+              // But we can still gracefully show a terminal footer when no more posts exist
+              if (!hasMore && !loading) {
+                return (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "1rem",
+                      opacity: 0.6,
+                    }}
+                  >
+                    🚩 End of shared posts
+                  </div>
+                );
+              }
+
+              // 🔹 Otherwise, show nothing
+              return null;
+            },
           }}
           scrollerRef={(ref) => {
             if (ref) {

@@ -10,11 +10,7 @@ import {
 } from "../../utils/types";
 import { useDispatch, useSelector } from "react-redux";
 import { showMessage } from "../../Slices/snackbarSlice";
-import {
-  doc,
-  updateDoc,
-  getDoc,
-} from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { Chip, Dialog, Typography } from "@mui/material";
 import "./editPostModal.css";
@@ -320,10 +316,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       await userDeletePost({ post, dispatch });
       console.log("✅ Finished Firestore + Storage deletion for:", post.id);
 
-      // ✅ No local Redux/IndexedDB/filteredSets updates here
-      // Firestore snapshot (usePosts) will propagate removals everywhere
-
-      handleCloseEditModal();
+        handleCloseEditModal();
       dispatch(showMessage("Post deleted successfully!"));
     } catch (error) {
       console.error("❌ Failed to delete post:", error);
