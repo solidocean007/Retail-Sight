@@ -89,11 +89,6 @@ const HeaderBar = ({
     }
   };
 
-  useEffect(() => {
-    console.log("Local version:", localVersion);
-    console.log("Server version:", serverVersion);
-  }, [localVersion, serverVersion]);
-
   return (
     <>
       <div className="header-bar">

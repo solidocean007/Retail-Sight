@@ -19,6 +19,7 @@ import LogOutButton from "./LogOutButton";
 import "./userProfileViewer.css";
 import UploadAvatar from "./UploadAvatar";
 import { resetApp } from "../utils/resetApp";
+import { useAppConfigSync } from "../hooks/useAppConfigSync";
 
 // interface AccountDisplayCount {
 //   accountName: string;
@@ -29,6 +30,8 @@ import { resetApp } from "../utils/resetApp";
 // const UserProfileViewer: React.FC<UserProfileViewerProps> = ({ user, accountDisplayData }) => {
 const UserProfileViewer: React.FC = () => {
   // const navigate = useNavigate();
+  const { localVersion, serverVersion } = useAppConfigSync();
+  const upToDate = localVersion === serverVersion;
   const dispatch = useAppDispatch();
   const [editingPicture, setEditingPicture] = useState(false);
   const user = useSelector(
@@ -51,9 +54,17 @@ const UserProfileViewer: React.FC = () => {
     <Container className="user-profile-container">
       <div className="user-info-section">
         <div className="reset-app-box">
-          <button className="btn-outline danger-button" onClick={handleReset}>
-            Reset App
+          <button
+            className="btn-outline danger-button"
+            onClick={handleReset}
+            disabled={!upToDate}
+          >
+            {localVersion != serverVersion ? `Reset App` : `App is up to date`}
           </button>
+          <Typography variant="caption" color={upToDate ? "success" : "error"}>
+            {`App version: ${localVersion}`}{" "}
+            {`Server version: ${serverVersion}`}
+          </Typography>
         </div>
         <div className="avatar-box">
           <Avatar
@@ -88,33 +99,6 @@ const UserProfileViewer: React.FC = () => {
           <UploadAvatar user={user} setEditingPicture={setEditingPicture} />
         )}
       </div>
-
-      {/* <div className="account-summary-section">
-        <Typography variant="h6">Displays by Account</Typography>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Account</TableCell>
-              <TableCell>Address</TableCell>
-              <TableCell>Displays</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {accountDisplayData.map((acc) => (
-              <TableRow key={acc.accountName}>
-                <TableCell>{acc.accountName}</TableCell>
-                <TableCell>{acc.accountAddress}</TableCell>
-                <TableCell>{acc.displayCount}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div> */}
-
-      {/* <div className="profile-footer">
-        <Button variant="contained" onClick={() => navigate("/user-home-page")}>Go to Feed</Button>
-        <LogOutButton />
-      </div> */}
     </Container>
   );
 };

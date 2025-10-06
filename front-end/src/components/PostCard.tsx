@@ -421,7 +421,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {post.id}
+          {/* {post.id} */}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>
@@ -449,7 +449,6 @@ const PostCard: React.FC<PostCardProps> = ({
                   </div>
                 )}
               </div>
-              {/* {post.id} */}
             </div>
             <div className="hash-tag-container">
               {/* Display hashtags above the image */}

@@ -7,6 +7,12 @@
   /* background-color: var(--background-body); */
 }
 
+.reset-app-box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;;
+}
+
 .avatar-box {
   display: flex;
   flex-direction: column;
