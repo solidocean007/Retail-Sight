@@ -1,10 +1,5 @@
 // ActivityFeed.tsx
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
@@ -21,9 +16,7 @@ import {
   fetchMorePostsBatch,
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
-import {
-  addPostsToIndexedDB,
-} from "../utils/database/indexedDBUtils";
+import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import { CircularProgress } from "@mui/material";
@@ -260,18 +253,46 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
               : undefined
           }
           components={{
-            Footer: () =>
-              loadingMore ? (
-                <div style={{ textAlign: "center", padding: "1rem" }}>
-                  <CircularProgress size={24} />
-                </div>
-              ) : (
-                <div
-                  style={{ textAlign: "center", padding: "1rem", opacity: 0.6 }}
-                >
-                  🚩 End of results
-                </div>
-              ),
+            Footer: () => {
+              // 🔹 Show animation during fetches
+              if (loadingMore) {
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      padding: "2rem 0",
+                    }}
+                  >
+                    <BeerCaseStackAnimation
+                      minDuration={2500}
+                      maxStagger={1800}
+                      dropMs={800}
+                      loop={false}
+                    />
+                  </div>
+                );
+              }
+
+              // 🔹 Only show footer text if filters are active
+              if (activePostSet === "filteredPosts" && !hasMore) {
+                return (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "1rem",
+                      opacity: 0.6,
+                    }}
+                  >
+                    🚩 End of filtered results
+                  </div>
+                );
+              }
+
+              // 🔹 Otherwise, render nothing
+              return null;
+            },
           }}
           scrollerRef={(ref) => {
             if (ref) {
