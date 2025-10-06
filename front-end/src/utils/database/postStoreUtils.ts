@@ -1,4 +1,4 @@
-// indexedDBUtils.ts
+// postStoreUtils.ts
 import {
   collection,
   getDocs,
@@ -11,29 +11,31 @@ import { PostQueryFilters, PostType, PostWithID } from "../types";
 import { openDB } from "./indexedDBOpen";
 import { db } from "../firebase";
 
-const refetchMemo = new Map<string, string>(); // companyId → lastCheckedDisplayDate
-
+const refetchMemo = new Map<string, string>();
 
 export async function shouldRefetchPosts(
   companyId: string,
   newestCachedDate: string | null
 ): Promise<boolean> {
   try {
+    // 🚫 Missing company or cache — always refetch
     if (!companyId || !newestCachedDate) return true;
 
+    // ✅ Use memo to skip duplicate checks
     const lastChecked = refetchMemo.get(companyId);
     if (lastChecked === newestCachedDate) {
-      console.log(`[Memo] Skipping shouldRefetch for ${companyId}`);
+      console.log(`[Memo] Skipping refetch check for ${companyId}`);
       return false;
     }
 
     const postsRef = collection(db, "posts");
 
-    const [companySnap, publicSnap] = await Promise.all([
+    // ✅ Query both company posts & network/shared posts
+    const [companySnap, sharedSnap] = await Promise.all([
       getDocs(
         query(
           postsRef,
-          where("postUserCompanyId", "==", companyId),
+          where("companyId", "==", companyId),
           orderBy("displayDate", "desc"),
           limit(1)
         )
@@ -41,37 +43,49 @@ export async function shouldRefetchPosts(
       getDocs(
         query(
           postsRef,
-          where("visibility", "==", "public"),
+          where("sharedWithCompanies", "array-contains", companyId),
           orderBy("displayDate", "desc"),
           limit(1)
         )
       ),
     ]);
 
-    const latestDates: Date[] = [];
+    // ✅ Gather latest Firestore dates
+    const latestDates: number[] = [];
+
+    const parseDate = (value: any): number => {
+      if (!value) return 0;
+      if (value.toDate) return value.toDate().getTime();
+      return new Date(value).getTime();
+    };
 
     if (!companySnap.empty) {
-      latestDates.push(new Date(companySnap.docs[0].data().displayDate));
+      latestDates.push(parseDate(companySnap.docs[0].data().displayDate));
     }
-    if (!publicSnap.empty) {
-      latestDates.push(new Date(publicSnap.docs[0].data().displayDate));
+    if (!sharedSnap.empty) {
+      latestDates.push(parseDate(sharedSnap.docs[0].data().displayDate));
     }
 
-    const newestLocal = new Date(newestCachedDate);
-    const hasNewer = latestDates.some((d) => d > newestLocal);
+    if (latestDates.length === 0) return false;
 
+    const newestFirestore = Math.max(...latestDates);
+    const newestLocal = parseDate(newestCachedDate);
+
+    const hasNewer = newestFirestore > newestLocal;
+
+    // ✅ Cache result to avoid redundant reads
     if (!hasNewer) {
       refetchMemo.set(companyId, newestCachedDate);
     }
 
     return hasNewer;
   } catch (err) {
-    console.error("[shouldRefetch] Error:", err);
-    return true; // Safe default
+    console.error("[shouldRefetchPosts] Error:", err);
+    return true; // Safe default if anything fails
   }
 }
 
-// export async function addPostsToIndexedDB(posts: PostType[]): Promise<void> {
+
 export async function addPostsToIndexedDB(posts: PostWithID[]): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(["posts"], "readwrite");

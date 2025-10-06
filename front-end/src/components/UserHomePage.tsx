@@ -159,7 +159,7 @@ export const UserHomePage = () => {
                 onClick={toggleFilterMenu}
                 className="icon-button"
                 title="Filters"
-                style={{ position: "fixed", top: "3.25rem", left: "2.5rem" }}
+                style={{ position: "fixed", top: "3.5rem", left: "2.5rem" }}
               >
                 <TuneIcon />
               </Fab>
@@ -167,36 +167,40 @@ export const UserHomePage = () => {
                 color="primary"
                 aria-label="create"
                 onClick={() => navigate("/create-post")}
-                style={{ position: "fixed", top: "3.25rem", right: "5.5rem" }}
+                style={{ position: "fixed", top: "3.5rem", right: "2.5rem" }}
               >
                 <AddAPhotoIcon />
               </Fab>
             </div>
           )}
         </div>
+        <div className="feed-tabs">
+          <button
+            className={
+              activePostSet === "posts btn-tabs" ? "active" : "btn-tabs"
+            }
+            onClick={() => setActivePostSet("posts")}
+          >
+            Company
+          </button>
+          <button
+            className={
+              activePostSet === "shared" ? "active btn-tabs" : "btn-tabs"
+            }
+            onClick={() => setActivePostSet("shared")}
+          >
+            Shared
+          </button>
+        </div>
+
         <div className="home-page-content">
           {/* insert tabs to switch to sharedFeed.tsx */}
-          <div className="feed-tabs">
-            <button
-              className={activePostSet === "posts" ? "active" : ""}
-              onClick={() => setActivePostSet("posts")}
-            >
-              Company Feed
-            </button>
-            <button
-              className={activePostSet === "shared" ? "active" : ""}
-              onClick={() => setActivePostSet("shared")}
-            >
-              Shared Feed
-            </button>
-          </div>
 
           <div className="activity-feed-container">
             {activePostSet === "shared" ? (
               <SharedFeed
-                currentUserUid={user?.uid}
-                openPostViewer={openPostViewer}
-                virtuosoRef={virtuosoRef}
+                virtuosoRef={virtuosoRef} // dont even think im using this
+                setPostIdToScroll={setPostIdToScroll}
               />
             ) : (
               <ActivityFeed

@@ -35,6 +35,25 @@ button {
   gap: 4px;
 }
 
+.btn-tabs {
+  background-color: var(--btn-primary-bg);
+  color: var(--text-primary-button);
+  border: none;
+  padding: 0.2rem .5rem;
+  box-shadow: none;
+  border-radius: 0;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 0;
+}
+
 .button-primary:hover {
   opacity: 0.9;
 }

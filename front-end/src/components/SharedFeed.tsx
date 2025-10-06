@@ -19,14 +19,15 @@ import {
 import "./activityFeed.css";
 import { useSharedPosts } from "../hooks/useSharedPosts";
 import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
-import { addSharedPosts } from "../Slices/sharedPostsSlice";
+import { addSharedPosts, setHasMore } from "../Slices/sharedPostsSlice";
+import { addSharedPostsToIndexedDB } from "../utils/database/sharedPostsStoreUtils";
 
 const POSTS_BATCH_SIZE = 5;
 
 interface SharedFeedProps {
-  virtuosoRef: React.RefObject<VirtuosoHandle>;
-  postIdToScroll: string | null;
-  setPostIdToScroll: React.Dispatch<React.SetStateAction<string | null>>;
+  virtuosoRef?: React.RefObject<VirtuosoHandle>;
+  postIdToScroll?: string;
+  setPostIdToScroll?: React.Dispatch<React.SetStateAction<string | null>>;
   setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
@@ -41,6 +42,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   setCurrentHashtag,
 }) => {
   const dispatch = useAppDispatch();
+  const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [showLoader, setShowLoader] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -59,7 +61,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   const hasAutoScrolled = useRef(false);
   const handlePostVisible = (id: string, idx: number) => {
     if (hasAutoScrolled.current || id !== postIdToScroll) return;
-    if (virtuosoRef.current) {
+    if (virtuosoRef?.current && setPostIdToScroll) {
       virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
       setPostIdToScroll(null);
       hasAutoScrolled.current = true;
@@ -75,7 +77,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
 
   // Scroll to post if deep-linked
   useEffect(() => {
-    if (!postIdToScroll || !virtuosoRef.current) return;
+    if (!postIdToScroll || !virtuosoRef?.current) return;
     const idx = sharedPosts.findIndex((p) => p.id === postIdToScroll);
     if (idx !== -1) {
       const timeout = setTimeout(() => {
@@ -91,7 +93,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   }
 
   const scrollToTop = () => {
-    virtuosoRef.current?.scrollToIndex({
+    virtuosoRef?.current?.scrollToIndex({
       index: 0,
       align: "start",
       behavior: "smooth",
@@ -151,7 +153,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
 
               dispatch(
                 fetchMoreSharedPostsBatch({
-                  companyId: currentUserCompanyId!,
+                  currentUser,
                   lastVisible,
                   limit: POSTS_BATCH_SIZE,
                 })
@@ -164,8 +166,15 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                       hasMore: moreAvailable,
                     } = action.payload;
                     setLastVisible(newCursor);
-                    setHasMore(moreAvailable);
+
+                    if(posts.length > 0) {
+                      addSharedPostsToIndexedDB(posts);
                     dispatch(addSharedPosts(posts));
+                    setHasMore(moreAvailable);
+
+                    } else {
+                      setHasMore(false);
+                    }
                   }
                 })
                 .finally(() => setLoadingMore(false));

@@ -10,11 +10,13 @@ import {
   startAfter,
   DocumentData,
   QueryDocumentSnapshot,
+  getDoc,
+  doc,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { PostWithID } from "../utils/types";
+import { PostType, PostWithID, UserType } from "../utils/types";
 import {
-  saveSharedPostsToIndexedDB,
+  addSharedPostsToIndexedDB,
   getSharedPostsFromIndexedDB,
 } from "../utils/database/sharedPostsStoreUtils";
 
@@ -27,7 +29,11 @@ interface FetchSharedPostsArgs {
 export const fetchSharedPostsBatch = createAsyncThunk(
   "sharedPosts/fetchBatch",
   async (
-    { companyId, lastVisible = null, limit: batchSize = 10 }: FetchSharedPostsArgs,
+    {
+      companyId,
+      lastVisible = null,
+      limit: batchSize = 10,
+    }: FetchSharedPostsArgs,
     { rejectWithValue }
   ) => {
     try {
@@ -53,11 +59,11 @@ export const fetchSharedPostsBatch = createAsyncThunk(
       const snap = await getDocs(q);
       const posts: PostWithID[] = snap.docs.map((doc) => ({
         id: doc.id,
-        ...(doc.data() as PostWithID),
+        ...(doc.data() as PostType),
       }));
 
       // cache locally
-      await saveSharedPostsToIndexedDB(posts);
+      await addSharedPostsToIndexedDB(posts);
 
       return {
         posts,
@@ -79,41 +85,66 @@ export const loadSharedPostsFromCache = createAsyncThunk(
 );
 
 interface FetchMoreSharedPostsArgs {
-  companyId: string;
-  lastVisible: QueryDocumentSnapshot<DocumentData> | null;
+  lastVisible: string | null;
   limit?: number;
+  currentUser: UserType | null;
 }
 
 export const fetchMoreSharedPostsBatch = createAsyncThunk(
   "sharedPosts/fetchMoreBatch",
   async (
-    { companyId, lastVisible, limit: batchSize = 10 }: FetchMoreSharedPostsArgs,
+    {
+      lastVisible,
+      limit: batchSize = 10,
+      currentUser,
+    }: FetchMoreSharedPostsArgs,
     { rejectWithValue }
   ) => {
+    const companyId = currentUser?.companyId;
     try {
-      if (!companyId) throw new Error("Missing companyId");
+      if (!companyId) {
+        throw new Error("Missing companyId");
+        return { posts: [], lastVisible: null };
+      }
       if (!lastVisible) return { posts: [], lastVisible: null };
 
-      const q = query(
-        collection(db, "posts"),
-        where("sharedWithCompanies", "array-contains", companyId),
-        orderBy("displayDate", "desc"),
-        startAfter(lastVisible),
-        limit(batchSize)
-      );
+      const postsCollectionRef = collection(db, "posts");
+      let moreSharedPostsBatch;
 
-      const snap = await getDocs(q);
-      const posts: PostWithID[] = snap.docs.map((doc) => ({
+      if (lastVisible) {
+        const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible)); //  Type 'Firestore' is missing the following properties from type 'DocumentReference<unknown, DocumentData>': converter, firestore, id, path, and 2 more.ts(2
+        if (!lastVisibleSnapshot.exists()) {
+          console.warn("⚠️ lastVisible document not found:", lastVisible);
+        }
+
+        moreSharedPostsBatch = query(
+          postsCollectionRef,
+          where("sharedWithCompanies", "array-contains", companyId),
+          orderBy("displayDate", "desc"),
+          startAfter(lastVisible),
+          limit(batchSize)
+        );
+      } else {
+         moreSharedPostsBatch = query(
+          postsCollectionRef,
+          where("sharedWithCompanies", "array-contains", companyId),
+          orderBy("displayDate", "desc"),
+          limit(batchSize)
+        );
+      }
+
+      const snap = await getDocs(moreSharedPostsBatch);
+      const postsWithIds: PostWithID[] = snap.docs.map((doc) => ({
         id: doc.id,
-        ...(doc.data() as PostWithID),
+        ...(doc.data() as PostType),
       }));
 
-      await saveSharedPostsToIndexedDB(posts);
+      await addSharedPostsToIndexedDB(postsWithIds);
 
-      const newLastVisible = snap.docs[snap.docs.length - 1] || null;
-      const hasMore = posts.length === batchSize;
+      const newLastVisible = snap.docs[snap.docs.length - 1]?.id || null;
+      const hasMore = postsWithIds.length === batchSize;
 
-      return { posts, lastVisible: newLastVisible, hasMore };
+      return { postsWithIds, lastVisible: newLastVisible, hasMore };
     } catch (error: any) {
       console.error("Error fetching more shared posts:", error);
       return rejectWithValue(error.message);

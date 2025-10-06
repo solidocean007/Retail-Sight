@@ -6,7 +6,7 @@ const SHARED_POSTS_STORE = "sharedPosts";
 /**
  * Overwrites and saves shared posts to IndexedDB.
  */
-export async function saveSharedPostsToIndexedDB(
+export async function addSharedPostsToIndexedDB(
   posts: PostWithID[]
 ): Promise<void> {
   const db = await openDB();
@@ -27,7 +27,6 @@ export async function saveSharedPostsToIndexedDB(
       posts.forEach((post, index) => {
         const request = store.put(post);
         request.onsuccess = () => {
-          // console.log(`Shared post ${index} added successfully`);
         };
         request.onerror = () => {
           console.error(
