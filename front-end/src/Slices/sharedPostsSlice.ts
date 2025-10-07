@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
+import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
 
 interface SharedPostsState {
   sharedPosts: PostWithID[];
@@ -43,9 +44,32 @@ const sharedPostsSlice = createSlice({
     },
     clearSharedPosts(state) {
       state.sharedPosts = [];
+      state.hasMore = true;
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchMoreSharedPostsBatch.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMoreSharedPostsBatch.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        const { postsWithIds, hasMore } = action.payload;
+        const newOnes = postsWithIds.filter(
+          (p) => !state.sharedPosts.some((sp) => sp.id === p.id)
+        );
+        state.sharedPosts.push(...newOnes);
+        state.hasMore = hasMore;
+      })
+      .addCase(fetchMoreSharedPostsBatch.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+  },
 });
+
 
 export const {
   setSharedPosts,

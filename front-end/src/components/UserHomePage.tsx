@@ -26,6 +26,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { Fab } from "@mui/material";
 import SharedFeed from "./SharedFeed";
+import { useSharedPosts } from "../hooks/useSharedPosts";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
@@ -49,6 +50,19 @@ export const UserHomePage = () => {
   const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
+  const batchSize = 5;
+  // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
+  const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
+
+  useEffect(() => {
+    if (
+      sharedPosts.length > 0 &&
+      activePostSet === "posts" &&
+      !viewCompanyPosts
+    ) {
+      setActivePostSet("shared");
+    }
+  }, [sharedPosts, activePostSet]);
 
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
@@ -174,24 +188,26 @@ export const UserHomePage = () => {
             </div>
           )}
         </div>
-        <div className="feed-tabs">
-          <button
-            className={
-              activePostSet === "posts btn-tabs" ? "active" : "btn-tabs"
-            }
-            onClick={() => setActivePostSet("posts")}
-          >
-            Company
-          </button>
-          <button
-            className={
-              activePostSet === "shared" ? "active btn-tabs" : "btn-tabs"
-            }
-            onClick={() => setActivePostSet("shared")}
-          >
-            Shared
-          </button>
-        </div>
+        {user?.companyId && sharedPosts.length > 0 && (
+          <div className="feed-tabs">
+            <button
+              className={`btn-tabs ${
+                activePostSet === "posts" ? "active" : ""
+              }`}
+              onClick={() => setActivePostSet("posts")}
+            >
+              Company
+            </button>
+            <button
+              className={`btn-tabs ${
+                activePostSet === "shared" ? "active" : ""
+              }`}
+              onClick={() => setActivePostSet("shared")}
+            >
+              Shared
+            </button>
+          </div>
+        )}
 
         <div className="home-page-content">
           {/* insert tabs to switch to sharedFeed.tsx */}

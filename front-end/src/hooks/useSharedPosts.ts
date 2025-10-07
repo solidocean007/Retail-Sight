@@ -1,78 +1,130 @@
-import { useEffect, useState, useCallback } from "react";
-import { collection, query, where, orderBy, limit, onSnapshot, getDocs, startAfter } from "firebase/firestore";
+import { useEffect, useCallback, useRef } from "react";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  getDocs,
+  startAfter,
+  QueryDocumentSnapshot,
+  DocumentData,
+} from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { PostWithID } from "../utils/types";
-import { useAppDispatch } from "../utils/store";
-import { addSharedPosts, updateSharedPost } from "../Slices/sharedPostsSlice";
-import { addSharedPostsToIndexedDB, getSharedPostsFromIndexedDB } from "../utils/database/sharedPostsStoreUtils";
+import { RootState, useAppDispatch } from "../utils/store";
+import {
+  addSharedPosts,
+  updateSharedPost,
+  setLoading,
+  setError,
+  setHasMore,
+  setSharedPosts,
+} from "../Slices/sharedPostsSlice";
+import {
+  addSharedPostsToIndexedDB,
+  getSharedPostsFromIndexedDB,
+} from "../utils/database/sharedPostsStoreUtils";
+import { useSelector } from "react-redux";
 
-export const useSharedPosts = (companyId: string | undefined, batchSize: number = 10) => {
+export const useSharedPosts = (
+  companyId: string | undefined,
+  batchSize: number = 10
+) => {
   const dispatch = useAppDispatch();
-  const [posts, setPosts] = useState<PostWithID[]>([]);
-  const [lastVisible, setLastVisible] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
+  const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
+  const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
+  const loading = useSelector((s: RootState) => s.sharedPosts.loading);
+  const lastVisibleRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(
+    null
+  );
 
-  // 🔹 Load cached shared posts
+  // 🔹 Load cached posts first
   useEffect(() => {
     if (!companyId) return;
-    getSharedPostsFromIndexedDB().then((cached) => {
-      if (cached?.length) setPosts(cached);
-    });
+    (async () => {
+      const cached = await getSharedPostsFromIndexedDB();
+      if (cached?.length) {
+        dispatch(setSharedPosts(cached));
+      } else {
+        await fetchInitialBatch();
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
-  // 🔹 Fetch first batch
+  // 🔹 Initial batch
   const fetchInitialBatch = useCallback(async () => {
     if (!companyId) return;
+    try {
+      dispatch(setLoading(true));
 
-    setLoading(true);
-    const q = query(
-      collection(db, "posts"),
-      where("sharedWithCompanies", "array-contains", companyId),
-      orderBy("displayDate", "desc"),
-      limit(batchSize)
-    );
+      const q = query(
+        collection(db, "posts"),
+        where("sharedWithCompanies", "array-contains", companyId),
+        orderBy("displayDate", "desc"),
+        limit(batchSize)
+      );
 
-    const snap = await getDocs(q);
-    const newPosts: PostWithID[] = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as PostWithID[];
+      const snap = await getDocs(q);
+      const docs = snap.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as PostWithID)
+      );
 
-    setPosts(newPosts);
-    setLastVisible(snap.docs[snap.docs.length - 1]);
-    setHasMore(snap.docs.length === batchSize);
-    dispatch(addSharedPosts(newPosts));
-    await addSharedPostsToIndexedDB(newPosts);
-    setLoading(false);
+      dispatch(setSharedPosts(docs));
+      await addSharedPostsToIndexedDB(docs);
+
+      lastVisibleRef.current = snap.docs[snap.docs.length - 1] || null;
+      dispatch(setHasMore(snap.docs.length === batchSize));
+    } catch (err: any) {
+      dispatch(setError(err.message));
+      console.error("Error fetching shared posts:", err);
+    } finally {
+      dispatch(setLoading(false));
+    }
   }, [companyId, batchSize, dispatch]);
 
-  // 🔹 Fetch more posts
+  // 🔹 Fetch more posts (pagination)
   const fetchMore = useCallback(async () => {
-    if (!companyId || !hasMore || !lastVisible) return;
+    if (!companyId || !hasMore || !lastVisibleRef.current) return;
 
-    const q = query(
-      collection(db, "posts"),
-      where("sharedWithCompanies", "array-contains", companyId),
-      orderBy("displayDate", "desc"),
-      startAfter(lastVisible),
-      limit(batchSize)
-    );
+    try {
+      dispatch(setLoading(true));
 
-    const snap = await getDocs(q);
-    const morePosts: PostWithID[] = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as PostWithID[];
+      const q = query(
+        collection(db, "posts"),
+        where("sharedWithCompanies", "array-contains", companyId),
+        orderBy("displayDate", "desc"),
+        startAfter(lastVisibleRef.current),
+        limit(batchSize)
+      );
 
-    if (!morePosts.length) {
-      setHasMore(false);
-      return;
+      const snap = await getDocs(q);
+      const morePosts = snap.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as PostWithID)
+      );
+
+      if (morePosts.length > 0) {
+        dispatch(addSharedPosts(morePosts));
+        await addSharedPostsToIndexedDB([...sharedPosts, ...morePosts]);
+        lastVisibleRef.current = snap.docs[snap.docs.length - 1] || null;
+        dispatch(setHasMore(morePosts.length === batchSize));
+      } else {
+        dispatch(setHasMore(false));
+      }
+    } catch (err: any) {
+      dispatch(setError(err.message));
+      console.error("Error fetching more shared posts:", err);
+    } finally {
+      dispatch(setLoading(false));
     }
+  }, [companyId, hasMore, sharedPosts, batchSize, dispatch]);
 
-    setPosts((prev) => [...prev, ...morePosts]);
-    setLastVisible(snap.docs[snap.docs.length - 1]);
-    dispatch(addSharedPosts(morePosts));
-    await addSharedPostsToIndexedDB([...posts, ...morePosts]);
-  }, [companyId, lastVisible, hasMore, batchSize, dispatch, posts]);
-
-  // 🔹 Real-time updates
+  // 🔹 Real-time listener
   useEffect(() => {
     if (!companyId) return;
+
     const q = query(
       collection(db, "posts"),
       where("sharedWithCompanies", "array-contains", companyId),
@@ -83,12 +135,9 @@ export const useSharedPosts = (companyId: string | undefined, batchSize: number 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         const post = { id: change.doc.id, ...change.doc.data() } as PostWithID;
-
         if (change.type === "added") {
-          setPosts((prev) => [post, ...prev.filter((p) => p.id !== post.id)]);
           dispatch(addSharedPosts([post]));
         } else if (change.type === "modified") {
-          setPosts((prev) => prev.map((p) => (p.id === post.id ? post : p)));
           dispatch(updateSharedPost(post));
         }
       });
@@ -97,5 +146,11 @@ export const useSharedPosts = (companyId: string | undefined, batchSize: number 
     return () => unsubscribe();
   }, [companyId, dispatch, batchSize]);
 
-  return { posts, loading, fetchMore, hasMore, refresh: fetchInitialBatch };
+  return {
+    posts: sharedPosts,
+    loading,
+    hasMore,
+    fetchMore,
+    refresh: fetchInitialBatch,
+  };
 };

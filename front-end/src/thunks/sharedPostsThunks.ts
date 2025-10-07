@@ -90,42 +90,42 @@ interface FetchMoreSharedPostsArgs {
   currentUser: UserType | null;
 }
 
-export const fetchMoreSharedPostsBatch = createAsyncThunk(
+export const fetchMoreSharedPostsBatch = createAsyncThunk<
+  { postsWithIds: PostWithID[]; lastVisible: string | null; hasMore: boolean },
+  FetchMoreSharedPostsArgs
+  // AsyncThunkConfig
+>(
   "sharedPosts/fetchMoreBatch",
   async (
-    {
-      lastVisible,
-      limit: batchSize = 10,
-      currentUser,
-    }: FetchMoreSharedPostsArgs,
+    { lastVisible, limit: batchSize = 10, currentUser }: FetchMoreSharedPostsArgs,
     { rejectWithValue }
   ) => {
-    const companyId = currentUser?.companyId;
     try {
+      const companyId = currentUser?.companyId;
       if (!companyId) {
-        throw new Error("Missing companyId");
-        return { posts: [], lastVisible: null };
+        console.warn("⚠️ Missing companyId — cannot fetch shared posts");
+        return { postsWithIds: [], lastVisible: null, hasMore: false };
       }
-      if (!lastVisible) return { posts: [], lastVisible: null };
 
       const postsCollectionRef = collection(db, "posts");
-      let moreSharedPostsBatch;
 
+      // build query
+      let postsQuery;
       if (lastVisible) {
-        const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible)); //  Type 'Firestore' is missing the following properties from type 'DocumentReference<unknown, DocumentData>': converter, firestore, id, path, and 2 more.ts(2
+        const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
         if (!lastVisibleSnapshot.exists()) {
           console.warn("⚠️ lastVisible document not found:", lastVisible);
         }
 
-        moreSharedPostsBatch = query(
+        postsQuery = query(
           postsCollectionRef,
           where("sharedWithCompanies", "array-contains", companyId),
           orderBy("displayDate", "desc"),
-          startAfter(lastVisible),
+          startAfter(lastVisibleSnapshot),
           limit(batchSize)
         );
       } else {
-         moreSharedPostsBatch = query(
+        postsQuery = query(
           postsCollectionRef,
           where("sharedWithCompanies", "array-contains", companyId),
           orderBy("displayDate", "desc"),
@@ -133,7 +133,7 @@ export const fetchMoreSharedPostsBatch = createAsyncThunk(
         );
       }
 
-      const snap = await getDocs(moreSharedPostsBatch);
+      const snap = await getDocs(postsQuery);
       const postsWithIds: PostWithID[] = snap.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as PostType),
@@ -151,3 +151,4 @@ export const fetchMoreSharedPostsBatch = createAsyncThunk(
     }
   }
 );
+

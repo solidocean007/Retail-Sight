@@ -13,8 +13,8 @@
 | Add real-time listener for `companyOnly` + `network` posts | ☑️     | Done with unified listener + cleanup.                                                                    |
 | Allow developers to see *all* posts (ignore filters)       | ☑️     | Implemented in `usePosts`.                                                                               |
 | Keep `loadPublic` fallback for unauthenticated or testing  | ☑️     | Implemented in current branch.                                                                           |
-| Create new `useSharedPosts()` hook                         | ⬜      | Will query `where("sharedWithCompanies", "array-contains", companyId)` and join metadata from `/shares`. |
-| Add `useSharedPosts` IndexedDB cache (optional)            | ⬜      | For offline continuity.                                                                                  |
+| Create new `useSharedPosts()` hook                         | ☑️      | Will query `where("sharedWithCompanies", "array-contains", companyId)` and join metadata from `/shares`. |
+| Add `useSharedPosts` IndexedDB cache (optional)            | ☑️      | For offline continuity.                                                                                  |
 
 
 ---
@@ -26,7 +26,7 @@
 | Update `fetchInitialPostsBatch` to support `migratedVisibility` | ☑️     | Matches `usePosts` filtering.                                 |
 | Replace snapshot cursor with serializable `displayDate`         | ☑️     | Implemented; no serialization warnings.                       |
 | Add pagination support (`fetchMorePostsBatch`)                  | ☑️     | Working; pagination stable.                                   |
-| Create new thunks for `fetchSharedPostsBatch`                   | ⬜      | Mirrors existing thunks but queries by `sharedWithCompanies`. |
+| Create new thunks for `fetchSharedPostsBatch`                   | ☑️      | Mirrors existing thunks but queries by `sharedWithCompanies`. |
 | Optionally normalize and store `sharedMeta` in Redux            | ⬜      | Derived from `/shares` subcollection.                         |
 
 
@@ -55,17 +55,18 @@
 
 ---
 
-## 🔹 5. UI / Routes
+## 🔹 5. UI
 
-| Task                                                     | Status | Notes                                               |
-| -------------------------------------------------------- | ------ | --------------------------------------------------- |
-| Add `/shared` route and component for shared feed        | ⬜      | Uses `useSharedPosts`.                              |
+| Task                                                     | Status  | Notes                                               |
+| -------------------------------------------------------- | ------  | --------------------------------------------------- |
+| Add SharedFeed and component for shared feed             | ☑️      | Uses `useSharedPosts`.                              |
 | Update `PostCard` to render shared metadata banner       | ⬜      | Displays “Shared by X (User Y) — Reason: Z”.        |
 | Add share action (supplier dashboard → share post modal) | ⬜      | Triggers callable `sharePostWithCompany`.           |
 | Show share analytics in supplier dashboard               | ⬜      | Based on `sharedSummary` or `shares` subcollection. |
 
 
 ---
+
 
 ✅ Next Step:
 

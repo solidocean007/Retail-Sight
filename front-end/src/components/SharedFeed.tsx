@@ -47,15 +47,9 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
-  const currentUserCompanyId = currentUser?.companyId;
-
-  // 🔹 Custom hook: get shared posts visible to this company
-  const {
-    posts: sharedPosts,
-    fetchMore,
-    hasMore,
-    loading,
-  } = useSharedPosts(currentUserCompanyId, POSTS_BATCH_SIZE);
+  const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
+  const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
+  const loading = useSelector((s: RootState) => s.sharedPosts.loading);
 
   // Auto-scroll handling
   const hasAutoScrolled = useRef(false);
@@ -161,16 +155,16 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                 .then((action) => {
                   if (fetchMoreSharedPostsBatch.fulfilled.match(action)) {
                     const {
-                      posts,
+                      postsWithIds,
                       lastVisible: newCursor,
                       hasMore: moreAvailable,
                     } = action.payload;
                     setLastVisible(newCursor);
 
-                    if(posts.length > 0) {
-                      addSharedPostsToIndexedDB(posts);
-                    dispatch(addSharedPosts(posts));
-                    setHasMore(moreAvailable);
+                    if (postsWithIds.length > 0) {
+                      addSharedPostsToIndexedDB(postsWithIds);
+                      dispatch(addSharedPosts(postsWithIds));
+                      dispatch(setHasMore(moreAvailable));
 
                     } else {
                       setHasMore(false);
