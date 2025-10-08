@@ -1,6 +1,7 @@
 // export type TPhoneInputState = [string, string, string]; // going to change this to one string
 
 import { serverTimestamp, Timestamp } from "firebase/firestore";
+import { FieldValue } from "react-hook-form";
 // import { ChannelType } from "../components/Create-Post/ChannelSelector";
 // import { CategoryType } from "../components/Create-Post/CategorySelector";
 export type NotificationAudienceType = "user" | "company" | "role" | "global";
@@ -108,26 +109,31 @@ export interface CompanyWithUsersAndId extends CompanyTypeWithId {
 
 // i just made this for this branch.. not sure if the shape is right.. i guess its how we get
 // started
-export type ConnectionRequest = {
+export interface ConnectionRequest {
   emailLower: string;
-  userType: "distributor" | "supplier";
-  companyNameNormalized: string;
-  companyId: string | null;
-  uid: string;
-  status: "pending" | "approved" | "denied";
-  createdAt: Date;
-  decidedAt?: Date;
-  decidedBy?: Date;
-};
+  requestFromCompanyType: "supplier" | "distributor";
+  requestFromCompanyId: string;
+  requestToCompanyId: string;
+  requestedByUid: string;
+  status: "pending" | "approved" | "rejected";
+  sharedBrands: string[];
+  requestedAt?: Timestamp | null;
+  requestedEmail?: string; // optional temporary field
+}
+
 
 export interface CompanyConnectionType {
   id: string;
   fromCompanyId: string;
   toCompanyId: string;
-  status: "approved" | "pending" | "rejected";
-  integration: string;
-  integrationLevel: "full" | "read-only";
-  createdAt: string; // or Firestore Timestamp if not normalized yet
+  fromCompanyType: "supplier" | "distributor";
+  toCompanyType: "supplier" | "distributor";
+  requestedBy: string; // user UID
+  status: "pending" | "approved" | "rejected";
+  sharedBrands: string[];
+  timestamp: Timestamp;
+  approvedBy?: string; // uid of approver
+  rejectionReason?: string;
 }
 
 export type TUserInputType = {
@@ -266,8 +272,8 @@ export interface PostType {
   // 🗓 Timing
   displayDate: string;
   timestamp: Timestamp;
-  visibility?: "public" | "company"  ;
-  migratedVisibility: "public" | "companyOnly" | "network" ;
+  visibility?: "public" | "company";
+  migratedVisibility: "public" | "companyOnly" | "network";
   sharedWithCompanies?: string[];
 
   // 🎯 Goals
@@ -502,7 +508,7 @@ export type CompanyGoalType = {
   companyId: string;
   goalTitle: string;
   targetRole?: "sales" | "supervisor";
-  targetMode?: "goalForSelectedUsers" | "goalForAccounts"
+  targetMode?: "goalForSelectedUsers" | "goalForAccounts";
   goalDescription: string;
   goalMetric: string;
   goalValueMin: number;
@@ -604,6 +610,7 @@ export type AchievementPayloadType = {
 };
 
 export type DashboardModeType =
+  | "ConnectionsMode"
   | "TeamMode"
   | "UsersMode"
   | "UsersMode2"

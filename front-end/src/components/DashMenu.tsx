@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
 import "./dashMenu.css";
 import { DashboardModeType } from "../utils/types";
-import { Inventory2 } from "@mui/icons-material";
+import { Handshake, Inventory2 } from "@mui/icons-material";
 
 const drawerWidth = 240;
 
@@ -108,12 +108,20 @@ const DashMenu = ({
             Admin
           </Typography>
           <ListItemButton
+            selected={selectedMode === "ConnectionsMode"}
+            onClick={() => onMenuClick("ConnectionsMode")}
+          >
+            <Handshake sx={{ mr: 1 }} />
+            <ListItemText primary="Connections" />
+          </ListItemButton>
+          <ListItemButton
             selected={selectedMode === "TeamMode"}
             onClick={() => onMenuClick("TeamMode")}
           >
             <GroupIcon sx={{ mr: 1 }} />
             <ListItemText primary="Teams" />
           </ListItemButton>
+
           <ListItemButton
             selected={selectedMode === "AccountsMode"}
             onClick={() => onMenuClick("AccountsMode")}

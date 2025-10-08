@@ -41,6 +41,7 @@ import MyGoals from "./GoalIntegration/MyGoals.tsx";
 import AdminUsersConsole from "./AdminDashboard/AdminUsersConsole.tsx";
 import TeamsViewer from "./TeamsViewer.tsx";
 import MyAccounts from "./MyAccounts.tsx";
+import CompanyConnectionsManager from "./CompanyConnectionsManager.tsx";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -181,6 +182,9 @@ export const Dashboard = () => {
           height: "100%",
         }}
       >
+        {dashboardMode === "ConnectionsMode" && (
+          <CompanyConnectionsManager currentCompanyId={companyId} user={user} />
+        )}
         {dashboardMode === "TeamMode" && (
           <TeamsViewer />
         )}

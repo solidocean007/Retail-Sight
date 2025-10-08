@@ -1,0 +1,52 @@
+import React from "react";
+import CompanyConnectionCard from "./CompanyConnectionCard";
+import "./companyConnectionList.css";
+
+interface CompanyConnection {
+  id?: string;
+  fromCompanyId: string;
+  toCompanyId: string;
+  status: "pending" | "approved" | "rejected";
+  sharedBrands?: string[];
+}
+
+interface CompanyConnectionListProps {
+  connections: CompanyConnection[];
+  currentCompanyId?: string;
+  statusFilter?: string;
+  isAdminView?: boolean;
+}
+
+const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
+  connections,
+  currentCompanyId,
+  statusFilter = "all",
+  isAdminView = false,
+}) => {
+  const filtered = connections.filter(
+    (c) => statusFilter === "all" || c.status === statusFilter
+  );
+
+  if (filtered.length === 0) {
+    return (
+      <div className="connections-list-empty">
+        <p>No connections found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="connections-list">
+      {filtered.map((c) => (
+        <CompanyConnectionCard
+          key={c.id}
+          connection={c}
+          currentCompanyId={currentCompanyId}
+          isAdminView={isAdminView}
+        />
+      ))}
+    </div>
+  );
+};
+
+export default CompanyConnectionList;

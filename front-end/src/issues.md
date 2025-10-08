@@ -11,7 +11,7 @@ of account numbers.  where an assignment now should be an account number with an
 
 ---
 
-## 🔹 2. 
+## 🔹 2. when a person requests access.. i need to make sure they are inputing or selecting distbutor or supplier so when i grant access to this company that this is set..i think this is already done but i need to double check that.
 ---
 
 ## 🔹 3. 
