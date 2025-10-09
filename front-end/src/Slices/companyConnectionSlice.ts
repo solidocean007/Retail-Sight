@@ -16,7 +16,12 @@ import {
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { CompanyConnectionType, ConnectionRequest } from "../utils/types";
-import { setCompanyConnectionsStore, updateCompanyConnectionInStore } from "../utils/database/companyConnectionsDBUtils";
+import {
+  setCompanyConnectionsStore,
+  updateCompanyConnectionInStore,
+} from "../utils/database/companyConnectionsDBUtils";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { showMessage } from "./snackbarSlice";
 
 interface CompanyConnectionsState {
   connections: CompanyConnectionType[];
@@ -30,27 +35,69 @@ const initialState: CompanyConnectionsState = {
   error: null,
 };
 
+// companyConnectionSlice.ts
+
 export const createConnectionRequest = createAsyncThunk(
   "companyConnections/createRequest",
-  async ({ currentCompanyId, user, usersCompany, emailInput, brandSelection }: any) => {
-    const newRequest: ConnectionRequest = {
-      emailLower: user.email,
-      requestFromCompanyType: usersCompany.companyType,
-      requestFromCompanyId: currentCompanyId,
-      requestToCompanyId: "",
-      requestedByUid: user.uid,
-      status: "pending",
-      sharedBrands: brandSelection,
-      requestedAt: serverTimestamp() as unknown as Timestamp,
-    };
-    const docRef = await addDoc(collection(db, "companyConnections"), {
-      ...newRequest,
-      requestedEmail: emailInput,
-    });
-    return { id: docRef.id, ...newRequest };
+  async (
+    { currentCompanyId, user, usersCompany, emailInput, brandSelection }: any,
+    { rejectWithValue }
+  ) => {
+    const safeBrands = Array.isArray(brandSelection) ? brandSelection : [];
+    const now = new Date().toISOString();
+
+    // const newRequest: ConnectionRequest = {
+    //   emailLower: user.email,
+    //   requestFromCompanyType: usersCompany.companyType,
+    //   requestFromCompanyId: currentCompanyId,
+    //   requestToCompanyId: "",
+    //   requestedByUid: user.uid,
+    //   status: "pending",
+    //   sharedBrands: safeBrands,
+    //   requestedAt: now,
+    // };
+
+    const functions = getFunctions();
+    const resolveFn = httpsCallable(functions, "resolveCompanyEmail");
+
+    try {
+      // ✅ Try resolving before writing to Firestore
+      const result: any = await resolveFn({ requestedEmail: emailInput });
+      const { toCompanyId, toCompanyType, toCompanyName } = result.data;
+      if (!result?.data?.toCompanyId) {
+        throw new Error("Could not resolve target company.");
+      }
+
+      const newRequest: ConnectionRequest = {
+        emailLower: user.email,
+        requestFromCompanyType: usersCompany.companyType,
+        requestFromCompanyId: currentCompanyId,
+        requestFromCompanyName: usersCompany.companyName ?? "Unknown Company",
+        requestToCompanyId: toCompanyId,
+        requestToCompanyType: toCompanyType,
+        requestToCompanyName: toCompanyName, // ✅ store here
+        requestedByUid: user.uid,
+        status: "pending",
+        sharedBrands: safeBrands,
+        requestedAt: now,
+      };
+
+      // ✅ Only create the connection after success
+      const docRef = await addDoc(collection(db, "companyConnections"), {
+        ...newRequest,
+        requestedEmail: emailInput,
+        requestToCompanyId: result.data.toCompanyId,
+        requestToCompanyType: result.data.toCompanyType,
+        requestedAt: serverTimestamp(),
+      });
+
+      return { id: docRef.id, ...newRequest };
+    } catch (err: any) {
+      console.error("createConnectionRequest error:", err);
+      return rejectWithValue(err.message || "Error creating connection");
+    }
   }
 );
-
 
 // ✅ Load all connections
 export const fetchCompanyConnections = createAsyncThunk(
@@ -59,15 +106,25 @@ export const fetchCompanyConnections = createAsyncThunk(
     const q = query(
       collection(db, "companyConnections"),
       or(
-        where("fromCompanyId", "==", companyId),
-        where("toCompanyId", "==", companyId)
+        where("requestFromCompanyId", "==", companyId),
+        where("requestToCompanyId", "==", companyId)
       )
     );
+
     const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as CompanyConnectionType[];
+
+    const data = snapshot.docs.map((doc) => {
+      const raw = doc.data() as CompanyConnectionType;
+      return {
+        id: doc.id,
+        ...raw,
+        // ✅ Convert Firestore Timestamp to ISO string
+        requestedAt:
+          raw.requestedAt instanceof Timestamp
+            ? raw.requestedAt.toDate().toISOString()
+            : raw.requestedAt ?? null,
+      };
+    });
 
     // ✅ Cache offline
     await setCompanyConnectionsStore(companyId, data);
@@ -78,13 +135,15 @@ export const fetchCompanyConnections = createAsyncThunk(
 
 export const updateConnectionStatus = createAsyncThunk(
   "companyConnections/updateStatus",
-  async (
-    {
-      id,
-      status,
-      companyId,
-    }: { id: string; status: "approved" | "rejected"; companyId: string }
-  ) => {
+  async ({
+    id,
+    status,
+    companyId,
+  }: {
+    id: string;
+    status: "approved" | "rejected" | "cancelled";
+    companyId: string;
+  }) => {
     const ref = doc(db, "companyConnections", id);
     await updateDoc(ref, { status });
 
@@ -101,8 +160,6 @@ export const updateConnectionStatus = createAsyncThunk(
     return { id, status };
   }
 );
-
-
 
 const companyConnectionSlice = createSlice({
   name: "companyConnections",
@@ -134,4 +191,3 @@ const companyConnectionSlice = createSlice({
 
 export const { setCachedConnections } = companyConnectionSlice.actions;
 export default companyConnectionSlice.reducer;
-

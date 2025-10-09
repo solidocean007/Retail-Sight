@@ -7,6 +7,11 @@ import { getExternalApiKeyStatus } from "./galloKeys/getExternalApiKeyStatus";
 import { syncUserRoleClaim } from "./syncUserRoleClaim";
 import { upsertGalloAxisKey } from "./galloKeys/upsertGalloAxisKey";
 import { deleteGalloAxisKey } from "./galloKeys/deleteGalloAxisKey";
+import { resolveCompanyEmail } from "./resolveCompanyEmail";
+import { onConnectionApproved } from "./onConnectionsApproved";
+import { sharePostWithCompany } from "./sharePostWithCompany";
+import { onSharePost } from "./onSharePost";
+import { onConnectionBrandsUpdated } from "./onConnectionUpdated";
 
 export {
   ping,
@@ -18,4 +23,9 @@ export {
   getExternalApiKeyStatus,
   upsertGalloAxisKey,
   deleteGalloAxisKey,
+  resolveCompanyEmail,
+  onConnectionApproved,
+  sharePostWithCompany,
+  onSharePost,
+  onConnectionBrandsUpdated,
 };

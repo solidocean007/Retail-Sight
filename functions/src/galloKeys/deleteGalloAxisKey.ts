@@ -34,7 +34,8 @@ export const deleteGalloAxisKey = onCall<{ env: "prod" | "dev" }>(
         ? data.externalApiKeys
         : [];
       const filtered = externalApiKeys.filter(
-        (k: any) => k.name !== `galloApiKey${env === "prod" ? "Prod" : "Dev"}`
+        (k: { name: string }) =>
+          k.name !== `galloApiKey${env === "prod" ? "Prod" : "Dev"}`
       );
       await apiKeysRef.set({ externalApiKeys: filtered }, { merge: true });
     }

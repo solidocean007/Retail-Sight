@@ -72,6 +72,34 @@
   font-size: 12px;
 }
 
+.selected-brand-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--chip-bg, #e8e8e8);
+  color: var(--chip-text, #333);
+  border-radius: 16px;
+  padding: 4px 10px;
+  margin: 4px;
+  font-size: 0.9rem;
+}
+
+.remove-brand-btn {
+  background: transparent;
+  border: none;
+  color: #555;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.remove-brand-btn:hover {
+  color: red;
+}
+
+
 @media (max-width: 768px) {
   .brand-chip-grid {
     grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));

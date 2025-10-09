@@ -1,16 +1,14 @@
 import React, { useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../utils/firebase";
-import "./companyConnectionCard.css";
-import { CompanyConnectionType } from "../utils/types";
 import { useAppDispatch } from "../utils/store";
 import { updateConnectionStatus } from "../Slices/companyConnectionSlice";
-
+import { CompanyConnectionType } from "../utils/types";
+import ConnectionEditModal from "./ConnectionEditModal";
+import "./companyConnectionCard.css";
 
 interface CompanyConnectionCardProps {
   connection: CompanyConnectionType;
   currentCompanyId?: string;
-  isAdminView?: boolean; // show approve/reject buttons
+  isAdminView?: boolean;
 }
 
 const CompanyConnectionCard: React.FC<CompanyConnectionCardProps> = ({
@@ -22,17 +20,32 @@ const CompanyConnectionCard: React.FC<CompanyConnectionCardProps> = ({
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(connection.status);
 
+  // 🧩 Edit modal state
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedConnection, setSelectedConnection] =
+    useState<CompanyConnectionType | null>(null);
+
   const otherCompanyId =
-    connection.toCompanyId === currentCompanyId
-      ? connection.fromCompanyId
-      : connection.toCompanyId;
+    connection.requestToCompanyId === currentCompanyId
+      ? connection.requestFromCompanyId
+      : connection.requestToCompanyId;
+
+  const otherCompanyName =
+    connection.requestToCompanyId === currentCompanyId
+      ? connection.requestFromCompanyName
+      : connection.requestToCompanyName;
 
   const handleUpdateStatus = async (newStatus: "approved" | "rejected") => {
-    if (!connection.id || !currentCompanyId) return; // Property 'id' does not exist on type 'CompanyConnectionType'
+    if (!connection.id || !currentCompanyId) return;
     try {
       setLoading(true);
-     dispatch(updateConnectionStatus({ id: connection.id!, status: newStatus, companyId: currentCompanyId }));
-
+      await dispatch(
+        updateConnectionStatus({
+          id: connection.id,
+          status: newStatus,
+          companyId: currentCompanyId,
+        })
+      );
       setStatus(newStatus);
     } catch (err) {
       console.error("Error updating connection:", err);
@@ -41,9 +54,34 @@ const CompanyConnectionCard: React.FC<CompanyConnectionCardProps> = ({
     }
   };
 
+  const handleCancel = async (id?: string) => {
+    if (!id || !currentCompanyId) return;
+    try {
+      setLoading(true);
+      await dispatch(
+        updateConnectionStatus({
+          id,
+          status: "cancelled",
+          companyId: currentCompanyId,
+        })
+      );
+      setStatus("cancelled");
+    } catch (err) {
+      console.error("Error cancelling connection:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🧩 Opens edit modal
+  const openEditModal = (conn: CompanyConnectionType) => {
+    setSelectedConnection(conn);
+    setIsEditOpen(true);
+  };
+
   return (
     <div className={`connection-card status-${status}`}>
-      <h4>Connection with {otherCompanyId}</h4>
+      <h4>Connection with {otherCompanyName || "Unknown Company"}</h4>
       <p>Status: {status}</p>
 
       {connection.sharedBrands?.length ? (
@@ -57,23 +95,54 @@ const CompanyConnectionCard: React.FC<CompanyConnectionCardProps> = ({
         <p>No shared brands</p>
       )}
 
-      {isAdminView && status === "pending" && (
+      {isAdminView && (
         <div className="connection-actions">
+          {status === "pending" ? (
+            connection.requestFromCompanyId === currentCompanyId ? (
+              <button
+                className="cancel-btn"
+                disabled={loading}
+                onClick={() => handleCancel(connection.id)}
+              >
+                Cancel
+              </button>
+            ) : (
+              <>
+                <button
+                  className="approve-btn"
+                  disabled={loading}
+                  onClick={() => handleUpdateStatus("approved")}
+                >
+                  Approve
+                </button>
+                <button
+                  className="reject-btn"
+                  disabled={loading}
+                  onClick={() => handleUpdateStatus("rejected")}
+                >
+                  Reject
+                </button>
+              </>
+            )
+          ) : null}
+
           <button
-            className="btn-approve"
-            onClick={() => handleUpdateStatus("approved")}
-            disabled={loading}
+            className="edit-btn"
+            onClick={() => openEditModal(connection)}
           >
-            {loading ? "..." : "Approve"}
-          </button>
-          <button
-            className="btn-reject"
-            onClick={() => handleUpdateStatus("rejected")}
-            disabled={loading}
-          >
-            Reject
+            Edit
           </button>
         </div>
+      )}
+
+      {/* 🧩 Edit modal */}
+      {selectedConnection && (
+        <ConnectionEditModal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          connection={selectedConnection}
+          currentCompanyId={currentCompanyId}
+        />
       )}
     </div>
   );

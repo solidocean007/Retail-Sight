@@ -113,23 +113,28 @@ export interface ConnectionRequest {
   emailLower: string;
   requestFromCompanyType: "supplier" | "distributor";
   requestFromCompanyId: string;
+  requestFromCompanyName: string;
   requestToCompanyId: string;
+  requestToCompanyType: string;
+  requestToCompanyName: string;
   requestedByUid: string;
   status: "pending" | "approved" | "rejected";
   sharedBrands: string[];
-  requestedAt?: Timestamp | null;
+  requestedAt?: Timestamp | string | null;
   requestedEmail?: string; // optional temporary field
 }
 
 
 export interface CompanyConnectionType {
   id: string;
-  fromCompanyId: string;
-  toCompanyId: string;
-  fromCompanyType: "supplier" | "distributor";
-  toCompanyType: "supplier" | "distributor";
+  requestFromCompanyId: string;
+  requestFromCompanyName: string;
+  requestToCompanyId: string;
+  requestFromCompanyType: "supplier" | "distributor";
+  requestToCompanyType: "supplier" | "distributor";
+  requestToCompanyName: string;
   requestedBy: string; // user UID
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "cancelled";
   sharedBrands: string[];
   timestamp: Timestamp;
   approvedBy?: string; // uid of approver

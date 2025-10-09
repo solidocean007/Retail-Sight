@@ -1,17 +1,10 @@
 import React from "react";
 import CompanyConnectionCard from "./CompanyConnectionCard";
 import "./companyConnectionList.css";
-
-interface CompanyConnection {
-  id?: string;
-  fromCompanyId: string;
-  toCompanyId: string;
-  status: "pending" | "approved" | "rejected";
-  sharedBrands?: string[];
-}
+import { CompanyConnectionType } from "../utils/types";
 
 interface CompanyConnectionListProps {
-  connections: CompanyConnection[];
+  connections: CompanyConnectionType[];
   currentCompanyId?: string;
   statusFilter?: string;
   isAdminView?: boolean;
