@@ -23,6 +23,16 @@ import {
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { showMessage } from "./snackbarSlice";
 
+function normalizeTimestamps(obj: any) {
+  const result: any = { ...obj };
+  Object.keys(result).forEach((key) => {
+    if (result[key] instanceof Timestamp) {
+      result[key] = result[key].toDate().toISOString();
+    }
+  });
+  return result;
+}
+
 interface CompanyConnectionsState {
   connections: CompanyConnectionType[];
   loading: boolean;
@@ -115,15 +125,7 @@ export const fetchCompanyConnections = createAsyncThunk(
 
     const data = snapshot.docs.map((doc) => {
       const raw = doc.data() as CompanyConnectionType;
-      return {
-        id: doc.id,
-        ...raw,
-        // ✅ Convert Firestore Timestamp to ISO string
-        requestedAt:
-          raw.requestedAt instanceof Timestamp
-            ? raw.requestedAt.toDate().toISOString()
-            : raw.requestedAt ?? null,
-      };
+      return normalizeTimestamps(raw);
     });
 
     // ✅ Cache offline
@@ -148,11 +150,11 @@ export const updateConnectionStatus = createAsyncThunk(
     await updateDoc(ref, { status });
 
     const snap = await getDoc(ref);
-    const updatedConnection = {
+    const updatedConnection = normalizeTimestamps({
       ...(snap.data() as CompanyConnectionType),
       id,
       status,
-    };
+    });
 
     // ✅ Update local IndexedDB (single record)
     await updateCompanyConnectionInStore(companyId, updatedConnection);

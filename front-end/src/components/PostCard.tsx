@@ -421,7 +421,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {/* {post.id} */}
+          {post.id}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>

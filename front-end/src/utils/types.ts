@@ -136,7 +136,7 @@ export interface CompanyConnectionType {
   requestedBy: string; // user UID
   status: "pending" | "approved" | "rejected" | "cancelled";
   sharedBrands: string[];
-  timestamp: Timestamp;
+  requestedAt: Timestamp | string;
   approvedBy?: string; // uid of approver
   rejectionReason?: string;
 }
