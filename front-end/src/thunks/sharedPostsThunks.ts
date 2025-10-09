@@ -19,6 +19,7 @@ import {
   addSharedPostsToIndexedDB,
   getSharedPostsFromIndexedDB,
 } from "../utils/database/sharedPostsStoreUtils";
+import { normalizePost } from "../utils/normalizePost";
 
 interface FetchSharedPostsArgs {
   companyId: string;
@@ -57,10 +58,9 @@ export const fetchSharedPostsBatch = createAsyncThunk(
       }
 
       const snap = await getDocs(q);
-      const posts: PostWithID[] = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as PostType),
-      }));
+      const posts: PostWithID[] = snap.docs.map((doc) =>
+        normalizePost({ id: doc.id, ...(doc.data() as PostType) })
+      );
 
       // cache locally
       await addSharedPostsToIndexedDB(posts);
@@ -97,7 +97,11 @@ export const fetchMoreSharedPostsBatch = createAsyncThunk<
 >(
   "sharedPosts/fetchMoreBatch",
   async (
-    { lastVisible, limit: batchSize = 10, currentUser }: FetchMoreSharedPostsArgs,
+    {
+      lastVisible,
+      limit: batchSize = 10,
+      currentUser,
+    }: FetchMoreSharedPostsArgs,
     { rejectWithValue }
   ) => {
     try {
@@ -134,10 +138,9 @@ export const fetchMoreSharedPostsBatch = createAsyncThunk<
       }
 
       const snap = await getDocs(postsQuery);
-      const postsWithIds: PostWithID[] = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as PostType),
-      }));
+      const postsWithIds: PostWithID[] = snap.docs.map((doc) =>
+        normalizePost({ id: doc.id, ...(doc.data() as PostType) })
+      );
 
       await addSharedPostsToIndexedDB(postsWithIds);
 
@@ -151,4 +154,3 @@ export const fetchMoreSharedPostsBatch = createAsyncThunk<
     }
   }
 );
-

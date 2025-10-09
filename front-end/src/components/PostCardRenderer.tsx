@@ -16,7 +16,7 @@ interface PostCardRendererProps {
     getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   };
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
-  setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
+  setActivePostSet?: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   postIdToScroll?: string | null;
   onPostVisible?: (postId: string, index: number) => void;

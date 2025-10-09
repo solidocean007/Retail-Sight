@@ -45,7 +45,7 @@ import ChainTypeSelect from "./ChainTypeSelect";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
-  setActivePostSet: React.Dispatch<React.SetStateAction<string>>;
+  setActiveCompanyPostSet: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
   isSearchActive: boolean;
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
   onFiltersApplied?: (filters: PostQueryFilters) => void;
@@ -59,7 +59,7 @@ interface EnhancedFilterSideBarProps {
 
 const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   activePostSet,
-  setActivePostSet,
+  setActiveCompanyPostSet,
   // isSearchActive,
   // setIsSearchActive,
   onFiltersApplied,
@@ -170,7 +170,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     setFilters(empty);
     setLastAppliedFilters(empty);
     resetInputs();
-    setActivePostSet("posts");
+    setActiveCompanyPostSet("posts");
 
     dispatch(setFilteredPosts(allPosts));
     dispatch(setFilteredPostFetchedAt(null));
@@ -279,7 +279,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       dispatch(setFilteredPosts(cached));
       const fetchedAt = await getFetchDate(filters);
       dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
-      setActivePostSet("filteredPosts");
+      setActiveCompanyPostSet("filteredPosts");
       setLastAppliedFilters(filters);
       onFiltersApplied?.(filters);
       return;
@@ -295,7 +295,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       dispatch(setFilteredPosts(fresh));
       dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
       await storeFilteredSet(filters, fresh);
-      setActivePostSet("filteredPosts");
+      setActiveCompanyPostSet("filteredPosts");
       setLastAppliedFilters(filters);
       onFiltersApplied?.(filters);
     }

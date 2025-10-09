@@ -28,7 +28,7 @@ interface SharedFeedProps {
   virtuosoRef?: React.RefObject<VirtuosoHandle>;
   postIdToScroll?: string;
   setPostIdToScroll?: React.Dispatch<React.SetStateAction<string | null>>;
-  setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
+ setSharedFeedPostSet?: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -37,7 +37,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   virtuosoRef,
   postIdToScroll,
   setPostIdToScroll,
-  setActivePostSet,
+  setSharedFeedPostSet,
   setIsSearchActive,
   setCurrentHashtag,
 }) => {
@@ -133,7 +133,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                   style={{ height: "100%" }}
                   data={{ post, getPostsByTag, getPostsByStarTag }}
                   setCurrentHashtag={setCurrentHashtag}
-                  setActivePostSet={setActivePostSet}
+                  setActivePostSet={setSharedFeedPostSet} //  Type 'string' is not assignable to type '"posts" | "filteredPosts"'.
                   setIsSearchActive={setIsSearchActive}
                   postIdToScroll={postIdToScroll}
                   onPostVisible={handlePostVisible}

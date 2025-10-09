@@ -19,7 +19,7 @@ interface PostDescriptionProps {
   getPostsByTag?: (hashTag: string, companyID?: string) => Promise<PostWithID[]>;
   getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
-  setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
+  setActivePostSet?: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 

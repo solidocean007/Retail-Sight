@@ -38,7 +38,12 @@ export const UserHomePage = () => {
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
-  const [activePostSet, setActivePostSet] = useState("posts");
+  const [activeFeedType, setActiveFeedType] = useState<"company" | "shared">(
+    "company"
+  );
+  const [activeCompanyPostSet, setActiveCompanyPostSet] = useState<
+    "posts" | "filteredPosts"
+  >("posts");
   const [clearInput, setClearInput] = useState(false);
   const user = useSelector(selectUser);
   const [isClosing, setIsClosing] = useState(false);
@@ -53,16 +58,19 @@ export const UserHomePage = () => {
   const batchSize = 5;
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
-
-  useEffect(() => {
-    if (
-      sharedPosts.length > 0 &&
-      activePostSet === "posts" &&
-      !viewCompanyPosts
-    ) {
-      setActivePostSet("shared");
-    }
-  }, [sharedPosts, activePostSet]);
+  console.log('sharedPosts: ', sharedPosts);
+  // useEffect(() => {  theers an error about this useEffect
+  //   const hasCompanyPosts = !!useSelector(
+  //     (s: RootState) => s.posts.posts.length
+  //   );
+  //   if (
+  //     !hasCompanyPosts &&
+  //     sharedPosts.length > 0 &&
+  //     activeFeedType !== "shared"
+  //   ) {
+  //     setActiveFeedType("shared");
+  //   }
+  // }, [sharedPosts]);
 
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
@@ -93,7 +101,7 @@ export const UserHomePage = () => {
   // 1) When we get new filters, load the full set
   useEffect(() => {
     if (!initialFilters) return;
-    setActivePostSet("filteredPosts");
+    setActiveCompanyPostSet("filteredPosts");
     setLastFilters(initialFilters);
 
     (async () => {
@@ -134,7 +142,7 @@ export const UserHomePage = () => {
   const clearSearch = async () => {
     setCurrentHashtag(null);
     setCurrentStarTag(null);
-    setActivePostSet("posts");
+    setActiveCompanyPostSet("posts");
     setLastFilters(null); // ✅ hides FilterSummaryBanner
     dispatch(setFilteredPosts([]));
     // dispatch(setFilteredPostCount(0)); // you'd need to define this reducer
@@ -160,7 +168,7 @@ export const UserHomePage = () => {
           />
         </div>
         <div className="mobile-home-page-actions">
-          {activePostSet === "filteredPosts" && filteredCount > 0 ? (
+          {activeCompanyPostSet === "filteredPosts" && filteredCount > 0 ? (
             <FilterSummaryBanner
               filteredCount={filteredCount}
               filterText={filterText}
@@ -192,17 +200,17 @@ export const UserHomePage = () => {
           <div className="feed-tabs">
             <button
               className={`btn-tabs ${
-                activePostSet === "posts" ? "active" : ""
+                activeFeedType === "company" ? "active" : ""
               }`}
-              onClick={() => setActivePostSet("posts")}
+              onClick={() => setActiveFeedType("company")}
             >
               Company
             </button>
             <button
               className={`btn-tabs ${
-                activePostSet === "shared" ? "active" : ""
+                activeFeedType === "shared" ? "active" : ""
               }`}
-              onClick={() => setActivePostSet("shared")}
+              onClick={() => setActiveFeedType("shared")}
             >
               Shared
             </button>
@@ -213,7 +221,7 @@ export const UserHomePage = () => {
           {/* insert tabs to switch to sharedFeed.tsx */}
 
           <div className="activity-feed-container">
-            {activePostSet === "shared" ? (
+            {activeFeedType === "shared" ? (
               <SharedFeed
                 virtuosoRef={virtuosoRef} // dont even think im using this
                 setPostIdToScroll={setPostIdToScroll}
@@ -226,8 +234,8 @@ export const UserHomePage = () => {
                 currentStarTag={currentStarTag}
                 setCurrentStarTag={setCurrentStarTag}
                 clearSearch={clearSearch}
-                activePostSet={activePostSet}
-                setActivePostSet={setActivePostSet}
+                activeCompanyPostSet={activeCompanyPostSet}
+                setActiveCompanyPostSet={setActiveCompanyPostSet}
                 isSearchActive={isSearchActive}
                 setIsSearchActive={setIsSearchActive}
                 clearInput={clearInput}
@@ -245,8 +253,8 @@ export const UserHomePage = () => {
             } ${isClosing ? "sidebar-closing" : ""}`}
           >
             <EnhancedFilterSidebar
-              activePostSet={activePostSet}
-              setActivePostSet={setActivePostSet}
+              activePostSet={activeCompanyPostSet}
+              setActiveCompanyPostSet={setActiveCompanyPostSet}
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
               onFiltersApplied={setLastFilters}

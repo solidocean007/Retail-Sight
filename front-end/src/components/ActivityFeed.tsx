@@ -37,11 +37,13 @@ interface ActivityFeedProps {
   virtuosoRef: React.RefObject<VirtuosoHandle>;
   currentHashtag?: string | null;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
-  currentStarTag: string | null;
-  setCurrentStarTag: React.Dispatch<React.SetStateAction<string | null>>;
+  currentStarTag?: string | null;
+  setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
   clearSearch: () => Promise<void>;
-  activePostSet?: string;
-  setActivePostSet?: React.Dispatch<React.SetStateAction<string>>;
+  activeCompanyPostSet: "posts" | "filteredPosts";
+  setActiveCompanyPostSet: React.Dispatch<
+    React.SetStateAction<"posts" | "filteredPosts">
+  >;
   isSearchActive?: boolean;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   clearInput: boolean;
@@ -53,19 +55,12 @@ interface ActivityFeedProps {
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   virtuosoRef,
-  // currentHashtag,
   setCurrentHashtag,
-  // currentStarTag,
-  // setCurrentStarTag,
-  // clearSearch,
-  activePostSet,
-  setActivePostSet,
-  // isSearchActive,
+  activeCompanyPostSet,
+  setActiveCompanyPostSet,
   setIsSearchActive,
-  // clearInput,
   postIdToScroll,
   setPostIdToScroll,
-  // toggleFilterMenu,
   appliedFilters,
 }) => {
   const dispatch = useAppDispatch();
@@ -78,14 +73,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     (s: RootState) => s.posts.filteredPostCount
   );
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
+  console.log('rawPosts: ', rawPosts)
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
   const displayPosts = useMemo(() => {
-    return activePostSet === "filteredPosts" ? filteredPosts : rawPosts;
+    return activeCompanyPostSet === "filteredPosts" ? filteredPosts : rawPosts;
   }, [
-    activePostSet,
-    activePostSet === "filteredPosts" ? filteredPosts : rawPosts,
+    activeCompanyPostSet,
+    activeCompanyPostSet === "filteredPosts" ? filteredPosts : rawPosts,
   ]);
   // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -106,13 +102,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   };
 
   // this should only be responsible for scrolling to the top on a activePostsSet change
-  const prevActivePostSet = useRef(activePostSet);
+  const prevActivePostSet = useRef(activeCompanyPostSet);
   useEffect(() => {
-    if (activePostSet !== prevActivePostSet.current) {
+    if (activeCompanyPostSet !== prevActivePostSet.current) {
       virtuosoRef.current?.scrollToIndex({ index: 0, align: "start" });
-      prevActivePostSet.current = activePostSet;
+      prevActivePostSet.current = activeCompanyPostSet;
     }
-  }, [activePostSet]);
+  }, [activeCompanyPostSet]);
 
   useEffect(() => {
     setShowLoader(true);
@@ -209,7 +205,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                   style={{ height: "100%" }}
                   data={{ post, getPostsByTag, getPostsByStarTag }}
                   setCurrentHashtag={setCurrentHashtag}
-                  setActivePostSet={setActivePostSet}
+                  setActivePostSet={setActiveCompanyPostSet}
                   setIsSearchActive={setIsSearchActive}
                   postIdToScroll={postIdToScroll}
                   onPostVisible={handlePostVisible}
@@ -218,7 +214,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             );
           }}
           endReached={
-            activePostSet === "posts"
+            activeCompanyPostSet === "posts"
               ? () => {
                   if (!loadingMore && hasMore) {
                     setLoadingMore(true);
@@ -276,7 +272,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
               }
 
               // 🔹 Only show footer text if filters are active
-              if (activePostSet === "filteredPosts" && !hasMore) {
+              if (activeCompanyPostSet === "filteredPosts" && !hasMore) {
                 return (
                   <div
                     style={{
