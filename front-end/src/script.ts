@@ -9,6 +9,150 @@ import {
 import fs from "fs";
 
 
+// App.tsx (dev-only audit helper)
+import { useEffect } from "react";
+import {
+  limit,
+  orderBy,
+  startAfter,
+  QueryDocumentSnapshot,
+  DocumentData,
+} from "firebase/firestore";
+
+type AuditRow = {
+  id: string;
+  companyId?: any;
+  email: string | null;
+  displayDate: string | null;
+  migratedVisibility?: any;
+};
+
+function toIso(d: any): string | null {
+  if (!d) return null;
+  if (typeof d === "string") return d;
+  if (d instanceof Date) return d.toISOString();
+  // Firestore Timestamp or timestamp-like
+  if (d instanceof Timestamp) return d.toDate().toISOString();
+  if (typeof d === "object" && "seconds" in d && "nanoseconds" in d) {
+    const ms = d.seconds * 1000 + (d.nanoseconds || 0) / 1_000_000;
+    return new Date(ms).toISOString();
+  }
+  return null;
+}
+
+/**
+ * Audits posts that have a missing/empty companyId.
+ * Scans entire collection in batches (ordered by displayDate desc).
+ * Logs a summary and an itemized list with postUser.email.
+//  */
+export async function auditPostsMissingCompanyId({
+  batchSize = 500,
+  maxBatches = 100, // safety guard
+}: { batchSize?: number; maxBatches?: number } = {}) {
+  const colRef = collection(db, "posts");
+  let cursor: QueryDocumentSnapshot<DocumentData> | null = null;
+  let batchCount = 0;
+  const offenders: AuditRow[] = [];
+
+  console.group("🔎 Audit: posts missing/empty companyId");
+
+  while (batchCount < maxBatches) {
+    const q = cursor
+      ? query(colRef, orderBy("displayDate", "desc"), startAfter(cursor), limit(batchSize))
+      : query(colRef, orderBy("displayDate", "desc"), limit(batchSize));
+
+    const snap = await getDocs(q);
+    if (snap.empty) break;
+
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+      const hasCompanyId = Object.prototype.hasOwnProperty.call(data, "companyId");
+      const companyId = data.companyId;
+
+      // Treat as missing if the field doesn't exist, is null, empty string, or non-string.
+      const isMissing =
+        !hasCompanyId || companyId == null || companyId === "" || typeof companyId !== "string";
+
+      if (isMissing) {
+        offenders.push({
+          id: docSnap.id,
+          companyId,
+          email: data?.postUser?.email ?? null,
+          displayDate: toIso(data?.displayDate) ?? toIso(data?.createdAt) ?? null,
+          migratedVisibility: data?.migratedVisibility,
+        });
+      }
+    });
+
+    cursor = snap.docs[snap.docs.length - 1];
+    batchCount += 1;
+
+    // If fewer than batchSize returned, we've reached the end
+    if (snap.size < batchSize) break;
+  }
+
+  console.log(`Total offenders (missing/empty companyId): ${offenders.length}`);
+  // Make it easy to copy/export:
+  (window as any).__POSTS_MISSING_COMPANYID__ = offenders;
+  console.table(
+    offenders.map((o) => ({
+      id: o.id,
+      email: o.email ?? "—",
+      displayDate: o.displayDate ?? "—",
+      companyId: String(o.companyId ?? "—"),
+      migratedVisibility: String(o.migratedVisibility ?? "—"),
+    }))
+  );
+  console.groupEnd();
+
+  return offenders;
+}
+
+
+
+export async function backfillMissingCompanyIdForHealy() {
+  const companyId = "3WOAwgj3l3bnvHqE4IV3"; // ✅ Healy Wholesale
+  const postsCol = collection(db, "posts");
+
+  let cursor: any = null;
+  let updated = 0;
+  let batch = 0;
+
+  console.group("🛠 Backfill companyId for Healy posts");
+  while (batch < 100) {
+    const q = cursor
+      ? query(postsCol, orderBy("displayDate", "desc"), startAfter(cursor), limit(500))
+      : query(postsCol, orderBy("displayDate", "desc"), limit(500));
+
+    const snap = await getDocs(q);
+    if (snap.empty) break;
+
+    for (const docSnap of snap.docs) {
+      const data = docSnap.data();
+      const hasCompanyId = Object.prototype.hasOwnProperty.call(data, "companyId");
+      const isHealyUser =
+        data?.postUser?.email?.toLowerCase().includes("healywholesale") ||
+        data?.postUser?.email?.toLowerCase().includes("dollarmike83") ||
+        data?.postUser?.email?.toLowerCase().includes("wpapshealy");
+
+      if ((!hasCompanyId || !data.companyId) && isHealyUser) {
+        await updateDoc(docSnap.ref, { companyId });
+        updated++;
+        console.log(`✅ Updated ${docSnap.id} (${data.postUser?.email})`);
+      }
+    }
+
+    cursor = snap.docs[snap.docs.length - 1];
+    batch++;
+    if (snap.size < 500) break;
+  }
+
+  console.log(`🎯 Done. Updated ${updated} posts.`);
+  console.groupEnd();
+}
+
+
+
 export async function auditPostDates() {
   try {
     const snapshot = await getDocs(collection(db, "posts"));
@@ -160,13 +304,13 @@ const isFSTimestamp = (v: any): v is FSTimestamp =>
 
 const isJsDate = (v: any): v is Date => v instanceof Date;
 
-const toIso = (v: unknown): string | null => {
-  try {
-    if (isFSTimestamp(v)) return v.toDate().toISOString();
-    if (isJsDate(v)) return v.toISOString();
-  } catch {}
-  return null;
-};
+// const toIso = (v: unknown): string | null => {
+//   try {
+//     if (isFSTimestamp(v)) return v.toDate().toISOString();
+//     if (isJsDate(v)) return v.toISOString();
+//   } catch {}
+//   return null;
+// };
 
 function findTimestampsDeep(value: any, basePath: string, out: FieldFinding[]) {
   if (value == null) return;

@@ -30,6 +30,8 @@ import UserModal from "./components/UserModal";
 import { useIntegrations } from "./hooks/useIntegrations";
 import useUserAccountsSync from "./hooks/useUserAccountsSync";
 import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
+import { backfillMissingCompanyIdForHealy } from "./script";
+import { auditPostsMissingCompanyId } from "./script";
 // import { migrateCompanyNameUsers } from "./script";
 
 function App(): React.JSX.Element {
@@ -56,9 +58,10 @@ function App(): React.JSX.Element {
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
 
-  // useEffect(() => {
-  //   migrateCompanyNameUsers();
-  // }, []);
+  useEffect(() => {
+    // auditPostsMissingCompanyId();
+    // backfillMissingCompanyIdForHealy();
+  }, []);
 
   useEffect(() => {
     if (!companyId) return;

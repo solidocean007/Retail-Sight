@@ -66,6 +66,8 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
     };
   }, [postIdToScroll, post.id, index, onPostVisible]);
 
+  console.log(post)
+
   return (
     <div className="memoized-post-card" ref={cardRef}>
       <MemoizedPostCard

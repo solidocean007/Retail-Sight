@@ -48,41 +48,56 @@ export const fetchInitialPostsBatch = createAsyncThunk(
       const companyId = currentUser?.companyId;
       const postsCollectionRef = collection(db, "posts");
 
-      const postsQuery = query(
-        postsCollectionRef,
-        orderBy("displayDate", "desc"),
-        limit(POSTS_BATCH_SIZE)
-      );
+      let postsQuery;
+
+      // 🔹 Developer sees everything
+      if (isDeveloper) {
+        postsQuery = query(
+          postsCollectionRef,
+          orderBy("displayDate", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        );
+      }
+      // 🔹 Regular company user: only their company posts (network or companyOnly)
+      else if (companyId) {
+        postsQuery = query(
+          postsCollectionRef,
+          where("companyId", "==", companyId),
+          where("migratedVisibility", "in", ["network", "companyOnly"]),
+          orderBy("displayDate", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        );
+      }
+      // 🔹 Public fallback (non-auth)
+      else {
+        postsQuery = query(
+          postsCollectionRef,
+          where("visibility", "==", "public"),
+          orderBy("displayDate", "desc"),
+          limit(POSTS_BATCH_SIZE)
+        );
+      }
 
       const querySnapshot = await getDocs(postsQuery);
+      // console.log("🔥 fetchInitialPostsBatch → Firestore returned:", querySnapshot.size);
 
-      const postsWithIds: PostWithID[] = querySnapshot.docs
-        .map((doc) => {
-          const postData: PostType = doc.data() as PostType;
-          return normalizePost({ ...postData, id: doc.id });
-        })
-        .filter((post) => {
-          if (isDeveloper) return true;
+      const postsWithIds: PostWithID[] = querySnapshot.docs.map((doc) => {
+        const postData: PostType = doc.data() as PostType;
+        return normalizePost({ ...postData, id: doc.id });
+      });
 
-          const isPublic = post.visibility === "public";
-          const isCompanyPost =
-            post.visibility === "company" &&
-            post.postUserCompanyId === companyId;
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]?.id || null;
 
-          return isPublic || isCompanyPost;
-        });
-
-      const lastVisible = postsWithIds[postsWithIds.length - 1]?.id;
-
+      console.log("✅ Normalized posts count:", postsWithIds.length);
       return { posts: postsWithIds, lastVisible };
     } catch (error) {
-      console.error("Error fetching initial posts:", error);
-      return rejectWithValue(error instanceof Error ? error.message : error);
+      console.error("❌ Error fetching initial posts:", error);
+      return rejectWithValue(error instanceof Error ? error.message : String(error));
     }
   }
 );
 
-// Define a type for the thunk argument
+
 type FetchMorePostsArgs = {
   lastVisible: string | null;
   limit: number;
@@ -95,60 +110,92 @@ export const fetchMorePostsBatch = createAsyncThunk(
     { lastVisible, limit: batchSize, currentUser }: FetchMorePostsArgs,
     { rejectWithValue }
   ) => {
-    const isDeveloper = currentUser?.role === "developer";
-    const companyId = currentUser?.companyId;
     try {
-      if (!companyId) {
-        console.warn(
-          "⚠️ fetchMorePostsBatch called without a valid companyId."
-        );
+      const isDeveloper = currentUser?.role === "developer";
+      const companyId = currentUser?.companyId;
+
+      if (!companyId && !isDeveloper) {
+        console.warn("⚠️ fetchMorePostsBatch called without a valid companyId.");
         return { posts: [], lastVisible: null };
       }
 
       const postsCollectionRef = collection(db, "posts");
       let postsQuery;
 
-      if (lastVisible) {
-        const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
-        if (!lastVisibleSnapshot.exists()) {
-          console.warn("⚠️ lastVisible document not found:", lastVisible);
+      // ─── Developer: unrestricted ─────────────────────────────
+      if (isDeveloper) {
+        if (lastVisible) {
+          const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
+          postsQuery = query(
+            postsCollectionRef,
+            orderBy("displayDate", "desc"),
+            startAfter(lastVisibleSnapshot),
+            limit(batchSize)
+          );
+        } else {
+          postsQuery = query(
+            postsCollectionRef,
+            orderBy("displayDate", "desc"),
+            limit(batchSize)
+          );
         }
+      }
 
-        postsQuery = query(
-          postsCollectionRef,
-          orderBy("displayDate", "desc"),
-          startAfter(lastVisibleSnapshot),
-          limit(batchSize)
-        );
-      } else {
-        postsQuery = query(
-          postsCollectionRef,
-          orderBy("displayDate", "desc"),
-          limit(batchSize)
-        );
+      // ─── Authenticated Company: network + companyOnly ─────────
+      else if (companyId) {
+        if (lastVisible) {
+          const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
+          postsQuery = query(
+            postsCollectionRef,
+            where("companyId", "==", companyId),
+            where("migratedVisibility", "in", ["companyOnly", "network"]),
+            orderBy("displayDate", "desc"),
+            startAfter(lastVisibleSnapshot),
+            limit(batchSize)
+          );
+        } else {
+          postsQuery = query(
+            postsCollectionRef,
+            where("companyId", "==", companyId),
+            where("migratedVisibility", "in", ["companyOnly", "network"]),
+            orderBy("displayDate", "desc"),
+            limit(batchSize)
+          );
+        }
+      }
+
+      // ─── Public Fallback ─────────────────────────────────────
+      else {
+        if (lastVisible) {
+          const lastVisibleSnapshot = await getDoc(doc(db, "posts", lastVisible));
+          postsQuery = query(
+            postsCollectionRef,
+            where("visibility", "==", "public"),
+            orderBy("displayDate", "desc"),
+            startAfter(lastVisibleSnapshot),
+            limit(batchSize)
+          );
+        } else {
+          postsQuery = query(
+            postsCollectionRef,
+            where("visibility", "==", "public"),
+            orderBy("displayDate", "desc"),
+            limit(batchSize)
+          );
+        }
       }
 
       const snapshot = await getDocs(postsQuery);
+      // console.log("🔥 fetchMorePostsBatch → Firestore returned:", snapshot.size);
 
-      const postsWithIds: PostWithID[] = snapshot.docs
-        .map((doc) => {
-          const data = doc.data() as PostType;
-          if (isDeveloper) return normalizePost({ id: doc.id, ...data });
-
-          const isPublic = data.visibility === "public";
-          const isCompanyPost =
-            data.visibility === "company" &&
-            data.postUserCompanyId === companyId;
-
-          return isPublic || isCompanyPost
-            ? normalizePost({ id: doc.id, ...data })
-            : null;
-        })
-
-        .filter((post): post is PostWithID => post !== null);
+      const postsWithIds: PostWithID[] = snapshot.docs.map((docSnap) =>
+        normalizePost({ id: docSnap.id, ...(docSnap.data() as PostType) })
+      );
 
       const newLastVisible =
         snapshot.docs[snapshot.docs.length - 1]?.id || null;
+
+      // console.log("✅ Normalized posts count:", postsWithIds.length);
       return { posts: postsWithIds, lastVisible: newLastVisible };
     } catch (error) {
       console.error("❌ Error in fetchMorePostsBatch:", error);

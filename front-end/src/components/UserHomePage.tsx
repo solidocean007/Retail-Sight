@@ -58,7 +58,7 @@ export const UserHomePage = () => {
   const batchSize = 5;
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
-  console.log('sharedPosts: ', sharedPosts);
+  // console.log('sharedPosts: ', sharedPosts);
   // useEffect(() => {  theers an error about this useEffect
   //   const hasCompanyPosts = !!useSelector(
   //     (s: RootState) => s.posts.posts.length

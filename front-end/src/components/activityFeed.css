@@ -128,3 +128,29 @@
 @media (min-width: 1921px) {
   /* Ultra wide screens */
 }
+
+
+.activity-feed-container,
+.activity-feed-box,
+.post-card-renderer-container,
+.memoized-post-card,
+.post-card-container {
+  display: block !important;
+  position: relative !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  min-height: 400px !important;
+  overflow: visible !important;
+}
+
+.home-page-content,
+.virtuoso-grid,
+.virtuoso-item-list {
+  overflow: visible !important;
+}
+
+.post-image,
+.blur-up-image-wrapper {
+  opacity: 1 !important;
+  transition: none !important;
+}

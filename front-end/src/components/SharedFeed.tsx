@@ -48,6 +48,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   const [loadingMore, setLoadingMore] = useState(false);
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
   const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
+  console.log('sharedPosts: ' , sharedPosts)
   const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
   const loading = useSelector((s: RootState) => s.sharedPosts.loading);
 
@@ -116,7 +117,10 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
         <Virtuoso
           ref={virtuosoRef}
           increaseViewportBy={500}
-          style={{ height: "100%", width: "100%" }}
+          style={{ 
+            // height: 1000,
+            height: "calc(100vh - 100px)", // ✅ dynamic, responsive
+             width: "100%" }}
           data={sharedPosts}
           itemContent={(index, post) => {
             if (!post?.id) return null;

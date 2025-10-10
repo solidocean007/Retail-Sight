@@ -73,7 +73,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     (s: RootState) => s.posts.filteredPostCount
   );
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
-  console.log('rawPosts: ', rawPosts)
+  // console.log('rawPosts: ', rawPosts)
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
@@ -187,7 +187,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         <Virtuoso
           ref={virtuosoRef}
           increaseViewportBy={500}
-          style={{ height: 1000, width: "100%" }} // is this necessary?
+          style={{
+            // height: 1000,
+            height: "calc(100vh - 100px)", // ✅ dynamic, responsive
+            width: "100%",
+          }} // is this necessary?
           data={displayPosts}
           // defaultItemHeight={itemHeight}
           itemContent={(index, post) => {
