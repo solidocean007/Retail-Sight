@@ -124,6 +124,10 @@ export interface ConnectionRequest {
   requestedEmail?: string; // optional temporary field
 }
 
+interface PendingBrandType {
+   brand: string,
+  proposedBy: string
+}
 
 export interface CompanyConnectionType {
   id: string;
@@ -136,6 +140,8 @@ export interface CompanyConnectionType {
   requestedBy: string; // user UID
   status: "pending" | "approved" | "rejected" | "cancelled";
   sharedBrands: string[];
+  pendingBrands?: PendingBrandType[];
+  declinedBrands?: PendingBrandType[];
   requestedAt: Timestamp | string;
   approvedBy?: string; // uid of approver
   rejectionReason?: string;

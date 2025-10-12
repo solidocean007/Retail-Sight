@@ -1,0 +1,201 @@
+.connection-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 0.4rem;
+  color: var(--accent-color);
+}
+
+.section-description {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.shared-brands-section,
+.pending-brands-section,
+.brand-proposal-section {
+  margin: 1.2rem 0;
+  background: var(--dashboard-card);
+  padding: 1rem;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+/* Shared / Pending tables */
+.shared-brands-table,
+.pending-brands-table {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.shared-column,
+.pending-column {
+  flex: 1;
+  min-width: 260px;
+  background: var(--background-pop-out-body);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 0.8rem;
+}
+
+.shared-column h5,
+.pending-column h5 {
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.shared-row,
+.pending-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  margin-bottom: 0.25rem;
+  background: var(--gray-50);
+  transition: background 0.2s;
+}
+
+.shared-row:hover,
+.pending-row:hover {
+  background: var(--gray-100);
+}
+
+/* Supplier selector */
+.supplier-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--gray-100);
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.supplier-selector label {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.supplier-selector select {
+  width: 80%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--background-pop-out-body);
+  font-size: 0.95rem;
+}
+
+/* Manual entry */
+.manual-brand-entry {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.manual-brand-input {
+  flex: 1;
+  max-width: 300px;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--input-background);
+  color: var(--input-text-color);
+}
+
+/* Excitement polish */
+.connection-edit-modal h3 {
+  text-align: center;
+  color: var(--accent-color);
+  font-size: 1.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.empty-text {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.4rem;
+}
+
+.connection-header {
+  text-align: center;
+  background: linear-gradient(
+    to right,
+    var(--accent-color),
+    var(--accent-hover)
+  );
+  color: #fff;
+  padding: 1.2rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+.connection-intro {
+  font-size: 0.95rem;
+  color: var(--text-on-accent);
+  margin-top: 0.5rem;
+  max-width: 600px;
+  margin-inline: auto;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--accent-color);
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+
+.brand-proposal-section {
+  text-align: center;
+  background: var(--gray-50);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  padding: 1rem 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.supplier-selector.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.supplier-selector select {
+  width: 300px;
+  padding: 0.6rem;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 1.5rem;
+}
+
+.brand-chip.selected {
+  background: var(--accent-color);
+  color: #fff;
+}
+

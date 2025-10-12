@@ -11,7 +11,7 @@ import { resolveCompanyEmail } from "./resolveCompanyEmail";
 import { onConnectionApproved } from "./onConnectionsApproved";
 import { sharePostWithCompany } from "./sharePostWithCompany";
 import { onSharePost } from "./onSharePost";
-import { onConnectionBrandsUpdated } from "./onConnectionUpdated";
+import { onConnectionBrandsUpdated } from "./onConnectionBrandsUpdated";
 import { onPostCreated } from "./onPostCreated";
 
 export {
