@@ -11,9 +11,10 @@ import {
   fetchCompanyConnections,
   setCachedConnections,
 } from "../../Slices/companyConnectionSlice";
-import { UserType } from "../../utils/types";
+import { CompanyConnectionType, UserType } from "../../utils/types";
 import ConnectionBuilder from "./ConnectionBuilder";
 import { Box, Modal } from "@mui/material";
+import ConnectionEditModal from "./ConnectionEditModal";
 
 interface Props {
   currentCompanyId: string | undefined;
@@ -29,6 +30,9 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     (state: RootState) => state.companyConnections
   );
   const usersCompany = useSelector(selectCurrentCompany);
+  const [selectedConnection, setSelectedConnection] =
+    useState<CompanyConnectionType | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const connectionLimitReached = connections.length >= 3;
@@ -79,6 +83,16 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     }
   };
 
+  const handleEdit = (connection: CompanyConnectionType) => {
+    setSelectedConnection(connection);
+    setIsEditOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsEditOpen(false);
+    setSelectedConnection(null);
+  };
+
   return (
     <div className="connections-dashboard">
       <div className="info-banner">
@@ -88,6 +102,9 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           display activity. Connections allow cross-company sharing of posts and
           goals.
         </p>
+      </div>
+
+      <div className="connections-list-card">
         <div className="tier-status">
           <strong>Your Plan: Free Tier</strong>
           <div className="tier-bar">
@@ -95,9 +112,6 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           </div>
           <small>1 of 3 connections used</small>
         </div>
-      </div>
-
-      <div className="connections-list-card">
         <h3>Existing Connections</h3>
         <p className="section-hint">
           Review current connections, pending requests, and shared brands.
@@ -122,6 +136,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           connections={connections}
           currentCompanyId={currentCompanyId}
           isAdminView={user?.role === "admin" || user?.role === "super-admin"}
+          onEdit={handleEdit}
         />
       </div>
 
@@ -140,6 +155,36 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           />
         </div>
       </Modal>
+      {/* Connection editing modal (only one active at a time) */}
+      {/* {selectedConnection && (
+        <ConnectionEditModal
+          isOpen={isEditOpen}
+          onClose={handleModalClose}
+          connection={selectedConnection}
+          currentCompanyId={currentCompanyId}
+        />
+      )} */}
+
+      {selectedConnection && (
+        <Modal
+          open={isEditOpen} // ✅ use isEditOpen, not isBuilderOpen
+          onClose={handleModalClose}
+          slotProps={{
+            backdrop: { className: "connection-builder-backdrop" }, // ✅ can reuse same backdrop style
+          }}
+        >
+          <div className="connection-builder-modal">
+            {" "}
+            {/* ✅ same container styling for consistent centering */}
+            <ConnectionEditModal
+              isOpen={isEditOpen}
+              onClose={handleModalClose}
+              connection={selectedConnection}
+              currentCompanyId={currentCompanyId}
+            />
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

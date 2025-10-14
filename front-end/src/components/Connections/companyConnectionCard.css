@@ -1,7 +1,10 @@
+/* === ACTION BUTTONS === */
 .connection-actions {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .btn-approve,
@@ -9,21 +12,22 @@
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 0.9rem;
-  border: none;
+  font-weight: 500;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .btn-approve {
   background: var(--status-active-bg);
   color: var(--status-active-color);
-  border: 1px solid var(--status-active-color);
+  border-color: var(--status-active-color);
 }
 
 .btn-reject {
   background: var(--status-pending-bg);
   color: var(--status-pending-color);
-  border: 1px solid var(--status-pending-color);
+  border-color: var(--status-pending-color);
 }
 
 .btn-approve:hover {
@@ -34,4 +38,149 @@
 .btn-reject:hover {
   background: var(--status-pending-color);
   color: var(--white);
+}
+
+/* === CONNECTION CARD CONTAINER === */
+.connection-card {
+  background: var(--card-panel-background);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.connection-card:hover {
+  box-shadow: var(--card-hover-shadow);
+  transform: translateY(-2px);
+}
+
+/* === HEADER === */
+.connection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.connection-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.status-label {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-label.approved {
+  color: var(--status-success-color);
+}
+
+.status-label.pending {
+  color: var(--status-pending-color);
+}
+
+.status-label.rejected {
+  color: var(--status-rejected-color);
+}
+
+/* === BRAND SECTIONS === */
+.brands-section,
+.pending-section,
+.declined-section {
+  background: var(--dashboard-card);
+  border-radius: 8px;
+  padding: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.brands-section h5 {
+  margin: 0;
+}
+
+.section-title {
+  text-align: center;
+  color: var(--accent-color);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+/* === BRAND LIST === */
+.brand-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.brand-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  background: var(--surface-light, #fafafa);
+}
+
+.tag {
+  font-size: 0.75rem;
+  color: var(--accent, #007bff);
+  margin-left: 0.25rem;
+}
+
+.muted {
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.brand-list.declined .brand-item {
+  opacity: 0.7;
+}
+
+/* === PENDING BRANDS === */
+.pending-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.pending-column {
+  flex: 1;
+  min-width: 240px;
+  margin: 0 10px;
+}
+
+/* === EMPTY STATES === */
+.empty-text {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 640px) {
+  .connection-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .pending-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .brand-list {
+    justify-content: center;
+  }
 }

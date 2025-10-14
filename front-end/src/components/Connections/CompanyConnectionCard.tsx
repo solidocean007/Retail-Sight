@@ -1,183 +1,153 @@
-import React, { useState } from "react";
-import { useAppDispatch } from "../../utils/store";
-import { updateConnectionStatus } from "../../Slices/companyConnectionSlice";
-import { CompanyConnectionType } from "../../utils/types";
-import ConnectionEditModal from "./ConnectionEditModal";
+import React, { useEffect, useMemo, useState } from "react";
 import "./companyConnectionCard.css";
-import { Modal } from "@mui/material";
+// import {motion}
+import { CompanyConnectionType, PendingBrandType } from "../../utils/types";
+import EditIcon from "@mui/icons-material/Edit";
+import HandshakeConnection from "./HandshakeConnection";
 
-interface CompanyConnectionCardProps {
+interface Props {
+  key: string;
   connection: CompanyConnectionType;
-  currentCompanyId?: string;
-  isAdminView?: boolean;
+  currentCompanyId: string | undefined;
+  onEdit: (connection: CompanyConnectionType) => void;
+  isAdminView?: boolean
 }
 
-const CompanyConnectionCard: React.FC<CompanyConnectionCardProps> = ({
+const CompanyConnectionCard: React.FC<Props> = ({
+  key,
   connection,
   currentCompanyId,
-  isAdminView = false,
+  onEdit,
+  isAdminView,
 }) => {
-  const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState(connection.status);
 
-  // 🧩 Edit modal state
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedConnection, setSelectedConnection] =
-    useState<CompanyConnectionType | null>(null);
+  const [animationComplete, setAnimationComplete] = useState(false);
 
-  const otherCompanyId =
-    connection.requestToCompanyId === currentCompanyId
-      ? connection.requestFromCompanyId
-      : connection.requestToCompanyId;
-
-  const otherCompanyName =
-    connection.requestToCompanyId === currentCompanyId
-      ? connection.requestFromCompanyName
-      : connection.requestToCompanyName;
-
-  const handleUpdateStatus = async (newStatus: "approved" | "rejected") => {
-    if (!connection.id || !currentCompanyId) return;
-    try {
-      setLoading(true);
-      await dispatch(
-        updateConnectionStatus({
-          id: connection.id,
-          status: newStatus,
-          companyId: currentCompanyId,
-        })
-      );
-      setStatus(newStatus);
-    } catch (err) {
-      console.error("Error updating connection:", err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (connection.status === "approved") {
+      const timer = setTimeout(() => setAnimationComplete(true), 1600);
+      return () => clearTimeout(timer);
+    } else {
+      setAnimationComplete(false);
     }
-  };
+  }, [connection.status]);
 
-  const handleCancel = async (id?: string) => {
-    if (!id || !currentCompanyId) return;
-    try {
-      setLoading(true);
-      await dispatch(
-        updateConnectionStatus({
-          id,
-          status: "cancelled",
-          companyId: currentCompanyId,
-        })
-      );
-      setStatus("cancelled");
-    } catch (err) {
-      console.error("Error cancelling connection:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isFromUser = currentCompanyId === connection.requestFromCompanyId;
 
-  // 🧩 Opens edit modal
-  const openEditModal = (conn: CompanyConnectionType) => {
-    setSelectedConnection(conn);
-    setIsEditOpen(true);
-  };
+  const ourCompany = isFromUser
+    ? connection.requestFromCompanyName
+    : connection.requestToCompanyName;
+
+  const theirCompany = isFromUser
+    ? connection.requestToCompanyName
+    : connection.requestFromCompanyName;
+
+  const pendingBrands = connection.pendingBrands || [];
+  const declinedBrands = connection.declinedBrands || [];
+
+  const pendingFromUs = useMemo(
+    () => pendingBrands.filter((b) => b.proposedBy === currentCompanyId),
+    [pendingBrands, currentCompanyId]
+  );
+
+  const pendingFromThem = useMemo(
+    () => pendingBrands.filter((b) => b.proposedBy !== currentCompanyId),
+    [pendingBrands, currentCompanyId]
+  );
 
   return (
-    <div className={`connection-card status-${status}`}>
-      <h4>Connection with {otherCompanyName || "Unknown Company"}</h4>
-      <p>Status: {status}</p>
+    <div className={`connection-card ${connection.status}`} key={key}>
+      <header className="connection-header">
+        <div className="company-info">
+          <h4 className="connection-title">
+            {ourCompany}
+            {connection.status === "approved" && (
+              <HandshakeConnection animate={true} pulse={true} size={1.5} />
+            )}
 
-      {connection.sharedBrands?.length ? (
-        <p>
-          Shared Brands:{" "}
-          <span className="shared-brands">
-            {connection.sharedBrands.join(", ")}
-          </span>
-        </p>
-      ) : (
-        <p>No shared brands</p>
-      )}
-      
+            {theirCompany}
+          </h4>
 
-      {isAdminView && (
-        <div className="connection-actions">
-          {status === "pending" ? (
-            connection.requestFromCompanyId === currentCompanyId ? (
-              <button
-                className="cancel-btn"
-                disabled={loading}
-                onClick={() => handleCancel(connection.id)}
-              >
-                Cancel
-              </button>
-            ) : (
-              <>
-                <button
-                  className="approve-btn"
-                  disabled={loading}
-                  onClick={() => handleUpdateStatus("approved")}
-                >
-                  Approve
-                </button>
-                <button
-                  className="reject-btn"
-                  disabled={loading}
-                  onClick={() => handleUpdateStatus("rejected")}
-                >
-                  Reject
-                </button>
-              </>
-            )
-          ) : null}
-
-          <button
-            className="edit-btn"
-            onClick={() => openEditModal(connection)}
-          >
-            Edit
-          </button>
+          <p className="connection-status">
+            Status:{" "}
+            <span className={`status-label ${connection.status}`}>
+              {connection.status}
+            </span>
+          </p>
         </div>
-      )}
 
-      {/* 🧩 Edit modal */}
-      {selectedConnection && (
-        <ConnectionEditModal
-          isOpen={isEditOpen}
-          onClose={() => setIsEditOpen(false)}
-          connection={selectedConnection}
-          currentCompanyId={currentCompanyId}
-        />
-      )}
-      <div className="0">.0
-        .0
-        .0
-        .0
-        <div className="0">.0
-          .0
-          .0
-          <div className="0">.0
-            .0
-            .0
-            .0
+        <button
+          className="app-btn small secondary"
+          onClick={() => onEdit(connection)}
+        >
+          <EditIcon fontSize="small" /> Edit
+        </button>
+      </header>
+
+      {/* Shared brands */}
+      <section className="brands-section">
+        <h5 className="section-title">Active Shared Brands</h5>
+        {connection.sharedBrands?.length ? (
+          <div className="brand-list">
+            {connection.sharedBrands
+              .filter((b) => b && b.trim() !== "")
+              .map((brand) => (
+                <span key={brand} className="brand-chip shared">
+                  {brand}
+                </span>
+              ))}
           </div>
-        </div>
-      </div>
+        ) : (
+          <p className="empty-text">No active shared brands yet.</p>
+        )}
+      </section>
 
-       <Modal
-        open={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        slotProps={{
-          backdrop: { className: "connection-builder-backdrop" },
-        }}
-      >
-        {selectedConnection && (
-        <div className="connection-builder-modal">
-           <ConnectionEditModal
-          isOpen={isEditOpen}
-          onClose={() => setIsEditOpen(false)}
-          connection={selectedConnection}
-          currentCompanyId={currentCompanyId}
-        />
-        </div>}
-      </Modal>
+      {/* Pending section */}
+      <section className="pending-section">
+        <div className="pending-column">
+          <h5>📤 Proposed by {ourCompany}</h5>
+          {pendingFromUs.length ? (
+            <div className="brand-list">
+              {pendingFromUs.map((b: PendingBrandType, i) => (
+                <span key={i} className="brand-chip pending">
+                  {b.brand}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-text">No proposals from you.</p>
+          )}
+        </div>
+
+        <div className="pending-column">
+          <h5>📥 Proposed by {theirCompany}</h5>
+          {pendingFromThem.length ? (
+            <div className="brand-list">
+              {pendingFromThem.map((b: PendingBrandType, i) => (
+                <span key={i} className="brand-chip pending">
+                  {b.brand}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-text">No pending proposals from them.</p>
+          )}
+        </div>
+      </section>
+
+      {/* Declined section */}
+      {declinedBrands.length > 0 && (
+        <section className="declined-section">
+          <h5>❌ Declined Brands</h5>
+          <div className="brand-list">
+            {declinedBrands.map((b: PendingBrandType, i) => (
+              <span key={i} className="brand-chip declined">
+                {b.brand}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

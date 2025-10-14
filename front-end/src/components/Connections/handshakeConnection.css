@@ -1,0 +1,73 @@
+.handshake-animation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.3rem;
+  width: 2.4rem;
+  height: 1.6rem;
+  position: relative;
+}
+
+.hands-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hand.left-hand {
+  transform-origin: 80% center; /* pivot near wrist */
+}
+
+.hand.right-hand {
+  transform-origin: 20% center; /* pivot near wrist */
+}
+
+.hand-icon {
+  vertical-align: middle;
+  line-height: 1;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.hand-icon.right.mirrored {
+  transform: scaleX(-1);
+}
+
+.handshake-icon {
+  animation: pulseHandshake 1.8s ease-in-out infinite;
+}
+
+.hands-pair,
+.clasp-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hands-pair {
+  z-index: 1;
+  opacity: 1;
+}
+
+.clasp-container {
+  z-index: 2; /* appears on top of fading hands */
+}
+
+@keyframes pulseHandshake {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}

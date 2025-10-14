@@ -124,7 +124,7 @@ export interface ConnectionRequest {
   requestedEmail?: string; // optional temporary field
 }
 
-interface PendingBrandType {
+export interface PendingBrandType {
    brand: string,
   proposedBy: string
 }
