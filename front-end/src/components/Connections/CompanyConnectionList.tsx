@@ -1,6 +1,7 @@
 import React from "react";
 import CompanyConnectionCard from "./CompanyConnectionCard";
 import { CompanyConnectionType } from "../../utils/types";
+import NewCompanyConnectionCard from "./NewCompanyConnectionCard";
 
 interface CompanyConnectionListProps {
   connections: CompanyConnectionType[];
@@ -9,15 +10,12 @@ interface CompanyConnectionListProps {
   onEdit: (connection: CompanyConnectionType) => void;
 }
 
-
 const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
   connections,
   currentCompanyId,
   isAdminView = false,
   onEdit,
 }) => {
-
-
   if (connections.length === 0) {
     return (
       <div className="connections-list-empty">
@@ -28,12 +26,21 @@ const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
 
   return (
     <div className="connections-list">
-      {connections.map((c) => (
+      {/* {connections.map((c) => (
         <CompanyConnectionCard
           key={c.id}
           connection={c}
           currentCompanyId={currentCompanyId}
           onEdit={onEdit}
+          isAdminView={isAdminView}
+        />
+      ))} */}
+      {connections.map((c) => (
+        <NewCompanyConnectionCard
+          // key={c.id}
+          connection={c}
+          currentCompanyId={currentCompanyId}
+          // onEdit={onEdit}
           isAdminView={isAdminView}
         />
       ))}

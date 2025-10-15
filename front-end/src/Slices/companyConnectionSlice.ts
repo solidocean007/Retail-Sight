@@ -123,9 +123,9 @@ export const fetchCompanyConnections = createAsyncThunk(
 
     const snapshot = await getDocs(q);
 
-    const data = snapshot.docs.map((doc) => {
-      const raw = doc.data() as CompanyConnectionType;
-      return normalizeTimestamps(raw);
+    const data = snapshot.docs.map((d) => {
+      const raw = d.data() as Omit<CompanyConnectionType, "id">;
+      return { id: d.id, ...normalizeTimestamps(raw) };
     });
 
     // ✅ Cache offline

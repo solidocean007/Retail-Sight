@@ -168,6 +168,22 @@
   color: var(--text-secondary);
 }
 
+/* === DRAFT PROPOSALS === */
+.draft-pending {
+  background: var(--dashboard-card);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  border: 1px dashed var(--accent-color);
+}
+
+.brand-chip.draft {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  border: 1px dashed var(--accent-color);
+  opacity: 0.9;
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 640px) {
   .connection-header {
