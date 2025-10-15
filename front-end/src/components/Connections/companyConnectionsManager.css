@@ -26,6 +26,36 @@
   backdrop-filter: blur(2px);
 }
 
+.edit-zone {
+  padding: 10px;
+  border-radius: var(--card-radius);
+  background-color: var(--connection-edit-zone);
+}
+
+.edit-zone-text {
+  text-align: justify;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 0.8rem;
+  max-width: 600px;
+}
+
+.supplier-intro {
+  text-align: justify;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.edit-zone strong {
+  color: var(--text-primary);
+}
+
+.edit-zone em {
+  color: var(--accent);
+}
+
 /* Your modal container */
 .connection-builder-modal {
   position: absolute;
@@ -39,15 +69,21 @@
   width: 92%;
   max-width: 640px;
   padding: 2rem 1.5rem;
-  max-height: 90vh;          /* ✅ limits height on smaller viewports */
-  overflow-y: auto;          /* ✅ allows scroll if content taller */
+  max-height: 90vh; /* ✅ limits height on smaller viewports */
+  overflow-y: auto; /* ✅ allows scroll if content taller */
   animation: fadeInModal 0.25s ease-out;
 }
 
 /* === Smooth open animation === */
 @keyframes fadeInModal {
-  from { opacity: 0; transform: translateY(-12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .connection-builder-modal {
   animation: fadeInModal 0.25s ease-out;
@@ -58,7 +94,6 @@
   flex-direction: column;
   align-items: start;
 }
-
 
 .build-connection-launcher {
   display: flex;
@@ -81,12 +116,20 @@
   justify-content: center;
 }
 
+.manual-brand-input-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 30px;
+  margin-bottom: 30px;
+}
+
 /* Inputs */
 .connection-email-input,
 .supplier-dropdown select,
 .manual-brand-input {
   width: 100%;
-  max-width: 300px;
+  max-width: 250px;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--gray-300);
   border-radius: 8px;
@@ -95,7 +138,6 @@
   font-size: 0.95rem;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
-
 
 .connection-request-btn {
   background: var(--accent, #0066cc);
@@ -162,7 +204,7 @@
   padding: 6px 10px;
   border-radius: 15px;
   border: 1px solid var(--border-color, #ccc);
-  background-color: var(--card-bg, #f9f9f9);
+  /* background-color: var(--card-bg, #f9f9f9); */
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -339,7 +381,6 @@
   align-items: center;
   margin: 1rem 0;
 }
-
 
 /* Mobile Responsive */
 @media (max-width: 600px) {

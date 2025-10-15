@@ -111,26 +111,25 @@ const CompanyConnectionsManager: React.FC<Props> = ({
             <div className="tier-progress" style={{ width: "33%" }}></div>
           </div>
           <small>1 of 3 connections used</small>
+          <div className="build-connection-launcher">
+            <button
+              className="button-primary"
+              onClick={() => setIsBuilderOpen(true)}
+              disabled={connectionLimitReached || isBuilderOpen}
+            >
+              Build New Connection
+            </button>
+            {connectionLimitReached && (
+              <p className="limit-message">
+                You’ve reached your connection limit for your current plan.
+              </p>
+            )}
+          </div>
         </div>
         <h3>Existing Connections</h3>
         <p className="section-hint">
           Review current connections, pending requests, and shared brands.
         </p>
-
-        <div className="build-connection-launcher">
-          <button
-            className="button-primary"
-            onClick={() => setIsBuilderOpen(true)}
-            disabled={connectionLimitReached || isBuilderOpen}
-          >
-            Build New Connection
-          </button>
-          {connectionLimitReached && (
-            <p className="limit-message">
-              You’ve reached your connection limit for your current plan.
-            </p>
-          )}
-        </div>
 
         <CompanyConnectionList
           connections={connections}

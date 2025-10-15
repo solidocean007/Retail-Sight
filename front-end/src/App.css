@@ -33,6 +33,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  max-width: 200px;
 }
 
 .btn-tabs {

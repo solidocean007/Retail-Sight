@@ -98,7 +98,7 @@ const ViewCollection = () => {
 
   return (
     <div className="view-collection-page">
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -131,7 +131,7 @@ const ViewCollection = () => {
           </button>
         </Stack>
 
-        <Stack spacing={3}>
+        <div className="posts-grid">
           {posts.map((post) => (
             <Card key={post.id} sx={{ position: "relative" }}>
               <CardMedia
@@ -182,7 +182,7 @@ const ViewCollection = () => {
               </CardContent>
             </Card>
           ))}
-        </Stack>
+        </div>
 
         <Snackbar
           open={snackbarOpen}

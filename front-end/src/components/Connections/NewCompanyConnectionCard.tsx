@@ -11,12 +11,14 @@ import { useSupplierBrands } from "../../hooks/useSupplierBrands";
 import { useAppDispatch } from "../../utils/store";
 
 interface Props {
+  key: number;
   connection: CompanyConnectionType;
   currentCompanyId: string | undefined;
   isAdminView?: boolean;
 }
 
 const NewCompanyConnectionCard: React.FC<Props> = ({
+  key,
   connection,
   currentCompanyId,
   isAdminView,
@@ -71,24 +73,11 @@ const NewCompanyConnectionCard: React.FC<Props> = ({
     () => pendingBrands.filter((b) => b.proposedBy !== currentCompanyId),
     [pendingBrands, currentCompanyId]
   );
-
   // --- Add or remove brands inline ---
-  const handleAddBrand = () => {
-    const newBrand = manualBrand.trim();
-    if (!newBrand) return;
-    if (!sharedBrands.includes(newBrand)) {
-      setSharedBrands((prev) => [...prev, newBrand]);
-    }
-    setManualBrand("");
-  };
-
-  const handleRemoveBrand = (brand: string) => {
-    setSharedBrands((prev) => prev.filter((b) => b !== brand));
-  };
-
   const handleAddManualBrand = () => {
     const newBrand = manualBrand.trim();
     if (!newBrand) return;
+    // Instead of adding to sharedBrands, treat it like supplier proposals
     if (!brandSelection.includes(newBrand)) {
       setBrandSelection((prev) => [...prev, newBrand]);
     }
@@ -104,13 +93,23 @@ const NewCompanyConnectionCard: React.FC<Props> = ({
   const handleSave = async () => {
     if (!connection.id) return;
     setSaving(true);
+
     try {
+      const newPending = [
+        ...(connection.pendingBrands || []),
+        ...brandSelection.map((b) => ({
+          brand: b,
+          proposedBy: currentCompanyId,
+          proposedAt: new Date().toISOString(), // ✅ use client time for each
+        })),
+      ];
+
       await updateDoc(doc(db, "companyConnections", connection.id), {
-        sharedBrands,
-        // you might later include pendingBrands update using brandSelection
-        updatedAt: serverTimestamp(),
+        pendingBrands: newPending,
+        updatedAt: serverTimestamp(), // ✅ allowed (not inside array)
       });
-      setBrandSelection([]); // clear draft selection
+
+      setBrandSelection([]);
       setIsEditing(false);
     } catch (err) {
       console.error("Error updating connection:", err);
@@ -120,6 +119,7 @@ const NewCompanyConnectionCard: React.FC<Props> = ({
   };
 
   const handleCancel = () => {
+    setSelectedSupplier("");
     setSharedBrands(connection.sharedBrands || []);
     setBrandSelection([]);
     setManualBrand("");
@@ -127,7 +127,8 @@ const NewCompanyConnectionCard: React.FC<Props> = ({
   };
 
   return (
-    <div className={`connection-card ${connection.status}`}>
+    <div key={key} className={`connection-card ${connection.status}`}>
+      connected
       <header className="connection-header">
         <div className="company-info">
           <h4 className="connection-title">
@@ -172,46 +173,6 @@ const NewCompanyConnectionCard: React.FC<Props> = ({
           </div>
         )}
       </header>
-
-      {/* Supplier Dropdown */}
-      {isEditing && (
-        <div className="supplier-dropdown">
-          <label htmlFor="supplierSelect">Select a Supplier:</label>
-          <select
-            id="supplierSelect"
-            value={selectedSupplier}
-            onChange={(e) => setSelectedSupplier(e.target.value)}
-          >
-            <option value="">-- Choose a supplier --</option>
-            {supplierBrandList.map((s) => (
-              <option key={s.supplier} value={s.supplier}>
-                {s.supplier}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Brand Selector */}
-      {selectedSupplier && (
-        <div className="brand-selector">
-          <h4>Brands from {selectedSupplier}</h4>
-          <div className="brand-chip-grid">
-            {currentBrands.map((brand) => (
-              <button
-                key={brand}
-                className={`brand-chip ${
-                  brandSelection.includes(brand) ? "selected" : ""
-                }`}
-                onClick={() => toggleBrand(brand)}
-              >
-                {brand}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Shared brands */}
       <section className="brands-section">
         <h5 className="section-title">Active Shared Brands</h5>
@@ -223,7 +184,7 @@ const NewCompanyConnectionCard: React.FC<Props> = ({
                 {isEditing && (
                   <button
                     className="remove-brand-btn"
-                    onClick={() => handleRemoveBrand(brand)}
+                    onClick={() => toggleBrand(brand)}
                   >
                     ×
                   </button>
@@ -234,90 +195,145 @@ const NewCompanyConnectionCard: React.FC<Props> = ({
         ) : (
           <p className="empty-text">No active shared brands yet.</p>
         )}
+        {/* Pending section */}
+        {pendingFromUs.length > 0 ||
+          (pendingFromThem.length > 0 && (
+            <section className="pending-section">
+              {pendingFromUs.length > 0 && (
+                <div className="pending-column">
+                  <h5>📤 Proposed by {ourCompany}</h5>
+                  {pendingFromUs.length ? (
+                    <div className="brand-list">
+                      {pendingFromUs.map((b: PendingBrandType, i) => (
+                        <span key={i} className="brand-chip pending">
+                          {b.brand}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="empty-text">No proposals from you.</p>
+                  )}
 
-        {/* Manual Add Input (visible in edit mode) */}
-        {isEditing && (
-          <div className="manual-brand-entry">
-            <p className="manual-brand-note">
-              If the brand isn’t listed, you can add it manually.
-            </p>
-            <input
-              type="text"
-              placeholder="Add a brand..."
-              value={manualBrand}
-              onChange={(e) => setManualBrand(e.target.value)}
-              className="manual-brand-input"
-            />
-            <button
-              className="button-primary"
-              onClick={handleAddBrand}
-              disabled={!manualBrand.trim()}
-            >
-              Add
-            </button>
-          </div>
-        )}
+                  {/* 🆕 Draft Proposals Preview */}
+                </div>
+              )}
+
+              {pendingFromThem.length > 0 && (
+                <div className="pending-column">
+                  <h5>📥 Proposed by {theirCompany}</h5>
+                  {pendingFromThem.length ? (
+                    <div className="brand-list">
+                      {pendingFromThem.map((b: PendingBrandType, i) => (
+                        <span key={i} className="brand-chip pending">
+                          {b.brand}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="empty-text">
+                      No pending proposals from them.
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
+          ))}
       </section>
+      {/* Supplier Dropdown */}
+      {isEditing && brandSelection.length > 0 && (
+        <div className="draft-pending">
+          <h6>Draft Proposals (will be sent on Save)</h6>
+          <div className="brand-list">
+            {brandSelection.map((b) => (
+              <span key={b} className="brand-chip draft">
+                {b}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {isEditing && (
+        <div className="edit-zone">
+          <p className="edit-zone-text">
+            <strong>Propose new brands to share</strong> with this connected
+            company. You can select brands from your supplier catalog or
+            manually type in a brand name that isn’t listed.
+          </p>
+          <p className="edit-zone-text">
+            When you click <strong>Save</strong>, all selected or manually added
+            brands will appear as <em>pending proposals</em> until the other
+            company accepts them.
+          </p>
 
-      {/* Pending section */}
-      <section className="pending-section">
-        <div className="pending-column">
-          <h5>📤 Proposed by {ourCompany}</h5>
-          {pendingFromUs.length ? (
-            <div className="brand-list">
-              {pendingFromUs.map((b: PendingBrandType, i) => (
-                <span key={i} className="brand-chip pending">
-                  {b.brand}
-                </span>
+          <div className="supplier-dropdown">
+            <p className="supplier-intro">
+              <strong>Select a supplier</strong> from your company’s product
+              manager list to view their available brands.
+            </p>
+
+            <label htmlFor="supplierSelect">Supplier:</label>
+            <select
+              id="supplierSelect"
+              value={selectedSupplier}
+              onChange={(e) => setSelectedSupplier(e.target.value)}
+            >
+              <option value="">-- Choose a supplier --</option>
+              {supplierBrandList.map((s) => (
+                <option key={s.supplier} value={s.supplier}>
+                  {s.supplier}
+                </option>
               ))}
-            </div>
-          ) : (
-            <p className="empty-text">No proposals from you.</p>
-          )}
+            </select>
+          </div>
 
-          {/* 🆕 Draft Proposals Preview */}
-          {isEditing && brandSelection.length > 0 && (
-            <div className="draft-pending">
-              <h6>Draft Proposals (will be sent on Save)</h6>
-              <div className="brand-list">
-                {brandSelection.map((b) => (
-                  <span key={b} className="brand-chip draft">
-                    {b}
-                  </span>
+          {selectedSupplier && (
+            <div className="brand-selector">
+              <h4 className="section-title">Brands from {selectedSupplier}</h4>
+              <p className="edit-zone-text">
+                Click a brand below to mark it for sharing. Selected brands turn
+                blue and will appear under <em>Draft Proposals</em> until you
+                save.
+              </p>
+
+              <div className="brand-chip-grid">
+                {currentBrands.map((brand) => (
+                  <button
+                    key={brand}
+                    className={`brand-chip ${
+                      brandSelection.includes(brand) ? "selected" : ""
+                    }`}
+                    onClick={() => toggleBrand(brand)}
+                  >
+                    {brand}
+                  </button>
                 ))}
               </div>
             </div>
           )}
-        </div>
 
-        <div className="pending-column">
-          <h5>📥 Proposed by {theirCompany}</h5>
-          {pendingFromThem.length ? (
-            <div className="brand-list">
-              {pendingFromThem.map((b: PendingBrandType, i) => (
-                <span key={i} className="brand-chip pending">
-                  {b.brand}
-                </span>
-              ))}
+          <div className="manual-brand-entry">
+            <p className="manual-brand-note">
+              Can’t find a brand in your supplier list? Add it manually below.
+              These will also appear as pending proposals until confirmed.
+            </p>
+            <div className="manual-brand-input-box">
+              <input
+                type="text"
+                placeholder="Enter a new brand name..."
+                value={manualBrand}
+                onChange={(e) => setManualBrand(e.target.value)}
+                className="manual-brand-input"
+              />
+              <button
+                className="button-primary"
+                onClick={handleAddManualBrand}
+                disabled={!manualBrand.trim()}
+              >
+                Add
+              </button>
             </div>
-          ) : (
-            <p className="empty-text">No pending proposals from them.</p>
-          )}
-        </div>
-      </section>
-
-      {/* Declined section */}
-      {declinedBrands.length > 0 && (
-        <section className="declined-section">
-          <h5>❌ Declined Brands</h5>
-          <div className="brand-list">
-            {declinedBrands.map((b: PendingBrandType, i) => (
-              <span key={i} className="brand-chip declined">
-                {b.brand}
-              </span>
-            ))}
           </div>
-        </section>
+        </div>
       )}
     </div>
   );

@@ -34,6 +34,7 @@
   --dark-gold: #a18801;
   --pale-aqua: #e0f7fa;
   --deep-navy: #012a4a;
+  --mustard-color: #ffb703;
 
   /* Backgrounds */
   --background-body: var(--gray-50);
@@ -144,6 +145,8 @@
   --user-modal-background: var(--muted-steel);
   --card-panel-background: var(--gray-300);
 
+  --connection-edit-zone: var(--mustard-color);
+
   /* pill status colors */
   --status-active-color: #1a7f37;
   --status-active-bg: rgba(26, 127, 55, 0.1);
@@ -168,7 +171,7 @@
     var(--primary-blue)
   );
 
-   --company-goal-card-background: linear-gradient(
+  --company-goal-card-background: linear-gradient(
     145deg,
     rgba(232, 240, 255, 0.95),
     rgba(206, 221, 255, 0.95)
@@ -238,6 +241,8 @@
   --user-modal-background: var(--deep-abyss);
   --card-panel-background: var(--gray-700);
 
+  --connection-edit-zone: var(--mustard-color);
+
   --status-active-bg: rgba(26, 127, 55, 0.25);
   --status-pending-bg: rgba(178, 106, 0, 0.25);
   --status-inactive-bg: rgba(150, 150, 150, 0.15);
@@ -249,7 +254,7 @@
   --text-color: var(--gray-100);
   --text-on-button: white;
   --company-goal-text-color: var(--gray-900);
-   --company-goal-card-background: linear-gradient(
+  --company-goal-card-background: linear-gradient(
     145deg,
     rgba(18, 30, 50, 0.95),
     rgba(40, 60, 90, 0.95)

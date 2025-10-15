@@ -1,5 +1,8 @@
+.view-collection-page {
+  width: 100%;
+}
 .view-collection-page .back-button {
-   background: none;
+  background: none;
   border: none;
   color: #1976d2;
   font-weight: bold;
@@ -72,6 +75,25 @@
 
 .list-item-checkbox {
   align-self: center;
+}
+
+/* viewCollection.css */
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.post-card {
+  background: var(--background-pop-out-body);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-4px);
 }
 
 /* Responsive Behavior */

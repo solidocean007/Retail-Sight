@@ -35,9 +35,9 @@ const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
           isAdminView={isAdminView}
         />
       ))} */}
-      {connections.map((c) => (
+      {connections.map((c, index) => (
         <NewCompanyConnectionCard
-          // key={c.id}
+          key={index}
           connection={c}
           currentCompanyId={currentCompanyId}
           // onEdit={onEdit}
