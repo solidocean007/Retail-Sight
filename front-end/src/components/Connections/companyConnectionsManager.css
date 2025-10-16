@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 1.2rem;
   padding: 1rem;
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -208,6 +208,11 @@
   cursor: pointer;
   transition: all 0.2s ease;
 }
+
+.brand-chip.shared {
+  background-color: green;
+}
+
 .brand-chip:hover {
   background: var(--accent-light, #e7f1ff);
 }
@@ -267,20 +272,99 @@
 /* =============== INFO & TIER BANNER =============== */
 .info-banner {
   background: var(--post-card-animated-gradient-light);
-  color: var(--text-color);
+  color: var(--text-primary);
   border-radius: 12px;
   padding: 1rem 1.2rem;
   text-align: center;
   box-shadow: var(--card-shadow);
+  transition: all 0.25s ease;
 }
 
-.info-banner h2 {
-  margin-bottom: 0.4rem;
+.info-banner-header {
+  cursor: pointer;
 }
 
-.info-banner p {
+.info-banner-summary {
   font-size: 0.95rem;
   opacity: 0.85;
+  margin: 0.3rem 0 0.6rem;
+}
+
+.toggle-info-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+.toggle-info-btn:hover {
+  opacity: 0.8;
+}
+
+.info-banner-details {
+  margin-top: 0.6rem;
+  text-align: left;
+  max-width: 650px;
+  margin-inline: auto;
+  animation: fadeIn 0.25s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.info-points {
+  list-style: none;
+  padding-left: 0;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.info-points li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: start;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+.info-icon {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.info-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.info-text strong {
+  color: var(--text-primary);
+  display: inline-block;
+  margin-right: 0.3rem;
+}
+
+.info-text em {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.info-banner-footer {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  text-align: justify;
+  margin-top: 0.8rem;
 }
 
 /* Tier progress section */

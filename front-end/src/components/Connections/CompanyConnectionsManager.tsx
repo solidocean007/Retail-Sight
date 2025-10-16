@@ -33,7 +33,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   const [selectedConnection, setSelectedConnection] =
     useState<CompanyConnectionType | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
-
+  const [showInfo, setShowInfo] = useState(false);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const connectionLimitReached = connections.length >= 3;
 
@@ -96,12 +96,70 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   return (
     <div className="connections-dashboard">
       <div className="info-banner">
-        <h2>Company Connections</h2>
-        <p>
-          Manage and build partnerships with other companies to share retail
-          display activity. Connections allow cross-company sharing of posts and
-          goals.
-        </p>
+        <div
+          className="info-banner-header"
+          onClick={() => setShowInfo(!showInfo)}
+        >
+          <h2>Company Connections</h2>
+          <p className="info-banner-summary">
+            Build trusted partnerships with other companies to share brand
+            activity and retail display posts.
+          </p>
+          <button className="toggle-info-btn">
+            {showInfo ? "▲ Hide Details" : "▼ Learn More"}
+          </button>
+        </div>
+
+        {showInfo && (
+          <div className="info-banner-details">
+            <ul className="info-points">
+              <li>
+                <span className="info-icon">🤝</span>
+                <div className="info-text">
+                  <strong>Collaborate:</strong> Connect with verified partner
+                  companies to share your display and goal activity across
+                  networks.
+                </div>
+              </li>
+              <li>
+                <span className="info-icon">📢</span>
+                <div className="info-text">
+                  <strong>Share Visibility:</strong> When you post a display
+                  with <em>network visibility</em>, your connected partners see
+                  it in their feed too. Note:  Displays with a company only visibility will not be seen by other companies.
+                </div>
+              </li>
+              <li>
+                <span className="info-icon">🔄</span>
+                <div className="info-text">
+                  <strong>Reciprocal Sharing:</strong> If a partner proposes to
+                  share their brand and you accept, you’ll also see their
+                  network posts.
+                </div>
+              </li>
+              <li>
+                <span className="info-icon">🏷️</span>
+                <div className="info-text">
+                  <strong>Shared Brands:</strong> Connections activate once both
+                  companies approve the brands to share.
+                </div>
+              </li>
+              <li>
+                <span className="info-icon">🌐</span>
+                <div className="info-text">
+                  <strong>Unified Feed:</strong> Build your network presence and
+                  expand visibility across the Displaygram ecosystem.
+                </div>
+              </li>
+            </ul>
+
+            <p className="info-banner-footer">
+              Tip: You can manage shared brands directly from the connections
+              below. Use <strong>Build New Connection</strong> to invite a new
+              partner.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="connections-list-card">

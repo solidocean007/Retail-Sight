@@ -1,7 +1,6 @@
 import React from "react";
-import CompanyConnectionCard from "./CompanyConnectionCard";
 import { CompanyConnectionType } from "../../utils/types";
-import NewCompanyConnectionCard from "./NewCompanyConnectionCard";
+import CompanyConnectionCard from "./CompanyConnectionCard";
 
 interface CompanyConnectionListProps {
   connections: CompanyConnectionType[];
@@ -23,7 +22,7 @@ const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
       </div>
     );
   }
-
+  // console.log(connections)
   return (
     <div className="connections-list">
       {/* {connections.map((c) => (
@@ -35,9 +34,9 @@ const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
           isAdminView={isAdminView}
         />
       ))} */}
-      {connections.map((c, index) => (
-        <NewCompanyConnectionCard
-          key={index}
+      {connections.map((c) => (
+        <CompanyConnectionCard
+          key={c.id}
           connection={c}
           currentCompanyId={currentCompanyId}
           // onEdit={onEdit}

@@ -184,6 +184,97 @@
   opacity: 0.9;
 }
 
+.pending-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 4px 0;
+}
+
+.pending-actions,
+.cancel-btn {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.accept-btn,
+.reject-btn,
+.cancel-btn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.accept-btn {
+  background: var(--status-active-bg);
+  color: var(--status-active-color);
+  border-color: var(--status-active-color);
+}
+.accept-btn:hover {
+  background: var(--status-active-color);
+  color: white;
+}
+
+.reject-btn {
+  background: var(--status-rejected-bg);
+  color: var(--status-rejected-color);
+  border-color: var(--status-rejected-color);
+}
+.reject-btn:hover {
+  background: var(--status-rejected-color);
+  color: white;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.cancel-btn {
+  background: var(--status-pending-bg);
+  color: var(--status-pending-color);
+  border-color: var(--status-pending-color);
+}
+
+.cancel-btn:hover {
+  background: var(--status-pending-color);
+  color: var(--white);
+}
+
+/* Fade-out effect when a brand is removed */
+.fade-out {
+  animation: fadeOutAndCollapse 0.3s ease forwards;
+}
+
+@keyframes fadeOutAndCollapse {
+  0% {
+    opacity: 1;
+    height: 32px;
+    margin-top: 4px;
+  }
+  60% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    height: 0;
+    margin-top: 0;
+    padding: 0;
+  }
+}
+
+
 /* === RESPONSIVE === */
 @media (max-width: 640px) {
   .connection-header {
