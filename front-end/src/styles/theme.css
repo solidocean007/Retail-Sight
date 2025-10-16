@@ -35,6 +35,7 @@
   --pale-aqua: #e0f7fa;
   --deep-navy: #012a4a;
   --mustard-color: #ffb703;
+  --some-dark-color: #264653;
 
   /* Backgrounds */
   --background-body: var(--gray-50);
@@ -241,7 +242,7 @@
   --user-modal-background: var(--deep-abyss);
   --card-panel-background: var(--gray-700);
 
-  --connection-edit-zone: var(--mustard-color);
+  --connection-edit-zone: var(--some-dark-color);
 
   --status-active-bg: rgba(26, 127, 55, 0.25);
   --status-pending-bg: rgba(178, 106, 0, 0.25);

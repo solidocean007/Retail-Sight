@@ -39,7 +39,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmBrand, setConfirmBrand] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<
-    "accept" | "reject" | "cancel" | null
+    "accept" | "reject" | "cancel" | "removeShared" | null
   >(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   // fade out visual feedback
@@ -136,7 +136,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
   };
 
   const openConfirm = (
-    action: "accept" | "reject" | "cancel",
+    action: "accept" | "reject" | "cancel" | "removeShared",
     brand: string
   ) => {
     setConfirmBrand(brand);
@@ -144,49 +144,63 @@ const CompanyConnectionCard: React.FC<Props> = ({
     setConfirmOpen(true);
   };
 
-  const handleConfirm = async () => {
-    if (!connection.id || !confirmBrand || !confirmAction) return;
-    setConfirmLoading(true);
+const handleConfirm = async () => {
+  if (!connection.id || !confirmBrand || !confirmAction) return;
+  setConfirmLoading(true);
 
-    try {
-      // ✅ Fade only after confirmation
-      const fadingEl = document.querySelector(`[data-brand='${confirmBrand}']`);
-      if (fadingEl) fadingEl.classList.add("fade-out");
+  try {
+    // Only fade after confirmation — one unified call
+    const fadingEl = document.querySelector(`[data-brand='${confirmBrand}']`);
+    if (fadingEl) fadingEl.classList.add("fade-out");
+    await new Promise((res) => setTimeout(res, 300)); // consistent fade duration
 
-      await new Promise((res) => setTimeout(res, 1000)); // wait for fade
+    // Common update skeleton
+    const updatedPending = (connection.pendingBrands || []).filter(
+      (b) => b.brand !== confirmBrand
+    );
 
-      const updatedPending = connection.pendingBrands?.filter(
-        (b) => b.brand !== confirmBrand
+    const updateData: any = {
+      pendingBrands: updatedPending,
+      updatedAt: serverTimestamp(),
+    };
+
+    if (confirmAction === "accept") {
+      updateData.sharedBrands = [
+        ...(connection.sharedBrands || []),
+        confirmBrand,
+      ];
+    } else if (confirmAction === "reject") {
+      updateData.declinedBrands = [
+        ...(connection.declinedBrands || []),
+        confirmBrand,
+      ];
+    } else if (confirmAction === "removeShared") {
+      // remove from sharedBrands only
+      const updatedShared = (connection.sharedBrands || []).filter(
+        (b) => b !== confirmBrand
       );
-
-      let updateData: any = {
-        pendingBrands: updatedPending,
+      await updateDoc(doc(db, "companyConnections", connection.id), {
+        sharedBrands: updatedShared,
         updatedAt: serverTimestamp(),
-      };
-
-      if (confirmAction === "accept") {
-        updateData.sharedBrands = [
-          ...(connection.sharedBrands || []),
-          confirmBrand,
-        ];
-      } else if (confirmAction === "reject") {
-        updateData.declinedBrands = [
-          ...(connection.declinedBrands || []),
-          confirmBrand,
-        ];
-      } // cancel = simply remove from pending, no add
-
-      await new Promise((res) => setTimeout(res, 300)); // wait for fade
-      await updateDoc(doc(db, "companyConnections", connection.id), updateData);
-
-      setSharedBrands(updateData.sharedBrands || sharedBrands);
+      });
+      setSharedBrands(updatedShared);
       setConfirmOpen(false);
-    } catch (err) {
-      console.error("Error updating brand decision:", err);
-    } finally {
-      setConfirmLoading(false);
+      return; // ✅ done early
     }
-  };
+
+    // Apply pending updates (for accept / reject / cancel)
+    await updateDoc(doc(db, "companyConnections", connection.id), updateData);
+
+    // update local state for visual sync
+    setSharedBrands(updateData.sharedBrands || sharedBrands);
+    setConfirmOpen(false);
+  } catch (err) {
+    console.error("Error updating brand decision:", err);
+  } finally {
+    setConfirmLoading(false);
+  }
+};
+
 
   return (
     <div key={key} className={`connection-card ${connection.status}`}>
@@ -245,7 +259,8 @@ const CompanyConnectionCard: React.FC<Props> = ({
                 {isEditing && (
                   <button
                     className="remove-brand-btn"
-                    onClick={() => toggleBrand(brand)}
+                    onClick={() => openConfirm("removeShared", brand)}
+                    title="Remove shared brand"
                   >
                     ×
                   </button>
@@ -256,68 +271,70 @@ const CompanyConnectionCard: React.FC<Props> = ({
         ) : (
           <p className="empty-text">No active shared brands yet.</p>
         )}
-        {/* Pending section */}
-        {(pendingFromUs.length > 0 || pendingFromThem.length > 0) && (
-          <section className="pending-section">
-            {/* Proposed by us */}
-            {pendingFromUs.length > 0 && (
-              <div className="pending-column">
-                <h5>📤 Proposed by {ourCompany}</h5>
-                <div className="brand-list">
-                  {pendingFromUs.map((b: PendingBrandType, i) => (
-                    <div
-                      key={i}
-                      className="pending-brand-row"
-                      data-brand={b.brand}
-                    >
-                      <span className="brand-chip pending">{b.brand}</span>
-                      {isAdminView && (
-                        <button
-                          className="icon-btn cancel-btn"
-                          onClick={() => openConfirm("cancel", b.brand)}
-                          title="Withdraw proposal"
-                        >
-                          <DeleteOutlineIcon fontSize="small" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Proposed by them */}
-            {pendingFromThem.length > 0 && (
-              <div className="pending-column">
-                <h5>📥 Proposed by {theirCompany}</h5>
-                <div className="brand-list">
-                  {pendingFromThem.map((b: PendingBrandType, i) => (
-                    <div key={i} className="pending-brand-row">
-                      <span className="brand-chip pending">{b.brand}</span>
-                      {isAdminView && (
-                        <div className="pending-actions">
-                          <button
-                            className="accept-btn"
-                            onClick={() => openConfirm("accept", b.brand)}
-                          >
-                            Accept
-                          </button>
-                          <button
-                            className="reject-btn"
-                            onClick={() => openConfirm("reject", b.brand)}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
       </section>
+
+      {/* Pending section */}
+      {(pendingFromUs.length > 0 || pendingFromThem.length > 0) && (
+        <section className="pending-section">
+          {/* Proposed by us */}
+          {pendingFromUs.length > 0 && (
+            <div className="pending-column">
+              <h5>📤 Proposed by 1 {ourCompany}</h5>
+              <div className="brand-list">
+                {pendingFromUs.map((b: PendingBrandType, i) => (
+                  <div
+                    key={i}
+                    className="pending-brand-row"
+                    data-brand={b.brand}
+                  >
+                    <span className="brand-chip pending">{b.brand}</span>
+                    {isAdminView && (
+                      <button
+                        className="icon-btn cancel-btn"
+                        onClick={() => openConfirm("cancel", b.brand)}
+                        title="Withdraw proposal"
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Proposed by them */}
+          {pendingFromThem.length > 0 && (
+            <div className="pending-column">
+              <h5>📥 Proposed by {theirCompany}</h5>
+              <div className="brand-list">
+                {pendingFromThem.map((b: PendingBrandType, i) => (
+                  <div key={i} className="pending-brand-row">
+                    <span className="brand-chip pending">{b.brand}</span>
+                    {isAdminView && (
+                      <div className="pending-actions">
+                        <button
+                          className="accept-btn"
+                          onClick={() => openConfirm("accept", b.brand)}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="reject-btn"
+                          onClick={() => openConfirm("reject", b.brand)}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Supplier Dropdown */}
       {isEditing && brandSelection.length > 0 && (
         <div className="draft-pending">
@@ -417,7 +434,9 @@ const CompanyConnectionCard: React.FC<Props> = ({
       <CustomConfirmation
         isOpen={confirmOpen}
         title={
-          confirmAction === "accept"
+          confirmAction === "removeShared"
+            ? "Remove Shared Brand"
+            : confirmAction === "accept"
             ? "Accept Brand Proposal"
             : confirmAction === "reject"
             ? "Reject Brand Proposal"
@@ -428,7 +447,9 @@ const CompanyConnectionCard: React.FC<Props> = ({
             ? `Are you sure you want to accept ${confirmBrand} as a shared brand with ${theirCompany}?`
             : confirmAction === "reject"
             ? `Reject ${confirmBrand} from being shared? This action cannot be undone.`
-            : `Withdraw your proposal to share ${confirmBrand}?`
+            : confirmAction === "cancel"
+            ? `Withdraw your proposal to share ${confirmBrand}?`
+            : `Remove ${confirmBrand} from your shared brands? This will stop mutual visibility for this brand.`
         }
         loading={confirmLoading}
         onConfirm={handleConfirm}

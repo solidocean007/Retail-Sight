@@ -5,78 +5,93 @@ const db = getFirestore();
 
 /**
  * Trigger: companyConnections/{connectionId}
- * When pendingBrands or sharedBrands change, update shared posts.
+ * Keeps posts in sync with shared brand changes.
+ * Adds and removes partner company visibility as needed.
  */
 export const onConnectionBrandsUpdated = onDocumentUpdated(
   "companyConnections/{connectionId}",
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    if (!before || !after) {
-      return;
-    }
+    if (!before || !after) return;
 
-    // Only run for approved connections
-    if (after.status !== "approved") {
-      return;
-    }
+    const { requestFromCompanyId, requestToCompanyId } = after;
+    const connectionId = event.params.connectionId;
 
-    // Compare brand arrays
+    if (after.status !== "approved") return;
+
     const beforeShared = before.sharedBrands || [];
     const afterShared = after.sharedBrands || [];
 
     const newShared = afterShared.filter(
       (b: string) => !beforeShared.includes(b)
     );
-    if (newShared.length === 0) {
-      return;
-    } // nothing new shared
+    const removedShared = beforeShared.filter(
+      (b: string) => !afterShared.includes(b)
+    );
 
-    const { requestFromCompanyId, requestToCompanyId } = after;
-    const connectionId = event.params.connectionId;
+    console.log(`🔁 Brand sync for ${connectionId}`);
+    console.log(`🟢 Added: ${newShared}`);
+    console.log(`🔴 Removed: ${removedShared}`);
 
-    console.log(`🔁 New shared brands for ${connectionId}:`, newShared);
+    const updateVisibility = async (
+      sourceCompanyId: string,
+      targetCompanyId: string,
+      brands: string[],
+      mode: "add" | "remove"
+    ) => {
+      if (brands.length === 0) return;
+      const postsSnap = await db
+        .collection("posts")
+        .where("companyId", "==", sourceCompanyId)
+        .where("migratedVisibility", "==", "network")
+        .where("brands", "array-contains-any", brands)
+        .get();
+
+      if (postsSnap.empty) return;
+
+      const batch = db.batch();
+      postsSnap.forEach((doc) => {
+        batch.update(doc.ref, {
+          sharedWithCompanies:
+            mode === "add"
+              ? FieldValue.arrayUnion(targetCompanyId)
+              : FieldValue.arrayRemove(targetCompanyId),
+        });
+      });
+      await batch.commit();
+
+      console.log(
+        `${mode === "add" ? "➕" : "➖"} ${
+          postsSnap.size
+        } posts updated for ${sourceCompanyId} → ${targetCompanyId}`
+      );
+    };
 
     try {
-      // Share posts in both directions
-      const shareInBothDirections = async (
-        sourceCompanyId: string,
-        targetCompanyId: string
-      ) => {
-        const postsSnap = await db
-          .collection("posts")
-          .where("companyId", "==", sourceCompanyId)
-          .where("migratedVisibility", "==", "network")
-          .where("brands", "array-contains-any", newShared)
-          .get();
-
-        if (!postsSnap.empty) {
-          const batch = db.batch();
-          postsSnap.forEach((doc) => {
-            batch.update(doc.ref, {
-              sharedWithCompanies: FieldValue.arrayUnion(targetCompanyId),
-            });
-          });
-          await batch.commit();
-        }
-      };
-
+      // Add new shares
       await Promise.all([
-        shareInBothDirections(requestFromCompanyId, requestToCompanyId),
-        shareInBothDirections(requestToCompanyId, requestFromCompanyId),
+        updateVisibility(requestFromCompanyId, requestToCompanyId, newShared, "add"),
+        updateVisibility(requestToCompanyId, requestFromCompanyId, newShared, "add"),
       ]);
 
-      // Audit entry
+      // Remove revoked shares
+      await Promise.all([
+        updateVisibility(requestFromCompanyId, requestToCompanyId, removedShared, "remove"),
+        updateVisibility(requestToCompanyId, requestFromCompanyId, removedShared, "remove"),
+      ]);
+
       await db.collection("connectionHistory").add({
-        event: "connection_brands_approved",
+        event: "connection_brands_sync",
         connectionId,
-        newShared,
+        added: newShared,
+        removed: removedShared,
         fromCompanyId: requestFromCompanyId,
         toCompanyId: requestToCompanyId,
         timestamp: FieldValue.serverTimestamp(),
       });
 
-      console.log(`✅ Shared brand sync complete for ${connectionId}`);
+      console.log(`✅ Brand sync complete for ${connectionId}`);
     } catch (err) {
       console.error("❌ Error updating shared brands:", err);
     }
