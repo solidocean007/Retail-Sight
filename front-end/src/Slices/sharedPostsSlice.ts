@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
 import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
+import { removeSharedPostFromIndexedDB } from "../utils/database/sharedPostsStoreUtils";
 
 interface SharedPostsState {
   sharedPosts: PostWithID[];
@@ -30,7 +31,9 @@ const sharedPostsSlice = createSlice({
       state.sharedPosts = [...state.sharedPosts, ...newOnes];
     },
     updateSharedPost(state, action: PayloadAction<PostWithID>) {
-      const idx = state.sharedPosts.findIndex((p) => p.id === action.payload.id);
+      const idx = state.sharedPosts.findIndex(
+        (p) => p.id === action.payload.id
+      );
       if (idx !== -1) state.sharedPosts[idx] = action.payload;
     },
     setLoading(state, action: PayloadAction<boolean>) {
@@ -42,6 +45,16 @@ const sharedPostsSlice = createSlice({
     setHasMore(state, action: PayloadAction<boolean>) {
       state.hasMore = action.payload;
     },
+   removeSharedPost: (state, action: PayloadAction<string>) => {
+  state.sharedPosts = state.sharedPosts.filter(
+    (post) => post.id !== action.payload
+  );
+
+  // 🔹 remove from offline cache
+  removeSharedPostFromIndexedDB(action.payload);
+},
+
+
     clearSharedPosts(state) {
       state.sharedPosts = [];
       state.hasMore = true;
@@ -69,7 +82,6 @@ const sharedPostsSlice = createSlice({
       });
   },
 });
-
 
 export const {
   setSharedPosts,

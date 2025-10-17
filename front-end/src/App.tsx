@@ -32,6 +32,7 @@ import useUserAccountsSync from "./hooks/useUserAccountsSync";
 import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
 import { backfillMissingCompanyIdForHealy } from "./script";
 import { auditPostsMissingCompanyId } from "./script";
+import { useCompanyConnectionsListener } from "./hooks/useCompanyConnectionsListener";
 // import { migrateCompanyNameUsers } from "./script";
 
 function App(): React.JSX.Element {
@@ -46,6 +47,8 @@ function App(): React.JSX.Element {
       user?.role == "supervisor"
   );
   useCustomAccountsSync(); // ✅ Sync custom manual accounts
+  useCompanyConnectionsListener();
+
 
   const dispatch = useAppDispatch();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);

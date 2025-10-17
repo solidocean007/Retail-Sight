@@ -13,12 +13,16 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    if (!before || !after) return;
+    if (!before || !after) {
+      return;
+    }
 
     const { requestFromCompanyId, requestToCompanyId } = after;
     const connectionId = event.params.connectionId;
 
-    if (after.status !== "approved") return;
+    if (after.status !== "approved") {
+      return;
+    }
 
     const beforeShared = before.sharedBrands || [];
     const afterShared = after.sharedBrands || [];
@@ -40,7 +44,9 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
       brands: string[],
       mode: "add" | "remove"
     ) => {
-      if (brands.length === 0) return;
+      if (brands.length === 0) {
+        return;
+      }
       const postsSnap = await db
         .collection("posts")
         .where("companyId", "==", sourceCompanyId)
@@ -48,7 +54,9 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
         .where("brands", "array-contains-any", brands)
         .get();
 
-      if (postsSnap.empty) return;
+      if (postsSnap.empty) {
+        return;
+      }
 
       const batch = db.batch();
       postsSnap.forEach((doc) => {
@@ -71,14 +79,34 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
     try {
       // Add new shares
       await Promise.all([
-        updateVisibility(requestFromCompanyId, requestToCompanyId, newShared, "add"),
-        updateVisibility(requestToCompanyId, requestFromCompanyId, newShared, "add"),
+        updateVisibility(
+          requestFromCompanyId,
+          requestToCompanyId,
+          newShared,
+          "add"
+        ),
+        updateVisibility(
+          requestToCompanyId,
+          requestFromCompanyId,
+          newShared,
+          "add"
+        ),
       ]);
 
       // Remove revoked shares
       await Promise.all([
-        updateVisibility(requestFromCompanyId, requestToCompanyId, removedShared, "remove"),
-        updateVisibility(requestToCompanyId, requestFromCompanyId, removedShared, "remove"),
+        updateVisibility(
+          requestFromCompanyId,
+          requestToCompanyId,
+          removedShared,
+          "remove"
+        ),
+        updateVisibility(
+          requestToCompanyId,
+          requestFromCompanyId,
+          removedShared,
+          "remove"
+        ),
       ]);
 
       await db.collection("connectionHistory").add({

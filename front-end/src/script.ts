@@ -44,69 +44,69 @@ function toIso(d: any): string | null {
  * Audits posts that have a missing/empty companyId.
  * Scans entire collection in batches (ordered by displayDate desc).
  * Logs a summary and an itemized list with postUser.email.
-//  */
-// export async function auditPostsMissingCompanyId({
-//   batchSize = 500,
-//   maxBatches = 100, // safety guard
-// }: { batchSize?: number; maxBatches?: number } = {}) {
-//   const colRef = collection(db, "posts");
-//   let cursor: QueryDocumentSnapshot<DocumentData> | null = null;
-//   let batchCount = 0;
-//   const offenders: AuditRow[] = [];
+ */
+ async function auditPostsMissingCompanyId({
+  batchSize = 500,
+  maxBatches = 100, // safety guard
+}: { batchSize?: number; maxBatches?: number } = {}) {
+  const colRef = collection(db, "posts");
+  let cursor: QueryDocumentSnapshot<DocumentData> | null = null;
+  let batchCount = 0;
+  const offenders: AuditRow[] = [];
 
-//   console.group("🔎 Audit: posts missing/empty companyId");
+  console.group("🔎 Audit: posts missing/empty companyId");
 
-//   while (batchCount < maxBatches) {
-//     const q = cursor
-//       ? query(colRef, orderBy("displayDate", "desc"), startAfter(cursor), limit(batchSize))
-//       : query(colRef, orderBy("displayDate", "desc"), limit(batchSize));
+  while (batchCount < maxBatches) {
+    const q = cursor
+      ? query(colRef, orderBy("displayDate", "desc"), startAfter(cursor), limit(batchSize))
+      : query(colRef, orderBy("displayDate", "desc"), limit(batchSize));
 
-//     const snap = await getDocs(q);
-//     if (snap.empty) break;
+    const snap = await getDocs(q);
+    if (snap.empty) break;
 
-//     snap.forEach((docSnap) => {
-//       const data = docSnap.data();
-//       const hasCompanyId = Object.prototype.hasOwnProperty.call(data, "companyId");
-//       const companyId = data.companyId;
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+      const hasCompanyId = Object.prototype.hasOwnProperty.call(data, "companyId");
+      const companyId = data.companyId;
 
-//       // Treat as missing if the field doesn't exist, is null, empty string, or non-string.
-//       const isMissing =
-//         !hasCompanyId || companyId == null || companyId === "" || typeof companyId !== "string";
+      // Treat as missing if the field doesn't exist, is null, empty string, or non-string.
+      const isMissing =
+        !hasCompanyId || companyId == null || companyId === "" || typeof companyId !== "string";
 
-//       if (isMissing) {
-//         offenders.push({
-//           id: docSnap.id,
-//           companyId,
-//           email: data?.postUser?.email ?? null,
-//           displayDate: toIso(data?.displayDate) ?? toIso(data?.createdAt) ?? null,
-//           migratedVisibility: data?.migratedVisibility,
-//         });
-//       }
-//     });
+      if (isMissing) {
+        offenders.push({
+          id: docSnap.id,
+          companyId,
+          email: data?.postUser?.email ?? null,
+          displayDate: toIso(data?.displayDate) ?? toIso(data?.createdAt) ?? null,
+          migratedVisibility: data?.migratedVisibility,
+        });
+      }
+    });
 
-//     cursor = snap.docs[snap.docs.length - 1];
-//     batchCount += 1;
+    cursor = snap.docs[snap.docs.length - 1];
+    batchCount += 1;
 
-//     // If fewer than batchSize returned, we've reached the end
-//     if (snap.size < batchSize) break;
-//   }
+    // If fewer than batchSize returned, we've reached the end
+    if (snap.size < batchSize) break;
+  }
 
-//   console.log(`Total offenders (missing/empty companyId): ${offenders.length}`);
-//   // Make it easy to copy/export:
-//   (window as any).__POSTS_MISSING_COMPANYID__ = offenders;
-//   console.table(
-//     offenders.map((o) => ({
-//       id: o.id,
-//       email: o.email ?? "—",
-//       displayDate: o.displayDate ?? "—",
-//       companyId: String(o.companyId ?? "—"),
-//       migratedVisibility: String(o.migratedVisibility ?? "—"),
-//     }))
-//   );
-//   console.groupEnd();
+  console.log(`Total offenders (missing/empty companyId): ${offenders.length}`);
+  // Make it easy to copy/export:
+  (window as any).__POSTS_MISSING_COMPANYID__ = offenders;
+  console.table(
+    offenders.map((o) => ({
+      id: o.id,
+      email: o.email ?? "—",
+      displayDate: o.displayDate ?? "—",
+      companyId: String(o.companyId ?? "—"),
+      migratedVisibility: String(o.migratedVisibility ?? "—"),
+    }))
+  );
+  console.groupEnd();
 
-//   return offenders;
-// }
+  return offenders;
+}
 
 
 

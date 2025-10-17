@@ -408,6 +408,13 @@
   box-shadow: var(--button-shadow);
 }
 
+.connections-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .connection-form-card,
 .connections-list-card {
   background: var(--background-pop-out-body);

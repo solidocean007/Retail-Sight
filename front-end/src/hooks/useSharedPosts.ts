@@ -135,10 +135,13 @@ export const useSharedPosts = (
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         const post = { id: change.doc.id, ...change.doc.data() } as PostWithID;
+
         if (change.type === "added") {
           dispatch(addSharedPosts([post]));
         } else if (change.type === "modified") {
           dispatch(updateSharedPost(post));
+        } else if (change.type === "removed") {
+          dispatch({ type: "sharedPosts/removeSharedPost", payload: post.id });
         }
       });
     });

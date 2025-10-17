@@ -171,7 +171,9 @@ const companyConnectionSlice = createSlice({
       state,
       action: PayloadAction<CompanyConnectionType[]>
     ) => {
-      state.connections = action.payload;
+      const incoming = action.payload;
+      const merged = [...incoming];
+      state.connections = merged;
     },
   },
   extraReducers: (builder) => {

@@ -65,6 +65,21 @@ export async function getSharedPostsFromIndexedDB(): Promise<PostWithID[]> {
   });
 }
 
+export async function removeSharedPostFromIndexedDB(postId: string) {
+   const db = await openDB();
+  const transaction = db.transaction([SHARED_POSTS_STORE], "readonly");
+  const store = transaction.objectStore(SHARED_POSTS_STORE);
+ return new Promise<void>((resolve, reject) => {
+    const request = store.delete(postId); 
+    request.onsuccess = () => resolve();
+    request.onerror = () => {
+      console.error("Error removing shared post:", request.error);
+      reject(request.error);
+    };  
+  });
+}
+
+
 /**
  * Clears all shared posts from IndexedDB.
  */

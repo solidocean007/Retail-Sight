@@ -61,7 +61,9 @@ interface PostCardProps {
   ) => Promise<PostWithID[]>;
   getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
-  setActivePostSet?: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
+  setActivePostSet?: React.Dispatch<
+    React.SetStateAction<"posts" | "filteredPosts">
+  >;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   postIdToScroll?: string | null; // New prop to control highlighting
 }
@@ -421,7 +423,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {post.id}
+          {/* {post.id} */}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>
