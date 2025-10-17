@@ -13,7 +13,11 @@ import {
 import { useDispatch } from "react-redux";
 import CollectionForm from "./CollectionForm";
 import CustomConfirmation from "./CustomConfirmation";
-import { CollectionType, CollectionWithId, DashboardModeType } from "../utils/types";
+import {
+  CollectionType,
+  CollectionWithId,
+  DashboardModeType,
+} from "../utils/types";
 import {
   addOrUpdateCollection,
   deleteUserCreatedCollectionFromIndexedDB,
@@ -84,6 +88,7 @@ const CollectionsViewer = ({
   };
 
   const handleDeleteCollectionConfirmed = async () => {
+    console.log("Deleting collection:", collectionToDelete);
     if (collectionToDelete) {
       try {
         await deleteDoc(doc(db, "collections", collectionToDelete));
@@ -165,7 +170,10 @@ const CollectionsViewer = ({
                       <Share />
                     </IconButton>
                     <IconButton
-                      onClick={() => setCollectionToDelete(collection.id)}
+                      onClick={() => {
+                        setCollectionToDelete(collection.id);
+                        setIsConfirmationOpen(true);
+                      }}
                     >
                       <Delete />
                     </IconButton>
@@ -187,7 +195,10 @@ const CollectionsViewer = ({
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}
         onConfirm={handleDeleteCollectionConfirmed}
-        message="Are you sure you want to delete this collection?"
+        message={`Are you sure you want to delete "${
+          collections.find((c) => c.id === collectionToDelete)?.name ||
+          "this collection"
+        }"?`}
       />
     </div>
   );

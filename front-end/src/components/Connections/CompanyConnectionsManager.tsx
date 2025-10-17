@@ -122,11 +122,20 @@ const CompanyConnectionsManager: React.FC<Props> = ({
                 </div>
               </li>
               <li>
+                <span className="info-icon">🏷️</span>
+                <div className="info-text">
+                  <strong>Shared Brands:</strong> Connections activate once both
+                  companies approve the brands to share.
+                </div>
+              </li>
+              <li>
                 <span className="info-icon">📢</span>
                 <div className="info-text">
                   <strong>Share Visibility:</strong> When you post a display
                   with <em>network visibility</em>, your connected partners see
-                  it in their feed too. Note:  Displays with a company only visibility will not be seen by other companies.
+                  posts where you share a brand in the connection in their feed
+                  too. Note: Displays with a company only visibility will not be
+                  seen by other companies.
                 </div>
               </li>
               <li>
@@ -137,13 +146,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
                   network posts.
                 </div>
               </li>
-              <li>
-                <span className="info-icon">🏷️</span>
-                <div className="info-text">
-                  <strong>Shared Brands:</strong> Connections activate once both
-                  companies approve the brands to share.
-                </div>
-              </li>
+
               <li>
                 <span className="info-icon">🌐</span>
                 <div className="info-text">

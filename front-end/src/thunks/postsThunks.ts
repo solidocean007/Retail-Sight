@@ -448,6 +448,7 @@ export const fetchPostsByIds = createAsyncThunk<
   }
 });
 
+
 export const fetchPostsByCollectionId = createAsyncThunk<
   PostWithID[],
   string, // collectionId
@@ -470,7 +471,7 @@ export const fetchPostsByCollectionId = createAsyncThunk<
         !Array.isArray(collectionData.posts) ||
         collectionData.posts.length === 0
       ) {
-        return []; // No posts in collection
+        return [];
       }
 
       // Step 2: Look up each post by its ID
@@ -483,16 +484,16 @@ export const fetchPostsByCollectionId = createAsyncThunk<
           return null;
         }
 
-        return {
+        const rawPost = {
           id: postSnap.id,
           ...(postSnap.data() as PostType),
-        } as PostWithID;
+        };
+
+        return normalizePost(rawPost);
       });
 
       const fetchedPosts = await Promise.all(postFetchPromises);
-      const validPosts = fetchedPosts.filter(
-        (post) => post !== null
-      ) as PostWithID[];
+      const validPosts = fetchedPosts.filter(Boolean) as PostWithID[];
 
       return validPosts;
     } catch (error) {
@@ -501,3 +502,4 @@ export const fetchPostsByCollectionId = createAsyncThunk<
     }
   }
 );
+
