@@ -114,3 +114,17 @@ export const handleBraintreeWebhook = onCall(async (request) => {
 
   return { received: true };
 });
+
+// === 5️⃣ Generate Client Token ===
+export const getClientToken = onCall(async (request) => {
+  try {
+    const { customerId } = request.data || {};
+    const result = await gateway.clientToken.generate(
+      customerId ? { customerId } : {}
+    );
+    return { clientToken: result.clientToken };
+  } catch (err: any) {
+    console.error("Error generating client token:", err);
+    throw new Error("Failed to generate client token");
+  }
+});

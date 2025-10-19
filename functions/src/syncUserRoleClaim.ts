@@ -8,7 +8,6 @@ export const syncUserRoleClaim = functions.firestore
     const afterData = change.after.exists ? change.after.data() : null;
 
     if (!afterData) {
-      // User doc deleted → clear claims
       await admin.auth().setCustomUserClaims(uid, {});
       return;
     }
@@ -18,6 +17,6 @@ export const syncUserRoleClaim = functions.firestore
     if (["admin", "super-admin", "developer"].includes(role)) {
       await admin.auth().setCustomUserClaims(uid, { role });
     } else {
-      await admin.auth().setCustomUserClaims(uid, {}); // clears elevated claims
+      await admin.auth().setCustomUserClaims(uid, {});
     }
   });

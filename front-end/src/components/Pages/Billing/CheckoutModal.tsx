@@ -3,6 +3,13 @@ import dropin from "braintree-web-drop-in";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../utils/firebase";
 import "./checkoutModal.css";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../utils/firebase";
+
+// inside your useEffect:
+const tokenFn = httpsCallable(functions, "getClientToken");
+const tokenRes: any = await tokenFn({ customerId });
+const token = tokenRes.data.clientToken;
 
 interface CheckoutModalProps {
   open: boolean;
@@ -33,7 +40,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     if (open && dropinRef.current) {
       (async () => {
         try {
-          const clientTokenFn = httpsCallable(functions, "createBraintreeCustomer");
+          const clientTokenFn = httpsCallable(
+            functions,
+            "createBraintreeCustomer"
+          );
           const tokenRes: any = await clientTokenFn({
             companyId,
             companyName,

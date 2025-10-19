@@ -17,6 +17,7 @@ import { createBraintreeCustomer } from "./braintreeHandlers";
 import { createSubscription } from "./braintreeHandlers";
 import { cancelSubscription } from "./braintreeHandlers";
 import { handleBraintreeWebhook } from "./braintreeHandlers";
+import { getClientToken } from "./braintreeHandlers";
 
 export {
   ping,
@@ -38,4 +39,5 @@ export {
   createSubscription,
   cancelSubscription,
   handleBraintreeWebhook,
+  getClientToken,
 };
