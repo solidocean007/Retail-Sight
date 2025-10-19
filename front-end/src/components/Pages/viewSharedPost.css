@@ -1,0 +1,126 @@
+.view-shared-post-page {
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  max-width: 1500px;
+}
+
+
+.view-shared-post-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 20px;
+  gap: 1rem
+}
+
+.view-shared-post-header {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: auto;
+}
+
+.view-shared-post-box {
+  display: flex;
+  flex-direction: column; /* Default to column on narrow screens */
+  width: 100%;
+  max-width: 960px;
+  /* background: #ffffff; */
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 24px;
+  gap: 24px;
+}
+
+.view-shared-post-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.view-shared-post-page h1 {
+  font-size: 2rem;
+  color: var(--text-color);
+  margin-bottom: 16px;
+}
+
+.view-shared-post-page h2 {
+  font-size: 1.5rem;
+  color: var(--text-color);
+  margin-bottom: 16px;
+} 
+
+.view-shared-post-text h4,
+.view-shared-post-text h6,
+.view-shared-post-text p {
+  margin: 0 0 8px 0;
+}
+
+.view-shared-post-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.view-shared-post-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cta-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+  color: white;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  width: 100%;
+  max-width: 960px;
+}
+
+.cta-heading {
+  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+}
+
+.cta-subtext {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cta-learn-button {
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+}
+
+
+/* Wide screens: switch to row */
+@media (min-width: 768px) {
+  .view-shared-post-container {
+    flex-direction: row;
+  }
+
+  .view-shared-post-header {
+    justify-content: flex-start;
+    align-self: start;
+  }
+
+  .view-shared-post-image {
+    max-width: 50%;
+  }
+
+  .view-shared-post-text {
+    max-width: 50%;
+  }
+}

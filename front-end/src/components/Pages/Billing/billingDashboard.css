@@ -1,0 +1,179 @@
+/* ===== CONTAINER ===== */
+.billing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1.5rem;
+  background: linear-gradient(
+    180deg,
+    var(--background-body) 0%,
+    var(--background-dashboard) 100%
+  );
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* ===== HEADER ===== */
+.billing-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.billing-header h1 {
+  color: var(--primary-blue);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.billing-header p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+/* ===== CARD ===== */
+.billing-card {
+  background: var(--dashboard-card);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  transition: box-shadow 0.2s ease;
+}
+
+.billing-card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* ===== PLAN TITLE ===== */
+.billing-plan {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.billing-plan h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  text-transform: capitalize;
+}
+
+/* ===== STATUS BADGE ===== */
+.status-badge {
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.status-active {
+  background: var(--success, #2ecc71);
+}
+
+.status-past-due {
+  background: var(--warning, #f39c12);
+}
+
+.status-canceled {
+  background: var(--danger, #e74c3c);
+}
+
+/* ===== DETAILS ===== */
+.billing-details {
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.billing-details p {
+  margin: 0.4rem 0;
+  color: var(--text-secondary);
+}
+
+/* ===== ACTION BUTTONS ===== */
+.billing-actions {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.btn-upgrade,
+.btn-cancel {
+  flex: 1 1 48%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: var(--button-radius, 8px);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-upgrade {
+  background: var(--primary-blue);
+  color: #fff;
+}
+
+.btn-upgrade:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--button-shadow-hover);
+}
+
+.btn-cancel {
+  background: var(--danger, #e74c3c);
+  color: #fff;
+}
+
+.btn-cancel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
+}
+
+/* ===== HISTORY SECTION ===== */
+.billing-history {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.billing-history h3 {
+  color: var(--primary-blue);
+  font-size: 1.3rem;
+  margin-bottom: 0.6rem;
+}
+
+.coming-soon {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* ===== LOADING ===== */
+.loading-text {
+  margin-top: 4rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .billing-card {
+    padding: 1.5rem;
+  }
+
+  .billing-actions {
+    flex-direction: column;
+  }
+
+  .btn-upgrade,
+  .btn-cancel {
+    flex: 1 1 100%;
+  }
+}

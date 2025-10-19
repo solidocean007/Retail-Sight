@@ -22,6 +22,7 @@
     "@types/google.maps": "^3.43.3",
     "@types/react-helmet": "^6.1.11",
     "axios": "^1.6.7",
+    "braintree-web-drop-in": "^1.45.2",
     "compressorjs": "^1.2.1",
     "cors": "^2.8.5",
     "date-fns": "^2.30.0",
@@ -32,7 +33,7 @@
     "heic2any": "^0.0.4",
     "lodash.isequal": "^4.5.0",
     "node-fetch": "^3.3.2",
-    "nodemailer": "^6.9.8",
+    "nodemailer": "^7.0.9",
     "react": "^18.3.1",
     "react-avatar-editor": "^13.0.2",
     "react-dom": "^18.3.1",
@@ -70,6 +71,6 @@
     "rollup-plugin-visualizer": "^5.12.0",
     "tsx": "^4.19.3",
     "typescript": "^5.3.3",
-    "vite": "^4.4.5"
+    "vite": "^6.4.0"
   }
 }
