@@ -13,6 +13,10 @@ import { sharePostWithCompany } from "./sharePostWithCompany";
 import { onSharePost } from "./onSharePost";
 import { onConnectionBrandsUpdated } from "./onConnectionBrandsUpdated";
 import { onPostCreated } from "./onPostCreated";
+import { createBraintreeCustomer } from "./braintreeHandlers";
+import { createSubscription } from "./braintreeHandlers";
+import { cancelSubscription } from "./braintreeHandlers";
+import { handleBraintreeWebhook } from "./braintreeHandlers";
 
 export {
   ping,
@@ -30,4 +34,8 @@ export {
   onSharePost,
   onConnectionBrandsUpdated,
   onPostCreated,
+  createBraintreeCustomer,
+  createSubscription,
+  cancelSubscription,
+  handleBraintreeWebhook,
 };
