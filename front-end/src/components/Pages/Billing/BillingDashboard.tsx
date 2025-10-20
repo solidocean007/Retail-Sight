@@ -6,8 +6,9 @@ import { RootState } from "../../../utils/store";
 
 const BillingDashboard: React.FC = () => {
   const company = useSelector((state: RootState) => state.currentCompany.data);
-  const user = useSelector((state: RootState) => state.user);
+  const user = useSelector((state: RootState) => state.user.currentUser);
   const [openModal, setOpenModal] = useState(false);
+
 
   if (!company) return <p className="loading-text">Loading company data...</p>;
 
@@ -56,13 +57,13 @@ const BillingDashboard: React.FC = () => {
         <div className="billing-actions">
           <button
             className="btn-upgrade"
-            onClick={() => alert("Launch checkout modal")}
+             onClick={() => setOpenModal(true)}
           >
             Upgrade Plan
           </button>
           <button
             className="btn-cancel"
-            onClick={() => alert("Cancel subscription")}
+            onClick={() => setOpenModal(true)}
           >
             Cancel Subscription
           </button>
@@ -71,17 +72,19 @@ const BillingDashboard: React.FC = () => {
 
       <section className="billing-history">
         <h3>Billing History</h3>
-        <p className="coming-soon">Transaction history and invoices coming soon.</p>
+        <p className="coming-soon">
+          Transaction history and invoices coming soon.
+        </p>
       </section>
-       <CheckoutModal
-      open={openModal}
-      onClose={() => setOpenModal(false)}
-      planId="team"
-      companyId={company.id}
-      customerId={company.billing?.braintreeCustomerId}
-      companyName={company.companyName}
-      email={user?.email}
-    />
+      <CheckoutModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        planId="team"
+        companyId={company.id}
+        customerId={company.billing?.braintreeCustomerId}
+        companyName={company.companyName}
+        email={user?.email}
+      />
     </div>
   );
 };

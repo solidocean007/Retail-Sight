@@ -1,15 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import dropin from "braintree-web-drop-in";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../utils/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import "./checkoutModal.css";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../utils/firebase";
-
-// inside your useEffect:
-const tokenFn = httpsCallable(functions, "getClientToken");
-const tokenRes: any = await tokenFn({ customerId });
-const token = tokenRes.data.clientToken;
 
 interface CheckoutModalProps {
   open: boolean;
@@ -40,17 +32,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     if (open && dropinRef.current) {
       (async () => {
         try {
-          const clientTokenFn = httpsCallable(
-            functions,
-            "createBraintreeCustomer"
-          );
-          const tokenRes: any = await clientTokenFn({
-            companyId,
-            companyName,
-            email,
-          });
+          const functions = getFunctions(undefined, "us-central1");
 
-          const token = tokenRes.data?.clientToken || tokenRes.data?.customerId;
+          const tokenFn = httpsCallable(functions, "getClientToken");
+          const tokenRes: any = await tokenFn({ customerId });
+          const token = tokenRes.data.clientToken;
           if (!token) throw new Error("Missing Braintree client token");
 
           instanceRef.current = await dropin.create({
@@ -85,16 +71,25 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setError(null);
 
     try {
+      const functions = getFunctions();
       const { nonce } = await instanceRef.current.requestPaymentMethod();
       const subscribeFn = httpsCallable(functions, "createSubscription");
 
-      const res: any = await subscribeFn({
+      // ✅ Make sure you send all required fields
+      const payload = {
+        companyId,
+        companyName,
+        email,
         customerId,
         paymentMethodNonce: nonce,
         planId,
-      });
+      };
 
-      if (res.data?.status === "Active" || res.data?.status === "active") {
+      console.log("Submitting subscription:", payload);
+
+      const res: any = await subscribeFn(payload);
+
+      if (res.data?.status?.toLowerCase() === "active") {
         setSuccess(true);
         setTimeout(() => onClose(), 2000);
       } else {

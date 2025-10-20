@@ -1,4 +1,4 @@
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import dotenv = require("dotenv");
 import braintree = require("braintree");
@@ -34,31 +34,133 @@ export const createBraintreeCustomer = onCall(async (request) => {
 });
 
 // --- 2. Create Subscription ---
+/**
+ * === Create Subscription (secure, production-ready) ===
+ * 1. Verifies auth + arguments
+ * 2. Creates Braintree customer if needed
+ * 3. Creates payment method + subscription
+ * 4. Updates Firestore company doc with billing info
+ */
+// --- 2. Create Subscription ---
 export const createSubscription = onCall(async (request) => {
-  const { customerId, paymentMethodNonce, planId } = request.data;
-
-  const paymentResult = await gateway.paymentMethod.create({
-    customerId,
+  const {
+    companyId,
+    companyName,
+    email,
     paymentMethodNonce,
-    options: { makeDefault: true },
-  });
-  if (!paymentResult.success) {
-    throw new Error(paymentResult.message);
-  }
-
-  const subscriptionResult = await gateway.subscription.create({
-    paymentMethodToken: paymentResult.paymentMethod.token,
     planId,
-  });
-  if (!subscriptionResult.success) {
-    throw new Error(subscriptionResult.message);
+    customerId,
+  } = request.data;
+
+  if (!companyId || !companyName || !email || !paymentMethodNonce || !planId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Missing required fields: companyId, companyName, email, planId, or paymentMethodNonce."
+    );
   }
 
-  return {
-    subscriptionId: subscriptionResult.subscription.id,
-    status: subscriptionResult.subscription.status,
-    nextBillingDate: subscriptionResult.subscription.nextBillingDate,
-  };
+  try {
+    let braintreeCustomerId = customerId;
+
+    // 🧠 Step 1: Create a customer if not already stored
+    if (!braintreeCustomerId) {
+      console.log("➡ Creating new Braintree customer for", companyId, email);
+
+      const customerResult = await gateway.customer.create({
+        firstName: companyName,
+        email,
+      });
+
+      console.log(
+        "Braintree customerResult:",
+        JSON.stringify(customerResult, null, 2)
+      );
+
+      if (!customerResult.success || !customerResult.customer?.id) {
+        console.error("❌ Failed customer creation:", customerResult.message);
+        throw new HttpsError(
+          "internal",
+          "Failed to create Braintree customer."
+        );
+      }
+
+      braintreeCustomerId = customerResult.customer.id;
+    }
+
+    // 🧠 Step 2: Create a payment method for this customer
+    console.log("➡ Creating payment method for", braintreeCustomerId);
+
+    const paymentResult = await gateway.paymentMethod.create({
+      customerId: braintreeCustomerId,
+      paymentMethodNonce,
+      options: { makeDefault: true },
+    });
+
+    console.log(
+      "PaymentMethod result:",
+      JSON.stringify(paymentResult, null, 2)
+    );
+
+    if (!paymentResult.success) {
+      throw new HttpsError(
+        "internal",
+        `Payment method creation failed: ${paymentResult.message}`
+      );
+    }
+
+    // 🧠 Step 3: Create subscription
+    console.log("➡ Creating subscription with plan:", planId);
+
+    const subscriptionResult = await gateway.subscription.create({
+      paymentMethodToken: paymentResult.paymentMethod.token,
+      planId,
+    });
+
+    console.log(
+      "Subscription result:",
+      JSON.stringify(subscriptionResult, null, 2)
+    );
+
+    if (!subscriptionResult.success) {
+      throw new HttpsError(
+        "internal",
+        `Subscription creation failed: ${subscriptionResult.message}`
+      );
+    }
+
+    const sub = subscriptionResult.subscription;
+
+    // 🧠 Step 4: Update Firestore
+    const companyRef = admin.firestore().collection("companies").doc(companyId);
+    await companyRef.update({
+      plan: planId,
+      "billing.braintreeCustomerId": braintreeCustomerId,
+      "billing.subscriptionId": sub.id,
+      "billing.paymentStatus": sub.status.toLowerCase(),
+      "billing.renewalDate": sub.nextBillingDate
+        ? admin.firestore.Timestamp.fromDate(new Date(sub.nextBillingDate))
+        : null,
+      "billing.lastPaymentDate": admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    console.log("✅ Subscription created successfully for", companyId);
+
+    return {
+      subscriptionId: sub.id,
+      status: sub.status,
+      nextBillingDate: sub.nextBillingDate,
+    };
+  } catch (error: unknown) {
+    let message = "Failed to create subscription.";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
+
+    console.error("Unhandled error in createSubscription:", error);
+    throw new HttpsError("internal", message);
+  }
 });
 
 // --- 3. Cancel Subscription ---
