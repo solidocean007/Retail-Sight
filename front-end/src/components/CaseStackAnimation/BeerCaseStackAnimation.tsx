@@ -15,10 +15,10 @@ type Props = {
 };
 
 const D_PATTERN = [
-  "1111110",
-  "1000011",
-  "1000011",
-  "1000011",
+  "11111110",
+  "11000011",
+  "11000011",
+  "11000011",
   "1111110",
 ]; // 5 rows x 7 cols; "0" = hole (negative space)
 
@@ -27,7 +27,7 @@ const BeerCaseStackAnimation: React.FC<Props> = ({
   maxStagger = 2000,
   dropMs = 800,
   loop = true,
-  gridSize = 15,
+  gridSize = 30,
 }) => {
   const stackRef = useRef<HTMLDivElement>(null);
   const [cycleKey, setCycleKey] = useState(0);
@@ -94,8 +94,8 @@ const BeerCaseStackAnimation: React.FC<Props> = ({
       ref={stackRef}
       style={{
         // auto-fit square: tweak as you like or make it a prop
-        width: 300,
-        height: 300,
+        width: 600,
+        height: 500,
         gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
         gridTemplateRows: `repeat(${gridSize}, 1fr)`,
       }}

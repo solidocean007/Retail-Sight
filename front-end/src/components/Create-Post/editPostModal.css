@@ -85,9 +85,30 @@
   background-color: var(--primary-blue-dark);
 }
 
+.visibility-select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.input-select {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--input-background);
+  color: var(--input-text-color);
+}
+
+.visibility-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
 /* Mobile responsiveness */
 @media only screen and (max-width: 600px) {
-   .input-container {
+  .input-container {
     padding: 1rem;
   }
   .edit-post-modal-container {
