@@ -1,0 +1,57 @@
+/* goalFilterGroup.css — grouped goal selector with chronological grouping */
+
+.goal-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--background-pop-out-body);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.goal-filter-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+}
+
+.goal-filter-autocomplete .MuiInputBase-root {
+  background: var(--input-background);
+  border-radius: 8px;
+}
+
+.goal-year-group {
+  margin-top: 0.3rem;
+}
+
+.goal-year-header {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary-blue);
+  padding: 0.2rem 0.5rem;
+  border-left: 3px solid var(--primary-blue);
+  background: rgba(59, 130, 246, 0.05);
+  margin-bottom: 0.2rem;
+}
+
+.MuiAutocomplete-noOptions,
+.MuiAutocomplete-loading {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-secondary);
+}
+
+.MuiAutocomplete-option {
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  transition: background-color 0.2s ease;
+}
+
+.MuiAutocomplete-option[aria-selected="true"] {
+  background-color: var(--gray-200);
+}
+
+.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary-blue);
+}

@@ -54,7 +54,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   isOpen,
   setIsEditModalOpen,
 }) => {
-  console.log("post in EditPostModal: ", post.id, post);
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
 
@@ -70,9 +69,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const userData = useSelector(selectUser)!;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [useOnBehalf, setUseOnBehalf] = useState(false);
-  const [postVisibility, setPostVisibility] = useState<
-    "public" | "company" | "supplier" | "private" | undefined
-  >("public");
+  const [migratedVisibility, setMigratedVisibility] = useState<
+    "companyOnly" | "network" | "public"
+  >(post.migratedVisibility || "network");
+
   const [updatedCaseCount, setUpdatedCaseCount] = useState(post.totalCaseCount);
 
   const handleCloseEditModal = () => {
@@ -176,7 +176,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   useEffect(() => {
     setDescription(post?.description || "");
-    setPostVisibility(post?.visibility || "public");
+    setMigratedVisibility(post?.migratedVisibility || "network");
   }, [post]);
 
   const handleSavePost = async (updatedPost: PostWithID) => {
@@ -192,7 +192,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
     const updatedFields: any = {
       description: updatedPost.description,
-      visibility: updatedPost.visibility,
+      migratedVisibility: updatedPost.migratedVisibility,
       totalCaseCount: updatedPost.totalCaseCount,
       hashtags: updatedPost.hashtags,
       starTags: updatedPost.starTags,
@@ -248,6 +248,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     }
 
     try {
+      console.log("updated fields: ", updatedFields); // this doesnt log
+
       await updateDoc(postRef, updatedFields);
       await updatePostWithNewTimestamp(updatedPost.id);
 
@@ -291,7 +293,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     const updatedPost: PostWithID = {
       ...editablePost,
       description,
-      // visibility: postVisibility ?? post.visibility,
+      migratedVisibility,
       totalCaseCount: updatedCaseCount,
       hashtags: extractedHashtags,
       starTags: extractedStarTags,
@@ -316,7 +318,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       await userDeletePost({ post, dispatch });
       console.log("✅ Finished Firestore + Storage deletion for:", post.id);
 
-        handleCloseEditModal();
+      handleCloseEditModal();
       dispatch(showMessage("Post deleted successfully!"));
     } catch (error) {
       console.error("❌ Failed to delete post:", error);
@@ -452,6 +454,32 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                   setSelectedCompanyGoal(goal);
                 }}
               />
+
+              <div className="visibility-select">
+                <label htmlFor="visibilitySelect">
+                  <strong>Post Visibility</strong>
+                </label>
+                <select
+                  id="visibilitySelect"
+                  value={migratedVisibility}
+                  onChange={(e) =>
+                    setMigratedVisibility(
+                      e.target.value as "companyOnly" | "network"
+                    )
+                  }
+                  className="input-select"
+                >
+                  <option value="network">
+                    Network (Shared with Connections)
+                  </option>
+                  <option value="companyOnly">Company Only</option>
+                </select>
+                <p className="visibility-hint">
+                  {migratedVisibility === "companyOnly"
+                    ? "Visible only to your company’s team."
+                    : "Visible to connected companies for shared brands."}
+                </p>
+              </div>
 
               <BrandsSelector
                 selectedBrands={editablePost.brands ?? []}
