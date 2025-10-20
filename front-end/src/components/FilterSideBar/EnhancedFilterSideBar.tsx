@@ -42,10 +42,13 @@ import AccountNameAutocomplete from "./AccountNameAutocomplete";
 import AccountTypeSelect from "./AccountTypeSelect";
 import ChainNameAutocomplete from "./ChainNameAutocomplete";
 import ChainTypeSelect from "./ChainTypeSelect";
+import GoalFilterGroup from "./GoalFilterGroup";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
-  setActiveCompanyPostSet: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
+  setActiveCompanyPostSet: React.Dispatch<
+    React.SetStateAction<"posts" | "filteredPosts">
+  >;
   isSearchActive: boolean;
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
   onFiltersApplied?: (filters: PostQueryFilters) => void;
@@ -540,7 +543,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         >
           🎯 Goal
         </button>
-        <div className="filter-group">
+        {/* <div className="filter-group">
           <select
             title="goal-selection"
             className="dropdown"
@@ -561,6 +564,16 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               </option>
             ))}
           </select>
+        </div> */}
+        <div className="filter-group">
+          <GoalFilterGroup
+            goals={companyGoals}
+            selectedGoalId={filters.companyGoalId}
+            onChange={(id, title) => {
+              handleChange("companyGoalId", id);
+              handleChange("companyGoalTitle", title);
+            }}
+          />
         </div>
       </div>
 
