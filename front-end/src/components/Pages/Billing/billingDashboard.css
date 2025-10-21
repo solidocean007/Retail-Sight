@@ -162,6 +162,66 @@
   font-style: italic;
 }
 
+.plans-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.plan-card {
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 270px;
+  box-shadow: var(--shadow-md);
+  transition: 0.25s ease;
+}
+
+.plan-card.current {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-lg);
+}
+
+.plan-card h3 {
+  color: var(--text-primary);
+}
+
+.price {
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: var(--accent);
+  margin: 0.5rem 0;
+}
+
+.btn-upgrade,
+.btn-current {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.6rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-upgrade {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-upgrade:hover {
+  background: var(--accent-hover);
+}
+
+.btn-current {
+  background: var(--disabled);
+  color: #333;
+  cursor: default;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
   .billing-card {

@@ -8,7 +8,7 @@ const tsToISO = (v: unknown): string | null => {
   return null;
 };
 
-export function normalizeNotification(raw: any, id?: string): NotificationType {
+export function normalizeNotificationOld(raw: any, id?: string): NotificationType {
   const sentBy = raw?.sentBy;
   const normalizedSentBy =
     sentBy && typeof sentBy === "object"
@@ -30,3 +30,22 @@ export function normalizeNotification(raw: any, id?: string): NotificationType {
     postId: raw.postId ?? "",
   } as NotificationType;
 }
+
+
+/** 🔁 Universal Firestore data normalizer
+ * Converts all Firestore Timestamp or Timestamp-like objects to ISO strings.
+ * Works recursively for deeply nested fields (billing, posts, goals, etc.).
+ */
+export const normalizeFirestoreData = <T>(input: T): T => {
+  const walk = (val: any): any => {
+    if (val instanceof Timestamp) return val.toDate().toISOString();
+    if (Array.isArray(val)) return val.map(walk);
+    if (val && typeof val === "object") {
+      const out: any = {};
+      for (const [k, v2] of Object.entries(val)) out[k] = walk(v2);
+      return out;
+    }
+    return val;
+  };
+  return walk(input);
+};

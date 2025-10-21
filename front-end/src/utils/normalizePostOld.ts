@@ -1,6 +1,6 @@
 import { PostWithID } from "../utils/types";
 
-export function normalizePost(post: any): PostWithID {
+export function normalizePostOld(post: any): PostWithID {
   const normalized: any = {
     ...post,
     timestamp: normalizeDate(post.timestamp),

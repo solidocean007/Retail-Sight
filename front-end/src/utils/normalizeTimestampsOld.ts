@@ -8,7 +8,7 @@ const isTimestampLike = (v: any): v is { toDate: () => Date } =>
   "seconds" in v;
 
 
-export function normalizeTimestamps<T>(input: T): T {
+export function normalizeTimestampsOld<T>(input: T): T {
   const walk = (val: any): any => {
     if (val instanceof Timestamp || isTimestampLike(val)) {
       return val.toDate().toISOString();

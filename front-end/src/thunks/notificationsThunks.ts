@@ -25,7 +25,7 @@ import {
 } from "../Slices/notificationsSlice";
 import { NotificationType } from "../utils/types";
 import { db } from "../utils/firebase";
-import { normalizeNotification } from "../utils/normalize";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 //
 // 🔁 1. Fetch All Notifications for a Company
@@ -47,7 +47,7 @@ export const fetchCompanyNotifications = createAsyncThunk(
       const roleNotifs: NotificationType[] = [];
 
       snapshot.forEach((docSnap) => {
-        const normalized = normalizeNotification(docSnap.data(), docSnap.id);
+        const normalized = normalizeFirestoreData(docSnap.data(), docSnap.id);
 
         const { recipientUserIds, recipientCompanyIds, recipientRoles } =
           normalized;

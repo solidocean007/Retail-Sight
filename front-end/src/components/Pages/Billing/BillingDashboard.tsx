@@ -1,90 +1,113 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import "./billingDashboard.css";
+// components/billing/BillingDashboard.tsx
+import React, { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../utils/firebase";
 import CheckoutModal from "./CheckoutModal";
-import { RootState } from "../../../utils/store";
+import "./billingDashboard.css";
 
-const BillingDashboard: React.FC = () => {
-  const company = useSelector((state: RootState) => state.currentCompany.data);
-  const user = useSelector((state: RootState) => state.user.currentUser);
-  const [openModal, setOpenModal] = useState(false);
+interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  braintreePlanId: string;
+  features?: string[];
+}
 
+interface Props {
+  currentCompanyId: string;
+  currentPlanId?: string;
+  companyName?: string;
+  email?: string;
+}
 
-  if (!company) return <p className="loading-text">Loading company data...</p>;
+const BillingDashboard: React.FC<Props> = ({
+  currentCompanyId,
+  currentPlanId,
+  companyName,
+  email,
+}) => {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const { plan, billing } = company;
-  const statusColor =
-    billing?.paymentStatus === "active"
-      ? "status-active"
-      : billing?.paymentStatus === "past_due"
-      ? "status-past-due"
-      : "status-canceled";
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const querySnap = await getDocs(collection(db, "plans"));
+        const planList: Plan[] = querySnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Plan[];
+        setPlans(planList);
+      } catch (err) {
+        console.error("Error loading plans:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlans();
+  }, []);
+
+  if (loading) {
+    return <p className="loading-msg">Loading plans...</p>;
+  }
 
   return (
     <div className="billing-container">
-      <header className="billing-header">
-        <h1>Billing & Subscription</h1>
-        <p>Manage your plan, payments, and renewal preferences</p>
-      </header>
+      <h2>Billing & Subscription</h2>
+      <p>Manage your plan, payments, and upgrades</p>
 
-      <section className="billing-card">
-        <div className="billing-plan">
-          <h2>{plan ? plan.toUpperCase() : "No Plan"}</h2>
-          <span className={`status-badge ${statusColor}`}>
-            {billing?.paymentStatus || "unknown"}
-          </span>
-        </div>
+      <div className="plans-grid">
+        {plans.map((plan) => {
+          const isCurrent = plan.braintreePlanId === currentPlanId;
+          return (
+            <div
+              key={plan.id}
+              className={`plan-card ${isCurrent ? "current" : ""}`}
+            >
+              <h3>{plan.name}</h3>
+              <p className="price">
+                {plan.price === 0 ? "Free" : `$${plan.price}/month`}
+              </p>
+              <p className="desc">{plan.description}</p>
+              <ul className="feature-list">
+                {plan.features?.map((f, i) => (
+                  <li key={i}>✅ {f}</li>
+                ))}
+              </ul>
 
-        <div className="billing-details">
-          <p>
-            <strong>Renewal Date:</strong>{" "}
-            {billing?.renewalDate
-              ? new Date(
-                  billing.renewalDate.seconds * 1000
-                ).toLocaleDateString()
-              : "Not set"}
-          </p>
-          <p>
-            <strong>Last Payment:</strong>{" "}
-            {billing?.lastPaymentDate
-              ? new Date(
-                  billing.lastPaymentDate.seconds * 1000
-                ).toLocaleDateString()
-              : "Not available"}
-          </p>
-        </div>
+              {isCurrent ? (
+                <button className="btn-current" disabled>
+                  Current Plan
+                </button>
+              ) : (
+                <button
+                  className="btn-upgrade"
+                  onClick={() => {
+                    setSelectedPlan(plan);
+                    setModalOpen(true);
+                  }}
+                >
+                  {plan.price > 0 ? "Upgrade" : "Downgrade"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-        <div className="billing-actions">
-          <button
-            className="btn-upgrade"
-             onClick={() => setOpenModal(true)}
-          >
-            Upgrade Plan
-          </button>
-          <button
-            className="btn-cancel"
-            onClick={() => setOpenModal(true)}
-          >
-            Cancel Subscription
-          </button>
-        </div>
-      </section>
-
-      <section className="billing-history">
-        <h3>Billing History</h3>
-        <p className="coming-soon">
-          Transaction history and invoices coming soon.
-        </p>
-      </section>
-      <CheckoutModal
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-        planId="team"
-        companyId={company.id}
-        customerId={company.billing?.braintreeCustomerId}
-        companyName={company.companyName}
-        email={user?.email}
-      />
+      {selectedPlan && (
+        <CheckoutModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          planId={selectedPlan.braintreePlanId}
+          companyId={currentCompanyId}
+          companyName={companyName}
+          email={email}
+        />
+      )}
     </div>
   );
 };
