@@ -31,7 +31,7 @@ import { useAppDispatch } from "../utils/store";
 import CustomConfirmation from "./CustomConfirmation";
 import { checkUserExists } from "../utils/validation/checkUserExists";
 import { showMessage } from "../Slices/snackbarSlice";
-import { normalizeTimestamps } from "../utils/normalizeTimestamps";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 const EmployeesViewer = () => {
   const functions = getFunctions(undefined, "us-central1");
@@ -189,7 +189,7 @@ const EmployeesViewer = () => {
           u // 'localUsers' is possibly 'null'
         ) => (u.uid === userId ? updatedUser : u)
       );
-      dispatch(setCompanyUsers(normalizeTimestamps(updatedUsers)));
+      dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
       await updateUserRoleInIndexedDB(userId, updatedUser.role);
       handleEditToggle(userId);
     } catch (err) {
@@ -214,7 +214,7 @@ const EmployeesViewer = () => {
           ? { ...u, status: "inactive" as "inactive" }
           : u
       );
-      dispatch(setCompanyUsers(normalizeTimestamps(updatedUsers)));
+      dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
 
       // Success feedback
       setFeedbackMessage(

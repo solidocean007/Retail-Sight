@@ -28,7 +28,7 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { db } from "../utils/firebase";
 import { fetchInitialPostsBatch } from "../thunks/postsThunks";
-import { normalizePost } from "../utils/normalizePost";
+import { normalizePost } from "../utils/normalize";
 
 const usePosts = (
   currentUserCompanyId: string | undefined,

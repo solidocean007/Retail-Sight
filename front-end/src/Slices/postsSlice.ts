@@ -9,7 +9,7 @@ import {
 } from "../thunks/postsThunks";
 import { PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
-import { normalizePost } from "../utils/normalizePost";
+import { normalizePost } from "../utils/normalize";
 
 type CursorType = string;
 

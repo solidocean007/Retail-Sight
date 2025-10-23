@@ -1,0 +1,67 @@
+/* ===========================
+   🚀 UPGRADE PROMPT BANNER
+   =========================== */
+.upgrade-prompt-banner {
+  width: 100%;
+  max-width: 1100px;
+  margin: 1rem auto 1.5rem;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid var(--primary-blue);
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.08),
+    rgba(59, 130, 246, 0.02)
+  );
+  box-shadow: var(--card-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: softGlow 4s ease-in-out infinite;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.banner-icon {
+  font-size: 1.4rem;
+}
+
+.banner-text {
+  color: var(--text-color);
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.banner-text strong {
+  color: var(--primary-blue);
+}
+
+.banner-btn {
+  background: var(--btn-primary-bg);
+  color: var(--text-primary-button);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--button-shadow);
+  transition: all 0.2s ease;
+}
+
+.banner-btn:hover {
+  background: var(--btn-primary-hover);
+  transform: translateY(-1px);
+}
+
+@keyframes softGlow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(59, 130, 246, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.35);
+  }
+}

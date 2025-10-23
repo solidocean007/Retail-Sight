@@ -5,6 +5,7 @@ import { db } from "../utils/firebase";
 import { CompanyType } from "../utils/types";
 import { setCurrentCompany } from "../Slices/currentCompanySlice";
 import { fetchCompanyConnections } from "../Slices/companyConnectionSlice";
+import { normalizeFirestoreData } from "../utils/normalize"; // ✅ add this
 
 /**
  * Load a single company document and store it in the currentCompany slice.
@@ -20,9 +21,11 @@ export const loadCompany = createAsyncThunk(
         return null;
       }
 
-      const data = snap.data() as CompanyType;
-      dispatch(setCurrentCompany({ id: snap.id, ...data }));
-      return { id: snap.id, ...data };
+      // ✅ normalize all nested timestamps (billing, createdAt, etc.)
+      const normalizedData = normalizeFirestoreData(snap.data()) as CompanyType;
+
+      dispatch(setCurrentCompany({ id: snap.id, ...normalizedData }));
+      return { id: snap.id, ...normalizedData };
     } catch (error) {
       console.error("Error loading company:", error);
       throw error;

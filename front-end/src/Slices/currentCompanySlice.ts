@@ -3,17 +3,11 @@ import { doc, getDoc } from "firebase/firestore";
 import { CompanyType } from "../utils/types";
 import { db } from "../utils/firebase";
 import { RootState } from "../utils/store";
-
-// small helper
-const toIso = (v: any) =>
-  v?.toDate?.() ? v.toDate().toISOString()
-  : v instanceof Date ? v.toISOString()
-  : typeof v === "string" ? v
-  : null;
+import { normalizeFirestoreData } from "../utils/normalize"; // ✅ add this
 
 // 🔌 one-off fetch by ID
 export const fetchCurrentCompany = createAsyncThunk<
-  (CompanyType & { id: string }),
+  CompanyType & { id: string },
   string,
   { rejectValue: string }
 >("currentCompany/fetch", async (companyId, { rejectWithValue }) => {
@@ -21,15 +15,13 @@ export const fetchCurrentCompany = createAsyncThunk<
     const snap = await getDoc(doc(db, "companies", companyId));
     if (!snap.exists()) throw new Error("Company not found");
 
-    const data = snap.data() as any;
-    const { createdAt, lastUpdated, ...rest } = data;
+    // ✅ normalize all nested timestamps (billing, addons, etc.)
+    const normalizedData = normalizeFirestoreData(snap.data()) as CompanyType;
 
     return {
       id: snap.id,
-      ...rest,
-      createdAt: toIso(createdAt),   // ✅ ISO string or null
-      lastUpdated: toIso(lastUpdated),
-    } as CompanyType & { id: string };
+      ...normalizedData,
+    };
   } catch (e: any) {
     return rejectWithValue(e.message);
   }
@@ -51,18 +43,27 @@ const currentCompanySlice = createSlice({
   name: "currentCompany",
   initialState,
   reducers: {
-    // optional manual setter (e.g. after profile update)
-    setCurrentCompany(state, action: PayloadAction<CompanyType & { id: string }>) {
-      state.data = action.payload;
+    // Manual setter (e.g., after profile update)
+    setCurrentCompany(
+      state,
+      action: PayloadAction<CompanyType & { id: string }>
+    ) {
+      // ✅ ensure serializable data here as well
+      state.data = normalizeFirestoreData(action.payload);
     },
   },
   extraReducers: (b) => {
-    b.addCase(fetchCurrentCompany.pending,  (s) => { s.loading = true; });
-    b.addCase(fetchCurrentCompany.fulfilled, (s, a) => {
-      s.data = a.payload; s.loading = false;
+    b.addCase(fetchCurrentCompany.pending, (s) => {
+      s.loading = true;
     });
-    b.addCase(fetchCurrentCompany.rejected,  (s, a) => {
-      s.error = a.payload ?? "Failed to load company"; s.loading = false;
+    b.addCase(fetchCurrentCompany.fulfilled, (s, a) => {
+      // ✅ guarantee serialized data from async thunk too
+      s.data = normalizeFirestoreData(a.payload);
+      s.loading = false;
+    });
+    b.addCase(fetchCurrentCompany.rejected, (s, a) => {
+      s.error = a.payload ?? "Failed to load company";
+      s.loading = false;
     });
   },
 });
@@ -71,6 +72,6 @@ export const { setCurrentCompany } = currentCompanySlice.actions;
 export default currentCompanySlice.reducer;
 
 // ───────────── Selectors ─────────────
-export const selectCurrentCompany   = (s: RootState) => s.currentCompany.data;
-export const selectCompanyLoading   = (s: RootState) => s.currentCompany.loading;
-export const selectCompanyError     = (s: RootState) => s.currentCompany.error;
+export const selectCurrentCompany = (s: RootState) => s.currentCompany.data;
+export const selectCompanyLoading = (s: RootState) => s.currentCompany.loading;
+export const selectCompanyError = (s: RootState) => s.currentCompany.error;

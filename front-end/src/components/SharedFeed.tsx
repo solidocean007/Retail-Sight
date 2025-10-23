@@ -4,20 +4,15 @@ import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
 import { RootState, useAppDispatch } from "../utils/store";
-import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
 import "./activityFeed.css";
-import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
-import { mergeAndSetPosts } from "../Slices/postsSlice";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { normalizePost } from "../utils/normalizePost";
 import {
   getPostsByTag,
   getPostsByStarTag,
 } from "../utils/PostLogic/getPostsByTag";
 import "./activityFeed.css";
-import { useSharedPosts } from "../hooks/useSharedPosts";
 import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
 import { addSharedPosts, setHasMore } from "../Slices/sharedPostsSlice";
 import { addSharedPostsToIndexedDB } from "../utils/database/sharedPostsStoreUtils";

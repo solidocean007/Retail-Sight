@@ -23,6 +23,9 @@ export const fetchCompanyGoalsByCompanyId = async (
       ) {
         return {
           id: data.id,
+          goalTitle: data.goalTitle,
+          createdAt: data.createdAt,
+          deleted: data.deleted,
           companyId: data.companyId,
           goalDescription: data.goalDescription,
           goalMetric: data.goalMetric,

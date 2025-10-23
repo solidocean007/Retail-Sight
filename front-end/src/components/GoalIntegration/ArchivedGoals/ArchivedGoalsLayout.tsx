@@ -64,11 +64,12 @@ const ArchivedGoalsLayout = ({
 
   return (
     <Box className="archived-goals-container">
+      test
       {Object.entries(groupedGoals)
         .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
-        .map(([year, months]) => (
+        .map(([year, months], index) => (
           <ArchivedYearSection
-            key={year}
+            key={`${year}-${months}`}
             year={year}
             months={months}
             isMobile={isMobile}

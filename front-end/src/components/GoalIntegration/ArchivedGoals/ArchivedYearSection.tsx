@@ -62,7 +62,6 @@ ArchivedYearSectionProps) => {
             )
             .map(([month, goals]) => (
               <ArchivedMonthChip
-                key={month}
                 month={month}
                 goals={goals}
                 isMobile={isMobile}

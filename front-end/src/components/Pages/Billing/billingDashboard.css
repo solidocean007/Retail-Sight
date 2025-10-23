@@ -1,239 +1,279 @@
-/* ===== CONTAINER ===== */
+/* === Layout & page === */
 .billing-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3rem 1.5rem;
-  background: linear-gradient(
-    180deg,
-    var(--background-body) 0%,
-    var(--background-dashboard) 100%
-  );
-  color: var(--text-primary);
+  padding: 3rem 1.25rem;
   min-height: 100vh;
+  background: linear-gradient(
+    160deg,
+    var(--background-pop-out-body),
+    var(--post-card-animated-gradient-light)
+  );
+  color: var(--text-color);
 }
 
-/* ===== HEADER ===== */
-.billing-header {
-  text-align: center;
+.billing-container h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 0.25rem;
+}
+
+.billing-container > p {
+  font-size: 1rem;
+  color: var(--text-secondary);
   margin-bottom: 2rem;
 }
 
-.billing-header h1 {
-  color: var(--primary-blue);
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-.billing-header p {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin-top: 0.5rem;
-}
-
-/* ===== CARD ===== */
-.billing-card {
-  background: var(--dashboard-card);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 2rem;
-  max-width: 600px;
+/* === Summary card === */
+.plan-summary-card {
   width: 100%;
+  max-width: 860px;
+  background: var(--dashboard-card);
   border: 1px solid var(--border-color);
-  transition: box-shadow 0.2s ease;
+  border-radius: var(--card-radius);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(8px);
 }
 
-.billing-card:hover {
-  box-shadow: var(--card-shadow-hover);
-}
-
-/* ===== PLAN TITLE ===== */
-.billing-plan {
+.summary-top {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.billing-plan h2 {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  text-transform: capitalize;
-}
-
-/* ===== STATUS BADGE ===== */
-.status-badge {
-  padding: 0.3rem 0.7rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #fff;
-}
-
-.status-active {
-  background: var(--success, #2ecc71);
-}
-
-.status-past-due {
-  background: var(--warning, #f39c12);
-}
-
-.status-canceled {
-  background: var(--danger, #e74c3c);
-}
-
-/* ===== DETAILS ===== */
-.billing-details {
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 0;
-  margin-bottom: 1.5rem;
-}
-
-.billing-details p {
-  margin: 0.4rem 0;
-  color: var(--text-secondary);
-}
-
-/* ===== ACTION BUTTONS ===== */
-.billing-actions {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
   gap: 1rem;
 }
 
-.btn-upgrade,
-.btn-cancel {
-  flex: 1 1 48%;
-  padding: 0.8rem;
-  border: none;
-  border-radius: var(--button-radius, 8px);
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.summary-left {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
 }
 
-.btn-upgrade {
-  background: var(--primary-blue);
-  color: #fff;
-}
-
-.btn-upgrade:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--button-shadow-hover);
-}
-
-.btn-cancel {
-  background: var(--danger, #e74c3c);
-  color: #fff;
-}
-
-.btn-cancel:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
-}
-
-/* ===== HISTORY SECTION ===== */
-.billing-history {
-  margin-top: 3rem;
-  text-align: center;
-}
-
-.billing-history h3 {
+.plan-name span {
   color: var(--primary-blue);
-  font-size: 1.3rem;
-  margin-bottom: 0.6rem;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
-.coming-soon {
+.total-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.total-label {
   color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
-/* ===== LOADING ===== */
-.loading-text {
-  margin-top: 4rem;
-  color: var(--text-secondary);
-  font-style: italic;
+.total-value {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--primary-blue);
 }
 
-.plans-grid {
+.status-pill {
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  box-shadow: var(--button-shadow);
+}
+.status-active { background: var(--status-active-bg); color: var(--status-active-color); }
+.status-pending { background: var(--status-pending-bg); color: var(--status-pending-color); }
+.status-inactive { background: var(--status-inactive-bg); color: var(--status-inactive-color); }
+
+.renewal-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.alert-banner {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+.alert-banner.warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #a16207;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.alert-banner.danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #991b1b;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.addon-summary {
+  margin-top: 0.75rem;
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  justify-content: center;
+}
+
+.btn-addon {
+  background: var(--btn-primary-bg);
+  color: var(--text-primary-button);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--button-shadow);
+}
+.btn-addon:hover { background: var(--btn-primary-hover); }
+
+/* === Plan grid === */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 1100px;
   margin-top: 1.5rem;
 }
 
 .plan-card {
-  background: white;
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
+  background: var(--background-pop-out-body);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
   padding: 1.5rem;
-  width: 270px;
-  box-shadow: var(--shadow-md);
-  transition: 0.25s ease;
+  text-align: center;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--card-shadow);
+}
+
+.plan-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
 }
 
 .plan-card.current {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-lg);
+  border: 2px solid var(--primary-blue);
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), transparent);
 }
 
-.plan-card h3 {
-  color: var(--text-primary);
+.current-badge,
+.recommended-badge {
+  position: absolute;
+  top: 10px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary-button);
+  box-shadow: var(--button-shadow);
 }
+.current-badge { right: 10px; background: var(--primary-blue); }
+.recommended-badge { left: 10px; background: var(--accent-gradient); }
 
-.price {
-  font-weight: bold;
-  font-size: 1.25rem;
-  color: var(--accent);
-  margin: 0.5rem 0;
-}
+.plan-card h3 { font-size: 1.2rem; margin-bottom: 0.25rem; }
+.price { font-weight: 700; color: var(--primary-blue); margin: 0.5rem 0 0.25rem; }
+.desc { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 0.8rem; }
 
-.btn-upgrade,
-.btn-current {
-  margin-top: 1rem;
-  width: 100%;
-  padding: 0.6rem;
-  font-weight: 600;
-  border-radius: 6px;
+.feature-list { list-style: none; padding: 0; margin: 0 0 1rem; text-align: left; }
+.feature-list li { color: var(--text-secondary); font-size: 0.92rem; margin: 0.3rem 0; }
+
+/* Buttons */
+.btn-upgrade, .btn-current, .btn-primary, .btn-secondary {
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
   border: none;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.btn-upgrade {
-  background: var(--accent);
-  color: white;
+.btn-upgrade { background: var(--btn-primary-bg); color: var(--text-primary-button); }
+.btn-upgrade:hover { background: var(--btn-primary-hover); }
+.btn-current { background: var(--btn-disabled-bg, #cfd4da); color: var(--gray-700); cursor: default; }
+
+.btn-primary { background: var(--btn-primary-bg); color: var(--text-primary-button); }
+.btn-primary:hover { background: var(--btn-primary-hover); }
+.btn-secondary { background: #e5e7eb; color: #111827; }
+.btn-secondary:hover { background: #d1d5db; }
+
+/* === Add-ons === */
+.addons-section {
+  width: 100%;
+  max-width: 1100px;
+  margin-top: 2rem;
 }
 
-.btn-upgrade:hover {
-  background: var(--accent-hover);
+.addons-section h3 { margin-bottom: 0.4rem; }
+.addons-subtext { color: var(--text-secondary); margin-bottom: 0.9rem; }
+
+.upgrade-banner {
+  margin: 0.5rem 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02));
+  border-left: 4px solid var(--primary-blue);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.btn-current {
-  background: var(--disabled);
-  color: #333;
-  cursor: default;
+.upgrade-banner-btn {
+  margin-left: 0.4rem;
+  background: var(--btn-primary-bg);
+  color: var(--text-primary-button);
+  border: none;
+  border-radius: 7px;
+  padding: 0.4rem 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.upgrade-note { color: var(--text-secondary); font-size: 0.85rem; }
+
+.addons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 600px) {
-  .billing-card {
-    padding: 1.5rem;
-  }
+/* === Confirm dialog === */
+.confirm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50;
+}
 
-  .billing-actions {
-    flex-direction: column;
-  }
+.confirm-card {
+  width: 92%;
+  max-width: 480px;
+  background: var(--dashboard-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  padding: 1rem 1.25rem;
+}
 
-  .btn-upgrade,
-  .btn-cancel {
-    flex: 1 1 100%;
-  }
+.confirm-title { margin: 0 0 0.25rem; }
+.confirm-body { color: var(--text-color); margin-bottom: 0.75rem; }
+.confirm-line { margin-bottom: 0.35rem; }
+.confirm-sub { color: var(--text-secondary); }
+
+/* === Loading === */
+.loading-msg {
+  margin-top: 4rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+}
+
+/* === Responsive tweaks === */
+@media (max-width: 768px) {
+  .summary-top { flex-direction: column; align-items: flex-start; }
+  .status-pill { align-self: flex-end; }
+  .plan-summary-card { padding: 1.25rem; }
 }

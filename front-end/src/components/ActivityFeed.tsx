@@ -19,7 +19,6 @@ import "./activityFeed.css";
 import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import { mergeAndSetPosts } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
-import { CircularProgress } from "@mui/material";
 import NoResults from "./NoResults";
 // import FilterSummaryBanner from "./FilterSummaryBanner";
 // import {
@@ -27,7 +26,7 @@ import NoResults from "./NoResults";
 //   getFilterSummaryText,
 // } from "./FilterSideBar/utils/filterUtils";
 import { PostQueryFilters } from "../utils/types";
-import { normalizePost } from "../utils/normalizePost";
+import { normalizePost } from "../utils/normalize";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 

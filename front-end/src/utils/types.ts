@@ -57,12 +57,6 @@ export type IntegrationConfig = {
 
 export type IntegrationsMap = Partial<Record<ProviderKey, IntegrationConfig>>;
 
-
-
-
-
-
-
 export type BillingStatus = "active" | "past_due" | "canceled";
 
 export interface CompanyAddons {
@@ -73,13 +67,14 @@ export interface CompanyAddons {
 export type PlanType = "free" | "team" | "network" | "enterprise";
 
 export interface CompanyBilling {
+  plan: PlanType;
+  price: number;
   braintreeCustomerId: string;
   subscriptionId: string;
   paymentStatus: BillingStatus;
   renewalDate?: Timestamp;
   lastPaymentDate?: Timestamp;
 }
-
 
 export type CompanyType = {
   id?: string;
@@ -97,16 +92,13 @@ export type CompanyType = {
   goals?: CompanyGoalWithIdType[];
   companyType: BusinessType;
 
-
   verified: boolean;
   accessStatus?: AccessStatus;
-  plan: PlanType
-  planPrice: number;
   userLimit: number;
   connectionLimit: number;
-   addons: CompanyAddons;
+  addons: CompanyAddons;
   billing: CompanyBilling;
-  
+
   // 🔁 replace array with a provider map
   integrations?: IntegrationsMap;
 
@@ -160,8 +152,8 @@ export interface ConnectionRequest {
 }
 
 export interface PendingBrandType {
-   brand: string,
-  proposedBy: string
+  brand: string;
+  proposedBy: string;
 }
 
 export interface CompanyConnectionType {

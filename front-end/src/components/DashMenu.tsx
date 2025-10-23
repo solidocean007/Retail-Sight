@@ -24,6 +24,8 @@ import LogOutButton from "./LogOutButton";
 import "./dashMenu.css";
 import { DashboardModeType } from "../utils/types";
 import { Handshake, Inventory2 } from "@mui/icons-material";
+import UpgradePromptBanner from "./UpgradePromptBanner";
+import { useSelector } from "react-redux";
 
 const drawerWidth = 240;
 
@@ -43,6 +45,19 @@ const DashMenu = ({
   selectedMode: DashboardModeType;
 }) => {
   const navigate = useNavigate();
+
+  const role = useSelector((state: any) => state.user.role);
+  const companyPlan = useSelector(
+    (state: any) => state.currentCompany?.billing?.plan
+  );
+  const connectionCount = useSelector(
+    (state: any) => state.currentCompany?.connectionCount
+  );
+
+  // Example condition: show banner if company is free or near limit
+  const showUpgradeBanner =
+    (role === "admin" || role === "super-admin") &&
+    (companyPlan === "free" || connectionCount >= 3);
 
   return (
     <Drawer
@@ -107,6 +122,12 @@ const DashMenu = ({
           <Typography variant="subtitle1" className="menu-section-title">
             Admin
           </Typography>
+          <UpgradePromptBanner
+            // show={showUpgradeBanner}
+            show={true}
+            message="You’re nearing your current plan limits."
+            highlight="Upgrade now to keep growing your network."
+          />
           <ListItemButton
             selected={selectedMode === "ConnectionsMode"}
             onClick={() => onMenuClick("ConnectionsMode")}

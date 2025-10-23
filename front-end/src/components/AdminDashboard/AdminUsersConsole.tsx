@@ -67,7 +67,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import CustomConfirmation from "../CustomConfirmation";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
-import { normalizeTimestamps } from "../../utils/normalizeTimestamps";
+import { normalizeFirestoreData } from "../../utils/normalize";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 
@@ -300,7 +300,7 @@ export default function AdminUsersConsole() {
       const updatedUsers = localUsers.map((u) =>
         u.uid === updatedUser.uid ? updatedUser : u
       );
-      dispatch(setCompanyUsers(normalizeTimestamps(updatedUsers)));
+      dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
       setEditRow(null);
     }
   };

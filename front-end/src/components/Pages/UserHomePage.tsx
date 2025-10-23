@@ -20,7 +20,7 @@ import EnhancedFilterSidebar from "./../FilterSideBar/EnhancedFilterSideBar";
 import { getFilterSummaryText } from "./../FilterSideBar/utils/filterUtils";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchFilteredPostsBatch } from "../../thunks/postsThunks";
-import { normalizePost } from "../../utils/normalizePost";
+import { normalizePost } from "../../utils/normalize";
 import PostViewerModal from "./../PostViewerModal";
 import TuneIcon from "@mui/icons-material/Tune";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";

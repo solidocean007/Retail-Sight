@@ -1,4 +1,4 @@
-//src/utils/listeners/setupGalloGoalsListeners.ts
+// src/utils/listeners/setupGalloGoalsListener.ts
 import { collection, onSnapshot, query, where } from "@firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -7,6 +7,7 @@ import {
 } from "../database/indexedDBUtils";
 import { FireStoreGalloGoalDocType } from "../types";
 import { setGalloGoals } from "../../Slices/galloGoalsSlice";
+import { normalizeFirestoreData } from "../normalize"; // ✅ Add this
 
 export const setupGalloGoalsListener =
   (companyId: string) => (dispatch: any) => {
@@ -17,27 +18,37 @@ export const setupGalloGoalsListener =
 
     const q = query(
       collection(db, "galloGoals"),
-      where("companyId", "==", companyId),
+      where("companyId", "==", companyId)
     );
 
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-        const allGalloGoals = snapshot.docs.map((doc) => ({
-          ...(doc.data() as FireStoreGalloGoalDocType),
-          id: doc.id,
-        }));
+        try {
+          // ✅ Deep normalize all timestamps for each document
+          const allGalloGoals = snapshot.docs.map((doc) => {
+            const normalizedData = normalizeFirestoreData(
+              doc.data()
+            ) as FireStoreGalloGoalDocType;
+            return {
+              id: doc.id,
+              ...normalizedData,
+            };
+          });
 
-        await clearGoalsFromIndexedDB("galloGoals");
-        dispatch(setGalloGoals([]));
-        await saveGoalsToIndexedDB(allGalloGoals, "galloGoals");
-        dispatch(setGalloGoals(allGalloGoals));
+          // ✅ IndexedDB and Redux updates
+          await clearGoalsFromIndexedDB("galloGoals");
+          dispatch(setGalloGoals([]));
+          await saveGoalsToIndexedDB(allGalloGoals, "galloGoals");
+          dispatch(setGalloGoals(allGalloGoals));
+        } catch (error) {
+          console.error("Error syncing Gallo goals:", error);
+        }
       },
       (error) => {
         console.error("Error in Gallo goals listener:", error);
-      },
+      }
     );
 
     return () => unsubscribe();
   };
-

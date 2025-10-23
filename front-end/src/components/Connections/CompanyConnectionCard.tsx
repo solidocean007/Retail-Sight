@@ -13,14 +13,12 @@ import CustomConfirmation from "../CustomConfirmation";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 interface Props {
-  key: string;
   connection: CompanyConnectionType;
   currentCompanyId: string | undefined;
   isAdminView?: boolean;
 }
 
 const CompanyConnectionCard: React.FC<Props> = ({
-  key,
   connection,
   currentCompanyId,
   isAdminView,
@@ -203,7 +201,7 @@ const handleConfirm = async () => {
 
 
   return (
-    <div key={key} className={`connection-card ${connection.status}`}>
+    <div className={`connection-card ${connection.status}`}>
       <header className="connection-header">
         <div className="company-info">
           <h4 className="connection-title">

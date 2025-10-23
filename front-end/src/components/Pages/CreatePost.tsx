@@ -27,7 +27,7 @@ import { useAppDispatch } from "../../utils/store";
 import { CancelRounded } from "@mui/icons-material";
 import { useIntegrations } from "../../hooks/useIntegrations";
 import { mergeAndSetPosts } from "../../Slices/postsSlice";
-import { normalizePost } from "../../utils/normalizePost";
+import { normalizePost } from "../../utils/normalize";
 import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
 import { UploadImage } from "../Create-Post/UploadImage";
 import { PickStore } from "../Create-Post/PickStore";

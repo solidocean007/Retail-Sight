@@ -10,9 +10,9 @@ Upgrade or downgrade anytime as your network grows.
 **For small teams getting started**
 
 - 👥 Up to **5 users**  
-  - Additional users: **$3 per month each**  
+  - Additional users: **$4 per month each**  
 - 🤝 **1 active company connection**  
-  - Additional connections: **$5 per month each**  
+  - Additional connections: **$6 per month each**  
 - 📸 Create and share display posts  
 - 🏷️ Manage and approve shared brands  
 - 🔄 Real-time syncing across users and devices  
@@ -32,9 +32,9 @@ _Add-ons are capped at the Team Plan price ($25/month)._
 **For growing companies building partnerships**
 
 - 👥 Up to **10 users**  
-  - Additional users: **$2 per month each**  
+  - Additional users: **$3 per month each**  
 - 🤝 Up to **3 active company connections**  
-  - Additional connections: **$3 per month each**  
+  - Additional connections: **$4 per month each**  
 - 🧩 Optional goal importing for supported suppliers (e.g., Gallo Axis)
 
 > Best for distributors or suppliers managing several partner relationships.
@@ -48,9 +48,9 @@ _Add-ons are capped at the Network Plan price ($59/month)._
 **For regional or multi-branch organizations**
 
 - 👥 Up to **40 users**  
-  - Additional users: **$1 per month each**  
+  - Additional users: **$2 per month each**  
 - 🤝 Up to **10 active company connections**  
-  - Additional connections: **$2 per month each**  
+  - Additional connections: **$3 per month each**  
 - 🧩 Includes all Team features plus advanced sharing options
 
 > Great for larger distributors or suppliers managing multiple territories and brand portfolios.

@@ -7,7 +7,7 @@ interface CheckoutModalProps {
   open: boolean;
   onClose: () => void;
   planId: string;
-  companyId: string;
+  companyId: string  | undefined;
   customerId?: string;
   companyName?: string;
   email?: string;

@@ -121,7 +121,7 @@ const UserTableForGoals = ({
                 <div className="submissions-wrapper">
                   {user.submissions.length > 0 ? (
                     user.submissions.map((sub, subIdx) => (
-                      <div key={subIdx} className="submission-item">
+                      <div key={sub.postId} className="submission-item">
                         <div className="store-name">{sub.storeName}</div>
                         <div className="submitted-at">
                           {new Date(sub.submittedAt).toLocaleString()}
