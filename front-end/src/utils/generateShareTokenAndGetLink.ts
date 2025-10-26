@@ -1,6 +1,7 @@
 // shareUtils.ts or a similar utilities file
 
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "./firebase";
 
 /**
  * Generates a shareable link for a post using Firebase Functions to create a share token.
@@ -20,7 +21,6 @@ export const generateShareTokenAndGetLink = async (
   postTitle: string,
   postLink: string,
 ): Promise<string> => {
-  const functions = getFunctions(); // Initialize Firebase Functions
   const generatePostShareToken = httpsCallable(
     functions,
     "generatePostShareToken",

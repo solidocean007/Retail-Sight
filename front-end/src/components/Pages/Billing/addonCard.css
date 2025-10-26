@@ -6,10 +6,12 @@
   background: var(--dashboard-card);
   border: 1px solid var(--border-color);
   border-radius: var(--card-radius);
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem 2rem; /* ⬆️ added horizontal padding */
   box-shadow: var(--card-shadow);
   display: flex;
-  flex-direction: column;
+  /* flex-direction: column; */
+  width: 100%;
+  margin-bottom: 1rem;;
   justify-content: space-between;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

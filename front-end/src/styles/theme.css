@@ -255,7 +255,7 @@
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);
 
-  /* --text-color: var(--gray-100); */
+  --text-secondary: var(--gray-300);
   --text-color: var(--gray-100);
   --text-on-button: white;
   --company-goal-text-color: var(--gray-900);

@@ -195,7 +195,7 @@ export const Dashboard = () => {
           <ProductsManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
         {dashboardMode === "MyGoalsMode" && <MyGoals  />}
-        {dashboardMode === "UsersMode" && <EmployeesViewer />}
+        {/* {dashboardMode === "UsersMode" && <EmployeesViewer />} */}
         {dashboardMode === "UsersMode2" && <AdminUsersConsole />}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
         {dashboardMode === "MyAccountsMode" && user && <MyAccounts />}

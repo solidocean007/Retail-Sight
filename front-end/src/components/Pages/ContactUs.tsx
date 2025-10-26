@@ -2,7 +2,8 @@
 import "./ContactUs.css";
 import { ContactUsPageHelmet } from "../../utils/helmetConfigurations";
 import React, { useState } from "react";
-import { getFunctions, httpsCallable } from "@firebase/functions";
+import { httpsCallable } from "@firebase/functions";
+import { functions } from "../../utils/firebase";
 
 const ContactUs = () => {
   const [form, setForm] = useState({
@@ -24,7 +25,6 @@ const ContactUs = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const target = event.currentTarget;
-    const functions = getFunctions();
     const sendEmail = httpsCallable(functions, "sendContactUsEmail");
     const formData = {
       name: (target.elements.namedItem("name") as HTMLInputElement).value,

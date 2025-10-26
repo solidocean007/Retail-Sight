@@ -1,17 +1,27 @@
 // components/billing/BillingDashboard.tsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { collection, doc, getDocs, getDoc } from "firebase/firestore";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  onSnapshot,
+  updateDoc,
+} from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import { useSelector } from "react-redux";
-import { db } from "../../../utils/firebase";
+import { db, functions } from "../../../utils/firebase";
 import { selectCurrentCompany } from "../../../Slices/currentCompanySlice";
 import CheckoutModal from "./CheckoutModal";
 import AddonCard from "./AddonCard";
 import "./billingDashboard.css";
+import { RootState } from "../../../utils/store";
+import { UserType } from "../../../utils/types";
+import PlanCard from "./PlanCard";
 
-interface PlanAddons {
-  extraUsers: number;
-  extraConnections: number;
+export interface PlanAddons {
+  extraUser: number;
+  extraConnection: number;
 }
 
 interface Plan {
@@ -25,13 +35,15 @@ interface Plan {
 }
 
 interface BillingAddons {
-  extraUsers: number;
-  extraConnections: number;
+  extraUser: number;
+  extraConnection: number;
 }
 
-interface BillingInfo {
+export interface BillingInfo {
   plan: string;
   price: number;
+  braintreeCustomerId: string;
+  subscriptionId: string;
   paymentStatus?: "active" | "past_due" | "canceled";
   renewalDate?: { seconds: number };
   lastPaymentDate?: { seconds: number };
@@ -79,29 +91,33 @@ const ConfirmDialog: React.FC<{
 };
 
 const BillingDashboard: React.FC = () => {
-  const functions = getFunctions(undefined, "us-central1");
   const currentCompanyId = useSelector(selectCurrentCompany)?.id;
-  const companyName = useSelector((state: any) => state.user.companyName);
-  const email = useSelector((state: any) => state.user.email);
+  const user = useSelector(
+    (state: RootState) => state.user.currentUser
+  ) as UserType;
+  const companyName = user?.company;
+  const email = user?.email;
   const [plans, setPlans] = useState<Plan[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<string>("free");
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showPaymentUpdate, setShowPaymentUpdate] = useState(false);
 
   // confirmation modal state
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmCtx, setConfirmCtx] = useState<{
     action: "add" | "remove";
-    addonType: "extraUsers" | "extraConnections";
+    addonType: "extraUser" | "extraConnection";
     count: number;
     estCost: number;
     label: string;
   } | null>(null);
   const [busyAction, setBusyAction] = useState(false);
 
-  // --- Fetch all plans ---
+  // --- Fetch all plans --- this is a frontend call to get plans is it possible a user can change what is returned here to corrupt the pricing?  pricing is declared in braintree but ..
+  //  why do we fetch this on every render?  should it be memoized or cached?  i really dont want to add this to cach if i dont have to.
   const fetchPlans = useCallback(async () => {
     try {
       const querySnap = await getDocs(collection(db, "plans"));
@@ -110,6 +126,7 @@ const BillingDashboard: React.FC = () => {
         ...doc.data(),
       })) as Plan[];
       setPlans(planList);
+      console.log("plans: ", plans)
     } catch (err) {
       console.error("Error loading plans:", err);
     } finally {
@@ -133,8 +150,21 @@ const BillingDashboard: React.FC = () => {
     }
   }, [currentCompanyId]);
 
-  console.log("billingInfo: ", billingInfo);
-  console.log("currentPlanId: ", currentPlanId);
+  useEffect(() => {
+    if (!currentCompanyId) return;
+
+    const companyRef = doc(db, "companies", currentCompanyId);
+    const unsubscribe = onSnapshot(companyRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setBillingInfo(data.billing || null);
+        setCurrentPlanId(data.billing?.plan || "free");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [currentCompanyId]);
+
   // Initial loads
   useEffect(() => {
     fetchPlans();
@@ -148,11 +178,10 @@ const BillingDashboard: React.FC = () => {
   const { addonPrices, nextPlan, shouldUpgrade, nextPlanLabel, addons } =
     useMemo(() => {
       const current = plans.find((p) => p.braintreePlanId === currentPlanId);
-      console.log("current plan: ", current);
       if (!current) {
         console.warn(`⚠️ Current plan not found for: ${currentPlanId}`);
         return {
-          addons: { extraUsers: 0, extraConnections: 0 },
+          addons: { extraUser: 0, extraConnection: 0 },
           addonPrices: { user: 0, connection: 0 },
           nextPlan: null,
           shouldUpgrade: false,
@@ -176,13 +205,13 @@ const BillingDashboard: React.FC = () => {
           : null;
 
       const prices = {
-        user: current.addons?.extraUsers ?? 0,
-        connection: current.addons?.extraConnections ?? 0,
+        user: current.addons?.extraUser ?? 0,
+        connection: current.addons?.extraConnection ?? 0,
       };
 
       const addOnTotals = billingInfo?.addons || {
-        extraUsers: 0,
-        extraConnections: 0,
+        extraUser: 0,
+        extraConnection: 0,
       };
 
       const total = billingInfo?.totalMonthlyCost ?? 0;
@@ -201,19 +230,19 @@ const BillingDashboard: React.FC = () => {
   // open confirmation with context
   const openConfirm = (
     action: "add" | "remove",
-    addonType: "extraUsers" | "extraConnections",
+    addonType: "extraUser" | "extraConnection",
     count: number
   ) => {
     const pricePer =
-      addonType === "extraUsers" ? addonPrices.user : addonPrices.connection;
+      addonType === "extraUser" ? addonPrices.user : addonPrices.connection;
     const estCost = count * pricePer;
 
     const labelBase =
-      addonType === "extraUsers" ? "user seat" : "company connection";
+      addonType === "extraUser" ? "user seat" : "company connection";
     const label =
       count === 1
         ? labelBase
-        : `${labelBase}${addonType === "extraUsers" ? "s" : "s"}`;
+        : `${labelBase}${addonType === "extraUser" ? "s" : "s"}`;
 
     setConfirmCtx({ action, addonType, count, estCost, label });
     setConfirmOpen(true);
@@ -227,6 +256,7 @@ const BillingDashboard: React.FC = () => {
     try {
       if (confirmCtx.action === "add") {
         const addAddon = httpsCallable(functions, "addAddon");
+
         await addAddon({
           companyId: currentCompanyId,
           addonType: confirmCtx.addonType,
@@ -254,11 +284,11 @@ const BillingDashboard: React.FC = () => {
 
   // Handler used by AddonCard
   const handleAddonAdd = (
-    type: "extraUsers" | "extraConnections",
+    type: "extraUser" | "extraConnection",
     qty: number
   ) => openConfirm("add", type, qty);
   const handleAddonRemove = (
-    type: "extraUsers" | "extraConnections",
+    type: "extraUser" | "extraConnection",
     qty: number
   ) => openConfirm("remove", type, qty);
 
@@ -280,21 +310,116 @@ const BillingDashboard: React.FC = () => {
     ? new Date(billingInfo.renewalDate.seconds * 1000).toLocaleDateString()
     : null;
 
+  const handlePlanSelection = async (selectedPlan: Plan) => {
+    if (!billingInfo || !currentCompanyId) return;
+
+    const currentPrice = billingInfo.price || 0;
+    const newPrice = selectedPlan.price;
+    const currentPlanName =
+      plans.find((p) => p.braintreePlanId === currentPlanId)?.name || "Free";
+
+    try {
+      if (newPrice > currentPrice) {
+        // 🔼 Upgrade → use CheckoutModal
+        setSelectedPlan(selectedPlan);
+        setModalOpen(true);
+      } else if (newPrice < currentPrice) {
+        // 🔽 Downgrade flow
+        const isFree = selectedPlan.braintreePlanId === "free";
+
+        const confirmed = window.confirm(
+          isFree
+            ? `Downgrading to the Free plan will cancel your subscription immediately. Continue?`
+            : `Downgrading to ${selectedPlan.name} will take effect at your next billing cycle. Continue?`
+        );
+        if (!confirmed) return;
+
+        const cancelFn = httpsCallable(functions, "cancelSubscription");
+        await cancelFn({ companyId: currentCompanyId });
+
+        // Firestore marker for upcoming downgrade
+        await updateDoc(doc(db, "companies", currentCompanyId), {
+          "billing.pendingPlan": selectedPlan.braintreePlanId,
+          "billing.pendingPlanName": selectedPlan.name,
+          "billing.pendingEffectiveDate": billingInfo.renewalDate || null,
+          updatedAt: new Date(),
+        });
+
+        alert(
+          isFree
+            ? `Your subscription has been canceled and you are now on the Free plan.`
+            : `Your downgrade to ${selectedPlan.name} will take effect on your next renewal date.`
+        );
+      } else {
+        alert(`You're already on the ${currentPlanName} plan.`);
+      }
+    } catch (err: any) {
+      console.error("Plan change failed:", err);
+      alert("Something went wrong updating your plan. Please try again later.");
+    }
+  };
+
   return (
     <div className="billing-container">
       <h2>Billing & Subscription</h2>
       <p>Manage your plan, payments, and add-ons</p>
+      {currentPlanId === "free" && (
+        <p className="upgrade-hint">
+          🚀 Unlock more capacity by upgrading your plan below.
+        </p>
+      )}
 
-      {/* === Plan Summary === */}
+      {/* === Plan Grid === */}
+      <div className="plans-grid">
+        {plans
+          // 🪄 Sort so current plan shows first
+          .sort((a, b) =>
+            a.braintreePlanId === currentPlanId
+              ? -1
+              : b.braintreePlanId === currentPlanId
+              ? 1
+              : a.price - b.price
+          )
+          .map((plan) => {
+            const isCurrent = plan.braintreePlanId === currentPlanId;
+            const currentPlan = plans.find(
+              (p) => p.braintreePlanId === currentPlanId
+            );
+            const isUpgrade =
+              currentPlan && plan.price > (currentPlan.price || 0);
+            const isDowngrade =
+              currentPlan && plan.price < (currentPlan.price || 0);
+            const isRecommended = plan.braintreePlanId === "network";
+
+            return (
+              <PlanCard
+                key={plan.id}
+                planId={plan.braintreePlanId}
+                name={plan.name}
+                description={plan.description}
+                price={plan.price}
+                features={plan.features}
+                isCurrent={isCurrent}
+                isUpgrade={isUpgrade}
+                isDowngrade={isDowngrade}
+                isRecommended={isRecommended}
+                onSelect={() => {
+                  if (!isCurrent) handlePlanSelection(plan);
+                }}
+              />
+            );
+          })}
+      </div>
+
       <div className="plan-summary-card">
         <div className="summary-top">
           <div className="summary-left">
-            <h3 className="plan-name">
-              Current Plan:{" "}
-              <span>
-                {currentPlanName} — ${billingInfo?.price}/month
-              </span>
-            </h3>
+            <div className="summary-header">
+              <h3 className="plan-name">
+                Current Plan: {currentPlanName} — ${billingInfo?.price}/month
+              </h3>
+            </div>
+
             <div className="total-line">
               <span className="total-label">Total Monthly Cost</span>
               <span className="total-value">${totalMonthly.toFixed(2)}</span>
@@ -320,11 +445,11 @@ const BillingDashboard: React.FC = () => {
         )}
 
         <div className="addon-summary">
-          <p>
+          {/* <p>
             You currently have <strong>{addons.extraUsers}</strong> extra users
             and <strong>{addons.extraConnections}</strong> extra connections.
-          </p>
-          <button
+          </p> */}
+          {/* <button
             className="btn-addon"
             onClick={() =>
               document
@@ -333,137 +458,86 @@ const BillingDashboard: React.FC = () => {
             }
           >
             Manage Add-ons
-          </button>
-        </div>
-
-        {currentPlanId === "free" && (
-          <p className="upgrade-hint">
-            🚀 Unlock more capacity by upgrading your plan below.
-          </p>
-        )}
-      </div>
-
-      {/* === Plan Grid === */}
-      <div className="plans-grid">
-        {plans.map((plan) => {
-          const isCurrent = plan.braintreePlanId === currentPlanId;
-          const currentPlan = plans.find(
-            (p) => p.braintreePlanId === currentPlanId
-          );
-          const isUpgrade =
-            currentPlan && plan.price > (currentPlan.price || 0);
-          const isDowngrade =
-            currentPlan && plan.price < (currentPlan.price || 0);
-          const isRecommended = plan.braintreePlanId === "network";
-
-          return (
-            <div
-              key={plan.id}
-              className={`plan-card ${isCurrent ? "current" : ""} ${
-                isRecommended ? "recommended" : ""
-              }`}
-            >
-              {isCurrent && <span className="current-badge">Current</span>}
-              {isRecommended && !isCurrent && (
-                <span className="recommended-badge">Recommended</span>
-              )}
-
-              <h3>{plan.name}</h3>
-              <p className="price">
-                {plan.price === 0 ? "Free" : `$${plan.price}/month`}
-              </p>
-              <p className="desc">{plan.description}</p>
-              <ul className="feature-list">
-                {plan.features?.map((f, i) => (
-                  <li key={i}>✅ {f}</li>
-                ))}
-              </ul>
-
-              <button
-                className={`${isCurrent ? "btn-current" : "btn-upgrade"}`}
-                disabled={isCurrent}
-                onClick={() => {
-                  if (!isCurrent) {
-                    setSelectedPlan(plan);
-                    setModalOpen(true);
-                  }
-                }}
-              >
-                {isCurrent
-                  ? "Your Current Plan"
-                  : isUpgrade
-                  ? "Upgrade"
-                  : isDowngrade
-                  ? `Switch to ${plan.name}`
-                  : "Select"}
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* === Add-ons Section === */}
-      <div className="addons-section">
-        <h3>Add-ons & Upgrades</h3>
-        <p className="addons-subtext">
-          Add-ons apply immediately and recur monthly. Removing add-ons is
-          effective at your next renewal (credits/proration may apply based on
-          policy). Upgrading plans takes effect immediately with prorated
-          charges for the current cycle.
-        </p>
-
-        {shouldUpgrade && (
-          <div className="upgrade-banner">
-            <p>
-              🚀 Your add-ons now cost about as much as the{" "}
-              <strong>{nextPlanLabel}</strong> plan.{" "}
-              <button
-                className="upgrade-banner-btn"
-                onClick={() => {
-                  if (nextPlan) {
-                    setSelectedPlan(nextPlan);
-                    setModalOpen(true);
-                  }
-                }}
-              >
-                Upgrade Now
-              </button>
-            </p>
-            <small className="upgrade-note">
-              You’ll pay only the prorated difference for this cycle.
-            </small>
+          </button> */}
+          <div className="addons-grid">
+            <AddonCard
+              title={`${currentPlanName} — Extra Users`}
+              description="Add more teammates to collaborate"
+              unitPrice={addonPrices.user}
+              current={addons.extraUser}
+              onAdd={(count) => handleAddonAdd("extraUser", count)}
+              onRemove={(count) => handleAddonRemove("extraUser", count)}
+            />
+            <AddonCard
+              title={`${currentPlanName} — Extra Connections`}
+              description="Grow your partner network"
+              unitPrice={addonPrices.connection}
+              current={addons.extraConnection}
+              onAdd={(count) => handleAddonAdd("extraConnection", count)}
+              onRemove={(count) => handleAddonRemove("extraConnection", count)}
+            />
           </div>
-        )}
+          <small className="addon-footnote">
+            Add-ons apply immediately and recur monthly. Removing applies next
+            cycle.
+          </small>
+        </div>
+        <div className="addons-section">
+          <h3>Add-ons & Upgrades</h3>
+          <p className="addons-subtext">
+            Add-ons apply immediately and recur monthly. Removing add-ons is
+            effective at your next renewal (credits/proration may apply based on
+            policy). Upgrading plans takes effect immediately with prorated
+            charges for the current cycle.
+          </p>
 
-        <div className="addons-grid">
-          <AddonCard
-            title={`${currentPlanName} — Extra Users`}
-            description="Add more teammates to collaborate"
-            unitPrice={addonPrices.user}
-            current={addons.extraUsers}
-            onAdd={(count) => handleAddonAdd("extraUsers", count)}
-            onRemove={(count) => handleAddonRemove("extraUsers", count)}
-          />
-          <AddonCard
-            title={`${currentPlanName} — Extra Connections`}
-            description="Grow your partner network"
-            unitPrice={addonPrices.connection}
-            current={addons.extraConnections}
-            onAdd={(count) => handleAddonAdd("extraConnections", count)}
-            onRemove={(count) => handleAddonRemove("extraConnections", count)}
-          />
+          {shouldUpgrade && (
+            <div className="upgrade-banner">
+              <p>
+                🚀 Your add-ons now cost about as much as the{" "}
+                <strong>{nextPlanLabel}</strong> plan.{" "}
+                <button
+                  className="upgrade-banner-btn"
+                  onClick={() => {
+                    if (nextPlan) {
+                      setSelectedPlan(nextPlan);
+                      setModalOpen(true);
+                    }
+                  }}
+                >
+                  Upgrade Now
+                </button>
+              </p>
+              <small className="upgrade-note">
+                You’ll pay only the prorated difference for this cycle.
+              </small>
+            </div>
+          )}
         </div>
       </div>
+      {/* === Add-ons Section === */}
 
       {/* Checkout */}
-      {selectedPlan && (
+      {(selectedPlan || showPaymentUpdate) && (
         <CheckoutModal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          planId={selectedPlan.braintreePlanId}
+          open={modalOpen || showPaymentUpdate}
+          onClose={() => {
+            setModalOpen(false);
+            setShowPaymentUpdate(false);
+          }}
+          planId={selectedPlan?.braintreePlanId || currentPlanId}
           companyId={currentCompanyId}
           companyName={companyName}
           email={email}
+          planName={selectedPlan?.name || "Payment Update"}
+          planPrice={selectedPlan?.price || billingInfo?.price || 0}
+          planFeatures={selectedPlan?.features || []}
+          planAddons={selectedPlan?.addons} // ✅ Add this line
+          isUpgrade={
+            !!selectedPlan && selectedPlan.price > (billingInfo?.price || 0)
+          }
+          mode={showPaymentUpdate ? "update-card" : "subscribe"}
+          billingInfo={billingInfo || undefined}
         />
       )}
 
@@ -487,10 +561,20 @@ const BillingDashboard: React.FC = () => {
                 </p>
               ) : (
                 <p className="confirm-sub">
-                  Removal takes effect at renewal (policy-dependent). Your
-                  monthly total will adjust accordingly.
+                  This will remove <strong>${confirmCtx.estCost}/month</strong>{" "}
+                  from your subscription. Adjustments will appear on your next
+                  invoice.
                 </p>
               )}
+              <small className="card-note">
+                Need to update your payment method?{" "}
+                <button
+                  className="btn-link"
+                  onClick={() => setShowPaymentUpdate(true)}
+                >
+                  Update Card
+                </button>
+              </small>
             </div>
           ) : null
         }

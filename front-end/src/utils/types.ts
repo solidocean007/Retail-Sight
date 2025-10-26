@@ -60,8 +60,8 @@ export type IntegrationsMap = Partial<Record<ProviderKey, IntegrationConfig>>;
 export type BillingStatus = "active" | "past_due" | "canceled";
 
 export interface CompanyAddons {
-  extraUsers: number;
-  extraConnections: number;
+  extraUser: number;
+  extraConnection: number;
 }
 
 export type PlanType = "free" | "team" | "network" | "enterprise";

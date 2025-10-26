@@ -80,7 +80,6 @@ function App(): React.JSX.Element {
     })();
   }, [dispatch, companyId]);
 
-  // const functions = getFunctions(undefined, "us-central1");
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {

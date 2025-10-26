@@ -62,8 +62,8 @@ import {
   setCompanyUsers,
 } from "../../Slices/userSlice";
 import { UserType } from "../../utils/types";
-import { db } from "../../utils/firebase";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { db, functions } from "../../utils/firebase";
+import { httpsCallable } from "firebase/functions";
 import CustomConfirmation from "../CustomConfirmation";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
@@ -177,7 +177,6 @@ export default function AdminUsersConsole() {
   }
 
   try {
-    const functions = getFunctions();
 
     // ✅ Check user existence & company membership in one place
     const checkUserExists = httpsCallable(functions, "checkUserExists");
@@ -268,7 +267,6 @@ export default function AdminUsersConsole() {
     // should we define this as a usertype return?
     if (!editRow) return;
     try {
-      // const functions = getFunctions();
       // const enforceLimit = httpsCallable(functions, "enforceSuperAdminLimit");
 
       // // ask backend if this is allowed
@@ -388,7 +386,6 @@ export default function AdminUsersConsole() {
       // optimistic: remove from grid immediately
       const remaining = prev.filter((u) => u.uid !== uid); // what do i do with remaining?
 
-      const functions = getFunctions();
       const deleteUser = httpsCallable(functions, "deleteAuthUser");
       const result = await deleteUser({ uid });
       const data = result.data as { message?: string };
@@ -414,7 +411,7 @@ export default function AdminUsersConsole() {
     () => [
       { field: "firstName", headerName: "First Name", flex: 1 },
       { field: "lastName", headerName: "Last Name", flex: 1 },
-      { field: "uid", headerName: "id", flex: 1 },
+      // { field: "uid", headerName: "id", flex: 1 },
       { field: "email", headerName: "Email", flex: 1.2 },
       { field: "phone", headerName: "Phone", flex: 1 },
       { field: "salesRouteNum", headerName: "Sales Route #", flex: 1 },

@@ -1,16 +1,31 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import dropin from "braintree-web-drop-in";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 import "./checkoutModal.css";
+import CartSummary from "./CartSummary";
+import { useOutsideAlerter } from "../../../utils/useOutsideAlerter";
+import { BillingInfo } from "./BillingDashboard";
+import { functions } from "../../../utils/firebase";
+
+interface PlanAddons {
+  extraUser: number;
+  extraConnection: number;
+}
 
 interface CheckoutModalProps {
   open: boolean;
   onClose: () => void;
   planId: string;
-  companyId: string  | undefined;
-  customerId?: string;
+  companyId?: string;
   companyName?: string;
   email?: string;
+  planName?: string;
+  planPrice?: number;
+  planFeatures?: string[];
+  isUpgrade?: boolean;
+  mode?: "subscribe" | "update-card";
+  billingInfo?: BillingInfo;
+  planAddons?: PlanAddons;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -18,24 +33,47 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onClose,
   planId,
   companyId,
-  customerId,
   companyName,
   email,
+  planName,
+  planPrice = 0,
+  planFeatures = [],
+  isUpgrade = false,
+  mode = "subscribe",
+  billingInfo,
+  planAddons,
 }) => {
   const dropinRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
+  const wrapperRef = useRef(null);
+  useOutsideAlerter(wrapperRef, onClose);
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dropinReady, setDropinReady] = useState(false);
 
+  // ✅ More descriptive state
+  const [additionalUserCount, setAdditionalUserCount] = useState(0);
+  const [additionalConnectionCount, setAdditionalConnectionCount] = useState(0);
+
+  // --- Derive add-on prices from Firestore plan ---
+  const addonPrices = useMemo(
+    () => ({
+      user: planAddons?.extraUser ?? 0,
+      connection: planAddons?.extraConnection ?? 0,
+    }),
+    [planAddons]
+  );
+
+  // --- Initialize Braintree drop-in ---
   useEffect(() => {
     if (open && dropinRef.current) {
+      setDropinReady(false);
       (async () => {
         try {
-          const functions = getFunctions(undefined, "us-central1");
-
           const tokenFn = httpsCallable(functions, "getClientToken");
-          const tokenRes: any = await tokenFn({ customerId });
+          const tokenRes: any = await tokenFn({ companyId });
           const token = tokenRes.data.clientToken;
           if (!token) throw new Error("Missing Braintree client token");
 
@@ -53,6 +91,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
               },
             },
           });
+          setDropinReady(true);
         } catch (err) {
           console.error(err);
           setError("Failed to initialize payment form.");
@@ -63,41 +102,64 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     return () => {
       instanceRef.current?.teardown?.();
     };
-  }, [open, companyId, companyName, email]);
+  }, [open, companyId]);
 
+  // --- Submit handler ---
   const handleSubmit = async () => {
-    if (!instanceRef.current) return;
+    if (!instanceRef.current || !companyId) return;
     setLoading(true);
     setError(null);
 
     try {
-      const functions = getFunctions();
       const { nonce } = await instanceRef.current.requestPaymentMethod();
-      const subscribeFn = httpsCallable(functions, "createSubscription");
+      const isExistingSub = !!billingInfo?.subscriptionId;
 
-      // ✅ Make sure you send all required fields
-      const payload = {
-        companyId,
-        companyName,
-        email,
-        customerId,
-        paymentMethodNonce: nonce,
-        planId,
-      };
+      const addons: any[] = [];
+      if (additionalUserCount > 0)
+        addons.push({ id: "extraUser", quantity: additionalUserCount, action: "add" });
+      if (additionalConnectionCount > 0)
+        addons.push({ id: "extraConnection", quantity: additionalConnectionCount, action: "add" });
 
-      console.log("Submitting subscription:", payload);
+      if (isExistingSub) {
+        const updateFn = httpsCallable(functions, "updateSubscriptionWithProration");
+        const newPlanId = planId;
+        const res: any = await updateFn({ companyId, newPlanId, addons });
 
-      const res: any = await subscribeFn(payload);
-
-      if (res.data?.status?.toLowerCase() === "active") {
-        setSuccess(true);
-        setTimeout(() => onClose(), 2000);
+        if (res.data?.status?.toLowerCase?.() === "active") {
+          setSuccess(true);
+          setTimeout(onClose, 2000);
+          return;
+        }
       } else {
-        throw new Error("Subscription failed.");
+        const subscribeFn = httpsCallable(functions, "createSubscription");
+        const payload = {
+          companyId,
+          companyName,
+          email,
+          paymentMethodNonce: nonce,
+          planId,
+          addons,
+        };
+        console.log("subscription payload: ", payload);
+        const res: any = await subscribeFn(payload);
+
+        if (res.data?.status?.toLowerCase?.() === "active") {
+          setSuccess(true);
+          setTimeout(onClose, 2000);
+          return;
+        }
       }
+
+      throw new Error("Subscription failed.");
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Payment failed.");
+      console.group("🔥 Checkout Error Details");
+      console.error("Full error object:", err);
+      if (err?.code) console.error("Firebase Error Code:", err.code);
+      if (err?.details) console.error("Firebase Error Details:", err.details);
+      if (err?.message) console.error("Firebase Error Message:", err.message);
+      if (err?.response?.data) console.error("Response Data:", err.response.data);
+      console.groupEnd();
+      setError(err.message || "Payment failed. Check console for details.");
     } finally {
       setLoading(false);
     }
@@ -105,26 +167,122 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   if (!open) return null;
 
+  // --- Compute live total ---
+  const activeAddons = [
+    {
+      label: "Additional Users",
+      quantity: additionalUserCount,
+      price: addonPrices.user,
+    },
+    {
+      label: "Additional Connections",
+      quantity: additionalConnectionCount,
+      price: addonPrices.connection,
+    },
+  ].filter((a) => a.quantity > 0);
+
   return (
     <div className="checkout-overlay">
-      <div className="checkout-modal">
+      <div ref={wrapperRef} className="checkout-modal">
         <button className="close-btn" onClick={onClose}>
           ✕
         </button>
-        <h2>Complete Checkout</h2>
-        <p className="plan-info">Plan: {planId}</p>
 
+        <h2>
+          {mode === "update-card"
+            ? "Update Payment Method"
+            : "Complete Checkout"}
+        </h2>
+
+        <p className="billing-note">
+          {mode === "update-card"
+            ? "Update your saved card details below."
+            : "Billed monthly • Cancel anytime"}
+        </p>
+
+        {/* === Plan Summary === */}
+        <div className="plan-summary">
+          <h3>{planName || planId}</h3>
+          <p className="plan-price">${planPrice}/month</p>
+
+          {/* === Add-on Inputs === */}
+          <div className="addon-selectors">
+            <h4>Optional Add-ons</h4>
+            <div className="addon-field">
+              <label>Additional Users (${addonPrices.user} each)</label>
+              <input
+                type="number"
+                min={0}
+                value={additionalUserCount}
+                onChange={(e) => setAdditionalUserCount(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="addon-field">
+              <label>Additional Connections (${addonPrices.connection} each)</label>
+              <input
+                type="number"
+                min={0}
+                value={additionalConnectionCount}
+                onChange={(e) =>
+                  setAdditionalConnectionCount(Number(e.target.value))
+                }
+              />
+            </div>
+          </div>
+
+          {/* === Live Summary === */}
+          <CartSummary
+            planName={planName || "Selected"}
+            planPrice={planPrice}
+            addons={activeAddons}
+          />
+
+          {planFeatures.length > 0 && (
+            <ul className="plan-features">
+              {planFeatures.map((f, i) => (
+                <li key={i}>✅ {f}</li>
+              ))}
+            </ul>
+          )}
+
+          {isUpgrade && (
+            <p className="proration-note">
+              ⚖️ This upgrade will be automatically prorated for the remainder
+              of your current billing cycle.
+            </p>
+          )}
+          <p className="secure-note">🔒 Secure payment via Braintree</p>
+        </div>
+
+        {/* === Drop-in / Feedback === */}
+        {!dropinReady && !error && (
+          <div className="dropin-loading">
+            <div className="spinner" />
+            <p>Loading secure payment form...</p>
+          </div>
+        )}
         {error && <p className="error-msg">{error}</p>}
         {success && <p className="success-msg">Payment successful! 🎉</p>}
 
-        <div ref={dropinRef} className="dropin-container" />
+        <div
+          ref={dropinRef}
+          className="dropin-container"
+          style={{ display: dropinReady ? "block" : "none" }}
+        />
 
         <button
           className="btn-submit"
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || !dropinReady}
         >
-          {loading ? "Processing..." : "Submit Payment"}
+          {loading
+            ? "Processing..."
+            : mode === "update-card"
+            ? "Update Card"
+            : isUpgrade
+            ? `Upgrade to ${planName}`
+            : `Start ${planName || "Plan"}`}
         </button>
       </div>
     </div>

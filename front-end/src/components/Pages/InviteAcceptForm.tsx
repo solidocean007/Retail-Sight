@@ -12,10 +12,10 @@ import {
   fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "../../utils/firebase";
+import { db, functions } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 import { IconButton } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
@@ -67,7 +67,6 @@ export default function InviteAcceptForm() {
             setError("This invite has already been accepted.");
           } else {
             try {
-              const functions = getFunctions();
               const checkUserExists = httpsCallable(
                 functions,
                 "checkUserExists"

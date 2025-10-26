@@ -1,8 +1,8 @@
 // utils/validation/checkUserExists.ts
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../firebase";
 
 export async function checkUserExists(email: string): Promise<boolean> {
-  const functions = getFunctions();
   const fn = httpsCallable<{ email: string }, { exists: boolean }>(
     functions,
     "checkUserExists" // 👈 name matches your deployed Gen2 function

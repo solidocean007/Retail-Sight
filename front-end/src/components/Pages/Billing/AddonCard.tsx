@@ -54,11 +54,11 @@ const AddonCard: React.FC<AddonCardProps> = ({
         <h4>{title}</h4>
         <span className="addon-price">${unitPrice.toFixed(2)}/ea</span>
       </div>
-      <p className="addon-desc">{description}</p>
+      {/* <p className="addon-desc">{description}</p> */}
 
       <div className="addon-current">
         <p>
-          Current: <strong>{current}</strong> active
+          Current: <strong>{current}</strong>
         </p>
       </div>
 
@@ -71,26 +71,22 @@ const AddonCard: React.FC<AddonCardProps> = ({
           className="addon-input"
         />
         <div className="addon-buttons">
-          <button
-            className="btn-addon-action add"
-            disabled={loading === "add"}
-            onClick={handleAdd}
-          >
-            {loading === "add" ? "Adding..." : `Add (${monthlyCost.toFixed(2)})`}
+          <button className="btn-addon-action add" onClick={handleAdd}>
+            Add
           </button>
-          <button
-            className="btn-addon-action remove"
-            disabled={!hasAddons || loading === "remove"}
-            onClick={handleRemove}
-          >
-            {loading === "remove" ? "Removing..." : "Remove"}
-          </button>
+
+          {/* Only show Remove if there’s something to remove */}
+          {current > 0 && (
+            <button className="btn-addon-action remove" onClick={handleRemove}>
+              Remove
+            </button>
+          )}
         </div>
       </div>
 
-      <small className="addon-footnote">
+      {/* <small className="addon-footnote">
         Add-ons apply immediately and recur monthly. Removing applies next cycle.
-      </small>
+      </small> */}
     </div>
   );
 };

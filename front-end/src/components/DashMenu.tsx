@@ -122,12 +122,12 @@ const DashMenu = ({
           <Typography variant="subtitle1" className="menu-section-title">
             Admin
           </Typography>
-          <UpgradePromptBanner
+          {/* <UpgradePromptBanner
             // show={showUpgradeBanner}
             show={true}
             message="You’re nearing your current plan limits."
             highlight="Upgrade now to keep growing your network."
-          />
+          /> */}
           <ListItemButton
             selected={selectedMode === "ConnectionsMode"}
             onClick={() => onMenuClick("ConnectionsMode")}

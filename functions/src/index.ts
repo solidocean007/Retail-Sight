@@ -16,6 +16,7 @@ import { onPostCreated } from "./onPostCreated";
 
 // 🧾 Braintree Billing System
 import {
+  updateSubscriptionWithProration,
   createBraintreeCustomer,
   createSubscription,
   cancelSubscription,
@@ -24,9 +25,12 @@ import {
   addAddon,
   removeAddon,
   calculateSubscriptionTotal,
-  syncPlanLimits,
   syncAddonUsage,
+  updatePaymentMethod,
+  listPlansAndAddons,
 } from "./braintreeHandlers";
+
+import { syncPlanLimits } from "./braintreeHelpers";
 
 export {
   // General functions
@@ -47,6 +51,7 @@ export {
   onPostCreated,
 
   // Billing functions
+  updateSubscriptionWithProration,
   createBraintreeCustomer,
   createSubscription,
   cancelSubscription,
@@ -57,4 +62,6 @@ export {
   calculateSubscriptionTotal,
   syncPlanLimits,
   syncAddonUsage,
+  updatePaymentMethod,
+  listPlansAndAddons,
 };
