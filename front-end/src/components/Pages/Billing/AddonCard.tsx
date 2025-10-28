@@ -83,10 +83,6 @@ const AddonCard: React.FC<AddonCardProps> = ({
           )}
         </div>
       </div>
-
-      {/* <small className="addon-footnote">
-        Add-ons apply immediately and recur monthly. Removing applies next cycle.
-      </small> */}
     </div>
   );
 };

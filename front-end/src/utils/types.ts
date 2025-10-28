@@ -661,4 +661,4 @@ export type DashboardModeType =
   | "GoalManagerMode"
   | "ApiMode"
   | "CollectionsMode"
-  | "TutorialMode";
+  | "TutorialMode"

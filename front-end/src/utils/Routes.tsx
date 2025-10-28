@@ -49,7 +49,7 @@ export const AppRoutes = () => {
       />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/pricing" element={<PricingPlans />} />
-      <Route path="/dashboard/billing" element={<BillingDashboard />} />
+      <Route path="/billing" element={<BillingDashboard />} />
       <Route path="/user-home-page" element={<UserHomePage />} />
       <Route path="/create-post" element={<CreatePost />} />
       <Route path="/dashboard" element={<Dashboard />} />

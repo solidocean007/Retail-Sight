@@ -42,8 +42,12 @@ import AdminUsersConsole from "../AdminDashboard/AdminUsersConsole.tsx";
 import TeamsViewer from "../TeamsViewer.tsx";
 import MyAccounts from "../MyAccounts.tsx";
 import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.tsx";
+import BillingDashboard from "./Billing/BillingDashboard.tsx";
+import { useNavigate } from "react-router-dom";
+import useProtectedAction from "../../utils/useProtectedAction.ts";
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const drawerWidth = 240;
   // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
@@ -202,6 +206,7 @@ export const Dashboard = () => {
         {dashboardMode === "GoalManagerMode" && (
           <GoalManager companyId={companyId} />
         )}
+       
         {dashboardMode === "CollectionsMode" && (
           <CollectionsViewer setDashboardMode={setDashboardMode} />
         )}

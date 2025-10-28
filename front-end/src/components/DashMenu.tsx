@@ -172,6 +172,10 @@ const DashMenu = ({
             <SettingsIcon sx={{ mr: 1 }} />
             <ListItemText primary="Goal Manager" />
           </ListItemButton>
+          <ListItemButton onClick={() => navigate("/billing")}>
+            <SettingsIcon sx={{ mr: 1 }} />
+            <ListItemText primary="Billing" />
+          </ListItemButton>
         </Box>
 
         <ListItem>

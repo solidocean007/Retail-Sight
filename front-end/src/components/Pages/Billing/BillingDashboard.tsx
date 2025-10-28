@@ -18,6 +18,7 @@ import "./billingDashboard.css";
 import { RootState } from "../../../utils/store";
 import { UserType } from "../../../utils/types";
 import PlanCard from "./PlanCard";
+import { useNavigate } from "react-router-dom";
 
 export interface PlanAddons {
   extraUser: number;
@@ -91,6 +92,8 @@ const ConfirmDialog: React.FC<{
 };
 
 const BillingDashboard: React.FC = () => {
+  const navigate = useNavigate();
+
   const currentCompanyId = useSelector(selectCurrentCompany)?.id;
   const user = useSelector(
     (state: RootState) => state.user.currentUser
@@ -126,7 +129,7 @@ const BillingDashboard: React.FC = () => {
         ...doc.data(),
       })) as Plan[];
       setPlans(planList);
-      console.log("plans: ", plans)
+      console.log("plans: ", plans);
     } catch (err) {
       console.error("Error loading plans:", err);
     } finally {
@@ -283,10 +286,8 @@ const BillingDashboard: React.FC = () => {
   };
 
   // Handler used by AddonCard
-  const handleAddonAdd = (
-    type: "extraUser" | "extraConnection",
-    qty: number
-  ) => openConfirm("add", type, qty);
+  const handleAddonAdd = (type: "extraUser" | "extraConnection", qty: number) =>
+    openConfirm("add", type, qty);
   const handleAddonRemove = (
     type: "extraUser" | "extraConnection",
     qty: number
@@ -311,7 +312,15 @@ const BillingDashboard: React.FC = () => {
     : null;
 
   const handlePlanSelection = async (selectedPlan: Plan) => {
-    if (!billingInfo || !currentCompanyId) return;
+    if (!currentCompanyId) return;
+
+    // 🆕 Handle new companies without billing info
+    if (!billingInfo || !billingInfo.plan) {
+      console.log("🟢 New company — no existing plan, opening checkout.");
+      setSelectedPlan(selectedPlan);
+      setModalOpen(true);
+      return;
+    }
 
     const currentPrice = billingInfo.price || 0;
     const newPrice = selectedPlan.price;
@@ -320,6 +329,7 @@ const BillingDashboard: React.FC = () => {
 
     try {
       if (newPrice > currentPrice) {
+        console.log("🟢 Opening checkout modal for", selectedPlan.name);
         // 🔼 Upgrade → use CheckoutModal
         setSelectedPlan(selectedPlan);
         setModalOpen(true);
@@ -362,6 +372,9 @@ const BillingDashboard: React.FC = () => {
   return (
     <div className="billing-container">
       <h2>Billing & Subscription</h2>
+      <button className="button-outline" onClick={() => navigate("/dashboard")}>
+        ← Back to Dashboard
+      </button>
       <p>Manage your plan, payments, and add-ons</p>
       {currentPlanId === "free" && (
         <p className="upgrade-hint">
@@ -477,10 +490,6 @@ const BillingDashboard: React.FC = () => {
               onRemove={(count) => handleAddonRemove("extraConnection", count)}
             />
           </div>
-          <small className="addon-footnote">
-            Add-ons apply immediately and recur monthly. Removing applies next
-            cycle.
-          </small>
         </div>
         <div className="addons-section">
           <h3>Add-ons & Upgrades</h3>
