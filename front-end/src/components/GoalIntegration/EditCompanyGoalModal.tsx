@@ -1,4 +1,3 @@
-// EditCompanyGoalModal.tsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Dialog,
@@ -12,12 +11,12 @@ import {
   TextField,
   Checkbox,
   FormControlLabel,
-  Chip,
 } from "@mui/material";
 import {
   CompanyGoalType,
   CompanyAccountType,
   UserType,
+  GoalAssignmentType,
 } from "../../utils/types";
 import AccountMultiSelector from "./AccountMultiSelector";
 import isEqual from "lodash.isequal";
@@ -40,9 +39,14 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   companyUsers,
   onSave,
 }) => {
+  // 🧩 Initialize from new or old goal data
+  const [goalAssignments, setGoalAssignments] = useState<GoalAssignmentType[]>(
+    goal.goalAssignments || []
+  );
   const [accountNumbersForThisGoal, setAccountNumbersForThisGoal] = useState<
     string[]
   >(goal.accountNumbersForThisGoal || []);
+
   const [goalTitle, setGoalTitle] = useState(goal.goalTitle);
   const [goalDescription, setGoalDescription] = useState(goal.goalDescription);
   const [goalMetric, setGoalMetric] = useState(goal.goalMetric);
@@ -53,36 +57,65 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const [goalEndDate, setGoalEndDate] = useState(goal.goalEndDate);
   const [searchSelected, setSearchSelected] = useState("");
 
+  // 🧩 Sync when modal opens or goal changes
   useEffect(() => {
+    setGoalAssignments(goal.goalAssignments || []);
     setAccountNumbersForThisGoal(goal.accountNumbersForThisGoal || []);
   }, [goal]);
 
-  const selectedAccountNumbers = accountNumbersForThisGoal;
-
+  // --- Derived data ---
   const selectedAccountObjects = useMemo(() => {
     return allAccounts.filter((acc) =>
-      selectedAccountNumbers.includes(acc.accountNumber.toString())
+      accountNumbersForThisGoal.includes(acc.accountNumber.toString())
     );
-  }, [allAccounts, selectedAccountNumbers]);
+  }, [allAccounts, accountNumbersForThisGoal]);
 
   const filteredSelectedAccounts = useMemo(() => {
     return selectedAccountObjects.filter(
       (acc) =>
-        acc.accountName.toLowerCase().includes(searchSelected.toLowerCase()) ||
+        acc.accountName
+          .toLowerCase()
+          .includes(searchSelected.toLowerCase()) ||
         acc.accountNumber.toString().includes(searchSelected)
     );
   }, [selectedAccountObjects, searchSelected]);
 
-  // 🔹 Handle account selection changes
-  const handleAccountSelectionChange = (
-    updatedAccounts: CompanyAccountType[]
-  ) => {
+  // --- Account selection change handler ---
+  const handleAccountSelectionChange = (updatedAccounts: CompanyAccountType[]) => {
     const updatedNumbers = updatedAccounts.map((acc) =>
       acc.accountNumber.toString()
     );
     setAccountNumbersForThisGoal(updatedNumbers);
+
+    // 🔹 Automatically prune assignments for removed accounts
+    setGoalAssignments((prev) =>
+      prev.filter((a) => updatedNumbers.includes(a.accountNumber.toString()))
+    );
+
+    // 🔹 Optionally auto-add reps for new accounts
+    const newAccounts = updatedAccounts.filter(
+      (acc) =>
+        !goalAssignments.some(
+          (a) => a.accountNumber === acc.accountNumber.toString()
+        )
+    );
+    const autoAssignments = newAccounts.flatMap((acc) => {
+      const reps = companyUsers.filter(
+        (u) =>
+          u.salesRouteNum && acc.salesRouteNums?.includes(u.salesRouteNum)
+      );
+      return reps.map((u) => ({
+        uid: u.uid,
+        accountNumber: acc.accountNumber.toString(),
+      }));
+    });
+
+    if (autoAssignments.length) {
+      setGoalAssignments((prev) => [...prev, ...autoAssignments]);
+    }
   };
 
+  // --- Form object ---
   const updatedGoal: Partial<CompanyGoalType> = useMemo(
     () => ({
       goalTitle,
@@ -93,6 +126,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalEndDate,
       perUserQuota,
       accountNumbersForThisGoal,
+      goalAssignments, // ✅ persist both arrays
     }),
     [
       goalTitle,
@@ -103,6 +137,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalEndDate,
       perUserQuota,
       accountNumbersForThisGoal,
+      goalAssignments,
     ]
   );
 
@@ -116,6 +151,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       goalStartDate: goal.goalStartDate,
       goalEndDate: goal.goalEndDate,
       accountNumbersForThisGoal: goal.accountNumbersForThisGoal || [],
+      goalAssignments: goal.goalAssignments || [],
     }),
     [goal]
   );
@@ -127,9 +163,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
 
   const handleSave = () => {
     const cleanedGoal: Partial<CompanyGoalType> = { ...updatedGoal };
-    if (updatedGoal.perUserQuota === 0) {
-      delete cleanedGoal.perUserQuota;
-    }
+    if (updatedGoal.perUserQuota === 0) delete cleanedGoal.perUserQuota;
     onSave(cleanedGoal);
     onClose();
   };
@@ -143,12 +177,6 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     }
   };
 
-  // const handleRemoveFromSelected = (accNum: string | number) => {
-  //   setSelectedAccountsObjects((prev) =>
-  //     prev.filter((a) => String(a.accountNumber) !== String(accNum))
-  //   );
-  // };
-
   return (
     <Dialog
       open={open}
@@ -160,7 +188,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       <DialogTitle className="goal-modal__title">Edit Company Goal</DialogTitle>
 
       <DialogContent dividers className="goal-modal-content">
-        {/* 📝 Form Fields */}
+        {/* 📝 Goal Basics */}
         <section>
           <header className="goal-modal-section-head">
             <h3>Goal basics</h3>
@@ -243,6 +271,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
 
         <Divider sx={{ my: 2 }} />
 
+        {/* 🧾 Current Accounts */}
         <section>
           <header className="goal-modal__section-head">
             <h3>Accounts on this goal</h3>
@@ -305,13 +334,13 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
           </Box>
         </section>
 
-        {/* ADD MORE */}
+        {/* 🧠 Add More Accounts */}
         <section className="goal-modal__section">
           <header className="goal-modal__section-head">
             <h3>Add more accounts</h3>
             <span className="muted">
               Search your company accounts below. Items already on the goal are
-              pre-checked.
+              pre-checked and auto-assign their salespeople.
             </span>
           </header>
 
@@ -319,10 +348,11 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
             allAccounts={allAccounts}
             selectedAccounts={selectedAccountObjects}
             setSelectedAccounts={handleAccountSelectionChange}
+            selectedAssignments={goalAssignments}
+            setSelectedAssignments={setGoalAssignments}
+            companyUsers={companyUsers}
           />
         </section>
-
-        {/* 📋 Full Account Selector */}
       </DialogContent>
 
       <DialogActions>

@@ -1,3 +1,9 @@
+/* ✅ Fix table overflow on mobile */
+.user-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .user-table-head {
   display: flex;
   width: 100%;
@@ -24,7 +30,7 @@
 }
 
 .user-table {
-  width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
 }
@@ -87,7 +93,7 @@
 }
 
 .store-name {
-  min-width: 300px;
+  flex: 1;
 }
 
 .submitted-at  {
@@ -167,4 +173,41 @@
 .unsubmitted-list li {
   margin-bottom: 4px;
 }
+.assigned-indicator {
+  color: var(--accent-color);
+  font-size: 0.85rem;
+  margin-left: 4px;
+}
+
+.assigned-count {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--secondary-text);
+}
+
+.no-assignment {
+  color: var(--warn-color);
+}
+
+
+
+/* Let long text wrap naturally */
+@media (max-width: 768px) {
+  .user-table-wrapper {
+    min-width: none;
+  }
+
+  .store-name,
+  .submitted-at,
+  .submission-item {
+    min-width: unset;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .user-table {
+    table-layout: auto;
+  }
+}
+
 

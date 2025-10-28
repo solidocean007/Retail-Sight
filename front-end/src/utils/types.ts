@@ -515,6 +515,11 @@ export type GalloGoalType = {
 //   | "goalForSelectedAccounts"
 //   | "goalForSelectedUsers";
 
+export interface GoalAssignmentType {
+  uid: string;
+  accountNumber: string;
+}
+
 export type CompanyGoalType = {
   companyId: string;
   goalTitle: string;
@@ -530,6 +535,7 @@ export type CompanyGoalType = {
   createdByFirstName?: string; // optional
   createdByLastName?: string; // optional
   accountNumbersForThisGoal?: string[]; // ✅ Full scope of accounts this goal applies to
+  goalAssignments?: GoalAssignmentType[];
   perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
   deleted: boolean;

@@ -2,8 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./userTableForGoals.css";
 import { getCompletionClass } from "../utils/helperFunctions/getCompletionClass";
-import { CompanyGoalWithIdType, PostQueryFilters } from "../utils/types";
-import { clearAllFilters } from "./FilterSideBar/utils/filterUtils";
+import { CompanyGoalWithIdType, GoalAssignmentType } from "../utils/types";
 
 export interface UserRowType {
   uid: string;
@@ -26,19 +25,31 @@ export interface UserRowType {
   }[];
 }
 
-const UserTableForGoals = ({
-  users,
-  goal,
-  onViewPostModal,
-}: {
+interface Props {
   users: UserRowType[];
   goal: CompanyGoalWithIdType;
   onViewPostModal: (postId: string, target?: HTMLElement) => void;
+}
+
+const UserTableForGoals: React.FC<Props> = ({
+  users,
+  goal,
+  onViewPostModal,
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   type SortMode = "completion-desc" | "completion-asc" | "alphabetical";
   const [sortMode, setSortMode] = useState<SortMode>("completion-desc");
+
+  // 🧩 Build a quick lookup for assignments per user (if new model)
+  const assignmentsByUser = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    (goal.goalAssignments || []).forEach((a: GoalAssignmentType) => {
+      if (!map[a.uid]) map[a.uid] = [];
+      map[a.uid].push(a.accountNumber);
+    });
+    return map;
+  }, [goal.goalAssignments]);
 
   const handleViewGoalPost = (postId: string, ref: HTMLElement) => {
     onViewPostModal(postId, ref);
@@ -91,81 +102,112 @@ const UserTableForGoals = ({
           </select>
         </div>
       </div>
+      <div className="user-table-wrapper">
+        <table className="user-table">
+          <tbody>
+            {sortedFilteredUsers.map((user, idx) => {
+              const assignedAccounts = assignmentsByUser[user.uid] || [];
 
-      <table className="user-table">
-        <tbody>
-          {sortedFilteredUsers.map((user, idx) => (
-            <tr key={user.uid}>
-              <td className="user-table-count">{idx + 1}</td>
-              <td>
-                <div className="user-info-cell">
-                  <div className="user-name-cell">
-                    {user.isInactive ? (
-                      <span className="inactive-label">
-                        Inactive Salesman (accounts need reassignment)
-                      </span>
-                    ) : (
-                      `${user.lastName}, ${user.firstName}`
-                    )}
-                  </div>
-
-                  <div
-                    className={getCompletionClass(
-                      user.userCompletionPercentage
-                    )}
-                  >
-                    {user.userCompletionPercentage}%
-                  </div>
-                </div>
-
-                <div className="submissions-wrapper">
-                  {user.submissions.length > 0 ? (
-                    user.submissions.map((sub, subIdx) => (
-                      <div key={subIdx} className="submission-item">
-                        <div className="store-name">{sub.storeName}</div>
-                        <div className="submitted-at">
-                          {new Date(sub.submittedAt).toLocaleString()}
-                        </div>
-                        <button
-                          onClick={(e) =>
-                            handleViewGoalPost(sub.postId, e.currentTarget)
-                          }
-                        >
-                          View
-                        </button>
+              return (
+                <tr key={user.uid}>
+                  <td className="user-table-count">{idx + 1}</td>
+                  <td>
+                    <div className="user-info-cell">
+                      <div className="user-name-cell">
+                        {user.isInactive ? (
+                          <span className="inactive-label">
+                            Inactive user (accounts need reassignment)
+                          </span>
+                        ) : (
+                          `${user.lastName}, ${user.firstName}`
+                        )}
                       </div>
-                    ))
-                  ) : (
-                    <div>— No submissions</div>
-                  )}
-                </div>
 
-                {/* Expandable section for unsubmitted accounts */}
-                {user.unsubmittedAccounts.length > 0 && (
-                  <details className="unsubmitted-details">
-                    <summary
-                      className="unsubmitted-summary"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {user.unsubmittedAccounts.length} unsubmitted account
-                      {user.unsubmittedAccounts.length > 1 ? "s" : ""}
-                    </summary>
-                    <ul className="unsubmitted-list">
-                      {user.unsubmittedAccounts.map((acc) => (
-                        <li key={acc.accountNumber}>
-                          <strong>{acc.accountName}</strong> —{" "}
-                          {acc.accountAddress}
-                          {/* {acc.accountNumber} */}
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                      <div
+                        className={getCompletionClass(
+                          user.userCompletionPercentage
+                        )}
+                      >
+                        {user.userCompletionPercentage}%
+                      </div>
+                    </div>
+
+                    {/* Show submissions */}
+                    <div className="submissions-wrapper">
+                      {user.submissions.length > 0 ? (
+                        user.submissions.map((sub, subIdx) => (
+                          <div key={subIdx} className="submission-item">
+                            <div className="store-name">{sub.storeName}</div>
+                            <div className="submitted-at">
+                              {new Date(sub.submittedAt).toLocaleString()}
+                            </div>
+                            <button
+                              onClick={(e) =>
+                                handleViewGoalPost(sub.postId, e.currentTarget)
+                              }
+                            >
+                              View
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div>— No submissions</div>
+                      )}
+                    </div>
+
+                    {/* Expandable unsubmitted accounts */}
+                    {user.unsubmittedAccounts.length > 0 && (
+                      <details className="unsubmitted-details">
+                        <summary
+                          className="unsubmitted-summary"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {user.unsubmittedAccounts.length} unsubmitted account
+                          {user.unsubmittedAccounts.length > 1 ? "s" : ""}
+                        </summary>
+                        <ul className="unsubmitted-list">
+                          {user.unsubmittedAccounts.map((acc) => (
+                            <li key={acc.accountNumber}>
+                              <strong>{acc.accountName}</strong> —{" "}
+                              {acc.accountAddress || "No address"}
+                              {assignedAccounts.length > 0 &&
+                                assignedAccounts.includes(
+                                  acc.accountNumber
+                                ) && (
+                                  <span className="assigned-indicator">
+                                    {" "}
+                                    (Assigned)
+                                  </span>
+                                )}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+
+                    {/* Optional: show assigned account count */}
+                    {goal.goalAssignments?.length > 0 && ( // 'goal.goalAssignments.length' is possibly 'undefined'.
+                      <div className="assigned-count">
+                        {assignedAccounts.length > 0 ? (
+                          <span>
+                            Assigned to{" "}
+                            <strong>{assignedAccounts.length}</strong> account
+                            {assignedAccounts.length > 1 ? "s" : ""}
+                          </span>
+                        ) : (
+                          <span className="no-assignment">
+                            No assigned accounts
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

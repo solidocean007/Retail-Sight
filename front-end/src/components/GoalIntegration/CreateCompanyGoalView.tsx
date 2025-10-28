@@ -21,6 +21,7 @@ import {
 import {
   CompanyAccountType,
   CompanyGoalType,
+  GoalAssignmentType,
   UserType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
@@ -41,6 +42,10 @@ import GoalTitleInput from "./GoalTitleInput";
 import ChainMultiSelect from "./FilterMultiSelect";
 import FilterMultiSelect from "./FilterMultiSelect";
 import ConfirmGoalModal from "./ConfirmGoalModal";
+import AssignmentsPreview from "./AssingmentsPreview";
+import { selectAllCompanyAccounts, setAllAccounts } from "../../Slices/allAccountsSlice";
+import { getAllCompanyAccountsFromIndexedDB, saveAllCompanyAccountsToIndexedDB } from "../../utils/database/accountStoreUtils";
+import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAcccountsFromFirestore";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -62,6 +67,9 @@ const CreateCompanyGoalView = () => {
     [companyUsers]
   );
   const [draftGoal, setDraftGoal] = useState<CompanyGoalType | null>(null);
+  const [goalAssignments, setGoalAssignments] = useState<GoalAssignmentType[]>(
+    []
+  );
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
@@ -69,7 +77,9 @@ const CreateCompanyGoalView = () => {
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
   const [perUserQuota, setPerUserQuota] = useState<number | string>("1");
   const [isSaving, setIsSaving] = useState(false);
+  const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
 
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
@@ -99,11 +109,62 @@ const CreateCompanyGoalView = () => {
 
   type SavedFilterSet = typeof filters;
 
-  // useEffect(() => {
-  //   if (accounts.length > 0 && selectedAccounts.length === 0) {
-  //     setSelectedAccounts(accounts);
-  //   }
-  // }, [accounts, selectedAccounts]);
+useEffect(() => {
+  let cancelled = false;
+
+  async function loadAccounts() {
+    setAccountsLoading(true);
+
+    // ✅ 1. If already in Redux, use that
+    if (allCompanyAccounts && allCompanyAccounts.length > 0) {
+      if (!cancelled) {
+        setAccounts(allCompanyAccounts);
+        setAccountsLoading(false);
+      }
+      return;
+    }
+
+    // ✅ 2. Try IndexedDB (offline cache)
+    try {
+      const cached = await getAllCompanyAccountsFromIndexedDB();
+      if (cached?.length && !cancelled) {
+        setAccounts(cached);
+        dispatch(setAllAccounts(cached)); // hydrate Redux from cache
+        setAccountsLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.warn("No cached accounts found:", err);
+    }
+
+    // ✅ 3. Fallback to Firestore fetch
+    try {
+      const accountsId = usersCompany?.accountsId;
+      if (!accountsId) throw new Error("Missing accountsId");
+      const firestoreAccounts = await fetchAllAccountsFromFirestore(accountsId);
+      if (!cancelled && firestoreAccounts?.length) {
+        setAccounts(firestoreAccounts);
+        dispatch(setAllAccounts(firestoreAccounts));
+        setAccountsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      if (!cancelled) setAccountsLoading(false);
+    }
+  }
+
+  loadAccounts();
+  return () => {
+    cancelled = true;
+  };
+}, [allCompanyAccounts, usersCompany?.accountsId, dispatch]);
+
+  useEffect(() => {
+    if (accountScope !== "selected") return;
+    // ✅ Start empty, no auto-selection
+    setAccountNumbersForThisGoal([]);
+    setGoalAssignments([]); // clear existing when switching
+  }, [accountScope]);
 
   const normalizedCompanyUsers = useMemo(() => {
     return (activeCompanyUsers || []).map((user) => ({
@@ -227,36 +288,6 @@ const CreateCompanyGoalView = () => {
       });
   }, [companyId]);
 
-  useEffect(() => { // i think if this useEffect doesnt return accounts then we need to ui to the user 'hey if you want goals you need to impport your accounts.. custom accounts aint gonna cut it"
-    const fetchAccounts = async () => {
-      if (!companyId) return;
-      try {
-        // const accountsId = await getCompanyAccountId(companyId);
-        const accountsId = usersCompany?.accountsId;
-        if (!accountsId) return;
-        const accountsDocRef = doc(db, "accounts", accountsId);
-        const snapshot = await getDoc(accountsDocRef);
-        console.log("fetched accounts snapshot!");
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          const formatted = (data.accounts as CompanyAccountType[]).map(
-            (account) => ({
-              ...account,
-              salesRouteNums: Array.isArray(account.salesRouteNums)
-                ? account.salesRouteNums
-                : [account.salesRouteNums].filter(Boolean),
-            })
-          );
-          setAccounts(formatted);
-        }
-      } catch (err) {
-        console.error("Error fetching accounts:", err);
-      }
-    };
-
-    fetchAccounts();
-  }, [companyId]);
-
   const { eligibleUsersForCurrentScope, numberOfAffectedUsers } =
     useMemo(() => {
       // 🔹 Build scoped accounts from either "all" or the accountNumbersForThisGoal array
@@ -321,6 +352,14 @@ const CreateCompanyGoalView = () => {
             accountNumbersForThisGoal.includes(a.accountNumber.toString())
           );
 
+    // 🔹 Build explicit assignments (uid + accountNumber)
+    const goalAssignments = scopedAccounts.flatMap((acc) =>
+      eligibleUsersForCurrentScope.map((u) => ({
+        uid: u.uid,
+        accountNumber: acc.accountNumber.toString(),
+      }))
+    );
+
     const newGoal: CompanyGoalType = {
       companyId,
       goalTitle,
@@ -332,9 +371,10 @@ const CreateCompanyGoalView = () => {
       goalEndDate,
       createdAt: new Date().toISOString(),
       deleted: false,
+      goalAssignments, // ✅ replaces accountNumbersForThisGoal
       accountNumbersForThisGoal: scopedAccounts.map((a) =>
         a.accountNumber.toString()
-      ),
+      ), // keep legacy field populated for now
       ...(enforcePerUserQuota && perUserQuota
         ? { perUserQuota: Number(perUserQuota) }
         : {}),
@@ -344,6 +384,7 @@ const CreateCompanyGoalView = () => {
     setShowConfirmModal(true);
   };
 
+  // // ✅ Do not auto-select anything. Only prune selections that fell out of view.
   useEffect(() => {
     if (accountScope !== "selected") return;
 
@@ -351,11 +392,6 @@ const CreateCompanyGoalView = () => {
       const inView = new Set(
         filteredAccounts.map((a) => a.accountNumber.toString())
       );
-
-      // First time in "selected" mode -> select everything in view
-      if (prev.length === 0) return Array.from(inView);
-
-      // Otherwise, KEEP ONLY what’s still visible; do NOT auto-add new items
       return prev.filter((id) => inView.has(id));
     });
   }, [accountScope, filteredAccounts]);
@@ -434,6 +470,12 @@ const CreateCompanyGoalView = () => {
   const affectedSalesCount = assigneeType === "sales" ? repsForScope.length : 0;
   const affectedSupervisorsCount =
     assigneeType === "supervisor" ? supervisorsForScope.length : 0;
+
+  const handleRemoveAssignment = (accountNumber: string, uid: string) => {
+    setGoalAssignments((prev) =>
+      prev.filter((g) => !(g.uid === uid && g.accountNumber === accountNumber))
+    );
+  };
 
   return (
     <Container>
@@ -907,7 +949,8 @@ const CreateCompanyGoalView = () => {
             {/* new accounts view showing them combined */}
             {accountScope === "selected" && (
               <>
-                {accountNumbersForThisGoal.length === 0 ? (
+                {accountNumbersForThisGoal.length === 0 ||
+                goalAssignments.length == 0 ? (
                   <Typography
                     variant="body2"
                     color="textSecondary"
@@ -919,6 +962,23 @@ const CreateCompanyGoalView = () => {
                   <Typography variant="h5" sx={{ mt: 4 }}>
                     Selected Accounts
                   </Typography>
+                )}
+                <Typography variant="caption" color="textSecondary">
+                  {`${
+                    new Set(goalAssignments.map((g) => g.accountNumber)).size
+                  } accounts, ${
+                    new Set(goalAssignments.map((g) => g.uid)).size
+                  } users assigned`}
+                </Typography>
+
+                {goalAssignments.length > 0 && (
+                  <AssignmentsPreview
+                    assignments={goalAssignments}
+                    accounts={accounts}
+                    users={normalizedCompanyUsers}
+                    onRemoveAssignment={handleRemoveAssignment}
+                    onClearAll={() => setGoalAssignments([])}
+                  />
                 )}
 
                 <AccountMultiSelector
@@ -933,6 +993,9 @@ const CreateCompanyGoalView = () => {
                       updated.map((a) => a.accountNumber.toString())
                     )
                   }
+                  selectedAssignments={goalAssignments}
+                  setSelectedAssignments={setGoalAssignments}
+                  companyUsers={normalizedCompanyUsers}
                 />
               </>
             )}

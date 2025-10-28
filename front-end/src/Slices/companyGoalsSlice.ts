@@ -1,3 +1,4 @@
+// companyGoalsSlice.ts
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../utils/store";
 import { CompanyAccountType, CompanyGoalWithIdType } from "../utils/types";
@@ -48,6 +49,7 @@ export const selectAllCompanyGoals = createSelector(
   (state: RootState) => state.companyGoals.goals,
   (goals) => goals.filter((goal) => !goal.deleted)
 );
+
 export const selectCompanyGoalsIsLoading = (state: RootState) =>
   state.companyGoals.isLoading;
 
@@ -57,38 +59,63 @@ export const selectCompanyGoalsError = (state: RootState) =>
 export const selectCompanyGoalsLastUpdated = (state: RootState) =>
   state.companyGoals.lastUpdated;
 
+/**
+ * 🔹 Returns goals visible to the current user (sales or supervisor).
+ * Prioritizes new goalAssignments model, falls back to accountNumbersForThisGoal.
+ */
 export const selectUsersCompanyGoals = createSelector(
   [
     selectAllCompanyGoals,
     (state: RootState) => state.user.currentUser,
-    (state: RootState) => state.allAccounts.accounts || [],
-    (state: RootState) => state.user.companyUsers || [], // need supervisors + reps
+    selectAllCompanyAccounts,
+    (state: RootState) => state.user.companyUsers || [],
   ],
   (allGoals, currentUser, allAccounts, companyUsers) => {
     if (!currentUser) return [];
-
-    const { salesRouteNum, uid, role } = currentUser;
+    const { uid, salesRouteNum, role } = currentUser;
 
     return allGoals.filter((goal) => {
-      // 🔹 Sales employee logic
+      // --- 🆕 New model: explicit goalAssignments
+      if (goal.goalAssignments?.length) {
+        // ✅ Sales: any assignment directly for this user
+        if (
+          goal.targetRole === "sales" &&
+          goal.goalAssignments.some((a) => a.uid === uid)
+        ) {
+          return true;
+        }
+
+        // ✅ Supervisor: has at least one rep whose assignment is included
+        if (goal.targetRole === "supervisor" && role === "supervisor") {
+          const repsReportingToMe = companyUsers.filter(
+            (r) => r.reportsTo === uid
+          );
+          const repIds = new Set(repsReportingToMe.map((r) => r.uid));
+          return goal.goalAssignments.some((a) => repIds.has(a.uid));
+        }
+
+        // Admins see all
+        if (role === "admin" || role === "super-admin") return true;
+
+        return false;
+      }
+
+      // --- 🕰️ Legacy fallback (route-based)
       if (goal.targetRole === "sales" && salesRouteNum) {
         const matchingAccountNumbers = allAccounts
           .filter((acc) => acc.salesRouteNums?.includes(salesRouteNum))
           .map((acc) => acc.accountNumber.toString());
-
         return goal.accountNumbersForThisGoal?.some((accNum) =>
           matchingAccountNumbers.includes(accNum)
         );
       }
 
-      // 🔹 Supervisor logic
       if (goal.targetRole === "supervisor" && role === "supervisor") {
         const repsReportingToMe = companyUsers.filter(
           (u) => u.reportsTo === uid && u.salesRouteNum
         );
         const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
 
-        // Get all accounts covered by this goal
         const matchingAccounts = (goal.accountNumbersForThisGoal || [])
           .map((accountId) =>
             allAccounts.find(
@@ -97,7 +124,6 @@ export const selectUsersCompanyGoals = createSelector(
           )
           .filter(Boolean) as CompanyAccountType[];
 
-        // Overlap check
         return matchingAccounts.some((acc) =>
           acc.salesRouteNums?.some((rn) => myRepsRouteNums.includes(rn))
         );
@@ -108,6 +134,10 @@ export const selectUsersCompanyGoals = createSelector(
   }
 );
 
+/**
+ * 🔹 Factory: Select goals visible to a given user by ID + role.
+ * Used in user-specific dashboards or supervisor analytics.
+ */
 export const makeSelectUsersCompanyGoals = (
   salesRouteNum?: string,
   userId?: string,
@@ -118,18 +148,32 @@ export const makeSelectUsersCompanyGoals = (
       selectAllCompanyGoals,
       (state: RootState) =>
         role === "supervisor" || role === "admin" || role === "super-admin"
-          ? selectAllCompanyAccounts(state) // supervisors+admins need all accounts
-          : selectUserAccounts(state), // sales reps just need their slice
+          ? selectAllCompanyAccounts(state)
+          : selectUserAccounts(state),
       (state: RootState) => state.user.companyUsers || [],
     ],
     (allGoals, relevantAccounts, companyUsers) => {
-      if (!salesRouteNum && !userId) {
-        console.log("⛔ No salesRouteNum or userId, returning []");
-        return [];
-      }
+      if (!salesRouteNum && !userId) return [];
 
       return allGoals.filter((goal: CompanyGoalWithIdType) => {
-        // 🔹 Sales
+        // --- 🆕 goalAssignments model
+        if (goal.goalAssignments?.length) {
+          if (goal.targetRole === "sales" && userId) {
+            return goal.goalAssignments.some((a) => a.uid === userId);
+          }
+
+          if (goal.targetRole === "supervisor" && userId) {
+            const repsReportingToMe = companyUsers.filter(
+              (u) => u.reportsTo === userId
+            );
+            const repIds = new Set(repsReportingToMe.map((r) => r.uid));
+            return goal.goalAssignments.some((a) => repIds.has(a.uid));
+          }
+
+          if (role === "admin" || role === "super-admin") return true;
+        }
+
+        // --- 🕰️ Legacy fallback
         if (goal.targetRole === "sales" && salesRouteNum) {
           const matchingAccounts = (goal.accountNumbersForThisGoal || [])
             .map((accountId) =>
@@ -139,14 +183,11 @@ export const makeSelectUsersCompanyGoals = (
             )
             .filter(Boolean) as CompanyAccountType[];
 
-          const match = matchingAccounts.some((account) =>
+          return matchingAccounts.some((account) =>
             (account.salesRouteNums || []).includes(salesRouteNum)
           );
-
-          return match;
         }
 
-        // 🔹 Supervisor
         if (
           goal.targetRole === "supervisor" &&
           role === "supervisor" &&
@@ -165,11 +206,9 @@ export const makeSelectUsersCompanyGoals = (
             )
             .filter(Boolean) as CompanyAccountType[];
 
-          const match = matchingAccounts.some((acc) =>
+          return matchingAccounts.some((acc) =>
             acc.salesRouteNums?.some((rn) => myRepsRouteNums.includes(rn))
           );
-
-          return match;
         }
 
         return false;

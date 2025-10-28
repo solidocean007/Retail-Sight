@@ -1,0 +1,116 @@
+.assignments-preview-container {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid var(--card-outline);
+  border-radius: 8px;
+  padding: 0.5rem;
+  background-color: var(--background-light, #fafafa);
+}
+
+/* Each assignment row */
+.assignment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding: 0.25rem 0.5rem;
+}
+
+.assignment-row:last-child {
+  border-bottom: none;
+}
+
+/* Account name (left side) */
+.assignment-account {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* User name and remove button (right side) */
+.assignment-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.assignment-remove-btn {
+  color: var(--error-color, #d32f2f);
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0.2rem;
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.assignment-remove-btn:hover {
+  color: #b71c1c;
+}
+
+.assignments-preview {
+  max-width: 100%;
+}
+
+.assignments-table-wrapper {
+  border: 1px solid var(--card-outline);
+  border-radius: 8px;
+  overflow-y: auto;
+  max-height: 280px;
+  background-color: var(--background-light, #fafafa);
+}
+
+.MuiTableCell-root {
+  font-size: 0.9rem;
+}
+
+.MuiTableHead-root .MuiTableCell-root {
+  font-weight: 600;
+  background-color: var(--table-header-bg, #f3f4f6);
+}
+
+.MuiTableRow-root:hover {
+  background-color: var(--hover-bg, #f9fafb);
+}
+
+.MuiIconButton-root {
+  padding: 4px;
+}
+
+.MuiIconButton-root:hover {
+  background-color: transparent;
+  color: var(--error-color, #c62828);
+}
+
+.assignments-preview {
+  max-width: 100%;
+}
+
+.assignments-table-wrapper {
+  border: 1px solid var(--card-outline);
+  border-radius: 8px;
+  overflow-y: auto;
+  max-height: 280px;
+  background-color: var(--background-light, #fafafa);
+}
+
+.MuiTableCell-root {
+  font-size: 0.9rem;
+}
+
+.MuiTableHead-root .MuiTableCell-root {
+  font-weight: 600;
+  background-color: var(--table-header-bg, #f3f4f6);
+}
+
+.MuiTableRow-root:hover {
+  background-color: var(--hover-bg, #f9fafb);
+}
