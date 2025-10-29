@@ -530,74 +530,170 @@ export const getClientToken = onCall(async (request) => {
 });
 
 /**
- * Removes a recurring add-on (e.g. extraUsers or extraConnections)
- * from a company's active subscription in Braintree and Firestore.
- *
- * You can toggle whether removals take effect immediately (with proration)
- * or at the next billing cycle via the `IMMEDIATE_REMOVAL` flag.
+ * ✅ addAddon — Adds an add-on to an existing subscription,
+ * or automatically creates a free-tier subscription if the company is on Free plan.
  */
-/* ========================================================
-   🔼 Add Add-on (Tier-Aware)
-======================================================== */
 export const addAddon = onCall(async (request) => {
-  const { companyId, addonType, quantity } = request.data;
+  const { companyId, addonType, quantity = 1 } = request.data || {};
 
-  if (!companyId || !addonType || typeof quantity !== "number") {
-    throw new HttpsError(
-      "invalid-argument",
-      "Missing or invalid fields: companyId, addonType, quantity."
-    );
+  console.log("=== [addAddon] Incoming request ===");
+  console.log("companyId:", companyId);
+  console.log("addonType:", addonType);
+  console.log("quantity:", quantity);
+
+  if (!companyId || !addonType) {
+    console.error("❌ Missing companyId or addonType");
+    throw new HttpsError("invalid-argument", "Missing companyId or addonType.");
   }
 
   const companyRef = db.collection("companies").doc(companyId);
   const companySnap = await companyRef.get();
+
   if (!companySnap.exists) {
+    console.error("❌ Company not found in Firestore");
     throw new HttpsError("not-found", "Company not found.");
   }
 
-  const companyData = companySnap.data()!;
-  const billing = companyData.billing;
+  const companyData = companySnap.data() as any;
+  const billing = companyData.billing || {};
+  console.log("ℹ️ Current billing snapshot:", billing);
 
-  if (!billing?.subscriptionId || !billing?.plan) {
+  const customerId = billing?.braintreeCustomerId;
+  if (!customerId) {
+    console.error("❌ Missing braintreeCustomerId");
     throw new HttpsError(
       "failed-precondition",
-      "No active subscription or missing plan info."
+      "Company has no Braintree customer. Please complete checkout first."
     );
   }
 
-  // 🔹 Determine correct tier-based add-on ID
-  // e.g. "teamPlanExtraUser" or "networkPlanExtraConnection"
-  const currentPlan = billing.plan;
-  const addonId = `${currentPlan}Plan${
-    addonType === "extraUser" ? "ExtraUser" : "ExtraConnection"
-  }`;
-
-  console.log(`🧩 Adding addon for ${companyId}: ${addonId} x${quantity}`);
-
-  // 🔹 Apply to Braintree
-  await updateBraintreeSubscription(billing.subscriptionId, {
-    addOns: { add: [{ inheritedFromId: addonId, quantity }] },
+  console.log("🔍 Fetching Braintree customer:", customerId);
+  const customer = await gateway.customer.find(customerId).catch((err) => {
+    console.error("❌ gateway.customer.find failed:", err);
+    return null;
   });
 
-  // 🔹 Update Firestore cache
-  const addons = companyData.addons || {};
-  addons[addonType] = (addons[addonType] || 0) + quantity;
+  if (!customer) {
+    console.error("❌ Braintree customer not found:", customerId);
+    throw new HttpsError("not-found", "Braintree customer not found.");
+  }
 
-  await companyRef.update({
-    addons,
-    updatedAt: admin.firestore.Timestamp.now(),
+  const defaultPayment =
+    customer.paymentMethods?.[0]?.token ||
+    customer.creditCards?.[0]?.token ||
+    null;
+  console.log("💳 Default payment token:", defaultPayment);
+
+  if (!defaultPayment) {
+    console.error("❌ No payment method for this customer");
+    throw new HttpsError(
+      "failed-precondition",
+      "No payment method found for this customer."
+    );
+  }
+
+  // Helper: update Firestore billing info
+  const syncBilling = async (subscription: any) => {
+    console.log("🧾 Syncing subscription back to Firestore:", subscription.id);
+    await companyRef.update({
+      "billing.subscriptionId": subscription.id,
+      "billing.paymentStatus": subscription.status,
+      "billing.plan": subscription.planId || billing.plan || "free",
+      "billing.lastPaymentDate": new Date(),
+      updatedAt: new Date(),
+    });
+  };
+
+  // ==========================
+  // Case 1: existing subscription
+  // ==========================
+  if (billing.subscriptionId) {
+    console.log("🧩 Found existing subscription:", billing.subscriptionId);
+    console.log("🪄 Adding add-on:", addonType, "x", quantity);
+
+    const result = await gateway.subscription.update(billing.subscriptionId, {
+      addOns: {
+        add: [
+          {
+            inheritedFromId: addonType,
+            quantity,
+          },
+        ],
+      },
+    });
+
+    console.log("📦 Braintree update result:", {
+      success: result.success,
+      message: result.message,
+      status: result.subscription?.status,
+    });
+
+    if (!result.success) {
+      console.error("❌ Add-on update failed:", result.message);
+      throw new HttpsError(
+        "internal",
+        result.message || "Failed to add add-on."
+      );
+    }
+
+    await syncBilling(result.subscription);
+
+    console.log("✅ Successfully added add-on to existing subscription.");
+    return {
+      status: result.subscription.status,
+      subscriptionId: result.subscription.id,
+      planId: result.subscription.planId,
+    };
+  }
+
+  // ==========================
+  // Case 2: no subscription yet
+  // ==========================
+  console.log(
+    "🆕 No subscription found — creating Free plan subscription with add-on."
+  );
+  console.log("💡 Using payment method:", defaultPayment);
+  console.log("💡 Using add-on ID:", addonType);
+
+  const result = await gateway.subscription.create({
+    paymentMethodToken: defaultPayment,
+    planId: "free_plan", // 👈 Replace with your actual Free plan ID in Braintree
+    addOns: {
+      add: [
+        {
+          inheritedFromId: addonType,
+          quantity,
+        },
+      ],
+    },
   });
 
-  console.log(`✅ Added ${quantity} ${addonId} for ${companyId}`);
-  console.log("📡 DEBUG AddAddon Params:", {
-    companyId,
-    addonType,
-    quantity,
-    subscriptionId: billing.subscriptionId,
-    plan: billing.plan,
+  console.log("📦 Braintree create result:", {
+    success: result.success,
+    message: result.message,
+    subscriptionId: result.subscription?.id,
+    status: result.subscription?.status,
   });
 
-  return { success: true, addonId, quantity };
+  if (!result.success) {
+    console.error("❌ Subscription creation failed:", result.message);
+    throw new HttpsError(
+      "internal",
+      result.message || "Failed to create subscription."
+    );
+  }
+
+  await syncBilling(result.subscription);
+  console.log(
+    "✅ Created Free plan subscription with add-on:",
+    result.subscription.id
+  );
+
+  return {
+    status: result.subscription.status,
+    subscriptionId: result.subscription.id,
+    planId: result.subscription.planId,
+  };
 });
 
 /* ========================================================

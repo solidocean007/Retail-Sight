@@ -3,6 +3,7 @@
 import * as admin from "firebase-admin";
 import dotenv = require("dotenv");
 import braintree = require("braintree");
+import { HttpsError } from "firebase-functions/https";
 
 dotenv.config();
 if (!admin.apps.length) {
@@ -156,3 +157,31 @@ export async function updateBraintreeSubscription(
     throw err;
   }
 }
+
+export const createCustomerIfMissing = async (
+  gateway: braintree.BraintreeGateway,
+  companyRef: FirebaseFirestore.DocumentReference,
+  companyData: any,
+  email: string
+) => {
+  const billing = companyData.billing || {};
+  if (billing.braintreeCustomerId) return billing.braintreeCustomerId;
+
+  const result = await gateway.customer.create({
+    firstName: companyData.name || "Displaygram User",
+    email,
+    customFields: { companyId: companyRef.id },
+  });
+
+  if (!result.success || !result.customer?.id)
+    throw new HttpsError("internal", "Failed to create Braintree customer.");
+
+  await companyRef.update({
+    "billing.braintreeCustomerId": result.customer.id,
+    "billing.paymentStatus": "active",
+    updatedAt: new Date(),
+  });
+
+  return result.customer.id;
+};
+
