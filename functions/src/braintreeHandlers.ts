@@ -6,6 +6,7 @@ import dotenv = require("dotenv");
 import braintree = require("braintree");
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import {
+  createCustomerIfMissing,
   syncPlanLimits,
   updateBraintreeSubscription,
 } from "./braintreeHelpers";
@@ -536,11 +537,6 @@ export const getClientToken = onCall(async (request) => {
 export const addAddon = onCall(async (request) => {
   const { companyId, addonType, quantity = 1 } = request.data || {};
 
-  console.log("=== [addAddon] Incoming request ===");
-  console.log("companyId:", companyId);
-  console.log("addonType:", addonType);
-  console.log("quantity:", quantity);
-
   if (!companyId || !addonType) {
     console.error("❌ Missing companyId or addonType");
     throw new HttpsError("invalid-argument", "Missing companyId or addonType.");
@@ -548,44 +544,43 @@ export const addAddon = onCall(async (request) => {
 
   const companyRef = db.collection("companies").doc(companyId);
   const companySnap = await companyRef.get();
-
   if (!companySnap.exists) {
-    console.error("❌ Company not found in Firestore");
     throw new HttpsError("not-found", "Company not found.");
   }
 
-  const companyData = companySnap.data() as any;
+  const companyData = companySnap.data()!;
   const billing = companyData.billing || {};
-  console.log("ℹ️ Current billing snapshot:", billing);
 
-  const customerId = billing?.braintreeCustomerId;
-  if (!customerId) {
-    console.error("❌ Missing braintreeCustomerId");
-    throw new HttpsError(
-      "failed-precondition",
-      "Company has no Braintree customer. Please complete checkout first."
-    );
-  }
+  console.log("=== [addAddon] Incoming request ===");
+  console.log({ companyId, addonType, quantity });
 
-  console.log("🔍 Fetching Braintree customer:", customerId);
+  // ✅ Ensure a customer exists (creates if missing)
+  const customerId = await createCustomerIfMissing(
+    gateway,
+    companyRef,
+    companyData,
+    companyData.email || request.auth?.token?.email
+  );
+
+  console.log("🔍 Using Braintree customer:", customerId);
+
+  // 🔹 Retrieve customer from Braintree
   const customer = await gateway.customer.find(customerId).catch((err) => {
     console.error("❌ gateway.customer.find failed:", err);
     return null;
   });
 
   if (!customer) {
-    console.error("❌ Braintree customer not found:", customerId);
     throw new HttpsError("not-found", "Braintree customer not found.");
   }
 
+  // 🔹 Use first available payment method
   const defaultPayment =
     customer.paymentMethods?.[0]?.token ||
     customer.creditCards?.[0]?.token ||
     null;
-  console.log("💳 Default payment token:", defaultPayment);
 
   if (!defaultPayment) {
-    console.error("❌ No payment method for this customer");
     throw new HttpsError(
       "failed-precondition",
       "No payment method found for this customer."
@@ -622,14 +617,7 @@ export const addAddon = onCall(async (request) => {
       },
     });
 
-    console.log("📦 Braintree update result:", {
-      success: result.success,
-      message: result.message,
-      status: result.subscription?.status,
-    });
-
     if (!result.success) {
-      console.error("❌ Add-on update failed:", result.message);
       throw new HttpsError(
         "internal",
         result.message || "Failed to add add-on."
@@ -652,12 +640,10 @@ export const addAddon = onCall(async (request) => {
   console.log(
     "🆕 No subscription found — creating Free plan subscription with add-on."
   );
-  console.log("💡 Using payment method:", defaultPayment);
-  console.log("💡 Using add-on ID:", addonType);
 
   const result = await gateway.subscription.create({
     paymentMethodToken: defaultPayment,
-    planId: "free_plan", // 👈 Replace with your actual Free plan ID in Braintree
+    planId: "free_plan", // 👈 replace with your actual Braintree Free plan ID
     addOns: {
       add: [
         {
@@ -668,15 +654,7 @@ export const addAddon = onCall(async (request) => {
     },
   });
 
-  console.log("📦 Braintree create result:", {
-    success: result.success,
-    message: result.message,
-    subscriptionId: result.subscription?.id,
-    status: result.subscription?.status,
-  });
-
   if (!result.success) {
-    console.error("❌ Subscription creation failed:", result.message);
     throw new HttpsError(
       "internal",
       result.message || "Failed to create subscription."
@@ -684,6 +662,7 @@ export const addAddon = onCall(async (request) => {
   }
 
   await syncBilling(result.subscription);
+
   console.log(
     "✅ Created Free plan subscription with add-on:",
     result.subscription.id

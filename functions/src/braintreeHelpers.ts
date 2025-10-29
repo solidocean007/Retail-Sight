@@ -165,16 +165,39 @@ export const createCustomerIfMissing = async (
   email: string
 ) => {
   const billing = companyData.billing || {};
-  if (billing.braintreeCustomerId) return billing.braintreeCustomerId;
+  if (billing.braintreeCustomerId) {
+    console.log("✅ Existing customer ID:", billing.braintreeCustomerId);
+    return billing.braintreeCustomerId;
+  }
+
+  // Defensive defaults
+  const safeEmail = email || companyData.email || "no-email@displaygram.com";
+  const safeName =
+    companyData.name || companyData.companyName || "Displaygram User";
+  const safeCompany = companyData.companyName || safeName;
+
+  console.log("🆕 Creating Braintree customer:", {
+    firstName: safeName,
+    company: safeCompany,
+    email: safeEmail,
+  });
 
   const result = await gateway.customer.create({
-    firstName: companyData.name || "Displaygram User",
-    email,
+    firstName: safeName,
+    company: safeCompany,
+    email: safeEmail,
     customFields: { companyId: companyRef.id },
   });
 
-  if (!result.success || !result.customer?.id)
-    throw new HttpsError("internal", "Failed to create Braintree customer.");
+  if (!result.success || !result.customer?.id) {
+    console.error("❌ Braintree customer creation failed:", result.message);
+    throw new HttpsError(
+      "internal",
+      `Failed to create Braintree customer: ${result.message}`
+    );
+  }
+
+  console.log("✅ Created Braintree customer:", result.customer.id);
 
   await companyRef.update({
     "billing.braintreeCustomerId": result.customer.id,
