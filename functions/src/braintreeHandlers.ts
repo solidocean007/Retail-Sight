@@ -4,12 +4,12 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import dotenv = require("dotenv");
 import braintree = require("braintree");
-import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import {
-  createCustomerIfMissing,
-  syncPlanLimits,
-  updateBraintreeSubscription,
-} from "./braintreeHelpers";
+  onDocumentCreated,
+  onDocumentUpdated,
+} from "firebase-functions/v2/firestore";
+import { syncPlanLimits } from "./braintreeHelpers";
+import { logger } from "firebase-functions/v2";
 
 dotenv.config();
 if (!admin.apps.length) {
@@ -28,6 +28,21 @@ const gateway = new braintree.BraintreeGateway({
   publicKey: process.env.BRAINTREE_PUBLIC_KEY!,
   privateKey: process.env.BRAINTREE_PRIVATE_KEY!,
 });
+
+const ADDON_IDS: Record<string, Record<string, string>> = {
+  free: {
+    extraUser: "freePlanExtraUser",
+    extraConnection: "freePlanExtraConnection",
+  },
+  team: {
+    extraUser: "teamPlanExtraUser",
+    extraConnection: "teamPlanExtraConnection",
+  },
+  network: {
+    extraUser: "networkPlanExtraUser",
+    extraConnection: "networkPlanExtraConnection",
+  },
+};
 
 /**
  * Sync company plan limits and price from Firestore.
@@ -103,9 +118,17 @@ export const updateSubscriptionWithProration = onCall(async (request) => {
         addOns: {
           add: addons.map((a: any) => {
             // Map Firestore add-on name → proper Braintree ID
-            const addonId = `${newPlanId}Plan${
-              a.id === "extraUser" ? "ExtraUser" : "ExtraConnection"
-            }`;
+            const addonId = ADDON_IDS[newPlanId]?.[a.id];
+            if (!addonId) {
+              console.error(
+                `❌ Unknown add-on mapping for plan: ${newPlanId}, type: ${a.id}`
+              );
+              throw new HttpsError(
+                "invalid-argument",
+                `No Braintree add-on ID found for plan ${newPlanId} and add-on ${a.id}.`
+              );
+            }
+
             return { inheritedFromId: addonId, quantity: a.quantity || 1 };
           }),
         },
@@ -266,11 +289,30 @@ export const createSubscription = onCall(async (request) => {
 
   const token = paymentRes.paymentMethod.token;
 
-  // 3️⃣ Create subscription using vaulted token
-  const subResult = await gateway.subscription.create({
+  // 3️⃣ Create subscription (force immediate billing)
+  const subPayload: any = {
     paymentMethodToken: token,
     planId,
-  } as any);
+    // 👇 ensures immediate billing cycle starts today
+    firstBillingDate: new Date(),
+  };
+
+  // include add-ons if user selected them
+  if (addons?.length) {
+    subPayload.addOns = {
+      add: addons.map((a: any) => {
+        const addonId = `${planId}Plan${
+          a.id === "extraUser" ? "ExtraUser" : "ExtraConnection"
+        }`;
+        return {
+          inheritedFromId: addonId,
+          quantity: a.quantity || 1,
+        };
+      }),
+    };
+  }
+
+  const subResult = await gateway.subscription.create(subPayload);
 
   if (!subResult.success || !subResult.subscription) {
     console.error("❌ Braintree subscription creation failed:", subResult);
@@ -279,60 +321,56 @@ export const createSubscription = onCall(async (request) => {
 
   const sub = subResult.subscription;
 
-  // 4️⃣ Optional: Add-ons
-  if (addons?.length) {
-    const updatePayload: any = {
-      addOns: {
-        add: addons.map((a: any) => ({
-          inheritedFromId: a.id,
-          quantity: a.quantity || 1,
-        })),
-      },
-    };
+  // 4️⃣ Calculate total cost (plan + add-ons)
+  const base = parseFloat(sub.price ?? "0");
+  const addOnsTotal = sub.addOns?.reduce(
+    (sum: number, a: any) =>
+      sum + parseFloat(a.amount ?? "0") * (a.quantity ?? 1),
+    0
+  );
+  const totalMonthlyCost = base + (addOnsTotal || 0);
 
-    const updateRes = await gateway.subscription.update(sub.id, updatePayload);
-    if (!updateRes.success) {
-      console.warn("⚠️ Add-on update failed (continuing):", updateRes);
+  // 5️⃣ Track addon quantities for Firestore
+  const addonsMap: Record<string, number> = {};
+  if (addons?.length) {
+    for (const a of addons) {
+      addonsMap[a.id] = a.quantity ?? 1;
     }
   }
 
-  // 5️⃣ Sync Firestore
-
-  const totalCost = parseFloat(sub.price ?? "0");
-  const addOnCost = sub.addOns?.reduce(
-    (sum: number, addon: any) =>
-      sum + parseFloat(addon.amount ?? "0") * (addon.quantity ?? 1),
-    0
-  );
-  const totalMonthlyCost = totalCost + (addOnCost || 0);
-
+  // 6️⃣ Sync to Firestore
   await companyRef.set(
     {
-      plan: planId,
-      planPrice: Number(sub.price),
       billing: {
         ...data.billing,
         braintreeCustomerId: customerId,
+        plan: planId,
+        planPrice: Number(sub.price),
         subscriptionId: sub.id,
         paymentStatus:
           sub.status?.toLowerCase() === "active" ? "active" : "pending",
         renewalDate: new Date(sub.nextBillingDate),
         lastPaymentDate: new Date(sub.createdAt),
-        totalMonthlyCost, // ✅ add this
+        totalMonthlyCost,
       },
+      addons: addonsMap,
       updatedAt: new Date(),
     },
     { merge: true }
   );
 
+  // 7️⃣ Sync limits from plan document
   await syncPlanLimits(companyId, planId);
 
   console.log(`✅ Subscription created for ${companyId} → ${planId}`);
+  console.log(`💵 Immediate charge: $${totalMonthlyCost.toFixed(2)}`);
 
   return {
+    success: true,
     status: sub.status,
     subscriptionId: sub.id,
     nextBillingDate: sub.nextBillingDate,
+    totalMonthlyCost,
   };
 });
 
@@ -408,7 +446,7 @@ export const handleBraintreeWebhook = onCall(async (request) => {
     return { ok: false };
   }
 
-  // Find matching company by subscriptionId
+  // 🔍 Find matching company by subscriptionId
   const companyQuery = await db
     .collection("companies")
     .where("billing.subscriptionId", "==", subscription.id)
@@ -422,6 +460,7 @@ export const handleBraintreeWebhook = onCall(async (request) => {
 
   const companyRef = companyQuery.docs[0].ref;
   const companyId = companyRef.id;
+  const companyData = companyQuery.docs[0].data();
 
   // Determine new payment status
   let paymentStatus = "active";
@@ -444,7 +483,7 @@ export const handleBraintreeWebhook = onCall(async (request) => {
     total += parseFloat(addon.amount ?? "0") * (addon.quantity ?? 1);
   });
 
-  // --- Load limits + plan info from Firestore plans collection ---
+  // --- Load plan info from Firestore ---
   const planId = subscription.planId;
   const planSnap = await db.collection("plans").doc(planId).get();
   const planData = planSnap.exists ? planSnap.data() : undefined;
@@ -456,6 +495,68 @@ export const handleBraintreeWebhook = onCall(async (request) => {
         connectionLimit: planData.connectionLimit ?? 1,
       }
     : undefined;
+
+  // --- Apply pending add-on removals if this is a renewal webhook ---
+  const isRenewalEvent =
+    eventType.includes("subscription_charged_successfully") ||
+    eventType.includes("subscription_renewed");
+
+  if (isRenewalEvent && companyData.billing?.pendingAddonRemoval) {
+    const pending = companyData.billing.pendingAddonRemoval;
+    const addonId = ADDON_IDS[planId]?.[pending.addonType];
+    if (addonId) {
+      console.log(
+        `🧩 Applying deferred add-on removal for ${companyId}: ${addonId}`
+      );
+
+      try {
+        const updatePayload: any =
+          pending.quantityRemoved <= 0
+            ? { addOns: { remove: [addonId] } }
+            : {
+                addOns: {
+                  update: [
+                    { existingId: addonId, quantity: pending.newQty ?? 0 },
+                  ],
+                },
+              };
+
+        const result = await gateway.subscription.update(
+          subscription.id,
+          updatePayload
+        );
+
+        if (result.success) {
+          console.log(
+            `✅ Successfully applied deferred removal for ${addonId} on ${companyId}`
+          );
+
+          // 🧾 Recompute total cost after removal
+          let newTotal = parseFloat(result.subscription.price ?? "0");
+          result.subscription.addOns?.forEach((a: any) => {
+            newTotal += parseFloat(a.amount ?? "0") * (a.quantity ?? 1);
+          });
+
+          await companyRef.update({
+            addons: { ...addonsFromBraintree }, // synced fresh state
+            "billing.totalMonthlyCost": newTotal,
+            "billing.pendingAddonRemoval": admin.firestore.FieldValue.delete(),
+            updatedAt: admin.firestore.Timestamp.now(),
+          });
+        } else {
+          console.warn(
+            "⚠️ Failed to apply deferred add-on removal:",
+            result.message
+          );
+        }
+      } catch (err: any) {
+        console.error(
+          "🔥 Error applying deferred add-on removal:",
+          err.message
+        );
+      }
+    }
+  }
 
   // --- Update company billing document ---
   const updateData: any = {
@@ -485,7 +586,7 @@ export const handleBraintreeWebhook = onCall(async (request) => {
     )}`
   );
 
-  // --- Log event for analytics / developer dashboard ---
+  // --- Log event for auditing ---
   await db.collection("billingLogs").add({
     companyId,
     plan: planId,
@@ -550,19 +651,17 @@ export const addAddon = onCall(async (request) => {
 
   const companyData = companySnap.data()!;
   const billing = companyData.billing || {};
+  if (!billing?.braintreeCustomerId) {
+    throw new HttpsError(
+      "failed-precondition",
+      "No Braintree customer. Please start a checkout to add payment method."
+    );
+  }
 
   console.log("=== [addAddon] Incoming request ===");
   console.log({ companyId, addonType, quantity });
 
-  // ✅ Ensure a customer exists (creates if missing)
-  const customerId = await createCustomerIfMissing(
-    gateway,
-    companyRef,
-    companyData,
-    companyData.email || request.auth?.token?.email
-  );
-
-  console.log("🔍 Using Braintree customer:", customerId);
+  const customerId = billing.braintreeCustomerId;
 
   // 🔹 Retrieve customer from Braintree
   const customer = await gateway.customer.find(customerId).catch((err) => {
@@ -589,11 +688,24 @@ export const addAddon = onCall(async (request) => {
 
   // Helper: update Firestore billing info
   const syncBilling = async (subscription: any) => {
-    console.log("🧾 Syncing subscription back to Firestore:", subscription.id);
+    const base = parseFloat(subscription.price ?? "0");
+    const addOns = subscription.addOns?.reduce(
+      (sum: number, a: any) =>
+        sum + parseFloat(a.amount ?? "0") * (a.quantity ?? 1),
+      0
+    );
+    const total = base + addOns;
+
+    console.log("🧾 Syncing subscription back to Firestore:", {
+      id: subscription.id,
+      total,
+    });
+
     await companyRef.update({
       "billing.subscriptionId": subscription.id,
       "billing.paymentStatus": subscription.status,
       "billing.plan": subscription.planId || billing.plan || "free",
+      "billing.totalMonthlyCost": total,
       "billing.lastPaymentDate": new Date(),
       updatedAt: new Date(),
     });
@@ -605,17 +717,34 @@ export const addAddon = onCall(async (request) => {
   if (billing.subscriptionId) {
     console.log("🧩 Found existing subscription:", billing.subscriptionId);
     console.log("🪄 Adding add-on:", addonType, "x", quantity);
+    const addonId = ADDON_IDS[billing.plan]?.[addonType];
+    if (!addonId) {
+      console.error(
+        `❌ Invalid add-on mapping for plan=${billing.plan}, type=${addonType}`
+      );
+      throw new HttpsError(
+        "invalid-argument",
+        `Unknown add-on mapping for plan ${billing.plan} and add-on ${addonType}`
+      );
+    }
 
-    const result = await gateway.subscription.update(billing.subscriptionId, {
+    // ✅ Build full update payload for immediate charge
+    const updatePayload: any = {
       addOns: {
         add: [
           {
-            inheritedFromId: addonType,
+            inheritedFromId: addonId,
             quantity,
           },
         ],
       },
-    });
+      options: { prorateCharges: true }, // immediate billing on existing sub
+    };
+
+    const result = await gateway.subscription.update(
+      billing.subscriptionId,
+      updatePayload
+    );
 
     if (!result.success) {
       throw new HttpsError(
@@ -625,6 +754,19 @@ export const addAddon = onCall(async (request) => {
     }
 
     await syncBilling(result.subscription);
+
+    // ✅ Update addons object in Firestore for tracking
+    const addonsMap = companyData.addons || {};
+    addonsMap[addonType] = (addonsMap[addonType] || 0) + quantity;
+
+    await companyRef.update({
+      addons: addonsMap,
+      "billing.totalMonthlyCost": admin.firestore.FieldValue.increment(
+        parseFloat(result.subscription.addOns?.[0]?.amount ?? "0") *
+          (result.subscription.addOns?.[0]?.quantity ?? 1)
+      ),
+      updatedAt: admin.firestore.Timestamp.now(),
+    });
 
     console.log("✅ Successfully added add-on to existing subscription.");
     return {
@@ -641,13 +783,17 @@ export const addAddon = onCall(async (request) => {
     "🆕 No subscription found — creating Free plan subscription with add-on."
   );
 
+  const addonId = `freePlan${
+    addonType === "extraUser" ? "ExtraUser" : "ExtraConnection"
+  }`;
+
   const result = await gateway.subscription.create({
     paymentMethodToken: defaultPayment,
-    planId: "free_plan", // 👈 replace with your actual Braintree Free plan ID
+    planId: "free",
     addOns: {
       add: [
         {
-          inheritedFromId: addonType,
+          inheritedFromId: addonId, // ✅ FIXED
           quantity,
         },
       ],
@@ -710,33 +856,67 @@ export const removeAddon = onCall(async (request) => {
     throw new HttpsError("failed-precondition", "No add-ons to remove.");
   }
 
-  // 🔹 Correct tier-based ID (singular-safe)
-  const currentPlan = billing.plan;
-  const addonId = `${currentPlan}Plan${
-    addonType === "extraUser" ? "ExtraUser" : "ExtraConnection"
-  }`;
+  // ✅ Lookup add-on ID safely
+  const addonId = ADDON_IDS[billing.plan]?.[addonType];
+  if (!addonId) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Unknown add-on mapping for plan ${billing.plan} and add-on ${addonType}`
+    );
+  }
 
   const newQty = Math.max(0, currentQty - quantity);
   console.log(
-    `🧩 Removing ${quantity} from ${addonId} (newQty=${newQty}) for ${companyId}`
+    `🧩 Scheduling removal of ${quantity} from ${addonId} (newQty=${newQty}) for ${companyId}`
   );
 
-  const updateData =
-    newQty === 0
-      ? { addOns: { remove: [addonId] } }
-      : { addOns: { update: [{ existingId: addonId, quantity: newQty }] } };
-
-  await updateBraintreeSubscription(billing.subscriptionId, updateData);
-
-  // 🔹 Sync Firestore
-  addons[addonType] = newQty;
+  // 🔹 Queue the removal in Firestore (deferred until next billing cycle)
   await companyRef.update({
-    addons,
+    [`addons.${addonType}`]: newQty,
+    "billing.pendingAddonRemoval": {
+      addonType,
+      removeAt: billing.renewalDate || null,
+      quantityRemoved: quantity,
+    },
     updatedAt: admin.firestore.Timestamp.now(),
   });
 
-  console.log(`✅ Updated ${addonId} quantity to ${newQty} for ${companyId}`);
-  return { success: true, newQuantity: newQty, addonId };
+  console.log(
+    `✅ Queued ${addonType} removal for ${companyId} at next renewal (${billing.renewalDate})`
+  );
+
+  // 🔹 Optionally tell Braintree to apply this change at next billing
+  try {
+    const result = await gateway.subscription.update(billing.subscriptionId, {
+      addOns: {
+        update: [{ existingId: addonId, quantity: newQty }],
+      },
+      options: {
+        // ✅ Correct property name
+        replaceAllAddOnsAndDiscounts: false,
+        prorateCharges: false, // optional: ensures no immediate charge/refund
+      },
+    });
+
+    if (!result.success) {
+      console.warn(
+        "⚠️ Braintree update failed, will retry on webhook:",
+        result.message
+      );
+    }
+  } catch (err: any) {
+    console.error(
+      "🔥 Failed to schedule Braintree addon removal:",
+      err.message
+    );
+  }
+
+  return {
+    success: true,
+    message: `Add-on ${addonType} will remain active until the next billing cycle.`,
+    newQuantity: newQty,
+    effectiveDate: billing.renewalDate || "next renewal",
+  };
 });
 
 /* ========================================================
@@ -747,39 +927,82 @@ export const syncAddonUsage = onDocumentUpdated(
   async (event) => {
     const after = event.data?.after?.data();
     const companyId = event.params.companyId;
-    if (!after?.billing?.subscriptionId) {
+
+    if (!after?.billing?.subscriptionId || !after?.billing?.plan) {
+      console.log(`⏭️ Skipping ${companyId} — no active subscription or plan.`);
       return;
     }
 
-    // Count active users
-    const userSnap = await db
-      .collection("users")
-      .where("companyId", "==", companyId)
-      .where("status", "==", "active")
-      .get();
+    const currentPlan = after.billing.plan;
 
-    const activeUsers = userSnap.size;
-    const planUserLimit = after.limits?.userLimit ?? 5;
-    const paidAddonQty = Math.max(0, activeUsers - planUserLimit);
-
-    const currentQty = after.addons?.extraUser ?? 0;
-    if (paidAddonQty === currentQty) {
+    // 🧩 Skip enforcement for specific test company IDs if desired
+    // (e.g., your dev/test company should not be billed automatically)
+    if (!after.addons) {
+      console.warn(
+        `⚠️ No addons object on company ${companyId}, skipping sync.`
+      );
       return;
     }
 
-    console.log(
-      `🔄 Syncing add-ons for ${companyId}: ${paidAddonQty} extra users`
-    );
+    try {
+      // Count active users in Firestore
+      const userSnap = await db
+        .collection("users")
+        .where("companyId", "==", companyId)
+        .where("status", "==", "active")
+        .get();
 
-    await gateway.subscription.update(after.billing.subscriptionId, {
-      addOns: { update: [{ existingId: "extraUser", quantity: paidAddonQty }] },
-      prorateCharges: true,
-    } as any);
+      const activeUsers = userSnap.size;
+      const planUserLimit = after.limits?.userLimit ?? 5;
+      const paidAddonQty = Math.max(0, activeUsers - planUserLimit);
+      const currentQty = after.addons?.extraUser ?? 0;
 
-    await db.collection("companies").doc(companyId).update({
-      "addons.extraUser": paidAddonQty,
-      updatedAt: admin.firestore.Timestamp.now(),
-    });
+      // 🧩 If nothing changed, skip
+      if (paidAddonQty === currentQty) {
+        console.log(`✅ No change in add-on quantity for ${companyId}`);
+        return;
+      }
+
+      console.log(
+        `🔄 Syncing add-ons for ${companyId}: ${paidAddonQty} extra users (was ${currentQty})`
+      );
+
+      // Correct add-on ID mapping based on the current plan
+      const addonId = `${currentPlan}PlanExtraUser`; // ✅ Fix
+
+      // Update subscription in Braintree
+      const updatePayload: any =
+        paidAddonQty === 0
+          ? { addOns: { remove: [addonId] } }
+          : {
+              addOns: {
+                update: [{ existingId: addonId, quantity: paidAddonQty }],
+              },
+              prorateCharges: true,
+            };
+
+      const result = await gateway.subscription.update(
+        after.billing.subscriptionId,
+        updatePayload
+      );
+
+      if (!result.success) {
+        console.error("❌ Braintree update failed:", result.message);
+        throw new Error(result.message || "Addon sync failed");
+      }
+
+      // Update Firestore
+      await db.collection("companies").doc(companyId).update({
+        "addons.extraUser": paidAddonQty,
+        updatedAt: admin.firestore.Timestamp.now(),
+      });
+
+      console.log(
+        `✅ Updated ${addonId} to ${paidAddonQty} for ${companyId} (plan: ${currentPlan})`
+      );
+    } catch (err: any) {
+      console.error("🔥 syncAddonUsage failed for", companyId, err.message);
+    }
   }
 );
 
@@ -856,5 +1079,121 @@ export const listPlansAndAddons = onCall(async () => {
   } catch (error) {
     console.error("❌ Failed to list Braintree plans:", error);
     throw new HttpsError("internal", "Unable to fetch plans from Braintree.");
+  }
+});
+
+// 🔥 Automatically runs whenever a new company doc is created
+export const initCompanyBilling = onDocumentCreated(
+  "companies/{companyId}",
+  async (event) => {
+    const { companyId } = event.params;
+    const companyData = event.data?.data();
+    if (!companyData) {
+      return;
+    }
+
+    try {
+      // 1️⃣ Create Braintree customer for this company
+      const result = await gateway.customer.create({
+        company: companyData.name || companyId,
+        email: companyData.email || "unknown@displaygram.com",
+        customFields: { displaygramCompanyId: companyId },
+      });
+
+      if (!result.success || !result.customer?.id) {
+        logger.error("Failed to create Braintree customer:", result);
+        return;
+      }
+
+      // 2️⃣ Write billing object into Firestore
+      await db.doc(`companies/${companyId}`).set(
+        {
+          billing: {
+            braintreeCustomerId: result.customer.id,
+            plan: "free",
+            planPrice: 0,
+            userLimit: 5,
+            connectionLimit: 1,
+            addons: { extraUser: 0, extraConnection: 0 },
+            paymentStatus: "active",
+            renewalDate: null,
+            lastPaymentDate: null,
+            totalMonthlyCost: 0,
+          },
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      logger.info(`✅ Initialized billing for company ${companyId}`);
+    } catch (err) {
+      logger.error("initCompanyBilling failed:", err);
+    }
+  }
+);
+
+export const backfillBillingForCompanies = onCall(async (request) => {
+  const allowedIds = [
+    "DcYlhNNjYJQL2vrPPyrF",
+    "GogGKnnpNNLrHP3c7cTh",
+    "YBlIYQQt7vDPjhzYuZc7",
+    "gK0PgUa3vHkwlb1z8CeS",
+    "oL40cFJ3z2iv0neKyNDa",
+  ];
+
+  try {
+    const results: Record<string, any> = {};
+
+    for (const id of allowedIds) {
+      const ref = db.collection("companies").doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) {
+        results[id] = "❌ Not found in Firestore";
+        continue;
+      }
+
+      const data = snap.data()!;
+      if (data.billing?.braintreeCustomerId) {
+        results[id] = "✅ Already has billing info";
+        continue;
+      }
+
+      // 1️⃣ Create Braintree customer
+      const customerRes = await gateway.customer.create({
+        company: data.name || id,
+      });
+
+      if (!customerRes.success || !customerRes.customer?.id) {
+        results[id] = `❌ Failed to create customer: ${customerRes.message}`;
+        continue;
+      }
+
+      // 2️⃣ Write Firestore billing object
+      await ref.set(
+        {
+          billing: {
+            braintreeCustomerId: customerRes.customer.id,
+            plan: "free",
+            planPrice: 0,
+            userLimit: 5,
+            connectionLimit: 1,
+            addons: { extraUser: 0, extraConnection: 0 },
+            paymentStatus: "active",
+            renewalDate: null,
+            lastPaymentDate: null,
+            totalMonthlyCost: 0,
+          },
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      results[id] = `✅ Created customer ${customerRes.customer.id}`;
+    }
+
+    return results;
+  } catch (err: any) {
+    console.error("Backfill failed:", err);
+    throw new HttpsError("internal", "Backfill failed", err);
   }
 });

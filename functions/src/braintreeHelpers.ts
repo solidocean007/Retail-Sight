@@ -3,7 +3,6 @@
 import * as admin from "firebase-admin";
 import dotenv = require("dotenv");
 import braintree = require("braintree");
-import { HttpsError } from "firebase-functions/https";
 
 dotenv.config();
 if (!admin.apps.length) {
@@ -116,95 +115,29 @@ export async function updateBraintreeSubscription(
   subscriptionId: string,
   updateData: any
 ): Promise<braintree.Subscription> {
-  console.log("🧩 updateBraintreeSubscription called with:", {
-    subscriptionId,
-    updateData,
-  });
+  console.log("🔄 Updating subscription:", { subscriptionId, updateData });
 
   try {
-    const result: any = await gateway.subscription.update(subscriptionId, {
+    const result = await gateway.subscription.update(subscriptionId, {
       ...updateData,
-      prorateCharges: true,
-    } as any);
+      options: {
+        replaceAllAddOnsAndDiscounts: false,
+        prorateCharges: true,
+      },
+    });
 
-    if (!result?.success) {
-      console.error("❌ updateBraintreeSubscription failed:", {
-        message: result?.message,
-        errors: result?.errors?.deepErrors?.() || [],
-        transactionStatus: result?.transaction?.status || "n/a",
-        subscriptionAddOns: result?.subscription?.addOns || [],
-        raw: result,
-      });
-      throw new Error(
-        `Braintree subscription update failed: ${result?.message || "Unknown"}`
-      );
+    if (!result.success) {
+      throw new Error(result.message || "Braintree subscription update failed");
     }
 
-    console.log("✅ updateBraintreeSubscription success:", {
-      subscriptionId: result?.subscription?.id,
-      planId: result?.subscription?.planId,
-      addOns: result?.subscription?.addOns || [],
+    console.log("✅ Subscription updated:", {
+      id: result.subscription?.id,
+      plan: result.subscription?.planId,
     });
 
     return result.subscription;
   } catch (err: any) {
-    console.error("🔥 Exception in updateBraintreeSubscription:", {
-      message: err?.message,
-      type: err?.type,
-      name: err?.name,
-      stack: err?.stack,
-    });
+    console.error("🔥 updateBraintreeSubscription error:", err.message);
     throw err;
   }
 }
-
-export const createCustomerIfMissing = async (
-  gateway: braintree.BraintreeGateway,
-  companyRef: FirebaseFirestore.DocumentReference,
-  companyData: any,
-  email: string
-) => {
-  const billing = companyData.billing || {};
-  if (billing.braintreeCustomerId) {
-    console.log("✅ Existing customer ID:", billing.braintreeCustomerId);
-    return billing.braintreeCustomerId;
-  }
-
-  // Defensive defaults
-  const safeEmail = email || companyData.email || "no-email@displaygram.com";
-  const safeName =
-    companyData.name || companyData.companyName || "Displaygram User";
-  const safeCompany = companyData.companyName || safeName;
-
-  console.log("🆕 Creating Braintree customer:", {
-    firstName: safeName,
-    company: safeCompany,
-    email: safeEmail,
-  });
-
-  const result = await gateway.customer.create({
-    firstName: safeName,
-    company: safeCompany,
-    email: safeEmail,
-    customFields: { companyId: companyRef.id },
-  });
-
-  if (!result.success || !result.customer?.id) {
-    console.error("❌ Braintree customer creation failed:", result.message);
-    throw new HttpsError(
-      "internal",
-      `Failed to create Braintree customer: ${result.message}`
-    );
-  }
-
-  console.log("✅ Created Braintree customer:", result.customer.id);
-
-  await companyRef.update({
-    "billing.braintreeCustomerId": result.customer.id,
-    "billing.paymentStatus": "active",
-    updatedAt: new Date(),
-  });
-
-  return result.customer.id;
-};
-

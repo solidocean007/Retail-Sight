@@ -93,7 +93,8 @@ const ConfirmDialog: React.FC<{
 
 const BillingDashboard: React.FC = () => {
   const navigate = useNavigate();
-
+  const company = useSelector(selectCurrentCompany) as any;
+  console.log("Current company in billing:", company);
   const currentCompanyId = useSelector(selectCurrentCompany)?.id;
   const user = useSelector(
     (state: RootState) => state.user.currentUser
@@ -101,12 +102,18 @@ const BillingDashboard: React.FC = () => {
   const companyName = user?.company;
   const email = user?.email;
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [freePlan, setFreePlan] = useState<Plan | null>(null);
   const [currentPlanId, setCurrentPlanId] = useState<string>("free");
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showPaymentUpdate, setShowPaymentUpdate] = useState(false);
+  // Used when opening CheckoutModal from an add-on click (no payment method yet)
+  const [pendingAddonType, setPendingAddonType] = useState<
+    "extraUser" | "extraConnection" | null
+  >(null);
+  const [pendingAddonQty, setPendingAddonQty] = useState<number>(0);
 
   // confirmation modal state
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -129,7 +136,10 @@ const BillingDashboard: React.FC = () => {
         ...doc.data(),
       })) as Plan[];
       setPlans(planList);
-      console.log("plans: ", plans);
+      // setFreePlan(planList.filter((plan) => plan.braintreePlanId === "free")))
+      const freePlan =
+        planList.find((plan) => plan.braintreePlanId === "free") || null;
+      setFreePlan(freePlan);
     } catch (err) {
       console.error("Error loading plans:", err);
     } finally {
@@ -286,8 +296,28 @@ const BillingDashboard: React.FC = () => {
   };
 
   // Handler used by AddonCard
-  const handleAddonAdd = (type: "extraUser" | "extraConnection", qty: number) =>
+  // --- inside BillingDashboard.tsx ---
+
+  const handleAddonAdd = (
+    type: "extraUser" | "extraConnection",
+    qty: number
+  ) => {
+    const hasCustomer = billingInfo?.braintreeCustomerId;
+
+    // 🧩 If no Braintree customer, open checkout modal with free plan
+    if (!hasCustomer) {
+      console.log("🔔 No Braintree customer yet — opening checkout modal.");
+      setPendingAddonType(type);
+      setPendingAddonQty(qty);
+      setSelectedPlan(freePlan);
+      setModalOpen(true);
+      return;
+    }
+
+    // ✅ Otherwise show confirmation for add-on action
     openConfirm("add", type, qty);
+  };
+
   const handleAddonRemove = (
     type: "extraUser" | "extraConnection",
     qty: number
@@ -473,21 +503,44 @@ const BillingDashboard: React.FC = () => {
             Manage Add-ons
           </button> */}
           <div className="addons-grid">
+            {!billingInfo?.braintreeCustomerId && (
+              <div className="upgrade-note">
+                💳 Add a payment method to purchase add-ons.
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    if (!freePlan) {
+                      alert(
+                        "Free plan details not loaded yet. Please try again."
+                      );
+                      return;
+                    }
+                    setSelectedPlan(freePlan);
+                    setModalOpen(true);
+                  }}
+                >
+                  Add Payment
+                </button>
+              </div>
+            )}
+
             <AddonCard
-              title={`${currentPlanName} — Extra Users`}
+              title={`Extra Users`}
               description="Add more teammates to collaborate"
               unitPrice={addonPrices.user}
               current={addons.extraUser}
               onAdd={(count) => handleAddonAdd("extraUser", count)}
               onRemove={(count) => handleAddonRemove("extraUser", count)}
+              pendingRemoval={company?.billing?.pendingAddonRemoval}
             />
             <AddonCard
-              title={`${currentPlanName} — Extra Connections`}
+              title={` Extra Connections`}
               description="Grow your partner network"
               unitPrice={addonPrices.connection}
               current={addons.extraConnection}
               onAdd={(count) => handleAddonAdd("extraConnection", count)}
               onRemove={(count) => handleAddonRemove("extraConnection", count)}
+              pendingRemoval={company?.billing?.pendingAddonRemoval}
             />
           </div>
         </div>
@@ -541,12 +594,14 @@ const BillingDashboard: React.FC = () => {
           planName={selectedPlan?.name || "Payment Update"}
           planPrice={selectedPlan?.price || billingInfo?.price || 0}
           planFeatures={selectedPlan?.features || []}
-          planAddons={selectedPlan?.addons} // ✅ Add this line
+          planAddons={selectedPlan?.addons}
           isUpgrade={
             !!selectedPlan && selectedPlan.price > (billingInfo?.price || 0)
           }
           mode={showPaymentUpdate ? "update-card" : "subscribe"}
           billingInfo={billingInfo || undefined}
+          initialAddonType={pendingAddonType || undefined}
+          initialAddonQty={pendingAddonQty || 0}
         />
       )}
 

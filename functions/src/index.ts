@@ -29,6 +29,8 @@ import {
   syncAddonUsage,
   updatePaymentMethod,
   listPlansAndAddons,
+  initCompanyBilling,
+  backfillBillingForCompanies,
 } from "./braintreeHandlers";
 
 import { syncPlanLimits } from "./braintreeHelpers";
@@ -66,4 +68,6 @@ export {
   syncAddonUsage,
   updatePaymentMethod,
   listPlansAndAddons,
+  initCompanyBilling,
+  backfillBillingForCompanies,
 };

@@ -9,6 +9,11 @@ interface AddonCardProps {
   current: number;
   onAdd: (count: number) => void;
   onRemove: (count: number) => void;
+  pendingRemoval?: {
+    addonType: string;
+    quantityRemoved: number;
+    removeAt?: string | Date | { toDate: () => Date };
+  } | null;
 }
 
 const AddonCard: React.FC<AddonCardProps> = ({
@@ -18,6 +23,7 @@ const AddonCard: React.FC<AddonCardProps> = ({
   current,
   onAdd,
   onRemove,
+  pendingRemoval,
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState<"add" | "remove" | null>(null);
@@ -46,7 +52,19 @@ const AddonCard: React.FC<AddonCardProps> = ({
   };
 
   const monthlyCost = unitPrice * quantity;
-  const hasAddons = current > 0;
+
+  const formatDate = (date: any): string | null => {
+    if (!date) return null;
+    const d =
+      date.toDate?.() ? date.toDate() : typeof date === "string" ? new Date(date) : null;
+    return d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : null;
+  };
+
+  const isPending =
+    pendingRemoval?.addonType?.toLowerCase() === title.toLowerCase() &&
+    pendingRemoval?.quantityRemoved > 0;
+
+  const removalDate = isPending ? formatDate(pendingRemoval?.removeAt) : null;
 
   return (
     <div className="addon-card">
@@ -54,13 +72,23 @@ const AddonCard: React.FC<AddonCardProps> = ({
         <h4>{title}</h4>
         <span className="addon-price">${unitPrice.toFixed(2)}/ea</span>
       </div>
-      {/* <p className="addon-desc">{description}</p> */}
+
+      <p className="addon-desc">{description}</p>
 
       <div className="addon-current">
         <p>
           Current: <strong>{current}</strong>
         </p>
       </div>
+
+      {isPending && (
+        <div className="addon-pending">
+          <span>
+            ⏳ Scheduled for removal on{" "}
+            <strong>{removalDate || "next billing cycle"}</strong>
+          </span>
+        </div>
+      )}
 
       <div className="addon-controls">
         <input
@@ -71,17 +99,28 @@ const AddonCard: React.FC<AddonCardProps> = ({
           className="addon-input"
         />
         <div className="addon-buttons">
-          <button className="btn-addon-action add" onClick={handleAdd}>
-            Add
+          <button
+            className="btn-addon-action add"
+            onClick={handleAdd}
+            disabled={loading === "add"}
+          >
+            {loading === "add" ? "Adding..." : "Add"}
           </button>
 
-          {/* Only show Remove if there’s something to remove */}
           {current > 0 && (
-            <button className="btn-addon-action remove" onClick={handleRemove}>
-              Remove
+            <button
+              className="btn-addon-action remove"
+              onClick={handleRemove}
+              disabled={loading === "remove"}
+            >
+              {loading === "remove" ? "Removing..." : "Remove"}
             </button>
           )}
         </div>
+      </div>
+
+      <div className="addon-footer">
+        <p className="addon-monthly">+${monthlyCost.toFixed(2)} / month</p>
       </div>
     </div>
   );

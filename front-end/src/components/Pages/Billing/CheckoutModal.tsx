@@ -26,6 +26,8 @@ interface CheckoutModalProps {
   mode?: "subscribe" | "update-card";
   billingInfo?: BillingInfo;
   planAddons?: PlanAddons;
+  initialAddonType?: "extraUser" | "extraConnection";
+  initialAddonQty?: number;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -42,7 +44,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   mode = "subscribe",
   billingInfo,
   planAddons,
+  initialAddonType,
+  initialAddonQty,
 }) => {
+  const isFreePlan = planId === "free";
+
   const dropinRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
   const wrapperRef = useRef(null);
@@ -66,8 +72,17 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     [planAddons]
   );
 
+  useEffect(() => {
+    if (initialAddonType === "extraUser")
+      setAdditionalUserCount(initialAddonQty || 0);
+    if (initialAddonType === "extraConnection")
+      setAdditionalConnectionCount(initialAddonQty || 0);
+  }, [initialAddonType, initialAddonQty]);
+
   // --- Initialize Braintree drop-in ---
   useEffect(() => {
+    if (!open || !companyId) return; // ✅ guard
+    if (!dropinRef.current) return;
     if (open && dropinRef.current) {
       setDropinReady(false);
       (async () => {
@@ -116,12 +131,23 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
       const addons: any[] = [];
       if (additionalUserCount > 0)
-        addons.push({ id: "extraUser", quantity: additionalUserCount, action: "add" });
+        addons.push({
+          id: "extraUser",
+          quantity: additionalUserCount,
+          action: "add",
+        });
       if (additionalConnectionCount > 0)
-        addons.push({ id: "extraConnection", quantity: additionalConnectionCount, action: "add" });
+        addons.push({
+          id: "extraConnection",
+          quantity: additionalConnectionCount,
+          action: "add",
+        });
 
       if (isExistingSub) {
-        const updateFn = httpsCallable(functions, "updateSubscriptionWithProration");
+        const updateFn = httpsCallable(
+          functions,
+          "updateSubscriptionWithProration"
+        );
         const newPlanId = planId;
         const res: any = await updateFn({ companyId, newPlanId, addons });
 
@@ -157,7 +183,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       if (err?.code) console.error("Firebase Error Code:", err.code);
       if (err?.details) console.error("Firebase Error Details:", err.details);
       if (err?.message) console.error("Firebase Error Message:", err.message);
-      if (err?.response?.data) console.error("Response Data:", err.response.data);
+      if (err?.response?.data)
+        console.error("Response Data:", err.response.data);
       console.groupEnd();
       setError(err.message || "Payment failed. Check console for details.");
     } finally {
@@ -197,6 +224,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <p className="billing-note">
           {mode === "update-card"
             ? "Update your saved card details below."
+            : isFreePlan
+            ? "Start your Free plan and securely add payment details for future add-ons."
             : "Billed monthly • Cancel anytime"}
         </p>
 
@@ -219,7 +248,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
 
             <div className="addon-field">
-              <label>Additional Connections (${addonPrices.connection} each)</label>
+              <label>
+                Additional Connections (${addonPrices.connection} each)
+              </label>
               <input
                 type="number"
                 min={0}
@@ -280,6 +311,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             ? "Processing..."
             : mode === "update-card"
             ? "Update Card"
+            : isFreePlan
+            ? "Start Free Plan"
             : isUpgrade
             ? `Upgrade to ${planName}`
             : `Start ${planName || "Plan"}`}
