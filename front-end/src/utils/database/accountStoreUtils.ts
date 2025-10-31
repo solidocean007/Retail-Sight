@@ -1,3 +1,4 @@
+// accountStoreUtils.ts
 import {
   CompanyAccountType,
 } from "../types";

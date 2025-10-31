@@ -1,17 +1,18 @@
+// companyGoalsThunk.ts
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   addDoc,
   collection,
-  deleteDoc,
   deleteField,
   doc,
   serverTimestamp,
-  setDoc,
   updateDoc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { CompanyGoalType, UserType } from "../utils/types";
+import { CompanyGoalType, GoalAssignmentType, UserType } from "../utils/types";
 
+// ✅ Create new goal
 export const createCompanyGoalInFirestore = createAsyncThunk(
   "companyGoals/create",
   async (
@@ -31,16 +32,16 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
         createdByFirstName: currentUser.firstName,
         createdByLastName: currentUser.lastName,
       });
-      console.log("Goal created with ID:", goalRef.id);
+      console.log("✅ Goal created with ID:", goalRef.id);
       return { id: goalRef.id, ...goal };
     } catch (err: any) {
-      console.error("Error creating goal:", err);
+      console.error("❌ Error creating goal:", err);
       return thunkAPI.rejectWithValue(err.message);
     }
   }
 );
 
-// ✅ Update Goal
+// ✅ Update existing goal (supports new goalAssignments)
 export const updateCompanyGoalInFirestore = createAsyncThunk(
   "companyGoals/updateGoal",
   async ({
@@ -50,21 +51,50 @@ export const updateCompanyGoalInFirestore = createAsyncThunk(
     goalId: string;
     updatedFields: Partial<CompanyGoalType>;
   }) => {
-    const docRef = doc(db, "companyGoals", goalId);
-
-    // 🔧 Cast to allow FieldValue inside updateDoc only
+    const goalRef = doc(db, "companyGoals", goalId);
     const cleanedFields: Record<string, any> = { ...updatedFields };
 
+    // --- Handle field cleanup ---
     if (cleanedFields.perUserQuota === 0) {
-      cleanedFields.perUserQuota = deleteField(); // ✅ now allowed
+      cleanedFields.perUserQuota = deleteField();
     }
 
-    await updateDoc(docRef, cleanedFields);
-    return { goalId, updatedFields };
+    // --- Ensure assignments are saved atomically ---
+    if (Array.isArray(cleanedFields.goalAssignments)) {
+      cleanedFields.goalAssignments = cleanedFields.goalAssignments.map((a: GoalAssignmentType) => ({
+        uid: a.uid,
+        accountNumber: a.accountNumber.toString(),
+      }));
+
+      // 🔹 Maintain backward compatibility
+      const accountNumbers = Array.from(
+        new Set(cleanedFields.goalAssignments.map((a: GoalAssignmentType) => a.accountNumber))
+      );
+      cleanedFields.accountNumbersForThisGoal = accountNumbers;
+    }
+
+    try {
+      // Optional: merge with existing goal to preserve unedited fields
+      const snap = await getDoc(goalRef);
+      if (!snap.exists()) {
+        console.warn("⚠️ Goal not found during update:", goalId);
+        return { goalId, updatedFields };
+      }
+
+      const existing = snap.data();
+      const merged = { ...existing, ...cleanedFields };
+
+      await updateDoc(goalRef, merged);
+      console.log("✅ Goal updated:", goalId);
+      return { goalId, updatedFields: merged };
+    } catch (err: any) {
+      console.error("❌ Error updating goal:", err);
+      throw err;
+    }
   }
 );
 
-// ✅ Delete Goal
+// ✅ Delete (soft-delete)
 export const deleteCompanyGoalInFirestore = createAsyncThunk<
   void,
   { goalId: string },

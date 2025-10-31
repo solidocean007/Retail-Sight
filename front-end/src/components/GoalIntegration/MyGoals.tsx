@@ -41,13 +41,13 @@ const MyGoals: React.FC<MyGoalsProps> = () => {
 
   return (
     <Box className="my-goals-container">
-      <Typography
+      {/* <Typography
         variant={isMobile ? "h5" : "h3"}
         className="my-goals-title"
         gutterBottom
       >
         My Goals
-      </Typography>
+      </Typography> */}
 
       <Tabs
         value={tabIndex}

@@ -1,5 +1,7 @@
 .my-goals-container {
+  /* display: flex; */
   margin: 1rem;
+
 }
 
 .my-goals-title {

@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import {
   Typography,
   Collapse,
@@ -10,23 +9,20 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
+import { Timestamp } from "firebase/firestore";
 import { CompanyAccountType, CompanyGoalWithIdType } from "../../utils/types";
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
-// import AccountTable from "../AccountTable";
 import UserTableForGoals, { UserRowType } from "../UserTableForGoals";
-// import GoalViewerFilters from "../GoalViewerFilters";
 import EditCompanyGoalModal from "./EditCompanyGoalModal";
 import "./companyGoalCard.css";
-// import { mapAccountsWithStatus } from "./utils/goalModeUtils";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
-import { Timestamp } from "firebase/firestore";
 
 interface CompanyGoalCardProps {
   goal: CompanyGoalWithIdType;
   expanded: boolean;
   onToggleExpand: (goalId: string) => void;
-  salesRouteNum?: string; // 🔧 new
+  salesRouteNum?: string;
   mobile?: boolean;
   onDelete?: (id: string) => void;
   onEdit?: (
@@ -46,45 +42,62 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   onEdit,
   onViewPostModal,
 }) => {
-  const navigate = useNavigate();
   const user = useSelector(selectUser);
-  const isMobileScreen = useMediaQuery("(max-width: 600px)");
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const activeCompanyUsers = companyUsers.filter((u) => u.status === "active");
-  const inactiveUsers = companyUsers.filter((u) => u.status !== "active");
 
   const goalIsForSupervisor = goal.targetRole === "supervisor";
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // ✅ Resolve relevant accounts for this goal
+  // --- Unified account list for this goal (new or old) ---
+  const accountNumbersForThisGoal = useMemo(() => {
+    if (goal.goalAssignments?.length) {
+      return Array.from(
+        new Set(goal.goalAssignments.map((g) => g.accountNumber))
+      );
+    }
+    return goal.accountNumbersForThisGoal || [];
+  }, [goal.goalAssignments, goal.accountNumbersForThisGoal]);
+
+  // --- Accounts directly tied to this goal ---
   const effectiveAccounts = useMemo(() => {
-    const allMatching = allCompanyAccounts.filter((acc) =>
-      goal.accountNumbersForThisGoal?.includes(acc.accountNumber.toString())
+    const baseAccounts = allCompanyAccounts.filter((acc) =>
+      accountNumbersForThisGoal.includes(acc.accountNumber.toString())
     );
-
-    return salesRouteNum
-      ? allMatching.filter((acc) =>
-          (acc.salesRouteNums || []).includes(salesRouteNum)
-        )
-      : allMatching;
-  }, [allCompanyAccounts, goal.accountNumbersForThisGoal, salesRouteNum]);
-
-  const handleGoalUpdate = (updatedFields: Partial<CompanyGoalWithIdType>) => {
-    if (onEdit) onEdit(goal.id, updatedFields);
-  };
+    if (salesRouteNum) {
+      return baseAccounts.filter((acc) =>
+        (acc.salesRouteNums || []).includes(salesRouteNum)
+      );
+    }
+    return baseAccounts;
+  }, [allCompanyAccounts, accountNumbersForThisGoal, salesRouteNum]);
 
   const total = effectiveAccounts.length;
 
+  // --- Submissions ---
   const submitted = useMemo(() => {
     if (!goal.submittedPosts) return 0;
 
+    if (goal.goalAssignments?.length) {
+      // Filter posts whose (uid, accountNumber) pair matches any assignment
+      const validPairs = new Set(
+        goal.goalAssignments.map(
+          (a) => `${a.uid}-${a.accountNumber.toString()}`
+        )
+      );
+      return goal.submittedPosts.filter((p) => {
+        const postUid = p.submittedBy?.uid;
+        const acct = p.account?.accountNumber?.toString();
+        return postUid && acct && validPairs.has(`${postUid}-${acct}`);
+      }).length;
+    }
+
+    // Fallback legacy
     if (salesRouteNum) {
       const userAccounts = effectiveAccounts.map((acc) =>
         acc.accountNumber.toString()
       );
-
       return goal.submittedPosts.filter(
         (post) =>
           post.account &&
@@ -93,214 +106,163 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     }
 
     return goal.submittedPosts.length;
-  }, [goal.submittedPosts, salesRouteNum, effectiveAccounts]); // this is rendering 48 now.  i had 44 in firestore then i edited 4 now i think i may have duplicates.
+  }, [
+    goal.submittedPosts,
+    goal.goalAssignments,
+    salesRouteNum,
+    effectiveAccounts,
+  ]);
 
   const percentage = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
-  const matchedAccounts = useMemo(() => {
-    // Sales goals → accounts come from accountNumbersForThisGoal
-    const base = allCompanyAccounts.filter((acc) =>
-      goal.accountNumbersForThisGoal?.includes(acc.accountNumber.toString())
-    );
-
-    if (goalIsForSupervisor) {
-      // Supervisor goals → Admins/Superadmins see all accounts,
-      // supervisors only see accounts that overlap with their reps
-      if (user?.role === "supervisor") {
-        const repsReportingToMe = companyUsers.filter(
-          (u) => u.reportsTo === user.uid && u.salesRouteNum
-        );
-        const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
-        return base.filter((acc) =>
-          (acc.salesRouteNums || []).some((rn) => myRepsRouteNums.includes(rn))
-        );
-      }
-
-      if (user?.role === "admin" || user?.role === "super-admin") {
-        return base;
-      }
-
-      return []; // regular sales shouldn't see supervisor goals
-    }
-
-    // Sales goals → if salesRouteNum is provided, filter by that
-    return salesRouteNum
-      ? base.filter((acc) => (acc.salesRouteNums || []).includes(salesRouteNum))
-      : base;
-  }, [
-    allCompanyAccounts,
-    goal.accountNumbersForThisGoal,
-    goalIsForSupervisor,
-    user?.uid,
-    user?.role,
-    companyUsers,
-    salesRouteNum,
-  ]);
-
-  const salesRouteNumsForGoal = useMemo(() => {
-    if (salesRouteNum && typeof salesRouteNum === "string") {
-      return [salesRouteNum];
-    }
-
-    return Array.from(
-      new Set(matchedAccounts.flatMap((acc) => acc.salesRouteNums || []))
-    );
-  }, [matchedAccounts, salesRouteNum]);
-
-  const usersForGoal = useMemo(() => {
-    if (!goal.accountNumbersForThisGoal) return [];
-
-    // Get accounts tied to this goal
-    const accountsForGoal = allCompanyAccounts.filter((acc) =>
-      goal.accountNumbersForThisGoal?.includes(acc.accountNumber.toString())
-    );
-
-    // 🔹 Sales goals
-    if (goal.targetRole === "sales") {
-      return companyUsers.filter((u) =>
-        accountsForGoal.some((acc) =>
-          (acc.salesRouteNums || []).includes(u.salesRouteNum || "")
-        )
-      );
-    }
-
-    // 🔹 Supervisor goals
-    if (goal.targetRole === "supervisor") {
-      // Supervisors who manage reps tied to these accounts
-      const repsForGoal = companyUsers.filter((u) =>
-        accountsForGoal.some((acc) =>
-          (acc.salesRouteNums || []).includes(u.salesRouteNum || "")
-        )
-      );
-
-      const supervisorUids = new Set(
-        repsForGoal.map((r) => r.reportsTo).filter(Boolean)
-      );
-      return companyUsers.filter((u) => supervisorUids.has(u.uid));
-    }
-
-    return [];
-  }, [
-    goal.accountNumbersForThisGoal,
-    goal.targetRole,
-    allCompanyAccounts,
-    companyUsers,
-  ]);
-
+  // --- Build user rows ---
+  // 🧩 Build user+account mappings (modern and legacy)
   const userBasedRows = useMemo(() => {
-    if (!goal.accountNumbersForThisGoal) return [];
+    const usingAssignments =
+      Array.isArray(goal.goalAssignments) && goal.goalAssignments.length > 0;
 
-    // Accounts tied to this goal
     const accountsForGoal = allCompanyAccounts.filter((acc) =>
-      goal.accountNumbersForThisGoal?.includes(acc.accountNumber.toString())
+      accountNumbersForThisGoal.includes(acc.accountNumber.toString())
     );
 
-    // If a specific salesRouteNum is passed → filter just that user
+    // 🧩 Step 1 — If salesRouteNum is passed, limit users to that single user
+    let scopedUsers = companyUsers;
     if (salesRouteNum) {
-      const currentUser = companyUsers.find(
+      scopedUsers = companyUsers.filter(
         (u) => u.salesRouteNum === salesRouteNum
       );
-      if (!currentUser) return [];
-
-      const accountsForUser =
-        goal.targetRole === "sales"
-          ? accountsForGoal.filter((acc) =>
-              (acc.salesRouteNums || []).includes(salesRouteNum)
-            )
-          : accountsForGoal.filter((acc) =>
-              (acc.salesRouteNums || []).some((rn) =>
-                companyUsers.some(
-                  (rep) =>
-                    rep.salesRouteNum === rn &&
-                    rep.reportsTo === currentUser.uid
-                )
-              )
-            );
-
-      return [{ user: currentUser, accounts: accountsForUser }];
     }
 
-    // Default: build rows for all relevant users
-    return usersForGoal.map((u) => {
-      let accountsForUser: CompanyAccountType[] = [];
+    // 🆕 Modern model
+    if (usingAssignments) {
+      return scopedUsers
+        .filter((u) => goal.goalAssignments!.some((g) => g.uid === u.uid))
+        .map((u) => {
+          const assignedAccountNumbers = goal
+            .goalAssignments!.filter((g) => g.uid === u.uid)
+            .map((g) => g.accountNumber.toString());
+          const accountsForUser = allCompanyAccounts.filter((acc) =>
+            assignedAccountNumbers.includes(acc.accountNumber.toString())
+          );
+          return { user: u, accounts: accountsForUser };
+        });
+    }
 
-      if (goal.targetRole === "sales") {
-        accountsForUser = accountsForGoal.filter((acc) =>
-          (acc.salesRouteNums || []).includes(u.salesRouteNum || "")
-        );
-      } else if (goal.targetRole === "supervisor") {
-        const reps = companyUsers.filter(
-          (rep) => rep.reportsTo === u.uid && rep.salesRouteNum
-        );
-        const repRouteNums = reps.map((r) => r.salesRouteNum);
-        accountsForUser = accountsForGoal.filter((acc) =>
-          (acc.salesRouteNums || []).some((rn) => repRouteNums.includes(rn))
-        );
-      }
+    // 🕰 Legacy model
+    if (!accountsForGoal.length) return [];
 
-      return { user: u, accounts: accountsForUser };
-    });
+    const legacyUserRows = scopedUsers
+      .map((u) => {
+        let accountsForUser: CompanyAccountType[] = [];
+
+        if (goal.targetRole === "sales") {
+          accountsForUser = accountsForGoal.filter((acc) =>
+            (acc.salesRouteNums || []).includes(u.salesRouteNum || "")
+          );
+        } else if (goal.targetRole === "supervisor") {
+          const reps = companyUsers.filter(
+            (rep) => rep.reportsTo === u.uid && rep.salesRouteNum
+          );
+          const repRouteNums = reps.map((r) => r.salesRouteNum);
+          accountsForUser = accountsForGoal.filter((acc) =>
+            (acc.salesRouteNums || []).some((rn) => repRouteNums.includes(rn))
+          );
+        }
+
+        return { user: u, accounts: accountsForUser };
+      })
+      .filter(({ accounts }) => accounts.length > 0);
+
+    return legacyUserRows;
   }, [
-    goal.accountNumbersForThisGoal,
-    goal.targetRole,
-    allCompanyAccounts,
-    usersForGoal,
+    goal.goalAssignments,
     companyUsers,
-    salesRouteNum,
+    allCompanyAccounts,
+    accountNumbersForThisGoal,
+    goal.targetRole,
+    salesRouteNum, // ✅ re-run when viewing single user
   ]);
 
-  const userRows: UserRowType[] = userBasedRows.map(({ user, accounts }) => {
-    const postsForUser = (goal.submittedPosts || []).filter(
-      (p) => p.submittedBy?.uid === user.uid
-    );
+  // 🧩 Build final UserTableForGoals rows
+  const userRows: UserRowType[] = useMemo(() => {
+    return userBasedRows.map(({ user, accounts }) => {
+      const postsForUser = (goal.submittedPosts || []).filter(
+        (p) => p.submittedBy?.uid === user.uid
+      );
 
-    const submissions = postsForUser.map((p) => ({
-      postId: p.postId,
-      storeName: p.account?.accountName || "Unknown Store",
-      submittedAt:
-        typeof p.submittedAt === "string"
-          ? p.submittedAt
-          : p.submittedAt instanceof Timestamp
-          ? p.submittedAt.toDate().toISOString()
-          : "",
-    }));
-
-    const submittedAccountNums = new Set(
-      postsForUser
-        .map((p) => p.account?.accountNumber?.toString())
-        .filter(Boolean) // remove undefined/null
-    );
-
-    const unsubmittedAccounts = accounts
-      .filter((acc) => !submittedAccountNums.has(acc.accountNumber.toString()))
-      .map((acc) => ({
-        accountName: acc.accountName,
-        accountAddress: acc.accountAddress || "",
-        accountNumber: acc.accountNumber.toString(),
+      const submissions = postsForUser.map((p) => ({
+        postId: p.postId,
+        storeName: p.account?.accountName || "Unknown Store",
+        submittedAt:
+          typeof p.submittedAt === "string"
+            ? p.submittedAt
+            : p.submittedAt instanceof Timestamp
+            ? p.submittedAt.toDate().toISOString()
+            : "",
       }));
 
-    const total = accounts.length;
-    const completed = submissions.length;
-    const userCompletionPercentage =
-      total > 0 ? Math.round((completed / total) * 100) : 0;
+      const submittedAccountNums = new Set(
+        postsForUser
+          .map((p) => p.account?.accountNumber?.toString())
+          .filter(Boolean)
+      );
 
-    return {
-      uid: user.uid,
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      isInactive: (user.status ?? "active") !== "active",
-      submissions,
-      userCompletionPercentage,
-      unsubmittedAccounts,
-    };
-  });
-
-  const percentageOfGoal =
-    goal.perUserQuota && salesRouteNumsForGoal.length > 0
-      ? Math.round(
-          (submitted / (salesRouteNumsForGoal.length * goal.perUserQuota)) * 100
+      const unsubmittedAccounts = accounts
+        .filter(
+          (acc) => !submittedAccountNums.has(acc.accountNumber.toString())
         )
-      : 0;
+        .map((acc) => ({
+          accountName: acc.accountName,
+          accountAddress: acc.accountAddress || "",
+          accountNumber: acc.accountNumber.toString(),
+        }));
+
+      const total = accounts.length;
+      const completed = submissions.length;
+
+      let userCompletionPercentage = 0;
+
+      // 🎯 If goal has per-user quota, use that as completion basis
+      if (goal.perUserQuota && goal.perUserQuota > 0) {
+        userCompletionPercentage = Math.min(
+          100,
+          Math.round((completed / goal.perUserQuota) * 100)
+        );
+      } else {
+        // fallback: percentage of assigned accounts
+        userCompletionPercentage =
+          total > 0 ? Math.round((completed / total) * 100) : 0;
+      }
+
+      return {
+        uid: user.uid,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        isInactive: (user.status ?? "active") !== "active",
+        submissions,
+        userCompletionPercentage,
+        unsubmittedAccounts,
+      };
+    });
+  }, [userBasedRows, goal.submittedPosts]);
+
+  // ✅ More accurate per-user quota progress
+  const percentageOfGoal = useMemo(() => {
+    if (!goal.perUserQuota || userRows.length === 0) return 0;
+
+    const ratios = userRows.map((r) => {
+      const completed = Math.min(r.submissions.length, goal.perUserQuota);
+      return completed / goal.perUserQuota;
+    });
+
+    const avgRatio = ratios.reduce((sum, r) => sum + r, 0) / userRows.length;
+
+    return Math.round(avgRatio * 100);
+  }, [goal.perUserQuota, userRows]);
+
+  const handleGoalUpdate = (updatedFields: Partial<CompanyGoalWithIdType>) => {
+    if (onEdit) onEdit(goal.id, updatedFields);
+  };
 
   return (
     <div
@@ -325,8 +287,8 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
-          {(onDelete && user?.role === "admin") ||
-            (user?.role === "super-admin" && (
+          {onDelete &&
+            (user?.role === "admin" || user?.role === "super-admin") && (
               <Box display="flex" gap={1}>
                 <Button
                   variant="outlined"
@@ -334,12 +296,11 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
                   className="delete-button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onDelete) onDelete(goal.id);
+                    onDelete?.(goal.id);
                   }}
                 >
                   Delete
                 </Button>
-
                 <Button
                   variant="outlined"
                   size="small"
@@ -348,9 +309,10 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
                   Edit
                 </Button>
               </Box>
-            ))}
+            )}
         </div>
       </div>
+
       <div className="info-layout-row">
         <div className="info-layout">
           <div className="info-description">
@@ -365,8 +327,6 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         </div>
         <div className="goal-progress-section">
           <Typography variant="caption">Goal Progress</Typography>
-
-          {/* <div className={isMobileScreen ? "left" : "right"} mt={1}> */}
           <div className="goal-progress-numbers">
             <div style={{ display: "flex", alignItems: "center" }}>
               <span>{submitted} Total Submissions</span>
@@ -407,7 +367,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
             variant="outlined"
             size="small"
             onClick={(e) => {
-              e.stopPropagation(); // ✅ Prevents collapsing the year accidentally
+              e.stopPropagation();
               onToggleExpand(goal.id);
             }}
           >
