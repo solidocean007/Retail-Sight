@@ -129,23 +129,31 @@ const BillingDashboard: React.FC = () => {
   // --- Fetch all plans --- this is a frontend call to get plans is it possible a user can change what is returned here to corrupt the pricing?  pricing is declared in braintree but ..
   //  why do we fetch this on every render?  should it be memoized or cached?  i really dont want to add this to cach if i dont have to.
   const fetchPlans = useCallback(async () => {
-    try {
-      const querySnap = await getDocs(collection(db, "plans"));
-      const planList: Plan[] = querySnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Plan[];
-      setPlans(planList);
-      // setFreePlan(planList.filter((plan) => plan.braintreePlanId === "free")))
-      const freePlan =
-        planList.find((plan) => plan.braintreePlanId === "free") || null;
-      setFreePlan(freePlan);
-    } catch (err) {
-      console.error("Error loading plans:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  try {
+    const querySnap = await getDocs(collection(db, "plans"));
+    const planList: Plan[] = querySnap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Plan[];
+    console.log(planList)
+    // Show hidden/internal plans only if Healy company
+    const visiblePlans =
+      currentCompanyId === "3WOAwgj3l3bnvHqE4IV3"
+        ? planList
+        : planList.filter((p) => p.id != "healy_plan");
+
+    setPlans(visiblePlans);
+
+    const freePlan =
+      planList.find((plan) => plan.braintreePlanId === "free") || null;
+    setFreePlan(freePlan);
+  } catch (err) {
+    console.error("Error loading plans:", err);
+  } finally {
+    setLoading(false);
+  }
+}, [currentCompanyId]);
+
 
   // --- Fetch current company billing ---
   const fetchCompanyPlan = useCallback(async () => {
