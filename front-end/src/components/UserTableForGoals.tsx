@@ -123,13 +123,17 @@ const UserTableForGoals: React.FC<Props> = ({
                         )}
                       </div>
 
-                      <div
-                        className={getCompletionClass(
-                          user.userCompletionPercentage
-                        )}
+                      <span
+                        className={`completion-pill ${
+                          user.userCompletionPercentage >= 90
+                            ? "high"
+                            : user.userCompletionPercentage >= 50
+                            ? "mid"
+                            : "low"
+                        }`}
                       >
                         {user.userCompletionPercentage}%
-                      </div>
+                      </span>
                     </div>
 
                     {/* Show submissions */}

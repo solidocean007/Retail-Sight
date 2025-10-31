@@ -72,17 +72,15 @@ const MyCompanyGoals: React.FC = () => {
       });
     };
 
-    const current = userCompanyGoals.filter((goal) => {
-      const start = new Date(goal.goalStartDate);
-      const end = new Date(goal.goalEndDate);
-      return start <= today && end >= today;
-    });
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    const current = userCompanyGoals.filter(
+      (goal) => goal.goalStartDate <= todayStr && goal.goalEndDate >= todayStr
+    );
     const upcoming = userCompanyGoals.filter(
-      (goal) => new Date(goal.goalStartDate) > today
+      (goal) => goal.goalStartDate > todayStr
     );
-    const past = userCompanyGoals.filter(
-      (goal) => new Date(goal.goalEndDate) < today
-    );
+    const past = userCompanyGoals.filter((goal) => goal.goalEndDate < todayStr);
 
     return {
       currentGoals: sortGoals(current),
@@ -90,7 +88,6 @@ const MyCompanyGoals: React.FC = () => {
       pastGoals: sortGoals(past),
     };
   }, [userCompanyGoals, sortOrder, today]);
-
 
   const archivedGoals = sortedGoals.pastGoals;
 

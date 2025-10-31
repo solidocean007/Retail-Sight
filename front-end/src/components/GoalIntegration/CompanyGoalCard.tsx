@@ -219,8 +219,20 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
       const total = accounts.length;
       const completed = submissions.length;
-      const userCompletionPercentage =
-        total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      let userCompletionPercentage = 0;
+
+      // 🎯 If goal has per-user quota, use that as completion basis
+      if (goal.perUserQuota && goal.perUserQuota > 0) {
+        userCompletionPercentage = Math.min(
+          100,
+          Math.round((completed / goal.perUserQuota) * 100)
+        );
+      } else {
+        // fallback: percentage of assigned accounts
+        userCompletionPercentage =
+          total > 0 ? Math.round((completed / total) * 100) : 0;
+      }
 
       return {
         uid: user.uid,
@@ -234,10 +246,19 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     });
   }, [userBasedRows, goal.submittedPosts]);
 
-  const percentageOfGoal =
-    goal.perUserQuota && userRows.length > 0
-      ? Math.round((submitted / (userRows.length * goal.perUserQuota)) * 100)
-      : 0;
+  // ✅ More accurate per-user quota progress
+  const percentageOfGoal = useMemo(() => {
+    if (!goal.perUserQuota || userRows.length === 0) return 0;
+
+    const ratios = userRows.map((r) => {
+      const completed = Math.min(r.submissions.length, goal.perUserQuota);
+      return completed / goal.perUserQuota;
+    });
+
+    const avgRatio = ratios.reduce((sum, r) => sum + r, 0) / userRows.length;
+
+    return Math.round(avgRatio * 100);
+  }, [goal.perUserQuota, userRows]);
 
   const handleGoalUpdate = (updatedFields: Partial<CompanyGoalWithIdType>) => {
     if (onEdit) onEdit(goal.id, updatedFields);
