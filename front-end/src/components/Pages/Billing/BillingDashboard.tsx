@@ -42,7 +42,7 @@ interface BillingAddons {
 
 export interface BillingInfo {
   plan: string;
-  price: number;
+  planPrice: number;
   braintreeCustomerId: string;
   subscriptionId: string;
   paymentStatus?: "active" | "past_due" | "canceled";
@@ -129,31 +129,30 @@ const BillingDashboard: React.FC = () => {
   // --- Fetch all plans --- this is a frontend call to get plans is it possible a user can change what is returned here to corrupt the pricing?  pricing is declared in braintree but ..
   //  why do we fetch this on every render?  should it be memoized or cached?  i really dont want to add this to cach if i dont have to.
   const fetchPlans = useCallback(async () => {
-  try {
-    const querySnap = await getDocs(collection(db, "plans"));
-    const planList: Plan[] = querySnap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Plan[];
-    console.log(planList)
-    // Show hidden/internal plans only if Healy company
-    const visiblePlans =
-      currentCompanyId === "3WOAwgj3l3bnvHqE4IV3"
-        ? planList
-        : planList.filter((p) => p.id != "healy_plan");
+    try {
+      const querySnap = await getDocs(collection(db, "plans"));
+      const planList: Plan[] = querySnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Plan[];
+      console.log(planList);
+      // Show hidden/internal plans only if Healy company
+      const visiblePlans =
+        currentCompanyId === "3WOAwgj3l3bnvHqE4IV3"
+          ? planList
+          : planList.filter((p) => p.id != "healy_plan");
 
-    setPlans(visiblePlans);
+      setPlans(visiblePlans);
 
-    const freePlan =
-      planList.find((plan) => plan.braintreePlanId === "free") || null;
-    setFreePlan(freePlan);
-  } catch (err) {
-    console.error("Error loading plans:", err);
-  } finally {
-    setLoading(false);
-  }
-}, [currentCompanyId]);
-
+      const freePlan =
+        planList.find((plan) => plan.braintreePlanId === "free") || null;
+      setFreePlan(freePlan);
+    } catch (err) {
+      console.error("Error loading plans:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentCompanyId]);
 
   // --- Fetch current company billing ---
   const fetchCompanyPlan = useCallback(async () => {
@@ -185,7 +184,6 @@ const BillingDashboard: React.FC = () => {
 
     return () => unsubscribe();
   }, [currentCompanyId]);
-
   // Initial loads
   useEffect(() => {
     fetchPlans();
@@ -360,7 +358,7 @@ const BillingDashboard: React.FC = () => {
       return;
     }
 
-    const currentPrice = billingInfo.price || 0;
+    const currentPrice = billingInfo.planPrice || 0;
     const newPrice = selectedPlan.price;
     const currentPlanName =
       plans.find((p) => p.braintreePlanId === currentPlanId)?.name || "Free";
@@ -374,14 +372,12 @@ const BillingDashboard: React.FC = () => {
       } else if (newPrice < currentPrice) {
         // 🔽 Downgrade flow
         const isFree = selectedPlan.braintreePlanId === "free";
-
         const confirmed = window.confirm(
           isFree
             ? `Downgrading to the Free plan will cancel your subscription immediately. Continue?`
             : `Downgrading to ${selectedPlan.name} will take effect at your next billing cycle. Continue?`
         );
         if (!confirmed) return;
-
         const cancelFn = httpsCallable(functions, "cancelSubscription");
         await cancelFn({ companyId: currentCompanyId });
 
@@ -467,7 +463,7 @@ const BillingDashboard: React.FC = () => {
           <div className="summary-left">
             <div className="summary-header">
               <h3 className="plan-name">
-                Current Plan: {currentPlanName} — ${billingInfo?.price}/month
+                Current Plan: {currentPlanName} — ${billingInfo?.planPrice}/month
               </h3>
             </div>
 
@@ -496,20 +492,6 @@ const BillingDashboard: React.FC = () => {
         )}
 
         <div className="addon-summary">
-          {/* <p>
-            You currently have <strong>{addons.extraUsers}</strong> extra users
-            and <strong>{addons.extraConnections}</strong> extra connections.
-          </p> */}
-          {/* <button
-            className="btn-addon"
-            onClick={() =>
-              document
-                .querySelector(".addons-section")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
-          >
-            Manage Add-ons
-          </button> */}
           <div className="addons-grid">
             {!billingInfo?.braintreeCustomerId && (
               <div className="upgrade-note">
@@ -600,11 +582,11 @@ const BillingDashboard: React.FC = () => {
           companyName={companyName}
           email={email}
           planName={selectedPlan?.name || "Payment Update"}
-          planPrice={selectedPlan?.price || billingInfo?.price || 0}
+          planPrice={selectedPlan?.price || billingInfo?.planPrice || 0}
           planFeatures={selectedPlan?.features || []}
           planAddons={selectedPlan?.addons}
           isUpgrade={
-            !!selectedPlan && selectedPlan.price > (billingInfo?.price || 0)
+            !!selectedPlan && selectedPlan.price > (billingInfo?.planPrice || 0)
           }
           mode={showPaymentUpdate ? "update-card" : "subscribe"}
           billingInfo={billingInfo || undefined}
