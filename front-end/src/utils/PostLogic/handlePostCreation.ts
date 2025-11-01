@@ -8,6 +8,7 @@ import {
 } from "../types";
 import { auth, db, storage } from "../firebase";
 import {
+  deleteObject,
   getDownloadURL,
   ref as storageRef,
   uploadBytesResumable,
@@ -22,28 +23,24 @@ import {
 } from "firebase/firestore";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { selectUser } from "../../Slices/userSlice";
-import { resizeImage } from "../../images/resizeImages";
 import { useAppDispatch } from "../store";
 import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementToGalloAxis";
 import { updateGoalWithSubmission } from "../helperFunctions/updateGoalWithSubmission";
 import { addPostsToIndexedDB } from "../database/indexedDBUtils";
 import { addNewPost } from "../../Slices/postsSlice";
-import { getOptimizedSizes } from "./getOptimizedSizes";
 import { buildPostPayload } from "./buildPostPayload";
 import { addPostToFirestore } from "./updateFirestore";
 import { normalizePost } from "../normalizePost";
 import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 import { createManualAccountThunk } from "../../thunks/manulAccountsThunk";
+import { logAiFeedback } from "../../hooks/logAiFeedback";
 
-// Helper to wrap a Firebase storage upload task into a Promise
 function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
   return new Promise((resolve, reject) => {
     task.on(
       "state_changed",
-      () => {
-        /* progress handled externally */
-      },
-      (error) => reject(error),
+      () => {},
+      reject,
       () => resolve(task.snapshot)
     );
   });
@@ -67,66 +64,49 @@ export const useHandlePostSubmission = () => {
     if (!user) throw new Error("Auth missing");
 
     setIsUploading(true);
-    setUploadStatusText("📸 Optimizing image...");
+    setUploadStatusText("☁️ Preparing post...");
 
     let newDocRef: DocumentReference | undefined;
+
     try {
-      let totalBytes = 0;
-      let totalTransferred = 0;
-
-      const { original, resized } = await getOptimizedSizes(selectedFile);
-
-      // ✅ Use one consistent timestamp for folder
-      const dateString = new Date().toISOString().split("T")[0];
-      const folderId = `${user.uid}-${Date.now()}`;
-
-      // 🔄 ORIGINAL IMAGE
-      const originalBlob = await resizeImage(
-        selectedFile,
-        original[0],
-        original[1]
+      // ✅ 1. Check if image already uploaded (pre-processed in UploadImage)
+      const alreadyUploaded = post.imageUrl?.startsWith(
+        "https://firebasestorage.googleapis.com"
       );
-      totalBytes += originalBlob.size;
 
-      const originalRef = storageRef(
-        storage,
-        `images/${dateString}/${folderId}/original.jpg`
-      );
-      const origTask = uploadBytesResumable(originalRef, originalBlob);
+      let finalImageUrl = post.imageUrl || "";
+      let finalOriginalUrl = post.originalImageUrl || post.imageUrl || "";
 
-      origTask.on("state_changed", (snap) => {
-        totalTransferred = snap.bytesTransferred;
-        setUploadProgress((totalTransferred / totalBytes) * 100);
-      });
-      await uploadTaskAsPromise(origTask);
-      const originalUrl = await getDownloadURL(originalRef);
+      if (!alreadyUploaded && selectedFile) {
+        // 🧠 Fall back to old upload logic (only if image not pre-uploaded)
+        setUploadStatusText("📸 Uploading image...");
 
-      // 🔄 RESIZED IMAGE
-      const resizedBlob = await resizeImage(
-        selectedFile,
-        resized[0],
-        resized[1]
-      );
-      totalBytes += resizedBlob.size;
+        const dateString = new Date().toISOString().split("T")[0];
+        const folderId = `${user.uid}-${Date.now()}`;
+        const originalRef = storageRef(
+          storage,
+          `images/${dateString}/${folderId}/original.jpg`
+        );
 
-      const resizedRef = storageRef(
-        storage,
-        `images/${dateString}/${folderId}/resized.jpg`
-      );
-      const resTask = uploadBytesResumable(resizedRef, resizedBlob);
+        const task = uploadBytesResumable(originalRef, selectedFile);
+        task.on("state_changed", (snap) => {
+          const pct = (snap.bytesTransferred / snap.totalBytes) * 100;
+          setUploadProgress(pct);
+        });
 
-      setUploadStatusText("☁️ Uploading images...");
-      resTask.on("state_changed", (snap) => {
-        totalTransferred = originalBlob.size + snap.bytesTransferred;
-        setUploadProgress((totalTransferred / totalBytes) * 100);
-      });
-      const resSnapshot = await uploadTaskAsPromise(resTask);
-      const resizedUrl = await getDownloadURL(resSnapshot.ref);
+        await uploadTaskAsPromise(task);
+        finalImageUrl = await getDownloadURL(task.snapshot.ref);
+        finalOriginalUrl = finalImageUrl;
 
-      // 📄 Prepare Firestore payload
+        setUploadStatusText("✅ Image upload complete");
+      } else {
+        console.log("✅ Skipping image upload — already uploaded earlier");
+      }
+
+      // ✅ 2. Prepare and save Firestore doc
       const payload: FirestorePostPayload = buildPostPayload({
         ...post,
-        imageUrl: "", // placeholder
+        imageUrl: finalImageUrl,
         postUser: post.postUser ?? userData,
       });
 
@@ -142,22 +122,38 @@ export const useHandlePostSubmission = () => {
         await updateGoalWithSubmission(post, postId);
       }
 
+      // ✅ 3. Update image URLs + timestamp
       await updateDoc(newDocRef, {
-        imageUrl: resizedUrl,
-        originalImageUrl: originalUrl,
+        imageUrl: finalImageUrl,
+        originalImageUrl: finalOriginalUrl,
         timestamp: Timestamp.now(),
       });
 
+      // 🧠 Log AI feedback if available
+      try {
+        await logAiFeedback({
+          companyId: userData.companyId,
+          imageId: newDocRef.id,
+          detected: post.rawCandidates ?? [],
+          accepted: post.autoDetectedBrands ?? [],
+          aiEnabled: post.aiEnabled ?? false,
+        });
+      } catch (err) {
+        console.warn("⚠️ AI feedback logging skipped:", err);
+      }
+
+      // ✅ 4. Local sync
       const finalPost: PostWithID = normalizePost({
         ...payload,
         id: postId,
-        imageUrl: resizedUrl,
-        originalImageUrl: originalUrl,
+        imageUrl: finalImageUrl,
+        originalImageUrl: finalOriginalUrl,
       });
 
       dispatch(addNewPost(finalPost));
       await addPostsToIndexedDB([finalPost]);
 
+      // ✅ 5. Optional: Gallo Axis integration
       if (post.oppId && apiKey) {
         dispatch(showMessage("📤 Sending achievement to Gallo Axis..."));
         const achievementPayload = {
@@ -166,7 +162,7 @@ export const useHandlePostSubmission = () => {
           closedBy: post.closedBy ?? user.displayName ?? "",
           closedDate: post.closedDate || new Date().toISOString().split("T")[0],
           closedUnits: post.totalCaseCount || "0",
-          photos: [{ file: resizedUrl }],
+          photos: [{ file: finalImageUrl }],
         };
 
         await sendAchievementToGalloAxis(achievementPayload, apiKey, dispatch);
@@ -176,10 +172,24 @@ export const useHandlePostSubmission = () => {
             markGalloAccountAsSubmitted({
               goal: selectedGalloGoal,
               accountNumber: post.account.accountNumber,
-              postId: postId,
+              postId,
             })
           );
         }
+      }
+
+      // 🧹 6. Optional cleanup of temp uploads
+      try {
+        if (post.imageUrl?.includes("tempUploads")) {
+          const tempPath = new URL(post.imageUrl).pathname;
+          const decodedPath = decodeURIComponent(tempPath.split("/o/")[1]);
+          const fileRef = storageRef(storage, decodedPath);
+          await deleteObject(fileRef);
+
+          console.log(`🧹 Deleted temporary upload: ${decodedPath}`);
+        }
+      } catch (cleanupErr) {
+        console.warn("⚠️ Failed to delete temp upload:", cleanupErr);
       }
 
       dispatch(showMessage("🎉 Post added successfully!"));

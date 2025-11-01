@@ -212,7 +212,7 @@ export const CreatePost = () => {
     } catch (err: any) {
       console.error("Upload failed:", err);
       alert(err.message || "An error occurred during upload.");
-    } 
+    }
   };
 
   // ❗ reset apiKey if feature is turned off while component is mounted
@@ -285,6 +285,14 @@ export const CreatePost = () => {
                 : "Submit"}
             </button>
           </div>
+          {post.autoDetectedBrands === undefined && post.imageUrl && (
+            <p className="hint-text">🧠 Analyzing image for brands…</p>
+          )}
+          {post.autoDetectedBrands && post.autoDetectedBrands?.length > 0 && (
+            <p className="hint-text">
+              ✅ AI detected {post.autoDetectedBrands.join(", ")}
+            </p>
+          )}
 
           {renderStepContent()}
         </div>

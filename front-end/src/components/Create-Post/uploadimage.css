@@ -15,3 +15,182 @@
   gap: 10px;
   font-weight: 600;
 }
+
+/* === 🧠 AI Detection Beta Feature Card === */
+.ai-detection-card {
+  background: var(--surface-elevated);
+  border: 2px solid var(--primary-blue);
+  border-radius: var(--card-radius);
+  padding: 1.25rem 1.25rem 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  max-width: 450px;
+}
+
+.ai-detection-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* header row */
+.ai-detection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.ai-icon {
+  font-size: 1.75rem;
+  margin-right: 0.4rem;
+}
+
+.ai-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text-color);
+  flex-grow: 1;
+}
+
+.ai-badge {
+  background: var(--gold);
+  color: var(--gray-900);
+  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.15);
+}
+
+/* toggle row */
+.ai-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.4rem 0;
+  cursor: pointer;
+}
+
+.ai-checkbox {
+  width: 26px;
+  height: 26px;
+  accent-color: var(--primary-blue);
+  cursor: pointer;
+  transform: scale(1.1);
+  transition: all 0.15s ease-in-out;
+}
+
+.ai-checkbox:hover {
+  filter: brightness(1.1);
+}
+
+.ai-toggle-text {
+  font-size: 0.95rem;
+  color: var(--text-color);
+  user-select: none;
+}
+
+.ai-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-left: 2.1rem;
+  margin-top: 0.25rem;
+  line-height: 1.35;
+}
+
+/* dark theme adjustments */
+[data-theme="dark"] .ai-detection-card {
+  border-color: var(--primary-blue);
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .ai-badge {
+  background: var(--gold);
+  color: var(--gray-900);
+}
+
+/* === ✨ Glow Animation for AI Activation === */
+.ai-detection-card.glow-active {
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6);
+  animation: aiGlowPulse 1.4s ease-out forwards;
+}
+
+@keyframes aiGlowPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 15px 6px rgba(59, 130, 246, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+/* 🌓 Dark mode glow tint */
+[data-theme="dark"] .ai-detection-card.glow-active {
+  animation: aiGlowPulseDark 1.4s ease-out forwards;
+}
+
+@keyframes aiGlowPulseDark {
+  0% {
+    box-shadow: 0 0 0 0 rgba(147, 197, 253, 0.7); /* light blue tint */
+  }
+  70% {
+    box-shadow: 0 0 18px 6px rgba(147, 197, 253, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(147, 197, 253, 0);
+  }
+}
+
+.ai-learnmore {
+  text-align: right;
+  margin-top: -0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.ai-info-button {
+  background: none;
+  border: none;
+  color: var(--primary-blue);
+  font-size: 0.55rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 15px;
+}
+
+.ai-info-button:hover {
+  color: var(--primary-blue-dark);
+}
+
+/* modal backdrop */
+.ai-info-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* modal card */
+.ai-info-content {
+  background: var(--surface-elevated);
+  color: var(--text-color);
+  padding: 1.5rem;
+  border-radius: var(--card-radius);
+  max-width: 420px;
+  box-shadow: var(--card-shadow);
+  text-align: left;
+}
+
+.ai-info-content h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--primary-blue);
+}

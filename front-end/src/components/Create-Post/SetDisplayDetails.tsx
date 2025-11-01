@@ -1,4 +1,3 @@
-// src/components/SetDisplayDetails.tsx
 import React, { useCallback, useMemo } from "react";
 import "./setDisplayDetails.css";
 import TotalCaseCount from "../TotalCaseCount";
@@ -16,17 +15,16 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
   setPost,
   handleTotalCaseCountChange,
 }) => {
-  // Destructure & default
   const brands = post.brands ?? [];
   const productTypes = post.productType ?? [];
-
+  const detected = post.autoDetectedBrands ?? [];
+  console.log(post)
   // form validity
   const isValid = useMemo(
     () => brands.length > 0 && productTypes.length > 0,
     [brands, productTypes]
   );
 
-  // pull out setPost into a stable callback
   const handleBrandsChange = useCallback(
     (newBrands: string[], newProductTypes: string[]) => {
       setPost((prev) => ({
@@ -49,10 +47,25 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
           )}
         </div>
 
+        {/* 🧠 Beta AI Brand Detection Preview */}
+        {detected.length > 0 && (
+          <div className="beta-ai-box">
+            <h4>🧠 Beta AI Brand Detection</h4>
+            <p>Detected brands in this image:</p>
+            <ul className="ai-detected-list">
+              {detected.map((b, i) => (
+                <li key={i}>• {b}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <BrandsSelector
           selectedBrands={brands}
           selectedProductType={productTypes}
           onChange={handleBrandsChange}
+          rawCandidates={post.rawCandidates}
+          autoDetectedBrands={post.autoDetectedBrands}
         />
 
         <TotalCaseCount

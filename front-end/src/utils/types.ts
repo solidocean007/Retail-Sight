@@ -125,8 +125,8 @@ export interface ConnectionRequest {
 }
 
 export interface PendingBrandType {
-   brand: string,
-  proposedBy: string
+  brand: string;
+  proposedBy: string;
 }
 
 export interface CompanyConnectionType {
@@ -227,6 +227,9 @@ export interface PostType {
   productType?: string[];
   productNames?: string[];
   brands?: string[];
+  aiEnabled?: boolean;
+  autoDetectedBrands?: string[];
+  rawCandiates?: string[];
   supplier?: string;
   companyId: string;
 
@@ -336,6 +339,9 @@ export type PostInputType = {
   hashtags?: string[];
   starTags?: string[];
   brands?: string[];
+  aiEnabled?: boolean;
+  autoDetectedBrands?: string[];
+  rawCandidates?: string[];
   productType?: string[];
   productNames?: string[];
   supplier?: string;

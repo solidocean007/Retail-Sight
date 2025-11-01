@@ -70,6 +70,7 @@ return {
   hashtags,
   starTags,
   brands: post.brands ?? [],
+  autoDetectedBrands: post.autoDetectedBrands ?? [],
   productNames: post.productNames ?? [],
   productType: post.productType ?? [],
   supplier: post.supplier ?? "",
