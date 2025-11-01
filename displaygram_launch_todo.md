@@ -3,14 +3,14 @@
 ### 📅 Status
 ✅ LLC Approved (North Carolina)  
 ✅ EIN Received (39-5095690)  
-⬜ Mercury Account Pending  
-⬜ Business Bank Funding  
+✅ Mercury Account Pending  
+⬜ Business Bank Funding .. 100 pending from my personal checking to my mercury business 
 ⬜ Privacy / Terms Setup  
 
 ---
 
 ## 🏦 1. Banking & Finance
-- [ ] Open **Mercury** business checking account  
+- [X] Open **Mercury** business checking account.. it is pending review
   - Upload: Articles of Organization, EIN letter, Operating Agreement, ID  
   - Set account name to **Displaygram LLC**
 - [ ] Link **Braintree payouts** to Mercury account
