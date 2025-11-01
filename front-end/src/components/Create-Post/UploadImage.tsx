@@ -239,7 +239,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
 
         <p className="ai-note">
           Helps tag your display with matching brands automatically. You can
-          still edit results manually.
+          still edit results manually. This is in development.  You can turn it off.
         </p>
       </div>
 

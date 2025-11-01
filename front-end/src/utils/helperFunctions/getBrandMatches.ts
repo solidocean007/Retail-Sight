@@ -53,7 +53,7 @@ export function getBrandMatches(rawCandidates: string[], companyBrands: string[]
 
   // keep top 8 with score ≥ 0.5
   return Array.from(unique.entries())
-    .filter(([_, score]) => score >= 0.7)
+    .filter(([_, score]) => score >= 0.75)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([brand]) => brand);
