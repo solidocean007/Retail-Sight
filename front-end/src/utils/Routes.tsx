@@ -24,6 +24,7 @@ import { Navigate } from "react-router-dom"; // add this import
 import InviteAcceptForm from "../components/Auth/InviteAcceptForm";
 import ViewPostByLink from "../components/ViewPostByLink";
 import ResetPassword from "../components/Auth/ResetPassword";
+import CookiePolicy from "../components/CookiePolicy";
 
 export const AppRoutes = () => {
   return (
@@ -35,7 +36,7 @@ export const AppRoutes = () => {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/help" element={<HelpSupport />} />
-      <Route path="/cookies" element={<HelpSupport />} />
+      <Route path="/cookies" element={<CookiePolicy />} />
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/sign-up-login" element={<Navigate to="/login" replace />} />
