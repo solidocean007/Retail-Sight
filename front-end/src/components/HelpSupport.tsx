@@ -1,5 +1,6 @@
 // import React from 'react';
 import { HelpSupportHelmet } from "../utils/helmetConfigurations";
+import BackNavBar from "./BackNavBar";
 import "./helpSupport.css";
 
 const HelpSupport = () => {
@@ -7,6 +8,7 @@ const HelpSupport = () => {
     <>
       <HelpSupportHelmet />
       <div className="help-support-container">
+        <BackNavBar />
         <h1>Help & Support</h1>
         <section>
           <h2>Frequently Asked Questions (FAQs)</h2>

@@ -1,46 +1,110 @@
+/* ===============================
+   🌐 Displaygram Footer (Two-tier layout)
+   =============================== */
+
 .footer-container {
-  background: var(--footer-background-color);
-  padding: 0.5rem 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-top: 1px solid var(--border-color);
   width: 100%;
+  background: var(--dashboard-card);
+  color: var(--text-color);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0 0.4rem;
+  box-shadow: var(--card-shadow);
+  z-index: 5;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* --- Links Row --- */
 .footer-content {
-  width: 100%;
-  max-width: 80%;
   display: flex;
-  justify-content: space-around;
-  padding: 0 1rem;
-  color: whitesmoke;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.25rem 1rem 0.5rem;
 }
 
 .footer-link {
-  /* color: var(--text-color); */
-  text-align: center;
-  font-size: 0.875rem;
-  transition: color 0.3s;
-}
-
-.footer-link p {
-  margin: 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .footer-link:hover {
-  color: var(--highlight-color);
-  text-decoration: none;
+  color: var(--primary-blue);
+  transform: translateY(-1px);
 }
 
+.footer-icon {
+  font-size: 1rem;
+  color: var(--primary-blue);
+  transition: color 0.2s ease;
+}
+
+/* --- Bottom Row --- */
+.footer-bottom {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+}
+
+.footer-brand {
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+/* --- Dark Mode --- */
+[data-theme="dark"] .footer-container {
+  background: var(--bgColor-muted);
+  color: var(--gray-200);
+  border-top: 1px solid var(--gray-700);
+}
+
+[data-theme="dark"] .footer-link:hover {
+  color: var(--gold);
+}
+
+[data-theme="dark"] .footer-brand {
+  color: var(--gold);
+}
+
+[data-theme="dark"] .footer-bottom {
+  color: var(--gray-400);
+}
+
+/* --- Responsive --- */
 @media (max-width: 768px) {
   .footer-content {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
+    gap: 1rem;
   }
+  .footer-link {
+    font-size: 0.85rem;
+  }
+  .footer-bottom {
+    font-size: 0.75rem;
+  }
+}
 
+@media (max-width: 480px) {
+  .footer-content {
+    gap: 0.65rem;
+    padding-bottom: 0.25rem;
+  }
   .footer-link {
     font-size: 0.8rem;
-    padding: 0.2rem 0;
+  }
+  .footer-icon {
+    font-size: 0.9rem;
+  }
+  .footer-bottom {
+    font-size: 0.7rem;
   }
 }

@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -40,5 +41,12 @@ setPersistence(auth, browserLocalPersistence)
   .catch((error) => {
     console.error("Error setting persistence", error);
   });
+
+// conditionally init analytics (avoids SSR errors)
+isSupported().then((supported) => {
+  if (supported) {
+    getAnalytics(app);
+  }
+});
 
 export { auth, db, updateProfile, storage };

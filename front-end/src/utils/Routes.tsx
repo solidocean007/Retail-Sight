@@ -31,10 +31,11 @@ export const AppRoutes = () => {
       <Route path="/" element={<SplashPage />} />
       <Route path="/about" element={<About />} />
       <Route path="/features" element={<Features />} />
-      <Route path="/contact-us" element={<ContactUs />} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/terms-service" element={<TermsOfService />} />
-      <Route path="/help-support" element={<HelpSupport />} />
+      <Route path="/contact" element={<ContactUs />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/help" element={<HelpSupport />} />
+      <Route path="/cookies" element={<HelpSupport />} />
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/sign-up-login" element={<Navigate to="/login" replace />} />

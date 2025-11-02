@@ -3,6 +3,9 @@ import "./ContactUs.css";
 import { ContactUsPageHelmet } from "../utils/helmetConfigurations";
 import React, { useState } from "react";
 import { getFunctions, httpsCallable } from "@firebase/functions";
+import BackNavBar from "./BackNavBar";
+
+
 
 const ContactUs = () => {
   const [form, setForm] = useState({
@@ -51,6 +54,7 @@ const ContactUs = () => {
     <>
       <ContactUsPageHelmet />
       <div className="contact-container">
+        <BackNavBar />
         <h1>Contact Us</h1>
         <p>
           If you have any questions or feedback, please feel free to reach out

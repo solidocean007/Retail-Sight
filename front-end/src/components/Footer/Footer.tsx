@@ -8,44 +8,45 @@ import {
 import "./footer.css";
 import { SvgIconTypeMap } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
+import { Link } from "react-router-dom";
 
-// Define a type for the props
 type FooterLinkProps = {
   to: string;
-  icon: OverridableComponent<SvgIconTypeMap<object, "svg">>;
+  icon?: OverridableComponent<SvgIconTypeMap<object, "svg">>;
   children: React.ReactNode;
 };
 
-const FooterLink = ({ to, icon: Icon, children }: FooterLinkProps) => {
-  return (
-    <div className="footer-link">
-      <a href={to} className="footer-anchor">
-        {Icon && <Icon className="footer-icon" />}
-        <p>{children}</p>
-      </a>
-    </div>
-  );
-};
+const FooterLink = ({ to, icon: Icon, children }: FooterLinkProps) => (
+  <Link to={to} className="footer-link">
+    {Icon && <Icon className="footer-icon" />}
+    {children}
+  </Link>
+);
 
 const Footer = () => {
+  const year = new Date().getFullYear();
+
   return (
     <footer className="footer-container">
       <div className="footer-content">
-        <FooterLink to="/about" icon={Info}>
-          About Us
+        <FooterLink to="/about">About</FooterLink>
+        <FooterLink to="/privacy" icon={PrivacyTip}>
+          Privacy
         </FooterLink>
-        <FooterLink to="/contact-us" icon={ContactPage}>
+        <FooterLink to="/terms" icon={Gavel}>
+          Terms
+        </FooterLink>
+        <FooterLink to="/cookies">Cookies</FooterLink>
+        <FooterLink to="/contact" icon={ContactPage}>
           Contact
         </FooterLink>
-        <FooterLink to="/privacy-policy" icon={PrivacyTip}>
-          Privacy Policy
+        <FooterLink to="/help" icon={Help}>
+          Help
         </FooterLink>
-        <FooterLink to="/terms-service" icon={Gavel}>
-          Terms of Service
-        </FooterLink>
-        <FooterLink to="/help-support" icon={Help}>
-          Help & Support
-        </FooterLink>
+      </div>
+      <div className="footer-bottom">
+        © {year} <span className="footer-brand">Displaygram LLC</span>. All
+        rights reserved.
       </div>
     </footer>
   );
