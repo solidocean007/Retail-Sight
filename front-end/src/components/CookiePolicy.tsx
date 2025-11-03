@@ -35,8 +35,12 @@ const CookiePolicy = () => {
             title="Displaygram Cookie Policy"
             loading="lazy"
             className="policy-iframe"
-            
           ></iframe>
+        </div>
+        <div className="footer-consent-link">
+          <a href="#" className="termly-display-preferences">
+            Cookie Preferences
+          </a>
         </div>
       </div>
     </>

@@ -132,12 +132,27 @@
   margin-bottom: 0.5rem;
 }
 
+.footer-consent-link {
+  text-align: center;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.footer-consent-link a {
+  color: var(--primary-blue);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+[data-theme="dark"] .footer-consent-link a {
+  color: var(--gold);
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
-
 
 /* --- Responsive design --- */
 @media (max-width: 768px) {

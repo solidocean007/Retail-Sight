@@ -1,5 +1,6 @@
 import {
   ContactPage,
+  Cookie,
   Gavel,
   Help,
   Info,
@@ -9,6 +10,7 @@ import "./footer.css";
 import { SvgIconTypeMap } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { Link } from "react-router-dom";
+import InfoIcon from '@mui/icons-material/Info';
 
 type FooterLinkProps = {
   to: string;
@@ -29,14 +31,18 @@ const Footer = () => {
   return (
     <footer className="footer-container">
       <div className="footer-content">
-        <FooterLink to="/about">About</FooterLink>
+        <FooterLink to="/about" icon={InfoIcon}>
+          About
+        </FooterLink>
         <FooterLink to="/privacy" icon={PrivacyTip}>
           Privacy
         </FooterLink>
         <FooterLink to="/terms" icon={Gavel}>
           Terms
         </FooterLink>
-        <FooterLink to="/cookies">Cookies</FooterLink>
+        <FooterLink to="/cookies" icon={Cookie}>
+          Cookies
+        </FooterLink>
         <FooterLink to="/contact" icon={ContactPage}>
           Contact
         </FooterLink>
