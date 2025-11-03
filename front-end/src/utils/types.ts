@@ -536,7 +536,7 @@ export type CompanyGoalType = {
   createdByLastName?: string; // optional
   accountNumbersForThisGoal?: string[]; // ✅ Full scope of accounts this goal applies to
   goalAssignments?: GoalAssignmentType[];
-  perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
+  perUserQuota?: number | null; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
   deleted: boolean;
 };

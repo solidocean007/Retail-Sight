@@ -98,7 +98,8 @@
   border: 1px solid var(--card-outline);
   border-radius: 8px;
   overflow-y: auto;
-  max-height: 280px;
+  height: 400px;
+  max-height: 700px;
   background-color: var(--background-light, #fafafa);
 }
 

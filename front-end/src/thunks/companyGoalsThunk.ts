@@ -61,14 +61,20 @@ export const updateCompanyGoalInFirestore = createAsyncThunk(
 
     // --- Ensure assignments are saved atomically ---
     if (Array.isArray(cleanedFields.goalAssignments)) {
-      cleanedFields.goalAssignments = cleanedFields.goalAssignments.map((a: GoalAssignmentType) => ({
-        uid: a.uid,
-        accountNumber: a.accountNumber.toString(),
-      }));
+      cleanedFields.goalAssignments = cleanedFields.goalAssignments.map(
+        (a: GoalAssignmentType) => ({
+          uid: a.uid,
+          accountNumber: a.accountNumber.toString(),
+        })
+      );
 
       // 🔹 Maintain backward compatibility
       const accountNumbers = Array.from(
-        new Set(cleanedFields.goalAssignments.map((a: GoalAssignmentType) => a.accountNumber))
+        new Set(
+          cleanedFields.goalAssignments.map(
+            (a: GoalAssignmentType) => a.accountNumber
+          )
+        )
       );
       cleanedFields.accountNumbersForThisGoal = accountNumbers;
     }
