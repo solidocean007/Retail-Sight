@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Table,
@@ -43,11 +43,14 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  console.log(selectedAccounts.length);
+  const listRef = useRef<HTMLDivElement>(null);
 
+  // 🧭 Scroll to top whenever page changes
   useEffect(() => {
-    setCurrentPage(0);
-  }, [searchTerm]);
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
+    }
+  }, [currentPage]);
 
   const normalize = (val: any) =>
     String(val ?? "")
@@ -240,6 +243,7 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
 
       {/* Scrollable Table */}
       <Box
+        ref={listRef} // ✅ attach ref here
         sx={{
           maxHeight: 400,
           overflowY: "auto",
@@ -264,7 +268,9 @@ const AccountMultiSelector: React.FC<AccountMultiSelectorProps> = ({
               <TableRow key={account.accountNumber}>
                 <TableCell>
                   <Checkbox
-                   disabled={disabledAccountNumbers?.includes(account.accountNumber.toString())}
+                    disabled={disabledAccountNumbers?.includes(
+                      account.accountNumber.toString()
+                    )}
                     checked={selectedAccounts.some(
                       (a) => a.accountNumber === account.accountNumber
                     )}

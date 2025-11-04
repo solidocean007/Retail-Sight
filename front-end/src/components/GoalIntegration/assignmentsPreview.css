@@ -4,7 +4,7 @@
   border: 1px solid var(--card-outline);
   border-radius: 8px;
   padding: 0.5rem;
-  background-color: var(--background-light, #fafafa);
+  background-color: var(--card-panel-background);
 }
 
 /* Each assignment row */
@@ -25,7 +25,7 @@
   flex: 1;
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -65,7 +65,7 @@
   border-radius: 8px;
   overflow-y: auto;
   max-height: 280px;
-  background-color: var(--background-light, #fafafa);
+  background-color: var(--user-modal-background, #fafafa);
 }
 
 .MuiTableCell-root {
@@ -74,11 +74,11 @@
 
 .MuiTableHead-root .MuiTableCell-root {
   font-weight: 600;
-  background-color: var(--table-header-bg, #f3f4f6);
+  /* background-color: var(--table-header-bg, #f3f4f6); */
 }
 
 .MuiTableRow-root:hover {
-  background-color: var(--hover-bg, #f9fafb);
+  /* background-color: var(--hover-bg, #f9fafb); */
 }
 
 .MuiIconButton-root {
@@ -100,7 +100,7 @@
   overflow-y: auto;
   height: 400px;
   max-height: 700px;
-  background-color: var(--background-light, #fafafa);
+  /* background-color: var(--background-light, #fafafa); */
 }
 
 .MuiTableCell-root {
@@ -109,9 +109,143 @@
 
 .MuiTableHead-root .MuiTableCell-root {
   font-weight: 600;
-  background-color: var(--table-header-bg, #f3f4f6);
+  /* background-color: var(--table-header-bg, #f3f4f6); */
 }
 
 .MuiTableRow-root:hover {
-  background-color: var(--hover-bg, #f9fafb);
+  /* background-color: var(--hover-bg, #f9fafb); */
+}
+
+.assignments-summary-list {
+  /* background: var(--background-light, #fafafa); */
+  border: 1px solid var(--card-outline, #ddd);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.assignments-summary-ul {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+}
+
+.assignments-summary-item {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #444);
+  line-height: 1.4;
+}
+
+.unassigned-accounts-list {
+  background: #fff8f8;
+  border: 1px solid #f5c2c2;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.unassigned-accounts-ul {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+}
+
+.unassigned-account-item {
+  font-size: 0.85rem;
+  color: var(--error-color, #b91c1c);
+  line-height: 1.4;
+}
+
+.unassigned-account-id {
+  color: var(--text-secondary, #666);
+  font-size: 0.8rem;
+}
+
+/* 🔹 Grid layout for user assignment summary */
+.assignments-user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.25rem;
+}
+
+/* 🔹 Individual user cards */
+.assignments-user-card {
+  /* background-color: #ffffff; */
+  border: 1px solid var(--card-outline, #e0e0e0);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: default;
+}
+
+.assignments-user-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* 🔹 Text hierarchy inside each card */
+.user-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-color, #111);
+  font-size: 0.9rem;
+  margin-bottom: 0.1rem;
+  text-transform: capitalize;
+}
+
+.user-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #555);
+}
+
+.unassigned-accounts-card {
+  /* background: #fff8f8; */
+  border: 1px solid #f5c2c2;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1rem;
+}
+
+.unassigned-scroll {
+  margin-top: 0.5rem;
+  max-height: 220px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.4rem 0.8rem;
+  padding-right: 0.5rem;
+}
+
+.unassigned-item {
+  font-size: 0.85rem;
+  /* background-color: #fff; */
+  border: 1px solid #f1bebe;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  color: #b91c1c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unassigned-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unassigned-number {
+  font-size: 0.75rem;
+  color: #888;
+  margin-left: 0.3rem;
 }

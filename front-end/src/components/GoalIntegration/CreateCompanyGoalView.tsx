@@ -12,23 +12,17 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  MenuItem,
-  Chip,
-  Select,
-  InputLabel,
   Checkbox,
 } from "@mui/material";
 import {
   CompanyAccountType,
   CompanyGoalType,
   GoalAssignmentType,
-  UserType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
 import { doc, getDoc } from "@firebase/firestore";
-import AccountMultiSelector from "./AccountMultiSelector";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
@@ -39,13 +33,15 @@ import TrackChangesIcon from "@mui/icons-material/TrackChanges"; // MUI's target
 import dayjs from "dayjs";
 import "./createCompanyGoalView.css";
 import GoalTitleInput from "./GoalTitleInput";
-import ChainMultiSelect from "./FilterMultiSelect";
-import FilterMultiSelect from "./FilterMultiSelect";
 import ConfirmGoalModal from "./ConfirmGoalModal";
-import AssignmentsPreview from "./AssingmentsPreview";
-import { selectAllCompanyAccounts, setAllAccounts } from "../../Slices/allAccountsSlice";
-import { getAllCompanyAccountsFromIndexedDB, saveAllCompanyAccountsToIndexedDB } from "../../utils/database/accountStoreUtils";
+import {
+  selectAllCompanyAccounts,
+  setAllAccounts,
+} from "../../Slices/allAccountsSlice";
+import { getAllCompanyAccountsFromIndexedDB } from "../../utils/database/accountStoreUtils";
 import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAcccountsFromFirestore";
+import GoalFiltersPanel from "./GoalFiltersPanel";
+import GoalAssignmentsSection from "./GoalAssignmentsSection";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -76,7 +72,7 @@ const CreateCompanyGoalView = () => {
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
   const [perUserQuota, setPerUserQuota] = useState<number | string>("1");
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // 'isSaving' is declared but its value is never read.
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
   const [accountsLoading, setAccountsLoading] = useState(true);
@@ -95,9 +91,6 @@ const CreateCompanyGoalView = () => {
     Record<string, SavedFilterSet>
   >({});
   const [filterSetName, setFilterSetName] = useState("");
-  const [accountNumbersForThisGoal, setAccountNumbersForThisGoal] = useState<
-    string[]
-  >([]);
 
   const [filters, setFilters] = useState({
     chains: [] as string[],
@@ -109,62 +102,57 @@ const CreateCompanyGoalView = () => {
 
   type SavedFilterSet = typeof filters;
 
-useEffect(() => {
-  let cancelled = false;
+  useEffect(() => {
+    let cancelled = false;
 
-  async function loadAccounts() {
-    setAccountsLoading(true);
+    async function loadAccounts() {
+      setAccountsLoading(true);
 
-    // ✅ 1. If already in Redux, use that
-    if (allCompanyAccounts && allCompanyAccounts.length > 0) {
-      if (!cancelled) {
-        setAccounts(allCompanyAccounts);
-        setAccountsLoading(false);
-      }
-      return;
-    }
-
-    // ✅ 2. Try IndexedDB (offline cache)
-    try {
-      const cached = await getAllCompanyAccountsFromIndexedDB();
-      if (cached?.length && !cancelled) {
-        setAccounts(cached);
-        dispatch(setAllAccounts(cached)); // hydrate Redux from cache
-        setAccountsLoading(false);
+      // ✅ 1. If already in Redux, use that
+      if (allCompanyAccounts && allCompanyAccounts.length > 0) {
+        if (!cancelled) {
+          setAccounts(allCompanyAccounts);
+          setAccountsLoading(false);
+        }
         return;
       }
-    } catch (err) {
-      console.warn("No cached accounts found:", err);
-    }
 
-    // ✅ 3. Fallback to Firestore fetch
-    try {
-      const accountsId = usersCompany?.accountsId;
-      if (!accountsId) throw new Error("Missing accountsId");
-      const firestoreAccounts = await fetchAllAccountsFromFirestore(accountsId);
-      if (!cancelled && firestoreAccounts?.length) {
-        setAccounts(firestoreAccounts);
-        dispatch(setAllAccounts(firestoreAccounts));
-        setAccountsLoading(false);
+      // ✅ 2. Try IndexedDB (offline cache)
+      try {
+        const cached = await getAllCompanyAccountsFromIndexedDB();
+        if (cached?.length && !cancelled) {
+          setAccounts(cached);
+          dispatch(setAllAccounts(cached)); // hydrate Redux from cache
+          setAccountsLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("No cached accounts found:", err);
       }
-    } catch (error) {
-      console.error("Error fetching accounts:", error);
-      if (!cancelled) setAccountsLoading(false);
+
+      // ✅ 3. Fallback to Firestore fetch
+      try {
+        const accountsId = usersCompany?.accountsId;
+        if (!accountsId) throw new Error("Missing accountsId");
+        const firestoreAccounts = await fetchAllAccountsFromFirestore(
+          accountsId
+        );
+        if (!cancelled && firestoreAccounts?.length) {
+          setAccounts(firestoreAccounts);
+          dispatch(setAllAccounts(firestoreAccounts));
+          setAccountsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error fetching accounts:", error);
+        if (!cancelled) setAccountsLoading(false);
+      }
     }
-  }
 
-  loadAccounts();
-  return () => {
-    cancelled = true;
-  };
-}, [allCompanyAccounts, usersCompany?.accountsId, dispatch]);
-
-  useEffect(() => {
-    if (accountScope !== "selected") return;
-    // ✅ Start empty, no auto-selection
-    setAccountNumbersForThisGoal([]);
-    setGoalAssignments([]); // clear existing when switching
-  }, [accountScope]);
+    loadAccounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [allCompanyAccounts, usersCompany?.accountsId, dispatch]);
 
   const normalizedCompanyUsers = useMemo(() => {
     return (activeCompanyUsers || []).map((user) => ({
@@ -186,14 +174,14 @@ useEffect(() => {
     return map;
   }, [normalizedCompanyUsers]);
 
-  const supervisorsByUid = useMemo(() => {
-    // should i use this for my selector?
-    const sup = new Map<string, (typeof normalizedCompanyUsers)[number]>();
-    normalizedCompanyUsers.forEach((u) => {
-      if (u.role === "supervisor") sup.set(u.uid, u);
-    });
-    return sup;
-  }, [normalizedCompanyUsers]);
+  // const supervisorsByUid = useMemo(() => {
+  //   // should i use this for my selector?
+  //   const sup = new Map<string, (typeof normalizedCompanyUsers)[number]>();
+  //   normalizedCompanyUsers.forEach((u) => {
+  //     if (u.role === "supervisor") sup.set(u.uid, u);
+  //   });
+  //   return sup;
+  // }, [normalizedCompanyUsers]);
 
   const getUserIdsForAccount = (
     account: CompanyAccountType,
@@ -244,6 +232,75 @@ useEffect(() => {
     );
   }, [accounts, filters, userIdsByAccount, reportsToMap]);
 
+  useEffect(() => {
+    // If scope is "all" we assign every account; if "selected", only filtered
+    const scopedAccounts = accountScope === "all" ? accounts : filteredAccounts;
+
+    // Build list of (accountNumber + uid) pairs dynamically based on assigneeType
+    let newAssignments: GoalAssignmentType[] = [];
+
+    if (assigneeType === "sales") {
+      // 🔹 Assign all matching reps for each account
+      newAssignments = scopedAccounts.flatMap((acc) => {
+        const reps = normalizedCompanyUsers.filter(
+          (u) =>
+            u.salesRouteNum &&
+            (acc.salesRouteNums || []).includes(u.salesRouteNum)
+        );
+        return reps.map((rep) => ({
+          accountNumber: acc.accountNumber.toString(),
+          uid: rep.uid,
+        }));
+      });
+    } else if (assigneeType === "supervisor") {
+      newAssignments = scopedAccounts.flatMap((acc) => {
+        const routeNums = acc.salesRouteNums || [];
+
+        // 1️⃣ Find reps who sell this account
+        const reps = normalizedCompanyUsers.filter(
+          (u) => u.salesRouteNum && routeNums.includes(u.salesRouteNum)
+        );
+
+        // 2️⃣ Collect supervisors of those reps
+        const supervisorUids = new Set(
+          reps.map((r) => r.reportsTo).filter(Boolean) as string[]
+        );
+
+        // 3️⃣ Also include any supervisors who personally sell the route
+        normalizedCompanyUsers.forEach((u) => {
+          if (
+            u.role === "supervisor" &&
+            u.salesRouteNum &&
+            routeNums.includes(u.salesRouteNum)
+          ) {
+            supervisorUids.add(u.uid);
+          }
+        });
+
+        // 4️⃣ Build assignment pairs
+        return Array.from(supervisorUids).map((uid) => ({
+          accountNumber: acc.accountNumber.toString(),
+          uid,
+        }));
+      });
+    }
+
+    // 🔹 Deduplicate (accountNumber + uid) pairs
+    const deduped = Array.from(
+      new Map(
+        newAssignments.map((a) => [`${a.accountNumber}-${a.uid}`, a])
+      ).values()
+    );
+
+    setGoalAssignments(deduped);
+  }, [
+    accountScope,
+    filteredAccounts,
+    accounts,
+    assigneeType,
+    normalizedCompanyUsers,
+  ]);
+
   const readyForCreation: boolean =
     goalTitle.trim().length > 0 &&
     goalDescription.trim().length > 0 &&
@@ -256,16 +313,6 @@ useEffect(() => {
       setSavedFilterSets(JSON.parse(stored));
     }
   }, []);
-
-  const saveCurrentFilterSet = () => {
-    if (!filterSetName.trim())
-      return alert("Enter a name to save this filter set.");
-
-    const updated = { ...savedFilterSets, [filterSetName]: filters };
-    setSavedFilterSets(updated);
-    localStorage.setItem("displaygram_filter_sets", JSON.stringify(updated));
-    setFilterSetName("");
-  };
 
   useEffect(() => {
     if (!companyId) return;
@@ -290,12 +337,14 @@ useEffect(() => {
 
   const { eligibleUsersForCurrentScope, numberOfAffectedUsers } =
     useMemo(() => {
-      // 🔹 Build scoped accounts from either "all" or the accountNumbersForThisGoal array
+      // 🔹 Build scoped accounts from either "all" or the goalAssignments
       const scopedAccounts =
         accountScope === "all"
           ? accounts
           : accounts.filter((a) =>
-              accountNumbersForThisGoal.includes(a.accountNumber.toString())
+              goalAssignments.some(
+                (g) => g.accountNumber === a.accountNumber.toString()
+              )
             );
 
       const routeNums = new Set(
@@ -329,7 +378,7 @@ useEffect(() => {
     }, [
       accountScope,
       accounts,
-      accountNumbersForThisGoal,
+      goalAssignments, // ✅ replaced legacy dependency
       normalizedCompanyUsers,
       assigneeType,
       reportsToMap,
@@ -345,20 +394,48 @@ useEffect(() => {
       return;
     }
 
+    // Helper: unique by uid+accountNumber
+    const dedupeAssignments = (
+      arr: { uid: string; accountNumber: string }[]
+    ) => {
+      const map = new Map<string, { uid: string; accountNumber: string }>();
+      for (const a of arr) map.set(`${a.uid}-${a.accountNumber}`, a);
+      return Array.from(map.values());
+    };
+
+    // Build scoped accounts using current goalAssignments when in "selected" mode.
+    const selectedAccountNums = Array.from(
+      new Set(goalAssignments.map((g) => g.accountNumber))
+    );
+
     const scopedAccounts =
       accountScope === "all"
         ? accounts
         : accounts.filter((a) =>
-            accountNumbersForThisGoal.includes(a.accountNumber.toString())
+            selectedAccountNums.includes(a.accountNumber.toString())
           );
 
-    // 🔹 Build explicit assignments (uid + accountNumber)
-    const goalAssignments = scopedAccounts.flatMap((acc) =>
-      eligibleUsersForCurrentScope.map((u) => ({
-        uid: u.uid,
-        accountNumber: acc.accountNumber.toString(),
-      }))
-    );
+    // Finalize assignments:
+    // - If scope is "selected" and user already assigned pairs, respect them.
+    // - Otherwise (scope "all" OR no manual pairs yet), generate matrix using eligibleUsersForCurrentScope.
+    const finalAssignments =
+      accountScope === "selected" && goalAssignments.length > 0
+        ? dedupeAssignments(
+            // keep only pairs whose account is inside the scope
+            goalAssignments.filter((g) =>
+              scopedAccounts.some(
+                (a) => a.accountNumber.toString() === g.accountNumber
+              )
+            )
+          )
+        : dedupeAssignments(
+            scopedAccounts.flatMap((acc) =>
+              eligibleUsersForCurrentScope.map((u) => ({
+                uid: u.uid,
+                accountNumber: acc.accountNumber.toString(),
+              }))
+            )
+          );
 
     const newGoal: CompanyGoalType = {
       companyId,
@@ -371,10 +448,7 @@ useEffect(() => {
       goalEndDate,
       createdAt: new Date().toISOString(),
       deleted: false,
-      goalAssignments, // ✅ replaces accountNumbersForThisGoal
-      accountNumbersForThisGoal: scopedAccounts.map((a) =>
-        a.accountNumber.toString()
-      ), // keep legacy field populated for now
+      goalAssignments: finalAssignments, // ✅ single source of truth
       ...(enforcePerUserQuota && perUserQuota
         ? { perUserQuota: Number(perUserQuota) }
         : {}),
@@ -384,15 +458,17 @@ useEffect(() => {
     setShowConfirmModal(true);
   };
 
-  // // ✅ Do not auto-select anything. Only prune selections that fell out of view.
+  // ✅ Keep goalAssignments in sync with current filtered view
   useEffect(() => {
     if (accountScope !== "selected") return;
 
-    setAccountNumbersForThisGoal((prev) => {
+    setGoalAssignments((prev) => {
       const inView = new Set(
         filteredAccounts.map((a) => a.accountNumber.toString())
       );
-      return prev.filter((id) => inView.has(id));
+
+      // Remove any assignments whose accountNumber is no longer visible
+      return prev.filter((g) => inView.has(g.accountNumber));
     });
   }, [accountScope, filteredAccounts]);
 
@@ -439,12 +515,13 @@ useEffect(() => {
   };
 
   // 🔹 Compute counts for confirmation modal
-  // 🔹 Compute counts for confirmation modal
   const scopedAccounts =
     accountScope === "all"
       ? accounts
       : accounts.filter((a) =>
-          accountNumbersForThisGoal.includes(a.accountNumber.toString())
+          goalAssignments.some(
+            (g) => g.accountNumber === a.accountNumber.toString()
+          )
         );
 
   const routeNums = new Set(
@@ -472,6 +549,7 @@ useEffect(() => {
     assigneeType === "supervisor" ? supervisorsForScope.length : 0;
 
   const handleRemoveAssignment = (accountNumber: string, uid: string) => {
+    // handleRemoveAssignment' is declared but its value is never read.
     setGoalAssignments((prev) =>
       prev.filter((g) => !(g.uid === uid && g.accountNumber === accountNumber))
     );
@@ -659,346 +737,33 @@ useEffect(() => {
 
             {accountScope === "selected" && (
               <>
-                <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
-                  {/* Chain Filter */}
-                  <FilterMultiSelect
-                    label="Chain"
-                    options={chainNames}
-                    selected={filters.chains}
-                    onChange={(newChains) =>
-                      setFilters((prev) => ({ ...prev, chains: newChains }))
-                    }
-                  />
+                <GoalFiltersPanel
+                  filters={filters}
+                  setFilters={setFilters}
+                  chains={chainNames}
+                  customerTypes={customerTypes}
+                  normalizedCompanyUsers={normalizedCompanyUsers}
+                  savedFilterSets={savedFilterSets}
+                  setSavedFilterSets={setSavedFilterSets}
+                  filterSetName={filterSetName}
+                  setFilterSetName={setFilterSetName}
+                  filteredAccounts={filteredAccounts} // ✅ added
+                  assigneeType={assigneeType}
+                  allAccounts={accounts}
 
-                  {/* Chain Type - Single Select (still TextField) */}
-                  <TextField
-                    select
-                    label="Chain Type"
-                    value={filters.chainType}
-                    onChange={(e) =>
-                      setFilters({ ...filters, chainType: e.target.value })
-                    }
-                    sx={{ minWidth: 160 }}
-                    size="small"
-                  >
-                    <MenuItem value="">All</MenuItem>
-                    <MenuItem value="chain">Chain</MenuItem>
-                    <MenuItem value="independent">Independent</MenuItem>
-                  </TextField>
-
-                  {/* Type of Account */}
-                  <FilterMultiSelect
-                    label="Type of Account"
-                    options={customerTypes}
-                    selected={filters.typeOfAccounts}
-                    onChange={(newTypes) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        typeOfAccounts: newTypes,
-                      }))
-                    }
-                  />
-
-                  {/* Salesperson */}
-                  <FilterMultiSelect
-                    label="Salesperson"
-                    options={normalizedCompanyUsers.map(
-                      (u) => `${u.firstName} ${u.lastName}`
-                    )}
-                    selected={filters.userIds.map((id) =>
-                      `${
-                        normalizedCompanyUsers.find((u) => u.uid === id)
-                          ?.firstName || ""
-                      } ${
-                        normalizedCompanyUsers.find((u) => u.uid === id)
-                          ?.lastName || ""
-                      }`.trim()
-                    )}
-                    onChange={(selectedNames) => {
-                      const userIds = selectedNames
-                        .map(
-                          (name) =>
-                            normalizedCompanyUsers.find(
-                              (u) => `${u.firstName} ${u.lastName}` === name
-                            )?.uid
-                        )
-                        .filter(Boolean) as string[];
-                      setFilters((prev) => ({ ...prev, userIds }));
-                    }}
-                  />
-                  {/* Salesperson */}
-                  <FilterMultiSelect
-                    label="Supervisor"
-                    options={normalizedCompanyUsers
-                      .filter((u) => u.role === "supervisor")
-                      .map((u) => `${u.firstName} ${u.lastName}`)}
-                    selected={filters.supervisorIds.map((id) =>
-                      `${
-                        normalizedCompanyUsers.find((u) => u.uid === id)
-                          ?.firstName || ""
-                      } ${
-                        normalizedCompanyUsers.find((u) => u.uid === id)
-                          ?.lastName || ""
-                      }`.trim()
-                    )}
-                    onChange={(selectedNames) => {
-                      const supervisorIds = selectedNames
-                        .map(
-                          (name) =>
-                            normalizedCompanyUsers.find(
-                              (u) =>
-                                `${u.firstName} ${u.lastName}` === name &&
-                                u.role === "supervisor"
-                            )?.uid
-                        )
-                        .filter(Boolean) as string[];
-                      setFilters((prev) => ({ ...prev, supervisorIds }));
-                    }}
-                  />
-
-                  {/* Clear Button */}
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    onClick={() =>
-                      setFilters({
-                        chains: [],
-                        chainType: "",
-                        typeOfAccounts: [],
-                        userIds: [],
-                        supervisorIds: [],
-                      })
-                    }
-                  >
-                    Clear Filters
-                  </Button>
-                </Box>
-
-                {(filters.chains.length > 0 ||
-                  filters.chainType ||
-                  filters.typeOfAccounts.length > 0 ||
-                  filters.userIds ||
-                  filters.supervisorIds.length > 0) && (
-                  <Box
-                    display="flex"
-                    gap={2}
-                    flexWrap="wrap"
-                    sx={{ mb: 1, mt: 1 }}
-                  >
-                    Filters applied:
-                    <div className="chains-container">
-                      {filters.chains.map((c) => (
-                        <Chip
-                          key={c}
-                          label={`Chain: ${c}`}
-                          onDelete={() =>
-                            setFilters({
-                              ...filters,
-                              chains: filters.chains.filter((x) => x !== c),
-                            })
-                          }
-                        />
-                      ))}
-                    </div>
-                    <div className="chain-type-container">
-                      {filters.chainType && (
-                        <Chip
-                          label={`Chain Type: ${filters.chainType}`}
-                          onDelete={() =>
-                            setFilters({ ...filters, chainType: "" })
-                          }
-                        />
-                      )}
-                    </div>
-                    <div className="types-of-account-container">
-                      {filters.typeOfAccounts.map((t) => (
-                        <Chip
-                          key={t}
-                          label={`Type: ${t}`}
-                          onDelete={() =>
-                            setFilters({
-                              ...filters,
-                              typeOfAccounts: filters.typeOfAccounts.filter(
-                                (x) => x !== t
-                              ),
-                            })
-                          }
-                        />
-                      ))}
-                    </div>
-                    {filters.userIds.length > 0 && (
-                      <Box
-                        className="sales-people-container"
-                        sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
-                      >
-                        <Typography variant="subtitle2" sx={{ mr: 1 }}>
-                          Salespeople:
-                        </Typography>
-                        {filters.userIds.map((uid) => {
-                          const user = normalizedCompanyUsers.find(
-                            (u) => u.uid === uid
-                          );
-                          const name = user
-                            ? `${user.firstName} ${user.lastName}`
-                            : "Unknown User";
-
-                          return (
-                            <Chip
-                              key={uid}
-                              label={`User: ${name}`}
-                              color={
-                                filteredAccounts.some((account) =>
-                                  account.salesRouteNums?.includes(
-                                    user?.salesRouteNum || ""
-                                  )
-                                )
-                                  ? "default"
-                                  : "error"
-                              }
-                              onDelete={() =>
-                                setFilters({
-                                  ...filters,
-                                  userIds: filters.userIds.filter(
-                                    (id) => id !== uid
-                                  ),
-                                })
-                              }
-                            />
-                          );
-                        })}
-                      </Box>
-                    )}
-                    {filters.supervisorIds.length > 0 && (
-                      <Box
-                        className="supervisors-container"
-                        sx={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 1,
-                          mt: 1,
-                        }}
-                      >
-                        <Typography variant="subtitle2" sx={{ mr: 1 }}>
-                          Supervisors:
-                        </Typography>
-                        {filters.supervisorIds.map((uid) => {
-                          const sup = normalizedCompanyUsers.find(
-                            (u) => u.uid === uid
-                          );
-                          const name = sup
-                            ? `${sup.firstName} ${sup.lastName}`
-                            : "Unknown Supervisor";
-                          return (
-                            <Chip
-                              key={uid}
-                              label={`Supervisor: ${name}`}
-                              onDelete={() =>
-                                setFilters({
-                                  ...filters,
-                                  supervisorIds: filters.supervisorIds.filter(
-                                    (id) => id !== uid
-                                  ),
-                                })
-                              }
-                            />
-                          );
-                        })}
-                      </Box>
-                    )}
-                  </Box>
-                )}
-
-                <Box display="flex" gap={2} alignItems="center" mt={2}>
-                  <TextField
-                    label="Save Filter Set As"
-                    value={filterSetName}
-                    onChange={(e) => setFilterSetName(e.target.value)}
-                    size="small"
-                  />
-                  <Button variant="outlined" onClick={saveCurrentFilterSet}>
-                    Save Filters
-                  </Button>
-                </Box>
-
-                {Object.keys(savedFilterSets).length > 0 && (
-                  <Box mt={1}>
-                    <Typography variant="caption">Saved Filters:</Typography>
-                    <Box display="flex" gap={1} flexWrap="wrap" mt={0.5}>
-                      {Object.entries(savedFilterSets).map(([name, set]) => (
-                        <Chip
-                          key={name}
-                          label={name}
-                          onClick={() => setFilters(set)}
-                          onDelete={() => {
-                            const updated = { ...savedFilterSets };
-                            delete updated[name];
-                            setSavedFilterSets(updated);
-                            localStorage.setItem(
-                              "displaygram_filter_sets",
-                              JSON.stringify(updated)
-                            );
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </Box>
-                )}
-              </>
-            )}
-
-            {/* new accounts view showing them combined */}
-            {accountScope === "selected" && (
-              <>
-                {accountNumbersForThisGoal.length === 0 ||
-                goalAssignments.length == 0 ? (
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{ mb: 2 }}
-                  >
-                    Please select accounts from the table below
-                  </Typography>
-                ) : (
-                  <Typography variant="h5" sx={{ mt: 4 }}>
-                    Selected Accounts
-                  </Typography>
-                )}
-                <Typography variant="caption" color="textSecondary">
-                  {`${
-                    new Set(goalAssignments.map((g) => g.accountNumber)).size
-                  } accounts, ${
-                    new Set(goalAssignments.map((g) => g.uid)).size
-                  } users assigned`}
-                </Typography>
-
-                {goalAssignments.length > 0 && (
-                  <AssignmentsPreview
-                    assignments={goalAssignments}
-                    accounts={accounts}
-                    users={normalizedCompanyUsers}
-                    onRemoveAssignment={handleRemoveAssignment}
-                    onClearAll={() => setGoalAssignments([])}
-                  />
-                )}
-
-                <AccountMultiSelector
-                  allAccounts={filteredAccounts}
-                  selectedAccounts={accounts.filter((acc) =>
-                    accountNumbersForThisGoal.includes(
-                      acc.accountNumber.toString()
-                    )
-                  )}
-                  setSelectedAccounts={(updated) =>
-                    setAccountNumbersForThisGoal(
-                      updated.map((a) => a.accountNumber.toString())
-                    )
-                  }
-                  selectedAssignments={goalAssignments}
-                  setSelectedAssignments={setGoalAssignments}
-                  companyUsers={normalizedCompanyUsers}
                 />
               </>
             )}
+
+            <GoalAssignmentsSection
+              accountScope={accountScope}
+              goalAssignments={goalAssignments}
+              setGoalAssignments={setGoalAssignments}
+              accounts={accounts}
+              filteredAccounts={filteredAccounts}
+              companyUsers={normalizedCompanyUsers}
+              assigneeType={assigneeType}
+            />
           </Box>
           {hasSummary && (
             <aside className="goal-summary-panel">
@@ -1039,8 +804,11 @@ useEffect(() => {
                     ? `${accounts.length} account${
                         accounts.length !== 1 ? "s" : ""
                       }`
-                    : `${accountNumbersForThisGoal.length} selected account${
-                        accountNumbersForThisGoal.length !== 1 ? "s" : ""
+                    : `${
+                        new Set(goalAssignments.map((g) => g.accountNumber))
+                          .size
+                      } selected account${
+                        goalAssignments.length !== 1 ? "s" : ""
                       }`}
                 </Typography>
 
