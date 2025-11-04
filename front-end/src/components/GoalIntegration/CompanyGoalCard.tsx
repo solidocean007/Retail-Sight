@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Tooltip,
-  useMediaQuery,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { Timestamp } from "firebase/firestore";
@@ -14,7 +13,6 @@ import { CompanyAccountType, CompanyGoalWithIdType } from "../../utils/types";
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 import UserTableForGoals, { UserRowType } from "../UserTableForGoals";
-import EditCompanyGoalModal from "./EditCompanyGoalModal";
 import "./companyGoalCard.css";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
 import NewEditCompanyGoalModal from "./NewEditComapnyGoalModal";
@@ -24,7 +22,7 @@ interface CompanyGoalCardProps {
   expanded: boolean;
   onToggleExpand: (goalId: string) => void;
   salesRouteNum?: string;
-  mobile?: boolean;
+  mobile: boolean;
   onDelete?: (id: string) => void;
   onEdit?: (
     goalId: string,

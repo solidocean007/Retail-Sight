@@ -112,7 +112,7 @@ const UserCompanyGoalCard: React.FC<Props> = ({
   return (
     <div className="info-box-company-goal">
       <div className="goal-badge">
-        {goal.targetRole} goal
+        {goal.targetRole}
       </div>
 
       <div className="company-goal-card-start-end">
@@ -146,7 +146,7 @@ const UserCompanyGoalCard: React.FC<Props> = ({
             </div>
             <div style={{ display: "flex", alignItems: "center" }}>
               <span className={getCompletionClass(percentage)}>
-                {percentage}% Complete
+                {percentage}% Completed
               </span>
               <Tooltip
                 title={

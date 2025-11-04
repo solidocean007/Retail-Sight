@@ -176,6 +176,7 @@ const MyCompanyGoals: React.FC = () => {
               archivedGoals={archivedGoals}
               isMobile={isMobile}
               salesRouteNum={user?.salesRouteNum}
+              onViewPostModal={openPostViewer}
             />
           )}
         </>

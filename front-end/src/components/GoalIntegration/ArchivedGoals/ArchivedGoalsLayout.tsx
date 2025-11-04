@@ -9,13 +9,14 @@ import { useSelector } from "react-redux";
 
 interface ArchivedGoalsLayoutProps {
   archivedGoals: CompanyGoalWithIdType[];
-  isMobile?: boolean;
+  isMobile: boolean;
   salesRouteNum?: string | undefined;
   onDelete?: (id: string) => void;
   onEdit?: (
     goalId: string,
     updatedFields: Partial<CompanyGoalWithIdType>
   ) => void;
+  onViewPostModal: (postId: string) => void
 }
 
 const ArchivedGoalsLayout = ({
@@ -24,6 +25,7 @@ const ArchivedGoalsLayout = ({
   salesRouteNum,
   onDelete,
   onEdit,
+  onViewPostModal,
 }: ArchivedGoalsLayoutProps) => {
   const currentUser = useSelector((state: RootState) => state.user.currentUser); // ✅ Required for modal
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
@@ -77,7 +79,7 @@ const ArchivedGoalsLayout = ({
             onEdit={onEdit}
             expandedGoalId={expandedGoalId}
             setExpandedGoalId={setExpandedGoalId}
-            // onViewPostModal={openPostViewer}
+            onViewPostModal={onViewPostModal}
           />
         ))}
       
