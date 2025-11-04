@@ -1,5 +1,5 @@
 import React from "react";
-import AssignmentsPreview from "./AssingmentsPreview";
+import AssignmentsPreview from "./AssignmentsPreview";
 import AccountMultiSelector from "./AccountMultiSelector";
 import {
   CompanyAccountType,

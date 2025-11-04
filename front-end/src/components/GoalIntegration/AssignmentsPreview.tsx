@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import {
   Box,
   Typography,
-  Table,
-  TableBody,
   TableCell,
-  TableHead,
   TableRow,
   IconButton,
   Button,
   TextField,
+  Table,
+  TableHead,
+  TableBody,
 } from "@mui/material";
 import {
   CompanyAccountType,
@@ -206,16 +206,43 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
               {showUnassigned ? "Hide" : "View"} Details
             </Button>
           </Box>
-
-          {showUnassigned && (
-            <div className="unassigned-scroll">
-              {unassignedAccounts.map((a) => (
-                <div key={a.accountNumber} className="unassigned-item">
-                  <span className="unassigned-name">{a.accountName}</span>
-                  <span className="unassigned-number">#{a.accountNumber}</span>
-                </div>
-              ))}
-            </div>
+          {unassignedAccounts.length > 0 && (
+            <Box className="unassigned-table-card" mt={2}>
+              {showUnassigned && (
+                <Box className="unassigned-table-wrapper">
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Account</TableCell>
+                        <TableCell>Address</TableCell>
+                        <TableCell>Route #</TableCell>
+                        <TableCell>Type</TableCell>
+                        <TableCell>Chain</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {unassignedAccounts.map((a) => (
+                        <TableRow key={a.accountNumber}>
+                          <TableCell>
+                            <strong>{a.accountName}</strong>
+                            <Typography variant="caption" color="textSecondary">
+                              {" "}
+                              #{a.accountNumber}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>{a.accountAddress || "-"}</TableCell>
+                          <TableCell>
+                            {(a.salesRouteNums || []).join(", ") || "-"}
+                          </TableCell>
+                          <TableCell>{a.typeOfAccount || "-"}</TableCell>
+                          <TableCell>{a.chain || "-"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+              )}
+            </Box>
           )}
         </div>
       )}

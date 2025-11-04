@@ -24,7 +24,7 @@ import {
 import AccountMultiSelector from "./AccountMultiSelector";
 import isEqual from "lodash.isequal";
 import "./editCompanyGoalModal.css";
-import AssignmentsPreview from "./AssingmentsPreview";
+import AssignmentsPreview from "./AssignmentsPreview";
 import FilterMultiSelect from "./FilterMultiSelect";
 
 interface EditCompanyGoalModalProps {

@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { CompanyAccountType } from "../utils/types";
 import { RootState } from "../utils/store";
-import { fetchAllAccountsFromFirestore } from "../utils/helperFunctions/fetchAllAcccountsFromFirestore";
+import { fetchAllAccountsFromFirestore } from "../utils/helperFunctions/fetchAllAccountsFromFirestore";
 
 // Thunk to load matching accounts based on Gallo distributor account IDs and companyId
 export const loadMatchingAccounts = createAsyncThunk<

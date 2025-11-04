@@ -37,13 +37,13 @@ import dayjs from "dayjs";
 import "./newEditCompanyGoalModal.css";
 import GoalTitleInput from "./GoalTitleInput";
 import FilterMultiSelect from "./FilterMultiSelect";
-import AssignmentsPreview from "./AssingmentsPreview";
+import AssignmentsPreview from "./AssignmentsPreview";
 import {
   selectAllCompanyAccounts,
   setAllAccounts,
 } from "../../Slices/allAccountsSlice";
 import { getAllCompanyAccountsFromIndexedDB } from "../../utils/database/accountStoreUtils";
-import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAcccountsFromFirestore";
+import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAccountsFromFirestore";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -80,10 +80,10 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
   const [perUserQuota, setPerUserQuota] = useState<number | string>("1");
-  const [isSaving, setIsSaving] = useState(false);
+  const [_isSaving, setIsSaving] = useState(false);
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
-  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [_accountsLoading, setAccountsLoading] = useState(true);
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
   const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(

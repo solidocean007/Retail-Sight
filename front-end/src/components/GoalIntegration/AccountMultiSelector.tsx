@@ -9,8 +9,6 @@ import {
   Checkbox,
   Typography,
   Button,
-  Select,
-  MenuItem,
 } from "@mui/material";
 import { CompanyAccountType, UserType } from "../../utils/types";
 import "./accountMultiSelector.css";

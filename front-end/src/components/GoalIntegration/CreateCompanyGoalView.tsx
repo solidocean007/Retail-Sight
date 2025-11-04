@@ -39,7 +39,7 @@ import {
   setAllAccounts,
 } from "../../Slices/allAccountsSlice";
 import { getAllCompanyAccountsFromIndexedDB } from "../../utils/database/accountStoreUtils";
-import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAcccountsFromFirestore";
+import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAccountsFromFirestore";
 import GoalFiltersPanel from "./GoalFiltersPanel";
 import GoalAssignmentsSection from "./GoalAssignmentsSection";
 
@@ -72,10 +72,10 @@ const CreateCompanyGoalView = () => {
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
   const [perUserQuota, setPerUserQuota] = useState<number | string>("1");
-  const [isSaving, setIsSaving] = useState(false); // 'isSaving' is declared but its value is never read.
+  const [_isSaving, setIsSaving] = useState(false); // 'isSaving' is declared but its value is never read.
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const [accounts, setAccounts] = useState<CompanyAccountType[]>([]);
-  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [_accountsLoading, setAccountsLoading] = useState(true);
 
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
@@ -768,8 +768,7 @@ const CreateCompanyGoalView = () => {
           {hasSummary && (
             <aside className="goal-summary-panel">
               <Box
-                mt={3}
-                p={3}
+                p={1}
                 border="1px solid #555"
                 borderRadius="12px"
                 bgcolor="background.paper"
@@ -778,6 +777,7 @@ const CreateCompanyGoalView = () => {
                   textAlign: "left",
                   lineHeight: 1.6,
                   fontSize: "0.95rem",
+                  width: "100%",
                   maxWidth: "800px",
                   marginX: "auto",
                   position: "relative",
