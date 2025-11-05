@@ -11,6 +11,9 @@ import {
   TextField,
   Checkbox,
   FormControlLabel,
+  MenuItem,
+  FormControl,
+  RadioGroup,
 } from "@mui/material";
 import {
   CompanyGoalType,
@@ -21,6 +24,8 @@ import {
 import AccountMultiSelector from "./AccountMultiSelector";
 import isEqual from "lodash.isequal";
 import "./editCompanyGoalModal.css";
+import AssignmentsPreview from "./AssignmentsPreview";
+import FilterMultiSelect from "./FilterMultiSelect";
 
 interface EditCompanyGoalModalProps {
   open: boolean;
@@ -56,6 +61,75 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const [goalStartDate, setGoalStartDate] = useState(goal.goalStartDate);
   const [goalEndDate, setGoalEndDate] = useState(goal.goalEndDate);
   const [searchSelected, setSearchSelected] = useState("");
+  // === 🔹 Account Filters (reused from CreateCompanyGoalView) ===
+  const [filters, setFilters] = useState({
+    chains: [] as string[],
+    chainType: "",
+    typeOfAccounts: [] as string[],
+    userIds: [] as string[],
+    supervisorIds: [] as string[],
+  });
+
+  // Pull company-level metadata from accounts
+  const allChains = useMemo(
+    () => Array.from(new Set(allAccounts.map((a) => a.chain).filter(Boolean))),
+    [allAccounts]
+  );
+
+  const customerTypes = useMemo(
+    () =>
+      Array.from(
+        new Set(allAccounts.map((a) => a.typeOfAccount).filter(Boolean))
+      ),
+    [allAccounts]
+  );
+
+  const getUserIdsForAccount = (
+    account: CompanyAccountType,
+    users: { uid: string; salesRouteNum?: string }[]
+  ): string[] => {
+    if (!account.salesRouteNums?.length) return [];
+    return users
+      .filter(
+        (u) =>
+          u.salesRouteNum && account.salesRouteNums.includes(u.salesRouteNum)
+      )
+      .map((u) => u.uid);
+  };
+
+  // 🔹 Map accounts → user IDs
+  const userIdsByAccount = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    allAccounts.forEach((acc) => {
+      map[acc.accountNumber] = getUserIdsForAccount(acc, companyUsers);
+    });
+    return map;
+  }, [allAccounts, companyUsers]);
+
+  // 🔹 Filter accounts
+  const filteredAccounts = useMemo(() => {
+    return allAccounts.filter(
+      (a) =>
+        (!filters.chains.length ||
+          filters.chains.some(
+            (c) => c.toLowerCase() === (a.chain || "").toLowerCase()
+          )) &&
+        (!filters.chainType || a.chainType === filters.chainType) &&
+        (!filters.typeOfAccounts.length ||
+          filters.typeOfAccounts.includes(a.typeOfAccount || "")) &&
+        (!filters.userIds.length ||
+          userIdsByAccount[a.accountNumber]?.some((id) =>
+            filters.userIds.includes(id)
+          )) &&
+        (!filters.supervisorIds.length ||
+          userIdsByAccount[a.accountNumber]?.some((repUid) => {
+            const supUid = companyUsers.find(
+              (u) => u.uid === repUid
+            )?.reportsTo;
+            return supUid && filters.supervisorIds.includes(supUid);
+          }))
+    );
+  }, [allAccounts, filters, userIdsByAccount, companyUsers]);
 
   // 🧩 Sync when modal opens or goal changes
   useEffect(() => {
@@ -73,15 +147,15 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
   const filteredSelectedAccounts = useMemo(() => {
     return selectedAccountObjects.filter(
       (acc) =>
-        acc.accountName
-          .toLowerCase()
-          .includes(searchSelected.toLowerCase()) ||
+        acc.accountName.toLowerCase().includes(searchSelected.toLowerCase()) ||
         acc.accountNumber.toString().includes(searchSelected)
     );
   }, [selectedAccountObjects, searchSelected]);
 
   // --- Account selection change handler ---
-  const handleAccountSelectionChange = (updatedAccounts: CompanyAccountType[]) => {
+  const handleAccountSelectionChange = (
+    updatedAccounts: CompanyAccountType[]
+  ) => {
     const updatedNumbers = updatedAccounts.map((acc) =>
       acc.accountNumber.toString()
     );
@@ -101,8 +175,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
     );
     const autoAssignments = newAccounts.flatMap((acc) => {
       const reps = companyUsers.filter(
-        (u) =>
-          u.salesRouteNum && acc.salesRouteNums?.includes(u.salesRouteNum)
+        (u) => u.salesRouteNum && acc.salesRouteNums?.includes(u.salesRouteNum)
       );
       return reps.map((u) => ({
         uid: u.uid,
@@ -343,9 +416,397 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
               pre-checked and auto-assign their salespeople.
             </span>
           </header>
+          {/* === 🧭 Account Filters === */}
+           <div className="target-accounts-and-roles">
+              <FormControl component="fieldset">
+                <Typography variant="subtitle1">Target Accounts</Typography>
+                <RadioGroup
+                  value={accountScope}
+                  onChange={(e) =>
+                    setAccountScope(e.target.value as "all" | "selected")
+                  }
+                  row
+                >
+                  <FormControlLabel
+                    value="all"
+                    control={<Radio />}
+                    label="All Accounts"
+                  />
+                  <FormControlLabel
+                    value="selected"
+                    control={<Radio />}
+                    label="Selected Accounts"
+                  />
+                </RadioGroup>
+              </FormControl>
+              <FormControl component="fieldset">
+                <Typography variant="subtitle1">Assign To</Typography>
+                <RadioGroup
+                  value={assigneeType}
+                  onChange={(e) =>
+                    setAssigneeType(e.target.value as "sales" | "supervisor")
+                  }
+                  row
+                >
+                  <FormControlLabel
+                    value="sales"
+                    control={<Radio />}
+                    label="Sales Reps"
+                  />
+                  <FormControlLabel
+                    value="supervisor"
+                    control={<Radio />}
+                    label="Supervisors"
+                  />
+                </RadioGroup>
+              </FormControl>
+            </div>
+
+            {accountScope === "selected" && (
+              <>
+                <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+                  {/* Chain Filter */}
+                  <FilterMultiSelect
+                    label="Chain"
+                    options={chainNames}
+                    selected={filters.chains}
+                    onChange={(newChains) =>
+                      setFilters((prev) => ({ ...prev, chains: newChains }))
+                    }
+                  />
+
+                  {/* Chain Type - Single Select (still TextField) */}
+                  <TextField
+                    select
+                    label="Chain Type"
+                    value={filters.chainType}
+                    onChange={(e) =>
+                      setFilters({ ...filters, chainType: e.target.value })
+                    }
+                    sx={{ minWidth: 160 }}
+                    size="small"
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    <MenuItem value="chain">Chain</MenuItem>
+                    <MenuItem value="independent">Independent</MenuItem>
+                  </TextField>
+
+                  {/* Type of Account */}
+                  <FilterMultiSelect
+                    label="Type of Account"
+                    options={customerTypes}
+                    selected={filters.typeOfAccounts}
+                    onChange={(newTypes) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        typeOfAccounts: newTypes,
+                      }))
+                    }
+                  />
+
+                  {/* Salesperson */}
+                  <FilterMultiSelect
+                    label="Salesperson"
+                    options={normalizedCompanyUsers.map(
+                      (u) => `${u.firstName} ${u.lastName}`
+                    )}
+                    selected={filters.userIds.map((id) =>
+                      `${
+                        normalizedCompanyUsers.find((u) => u.uid === id)
+                          ?.firstName || ""
+                      } ${
+                        normalizedCompanyUsers.find((u) => u.uid === id)
+                          ?.lastName || ""
+                      }`.trim()
+                    )}
+                    onChange={(selectedNames) => {
+                      const userIds = selectedNames
+                        .map(
+                          (name) =>
+                            normalizedCompanyUsers.find(
+                              (u) => `${u.firstName} ${u.lastName}` === name
+                            )?.uid
+                        )
+                        .filter(Boolean) as string[];
+                      setFilters((prev) => ({ ...prev, userIds }));
+                    }}
+                  />
+                  {/* Salesperson */}
+                  <FilterMultiSelect
+                    label="Supervisor"
+                    options={normalizedCompanyUsers
+                      .filter((u) => u.role === "supervisor")
+                      .map((u) => `${u.firstName} ${u.lastName}`)}
+                    selected={filters.supervisorIds.map((id) =>
+                      `${
+                        normalizedCompanyUsers.find((u) => u.uid === id)
+                          ?.firstName || ""
+                      } ${
+                        normalizedCompanyUsers.find((u) => u.uid === id)
+                          ?.lastName || ""
+                      }`.trim()
+                    )}
+                    onChange={(selectedNames) => {
+                      const supervisorIds = selectedNames
+                        .map(
+                          (name) =>
+                            normalizedCompanyUsers.find(
+                              (u) =>
+                                `${u.firstName} ${u.lastName}` === name &&
+                                u.role === "supervisor"
+                            )?.uid
+                        )
+                        .filter(Boolean) as string[];
+                      setFilters((prev) => ({ ...prev, supervisorIds }));
+                    }}
+                  />
+
+                  {/* Clear Button */}
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={() =>
+                      setFilters({
+                        chains: [],
+                        chainType: "",
+                        typeOfAccounts: [],
+                        userIds: [],
+                        supervisorIds: [],
+                      })
+                    }
+                  >
+                    Clear Filters
+                  </Button>
+                </Box>
+
+                {(filters.chains.length > 0 ||
+                  filters.chainType ||
+                  filters.typeOfAccounts.length > 0 ||
+                  filters.userIds ||
+                  filters.supervisorIds.length > 0) && (
+                  <Box
+                    display="flex"
+                    gap={2}
+                    flexWrap="wrap"
+                    sx={{ mb: 1, mt: 1 }}
+                  >
+                    Filters applied:
+                    <div className="chains-container">
+                      {filters.chains.map((c) => (
+                        <Chip
+                          key={c}
+                          label={`Chain: ${c}`}
+                          onDelete={() =>
+                            setFilters({
+                              ...filters,
+                              chains: filters.chains.filter((x) => x !== c),
+                            })
+                          }
+                        />
+                      ))}
+                    </div>
+                    <div className="chain-type-container">
+                      {filters.chainType && (
+                        <Chip
+                          label={`Chain Type: ${filters.chainType}`}
+                          onDelete={() =>
+                            setFilters({ ...filters, chainType: "" })
+                          }
+                        />
+                      )}
+                    </div>
+                    <div className="types-of-account-container">
+                      {filters.typeOfAccounts.map((t) => (
+                        <Chip
+                          key={t}
+                          label={`Type: ${t}`}
+                          onDelete={() =>
+                            setFilters({
+                              ...filters,
+                              typeOfAccounts: filters.typeOfAccounts.filter(
+                                (x) => x !== t
+                              ),
+                            })
+                          }
+                        />
+                      ))}
+                    </div>
+                    {filters.userIds.length > 0 && (
+                      <Box
+                        className="sales-people-container"
+                        sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
+                      >
+                        <Typography variant="subtitle2" sx={{ mr: 1 }}>
+                          Salespeople:
+                        </Typography>
+                        {filters.userIds.map((uid) => {
+                          const user = normalizedCompanyUsers.find(
+                            (u) => u.uid === uid
+                          );
+                          const name = user
+                            ? `${user.firstName} ${user.lastName}`
+                            : "Unknown User";
+
+                          return (
+                            <Chip
+                              key={uid}
+                              label={`User: ${name}`}
+                              color={
+                                filteredAccounts.some((account) =>
+                                  account.salesRouteNums?.includes(
+                                    user?.salesRouteNum || ""
+                                  )
+                                )
+                                  ? "default"
+                                  : "error"
+                              }
+                              onDelete={() =>
+                                setFilters({
+                                  ...filters,
+                                  userIds: filters.userIds.filter(
+                                    (id) => id !== uid
+                                  ),
+                                })
+                              }
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                    {filters.supervisorIds.length > 0 && (
+                      <Box
+                        className="supervisors-container"
+                        sx={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 1,
+                          mt: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle2" sx={{ mr: 1 }}>
+                          Supervisors:
+                        </Typography>
+                        {filters.supervisorIds.map((uid) => {
+                          const sup = normalizedCompanyUsers.find(
+                            (u) => u.uid === uid
+                          );
+                          const name = sup
+                            ? `${sup.firstName} ${sup.lastName}`
+                            : "Unknown Supervisor";
+                          return (
+                            <Chip
+                              key={uid}
+                              label={`Supervisor: ${name}`}
+                              onDelete={() =>
+                                setFilters({
+                                  ...filters,
+                                  supervisorIds: filters.supervisorIds.filter(
+                                    (id) => id !== uid
+                                  ),
+                                })
+                              }
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                <Box display="flex" gap={2} alignItems="center" mt={2}>
+                  <TextField
+                    label="Save Filter Set As"
+                    value={filterSetName}
+                    onChange={(e) => setFilterSetName(e.target.value)}
+                    size="small"
+                  />
+                  <Button variant="outlined" onClick={saveCurrentFilterSet}>
+                    Save Filters
+                  </Button>
+                </Box>
+
+                {Object.keys(savedFilterSets).length > 0 && (
+                  <Box mt={1}>
+                    <Typography variant="caption">Saved Filters:</Typography>
+                    <Box display="flex" gap={1} flexWrap="wrap" mt={0.5}>
+                      {Object.entries(savedFilterSets).map(([name, set]) => (
+                        <Chip
+                          key={name}
+                          label={name}
+                          onClick={() => setFilters(set)}
+                          onDelete={() => {
+                            const updated = { ...savedFilterSets };
+                            delete updated[name];
+                            setSavedFilterSets(updated);
+                            localStorage.setItem(
+                              "displaygram_filter_sets",
+                              JSON.stringify(updated)
+                            );
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </>
+            )}
+
+            {/* new accounts view showing them combined */}
+            {accountScope === "selected" && (
+              <>
+                {accountNumbersForThisGoal.length === 0 ||
+                goalAssignments.length == 0 ? (
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{ mb: 2 }}
+                  >
+                    Please select accounts from the table below
+                  </Typography>
+                ) : (
+                  <Typography variant="h5" sx={{ mt: 4 }}>
+                    Selected Accounts
+                  </Typography>
+                )}
+                <Typography variant="caption" color="textSecondary">
+                  {`${
+                    new Set(goalAssignments.map((g) => g.accountNumber)).size
+                  } accounts, ${
+                    new Set(goalAssignments.map((g) => g.uid)).size
+                  } users assigned`}
+                </Typography>
+
+                {goalAssignments.length > 0 && (
+                  <AssignmentsPreview
+                    assignments={goalAssignments}
+                    accounts={accounts}
+                    users={normalizedCompanyUsers}
+                    onRemoveAssignment={handleRemoveAssignment}
+                    onClearAll={() => setGoalAssignments([])}
+                  />
+                )}
+
+                <AccountMultiSelector
+                  allAccounts={filteredAccounts}
+                  selectedAccounts={accounts.filter((acc) =>
+                    accountNumbersForThisGoal.includes(
+                      acc.accountNumber.toString()
+                    )
+                  )}
+                  setSelectedAccounts={(updated) =>
+                    setAccountNumbersForThisGoal(
+                      updated.map((a) => a.accountNumber.toString())
+                    )
+                  }
+                  selectedAssignments={goalAssignments}
+                  setSelectedAssignments={setGoalAssignments}
+                  companyUsers={normalizedCompanyUsers}
+                />
+              </>
+            )}
 
           <AccountMultiSelector
-            allAccounts={allAccounts}
+            allAccounts={filteredAccounts}
             selectedAccounts={selectedAccountObjects}
             setSelectedAccounts={handleAccountSelectionChange}
             selectedAssignments={goalAssignments}

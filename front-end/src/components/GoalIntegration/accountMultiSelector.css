@@ -142,3 +142,7 @@
 .MuiDialogContent-root::-webkit-scrollbar-track {
   background-color: transparent;
 }
+
+.account-multi-selector .MuiBox-root[style*="overflow-y: auto"] {
+  scroll-behavior: smooth;
+}

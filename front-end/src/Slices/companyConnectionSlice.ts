@@ -14,14 +14,13 @@ import {
   addDoc,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "../utils/firebase";
+import { db, functions } from "../utils/firebase";
 import { CompanyConnectionType, ConnectionRequest } from "../utils/types";
 import {
   setCompanyConnectionsStore,
   updateCompanyConnectionInStore,
 } from "../utils/database/companyConnectionsDBUtils";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { showMessage } from "./snackbarSlice";
+import {  httpsCallable } from "firebase/functions";
 
 function normalizeTimestamps(obj: any) {
   const result: any = { ...obj };
@@ -67,7 +66,6 @@ export const createConnectionRequest = createAsyncThunk(
     //   requestedAt: now,
     // };
 
-    const functions = getFunctions();
     const resolveFn = httpsCallable(functions, "resolveCompanyEmail");
 
     try {

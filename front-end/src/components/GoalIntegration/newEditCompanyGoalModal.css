@@ -1,0 +1,83 @@
+/* Default: single column */
+
+.goal-create-layout {
+  display: block;
+}
+
+/* When a summary is present, switch to 2 columns */
+.goal-create-layout:has(.goal-summary-panel) {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 340px);
+  gap: 24px;
+  align-items: start;
+}
+
+.goal-form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 20px;
+  max-width: 600px;
+}
+
+.target-accounts-and-roles {
+  display: flex;
+  align-items: center;
+}
+
+.custom-input {
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 6px;
+  /* background-color: var(--input-bg, #fff); */
+  color: var(--text-color, #333);
+  transition: border-color 0.2s ease;
+  /* width: 100%; */
+}
+
+.custom-textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-background);
+  color: var(--text-color);
+  resize: vertical;
+  min-height: 100px;
+}
+
+.custom-textarea textarea {
+  border-radius: var(--border-radius);
+}
+
+
+.goal-title {
+  max-width: 200px;
+}
+
+.custom-input:focus {
+  border-color: var(--primary-color, #1976d2);
+  outline: none;
+  /* background-color: var(--input-focus-bg, #fefefe); */
+}
+
+.chains-container,
+.chain-type-container,
+.types-of-account-container,
+.sales-people-container {
+  display: flex;
+}
+
+/* Mobile: stack and disable sticky */
+@media (max-width: 768px) {
+  .goal-create-layout:has(.goal-summary-panel) {
+    display: block;
+  }
+  .goal-summary-panel {
+    position: static;
+    top: auto;
+    margin-top: 1rem;
+  }
+}

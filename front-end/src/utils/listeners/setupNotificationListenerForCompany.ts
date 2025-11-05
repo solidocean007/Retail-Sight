@@ -12,6 +12,7 @@ import { db } from "../firebase";
 import { AppDispatch } from "../store";
 import { setCompanyNotifications } from "../../Slices/notificationsSlice";
 import { NotificationType, UserType } from "../types";
+import { normalizeFirestoreData } from "../normalize"; // ✅ add this
 
 export const setupNotificationListenersForCompany = (user: UserType) => {
   return (dispatch: AppDispatch) => {
@@ -33,23 +34,14 @@ export const setupNotificationListenersForCompany = (user: UserType) => {
     const handleSnapshot = (snapshot: QuerySnapshot<DocumentData>) => {
       snapshot.docChanges().forEach((change) => {
         const doc = change.doc;
-        const raw = structuredClone(doc.data()); // 🔐 safer clone for Redux
 
+        // ✅ Deep normalize all Firestore timestamps (sentAt, scheduledAt, etc.)
+        const normalizedData = normalizeFirestoreData(doc.data()) as NotificationType;
 
-        const notification = {
-          ...raw,
-          id: doc.id,
-          sentAt:
-            raw.sentAt?.toDate instanceof Function
-              ? raw.sentAt.toDate().toISOString()
-              : typeof raw.sentAt === "string"
-              ? raw.sentAt
-              : new Date().toISOString(),
-          scheduledAt:
-            raw.scheduledAt?.toDate instanceof Function
-              ? raw.scheduledAt.toDate()
-              : raw.scheduledAt || null,
-        } as NotificationType;
+        const notification: NotificationType = {
+          // id: doc.id,
+          ...normalizedData,
+        };
 
         if (change.type === "removed") {
           delete companyNotifications[doc.id];

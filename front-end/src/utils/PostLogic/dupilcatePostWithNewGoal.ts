@@ -9,7 +9,7 @@ import { PostWithID } from "../types";
 import { AppDispatch } from "../store";
 import { db } from "../firebase";
 import { mergeAndSetPosts } from "../../Slices/postsSlice";
-import { normalizePost } from "../normalizePost";
+import { normalizePost } from "../normalize";
 import { addPostsToIndexedDB } from "../database/postStoreUtils";
 import { updateGoalWithSubmission } from "../helperFunctions/updateGoalWithSubmission";
 

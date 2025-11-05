@@ -27,6 +27,10 @@
   --status-inactive-bg: rgba(120, 120, 120, 0.1);
 
   /* Brand & Accent */
+  --accent-light-blue: #60a5fa; /* soft blue accent for gradients */
+  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  --card-shadow-hover: 0 8px 24px rgba(59, 130, 246, 0.25);
+  --text-secondary: var(--gray-600);
   --primary-dark-blue: #0944a3;
   --primary-blue: #3b82f6;
   --primary-blue-dark: #2563eb;
@@ -263,10 +267,7 @@
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);
 
-  --surface-elevated: #1f1f22; /* darker card background */
-  --surface-base: #121214;
-
-  /* --text-color: var(--gray-100); */
+  --text-secondary: var(--gray-300);
   --text-color: var(--gray-100);
   --text-muted: #a2a7af;
   --text-on-button: white;

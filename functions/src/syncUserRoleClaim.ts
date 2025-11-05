@@ -1,4 +1,5 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) {
@@ -16,8 +17,8 @@ export const syncUserRoleClaim = onDocumentWritten(
     const uid = event.params.uid;
     const afterData = event.data?.after?.data();
 
-    if (!afterData) {
-      // User doc deleted → clear claims
+    if (!after) {
+      // user deleted — clear custom claims
       await admin.auth().setCustomUserClaims(uid, {});
       return;
     }
@@ -28,5 +29,7 @@ export const syncUserRoleClaim = onDocumentWritten(
     } else {
       await admin.auth().setCustomUserClaims(uid, {}); // clear elevated claims
     }
+  }
+);
   }
 );

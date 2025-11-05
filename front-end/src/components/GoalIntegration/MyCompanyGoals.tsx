@@ -20,6 +20,7 @@ import "./myCompanyGoals.css";
 import ArchivedGoalsLayout from "./ArchivedGoals/ArchivedGoalsLayout";
 import PostViewerModal from "../PostViewerModal";
 import { RootState } from "../../utils/store";
+import UserCompanyGoalCard from "./UserCompanyGoalCard";
 
 const MyCompanyGoals: React.FC = () => {
   const theme = useTheme();
@@ -106,7 +107,7 @@ const MyCompanyGoals: React.FC = () => {
         {title}
       </Typography>
       {goals.map((goal) => (
-        <CompanyGoalCard
+        <UserCompanyGoalCard
           key={goal.id}
           goal={goal}
           salesRouteNum={user?.salesRouteNum}
@@ -175,6 +176,7 @@ const MyCompanyGoals: React.FC = () => {
               archivedGoals={archivedGoals}
               isMobile={isMobile}
               salesRouteNum={user?.salesRouteNum}
+              onViewPostModal={openPostViewer}
             />
           )}
         </>

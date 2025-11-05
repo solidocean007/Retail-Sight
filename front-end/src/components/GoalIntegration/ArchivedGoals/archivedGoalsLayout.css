@@ -34,20 +34,20 @@
 
 .archived-months-row {
   display: flex;
-  flex-wrap: wrap; /* allow wrapping only if absolutely needed */
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+  margin: 0.75rem 0 1rem;
 }
 
 .archived-month-chip {
-  background-color: var(--chip-bg);
-  /* width: 200px; */
-  color: var(--chip-text);
   border-radius: 16px;
   padding: 0.25rem 0.75rem;
+  background-color: var(--chip-bg);
+  color: var(--chip-text);
   box-shadow: var(--chip-shadow);
-  transition: background-color 0.3s ease;
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
 
 .archived-month-chip:hover {
@@ -60,10 +60,12 @@
 }
 
 .archived-goal-cards {
-  margin-top: 0.5rem;
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding: 1rem;
+  border-top: 1px solid var(--card-outline);
 }
 
 .archived-month-chip.active {
@@ -79,3 +81,88 @@
   gap: 1rem;
   padding-left: 1rem; /* Indent under chip */
 }
+
+/* ✨ Smooth slide + fade for expanded month goals */
+.fade-slide-in {
+  animation: fadeSlideIn 0.45s ease forwards;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Optional: subtle fade-out if you like symmetry */
+.MuiCollapse-wrapperInner {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* subtle fade + slide */
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(200px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-200px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-right {
+  animation: slideInFromRight 0.45s ease forwards;
+}
+
+.slide-left {
+  animation: slideInFromLeft 0.45s ease forwards;
+}
+
+@keyframes slideEnterFromRight {
+  0% { opacity: 0; transform: translateX(200px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideEnterFromLeft {
+  0% { opacity: 0; transform: translateX(-200px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideExitToRight {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(200px); }
+}
+
+@keyframes slideExitToLeft {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-200px); }
+}
+
+/* Apply classes based on direction + phase */
+.slide-right.slide-enter { animation: slideEnterFromRight 0.4s ease forwards; }
+.slide-left.slide-enter  { animation: slideEnterFromLeft 0.4s ease forwards; }
+.slide-right.slide-exit  { animation: slideExitToLeft 0.3s ease forwards; }
+.slide-left.slide-exit   { animation: slideExitToRight 0.3s ease forwards; }
+

@@ -29,7 +29,7 @@ export const findMatchingCompany = async (normalizedInput: string) => {
 // optional: define a type for clarity
 type CompanyLimits = { maxUsers: number; maxConnections: number };
 type NewCompanyOptions = {
-  tier?: "freeLimited" | "pro" | "enterprise" | "freeNoLimits";
+  plan?: "freeLimited" | "pro" | "enterprise" | "freeNoLimits";
   limits?: CompanyLimits;
   verified?: boolean;                 // canonical new field
   companyVerified?: boolean;          // legacy (kept for compatibility)
@@ -44,7 +44,7 @@ export const createNewCompany = async (
 ) => {
   const {
     userTypeHint,
-    tier = "free",
+    plan = "free",
     verified = false,
     companyVerified = false, // keep legacy mirror; prefer `verified` going forward
     limits = userTypeHint === "supplier"
@@ -62,7 +62,7 @@ export const createNewCompany = async (
     companyName,                          // as entered
     companyNameNormalized,                // normalized for lookups
     verified,                             // new canonical verification flag
-    tier,                                 // "free" | "pro" | "enterprise"
+    plan,                                 // "free" | "pro" | "enterprise"
     limits,                               // { maxUsers, maxConnections }
     usersCount: 1,                        // creator will be first user (even if pending)
     connectionsCount: 0,

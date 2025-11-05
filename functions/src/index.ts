@@ -16,13 +16,14 @@ import { onPostCreated } from "./onPostCreated";
 import { detectBrands } from "./ml/detectBrands";
 
 export {
+  // General functions
   ping,
   createInviteAndEmail,
   deleteAuthUser,
   checkUserExists,
   getExternalApiKey,
-  syncUserRoleClaim,
   getExternalApiKeyStatus,
+  syncUserRoleClaim,
   upsertGalloAxisKey,
   deleteGalloAxisKey,
   resolveCompanyEmail,

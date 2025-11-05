@@ -7,7 +7,7 @@ import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import store from "../utils/store";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
-import { normalizePost } from "../utils/normalizePost";
+import { normalizePost } from "../utils/normalize";
 
 // 🔧 Can be bumped manually when needed
 const POSTS_BATCH_SIZE = 50;
@@ -105,7 +105,7 @@ const useSchemaVersion = () => {
               const action = await store.dispatch(
                 fetchInitialPostsBatch({
                   POSTS_BATCH_SIZE,
-                  currentUserCompanyId: companyId,
+                  currentUser: user,
                 }),
               );
 

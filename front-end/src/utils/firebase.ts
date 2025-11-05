@@ -7,6 +7,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
 
 // Firebase configuration
@@ -27,6 +28,8 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Storage
 const storage = getStorage(app);
 
+const functions = getFunctions(app, "us-central1");
+
 // Get a reference to the auth service
 const auth = getAuth(app);
 
@@ -41,4 +44,4 @@ setPersistence(auth, browserLocalPersistence)
     console.error("Error setting persistence", error);
   });
 
-export { auth, db, updateProfile, storage };
+export { auth, db, updateProfile, storage, functions };
