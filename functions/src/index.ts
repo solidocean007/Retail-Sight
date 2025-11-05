@@ -14,6 +14,7 @@ import { onSharePost } from "./onSharePost";
 import { onConnectionBrandsUpdated } from "./onConnectionBrandsUpdated";
 import { onPostCreated } from "./onPostCreated";
 import { enforceSuperAdminLimit } from "./enforceSuperAdminLimit";
+import { createCompanyOrRequest } from "./createCompanyOrRequest";
 
 // 🧾 Braintree Billing System
 import {
@@ -53,6 +54,7 @@ export {
   onConnectionBrandsUpdated,
   onPostCreated,
   enforceSuperAdminLimit,
+  createCompanyOrRequest,
 
   // Billing functions
   updateSubscriptionWithProration,
