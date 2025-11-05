@@ -20,8 +20,8 @@ import {
 import dayjs, { Dayjs } from "dayjs";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db, functions } from "../../utils/firebase";
-import { httpsCallable } from "firebase/functions";
+import { db } from "../../utils/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import DateSelector from "./DateSelector";
 import ProgramTable from "./ProgramTable";
 import GoalTable from "./GoalTable";
@@ -76,6 +76,7 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
   useEffect(() => {
     const fetchKey = async () => {
       try {
+        const functions = getFunctions();
         const getExternalApiKey = httpsCallable<
           { name: string },
           { key: string }
@@ -131,6 +132,7 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
+        const functions = getFunctions();
         const getExternalApiKeyStatus = httpsCallable<
           { integration: string },
           {
@@ -162,6 +164,7 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
       return;
     }
     try {
+      const functions = getFunctions();
       const upsertGalloAxisKey = httpsCallable<
         { env: "prod" | "dev"; key: string },
         { success: boolean }
@@ -182,6 +185,7 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
 
   const deleteKey = async (env: "prod" | "dev") => {
     try {
+      const functions = getFunctions();
       const deleteGalloAxisKey = httpsCallable<
         { env: "prod" | "dev" },
         { success: boolean }
@@ -202,6 +206,7 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
 
   const refreshKeyStatus = async () => {
     try {
+      const functions = getFunctions();
       const getExternalApiKeyStatus = httpsCallable<
         { integration: string },
         {

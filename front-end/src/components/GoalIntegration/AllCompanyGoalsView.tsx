@@ -178,6 +178,7 @@ const AllCompanyGoalsView = ({
                 setIsConfirmationOpen(true);
               }}
               onEdit={handleEditCompanyGoal}
+              onViewPostModal={openPostViewer}
             />
           )}
         </>
