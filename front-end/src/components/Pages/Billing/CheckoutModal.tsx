@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import dropin from "braintree-web-drop-in";
+// import dropin from "braintree-web-drop-in";
 import { httpsCallable } from "firebase/functions";
 import "./checkoutModal.css";
 import CartSummary from "./CartSummary";
@@ -80,44 +80,44 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   }, [initialAddonType, initialAddonQty]);
 
   // --- Initialize Braintree drop-in ---
-  useEffect(() => {
-    if (!open || !companyId) return; // ✅ guard
-    if (!dropinRef.current) return;
-    if (open && dropinRef.current) {
-      setDropinReady(false);
-      (async () => {
-        try {
-          const tokenFn = httpsCallable(functions, "getClientToken");
-          const tokenRes: any = await tokenFn({ companyId });
-          const token = tokenRes.data.clientToken;
-          if (!token) throw new Error("Missing Braintree client token");
+  // useEffect(() => {
+  //   if (!open || !companyId) return; // ✅ guard
+  //   if (!dropinRef.current) return;
+  //   if (open && dropinRef.current) {
+  //     setDropinReady(false);
+  //     (async () => {
+  //       try {
+  //         const tokenFn = httpsCallable(functions, "getClientToken");
+  //         const tokenRes: any = await tokenFn({ companyId });
+  //         const token = tokenRes.data.clientToken;
+  //         if (!token) throw new Error("Missing Braintree client token");
 
-          instanceRef.current = await dropin.create({
-            authorization: token,
-            container: dropinRef.current,
-            paypal: { flow: "vault" },
-            card: {
-              overrides: {
-                fields: {
-                  number: { placeholder: "Card number" },
-                  cvv: { placeholder: "CVV" },
-                  expirationDate: { placeholder: "MM/YY" },
-                },
-              },
-            },
-          });
-          setDropinReady(true);
-        } catch (err) {
-          console.error(err);
-          setError("Failed to initialize payment form.");
-        }
-      })();
-    }
+  //         instanceRef.current = await dropin.create({
+  //           authorization: token,
+  //           container: dropinRef.current,
+  //           paypal: { flow: "vault" },
+  //           card: {
+  //             overrides: {
+  //               fields: {
+  //                 number: { placeholder: "Card number" },
+  //                 cvv: { placeholder: "CVV" },
+  //                 expirationDate: { placeholder: "MM/YY" },
+  //               },
+  //             },
+  //           },
+  //         });
+  //         setDropinReady(true);
+  //       } catch (err) {
+  //         console.error(err);
+  //         setError("Failed to initialize payment form.");
+  //       }
+  //     })();
+  //   }
 
-    return () => {
-      instanceRef.current?.teardown?.();
-    };
-  }, [open, companyId]);
+  //   return () => {
+  //     instanceRef.current?.teardown?.();
+  //   };
+  // }, [open, companyId]);
 
   // --- Submit handler ---
   const handleSubmit = async () => {

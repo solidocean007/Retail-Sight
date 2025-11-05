@@ -5,8 +5,8 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { AccessRequestDraft } from "../DeveloperDashboard/deverloperTypes";
 // import { Eye, EyeOff } from "lucide-react"; // nice minimal icons
-import "../signUpLogIn.css";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import './signUpLogIn.css'
 
 type UserTypeHint = "distributor" | "supplier";
 
