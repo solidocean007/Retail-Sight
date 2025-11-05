@@ -7,8 +7,8 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
-import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -28,6 +28,8 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Storage
 const storage = getStorage(app);
 
+const functions = getFunctions(app, "us-central1");
+
 // Get a reference to the auth service
 const auth = getAuth(app);
 
@@ -42,11 +44,4 @@ setPersistence(auth, browserLocalPersistence)
     console.error("Error setting persistence", error);
   });
 
-// conditionally init analytics (avoids SSR errors)
-isSupported().then((supported) => {
-  if (supported) {
-    getAnalytics(app);
-  }
-});
-
-export { auth, db, updateProfile, storage };
+export { auth, db, updateProfile, storage, functions };

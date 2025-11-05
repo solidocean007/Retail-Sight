@@ -31,7 +31,7 @@ import {
   storeFilteredSet,
 } from "../../utils/database/indexedDBUtils";
 import { useDebouncedValue } from "../../hooks/useDebounce";
-import { normalizePost } from "../../utils/normalizePost";
+import { normalizePost } from "../../utils/normalize";
 // import { clear } from "console";
 // import { Autocomplete, TextField } from "@mui/material";
 import ProductTypeAutocomplete from "./ProductTypeAutoComplete";

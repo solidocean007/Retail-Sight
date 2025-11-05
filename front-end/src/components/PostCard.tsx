@@ -42,7 +42,7 @@ import ImageModal from "./ImageModal";
 import { MoreVert } from "@mui/icons-material";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
-import "./viewSharedPost.css";
+// import "./viewSharedPost.css";
 import LinkShareModal from "./LinkShareModal";
 import BlurUpImage from "./BlurUpImage";
 import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";

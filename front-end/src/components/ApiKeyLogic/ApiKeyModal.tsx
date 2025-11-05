@@ -9,12 +9,11 @@ import {
   Modal,
   Typography,
 } from "@mui/material";
-import { getFunctions, httpsCallable } from "@firebase/functions";
+import { httpsCallable } from "@firebase/functions";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
-import { db } from "../../utils/firebase";
 import { PermissionsType } from "../../utils/types";
+import { functions } from "../../utils/firebase";
 
 interface ApiKeyResponse {
   apiKey: string;
@@ -47,7 +46,6 @@ const ApiKeyModal = ({
   const [loadingKey, setLoadingKey] = useState(false);
 
   const fetchApiKey = async () => {
-    const functions = getFunctions();
     const getApiKey = httpsCallable(functions, "getApiKey");
     try {
       const result = await getApiKey({ companyId: dashboardUser?.companyId });
@@ -61,7 +59,6 @@ const ApiKeyModal = ({
   };
 
   const handleGenerateNewApiKey = async () => {
-    const functions = getFunctions();
     const generateApiKey = httpsCallable(functions, "generateApiKey");
     try {
       const permissions: PermissionsType["permissions"] = {

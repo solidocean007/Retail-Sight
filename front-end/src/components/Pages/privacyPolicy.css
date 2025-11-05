@@ -1,0 +1,30 @@
+.privacy-policy-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background: var(--post-card-background);
+  color: var(--text-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.privacy-policy-container h1 {
+  color: var(--header-title);
+  text-align: center;
+}
+
+.privacy-policy-container p,
+.privacy-policy-container h2 {
+  margin-bottom: 16px;
+}
+
+.privacy-policy-container section {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .privacy-policy-container {
+    margin: 20px;
+    padding: 15px;
+  }
+}

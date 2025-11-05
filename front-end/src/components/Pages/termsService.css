@@ -1,0 +1,30 @@
+.terms-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background: var(--post-card-background);
+  color: var(--text-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.terms-container h1 {
+  color: var(--header-title);
+  text-align: center;
+}
+
+.terms-container p,
+.terms-container h2 {
+  margin-bottom: 16px;
+}
+
+.terms-container section {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .terms-container {
+    margin: 20px;
+    padding: 15px;
+  }
+}

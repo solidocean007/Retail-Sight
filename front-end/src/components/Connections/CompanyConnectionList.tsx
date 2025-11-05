@@ -25,15 +25,6 @@ const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
   // console.log(connections)
   return (
     <div className="connections-list">
-      {/* {connections.map((c) => (
-        <CompanyConnectionCard
-          key={c.id}
-          connection={c}
-          currentCompanyId={currentCompanyId}
-          onEdit={onEdit}
-          isAdminView={isAdminView}
-        />
-      ))} */}
       {connections.map((c) => (
         <CompanyConnectionCard
           key={c.id}

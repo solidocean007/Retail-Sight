@@ -1,4 +1,4 @@
-import { fetchAllAccountsFromFirestore } from "./fetchAllAccountsFromFirestore";
+import { fetchAllAccountsFromFirestore } from "./fetchAllAcccountsFromFirestore";
 import getCompanyAccountId from "./getCompanyAccountId";
 
 // this gets all of the accounts for the users company

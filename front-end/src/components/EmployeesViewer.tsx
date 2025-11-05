@@ -17,7 +17,7 @@ import {
 import React, { useState } from "react";
 import { UserType } from "../utils/types";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../utils/firebase";
+import { db, functions } from "../utils/firebase";
 import { useSelector } from "react-redux";
 import {
   selectCompanyUsers,
@@ -26,15 +26,14 @@ import {
 } from "../Slices/userSlice";
 import { updateUserRoleInIndexedDB } from "../utils/database/userDataIndexedDB";
 import PendingInvites from "./PendingInvites";
-import { getFunctions, httpsCallable } from "@firebase/functions";
+import { httpsCallable } from "@firebase/functions";
 import { useAppDispatch } from "../utils/store";
 import CustomConfirmation from "./CustomConfirmation";
 import { checkUserExists } from "../utils/validation/checkUserExists";
 import { showMessage } from "../Slices/snackbarSlice";
-import { normalizeTimestamps } from "../utils/normalizeTimestamps";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 const EmployeesViewer = () => {
-  const functions = getFunctions(undefined, "us-central1");
   const createInviteAndEmail = httpsCallable<
     { email: string; role?: string; baseUrl?: string },
     { success: boolean; inviteId: string }
@@ -189,7 +188,7 @@ const EmployeesViewer = () => {
           u // 'localUsers' is possibly 'null'
         ) => (u.uid === userId ? updatedUser : u)
       );
-      dispatch(setCompanyUsers(normalizeTimestamps(updatedUsers)));
+      dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
       await updateUserRoleInIndexedDB(userId, updatedUser.role);
       handleEditToggle(userId);
     } catch (err) {
@@ -214,7 +213,7 @@ const EmployeesViewer = () => {
           ? { ...u, status: "inactive" as "inactive" }
           : u
       );
-      dispatch(setCompanyUsers(normalizeTimestamps(updatedUsers)));
+      dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
 
       // Success feedback
       setFeedbackMessage(

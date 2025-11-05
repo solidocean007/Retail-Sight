@@ -57,6 +57,25 @@ export type IntegrationConfig = {
 
 export type IntegrationsMap = Partial<Record<ProviderKey, IntegrationConfig>>;
 
+export type BillingStatus = "active" | "past_due" | "canceled";
+
+export interface CompanyAddons {
+  extraUser: number;
+  extraConnection: number;
+}
+
+export type PlanType = "free" | "team" | "network" | "enterprise";
+
+export interface CompanyBilling {
+  plan: PlanType;
+  price: number;
+  braintreeCustomerId: string;
+  subscriptionId: string;
+  paymentStatus: BillingStatus;
+  renewalDate?: Timestamp;
+  lastPaymentDate?: Timestamp;
+}
+
 export type CompanyType = {
   id?: string;
   lastUpdated: string | null;
@@ -69,19 +88,17 @@ export type CompanyType = {
   statusPendingUsers?: string[]; // not necessary
   companyVerified?: boolean; // not necessary
   createdAt?: string | null;
-  accountsId?: string | null; // this is null to begin with but after onboarding i think
+  accountsId?: string | null; // this is null to begin with but after onboarding
   goals?: CompanyGoalWithIdType[];
-  companyType: BusinessType; // my the developer is the owner of displaygram
+  companyType: BusinessType;
 
-  // new fields in branch: fix-creating-new-company
   verified: boolean;
   accessStatus?: AccessStatus;
-  tier: "free" | "pro" | "enterprise"; // not even sure what enterprise is for.  maybe different prices for different tiers
-  limits: {
-    // this i understand well.  i have an idea that companies will have user and connection limits for their paid or free plans
-    maxUsers: number;
-    maxConnections: number;
-  };
+  userLimit: number;
+  connectionLimit: number;
+  addons: CompanyAddons;
+  billing: CompanyBilling;
+
   // 🔁 replace array with a provider map
   integrations?: IntegrationsMap;
 
@@ -93,6 +110,16 @@ export type CompanyType = {
     connectionsPending?: number;
   };
 };
+
+export interface BillingLogType {
+  id: string;
+  companyId: string;
+  companyName: string;
+  plan: PlanType;
+  event: "created" | "renewed" | "canceled" | "payment_failed";
+  amount: number;
+  timestamp: Timestamp;
+}
 
 export interface CompanyTypeWithId extends CompanyType {
   id: string;
@@ -125,8 +152,8 @@ export interface ConnectionRequest {
 }
 
 export interface PendingBrandType {
-   brand: string,
-  proposedBy: string
+  brand: string;
+  proposedBy: string;
 }
 
 export interface CompanyConnectionType {
@@ -536,7 +563,7 @@ export type CompanyGoalType = {
   createdByLastName?: string; // optional
   accountNumbersForThisGoal?: string[]; // ✅ Full scope of accounts this goal applies to
   goalAssignments?: GoalAssignmentType[];
-  perUserQuota?: number | null; // ✅ Minimum required submissions per user (if defined)
+  perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
   deleted: boolean;
 };
@@ -640,4 +667,4 @@ export type DashboardModeType =
   | "GoalManagerMode"
   | "ApiMode"
   | "CollectionsMode"
-  | "TutorialMode";
+  | "TutorialMode"

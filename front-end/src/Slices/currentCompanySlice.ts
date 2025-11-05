@@ -3,15 +3,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { CompanyType } from "../utils/types";
 import { db } from "../utils/firebase";
 import { RootState } from "../utils/store";
-
-// small helper
-const toIso = (v: any): string | null => {
-  if (!v) return null;
-  if (v.toDate) return v.toDate().toISOString();
-  if (v instanceof Date) return v.toISOString();
-  if (typeof v === "string") return v;
-  return null;
-};
+import { normalizeFirestoreData } from "../utils/normalize"; // ✅ add this
 
 // 🔌 one-off fetch by ID
 export const fetchCurrentCompany = createAsyncThunk<
@@ -23,16 +15,13 @@ export const fetchCurrentCompany = createAsyncThunk<
     const snap = await getDoc(doc(db, "companies", companyId));
     if (!snap.exists()) throw new Error("Company not found");
 
-    const data = snap.data() as any;
-    const { createdAt, lastUpdated, updatedAt, ...rest } = data;
+    // ✅ normalize all nested timestamps (billing, addons, etc.)
+    const normalizedData = normalizeFirestoreData(snap.data()) as CompanyType;
 
     return {
       id: snap.id,
-      ...rest,
-      createdAt: toIso(createdAt),
-      lastUpdated: toIso(lastUpdated),
-      updatedAt: toIso(updatedAt), // ✅ use helper instead of direct call
-    } as CompanyType & { id: string };
+      ...normalizedData,
+    };
   } catch (e: any) {
     return rejectWithValue(e.message);
   }
@@ -54,12 +43,13 @@ const currentCompanySlice = createSlice({
   name: "currentCompany",
   initialState,
   reducers: {
-    // optional manual setter (e.g. after profile update)
+    // Manual setter (e.g., after profile update)
     setCurrentCompany(
       state,
       action: PayloadAction<CompanyType & { id: string }>
     ) {
-      state.data = action.payload;
+      // ✅ ensure serializable data here as well
+      state.data = normalizeFirestoreData(action.payload);
     },
   },
   extraReducers: (b) => {
@@ -67,7 +57,8 @@ const currentCompanySlice = createSlice({
       s.loading = true;
     });
     b.addCase(fetchCurrentCompany.fulfilled, (s, a) => {
-      s.data = a.payload;
+      // ✅ guarantee serialized data from async thunk too
+      s.data = normalizeFirestoreData(a.payload);
       s.loading = false;
     });
     b.addCase(fetchCurrentCompany.rejected, (s, a) => {

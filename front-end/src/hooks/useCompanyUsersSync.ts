@@ -7,7 +7,7 @@ import {
 } from "../utils/database/userDataIndexedDB";
 import { db } from "../utils/firebase";
 import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
-import { normalizeTimestamps } from "../utils/normalizeTimestamps";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 export default function useCompanyUsersSync() {
   const dispatch = useDispatch();
@@ -24,7 +24,7 @@ export default function useCompanyUsersSync() {
       // If Redux already has users, you can skip the initial fetch, but keep the live listener.
       const cached = await getCompanyUsersFromIndexedDB();
       if (cached?.length && (!companyUsers || companyUsers.length === 0)) {
-        const normalized = normalizeTimestamps(cached);
+        const normalized = normalizeFirestoreData(cached);
         dispatch(setCompanyUsers(normalized));
       }
 
@@ -35,7 +35,7 @@ export default function useCompanyUsersSync() {
         try {
           const snap = await getDocs(q);
           const users = snap.docs.map((d) => ({ ...(d.data() as any), uid: d.id }));
-          const normalized = normalizeTimestamps(users);
+          const normalized = normalizeFirestoreData(users);
           dispatch(setCompanyUsers(normalized));
           await saveCompanyUsersToIndexedDB(normalized); // <-- save normalized
         } catch (err) {
@@ -46,7 +46,7 @@ export default function useCompanyUsersSync() {
       // Real-time
       unsub = onSnapshot(q, async (snap) => {
         const fresh = snap.docs.map((d) => ({ ...(d.data() as any), uid: d.id }));
-        const normalized = normalizeTimestamps(fresh);
+        const normalized = normalizeFirestoreData(fresh);
 
         // compare with latest Redux (via ref)
         const curr = usersRef.current ?? [];

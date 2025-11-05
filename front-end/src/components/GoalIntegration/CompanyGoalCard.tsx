@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   Tooltip,
+  useMediaQuery,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { Timestamp } from "firebase/firestore";
@@ -13,16 +14,16 @@ import { CompanyAccountType, CompanyGoalWithIdType } from "../../utils/types";
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 import UserTableForGoals, { UserRowType } from "../UserTableForGoals";
+import EditCompanyGoalModal from "./EditCompanyGoalModal";
 import "./companyGoalCard.css";
 import { getCompletionClass } from "../../utils/helperFunctions/getCompletionClass";
-import NewEditCompanyGoalModal from "./NewEditComapnyGoalModal";
 
 interface CompanyGoalCardProps {
   goal: CompanyGoalWithIdType;
   expanded: boolean;
   onToggleExpand: (goalId: string) => void;
   salesRouteNum?: string;
-  mobile: boolean;
+  mobile?: boolean;
   onDelete?: (id: string) => void;
   onEdit?: (
     goalId: string,
@@ -247,15 +248,15 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
   // ✅ More accurate per-user quota progress
   const percentageOfGoal = useMemo(() => {
-    const quota = goal.perUserQuota ?? 0;
-    if (quota <= 0 || userRows.length === 0) return 0;
+    if (!goal.perUserQuota || userRows.length === 0) return 0;
 
     const ratios = userRows.map((r) => {
-      const completed = Math.min(r.submissions.length, quota);
-      return completed / quota;
+      const completed = Math.min(r.submissions.length, goal.perUserQuota);
+      return completed / goal.perUserQuota;
     });
 
     const avgRatio = ratios.reduce((sum, r) => sum + r, 0) / userRows.length;
+
     return Math.round(avgRatio * 100);
   }, [goal.perUserQuota, userRows]);
 
@@ -387,10 +388,12 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       </Collapse>
 
       {isEditModalOpen && (
-        <NewEditCompanyGoalModal
+        <EditCompanyGoalModal
           open={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           goal={goal}
+          allAccounts={allCompanyAccounts}
+          companyUsers={activeCompanyUsers}
           onSave={handleGoalUpdate}
         />
       )}

@@ -1,0 +1,224 @@
+.billing-plan-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--background-pop-out-body);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.billing-plan-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
+}
+
+.billing-plan-card h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.billing-plan-card.current {
+  border-color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), transparent);
+}
+
+.plan-pill.recommended {
+  background: var(--primary-blue);
+  color: #fff;
+  border-radius: 16px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  animation: pulseGlow 2.2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.45);
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.6);
+  }
+}
+
+
+/* === Header === */
+.plan-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.plan-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-title {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.price {
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin: 0.5rem 0 0.25rem;
+}
+
+.desc {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 0.8rem;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  text-align: left;
+}
+.feature-list li {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  margin: 0.3rem 0;
+}
+
+.plan-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 0.25rem 0.6rem;
+  margin-left: 0.5rem;
+  max-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.plan-pill.recommended {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.plan-pill.current {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary-blue);
+}
+
+.plan-header-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-select {
+  flex: 1;
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: var(--button-radius, 8px);
+  padding: 0.4rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-select.btn-disabled {
+  background: #ccc;
+  cursor: default;
+}
+
+.btn-select:hover:not(.btn-disabled) {
+  background: var(--primary-hover, #0052a3);
+}
+
+.collapse-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+/* === Body === */
+.plan-body {
+  padding: 0.5rem 0 0;
+  text-align: left;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+
+.feature-list li {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+/* === Mobile === */
+@media (max-width: 768px) {
+  .plan-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-select {
+    width: 100%;
+  }
+
+  .collapse-btn {
+    align-self: flex-end;
+  }
+}
+
+/* === Medium (768–1200px) === */
+@media (min-width: 768px) and (max-width: 1200px) {
+  .plans-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .billing-plan-card {
+    flex: 1 1 calc(25% - 1rem); /* 4 cards per row */
+    max-width: 250px;
+  }
+}
+
+/* === Large screens === */
+@media (min-width: 1200px) {
+  .billing-plan-card {
+    flex: 1 1 calc(25% - 1rem);
+    max-width: 250px;
+  }
+
+  .billing-plan-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
+  }
+
+  /* Always show details */
+  .billing-plan-card .plan-body {
+    display: block !important;
+  }
+
+  /* Hide toggle */
+  .billing-plan-card .collapse-btn {
+    display: none;
+  }
+}

@@ -25,7 +25,7 @@ import {
 } from "../Slices/notificationsSlice";
 import { NotificationType } from "../utils/types";
 import { db } from "../utils/firebase";
-import { normalizeNotification } from "../utils/normalize";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 //
 // 🔁 1. Fetch All Notifications for a Company
@@ -47,7 +47,15 @@ export const fetchCompanyNotifications = createAsyncThunk(
       const roleNotifs: NotificationType[] = [];
 
       snapshot.forEach((docSnap) => {
-        const normalized = normalizeNotification(docSnap.data(), docSnap.id);
+        // ✅ Normalize the Firestore data safely
+        // ✅ Normalize the Firestore data safely
+        const normalizedData = normalizeFirestoreData(
+          docSnap.data()
+        ) as NotificationType;
+        const normalized: NotificationType = {
+          ...normalizedData,
+          id: docSnap.id,
+        };
 
         const { recipientUserIds, recipientCompanyIds, recipientRoles } =
           normalized;
@@ -72,6 +80,7 @@ export const fetchCompanyNotifications = createAsyncThunk(
       dispatch(setCompanyNotifications(companyNotifs));
       dispatch(setRoleNotifications(roleNotifs));
     } catch (err: any) {
+      console.error("Error fetching notifications:", err);
       dispatch(setError(err.message));
     } finally {
       dispatch(setLoading(false));
@@ -81,6 +90,7 @@ export const fetchCompanyNotifications = createAsyncThunk(
 
 //
 // 📩 2. Send Notification (Flat collection)
+//
 export const sendNotification = createAsyncThunk(
   "notifications/sendNotification",
   async (
@@ -88,10 +98,9 @@ export const sendNotification = createAsyncThunk(
     { dispatch }
   ) => {
     try {
-      // 1) Create an ID up front
       const docRef = doc(collection(db, "notifications"));
 
-      // 2) Firestore payload (OK to use Timestamp here)
+      // ✅ Prepare Firestore payload
       const firestorePayload: NotificationType = {
         ...notification,
         id: docRef.id,
@@ -107,38 +116,32 @@ export const sendNotification = createAsyncThunk(
         postId: notification.postId ?? "",
       };
 
-      // 3) Write to Firestore
       await setDoc(docRef, firestorePayload);
 
-      // 4) Normalize for Redux (must be serializable)
-      const normalized = normalizeNotification(firestorePayload);
+      // ✅ Normalize before dispatching to Redux (serializable)
+      const normalized = {
+        ...normalizeFirestoreData(firestorePayload),
+      };
 
-      // 5) Dispatch to the correct buckets
-      const {
-        recipientUserIds,
-        recipientCompanyIds,
-        recipientRoles,
-      } = normalized;
-
+      const { recipientUserIds, recipientCompanyIds, recipientRoles } =
+        normalized;
       let dispatched = false;
 
-      if (recipientUserIds && recipientUserIds.length > 0) {
+      if (recipientUserIds?.length) {
         dispatch(addUserNotification(normalized));
         dispatched = true;
       }
-      if (recipientCompanyIds && recipientCompanyIds.length > 0) {
+      if (recipientCompanyIds?.length) {
         dispatch(addCompanyNotification(normalized));
         dispatched = true;
       }
-      if (recipientRoles && recipientRoles.length > 0) {
+      if (recipientRoles?.length) {
         dispatch(addRoleNotification(normalized));
         dispatched = true;
       }
 
-      // Global fallback: no audience specified → company-wide feed
-      if (!dispatched) {
-        dispatch(addCompanyNotification(normalized));
-      }
+      // Default: no audience → company-wide
+      if (!dispatched) dispatch(addCompanyNotification(normalized));
     } catch (err: any) {
       console.error("Error sending notification:", err);
       dispatch(setError(err.message || "Failed to send notification"));

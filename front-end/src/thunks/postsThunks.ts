@@ -29,7 +29,7 @@ import {
   // QueryConstraint,
 } from "firebase/firestore";
 
-import { normalizePost } from "../utils/normalizePost";
+import { normalizePost } from "../utils/normalize";
 
 
 type FetchInitialPostsArgs = {

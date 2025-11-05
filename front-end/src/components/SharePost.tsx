@@ -1,7 +1,8 @@
 // SharePost.tsx
 import React, { useState, useEffect } from "react";
 import "./shareButton.css";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../utils/firebase";
 
 interface ShareTokenResponse {
   shareToken: string;
@@ -23,7 +24,6 @@ const SharePost: React.FC<SharePostProps> = ({
 
   // This function will be updated to handle token generation
   const handleShareClick = async () => {
-    const functions = getFunctions(); // Initialize Firebase Functions
     const generatePostShareToken = httpsCallable(
       functions,
       "generatePostShareToken",

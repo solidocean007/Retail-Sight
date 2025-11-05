@@ -2,7 +2,6 @@ import {
   collection,
   onSnapshot,
   query,
-  Timestamp,
   where,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -15,32 +14,36 @@ import {
   setCompanyGoals,
   setCompanyGoalsLoading,
   setCompanyGoalsError,
-} from "../../Slices/companyGoalsSlice"; // ✅ import error + loading
+} from "../../Slices/companyGoalsSlice";
+import { normalizeFirestoreData } from "../normalize"; // ✅ add this
 
 export const setupCompanyGoalsListener =
   (companyId: string) => (dispatch: any) => {
     const q = query(
       collection(db, "companyGoals"),
       where("companyId", "==", companyId),
-      where("deleted", "==", false) // ✅ Only listen to non-deleted goals
+      where("deleted", "==", false)
     );
 
-    dispatch(setCompanyGoalsLoading(true)); // ✅ start loading
-    dispatch(setCompanyGoalsError(null)); // ✅ clear error
+    dispatch(setCompanyGoalsLoading(true));
+    dispatch(setCompanyGoalsError(null));
 
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
         try {
-          const allCompanyGoals = snapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              createdAt:
-                (data.createdAt as Timestamp)?.toDate().toISOString() || null,
-            } as CompanyGoalWithIdType;
-          });
+          // ✅ Normalize all timestamps in every document (recursively)
+          const allCompanyGoals: CompanyGoalWithIdType[] = snapshot.docs.map(
+            (docSnap) => {
+              const normalizedData = normalizeFirestoreData(
+                docSnap.data()
+              ) as CompanyGoalType;
+              return {
+                id: docSnap.id,
+                ...normalizedData,
+              };
+            }
+          );
 
           await clearGoalsFromIndexedDB("companyGoals");
           dispatch(setCompanyGoals([]));
@@ -50,7 +53,7 @@ export const setupCompanyGoalsListener =
           console.error("Error syncing company goals:", error);
           dispatch(setCompanyGoalsError("Failed to sync goals from Firestore"));
         } finally {
-          dispatch(setCompanyGoalsLoading(false)); // ✅ done loading
+          dispatch(setCompanyGoalsLoading(false));
         }
       },
       (error) => {

@@ -13,15 +13,37 @@ import { sharePostWithCompany } from "./sharePostWithCompany";
 import { onSharePost } from "./onSharePost";
 import { onConnectionBrandsUpdated } from "./onConnectionBrandsUpdated";
 import { onPostCreated } from "./onPostCreated";
+import { enforceSuperAdminLimit } from "./enforceSuperAdminLimit";
+
+// 🧾 Braintree Billing System
+import {
+  updateSubscriptionWithProration,
+  createBraintreeCustomer,
+  createSubscription,
+  cancelSubscription,
+  handleBraintreeWebhook,
+  getClientToken,
+  addAddon,
+  removeAddon,
+  calculateSubscriptionTotal,
+  syncAddonUsage,
+  updatePaymentMethod,
+  listPlansAndAddons,
+  initCompanyBilling,
+  backfillBillingForCompanies,
+} from "./braintreeHandlers";
+
+import { syncPlanLimits } from "./braintreeHelpers";
 
 export {
+  // General functions
   ping,
   createInviteAndEmail,
   deleteAuthUser,
   checkUserExists,
   getExternalApiKey,
-  syncUserRoleClaim,
   getExternalApiKeyStatus,
+  syncUserRoleClaim,
   upsertGalloAxisKey,
   deleteGalloAxisKey,
   resolveCompanyEmail,
@@ -30,4 +52,22 @@ export {
   onSharePost,
   onConnectionBrandsUpdated,
   onPostCreated,
+  enforceSuperAdminLimit,
+
+  // Billing functions
+  updateSubscriptionWithProration,
+  createBraintreeCustomer,
+  createSubscription,
+  cancelSubscription,
+  handleBraintreeWebhook,
+  getClientToken,
+  addAddon,
+  removeAddon,
+  calculateSubscriptionTotal,
+  syncPlanLimits,
+  syncAddonUsage,
+  updatePaymentMethod,
+  listPlansAndAddons,
+  initCompanyBilling,
+  backfillBillingForCompanies,
 };

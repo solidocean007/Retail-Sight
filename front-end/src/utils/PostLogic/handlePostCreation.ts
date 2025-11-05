@@ -31,7 +31,7 @@ import { addNewPost } from "../../Slices/postsSlice";
 import { getOptimizedSizes } from "./getOptimizedSizes";
 import { buildPostPayload } from "./buildPostPayload";
 import { addPostToFirestore } from "./updateFirestore";
-import { normalizePost } from "../normalizePost";
+import { normalizePost } from "../normalize";
 import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 import { createManualAccountThunk } from "../../thunks/manulAccountsThunk";
 

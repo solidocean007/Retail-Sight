@@ -10,7 +10,7 @@ import { ThemeProvider, CssBaseline, Alert } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 import { AppRoutes } from "./utils/Routes";
 import { getTheme } from "./theme";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { setDarkMode } from "./Slices/themeSlice"; // ✅ New, clean import
 import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener";
 import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener";
@@ -30,10 +30,9 @@ import UserModal from "./components/UserModal";
 import { useIntegrations } from "./hooks/useIntegrations";
 import useUserAccountsSync from "./hooks/useUserAccountsSync";
 import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
-// import { backfillMissingCompanyIdForHealy } from "./script";
-// import { auditPostsMissingCompanyId } from "./script";
+import { backfillMissingCompanyIdForHealy } from "./script";
+import { auditPostsMissingCompanyId } from "./script";
 import { useCompanyConnectionsListener } from "./hooks/useCompanyConnectionsListener";
-import Footer from "./components/Footer/Footer";
 // import { migrateCompanyNameUsers } from "./script";
 
 function App(): React.JSX.Element {
@@ -81,7 +80,6 @@ function App(): React.JSX.Element {
     })();
   }, [dispatch, companyId]);
 
-  // const functions = getFunctions(undefined, "us-central1");
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {
@@ -134,7 +132,6 @@ function App(): React.JSX.Element {
         <ThemeToggle />
         <Router>
           <AppRoutes />
-          <Footer />
         </Router>
         {snackbar.current && (
           <Snackbar

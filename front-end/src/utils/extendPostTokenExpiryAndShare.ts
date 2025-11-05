@@ -1,6 +1,6 @@
 import { doc, updateDoc, Timestamp } from "firebase/firestore";
-import { db } from "../utils/firebase";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { db, functions } from "../utils/firebase";
+import { httpsCallable } from "firebase/functions";
 
 // Define the structure if not already done
 interface TokenData {
@@ -24,7 +24,6 @@ export const extendPostTokenExpiryAndShare = async (postId: string, tokenData: T
     console.log(`Token expiry extended to ${newExpiryDate.toISOString()}. Generating share token...`);
 
     // Call your backend function to refresh the share token
-    const functions = getFunctions();
     const generatePostShareToken = httpsCallable(functions, "generatePostShareToken");
     const response = await generatePostShareToken({ postId, tokenData });
 

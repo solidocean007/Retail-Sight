@@ -7,3 +7,8 @@ typings/
 
 # Node.js dependency directory
 node_modules/
+
+# Environment files
+.env
+.env.retail-sight
+.env.*

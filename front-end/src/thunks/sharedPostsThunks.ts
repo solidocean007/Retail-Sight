@@ -19,7 +19,7 @@ import {
   addSharedPostsToIndexedDB,
   getSharedPostsFromIndexedDB,
 } from "../utils/database/sharedPostsStoreUtils";
-import { normalizePost } from "../utils/normalizePost";
+import { normalizePost } from "../utils/normalize";
 
 interface FetchSharedPostsArgs {
   companyId: string;
