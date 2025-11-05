@@ -21,7 +21,7 @@ const HelpSupport = () => {
           <h2>Customer Support</h2>
           <p>
             Need more help? Our customer support team is available Monday to
-            Friday from 9am to 5pm (your timezone). You can reach us at:
+            Friday from 9am EST to 5pm EST. You can reach us at:
           </p>
           <ul>
             <li>Email: support@displaygram.com</li>

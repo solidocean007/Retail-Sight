@@ -3,10 +3,10 @@ import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
-import { getApiBaseUrl } from "../../utils/getApiBase";
 import { AccessRequestDraft } from "../DeveloperDashboard/deverloperTypes";
 // import { Eye, EyeOff } from "lucide-react"; // nice minimal icons
 import "../signUpLogIn.css";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 type UserTypeHint = "distributor" | "supplier";
 
@@ -24,7 +24,11 @@ export default function RequestAccessForm() {
     userTypeHint: "distributor" as UserTypeHint,
     companyName: "",
   });
-
+  const functions = getFunctions();
+  const createCompanyOrRequest = httpsCallable(
+    functions,
+    "createCompanyOrRequest"
+  );
   const [password, setPassword] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -80,55 +84,43 @@ export default function RequestAccessForm() {
     setForm((f) => ({ ...f, [name]: value }));
 
   const submitAccessRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError(null);
+  e.preventDefault();
+  setSubmitting(true);
+  setError(null);
 
-    try {
-      if (passwordError || verifyPasswordError) {
-        throw new Error("Please fix the password errors before submitting.");
-      }
-      if (!password || !verifyPassword) {
-        throw new Error("Please enter and confirm your password.");
-      }
-      if (password !== verifyPassword) {
-        throw new Error("Passwords do not match.");
-      }
+  try {
+    if (passwordError || verifyPasswordError)
+      throw new Error("Please fix the password errors before submitting.");
+    if (!password || !verifyPassword)
+      throw new Error("Please enter and confirm your password.");
+    if (password !== verifyPassword)
+      throw new Error("Passwords do not match.");
+    if (!form.workEmail.includes("@"))
+      throw new Error("Enter a valid work email.");
 
-      const resp = await fetch(`${getApiBaseUrl()}/createCompanyOrRequest`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, password }),
-      });
+    const result = await createCompanyOrRequest({
+      ...form,
+      userTypeHint: form.userTypeHint,
+      password,
+    });
+    const data = result.data as { ok?: boolean; error?: string };
 
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
-        if (
-          resp.status === 409 &&
-          data?.code === "company_exists_requires_invite"
-        ) {
-          const msg =
-            "This company already exists on Displaygram. Joining is invite-only. Please ask a company admin to send you an invite link.";
-          setError(msg);
-          dispatch(showMessage(msg));
-          return;
-        }
-        throw new Error(data.error || `Request failed (${resp.status})`);
-      }
-
-      const { ok } = await resp.json();
-      if (ok) {
-        localStorage.setItem("showOnboardingModal", "true");
-        navigate("/user-home-page");
-      }
-    } catch (err: any) {
-      const errorMsg = err?.message || "❌ Request failed.";
-      setError(errorMsg);
-      dispatch(showMessage(errorMsg));
-    } finally {
-      setSubmitting(false);
+    if (data.ok) {
+      localStorage.setItem("showOnboardingModal", "true");
+      navigate("/user-home-page");
+      return;
     }
-  };
+
+    throw new Error(data.error || "Request failed.");
+  } catch (err: any) {
+    const errorMsg = err?.message || "❌ Request failed.";
+    setError(errorMsg);
+    dispatch(showMessage(errorMsg));
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   const handleClearForm = () => {
     setForm({
@@ -246,7 +238,7 @@ export default function RequestAccessForm() {
               onClick={() => setShowPassword((p) => !p)}
               aria-label="Toggle password visibility"
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? "🙈" : "👁️"}
             </button>
           </div>
           {passwordError && <div className="auth-error">{passwordError}</div>}
@@ -265,10 +257,10 @@ export default function RequestAccessForm() {
             <button
               type="button"
               className="btn-icon"
-              onClick={() => setShowVerifyPassword((p) => !p)}
-              aria-label="Toggle verify password visibility"
+              onClick={() => setShowPassword((p) => !p)}
+              aria-label="Toggle password visibility"
             >
-              {showVerifyPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? "🙈" : "👁️"}
             </button>
           </div>
           {verifyPasswordError && (

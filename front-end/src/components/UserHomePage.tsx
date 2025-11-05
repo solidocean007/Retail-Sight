@@ -57,7 +57,7 @@ export const UserHomePage = () => {
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
   const batchSize = 5;
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(true);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
 
   useEffect(() => {
@@ -68,21 +68,9 @@ export const UserHomePage = () => {
       localStorage.removeItem("showOnboardingModal");
     }
   }, []);
+
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
-  // console.log('sharedPosts: ', sharedPosts);
-  // useEffect(() => {  theers an error about this useEffect
-  //   const hasCompanyPosts = !!useSelector(
-  //     (s: RootState) => s.posts.posts.length
-  //   );
-  //   if (
-  //     !hasCompanyPosts &&
-  //     sharedPosts.length > 0 &&
-  //     activeFeedType !== "shared"
-  //   ) {
-  //     setActiveFeedType("shared");
-  //   }
-  // }, [sharedPosts]);
 
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);

@@ -13,6 +13,7 @@ import { sharePostWithCompany } from "./sharePostWithCompany";
 import { onSharePost } from "./onSharePost";
 import { onConnectionBrandsUpdated } from "./onConnectionBrandsUpdated";
 import { onPostCreated } from "./onPostCreated";
+import { createCompanyOrRequest } from "./createCompanyOrRequest";
 
 export {
   ping,
@@ -30,4 +31,5 @@ export {
   onSharePost,
   onConnectionBrandsUpdated,
   onPostCreated,
+  createCompanyOrRequest,
 };
