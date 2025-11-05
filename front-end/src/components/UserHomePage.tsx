@@ -52,7 +52,7 @@ export const UserHomePage = () => {
     () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
     [lastFilters, companyUsers]
   );
-  const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
+  const [viewCompanyPosts, setViewCompanyPosts] = useState(true); // unused?
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
   const batchSize = 5;
