@@ -322,6 +322,75 @@ form {
   padding: 1px;
 }
 
+/* Auth form refinements */
+.auth-card {
+  background: var(--background-pop-out-body);
+  color: var(--text-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 2rem;
+  max-width: 460px;
+  margin: 2rem auto;
+}
+
+.auth-input,
+.auth-input[type="email"],
+.auth-input[type="password"],
+.auth-input[type="text"],
+.auth-input textarea,
+.auth-input select {
+  background-color: var(--input-background);
+  color: var(--input-text-color);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  width: 100%;
+  transition: border-color 0.2s ease;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.auth-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 1rem;
+  color: var(--text-color);
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field .btn-icon {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.password-field .btn-icon:hover {
+  color: var(--primary-blue);
+}
+
+.auth-error {
+  color: var(--btn-error-text-color);
+  background: var(--btn-error-bg);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+
 /* Mobile comfort */
 @media (max-width: 480px) {
   .auth-card {
