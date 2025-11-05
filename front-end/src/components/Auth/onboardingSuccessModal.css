@@ -1,0 +1,76 @@
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.onboarding-card {
+  background: var(--background-pop-out-body);
+  color: var(--text-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  width: 90%;
+  max-width: 520px;
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+}
+
+.onboarding-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.onboarding-title {
+  color: var(--primary-blue);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.onboarding-sub {
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+}
+
+.onboarding-steps {
+  text-align: left;
+  margin: 1rem auto 1.5rem;
+  max-width: 400px;
+  list-style: none;
+  padding: 0;
+  color: var(--text-color);
+}
+
+.onboarding-steps li {
+  padding: 0.35rem 0;
+}
+
+.onboarding-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.onboarding-card.approved {
+  border-top: 4px solid var(--status-active-color);
+}
+
+@media (min-width: 500px) {
+  .onboarding-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}

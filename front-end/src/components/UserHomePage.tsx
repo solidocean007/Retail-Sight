@@ -27,6 +27,7 @@ import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { Fab } from "@mui/material";
 import SharedFeed from "./SharedFeed";
 import { useSharedPosts } from "../hooks/useSharedPosts";
+import OnboardingSuccessModal from "./Auth/OnboardingSuccessModal";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
@@ -56,6 +57,17 @@ export const UserHomePage = () => {
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
   const batchSize = 5;
+  const [showModal, setShowModal] = useState(false);
+  const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
+
+  useEffect(() => {
+    const flag = localStorage.getItem("showOnboardingModal");
+    if (flag) {
+      setVariant(flag === "approved" ? "approved" : "submitted");
+      setShowModal(true);
+      localStorage.removeItem("showOnboardingModal");
+    }
+  }, []);
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
   // console.log('sharedPosts: ', sharedPosts);
@@ -276,6 +288,11 @@ export const UserHomePage = () => {
             currentUserUid={user?.uid}
           />
         )}
+        <OnboardingSuccessModal
+          open={showModal}
+          variant={variant}
+          onClose={() => setShowModal(false)}
+        />
       </div>
     </>
   );
