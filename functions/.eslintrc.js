@@ -26,7 +26,8 @@ module.exports = {
     "linebreak-style": ["error", "unix"],
     "max-len": ["error", { code: 120 }],
     "prettier/prettier": ["error"],
-    curly: ["error", "all"],
+    curly: "off",
+    "valid-jsdoc": "off",
     "import/no-unresolved": 0,
   },
 };

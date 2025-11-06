@@ -1,21 +1,27 @@
-// functions/src/createCompanyOrRequest.ts
 import { onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+const db = admin.firestore();
+
+/** Normalize company name for lookups */
 const normalizeCompanyInput = (name: string) =>
   name.trim().toLowerCase().replace(/\s+/g, " ");
 
+/** Find existing company by normalized name */
 const findMatchingCompany = async (normalizedName: string) => {
   const snap = await db
     .collection("companies")
     .where("normalizedName", "==", normalizedName)
     .limit(1)
     .get();
-  if (snap.empty) {
-    return null;
-  }
+  if (snap.empty) return null;
   return { id: snap.docs[0].id, ...snap.docs[0].data() };
 };
 
+/** Create a provisional (unverified) company */
 const createNewCompany = async (data: {
   companyName: string;
   companyType: string;
@@ -33,15 +39,7 @@ const createNewCompany = async (data: {
   return { id: ref.id };
 };
 
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
-
-/**
- * Gen2 Callable function: createCompanyOrRequest
- * Called via httpsCallable() from the frontend
- */
+/** Main callable */
 export const createCompanyOrRequest = onCall(async (request) => {
   try {
     const data = request.data || {};
@@ -62,32 +60,65 @@ export const createCompanyOrRequest = onCall(async (request) => {
     const normalizedName = normalizeCompanyInput(companyName);
     const existing = await findMatchingCompany(normalizedName);
 
-    if (existing) {
-      // Company already exists — add pending request
-      await db.collection("accessRequests").add({
-        workEmail,
-        firstName,
-        lastName,
-        phone,
-        notes,
-        userType: userTypeHint,
-        companyName: normalizedName,
-        companyId: existing.id,
-        status: "pending",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+    const accessRequestDoc = {
+      workEmail,
+      firstName,
+      lastName,
+      phone,
+      notes,
+      userType: userTypeHint,
+      companyName: normalizedName,
+      companyId: existing ? existing.id : undefined,
+      status: "pending",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
 
-      // Notify admin
+    if (existing) {
+      // Company already exists
+      await db.collection("accessRequests").add(accessRequestDoc);
+
+      // Notify admin about the new join request
       await db.collection("mail").add({
         to: "support@displaygram.com",
-        subject: `🆕 New Access Request (${normalizedName})`,
-        text: `${firstName} ${lastName} (${workEmail}) requested access to ${normalizedName} (${userTypeHint}).`,
+        from: "support@displaygram.com",
+        replyTo: "support@displaygram.com",
+        message: {
+          subject: `🆕 Access Request for Existing Company (${normalizedName})`,
+          text: `${firstName} ${lastName} (${workEmail}) requested access as a ${userTypeHint} 
+          to join ${companyName}.`,
+          html: `
+            <div style="font-family: sans-serif; font-size: 15px; color: #333;">
+              <p><strong>${firstName} ${lastName}</strong> (${workEmail}) requested access as 
+              a <strong>${userTypeHint}</strong> to join <strong>${companyName}</strong>.</p>
+            </div>
+          `,
+        },
+      });
+
+      // Confirmation email to requester
+      await db.collection("mail").add({
+        to: workEmail,
+        from: "support@displaygram.com",
+        replyTo: "support@displaygram.com",
+        message: {
+          subject: "✅ Displaygram access request received",
+          text: `Hi ${firstName}, thanks for requesting access to Displaygram as a ${userTypeHint}.
+We’ll review your company (${companyName}) and notify you once approved.`,
+          html: `
+            <div style="font-family: sans-serif; font-size: 15px; color: #333;">
+              <p>Hi ${firstName},</p>
+              <p>Thanks for requesting access to <strong>Displaygram</strong> as a <strong>${userTypeHint}
+              </strong>.</p>
+              <p>We’ll review your company <strong>${companyName}</strong> and notify you once approved.</p>
+            </div>
+          `,
+        },
       });
 
       return { ok: true };
     }
 
-    // No existing company — create provisional one
+    // No existing company — create provisional
     const newCompany = await createNewCompany({
       companyName: normalizedName,
       companyType: userTypeHint,
@@ -96,31 +127,46 @@ export const createCompanyOrRequest = onCall(async (request) => {
     });
 
     await db.collection("accessRequests").add({
-      workEmail,
-      firstName,
-      lastName,
-      phone,
-      notes,
-      userType: userTypeHint,
-      companyName: normalizedName,
+      ...accessRequestDoc,
       companyId: newCompany.id,
-      status: "pending",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Notify requester + admin
+    // Confirmation email to requester
     await db.collection("mail").add({
       to: workEmail,
-      subject: "✅ Displaygram access request received",
-      text: `Hi ${firstName}, thanks for requesting access to Displaygram as a ${userTypeHint}.
-       We'll review your company (${normalizedName}) and notify you once approved.`,
+      from: "support@displaygram.com",
+      replyTo: "support@displaygram.com",
+      message: {
+        subject: "✅ Displaygram access request received",
+        text: `Hi ${firstName}, thanks for requesting access to Displaygram as a ${userTypeHint}.
+We’ll review your company (${companyName}) and notify you once approved.`,
+        html: `
+          <div style="font-family: sans-serif; font-size: 15px; color: #333;">
+            <p>Hi ${firstName},</p>
+            <p>Thanks for requesting access to <strong>Displaygram</strong> as a <strong>${userTypeHint}</strong>.</p>
+            <p>We’ll review your company <strong>${companyName}</strong> and notify you once approved.</p>
+          </div>
+        `,
+      },
     });
 
+    // Notification email to admin
     await db.collection("mail").add({
       to: "support@displaygram.com",
-      subject: `🆕 New Access Request (${normalizedName})`,
-      text: `${firstName} ${lastName} (${workEmail}) requested access as a ${userTypeHint}.
-       A provisional company was created.`,
+      from: "support@displaygram.com",
+      replyTo: "support@displaygram.com",
+      message: {
+        subject: `🆕 New Access Request (${normalizedName})`,
+        text: `${firstName} ${lastName} (${workEmail}) requested access as a ${userTypeHint}. 
+        A provisional company was created.`,
+        html: `
+          <div style="font-family: sans-serif; font-size: 15px; color: #333;">
+            <p><strong>${firstName} ${lastName}</strong> (${workEmail}) requested access as a <strong>
+            ${userTypeHint}</strong>.</p>
+            <p>A new provisional company (<strong>${companyName}</strong>) was created and marked pending review.</p>
+          </div>
+        `,
+      },
     });
 
     return { ok: true };

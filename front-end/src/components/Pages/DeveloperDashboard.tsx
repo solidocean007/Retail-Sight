@@ -41,6 +41,7 @@ import CompanyOnboardingAdmin from "../DeveloperDashboard/CompanyOnboardingAdmin
 import { CreateTestCompanyModal } from "../DeveloperDashboard/CreateTestCompanyModal";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../../utils/firebase";
+import AccessRequestsPanel from "../DeveloperDashboard/AccessRequestPanel";
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
@@ -150,6 +151,7 @@ const DeveloperDashboard = () => {
             variant="fullWidth"
             sx={{ mt: 3 }}
           >
+            <Tab label="Access Requests" />
             <Tab label="Company Manager" />
             <Tab label="Users" />
             <Tab label="Notifications" />
@@ -160,10 +162,15 @@ const DeveloperDashboard = () => {
           <Box sx={{ mt: 2 }}>
             {tabIndex === 0 && (
               <>
-                <CompanyOnboardingAdmin />
+                <AccessRequestsPanel />
               </>
             )}
             {tabIndex === 1 && (
+              <>
+                <CompanyOnboardingAdmin />
+              </>
+            )}
+            {tabIndex === 2 && (
               <>
                 {allCompaniesAndUsers.map((company) => (
                   <Accordion key={company.id}>
@@ -195,7 +202,7 @@ const DeveloperDashboard = () => {
               </>
             )}
 
-            {tabIndex === 2 && (
+            {tabIndex === 3 && (
               <Box>
                 <Typography variant="h6" mb={1}>
                   Notifications
@@ -212,7 +219,7 @@ const DeveloperDashboard = () => {
               </Box>
             )}
 
-            {tabIndex === 3 && (
+            {tabIndex === 4 && (
               <Box>
                 <Typography variant="h6" mb={1}>
                   API Keys

@@ -26,6 +26,7 @@ import ViewPostByLink from "../components/Pages/ViewPostByLink";
 import ResetPassword from "../components/Pages/ResetPassword";
 import PricingPlans from "../components/Pages/PricingPlans";
 import BillingDashboard from "../components/Pages/Billing/BillingDashboard";
+import RequestSubmitted from "../components/Pages/RequestSubmitted";
 
 export const AppRoutes = () => {
   return (
@@ -43,6 +44,7 @@ export const AppRoutes = () => {
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<RequestAccessForm />} />
       <Route path="/request-access" element={<RequestAccessForm />} />
+      <Route path="/request-submitted" element={<RequestSubmitted />} />
       <Route
         path="/accept-invite/:companyId/:inviteId"
         element={<InviteAcceptForm />}

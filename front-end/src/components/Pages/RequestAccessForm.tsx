@@ -6,7 +6,7 @@ import { useAppDispatch } from "../../utils/store";
 import { AccessRequestDraft } from "../DeveloperDashboard/deverloperTypes";
 // import { Eye, EyeOff } from "lucide-react"; // nice minimal icons
 import { getFunctions, httpsCallable } from "firebase/functions";
-import './signUpLogIn.css'
+import "./signUpLogIn.css";
 
 type UserTypeHint = "distributor" | "supplier";
 
@@ -29,43 +29,10 @@ export default function RequestAccessForm() {
     functions,
     "createCompanyOrRequest"
   );
-  const [password, setPassword] = useState("");
-  const [verifyPassword, setVerifyPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showVerifyPassword, setShowVerifyPassword] = useState(false);
-
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
-    null
-  );
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  const handlePasswordChange = (value: string) => {
-    setPassword(value);
-    if (value.length < 8) {
-      setPasswordError("Password must be at least 8 characters.");
-    } else {
-      setPasswordError(null);
-    }
-
-    if (verifyPassword && value !== verifyPassword) {
-      setVerifyPasswordError("Passwords do not match.");
-    } else {
-      setVerifyPasswordError(null);
-    }
-  };
-
-  const handleVerifyPasswordChange = (value: string) => {
-    setVerifyPassword(value);
-    if (password && value !== password) {
-      setVerifyPasswordError("Passwords do not match.");
-    } else {
-      setVerifyPasswordError(null);
-    }
-  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -84,43 +51,35 @@ export default function RequestAccessForm() {
     setForm((f) => ({ ...f, [name]: value }));
 
   const submitAccessRequest = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setSubmitting(true);
-  setError(null);
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
 
-  try {
-    if (passwordError || verifyPasswordError)
-      throw new Error("Please fix the password errors before submitting.");
-    if (!password || !verifyPassword)
-      throw new Error("Please enter and confirm your password.");
-    if (password !== verifyPassword)
-      throw new Error("Passwords do not match.");
-    if (!form.workEmail.includes("@"))
-      throw new Error("Enter a valid work email.");
+    try {
+      if (!form.workEmail.includes("@"))
+        throw new Error("Enter a valid work email.");
 
-    const result = await createCompanyOrRequest({
-      ...form,
-      userTypeHint: form.userTypeHint,
-      password,
-    });
-    const data = result.data as { ok?: boolean; error?: string };
+      const result = await createCompanyOrRequest({
+        ...form,
+        userTypeHint: form.userTypeHint,
+      });
+      const data = result.data as { ok?: boolean; error?: string };
 
-    if (data.ok) {
-      localStorage.setItem("showOnboardingModal", "true");
-      navigate("/user-home-page");
-      return;
+      if (data.ok) {
+        localStorage.setItem("showOnboardingModal", "true");
+        navigate("/request-submitted");
+        return;
+      }
+
+      throw new Error(data.error || "Request failed.");
+    } catch (err: any) {
+      const errorMsg = err?.message || "❌ Request failed.";
+      setError(errorMsg);
+      dispatch(showMessage(errorMsg));
+    } finally {
+      setSubmitting(false);
     }
-
-    throw new Error(data.error || "Request failed.");
-  } catch (err: any) {
-    const errorMsg = err?.message || "❌ Request failed.";
-    setError(errorMsg);
-    dispatch(showMessage(errorMsg));
-  } finally {
-    setSubmitting(false);
-  }
-};
-
+  };
 
   const handleClearForm = () => {
     setForm({
@@ -132,8 +91,6 @@ export default function RequestAccessForm() {
       userTypeHint: "distributor" as UserTypeHint,
       companyName: "",
     });
-    setPassword("");
-    setVerifyPassword("");
     setError(null);
   };
 
@@ -221,52 +178,6 @@ export default function RequestAccessForm() {
             ))}
           </select>
 
-          {/* Password input */}
-          <label className="auth-label">Password</label>
-          <div className="password-field">
-            <input
-              type={showPassword ? "text" : "password"}
-              className="auth-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => handlePasswordChange(e.target.value)}
-              required
-            />
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => setShowPassword((p) => !p)}
-              aria-label="Toggle password visibility"
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </button>
-          </div>
-          {passwordError && <div className="auth-error">{passwordError}</div>}
-
-          {/* Verify password */}
-          <label className="auth-label">Verify password</label>
-          <div className="password-field">
-            <input
-              type={showVerifyPassword ? "text" : "password"}
-              className="auth-input"
-              placeholder="••••••••"
-              value={verifyPassword}
-              onChange={(e) => handleVerifyPasswordChange(e.target.value)}
-              required
-            />
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => setShowPassword((p) => !p)}
-              aria-label="Toggle password visibility"
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </button>
-          </div>
-          {verifyPasswordError && (
-            <div className="auth-error">{verifyPasswordError}</div>
-          )}
-
           <label className="auth-label">Phone (optional)</label>
           <input
             title="Phone number"
@@ -286,16 +197,7 @@ export default function RequestAccessForm() {
           />
 
           <div className="auth-actions">
-            <button
-              className="button-primary"
-              disabled={
-                submitting ||
-                !!passwordError ||
-                !!verifyPasswordError ||
-                password.length === 0 ||
-                verifyPassword.length === 0
-              }
-            >
+            <button className="button-primary" disabled={submitting}>
               {submitting && !error ? "Submitting…" : "Submit request"}
             </button>
           </div>
