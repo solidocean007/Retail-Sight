@@ -17,7 +17,7 @@ export default function RequestSubmitted() {
           <a href="mailto:support@displaygram.com" className="support-link">
             support@displaygram.com
           </a>{" "}
-          once a decision has been made.
+          after reviewing your information.
         </p>
 
         <div className="button-row">

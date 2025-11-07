@@ -113,10 +113,10 @@ export default function RequestAccessForm() {
     <div className="auth-page">
       <div className="auth-card">
         <header className="auth-header">
-          <h1 className="auth-welcome">Request Access</h1>
-          <h2 className="auth-title">
-            Sign up for <span>Displaygram</span>
-          </h2>
+          <h1 className="auth-title">
+            <span>Displaygram</span>
+          </h1>
+          <h2 className="auth-welcome">Request Access to get started</h2>
         </header>
 
         {error && <div className="auth-alert">{error}</div>}
@@ -196,7 +196,7 @@ export default function RequestAccessForm() {
             rows={3}
           />
 
-          <div className="auth-actions">
+          <div className="auth-actions submit-request">
             <button className="button-primary" disabled={submitting}>
               {submitting && !error ? "Submitting…" : "Submit request"}
             </button>

@@ -38,9 +38,9 @@ import LogOutButton from "../LogOutButton";
 import DeveloperNotificationForm from "../Notifications/DeveloperNotificationForm";
 import DeveloperNotificationsTable from "../Notifications/DeveloperNotificationsTable";
 import CompanyOnboardingAdmin from "../DeveloperDashboard/CompanyOnboardingAdmin";
-import { CreateTestCompanyModal } from "../DeveloperDashboard/CreateTestCompanyModal";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "../../utils/firebase";
+// import { CreateTestCompanyModal } from "../DeveloperDashboard/CreateTestCompanyModal";
+// import { addDoc, collection } from "firebase/firestore";
+// import { db } from "../../utils/firebase";
 import AccessRequestsPanel from "../DeveloperDashboard/AccessRequestPanel";
 
 const DeveloperDashboard = () => {
@@ -92,7 +92,7 @@ const DeveloperDashboard = () => {
 
   const handleRefresh = () => dispatch(fetchCompaniesWithUsers());
   const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
+  // const handleCloseModal = () => setIsModalOpen(false);
 
   return (
     <Container sx={{ display: "flex", flexDirection: "column" }}>
@@ -102,7 +102,7 @@ const DeveloperDashboard = () => {
         <Typography variant="h4">Developer Dashboard</Typography>
         <Typography variant="subtitle2">
           {dashboardUser?.firstName} {dashboardUser?.lastName} — Role:{" "}
-          {dashboardUser?.role} uid: {dashboardUser?.uid}
+          {dashboardUser?.role}
         </Typography>
         <LogOutButton />
 
@@ -135,13 +135,13 @@ const DeveloperDashboard = () => {
       ) : (
         <>
           {/* ─────────────────── TABS ─────────────────── */}
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             onClick={() => setIsCreateTestCompanyModalOpen(true)}
           >
             Create Test Company
-          </Button>
+          </Button> */}
 
           <Tabs
             value={tabIndex}
@@ -240,8 +240,7 @@ const DeveloperDashboard = () => {
         onClose={() => setConfirmOpen(false)}
         loading={deleting}
       />
-      // inside DeveloperDashboard component
-      <CreateTestCompanyModal
+      {/* <CreateTestCompanyModal
         open={isCreateTestCompanyModalOpen}
         onClose={handleCloseModal}
         onCreate={async (companyData) => {
@@ -252,7 +251,7 @@ const DeveloperDashboard = () => {
             console.error("Error creating test company:", err);
           }
         }}
-      />
+      /> */}
     </Container>
   );
 };

@@ -69,7 +69,7 @@ export const createCompanyOrRequest = onCall(async (request) => {
       userType: userTypeHint,
       companyName: normalizedName,
       companyId: existing ? existing.id : undefined,
-      status: "pending",
+      status: "pending-approval",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 

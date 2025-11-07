@@ -1084,7 +1084,7 @@ export const listPlansAndAddons = onCall(async () => {
 
 // 🔥 Automatically runs whenever a new company doc is created
 export const initCompanyBilling = onDocumentCreated(
-  "companies/{companyId}",
+  { region: "us-central1", document: "companies/{companyId}" },
   async (event) => {
     const { companyId } = event.params;
     const companyData = event.data?.data();
@@ -1097,7 +1097,6 @@ export const initCompanyBilling = onDocumentCreated(
       const result = await gateway.customer.create({
         company: companyData.name || companyId,
         email: companyData.email || "unknown@displaygram.com",
-        customFields: { displaygramCompanyId: companyId },
       });
 
       if (!result.success || !result.customer?.id) {

@@ -228,6 +228,11 @@ form {
   gap: 0.6rem;
   margin-top: 0.5rem;
 }
+
+.auth-actions.submit-request {
+  display: flex;
+  justify-content: center;
+}
 /* inviteAcceptForm.css */
 .auth-submit {
   background-color: #3f51b5; /* or your theme color */

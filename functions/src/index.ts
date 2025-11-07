@@ -15,6 +15,8 @@ import { onConnectionBrandsUpdated } from "./onConnectionBrandsUpdated";
 import { onPostCreated } from "./onPostCreated";
 import { enforceSuperAdminLimit } from "./enforceSuperAdminLimit";
 import { createCompanyOrRequest } from "./createCompanyOrRequest";
+import { approveAccessRequest } from "./approveAccessRequst";
+import { markAccessRequestComplete } from "./markAccessRequestComplete";
 
 // 🧾 Braintree Billing System
 import {
@@ -55,6 +57,8 @@ export {
   onPostCreated,
   enforceSuperAdminLimit,
   createCompanyOrRequest,
+  approveAccessRequest,
+  markAccessRequestComplete,
 
   // Billing functions
   updateSubscriptionWithProration,

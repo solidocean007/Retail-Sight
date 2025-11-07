@@ -175,6 +175,8 @@
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 1.8rem;
+  flex-wrap: wrap;
+  text-align: justify;
 }
 
 .support-link {
