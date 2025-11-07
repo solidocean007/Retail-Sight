@@ -1,0 +1,148 @@
+.access-requests-panel {
+  padding: 1.5rem;
+  color: var(--text-color);
+}
+
+.access-requests-panel h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.access-requests-panel .subtext {
+  margin-bottom: 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Grid layout that adapts to mobile */
+.requests-list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* ==== Request Card ==== */
+.request-card {
+  background: var(--card-panel-background);
+  border: 1px solid var(--card-outline);
+  border-radius: var(--card-radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease;
+}
+
+.request-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-blue);
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Dark theme refinement */
+[data-theme="dark"] .request-card {
+  background: var(--background-pop-out-body);
+  border: 1px solid var(--gray-200);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.15);
+}
+[data-theme="dark"] .request-card:hover {
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.25);
+}
+
+/* ==== Header and Chips ==== */
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.request-header strong {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* ==== User Info ==== */
+.request-card p {
+  margin: 0.3rem 0;
+  line-height: 1.4;
+}
+
+.request-card small {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.user-type {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ==== Buttons ==== */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+  border-radius: var(--btn-border-radius, 8px);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--btn-primary-bg);
+  color: var(--text-on-button);
+  border: none;
+  box-shadow: var(--button-shadow);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--btn-primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: var(--outlined-button-bg);
+  border: 1px solid var(--outlined-button-border);
+  color: var(--text-color);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--outlined-button-hover);
+  color: var(--primary-blue);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Improve visible contrast for disabled primary buttons */
+.btn-primary:disabled {
+  background: var(--gray-300);
+  color: var(--gray-700);
+}
+
+/* Status chip adjustments */
+.MuiChip-root {
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .request-card {
+    padding: 1rem;
+  }
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+}

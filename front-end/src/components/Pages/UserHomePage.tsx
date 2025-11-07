@@ -25,8 +25,9 @@ import PostViewerModal from "./../PostViewerModal";
 import TuneIcon from "@mui/icons-material/Tune";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { Fab } from "@mui/material";
-import SharedFeed from "./../SharedFeed";
+import SharedFeed from "../SharedFeed";
 import { useSharedPosts } from "../../hooks/useSharedPosts";
+import OnboardingSuccessModal from "./OnboardingSuccessModal";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
@@ -46,31 +47,31 @@ export const UserHomePage = () => {
   >("posts");
   const [clearInput, setClearInput] = useState(false);
   const user = useSelector(selectUser);
+  console.log(user)
   const [isClosing, setIsClosing] = useState(false);
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
   const filterText = useMemo(
     () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
     [lastFilters, companyUsers]
   );
-  const [viewCompanyPosts, setViewCompanyPosts] = useState(true); // unused?
+  const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
   const batchSize = 5;
+  const [showModal, setShowModal] = useState(false);
+  const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
+
+  useEffect(() => {
+    const flag = localStorage.getItem("showOnboardingModal");
+    if (flag) {
+      setVariant(flag === "approved" ? "approved" : "submitted");
+      setShowModal(true);
+      localStorage.removeItem("showOnboardingModal");
+    }
+  }, []);
+
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
-  // console.log('sharedPosts: ', sharedPosts);
-  // useEffect(() => {  theers an error about this useEffect
-  //   const hasCompanyPosts = !!useSelector(
-  //     (s: RootState) => s.posts.posts.length
-  //   );
-  //   if (
-  //     !hasCompanyPosts &&
-  //     sharedPosts.length > 0 &&
-  //     activeFeedType !== "shared"
-  //   ) {
-  //     setActiveFeedType("shared");
-  //   }
-  // }, [sharedPosts]);
 
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
@@ -276,6 +277,11 @@ export const UserHomePage = () => {
             currentUserUid={user?.uid}
           />
         )}
+        <OnboardingSuccessModal
+          open={showModal}
+          variant={variant}
+          onClose={() => setShowModal(false)}
+        />
       </div>
     </>
   );

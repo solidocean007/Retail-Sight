@@ -1,0 +1,238 @@
+/* ===================================
+   🎨 Request Submitted Page — Final Glow + Parallax
+   =================================== */
+
+/* ====== Page Background ====== */
+.request-submitted-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+  background: radial-gradient(
+    circle at center,
+    var(--background-light) 0%,
+    var(--surface) 100%
+  );
+}
+
+/* Subtle moving overlay pattern */
+.request-submitted-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.03) 0 10px,
+    transparent 10px 20px
+  );
+  animation: driftPattern 20s linear infinite;
+  z-index: 0;
+}
+
+@keyframes driftPattern {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 200px 200px;
+  }
+}
+
+/* ====== Card ====== */
+.request-card {
+  position: relative;
+  max-width: 440px;
+  width: 100%;
+  background: var(--surface);
+  border: 2px solid var(--success, #2ecc71);
+  border-radius: var(--radius-xl, 16px);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  box-shadow:
+    0 0 20px rgba(0, 0, 0, 0.25),
+    0 0 10px var(--success-glow, rgba(46, 204, 113, 0.25));
+  animation: fadeInUp 0.8s ease forwards;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 1;
+}
+
+.request-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 25px rgba(0, 0, 0, 0.3),
+    0 0 12px var(--success-glow, rgba(46, 204, 113, 0.35));
+}
+
+/* Accent trim ring */
+.request-card::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    var(--success, #2ecc71),
+    transparent 60%
+  );
+  opacity: 0.25;
+  filter: blur(6px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ====== Animations ====== */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ====== Checkmark Ripple ====== */
+.checkmark-container {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkmark-symbol {
+  font-size: 2.4rem;
+  z-index: 2;
+  animation: popIn 0.7s ease forwards;
+}
+
+.checkmark-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.checkmark-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--success, #2ecc71);
+  filter: blur(16px);
+  opacity: 0.4;
+  animation: rippleOnce 1.8s ease-out forwards;
+}
+
+/* One-time ripple burst */
+@keyframes rippleOnce {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Checkmark pop-in */
+@keyframes popIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ====== Text ====== */
+.request-title {
+  font-size: 1.7rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.request-message {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.8rem;
+  flex-wrap: wrap;
+  text-align: justify;
+}
+
+.support-link {
+  color: var(--success, #2ecc71);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.support-link:hover {
+  text-decoration: underline;
+}
+
+.small-note {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  margin-top: 1.5rem;
+}
+
+/* ====== Buttons ====== */
+.button-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.button-row .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 130px;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 480px) {
+  .request-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .request-title {
+    font-size: 1.4rem;
+  }
+
+  .checkmark-container {
+    width: 60px;
+    height: 60px;
+  }
+
+  .checkmark-symbol {
+    font-size: 2rem;
+  }
+
+  .button-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
