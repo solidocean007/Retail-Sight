@@ -44,10 +44,12 @@
   /* Surfaces & elevations */
   --surface-elevated: #ffffff; /* cards, modals, light surfaces */
   --surface-base: #f5f7fa; /* page background base */
+  --success: #2ecc71; /* pleasant green, consistent with ✅ */
+  --success-glow: rgba(46, 204, 113, 0.45);
 
   /* Backgrounds */
   --background-body: var(--gray-50);
-  --input-background: var(--white);
+  --input-background: var(--gray-300);
   --user-modal-background: var(--muted-steel);
   --alert-background: red;
 
@@ -80,6 +82,7 @@
 
   /* Shadow & Radius */
   --card-radius: 16px;
+  --radius-xl: 16px;
   --card-shadow: 0 5px 5px -2px rgba(0, 0, 0, 0.08);
   --button-shadow: 1px 2px 2px 2px rgba(0, 0, 0, 0.25),
     0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
@@ -140,6 +143,20 @@
   --btn-text-color: var(--text-on-button); /* already set per theme */
   --btn-border-radius: 8px;
   --btn-padding: 0.75rem 1.5rem;
+
+   /* Access Requests Panel additions */
+  --request-card-glow: rgba(59, 130, 246, 0.25); /* soft blue glow */
+  --request-card-hover-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+  --request-card-gradient-light: linear-gradient(
+    135deg,
+    var(--gray-50) 0%,
+    var(--gray-200) 100%
+  );
+  --request-card-gradient-dark: linear-gradient(
+    135deg,
+    var(--deep-abyss) 0%,
+    var(--shadow-slate) 100%
+  );
 }
 
 /* ============================
@@ -213,7 +230,7 @@
   --outlined-button-border: var(--primary-blue);
   --outlined-button-hover: var(--gray-100);
 
-  --input-background: var(--white);
+  --input-background: var(--gray-300);
   --input-text-color: var(--gray-900);
   --input-border: var(--gray-200);
 
@@ -294,7 +311,7 @@
   --outlined-button-border: var(--gray-100);
   --outlined-button-hover: var(--gray-800);
 
-  --input-background: var(--gray-600);
+  --input-background: var(--gray-300);
   --input-text-color: var(--gray-100);
   --input-border: var(--gray-200);
 

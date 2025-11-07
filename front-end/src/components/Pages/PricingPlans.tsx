@@ -27,7 +27,7 @@ const PricingPlans: React.FC = () => {
         "👥 Up to 10 users (add more for $2 each)",
         "🤝 3 active company connections",
       ],
-      button: "Upgrade to Team",
+      button: "Team",
       badge: "Best Value",
     },
     {
@@ -41,7 +41,7 @@ const PricingPlans: React.FC = () => {
         "🧩 Third party Goal importing",
        
       ],
-      button: "Upgrade to Network",
+      button: "Network",
     },
     {
       id: "enterprise",

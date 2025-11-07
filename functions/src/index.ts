@@ -14,6 +14,30 @@ import { onSharePost } from "./onSharePost";
 import { onConnectionBrandsUpdated } from "./onConnectionBrandsUpdated";
 import { onPostCreated } from "./onPostCreated";
 import { detectBrands } from "./ml/detectBrands";
+import { enforceSuperAdminLimit } from "./enforceSuperAdminLimit";
+import { createCompanyOrRequest } from "./createCompanyOrRequest";
+import { approveAccessRequest } from "./approveAccessRequst";
+import { markAccessRequestComplete } from "./markAccessRequestComplete";
+
+// 🧾 Braintree Billing System
+import {
+  updateSubscriptionWithProration,
+  createBraintreeCustomer,
+  createSubscription,
+  cancelSubscription,
+  handleBraintreeWebhook,
+  getClientToken,
+  addAddon,
+  removeAddon,
+  calculateSubscriptionTotal,
+  syncAddonUsage,
+  updatePaymentMethod,
+  listPlansAndAddons,
+  initCompanyBilling,
+  backfillBillingForCompanies,
+} from "./braintreeHandlers";
+
+import { syncPlanLimits } from "./braintreeHelpers";
 
 export {
   // General functions
@@ -33,4 +57,25 @@ export {
   onConnectionBrandsUpdated,
   onPostCreated,
   detectBrands,
+  enforceSuperAdminLimit,
+  createCompanyOrRequest,
+  approveAccessRequest,
+  markAccessRequestComplete,
+
+  // Billing functions
+  updateSubscriptionWithProration,
+  createBraintreeCustomer,
+  createSubscription,
+  cancelSubscription,
+  handleBraintreeWebhook,
+  getClientToken,
+  addAddon,
+  removeAddon,
+  calculateSubscriptionTotal,
+  syncPlanLimits,
+  syncAddonUsage,
+  updatePaymentMethod,
+  listPlansAndAddons,
+  initCompanyBilling,
+  backfillBillingForCompanies,
 };

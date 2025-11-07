@@ -26,7 +26,7 @@ export const findMatchingCompany = async (normalizedInput: string) => {
   }
 };
 
-// optional: define a type for clarity
+// optional: define a type for clarity.. these might be redudant..i think i have them defined in utils/types
 type CompanyLimits = { maxUsers: number; maxConnections: number };
 type NewCompanyOptions = {
   plan?: "freeLimited" | "pro" | "enterprise" | "freeNoLimits";

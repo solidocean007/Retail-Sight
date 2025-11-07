@@ -9,7 +9,6 @@ import {
   AuthCredential,
   signInWithPopup,
   linkWithCredential,
-  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db, functions } from "../../utils/firebase";

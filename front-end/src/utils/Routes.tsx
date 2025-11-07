@@ -26,6 +26,8 @@ import ViewPostByLink from "../components/Pages/ViewPostByLink";
 import ResetPassword from "../components/Pages/ResetPassword";
 import PricingPlans from "../components/Pages/PricingPlans";
 import BillingDashboard from "../components/Pages/Billing/BillingDashboard";
+import RequestSubmitted from "../components/Pages/RequestSubmitted";
+import CompanyOnboardingAcceptForm from "../components/Pages/CompanyOnboardingAcceptForm";
 
 export const AppRoutes = () => {
   return (
@@ -43,6 +45,7 @@ export const AppRoutes = () => {
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<RequestAccessForm />} />
       <Route path="/request-access" element={<RequestAccessForm />} />
+      <Route path="/request-submitted" element={<RequestSubmitted />} />
       <Route
         path="/accept-invite/:companyId/:inviteId"
         element={<InviteAcceptForm />}
@@ -61,6 +64,11 @@ export const AppRoutes = () => {
         path="/view-shared-post/:postId/:token"
         element={<ViewSharedPost />}
       />
+      <Route
+        path="/onboard-company/:companyId/:inviteId"
+        element={<CompanyOnboardingAcceptForm />}
+      />
+
       <Route path="/view-post-by-link/:postId" element={<ViewPostByLink />} />
       <Route path="/access-denied" element={<AccessDenied />} />
       <Route path="*" element={<PageNotFound />} />
