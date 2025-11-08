@@ -92,6 +92,7 @@ export type CompanyType = {
   accountsId?: string | null; // this is null to begin with but after onboarding
   goals?: CompanyGoalWithIdType[];
   companyType: BusinessType;
+  customBrandLibrary?: string[];
 
   verified: boolean;
   accessStatus?: AccessStatus;

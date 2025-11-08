@@ -53,6 +53,17 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
     // pick the top 10 candidates for display
     const top10 = Array.from(new Set(rawCandidates)).slice(0, 10);
 
+    // ✅ Auto-add matches immediately
+    if (matches.length > 0) {
+      const normalizedSelected = selectedBrands.map((b) => b.toLowerCase());
+      const newOnes = matches.filter(
+        (m) => !normalizedSelected.includes(m.toLowerCase())
+      );
+      if (newOnes.length) {
+        onChange([...selectedBrands, ...newOnes], selectedProductType);
+      }
+    }
+
     setAiMatches(matches);
     setAiSuggestions(top10);
   }, [rawCandidates, brandOptions]);
@@ -133,6 +144,9 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
     }
     // 5️⃣ Emit the new brands + defaultTypes back to parent
     onChange(capped, defaultTypes);
+    if (defaultTypes.length === 0) {
+      defaultTypes = ["unspecified"]; // ✅ fallback for no product types
+    }
   };
 
   // let the user override/tweak the productType list
@@ -150,7 +164,32 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
             <p className="ai-subtitle">Top suggestions:</p>
             <div className="ai-chip-row">
               {aiSuggestions.map((word) => (
-                <Chip key={word} label={word} size="small" variant="outlined" />
+                <Chip
+                  key={word}
+                  label={word}
+                  size="small"
+                  variant="outlined"
+                  onClick={() => {
+                    // ✅ allow direct selection as custom brand
+                    if (
+                      !selectedBrands.includes(word) &&
+                      selectedBrands.length < MAX_BRANDS
+                    ) {
+                      handleBrandsChange(null, [...selectedBrands, word]);
+                      dispatch(showMessage(`✅ Added custom brand: ${word}`));
+                    }
+                    const chip = document.querySelector(
+                      `.MuiChip-label:contains("${word}")`
+                    );
+                    if (chip) {
+                      chip.classList.add("ai-chip-added");
+                      setTimeout(
+                        () => chip.classList.remove("ai-chip-added"),
+                        800
+                      );
+                    }
+                  }}
+                />
               ))}
             </div>
 
@@ -211,8 +250,8 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
           renderTags={(value, getTagProps) =>
             value.map((option, index) => {
               const { key, ...tagProps } = getTagProps({ index });
-              const isCustom = !companyProducts.some(
-                (p) => p.brand?.toLowerCase() === option.toLowerCase()
+              const isCustom = !brandOptions.some(
+                (b) => b.toLowerCase() === option.toLowerCase()
               );
 
               return (

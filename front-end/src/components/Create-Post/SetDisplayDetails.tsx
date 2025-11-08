@@ -18,8 +18,7 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
   const brands = post.brands ?? [];
   const productTypes = post.productType ?? [];
   const detected = post.autoDetectedBrands ?? [];
-  console.log(post)
-  // form validity
+  
   const isValid = useMemo(
     () => brands.length > 0 && productTypes.length > 0,
     [brands, productTypes]
@@ -36,6 +35,7 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
     [setPost]
   );
 
+  
   return (
     <div className="setDisplayDetails">
       <section className="property-zone">

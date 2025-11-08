@@ -27,3 +27,26 @@
   padding-left: 1rem;
   color: var(--text-color);
 }
+
+.ai-raw-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 0.5rem;
+}
+
+.ai-chip {
+  background-color: var(--gray-200);
+  color: var(--text-color);
+  border: 1px solid var(--gray-400);
+  border-radius: 16px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-chip:hover {
+  background-color: var(--primary-blue);
+  color: white;
+}
+

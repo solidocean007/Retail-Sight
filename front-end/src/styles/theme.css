@@ -42,7 +42,6 @@
   --some-dark-color: #264653;
 
   /* Surfaces & elevations */
-  --surface-elevated: #ffffff; /* cards, modals, light surfaces */
   --surface-base: #f5f7fa; /* page background base */
   --success: #2ecc71; /* pleasant green, consistent with ✅ */
   --success-glow: rgba(46, 204, 113, 0.45);
@@ -177,7 +176,7 @@
   --connection-edit-zone: var(--mustard-color);
 
   /* Surfaces & elevations */
-  --surface-elevated: #ffffff; /* cards, modals, light surfaces */
+  --surface-elevated: white; /* cards, modals, light surfaces */
   --surface-base: #f5f7fa; /* page background base */
 
   /* pill status colors */
@@ -280,6 +279,7 @@
   --status-active-bg: rgba(26, 127, 55, 0.25);
   --status-pending-bg: rgba(178, 106, 0, 0.25);
   --status-inactive-bg: rgba(150, 150, 150, 0.15);
+   --surface-elevated: var(--gray-900);
 
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);
@@ -311,7 +311,7 @@
   --outlined-button-border: var(--gray-100);
   --outlined-button-hover: var(--gray-800);
 
-  --input-background: var(--gray-300);
+  --input-background: var(--gray-900);
   --input-text-color: var(--gray-100);
   --input-border: var(--gray-200);
 
