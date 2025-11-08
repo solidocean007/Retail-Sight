@@ -45,7 +45,8 @@ export type NotificationType = {
 };
 
 export type BusinessType = "distributor" | "supplier";
-export type AccessStatus = "active" | "suspended";
+export type AccessStatus = "off" | "limited" | "on";
+
 
 export type ProviderKey = "gallo" | "manualGoals"; // extend later
 
@@ -152,8 +153,6 @@ export interface ConnectionRequest {
 }
 
 export interface PendingBrandType {
-  brand: string;
-  proposedBy: string;
   brand: string;
   proposedBy: string;
 }

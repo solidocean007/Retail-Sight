@@ -5,7 +5,6 @@ import * as admin from "firebase-admin";
 import dotenv = require("dotenv");
 import braintree = require("braintree");
 import {
-  onDocumentCreated,
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
 import { syncPlanLimits } from "./braintreeHelpers";
@@ -1083,24 +1082,37 @@ export const listPlansAndAddons = onCall(async () => {
 });
 
 // 🔥 Automatically runs whenever a new company doc is created
-export const initCompanyBilling = onDocumentCreated(
-  { region: "us-central1", document: "companies/{companyId}" },
+export const initCompanyBilling = onDocumentUpdated(
+  {
+    region: "us-central1",
+    document: "companies/{companyId}",
+  },
   async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
     const { companyId } = event.params;
-    const companyData = event.data?.data();
-    if (!companyData) {
-      return;
-    }
+
+    // 🧩 Only run when `verified` changes from false → true
+    if (!before || !after) return;
+    const wasVerified = Boolean(before.verified);
+    const isVerified = Boolean(after.verified);
+    if (wasVerified || !isVerified) return; // only trigger on first verification
 
     try {
+      const companyName = after.name || companyId;
+      const companyEmail =
+        after.primaryContact?.email ||
+        after.createdBy ||
+        "unknown@displaygram.com";
+
       // 1️⃣ Create Braintree customer for this company
       const result = await gateway.customer.create({
-        company: companyData.name || companyId,
-        email: companyData.email || "unknown@displaygram.com",
+        company: companyName,
+        email: companyEmail,
       });
 
       if (!result.success || !result.customer?.id) {
-        logger.error("Failed to create Braintree customer:", result);
+        logger.error("❌ Failed to create Braintree customer:", result);
         return;
       }
 
@@ -1114,7 +1126,7 @@ export const initCompanyBilling = onDocumentCreated(
             userLimit: 5,
             connectionLimit: 1,
             addons: { extraUser: 0, extraConnection: 0 },
-            paymentStatus: "active",
+            paymentStatus: "inactive", // until first payment or upgrade
             renewalDate: null,
             lastPaymentDate: null,
             totalMonthlyCost: 0,
@@ -1124,9 +1136,11 @@ export const initCompanyBilling = onDocumentCreated(
         { merge: true }
       );
 
-      logger.info(`✅ Initialized billing for company ${companyId}`);
+      logger.info(
+        `✅ Initialized billing for verified company ${companyName} (${companyId})`
+      );
     } catch (err) {
-      logger.error("initCompanyBilling failed:", err);
+      logger.error("💥 initCompanyBilling failed:", err);
     }
   }
 );

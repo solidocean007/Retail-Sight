@@ -33,6 +33,7 @@ export default function AccessRequestsPanel() {
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const functions = getFunctions();
   const approveAccessRequest = httpsCallable(functions, "approveAccessRequest");
+  const rejectAccessRequest = httpsCallable(functions, "rejectAccessRequest");
 
   useEffect(() => {
     const q = query(
@@ -62,7 +63,7 @@ export default function AccessRequestsPanel() {
 
   const handleReject = async (id: string) => {
     try {
-      await updateDoc(doc(db, "accessRequests", id), { status: "rejected" });
+      await rejectAccessRequest({ requestId: id });
     } catch (e) {
       console.error("Reject error", e);
     }

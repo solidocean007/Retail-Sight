@@ -16,8 +16,9 @@ import { onPostCreated } from "./onPostCreated";
 import { detectBrands } from "./ml/detectBrands";
 import { enforceSuperAdminLimit } from "./enforceSuperAdminLimit";
 import { createCompanyOrRequest } from "./createCompanyOrRequest";
-import { approveAccessRequest } from "./approveAccessRequst";
 import { markAccessRequestComplete } from "./markAccessRequestComplete";
+import { rejectAccessRequest } from "./rejectAccessRequest";
+import { approveAccessRequest } from "./approveAccessRequest";
 
 // 🧾 Braintree Billing System
 import {
@@ -61,6 +62,7 @@ export {
   createCompanyOrRequest,
   approveAccessRequest,
   markAccessRequestComplete,
+  rejectAccessRequest,
 
   // Billing functions
   updateSubscriptionWithProration,

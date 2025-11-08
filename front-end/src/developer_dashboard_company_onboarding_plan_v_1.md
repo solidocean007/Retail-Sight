@@ -34,7 +34,7 @@ These exist today (per code) or are trivial to add. The UI should rely on these 
 
 * `primaryContact: { name: string; email: string; phone?: string }`
   **Decision:** ✅ Required. Default to the requester on creation; editable later by admins.
-* `accessStatus?: 'active' | 'suspended'`
+* `accessStatus?: "off" | "limited" | "on";`
   **Decision:** repurpose away from feature-gating. Use only for **billing/collections** or admin suspension. If absent, treat as `'active'`.
 * `counts?: { usersTotal?: number; usersPending?: number; connectionsApproved?: number; connectionsPending?: number }`
   **Decision:** ✅ Add to Company type; optional to populate in Phase 1 (can be computed client-side on load or added later via CF).
@@ -63,7 +63,6 @@ These exist today (per code) or are trivial to add. The UI should rely on these 
 
 * **Verified=false** → company cannot use cross-company features.
 * **Verified=true** → company is fully enabled (subject to tier limits).
-* **Account suspension (optional):** `accessStatus='suspended'` used **only** for billing or manual suspension; when suspended, block writes that exceed free tier and freeze new connections.
 
 ### Minimal Readiness Checklist (v1)
 
@@ -98,7 +97,6 @@ These exist today (per code) or are trivial to add. The UI should rely on these 
 * **Summary**: companyName, type, verified badge, tier, createdAt, **primaryContact** (editable)
 * **Members**: count + link; quick invite field (optional Phase 2)
 * **Verification**: one button **Verify Company** (or **Unverify**) with confirmation
-* **Account Status**: optional **Suspend/Unsuspend** control mapped to `accessStatus='suspended' | 'active'` (billing/admin-only)
 * **Optional extras**: links to Accounts, Brands/Products, Goals (non-blocking)
 
 ---
