@@ -1,7 +1,5 @@
 // PickStore.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
-
 import {
   CompanyAccountType,
   CompanyGoalWithIdType,
@@ -12,23 +10,18 @@ import {
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { Box, CircularProgress, Typography, Button } from "@mui/material";
-// import { fetchGalloGoalsByCompanyId } from "../../utils/helperFunctions/fetchGalloGoalsByCompanyId";
-import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount"; // this function looks useful also
+import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount";
 import {
   getAllCompanyAccountsFromIndexedDB,
-  getUserAccountsFromIndexedDB,
   saveAllCompanyAccountsToIndexedDB,
 } from "../../utils/database/indexedDBUtils";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
-
 import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCompanyAccounts";
 import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/getActiveCompanyGoalsForAccount";
-// import { matchAccountWithSelectedStoreForAdmin } from "../../utils/helperFunctions/accountHelpers";
 import GalloGoalDropdown from "./GalloGoalDropdown";
 import CompanyGoalDropdown from "./CompanyGoalDropdown";
 import "./pickstore.css";
 import AccountModalSelector from "./AccountModalSelector";
-
 import {
   selectAllGalloGoals,
   selectUsersGalloGoals,
@@ -37,7 +30,72 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { useIntegrations } from "../../hooks/useIntegrations";
 import { setAllAccounts } from "../../Slices/allAccountsSlice";
 import ManualAccountForm from "./ManualAccountForm";
-import { fetchCityAndState } from "../../utils/location/googlePlacesHelpers";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { ResetTvOutlined } from "@mui/icons-material";
+import NoResults from "../NoResults";
+
+// Normalize abbreviations and compare address similarity
+const normalizeCache = new Map<string, string>();
+const normalizeAddress = (input: string) => {
+  if (!input) return "";
+  if (normalizeCache.has(input)) return normalizeCache.get(input)!;
+  const result = input
+    .toLowerCase()
+    // strip city/state/zip if present
+    .replace(/,.*/, "")
+    // expand direction abbreviations
+    .replace(/\b(n|north)\b/g, "north")
+    .replace(/\b(s|south)\b/g, "south")
+    .replace(/\b(e|east)\b/g, "east")
+    .replace(/\b(w|west)\b/g, "west")
+    // expand common suffixes
+    .replace(/\brd\b/g, "road")
+    .replace(/\bst\b/g, "street")
+    .replace(/\bave\b/g, "avenue")
+    .replace(/\bdr\b/g, "drive")
+    .replace(/\bblvd\b/g, "boulevard")
+    .replace(/\bln\b/g, "lane")
+    .replace(/\bct\b/g, "court")
+    // remove punctuation/spaces
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+  normalizeCache.set(input, result);
+
+  return result;
+};
+
+const fuzzyMatch = (a: string, b: string) => {
+  const cleanA = normalizeAddress(a);
+  const cleanB = normalizeAddress(b);
+  if (!cleanA || !cleanB) return 0;
+  const base = Math.min(cleanA.length, cleanB.length);
+  let matches = 0;
+  for (let i = 0; i < base; i++) if (cleanA[i] === cleanB[i]) matches++;
+  const ratio = matches / Math.max(cleanA.length, cleanB.length);
+  return ratio >= 0.8
+    ? ratio
+    : ratio + (cleanA.includes(cleanB) || cleanB.includes(cleanA) ? 0.2 : 0);
+};
+
+// simple util to extract city/state from formatted address
+const extractCityState = (address: string) => {
+  if (!address) return { city: "", state: "" };
+
+  // Example: "7701 S Raeford Rd, Fayetteville, NC 28304, USA"
+  const parts = address.split(",").map((p) => p.trim());
+
+  if (parts.length < 3) return { city: "", state: "" };
+
+  // City is always the second segment from the end before the state line
+  const city = parts[parts.length - 3] || "";
+
+  // State comes from the second-to-last part (e.g. "NC 28304")
+  const stateZip = parts[parts.length - 2] || "";
+  const stateMatch = stateZip.match(/[A-Z]{2}/);
+  const state = stateMatch ? stateMatch[0] : "";
+
+  return { city, state };
+};
 
 interface PickStoreProps {
   post: PostInputType;
@@ -48,10 +106,7 @@ interface PickStoreProps {
   ) => void;
   setSelectedCompanyAccount: (account: CompanyAccountType | null) => void;
   setSelectedGalloGoal: (goal: FireStoreGalloGoalDocType | null) => void;
-  userLocation: {
-    lat: number;
-    lng: number;
-  } | null;
+  userLocation: { lat: number; lng: number } | null;
 }
 
 export const PickStore: React.FC<PickStoreProps> = ({
@@ -62,12 +117,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
   setSelectedGalloGoal,
   userLocation,
 }) => {
-  const VITE_GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY!;
-  console.log(VITE_GOOGLE_MAPS_API_KEY);
+  const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY!;
+  const [locationChecked, setLocationChecked] = useState(false);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyUsers = useSelector(selectCompanyUsers) || [];
-  const isAdminOrAbove = user?.role === "admin" || user?.role === "super-admin";
+  const isAdminOrAbove = ["admin", "super-admin"].includes(user?.role || "");
   const [openManualAccountForm, setOpenManualAccountForm] = useState(false);
   const salesRouteNum = user?.salesRouteNum;
   const { isEnabled } = useIntegrations();
@@ -76,6 +131,12 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [nearbyStores, setNearbyStores] = useState<
     { name: string; address: string; placeId?: string }[]
   >([]);
+  const [selectedNearbyStore, setSelectedNearbyStore] = useState<{
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+  } | null>(null);
 
   const allCompanyAccounts = useSelector(
     (state: RootState) => state.allAccounts.accounts
@@ -83,23 +144,17 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const userAccounts = useSelector(
     (state: RootState) => state.userAccounts.accounts
   );
-  console.log(allCompanyAccounts);
-  const [isAllStoresShown, setIsAllStoresShown] = useState(() => {
-    if (
-      user?.role === "supervisor" ||
-      user?.role === "admin" ||
-      user?.role === "super-admin"
-    ) {
-      return true; // default supervisors/admins to All Stores
-    }
-    return false; // sales reps start in My Stores
-  });
 
-  const combinedAccounts = useMemo(() => {
-    return isAllStoresShown ? allCompanyAccounts : userAccounts;
-  }, [isAllStoresShown, allCompanyAccounts, userAccounts]);
-  const [loadingAccounts, setLoadingAccounts] = useState(true); // Tracks loading status
+  const [isAllStoresShown, setIsAllStoresShown] = useState(
+    isAdminOrAbove || user?.role === "supervisor"
+  );
 
+  const combinedAccounts = useMemo(
+    () => (isAllStoresShown ? allCompanyAccounts : userAccounts),
+    [isAllStoresShown, allCompanyAccounts, userAccounts]
+  );
+
+  const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [isFetchingGoal, setIsFetchingGoal] = useState(false);
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
 
@@ -110,17 +165,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
     null
   );
-
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalWithIdType>();
-
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
   );
-
   const allGalloGoals = useSelector(selectAllGalloGoals);
-  const [openAccountModal, setOpenAccountModal] = useState(false);
-
+  const [openAccountModal, setOpenAccountModal] = useState(true);
   const onlyUsersStores = !isAllStoresShown;
 
   const usersActiveGalloGoals = galloEnabled
@@ -149,45 +200,31 @@ export const PickStore: React.FC<PickStoreProps> = ({
   }, [post.account?.accountNumber, allCompanyGoals]);
 
   const goalsForAccount = useMemo(() => {
-    if (!post.account) return []; // guard early
+    if (!post.account) return [];
 
     const { accountNumber, salesRouteNums = [] } = post.account;
-
     return companyGoals.filter((goal) => {
-      // 🟢 Sales employees only see sales goals
-      if (user?.role === "employee" && goal.targetRole === "sales") {
+      if (user?.role === "employee" && goal.targetRole === "sales")
         return goal.accountNumbersForThisGoal?.includes(
           accountNumber.toString()
         );
-      }
-
-      // 🟢 Supervisors only see supervisor goals tied to their reps' accounts
       if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
-        // find all reps reporting to this supervisor
         const repsReportingToMe = companyUsers.filter(
           (u) => u.reportsTo === user?.uid && u.salesRouteNum
         );
-
         const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
-
-        // check overlap between account route nums and my reps' route nums
         const overlap = salesRouteNums.some((rn) =>
           myRepsRouteNums.includes(rn)
         );
-
         return (
           overlap &&
           goal.accountNumbersForThisGoal?.includes(accountNumber.toString())
         );
       }
-
-      // 🟢 Admins/super-admins see all goals
-      if (isAdminOrAbove) {
+      if (isAdminOrAbove)
         return goal.accountNumbersForThisGoal?.includes(
           accountNumber.toString()
         );
-      }
-
       return false;
     });
   }, [
@@ -199,186 +236,138 @@ export const PickStore: React.FC<PickStoreProps> = ({
     isAdminOrAbove,
   ]);
 
-  let isConfigured = false;
-
+  // ✅ New Places API (v1)
   const getNearbyStores = async (lat: number, lng: number) => {
-    const res = await fetch(
-      "https://places.googleapis.com/v1/places:searchNearby",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": VITE_GOOGLE_MAPS_API_KEY,
-          "X-Goog-FieldMask":
-            "places.displayName,places.formattedAddress,places.id",
-        },
-        body: JSON.stringify({
-          includedTypes: ["store"],
-          maxResultCount: 5,
-          locationRestriction: {
-            circle: {
-              center: { latitude: lat, longitude: lng },
-              radius: 300.0,
-            },
+    try {
+      const res = await fetch(
+        "https://places.googleapis.com/v1/places:searchNearby",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": GOOGLE_KEY,
+            "X-Goog-FieldMask":
+              "places.displayName,places.formattedAddress,places.id",
           },
-        }),
+          body: JSON.stringify({
+            includedTypes: ["store"],
+            maxResultCount: 5,
+            locationRestriction: {
+              circle: {
+                center: { latitude: lat, longitude: lng },
+                radius: 600,
+              },
+            },
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (data?.places?.length) {
+        const formatted = data.places.map((p: any) => ({
+          name: p.displayName.text,
+          address: p.formattedAddress,
+          placeId: p.id,
+        }));
+        if (combinedAccounts.length === 0) setNearbyStores(formatted);
+        return formatted; // at end of getNearbyStores()
+      } else {
+        console.warn("No nearby stores found:", data);
       }
-    );
-    const data = await res.json();
-    console.log("Nearby (new Places API):", data);
+    } catch (err) {
+      console.error("Failed to fetch nearby stores:", err);
+    }
   };
 
+  // 🧭 Get user location & fetch stores
   useEffect(() => {
-    const loadAndFindNearby = async () => {
-      try {
-        if (!isConfigured) {
-          // ✅ only set your key once
-          // @ts-expect-error Google's types lag behind the runtime API
-          setOptions({ apiKey: VITE_GOOGLE_MAPS_API_KEY });
+    if (locationChecked || !navigator.geolocation) return;
+    setLocationChecked(true);
 
-          isConfigured = true;
-        }
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        const { latitude, longitude } = coords;
+        const places = await getNearbyStores(latitude, longitude);
+        if (!places?.length) return;
 
-        // ✅ load the places library
-        await importLibrary("places");
-        console.log("✅ Google Maps Places loaded");
+        if (combinedAccounts.length) {
+          // try to find a close match by address
+          const bestMatch = places
+            .map((place) => {
+              const placeAddr = place.address.split(",")[0];
+              let best = {
+                score: 0,
+                account: null as CompanyAccountType | null,
+              };
+              for (const acc of combinedAccounts) {
+                const score = fuzzyMatch(placeAddr, acc.accountAddress);
+                if (score > best.score) best = { score, account: acc };
+              }
+              return { place, ...best };
+            })
+            .sort((a, b) => b.score - a.score)[0];
 
-        if (!navigator.geolocation) return;
-
-        navigator.geolocation.getCurrentPosition(
-          ({ coords }) => {
-            const { latitude, longitude } = coords;
-            const service = new google.maps.places.PlacesService(
-              document.createElement("div")
+          if (bestMatch?.score && bestMatch.score > 0.6 && bestMatch.account) {
+            handleAccountSelect(bestMatch.account);
+            dispatch(
+              showMessage(
+                `Auto-detected store: ${bestMatch.account.accountName}`
+              )
             );
-            getNearbyStores(latitude, longitude);
-
-            // service.nearbySearch(
-            //   {
-            //     location: { lat: latitude, lng: longitude },
-            //     radius: 300,
-            //     type: "store",
-            //   },
-            //   (results, status) => {
-            //     if (
-            //       status !== google.maps.places.PlacesServiceStatus.OK ||
-            //       !results
-            //     ) {
-            //       console.warn("Places search failed:", status);
-            //       return;
-            //     }
-
-            //     const places = results
-            //       .filter((r) => r.name && r.vicinity)
-            //       .slice(0, 5)
-            //       .map((r) => ({
-            //         name: r.name!,
-            //         address: r.vicinity!,
-            //         placeId: r.place_id,
-            //       }));
-
-            //     console.log("Nearby stores:", places);
-            //     if (combinedAccounts.length === 0) setNearbyStores(places);
-            //   }
-            // );
-          },
-          (err) => console.warn("Location lookup failed:", err),
-          { enableHighAccuracy: true, timeout: 15000 }
-        );
-      } catch (err) {
-        console.error("❌ Failed to load Google Maps libraries:", err);
-      }
-    };
-
-    loadAndFindNearby();
-  }, [combinedAccounts.length]);
+            setOpenAccountModal(false);
+          } else {
+            setOpenAccountModal(true);
+          }
+        } else {
+          // ✅ No accounts available — show nearby places as options
+          setNearbyStores(places);
+        }
+      },
+      (err) => console.warn("Location lookup failed:", err),
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  }, [combinedAccounts.length, locationChecked]);
 
   useEffect(() => {
-    if (!loadingAccounts) {
-      if (combinedAccounts.length === 0) {
-        // 🛑 No accounts → open manual form, keep modal closed
-        setOpenManualAccountForm(true);
-        setOpenAccountModal(false);
-      } else if (!post.account?.accountNumber) {
-        // ✅ Accounts exist but none selected → open modal
-        setOpenAccountModal(true);
-      }
-    }
-  }, [loadingAccounts, combinedAccounts.length, post.account?.accountNumber]);
-
-  // open manual account form if no accounts exist
-  useEffect(() => {
-    if (!loadingAccounts && combinedAccounts.length === 0) {
-      setOpenManualAccountForm(true);
-    }
-  }, [loadingAccounts, combinedAccounts.length]);
-
-  useEffect(() => {
-    const shouldFetchAllAccounts = isAllStoresShown;
-
-    if (!shouldFetchAllAccounts) {
-      // 🟢 Supervisor or users without route accounts
-      setLoadingAccounts(false);
-      return;
-    }
-
     const fetchAccounts = async () => {
-      setLoadingAccounts(true); // ✅ start spinner
-
+      setLoadingAccounts(true);
       const cached = await getAllCompanyAccountsFromIndexedDB();
       if (cached.length > 0) {
         dispatch(setAllAccounts(cached));
-        setLoadingAccounts(false); // ✅ stop spinner after cache
+        setLoadingAccounts(false);
         return;
       }
-
       const fresh = await fetchAllCompanyAccounts(user?.companyId);
       dispatch(setAllAccounts(fresh));
       await saveAllCompanyAccountsToIndexedDB(fresh);
-      setLoadingAccounts(false); // ✅ stop spinner after fetch
+      setLoadingAccounts(false);
     };
-
-    fetchAccounts();
+    if (isAllStoresShown) fetchAccounts();
+    else setLoadingAccounts(false);
   }, [isAllStoresShown, user?.role, user?.companyId, dispatch]);
 
-  const handleCompanyGoalSelection = (
-    goal: CompanyGoalWithIdType | undefined
-  ) => {
-    if (!goal) {
-      console.warn("No goal selected.");
-      return;
-    }
-
-    setSelectedCompanyGoal(goal); // Update state with the selected goal object
-    handleFieldChange("companyGoalId", goal.id); // Set the goal ID
-    handleFieldChange("companyGoalDescription", goal.goalDescription); // Set the goal description
-    handleFieldChange("companyGoalTitle", goal.goalTitle); // i just added this
-    console.log("new post data:", post);
+  const handleCompanyGoalSelection = (goal?: CompanyGoalWithIdType) => {
+    if (!goal) return;
+    setSelectedCompanyGoal(goal);
+    handleFieldChange("companyGoalId", goal.id);
+    handleFieldChange("companyGoalDescription", goal.goalDescription);
+    handleFieldChange("companyGoalTitle", goal.goalTitle);
   };
 
-  const handleGalloGoalSelection = (
-    // no change to the amount of gallo goals.. still just one per post.
-    galloGoal: FireStoreGalloGoalDocType | undefined
-  ) => {
-    if (!galloGoal) return;
-
-    setSelectedGalloGoalId(galloGoal.goalDetails.goalId);
-    setSelectedGalloGoal(galloGoal); // 🆕 Save the full object directly
-
-    const matchingAccount = galloGoal.accounts.find(
-      (acc) => acc.distributorAcctId === post.account?.accountNumber
+  const handleGalloGoalSelection = (goal?: FireStoreGalloGoalDocType) => {
+    if (!goal) return;
+    setSelectedGalloGoalId(goal.goalDetails.goalId);
+    setSelectedGalloGoal(goal);
+    const match = goal.accounts.find(
+      (a) => a.distributorAcctId === post.account?.accountNumber
     );
-
-    if (matchingAccount?.oppId) {
-      handleFieldChange("oppId", matchingAccount.oppId);
-      handleFieldChange("galloGoalTitle", galloGoal.goalDetails.goal);
-      handleFieldChange("galloGoalId", galloGoal.goalDetails.goalId);
-    } else {
-      console.warn("No matching account found for selected Gallo goal.");
+    if (match?.oppId) {
+      handleFieldChange("oppId", match.oppId);
+      handleFieldChange("galloGoalTitle", goal.goalDetails.goal);
+      handleFieldChange("galloGoalId", goal.goalDetails.goalId);
     }
   };
 
-  // Handler for Account Selection
   const handleAccountSelect = (account: CompanyAccountType) => {
     const {
       accountName,
@@ -393,8 +382,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
       chainType,
     } = account;
 
-    setPost((prevPost) => ({
-      ...prevPost,
+    setPost((p) => ({
+      ...p,
       account: {
         accountName,
         accountAddress,
@@ -419,8 +408,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
   const handleClearAccount = () => {
     setManualAccountAdded(false);
-    setPost((prevPost) => ({
-      ...prevPost,
+    setPost((p) => ({
+      ...p,
       account: null,
       accountNumber: "",
       city: "",
@@ -431,20 +420,17 @@ export const PickStore: React.FC<PickStoreProps> = ({
     setSelectedCompanyGoal(undefined);
   };
 
-  if (loadingAccounts) {
-    return <CircularProgress />;
-  }
+  if (loadingAccounts) return <CircularProgress />;
 
   return (
     <div className="pick-store">
-      {/* Header Controls */}
+      {/* Header */}
       <Box
         display="flex"
         justifyContent="space-between"
         alignItems="center"
         mt={2}
         px={3}
-        className="pick-store-navigation-buttons"
       >
         {post.account && (
           <Button
@@ -457,6 +443,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
           </Button>
         )}
       </Box>
+
       <Box className="store-selection">
         {combinedAccounts.length > 0 && (
           <Button
@@ -464,37 +451,36 @@ export const PickStore: React.FC<PickStoreProps> = ({
             variant="contained"
             size="large"
             fullWidth
-            disabled={!combinedAccounts?.length}
+            disabled={!combinedAccounts.length}
             sx={{
               maxWidth: 400,
               mx: "auto",
               my: 1,
               fontWeight: 600,
               fontSize: "1rem",
-              backgroundColor: "#1976d2", // brighter blue
+              backgroundColor: "#1976d2",
               color: "#fff",
-              "&:hover": {
-                backgroundColor: "#1565c0",
-              },
+              "&:hover": { backgroundColor: "#1565c0" },
             }}
           >
-            Select Account
+            {post.account ? "Change Account" : "Select Account"}
           </Button>
         )}
       </Box>
+
+      {/* My Stores / All Stores toggle */}
       {!post.account?.accountNumber && combinedAccounts.length > 0 && (
-        <Box className="toggle-section" mt={3}>
-          <Box className="toggle-wrapper" mt={2}>
+        <Box mt={3}>
+          <Box mt={2} display="flex" justifyContent="center" gap={2}>
             <Typography
               className={`toggle-label ${!isAllStoresShown ? "selected" : ""}`}
-              onClick={() => setIsAllStoresShown(!isAllStoresShown)}
+              onClick={() => setIsAllStoresShown(false)}
             >
               My Stores
             </Typography>
-
             <Typography
               className={`toggle-label ${isAllStoresShown ? "selected" : ""}`}
-              onClick={() => setIsAllStoresShown(!isAllStoresShown)}
+              onClick={() => setIsAllStoresShown(true)}
             >
               All Stores
             </Typography>
@@ -502,47 +488,118 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Box>
       )}
 
-      {/* My Stores / All Stores Toggle */}
-
-      {/* Account Selection */}
-      <Box mt={2}>{loadingAccounts ? <CircularProgress /> : <Box></Box>}</Box>
-
-      {/* Display Selected Store */}
+      {/* Display selected store */}
       {post.account && (
         <Box mt={3} p={2} sx={{ border: "1px solid #ccc", borderRadius: 2 }}>
           <Typography variant="h6" fontWeight="bold">
-            {/* {post.selectedStore} */}
-            {post.account?.accountName}
+            {post.account.accountName}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             {post.account.accountAddress}
           </Typography>
           {selectedCompanyGoal && (
             <Typography variant="body2" color="primary" mt={1}>
-              Goal:{" "}
-              {
-                companyGoals.find((goal) => goal.id === selectedCompanyGoal.id)
-                  ?.goalTitle
-              }
+              Goal: {selectedCompanyGoal.goalTitle}
             </Typography>
           )}
         </Box>
       )}
+      {!combinedAccounts.length && nearbyStores.length > 0 && (
+        <Box mt={3} p={2}>
+          <Typography variant="subtitle1" color="textSecondary">
+            No company accounts found. Choose a nearby store to create one:
+          </Typography>
+          {/* ...store cards here */}
+        </Box>
+      )}
 
-      {/* Goals Dropdowns inside of PickStore.tsx*/}
-      {/* {post.selectedStore && ( */}
+      {/* Nearby stores (new API results) */}
+      {!combinedAccounts.length && nearbyStores.length > 0 && (
+        <Box
+          mt={3}
+          p={2}
+          className={nearbyStores.length === 0 ? "nearby-stores-hidden" : ""}
+        >
+          <Typography variant="h6">Nearby Stores</Typography>
+          {nearbyStores.map((store) => {
+            return (
+              <Box
+                key={store.placeId}
+                sx={{
+                  border: "1px solid #ccc",
+                  borderRadius: "8px",
+                  p: 1.5,
+                  mt: 1,
+                  cursor: "pointer",
+                  transition: "background-color 0.2s ease-in-out",
+                  "&:hover": { backgroundColor: "#f3f3f3" },
+                }}
+                onClick={() => {
+                  const { city, state } = extractCityState(store.address);
+                  setSelectedNearbyStore({
+                    name: store.name,
+                    address: store.address,
+                    city,
+                    state,
+                  });
+                  setNearbyStores([]); // ✅ hide suggestions
+                  setOpenManualAccountForm(true);
+                }}
+              >
+                <Typography fontWeight="bold">{store.name}</Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {store.address}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+
+      {/* Fallback manual form */}
+      {openManualAccountForm && (
+        <ManualAccountForm
+          open={openManualAccountForm}
+          onSave={(account) => {
+            handleAccountSelect(account);
+            setSelectedNearbyStore(null);
+            setOpenManualAccountForm(false);
+          }}
+          initialValues={
+            selectedNearbyStore
+              ? {
+                  accountName: selectedNearbyStore.name,
+                  accountAddress: selectedNearbyStore.address,
+                  city: selectedNearbyStore.city,
+                  state: selectedNearbyStore.state,
+                }
+              : undefined
+          }
+        />
+      )}
+
+      {/* Account modal */}
+      {combinedAccounts.length > 0 && (
+        <AccountModalSelector
+          open={openAccountModal}
+          onClose={() => setOpenAccountModal(false)}
+          accounts={combinedAccounts}
+          onAccountSelect={handleAccountSelect}
+          isAllStoresShown={isAllStoresShown}
+          setIsAllStoresShown={setIsAllStoresShown}
+        />
+      )}
+
+      {/* Goal dropdowns */}
       {post.account && (
         <Box mt={3}>
-          <Box mt={2}>
-            <CompanyGoalDropdown
-              goals={goalsForAccount}
-              label="Company Goals"
-              loading={isFetchingGoal}
-              onSelect={handleCompanyGoalSelection}
-              selectedGoal={selectedCompanyGoal}
-            />
-          </Box>
-
+          <CompanyGoalDropdown
+            goals={goalsForAccount}
+            label="Company Goals"
+            loading={isFetchingGoal}
+            onSelect={handleCompanyGoalSelection}
+            selectedGoal={selectedCompanyGoal}
+          />
           {galloEnabled && (
             <Box mt={2}>
               <GalloGoalDropdown
@@ -555,71 +612,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
             </Box>
           )}
         </Box>
-      )}
-
-      {!combinedAccounts.length && nearbyStores.length > 0 && (
-        <Box mt={3} p={2}>
-          <Typography variant="h6">Nearby Stores (from Google Maps)</Typography>
-          {nearbyStores.map((store) => (
-            <Box
-              key={store.placeId}
-              sx={{
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                p: 1.5,
-                mt: 1,
-                cursor: "pointer",
-                transition: "background-color 0.2s ease-in-out",
-                "&:hover": { backgroundColor: "#f3f3f3" },
-              }}
-              onClick={() => {
-                if (!store.placeId) return;
-                fetchCityAndState(store.placeId, (city, state) => {
-                  setPost((prev) => ({
-                    ...prev,
-                    account: {
-                      accountName: store.name,
-                      accountAddress: store.address,
-                      city,
-                      state,
-                      accountNumber: "", // placeholder for Firestore later
-                      typeOfAccount: "Unknown",
-                    } as any,
-                  }));
-                  setSelectedCompanyAccount(null);
-                  console.log("✅ Selected Google Store:", {
-                    ...store,
-                    city,
-                    state,
-                  });
-                });
-              }}
-            >
-              <Typography fontWeight="bold">{store.name}</Typography>
-              <Typography variant="body2" color="textSecondary">
-                {store.address}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      {!combinedAccounts?.length && !manualAccountAdded && (
-        <ManualAccountForm
-          open={openManualAccountForm}
-          onSave={handleAccountSelect}
-        />
-      )}
-
-      {combinedAccounts.length > 0 && (
-        <AccountModalSelector
-          open={openAccountModal}
-          onClose={() => setOpenAccountModal(false)}
-          accounts={combinedAccounts}
-          onAccountSelect={handleAccountSelect}
-          isAllStoresShown={isAllStoresShown}
-          setIsAllStoresShown={setIsAllStoresShown}
-        />
       )}
     </div>
   );

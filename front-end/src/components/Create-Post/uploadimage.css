@@ -157,10 +157,10 @@
   background: none;
   border: none;
   color: var(--primary-blue);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   cursor: pointer;
   text-decoration: underline;
-  padding: 15px;
+  padding:5px 15px;
 }
 
 .ai-info-button:hover {

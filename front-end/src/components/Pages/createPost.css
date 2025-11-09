@@ -23,7 +23,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  max-width: 95%;
+  width: 100%;
+  max-width: 700px;
 }
 
 .create-post-header {
@@ -41,7 +42,28 @@
   align-items: center;
   margin: 10px 0;
   width: 100%;
+  position: sticky;
+  bottom: 0;
+  padding: 0.5rem 1rem;
+  z-index: 10;
 }
+
+/* Placeholder keeps spacing when Back is hidden */
+.btn-placeholder {
+  width: 100px; /* match typical Back button width */
+  height: 36px;
+}
+
+/* Ensure buttons align well on mobile */
+@media (max-width: 600px) {
+  .create-post-navigation {
+    padding: 0.5rem;
+  }
+  .btn-placeholder {
+    width: 80px;
+  }
+}
+
 
 .post-detail-selection {
   display: flex;

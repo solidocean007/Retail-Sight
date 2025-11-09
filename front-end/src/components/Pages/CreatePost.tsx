@@ -54,7 +54,7 @@ export const CreatePost = () => {
     lat: number;
     lng: number;
   } | null>(null);
-  console.log(userLocation)
+  console.log(userLocation);
   const handlePostSubmission = useHandlePostSubmission();
 
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
@@ -268,14 +268,21 @@ export const CreatePost = () => {
           )}
           {/* Sticky footer */}
           <div className="create-post-navigation">
-            <button
-              className="btn-secondary"
-              onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
-              disabled={currentStep === 1 || isUploading}
-            >
-              Back
-            </button>
+            {/* Back Button or Placeholder */}
+            {currentStep > 1 ? (
+              <button
+                className="btn-secondary"
+                onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
+                disabled={isUploading}
+              >
+                Back
+              </button>
+            ) : (
+              // invisible placeholder keeps layout stable
+              <div className="btn-placeholder" />
+            )}
 
+            {/* Next / Submit Button */}
             <button
               type="button"
               className={canGoNext ? "button-primary" : "btn-disabled"}
@@ -292,6 +299,7 @@ export const CreatePost = () => {
                 : "Submit"}
             </button>
           </div>
+
           {post.autoDetectedBrands === undefined && post.imageUrl && (
             <p className="hint-text">🧠 Analyzing image for brands…</p>
           )}

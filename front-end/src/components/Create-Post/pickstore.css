@@ -66,3 +66,10 @@
   border-radius: 8px;
   padding: 16px;
 }
+
+/* in pickstore.css */
+.nearby-stores-hidden {
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+

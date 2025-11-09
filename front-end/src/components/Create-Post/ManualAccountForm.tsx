@@ -1,14 +1,14 @@
 import { useState } from "react";
 import stringSimilarity from "string-similarity";
 import { CompanyAccountType } from "../../utils/types";
-import "./storeSelector.css";
+import "./manualAccountForm.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
 import { Autocomplete, TextField, Typography } from "@mui/material";
 
 interface ManualFormState {
   accountName: string;
-  streetAddress: string;
+  accountAddress: string;
   city: string;
   state: string;
   chainName?: string;
@@ -17,7 +17,8 @@ interface ManualFormState {
 const ManualAccountForm: React.FC<{
   open: boolean;
   onSave: (account: CompanyAccountType) => void;
-}> = ({ open, onSave }) => {
+  initialValues?: Partial<CompanyAccountType>;
+}> = ({ open, onSave, initialValues }) => {
   const customAccounts = useSelector(
     (state: RootState) => state.customAccounts.accounts
   );
@@ -27,15 +28,15 @@ const ManualAccountForm: React.FC<{
   );
 
   const [form, setForm] = useState<ManualFormState>({
-    accountName: "",
-    streetAddress: "",
-    city: "",
-    state: "",
+    accountName: initialValues?.accountName || "",
+    accountAddress: initialValues?.accountAddress || "",
+    city: initialValues?.city || "",
+    state: initialValues?.state || "",
     chainName: "",
   });
 
   const normalizedKey = (form: ManualFormState) =>
-    `${form.accountName?.trim().toLowerCase()}|${form.streetAddress
+    `${form.accountName?.trim().toLowerCase()}|${form.accountAddress
       ?.trim()
       .toLowerCase()}|${form.city?.trim().toLowerCase()}|${form.state
       ?.trim()
@@ -90,8 +91,8 @@ const ManualAccountForm: React.FC<{
     const manualAccount: CompanyAccountType = {
       accountNumber: `manual-${Date.now()}`,
       accountName: form.accountName,
-      accountAddress: `${form.streetAddress}, ${form.city}, ${form.state}`,
-      streetAddress: form.streetAddress,
+      accountAddress: `${form.accountAddress}, ${form.city}, ${form.state}`,
+      streetAddress: form.accountAddress,
       city: form.city,
       state: form.state,
       salesRouteNums: [],
@@ -127,7 +128,7 @@ const ManualAccountForm: React.FC<{
                 setSelectedMatch(match);
                 setForm({
                   accountName: match.accountName,
-                  streetAddress: match.streetAddress || "",
+                  accountAddress: match.streetAddress || "",
                   city: match.city || "",
                   state: match.state || "",
                   chainName: match.chain || "",
@@ -180,31 +181,33 @@ const ManualAccountForm: React.FC<{
           <input
             title="Street Address"
             placeholder="Street Address"
-            value={form.streetAddress}
+            value={form.accountAddress}
             onChange={(e) =>
-              setForm({ ...form, streetAddress: e.target.value })
+              setForm({ ...form, accountAddress: e.target.value })
             }
           />
         </div>
 
-        <div className="input-field">
-          <label>City</label>
-          <input
-            title="City"
-            placeholder="City"
-            value={form.city}
-            onChange={(e) => setForm({ ...form, city: e.target.value })}
-          />
-        </div>
+        <div className="city-state-row">
+          <div className="input-field">
+            <label>City</label>
+            <input
+              title="City"
+              placeholder="City"
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+            />
+          </div>
 
-        <div className="input-field">
-          <label>State</label>
-          <input
-            title="State"
-            placeholder="State"
-            value={form.state}
-            onChange={(e) => setForm({ ...form, state: e.target.value })}
-          />
+          <div className="input-field">
+            <label>State</label>
+            <input
+              title="State"
+              placeholder="State"
+              value={form.state}
+              onChange={(e) => setForm({ ...form, state: e.target.value })}
+            />
+          </div>
         </div>
 
         <div className="input-field">

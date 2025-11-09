@@ -225,13 +225,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           <span className="ai-title">AI Brand Detection</span>
           <span className="ai-badge">Beta</span>
         </div>
-        <button
-          className="ai-info-button"
-          type="button"
-          onClick={() => setShowAiInfo(true)}
-        >
-          ⓘ Learn More
-        </button>
+
         <label className="ai-toggle-label">
           <input
             type="checkbox"
@@ -249,6 +243,13 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           still edit results manually. This is in development. You can turn it
           off.
         </p>
+        <button
+          className="ai-info-button"
+          type="button"
+          onClick={() => setShowAiInfo(true)}
+        >
+          ⓘ Learn More
+        </button>
       </div>
 
       {/* 📸 Upload buttons */}

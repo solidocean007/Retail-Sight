@@ -1,0 +1,63 @@
+/* storeSelector.css */
+.store-address-input-box {
+  width: 95%;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Input field shared styling */
+.store-address-input-box .input-field {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.store-address-input-box .input-field input {
+  width: 100%;
+  height: 34px;
+  padding: 6px 8px;
+  font-size: 0.95rem;
+  border: 1px solid var(--card-outline, #ccc);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* City + State row layout */
+.city-state-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.city-state-row .input-field {
+  flex: 1;
+}
+
+.city-state-row .input-field:nth-child(1) {
+  flex: 0.7; /* City takes more space */
+}
+
+.city-state-row .input-field:nth-child(2) {
+  flex: 0.3; /* State smaller */
+}
+
+/* Save button styling */
+.button-primary {
+  margin-top: 10px;
+  padding: 8px 18px;
+  background-color: var(--primary, #1976d2);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.button-primary:hover {
+  background-color: var(--primary-hover, #1565c0);
+}
+
