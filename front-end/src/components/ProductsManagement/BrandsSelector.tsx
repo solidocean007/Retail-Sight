@@ -45,28 +45,28 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
 
   // 🔍 Compare AI rawCandidates to known brands whenever they update
   useEffect(() => {
-    if (!rawCandidates?.length) return;
+  if (!rawCandidates?.length) return;
 
-    const matches = getBrandMatches(rawCandidates, brandOptions);
-    setAiMatches(matches);
+  const matches = getBrandMatches(rawCandidates, brandOptions);
+  const top10 = Array.from(new Set(rawCandidates)).slice(0, 10);
 
-    // pick the top 10 candidates for display
-    const top10 = Array.from(new Set(rawCandidates)).slice(0, 10);
+  setAiSuggestions(top10);
 
-    // ✅ Auto-add matches immediately
-    if (matches.length > 0) {
-      const normalizedSelected = selectedBrands.map((b) => b.toLowerCase());
-      const newOnes = matches.filter(
-        (m) => !normalizedSelected.includes(m.toLowerCase())
-      );
-      if (newOnes.length) {
-        onChange([...selectedBrands, ...newOnes], selectedProductType);
-      }
-    }
+  // Only run auto-add logic when there are *new* matches not already added
+  const normalizedSelected = selectedBrands.map((b) => b.toLowerCase());
+  const newOnes = matches.filter(
+    (m) => !normalizedSelected.includes(m.toLowerCase())
+  );
 
-    setAiMatches(matches);
-    setAiSuggestions(top10);
-  }, [rawCandidates, brandOptions]);
+  if (newOnes.length > 0) {
+    onChange([...selectedBrands, ...newOnes], selectedProductType);
+  }
+
+  // Update aiMatches only once
+  setAiMatches(matches);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [rawCandidates]); // ✅ remove brandOptions from deps
+
 
   // 🧠 When AI finds matches, auto-add them to selected brands
   useEffect(() => {

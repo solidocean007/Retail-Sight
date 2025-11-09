@@ -34,6 +34,7 @@ import { normalizePost } from "../normalize";
 import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 import { createManualAccountThunk } from "../../thunks/manulAccountsThunk";
 import { logAiFeedback } from "../../hooks/logAiFeedback";
+import { persistCustomProductData } from "./persistCustomProductData";
 
 function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
   return new Promise((resolve, reject) => {
@@ -112,6 +113,7 @@ export const useHandlePostSubmission = () => {
 
       newDocRef = await addPostToFirestore(db, payload);
       const postId = newDocRef.id;
+      persistCustomProductData(userData.companyId, post).catch(console.warn);
 
       if (post.account?.typeOfAccount === "manual") {
         await dispatch(createManualAccountThunk(post.account));

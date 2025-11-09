@@ -8,10 +8,20 @@ export const useBrandOptions = (): string[] => {
   const products = useSelector(selectAllProducts);
   const company = useSelector(selectCurrentCompany);
   const library = company?.customBrandLibrary ?? [];
+
+  console.log("🪵 useBrandOptions — company:", company);
+  console.log("🪵 useBrandOptions — customBrandLibrary:", library);
+
   return useMemo(() => {
+    // extract and clean product brands
     const brands = products
-      .map((p) => p.brand)
+      .map((p) => p.brand?.trim())
       .filter((b): b is string => Boolean(b));
-    return Array.from(new Set([...brands, ...library])).sort();
-  }, [products, library]);
+
+    // merge and dedupe
+    const all = Array.from(new Set([...brands, ...library])).sort();
+
+    return all;
+  }, [products, library]); // ✅ include library so it re-runs when company doc updates
 };
+

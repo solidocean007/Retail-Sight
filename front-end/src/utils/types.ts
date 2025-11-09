@@ -93,6 +93,7 @@ export type CompanyType = {
   goals?: CompanyGoalWithIdType[];
   companyType: BusinessType;
   customBrandLibrary?: string[];
+  customProductTypeLibrary?: string[];
 
   verified: boolean;
   accessStatus?: AccessStatus;
