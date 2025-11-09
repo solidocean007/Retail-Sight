@@ -16,6 +16,12 @@ interface UploadImageProps {
   post: PostInputType;
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   isAiFeatureEnabled?: boolean; // ✅ control default AI toggle from plan
+  setUserLocation: React.Dispatch<
+    React.SetStateAction<{
+      lat: number;
+      lng: number;
+    } | null>
+  >;
 }
 
 export const UploadImage: React.FC<UploadImageProps> = ({
@@ -23,6 +29,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
   post,
   setPost,
   isAiFeatureEnabled = true, // free-tier companies can disable by default
+  setUserLocation,
 }) => {
   const dispatch = useAppDispatch();
   const functions = getFunctions();
@@ -239,7 +246,8 @@ export const UploadImage: React.FC<UploadImageProps> = ({
 
         <p className="ai-note">
           Helps tag your display with matching brands automatically. You can
-          still edit results manually. This is in development.  You can turn it off.
+          still edit results manually. This is in development. You can turn it
+          off.
         </p>
       </div>
 

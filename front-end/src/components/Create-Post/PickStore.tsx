@@ -1,5 +1,7 @@
 // PickStore.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
+
 import {
   CompanyAccountType,
   CompanyGoalWithIdType,
@@ -35,6 +37,7 @@ import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 import { useIntegrations } from "../../hooks/useIntegrations";
 import { setAllAccounts } from "../../Slices/allAccountsSlice";
 import ManualAccountForm from "./ManualAccountForm";
+import { fetchCityAndState } from "../../utils/location/googlePlacesHelpers";
 
 interface PickStoreProps {
   post: PostInputType;
@@ -45,6 +48,10 @@ interface PickStoreProps {
   ) => void;
   setSelectedCompanyAccount: (account: CompanyAccountType | null) => void;
   setSelectedGalloGoal: (goal: FireStoreGalloGoalDocType | null) => void;
+  userLocation: {
+    lat: number;
+    lng: number;
+  } | null;
 }
 
 export const PickStore: React.FC<PickStoreProps> = ({
@@ -53,7 +60,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
   handleFieldChange,
   setSelectedCompanyAccount,
   setSelectedGalloGoal,
+  userLocation,
 }) => {
+  const VITE_GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY!;
+  console.log(VITE_GOOGLE_MAPS_API_KEY);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyUsers = useSelector(selectCompanyUsers) || [];
@@ -63,6 +73,9 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
   const [manualAccountAdded, setManualAccountAdded] = useState(false);
+  const [nearbyStores, setNearbyStores] = useState<
+    { name: string; address: string; placeId?: string }[]
+  >([]);
 
   const allCompanyAccounts = useSelector(
     (state: RootState) => state.allAccounts.accounts
@@ -70,6 +83,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const userAccounts = useSelector(
     (state: RootState) => state.userAccounts.accounts
   );
+  console.log(allCompanyAccounts);
   const [isAllStoresShown, setIsAllStoresShown] = useState(() => {
     if (
       user?.role === "supervisor" ||
@@ -184,6 +198,100 @@ export const PickStore: React.FC<PickStoreProps> = ({
     user?.uid,
     isAdminOrAbove,
   ]);
+
+  let isConfigured = false;
+
+  const getNearbyStores = async (lat: number, lng: number) => {
+    const res = await fetch(
+      "https://places.googleapis.com/v1/places:searchNearby",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": VITE_GOOGLE_MAPS_API_KEY,
+          "X-Goog-FieldMask":
+            "places.displayName,places.formattedAddress,places.id",
+        },
+        body: JSON.stringify({
+          includedTypes: ["store"],
+          maxResultCount: 5,
+          locationRestriction: {
+            circle: {
+              center: { latitude: lat, longitude: lng },
+              radius: 300.0,
+            },
+          },
+        }),
+      }
+    );
+    const data = await res.json();
+    console.log("Nearby (new Places API):", data);
+  };
+
+  useEffect(() => {
+    const loadAndFindNearby = async () => {
+      try {
+        if (!isConfigured) {
+          // ✅ only set your key once
+          // @ts-expect-error Google's types lag behind the runtime API
+          setOptions({ apiKey: VITE_GOOGLE_MAPS_API_KEY });
+
+          isConfigured = true;
+        }
+
+        // ✅ load the places library
+        await importLibrary("places");
+        console.log("✅ Google Maps Places loaded");
+
+        if (!navigator.geolocation) return;
+
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => {
+            const { latitude, longitude } = coords;
+            const service = new google.maps.places.PlacesService(
+              document.createElement("div")
+            );
+            getNearbyStores(latitude, longitude);
+
+            // service.nearbySearch(
+            //   {
+            //     location: { lat: latitude, lng: longitude },
+            //     radius: 300,
+            //     type: "store",
+            //   },
+            //   (results, status) => {
+            //     if (
+            //       status !== google.maps.places.PlacesServiceStatus.OK ||
+            //       !results
+            //     ) {
+            //       console.warn("Places search failed:", status);
+            //       return;
+            //     }
+
+            //     const places = results
+            //       .filter((r) => r.name && r.vicinity)
+            //       .slice(0, 5)
+            //       .map((r) => ({
+            //         name: r.name!,
+            //         address: r.vicinity!,
+            //         placeId: r.place_id,
+            //       }));
+
+            //     console.log("Nearby stores:", places);
+            //     if (combinedAccounts.length === 0) setNearbyStores(places);
+            //   }
+            // );
+          },
+          (err) => console.warn("Location lookup failed:", err),
+          { enableHighAccuracy: true, timeout: 15000 }
+        );
+      } catch (err) {
+        console.error("❌ Failed to load Google Maps libraries:", err);
+      }
+    };
+
+    loadAndFindNearby();
+  }, [combinedAccounts.length]);
 
   useEffect(() => {
     if (!loadingAccounts) {
@@ -446,6 +554,53 @@ export const PickStore: React.FC<PickStoreProps> = ({
               />
             </Box>
           )}
+        </Box>
+      )}
+
+      {!combinedAccounts.length && nearbyStores.length > 0 && (
+        <Box mt={3} p={2}>
+          <Typography variant="h6">Nearby Stores (from Google Maps)</Typography>
+          {nearbyStores.map((store) => (
+            <Box
+              key={store.placeId}
+              sx={{
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                p: 1.5,
+                mt: 1,
+                cursor: "pointer",
+                transition: "background-color 0.2s ease-in-out",
+                "&:hover": { backgroundColor: "#f3f3f3" },
+              }}
+              onClick={() => {
+                if (!store.placeId) return;
+                fetchCityAndState(store.placeId, (city, state) => {
+                  setPost((prev) => ({
+                    ...prev,
+                    account: {
+                      accountName: store.name,
+                      accountAddress: store.address,
+                      city,
+                      state,
+                      accountNumber: "", // placeholder for Firestore later
+                      typeOfAccount: "Unknown",
+                    } as any,
+                  }));
+                  setSelectedCompanyAccount(null);
+                  console.log("✅ Selected Google Store:", {
+                    ...store,
+                    city,
+                    state,
+                  });
+                });
+              }}
+            >
+              <Typography fontWeight="bold">{store.name}</Typography>
+              <Typography variant="body2" color="textSecondary">
+                {store.address}
+              </Typography>
+            </Box>
+          ))}
         </Box>
       )}
 

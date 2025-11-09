@@ -50,7 +50,11 @@ export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatusText, setUploadStatusText] = useState("");
-
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  console.log(userLocation)
   const handlePostSubmission = useHandlePostSubmission();
 
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
@@ -131,6 +135,7 @@ export const CreatePost = () => {
             setSelectedFile={setSelectedFile}
             post={post}
             setPost={setPost}
+            setUserLocation={setUserLocation}
           />
         );
       case 2:
@@ -141,6 +146,7 @@ export const CreatePost = () => {
             handleFieldChange={handleFieldChange}
             setSelectedCompanyAccount={setSelectedCompanyAccount}
             setSelectedGalloGoal={setSelectedGalloGoal}
+            userLocation={userLocation} // 👈 add this
           />
         );
       case 3:
