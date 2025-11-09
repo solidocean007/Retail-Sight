@@ -158,7 +158,7 @@ export default function InviteAcceptForm() {
           companyId: invite.companyId,
           role: invite.role || "employee",
           createdAt: createdAtIso,
-          updatedAt: nowIso,
+          lastUpdated: nowIso,
         },
         { merge: true }
       );
@@ -266,7 +266,7 @@ export default function InviteAcceptForm() {
           companyId: invite.companyId,
           role: invite.role || "employee",
           createdAt: createdAtIso,
-          updatedAt: nowIso,
+          lastUpdated: nowIso,
         },
         { merge: true }
       );

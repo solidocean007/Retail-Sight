@@ -144,7 +144,7 @@ export default function CompanyOnboardingAcceptForm() {
           role: "admin",
           approvedViaRequest: true,
           createdAt: createdAtIso,
-          updatedAt: nowIso,
+          lastUpdated: nowIso,
         },
         { merge: true }
       );
@@ -248,7 +248,7 @@ export default function CompanyOnboardingAcceptForm() {
           role: "admin",
           approvedViaRequest: true,
           createdAt: createdAtIso,
-          updatedAt: nowIso,
+          lastUpdated: nowIso,
         },
         { merge: true }
       );

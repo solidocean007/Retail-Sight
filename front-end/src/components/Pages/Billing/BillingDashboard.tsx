@@ -386,7 +386,7 @@ const BillingDashboard: React.FC = () => {
           "billing.pendingPlan": selectedPlan.braintreePlanId,
           "billing.pendingPlanName": selectedPlan.name,
           "billing.pendingEffectiveDate": billingInfo.renewalDate || null,
-          updatedAt: new Date(),
+          lastUpdated: new Date(),
         });
 
         alert(
@@ -463,7 +463,8 @@ const BillingDashboard: React.FC = () => {
           <div className="summary-left">
             <div className="summary-header">
               <h3 className="plan-name">
-                Current Plan: {currentPlanName} — ${billingInfo?.planPrice}/month
+                Current Plan: {currentPlanName} — ${billingInfo?.planPrice}
+                /month
               </h3>
             </div>
 

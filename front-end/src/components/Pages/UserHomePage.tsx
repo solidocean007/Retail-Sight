@@ -47,7 +47,6 @@ export const UserHomePage = () => {
   >("posts");
   const [clearInput, setClearInput] = useState(false);
   const user = useSelector(selectUser);
-  console.log(user)
   const [isClosing, setIsClosing] = useState(false);
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
   const filterText = useMemo(

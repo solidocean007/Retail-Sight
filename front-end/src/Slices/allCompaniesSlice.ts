@@ -17,30 +17,35 @@ export const fetchAllCompanies = createAsyncThunk<
 >("companies/fetchAll", async (_, { rejectWithValue }) => {
   try {
     const snap = await getDocs(collection(db, "companies"));
+
+    const toIso = (v: any): string | null =>
+      v?.toDate?.()
+        ? v.toDate().toISOString()
+        : v instanceof Date
+        ? v.toISOString()
+        : typeof v === "string"
+        ? v
+        : null;
+
     return snap.docs.map((d) => {
       const data = d.data() as CompanyType;
-      const { createdAt, lastUpdated, ...rest } = data;
+      const { createdAt, lastUpdated, updatedAt, ...rest } = data;
 
-      const toIso = (v: any) =>
-        v?.toDate?.()
-          ? v.toDate().toISOString()
-          : v instanceof Date
-          ? v.toISOString()
-          : typeof v === "string"
-          ? v
-          : null;
+      // ✅ Prefer explicit lastUpdated, else fall back to updatedAt
+      const normalizedLastUpdated = toIso(lastUpdated || updatedAt);
 
       return {
         id: d.id,
-        ...rest, // no raw createdAt/lastUpdated here
-        createdAt: toIso(createdAt), // ✅ ISO string or null
-        lastUpdated: toIso(lastUpdated), // ✅ ISO string or null
+        ...rest,
+        createdAt: toIso(createdAt),
+        lastUpdated: normalizedLastUpdated,
       } as CompanyTypeWithId;
     });
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
 });
+
 
 // Slices/allCompaniesSlice.ts  ➜  ADD BELOW fetchAllCompanies
 // what is this for?

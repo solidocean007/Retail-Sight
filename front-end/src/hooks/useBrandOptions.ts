@@ -9,9 +9,6 @@ export const useBrandOptions = (): string[] => {
   const company = useSelector(selectCurrentCompany);
   const library = company?.customBrandLibrary ?? [];
 
-  console.log("🪵 useBrandOptions — company:", company);
-  console.log("🪵 useBrandOptions — customBrandLibrary:", library);
-
   return useMemo(() => {
     // extract and clean product brands
     const brands = products

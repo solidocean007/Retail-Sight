@@ -80,6 +80,7 @@ export interface CompanyBilling {
 export type CompanyType = {
   id?: string;
   lastUpdated: string | null;
+  updatedAt?: string;  // this is a safe guard where old logic was writing incorrectly. adding it here so i can safely convert to string before storing in redux
   companyName: string;
   primaryContact?: { name?: string; email?: string; phone?: string };
   altCompanyNames?: string[]; // not necessary
