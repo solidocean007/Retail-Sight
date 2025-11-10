@@ -94,7 +94,6 @@ const ConfirmDialog: React.FC<{
 const BillingDashboard: React.FC = () => {
   const navigate = useNavigate();
   const company = useSelector(selectCurrentCompany) as any;
-  console.log("Current company in billing:", company);
   const currentCompanyId = useSelector(selectCurrentCompany)?.id;
   const user = useSelector(
     (state: RootState) => state.user.currentUser
@@ -102,7 +101,6 @@ const BillingDashboard: React.FC = () => {
   const companyName = user?.company;
   const email = user?.email;
   const [plans, setPlans] = useState<Plan[]>([]);
-  console.log(plans)
   const [freePlan, setFreePlan] = useState<Plan | null>(null);
   const [currentPlanId, setCurrentPlanId] = useState<string>("free");
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
