@@ -30,8 +30,8 @@ import UserModal from "./components/UserModal";
 import { useIntegrations } from "./hooks/useIntegrations";
 import useUserAccountsSync from "./hooks/useUserAccountsSync";
 import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
-import { backfillMissingCompanyIdForHealy } from "./script";
-import { auditPostsMissingCompanyId } from "./script";
+// import { backfillMissingCompanyIdForHealy } from "./script";
+// import { auditPostsMissingCompanyId } from "./script";
 import { useCompanyConnectionsListener } from "./hooks/useCompanyConnectionsListener";
 // import { migrateCompanyNameUsers } from "./script";
 

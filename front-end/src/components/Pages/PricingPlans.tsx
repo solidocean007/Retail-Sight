@@ -13,7 +13,7 @@ const PricingPlans: React.FC = () => {
       tagline: "For small teams getting started",
       features: [
         "👥 Up to 5 users",
-        "🤝 1 active company connection",
+        "🤝 2 active company connections",
       
       ],
       button: "Start Free",

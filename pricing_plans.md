@@ -11,7 +11,7 @@ Upgrade or downgrade anytime as your network grows.
 
 - 👥 Up to **5 users**  
   - Additional users: **$4 per month each**  
-- 🤝 **1 active company connection**  
+- 🤝 **2 active company connection**  
   - Additional connections: **$6 per month each**  
 - 📸 Create and share display posts  
 - 🏷️ Manage and approve shared brands  

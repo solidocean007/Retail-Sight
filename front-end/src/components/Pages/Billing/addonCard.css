@@ -126,6 +126,13 @@
 
 /* Mobile */
 @media (max-width: 600px) {
+  .addon-card {
+    flex-direction: column;
+  }
+  .addon-card p {
+    margin: 0;
+    padding: 0;
+  }
   .addon-controls {
     flex-direction: column;
     align-items: stretch;

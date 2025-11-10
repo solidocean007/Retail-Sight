@@ -31,7 +31,7 @@
 .plan-summary-card {
   /* width: 100%; */
   min-width: 300px;
-  max-width: 860px;
+  max-width: 90vw;
   background: var(--dashboard-card);
   border: 1px solid var(--border-color);
   border-radius: var(--card-radius);
@@ -151,7 +151,7 @@
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.25rem;
   width: 100%;
-  max-width: 1100px;
+  max-width: 90vw;
   margin: 1.5rem 0;
 }
 
@@ -340,6 +340,7 @@
 
 /* Tablet / small desktop: wrap into two columns */
 @media (min-width: 768px) and (max-width: 1200px) {
+  
   .plans-grid {
     display: flex;
     flex-wrap: wrap;

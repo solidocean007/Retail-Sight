@@ -4,9 +4,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import dotenv = require("dotenv");
 import braintree = require("braintree");
-import {
-  onDocumentUpdated,
-} from "firebase-functions/v2/firestore";
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { syncPlanLimits } from "./braintreeHelpers";
 import { logger } from "firebase-functions/v2";
 
@@ -1124,7 +1122,7 @@ export const initCompanyBilling = onDocumentUpdated(
             plan: "free",
             planPrice: 0,
             userLimit: 5,
-            connectionLimit: 1,
+            connectionLimit: 2,
             addons: { extraUser: 0, extraConnection: 0 },
             paymentStatus: "inactive", // until first payment or upgrade
             renewalDate: null,
@@ -1189,7 +1187,7 @@ export const backfillBillingForCompanies = onCall(async (request) => {
             plan: "free",
             planPrice: 0,
             userLimit: 5,
-            connectionLimit: 1,
+            connectionLimit: 2,
             addons: { extraUser: 0, extraConnection: 0 },
             paymentStatus: "active",
             renewalDate: null,

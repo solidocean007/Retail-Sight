@@ -289,7 +289,7 @@ export default function CompanyOnboardingAcceptForm() {
 
         <div className="plan-summary">
           <h3>Plan: Free</h3>
-          <p>Includes up to <strong>5 users</strong> and <strong>1 connection</strong>.</p>
+          <p>Includes up to <strong>5 users</strong> and <strong>2 connections</strong>.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="onboarding-form">

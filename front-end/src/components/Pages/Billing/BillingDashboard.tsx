@@ -102,6 +102,7 @@ const BillingDashboard: React.FC = () => {
   const companyName = user?.company;
   const email = user?.email;
   const [plans, setPlans] = useState<Plan[]>([]);
+  console.log(plans)
   const [freePlan, setFreePlan] = useState<Plan | null>(null);
   const [currentPlanId, setCurrentPlanId] = useState<string>("free");
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
@@ -147,6 +148,7 @@ const BillingDashboard: React.FC = () => {
       const freePlan =
         planList.find((plan) => plan.braintreePlanId === "free") || null;
       setFreePlan(freePlan);
+      console.log(freePlan)
     } catch (err) {
       console.error("Error loading plans:", err);
     } finally {

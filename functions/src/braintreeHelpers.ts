@@ -57,7 +57,7 @@ export async function syncPlanLimits(
       console.warn(
         `⚠️ Plan ${planId} not found in Firestore. Using Free fallback.`
       );
-      const fallbackLimits = { userLimit: 5, connectionLimit: 1 };
+      const fallbackLimits = { userLimit: 5, connectionLimit: 2 };
       await companyRef.update({
         limits: fallbackLimits,
         "billing.plan": "free",
@@ -71,7 +71,7 @@ export async function syncPlanLimits(
 
     const limits = {
       userLimit: planData.userLimit ?? 5,
-      connectionLimit: planData.connectionLimit ?? 1,
+      connectionLimit: planData.connectionLimit ?? 2,
     };
 
     const planPrice = planData.price ?? 0;
