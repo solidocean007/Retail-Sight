@@ -54,7 +54,6 @@ export const CreatePost = () => {
     lat: number;
     lng: number;
   } | null>(null);
-  console.log(userLocation);
   const handlePostSubmission = useHandlePostSubmission();
 
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);

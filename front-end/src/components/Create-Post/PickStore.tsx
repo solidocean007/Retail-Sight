@@ -236,6 +236,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
     isAdminOrAbove,
   ]);
 
+  useEffect(() => {
+    if (post.account) setOpenManualAccountForm(false);
+  }, [post.account]);
+
   // ✅ New Places API (v1)
   const getNearbyStores = async (lat: number, lng: number) => {
     try {
@@ -303,6 +307,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
                 const score = fuzzyMatch(placeAddr, acc.accountAddress);
                 if (score > best.score) best = { score, account: acc };
               }
+
               return { place, ...best };
             })
             .sort((a, b) => b.score - a.score)[0];
@@ -553,6 +558,19 @@ export const PickStore: React.FC<PickStoreProps> = ({
               </Box>
             );
           })}
+        </Box>
+      )}
+      {!post.account && !nearbyStores.length && (
+        <Box textAlign="center" mt={2}>
+          <Typography variant="body2" color="textSecondary" mb={1}>
+            Can’t find the store in your list?
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => setOpenManualAccountForm(true)}
+          >
+            + Add Store Manually
+          </Button>
         </Box>
       )}
 

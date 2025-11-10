@@ -134,9 +134,6 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           const detected = res.data?.detectedBrands || [];
           const rawCandidates = res.data?.rawCandidates || [];
 
-          console.log("🧠 AI detected brands:", detected);
-          console.log("📊 Vision raw text:", rawCandidates);
-
           setPost((prev) => ({
             ...prev,
             autoDetectedBrands: detected,
