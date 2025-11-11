@@ -19,6 +19,8 @@ import { createCompanyOrRequest } from "./createCompanyOrRequest";
 import { markAccessRequestComplete } from "./markAccessRequestComplete";
 import { rejectAccessRequest } from "./rejectAccessRequest";
 import { approveAccessRequest } from "./approveAccessRequest";
+import { getPlanDetails } from "./planHandlers";
+import { enforcePlanLimits } from "./enforcePlanLimits";
 
 // 🧾 Braintree Billing System
 import {
@@ -63,6 +65,8 @@ export {
   approveAccessRequest,
   markAccessRequestComplete,
   rejectAccessRequest,
+  getPlanDetails,
+  enforcePlanLimits,
 
   // Billing functions
   updateSubscriptionWithProration,

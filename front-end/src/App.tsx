@@ -33,6 +33,7 @@ import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
 // import { backfillMissingCompanyIdForHealy } from "./script";
 // import { auditPostsMissingCompanyId } from "./script";
 import { useCompanyConnectionsListener } from "./hooks/useCompanyConnectionsListener";
+import { hydrateFromCache } from "./Slices/planSlice";
 // import { migrateCompanyNameUsers } from "./script";
 
 function App(): React.JSX.Element {
@@ -49,8 +50,10 @@ function App(): React.JSX.Element {
   useCustomAccountsSync(); // ✅ Sync custom manual accounts
   useCompanyConnectionsListener();
 
-
   const dispatch = useAppDispatch();
+  useEffect(() => {
+    dispatch(hydrateFromCache());
+  }, [dispatch]);
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
   const companyId = user?.companyId;
@@ -79,7 +82,6 @@ function App(): React.JSX.Element {
       }
     })();
   }, [dispatch, companyId]);
-
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {

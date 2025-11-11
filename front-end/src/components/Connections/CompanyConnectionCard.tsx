@@ -11,6 +11,8 @@ import { useSupplierBrands } from "../../hooks/useSupplierBrands";
 import { useAppDispatch } from "../../utils/store";
 import CustomConfirmation from "../CustomConfirmation";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { showMessage } from "../../Slices/snackbarSlice";
 
 interface Props {
   connection: CompanyConnectionType;
@@ -24,6 +26,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
   isAdminView,
 }) => {
   const dispatch = useAppDispatch();
+  const functions = getFunctions();
   const { supplierBrandList } = useSupplierBrands();
   const [animationComplete, setAnimationComplete] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
@@ -80,6 +83,18 @@ const CompanyConnectionCard: React.FC<Props> = ({
     () => pendingBrands.filter((b) => b.proposedBy !== currentCompanyId),
     [pendingBrands, currentCompanyId]
   );
+
+  const checkConnectionLimit = async (companyId: string) => {
+    const fn = httpsCallable(functions, "enforcePlanLimits");
+    const res = await fn({ companyId, type: "connection" });
+    return res.data as {
+      allowed: boolean;
+      usedConnections?: number;
+      remainingConnections?: number;
+      planLimit?: number;
+    };
+  };
+
   // --- Add or remove brands inline ---
   const handleAddManualBrand = () => {
     const newBrand = manualBrand.trim();
@@ -142,63 +157,98 @@ const CompanyConnectionCard: React.FC<Props> = ({
     setConfirmOpen(true);
   };
 
-const handleConfirm = async () => {
-  if (!connection.id || !confirmBrand || !confirmAction) return;
-  setConfirmLoading(true);
+  const handleConfirm = async () => {
+    if (!connection.id || !confirmBrand || !confirmAction) return;
+    setConfirmLoading(true);
 
-  try {
-    // Only fade after confirmation — one unified call
-    const fadingEl = document.querySelector(`[data-brand='${confirmBrand}']`);
-    if (fadingEl) fadingEl.classList.add("fade-out");
-    await new Promise((res) => setTimeout(res, 300)); // consistent fade duration
+    try {
+      // Only fade after confirmation — one unified call
+      const fadingEl = document.querySelector(`[data-brand='${confirmBrand}']`);
+      if (fadingEl) fadingEl.classList.add("fade-out");
+      await new Promise((res) => setTimeout(res, 300)); // consistent fade duration
 
-    // Common update skeleton
-    const updatedPending = (connection.pendingBrands || []).filter(
-      (b) => b.brand !== confirmBrand
-    );
-
-    const updateData: any = {
-      pendingBrands: updatedPending,
-      updatedAt: serverTimestamp(),
-    };
-
-    if (confirmAction === "accept") {
-      updateData.sharedBrands = [
-        ...(connection.sharedBrands || []),
-        confirmBrand,
-      ];
-    } else if (confirmAction === "reject") {
-      updateData.declinedBrands = [
-        ...(connection.declinedBrands || []),
-        confirmBrand,
-      ];
-    } else if (confirmAction === "removeShared") {
-      // remove from sharedBrands only
-      const updatedShared = (connection.sharedBrands || []).filter(
-        (b) => b !== confirmBrand
+      // Common update skeleton
+      const updatedPending = (connection.pendingBrands || []).filter(
+        (b) => b.brand !== confirmBrand
       );
-      await updateDoc(doc(db, "companyConnections", connection.id), {
-        sharedBrands: updatedShared,
+
+      const updateData: any = {
+        pendingBrands: updatedPending,
         updatedAt: serverTimestamp(),
-      });
-      setSharedBrands(updatedShared);
+      };
+
+      if (confirmAction === "accept") {
+        try {
+          const result = await checkConnectionLimit(currentCompanyId!);
+
+          if (!result.allowed) {
+            dispatch(
+              showMessage(
+                `You’ve reached your connection limit (${result.planLimit}). Please upgrade to add more.`
+              )
+            );
+            setConfirmOpen(false);
+            setConfirmLoading(false);
+            return;
+          }
+
+          if (result.remainingConnections !== undefined) {
+            dispatch(
+              showMessage(
+                `You have ${result.remainingConnections} connection${
+                  result.remainingConnections === 1 ? "" : "s"
+                } remaining.`
+              )
+            );
+          }
+
+          updateData.sharedBrands = [
+            ...(connection.sharedBrands || []),
+            confirmBrand,
+          ];
+        } catch (err: any) {
+          console.error("Limit enforcement failed:", err);
+          dispatch(
+            showMessage(
+              err.message ||
+                "You’ve reached your connection limit. Upgrade to add more connections."
+            )
+          );
+          setConfirmOpen(false);
+          setConfirmLoading(false);
+          return;
+        }
+      } else if (confirmAction === "reject") {
+        updateData.declinedBrands = [
+          ...(connection.declinedBrands || []),
+          confirmBrand,
+        ];
+      } else if (confirmAction === "removeShared") {
+        // remove from sharedBrands only
+        const updatedShared = (connection.sharedBrands || []).filter(
+          (b) => b !== confirmBrand
+        );
+        await updateDoc(doc(db, "companyConnections", connection.id), {
+          sharedBrands: updatedShared,
+          updatedAt: serverTimestamp(),
+        });
+        setSharedBrands(updatedShared);
+        setConfirmOpen(false);
+        return; // ✅ done early
+      }
+
+      // Apply pending updates (for accept / reject / cancel)
+      await updateDoc(doc(db, "companyConnections", connection.id), updateData);
+
+      // update local state for visual sync
+      setSharedBrands(updateData.sharedBrands || sharedBrands);
       setConfirmOpen(false);
-      return; // ✅ done early
+    } catch (err) {
+      console.error("Error updating brand decision:", err);
+    } finally {
+      setConfirmLoading(false);
     }
-
-    // Apply pending updates (for accept / reject / cancel)
-    await updateDoc(doc(db, "companyConnections", connection.id), updateData);
-
-    // update local state for visual sync
-    setSharedBrands(updateData.sharedBrands || sharedBrands);
-    setConfirmOpen(false);
-  } catch (err) {
-    console.error("Error updating brand decision:", err);
-  } finally {
-    setConfirmLoading(false);
-  }
-};
-
+  };
 
   return (
     <div className={`connection-card ${connection.status}`}>

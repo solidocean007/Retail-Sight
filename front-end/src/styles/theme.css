@@ -74,6 +74,11 @@
   --text-color: var(--gray-900);
   --text-muted: #6f7a8a;
   --alert-text-color: white;
+  --text-secondary: var(--text-muted, #999);
+  --error-color: #ff6b6b;
+  --error-bg: rgba(255, 107, 107, 0.1);
+  --warning-color: #ffb020;
+  --warning-bg: rgba(255, 176, 32, 0.12);
 
   /* Buttons */
   --outlined-button-border: var(--primary-blue);
@@ -143,7 +148,7 @@
   --btn-border-radius: 8px;
   --btn-padding: 0.75rem 1.5rem;
 
-   /* Access Requests Panel additions */
+  /* Access Requests Panel additions */
   --request-card-glow: rgba(59, 130, 246, 0.25); /* soft blue glow */
   --request-card-hover-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
   --request-card-gradient-light: linear-gradient(
@@ -279,7 +284,7 @@
   --status-active-bg: rgba(26, 127, 55, 0.25);
   --status-pending-bg: rgba(178, 106, 0, 0.25);
   --status-inactive-bg: rgba(150, 150, 150, 0.15);
-   --surface-elevated: var(--gray-900);
+  --surface-elevated: var(--gray-900);
 
   --dashboard-card: var(--bgColor-muted);
   --card-outline: var(--gray-200);

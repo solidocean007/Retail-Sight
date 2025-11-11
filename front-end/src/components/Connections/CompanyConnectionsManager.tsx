@@ -13,8 +13,10 @@ import {
 } from "../../Slices/companyConnectionSlice";
 import { CompanyConnectionType, UserType } from "../../utils/types";
 import ConnectionBuilder from "./ConnectionBuilder";
-import { Box, Modal } from "@mui/material";
 import ConnectionEditModal from "./ConnectionEditModal";
+import { Modal } from "@mui/material";
+import { getPlanDetails } from "../../utils/getPlanDetails";
+import { setPlan, setLoading } from "../../Slices/planSlice";
 
 interface Props {
   currentCompanyId: string | undefined;
@@ -26,17 +28,55 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   user,
 }) => {
   const dispatch = useAppDispatch();
+  const usersCompany = useSelector(selectCurrentCompany);
   const { connections } = useSelector(
     (state: RootState) => state.companyConnections
   );
-  const usersCompany = useSelector(selectCurrentCompany);
+
+  // ✅ Access plan data from Redux (cached + persisted)
+  const { currentPlan, loading } = useSelector((s: RootState) => s.planSlice);
+
   const [selectedConnection, setSelectedConnection] =
     useState<CompanyConnectionType | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
-  const connectionLimitReached = connections.length >= 3;
 
+  // 🧮 Derive limits and usage
+  const planLimit = currentPlan?.connectionLimit ?? 0;
+  const extraConnections = usersCompany?.billing?.addons?.extraConnection ?? 0;
+  const approvedConnections = connections.filter(
+    (c) => c.status === "approved"
+  ).length;
+
+  const connectionLimitReached = // 'connectionLimitReached' is declared but its value is never read
+    approvedConnections >= planLimit + extraConnections;
+
+  const totalLimit = (planLimit || 0) + (extraConnections || 0);
+  const progressPercent = totalLimit
+    ? Math.min((approvedConnections / totalLimit) * 100, 100)
+    : 0;
+
+  // ✅ Load plan once (or refresh if plan name changed)
+  useEffect(() => {
+    const loadPlan = async () => {
+      if (currentPlan?.name === usersCompany?.billing?.plan) return; // only reload if different
+      if (!usersCompany?.billing?.plan) return;
+
+      dispatch(setLoading(true));
+      try {
+        const plan = await getPlanDetails(usersCompany.billing.plan);
+        dispatch(setPlan(plan));
+      } catch (err) {
+        console.error("Failed to fetch plan details:", err);
+      } finally {
+        dispatch(setLoading(false));
+      }
+    };
+    loadPlan();
+  }, [usersCompany?.billing?.plan]);
+
+  // ✅ Load connections (cached + remote)
   useEffect(() => {
     if (!currentCompanyId) return;
     const loadConnections = async () => {
@@ -52,7 +92,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     loadConnections();
   }, [currentCompanyId, dispatch]);
 
-  // 🧩 Handle create request
+  // 🧩 Handle connection creation
   const handleConfirmRequest = async (
     emailInput: string,
     brandSelection: string[]
@@ -117,76 +157,68 @@ const CompanyConnectionsManager: React.FC<Props> = ({
                 <span className="info-icon">🤝</span>
                 <div className="info-text">
                   <strong>Collaborate:</strong> Connect with verified partner
-                  companies to share your display and goal activity across
-                  networks.
+                  companies to share your display and goal activity.
                 </div>
               </li>
               <li>
                 <span className="info-icon">🏷️</span>
                 <div className="info-text">
-                  <strong>Shared Brands:</strong> Connections activate once both
-                  companies approve the brands to share.
+                  <strong>Shared Brands:</strong> Activate once both companies
+                  approve shared brands.
                 </div>
               </li>
               <li>
                 <span className="info-icon">📢</span>
                 <div className="info-text">
-                  <strong>Share Visibility:</strong> When you post a display
-                  with <em>network visibility</em>, your connected partners see
-                  posts where you share a brand in the connection in their feed
-                  too. Note: Displays with a company only visibility will not be
-                  seen by other companies.
+                  <strong>Share Visibility:</strong> Network posts become
+                  visible to approved partners.
                 </div>
               </li>
-              <li>
-                <span className="info-icon">🔄</span>
-                <div className="info-text">
-                  <strong>Reciprocal Sharing:</strong> If a partner proposes to
-                  share their brand and you accept, you’ll also see their
-                  network posts.
-                </div>
-              </li>
-
               <li>
                 <span className="info-icon">🌐</span>
                 <div className="info-text">
-                  <strong>Unified Feed:</strong> Build your network presence and
-                  expand visibility across the Displaygram ecosystem.
+                  <strong>Unified Feed:</strong> Expand visibility across the
+                  Displaygram ecosystem.
                 </div>
               </li>
             </ul>
-
             <p className="info-banner-footer">
-              Tip: You can manage shared brands directly from the connections
-              below. Use <strong>Build New Connection</strong> to invite a new
-              partner.
+              Tip: Manage shared brands directly from the list below.
             </p>
           </div>
         )}
       </div>
 
       <div className="connections-list-card">
-        <div className="tier-status">
-          <strong>Your Plan: Free Tier</strong>
-          <div className="tier-bar">
-            <div className="tier-progress" style={{ width: "33%" }}></div>
+        {!loading && (
+          <div className="tier-status">
+            <strong>
+              Your Plan:{" "}
+              {currentPlan?.name
+                ? currentPlan.name.charAt(0).toUpperCase() +
+                  currentPlan.name.slice(1)
+                : "—"}
+            </strong>
+            <div className="tier-bar">
+              <div
+                className="tier-progress"
+                style={{
+                  width: `${Math.min(
+                    (approvedConnections /
+                      (planLimit + (extraConnections || 0))) *
+                      100,
+                    100
+                  )}%`,
+                }}
+              ></div>
+            </div>
+            <small>
+              {approvedConnections} of {planLimit + (extraConnections || 0)}{" "}
+              connections used
+            </small>
           </div>
-          <small>1 of 3 connections used</small>
-          <div className="build-connection-launcher">
-            <button
-              className="button-primary"
-              onClick={() => setIsBuilderOpen(true)}
-              disabled={connectionLimitReached || isBuilderOpen}
-            >
-              Build New Connection
-            </button>
-            {connectionLimitReached && (
-              <p className="limit-message">
-                You’ve reached your connection limit for your current plan.
-              </p>
-            )}
-          </div>
-        </div>
+        )}
+
         <h3>Existing Connections</h3>
         <p className="section-hint">
           Review current connections, pending requests, and shared brands.
@@ -200,13 +232,11 @@ const CompanyConnectionsManager: React.FC<Props> = ({
         />
       </div>
 
-      {/* 🧩 Modal */}
+      {/* 🧩 Builder Modal */}
       <Modal
         open={isBuilderOpen}
         onClose={() => setIsBuilderOpen(false)}
-        slotProps={{
-          backdrop: { className: "connection-builder-backdrop" },
-        }}
+        slotProps={{ backdrop: { className: "connection-builder-backdrop" } }}
       >
         <div className="connection-builder-modal">
           <ConnectionBuilder
@@ -215,27 +245,15 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           />
         </div>
       </Modal>
-      {/* Connection editing modal (only one active at a time) */}
-      {/* {selectedConnection && (
-        <ConnectionEditModal
-          isOpen={isEditOpen}
-          onClose={handleModalClose}
-          connection={selectedConnection}
-          currentCompanyId={currentCompanyId}
-        />
-      )} */}
 
+      {/* 🧩 Edit Modal */}
       {selectedConnection && (
         <Modal
-          open={isEditOpen} // ✅ use isEditOpen, not isBuilderOpen
+          open={isEditOpen}
           onClose={handleModalClose}
-          slotProps={{
-            backdrop: { className: "connection-builder-backdrop" }, // ✅ can reuse same backdrop style
-          }}
+          slotProps={{ backdrop: { className: "connection-builder-backdrop" } }}
         >
           <div className="connection-builder-modal">
-            {" "}
-            {/* ✅ same container styling for consistent centering */}
             <ConnectionEditModal
               isOpen={isEditOpen}
               onClose={handleModalClose}

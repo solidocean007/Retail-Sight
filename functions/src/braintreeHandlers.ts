@@ -161,8 +161,8 @@ export const updateSubscriptionWithProration = onCall(async (request) => {
       "billing.paymentStatus":
         updatedSub.status?.toLowerCase?.() === "active" ? "active" : "pending",
       "billing.renewalDate": new Date(updatedSub.nextBillingDate),
-      addons: newAddonsObj, // reset or overwrite
-      updatedAt: admin.firestore.Timestamp.now(),
+      "billing.addons": newAddonsObj, // reset or overwrite
+      lastUpdated: admin.firestore.Timestamp.now(),
     });
 
     await syncPlanLimits(companyId, newPlanId);
@@ -349,9 +349,9 @@ export const createSubscription = onCall(async (request) => {
         renewalDate: new Date(sub.nextBillingDate),
         lastPaymentDate: new Date(sub.createdAt),
         totalMonthlyCost,
+        addons: addonsMap,
       },
-      addons: addonsMap,
-      updatedAt: new Date(),
+      lastUpdatedAt: new Date(),
     },
     { merge: true }
   );
@@ -535,7 +535,7 @@ export const handleBraintreeWebhook = onCall(async (request) => {
           });
 
           await companyRef.update({
-            addons: { ...addonsFromBraintree }, // synced fresh state
+            "billing.addons": { ...addonsFromBraintree }, // synced fresh state
             "billing.totalMonthlyCost": newTotal,
             "billing.pendingAddonRemoval": admin.firestore.FieldValue.delete(),
             updatedAt: admin.firestore.Timestamp.now(),
@@ -567,7 +567,7 @@ export const handleBraintreeWebhook = onCall(async (request) => {
       : null,
     "billing.lastPaymentDate": admin.firestore.Timestamp.now(),
     "billing.totalMonthlyCost": total,
-    addons: addonsFromBraintree,
+    "billing.addons": addonsFromBraintree,
     updatedAt: admin.firestore.Timestamp.now(),
   };
 
@@ -757,7 +757,7 @@ export const addAddon = onCall(async (request) => {
     addonsMap[addonType] = (addonsMap[addonType] || 0) + quantity;
 
     await companyRef.update({
-      addons: addonsMap,
+      "billing.addons": addonsMap,
       "billing.totalMonthlyCost": admin.firestore.FieldValue.increment(
         parseFloat(result.subscription.addOns?.[0]?.amount ?? "0") *
           (result.subscription.addOns?.[0]?.quantity ?? 1)
@@ -952,7 +952,7 @@ export const syncAddonUsage = onDocumentUpdated(
       const activeUsers = userSnap.size;
       const planUserLimit = after.limits?.userLimit ?? 5;
       const paidAddonQty = Math.max(0, activeUsers - planUserLimit);
-      const currentQty = after.addons?.extraUser ?? 0;
+      const currentQty = after.billing?.addons?.extraUser ?? 0;
 
       // 🧩 If nothing changed, skip
       if (paidAddonQty === currentQty) {
@@ -990,7 +990,7 @@ export const syncAddonUsage = onDocumentUpdated(
 
       // Update Firestore
       await db.collection("companies").doc(companyId).update({
-        "addons.extraUser": paidAddonQty,
+        "billing.addons.extraUser": paidAddonQty,
         updatedAt: admin.firestore.Timestamp.now(),
       });
 
@@ -999,6 +999,87 @@ export const syncAddonUsage = onDocumentUpdated(
       );
     } catch (err: any) {
       console.error("🔥 syncAddonUsage failed for", companyId, err.message);
+    }
+  }
+);
+
+export const syncConnectionAddonUsage = onDocumentUpdated(
+  "companies/{companyId}",
+  async (event) => {
+    const after = event.data?.after?.data();
+    const companyId = event.params.companyId;
+
+    if (!after?.billing?.subscriptionId || !after?.billing?.plan) {
+      console.log(`⏭️ Skipping ${companyId} — no active subscription or plan.`);
+      return;
+    }
+
+    const currentPlan = after.billing.plan;
+
+    // Use the new nested structure
+    const addons = after.billing?.addons || {};
+
+    try {
+      // Count approved connections
+      const connSnap = await db
+        .collection("companyConnections")
+        .where("participants", "array-contains", companyId)
+        .where("status", "==", "approved")
+        .get();
+
+      const activeConnections = connSnap.size;
+      const planConnectionLimit = after.limits?.connectionLimit ?? 1;
+      const paidAddonQty = Math.max(0, activeConnections - planConnectionLimit);
+      const currentQty = addons.extraConnection ?? 0;
+
+      if (paidAddonQty === currentQty) {
+        console.log(`✅ No change in connection add-on for ${companyId}`);
+        return;
+      }
+
+      console.log(
+        `🔄 Syncing connection add-ons for ${companyId}: ${paidAddonQty} extra connections (was ${currentQty})`
+      );
+
+      const addonId = `${currentPlan}PlanExtraConnection`;
+
+      const updatePayload: any =
+        paidAddonQty === 0
+          ? { addOns: { remove: [addonId] } }
+          : {
+              addOns: {
+                update: [{ existingId: addonId, quantity: paidAddonQty }],
+              },
+              prorateCharges: true,
+            };
+
+      const result = await gateway.subscription.update(
+        after.billing.subscriptionId,
+        updatePayload
+      );
+
+      if (!result.success) {
+        console.error(
+          "❌ Braintree update failed for connections:",
+          result.message
+        );
+        throw new Error(result.message || "Connection add-on sync failed");
+      }
+
+      await db.collection("companies").doc(companyId).update({
+        "billing.addons.extraConnection": paidAddonQty,
+        updatedAt: admin.firestore.Timestamp.now(),
+      });
+
+      console.log(
+        `✅ Updated ${addonId} to ${paidAddonQty} for ${companyId} (plan: ${currentPlan})`
+      );
+    } catch (err: any) {
+      console.error(
+        "🔥 syncConnectionAddonUsage failed for",
+        companyId,
+        err.message
+      );
     }
   }
 );

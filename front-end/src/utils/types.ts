@@ -47,7 +47,6 @@ export type NotificationType = {
 export type BusinessType = "distributor" | "supplier";
 export type AccessStatus = "off" | "limited" | "on";
 
-
 export type ProviderKey = "gallo" | "manualGoals"; // extend later
 
 export type IntegrationConfig = {
@@ -65,10 +64,23 @@ export interface CompanyAddons {
   extraConnection: number;
 }
 
-export type PlanType = "free" | "team" | "network" | "enterprise";
+// Existing
+export type PlanName = "free" | "team" | "network" | "enterprise" | "healy_plan";
+
+// 🧩 Full plan definition
+export interface PlanType {
+  name: PlanName;
+  description: string;
+  price: number;
+  connectionLimit: number;
+  userLimit: number;
+  features?: string[];
+}
 
 export interface CompanyBilling {
-  plan: PlanType;
+  plan: PlanName;
+  addons: CompanyAddons;
+
   price: number;
   braintreeCustomerId: string;
   subscriptionId: string;
@@ -80,7 +92,7 @@ export interface CompanyBilling {
 export type CompanyType = {
   id?: string;
   lastUpdated: string | null;
-  updatedAt?: string;  // this is a safe guard where old logic was writing incorrectly. adding it here so i can safely convert to string before storing in redux
+  updatedAt?: string; // this is a safe guard where old logic was writing incorrectly. adding it here so i can safely convert to string before storing in redux
   companyName: string;
   primaryContact?: { name?: string; email?: string; phone?: string };
   altCompanyNames?: string[]; // not necessary
@@ -100,7 +112,6 @@ export type CompanyType = {
   accessStatus?: AccessStatus;
   userLimit: number;
   connectionLimit: number;
-  addons: CompanyAddons;
   billing: CompanyBilling;
 
   // 🔁 replace array with a provider map
@@ -677,4 +688,4 @@ export type DashboardModeType =
   | "GoalManagerMode"
   | "ApiMode"
   | "CollectionsMode"
-  | "TutorialMode"
+  | "TutorialMode";

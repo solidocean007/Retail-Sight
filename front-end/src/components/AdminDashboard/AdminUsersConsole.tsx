@@ -112,10 +112,40 @@ export default function AdminUsersConsole() {
   const activeUsers = localUsers.filter((u) => u.status === "active");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
+  const [invites, setInvites] = useState<InviteRow[]>([]);
 
   const companyId = useSelector(selectUser)?.companyId;
+  useEffect(() => {
+    const fetchUserLimit = async () => {
+      if (!companyId) return;
+      setLimitLoading(true);
+      try {
+        const enforce = httpsCallable(functions, "enforcePlanLimits");
+        const res = await enforce({ companyId, type: "user" });
+        const data = res.data as {
+          usedUsers: number;
+          remainingConnections: number;
+          remaining: number;
+          planLimit: number;
+          used: number;
+        };
 
-  const [invites, setInvites] = useState<InviteRow[]>([]);
+        // pick safest structure from function
+        setUserLimitInfo({
+          used: data.used ?? data.usedUsers ?? 0,
+          remaining: data.remaining ?? data.remainingConnections ?? 0,
+          planLimit: data.planLimit ?? 0,
+        });
+      } catch (err) {
+        console.error("Failed to load user limit info:", err);
+      } finally {
+        setLimitLoading(false);
+      }
+    };
+
+    fetchUserLimit();
+  }, [companyId, invites.length]);
+
   const [loadingInvites, setLoadingInvites] = useState(true);
   const [tab, setTab] = useState(0);
   const [editRow, setEditRow] = useState<UserType | null>(null);
@@ -123,6 +153,12 @@ export default function AdminUsersConsole() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive" | "deleted"
   >("all");
+  const [userLimitInfo, setUserLimitInfo] = useState<{
+    used: number;
+    remaining: number;
+    planLimit: number;
+  } | null>(null);
+  const [limitLoading, setLimitLoading] = useState(false);
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("employee");
@@ -161,71 +197,82 @@ export default function AdminUsersConsole() {
     return () => unsub();
   }, [db, companyId]);
 
- const handleSendInvite = async () => {
-  const normalizedEmail = inviteEmail.trim().toLowerCase();
-  if (!normalizedEmail || !companyId) return;
+  const handleSendInvite = async () => {
+    const normalizedEmail = inviteEmail.trim().toLowerCase();
+    if (!normalizedEmail || !companyId) return;
 
-  // Optional: skip if user already exists in local list
-  const alreadyInList = localUsers?.some(
-    (u) => (u.email || "").toLowerCase() === normalizedEmail
-  );
-  if (alreadyInList) {
-    dispatch(
-      showMessage({ text: "User already in your company.", severity: "info" })
+    // Prevent duplicates in current company list
+    const alreadyInList = localUsers?.some(
+      (u) => (u.email || "").toLowerCase() === normalizedEmail
     );
-    return;
-  }
-
-  try {
-
-    // ✅ Check user existence & company membership in one place
-    const checkUserExists = httpsCallable(functions, "checkUserExists");
-    const response = await checkUserExists({ 
-      email: normalizedEmail, 
-      companyId 
-    });
-
-    const { exists } = response.data as { exists: boolean };
-
-    if (exists) {
-      // If the function didn’t throw, it means the user is either:
-      // – brand new (no company yet), or
-      // – already in THIS company (which is fine, but you might skip sending)
+    if (alreadyInList) {
       dispatch(
-        showMessage({
-          text: "User is already registered or eligible. Sending invite...",
-          severity: "info",
-        })
+        showMessage({ text: "User already in your company.", severity: "info" })
       );
+      return;
     }
 
-    // ✅ Send the invite
-    const createInviteAndEmail = httpsCallable(functions, "createInviteAndEmail");
-    const BASE_URL =
-      (import.meta as any).env?.VITE_APP_PUBLIC_URL || window.location.origin;
+    try {
+      // 🧩 1️⃣ Enforce user limit before sending invite
+      const enforce = httpsCallable(functions, "enforcePlanLimits");
+      await enforce({ companyId, type: "user" });
 
-    await createInviteAndEmail({
-      email: normalizedEmail,
-      role: inviteRole,
-      baseUrl: BASE_URL,
-    });
+      // 🧩 2️⃣ Check if user already exists or belongs elsewhere
+      const checkUserExists = httpsCallable(functions, "checkUserExists");
+      const response = await checkUserExists({
+        email: normalizedEmail,
+        companyId,
+      });
+      const { exists } = response.data as { exists: boolean };
 
-    dispatch(showMessage({ text: "Invite sent!", severity: "success" }));
-    setInviteEmail("");
-    setInviteRole("employee");
-    setInviteRoute("");
-  } catch (err: any) {
-    const code = err?.code || err?.message;
-    const friendly =
-      code === "failed-precondition"
-        ? "This user already belongs to another company."
-        : code === "functions/already-exists"
-        ? "An invite is already pending for this email."
-        : "Error sending invite.";
-    dispatch(showMessage({ text: friendly, severity: "error" }));
-  }
-};
+      if (exists) {
+        dispatch(
+          showMessage({
+            text: "User already registered or eligible. Sending invite...",
+            severity: "info",
+          })
+        );
+      }
 
+      // 🧩 3️⃣ Create invite + send email
+      const createInviteAndEmail = httpsCallable(
+        functions,
+        "createInviteAndEmail"
+      );
+      const BASE_URL =
+        (import.meta as any).env?.VITE_APP_PUBLIC_URL || window.location.origin;
+
+      await createInviteAndEmail({
+        email: normalizedEmail,
+        role: inviteRole,
+        baseUrl: BASE_URL,
+      });
+      dispatch(showMessage({ text: "Invite sent!", severity: "success" }));
+      setInviteEmail("");
+      setInviteRole("employee");
+      setInviteRoute("");
+
+      // Refresh remaining slot counter
+      const res = await enforce({ companyId, type: "user" });
+      const data = res.data as any;
+      setUserLimitInfo({
+        used: data.used ?? data.usedUsers ?? 0,
+        remaining: data.remaining ?? data.remainingConnections ?? 0,
+        planLimit: data.planLimit ?? 0,
+      });
+    } catch (err: any) {
+      const code = err?.code || err?.message;
+      const friendly =
+        code === "resource-exhausted"
+          ? "You’ve reached your user limit. Upgrade your plan to add more users."
+          : code === "failed-precondition"
+          ? "This user already belongs to another company."
+          : code === "already-exists"
+          ? "An invite is already pending for this email."
+          : "Error sending invite.";
+      dispatch(showMessage({ text: friendly, severity: "error" }));
+    }
+  };
 
   const handleRevokeInvite = (invite: InviteRow) => {
     setConfirmation({
@@ -555,6 +602,37 @@ export default function AdminUsersConsole() {
           elevation={0}
           sx={{ p: 1.5, bgcolor: "var(--dashboard-card)", borderRadius: 3 }}
         >
+          {userLimitInfo && (
+            <div
+              style={{
+                marginBottom: "0.75rem",
+                fontSize: "0.9rem",
+                fontWeight: 500,
+                color:
+                  userLimitInfo.remaining <= 0
+                    ? "var(--error-color)"
+                    : userLimitInfo.remaining <= 2
+                    ? "var(--warning-color)"
+                    : "var(--text-secondary)",
+                background:
+                  userLimitInfo.remaining <= 0
+                    ? "var(--error-bg)"
+                    : userLimitInfo.remaining <= 2
+                    ? "var(--warning-bg)"
+                    : "transparent",
+                padding: "0.35rem 0.75rem",
+                borderRadius: "6px",
+                display: "inline-block",
+              }}
+            >
+              {limitLoading
+                ? "Checking available slots..."
+                : userLimitInfo.remaining > 0
+                ? `${userLimitInfo.used}/${userLimitInfo.planLimit} users used (${userLimitInfo.remaining} remaining)`
+                : `User limit reached (${userLimitInfo.planLimit} plan limit)`}
+            </div>
+          )}
+
           <Stack direction="row" spacing={1} sx={{ mb: 1 }} alignItems="center">
             <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel id="status-filter">Filter status</InputLabel>

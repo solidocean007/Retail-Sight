@@ -33,7 +33,7 @@ _Add-ons are capped at the Team Plan price ($25/month)._
 
 - 👥 Up to **10 users**  
   - Additional users: **$3 per month each**  
-- 🤝 Up to **3 active company connections**  
+- 🤝 Up to **5 active company connections**  
   - Additional connections: **$5 per month each**  
 - 🧩 Optional goal importing for supported suppliers (e.g., Gallo Axis)
 
