@@ -10,78 +10,25 @@ import { ThemeProvider, CssBaseline, Alert } from "@mui/material";
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 import { AppRoutes } from "./utils/Routes";
 import { getTheme } from "./theme";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { setDarkMode } from "./Slices/themeSlice"; // ✅ New, clean import
-import { setupCompanyGoalsListener } from "./utils/listeners/setupCompanyGoalsListener";
-import { setupGalloGoalsListener } from "./utils/listeners/setupGalloGoalsListener";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { loadCompany } from "./thunks/companyConnectionThunk";
-import { fetchCompanyProducts } from "./thunks/productThunks";
-import { setAllProducts } from "./Slices/productsSlice";
-import { getAllCompanyProductsFromIndexedDB } from "./utils/database/indexedDBUtils";
-import useSchemaVersion from "./hooks/useSchemaVersion";
-import useCompanyUsersSync from "./hooks/useCompanyUsersSync";
-import useAllCompanyAccountsSync from "./hooks/useAllCompanyAccountsSync";
-import { fetchCurrentCompany } from "./Slices/currentCompanySlice";
-import { setupNotificationListenersForUser } from "./utils/listeners/setupNotificationListenersForUser";
-import { setupNotificationListenersForCompany } from "./utils/listeners/setupNotificationListenerForCompany";
 import UserModal from "./components/UserModal";
-import { useIntegrations } from "./hooks/useIntegrations";
-import useUserAccountsSync from "./hooks/useUserAccountsSync";
-import { useCustomAccountsSync } from "./hooks/useCustomAccountsSync";
-// import { backfillMissingCompanyIdForHealy } from "./script";
-// import { auditPostsMissingCompanyId } from "./script";
-import { useCompanyConnectionsListener } from "./hooks/useCompanyConnectionsListener";
-import { hydrateFromCache } from "./Slices/planSlice";
+import { useAppBootstrap } from "./hooks/useApppBootstrap";
+import AppLoadingScreen from "./components/AppLoadingScreen";
 // import { migrateCompanyNameUsers } from "./script";
 
 function App(): React.JSX.Element {
-  const user = useSelector((state: RootState) => state.user.currentUser);
-
-  useSchemaVersion();
-  useCompanyUsersSync();
-  useUserAccountsSync();
-  useAllCompanyAccountsSync(
-    user?.role === "admin" ||
-      user?.role === "super-admin" ||
-      user?.role == "supervisor"
-  );
-  useCustomAccountsSync(); // ✅ Sync custom manual accounts
-  useCompanyConnectionsListener();
-
   const dispatch = useAppDispatch();
-  useEffect(() => {
-    dispatch(hydrateFromCache());
-  }, [dispatch]);
+  const { currentUser, initializing } = useFirebaseAuth();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const snackbar = useSelector((state: RootState) => state.snackbar);
-  const companyId = user?.companyId;
-  // const salesRouteNum = user?.salesRouteNum;
-  const { currentUser, initializing } = useFirebaseAuth();
+  const appReady = useSelector((s: RootState) => s.app.appReady);
   const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
-
-  useEffect(() => {
-    // auditPostsMissingCompanyId();
-    // backfillMissingCompanyIdForHealy();
-  }, []);
-
-  useEffect(() => {
-    if (!companyId) return;
-    (async () => {
-      try {
-        const cached = await getAllCompanyProductsFromIndexedDB();
-        if (cached.length) dispatch(setAllProducts(cached));
-        dispatch(fetchCompanyProducts(companyId));
-        dispatch(fetchCurrentCompany(user.companyId)); // this is a new line
-      } catch (err) {
-        console.error("Product load failed", err);
-      }
-    })();
-  }, [dispatch, companyId]);
+  // Single atomic bootstrap
+  useAppBootstrap();
 
   // 🌓 Set theme on first load based on localStorage
   useEffect(() => {
@@ -91,41 +38,9 @@ function App(): React.JSX.Element {
     }
   }, [dispatch]);
 
-  useEffect(() => {
-    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
-
-  useEffect(() => {
-    if (companyId) {
-      dispatch(loadCompany(user.companyId));
-    }
-  }, [user?.companyId, dispatch]);
-
-  // 📡 Realtime listeners for goals and notifications
-  useEffect(() => {
-    // return
-    if (!companyId || !currentUser?.companyId) return;
-    const unsubs: Array<() => void> = [];
-
-    // always-on listeners
-    unsubs.push(dispatch(setupNotificationListenersForUser(currentUser)));
-    unsubs.push(dispatch(setupNotificationListenersForCompany(currentUser)));
-    unsubs.push(dispatch(setupCompanyGoalsListener(companyId)));
-
-    // only when this company has the gallo integration enabled
-    if (galloEnabled) {
-      unsubs.push(dispatch(setupGalloGoalsListener(companyId)));
-    }
-
-    return () => {
-      for (const u of unsubs)
-        try {
-          u && u();
-        } catch {}
-    };
-  }, [dispatch, currentUser]);
-
-  if (initializing) return <></>;
+  if (initializing || !appReady) {
+    return <AppLoadingScreen />; // ✅ user sees clean loading state
+  }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -140,9 +55,9 @@ function App(): React.JSX.Element {
             open={snackbar.open}
             onClose={() => {
               dispatch(hideMessage());
-              setTimeout(() => dispatch(nextMessage()), 300);
+              setTimeout(() => dispatch(nextMessage()), 500);
             }}
-            autoHideDuration={snackbar.current.duration ?? 4000}
+            autoHideDuration={snackbar.current.duration ?? 5000}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert

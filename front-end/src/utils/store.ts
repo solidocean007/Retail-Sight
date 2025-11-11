@@ -23,6 +23,7 @@ import currentCompanySlice from "../Slices/currentCompanySlice";
 import customAccountsSlice from "../Slices/customAccountsSlice";
 import sharedPostsSlice from "../Slices/sharedPostsSlice";
 import planSlice from "../Slices/planSlice";
+import appSlice from "../Slices/appSlice";
 
 const store = configureStore({
   reducer: {
@@ -45,7 +46,8 @@ const store = configureStore({
     notifications: notificationsSlice, // 🆕 Notifications slice
     customAccounts: customAccountsSlice,
     sharedPosts: sharedPostsSlice,
-    planSlice: planSlice
+    planSlice: planSlice,
+    app: appSlice,
   },
   devTools: process.env.NODE_ENV !== "production",
 });

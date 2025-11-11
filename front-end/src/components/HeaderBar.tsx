@@ -10,9 +10,14 @@ import { Badge, IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { resetApp } from "../utils/resetApp";
 import { useAppConfigSync } from "../hooks/useAppConfigSync";
-import { selectAllNotifications, selectUnreadNotifications } from "../Slices/notificationsSlice";
+import {
+  selectAllNotifications,
+  selectUnreadNotifications,
+} from "../Slices/notificationsSlice";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
+import { setResetting, setVersions } from "../Slices/appSlice";
+import CustomConfirmation from "./CustomConfirmation";
 
 const HeaderBar = ({
   toggleFilterMenu,
@@ -21,23 +26,24 @@ const HeaderBar = ({
   toggleFilterMenu: () => void;
   openPostViewer?: (postId: string) => void;
 }) => {
+  const dispatch = useAppDispatch();
+  const { localVersion, serverVersion, resetting } = useSelector(
+    (s: RootState) => s.app
+  );
+  const upToDate = !!serverVersion && localVersion === serverVersion;
+
   const mobile = useMediaQuery("(max-width: 900px)");
   const notifications = useSelector(selectAllNotifications);
-  const { localVersion, serverVersion } = useAppConfigSync();
-  const upToDate = localVersion === serverVersion;
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
-  const dispatch = useAppDispatch();
   const { currentUser } = useSelector((state: RootState) => state.user);
   const [showMenuTab, setShowMenuTab] = useState(false);
   const unreadNotifications = useSelector(selectUnreadNotifications);
   const unreadCount = unreadNotifications.length;
-
-  // const [localVersion, setLocalVersion] = useState<string | null>("Loading...");
-  // const [serverVersion, setServerVersion] = useState<string | null>(null);
   const navigate = useNavigate();
   const protectedAction = useProtectedAction();
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useOutsideAlerter(menuRef, () => setShowMenuTab(false));
 
@@ -79,13 +85,21 @@ const HeaderBar = ({
     }
   };
 
-  const handleReset = async () => {
-    if (
-      window.confirm(
-        "Are you sure you want to reset the app? This will clear all stored data."
-      )
-    ) {
+  const handleReset = () => {
+    setShowConfirm(true);
+  };
+
+  const confirmReset = async () => {
+    setResetting(true);
+    try {
       await resetApp(dispatch);
+      dispatch(showMessage("App reset complete. Reloading data..."));
+    } catch (err) {
+      console.error("Reset failed", err);
+      dispatch(showMessage("Reset failed. Try again."));
+    } finally {
+      setResetting(false);
+      setShowConfirm(false);
     }
   };
 
@@ -112,13 +126,13 @@ const HeaderBar = ({
           </div>
           <div className="company-name-app-state">
             <h5>{currentUser?.company}</h5>
-            {localVersion !== serverVersion ? (
+            {!upToDate ? (
               <button
                 className="btn-outline danger-button"
                 onClick={handleReset}
-                disabled={upToDate}
+                disabled={resetting}
               >
-                Reset App
+                {resetting ? "Resetting..." : "Reset App"}
               </button>
             ) : (
               <span className="up-to-date-message">✅ App is up to date</span>
@@ -132,13 +146,19 @@ const HeaderBar = ({
           <div className="header-details">
             <div className="header-buttons">
               <div className="menu-buttons">
-                <button className="btn-secondary"
+                <button
+                  className="btn-secondary"
                   onClick={handleDashboardClick}
-                // >{`${currentUser.role} Dashboard`}</button>
+                  // >{`${currentUser.role} Dashboard`}</button>
                 >{`Dashboard`}</button>
               </div>
               <div className="capture-display-btn">
-                <button className="button-primary" onClick={handleCreatePostClick}>Create</button>
+                <button
+                  className="button-primary"
+                  onClick={handleCreatePostClick}
+                >
+                  Create
+                </button>
               </div>
             </div>
             <div
@@ -172,6 +192,17 @@ const HeaderBar = ({
           </div>
         )}
       </div>
+      {/* ✅ Confirmation Modal */}
+      {showConfirm && (
+        <CustomConfirmation
+          isOpen={showConfirm}
+          title="Confirm App Reset"
+          message="This will clear cached data and reload everything. Continue?"
+          onConfirm={confirmReset}
+          onClose={() => setShowConfirm(false)}
+          loading={resetting}
+        />
+      )}
     </>
   );
 };
