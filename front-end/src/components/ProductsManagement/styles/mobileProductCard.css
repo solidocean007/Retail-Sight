@@ -12,7 +12,7 @@
   border: 1px solid var(--card-outline);
   border-radius: 8px;
   width: 100%;
-  background-color: var(--white);
+  /* background-color: var(--white); */
 }
 
 
@@ -20,13 +20,13 @@
   font-weight: 600;
   text-align: left;
   padding: 6px;
-  background-color: var(--gray-100);
+  /* background-color: var(--gray-100); */
   border-radius: 4px 0 0 4px;
 }
 
 .mobile-product-value {
   padding: 6px;
-  background-color: var(--gray-50);
+  /* background-color: var(--gray-50); */
   border-radius: 0 4px 4px 0;
   font-weight: 400;
   color: var(--text-color);

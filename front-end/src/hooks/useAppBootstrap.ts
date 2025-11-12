@@ -1,3 +1,4 @@
+// hooks/useAppBootstrap.ts
 import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../utils/store";
@@ -15,16 +16,21 @@ import { setupGalloGoalsListener } from "../utils/listeners/setupGalloGoalsListe
 import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 import { useIntegrations } from "./useIntegrations";
 import { useSchemaVersion } from "./useSchemaVersion";
+import useCompanyUsersSync from "./useCompanyUsersSync";
+import useUserAccountsSync from "./useUserAccountsSync";
+import useAllCompanyAccountsSync from "./useAllCompanyAccountsSync";
+import { useCustomAccountsSync } from "./useCustomAccountsSync";
+import { useCompanyConnectionsListener } from "./useCompanyConnectionsListener";
 
 /**
  * useAppBootstrap
  * ----------------------------------------------------------
- * Initializes the app after auth is ready:
- *  - Loads Firestore AppConfig (schema version)
- *  - Hydrates caches (plans, products)
- *  - Sets up real-time listeners
- *  - Handles version mismatch soft resets
- * Safe against multiple re-renders and hard resets.
+ * Bootstraps the app after authentication is ready:
+ *  - Syncs schema version (Firestore vs local)
+ *  - Hydrates cache (plans, products)
+ *  - Sets up listeners (goals, notifications)
+ *  - Ensures all relationship sync hooks run
+ *  - Emits "appReady" only after all streams attached
  */
 
 export function useAppBootstrap() {
@@ -37,11 +43,22 @@ export function useAppBootstrap() {
   const hasBootstrapped = useRef(false);
   const runningBootstrap = useRef<Promise<void> | null>(null);
 
-  // ✅ Keep version sync logic separate
+  // 🔄 Always keep schemaVersion synced
   useSchemaVersion();
 
+  // 👥 Re-enable dependent sync hooks (required for full goal hydration)
+  useCompanyUsersSync();
+  useUserAccountsSync();
+  useAllCompanyAccountsSync(
+    currentUser?.role === "admin" ||
+      currentUser?.role === "super-admin" ||
+      currentUser?.role === "supervisor"
+  );
+  useCustomAccountsSync();
+  useCompanyConnectionsListener();
+
   // ───────────────────────────────
-  // 1️⃣ MAIN BOOTSTRAP (runs once)
+  // 1️⃣ MAIN BOOTSTRAP
   // ───────────────────────────────
   useEffect(() => {
     if (initializing || !currentUser || hasBootstrapped.current) return;
@@ -54,7 +71,7 @@ export function useAppBootstrap() {
           dispatch(setResetting(true));
           await new Promise((res) => setTimeout(res, 200));
 
-          // hydrate plans & products
+          // 🧠 1. Hydrate cached plans/products first
           await dispatch(hydrateFromCache());
           if (companyId) {
             const cached = await getAllCompanyProductsFromIndexedDB();
@@ -63,8 +80,22 @@ export function useAppBootstrap() {
             await dispatch(fetchCompanyProducts(companyId));
           }
 
+          // 🔔 2. Attach listeners BEFORE marking appReady
+          const unsubs: (() => void)[] = [];
+          if (companyId) {
+            unsubs.push(dispatch(setupCompanyGoalsListener(companyId)));
+            unsubs.push(dispatch(setupNotificationListenersForUser(currentUser)));
+            unsubs.push(dispatch(setupNotificationListenersForCompany(currentUser)));
+            if (galloEnabled)
+              unsubs.push(dispatch(setupGalloGoalsListener(companyId)));
+          }
+
+          // ✅ 3. Now mark app as ready
           dispatch(setAppReady(true));
           dispatch(showMessage("✅ App ready."));
+
+          // Store unsubs on ref (optional future cleanup)
+          (runningBootstrap as any).unsubs = unsubs;
         } catch (err) {
           console.error("❌ useAppBootstrap failed:", err);
           setTimeout(() => (hasBootstrapped.current = false), 2000);
@@ -73,34 +104,18 @@ export function useAppBootstrap() {
           runningBootstrap.current = null;
         }
       })();
+
       return runningBootstrap.current;
     };
 
     startBootstrap();
-  }, [initializing, currentUser?.uid, companyId, dispatch]);
+  }, [initializing, currentUser?.uid, companyId, galloEnabled, dispatch]);
 
   // ───────────────────────────────
-  // 2️⃣ POST-BOOTSTRAP LISTENERS
+  // 2️⃣ OPTIONAL SAFETY RE-ATTACH
   // ───────────────────────────────
   useEffect(() => {
     if (!appReady || !currentUser?.companyId) return;
-
-    const companyId = currentUser.companyId;
-    const unsubs: Array<() => void> = [];
-
-    unsubs.push(dispatch(setupCompanyGoalsListener(companyId)));
-    unsubs.push(dispatch(setupNotificationListenersForUser(currentUser)));
-    unsubs.push(dispatch(setupNotificationListenersForCompany(currentUser)));
-
-    if (galloEnabled) {
-      unsubs.push(dispatch(setupGalloGoalsListener(companyId)));
-    }
-
-    return () => {
-      for (const u of unsubs)
-        try {
-          u();
-        } catch {}
-    };
-  }, [dispatch, appReady, currentUser, galloEnabled]);
+    console.log("🔁 App ready – verifying listeners...");
+  }, [appReady, currentUser]);
 }

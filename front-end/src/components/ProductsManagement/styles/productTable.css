@@ -18,11 +18,11 @@
   align-items: center;
   padding: 0.5rem 0.25rem;
   border-bottom: 1px solid #ddd;
-  background-color: #f8f9fa;
+  /* background-color: #f8f9fa; */
 }
 
 .product-row {
-  background-color: white;
+  /* background-color: white; */
 }
 
 .product-cell {
