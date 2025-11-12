@@ -14,6 +14,15 @@ import { clearPostsData } from "../Slices/postsSlice";
 import { showMessage } from "../Slices/snackbarSlice";
 import { openDB } from "./database/indexedDBOpen";
 
+let reloadTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function safeReload(delay = 500) {
+  if (reloadTimer) return; // ✅ prevent double reloads
+  reloadTimer = setTimeout(() => {
+    window.location.reload();
+  }, delay);
+}
+
 // utils/resetApp.ts
 export async function resetApp(dispatch: AppDispatch) {
   try {
@@ -56,11 +65,10 @@ export async function resetApp(dispatch: AppDispatch) {
 
     console.log("🔄 Triggering local rebootstrap...");
     dispatch(showMessage("App reset complete — syncing fresh data..."));
-    // optionally dispatch a re-fetch thunk or toggle a `reloadFlag` in Redux
+    safeReload();
 
   } catch (error) {
     console.error("❌ App reset failed:", error);
     dispatch(showMessage("❌ Failed to reset app. Check console for details."));
   }
 }
-

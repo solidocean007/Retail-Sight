@@ -1,142 +1,100 @@
+// hooks/useSchemaVersion.ts
 import { useEffect } from "react";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { db } from "../utils/firebase";
 import { openDB } from "../utils/database/indexedDBOpen";
-import { clearPostsData, mergeAndSetPosts, setPosts } from "../Slices/postsSlice";
-import { fetchInitialPostsBatch } from "../thunks/postsThunks";
-import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
-import store from "../utils/store";
-import { useSelector } from "react-redux";
-import { selectUser } from "../Slices/userSlice";
-import { normalizePost } from "../utils/normalize";
+import { useAppDispatch } from "../utils/store";
+import { setVersions } from "../Slices/appSlice";
+import { showMessage } from "../Slices/snackbarSlice";
+import { resetApp, safeReload } from "../utils/resetApp";
 
-// 🔧 Can be bumped manually when needed
-const POSTS_BATCH_SIZE = 50;
-const useSchemaVersion = () => {
-  const user = useSelector(selectUser); // will this be ready so soon always when its called in App.tsx?
+/**
+ * useSchemaVersion
+ * Handles:
+ *  - Reading remote schemaVersion from Firestore
+ *  - Syncing local version in localStorage + IndexedDB
+ *  - Triggering reset on mismatch
+ *  - Watching for realtime changes
+ */
+export const useSchemaVersion = () => {
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!user?.companyId) return;
-    const getLocalSchemaVersion = async (): Promise<string | null> => {
-      const db = await openDB();
-      const transaction = db.transaction("localSchemaVersion", "readonly");
-      const store = transaction.objectStore("localSchemaVersion");
-      const request = store.get("schemaVersion");
+    const configRef = doc(db, "appConfig", "HlAAI92RInjZymlMiwqu");
 
-      return new Promise((resolve, reject) => {
-        request.onsuccess = () => {
-          resolve(request.result?.version ?? null);
-        };
-        request.onerror = () => {
-          reject(request.error);
-        };
-      });
-    };
-
-    const migrateLocalData = async () => {
-      const db = await openDB();
-      const objectStoreNames = db.objectStoreNames;
-      const clearPromises = [];
-
-      for (const name of objectStoreNames) {
-        const transaction = db.transaction(name, "readwrite");
-        const store = transaction.objectStore(name);
-        clearPromises.push(store.clear());
-        console.log(`🧹 Cleared IndexedDB store: ${name}`);
-      }
-
-      store.dispatch(clearPostsData());
-      console.log("🧼 Cleared Redux posts data");
-
-      await Promise.all(clearPromises);
-    };
-
-    const setLocalSchemaVersion = async (version: string) => {
+    const syncVersion = async () => {
       try {
-        const db = await openDB();
-        const tx = db.transaction("localSchemaVersion", "readwrite");
-        const store = tx.objectStore("localSchemaVersion");
-        await store.put({ id: "schemaVersion", version });
-        console.log("✅ Updated local schema version to:", version);
-      } catch (err) {
-        console.error("❌ Failed to update local schema version:", err);
-      }
-    };
+        // 1️⃣ Fetch server schema version
+        const snap = await getDoc(configRef);
+        const serverVersion = snap.exists()
+          ? (snap.data().schemaVersion as string)
+          : null;
 
-    const checkAndMigrateData = async () => {
-      const firestore = getFirestore();
-      const appConfigRef = collection(firestore, "appConfig");
+        if (!serverVersion) return;
 
-      try {
-        // console.log("🚀 Starting schema version check...");
-        const appConfigSnapshot = await getDocs(appConfigRef);
-        let remoteVersion: string | null = null;
+        // 2️⃣ Read local version
+        let localVersion = localStorage.getItem("app_version");
 
-        appConfigSnapshot.forEach((doc) => {
-          if (doc.exists()) {
-            remoteVersion = doc.data().schemaVersion;
-            // console.log(
-            //   "🌐 Remote schemaVersion from Firestore:",
-            //   remoteVersion,
-            // );
+        // 3️⃣ Initialize local if missing
+        if (!localVersion) {
+          localVersion = serverVersion;
+          localStorage.setItem("app_version", serverVersion);
+
+          const dbConn = await openDB();
+          const tx = dbConn.transaction("localSchemaVersion", "readwrite");
+          tx.objectStore("localSchemaVersion").put({
+            id: "schemaVersion",
+            version: serverVersion,
+          });
+        }
+
+        dispatch(setVersions({ localVersion, serverVersion }));
+
+        // 4️⃣ If mismatch, reset
+        if (serverVersion !== localVersion) {
+          console.log("🔄 Schema mismatch detected — resetting app.");
+          await resetApp(dispatch);
+          localStorage.setItem("app_version", serverVersion);
+          const dbConn = await openDB();
+          const tx = dbConn.transaction("localSchemaVersion", "readwrite");
+          tx.objectStore("localSchemaVersion").put({
+            id: "schemaVersion",
+            version: serverVersion,
+          });
+        }
+
+        // 5️⃣ Watch for live changes
+        return onSnapshot(configRef, (s) => {
+          const next = s.exists() ? (s.data().schemaVersion as string) : null;
+          const prev = localStorage.getItem("app_version");
+
+          if (next && next !== prev) {
+            dispatch(
+              showMessage("New app version detected. Auto refreshing soon...")
+            );
+            dispatch(setVersions({ localVersion: prev, serverVersion: next }));
+
+            // Schedule an auto refresh fallback
+            if (!window.__autoReloadTimer) {
+              window.__autoReloadTimer = setTimeout(async () => {
+                console.log("🔁 Auto-refreshing app after delay...");
+                await resetApp(dispatch);
+                safeReload();
+              }, 60000);
+            }
           }
         });
-
-        const localVersion = await getLocalSchemaVersion();
-        // console.log("💾 Local schemaVersion in IndexedDB:", localVersion);
-
-        if (!remoteVersion) {
-          console.warn("⚠️ Remote schemaVersion is undefined or null.");
-          return;
-        }
-
-        if (!localVersion || localVersion !== remoteVersion) {
-          console.warn(
-            "🛠️ Version mismatch or missing. Performing migration...",
-          );
-          await migrateLocalData();
-
-          try {
-            console.log("📦 Fetching fresh posts after schema reset...");
-            const companyId = user?.companyId;
-
-            if (!companyId) {
-              console.warn("⚠️ No companyId found — cannot re-fetch posts.");
-            } else {
-              const action = await store.dispatch(
-                fetchInitialPostsBatch({
-                  POSTS_BATCH_SIZE,
-                  currentUser: user,
-                }),
-              );
-
-              if (fetchInitialPostsBatch.fulfilled.match(action)) {
-                const { posts } = action.payload;
-                console.log(`✅ Fetched ${posts.length} posts`);
-                const normalizedPosts = posts.map(normalizePost);
-                store.dispatch(mergeAndSetPosts(normalizedPosts));
-
-                await addPostsToIndexedDB(posts);
-                console.log("💾 Posts saved to Redux and IndexedDB");
-              } else {
-                console.error("❌ Failed to fetch posts after migration.");
-              }
-            }
-          } catch (fetchError) {
-            console.error("❌ Unexpected error during post fetch:", fetchError);
-          }
-
-          // ✅ Set version regardless of fetch result
-          await setLocalSchemaVersion(remoteVersion);
-        } else {
-          // console.log("✅ Schema version is up-to-date. No migration needed.");
-        }
-      } catch (error) {
-        console.error("❌ Error during schema check/migration:", error);
+      } catch (err) {
+        console.error("❌ Failed schemaVersion sync:", err);
       }
     };
 
-    checkAndMigrateData();
-  }, []);
-};
+    const unsubPromise = syncVersion();
 
-export default useSchemaVersion;
+    return () => {
+      unsubPromise.then((unsub) => {
+        if (typeof unsub === "function") unsub();
+      });
+    };
+  }, [dispatch]);
+};

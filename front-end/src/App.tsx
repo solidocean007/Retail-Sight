@@ -40,42 +40,41 @@ function App(): React.JSX.Element {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  // ---- 3. Gate UI until both auth + bootstrap are ready ----
-  // if (initializing || !appReady) {
-  //   return <AppLoadingScreen />; // ✅ clean loading state
-  // }
-
   // ---- 4. Main App Render ----
-  return (
+ return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <ThemeToggle />
-        <Router>
-          <AppRoutes />
-        </Router>
-
-        {snackbar.current && (
-          <Snackbar
-            open={snackbar.open}
-            onClose={() => {
-              dispatch(hideMessage());
-              setTimeout(() => dispatch(nextMessage()), 300);
-            }}
-            autoHideDuration={snackbar.current.duration ?? 4000}
-            anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          >
-            <Alert
-              severity={snackbar.current.severity || "info"}
-              sx={{ width: "100%" }}
-              onClose={() => dispatch(hideMessage())}
-            >
-              {snackbar.current.text}
-            </Alert>
-          </Snackbar>
+        {initializing || !appReady ? (
+          <AppLoadingScreen />
+        ) : (
+          <>
+            <Router>
+              <AppRoutes />
+            </Router>
+            {snackbar.current && (
+              <Snackbar
+                open={snackbar.open}
+                onClose={() => {
+                  dispatch(hideMessage());
+                  setTimeout(() => dispatch(nextMessage()), 500);
+                }}
+                autoHideDuration={snackbar.current.duration ?? 5000}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+              >
+                <Alert
+                  severity={snackbar.current.severity || "info"}
+                  sx={{ width: "100%" }}
+                  onClose={() => dispatch(hideMessage())}
+                >
+                  {snackbar.current.text}
+                </Alert>
+              </Snackbar>
+            )}
+            {!initializing && currentUser && <UserModal />}
+          </>
         )}
-
-        {!initializing && currentUser && <UserModal />}
       </ThemeProvider>
     </LocalizationProvider>
   );
