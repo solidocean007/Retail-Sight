@@ -346,7 +346,6 @@
 .info-text {
   font-size: 0.95rem;
   line-height: 1.5;
-  color: var(--text-secondary);
 }
 
 .info-text strong {

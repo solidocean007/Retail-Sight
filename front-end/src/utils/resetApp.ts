@@ -14,11 +14,11 @@ import { clearPostsData } from "../Slices/postsSlice";
 import { showMessage } from "../Slices/snackbarSlice";
 import { openDB } from "./database/indexedDBOpen";
 
+// utils/resetApp.ts
 export async function resetApp(dispatch: AppDispatch) {
   try {
     console.log("🧹 Starting app reset...");
 
-    // Clear IndexedDB stores
     await Promise.all([
       clearPostsInIndexedDB(),
       clearUserCreatedPostsInIndexedDB(),
@@ -35,27 +35,32 @@ export async function resetApp(dispatch: AppDispatch) {
       clearIndexedDBStore("locations"),
       clearIndexedDBStore("collections"),
       clearIndexedDBStore("lastSeenTimestamp"),
-      setLastSeenTimestamp("1970-01-01T00:00:00.000Z"), // 🔥 Reset listener baseline
+      setLastSeenTimestamp("1970-01-01T00:00:00.000Z"),
     ]);
 
     console.log("✅ IndexedDB cleared.");
-
-    // Clear Redux
     dispatch(clearPostsData());
-    dispatch(showMessage("✅ App data cleared. Reloading..."));
+    dispatch(showMessage("✅ App data cleared. Reinitializing..."));
 
-    // Clear schemaVersion
+    // 🔥 Instead of reloading the page:
+    // just clear schemaVersion flags to trigger a re-sync from Firestore
     const db = await openDB();
     const tx = db.transaction("localSchemaVersion", "readwrite");
     const store = tx.objectStore("localSchemaVersion");
-    store.delete("schemaVersion");
-
+    await store.delete("schemaVersion");
     sessionStorage.removeItem("schemaVersionSynced");
 
-    // console.log("🔄 Reloading page...");
-    window.location.reload();
+    // Trigger re-bootstrap manually if you’re using the new hook
+    localStorage.removeItem("app_version");
+    localStorage.removeItem("last_reset_version");
+
+    console.log("🔄 Triggering local rebootstrap...");
+    dispatch(showMessage("App reset complete — syncing fresh data..."));
+    // optionally dispatch a re-fetch thunk or toggle a `reloadFlag` in Redux
+
   } catch (error) {
     console.error("❌ App reset failed:", error);
     dispatch(showMessage("❌ Failed to reset app. Check console for details."));
   }
 }
+

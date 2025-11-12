@@ -1,47 +1,51 @@
 // App.tsx
-import Snackbar from "@mui/material/Snackbar";
-import { useSelector } from "react-redux";
-import { hideMessage, nextMessage } from "./Slices/snackbarSlice";
-import "./App.css";
+import React, { useEffect, useMemo } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
-import { RootState, useAppDispatch } from "./utils/store";
-import { ThemeToggle } from "./components/ThemeToggle";
-import { ThemeProvider, CssBaseline, Alert } from "@mui/material";
-import { useFirebaseAuth } from "./utils/useFirebaseAuth";
-import { AppRoutes } from "./utils/Routes";
-import { getTheme } from "./theme";
-import React, { useEffect } from "react";
-import { setDarkMode } from "./Slices/themeSlice"; // ✅ New, clean import
+import { useSelector } from "react-redux";
+import Snackbar from "@mui/material/Snackbar";
+import { Alert, CssBaseline, ThemeProvider } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import UserModal from "./components/UserModal";
-import { useAppBootstrap } from "./hooks/useApppBootstrap";
+
+import "./App.css";
+import { RootState, useAppDispatch } from "./utils/store";
+import { hideMessage, nextMessage } from "./Slices/snackbarSlice";
+import { setDarkMode } from "./Slices/themeSlice";
+import { getTheme } from "./theme";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { useFirebaseAuth } from "./utils/useFirebaseAuth";
 import AppLoadingScreen from "./components/AppLoadingScreen";
-// import { migrateCompanyNameUsers } from "./script";
+import { AppRoutes } from "./utils/Routes";
+import UserModal from "./components/UserModal";
+import { useAppBootstrap } from "./hooks/useAppBootstrap";
 
 function App(): React.JSX.Element {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
-  const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
-  const snackbar = useSelector((state: RootState) => state.snackbar);
+  const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
+  const snackbar = useSelector((s: RootState) => s.snackbar);
   const appReady = useSelector((s: RootState) => s.app.appReady);
-  const theme = React.useMemo(() => getTheme(isDarkMode), [isDarkMode]);
+  const theme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  // Single atomic bootstrap
+  // ---- 1. Run single atomic bootstrap ----
   useAppBootstrap();
 
-  // 🌓 Set theme on first load based on localStorage
+  // ---- 2. Apply theme on first mount ----
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
-    if (storedTheme) {
-      dispatch(setDarkMode(storedTheme === "dark"));
-    }
+    if (storedTheme) dispatch(setDarkMode(storedTheme === "dark"));
   }, [dispatch]);
 
-  if (initializing || !appReady) {
-    return <AppLoadingScreen />; // ✅ user sees clean loading state
-  }
+  useEffect(() => {
+    document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
 
+  // ---- 3. Gate UI until both auth + bootstrap are ready ----
+  // if (initializing || !appReady) {
+  //   return <AppLoadingScreen />; // ✅ clean loading state
+  // }
+
+  // ---- 4. Main App Render ----
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <ThemeProvider theme={theme}>
@@ -50,14 +54,15 @@ function App(): React.JSX.Element {
         <Router>
           <AppRoutes />
         </Router>
+
         {snackbar.current && (
           <Snackbar
             open={snackbar.open}
             onClose={() => {
               dispatch(hideMessage());
-              setTimeout(() => dispatch(nextMessage()), 500);
+              setTimeout(() => dispatch(nextMessage()), 300);
             }}
-            autoHideDuration={snackbar.current.duration ?? 5000}
+            autoHideDuration={snackbar.current.duration ?? 4000}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert

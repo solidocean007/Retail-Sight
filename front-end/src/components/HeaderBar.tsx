@@ -3,7 +3,7 @@ import { RootState, useAppDispatch } from "../utils/store";
 import { useNavigate } from "react-router-dom";
 import useProtectedAction from "../utils/useProtectedAction";
 import "./headerBar.css";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { showMessage } from "../Slices/snackbarSlice";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { Badge, IconButton, Tooltip, useMediaQuery } from "@mui/material";
@@ -16,22 +16,31 @@ import {
 } from "../Slices/notificationsSlice";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
-import { setResetting, setVersions } from "../Slices/appSlice";
-import CustomConfirmation from "./CustomConfirmation";
 
-const HeaderBar = ({
-  toggleFilterMenu,
-  openPostViewer,
-}: {
+type HeaderBarProps = {
   toggleFilterMenu: () => void;
   openPostViewer?: (postId: string) => void;
+  onRequestReset?: () => void; // ✅ new
+};
+
+const HeaderBar: React.FC<HeaderBarProps> = ({
+  toggleFilterMenu,
+  openPostViewer,
+  onRequestReset,
 }) => {
   const dispatch = useAppDispatch();
   const { localVersion, serverVersion, resetting } = useSelector(
     (s: RootState) => s.app
   );
   const upToDate = !!serverVersion && localVersion === serverVersion;
-
+  console.log(
+    "upToDate: ",
+    upToDate,
+    "serverVersion: ",
+    serverVersion,
+    "localVersion: ",
+    localVersion
+  );
   const mobile = useMediaQuery("(max-width: 900px)");
   const notifications = useSelector(selectAllNotifications);
   const [showNotificationDropdown, setShowNotificationDropdown] =
@@ -43,7 +52,6 @@ const HeaderBar = ({
   const navigate = useNavigate();
   const protectedAction = useProtectedAction();
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   useOutsideAlerter(menuRef, () => setShowMenuTab(false));
 
@@ -73,6 +81,10 @@ const HeaderBar = ({
     }
   };
 
+  useEffect(() => {
+    console.count("HeaderBar render count");
+  }, []);
+
   const handleMenuOptionSelect = (option: string) => {
     if (option === "filters") {
       toggleFilterMenu();
@@ -82,24 +94,6 @@ const HeaderBar = ({
       else if (option === "tutorial") handleTutorialClick();
       else if (option === "dashboard") handleDashboardClick();
       setShowMenuTab(false);
-    }
-  };
-
-  const handleReset = () => {
-    setShowConfirm(true);
-  };
-
-  const confirmReset = async () => {
-    setResetting(true);
-    try {
-      await resetApp(dispatch);
-      dispatch(showMessage("App reset complete. Reloading data..."));
-    } catch (err) {
-      console.error("Reset failed", err);
-      dispatch(showMessage("Reset failed. Try again."));
-    } finally {
-      setResetting(false);
-      setShowConfirm(false);
     }
   };
 
@@ -129,7 +123,11 @@ const HeaderBar = ({
             {!upToDate ? (
               <button
                 className="btn-outline danger-button"
-                onClick={handleReset}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation(); // ✅ prevent splash navigation
+                  onRequestReset?.(); // ✅ open modal in parent
+                }}
                 disabled={resetting}
               >
                 {resetting ? "Resetting..." : "Reset App"}
@@ -192,17 +190,6 @@ const HeaderBar = ({
           </div>
         )}
       </div>
-      {/* ✅ Confirmation Modal */}
-      {showConfirm && (
-        <CustomConfirmation
-          isOpen={showConfirm}
-          title="Confirm App Reset"
-          message="This will clear cached data and reload everything. Continue?"
-          onConfirm={confirmReset}
-          onClose={() => setShowConfirm(false)}
-          loading={resetting}
-        />
-      )}
     </>
   );
 };
