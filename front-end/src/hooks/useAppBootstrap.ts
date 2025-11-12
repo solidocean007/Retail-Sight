@@ -16,7 +16,6 @@ import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 import { useIntegrations } from "./useIntegrations";
 import { useSchemaVersion } from "./useSchemaVersion";
 
-
 /**
  * useAppBootstrap
  * ----------------------------------------------------------
@@ -38,9 +37,12 @@ export function useAppBootstrap() {
   const hasBootstrapped = useRef(false);
   const runningBootstrap = useRef<Promise<void> | null>(null);
 
-  // ✅ new line
-  useSchemaVersion(); // handles appConfig sync, local storage + reset
+  // ✅ Keep version sync logic separate
+  useSchemaVersion();
 
+  // ───────────────────────────────
+  // 1️⃣ MAIN BOOTSTRAP (runs once)
+  // ───────────────────────────────
   useEffect(() => {
     if (initializing || !currentUser || hasBootstrapped.current) return;
     hasBootstrapped.current = true;
@@ -52,7 +54,7 @@ export function useAppBootstrap() {
           dispatch(setResetting(true));
           await new Promise((res) => setTimeout(res, 200));
 
-          // hydrate + listeners as before
+          // hydrate plans & products
           await dispatch(hydrateFromCache());
           if (companyId) {
             const cached = await getAllCompanyProductsFromIndexedDB();
@@ -61,17 +63,8 @@ export function useAppBootstrap() {
             await dispatch(fetchCompanyProducts(companyId));
           }
 
-          const unsubs: (() => void)[] = [];
-          if (companyId) {
-            unsubs.push(dispatch(setupNotificationListenersForUser(currentUser)));
-            unsubs.push(dispatch(setupNotificationListenersForCompany(currentUser)));
-            unsubs.push(dispatch(setupCompanyGoalsListener(companyId)));
-            if (galloEnabled) unsubs.push(dispatch(setupGalloGoalsListener(companyId)));
-          }
-
           dispatch(setAppReady(true));
           dispatch(showMessage("✅ App ready."));
-          (runningBootstrap as any).unsubs = unsubs;
         } catch (err) {
           console.error("❌ useAppBootstrap failed:", err);
           setTimeout(() => (hasBootstrapped.current = false), 2000);
@@ -80,10 +73,34 @@ export function useAppBootstrap() {
           runningBootstrap.current = null;
         }
       })();
-
       return runningBootstrap.current;
     };
 
     startBootstrap();
-  }, [initializing, currentUser?.uid, companyId, galloEnabled, dispatch, appReady]);
+  }, [initializing, currentUser?.uid, companyId, dispatch]);
+
+  // ───────────────────────────────
+  // 2️⃣ POST-BOOTSTRAP LISTENERS
+  // ───────────────────────────────
+  useEffect(() => {
+    if (!appReady || !currentUser?.companyId) return;
+
+    const companyId = currentUser.companyId;
+    const unsubs: Array<() => void> = [];
+
+    unsubs.push(dispatch(setupCompanyGoalsListener(companyId)));
+    unsubs.push(dispatch(setupNotificationListenersForUser(currentUser)));
+    unsubs.push(dispatch(setupNotificationListenersForCompany(currentUser)));
+
+    if (galloEnabled) {
+      unsubs.push(dispatch(setupGalloGoalsListener(companyId)));
+    }
+
+    return () => {
+      for (const u of unsubs)
+        try {
+          u();
+        } catch {}
+    };
+  }, [dispatch, appReady, currentUser, galloEnabled]);
 }
