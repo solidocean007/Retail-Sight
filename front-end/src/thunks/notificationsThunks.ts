@@ -100,13 +100,26 @@ export const sendNotification = createAsyncThunk(
     try {
       const docRef = doc(collection(db, "notifications"));
 
-      // ✅ Prepare Firestore payload
+      // 🧹 REMOVE ACTOR FROM RECIPIENT LISTS
+      const actorUid =
+        typeof notification.sentBy === "object"
+          ? notification.sentBy.uid
+          : null;
+
+      const filteredUserRecipients = (
+        notification.recipientUserIds ?? []
+      ).filter((uid) => uid !== actorUid);
+
+      const filteredCompanyRecipients = notification.recipientCompanyIds ?? [];
+      const filteredRoleRecipients = notification.recipientRoles ?? [];
+
+      // 📝 Firestore payload
       const firestorePayload: NotificationType = {
         ...notification,
         id: docRef.id,
-        recipientCompanyIds: notification.recipientCompanyIds ?? [],
-        recipientUserIds: notification.recipientUserIds ?? [],
-        recipientRoles: notification.recipientRoles ?? [],
+        recipientCompanyIds: filteredCompanyRecipients,
+        recipientUserIds: filteredUserRecipients,
+        recipientRoles: filteredRoleRecipients,
         sentAt:
           notification.sentAt instanceof Timestamp
             ? notification.sentAt
@@ -118,13 +131,14 @@ export const sendNotification = createAsyncThunk(
 
       await setDoc(docRef, firestorePayload);
 
-      // ✅ Normalize before dispatching to Redux (serializable)
+      // 🔁 Normalize for Redux
       const normalized = {
         ...normalizeFirestoreData(firestorePayload),
       };
 
       const { recipientUserIds, recipientCompanyIds, recipientRoles } =
         normalized;
+
       let dispatched = false;
 
       if (recipientUserIds?.length) {
@@ -140,7 +154,6 @@ export const sendNotification = createAsyncThunk(
         dispatched = true;
       }
 
-      // Default: no audience → company-wide
       if (!dispatched) dispatch(addCompanyNotification(normalized));
     } catch (err: any) {
       console.error("Error sending notification:", err);
