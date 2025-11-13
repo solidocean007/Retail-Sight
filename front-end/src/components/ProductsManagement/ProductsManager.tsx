@@ -105,31 +105,30 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   };
 
   const executeAddProducts = async (products: ProductType[]) => {
-    try {
-      setIsSubmitting(true);
+  try {
+    setIsSubmitting(true);
+    const companyId = user!.companyId;
+    const itemsCollectionRef = collection(db, "products", companyId, "items");
+    const batch = writeBatch(db);
 
-      const companyId = user!.companyId;
-      const itemsCollectionRef = collection(db, "products", companyId, "items");
-      const batch = writeBatch(db);
-
-      for (const product of products) {
-        const newDocRef = doc(itemsCollectionRef); // Auto-generated ID
-        batch.set(newDocRef, product);
-      }
-
-      await batch.commit();
-
-      dispatch(fetchCompanyProducts(companyId));
-      dispatch(showMessage("Products uploaded successfully"));
-    } catch (err) {
-      console.error("Upload error:", err);
-      dispatch(showMessage("Error uploading products"));
-    } finally {
-      setShowConfirm(false);
-      setIsSubmitting(false);
-      setPendingAddProducts([]);
+    for (const product of products) {
+      // ✅ use companyProductId as document ID
+      const docRef = doc(itemsCollectionRef, product.companyProductId);
+      batch.set(docRef, product);
     }
-  };
+
+    await batch.commit();
+    dispatch(fetchCompanyProducts(companyId));
+    dispatch(showMessage("Products uploaded successfully"));
+  } catch (err) {
+    console.error("Upload error:", err);
+    dispatch(showMessage("Error uploading products"));
+  } finally {
+    setShowConfirm(false);
+    setIsSubmitting(false);
+  }
+};
+
 
   const handleUpdateProducts = async (file: File) => {
     try {
@@ -229,9 +228,8 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
         product.companyProductId
       );
 
-      await setDoc(productDocRef, product);
+      await setDoc(productDocRef, product,{merge: true});
       dispatch(updateProduct(product)); // ✅ Optimistic update
-
       dispatch(showMessage("Changes saved."));
     } catch (err) {
       console.error("Error saving changes:", err);
@@ -244,31 +242,31 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
   };
 
   const executeManualSubmit = async (product: ProductType) => {
-    try {
-      setIsSubmitting(true);
-      const companyId = user!.companyId;
+  try {
+    setIsSubmitting(true);
+    const companyId = user!.companyId;
 
-      const productDocRef = doc(
-        db,
-        "products",
-        companyId,
-        "items",
-        product.companyProductId
-      );
+    const productDocRef = doc(
+      db,
+      "products",
+      companyId,
+      "items",
+      product.companyProductId
+    );
 
-      await setDoc(productDocRef, product);
-      dispatch(addProduct(product)); // ✅ Optimistic update
+    await setDoc(productDocRef, product); // deterministic ID
+    dispatch(addProduct(product));
+    dispatch(showMessage("Product added successfully"));
+  } catch (err) {
+    console.error("Error saving product:", err);
+    dispatch(showMessage("Error saving product."));
+  } finally {
+    setIsSubmitting(false);
+    setShowConfirm(false);
+    setPendingManualProduct(null);
+  }
+};
 
-      dispatch(showMessage("Product added successfully"));
-    } catch (err) {
-      console.error("Error saving product:", err);
-      dispatch(showMessage("Error saving product."));
-    } finally {
-      setIsSubmitting(false);
-      setShowConfirm(false);
-      setPendingManualProduct(null);
-    }
-  };
 
   const isMobile = window.innerWidth <= 1200; // Adjust based on your design breakpoints;
   const rowHeight = isMobile ? 400 : 80; // Adjust row height based on mobile view
@@ -374,11 +372,7 @@ const ProductsManager: React.FC<ProductManagerProps> = ({
         rowHeight = {rowHeight}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        onEditSave={(product) => {
-          setConfirmMessage(`Save changes to "${product.productName}"?`);
-          setConfirmAction(() => () => executeInlineSave(product));
-          setShowConfirm(true);
-        }}
+        onEditSave={executeInlineSave}
         onDelete={(productId) => {
           const product = companyProducts.find(
             (p) => p.companyProductId === productId

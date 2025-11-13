@@ -18,6 +18,43 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
 } from "firebase/firestore";
+// migrateProductsToDeterministicIds.ts
+
+// src/script/migrateProducts.ts
+
+export async function migrateProducts(companyId: string) {
+  console.log("🚀 Starting migration for company:", companyId);
+
+  const oldItemsRef = collection(db, "products", companyId, "items");
+  const snapshot = await getDocs(oldItemsRef);
+
+  if (snapshot.empty) {
+    console.log("⚠️ No products found for company:", companyId);
+    return;
+  }
+
+  const batch = writeBatch(db);
+  let count = 0;
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data() as ProductType;
+    if (!data.companyProductId) {
+      console.warn(`Skipping ${docSnap.id}: missing companyProductId`);
+      return;
+    }
+
+    const newRef = doc(db, "products", companyId, "items", data.companyProductId);
+    batch.set(newRef, data, { merge: true });
+    // remove this line if you want to keep old docs
+    batch.delete(docSnap.ref);
+    count++;
+  });
+
+  await batch.commit();
+  console.log(`✅ Migration complete — ${count} docs migrated.`);
+}
+
+
 
 type AuditRow = {
   id: string;
@@ -277,6 +314,7 @@ export async function migratePostDates() {
 
 // src/debug/logTimestamps.ts
 import {  Timestamp as FSTimestamp } from "firebase/firestore";
+import { ProductType } from "./utils/types";
 
 // Collections to scan by default
 const DEFAULT_COLLECTIONS = [

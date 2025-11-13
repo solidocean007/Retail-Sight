@@ -41,7 +41,7 @@ function App(): React.JSX.Element {
   }, [isDarkMode]);
 
   // ---- 4. Main App Render ----
- return (
+  return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <ThemeProvider theme={theme}>
         <CssBaseline />

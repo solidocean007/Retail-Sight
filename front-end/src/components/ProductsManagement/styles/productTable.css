@@ -5,6 +5,7 @@
   overflow: hidden;
   font-family: sans-serif;
   padding-top: 1rem;
+  overflow: visible;
 }
 
 .product-list-scrollable {
@@ -99,7 +100,6 @@
     font-size: 0.75rem;
     /* flex-wrap: wrap; */
     flex-direction: column;
-    height: 400px;
   }
 
   .product-cell {
