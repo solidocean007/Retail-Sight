@@ -45,7 +45,6 @@ useEffect(() => {
     //  console.group("🪣 [usePosts] loadInitialPosts");
       // console.log("companyId:", companyId);
     const cached = await getPostsFromIndexedDB();
-    console.log("Cached posts in IndexedDB:", cached.length);
     const newestCachedDate = cached?.[0]?.displayDate || null;
     const needsUpdate = await shouldRefetchPosts(companyId, newestCachedDate);
 

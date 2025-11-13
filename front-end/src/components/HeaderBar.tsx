@@ -33,14 +33,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     (s: RootState) => s.app
   );
   const upToDate = !!serverVersion && localVersion === serverVersion;
-  console.log(
-    "upToDate: ",
-    upToDate,
-    "serverVersion: ",
-    serverVersion,
-    "localVersion: ",
-    localVersion
-  );
   const mobile = useMediaQuery("(max-width: 900px)");
   const notifications = useSelector(selectAllNotifications);
   const [showNotificationDropdown, setShowNotificationDropdown] =
@@ -81,9 +73,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     }
   };
 
-  useEffect(() => {
-    console.count("HeaderBar render count");
-  }, []);
 
   const handleMenuOptionSelect = (option: string) => {
     if (option === "filters") {
