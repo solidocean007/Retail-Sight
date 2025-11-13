@@ -62,8 +62,8 @@ export const UserHomePage = () => {
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
   const batchSize = 5;
-    const [showConfirmReset, setShowConfirmReset] = useState(false);
-  
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
+
   const [showModal, setShowModal] = useState(false);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
 
@@ -160,23 +160,19 @@ export const UserHomePage = () => {
     }
   };
 
-const confirmReset = async () => {
-  dispatch(setResetting(true)); // ✅ fix
-  try {
-    await resetApp(dispatch);
-    dispatch(showMessage("App reset complete. Reloading data..."));
-  } catch (err) {
-    console.error("Reset failed", err);
-    dispatch(showMessage("Reset failed. Try again."));
-  } finally {
-    dispatch(setResetting(false)); // ✅ fix
-    setShowConfirmReset(false);
-  }
-};
-
-  useEffect(() => {
-    console.log(showConfirmReset);// this always logs false even after reset app button click.  i still see the splash page flash
-  },[showConfirmReset])
+  const confirmReset = async () => {
+    dispatch(setResetting(true)); // ✅ fix
+    try {
+      await resetApp(dispatch);
+      dispatch(showMessage("App reset complete. Reloading data..."));
+    } catch (err) {
+      console.error("Reset failed", err);
+      dispatch(showMessage("Reset failed. Try again."));
+    } finally {
+      dispatch(setResetting(false)); // ✅ fix
+      setShowConfirmReset(false);
+    }
+  };
 
   useEffect(() => {
     dispatch(fetchLocationOptions());

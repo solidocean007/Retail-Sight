@@ -6,6 +6,7 @@ type AppState = {
   resetting: boolean;
   localVersion: string | null;
   serverVersion: string | null;
+  loadingMessage: string | null;
 };
 
 const initialState: AppState = {
@@ -13,6 +14,7 @@ const initialState: AppState = {
   resetting: false,
   localVersion: null,
   serverVersion: null,
+   loadingMessage: null,
 };
 
 const appSlice = createSlice({
@@ -32,8 +34,11 @@ const appSlice = createSlice({
       state.localVersion = action.payload.localVersion;
       state.serverVersion = action.payload.serverVersion;
     },
+     setLoadingMessage(state, action: PayloadAction<string | null>) {  // ⬅ NEW
+      state.loadingMessage = action.payload;
+    }
   },
 });
 
-export const { setAppReady, setResetting, setVersions } = appSlice.actions;
+export const { setAppReady, setResetting, setVersions, setLoadingMessage } = appSlice.actions;
 export default appSlice.reducer;

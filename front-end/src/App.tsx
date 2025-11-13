@@ -2,22 +2,29 @@
 import React, { useEffect, useMemo } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { useSelector } from "react-redux";
+
 import Snackbar from "@mui/material/Snackbar";
 import { Alert, CssBaseline, ThemeProvider } from "@mui/material";
+
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import "./App.css";
+
 import { RootState, useAppDispatch } from "./utils/store";
 import { hideMessage, nextMessage } from "./Slices/snackbarSlice";
 import { setDarkMode } from "./Slices/themeSlice";
+
 import { getTheme } from "./theme";
 import { ThemeToggle } from "./components/ThemeToggle";
+
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
+import { useAppBootstrap } from "./hooks/useAppBootstrap";
+
 import AppLoadingScreen from "./components/AppLoadingScreen";
 import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
-import { useAppBootstrap } from "./hooks/useAppBootstrap";
+
 
 function App(): React.JSX.Element {
   const dispatch = useAppDispatch();
@@ -25,34 +32,60 @@ function App(): React.JSX.Element {
   const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
   const snackbar = useSelector((s: RootState) => s.snackbar);
   const appReady = useSelector((s: RootState) => s.app.appReady);
+  const loadingMessage = useSelector((s: RootState) => s.app.loadingMessage);
+
   const theme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
-  // ---- 1. Run single atomic bootstrap ----
+  //
+  // 🔄 Run core bootstrap (Option B)
+  //
   useAppBootstrap();
 
-  // ---- 2. Apply theme on first mount ----
+  //
+  // 🎨 Theme initialization
+  //
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
-    if (storedTheme) dispatch(setDarkMode(storedTheme === "dark"));
+    if (storedTheme) {
+      dispatch(setDarkMode(storedTheme === "dark"));
+    }
   }, [dispatch]);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  // ---- 4. Main App Render ----
+
+  //
+  // 🧠 LOADER LOGIC — Option B
+  //
+  // - Public visitor → show full app immediately
+  // - Logged-in user → show loader until essential boot completes
+  // - Firebase still waking → show loader
+  //
+  const showLoader = (() => {
+    if (initializing) return true;      // Firebase waking up
+    if (!currentUser) return false;     // Public visitor → no blocking
+    return !appReady;                   // Logged-in user waits for bootstrap
+  })();
+
+
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <ThemeToggle />
-        {initializing || !appReady ? (
-          <AppLoadingScreen />
-        ) : (
-          <>
+    <>
+      {showLoader && (
+        <AppLoadingScreen message={loadingMessage ?? "Loading…"} />
+      )}
+
+      {!showLoader && (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <ThemeToggle />
+
             <Router>
               <AppRoutes />
             </Router>
+
             {snackbar.current && (
               <Snackbar
                 open={snackbar.open}
@@ -72,11 +105,12 @@ function App(): React.JSX.Element {
                 </Alert>
               </Snackbar>
             )}
-            {!initializing && currentUser && <UserModal />}
-          </>
-        )}
-      </ThemeProvider>
-    </LocalizationProvider>
+
+            {currentUser && <UserModal />}
+          </ThemeProvider>
+        </LocalizationProvider>
+      )}
+    </>
   );
 }
 

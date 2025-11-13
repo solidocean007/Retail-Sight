@@ -88,7 +88,6 @@ export const fetchInitialPostsBatch = createAsyncThunk(
 
       const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]?.id || null;
 
-      console.log("✅ Normalized posts count:", postsWithIds.length);
       return { posts: postsWithIds, lastVisible };
     } catch (error) {
       console.error("❌ Error fetching initial posts:", error);

@@ -7,7 +7,7 @@ import { fetchCompanyProducts } from "../thunks/productThunks";
 interface ProductsState {
   allProducts: ProductType[];
   loading: boolean;
-  error: string | null;
+  error: string | {} | null;
 }
 
 const initialState: ProductsState = {

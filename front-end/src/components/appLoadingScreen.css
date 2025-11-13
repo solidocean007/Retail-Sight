@@ -1,7 +1,6 @@
-/* AppLoadingScreen.css */
-.app-loading-screen {
+/* Full-screen centered container */
+.app-loading-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100vh;
@@ -9,24 +8,75 @@
   background-color: var(--background-default);
   color: var(--text-primary);
   font-family: var(--font-family, "Inter", sans-serif);
+  transition: opacity 0.4s ease;
+}
+
+/* Fade animation */
+.fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Center card */
+.app-loading-card {
   text-align: center;
-  transition: opacity 0.3s ease;
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 300px;
+  width: 90%;
+  background: var(--background-light);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
-.loading-logo {
-  font-size: 1.8rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-bottom: 0.5rem;
+/* Logo styling */
+.loading-logo-img {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 1rem;
+  opacity: 0.9;
 }
 
-.loading-text {
-  font-size: 1rem;
-  opacity: 0.8;
+/* Message text */
+.loading-message {
+  font-size: 1.05rem;
+  margin-top: 0.25rem;
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
-.app-loading-screen.fade-out {
-  opacity: 0;
-  pointer-events: none;
+/* Animated dots */
+.loading-dots {
+  margin-top: 8px;
+  font-size: 1.5rem;
+  letter-spacing: 4px;
 }
 
+.loading-dots span {
+  animation: blink 1.4s infinite both;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}

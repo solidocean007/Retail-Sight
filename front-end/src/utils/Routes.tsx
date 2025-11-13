@@ -28,6 +28,7 @@ import PricingPlans from "../components/Pages/PricingPlans";
 import BillingDashboard from "../components/Pages/Billing/BillingDashboard";
 import RequestSubmitted from "../components/Pages/RequestSubmitted";
 import CompanyOnboardingAcceptForm from "../components/Pages/CompanyOnboardingAcceptForm";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export const AppRoutes = () => {
   return (
@@ -52,10 +53,6 @@ export const AppRoutes = () => {
       />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/pricing" element={<PricingPlans />} />
-      <Route path="/billing" element={<BillingDashboard />} />
-      <Route path="/user-home-page" element={<UserHomePage />} />
-      <Route path="/create-post" element={<CreatePost />} />
-      <Route path="/dashboard" element={<Dashboard />} />
       <Route
         path="/view-collection/:collectionId"
         element={<ViewCollection />}
@@ -64,6 +61,40 @@ export const AppRoutes = () => {
         path="/view-shared-post/:postId/:token"
         element={<ViewSharedPost />}
       />
+      <Route
+        path="/user-home-page"
+        element={
+          <ProtectedRoute>
+            <UserHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/create-post"
+        element={
+          <ProtectedRoute>
+            <CreatePost />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute>
+            <BillingDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/onboard-company/:companyId/:inviteId"
         element={<CompanyOnboardingAcceptForm />}
