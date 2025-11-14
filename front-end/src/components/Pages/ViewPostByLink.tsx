@@ -18,6 +18,8 @@ export const ViewPostByLink = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  console.log("viewpostbylink")
+
   useEffect(() => {
     const fetchPost = async () => {
       if (!postId) {

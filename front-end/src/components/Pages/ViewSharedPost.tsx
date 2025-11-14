@@ -16,6 +16,8 @@ export const ViewSharedPost = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  console.log('viewsharedpostpage')
+
   useEffect(() => {
     if (!postId || !token) {
       setError("Invalid link parameters.");

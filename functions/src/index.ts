@@ -21,6 +21,7 @@ import { rejectAccessRequest } from "./rejectAccessRequest";
 import { approveAccessRequest } from "./approveAccessRequest";
 import { getPlanDetails } from "./planHandlers";
 import { enforcePlanLimits } from "./enforcePlanLimits";
+import { generatePostShareToken } from "./generatePostShareToken";
 
 // 🧾 Braintree Billing System
 import {
@@ -67,6 +68,7 @@ export {
   rejectAccessRequest,
   getPlanDetails,
   enforcePlanLimits,
+  generatePostShareToken,
 
   // Billing functions
   updateSubscriptionWithProration,

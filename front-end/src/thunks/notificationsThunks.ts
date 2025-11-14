@@ -113,7 +113,17 @@ export const sendNotification = createAsyncThunk(
       const filteredCompanyRecipients = notification.recipientCompanyIds ?? [];
       const filteredRoleRecipients = notification.recipientRoles ?? [];
 
-      // 📝 Firestore payload
+      // 🚫 EARLY EXIT — NO RECIPIENTS LEFT
+      if (
+        filteredUserRecipients.length === 0 &&
+        filteredCompanyRecipients.length === 0 &&
+        filteredRoleRecipients.length === 0
+      ) {
+        // No recipients → do not create OR dispatch notification
+        return;
+      }
+
+      // 📝 Firestore payload (safe)
       const firestorePayload: NotificationType = {
         ...notification,
         id: docRef.id,
@@ -129,6 +139,7 @@ export const sendNotification = createAsyncThunk(
         postId: notification.postId ?? "",
       };
 
+      // Save to Firestore
       await setDoc(docRef, firestorePayload);
 
       // 🔁 Normalize for Redux
@@ -139,22 +150,16 @@ export const sendNotification = createAsyncThunk(
       const { recipientUserIds, recipientCompanyIds, recipientRoles } =
         normalized;
 
-      let dispatched = false;
-
+      // Dispatch properly
       if (recipientUserIds?.length) {
         dispatch(addUserNotification(normalized));
-        dispatched = true;
       }
       if (recipientCompanyIds?.length) {
         dispatch(addCompanyNotification(normalized));
-        dispatched = true;
       }
       if (recipientRoles?.length) {
         dispatch(addRoleNotification(normalized));
-        dispatched = true;
       }
-
-      if (!dispatched) dispatch(addCompanyNotification(normalized));
     } catch (err: any) {
       console.error("Error sending notification:", err);
       dispatch(setError(err.message || "Failed to send notification"));
