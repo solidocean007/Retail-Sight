@@ -6,63 +6,46 @@ if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
 
 export const generatePostShareToken = onCall(
-  { region: "us-central1" },
+  { region: "us-east4" },
   async (request) => {
     const { postId, expiresInHours = 48 } = request.data || {};
     const auth = request.auth;
 
     if (!auth || !auth.uid) {
-      throw new Error("Must be authenticated to generate a link.");
+      throw new Error("Authentication required.");
     }
 
     if (!postId) {
-      throw new Error("Missing postId.");
+      throw new Error("postId missing.");
     }
 
-    // 1. Create token
-    const token = uuidv4().replace(/-/g, "").slice(0, 16);
+    // Create a random short token
+    const token = uuidv4().replace(/-/g, "").slice(0, 12);
 
+    // Expiration timestamp
     const expiresAt =
       expiresInHours > 0
         ? admin.firestore.Timestamp.fromMillis(
-            Date.now() + expiresInHours * 60 * 60 * 1000
+            Date.now() + expiresInHours * 3600 * 1000
           )
         : null;
 
-    // 2. Write token doc
+    // Store in /shareTokens
     await db.collection("shareTokens").doc(token).set({
       postId,
       createdBy: auth.uid,
       createdAt: admin.firestore.Timestamp.now(),
       expiresAt,
       revoked: false,
-      accessLevel: "view",
     });
 
-    // 3. Build link
-    const shareUrl = `https://displaygram.com/view-shared-post/${postId}/${token}`;
+    // Build long URL
+    const longUrl = `https://displaygram.com/view-shared-post/${postId}/${token}`;
 
-    const shortLink = await createDynamicLink(shareUrl);
-
-    return { token, shareUrl: shortLink, expiresAt };
+    return {
+      token,
+      longUrl,
+      expiresAt,
+    };
   }
 );
-
-async function createDynamicLink(longUrl: string): Promise<string> {
-  const resp = await fetch(
-    "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + process.env.DYNAMIC_LINKS_KEY,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        dynamicLinkInfo: {
-          domainUriPrefix: "https://displaygram.page.link",
-          link: longUrl,
-        }
-      })
-    }
-  );
-
-  const data = await resp.json();
-  return data.shortLink;
-}

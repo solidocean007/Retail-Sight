@@ -1,57 +1,62 @@
-import { useState, useEffect, useMemo } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { PostWithID } from "../../utils/types";
-import HeaderBar from "./../HeaderBar";
+import HeaderBar from "../HeaderBar";
 import { CircularProgress, Button, Box, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 import "./viewSharedPost.css";
-import MemoizedPostCard from "./../PostCard";
+import MemoizedPostCard from "../PostCard";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { db } from "../../utils/firebase";
 
-export const ViewSharedPost = () => {
+const ViewSharedPost = () => {
   const navigate = useNavigate();
   const { postId, token } = useParams();
+
   const user = useSelector(selectUser);
+
   const [post, setPost] = useState<PostWithID | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  console.log('viewsharedpostpage')
-
   useEffect(() => {
     if (!postId || !token) {
-      setError("Invalid link parameters.");
+      setError("Invalid share link.");
       setLoading(false);
       return;
     }
 
-    const validateToken = async () => {
+    const validate = async () => {
       try {
-        const response = await fetch(
-          "https://my-fetch-data-api.vercel.app/api/validatePostShareToken",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ postId, token }),
-          }
+        const functions = getFunctions();
+        const validateFn = httpsCallable(
+          functions,
+          "validatePostShareToken"
         );
 
-        const result = await response.json();
-        if (!response.ok || !result.valid || !result.post) {
-          setError(result.error || "Invalid or expired token.");
+        const result: any = await validateFn({ postId, token });
+
+        if (!result.data?.valid) {
+          setError(result.data?.error || "Invalid or expired share link.");
         } else {
-          setPost(result.post);
+          // We validated the token AND retrieved the sanitized post
+          setPost(result.data.post as PostWithID);
         }
       } catch (err: any) {
-        setError(err?.message || "An unexpected error occurred.");
+        console.error("Share link validation failed:", err);
+        setError(err.message || "Something went wrong validating this link.");
       } finally {
         setLoading(false);
       }
     };
 
-    validateToken();
+    validate();
   }, [postId, token]);
 
+  // ---------------------------------------
+  // Loading State
+  // ---------------------------------------
   if (loading) {
     return (
       <Box
@@ -65,13 +70,18 @@ export const ViewSharedPost = () => {
     );
   }
 
+  // ---------------------------------------
+  // Error State
+  // ---------------------------------------
   if (error) {
     return (
       <Box textAlign="center" mt={8}>
         <HeaderBar toggleFilterMenu={() => {}} />
-        <Typography variant="h5" color="error">
+
+        <Typography variant="h5" color="error" mb={2}>
           {error}
         </Typography>
+
         <Button
           variant="contained"
           color="secondary"
@@ -83,8 +93,11 @@ export const ViewSharedPost = () => {
     );
   }
 
+  // ---------------------------------------
+  // Valid Post — Render Like Normal
+  // ---------------------------------------
   return (
-    <div className=" view-shared-post-page">
+    <div className="view-shared-post-page">
       <HeaderBar toggleFilterMenu={() => {}} />
 
       <div className="view-shared-post-container">
@@ -93,10 +106,12 @@ export const ViewSharedPost = () => {
             <Typography variant="h2" align="center" className="cta-heading">
               Retail displays that inspire. Results that scale.
             </Typography>
+
             <Typography variant="body1" align="center" className="cta-subtext">
-              Displaygram is where suppliers and distributors showcase their best
-              work—and get results.
+              Displaygram is where suppliers and distributors showcase their
+              best work—and get results.
             </Typography>
+
             <Button
               variant="contained"
               color="secondary"
@@ -110,20 +125,22 @@ export const ViewSharedPost = () => {
           <div>
             <h3>Click Image For Larger View</h3>
           </div>
-
         </div>
 
-        <MemoizedPostCard
-          post={post as PostWithID}
-          id={(post as PostWithID).id}
-          currentUserUid={user?.uid || ""}
-        />
+        {post && (
+          <MemoizedPostCard
+            post={post}
+            id={post.id}
+            currentUserUid={user?.uid || ""}
+          />
+        )}
 
         {!user && (
           <Box textAlign="center" mt={4}>
             <Typography variant="h6" gutterBottom>
               Love what you see?
             </Typography>
+
             <Button
               variant="contained"
               color="secondary"
@@ -134,8 +151,6 @@ export const ViewSharedPost = () => {
           </Box>
         )}
       </div>
-      {/* i need a cta modal here */}
-      {/* abstract it and we can import it */}
     </div>
   );
 };

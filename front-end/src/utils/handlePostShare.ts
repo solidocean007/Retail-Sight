@@ -1,31 +1,41 @@
-import buildPostLink from "./buildPostLink";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { collection, addDoc, onSnapshot } from "firebase/firestore";
+import { db } from "../utils/firebase";
 
-export const handlePostShare = async (postId: string) => {
+export const handlePostShare = async (postId: string): Promise<string> => {
   try {
-    console.log(`Generating or reusing share token for post ${postId}...`);
+    const functions = getFunctions();
+    const createToken = httpsCallable(functions, "generatePostShareToken");
 
-    const response = await fetch('https://my-fetch-data-api.vercel.app/api/generatePostShareToken', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postId }),
+    // 1️⃣ Generate token & get long URL
+    const result: any = await createToken({ postId });
+    const longUrl = result.data.longUrl;
+
+    // 2️⃣ Create doc in `/urls` to trigger the extension
+    const urlDocRef = await addDoc(collection(db, "urls"), {
+      url: longUrl,
     });
 
-    const data = await response.json();
-    const newToken = data.token;
+    // 3️⃣ Wait for extension to write shortUrl
+    return new Promise((resolve, reject) => {
+      const unsub = onSnapshot(urlDocRef, (snap) => {
+        const data = snap.data();
+        if (!data) return;
 
-    if (!newToken) {
-      console.error("Failed to generate token.");
-      throw new Error("Failed to generate token.");
-    }
+        if (data.shortUrl) {
+          unsub();
+          resolve(data.shortUrl);
+        }
 
-    const shareableLink = buildPostLink(postId, newToken);
-    console.log("Shareable Link:", shareableLink);
-
-    return shareableLink;
+        if (data.error) {
+          unsub();
+          reject(data.error);
+        }
+      });
+    });
   } catch (error) {
-    console.error("Failed to share post:", error);
+    console.error("Error generating share link:", error);
     throw error;
   }
 };
-
 
