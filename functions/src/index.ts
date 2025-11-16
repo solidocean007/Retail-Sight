@@ -42,6 +42,12 @@ import {
   backfillBillingForCompanies,
 } from "./braintreeHandlers";
 
+// Notification system
+import { sendNotification } from "./notifications/sendNotification";
+import { commentLikeNotification } from "./notifications/commentLikeNotification";
+import { commentNotification } from "./notifications/commentNotification";
+import { postLikeNotification } from "./notifications/postLikeNotification";
+
 import { syncPlanLimits } from "./braintreeHelpers";
 
 export {
@@ -88,4 +94,10 @@ export {
   listPlansAndAddons,
   initCompanyBilling,
   backfillBillingForCompanies,
+
+  // Notifications
+  sendNotification,
+  commentLikeNotification,
+  commentNotification,
+  postLikeNotification,
 };

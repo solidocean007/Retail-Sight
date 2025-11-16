@@ -21,6 +21,7 @@ module.exports = {
   plugins: ["@typescript-eslint", "import", "prettier"],
   ignorePatterns: [".eslintrc.js", "/lib/**/*"],
   rules: {
+     "@typescript-eslint/no-explicit-any": "off",
     quotes: ["error", "double"],
     indent: ["off"],
     "linebreak-style": ["error", "unix"],
