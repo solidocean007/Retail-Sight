@@ -35,7 +35,7 @@
 
 
 .notification-item.read {
-  background-color: var(--gray-200);
+  background-color: var(--read-notification-bg);
   opacity: 0.7;
 }
 

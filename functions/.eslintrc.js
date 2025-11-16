@@ -22,10 +22,16 @@ module.exports = {
   ignorePatterns: [".eslintrc.js", "/lib/**/*"],
   rules: {
     quotes: ["error", "double"],
-    indent: ["error", 2],
+    indent: ["off"],
     "linebreak-style": ["error", "unix"],
     "max-len": ["error", { code: 120 }],
-    "prettier/prettier": ["error"],
+    "prettier/prettier": [
+      "error",
+      {
+        tabWidth: 2,
+        useTabs: false,
+      },
+    ],
     curly: "off",
     "valid-jsdoc": "off",
     "import/no-unresolved": 0,

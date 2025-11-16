@@ -23,7 +23,7 @@ import {
   setCompanyNotifications,
   setRoleNotifications,
 } from "../Slices/notificationsSlice";
-import { NotificationType } from "../utils/types";
+import { NotificationType, UserType } from "../utils/types";
 import { db } from "../utils/firebase";
 import { normalizeFirestoreData } from "../utils/normalize";
 
@@ -47,11 +47,8 @@ export const fetchCompanyNotifications = createAsyncThunk(
       const roleNotifs: NotificationType[] = [];
 
       snapshot.forEach((docSnap) => {
-        // ✅ Normalize the Firestore data safely
-        // ✅ Normalize the Firestore data safely
-        const normalizedData = normalizeFirestoreData(
-          docSnap.data()
-        ) as NotificationType;
+        const normalizedData = normalizeFirestoreData(docSnap.data()) as NotificationType;
+
         const normalized: NotificationType = {
           ...normalizedData,
           id: docSnap.id,
@@ -60,25 +57,40 @@ export const fetchCompanyNotifications = createAsyncThunk(
         const { recipientUserIds, recipientCompanyIds, recipientRoles } =
           normalized;
 
+        // GLOBAL
         if (
           (!recipientUserIds || recipientUserIds.length === 0) &&
           (!recipientCompanyIds || recipientCompanyIds.length === 0) &&
           (!recipientRoles || recipientRoles.length === 0)
         ) {
-          companyNotifs.push(normalized); // global
-        } else if (recipientCompanyIds?.includes(companyId)) {
           companyNotifs.push(normalized);
-        } else if (recipientRoles?.length) {
+          return;
+        }
+
+        // COMPANY
+        if (recipientCompanyIds?.includes(companyId)) {
+          companyNotifs.push(normalized);
+          return;
+        }
+
+        // ROLE  (CURRENTLY KEEP SIMPLE)
+        // Just collect them — not actively filtering by current user's role yet.
+        if (recipientRoles?.length) {
           roleNotifs.push(normalized);
-        } else {
+          return;
+        }
+
+        // USER
+        if (recipientUserIds?.length) {
           userNotifs.push(normalized);
+          return;
         }
       });
 
-      // ✅ Dispatch each group
       dispatch(setUserNotifications(userNotifs));
       dispatch(setCompanyNotifications(companyNotifs));
       dispatch(setRoleNotifications(roleNotifs));
+
     } catch (err: any) {
       console.error("Error fetching notifications:", err);
       dispatch(setError(err.message));
@@ -88,6 +100,7 @@ export const fetchCompanyNotifications = createAsyncThunk(
   }
 );
 
+
 //
 // 📩 2. Send Notification (Flat collection)
 //
@@ -95,12 +108,14 @@ export const sendNotification = createAsyncThunk(
   "notifications/sendNotification",
   async (
     { notification }: { notification: NotificationType },
-    { dispatch }
+    { dispatch, getState }
   ) => {
     try {
       const docRef = doc(collection(db, "notifications"));
 
-      // 🧹 REMOVE ACTOR FROM RECIPIENT LISTS
+      // -----------------------------
+      // REMOVE ACTOR FROM RECIPIENT LISTS
+      // -----------------------------
       const actorUid =
         typeof notification.sentBy === "object"
           ? notification.sentBy.uid
@@ -113,22 +128,23 @@ export const sendNotification = createAsyncThunk(
       const filteredCompanyRecipients = notification.recipientCompanyIds ?? [];
       const filteredRoleRecipients = notification.recipientRoles ?? [];
 
-      // 🚫 EARLY EXIT — NO RECIPIENTS LEFT
+      // 🚫 If nobody left to notify → return early
       if (
         filteredUserRecipients.length === 0 &&
         filteredCompanyRecipients.length === 0 &&
         filteredRoleRecipients.length === 0
       ) {
-        // No recipients → do not create OR dispatch notification
         return;
       }
 
-      // 📝 Firestore payload (safe)
+      // -----------------------------
+      // FIRESTORE PAYLOAD
+      // -----------------------------
       const firestorePayload: NotificationType = {
         ...notification,
         id: docRef.id,
-        recipientCompanyIds: filteredCompanyRecipients,
         recipientUserIds: filteredUserRecipients,
+        recipientCompanyIds: filteredCompanyRecipients,
         recipientRoles: filteredRoleRecipients,
         sentAt:
           notification.sentAt instanceof Timestamp
@@ -139,27 +155,22 @@ export const sendNotification = createAsyncThunk(
         postId: notification.postId ?? "",
       };
 
-      // Save to Firestore
       await setDoc(docRef, firestorePayload);
 
-      // 🔁 Normalize for Redux
-      const normalized = {
-        ...normalizeFirestoreData(firestorePayload),
-      };
+      // -----------------------------
+      // REFRESH
+      // -----------------------------
+      // Only refresh for ACTUAL intended recipients.
+      // (System notifications don't refresh anything—yet.)
+      if (typeof notification.sentBy === "object") {
+        const senderCompanyId = notification.sentBy.companyId;
+        if (senderCompanyId) {
+          dispatch(fetchCompanyNotifications(senderCompanyId));
+        }
+      }
 
-      const { recipientUserIds, recipientCompanyIds, recipientRoles } =
-        normalized;
-
-      // Dispatch properly
-      if (recipientUserIds?.length) {
-        dispatch(addUserNotification(normalized));
-      }
-      if (recipientCompanyIds?.length) {
-        dispatch(addCompanyNotification(normalized));
-      }
-      if (recipientRoles?.length) {
-        dispatch(addRoleNotification(normalized));
-      }
+      // System notifications? Do nothing for now.
+      // We'll define logic later.
     } catch (err: any) {
       console.error("Error sending notification:", err);
       dispatch(setError(err.message || "Failed to send notification"));

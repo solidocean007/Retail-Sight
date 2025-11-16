@@ -118,3 +118,6 @@ export const selectUnreadNotifications = createSelector(
   (notifications, uid) =>
     notifications.filter((n) => !n.readBy?.includes(uid ?? ""))
 );
+
+
+// a notification has a sentBy which is a user.  sentBy could also be 'system' though.  

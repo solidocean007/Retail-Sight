@@ -5,7 +5,7 @@
   width: 460px;
   max-height: 90vw;
   padding: 1rem;
-  background: var(--menu-background-color);
+  background: var(--notification-dropdown-bg);
   box-shadow: var(--card-shadow);
   border-radius: var(--card-radius);
   z-index: 1000;
@@ -20,12 +20,13 @@
 }
 
 .notification-action {
-  background: transparent;
+  /* background: transparent; */
   border: none;
   font-size: 1rem;
   cursor: pointer;
   opacity: 0.7;
-  transition: opacity 0.2s ease;
+  max-height: 50px;
+  /* transition: opacity 0.2s ease; */
 }
 
 .notification-action:hover {

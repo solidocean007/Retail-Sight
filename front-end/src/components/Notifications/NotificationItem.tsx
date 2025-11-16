@@ -89,7 +89,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           View Post
         </button>
       )}
-      {notification.id}
     </div>
   );
 };
