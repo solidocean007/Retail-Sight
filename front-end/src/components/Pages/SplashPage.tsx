@@ -54,14 +54,14 @@ const SplashPage = () => {
         <div className="logo-box">
           <Link to="/">
             <img
-              src="https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fdisplaygramlogo.svg?alt=media&token=991cea53-8831-422b-b9cd-2a308040d7bd"
+              src="/splash/displaygram-logo-with-name-light.png"
               alt="Displaygram logo"
               width={140}
               height={40}
               decoding="async"
               loading="eager"
             />
-            <span className="brand">Displaygram</span>
+            {/* <span className="brand">Displaygram</span> */}
           </Link>
         </div>
         <div className="navbar">
@@ -128,7 +128,7 @@ const SplashPage = () => {
                 Our platform revolutionizes how retail teams, suppliers, and
                 networks exchange merchandising success. Skip the clutter of
                 texts and emails; quickly archive and replicate winning store
-                displays at no cost. Your digital portfolio for retail
+                displays. Your digital portfolio for retail
                 excellence – accessible anytime, by your whole team.
               </p>
               <div className="content-button-box">

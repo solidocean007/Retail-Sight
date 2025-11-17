@@ -1,0 +1,63 @@
+{
+  "name": "Displaygram",
+  "short_name": "Displaygram",
+  "description": "Retail display tracking platform for suppliers and distributors.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff",
+
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+
+    {
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "New Post",
+      "short_name": "Post",
+      "description": "Create a new Displaygram post",
+      "url": "/create-post",
+      "icons": [{ "src": "/icons/shortcut-create.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Feed",
+      "short_name": "Feed",
+      "description": "View activity feed",
+      "url": "/user-home-page",
+      "icons": [{ "src": "/icons/shortcut-feed.png", "sizes": "96x96" }]
+    }
+  ],
+
+  "categories": ["productivity", "business", "photo"],
+  "prefer_related_applications": false
+}
