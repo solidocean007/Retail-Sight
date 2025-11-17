@@ -199,6 +199,7 @@
   --card-outline: var(--gray-800);
 
   --notification-dropdown-bg: var(--muted-steel);
+  --unread-notification-bg: var(var(--gray-100));
   --read-notification-bg: var(--gray-200);
 
   --text-color: var(--gray-900);
@@ -293,6 +294,7 @@
 
   --notification-dropdown-bg: var(--primary-dark-blue);
   --read-notification-bg: var(--gray-700);
+  --unread-notification-bg: var(--accent-light-blue);
   --card-outline: var(--gray-200);
 
   --text-secondary: var(--gray-300);

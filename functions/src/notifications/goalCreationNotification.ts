@@ -1,9 +1,10 @@
 // functions/src/notifications/goalNotification.ts
 import {
   onDocumentCreated,
-  onDocumentUpdated,
+  // onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
-import { sendNotification, admin } from "./sendNotification";
+// import { sendNotification, admin } from "./sendNotification";
+import { sendNotification } from "./sendNotification";
 
 // Example: when a goal is created or assigned, notify users.
 // Tweak collection path & fields to match your schema.

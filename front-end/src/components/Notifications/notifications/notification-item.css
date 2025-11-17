@@ -12,7 +12,7 @@
 
 .notification-item.unread {
   border-left: 6px solid var(--primary-blue);
-  background-color: var(--gray-100);
+  background-color: var(--unread-notification-bg);
   font-weight: 600;
   box-shadow: 0 0 0 2px var(--primary-blue-light, rgba(59,130,246,0.3));
 }
@@ -66,7 +66,7 @@
 
 .notification-timestamp {
   font-size: 12px;
-  color: var(--gray-600);
+  color: var(--text-color);
   text-align: right;
   margin-top: 6px;
   display: block;

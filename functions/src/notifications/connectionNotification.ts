@@ -1,6 +1,6 @@
 // functions/src/notifications/connectionNotification.ts
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import { sendNotification, admin } from "./sendNotification";
+import { sendNotification } from "./sendNotification";
 
 // Example: new connection request between companies
 
