@@ -1,521 +1,230 @@
-/* splashPage.css */
-
-.splash-container {
+/* splashPage.css — mobile-first, modern, clean */
+.splash {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  /* height: 100%; */
-  justify-content: flex-start;
-  align-items: center;
-  text-align: center;
-  width: 100%;
+  gap: 3rem;
+  padding: 1.5rem;
+  padding-top: 4rem;
 }
 
-.top-nav {
-  position: sticky;
-  position: -webkit-sticky; /* Safari/iOS */
-  top: 0;
+/* ================================
+   HEADER / NAV
+================================ */
+.splash-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: #002b45; /* Dark header background */
+  background: var(--deep-navy);
+  height: 70px;
+  padding: 0 1.5rem;
   width: 100%;
-  z-index: 1000;
-}
-
-.logo-box {
-  display: flex;
-  align-items: center;
-  color: white;
-}
-
-.logo-box h1 {
-  margin: 0;
-  color: var(--gold-leaf);
-}
-
-.logo-box img {
-  width: 3rem;
-  height: auto;
-}
-
-/* Hamburger Menu Button */
-.splash-menu-button {
-  display: none; /* hide menu button on wide screens */
-  justify-content: flex-end; /* Align the button to the right */
-  align-items: center;
-  cursor: pointer;
+  position: sticky;
+  top: 0;
   z-index: 50;
 }
 
-.top-nav ul {
+.splash-header__brand {
   display: flex;
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  /* background-color: #002b45; */
-  width: 100%;
-  transition: transform 0.3s ease-in-out;
+  align-items: center;
+  gap: 0.75rem; /* space between logo + “Displaygram” */
 }
 
-.top-nav li {
-  margin-right: 0.5rem;
-  width: 9rem;
-  color: whitesmoke;
+.brand-link {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--white);
+  text-decoration: none;
 }
 
-/* List Items */
-.navbar ul li {
-  position: relative;
-  list-style: none;
-  margin: 10px 0;
+.brand-logo {
+  height: 56px;
+  width: auto;
+}
+
+.splash-header__menu-btn {
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 1.5rem;
+  display: block;
   cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-/* Hover effect for list items */
-.navbar ul li:hover {
-  color: #007bff; /* Change text color on hover */
-  transform: translateX(-10px); /* Slight movement effect */
-}
-
-.navbar ul li::after {
-  content: "→";
-  font-size: 3rem;
-  position: absolute;
-  right: -20px;
-  opacity: 0;
-  transition: opacity 0.3s, transform 0.3s ease;
-  pointer-events: none; /* 👈 allow clicks to pass through */
-}
-
-
-/* Show arrow on hover */
-.navbar ul li:hover::after {
-  opacity: 1; /* Show arrow */
-  transform: translateX(-65px); /* Move arrow slightly */
-}
-
-.top-nav a {
-  /* color: var(--splash-nav-text); */
-  padding: 0;
-}
-
-.splash-main {
-  display: flex;
+.splash-nav {
+  display: none;
   flex-direction: column;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 2rem;
+  background: var(--deep-navy);
+  padding: 1rem 0;
+  gap: 1rem;
 }
 
-.first-section,
-.fifth-section {
-  position: relative;
-  width: 100%;
-  color: #ffffff;
-}
-
-.first-image-box img,
-.fifth-image-box img {
-  width: 100%;
-  min-height: 400px; /* Adjust as needed */
-  height: auto;
-  max-height: 400px;
-  object-fit: cover; /* Ensures the image covers the area properly */
-}
-
-.first-content,
-.fifth-content {
+.splash-nav.open {
   display: flex;
-  flex-direction: column;
-  text-align: justify;
-  background-image: url("https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/assets%2Fbluebackground.jpg?alt=media&token=74ab3fe5-ab33-4148-9337-14c869c1dfd7"); /* Adjust the path */
-  color: white;
-  background-size: cover; /* Ensure the background covers the entire container */
-  background-position: center; /* Center the background image */
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  justify-content: center;
-  align-items: center;
-  width: 50%;
-  padding: 1rem;
-  z-index: 2; /* Make sure it's above the image */
 }
 
-.fifth-content {
-  background: #4a535c;
-}
-
-.second-section {
-  color: white;
-  background-color: black;
-  padding: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%; /* Limit content width */
-  margin: 1rem 0rem;
-}
-
-.second-content {
-  display: flex;
-  flex-direction: column;
-  color: white;
-  width: 50%;
-}
-
-.second-image-box {
-  padding: 1rem;
-  width: 100%;
-}
-
-.second-image-box img {
-  width: 50%;
-  min-height: 400px; /* Adjust as needed */
-  max-height: 500px;
-  height: auto;
-  object-fit: cover; /* Ensures the image covers the area properly */
-}
-
-.hero-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%; /* Limit content width */
-  margin-bottom: 1rem;
-}
-
-.hero-content:nth-child(even) {
-  flex-direction: row-reverse;
-}
-
-.hero-full-background {
-  position: relative;
-}
-
-.first-section img,
-.fifth-section img {
-  width: 100%;
-  height: fit-content;
-}
-
-.hero-content-full {
-  position: absolute;
-  color: white;
-  top: 1rem;
-  left: 3rem;
-  padding: 1rem;
-}
-
-.hero-content-left,
-.hero-content-right {
-  width: 50%;
+.splash-nav a {
+  color: var(--white);
+  text-decoration: none;
+  text-align: center;
   padding: 0.5rem;
 }
 
-.second-content p {
-  text-align: justify;
-}
-
-.features-image-box img {
-  height: auto;
-  width: 100%;
-}
-
-.features-image-box {
-  position: relative;
-}
-
-.features-image-box::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: rgba(0, 0, 0, 0.5); /* Black overlay with 20% opacity */
-  z-index: 3; /* Ensure the overlay is below the button text */
-}
-
-.features-button {
-  position: absolute;
-  top: 55%; /* Adjust this value to move the button lower than the middle */
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 5;
-  /* Add any additional styling you need for the button here */
-}
-
-.features-text-box {
-  background-color: #5c97bf; /* Darker blue background */
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.2) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.2) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 5px 5px; /* Adjust the size of the rectangles */
-  color: black;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-height: 400px;
-  width: 35%;
-  margin: auto;
-  text-align: justify;
-}
-
-.section-three {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%; /* Limit content width */
-  margin-bottom: 1rem;
-}
-
-.fourth-block {
-  display: flex;
-  justify-content: center;
-  color: #000;
-  background-image: url("https://images.unsplash.com/photo-1454117096348-e4abbeba002c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
-}
-
-.fourth-insert {
-  margin: 0.5rem;
-}
-
-.last-block {
+/* ================================
+   HERO
+================================ */
+.hero {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+  text-align: center;
+  margin-top: 3rem;
+  width: 100%;
+  padding: 0 1rem;
+}
+
+.hero__text h1 {
+  font-size: 1.9rem;
   color: var(--text-color);
 }
 
-.hero-image img {
-  max-width: 100%;
+.hero__text p {
+  max-width: 600px;
+  margin: 0.5rem auto;
+  color: var(--text-muted);
 }
 
-.hero-image {
-  position: relative;
-  /* height: 100%; */
-}
-
-.content-button-box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.enter-site-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  color: #fff;
-  background-color: #007bff; /* Bootstrap primary color for the button */
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  width: 10rem;
-}
-
-.enter-site-btn:hover {
-  background-color: #0056b3; /* Darken button on hover */
-}
-
-/* Display the menu when 'isMenuOpen' is true */
-.isMenuOpen {
-  transform: translateY(0); /* Show the menu */
-}
-
-.top-nav a {
-  color: var(--splash-nav-text);
-  /* display: block; */
+.hero__image img {
   width: 100%;
-  padding: 0;
+  border-radius: var(--card-radius);
 }
 
-footer {
-  padding: 1rem 0;
-  font-size: 0.9em;
+.hero__cta {
+  margin-top: 1rem;
+}
+
+/* ================================
+   GENERIC SECTION
+================================ */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
   text-align: center;
-  background-color: #002b45; /* Match the header */
-  color: #ffffff; /* Footer text color */
 }
 
-footer a {
-  text-decoration: none;
-  color: #ffffff; /* Links color */
-  transition: color 0.3s ease;
+.section__image img {
+  width: 100%;
+  border-radius: var(--card-radius);
 }
 
-footer a:hover {
-  color: #ffd700; /* Highlight color on hover */
+.section__text h2 {
+  color: var(--text-color);
 }
 
-/* Responsive styles for screens less than or equal to 768px wide (tablets). */
-@media (max-width: 750px) {
-  .top-nav ul {
-    position: absolute;
-    top: 100%; /* appear below the bar, not at 0 */
-    left: 0;
-    right: 0;
-    flex-direction: column;
+.section__text p {
+  color: var(--text-muted);
+  margin: 0.5rem 0;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.75rem 1.4rem;
+  border-radius: var(--btn-border-radius);
+  font-size: 1rem;
+  text-align: center;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: var(--btn-primary-bg);
+  color: var(--text-on-button);
+}
+
+.btn-primary:hover {
+  background: var(--btn-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--btn-secondary-bg);
+  color: var(--text-color);
+}
+
+.btn-secondary:hover {
+  background: var(--btn-secondary-hover);
+}
+
+/* ================================
+   PRICING
+================================ */
+.pricing-preview {
+  background: var(--surface-base);
+  padding: 2rem 1rem;
+  border-radius: var(--card-radius);
+}
+
+.pricing-preview__list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ================================
+   FINAL CTA
+================================ */
+.final-cta {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: var(--surface-base);
+  border-radius: var(--card-radius);
+}
+
+.final-cta h2 {
+  margin-bottom: 0.5rem;
+}
+
+/* ================================
+   DESKTOP
+================================ */
+@media (min-width: 780px) {
+  .hero,
+  .section {
+    flex-direction: row;
     align-items: center;
-    transform: translateY(-100%); /* hidden offscreen */
-    background-color: #002b45;
-    z-index: 1001;
-    transition: transform 0.3s ease-in-out;
-    pointer-events: none; /* 👈 don't intercept clicks when hidden */
+    text-align: left;
+    padding: 2rem 0;
   }
 
-  .top-nav ul.isMenuOpen {
-    transform: translateY(0);
-    pointer-events: auto; /* 👈 clickable when opened */
+  .hero__text,
+  .section__text {
+    flex: 1;
+    padding-right: 2rem;
   }
 
-  .first-content,
-  .fifth-content {
-    width: 100%; /* Full width on smaller screens */
-    position: static; /* Normal document flow */
-    padding: 1rem 2rem; /* Increase padding */
+  .hero__image,
+  .section__image {
+    flex: 1;
   }
 
-  .second-section {
-    flex-direction: column;
+  .splash-header__menu-btn {
+    display: none;
   }
 
-  .second-content,
-  .second-image-box {
-    width: auto;
-  }
-
-  .first-image-box img,
-  .second-image-box img,
-  .fifth-image-box img {
-    display: block; /* Ensure the image is a block element */
-    min-height: 100px; /* Adjust for smaller screens */
-    max-height: 200px;
-  }
-
-  .splash-menu-button {
+  .splash-nav {
     display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    background: none;
   }
 
-  .hero-content,
-  .second-block {
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-  }
-
-  .hero-content-left,
-  .hero-content-right {
-    width: 100%;
-  }
-
-  .hero-content-left,
-  .hero-content-right,
-  .hero-full {
-    position: relative; /* Reset position for smaller screens */
-    text-align: center; /* Center text for smaller screens */
-  }
-
-  .hero-content-full {
-    top: 0;
-    left: 0;
-  }
-
-  .hero-full img {
-    width: 100%; /* Full width of the container */
-    height: auto; /* Keep image aspect ratio */
-  }
-
-  /* Hide overflow images */
-  .hero-content-right {
-    overflow: hidden;
-  }
-
-  .section-three {
-    flex-direction: column-reverse;
-  }
-
-  .third-block {
-    flex-direction: column;
-    width: 90%;
-  }
-
-  /* Adjust button sizes */
-  .enter-site-btn {
-    padding: 0.8rem 1.6rem;
-    font-size: 0.8rem;
-  }
-
-  .top-nav .isMenuOpen {
-    transform: translateY(0); /* Bring the menu on screen */
-  }
-
-  /* Top navigation links - hidden by default on small screens */
-  .top-nav ul {
-    display: flex; /* Flex to stack items */
-    flex-direction: column; /* Stack items vertically */
-    align-items: center;
-    position: absolute;
-    top: 0rem;
-    left: 0;
-    transform: translateY(-100%); /* Hide the menu offscreen */
-    width: 100%;
-    z-index: 10;
-    transition: transform 0.3s ease-in-out;
-    background-color: #002b45;
-  }
-}
-
-/* Responsive styles for screens less than or equal to 500px wide (phones). */
-@media (max-width: 500px) {
-  .splash-container {
-    font-size: smaller;
-  }
-
-  .hero-content-full {
-    top: 10px;
-    left: 0;
-    /* transform: translate(-50%, -50%); */
-  }
-
-  .second-block {
-    flex-direction: column;
-  }
-
-  .third-block {
-    width: 90%;
-  }
-
-  .hero-content-left,
-  .hero-content-right {
-    padding-bottom: 0.5rem;
-  }
-
-  /* Ensure images don't overflow their containers */
-  .hero-content-right img,
-  .hero-full img {
-    max-width: 100%;
-    height: auto;
-  }
-
-  .top-nav ul {
-    flex-direction: column;
-  }
-
-  .top-nav li {
-    margin: 5px 0; /* Reduce margin between nav items */
+  .splash-nav a {
+    color: var(--white);
+    padding: 0;
   }
 }
