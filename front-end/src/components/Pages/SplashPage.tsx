@@ -16,6 +16,21 @@ const SplashPage = () => {
     if (user) navigate("/user-home-page");
   }, [user, navigate]);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    document.querySelectorAll(".fade-in").forEach((el) => observer.observe(el));
+  }, []);
+
   return (
     <>
       <SplashPageHelmet />
@@ -23,11 +38,10 @@ const SplashPage = () => {
         <div className="splash-header__brand">
           <Link to="/" className="brand-link">
             <img
-              src="/splash/logo.png"
+              src="/splash/splash-logo.png"
               alt="Displaygram logo"
               className="brand-logo"
             />
-            <span>Displaygram</span>
           </Link>
         </div>
 
@@ -60,7 +74,7 @@ const SplashPage = () => {
 
       <main className="splash">
         {/* HERO */}
-        <section className="hero">
+        <section className="hero section fade-in">
           <div className="hero__text">
             <h1>Discover and share retail success.</h1>
             <p>
@@ -79,14 +93,15 @@ const SplashPage = () => {
         </section>
 
         {/* OBJECTIVE */}
-        <section id="objective" className="section objective">
+        <section id="objective" className="section fade-in objective">
           <div className="section__text">
             <h2>The Objective</h2>
             <p>
-              Displaygram helps teams <strong>capture, archive, and evaluate</strong> retail
-              execution. Field reps upload photos tied to the correct account,
-              brand, and timing — creating a visual history your entire team can
-              learn from.
+              Displaygram helps teams{" "}
+              <strong>capture, archive, and evaluate</strong> retail execution.
+              Field reps upload photos tied to the correct account, brand, and
+              timing — creating a visual history your entire team can learn
+              from.
             </p>
             <p>
               Managers and suppliers can track completion, verify execution, and
@@ -99,7 +114,7 @@ const SplashPage = () => {
         </section>
 
         {/* FEATURES */}
-        <section id="features" className="section features-preview">
+        <section id="features" className="section fade-in features-preview">
           <div className="section__image">
             <img src="/splash/features.png" alt="Retail shelves" />
           </div>
@@ -108,8 +123,8 @@ const SplashPage = () => {
             <h2>Features</h2>
             <p>
               Filter displays by store, category, brand, or rep. Find the work
-              that matters most — whether you're a distributor, supplier partner,
-              or manager.
+              that matters most — whether you're a distributor, supplier
+              partner, or manager.
             </p>
 
             <Link to="/features" className="btn-secondary">
@@ -119,27 +134,36 @@ const SplashPage = () => {
         </section>
 
         {/* PRICING */}
-        <section id="pricing" className="section pricing-preview">
+        <section id="pricing" className="section fade-in pricing-preview">
           <h2>Get Started Free — Upgrade Anytime</h2>
-          <p>
-            Displaygram is <strong>free to explore</strong> with limited access.  
-            Unlock advanced features when your team is ready.
-          </p>
 
-          <ul className="pricing-preview__list">
-            <li>✔️ Create and view posts in your company</li>
-            <li>✔️ No credit card required</li>
-            <li>🔒 Cross-company visibility</li>
-            <li>🔒 Goal tracking & execution insights</li>
-          </ul>
+          <div className="pricing-columns">
+            <div className="pricing-col">
+              <p>
+                Displaygram is <strong>free to explore</strong> with limited
+                access. Unlock advanced features when your team is ready.
+              </p>
+            </div>
 
-          <Link to="/pricing" className="btn-primary">
+            <div className="pricing-col">
+              <ul className="pricing-preview__list">
+                <li>✔️ Create and view posts in your company</li>
+                <li>✔️ No credit card required</li>
+                <li>🔒 Cross-company visibility</li>
+                <li>🔒 Goal tracking & execution insights</li>
+              </ul>
+            </div>
+
+            <div className="pricing-col"></div>
+          </div>
+
+          <Link to="/pricing" className="btn-primary pricing-cta">
             View Plans & Pricing
           </Link>
         </section>
 
         {/* SECURITY */}
-        <section id="security" className="section security">
+        <section id="security" className="section fade-in security">
           <div className="section__text">
             <h2>Security & Compliance</h2>
             <p>
@@ -158,7 +182,7 @@ const SplashPage = () => {
         </section>
 
         {/* FINAL CTA */}
-        <section className="final-cta">
+        <section className="section fade-in final-cta">
           <h2>Ready to get started?</h2>
           <p>Unlock clearer retail execution today.</p>
           <Link to="/request-access" className="btn-primary">
