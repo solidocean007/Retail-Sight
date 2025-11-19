@@ -8,11 +8,64 @@
 }
 
 .assignments-preview-container {
-  max-height: 250px;
-  overflow-y: auto;
-  border: 1px solid var(--card-outline);
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--card-bg, #111);
+  border: 1px solid var(--card-outline, #333);
+}
+
+.ap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ap-clear {
+  border: 1px solid var(--danger-color, #c44);
+  color: var(--danger-color, #c44);
+  padding: 0.25rem 0.75rem;
   border-radius: 8px;
-  padding: 0.5rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ap-subtitle {
+  text-align: center;
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+}
+
+.ap-user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ap-user-card {
+  border: 1px solid var(--card-outline);
+  padding: 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--card-bg-dark, #181818);
+  transition: 0.2s ease;
+}
+
+.ap-user-card:hover {
+  border-color: var(--main-blue);
+  background: var(--card-hover, #222);
+  transform: translateY(-2px);
+}
+
+.ap-user-name {
+  font-weight: 600;
+}
+
+.ap-user-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
 }
 
 /* ====== Rows / chips ====== */
@@ -65,7 +118,7 @@
   border: 1px solid var(--card-outline);
   border-radius: 8px;
   overflow-y: auto;
-  height: 400px;
+  height: auto;
   max-height: 700px;
   background-color: var(--background-pop-out-body);
 }
@@ -167,11 +220,11 @@
   border-radius: 10px;
   padding: 0.75rem 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  margin-bottom: 1rem;
+  margin: 1rem 0;
 }
 .unassigned-scroll {
   margin-top: 0.5rem;
-  max-height: 220px;
+  max-height: 520px;
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -214,7 +267,7 @@
 /* Table wrapper */
 .unassigned-table-wrapper {
   margin-top: 0.5rem;
-  max-height: 260px;
+  max-height: 450px;
   overflow-y: auto;
   border-radius: 6px;
   border: 1px solid var(--card-outline);

@@ -1,0 +1,14 @@
+.uam-search {
+  margin-bottom: 1rem;
+}
+
+.uam-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.uam-empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--text-muted);
+}
