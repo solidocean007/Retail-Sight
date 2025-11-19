@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .line { 
+        stroke: #2b4c7f; 
+        stroke-opacity: 0.15; 
+        stroke-width: 1; 
+      }
+    </style>
+
+    <!-- dot -->
+    <circle id="dot" cx="0" cy="0" r="2" fill="#2b4c7f" fill-opacity="0.08" />
+  </defs>
+
+  <!-- diagonal lines -->
+  <path class="line" d="M-200 200 L200 -200"/>
+  <path class="line" d="M0 400 L400 0"/>
+  <path class="line" d="M400 800 L800 400"/>
+  <path class="line" d="M200 1000 L1000 200"/>
+
+  <!-- vertical lines -->
+  <path class="line" d="M200 -200 V1000"/>
+  <path class="line" d="M600 -200 V1000"/>
+
+  <!-- horizontal lines -->
+  <path class="line" d="M-200 200 H1000"/>
+  <path class="line" d="M-200 600 H1000"/>
+
+  <!-- arcs -->
+  <circle class="line" cx="400" cy="400" r="150" fill="none"/>
+  <circle class="line" cx="400" cy="400" r="300" fill="none"/>
+  <circle class="line" cx="400" cy="400" r="500" fill="none"/>
+
+  <!-- dots -->
+  <use href="#dot" x="120" y="150"/>
+  <use href="#dot" x="520" y="250"/>
+  <use href="#dot" x="690" y="540"/>
+  <use href="#dot" x="300" y="660"/>
+  <use href="#dot" x="100" y="500"/>
+  <use href="#dot" x="650" y="120"/>
+</svg>

@@ -1,6 +1,6 @@
 // App.tsx
 import React, { useEffect, useMemo } from "react";
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter as Router, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import Snackbar from "@mui/material/Snackbar";
@@ -25,25 +25,27 @@ import AppLoadingScreen from "./components/AppLoadingScreen";
 import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 
-
-function App(): React.JSX.Element {
+// 🔍 NEW WRAPPER — Allows Router to stay at top,
+// while AppContent can safely use useLocation()
+function AppContent() {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
+
   const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
   const snackbar = useSelector((s: RootState) => s.snackbar);
   const appReady = useSelector((s: RootState) => s.app.appReady);
   const loadingMessage = useSelector((s: RootState) => s.app.loadingMessage);
 
   const theme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
+  const location = useLocation();
 
-  //
-  // 🔄 Run core bootstrap (Option B)
-  //
+  // Detect splash page to hide ThemeToggle
+  const isSplashPage = location.pathname === "/";
+
+  // Run core bootstrap
   useAppBootstrap();
 
-  //
-  // 🎨 Theme initialization
-  //
+  // Initialize theme
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
     if (storedTheme) {
@@ -55,20 +57,12 @@ function App(): React.JSX.Element {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-
-  //
-  // 🧠 LOADER LOGIC — Option B
-  //
-  // - Public visitor → show full app immediately
-  // - Logged-in user → show loader until essential boot completes
-  // - Firebase still waking → show loader
-  //
+  // Loader logic
   const showLoader = (() => {
-    if (initializing) return true;      // Firebase waking up
-    if (!currentUser) return false;     // Public visitor → no blocking
-    return !appReady;                   // Logged-in user waits for bootstrap
+    if (initializing) return true;
+    if (!currentUser) return false;
+    return !appReady;
   })();
-
 
   return (
     <>
@@ -80,11 +74,11 @@ function App(): React.JSX.Element {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <ThemeProvider theme={theme}>
             <CssBaseline />
-            <ThemeToggle />
 
-            <Router>
-              <AppRoutes />
-            </Router>
+            {/* Hide ThemeToggle on splash page */}
+            {!isSplashPage && <ThemeToggle />}
+
+            <AppRoutes />
 
             {snackbar.current && (
               <Snackbar
@@ -114,4 +108,13 @@ function App(): React.JSX.Element {
   );
 }
 
-export default App;
+// ============================
+//  MAIN APP — Router at Top
+// ============================
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}

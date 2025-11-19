@@ -1,0 +1,13 @@
+<svg width="1440" height="80" viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="darkWave" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="rgba(0, 0, 0, 0)" />
+      <stop offset="100%" stop-color="rgba(0, 0, 0, 0.35)" />
+    </linearGradient>
+  </defs>
+
+  <path 
+    d="M0 20 C 360 90, 1080 -40, 1440 20 L1440 80 L0 80 Z" 
+    fill="url(#darkWave)" 
+  />
+</svg>

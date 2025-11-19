@@ -27,6 +27,7 @@
   --status-inactive-bg: rgba(120, 120, 120, 0.1);
 
   /* Brand & Accent */
+  --accent-orange: #ff8a3d;
   --accent-light-blue: #60a5fa; /* soft blue accent for gradients */
   --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
   --card-shadow-hover: 0 8px 24px rgba(59, 130, 246, 0.25);
@@ -226,7 +227,7 @@
   );
 
   --header-title: var(--gray-900);
-
+   --accent-orange: #ff8a3d;
   --link-color: var(--gold);
   --link-hover-color: var(--dark-gold);
 
@@ -315,7 +316,7 @@
   --header-title: var(--white);
   --link-color: #93c5fd; /* Light-blue-300 (Tailwind-ish) */
   --link-hover-color: var(--primary-blue); /* Slightly brighter */
-
+   --accent-orange: #ff8a3d;
   --button-background: var(--primary-blue);
   --button-background-hover: var(--primary-blue-dark);
   --button-text-color: var(--white);
