@@ -198,6 +198,10 @@
   --dashboard-card: var(--gray-200);
   --card-outline: var(--gray-800);
 
+  --notification-dropdown-bg: var(--muted-steel);
+  --unread-notification-bg: var(var(--gray-100));
+  --read-notification-bg: var(--gray-200);
+
   --text-color: var(--gray-900);
   --text-muted: #6f7a8a;
   --text-on-button: black;
@@ -287,6 +291,10 @@
   --surface-elevated: var(--gray-900);
 
   --dashboard-card: var(--bgColor-muted);
+
+  --notification-dropdown-bg: var(--primary-dark-blue);
+  --read-notification-bg: var(--gray-700);
+  --unread-notification-bg: var(--accent-light-blue);
   --card-outline: var(--gray-200);
 
   --text-secondary: var(--gray-300);
@@ -318,7 +326,7 @@
 
   --input-background: var(--gray-900);
   --input-text-color: var(--gray-100);
-  --input-border: var(--gray-200);
+  --input-border: var(--gray-700);
 
   --form-background-color: var(--gray-800);
 

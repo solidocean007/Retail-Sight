@@ -21,11 +21,18 @@ module.exports = {
   plugins: ["@typescript-eslint", "import", "prettier"],
   ignorePatterns: [".eslintrc.js", "/lib/**/*"],
   rules: {
+     "@typescript-eslint/no-explicit-any": "off",
     quotes: ["error", "double"],
-    indent: ["error", 2],
+    indent: ["off"],
     "linebreak-style": ["error", "unix"],
     "max-len": ["error", { code: 120 }],
-    "prettier/prettier": ["error"],
+    "prettier/prettier": [
+      "error",
+      {
+        tabWidth: 2,
+        useTabs: false,
+      },
+    ],
     curly: "off",
     "valid-jsdoc": "off",
     "import/no-unresolved": 0,

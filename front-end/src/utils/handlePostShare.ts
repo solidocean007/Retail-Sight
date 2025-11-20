@@ -1,31 +1,41 @@
-import buildPostLink from "./buildPostLink";
+// handlePostShare.ts
 
-export const handlePostShare = async (postId: string) => {
+import { collection, addDoc, onSnapshot } from "firebase/firestore";
+import { db } from "../utils/firebase";
+
+export const handlePostShare = async (longUrl: string): Promise<string> => {
   try {
-    console.log(`Generating or reusing share token for post ${postId}...`);
 
-    const response = await fetch('https://my-fetch-data-api.vercel.app/api/generatePostShareToken', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postId }),
+    // 🚫 BITLY DISABLED TEMPORARILY
+    // return the long URL instantly for now
+    return longUrl;
+
+    // ---- ORIGINAL BITLY LOGIC BELOW (commented out, preserved) ----
+    /*
+    const urlDocRef = await addDoc(collection(db, "urls"), {
+      url: longUrl,
     });
 
-    const data = await response.json();
-    const newToken = data.token;
+    return new Promise((resolve, reject) => {
+      const unsub = onSnapshot(urlDocRef, (snap) => {
+        const data = snap.data();
+        if (!data) return;
 
-    if (!newToken) {
-      console.error("Failed to generate token.");
-      throw new Error("Failed to generate token.");
-    }
+        if (data.shortUrl) {
+          unsub();
+          resolve(data.shortUrl);
+        }
 
-    const shareableLink = buildPostLink(postId, newToken);
-    console.log("Shareable Link:", shareableLink);
-
-    return shareableLink;
+        if (data.error) {
+          unsub();
+          reject(data.error);
+        }
+      });
+    });
+    */
   } catch (error) {
-    console.error("Failed to share post:", error);
-    throw error;
+    console.error("Error generating share link:", error);
+    return longUrl; // fallback
   }
 };
-
 

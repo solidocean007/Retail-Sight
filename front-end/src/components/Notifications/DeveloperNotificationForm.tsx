@@ -20,7 +20,6 @@ import {
   CompanyWithUsersAndId,
 } from "../../utils/types";
 import { useAppDispatch } from "../../utils/store";
-import { sendNotification } from "../../thunks/notificationsThunks";
 // import { LocalizationProvider } from "@mui/x-date-pickers";
 // import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 // import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -63,12 +62,12 @@ const DeveloperNotificationForm = ({
       pinned: false,
     };
 
-    dispatch(
-      sendNotification({
-        // companyId: currentUser.companyId || "global",
-        notification,
-      })
-    );
+    // dispatch(
+    //   sendNotification({
+    //     // companyId: currentUser.companyId || "global",
+    //     notification,
+    //   })
+    // );
 
     setTitle("");
     setMessage("");

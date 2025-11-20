@@ -21,6 +21,8 @@ import { rejectAccessRequest } from "./rejectAccessRequest";
 import { approveAccessRequest } from "./approveAccessRequest";
 import { getPlanDetails } from "./planHandlers";
 import { enforcePlanLimits } from "./enforcePlanLimits";
+import { generatePostShareToken } from "./generatePostShareToken";
+import { validatePostShareToken } from "./validatePostShareToken";
 
 // 🧾 Braintree Billing System
 import {
@@ -39,6 +41,12 @@ import {
   initCompanyBilling,
   backfillBillingForCompanies,
 } from "./braintreeHandlers";
+
+// Notification system
+import { sendNotification } from "./notifications/sendNotification";
+import { commentLikeNotification } from "./notifications/commentLikeNotification";
+import { commentNotification } from "./notifications/commentNotification";
+import { postLikeNotification } from "./notifications/postLikeNotification";
 
 import { syncPlanLimits } from "./braintreeHelpers";
 
@@ -67,6 +75,8 @@ export {
   rejectAccessRequest,
   getPlanDetails,
   enforcePlanLimits,
+  generatePostShareToken,
+  validatePostShareToken,
 
   // Billing functions
   updateSubscriptionWithProration,
@@ -84,4 +94,10 @@ export {
   listPlansAndAddons,
   initCompanyBilling,
   backfillBillingForCompanies,
+
+  // Notifications
+  sendNotification,
+  commentLikeNotification,
+  commentNotification,
+  postLikeNotification,
 };

@@ -47,6 +47,9 @@ import LinkShareModal from "./LinkShareModal";
 import BlurUpImage from "./BlurUpImage";
 import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
+import { Timestamp } from "firebase/firestore";
+import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
+
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -179,12 +182,6 @@ const PostCard: React.FC<PostCardProps> = ({
     protectedAction(onLikePostButtonClick);
   };
 
-  let formattedDate = "N/A"; // default value
-  if (post.displayDate) {
-    const jsDate = new Date(post.displayDate); // Creating a Date object from ISO string
-    formattedDate = jsDate.toLocaleDateString();
-  }
-
   const handleDeleteComment = async (commentId: string) => {
     try {
       const postRef = doc(db, "posts", post.id);
@@ -245,23 +242,44 @@ const PostCard: React.FC<PostCardProps> = ({
   const handleShare = async () => {
     try {
       setIsSharing(true);
-      const link = await handlePostShare(post.id);
+      setShareModalOpen(true);
 
+      const longUrl = `https://displaygram.com/p/${post.id}`;
+
+      // 🔄 Start short-link generation in background
+      const shortLinkPromise = handlePostShare(longUrl);
+
+      // ⏳ Timeout fallback (5 seconds)
+      const timeoutPromise = new Promise<string>((resolve) =>
+        setTimeout(() => resolve(longUrl), 5000)
+      );
+
+      // 🏁 Whichever resolves first wins
+      const finalUrl = await Promise.race([shortLinkPromise, timeoutPromise]);
+
+      setShareLink(finalUrl);
+
+      // 📱 If device supports native sharing
       if (navigator.share) {
-        await navigator.share({
-          title: "Displaygram Post",
-          text: "Check out this post on Displaygram!",
-          url: link,
-        });
-      } else {
-        setShareLink(link);
-        setShareModalOpen(true);
+        try {
+          await navigator.share({
+            title: "Displaygram Post",
+            text: "Check out this retail display!",
+            url: finalUrl,
+          });
+
+          setShareModalOpen(false); // User shared → close modal
+          return;
+        } catch (err) {
+          console.warn("Native share failed:", err);
+        }
       }
-    } catch (error) {
-      console.error("Error sharing post:", error);
+
+      // 🖥 Desktop users will just see the modal with finalUrl
+    } catch (err) {
+      console.error("Error sharing post:", err);
     } finally {
       setIsSharing(false);
-      handleClose();
     }
   };
 
@@ -345,7 +363,8 @@ const PostCard: React.FC<PostCardProps> = ({
                   <div className="store-name-number">
                     <h3>{post.account?.accountName} </h3>
 
-                    <h5>{formattedDate}</h5>
+                    <h5>{formatDisplayDate(post.displayDate)}</h5>
+
                   </div>
                   <div className="store-address-box">
                     <h6>{post.account?.accountAddress}</h6>{" "}

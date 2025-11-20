@@ -32,6 +32,8 @@ import useUserAccountsSync from "./useUserAccountsSync";
 import useAllCompanyAccountsSync from "./useAllCompanyAccountsSync";
 import { useCustomAccountsSync } from "./useCustomAccountsSync";
 import { useCompanyConnectionsListener } from "./useCompanyConnectionsListener";
+import { useCompanyProductsListener } from "./useCompanyProductsListener";
+
 
 /**
  * useAppBootstrap – Option B
@@ -56,6 +58,9 @@ export function useAppBootstrap() {
   // 🔄 Always call these (Rules of Hooks)
   //
   useSchemaVersion();
+
+  // 👥 Re-enable dependent sync hooks (required for full goal hydration)
+  useCompanyProductsListener(companyId);
   useCompanyUsersSync();
   useUserAccountsSync();
   useAllCompanyAccountsSync(

@@ -66,7 +66,7 @@ const NotificationsPage: React.FC = () => {
       </div>
 
       <div className="notifications-actions">
-        <button className="button-outline" onClick={() => navigate("/")}>
+        <button className="button-primary" onClick={() => navigate("/")}>
           Close
         </button>
         <button className="button-primary" onClick={handleMarkAllRead}>

@@ -10,7 +10,7 @@ import MemoizedPostCard from "./../PostCard";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 
-export const ViewPostByLink = () => {
+export const PublicPostViewer = () => {
   const navigate = useNavigate();
   const { postId } = useParams();
   const user = useSelector(selectUser);
@@ -77,19 +77,66 @@ export const ViewPostByLink = () => {
   }
 
   return (
-    <div className=" view-shared-post-page">
+    <div className="view-shared-post-page">
       <HeaderBar toggleFilterMenu={() => {}} />
-        <button className="btn-secondary" onClick={()=>navigate("/user-home-page")}>Home</button>
 
       <div className="view-shared-post-container">
-        <MemoizedPostCard
-          post={post as PostWithID}
-          id={(post as PostWithID).id}
-          currentUserUid={user?.uid || ""}
-        />
+        <div className="view-shared-post-header">
+          {!user && (
+            <div className="cta-hero">
+              <Typography variant="h2" align="center" className="cta-heading">
+                Retail displays that inspire. Results that scale.
+              </Typography>
+
+              <Typography
+                variant="body1"
+                align="center"
+                className="cta-subtext"
+              >
+                Displaygram is where suppliers and distributors showcase their
+                best work—and get results.
+              </Typography>
+
+              <button
+                color="secondary"
+                className="cta-learn-button"
+                onClick={() => navigate("/request-access")}
+              >
+                Learn More & Get Started
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="view-post-by-link-page">
+          {post && (
+            <div className="view-post-card-wrapper">
+              <MemoizedPostCard
+                post={post}
+                id={post.id}
+                currentUserUid={user?.uid || ""}
+              />
+            </div>
+          )}
+
+          {!user && (
+            <div className="view-post-footer-cta">
+              <h3>Want to share your own displays?</h3>
+              <button
+                className="view-post-cta-secondary"
+                onClick={() => navigate("/sign-up-login?mode=signup")}
+              >
+                Join Displaygram
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+      <div>
+        <h3>Click Image For Larger View</h3>
       </div>
     </div>
   );
 };
 
-export default ViewPostByLink;
+export default PublicPostViewer;

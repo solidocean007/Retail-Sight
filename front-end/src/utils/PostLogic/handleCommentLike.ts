@@ -1,21 +1,28 @@
-// handleLikeComment.ts
+// utils/PostLogic/handleCommentLike.ts
+
 import {
   doc,
   updateDoc,
   arrayUnion,
   arrayRemove,
-  Timestamp,
   collection,
+  addDoc,
   query,
   where,
   getDocs,
   deleteDoc,
+  serverTimestamp,
 } from "firebase/firestore";
-import { CommentType, NotificationType, PostWithID, UserType } from "../types";
-import { sendNotification } from "../../thunks/notificationsThunks";
+
+import { CommentType, PostWithID, UserType } from "../types";
 import { db } from "../firebase";
 import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 
+/**
+ * Handles liking/unliking a comment.
+ * Frontend updates comment likes + writes to commentLikes/{id}
+ * Cloud Functions will generate the notification.
+ */
 export const handleCommentLike = async ({
   comment,
   post,
@@ -27,57 +34,45 @@ export const handleCommentLike = async ({
   user: UserType;
   liked: boolean;
 }) => {
-  const commentId = comment.commentId;
-  const commentRef = doc(db, "comments", commentId);
-  const isSelf = user.uid === comment.userId;
-
   try {
-    // ✅ 1. Update Firestore comment likes
-    await updateDoc(commentRef, {
-      likes: liked ? arrayUnion(user.uid) : arrayRemove(user.uid),
-    });
+    if (!comment.commentId) {
+      console.error("Comment missing commentId:", comment);
+      return;
+    }
 
-    // ✅ 2. Notification logic
-    if (liked && !isSelf && post.postedByUid) {
-      const notif: NotificationType = {
-        id: "",
-        title: "Like on Your Comment",
-        message: `${user.firstName} ${user.lastName} liked your comment on: ${
-          post.accountName || "a store"
-        }`,
-        sentAt: Timestamp.now(),
-        sentBy: user,
-        recipientUserIds: [post.postedByUid],
-        recipientCompanyIds: [],
-        recipientRoles: [],
-        readBy: [],
-        priority: "low",
-        pinned: false,
-        type: "like",
+    const commentRef = doc(db, "comments", comment.commentId);
+
+    const likeMutation = liked ? arrayUnion(user.uid) : arrayRemove(user.uid);
+
+    // 1️⃣ Update comment.likes array
+    await updateDoc(commentRef, { likes: likeMutation });
+
+    // 2️⃣ Write to commentLikes for backend triggers
+    const commentLikesCol = collection(db, "commentLikes");
+
+    if (liked) {
+      await addDoc(commentLikesCol, {
         postId: post.id,
         commentId: comment.commentId,
-      };
-
-      await sendNotification({ notification: notif } as any);
-    }
-
-    // ✅ 3. Remove notification if unliked
-    if (!liked && !isSelf) {
-      const snap = await getDocs(
-        query(
-          collection(db, "notifications"),
-          where("sentBy.uid", "==", user.uid),
-          where("recipientUserIds", "array-contains", comment.userId),
-          where("postId", "==", post.id),
-          where("commentId", "==", comment.commentId),
-          where("type", "==", "like")
-        )
-      );
-      snap.forEach(async (docSnap) => {
-        await deleteDoc(docSnap.ref);
+        userId: user.uid,
+        userName: `${user.firstName} ${user.lastName}`,
+        createdAt: serverTimestamp(),
       });
+    } else {
+      // Unlike → delete any existing like record
+      const q = query(
+        commentLikesCol,
+        where("commentId", "==", comment.commentId),
+        where("userId", "==", user.uid)
+      );
+
+      const snap = await getDocs(q);
+      for (const d of snap.docs) {
+        await deleteDoc(d.ref);
+      }
     }
-    // ✅ 4. Always update post timestamp for listeners
+
+    // 3️⃣ Update post timestamp so feed reorders
     await updatePostWithNewTimestamp(post.id);
   } catch (error) {
     console.error("Failed to like/unlike comment:", error);

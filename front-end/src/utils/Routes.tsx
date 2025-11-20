@@ -14,7 +14,6 @@ import SplashPage from "../components/Pages/SplashPage";
 import ViewCollection from "../components/Pages/ViewCollection";
 import { PageNotFound } from "../components/Pages/ErrorPages/PageNotFound";
 import { AccessDenied } from "../components/Pages/ErrorPages/AccessDenied";
-import { ViewSharedPost } from "../components/Pages/ViewSharedPost";
 import DeveloperDashboard from "../components/Pages/DeveloperDashboard";
 import NotificationsPage from "../components/Pages/NotificationsPage";
 import LoginForm from "../components/Pages/LoginForm";
@@ -22,13 +21,14 @@ import LoginForm from "../components/Pages/LoginForm";
 import RequestAccessForm from "../components/Pages/RequestAccessForm";
 import { Navigate } from "react-router-dom"; // add this import
 import InviteAcceptForm from "../components/Pages/InviteAcceptForm";
-import ViewPostByLink from "../components/Pages/ViewPostByLink";
+import { PublicPostViewer } from "../components/Pages/ViewPostByLink";
 import ResetPassword from "../components/Pages/ResetPassword";
 import PricingPlans from "../components/Pages/PricingPlans";
 import BillingDashboard from "../components/Pages/Billing/BillingDashboard";
 import RequestSubmitted from "../components/Pages/RequestSubmitted";
 import CompanyOnboardingAcceptForm from "../components/Pages/CompanyOnboardingAcceptForm";
 import ProtectedRoute from "../components/ProtectedRoute";
+import PostViewer from "../components/Pages/PostViewer";
 
 export const AppRoutes = () => {
   return (
@@ -58,8 +58,8 @@ export const AppRoutes = () => {
         element={<ViewCollection />}
       />
       <Route
-        path="/view-shared-post/:postId/:token"
-        element={<ViewSharedPost />}
+        path="/post/:postId"
+        element={<PostViewer />}
       />
       <Route
         path="/user-home-page"
@@ -100,7 +100,7 @@ export const AppRoutes = () => {
         element={<CompanyOnboardingAcceptForm />}
       />
 
-      <Route path="/view-post-by-link/:postId" element={<ViewPostByLink />} />
+      <Route path="/p/:postId" element={<PublicPostViewer />} />
       <Route path="/access-denied" element={<AccessDenied />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
