@@ -1,0 +1,38 @@
+.rrn-container {
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.25rem;
+  background: var(--gray-200);
+  border-radius: 12px;
+}
+
+.rrn-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.rrn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.rrn-modes {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rrn-preview-btn {
+  padding: 0.5rem 1rem !important;
+}
+
+@media (max-width: 600px) {
+  .rrn-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

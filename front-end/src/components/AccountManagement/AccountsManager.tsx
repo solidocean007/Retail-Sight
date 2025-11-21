@@ -49,6 +49,7 @@ import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
 import UploadReviewModal, { UnifiedDiff } from "./UploadReviewModal";
 import { getAccountDiffs } from "./utils/getAccountDiffs";
 import AccountsBackup from "./AccountsBackup";
+import ReassignAccountRouteNumber from "./ReassignAccountRouteNumber";
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -96,6 +97,35 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const addInputRef = useRef<HTMLInputElement>(null);
   const updateInputRef = useRef<HTMLInputElement>(null);
+  const [oldRoute, setOldRoute] = useState("");
+  const [newRoute, setNewRoute] = useState("");
+  const [showReassignConfirm, setShowReassignConfirm] = useState(false);
+
+  const handleReassignRoutes = () => {
+    if (!oldRoute.trim() || !newRoute.trim()) {
+      dispatch(showMessage("Both route numbers are required."));
+      return;
+    }
+
+    const updated = accounts.map((acc) => {
+      if (!acc.salesRouteNums?.includes(oldRoute.trim())) return acc;
+
+      return {
+        ...acc,
+        salesRouteNums: [
+          ...acc.salesRouteNums.filter((r) => r !== oldRoute.trim()),
+          newRoute.trim(),
+        ],
+      };
+    });
+
+    setPendingUpdates(updated);
+    setFileData(updated);
+    setConfirmMessage(
+      `Reassign all accounts from route ${oldRoute} → ${newRoute}?`
+    );
+    setShowReassignConfirm(true);
+  };
 
   const handleAccountsUpload = async (file: File) => {
     try {
@@ -592,6 +622,15 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         placeholder="e.g., 45"
       />
 
+      <ReassignAccountRouteNumber
+        accounts={accounts}
+        onSubmit={async (updatedList) => {
+          await saveAccountsToFirestore(updatedList);
+          dispatch(showMessage("Route reassignment complete."));
+          fetchAccounts(); // refresh state + IndexedDB
+        }}
+      />
+
       <Typography variant="body2" sx={{ marginTop: 1 }}>
         {filteredAccounts.length} account
         {filteredAccounts.length !== 1 ? "s" : ""} found.
@@ -700,6 +739,23 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         message="Would you like to back up current accounts before uploading?"
         onClose={handleBackupDecline}
         onConfirm={handleBackupConfirm}
+      />
+      <CustomConfirmation
+        isOpen={showReassignConfirm}
+        onClose={() => setShowReassignConfirm(false)}
+        onConfirm={async () => {
+          setShowReassignConfirm(false);
+
+          try {
+            await saveAccountsToFirestore(pendingUpdates!); // reuse your existing save
+            dispatch(showMessage("Routes reassigned successfully."));
+          } catch (err) {
+            console.error("Failed reassignment:", err);
+            dispatch(showMessage("Failed to reassign routes."));
+          }
+        }}
+        message={`Confirm reassigning all accounts from route ${oldRoute} → ${newRoute}?`}
+        loading={isSubmitting}
       />
 
       <UploadTemplateModal
