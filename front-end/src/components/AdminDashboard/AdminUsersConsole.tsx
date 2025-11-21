@@ -314,14 +314,14 @@ export default function AdminUsersConsole() {
     // should we define this as a usertype return?
     if (!editRow) return;
     try {
-      const enforceLimit = httpsCallable(functions, "enforceSuperAdminLimit");
+      // const enforceLimit = httpsCallable(functions, "enforceSuperAdminLimit");
 
       // ask backend if this is allowed
-      await enforceLimit({
-        companyId,
-        uid: editRow.uid,
-        newRole: editRow.role,
-      });
+      // await enforceLimit({
+      //   companyId,
+      //   uid: editRow.uid,
+      //   newRole: editRow.role,
+      // });
 
       await updateDoc(doc(db, "users", editRow.uid), {
         firstName: editRow.firstName ?? null,

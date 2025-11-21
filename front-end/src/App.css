@@ -119,6 +119,7 @@ input[type="password"] {
   width: 100%;
   padding: 5px; /* Adjust as necessary */
   /* border: 1px solid #ccc; */
+  color: var(--text-color);
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }

@@ -27,10 +27,10 @@ export const enforceSuperAdminLimit = onCall(async (request) => {
     .where("role", "==", "super-admin")
     .get();
 
-  if (snapshot.size >= 2) {
+  if (snapshot.size >= 3) {
     throw new HttpsError(
       "failed-precondition",
-      "This company already has 2 super-admins."
+      "This company already has 3 super-admins."
     );
   }
 

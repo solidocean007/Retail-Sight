@@ -191,7 +191,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       : allActiveGalloGoals
     : [];
 
-  const companyGoals = useMemo(() => {
+  const activeCompanyGoals = useMemo(() => {
     if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
     return getActiveCompanyGoalsForAccount(
       post.account.accountNumber,
@@ -199,42 +199,55 @@ export const PickStore: React.FC<PickStoreProps> = ({
     );
   }, [post.account?.accountNumber, allCompanyGoals]);
 
-  const goalsForAccount = useMemo(() => {
-    if (!post.account) return [];
+  console.log("active company goals: ", activeCompanyGoals) // this logs the active goal now
 
-    const { accountNumber, salesRouteNums = [] } = post.account;
-    return companyGoals.filter((goal) => {
-      if (user?.role === "employee" && goal.targetRole === "sales")
-        return goal.accountNumbersForThisGoal?.includes(
-          accountNumber.toString()
-        );
-      if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
-        const repsReportingToMe = companyUsers.filter(
-          (u) => u.reportsTo === user?.uid && u.salesRouteNum
-        );
-        const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
-        const overlap = salesRouteNums.some((rn) =>
-          myRepsRouteNums.includes(rn)
-        );
-        return (
-          overlap &&
-          goal.accountNumbersForThisGoal?.includes(accountNumber.toString())
-        );
-      }
-      if (isAdminOrAbove)
-        return goal.accountNumbersForThisGoal?.includes(
-          accountNumber.toString()
-        );
-      return false;
-    });
-  }, [
-    companyGoals,
-    post.account,
-    user?.role,
-    companyUsers,
-    user?.uid,
-    isAdminOrAbove,
-  ]);
+  const goalsForAccount = useMemo(() => {
+  if (!post.account) return [];
+
+  const { accountNumber, salesRouteNums = [] } = post.account;
+  const accountKey = accountNumber.toString();
+
+  return activeCompanyGoals.filter((goal) => {
+    const assignedUsersForAccount = goal.goalAssignments?.filter(
+      (a) => a.accountNumber === accountKey
+    );
+
+    if (assignedUsersForAccount?.length === 0) return false;
+
+    // 🧑‍💼 Employee — only sales goals matching this account
+    if (user?.role === "employee" && goal.targetRole === "sales") {
+      return assignedUsersForAccount?.some((a) => a.uid === user.uid);
+    }
+
+    // 🧑‍🏫 Supervisor — only supervisor goals
+    if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
+      const repsReportingToMe = companyUsers.filter(
+        (u) => u.reportsTo === user?.uid && u.salesRouteNum
+      );
+      const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
+
+      // Does any of this account's routeNums match a route from my reps?
+      const overlap = salesRouteNums.some((rn) =>
+        myRepsRouteNums.includes(rn)
+      );
+
+      return overlap;
+    }
+
+    // 👑 Admin sees any goal for this account
+    if (isAdminOrAbove) return true;
+
+    return false;
+  });
+}, [
+  activeCompanyGoals,
+  post.account,
+  user?.role,
+  companyUsers,
+  user?.uid,
+  isAdminOrAbove,
+]);
+
 
   useEffect(() => {
     if (post.account) setOpenManualAccountForm(false);
@@ -297,7 +310,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         if (combinedAccounts.length) {
           // try to find a close match by address
           const bestMatch = places
-            .map((place) => {
+            .map((place: any) => {
               const placeAddr = place.address.split(",")[0];
               let best = {
                 score: 0,
@@ -310,7 +323,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
               return { place, ...best };
             })
-            .sort((a, b) => b.score - a.score)[0];
+            .sort((a: any, b: any) => b.score - a.score)[0];
 
           if (bestMatch?.score && bestMatch.score > 0.6 && bestMatch.account) {
             handleAccountSelect(bestMatch.account);

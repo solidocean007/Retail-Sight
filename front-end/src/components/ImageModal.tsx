@@ -3,6 +3,8 @@ import ReactDOM from "react-dom";
 import "./ImageModal.css";
 import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
 import CloseIcon from "@mui/icons-material/Close";
+import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
+import FadeImage from "./FadeImage";
 
 interface ImageModalProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ isOpen, src, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
   const lowResUrl = getLowResUrl(src);
+  const { medium, original } = resolvePostImage({ imageUrl: src });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -34,23 +37,9 @@ const ImageModal: React.FC<ImageModalProps> = ({ isOpen, src, onClose }) => {
   return ReactDOM.createPortal(
     <div className="image-modal-backdrop">
       <div className="image-modal-content" ref={modalRef}>
-        <div className="blur-up-image-wrapper">
-          <img
-            src={lowResUrl}
-            alt="Low resolution preview"
-            className={`blur-up-image post-image low-res ${
-              loaded ? "hidden" : ""
-            }`}
-          />
-          <img
-            src={src}
-            alt="Full size"
-            className={`blur-up-image post-image full-res ${
-              loaded ? "visible" : "hidden"
-            }`}
-            onLoad={() => setLoaded(true)}
-          />
-        </div>
+        <FadeImage
+          srcList={[...medium, ...original]} // medium first → fallback to original (tokened)
+        />
         <button className="close-modal" onClick={onClose}>
           <CloseIcon fontSize="small" />
         </button>

@@ -271,7 +271,7 @@ export interface PostType {
   brands?: string[];
   aiEnabled?: boolean;
   autoDetectedBrands?: string[];
-  rawCandiates?: string[];
+  rawCandidates?: string[];
   supplier?: string;
   companyId: string;
 

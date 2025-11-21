@@ -93,10 +93,18 @@ const postsSlice = createSlice({
     },
     // Adjusted to the correct state.posts property
     updatePost: (state, action: PayloadAction<PostWithID>) => {
-      state.posts = state.posts.map((post) =>
-        post.id === action.payload.id ? action.payload : post
-      );
+      const updated = action.payload;
+
+      const apply = (list: PostWithID[]) =>
+        list.map((p) => (p.id === updated.id ? updated : p));
+
+      state.posts = apply(state.posts);
+      state.filteredPosts = apply(state.filteredPosts);
+      state.userPosts = apply(state.userPosts);
+      state.hashtagPosts = apply(state.hashtagPosts);
+      state.starTagPosts = apply(state.starTagPosts);
     },
+
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },

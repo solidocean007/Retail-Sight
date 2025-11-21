@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -19,12 +19,16 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import "./AssignmentsPreview.css";
 import { TableVirtuoso } from "react-virtuoso";
+import UserAssignmentModal from "./UserAssignmentModal";
 
 interface AssignmentsPreviewProps {
   assignments: GoalAssignmentType[];
   accounts: CompanyAccountType[];
   users: UserType[];
-  onRemoveAssignment: (accountNumber: string, uid: string) => void;
+  setGoalAssignments: React.Dispatch<
+    React.SetStateAction<GoalAssignmentType[]>
+  >;
+
   onClearAll?: () => void;
   filteredAccounts: CompanyAccountType[]; // ✅ new
   assigneeType: "sales" | "supervisor"; // ✅ new
@@ -34,16 +38,27 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
   assignments,
   accounts,
   users,
-  onRemoveAssignment,
+  setGoalAssignments,
   onClearAll,
   filteredAccounts,
   assigneeType,
 }) => {
   if (!assignments.length) return null;
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+
   const uniqueAccounts = new Set(assignments.map((a) => a.accountNumber));
   const uniqueUsers = new Set(assignments.map((a) => a.uid));
   const [showUnassigned, setShowUnassigned] = useState(false);
+
+  // Build a map: userUid -> count of accounts assigned
+  const userAssignmentCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    assignments.forEach((g) => {
+      map.set(g.uid, (map.get(g.uid) || 0) + 1);
+    });
+    return map;
+  }, [assignments]);
 
   // 🧮 Group assignments by user
   const assignmentsByUser = users
@@ -54,10 +69,6 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
     })
     .sort((a, b) => b.count - a.count); // optional: sort by count desc
 
-  // 🕳️ Find any accounts not present in assignments
-  const assignedAccountNums = new Set(assignments.map((a) => a.accountNumber));
-
-  // 🕳️ Compute unassigned accounts based on current filters and role type
   // 🕳️ Compute unassigned accounts correctly for both sales & supervisor modes
   const unassignedAccounts = filteredAccounts.filter((acc) => {
     const routeNums = acc.salesRouteNums || [];
@@ -157,13 +168,7 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
       >
         {`${uniqueAccounts.size} accounts, ${uniqueUsers.size} users assigned`}
       </Typography>
-      <TextField
-        size="small"
-        label="Search Accounts"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 1 }}
-      />
+
       {assignmentsByUser.length > 0 && (
         <Box className="assignments-summary-list" mb={1}>
           <Typography variant="subtitle2" fontWeight={600}>
@@ -173,7 +178,16 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
 
           <div className="assignments-user-grid">
             {assignmentsByUser.map((u) => (
-              <div key={u.uid} className="assignments-user-card">
+              <div
+                key={u.uid}
+                className="assignments-user-card"
+                onClick={() =>
+                  setSelectedUser(
+                    users.find((user) => user.uid === u.uid) || null
+                  )
+                }
+                role="button"
+              >
                 <div className="user-header">
                   <span className="user-name">{u.name}</span>
                   <span className="user-count">
@@ -185,7 +199,56 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
           </div>
         </Box>
       )}
-
+      <TextField
+        size="small"
+        label="Search Accounts"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        sx={{ mb: 1 }}
+      />
+      <Box className="assignments-table-wrapper">
+        <TableVirtuoso
+          data={rows.filter((r) =>
+            r.accountName.toLowerCase().includes(searchTerm.toLowerCase())
+          )}
+          fixedHeaderContent={() => (
+            <TableRow>
+              <TableCell>Account</TableCell>
+              <TableCell>Address</TableCell>
+              <TableCell>Salesperson</TableCell>
+              <TableCell align="right">Remove</TableCell>
+            </TableRow>
+          )}
+          itemContent={(_, r) => (
+            <>
+              <TableCell>
+                <strong>{r.accountName}</strong>
+              </TableCell>
+              <TableCell>{r.address}</TableCell>
+              <TableCell>{r.userName}</TableCell>
+              <TableCell align="right">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() =>
+                    setGoalAssignments((prev) =>
+                      prev.filter(
+                        (a) =>
+                          !(
+                            a.uid === r.userId &&
+                            a.accountNumber === r.accountNumber
+                          )
+                      )
+                    )
+                  }
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </TableCell>
+            </>
+          )}
+        />
+      </Box>
       {unassignedAccounts.length > 0 && (
         <div className="unassigned-accounts-card">
           <Box
@@ -246,40 +309,13 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
           )}
         </div>
       )}
-
-      <Box className="assignments-table-wrapper">
-        <TableVirtuoso
-          data={rows.filter((r) =>
-            r.accountName.toLowerCase().includes(searchTerm.toLowerCase())
-          )}
-          fixedHeaderContent={() => (
-            <TableRow>
-              <TableCell>Account</TableCell>
-              <TableCell>Address</TableCell>
-              <TableCell>Salesperson</TableCell>
-              <TableCell align="right">Remove</TableCell>
-            </TableRow>
-          )}
-          itemContent={(_, r) => (
-            <>
-              <TableCell>
-                <strong>{r.accountName}</strong>
-              </TableCell>
-              <TableCell>{r.address}</TableCell>
-              <TableCell>{r.userName}</TableCell>
-              <TableCell align="right">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => onRemoveAssignment(r.accountNumber, r.userId)}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </TableCell>
-            </>
-          )}
-        />
-      </Box>
+      <UserAssignmentModal
+        user={selectedUser}
+        accounts={accounts}
+        goalAssignments={assignments}
+        setGoalAssignments={setGoalAssignments}
+        onClose={() => setSelectedUser(null)}
+      />
     </Box>
   );
 };

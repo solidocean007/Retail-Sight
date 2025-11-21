@@ -15,16 +15,11 @@ export const getActiveCompanyGoalsForAccount = (
     const isActiveToday = start <= today && end >= today;
     if (!isActiveToday) return false;
 
-    // 🔹 Sales goals: account must be explicitly included
-    if (goal.targetRole === "sales") {
-      return goal.accountNumbersForThisGoal?.includes(accountKey);
-    }
+    // 🔥 NEW — use goalAssignments instead of accountNumbersForThisGoal
+    const isIncluded = goal.goalAssignments?.some(
+      (a) => a.accountNumber === accountKey
+    );
 
-    // 🔹 Supervisor goals: still filter by account, but we’ll check role later in PickStore
-    if (goal.targetRole === "supervisor") {
-      return goal.accountNumbersForThisGoal?.includes(accountKey);
-    }
-
-    return false;
+    return isIncluded;
   });
 };

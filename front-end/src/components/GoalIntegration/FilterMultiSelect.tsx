@@ -13,10 +13,15 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
+export interface OptionItem {
+  label: string;
+  value: string;
+}
+
 interface FilterMultiSelectProps {
   label: string;
-  options: string[];
-  selected: string[];
+  options: OptionItem[];
+  selectedValues: string[];
   onChange: (newSelected: string[]) => void;
   placeholder?: string;
   sx?: SxProps<Theme>;
@@ -25,45 +30,49 @@ interface FilterMultiSelectProps {
 const FilterMultiSelect: React.FC<FilterMultiSelectProps> = ({
   label,
   options,
-  selected,
+  selectedValues,
   onChange,
   placeholder = "Search...",
   sx,
 }) => {
-  const sortedOptions = [...options].sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: "base" })
+  const selectedObjects = options.filter((o) =>
+    selectedValues.includes(o.value)
   );
 
   return (
     <Autocomplete
       multiple
       disableCloseOnSelect
-      options={sortedOptions}
-      value={selected}
-      onChange={(_, newValue) => onChange(newValue)}
+      options={options}
+      value={selectedObjects}
+      onChange={(_, newValue) => {
+        onChange(newValue.map((o) => o.value));
+      }}
+      getOptionLabel={(option) => option.label}
       filterSelectedOptions
-      getOptionLabel={(option) => option}
-      renderOption={(props, option, { selected }) => (
-        <li {...props}>
-          <Checkbox
-            icon={icon}
-            checkedIcon={checkedIcon}
-            style={{ marginRight: 8 }}
-            checked={selected}
-          />
-          {option}
-        </li>
-      )}
+      renderOption={(props, option, { selected }) => {
+        const opt =
+          typeof option === "string"
+            ? { label: option, value: option }
+            : option;
+        return (
+          <li {...props}>
+            <Checkbox
+              icon={icon}
+              checkedIcon={checkedIcon}
+              style={{ marginRight: 8 }}
+              checked={selected}
+            />
+            {opt.label}
+          </li>
+        );
+      }}
       renderInput={(params) => (
         <TextField
           {...params}
           label={label}
           placeholder={placeholder}
           size="small"
-          InputProps={{
-            ...params.InputProps,
-            startAdornment: null,
-          }}
         />
       )}
       sx={sx || { minWidth: 200 }}
@@ -72,4 +81,3 @@ const FilterMultiSelect: React.FC<FilterMultiSelectProps> = ({
 };
 
 export default FilterMultiSelect;
-

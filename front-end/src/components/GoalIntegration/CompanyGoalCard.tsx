@@ -45,7 +45,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const allCompanyAccounts = useSelector(selectAllCompanyAccounts);
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const activeCompanyUsers = companyUsers.filter((u) => u.status === "active");
-
+  console.log("goal: ", goal)
   const goalIsForSupervisor = goal.targetRole === "supervisor";
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 

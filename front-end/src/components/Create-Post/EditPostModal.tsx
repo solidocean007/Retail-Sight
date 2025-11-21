@@ -41,6 +41,7 @@ import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import CustomConfirmation from "../CustomConfirmation";
 import GoalChangeConfirmation from "./GoalChangeConfirmation";
 import { duplicatePostWithNewGoal } from "../../utils/PostLogic/dupilcatePostWithNewGoal";
+import { updatePost } from "../../Slices/postsSlice";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -252,6 +253,27 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
       await updateDoc(postRef, updatedFields);
       await updatePostWithNewTimestamp(updatedPost.id);
+
+      //--------------------------------------------------------
+// ⭐ OPTIMISTIC UI UPDATE (Redux + IndexedDB + filteredSets)
+//--------------------------------------------------------
+const mergedPost: PostWithID = {
+  ...existing,
+  ...updatedFields,
+  id: updatedPost.id,
+};
+
+// 1. Redux main feed
+dispatch(updatePost(mergedPost));
+
+// 2. IndexedDB cached posts
+await updatePostInIndexedDB(mergedPost);
+
+// 3. FilteredSets (for filter pages that were showing stale data)
+await updatePostInFilteredSets(mergedPost);
+
+//--------------------------------------------------------
+
 
       // Update goal submittedPosts array
       if (selectedCompanyGoal?.id) {

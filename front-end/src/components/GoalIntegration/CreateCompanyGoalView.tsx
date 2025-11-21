@@ -42,6 +42,8 @@ import { getAllCompanyAccountsFromIndexedDB } from "../../utils/database/account
 import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAccountsFromFirestore";
 import GoalFiltersPanel from "./GoalFiltersPanel";
 import GoalAssignmentsSection from "./GoalAssignmentsSection";
+import { useFilteredAccounts } from "../../hooks/useFilteredAccounts";
+import { buildAssignments } from "./utils/buildAssignments";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -99,6 +101,13 @@ const CreateCompanyGoalView = () => {
     userIds: [] as string[], // Sales reps
     supervisorIds: [] as string[], // Supervisors
   });
+
+  // const hasActiveFilters =
+  //   filters.chains.length > 0 ||
+  //   filters.chainType !== "" ||
+  //   filters.typeOfAccounts.length > 0 ||
+  //   filters.userIds.length > 0 ||
+  //   filters.supervisorIds.length > 0;
 
   type SavedFilterSet = typeof filters;
 
@@ -210,102 +219,42 @@ const CreateCompanyGoalView = () => {
     return map;
   }, [accounts, normalizedCompanyUsers]);
 
-  const filteredAccounts = useMemo(() => {
-    return accounts.filter(
-      (a) =>
-        (!filters.chains.length ||
-          filters.chains.some(
-            (c) => c.toLowerCase() === (a.chain || "").toLowerCase()
-          )) &&
-        (!filters.chainType || a.chainType === filters.chainType) &&
-        (!filters.typeOfAccounts.length ||
-          filters.typeOfAccounts.includes(a.typeOfAccount || "")) &&
-        (!filters.userIds.length ||
-          userIdsByAccount[a.accountNumber]?.some((id) =>
-            filters.userIds.includes(id)
-          )) &&
-        (!filters.supervisorIds.length ||
-          userIdsByAccount[a.accountNumber]?.some((repUid) => {
-            const supUid = reportsToMap.get(repUid);
-            return supUid && filters.supervisorIds.includes(supUid);
-          }))
-    );
-  }, [accounts, filters, userIdsByAccount, reportsToMap]);
+  const filteredAccounts = useFilteredAccounts({
+    accounts,
+    filters,
+    reportsToMap,
+    userIdsByAccount,
+  });
 
   useEffect(() => {
-    // If scope is "all" we assign every account; if "selected", only filtered
-    const scopedAccounts = accountScope === "all" ? accounts : filteredAccounts;
-
-    // Build list of (accountNumber + uid) pairs dynamically based on assigneeType
-    let newAssignments: GoalAssignmentType[] = [];
-
-    if (assigneeType === "sales") {
-      // 🔹 Assign all matching reps for each account
-      newAssignments = scopedAccounts.flatMap((acc) => {
-        const reps = normalizedCompanyUsers.filter(
-          (u) =>
-            u.salesRouteNum &&
-            (acc.salesRouteNums || []).includes(u.salesRouteNum)
-        );
-        return reps.map((rep) => ({
-          accountNumber: acc.accountNumber.toString(),
-          uid: rep.uid,
-        }));
-      });
-    } else if (assigneeType === "supervisor") {
-      newAssignments = scopedAccounts.flatMap((acc) => {
-        const routeNums = acc.salesRouteNums || [];
-
-        // 1️⃣ Find reps who sell this account
-        const reps = normalizedCompanyUsers.filter(
-          (u) => u.salesRouteNum && routeNums.includes(u.salesRouteNum)
-        );
-
-        // 2️⃣ Collect supervisors of those reps
-        const supervisorUids = new Set(
-          reps.map((r) => r.reportsTo).filter(Boolean) as string[]
-        );
-
-        // 3️⃣ Also include any supervisors who personally sell the route
-        normalizedCompanyUsers.forEach((u) => {
-          if (
-            u.role === "supervisor" &&
-            u.salesRouteNum &&
-            routeNums.includes(u.salesRouteNum)
-          ) {
-            supervisorUids.add(u.uid);
-          }
-        });
-
-        // 4️⃣ Build assignment pairs
-        return Array.from(supervisorUids).map((uid) => ({
-          accountNumber: acc.accountNumber.toString(),
-          uid,
-        }));
-      });
+    if (accountScope === "selected" && filteredAccounts.length === 0) {
+      // no accounts selected → no assignments
+      setGoalAssignments([]);
+      return;
     }
 
-    // 🔹 Deduplicate (accountNumber + uid) pairs
-    const deduped = Array.from(
-      new Map(
-        newAssignments.map((a) => [`${a.accountNumber}-${a.uid}`, a])
-      ).values()
-    );
+    const newAssignments = buildAssignments({
+      accounts,
+      filteredAccounts,
+      normalizedUsers: normalizedCompanyUsers,
+      assigneeType,
+      accountScope,
+    });
 
-    setGoalAssignments(deduped);
+    setGoalAssignments(newAssignments);
   }, [
-    accountScope,
-    filteredAccounts,
     accounts,
+    filteredAccounts,
     assigneeType,
+    accountScope,
     normalizedCompanyUsers,
   ]);
 
-  const readyForCreation: boolean =
-    goalTitle.trim().length > 0 &&
-    goalDescription.trim().length > 0 &&
-    goalMetric.trim().length > 0 &&
-    Number(goalValueMin) > 0;
+  const readyForCreation =
+    !!goalTitle.trim() &&
+    !!goalDescription.trim() &&
+    !!goalMetric.trim() &&
+    goalValueMin > 0;
 
   useEffect(() => {
     const stored = localStorage.getItem("displaygram_filter_sets");
@@ -335,54 +284,7 @@ const CreateCompanyGoalView = () => {
       });
   }, [companyId]);
 
-  const { eligibleUsersForCurrentScope, numberOfAffectedUsers } =
-    useMemo(() => {
-      // 🔹 Build scoped accounts from either "all" or the goalAssignments
-      const scopedAccounts =
-        accountScope === "all"
-          ? accounts
-          : accounts.filter((a) =>
-              goalAssignments.some(
-                (g) => g.accountNumber === a.accountNumber.toString()
-              )
-            );
-
-      const routeNums = new Set(
-        scopedAccounts.flatMap((a) => a.salesRouteNums || [])
-      );
-
-      const reps = normalizedCompanyUsers.filter(
-        (u) => u.salesRouteNum && routeNums.has(u.salesRouteNum)
-      );
-
-      if (assigneeType === "sales") {
-        return {
-          eligibleUsersForCurrentScope: reps,
-          numberOfAffectedUsers: reps.length,
-        };
-      }
-
-      // 🔹 supervisors who manage at least one of those reps
-      const supervisorUids = new Set(
-        reps.map((r) => reportsToMap.get(r.uid)).filter(Boolean) as string[]
-      );
-
-      const supervisors = normalizedCompanyUsers.filter((u) =>
-        supervisorUids.has(u.uid)
-      );
-
-      return {
-        eligibleUsersForCurrentScope: supervisors,
-        numberOfAffectedUsers: supervisors.length,
-      };
-    }, [
-      accountScope,
-      accounts,
-      goalAssignments, // ✅ replaced legacy dependency
-      normalizedCompanyUsers,
-      assigneeType,
-      reportsToMap,
-    ]);
+  const numberOfAffectedUsers = new Set(goalAssignments.map((a) => a.uid)).size;
 
   const handleCreateGoal = async () => {
     if (!readyForCreation) {
@@ -394,48 +296,14 @@ const CreateCompanyGoalView = () => {
       return;
     }
 
-    // Helper: unique by uid+accountNumber
-    const dedupeAssignments = (
-      arr: { uid: string; accountNumber: string }[]
-    ) => {
-      const map = new Map<string, { uid: string; accountNumber: string }>();
-      for (const a of arr) map.set(`${a.uid}-${a.accountNumber}`, a);
-      return Array.from(map.values());
-    };
-
-    // Build scoped accounts using current goalAssignments when in "selected" mode.
-    const selectedAccountNums = Array.from(
-      new Set(goalAssignments.map((g) => g.accountNumber))
-    );
-
-    const scopedAccounts =
-      accountScope === "all"
-        ? accounts
-        : accounts.filter((a) =>
-            selectedAccountNums.includes(a.accountNumber.toString())
-          );
-
-    // Finalize assignments:
-    // - If scope is "selected" and user already assigned pairs, respect them.
-    // - Otherwise (scope "all" OR no manual pairs yet), generate matrix using eligibleUsersForCurrentScope.
-    const finalAssignments =
-      accountScope === "selected" && goalAssignments.length > 0
-        ? dedupeAssignments(
-            // keep only pairs whose account is inside the scope
-            goalAssignments.filter((g) =>
-              scopedAccounts.some(
-                (a) => a.accountNumber.toString() === g.accountNumber
-              )
-            )
-          )
-        : dedupeAssignments(
-            scopedAccounts.flatMap((acc) =>
-              eligibleUsersForCurrentScope.map((u) => ({
-                uid: u.uid,
-                accountNumber: acc.accountNumber.toString(),
-              }))
-            )
-          );
+    // 🚀 Always use the unified assignment builder
+    const finalAssignments = buildAssignments({
+      accounts,
+      filteredAccounts,
+      normalizedUsers: normalizedCompanyUsers,
+      assigneeType,
+      accountScope,
+    });
 
     const newGoal: CompanyGoalType = {
       companyId,
@@ -448,7 +316,7 @@ const CreateCompanyGoalView = () => {
       goalEndDate,
       createdAt: new Date().toISOString(),
       deleted: false,
-      goalAssignments: finalAssignments, // ✅ single source of truth
+      goalAssignments: finalAssignments,
       ...(enforcePerUserQuota && perUserQuota
         ? { perUserQuota: Number(perUserQuota) }
         : {}),
@@ -473,12 +341,8 @@ const CreateCompanyGoalView = () => {
   }, [accountScope, filteredAccounts]);
 
   useEffect(() => {
-    if (!goalStartDate) {
-      setGoalStartDate(dayjs().format("YYYY-MM-DD"));
-    }
-    if (!goalEndDate) {
-      setGoalEndDate(dayjs().endOf("month").format("YYYY-MM-DD"));
-    }
+    setGoalStartDate(dayjs().format("YYYY-MM-DD"));
+    setGoalEndDate(dayjs().endOf("month").format("YYYY-MM-DD"));
   }, []);
 
   const hasSummary = goalTitle.length > 1 && goalDescription.length > 1;
@@ -515,45 +379,26 @@ const CreateCompanyGoalView = () => {
   };
 
   // 🔹 Compute counts for confirmation modal
-  const scopedAccounts =
-    accountScope === "all"
-      ? accounts
-      : accounts.filter((a) =>
-          goalAssignments.some(
-            (g) => g.accountNumber === a.accountNumber.toString()
-          )
-        );
+  // 🔹 Confirmation modal data – now using the unified assignment builder
+  const confirmAssignments = draftGoal?.goalAssignments ?? [];
 
-  const routeNums = new Set(
-    scopedAccounts.flatMap((a) => a.salesRouteNums || [])
-  );
+  const affectedAccountsCount = new Set(
+    confirmAssignments.map((a) => a.accountNumber)
+  ).size;
 
-  const repsForScope = normalizedCompanyUsers.filter(
-    (u) => u.salesRouteNum && routeNums.has(u.salesRouteNum)
-  );
+  const affectedUsersCount = new Set(confirmAssignments.map((a) => a.uid)).size;
 
-  let supervisorsForScope: typeof normalizedCompanyUsers = [];
+  // Sales or supervisor counts (optional, depends on target)
+  const affectedSalesCount = assigneeType === "sales" ? affectedUsersCount : 0;
 
-  if (assigneeType === "supervisor") {
-    const supervisorUids = new Set(
-      repsForScope.map((r) => r.reportsTo).filter(Boolean) as string[]
-    );
-    supervisorsForScope = normalizedCompanyUsers.filter((u) =>
-      supervisorUids.has(u.uid)
-    );
-  }
-
-  const affectedAccountsCount = scopedAccounts.length;
-  const affectedSalesCount = assigneeType === "sales" ? repsForScope.length : 0;
   const affectedSupervisorsCount =
-    assigneeType === "supervisor" ? supervisorsForScope.length : 0;
+    assigneeType === "supervisor" ? affectedUsersCount : 0;
 
-  const handleRemoveAssignment = (accountNumber: string, uid: string) => {
-    // handleRemoveAssignment' is declared but its value is never read.
-    setGoalAssignments((prev) =>
-      prev.filter((g) => !(g.uid === uid && g.accountNumber === accountNumber))
-    );
-  };
+  // useEffect(() => {
+  //   if (accountScope === "selected") {
+  //     setGoalAssignments([]); // Clear everything until user filters
+  //   }
+  // }, [accountScope]);
 
   return (
     <Container>
@@ -690,7 +535,7 @@ const CreateCompanyGoalView = () => {
                 />
               )}
             </Box>
-            <div className="target-accounts-and-roles">
+           {readyForCreation && <div className="target-accounts-and-roles">
               <FormControl component="fieldset">
                 <Typography variant="subtitle1">Target Accounts</Typography>
                 <RadioGroup
@@ -733,9 +578,9 @@ const CreateCompanyGoalView = () => {
                   />
                 </RadioGroup>
               </FormControl>
-            </div>
+            </div>}
 
-            {accountScope === "selected" && (
+            {accountScope === "selected" && readyForCreation && (
               <>
                 <GoalFiltersPanel
                   filters={filters}
@@ -750,12 +595,12 @@ const CreateCompanyGoalView = () => {
                   filteredAccounts={filteredAccounts} // ✅ added
                   assigneeType={assigneeType}
                   allAccounts={accounts}
-
                 />
               </>
             )}
 
             <GoalAssignmentsSection
+              readyForCreation={readyForCreation} // Type 'string | boolean' is not assignable to type 'boolean'
               accountScope={accountScope}
               goalAssignments={goalAssignments}
               setGoalAssignments={setGoalAssignments}
