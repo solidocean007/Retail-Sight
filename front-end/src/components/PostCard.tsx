@@ -49,7 +49,8 @@ import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
 import { Timestamp } from "firebase/firestore";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
-
+import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
+import FadeImage from "./FadeImage";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -83,6 +84,7 @@ const PostCard: React.FC<PostCardProps> = ({
   setIsSearchActive,
   postIdToScroll = null, // Default to null if not provided
 }) => {
+  const { small, medium, original } = resolvePostImage(post);
   const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
   const [commentCount] = useState(post.commentCount);
@@ -105,6 +107,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const [_selectedCompanyAccount, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
   const [shouldHighlight, setShouldHighlight] = useState(false);
+
+  const isMobile = window.innerWidth <= 670;
+  const feedList = isMobile ? small : medium;
 
   useEffect(() => {
     let startTimer: NodeJS.Timeout;
@@ -364,7 +369,6 @@ const PostCard: React.FC<PostCardProps> = ({
                     <h3>{post.account?.accountName} </h3>
 
                     <h5>{formatDisplayDate(post.displayDate)}</h5>
-
                   </div>
                   <div className="store-address-box">
                     <h6>{post.account?.accountAddress}</h6>{" "}
@@ -422,19 +426,16 @@ const PostCard: React.FC<PostCardProps> = ({
               🚨 Missing Account Info — Please Edit
             </div>
           )}
-
           {post.companyGoalId && (
             <div className="company-goal-banner textured-background">
               Company Goal: {post.companyGoalTitle}
             </div>
           )}
-
           {post.oppId && (
             <div className="gallo-goal-banner gallo-textured-background">
               Gallo Goal: {post.galloGoalTitle}
             </div>
           )}
-
           {post.brands && post.brands.length > 0 && (
             <div className="brands-list">
               {post.brands.map((brand) => (
@@ -442,7 +443,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {/* {post.id} */}
+          {/* {post.id}/ */}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>
@@ -484,11 +485,13 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
             <div className="activity-post-image-box">
               {post.imageUrl && (
-                <BlurUpImage
-                  lowResSrc={getLowResUrl(post.imageUrl)}
-                  fullResSrc={post.imageUrl}
+                <FadeImage
+                  srcList={feedList}
                   alt="Post image"
-                  openImageModal={handleImageClick}
+                  onClick={() => {
+                    setFullSizeImageUrl(original[0]);
+                    setIsImageModalOpen(true);
+                  }}
                 />
               )}
               {/* <img
