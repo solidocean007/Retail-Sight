@@ -57,7 +57,7 @@ const SplashPage = () => {
             src={
               isMobileLogo
                 ? "/icons/icon-512-maskable.png"
-                : "/splash/splash-logo.png"
+                : "/displaygram-logo-long-BLUE.svg"
             }
             alt="Displaygram"
             className="brand-logo"

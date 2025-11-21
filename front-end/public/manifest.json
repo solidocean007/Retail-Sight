@@ -16,7 +16,7 @@
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/icon-512newCircle.png",
       "sizes": "512x512",
       "type": "image/png"
     },
@@ -38,6 +38,21 @@
       "src": "/icons/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/splash/screenshot-home-1280x720.png",
+      "description": "Displaygram home feed showing retail displays and filters",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/splash/screenshot-home-750x1334.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ],
 

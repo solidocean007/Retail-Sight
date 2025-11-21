@@ -1,0 +1,78 @@
+.install-prompt-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 9999;
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+.install-card {
+  background: #ffffffee;
+  backdrop-filter: blur(6px);
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.15);
+  width: 300px;
+  animation: slideUp 0.35s ease-out forwards;
+}
+
+.install-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.35rem;
+}
+
+.install-subtitle {
+  font-size: 0.92rem;
+  color: #475569;
+  margin-bottom: 1rem;
+  line-height: 1.35;
+}
+
+.install-buttons {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.install-btn {
+  flex: 1;
+  background: #3b82f6;
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 0.55rem 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.install-btn:hover {
+  background: #2563eb;
+}
+
+.dismiss-btn {
+  flex: 1;
+  background: #e2e8f0;
+  border: none;
+  color: #475569;
+  font-weight: 500;
+  padding: 0.55rem 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dismiss-btn:hover {
+  background: #cbd5e1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(15px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
