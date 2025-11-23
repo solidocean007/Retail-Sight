@@ -1,16 +1,20 @@
 import React, { useMemo, useState } from "react";
-import "./companyConnectionsManager.css";
+import "./connectionBuilder.css";
 import { useSupplierBrands } from "../../hooks/useSupplierBrands";
 import { useAppDispatch } from "../../utils/store";
 import { showMessage } from "../../Slices/snackbarSlice";
 import CustomConfirmation from "../CustomConfirmation";
 
 interface ConnectionBuilderProps {
+  email: string;
+  lookup: any;
   onClose: () => void;
-  onConfirm: (emailInput: string, brandSelection: string[]) => Promise<void>;
+  onConfirm: (email: string, brandSelection: string[]) => Promise<void>;
 }
 
 const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
+  email,
+  lookup,
   onClose,
   onConfirm,
 }) => {
@@ -19,7 +23,6 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
 
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const [manualBrand, setManualBrand] = useState("");
-  const [emailInput, setEmailInput] = useState("");
   const [brandSelection, setBrandSelection] = useState<string[]>([]);
   const [manualBrandMode, setManualBrandMode] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -42,50 +45,81 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
   };
 
   const toggleBrand = (brand: string) => {
-    setBrandSelection((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    );
+    const normalized = brand.trim().toLowerCase();
+
+    setBrandSelection((prev) => {
+      const exists = prev.some((b) => b.toLowerCase() === normalized);
+      return exists
+        ? prev.filter((b) => b.toLowerCase() !== normalized)
+        : [...prev, brand];
+    });
   };
 
   const openConfirmation = () => {
-    if (!emailInput.trim()) {
-      dispatch(showMessage("Please enter a valid company admin email."));
+    const clean = email.trim().toLowerCase();
+
+    if (!clean || !clean.includes("@")) {
+      dispatch(showMessage("Invalid email format."));
       return;
     }
+
     setIsConfirmOpen(true);
   };
 
   const handleConfirm = async () => {
     setLoadingConfirm(true);
-    await onConfirm(emailInput, brandSelection);
+    await onConfirm(email, brandSelection);
     setLoadingConfirm(false);
     setIsConfirmOpen(false);
   };
 
   return (
     <div className="connection-builder">
-      <h3>Build a New Connection</h3>
-      <p className="section-hint">
-        Enter the company admin’s email address to begin a connection request.
-        Once approved, you’ll be able to share goals and posts across companies.
-      </p>
+      <h3>Step 2 — Select Shared Brands (Optional)</h3>
 
-      <input
-        type="email"
-        value={emailInput}
-        placeholder="Enter company admin email"
-        onChange={(e) => setEmailInput(e.target.value)}
-        className="connection-email-input"
-      />
+      {/* INVITE HEADER */}
+      {lookup.mode !== "user-found" && (
+        <div className="flashy-invite-box">
+          <div className="email-glow">📧</div>
+          <div className="invite-email">{email}</div>
+          <p>This user is not yet part of a company on Displaygram.</p>
+          <p>
+            You may send them an invitation and optionally propose brands to
+            share once they join.
+          </p>
+        </div>
+      )}
+
+      {/* NORMAL HEADER */}
+      {lookup.mode === "user-found" && (
+        <p className="section-hint">
+          The company administrator has been identified. Now choose any brands
+          you’d like to propose sharing with them.
+        </p>
+      )}
 
       <p className="section-hint">
-        Optionally, propose brands from your Product Manager to share with this
+        Propose brands from your Product Manager to share right away with this
         company.
       </p>
 
-      {/* Supplier Dropdown */}
+      {/* NEW: SUPPLIER HEADER ROW */}
+      <div className="supplier-header-row">
+        <label htmlFor="supplierSelect" className="supplier-label">
+          Choose a supplier to filter brands or
+        </label>
+
+        <button
+          type="button"
+          className="inline-text-btn"
+          onClick={() => setManualBrandMode(!manualBrandMode)}
+        >
+          {manualBrandMode ? "Hide Custom Brand" : "Add a Custom Brand"}
+        </button>
+      </div>
+
+      {/* DROPDOWN */}
       <div className="supplier-dropdown">
-        <label htmlFor="supplierSelect">Select a Supplier:</label>
         <select
           id="supplierSelect"
           value={selectedSupplier}
@@ -100,7 +134,7 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
         </select>
       </div>
 
-      {/* Brand Selector */}
+      {/* BRAND SELECTOR */}
       {selectedSupplier && (
         <div className="brand-selector">
           <h4>Brands from {selectedSupplier}</h4>
@@ -120,23 +154,15 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
         </div>
       )}
 
-      {/* Manual Brand Input */}
-      <div className="manual-brand-box">
-         <button
-        onClick={() => setManualBrandMode(!manualBrandMode)}
-        className="toggle-manual-btn"
-      >
-        {manualBrandMode ? "Hide Manual Brand Input" : "Add a Custom Brand"}
-      </button>
-       {manualBrandMode && (
+      {/* MANUAL BRAND INPUT */}
+      {manualBrandMode && (
         <div className="manual-brand-entry">
           <p className="manual-brand-note">
-            If the brand isn’t listed, you can add it manually. (Note: manually
-            added brands must also be typed when creating posts.)
+            If the brand isn’t listed, you can add it manually.
           </p>
           <input
             type="text"
-            placeholder="Enter new brand name..."
+            placeholder="Enter brand name..."
             value={manualBrand}
             onChange={(e) => setManualBrand(e.target.value)}
             className="manual-brand-input"
@@ -150,12 +176,8 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
           </button>
         </div>
       )}
-      </div>
-     
 
-     
-
-      {/* Selected Brands */}
+      {/* SELECTED BRANDS */}
       {brandSelection.length > 0 && (
         <div className="selected-brands-bar">
           <h5>Proposed Brands</h5>
@@ -166,7 +188,9 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
                 <button
                   className="remove-brand-btn"
                   onClick={() =>
-                    setBrandSelection((prev) => prev.filter((b) => b !== brand))
+                    setBrandSelection((prev) =>
+                      prev.filter((b) => b !== brand)
+                    )
                   }
                 >
                   ×
@@ -177,6 +201,7 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
         </div>
       )}
 
+      {/* ACTION BUTTONS */}
       <div className="modal-actions">
         <button
           className="clear-selection-btn"
@@ -184,11 +209,13 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
             setBrandSelection([]);
             setSelectedSupplier("");
             setManualBrand("");
+            setManualBrandMode(false);
           }}
           disabled={!brandSelection.length && !selectedSupplier}
         >
           Clear
         </button>
+
         <button
           className="button-primary"
           onClick={openConfirmation}
@@ -196,23 +223,24 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
         >
           {loadingConfirm ? "Processing..." : "Send Request"}
         </button>
+
         <button className="button-secondary" onClick={onClose}>
           Close
         </button>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* CONFIRM MODAL */}
       <CustomConfirmation
         isOpen={isConfirmOpen}
         loading={loadingConfirm}
         onConfirm={handleConfirm}
         onClose={() => setIsConfirmOpen(false)}
         title="Confirm Connection Request"
-        message={`You're about to send a connection request to ${emailInput}${
+        message={`You're about to send a connection request to ${email}.${
           brandSelection.length > 0
-            ? `, including ${brandSelection.length} proposed brand(s)`
+            ? `\n\nIncluded: ${brandSelection.length} proposed brand(s).`
             : ""
-        }. Continue?`}
+        }`}
       />
     </div>
   );

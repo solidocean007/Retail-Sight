@@ -23,6 +23,9 @@ import { getPlanDetails } from "./planHandlers";
 import { enforcePlanLimits } from "./enforcePlanLimits";
 import { generatePostShareToken } from "./generatePostShareToken";
 import { validatePostShareToken } from "./validatePostShareToken";
+import { createInviteAndDraftConnection } from "./createInviteAndDraftConnection";
+import { lookupConnectionTarget } from "./lookupConnectionTarget";
+import { acceptInviteAutoResolve } from "./acceptInviteAutoResolve"
 
 // 🧾 Braintree Billing System
 import {
@@ -65,7 +68,6 @@ export {
   onConnectionApproved,
   sharePostWithCompany,
   onSharePost,
-  onConnectionBrandsUpdated,
   onPostCreated,
   detectBrands,
   enforceSuperAdminLimit,
@@ -94,6 +96,12 @@ export {
   listPlansAndAddons,
   initCompanyBilling,
   backfillBillingForCompanies,
+
+  // Connection function
+  createInviteAndDraftConnection,
+  onConnectionBrandsUpdated,
+  lookupConnectionTarget,
+  acceptInviteAutoResolve,
 
   // Notifications
   sendNotification,

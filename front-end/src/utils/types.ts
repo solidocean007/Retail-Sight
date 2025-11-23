@@ -151,8 +151,12 @@ export interface CompanyWithUsersAndId extends CompanyTypeWithId {
 
 // i just made this for this branch.. not sure if the shape is right.. i guess its how we get
 // started
-export interface ConnectionRequest {
-  emailLower: string;
+export interface brandRequestType {
+  brand: string;
+  proposedBy: UserType;
+}
+export interface ConnectionRequestType {
+  requestToEmailLower: string;
   requestFromCompanyType: "supplier" | "distributor";
   requestFromCompanyId: string;
   requestFromCompanyName: string;
@@ -161,14 +165,14 @@ export interface ConnectionRequest {
   requestToCompanyName: string;
   requestedByUid: string;
   status: "pending" | "approved" | "rejected";
-  sharedBrands: string[];
+  pendingBrands: brandRequestType[];
   requestedAt?: Timestamp | string | null;
   requestedEmail?: string; // optional temporary field
 }
 
 export interface PendingBrandType {
   brand: string;
-  proposedBy: string;
+  proposedBy: UserType;
 }
 
 export interface CompanyConnectionType {

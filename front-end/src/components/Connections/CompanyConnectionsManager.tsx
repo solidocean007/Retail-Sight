@@ -17,6 +17,9 @@ import ConnectionEditModal from "./ConnectionEditModal";
 import { Modal } from "@mui/material";
 import { getPlanDetails } from "../../utils/getPlanDetails";
 import { setPlan, setLoading } from "../../Slices/planSlice";
+import InviteAndConnectModal from "./InviteAndConnectModal";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import IdentifyCompany from "./IdentifyCompany";
 
 interface Props {
   currentCompanyId: string | undefined;
@@ -28,6 +31,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   user,
 }) => {
   const dispatch = useAppDispatch();
+  const functions = getFunctions();
   const usersCompany = useSelector(selectCurrentCompany);
   const { connections } = useSelector(
     (state: RootState) => state.companyConnections
@@ -35,12 +39,19 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 
   // ✅ Access plan data from Redux (cached + persisted)
   const { currentPlan, loading } = useSelector((s: RootState) => s.planSlice);
-
+  const [inviteMode, setInviteMode] = useState(false);
   const [selectedConnection, setSelectedConnection] =
     useState<CompanyConnectionType | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  // 🆕 Step-based flow management
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [identifiedEmail, setIdentifiedEmail] = useState("");
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [lookup, setLookup] = useState<any | null>(null);
+
+  const [lookupCompanyName, setLookupCompanyName] = useState("");
+  const [lookupCompanyType, setLookupCompanyType] = useState("");
 
   // 🧮 Derive limits and usage
   const planLimit = currentPlan?.connectionLimit ?? 0;
@@ -53,9 +64,9 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     approvedConnections >= planLimit + extraConnections;
 
   const totalLimit = (planLimit || 0) + (extraConnections || 0);
-  const progressPercent = totalLimit
-    ? Math.min((approvedConnections / totalLimit) * 100, 100)
-    : 0;
+  // const progressPercent = totalLimit
+  //   ? Math.min((approvedConnections / totalLimit) * 100, 100)
+  //   : 0;
 
   // ✅ Load plan once (or refresh if plan name changed)
   useEffect(() => {
@@ -105,13 +116,16 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           user,
           usersCompany,
           emailInput,
-          brandSelection,
+          pendingBrands: brandSelection.map((b) => ({
+            brand: b,
+            proposedBy: user,
+          })),
         })
       ).unwrap();
 
       dispatch(showMessage("Connection request sent successfully."));
       await dispatch(fetchCompanyConnections(currentCompanyId));
-      setIsBuilderOpen(false);
+      setStep(0);
     } catch (err: any) {
       if (err.code === "already-exists") {
         dispatch(showMessage("A connection request already exists."));
@@ -122,6 +136,26 @@ const CompanyConnectionsManager: React.FC<Props> = ({
       }
     }
   };
+
+  // === STEP 1 → STEP 2: Handling flow transitions ===
+  const handleIdentifyContinue = (email: string, lookupData: any) => {
+    setIdentifiedEmail(email);
+    setLookup(lookupData); // <-- store entire lookup object
+    setStep(2);
+  };
+
+  // === When email is NOT a Displaygram user ===
+  const handleInviteFlow = (email: string) => {
+    setIdentifiedEmail(email);
+    setLookup({ mode: "invitable", email }); // <-- fill lookup for consistency
+    setInviteMode(true);
+    setStep(2);
+  };
+
+  // === Store brand selections from Step 2 ===
+  const [brandSelectionFromStep2, setBrandSelectionFromStep2] = useState<
+    string[]
+  >([]);
 
   const handleEdit = (connection: CompanyConnectionType) => {
     setSelectedConnection(connection);
@@ -135,55 +169,82 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 
   return (
     <div className="connections-dashboard">
-      <div className="info-banner">
-        <div
-          className="info-banner-header"
-          onClick={() => setShowInfo(!showInfo)}
-        >
+      {/* === MERGED CONNECTIONS OVERVIEW PANEL === */}
+      <div className="connections-overview">
+        <div className="overview-header" onClick={() => setShowInfo(!showInfo)}>
           <h2>Company Connections</h2>
-          <p className="info-banner-summary">
-            Build trusted partnerships with other companies to share brand
-            activity and retail display posts.
+          <p className="overview-summary">
+            Understand how connections, shared brands, and partner visibility
+            work.
           </p>
-          <button className="toggle-info-btn">
+
+          <button className="toggle-overview-btn">
             {showInfo ? "▲ Hide Details" : "▼ Learn More"}
           </button>
         </div>
 
         {showInfo && (
-          <div className="info-banner-details">
-            <ul className="info-points">
+          <div className="overview-details">
+            <ul className="overview-points">
               <li>
-                <span className="info-icon">🤝</span>
-                <div className="info-text">
-                  <strong>Collaborate:</strong> Connect with verified partner
-                  companies to share your display and goal activity.
+                <span className="overview-icon">📨</span>
+                <div>
+                  <strong>Start with an email.</strong>
+                  <p>
+                    Enter a partner admin’s email. If they aren’t on Displaygram
+                    yet, you can invite them instantly.
+                  </p>
                 </div>
               </li>
+
               <li>
-                <span className="info-icon">🏷️</span>
-                <div className="info-text">
-                  <strong>Shared Brands:</strong> Activate once both companies
-                  approve shared brands.
+                <span className="overview-icon">🤝</span>
+                <div>
+                  <strong>Two-way approval.</strong>
+                  <p>
+                    Both companies must approve shared brands. This ensures
+                    visibility stays relevant and intentional.
+                  </p>
                 </div>
               </li>
+
               <li>
-                <span className="info-icon">📢</span>
-                <div className="info-text">
-                  <strong>Share Visibility:</strong> Network posts become
-                  visible to approved partners.
+                <span className="overview-icon">🏷️</span>
+                <div>
+                  <strong>Shared Brands determine visibility.</strong>
+                  <p>
+                    You’ll only see posts and collections containing brands that
+                    BOTH companies approve.
+                  </p>
                 </div>
               </li>
+
               <li>
-                <span className="info-icon">🌐</span>
-                <div className="info-text">
-                  <strong>Unified Feed:</strong> Expand visibility across the
-                  Displaygram ecosystem.
+                <span className="overview-icon">🌎</span>
+                <div>
+                  <strong>Cross-company visibility.</strong>
+                  <p>
+                    Approved partners automatically see your matching display
+                    posts and shareable collections.
+                  </p>
+                </div>
+              </li>
+
+              <li>
+                <span className="overview-icon">📊</span>
+                <div>
+                  <strong>Your plan has limits.</strong>
+                  <p>
+                    Free plans include 2 connections. Upgrading raises your
+                    limit instantly.
+                  </p>
                 </div>
               </li>
             </ul>
-            <p className="info-banner-footer">
-              Tip: Manage shared brands directly from the list below.
+
+            <p className="overview-footer">
+              Tip: You can manage shared brands and pending proposals from each
+              connection card below.
             </p>
           </div>
         )}
@@ -216,6 +277,18 @@ const CompanyConnectionsManager: React.FC<Props> = ({
               {approvedConnections} of {planLimit + (extraConnections || 0)}{" "}
               connections used
             </small>
+            <div className="connection-create-card">
+              <h4>Create New Connection</h4>
+              <p>Invite another company to connect and share brand activity.</p>
+
+              <button
+                className="button-primary create-connection-btn"
+                onClick={() => setStep(1)}
+                disabled={connectionLimitReached}
+              >
+                + New Connection
+              </button>
+            </div>
           </div>
         )}
 
@@ -231,20 +304,92 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           onEdit={handleEdit}
         />
       </div>
+      {/* === STEP 1: Identify Company === */}
+      {step === 1 && (
+        <Modal
+          open={true}
+          onClose={() => setStep(0)}
+          slotProps={{ backdrop: { className: "connection-builder-backdrop" } }}
+        >
+          <div className="connection-builder-modal">
+            {/* <IdentifyCompany
+              onContinue={(email, lookup) => {
+                setIdentifiedEmail(email);
+                setStep(2);
+              }}
+              onInvite={(email) => {
+                setIdentifiedEmail(email);
+                setShowInviteModal(true);
+              }}
+            /> */}
+            <IdentifyCompany
+              fromCompanyId={currentCompanyId!}
+              currentUser={user}
+              currentCompany={usersCompany}
+              currentConnections={connections}
+              onContinue={handleIdentifyContinue}
+              onInvite={handleInviteFlow}
+            />
+          </div>
+        </Modal>
+      )}
 
-      {/* 🧩 Builder Modal */}
-      <Modal
-        open={isBuilderOpen}
-        onClose={() => setIsBuilderOpen(false)}
-        slotProps={{ backdrop: { className: "connection-builder-backdrop" } }}
-      >
-        <div className="connection-builder-modal">
-          <ConnectionBuilder
-            onClose={() => setIsBuilderOpen(false)}
-            onConfirm={handleConfirmRequest}
-          />
-        </div>
-      </Modal>
+      {/* === STEP 2: Brand Selection (Existing ConnectionBuilder, modified) === */}
+      {step === 2 && (
+        <Modal
+          open={true}
+          onClose={() => setStep(0)}
+          slotProps={{ backdrop: { className: "connection-builder-backdrop" } }}
+        >
+          <div className="connection-builder-modal">
+            <ConnectionBuilder
+              email={identifiedEmail}
+              lookup={lookup}
+              onClose={() => setStep(0)}
+              onConfirm={(email, brandSelection) => {
+                setBrandSelectionFromStep2(brandSelection);
+
+                if (inviteMode) {
+                  setShowInviteModal(true);
+                  return Promise.resolve(); // don't send request yet
+                }
+
+                return handleConfirmRequest(email, brandSelection); // existing user path
+              }}
+            />
+          </div>
+        </Modal>
+      )}
+      {/* === INVITE MODAL === */}
+      <InviteAndConnectModal
+        email={identifiedEmail}
+        isOpen={showInviteModal}
+        onCancel={() => setShowInviteModal(false)}
+        onConfirm={async () => {
+          const fn = httpsCallable(functions, "createInviteAndDraftConnection");
+
+          await fn({
+            targetEmail: identifiedEmail,
+            fromCompanyId: currentCompanyId,
+            sharedBrands: brandSelectionFromStep2.map((b) => ({
+              brand: b,
+              proposedBy: user,
+            })),
+          });
+
+          // ✅ Correct location
+          setInviteMode(false);
+
+          dispatch(
+            showMessage(
+              "Invite sent. The connection will auto-stage when they join."
+            )
+          );
+
+          setShowInviteModal(false);
+          setStep(0);
+        }}
+      />
 
       {/* 🧩 Edit Modal */}
       {selectedConnection && (

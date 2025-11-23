@@ -219,19 +219,6 @@ export const UserHomePage = () => {
             </div>
           )}
         </div>
-        <button
-          onClick={async () => {
-            if (!window.deferredPrompt) {
-              console.log("No deferredPrompt yet");
-              return;
-            }
-            window.deferredPrompt.prompt();
-            const choice = await window.deferredPrompt.userChoice;
-            console.log("User choice:", choice.outcome);
-          }}
-        >
-          Force Install Prompt
-        </button>
 
         {user?.companyId && sharedPosts.length > 0 && (
           <div className="feed-tabs">

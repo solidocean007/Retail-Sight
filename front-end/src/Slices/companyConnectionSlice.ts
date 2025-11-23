@@ -15,12 +15,12 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db, functions } from "../utils/firebase";
-import { CompanyConnectionType, ConnectionRequest } from "../utils/types";
+import { CompanyConnectionType, ConnectionRequestType } from "../utils/types";
 import {
   setCompanyConnectionsStore,
   updateCompanyConnectionInStore,
 } from "../utils/database/companyConnectionsDBUtils";
-import {  httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 
 function normalizeTimestamps(obj: any) {
   const result: any = { ...obj };
@@ -55,55 +55,56 @@ export const createConnectionRequest = createAsyncThunk(
     const safeBrands = Array.isArray(brandSelection) ? brandSelection : [];
     const now = new Date().toISOString();
 
-    // const newRequest: ConnectionRequest = {
-    //   emailLower: user.email,
-    //   requestFromCompanyType: usersCompany.companyType,
-    //   requestFromCompanyId: currentCompanyId,
-    //   requestToCompanyId: "",
-    //   requestedByUid: user.uid,
-    //   status: "pending",
-    //   sharedBrands: safeBrands,
-    //   requestedAt: now,
-    // };
+    const lookupFn = httpsCallable(functions, "lookupConnectionTarget");
+    const result: any = await lookupFn({
+      email: emailInput,
+      fromCompanyId: currentCompanyId,
+    });
 
-    const resolveFn = httpsCallable(functions, "resolveCompanyEmail");
-
-    try {
-      // ✅ Try resolving before writing to Firestore
-      const result: any = await resolveFn({ requestedEmail: emailInput });
-      const { toCompanyId, toCompanyType, toCompanyName } = result.data;
-      if (!result?.data?.toCompanyId) {
-        throw new Error("Could not resolve target company.");
-      }
-
-      const newRequest: ConnectionRequest = {
-        emailLower: user.email,
-        requestFromCompanyType: usersCompany.companyType,
-        requestFromCompanyId: currentCompanyId,
-        requestFromCompanyName: usersCompany.companyName ?? "Unknown Company",
-        requestToCompanyId: toCompanyId,
-        requestToCompanyType: toCompanyType,
-        requestToCompanyName: toCompanyName, // ✅ store here
-        requestedByUid: user.uid,
-        status: "pending",
-        sharedBrands: safeBrands,
-        requestedAt: now,
-      };
-
-      // ✅ Only create the connection after success
-      const docRef = await addDoc(collection(db, "companyConnections"), {
-        ...newRequest,
-        requestedEmail: emailInput,
-        requestToCompanyId: result.data.toCompanyId,
-        requestToCompanyType: result.data.toCompanyType,
-        requestedAt: serverTimestamp(),
-      });
-
-      return { id: docRef.id, ...newRequest };
-    } catch (err: any) {
-      console.error("createConnectionRequest error:", err);
-      return rejectWithValue(err.message || "Error creating connection");
+    if (!result?.data) throw new Error("Connection lookup failed.");
+    if (result.data.mode !== "user-found") {
+      throw new Error("Cannot create connection — invalid target company.");
     }
+
+    const {
+      companyId: toCompanyId,
+      companyType: toCompanyType,
+      companyName: toCompanyName,
+    } = result.data;
+
+    // 🔥 UPDATED: Now stores full UserType object
+    const newRequest: ConnectionRequestType = {
+      requestToEmailLower: user.email,
+      requestFromCompanyType: usersCompany.companyType,
+      requestFromCompanyId: currentCompanyId,
+      requestFromCompanyName: usersCompany.companyName ?? "Unknown Company",
+      requestToCompanyId: toCompanyId,
+      requestToCompanyType: toCompanyType,
+      requestToCompanyName: toCompanyName,
+      requestedByUid: user.uid,
+      status: "pending",
+      pendingBrands: safeBrands.map((b: string) => ({
+        brand: b,
+        proposedBy: user, // ✔ full user object
+      })),
+      requestedAt: now,
+    };
+
+    // 🔥 Also stored correctly in Firestore
+    const docRef = await addDoc(collection(db, "companyConnections"), {
+      ...newRequest,
+      requestedEmail: emailInput,
+      requestToCompanyId: toCompanyId,
+      requestToCompanyType: toCompanyType,
+      requestToCompanyName: toCompanyName,
+      requestedAt: serverTimestamp(),
+      pendingBrands: safeBrands.map((b: string) => ({
+        brand: b,
+        proposedBy: user, // ✔ full user object
+      })),
+    });
+
+    return { id: docRef.id, ...newRequest };
   }
 );
 

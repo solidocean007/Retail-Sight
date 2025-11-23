@@ -18,7 +18,8 @@
   /* pill status colors */
   --status-active-color: #1a7f37;
   --status-active-bg: rgba(26, 127, 55, 0.1);
-
+  --chip-bg-color: var(--gray-100);
+  --chip-bg-color-selected: var(--primary-blue);
   --status-pending-color: #b26a00;
   --status-pending-bg: rgba(178, 106, 0, 0.1);
 
@@ -181,6 +182,9 @@
 
   --connection-edit-zone: var(--mustard-color);
 
+  --chip-bg-color: var(--gray-100);
+  --chip-bg-color-selected: var(--primary-blue);
+
   /* Surfaces & elevations */
   --surface-elevated: white; /* cards, modals, light surfaces */
   --surface-base: #f5f7fa; /* page background base */
@@ -227,7 +231,7 @@
   );
 
   --header-title: var(--gray-900);
-   --accent-orange: #ff8a3d;
+  --accent-orange: #ff8a3d;
   --link-color: var(--gold);
   --link-hover-color: var(--dark-gold);
 
@@ -281,7 +285,7 @@
   --dashboard-header-background: var(--gray-800);
   --tab-background: var(--gray-800);
   --tab-background-selected: var(--light-blue-2);
-  --user-modal-background: var(--deep-abyss);
+  --user-modal-background: var(--gray-600);
   --card-panel-background: var(--gray-700);
 
   --connection-edit-zone: var(--some-dark-color);
@@ -290,6 +294,9 @@
   --status-pending-bg: rgba(178, 106, 0, 0.25);
   --status-inactive-bg: rgba(150, 150, 150, 0.15);
   --surface-elevated: var(--gray-900);
+
+  --chip-bg-color: var(--gray-100);
+  --chip-bg-color-selected: var(--primary-blue);
 
   --dashboard-card: var(--bgColor-muted);
 
@@ -316,7 +323,7 @@
   --header-title: var(--white);
   --link-color: #93c5fd; /* Light-blue-300 (Tailwind-ish) */
   --link-hover-color: var(--primary-blue); /* Slightly brighter */
-   --accent-orange: #ff8a3d;
+  --accent-orange: #ff8a3d;
   --button-background: var(--primary-blue);
   --button-background-hover: var(--primary-blue-dark);
   --button-text-color: var(--white);

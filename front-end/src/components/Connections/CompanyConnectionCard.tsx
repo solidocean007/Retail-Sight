@@ -13,6 +13,11 @@ import CustomConfirmation from "../CustomConfirmation";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { showMessage } from "../../Slices/snackbarSlice";
+import { useSelector } from "react-redux";
+import { selectUser } from "../../Slices/userSlice";
+import { getProposerCompanyId, getProposerName } from "../../utils/connectionHelper";
+
+
 
 interface Props {
   connection: CompanyConnectionType;
@@ -25,6 +30,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
   currentCompanyId,
   isAdminView,
 }) => {
+  const user = useSelector(selectUser);
   const dispatch = useAppDispatch();
   const functions = getFunctions();
   const { supplierBrandList } = useSupplierBrands();
@@ -75,14 +81,29 @@ const CompanyConnectionCard: React.FC<Props> = ({
   const declinedBrands = connection.declinedBrands || [];
 
   const pendingFromUs = useMemo(
-    () => pendingBrands.filter((b) => b.proposedBy === currentCompanyId),
-    [pendingBrands, currentCompanyId]
-  );
+  () =>
+    pendingBrands.filter((b) => {
+      const proposer = b.proposedBy;
+      if (typeof proposer === "string") {
+        return proposer === currentCompanyId; // old shape
+      }
+      return proposer.companyId === currentCompanyId; // new shape
+    }),
+  [pendingBrands, currentCompanyId]
+);
 
-  const pendingFromThem = useMemo(
-    () => pendingBrands.filter((b) => b.proposedBy !== currentCompanyId),
-    [pendingBrands, currentCompanyId]
-  );
+const pendingFromThem = useMemo(
+  () =>
+    pendingBrands.filter((b) => {
+      const proposer = b.proposedBy;
+      if (typeof proposer === "string") {
+        return proposer !== currentCompanyId; // old shape
+      }
+      return proposer.companyId !== currentCompanyId; // new shape
+    }),
+  [pendingBrands, currentCompanyId]
+);
+
 
   const checkConnectionLimit = async (companyId: string) => {
     const fn = httpsCallable(functions, "enforcePlanLimits");
@@ -121,7 +142,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
         ...(connection.pendingBrands || []),
         ...brandSelection.map((b) => ({
           brand: b,
-          proposedBy: currentCompanyId,
+          proposedBy: user,
           proposedAt: new Date().toISOString(), // ✅ use client time for each
         })),
       ];
@@ -302,7 +323,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
         {sharedBrands.length ? (
           <div className="brand-list">
             {sharedBrands.map((brand) => (
-              <span key={brand} className="brand-chip shared">
+              <span key={brand} className="chip brand-chip shared">
                 {brand}
                 {isEditing && (
                   <button
@@ -335,7 +356,13 @@ const CompanyConnectionCard: React.FC<Props> = ({
                     className="pending-brand-row"
                     data-brand={b.brand}
                   >
-                    <span className="brand-chip pending">{b.brand}</span>
+                    <span className="brand-chip pending">
+                      {b.brand}
+                      <small className="proposer-label">
+                        {getProposerName(b)}
+                      </small>
+                    </span>
+
                     {isAdminView && (
                       <button
                         className="icon-btn cancel-btn"

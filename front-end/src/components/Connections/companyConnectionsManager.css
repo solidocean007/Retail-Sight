@@ -7,6 +7,63 @@
   margin: 0 auto;
 }
 
+.connections-overview {
+  background: var(--background-pop-out-body);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+}
+
+.overview-header {
+  cursor: pointer;
+  text-align: center;
+}
+
+.overview-summary {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  margin: 0.3rem 0 0.6rem;
+}
+
+.toggle-overview-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.overview-details {
+  margin-top: 0.8rem;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.overview-points {
+  list-style: none;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.overview-icon {
+  font-size: 1.1rem;
+  margin-top: 2px;
+}
+
+.overview-points li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0.6rem;
+}
+
+.overview-footer {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 0.6rem;
+}
+
 .connections-dashboard h2 {
   text-align: center;
   font-size: 1.6rem;
@@ -24,6 +81,7 @@
 .connection-builder-backdrop {
   background-color: rgba(0, 0, 0, 0.6) !important;
   backdrop-filter: blur(2px);
+   z-index: 1200 !important;
 }
 
 .edit-zone {
@@ -71,22 +129,23 @@
   padding: 2rem 1.5rem;
   max-height: 90vh; /* ✅ limits height on smaller viewports */
   overflow-y: auto; /* ✅ allows scroll if content taller */
-  animation: fadeInModal 0.25s ease-out;
+  animation: fadeInModal 0.25s ease-out forwards;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.98);
+  will-change: transform, opacity;
+  z-index: 1500;
 }
 
 /* === Smooth open animation === */
 @keyframes fadeInModal {
   from {
     opacity: 0;
-    transform: translateY(-12px);
+    transform: translate(-50%, -50%) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate(-50%, -50%) scale(1);
   }
-}
-.connection-builder-modal {
-  animation: fadeInModal 0.25s ease-out;
 }
 
 .connection-builder {
@@ -200,26 +259,8 @@
   background: var(--background-pop-out-body, #fff);
 }
 
-.brand-chip {
-  padding: 6px 10px;
-  border-radius: 15px;
-  border: 1px solid var(--border-color, #ccc);
-  /* background-color: var(--card-bg, #f9f9f9); */
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
 .brand-chip.shared {
   background-color: green;
-}
-
-.brand-chip:hover {
-  background: var(--accent-light, #e7f1ff);
-}
-.brand-chip.selected {
-  border: 2px solid var(--accent, #0066cc);
-  background: var(--accent, #0066cc);
-  color: white;
 }
 
 /* Selected Brands */
@@ -237,22 +278,10 @@
   margin-top: 0.4rem;
 }
 
-.selected-brand-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: var(--chip-bg, #e5f0ff);
-  border-radius: 16px;
-  padding: 0.3rem 0.8rem;
-  font-size: 0.85rem;
-}
-
 .remove-brand-btn {
-  border: none;
   background: none;
-  color: var(--accent, #0066cc);
-  cursor: pointer;
-  font-weight: bold;
+  box-shadow: none;
+  color: white;
 }
 
 .clear-selection-btn {
@@ -470,6 +499,201 @@
   flex-direction: column;
   align-items: center;
   margin: 1rem 0;
+}
+
+.connections-context-panel {
+  background: var(--background-pop-out-body);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: var(--card-shadow);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.context-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.context-intro {
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.45;
+}
+
+.context-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.context-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.context-icon {
+  font-size: 1.25rem;
+  margin-top: 4px;
+}
+
+.context-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.error-banner {
+  background: #ffd6d6;
+  color: #8a0000;
+  border: 1px solid #ffb6b6;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+@keyframes subtle-shake {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.shake {
+  animation: subtle-shake 0.25s ease;
+}
+
+.inline-error {
+  background: #ffdddd;
+  color: #aa0000;
+  border: 1px solid #ffaaaa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.company-preview-box {
+  margin-top: 1rem;
+  background: var(--dashboard-card);
+  border: 1px solid var(--border-color);
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  animation: fadeInPreview 0.25s ease-out;
+}
+
+.preview-title {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.preview-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.preview-type {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+/* Inline text button */
+.inline-text-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.inline-text-btn:hover {
+  opacity: 0.8;
+}
+
+/* Header row for supplier + add brand link */
+.supplier-header-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+}
+
+.supplier-label {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+@keyframes fadeInPreview {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .connections-context-panel {
+    padding: 1rem;
+  }
+  .context-item {
+    grid-template-columns: 26px 1fr;
+  }
 }
 
 /* Mobile Responsive */

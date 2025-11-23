@@ -1,0 +1,264 @@
+/* ===========================================
+   CONNECTION BUILDER — CLEAN DEDICATED CSS
+   =========================================== */
+
+.connection-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 0.4rem 0;
+  width: 100%;
+}
+
+/* Enhanced hint styling */
+.invite-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: center;
+  background: var(--background-pop-out-body);
+  border-left: 4px solid var(--accent);
+  padding: 1rem;
+}
+
+/* Icon inside hint */
+.hint-icon {
+  font-size: 1.3rem;
+  margin-bottom: 0.25rem;
+}
+
+/* === Headings === */
+.connection-builder h3 {
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+
+/* === Section hint bubble === */
+.connection-builder .section-hint {
+  background: var(--dashboard-card);
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+/* ===========================================
+   SUPPLIER DROPDOWN
+   =========================================== */
+.supplier-dropdown {
+  background: var(--dashboard-card);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  border-radius: 10px;
+  max-width: 360px;
+  width: 100%;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.supplier-dropdown label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.supplier-dropdown select {
+  padding: 0.6rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  width: 100%;
+  background: var(--input-background);
+  color: var(--input-text-color);
+}
+
+/* ===========================================
+   BRAND GRID
+   =========================================== */
+.brand-selector {
+  background: var(--background-pop-out-body);
+  border: 1px solid var(--border-color);
+  padding: 0.9rem;
+  border-radius: 10px;
+}
+
+.brand-selector h4 {
+  margin-bottom: 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.brand-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ===========================================
+   MANUAL BRAND INPUT
+   =========================================== */
+.manual-brand-box {
+  background: var(--dashboard-card);
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.toggle-manual-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.25rem 0;
+  font-weight: 500;
+}
+
+.manual-brand-entry {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.manual-brand-note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.manual-brand-input {
+  padding: 0.6rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  background: var(--input-background);
+  color: var(--input-text-color);
+}
+
+.add-brand-btn {
+  align-self: flex-start;
+  padding: 6px 12px;
+  background: var(--accent);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  font-size: 0.85rem;
+  transition: background 0.2s ease;
+}
+
+.add-brand-btn:hover {
+  background: var(--accent-hover);
+}
+
+/* ===========================================
+   SELECTED BRAND BAR
+   =========================================== */
+.selected-brands-bar {
+  width: 100%;
+  background: var(--dashboard-card);
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.selected-brands-bar h5 {
+  margin: 0;
+}
+
+.selected-brand-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+/* ===========================================
+   ACTION BUTTONS
+   =========================================== */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+/* Fix secondary button in dark mode */
+.button-secondary {
+  background: var(--dashboard-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.button-secondary:hover {
+  background: var(--background-pop-out-body);
+  border-color: var(--accent);
+}
+
+.invite-hint strong {
+  color: var(--text-primary);
+}
+
+/* ==========================================================
+   INVITE HINT — Glowing Email Box
+   ========================================================== */
+
+/* ============================================================
+   INVITE BANNER — Gorgeous glowing effect
+   ============================================================ */
+
+.flashy-invite-box {
+  background: var(--dashboard-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 12px rgba(0, 120, 255, 0.25);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.email-glow {
+  font-size: 3rem;
+  margin-bottom: 0.4rem;
+  animation: emailPulse 2s infinite ease-in-out;
+}
+
+@keyframes emailPulse {
+  0% {
+    text-shadow: 0 0 6px rgba(0, 150, 255, 0.6);
+  }
+  50% {
+    text-shadow: 0 0 22px rgba(0, 150, 255, 1);
+  }
+  100% {
+    text-shadow: 0 0 6px rgba(0, 150, 255, 0.6);
+  }
+}
+
+.invite-email {
+  color: var(--accent);
+  font-size: 1.05rem;
+}
+
+/* email highlight */
+.invite-email {
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+/* Improve readability */
+.flashy-invite-box p {
+  color: var(--text-secondary);
+  margin: 0.25rem 0;
+}

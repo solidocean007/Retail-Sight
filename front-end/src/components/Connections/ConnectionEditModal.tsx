@@ -1,9 +1,27 @@
 import React, { useState, useMemo } from "react";
-import { CompanyConnectionType, PendingBrandType } from "../../utils/types";
+import {
+  CompanyConnectionType,
+  PendingBrandType,
+  UserType,
+} from "../../utils/types";
 import { db } from "../../utils/firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useSupplierBrands } from "../../hooks/useSupplierBrands";
 import CustomConfirmation from "../CustomConfirmation";
+import { getProposerCompanyId } from "../../utils/connectionHelper";
+
+// Format pending brand entry showing who proposed it
+const renderPendingBrand = (p: PendingBrandType) => {
+  const proposer =
+    typeof p.proposedBy === "string"
+      ? p.proposedBy
+      : p.proposedBy?.firstName ||
+        p.proposedBy?.email ||
+        "Unknown user";
+
+  return `${p.brand} — proposed by ${proposer}`;
+};
+
 
 interface ConnectionEditModalProps {
   isOpen: boolean;
@@ -46,21 +64,36 @@ const ConnectionEditModal: React.FC<ConnectionEditModalProps> = ({
 
   // derive pending/declined groups
   const pendingFromUs =
-    connection.pendingBrands?.filter((b) => b.proposedBy === ourCompanyId) || [];
-  const pendingFromThem =
-    connection.pendingBrands?.filter((b) => b.proposedBy === theirCompanyId) || [];
+  connection.pendingBrands?.filter((b) => {
+    const proposer = b.proposedBy;
+    if (typeof proposer === "string") {
+      return proposer === ourCompanyId;
+    }
+    return proposer.companyId === ourCompanyId;
+  }) || [];
+
+const pendingFromThem =
+  connection.pendingBrands?.filter((b) => {
+    const proposer = b.proposedBy;
+    if (typeof proposer === "string") {
+      return proposer !== ourCompanyId;
+    }
+    return proposer.companyId !== ourCompanyId;
+  }) || [];
+
+
   const declinedBrands = connection.declinedBrands || [];
 
   const currentBrands = useMemo(() => {
-    const supplier = supplierBrandList.find((s) => s.supplier === selectedSupplier);
+    const supplier = supplierBrandList.find(
+      (s) => s.supplier === selectedSupplier
+    );
     return supplier ? supplier.brands : [];
   }, [supplierBrandList, selectedSupplier]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>
-      prev.includes(brand)
-        ? prev.filter((b) => b !== brand)
-        : [...prev, brand]
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
     );
   };
 
@@ -90,6 +123,15 @@ const ConnectionEditModal: React.FC<ConnectionEditModalProps> = ({
     }
   };
 
+  // TODO: implement real actions later
+  const onApprovePendingBrand = (connectionId: string, pendingBrand: PendingBrandType) => {
+    console.log("Approve pending brand:", pendingBrand, "for", connectionId);
+  };
+
+  const onRejectPendingBrand = (connectionId: string, pendingBrand: PendingBrandType) => {
+    console.log("Reject pending brand:", pendingBrand, "for", connectionId);
+  };
+
   return (
     <div className="connection-edit-modal">
       <header className="connection-header">
@@ -97,8 +139,8 @@ const ConnectionEditModal: React.FC<ConnectionEditModalProps> = ({
           Edit Connection — {ourCompanyName} ↔ {theirCompanyName}
         </h2>
         <p className="connection-intro">
-          Review and manage shared brands with {theirCompanyName}.
-          You can accept proposals, propose new brands, or remove existing ones.
+          Review and manage shared brands with {theirCompanyName}. You can
+          accept proposals, propose new brands, or remove existing ones.
         </p>
       </header>
 
@@ -117,6 +159,39 @@ const ConnectionEditModal: React.FC<ConnectionEditModalProps> = ({
           <p className="empty-text">No active shared brands yet.</p>
         )}
       </section>
+      {connection.pendingBrands && connection.pendingBrands.length > 0 && (
+        <div className="pending-brands-section">
+          <h4>Pending Brand Requests</h4>
+
+          <ul className="pending-brands-list">
+            {connection.pendingBrands.map((p, idx) => (
+              <li key={idx} className="pending-brand-item">
+                <span>{renderPendingBrand(p)}</span>
+
+                {/* 
+            You will wire these up later.
+            The UI is ready now.
+          */}
+                <div className="pending-brand-actions">
+                  <button
+                    className="approve-btn"
+                    onClick={() => onApprovePendingBrand(connection.id, p)}
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    className="reject-btn"
+                    onClick={() => onRejectPendingBrand(connection.id, p)}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* === PENDING PROPOSALS === */}
       <section className="pending-section">

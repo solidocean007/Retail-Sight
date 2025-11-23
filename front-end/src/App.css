@@ -7,6 +7,18 @@
   color: var(--input-text-color);
 }
 
+.MuiModal-root,
+.MuiBackdrop-root {
+  position: fixed !important;
+  inset: 0 !important;
+}
+
+.MuiModal-root .connection-builder-backdrop {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
 /* 🎯 Unified Button Styles */
 
 button {
@@ -40,7 +52,7 @@ button {
   background-color: var(--btn-primary-bg);
   color: var(--text-primary-button);
   border: none;
-  padding: 0.2rem .5rem;
+  padding: 0.2rem 0.5rem;
   box-shadow: none;
   border-radius: 0;
   border-top-left-radius: 0.5rem;
@@ -163,6 +175,69 @@ tr {
 
 tr:nth-child(even) {
   background-color: #fafafa;
+}
+
+/* ============================================================
+   🌐 GLOBAL CHIP SYSTEM — applies everywhere (App.css)
+   ============================================================ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--chip-bg-color);
+  color: var(--text-primary);
+  transition: 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.chip:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+
+.chip.selected {
+  background: var(--chip-bg-color-selected);
+  border-color: var(--chip-bg-color-selected);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(0, 120, 255, 0.4);
+}
+
+/* X button */
+.chip .chip-remove {
+  margin-left: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.8;
+  transition: 0.15s ease;
+  background: none;
+  border: none;
+}
+
+.chip .chip-remove:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+/* Grid container */
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Selected Chip List */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* Sidebar Toggle Visibility */

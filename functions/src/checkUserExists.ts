@@ -47,11 +47,15 @@ export const checkUserExists = onCall<{ email: string; companyId?: string }>(
         companyId: existingCompanyId || null,
         signInMethods, // 👈 return provider info
       };
-    } catch (err: unknown) {
-      if (
-        err instanceof Error &&
-        (err as any)?.code === "auth/user-not-found"
-      ) {
+    } catch (err: any) {
+      // correctly detect missing user
+      const code =
+        err?.code ||
+        err?.errorInfo?.code ||
+        err?.errorInfo?.message ||
+        err?.message;
+
+      if (code === "auth/user-not-found") {
         return { exists: false, signInMethods: [] };
       }
 
