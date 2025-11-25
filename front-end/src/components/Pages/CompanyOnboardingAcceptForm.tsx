@@ -41,7 +41,7 @@ export default function CompanyOnboardingAcceptForm() {
   const { inviteId, companyId } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+   
   const [invite, setInvite] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +61,24 @@ export default function CompanyOnboardingAcceptForm() {
     functions,
     "markAccessRequestComplete"
   );
+
+  const resolveStagedConnections = async (
+    email: string,
+    newCompanyId: string
+  ) => {
+    try {
+      const fn = httpsCallable(functions, "acceptInviteAutoResolve");
+      await fn({ email, newCompanyId });
+    } catch (err) {
+      console.error("Failed to auto-resolve staged connections:", err);
+      // Optional: surface a non-blocking warning
+      dispatch(
+        showMessage(
+          "Company activated, but connection setup may take a moment."
+        )
+      );
+    }
+  };
 
   useEffect(() => {
     if (!inviteId || !companyId) return;
@@ -125,7 +143,9 @@ export default function CompanyOnboardingAcceptForm() {
 
       if (user.email?.toLowerCase() !== invite.inviteeEmail.toLowerCase()) {
         await auth.signOut();
-        throw new Error("Signed-in Google account does not match invited email.");
+        throw new Error(
+          "Signed-in Google account does not match invited email."
+        );
       }
 
       const nowIso = new Date().toISOString();
@@ -157,6 +177,10 @@ export default function CompanyOnboardingAcceptForm() {
       });
 
       dispatch(showMessage("✅ Account activated!"));
+
+      // 🆕 Auto-resolve staged connections for this new company
+      await resolveStagedConnections(invite.inviteeEmail, invite.companyId);
+
       navigate("/user-home-page");
     } catch (e: any) {
       if (e.code === "auth/account-exists-with-different-credential") {
@@ -265,6 +289,9 @@ export default function CompanyOnboardingAcceptForm() {
         inviteeEmail: invite.inviteeEmail,
       });
 
+      // 🆕 Auto-resolve staged connections for this new company
+      await resolveStagedConnections(invite.inviteeEmail, invite.companyId);
+
       dispatch(showMessage("✅ Company activated! Redirecting..."));
       setTimeout(() => navigate("/user-home-page"), 800);
     } catch (err: any) {
@@ -274,22 +301,27 @@ export default function CompanyOnboardingAcceptForm() {
     }
   };
 
-  if (loading) return <div className="onboarding-loading">Loading company setup…</div>;
+  if (loading)
+    return <div className="onboarding-loading">Loading company setup…</div>;
   if (error) return <div className="onboarding-error">{error}</div>;
-  if (!invite) return null;
+  // if (!invite) return null;
 
   return (
     <div className="onboarding-page">
       <div className="onboarding-card">
         <h1>Activate Your Company Account</h1>
         <p>
-          <strong>{invite.companyName}</strong> is now approved and live on Displaygram.
+          <strong>{invite.companyName}</strong> is now approved and live on
+          Displaygram.
         </p>
         <p>You’re being registered as the company admin.</p>
 
         <div className="plan-summary">
           <h3>Plan: Free</h3>
-          <p>Includes up to <strong>5 users</strong> and <strong>2 connections</strong>.</p>
+          <p>
+            Includes up to <strong>5 users</strong> and{" "}
+            <strong>2 connections</strong>.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="onboarding-form">
@@ -326,7 +358,9 @@ export default function CompanyOnboardingAcceptForm() {
               {showPassword ? <VisibilityOff /> : <Visibility />}
             </IconButton>
           </div>
-          {passwordError && <div className="onboarding-error">{passwordError}</div>}
+          {passwordError && (
+            <div className="onboarding-error">{passwordError}</div>
+          )}
 
           <label>Verify Password</label>
           <div className="password-wrapper">

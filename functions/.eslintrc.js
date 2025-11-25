@@ -25,7 +25,7 @@ module.exports = {
     quotes: ["error", "double"],
     indent: ["off"],
     "linebreak-style": ["error", "unix"],
-    "max-len": ["error", { code: 120 }],
+    "max-len": ["error", { code: 130 }],
     "prettier/prettier": [
       "error",
       {

@@ -30,11 +30,13 @@ const NotificationsPage: React.FC = () => {
 
   if (!currentUser) return null;
 
-  useEffect(()=> {
-    if(notifications.length === 0) {
+  
+
+  useEffect(() => {
+    if (notifications.length === 0) {
       navigate("/");
-    } 
-  },[notifications])
+    }
+  }, [notifications]);
 
   const handleMarkAllRead = () => {
     notifications.forEach((notif) => {

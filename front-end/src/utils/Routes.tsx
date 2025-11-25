@@ -57,10 +57,7 @@ export const AppRoutes = () => {
         path="/view-collection/:collectionId"
         element={<ViewCollection />}
       />
-      <Route
-        path="/post/:postId"
-        element={<PostViewer />}
-      />
+      <Route path="/post/:postId" element={<PostViewer />} />
       <Route
         path="/user-home-page"
         element={
@@ -98,6 +95,10 @@ export const AppRoutes = () => {
       <Route
         path="/onboard-company/:companyId/:inviteId"
         element={<CompanyOnboardingAcceptForm />}
+      />
+      <Route
+        path="/new-company-invite/:inviteId"
+        element={<RequestAccessForm inviteMode={true} />}
       />
 
       <Route path="/p/:postId" element={<PublicPostViewer />} />

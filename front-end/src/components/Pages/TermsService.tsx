@@ -3,6 +3,7 @@ import { TermsOfServiceHelmet } from "../../utils/helmetConfigurations";
 import "./termsService.css";
 
 const TermsOfService = () => {
+  
   return (
     <>
       <TermsOfServiceHelmet />

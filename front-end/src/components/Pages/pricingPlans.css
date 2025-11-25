@@ -10,14 +10,14 @@
   flex-direction: column;
   align-items: center;
   color: var(--text-primary);
-  padding: 4rem 1.5rem;
+  padding: 2rem 1.5rem;
 }
 
 /* ===== HERO ===== */
 .pricing-hero {
   text-align: center;
   max-width: 750px;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   animation: fadeUp 0.8s ease-out forwards;
 }
 
@@ -42,7 +42,7 @@
   gap: 2rem;
   max-width: 1100px;
   width: 100%;
-  margin: 0 auto 3.5rem;
+  margin: 0 auto;
 }
 
 /* ===== PLAN CARD ===== */
@@ -73,6 +73,8 @@
   border: 1px solid var(--accent);
   box-shadow: 0 0 20px rgba(0, 102, 204, 0.25);
   transform: scale(1.02);
+  /* color: var(--text-color); */
+  color: white;
   z-index: 2;
 }
 
@@ -114,7 +116,7 @@
 }
 
 .tagline {
-  color: var(--text-secondary);
+  /* color: var(--text-secondary); */
   font-size: 0.9rem;
   margin-bottom: 0.75rem;
 }
@@ -136,10 +138,16 @@
 .plan-features li {
   margin-bottom: 0.6rem;
   color: var(--text-secondary);
+  /* color: white; */
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
+
+.featured li, .featured .plan-price {
+  color:white;
+}
+
 
 /* ===== BUTTONS ===== */
 .plan-button {
@@ -196,7 +204,7 @@
 /* ===== FOOTER ===== */
 .pricing-footer {
   text-align: center;
-  margin-top: 3rem;
+  margin-top: 0rem;
   max-width: 950px;
 }
 
@@ -275,6 +283,22 @@
   animation-delay: 0.4s;
 }
 
+@media (min-width: 900px) {
+  .pricing-footer {
+    width: 100%
+  }
+  .plan-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .pricing-grid  {
+    max-width: 700px;
+  }
+
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 700px) {
   .pricing-hero h1 {
@@ -283,4 +307,6 @@
   .plan-card {
     padding: 1.5rem;
   }
+
 }
+

@@ -105,11 +105,7 @@ const ResetPassword: React.FC = () => {
             onChange={(e) => setConfirm(e.target.value)}
           />
 
-          <button
-            type="submit"
-            className="auth-submit"
-            disabled={submitting}
-          >
+          <button type="submit" className="auth-submit" disabled={submitting}>
             {submitting ? "Resetting…" : "Reset Password"}
           </button>
         </form>

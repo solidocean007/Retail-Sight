@@ -52,6 +52,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
   } | null>(null);
   const [showRedirectBanner, setShowRedirectBanner] = useState(false);
 
+
+
   useEffect(() => {
     if (localStorage.getItem("postRedirect")) {
       setShowRedirectBanner(true);
@@ -339,9 +341,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </button>
           </nav>
 
-          <div className="auth-divider" role="separator" aria-hidden="true">
+          {/* <div className="auth-divider" role="separator" aria-hidden="true">
             <span>or</span>
-          </div>
+          </div> */}
 
           <footer className="auth-footnote" aria-label="New user options">
             <span>New here?</span>{" "}

@@ -14,7 +14,7 @@ const ContactUs = () => {
   });
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = event.target as
       | HTMLInputElement
@@ -46,6 +46,8 @@ const ContactUs = () => {
         alert("Failed to send message");
       });
   };
+
+
 
   return (
     <>

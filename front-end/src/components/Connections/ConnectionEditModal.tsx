@@ -269,7 +269,7 @@ const pendingFromThem =
               {currentBrands.map((brand) => (
                 <button
                   key={brand}
-                  className={`brand-chip ${
+                  className={`chip brand-chip ${
                     selectedBrands.includes(brand) ? "selected" : ""
                   }`}
                   onClick={() => toggleBrand(brand)}

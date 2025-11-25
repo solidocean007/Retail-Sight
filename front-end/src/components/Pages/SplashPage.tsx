@@ -35,15 +35,15 @@ const SplashPage = () => {
   --------------------------------------- */
   useEffect(() => {
     const observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
+      (entries) => {
+        entries.forEach((entry) => {
           if (entry.isIntersecting) entry.target.classList.add("visible");
         });
       },
       { threshold: 0.2 }
     );
 
-    document.querySelectorAll(".fade-in").forEach(el => observer.observe(el));
+    document.querySelectorAll(".fade-in").forEach((el) => observer.observe(el));
   }, []);
 
   return (
@@ -73,17 +73,26 @@ const SplashPage = () => {
         </button>
 
         <nav className={`splash-nav ${menuOpen ? "open" : ""}`}>
-          <Link to="/login" onClick={() => setMenuOpen(false)}>Login</Link>
-          <a href="#objective" onClick={() => setMenuOpen(false)}>Objective</a>
-          <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
-          <a href="#pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
-          <a href="#security" onClick={() => setMenuOpen(false)}>Security</a>
+          <Link to="/login" onClick={() => setMenuOpen(false)}>
+            Login
+          </Link>
+          <a href="#objective" onClick={() => setMenuOpen(false)}>
+            Objective
+          </a>
+          <a href="#features" onClick={() => setMenuOpen(false)}>
+            Features
+          </a>
+          <a href="#pricing" onClick={() => setMenuOpen(false)}>
+            Pricing
+          </a>
+          <a href="#security" onClick={() => setMenuOpen(false)}>
+            Security
+          </a>
         </nav>
       </header>
 
       {/* MAIN CONTENT */}
       <main className="splash">
-
         {/* HERO */}
         <section className="hero section fade-in">
           <div className="hero__text">
@@ -94,9 +103,9 @@ const SplashPage = () => {
             <h1>Discover and share retail success.</h1>
 
             <p>
-              Capture displays, tag stores, and instantly share results with your
-              team and trusted partners — without the clutter of group texts or
-              email chains.
+              Capture displays, tag stores, and instantly share results with
+              your team and trusted partners — without the clutter of group
+              texts or email chains.
             </p>
 
             <Link to="/request-access" className="btn-primary hero__cta">
@@ -118,10 +127,11 @@ const SplashPage = () => {
           <div className="section__text">
             <h2>The Objective</h2>
             <p>
-              Displaygram helps teams <strong>capture, archive, and evaluate</strong>{" "}
-              retail execution. Field reps upload photos tied to the correct
-              account, brand, and timing — creating a visual history your entire
-              team can learn from.
+              Displaygram helps teams{" "}
+              <strong>capture, archive, and evaluate</strong> retail execution.
+              Field reps upload photos tied to the correct account, brand, and
+              timing — creating a visual history your entire team can learn
+              from.
             </p>
 
             <p>
@@ -154,8 +164,8 @@ const SplashPage = () => {
 
             <p>
               Filter displays by store, category, brand, or rep. Find the work
-              that matters most — whether you're a distributor, supplier partner,
-              or manager.
+              that matters most — whether you're a distributor, supplier
+              partner, or manager.
             </p>
 
             <Link to="/features" className="btn-secondary">
@@ -201,8 +211,8 @@ const SplashPage = () => {
 
             <p>
               Displaygram is built on secure Firebase authentication and cloud
-              infrastructure. Images and data are stored safely and reliably using
-              industry-standard encryption.
+              infrastructure. Images and data are stored safely and reliably
+              using industry-standard encryption.
             </p>
 
             <Link to="/request-access" className="btn-secondary">
@@ -228,7 +238,6 @@ const SplashPage = () => {
             Sign Up Now
           </Link>
         </section>
-
       </main>
     </>
   );

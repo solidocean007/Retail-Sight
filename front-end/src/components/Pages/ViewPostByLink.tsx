@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect} from "react";
+import {  useNavigate, useParams } from "react-router-dom";
 import { PostWithID } from "../../utils/types";
 import HeaderBar from "./../HeaderBar";
 import { CircularProgress, Button, Box, Typography } from "@mui/material";

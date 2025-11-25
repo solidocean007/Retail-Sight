@@ -469,12 +469,10 @@ const pendingFromThem = useMemo(
               <div className="brand-chip-grid">
                 {currentBrands.map((brand) => (
                   <button
-                    key={brand}
-                    className={`brand-chip ${
-                      brandSelection.includes(brand) ? "selected" : ""
-                    }`}
-                    onClick={() => toggleBrand(brand)}
-                  >
+  className={`chip brand-chip ${brandSelection.includes(brand) ? "selected" : ""}`}
+  onClick={() => toggleBrand(brand)}
+>
+
                     {brand}
                   </button>
                 ))}

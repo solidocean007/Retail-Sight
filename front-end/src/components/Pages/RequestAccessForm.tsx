@@ -1,18 +1,28 @@
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { AccessRequestDraft } from "../DeveloperDashboard/deverloperTypes";
 // import { Eye, EyeOff } from "lucide-react"; // nice minimal icons
 import { getFunctions, httpsCallable } from "firebase/functions";
 import "./signUpLogIn.css";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../utils/firebase";
 
 type UserTypeHint = "distributor" | "supplier";
 
 const COMPANY_TYPES: UserTypeHint[] = ["distributor", "supplier"];
 
-export default function RequestAccessForm() {
+export default function RequestAccessForm({
+  inviteMode,
+}: {
+  inviteMode?: boolean;
+}) {
   const dispatch = useAppDispatch();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [form, setForm] = useState<AccessRequestDraft>({
@@ -25,6 +35,7 @@ export default function RequestAccessForm() {
     companyName: "",
   });
   const functions = getFunctions();
+
   const createCompanyOrRequest = httpsCallable(
     functions,
     "createCompanyOrRequest"
@@ -33,6 +44,50 @@ export default function RequestAccessForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const { inviteId } = useParams();
+
+  // 🔵 Invite context
+  const [inviteData, setInviteData] = useState<any>(null);
+
+  function invertCompanyType(
+    type: "supplier" | "distributor"
+  ): "supplier" | "distributor" {
+    return type === "supplier" ? "distributor" : "supplier";
+  }
+
+  // Load pendingInvite context if inviteId exists
+  useEffect(() => {
+    if (!inviteId) return;
+
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, "pendingInvites", inviteId));
+        if (!snap.exists()) {
+          dispatch(showMessage("Invite not found or expired."));
+          return;
+        }
+
+        const data = snap.data();
+        setInviteData(data);
+        console.log(inviteData);
+        // PREFILL FIELDS
+        setForm((prev) => ({
+          ...prev,
+          workEmail: data.email || prev.workEmail,
+          companyName: data.inferredCompanyName || prev.companyName,
+          firstName: data.firstName || prev.firstName,
+          lastName: data.lastName || prev.lastName,
+          userTypeHint: data.fromCompanyType
+            ? invertCompanyType(data.fromCompanyType)
+            : prev.userTypeHint,
+        }));
+      } catch (err) {
+        console.error("Failed to load invite:", err);
+        dispatch(showMessage("Failed to load invite details."));
+      }
+    })();
+  }, [inviteId]);
 
   useEffect(() => {
     const auth = getAuth();
@@ -56,13 +111,26 @@ export default function RequestAccessForm() {
     setError(null);
 
     try {
-      if (!form.workEmail.includes("@"))
+      if (!form.workEmail.includes("@")) {
         throw new Error("Enter a valid work email.");
+      }
 
-      const result = await createCompanyOrRequest({
+      // Build request payload dynamically
+      const payload: any = {
         ...form,
         userTypeHint: form.userTypeHint,
-      });
+      };
+
+      // Add invite metadata if applicable
+      if (inviteData && inviteId) {
+        payload.inviteId = inviteId;
+        payload.invitedByCompanyId = inviteData.fromCompanyId;
+        payload.inferredCompanyType = invertCompanyType(
+          inviteData.fromCompanyType
+        );
+      }
+
+      const result = await createCompanyOrRequest(payload);
       const data = result.data as { ok?: boolean; error?: string };
 
       if (data.ok) {
@@ -113,10 +181,40 @@ export default function RequestAccessForm() {
     <div className="auth-page">
       <div className="auth-card">
         <header className="auth-header">
-          <h1 className="auth-title">
-            <span>Displaygram</span>
+          {/* INVITE BANNER */}
+          {inviteData && (
+            <div className="invite-banner">
+              <h3>You were invited to join Displaygram</h3>
+
+              {inviteData.fromCompanyName && (
+                <p>
+                  <strong>{inviteData.fromCompanyName}</strong> invited you to
+                  join Displaygram and start a shared-brand connection.
+                </p>
+              )}
+
+              {inviteData.pendingBrands?.length > 0 && (
+                <div className="brand-preview-box">
+                  <p>They proposed these brands to collaborate on:</p>
+                  <div className="brand-list">
+                    {inviteData.pendingBrands.map((b: string) => (
+                      <span key={b} className="brand-pill">
+                        {b}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p className="invite-note">
+                Your company request will be reviewed and approved before
+                onboarding.
+              </p>
+            </div>
+          )}
+          <h1 className="request-title">
+            {inviteData ? "Complete Your Company Request" : "Request Access"}
           </h1>
-          <h2 className="auth-welcome">Request Access to get started</h2>
         </header>
 
         {error && <div className="auth-alert">{error}</div>}
@@ -149,6 +247,7 @@ export default function RequestAccessForm() {
             placeholder="you@company.com"
             value={form.workEmail}
             onChange={(e) => setField("workEmail", e.target.value)}
+            disabled={!!inviteData}
             required
           />
 
@@ -169,6 +268,7 @@ export default function RequestAccessForm() {
             onChange={(e) =>
               setField("userTypeHint", e.target.value as UserTypeHint)
             }
+            disabled={!!inviteData}
             required
           >
             {COMPANY_TYPES.map((t) => (
@@ -177,6 +277,12 @@ export default function RequestAccessForm() {
               </option>
             ))}
           </select>
+          {inviteData?.fromCompanyType && (
+            <p className="role-hint">
+              Suggested based on your invitation:{" "}
+              {invertCompanyType(inviteData.fromCompanyType)}.
+            </p>
+          )}
 
           <label className="auth-label">Phone (optional)</label>
           <input
@@ -202,9 +308,9 @@ export default function RequestAccessForm() {
             </button>
           </div>
 
-          <div className="auth-divider">
+          {/* <div className="auth-divider">
             <span>or</span>
-          </div>
+          </div> */}
 
           <div className="auth-footnote">
             Already have an invite? Use your link or{" "}

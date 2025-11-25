@@ -42,7 +42,7 @@ export default function AccessRequestsPanel() {
     );
     const unsub = onSnapshot(q, (snap) => {
       const items = snap.docs.map((d) => ({
-        id: d.id,
+        id: d.id, // id' is specified more than once, so this usage will be overwritten.
         ...(d.data() as AccessRequest),
       }));
       setRequests(items);

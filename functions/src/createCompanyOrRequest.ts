@@ -71,6 +71,11 @@ export const createCompanyOrRequest = onCall(async (request) => {
       companyId: existing ? existing.id : undefined,
       status: "pending-approval",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+
+      // NEW FIELDS FOR INVITE MODE
+      inviteId: data.inviteId || null,
+      invitedByCompanyId: data.invitedByCompanyId || null,
+      inferredCompanyType: data.inferredCompanyType || null,
     };
 
     if (existing) {

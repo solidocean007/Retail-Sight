@@ -209,6 +209,42 @@ tr:nth-child(even) {
   box-shadow: 0 0 10px rgba(0, 120, 255, 0.4);
 }
 
+/* brand chips inside grid */
+.chip.brand-chip {
+  padding: 4px 10px;
+  opacity: 0.7;
+}
+
+.chip.brand-chip.selected {
+  background: var(--chip-bg-color-selected, var(--primary-blue));
+  color: white;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 8px rgba(0, 120, 255, 0.3);
+  font-weight: 600;
+  opacity: 1;
+}
+
+.selected-brand-chip {
+  background: var(--chip-bg-color-selected, var(--primary-blue));
+  color: white;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 8px rgba(0, 120, 255, 0.3);
+  font-weight: 600;
+}
+
+.brand-chip {
+  opacity: 1;
+  transition: 0.15s ease;
+}
+
+.brand-chip.selected {
+  opacity: 1;
+}
+
+.brand-chip:not(.selected) {
+  opacity: 0.65;
+}
+
 /* X button */
 .chip .chip-remove {
   margin-left: 6px;

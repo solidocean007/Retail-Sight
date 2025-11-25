@@ -18,7 +18,10 @@ export default function OnboardingSuccessModal({
   onClose,
 }: Props) {
   const isApproved = variant === "approved";
-   const currentCompany = useSelector((state: RootState) => state.user.currentUser)?.company;
+  const currentCompany = useSelector(
+    (state: RootState) => state.user.currentUser
+  )?.company;
+  
   return (
     <AnimatePresence>
       {open && (
@@ -50,7 +53,9 @@ export default function OnboardingSuccessModal({
                     👥 Add your teammates under{" "}
                     <strong>Dashboards → Users</strong>.
                   </li>
-                  <li>🏬 Upload your accounts list in Accounts to get started.</li>
+                  <li>
+                    🏬 Upload your accounts list in Accounts to get started.
+                  </li>
                   <li>🍻 Upload your products list in Products.</li>
                   <li>
                     📸 Start posting retail displays directly from your phone!

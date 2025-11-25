@@ -1,6 +1,7 @@
 import "./RequestSubmitted.css";
 
 export default function RequestSubmitted() {
+  
   return (
     <main className="request-submitted-page">
       <section className="request-card fade-in-up">

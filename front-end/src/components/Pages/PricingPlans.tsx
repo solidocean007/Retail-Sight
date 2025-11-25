@@ -5,17 +5,14 @@ import "./pricingPlans.css";
 const PricingPlans: React.FC = () => {
   const navigate = useNavigate();
 
+
   const plans = [
     {
       id: "free",
       name: "Free Tier",
       price: "$0 / month",
       tagline: "For small teams getting started",
-      features: [
-        "👥 Up to 5 users",
-        "🤝 2 active company connections",
-      
-      ],
+      features: ["👥 Up to 5 users", "🤝 2 active company connections"],
       button: "Start Free",
     },
     {
@@ -39,7 +36,6 @@ const PricingPlans: React.FC = () => {
         "👥 Up to 40 users (add more for $1 each)",
         "🤝 10 active company connections",
         "🧩 Third party Goal importing",
-       
       ],
       button: "Network",
     },
@@ -58,11 +54,14 @@ const PricingPlans: React.FC = () => {
 
   const handleSelect = (planId: string) => {
     if (planId === "free") navigate("/request-access");
-    else navigate(`/checkout?plan=${planId}`);
+    else navigate(`/checkout?plan=${planId}`); // i need a new route that handles this case
   };
 
   return (
     <div className="pricing-container">
+      <Link to="/" className="back-home-link">
+        ← Back to Home
+      </Link>
       <section className="pricing-hero">
         <h1>Plans that Grow with Your Team</h1>
         <p>
@@ -94,9 +93,7 @@ const PricingPlans: React.FC = () => {
             </ul>
 
             <button
-              className={`plan-button ${
-                plan.badge ? "accent" : "primary"
-              }`}
+              className={`plan-button ${plan.badge ? "accent" : "primary"}`}
               onClick={() => handleSelect(plan.id)}
             >
               {plan.button}
@@ -120,10 +117,8 @@ const PricingPlans: React.FC = () => {
           <li>📸 Create and share display posts</li>
           <li>🏷️ Manage and approve shared brands</li>
           <li>🔄 Real-time sync + offline support</li>
-          <li>🔄 Real-time sync + offline support</li>
-          <li>  📸 Shared brand workflow</li>
+          <li> 📸 Shared brand workflow</li>
           <li> 🔐 Role-based access for Admins & Sales Reps</li>
-        <li>"🔄 Real-time syncing across devices"</li>
           <li>🔐 Secure Firestore + Firebase Auth</li>
         </ul>
         <p className="billing-note">

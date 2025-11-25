@@ -24,6 +24,7 @@ import { useAppBootstrap } from "./hooks/useAppBootstrap";
 import AppLoadingScreen from "./components/AppLoadingScreen";
 import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
+import ScrollToTop from "./ScrollToTop";
 
 // 🔍 NEW WRAPPER — Allows Router to stay at top,
 // while AppContent can safely use useLocation()
@@ -114,12 +115,17 @@ function AppContent() {
   );
 }
 
+if ("scrollRestoration" in window.history) {
+  window.history.scrollRestoration = "manual";
+}
+
 // ============================
 //  MAIN APP — Router at Top
 // ============================
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AppContent />
     </Router>
   );

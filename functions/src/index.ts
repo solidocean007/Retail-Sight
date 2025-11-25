@@ -25,7 +25,8 @@ import { generatePostShareToken } from "./generatePostShareToken";
 import { validatePostShareToken } from "./validatePostShareToken";
 import { createInviteAndDraftConnection } from "./createInviteAndDraftConnection";
 import { lookupConnectionTarget } from "./lookupConnectionTarget";
-import { acceptInviteAutoResolve } from "./acceptInviteAutoResolve"
+import { acceptInviteAutoResolve } from "./acceptInviteAutoResolve";
+import { onPendingNewUserAndCompanyInviteCreate } from "./onPendingNewUserAndCompanyInviteCreate";
 
 // 🧾 Braintree Billing System
 import {
@@ -102,6 +103,7 @@ export {
   onConnectionBrandsUpdated,
   lookupConnectionTarget,
   acceptInviteAutoResolve,
+  onPendingNewUserAndCompanyInviteCreate,
 
   // Notifications
   sendNotification,

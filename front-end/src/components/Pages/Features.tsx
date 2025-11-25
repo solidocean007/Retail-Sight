@@ -4,6 +4,7 @@ import "./features.css";
 
 const Features = () => {
   const navigate = useNavigate();
+
   const goRequestAccess = () => navigate("/request-access");
 
   return (

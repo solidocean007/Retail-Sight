@@ -141,12 +141,10 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
           <div className="brand-chip-grid">
             {currentBrands.map((brand) => (
               <button
-                key={brand}
-                className={`brand-chip ${
-                  brandSelection.includes(brand) ? "selected" : ""
-                }`}
-                onClick={() => toggleBrand(brand)}
-              >
+  className={`chip brand-chip ${brandSelection.includes(brand) ? "selected" : ""}`}
+  onClick={() => toggleBrand(brand)}
+>
+
                 {brand}
               </button>
             ))}
@@ -183,7 +181,7 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
           <h5>Proposed Brands</h5>
           <div className="selected-brand-list">
             {brandSelection.map((brand) => (
-              <span key={brand} className="selected-brand-chip">
+              <span key={brand} className="chip selected-brand-chip">
                 {brand}
                 <button
                   className="remove-brand-btn"

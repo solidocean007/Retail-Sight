@@ -91,7 +91,7 @@ export const approveAccessRequest = onCall(async (request) => {
 
   // 📨 Send invite email
   const appDomain = process.env.APP_DOMAIN || "https://displaygram.com";
-  const inviteLink = `${appDomain}/onboard-company/${companyId}/${inviteId}`;
+  const inviteLink = `${appDomain}/new-company-invite/${inviteId}`;
 
   await db.collection("mail").add({
     to: reqData.workEmail,

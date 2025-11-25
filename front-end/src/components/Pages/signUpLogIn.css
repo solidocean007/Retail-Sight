@@ -395,6 +395,49 @@ form {
   font-size: 0.85rem;
 }
 
+.invite-banner {
+  background: var(--dashboard-card);
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.invite-banner h3 {
+  margin-top: 0;
+  color: var(--primary-blue);
+  font-weight: 600;
+}
+
+.brand-preview-box {
+  background: var(--background-pop-out-body);
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.brand-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.brand-pill {
+  padding: 4px 10px;
+  background: var(--primary-blue);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+}
+
+.invite-note {
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+  color: var(--text-secondary);
+}
 
 /* Mobile comfort */
 @media (max-width: 480px) {
@@ -406,7 +449,8 @@ form {
     padding: 0.85rem 0.9rem;
     line-height: 1.5;
   }
-  .auth-submit, .btn-google {
+  .auth-submit,
+  .btn-google {
     padding: 12px;
     font-size: 17px;
   }

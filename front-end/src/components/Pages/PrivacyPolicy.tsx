@@ -3,6 +3,7 @@ import "./PrivacyPolicy.css";
 import { PrivacyPolicyHelmet } from "../../utils/helmetConfigurations";
 
 const PrivacyPolicy = () => {
+  
   return (
     <>
       <PrivacyPolicyHelmet />

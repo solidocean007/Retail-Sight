@@ -17,28 +17,45 @@ export const createInviteAndDraftConnection = onCall(async (request) => {
 
     const cleanEmail = String(targetEmail).trim().toLowerCase();
 
-    // Create invite
+    // Get inviting company details
+    const invitingCompanySnap = await db
+      .collection("companies")
+      .doc(fromCompanyId)
+      .get();
+
+    if (!invitingCompanySnap.exists) {
+      throw new Error("Inviting company does not exist.");
+    }
+
+    const invitingCompany = invitingCompanySnap.data();
+    const fromCompanyType = invitingCompany?.companyType; // "distributor" | "supplier"
+
+    // 1️⃣ Create pendingInvite
     const inviteRef = await db.collection("pendingInvites").add({
       email: cleanEmail,
       fromCompanyId,
+      fromCompanyType,
       status: "pending",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Normalize sharedBrands → pendingBrands format
-    const pendingBrands = sharedBrands; // already structured
+    // 2️⃣ Create draft connection for shared brands
+    const draftConnectionRef = await db
+      .collection("companyConnectionDrafts")
+      .add({
+        targetEmail: cleanEmail,
+        fromCompanyId,
+        pendingBrands: sharedBrands,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        inviteId: inviteRef.id,
+      });
 
-    // Create draft connection
-    const draftConnection = await db.collection("companyConnectionDrafts").add({
-      targetEmail: cleanEmail,
-      fromCompanyId,
-      pendingBrands,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    return { inviteId: inviteRef.id, draftId: draftConnection.id };
+    return {
+      inviteId: inviteRef.id,
+      draftId: draftConnectionRef.id,
+    };
   } catch (err: any) {
-    console.error("Error in createInviteAndDraftConnection: ", err);
+    console.error("Error in createInviteAndDraftConnection:", err);
     throw new Error(err.message || "Internal error occurred.");
   }
 });
