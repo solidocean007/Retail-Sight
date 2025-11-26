@@ -51,7 +51,7 @@
 @media (max-width: 520px) {
   .brand-logo {
     height: 44px;
-    content: url("/icons/icon-512-maskable.png");
+    content: url("/logos/displaygram-logo.svg");
   }
 }
 

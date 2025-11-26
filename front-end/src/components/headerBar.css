@@ -14,10 +14,15 @@
   margin-bottom: 20px;
 }
 
+.header-brand-logo {
+  height: 50px;
+  width: auto;
+}
+
 .website-title {
   display: flex;
   width: 100%;
-  flex-direction: column;
+  /* flex-direction: column; */
   justify-content: space-between;
   text-align: justify;
   margin: 0 0 0 5px;
@@ -133,6 +138,10 @@
 
 .company-name-app-state {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  flex-direction: column;
 }
 
 .company-name-app-state h5 {
@@ -141,11 +150,13 @@
 }
 
 .up-to-date-message {
-  width: 100%;
   color: var(--text-color);
   font-weight: 200;
   font-size: x-small;
-  margin-left: 8px;
+}
+
+.company-name-app-state p {
+  margin: 0px;
 }
 
 

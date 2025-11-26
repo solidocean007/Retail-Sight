@@ -44,6 +44,17 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const navigate = useNavigate();
   const protectedAction = useProtectedAction();
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [isMobileLogo, setIsMobileLogo] = useState(false);
+
+  /* --------------------------------------
+     Detect small screens for logo swap
+  --------------------------------------- */
+  useEffect(() => {
+    const check = () => setIsMobileLogo(window.innerWidth <= 520);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useOutsideAlerter(menuRef, () => setShowMenuTab(false));
 
@@ -73,7 +84,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     }
   };
 
-
   const handleMenuOptionSelect = (option: string) => {
     if (option === "filters") {
       toggleFilterMenu();
@@ -91,7 +101,16 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       <div className="header-bar">
         <div className="website-title" onClick={() => navigate("/")}>
           <div className="title-and-version">
-            <h1>Displaygram</h1>
+            <img
+              src={
+                isMobileLogo
+                  ? "/logos/displaygram-logo.svg"
+                  : "/displaygram-logo-long-BLUE.svg"
+              }
+              alt="Displaygram"
+              className="header-brand-logo"
+            />
+
             {!mobile && (
               <div className="version-info">
                 <Tooltip
@@ -122,7 +141,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 {resetting ? "Resetting..." : "Reset App"}
               </button>
             ) : (
-              <span className="up-to-date-message">✅ App is up to date</span>
+              <p className="up-to-date-message">✅ App is up to date</p>
             )}
           </div>
         </div>
