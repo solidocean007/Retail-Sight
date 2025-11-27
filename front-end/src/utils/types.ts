@@ -681,6 +681,7 @@ export type AchievementPayloadType = {
 export type DashboardModeType =
   | "ConnectionsMode"
   | "TeamMode"
+  | "NotificationsMode"
   | "UsersMode"
   | "UsersMode2"
   | "AccountsMode"

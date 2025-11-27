@@ -1,128 +1,147 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   collection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  updateDoc,
   doc,
+  getDocs,
   query,
   orderBy,
-  arrayUnion,
   setDoc,
+  updateDoc,
+  deleteDoc,
   Timestamp,
+  where,
 } from "firebase/firestore";
-import {
-  deleteNotification,
-  setLoading,
-  setError,
-  addCompanyNotification,
-  addRoleNotification,
-  addUserNotification,
-  setUserNotifications,
-  setCompanyNotifications,
-  setRoleNotifications,
-} from "../Slices/notificationsSlice";
-import { NotificationType, UserType } from "../utils/types";
-import { db } from "../utils/firebase";
-import { normalizeFirestoreData } from "../utils/normalize";
+import { db, auth } from "../utils/firebase";
+import { NotificationType } from "../utils/types";
 
-//
-// 🔁 1. Fetch All Notifications for a Company
-//
+// -------------------------------------------------
+// Fetch user-specific notifications
+// -------------------------------------------------
+export const fetchUserNotifications = createAsyncThunk(
+  "notifications/fetchUserNotifications",
+  async (uid: string) => {
+    const q = query(
+      collection(db, `users/${uid}/notifications`),
+      orderBy("sentAt", "desc")
+    );
+
+    const snapshot = await getDocs(q);
+
+    const results: NotificationType[] = [];
+    snapshot.forEach((docSnap) => {
+      results.push(docSnap.data() as NotificationType);
+    });
+
+    return results;
+  }
+);
+
+// -------------------------------------------------
+// Fetch global + company developer notifications
+// Called by DeveloperNotificationsTable
+// -------------------------------------------------
 export const fetchCompanyNotifications = createAsyncThunk(
   "notifications/fetchCompanyNotifications",
-  async (companyId: string, { dispatch }) => {
-    try {
-      dispatch(setLoading(true));
+  async (companyId: string | "all") => {
+    const ref = collection(db, "notifications");
 
-      const q = query(
-        collection(db, "notifications"),
-        orderBy("sentAt", "desc")
-      );
-      const snapshot = await getDocs(q);
+    const q =
+      companyId === "all"
+        ? query(ref, orderBy("sentAt", "desc"))
+        : query(
+            ref,
+            where("recipientCompanyIds", "array-contains", companyId),
+            orderBy("sentAt", "desc")
+          );
 
-      const userNotifs: NotificationType[] = [];
-      const companyNotifs: NotificationType[] = [];
-      const roleNotifs: NotificationType[] = [];
+    const snapshot = await getDocs(q);
 
-      snapshot.forEach((docSnap) => {
-        const normalizedData = normalizeFirestoreData(
-          docSnap.data()
-        ) as NotificationType;
+    const results: NotificationType[] = [];
+    snapshot.forEach((docSnap) => {
+      results.push(docSnap.data() as NotificationType);
+    });
 
-        const normalized: NotificationType = {
-          ...normalizedData,
-          id: docSnap.id,
-        };
-
-        const { recipientUserIds, recipientCompanyIds, recipientRoles } =
-          normalized;
-
-        // GLOBAL
-        if (
-          (!recipientUserIds || recipientUserIds.length === 0) &&
-          (!recipientCompanyIds || recipientCompanyIds.length === 0) &&
-          (!recipientRoles || recipientRoles.length === 0)
-        ) {
-          companyNotifs.push(normalized);
-          return;
-        }
-
-        // COMPANY
-        if (recipientCompanyIds?.includes(companyId)) {
-          companyNotifs.push(normalized);
-          return;
-        }
-
-        // ROLE  (CURRENTLY KEEP SIMPLE)
-        // Just collect them — not actively filtering by current user's role yet.
-        if (recipientRoles?.length) {
-          roleNotifs.push(normalized);
-          return;
-        }
-
-        // USER
-        if (recipientUserIds?.length) {
-          userNotifs.push(normalized);
-          return;
-        }
-      });
-
-      dispatch(setUserNotifications(userNotifs));
-      dispatch(setCompanyNotifications(companyNotifs));
-      dispatch(setRoleNotifications(roleNotifs));
-    } catch (err: any) {
-      console.error("Error fetching notifications:", err);
-      dispatch(setError(err.message));
-    } finally {
-      dispatch(setLoading(false));
-    }
+    return results;
   }
 );
 
-//
-// ✅ 3. Mark as Read
-//
+// -------------------------------------------------
+// Mark notification read (user notifications ONLY)
+// -------------------------------------------------
 export const markNotificationRead = createAsyncThunk(
-  "notifications/markRead",
+  "notifications/markNotificationRead",
   async ({ notificationId, uid }: { notificationId: string; uid: string }) => {
-    const ref = doc(db, `notifications/${notificationId}`);
-    await updateDoc(ref, { readBy: arrayUnion(uid) });
+    const notifRef = doc(db, `users/${uid}/notifications/${notificationId}`);
+
+    await updateDoc(notifRef, {
+      readBy: [uid], // user-specific notifications have only 1 reader
+    });
+
+    return { notificationId, uid };
   }
 );
 
-//
-// ❌ 4. Remove Notification
-//
+// -------------------------------------------------
+// Remove user notification completely
+// -------------------------------------------------
 export const removeNotification = createAsyncThunk(
   "notifications/removeNotification",
-  async ({ notificationId }: { notificationId: string }, { dispatch }) => {
-    try {
-      await deleteDoc(doc(db, `notifications/${notificationId}`));
-      dispatch(deleteNotification(notificationId));
-    } catch (err: any) {
-      dispatch(setError(err.message));
-    }
+  async ({ notificationId }: { notificationId: string }) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error("Not authenticated");
+
+    const notifRef = doc(db, `users/${uid}/notifications/${notificationId}`);
+    await deleteDoc(notifRef);
+
+    return { notificationId };
+  }
+);
+
+// -------------------------------------------------
+// Send Developer Notification (global broadcast)
+// Stored under /notifications/{id}
+// -------------------------------------------------
+export const sendDeveloperNotification = createAsyncThunk(
+  "notifications/sendDeveloperNotification",
+  async (notification: NotificationType) => {
+    const newRef = doc(collection(db, "notifications"));
+
+    const payload = {
+      ...notification,
+      id: newRef.id,
+      sentAt: Timestamp.now(),
+    };
+
+    await setDoc(newRef, payload);
+
+    return payload;
+  }
+);
+
+// -------------------------------------------------
+// Write user-specific notification
+// Called when your backend
+// triggers goal assignments, likes, comments, etc.
+// -------------------------------------------------
+export const writeUserNotification = createAsyncThunk(
+  "notifications/writeUserNotification",
+  async ({
+    uid,
+    data,
+  }: {
+    uid: string;
+    data: Omit<NotificationType, "id" | "sentAt">;
+  }) => {
+    const newRef = doc(collection(db, `users/${uid}/notifications`));
+
+    const payload: NotificationType = {
+      ...data,
+      id: newRef.id,
+      sentAt: Timestamp.now(),
+    };
+
+    await setDoc(newRef, payload);
+
+    return payload;
   }
 );

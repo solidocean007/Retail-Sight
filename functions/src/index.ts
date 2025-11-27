@@ -47,10 +47,8 @@ import {
 } from "./braintreeHandlers";
 
 // Notification system
-import { sendNotification } from "./notifications/sendNotification";
-import { commentLikeNotification } from "./notifications/commentLikeNotification";
-import { commentNotification } from "./notifications/commentNotification";
-import { postLikeNotification } from "./notifications/postLikeNotification";
+import { onUserNotificationCreated } from "./notifications/onUserNotificationCreated";
+import { sendNotificationToUser } from "./notifications/sendNotificationToUser";
 
 import { syncPlanLimits } from "./braintreeHelpers";
 
@@ -106,8 +104,6 @@ export {
   onPendingNewUserAndCompanyInviteCreate,
 
   // Notifications
-  sendNotification,
-  commentLikeNotification,
-  commentNotification,
-  postLikeNotification,
+  onUserNotificationCreated,
+  sendNotificationToUser,
 };

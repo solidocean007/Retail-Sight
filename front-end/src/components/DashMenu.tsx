@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 import LogOutButton from "./LogOutButton";
 import "./dashMenu.css";
 import { DashboardModeType } from "../utils/types";
-import { Handshake, Inventory2 } from "@mui/icons-material";
+import { Handshake, Inventory2, NotificationAdd } from "@mui/icons-material";
 import UpgradePromptBanner from "./UpgradePromptBanner";
 import { useSelector } from "react-redux";
 
@@ -108,6 +108,13 @@ const DashMenu = ({
           onClick={() => onMenuClick("CollectionsMode")}
         >
           <CollectionsBookmarkIcon sx={{ mr: 1 }} />
+          <ListItemText primary="Collections" />
+        </ListItemButton>
+        <ListItemButton
+          selected={selectedMode === "NotificationsMode"}
+          onClick={() => onMenuClick("NotificationsMode")}
+        >
+          <NotificationAdd sx={{ mr: 1 }} />
           <ListItemText primary="Collections" />
         </ListItemButton>
         <ListItemButton
