@@ -1,12 +1,11 @@
-import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "../utils/firebase";
+import { app, auth, db } from "../utils/firebase";
 
 // --------------------------------------------
 // CONFIG
 // --------------------------------------------
-const firebaseConfig = {
+const firebaseConfig = { // 'firebaseConfig' is declared but its value is never read.
   apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
   authDomain: "retail-sight.firebaseapp.com",
   projectId: "retail-sight",
@@ -17,9 +16,6 @@ const firebaseConfig = {
 // IMPORTANT: Your VAPID key from Firebase Console > Cloud Messaging > Web Push Certificate
 const VAPID_KEY =
   "BJiNiXm0teEtgSz77WuMwg9LtT84oOCqQpKTd1B4375arXLaKh__2vT2Mod2ZSSl3vGQoPrCUBgqSnYg6RbbjGc";
-
-// Only initialize once
-const app = initializeApp(firebaseConfig);
 
 // Messaging instance
 export const messaging = getMessaging(app);
@@ -149,3 +145,14 @@ export function handleTokenRefresh(uid: string) {
     }
   });
 }
+
+// Expose for console testing
+// @ts-ignore
+window.registerFcmToken = registerFcmToken;
+// @ts-ignore
+window.requestNotificationPermission = requestNotificationPermission;
+// @ts-ignore
+window.subscribeToForegroundMessages = subscribeToForegroundMessages;
+// @ts-ignore
+window.deleteFcmToken = deleteFcmToken;
+

@@ -8,14 +8,38 @@ import "./styles/theme.css";
 import "./utils/firebase.ts";
 import { HelmetProvider } from "react-helmet-async";
 import { register as registerServiceWorker } from "./serviceWorkerRegistration";
+import {
+  registerFcmToken,
+  requestNotificationPermission,
+  subscribeToForegroundMessages,
+  deleteFcmToken
+} from "./firebase/messaging.ts";  
+
 
 registerServiceWorker();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("/firebase-messaging-sw.js", { scope: "/firebase-messaging-sw/" })
+    .then((reg) => console.log("FCM SW registered:", reg))
+    .catch((err) => console.error("FCM SW registration failed:", err));
+}
 
 const savedTheme = localStorage.getItem("theme");
 const prefersDark = savedTheme === "dark";
 
 // Apply theme attribute to body early
 document.body.setAttribute("data-theme", prefersDark ? "dark" : "light");
+
+// @ts-ignore
+window.registerFcmToken = registerFcmToken;
+// @ts-ignore
+window.requestNotificationPermission = requestNotificationPermission;
+// @ts-ignore
+window.subscribeToForegroundMessages = subscribeToForegroundMessages;
+// @ts-ignore
+window.deleteFcmToken = deleteFcmToken;
+
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <HelmetProvider>

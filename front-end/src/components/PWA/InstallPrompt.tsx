@@ -5,7 +5,6 @@ import "./installPrompt.css";
 export default function InstallPrompt({ user }: { user: any }) {
   const deferredPrompt = usePWAInstallPrompt();
   const [visible, setVisible] = useState(false);
-  console.log("deferredPrompt:", deferredPrompt);
   // Detect if already installed
   const isPWA =
     window.matchMedia("(display-mode: standalone)").matches ||

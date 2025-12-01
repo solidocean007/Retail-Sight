@@ -115,7 +115,7 @@ const DashMenu = ({
           onClick={() => onMenuClick("NotificationsMode")}
         >
           <NotificationAdd sx={{ mr: 1 }} />
-          <ListItemText primary="Collections" />
+          <ListItemText primary="Notifications" />
         </ListItemButton>
         <ListItemButton
           selected={selectedMode === "TutorialMode"}

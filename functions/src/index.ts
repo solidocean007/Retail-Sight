@@ -27,6 +27,8 @@ import { createInviteAndDraftConnection } from "./createInviteAndDraftConnection
 import { lookupConnectionTarget } from "./lookupConnectionTarget";
 import { acceptInviteAutoResolve } from "./acceptInviteAutoResolve";
 import { onPendingNewUserAndCompanyInviteCreate } from "./onPendingNewUserAndCompanyInviteCreate";
+import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
+import { sendTestPush } from "./notifications/sendTestPush";
 
 // 🧾 Braintree Billing System
 import {
@@ -106,4 +108,6 @@ export {
   // Notifications
   onUserNotificationCreated,
   sendNotificationToUser,
+  supervisorDisplayAlert,
+  sendTestPush,
 };
