@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useUserNotificationSettings } from "../hooks/useUserNotificationSettings";
 import { useSelector } from "react-redux";
 import { selectUser } from "../Slices/userSlice";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { registerFcmToken } from "../firebase/messaging";
+import PushDebugConsole from "./PushDebugConsole";
 
 interface SettingToggleProps {
   label: string;
@@ -18,7 +19,6 @@ const NotificationSettingsPanel = () => {
 
   const handleTestNotification = async () => {
     const token = await registerFcmToken(); // <= ALWAYS use the real token
-
     fn({ token })
       .then((res) => console.log("RESULT:", res))
       .catch(console.error);
@@ -26,10 +26,26 @@ const NotificationSettingsPanel = () => {
 
   const user = useSelector(selectUser);
 
+  useEffect(() => {
+    const handler = (event: any) => {
+      console.log("[PAGE] SW Message:", event.data);
+      window.dispatchEvent(
+        new CustomEvent("push-debug", { detail: event.data })
+      );
+    };
+
+    navigator.serviceWorker.addEventListener("message", handler);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handler);
+    };
+  }, []);
+
   if (loading || !settings) return <div>Loading...</div>;
 
   return (
     <div style={{ padding: "2rem", maxWidth: "600px", margin: "auto" }}>
+      <PushDebugConsole />
       <h2 style={{ marginBottom: "1.5rem", textAlign: "center" }}>
         Notification Settings
       </h2>
