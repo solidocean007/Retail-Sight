@@ -2,7 +2,7 @@
 import React, { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
-import { selectAllNotifications } from "../../Slices/notificationsSlice";
+import { selectNotifications } from "../../Slices/notificationsSlice";
 import NotificationItem from "./NotificationItem";
 import "./notifications/notification-dropdown.css";
 import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
@@ -16,13 +16,14 @@ import { NotificationType } from "../../utils/types";
 const NotificationDropdown: React.FC<{
   onClose: () => void;
   openPostViewer?: (postId: string) => void;
-}> = ({ onClose, 
-  openPostViewer
- }) => {
-  const dispatch = useAppDispatch(); // ✅ thunk-aware
+}> = ({ onClose, openPostViewer }) => {
+  const dispatch = useAppDispatch();
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const notifications = useSelector(selectAllNotifications);
+
+  // 🔥 Correct unified selector
+  const notifications = useSelector(selectNotifications);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
     null
@@ -41,29 +42,28 @@ const NotificationDropdown: React.FC<{
     >
       <div className="dropdown-header">
         <h4>Notifications</h4>
-        {/* <button onClick={onClose}>×</button> */}
       </div>
+
       <div className="dropdown-body">
         {notifications.length === 0 ? (
           <div className="no-notifications">No notifications.</div>
         ) : (
           notifications.slice(0, 5).map((notif) => (
             <div key={notif.id} className="notification-row">
-              {/* Dismiss Button */}
+              
+              {/* TEMP dismiss — can be removed */}
               <button
                 className="notification-action dismiss"
-                onClick={() => {
-                  // Optionally filter it from the dropdown only, not Firestore
+                onClick={() =>
                   dispatch({
                     type: "notifications/tempDismiss",
                     payload: notif.id,
-                  });
-                }}
+                  })
+                }
               >
                 ↩
               </button>
 
-              {/* Actual Notification */}
               <NotificationItem
                 notification={notif}
                 currentUserId={currentUser.uid}
@@ -76,13 +76,15 @@ const NotificationDropdown: React.FC<{
                       })
                     );
                   }
-                  if (notif.postId && openPostViewer) openPostViewer(notif.postId);
-                  // Open modal to view full details
+                  if (notif.postId && openPostViewer)
+                    openPostViewer(notif.postId);
                   setSelectedNotif(notif);
                 }}
+                onDelete={() =>
+                  dispatch(removeNotification({ notificationId: notif.id }))
+                }
               />
 
-              {/* Delete Button */}
               <button
                 className="notification-action delete"
                 onClick={() =>
@@ -95,6 +97,7 @@ const NotificationDropdown: React.FC<{
           ))
         )}
       </div>
+
       <ViewNotificationModal
         open={!!selectedNotif}
         onClose={() => setSelectedNotif(null)}

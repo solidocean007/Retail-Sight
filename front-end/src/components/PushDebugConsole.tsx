@@ -29,7 +29,7 @@ const PushDebugConsole = () => {
       }}
     >
       <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
-        Push Debug Console
+        Push Debug Console v2
       </div>
       {logs.length === 0 && (
         <div style={{ opacity: 0.5 }}>No push activity yet…</div>

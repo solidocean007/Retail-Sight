@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { AppDispatch } from "../store";
-import { setCompanyNotifications } from "../../Slices/notificationsSlice";
+import { setNotifications } from "../../Slices/notificationsSlice";
 import { NotificationType, UserType } from "../types";
 import { normalizeFirestoreData } from "../normalize"; // ✅ add this
 
@@ -20,7 +20,7 @@ export const setupNotificationListenersForCompany = (user: UserType) => {
     const companyNotifications: Record<string, NotificationType> = {};
 
     const dispatchCompanyNotifications = () => {
-      dispatch(setCompanyNotifications(Object.values(companyNotifications)));
+      dispatch(setNotifications(Object.values(companyNotifications)));
     };
 
     const baseRef = collection(db, "notifications");

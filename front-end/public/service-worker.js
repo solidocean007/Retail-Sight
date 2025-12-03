@@ -19,8 +19,12 @@ self.addEventListener("fetch", (event) => {
 // -------------------------------------------------------
 // 1. FIREBASE MESSAGING SETUP
 // -------------------------------------------------------
-importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
+importScripts(
+  "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
+);
+importScripts(
+  "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"
+);
 
 firebase.initializeApp({
   apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
@@ -51,17 +55,14 @@ self.addEventListener("error", (e) => {
 // 3. BACKGROUND MESSAGE HANDLER
 // -------------------------------------------------------
 messaging.onBackgroundMessage((payload) => {
-  console.log("[SW] Background push:", payload);
+  // Skip if FCM already included a notification block
+  const hasNativeNotification =
+    payload.notification || (payload.data && payload.data.title);
 
-  // FORWARD TO PAGE (PushDebugConsole)
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    for (const client of clients) {
-      client.postMessage({
-        type: "BACKGROUND_MESSAGE",
-        payload,
-      });
-    }
-  });
+  if (hasNativeNotification) {
+    console.log("[SW] Native notification already handled by FCM.");
+    return;
+  }
 
   const title = payload.data?.title || "New Notification";
   const body = payload.data?.body || "";
@@ -98,7 +99,8 @@ self.addEventListener("notificationclick", (event) => {
   const target = event.notification.data?.link || "/notifications";
 
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true })
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin)) {

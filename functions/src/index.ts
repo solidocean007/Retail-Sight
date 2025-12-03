@@ -29,6 +29,7 @@ import { acceptInviteAutoResolve } from "./acceptInviteAutoResolve";
 import { onPendingNewUserAndCompanyInviteCreate } from "./onPendingNewUserAndCompanyInviteCreate";
 import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
 import { sendTestPush } from "./notifications/sendTestPush";
+import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
 
 // 🧾 Braintree Billing System
 import {
@@ -104,6 +105,7 @@ export {
   lookupConnectionTarget,
   acceptInviteAutoResolve,
   onPendingNewUserAndCompanyInviteCreate,
+  onActivityEventCreated,
 
   // Notifications
   onUserNotificationCreated,

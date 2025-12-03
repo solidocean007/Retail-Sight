@@ -11,7 +11,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import { resetApp } from "../utils/resetApp";
 import { useAppConfigSync } from "../hooks/useAppConfigSync";
 import {
-  selectAllNotifications,
+  selectNotifications,
   selectUnreadNotifications,
 } from "../Slices/notificationsSlice";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -34,7 +34,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   );
   const upToDate = !!serverVersion && localVersion === serverVersion;
   const mobile = useMediaQuery("(max-width: 900px)");
-  const notifications = useSelector(selectAllNotifications);
+  const notifications = useSelector(selectNotifications);
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
   const { currentUser } = useSelector((state: RootState) => state.user);

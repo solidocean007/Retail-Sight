@@ -1,9 +1,8 @@
 export function register() {
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        // .register("/service-worker.js")
-        // .catch((err) => console.error("SW reg failed:", err));
-    });
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then((reg) => console.log("SW registered:", reg))
+      .catch((err) => console.error("SW registration failed:", err));
   }
 }

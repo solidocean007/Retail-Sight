@@ -44,6 +44,30 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
       // 3️⃣ Store commentId
       await updateDoc(docRef, { commentId: docRef.id });
 
+      // 2️⃣ Notify post owner via activityEvents
+      try {
+        const targetUserIds: string[] = [];
+
+        if (post.postUser?.uid && post.postUser.uid !== user.uid) {
+          targetUserIds.push(post.postUser.uid);
+        }
+
+        if (targetUserIds.length > 0) {
+          await addDoc(collection(db, "activityEvents"), {
+            type: "post.comment",
+            postId: post.id,
+            commentId: docRef.id,
+            actorUserId: user.uid,
+            actorName: userFullName,
+            commentText: newComment.trim(), // 👈 add this
+            targetUserIds,
+            createdAt: Timestamp.now(),
+          });
+        }
+      } catch (err) {
+        console.error("Failed writing comment activity event:", err);
+      }
+
       // 4️⃣ Update post.commentCount
       const postRef = doc(db, "posts", post.id);
       await updateDoc(postRef, { commentCount: increment(1) });
@@ -95,4 +119,3 @@ const CommentSection: React.FC<CommentProps> = ({ post }) => {
 };
 
 export default CommentSection;
-

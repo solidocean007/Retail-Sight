@@ -5,7 +5,8 @@ import { app, auth, db } from "../utils/firebase";
 // --------------------------------------------
 // CONFIG
 // --------------------------------------------
-const firebaseConfig = { // 'firebaseConfig' is declared but its value is never read.
+const firebaseConfig = {
+  // 'firebaseConfig' is declared but its value is never read. why is it here?
   apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
   authDomain: "retail-sight.firebaseapp.com",
   projectId: "retail-sight",
@@ -75,40 +76,72 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   }
 }
 
-// --------------------------------------------
-// Get & Register FCM Token
-// --------------------------------------------
+// iOS Safari DOES support push if installed as a PWA (iOS 16.4+).
+// The only case to block is: iOS + NOT installed as PWA.
+//
+
+export function isIOS(): boolean {
+  return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+}
+
+export function isStandalone(): boolean {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as any).standalone === true
+  ); // iOS < 13
+}
+
 export async function registerFcmToken(): Promise<string | null> {
-  // Block if iOS Safari not installed as PWA
-  if (isIOSPWA()) {
-    console.log("iOS PWA detected — push not supported yet.");
-    return null;
-  }
-
-  if (Notification.permission !== "granted") {
-    const perm = await requestNotificationPermission();
-    if (perm !== "granted") return null;
-  }
-
   try {
+    // ─────────────────────────────────────────────
+    // SAFE iOS DETECTION (never blocks page render)
+    // ─────────────────────────────────────────────
+    const iOS = /iphone|ipad|ipod/.test(
+      window.navigator.userAgent.toLowerCase()
+    );
+
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+
+    // iOS Safari (NOT standalone/PWA) → allow app to load but disable push
+    if (iOS && !standalone) {
+      console.warn("iOS Safari (not PWA) — push disabled, UI allowed.");
+      return null;
+    }
+
+    // ─────────────────────────────────────────────
+    // REQUEST NOTIFICATION PERMISSION
+    // ─────────────────────────────────────────────
+    if (Notification.permission !== "granted") {
+      const perm = await requestNotificationPermission();
+      if (perm !== "granted") return null;
+    }
+
+    // ─────────────────────────────────────────────
+    // GET FCM TOKEN
+    // ─────────────────────────────────────────────
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: await navigator.serviceWorker.ready,
     });
 
     if (!token) {
-      console.warn("Failed to obtain FCM token.");
+      console.warn("FCM token unavailable.");
       return null;
     }
 
+    // ─────────────────────────────────────────────
+    // SAVE TO FIRESTORE
+    // ─────────────────────────────────────────────
     const user = auth.currentUser;
     if (user) {
       await saveFcmToken(user.uid, token);
     }
 
     return token;
-  } catch (e) {
-    console.error("Error getting FCM token:", e);
+  } catch (err) {
+    console.error("registerFcmToken failed:", err);
     return null;
   }
 }
@@ -155,4 +188,3 @@ window.requestNotificationPermission = requestNotificationPermission;
 window.subscribeToForegroundMessages = subscribeToForegroundMessages;
 // @ts-ignore
 window.deleteFcmToken = deleteFcmToken;
-

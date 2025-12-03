@@ -7,24 +7,19 @@ import {
   arrayRemove,
   collection,
   addDoc,
-  query,
-  where,
-  getDocs,
-  deleteDoc,
   serverTimestamp,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { PostWithID, UserType } from "../types";
 import { updatePost } from "../../Slices/postsSlice";
-import { updatePostInIndexedDB } from "../database/indexedDBUtils";
+import { updatePostInFilteredSets, updatePostInIndexedDB } from "../database/indexedDBUtils";
 import { AppDispatch } from "../store";
 import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
 
 /**
  * Handles liking/unliking a post.
- * Frontend updates post document *and* creates/deletes a postLikes/{id} document.
- * Cloud Functions will generate notifications.
+ * All notification logic now flows through Cloud Functions using activityEvents.
  */
 export const handleLikePost = async (
   post: PostWithID,
@@ -40,7 +35,7 @@ export const handleLikePost = async (
 
     const likeMutation = liked ? arrayUnion(user.uid) : arrayRemove(user.uid);
 
-    // 1️⃣ Update Firestore post.likes array
+    // 1️⃣ Update Firestore likes array
     await updateDoc(postRef, { likes: likeMutation });
 
     // 2️⃣ Update Redux + IndexedDB snapshot
@@ -55,35 +50,37 @@ export const handleLikePost = async (
 
     dispatch(updatePost(updatedPost));
     await updatePostInIndexedDB(updatedPost);
+    await updatePostInFilteredSets(updatedPost);
 
-    // 3️⃣ Write to postLikes/{id} for backend notification triggers
-    const postLikesCol = collection(db, "postLikes");
-
+    // 3️⃣ Trigger activity event for Cloud Functions (ONLY when liking)
     if (liked) {
-      // Create a new like record
-      await addDoc(postLikesCol, {
+      // Determine notification recipients
+      // Usually the post owner, but more advanced rules could be added here.
+      const targetUserIds: string[] = [];
+      if (post.postUser?.uid) targetUserIds.push(post.postUser.uid);
+
+      // Could expand here:
+      // - notify supervisors
+      // - notify connected companies
+      // - notify tagged users
+      // - notify everyone with a role
+      // The CF will iterate targetUserIds.
+
+      await addDoc(collection(db, "activityEvents"), {
+        type: "post.like",
         postId: post.id,
-        userId: user.uid,
-        userName: `${user.firstName} ${user.lastName}`,
+        actorUserId: user.uid,
+        actorName: `${user.firstName} ${user.lastName}`,
+        targetUserIds, // ARRAY of recipients
         createdAt: serverTimestamp(),
       });
-    } else {
-      // Unlike → delete any existing postLikes entry
-      const q = query(
-        postLikesCol,
-        where("postId", "==", post.id),
-        where("userId", "==", user.uid)
-      );
-
-      const snap = await getDocs(q);
-      for (const d of snap.docs) {
-        await deleteDoc(d.ref);
-      }
     }
 
-    // 4️⃣ Update timestamp for feed ordering
+    // 4️⃣ Update ordering timestamp
     await updatePostWithNewTimestamp(post.id);
+
   } catch (error) {
     console.error("Error updating likes:", error);
   }
 };
+

@@ -45,7 +45,7 @@ import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.
 import BillingDashboard from "./Billing/BillingDashboard.tsx";
 import { useNavigate } from "react-router-dom";
 import useProtectedAction from "../../utils/useProtectedAction.ts";
-import NotificationSettingsPanel from "../NotificationSettingsPanel.tsx";
+import NotificationSettingsPanel from "../Notifications/NotificationSettingsPanel.tsx";
 
 export const Dashboard = () => {
   const navigate = useNavigate();

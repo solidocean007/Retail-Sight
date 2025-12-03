@@ -184,7 +184,34 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     <div className="image-selection-box" style={{ position: "relative" }}>
       {!post.imageUrl && (
         <div className="step-one">
-          <h4>1st add picture</h4>
+            {/* 📸 Upload buttons */}
+      <div className="upload-buttons">
+        <button className="upload-button btn-outline">
+          <label>
+            <AddAPhotoIcon /> Take Photo
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onClick={(e) => (e.currentTarget.value = "")}
+              onChange={handleImageChange}
+              style={{ display: "none" }}
+            />
+          </label>
+        </button>
+        <button className="upload-button btn-outline">
+          <label>
+            <Photo /> Select Photo
+            <input
+              type="file"
+              accept="image/*"
+              onClick={(e) => (e.currentTarget.value = "")}
+              onChange={handleImageChange}
+              style={{ display: "none" }}
+            />
+          </label>
+        </button>
+      </div>
         </div>
       )}
 
@@ -249,34 +276,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
         </button>
       </div>
 
-      {/* 📸 Upload buttons */}
-      <div className="upload-buttons">
-        <button className="upload-button btn-outline">
-          <label>
-            <AddAPhotoIcon /> Take Photo
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onClick={(e) => (e.currentTarget.value = "")}
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-            />
-          </label>
-        </button>
-        <button className="upload-button btn-outline">
-          <label>
-            <Photo /> Select Photo
-            <input
-              type="file"
-              accept="image/*"
-              onClick={(e) => (e.currentTarget.value = "")}
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-            />
-          </label>
-        </button>
-      </div>
+    
 
       {/* 🖼 Preview */}
       {post.imageUrl && (

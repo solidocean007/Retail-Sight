@@ -7,7 +7,7 @@ import "./index.css";
 import "./styles/theme.css";
 import "./utils/firebase.ts";
 import { HelmetProvider } from "react-helmet-async";
-// import { register as registerServiceWorker } from "./serviceWorkerRegistration";
+import { register as registerServiceWorker } from "./serviceWorkerRegistration";
 import {
   registerFcmToken,
   requestNotificationPermission,
@@ -15,14 +15,12 @@ import {
   deleteFcmToken,
 } from "./firebase/messaging.ts";
 
-// registerServiceWorker(); // temp removed for debugging messaging                                                                                               
-
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .register("/firebase-messaging-sw.js")
-    .then((reg) => console.log("FCM SW registered:", reg))
-    .catch((err) => console.error("FCM SW registration failed:", err));
+  window.addEventListener("load", () => {
+    registerServiceWorker();
+  });
 }
+                                                                                            
 
 const savedTheme = localStorage.getItem("theme");
 const prefersDark = savedTheme === "dark";

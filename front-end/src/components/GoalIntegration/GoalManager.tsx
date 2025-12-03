@@ -14,7 +14,6 @@ import AllGoalsLayout from "./AllGoalsLayout";
 import React, { useEffect, useState } from "react";
 import { useIntegrations } from "../../hooks/useIntegrations";
 import GalloIntegration from "./GalloIntegration";
-import CreateCompanyGoalViewCopy from "./CreateCompanyGoalViewCopy";
 const CreateGalloGoalView = React.lazy(() => import("./CreateGalloGoalView"));
 
 interface TabPanelProps {

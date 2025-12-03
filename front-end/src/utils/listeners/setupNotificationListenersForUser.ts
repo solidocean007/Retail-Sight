@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { AppDispatch } from "../store";
-import { setUserNotifications } from "../../Slices/notificationsSlice";
+import { setNotifications } from "../../Slices/notificationsSlice";
 import { NotificationType, UserType } from "../types";
 import { normalizeFirestoreData } from "../normalize"; // ✅ Add this import
 
@@ -20,33 +20,28 @@ export const setupNotificationListenersForUser = (user: UserType) => {
     const userNotifications: Record<string, NotificationType> = {};
 
     const dispatchUserNotifications = () => {
-      dispatch(setUserNotifications(Object.values(userNotifications)));
+      dispatch(setNotifications(Object.values(userNotifications)));
     };
 
-    const baseRef = collection(db, "notifications");
+    // 🔥 The correct notifications path
+    const baseRef = collection(db, "users", user.uid, "notifications");
 
-    const userQuery = query(
-      baseRef,
-      where("recipientUserIds", "array-contains", user.uid),
-      orderBy("sentAt", "desc")
-    );
+    // If you want ordering:
+    const userQuery = query(baseRef, orderBy("sentAt", "desc"));
 
     const handleSnapshot = (snapshot: QuerySnapshot<DocumentData>) => {
       snapshot.docChanges().forEach((change) => {
         const doc = change.doc;
 
-        // ✅ Deep normalize all timestamps and nested fields
         const normalizedData = normalizeFirestoreData(doc.data()) as NotificationType;
-
-        const notification: NotificationType = {
-          // id: doc.id,
-          ...normalizedData,
-        };
 
         if (change.type === "removed") {
           delete userNotifications[doc.id];
         } else {
-          userNotifications[doc.id] = notification;
+          userNotifications[doc.id] = {
+            id: doc.id, // 'id' is specified more than once, so this usage will be overwritten.
+            ...normalizedData,
+          };
         }
       });
 
@@ -58,3 +53,4 @@ export const setupNotificationListenersForUser = (user: UserType) => {
     return () => unsubscribers.forEach((unsub) => unsub());
   };
 };
+
