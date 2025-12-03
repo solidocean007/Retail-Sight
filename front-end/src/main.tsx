@@ -7,9 +7,7 @@ import "./index.css";
 import "./styles/theme.css";
 import "./utils/firebase.ts";
 import { HelmetProvider } from "react-helmet-async";
-import { register as registerServiceWorker } from "./serviceWorkerRegistration";
 
-registerServiceWorker();
 
 const savedTheme = localStorage.getItem("theme");
 const prefersDark = savedTheme === "dark";

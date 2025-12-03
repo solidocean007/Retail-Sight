@@ -32,7 +32,6 @@ import CustomConfirmation from "../CustomConfirmation";
 import { setResetting } from "../../Slices/appSlice";
 import { resetApp } from "../../utils/resetApp";
 import { showMessage } from "../../Slices/snackbarSlice";
-import InstallPrompt from "../PWA/InstallPrompt";
 
 export const UserHomePage = () => {
   const navigate = useNavigate();
@@ -316,7 +315,6 @@ export const UserHomePage = () => {
           variant={variant}
           onClose={() => setShowModal(false)}
         />
-        <InstallPrompt user={user} />
       </div>
     </>
   );
