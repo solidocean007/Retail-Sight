@@ -1,5 +1,5 @@
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import { doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, deleteDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 import { app, auth, db } from "../utils/firebase";
 
 // --------------------------------------------
@@ -143,6 +143,20 @@ export async function registerFcmToken(): Promise<string | null> {
   } catch (err) {
     console.error("registerFcmToken failed:", err);
     return null;
+  }
+}
+
+// Return TRUE if any token exists for this user
+export async function hasExistingFcmToken(uid: string): Promise<boolean> {
+  if (!uid) return false;
+
+  try {
+    const colRef = collection(db, `users/${uid}/fcmTokens`);
+    const snap = await getDocs(colRef);
+    return snap.size > 0;
+  } catch (err) {
+    console.error("hasExistingFcmToken error:", err);
+    return false;
   }
 }
 

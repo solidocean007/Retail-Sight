@@ -1,4 +1,3 @@
-// components/Notifications/NotificationSettingsPanel.tsx
 import React, { useEffect, useState } from "react";
 import { useUserNotificationSettings } from "../../hooks/useUserNotificationSettings";
 import { useSelector } from "react-redux";
@@ -14,7 +13,7 @@ import FlagIcon from "@mui/icons-material/Flag";
 import GroupIcon from "@mui/icons-material/Group";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
-import { registerFcmToken } from "../../firebase/messaging";
+import { registerFcmToken, hasExistingFcmToken } from "../../firebase/messaging";
 import "./notificationSettingsPanel.css";
 
 const NotificationSettingsPanel = () => {
@@ -23,21 +22,31 @@ const NotificationSettingsPanel = () => {
 
   const [tokenStatus, setTokenStatus] = useState<"none" | "ok" | "error">("none");
 
-  // Check token status on load
+   // Check status without generating a token
   useEffect(() => {
     const check = async () => {
       try {
-        const token = await registerFcmToken();
-        setTokenStatus(token ? "ok" : "none");
+        if (user) {
+          const exists = await hasExistingFcmToken(user.uid);
+          setTokenStatus(exists ? "ok" : "none");
+        }
       } catch {
         setTokenStatus("error");
       }
     };
 
     check();
-  }, []);
+  }, [user]);
 
-  const handleEnablePush = async () => {
+  const enablePush = async () => {
+    // 1. Ask user’s permission
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") {
+      setTokenStatus("none");
+      return;
+    }
+
+    // 2. Only now try to register token
     try {
       const token = await registerFcmToken();
       setTokenStatus(token ? "ok" : "none");
@@ -52,7 +61,7 @@ const NotificationSettingsPanel = () => {
     <div className="notif-settings-container">
       <h2 className="notif-settings-title">Notification Settings</h2>
 
-      {/* --- Push Status --- */}
+      {/* Push Status */}
       <div className="push-status-card">
         <NotificationsActiveIcon className="push-status-icon" />
 
@@ -66,7 +75,7 @@ const NotificationSettingsPanel = () => {
         </div>
 
         {tokenStatus !== "ok" && (
-          <button className="push-enable-btn" onClick={handleEnablePush}>
+          <button className="push-enable-btn" onClick={enablePush}>
             Enable
           </button>
         )}
@@ -130,7 +139,12 @@ interface SwitchProps {
   onChange: (value: boolean) => void;
 }
 
-const SettingSwitch: React.FC<SwitchProps> = ({ icon, label, value, onChange }) => (
+const SettingSwitch: React.FC<SwitchProps> = ({
+  icon,
+  label,
+  value,
+  onChange,
+}) => (
   <div className="notif-row">
     <div className="notif-left">
       {icon}

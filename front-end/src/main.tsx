@@ -7,20 +7,12 @@ import "./index.css";
 import "./styles/theme.css";
 import "./utils/firebase.ts";
 import { HelmetProvider } from "react-helmet-async";
-import { register as registerServiceWorker } from "./serviceWorkerRegistration";
 import {
   registerFcmToken,
   requestNotificationPermission,
   subscribeToForegroundMessages,
   deleteFcmToken,
 } from "./firebase/messaging.ts";
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    registerServiceWorker();
-  });
-}
-                                                                                            
 
 const savedTheme = localStorage.getItem("theme");
 const prefersDark = savedTheme === "dark";

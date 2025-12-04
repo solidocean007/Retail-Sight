@@ -77,6 +77,37 @@ export const UserHomePage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    if (!("serviceWorker" in navigator)) return;
+
+    // Detect iOS
+    const isIOS = /iphone|ipad|ipod/.test(
+      window.navigator.userAgent.toLowerCase()
+    );
+
+    // Detect PWA (standalone mode)
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+
+    // ❌ iOS + NOT standalone → do NOT register SW
+    if (isIOS && !isStandalone) {
+      console.log("iOS Safari (not installed) — skipping SW registration.");
+      return;
+    }
+
+    // Add a tiny delay to let UI settle (fixes iOS race conditions)
+    const timer = setTimeout(() => {
+      navigator.serviceWorker
+        .register("/service-worker.js")
+        .then((reg) => console.log("Unified SW registered:", reg))
+        .catch((err) => console.error("Unified SW registration failed:", err));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [user]);
+
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
 

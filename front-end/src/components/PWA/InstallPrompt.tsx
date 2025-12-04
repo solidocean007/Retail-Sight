@@ -5,23 +5,40 @@ import "./installPrompt.css";
 export default function InstallPrompt({ user }: { user: any }) {
   const deferredPrompt = usePWAInstallPrompt();
   const [visible, setVisible] = useState(false);
-  // Detect if already installed
-  const isPWA =
+
+  // Detect PWA installed state
+  const isStandalone =
     window.matchMedia("(display-mode: standalone)").matches ||
     (window.navigator as any).standalone === true;
 
+  // Detect iOS device
+  const isIOS = /iphone|ipad|ipod/.test(
+    window.navigator.userAgent.toLowerCase()
+  );
+
   useEffect(() => {
     if (!user) return;
-    if (!deferredPrompt || isPWA) return;
+    if (isStandalone) return; // already installed
     if (localStorage.getItem("pwaInstalled") === "true") return;
+    if (localStorage.getItem("pwaInstallDismissed") === "true") return;
+
+    // iOS:
+    // ❗ No deferredPrompt — we show our own banner
+    // Android:
+    // ✔ deferredPrompt exists — show regular install banner
+    const shouldShow =
+      (isIOS && !isStandalone) || (!isIOS && deferredPrompt);
+
+    if (!shouldShow) return;
 
     const t = setTimeout(() => setVisible(true), 4000);
     return () => clearTimeout(t);
-  }, [user, deferredPrompt, isPWA]);
+  }, [user, deferredPrompt, isStandalone, isIOS]);
 
   if (!visible) return null;
 
-  const handleInstall = async () => {
+  // Android
+  const handleAndroidInstall = async () => {
     if (!deferredPrompt) return;
 
     deferredPrompt.prompt();
@@ -30,32 +47,56 @@ export default function InstallPrompt({ user }: { user: any }) {
     if (choice.outcome === "accepted") {
       localStorage.setItem("pwaInstalled", "true");
     }
-
     setVisible(false);
   };
 
-  const handleDismiss = () => {
+  // iOS
+  const handleIOSDismiss = () => {
     setVisible(false);
-    localStorage.setItem("pwaInstalled", "dismissed");
+    localStorage.setItem("pwaInstallDismissed", "true");
   };
 
   return (
     <div className="install-prompt-container">
       <div className="install-card">
         <div className="install-title">Install Displaygram</div>
-        <div className="install-subtitle">
-          Get full-screen speed and a smoother experience on your device.
-        </div>
 
-        <div className="install-buttons">
-          <button className="install-btn" onClick={handleInstall}>
-            Install App
-          </button>
+        {!isIOS ? (
+          <>
+            <div className="install-subtitle">
+              Get full-screen speed and a smoother experience.
+            </div>
 
-          <button className="dismiss-btn" onClick={handleDismiss}>
-            Not now
-          </button>
-        </div>
+            <div className="install-buttons">
+              <button className="install-btn" onClick={handleAndroidInstall}>
+                Install App
+              </button>
+
+              <button
+                className="dismiss-btn"
+                onClick={() => {
+                  setVisible(false);
+                  localStorage.setItem("pwaInstallDismissed", "true");
+                }}
+              >
+                Not now
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="install-subtitle ios-instructions">
+              Install Displaygram by tapping <strong>Share</strong> →{" "}
+              <strong>Add to Home Screen</strong>.
+            </div>
+
+            <div className="install-buttons">
+              <button className="dismiss-btn" onClick={handleIOSDismiss}>
+                Got it
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

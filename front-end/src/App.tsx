@@ -67,11 +67,6 @@ function AppContent() {
     return !appReady;
   })();
 
-  useEffect(() => {
-    window.addEventListener("beforeinstallprompt", () => {
-      console.log("🔥 beforeinstallprompt FIRED");
-    });
-  }, []);
 
   return (
     <>
