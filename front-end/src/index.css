@@ -8,7 +8,7 @@ body,
   justify-content: space-between;
   align-items: center;
   text-align: center;
-  min-height: 100vh;
+  height: 100%;
   width: 100vw;
   margin: 0;
   padding: 0;
@@ -20,6 +20,7 @@ body,
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  max-height: 100%;
 }
 
 html {

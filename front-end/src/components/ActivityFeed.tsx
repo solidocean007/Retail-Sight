@@ -188,7 +188,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           increaseViewportBy={500}
           style={{
             // height: 1000,
-            height: "calc(100vh - 100px)", // ✅ dynamic, responsive
+            height: "calc(100vh - 200px)", // ✅ dynamic, responsive
             width: "100%",
           }} // is this necessary?
           data={displayPosts}

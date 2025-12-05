@@ -34,19 +34,19 @@ const Footer = () => {
         <FooterLink to="/about" icon={InfoIcon}>
           About
         </FooterLink>
-        <FooterLink to="/privacy" icon={PrivacyTip}>
+        <FooterLink to="/privacy-policy" icon={PrivacyTip}>
           Privacy
         </FooterLink>
-        <FooterLink to="/terms" icon={Gavel}>
+        <FooterLink to="/terms-service" icon={Gavel}>
           Terms
         </FooterLink>
         <FooterLink to="/cookies" icon={Cookie}>
           Cookies
         </FooterLink>
-        <FooterLink to="/contact" icon={ContactPage}>
+        <FooterLink to="/contact-us" icon={ContactPage}>
           Contact
         </FooterLink>
-        <FooterLink to="/help" icon={Help}>
+        <FooterLink to="/help-support" icon={Help}>
           Help
         </FooterLink>
       </div>

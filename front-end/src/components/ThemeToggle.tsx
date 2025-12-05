@@ -43,7 +43,7 @@ export const ThemeToggle: React.FC = () => {
         position: "fixed",
         bottom: "2rem",
         right: "1.5rem",
-        zIndex: 20,
+        zIndex: 5001,
       }}
     >
       <Fab

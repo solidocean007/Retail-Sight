@@ -25,6 +25,7 @@ import AppLoadingScreen from "./components/AppLoadingScreen";
 import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
+import Footer from "./components/Footer/Footer";
 
 // 🔍 NEW WRAPPER — Allows Router to stay at top,
 // while AppContent can safely use useLocation()
@@ -80,6 +81,7 @@ function AppContent() {
             {!isSplashPage && <ThemeToggle />}
 
             <AppRoutes />
+            {!isSplashPage && <Footer />}
 
             {snackbar.current && (
               <Snackbar
