@@ -25,14 +25,13 @@ import AppLoadingScreen from "./components/AppLoadingScreen";
 import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
-import { usePushNotifications } from "./hooks/usePushNotifications";
+import Footer from "./components/Footer/Footer";
 
 // 🔍 NEW WRAPPER — Allows Router to stay at top,
 // while AppContent can safely use useLocation()
 function AppContent() {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
-  const push = usePushNotifications();
 
   const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
   const snackbar = useSelector((s: RootState) => s.snackbar);
@@ -67,7 +66,6 @@ function AppContent() {
     return !appReady;
   })();
 
-
   return (
     <>
       {showLoader && (
@@ -83,6 +81,7 @@ function AppContent() {
             {!isSplashPage && <ThemeToggle />}
 
             <AppRoutes />
+            {!isSplashPage && <Footer />}
 
             {snackbar.current && (
               <Snackbar

@@ -1,5 +1,12 @@
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import { doc, setDoc, deleteDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  serverTimestamp,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { app, auth, db } from "../utils/firebase";
 
 // --------------------------------------------

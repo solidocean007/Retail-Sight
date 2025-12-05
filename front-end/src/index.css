@@ -1,26 +1,25 @@
 /* index.css */
 
-html,
-body,
-#root {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
-  min-height: 100vh;
-  width: 100vw;
+html, body, #root {
   margin: 0;
   padding: 0;
-  /* overflow-x: hidden; */
+  height: 100%;
+  width: 100%;
+
+  /* REMOVE dangerous flex layout and centering */
+  display: block;
+
+  /* keep these */
   background-color: var(--background-body);
   color: var(--text-color);
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  overscroll-behavior: none;
 }
+
 
 html {
   scroll-behavior: smooth; /* smooth anchor scrolling */

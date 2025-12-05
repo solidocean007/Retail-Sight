@@ -1,14 +1,24 @@
-/* activityFeed.css — Refactored + Themed */
+/* ============================================================
+   ActivityFeed.css — CLEAN, VIRTUOSO-SAFE, MOBILE-SAFE
+   ============================================================ */
 
-/* Activity Feed Layout */
+/* Main feed wrapper */
 .activity-feed-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 0;
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0; /* Allows Virtuoso to take over scroll */
+
+  /* Ensures iOS Safari scrolls correctly */
+  touch-action: pan-y;
 }
 
+/* -------------------------------
+   Top header (mobile only)
+-------------------------------- */
 .top-of-activity-feed {
   display: flex;
   text-align: center;
@@ -34,42 +44,39 @@
   display: flex;
 }
 
-/* Optional utility box for future filters, user buttons, etc. */
 .header-right-side-box {
   display: none;
 }
 
-/* Cards */
+/* -------------------------------
+   Cards List Container
+-------------------------------- */
 .list-container {
   width: 100%;
-  max-width: 700px; /* Adjusted for better responsiveness */
+  max-width: 700px;
   margin: 0 auto 20px auto;
-  /* height: 900px; */
   background-color: var(--post-card-background);
   color: var(--text-color);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
 }
 
+/* Scroll-to-top floating button */
 .scroll-to-top-btn {
   position: absolute;
   top: 3rem;
-  right: .7rem;
+  right: 0.7rem;
   font-weight: bold;
-  /* background-color: var(--menu-background-color); */
   background-color: transparent;
   color: var(--text-color);
   border: none;
   border-radius: 50%;
-  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
-  /* height: 30px; */
   width: 30px;
   cursor: pointer;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* transition: background-color 0.2s ease; */
 }
 
 .scroll-to-top-btn:hover {
@@ -77,80 +84,50 @@
   background-color: var(--primary-blue-dark);
 }
 
+/* ============================================================
+   Virtuoso Compatibility FIXES
+   ============================================================ */
 
-
-/* Responsive Breakpoints */
-
-/* Hide top activity feed header on wider screens */
-@media (min-width: 900px) {
-  .top-of-activity-feed {
-    display: none;
-  }
+/* Let Virtuoso manage item positioning */
+.post-card-renderer-container {
+  min-height: 250px; /* safe baseline without killing virtualization */
 }
 
-@media (max-width: 600px) {
-  /* .scroll-to-top-btn {
-    top: 2rem;
-    right: 1rem;
-    width: 40px;
-    height: 40px;
-    font-size: 1rem;
-  } */
-}
-
-
-/* Basic mobile structure placeholders */
-@media (max-width: 414px) {
-  /* Small smartphones */
-}
-
-@media (min-width: 415px) and (max-width: 768px) {
-  /* Tablets in portrait */
-  .top-of-activity-feed {
-    flex-direction: column;
-  }
-}
-
-/* Medium to large tablets */
-@media (min-width: 769px) and (max-width: 1024px) {
-  /* Add padding or layout tweaks here if needed */
-}
-
-/* Larger screens */
-@media (min-width: 1100px) {
-  /* Reserved for desktops if necessary */
-}
-
-@media (min-width: 1367px) and (max-width: 1920px) {
-  /* Styles for large screens */
-}
-
-@media (min-width: 1921px) {
-  /* Ultra wide screens */
-}
-
-
-.activity-feed-container,
-.activity-feed-box,
-.post-card-renderer-container,
-.memoized-post-card,
+/* Prevent nested container overflow issues */
 .post-card-container {
-  display: block !important;
-  position: relative !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  min-height: 400px !important;
-  overflow: visible !important;
+  overflow: hidden;
 }
 
+/* Do NOT block Virtuoso from managing overflow */
 .home-page-content,
 .virtuoso-grid,
 .virtuoso-item-list {
   overflow: visible !important;
 }
 
+/* Allow fade images to display immediately */
 .post-image,
 .blur-up-image-wrapper {
   opacity: 1 !important;
   transition: none !important;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (min-width: 900px) {
+  .top-of-activity-feed {
+    display: none;
+  }
+}
+
+@media (min-width: 415px) and (max-width: 768px) {
+  .top-of-activity-feed {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 600px) {
+  /* space for future mobile-specific tuning */
 }

@@ -17,6 +17,11 @@ export default function InstallPrompt({ user }: { user: any }) {
   );
 
   useEffect(() => {
+    if (visible) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+  }, [visible]);
+
+  useEffect(() => {
     if (!user) return;
     if (isStandalone) return; // already installed
     if (localStorage.getItem("pwaInstalled") === "true") return;
@@ -26,8 +31,7 @@ export default function InstallPrompt({ user }: { user: any }) {
     // ❗ No deferredPrompt — we show our own banner
     // Android:
     // ✔ deferredPrompt exists — show regular install banner
-    const shouldShow =
-      (isIOS && !isStandalone) || (!isIOS && deferredPrompt);
+    const shouldShow = (isIOS && !isStandalone) || (!isIOS && deferredPrompt);
 
     if (!shouldShow) return;
 

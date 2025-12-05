@@ -20,21 +20,8 @@ firebase.initializeApp({
 // Messaging handler
 const messaging = firebase.messaging();
 
-self.addEventListener("error", (e) => {
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    for (const client of clients) {
-      client.postMessage({
-        type: "SW_ERROR",
-        message: e.message,
-        error: e.error
-      });
-    }
-  });
-});
-
-
 // Background messages ✔
-self.addEventListener("fetch", () => {});
+// self.addEventListener("fetch", () => {});
 
 messaging.onBackgroundMessage((payload) => {
   console.log("[firebase-messaging-sw.js] Background push:", payload);
@@ -84,15 +71,3 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-// Let page know SW woke up
-self.addEventListener("push", (e) => {
-  // Tell the page "SW received a push event"
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    for (const client of clients) {
-      client.postMessage({
-        type: "SW_PUSH_EVENT",
-        message: "Service worker received a push event",
-      });
-    }
-  });
-});

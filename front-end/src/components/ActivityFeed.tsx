@@ -185,10 +185,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       ) : (
         <Virtuoso
           ref={virtuosoRef}
-          increaseViewportBy={500}
+          increaseViewportBy={{ top: 600, bottom: 800 }}
+
           style={{
-            // height: 1000,
-            height: "calc(100vh - 100px)", // ✅ dynamic, responsive
+            height: "100dvh",
             width: "100%",
           }} // is this necessary?
           data={displayPosts}

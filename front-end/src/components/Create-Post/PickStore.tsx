@@ -199,8 +199,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
     );
   }, [post.account?.accountNumber, allCompanyGoals]);
 
-  console.log("active company goals: ", activeCompanyGoals) // this logs the active goal now
-
   const goalsForAccount = useMemo(() => {
   if (!post.account) return [];
 
