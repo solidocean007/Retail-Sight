@@ -1,5 +1,5 @@
 // src/components/ProductsManagement/BrandsSelector.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Autocomplete, TextField, Chip, FormControl } from "@mui/material";
 import { selectAllProducts } from "../../Slices/productsSlice";
@@ -9,189 +9,211 @@ import "./styles/brandsSelector.css";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { getBrandMatches } from "../../utils/helperFunctions/getBrandMatches";
+import CustomConfirmation from "../CustomConfirmation";
+
+//
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+//
+
+// Case-insensitive dedupe
+const dedupeBrands = (brands: string[]) => {
+  const map = new Map<string, string>();
+  for (const b of brands) {
+    const key = b.trim().toLowerCase();
+    if (!map.has(key)) map.set(key, b.trim());
+  }
+  return [...map.values()];
+};
+
+// Validate whether a custom brand is reasonable
+function isValidCustomBrand(word: string): boolean {
+  if (!word) return false;
+  const w = word.trim();
+  if (w.length < 3) return false;
+  if (/^\d+$/.test(w)) return false;
+
+  const junkWords = [
+    "the","and","for","with","from","this","that",
+    "mm","ml","beer","wine","case","cases","size","pkg",
+    "bottle","bottles","can","cans","lager","ipa","ale",
+    "brewing","brewery","imports","fl","oz","container",
+  ];
+
+  return !junkWords.includes(w.toLowerCase());
+}
 
 export interface BrandsSelectorProps {
   selectedBrands: string[];
-  selectedProductType: string[]; // matches your PostType.productType[]
+  selectedProductType: string[];
   onChange: (brands: string[], productType: string[]) => void;
-  // 🧠 Optional props for AI detection
-  autoDetectedBrands?: string[];
   rawCandidates?: string[];
 }
 
 const MAX_BRANDS = 5;
 
+//
+// ─────────────────────────────────────────────────────────────
+// COMPONENT
+// ─────────────────────────────────────────────────────────────
+//
+
 const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   selectedBrands,
   selectedProductType,
   onChange,
-  autoDetectedBrands,
   rawCandidates,
 }) => {
   const dispatch = useAppDispatch();
   const companyProducts = useSelector(selectAllProducts);
+
+  const brandOptions = useBrandOptions();
+  const derivedProductTypes = useProductTypeOptions(selectedBrands);
+
   const [brandInput, setBrandInput] = useState("");
   const [typeInput, setTypeInput] = useState("");
 
-  // all available brands in the company
-  const brandOptions = useBrandOptions(); // your company brand list
   const [aiMatches, setAiMatches] = useState<string[]>([]);
-  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
-  const derivedProductTypes = useProductTypeOptions(selectedBrands);
+  const [aiCustomSuggestions, setAiCustomSuggestions] = useState<string[]>([]);
 
-  // If a selected brand has no known types, fallback to empty but let freeSolo input work
-  const availableTypes =
-    derivedProductTypes.length > 0 ? derivedProductTypes : [];
-
-  // 🔍 Compare AI rawCandidates to known brands whenever they update
-  useEffect(() => {
-  if (!rawCandidates?.length) return;
-
-  const matches = getBrandMatches(rawCandidates, brandOptions);
-  const top10 = Array.from(new Set(rawCandidates)).slice(0, 10);
-
-  setAiSuggestions(top10);
-
-  // Only run auto-add logic when there are *new* matches not already added
-  const normalizedSelected = selectedBrands.map((b) => b.toLowerCase());
-  const newOnes = matches.filter(
-    (m) => !normalizedSelected.includes(m.toLowerCase())
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingCustomBrand, setPendingCustomBrand] = useState<string | null>(
+    null
   );
 
-  if (newOnes.length > 0) {
-    onChange([...selectedBrands, ...newOnes], selectedProductType);
-  }
-
-  // Update aiMatches only once
-  setAiMatches(matches);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [rawCandidates]); // ✅ remove brandOptions from deps
-
-
-  // 🧠 When AI finds matches, auto-add them to selected brands
+  //
+  // 1️⃣ OCR → fuzzy matches + potential custom words
+  //
   useEffect(() => {
-    if (aiMatches.length === 0) return;
+    if (!rawCandidates?.length) return;
 
-    // Case-insensitive deduplication
-    const normalizedSelected = selectedBrands.map((b) => b.toLowerCase());
-    const newMatches = aiMatches.filter(
-      (m) => !normalizedSelected.includes(m.toLowerCase())
-    );
+    const matches = getBrandMatches(rawCandidates, brandOptions);
+    setAiMatches(matches);
 
-    if (newMatches.length === 0) return;
+    // Extract possible custom brands
+    const custom = rawCandidates
+      .map((w) => w.trim())
+      .filter((w) => {
+        if (!w) return false;
+        const lower = w.toLowerCase();
+        if (brandOptions.some((b) => b.toLowerCase() === lower)) return false;
+        if (matches.some((m) => m.toLowerCase() === lower)) return false;
+        if (lower.length < 3) return false;
+        if (/^\d+$/.test(lower)) return false;
+        return true;
+      });
 
-    // Cap total to MAX_BRANDS
-    const combined = [...selectedBrands, ...newMatches].slice(0, MAX_BRANDS);
+    setAiCustomSuggestions(dedupeBrands(custom));
+  }, [rawCandidates, brandOptions]);
 
-    onChange(combined, selectedProductType);
+  //
+  // 2️⃣ Case-insensitive product-type derivation + normalize
+  //
+  const updateBrands = (list: string[]) => {
+    const cleaned = dedupeBrands(list).slice(0, MAX_BRANDS);
 
-    // Snackbar feedback
-    const msg =
-      newMatches.length === 1
-        ? `✅ Added AI-detected brand: ${newMatches[0]}`
-        : `✅ Added ${newMatches.length} AI-detected brands`;
-    dispatch(showMessage(msg));
+    const cleanedLower = cleaned.map((b) => b.toLowerCase());
 
-    // optional: add highlight pulse effect
-    const brandBox = document.querySelector(".brandsSelector");
-    if (brandBox) {
-      brandBox.classList.add("ai-brand-pulse");
-      setTimeout(() => brandBox.classList.remove("ai-brand-pulse"), 1500);
-    }
-  }, [aiMatches]);
-
-  // whenever you pick a new set of brands:
-  const handleBrandsChange = (_: any, newBrands: string[]) => {
-    // 2️⃣ Cap at MAX_BRANDS
-    const capped = newBrands.slice(0, MAX_BRANDS);
-
-    // 3️⃣ Build the raw derived list of productTypes for these brands
     const derived = Array.from(
       new Set(
         companyProducts
-          .filter((p) => {
-            const include = p.brand && capped.includes(p.brand);
-            return include;
-          })
-          .map((p) => {
-            const t = p.productType?.toLowerCase() ?? "";
-            return t;
-          })
-          .filter((t) => {
-            const keep = Boolean(t);
-            if (!keep) console.log("    – filtered out empty type");
-            return keep;
-          })
+          .filter(
+            (p) => p.brand && cleanedLower.includes(p.brand.toLowerCase())
+          )
+          .map((p) => p.productType?.toLowerCase() ?? "")
+          .filter(Boolean)
       )
     ).sort();
 
-    let defaultTypes: string[];
-    const foundBeer = derived.some((t) => {
-      const match = t.includes("beer");
-      return match;
-    });
-    const foundWine = derived.some((t) => {
-      const match = t.includes("wine");
-      return match;
-    });
-
-    if (foundBeer) {
-      defaultTypes = ["beer pkg"];
-    } else if (foundWine) {
+    let defaultTypes = ["unspecified"];
+    if (derived.some((t) => t.includes("beer"))) defaultTypes = ["beer pkg"];
+    else if (derived.some((t) => t.includes("wine")))
       defaultTypes = ["wine unfortified"];
-    } else {
-      defaultTypes = derived;
-    }
-    // 5️⃣ Emit the new brands + defaultTypes back to parent
-    onChange(capped, defaultTypes);
-    if (defaultTypes.length === 0) {
-      defaultTypes = ["unspecified"]; // ✅ fallback for no product types
-    }
+    else if (derived.length > 0) defaultTypes = derived;
+
+    onChange(cleaned, defaultTypes);
   };
 
-  // let the user override/tweak the productType list
+  //
+  // 3️⃣ Confirm modal for custom brand
+  //
+  const requestAddCustomBrand = (word: string) => {
+    setPendingCustomBrand(word);
+    setConfirmOpen(true);
+  };
+
+  const confirmAddCustomBrand = () => {
+    if (!pendingCustomBrand) return;
+    updateBrands([...selectedBrands, pendingCustomBrand]);
+    dispatch(showMessage(`➕ Added custom brand: ${pendingCustomBrand}`));
+
+    setPendingCustomBrand(null);
+    setConfirmOpen(false);
+  };
+
+  //
+  // 4️⃣ Manual brand selection
+  //
+  const handleBrandsChange = (_: any, newList: string[]) => {
+    const newItem = newList[newList.length - 1];
+
+    const lowerKnown = brandOptions.map((b) => b.toLowerCase());
+    const isKnown = lowerKnown.includes(newItem?.toLowerCase());
+
+    if (!isKnown) {
+      if (newItem && isValidCustomBrand(newItem)) {
+        requestAddCustomBrand(newItem);
+        return;
+      }
+    }
+
+    updateBrands(newList);
+  };
+
+  //
+  // 5️⃣ Product Types
+  //
   const handleTypesChange = (_: any, types: string[]) => {
     onChange(selectedBrands, types);
   };
 
+  //
+  // 6️⃣ Auto-select AI fuzzy matches (your corrected behavior)
+  //
+  useEffect(() => {
+    if (aiMatches.length === 0) return;
+
+    const lowerSelected = selectedBrands.map((b) => b.toLowerCase());
+
+    const newOnes = aiMatches.filter(
+      (m) => !lowerSelected.includes(m.toLowerCase())
+    );
+
+    if (newOnes.length > 0) {
+      updateBrands([...selectedBrands, ...newOnes]);
+      dispatch(
+        showMessage(
+          newOnes.length === 1
+            ? `🤖 Auto-added AI match: ${newOnes[0]}`
+            : `🤖 Auto-added ${newOnes.length} detected brands`
+        )
+      );
+    }
+  }, [aiMatches]);
+
+  //
+  // ─────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────
+  //
+
   return (
     <div className="brandsSelector">
       <div className="ui-detect-brands">
-        {rawCandidates && rawCandidates.length > 0 ? (
+        {rawCandidates?.length ? (
           <div className="ai-suggestions-box">
             <h4>🧠 Beta AI Brand Detection</h4>
-
-            <p className="ai-subtitle">Top suggestions:</p>
-            <div className="ai-chip-row">
-              {aiSuggestions.map((word) => (
-                <Chip
-                  key={word}
-                  label={word}
-                  size="small"
-                  variant="outlined"
-                  onClick={() => {
-                    // ✅ allow direct selection as custom brand
-                    if (
-                      !selectedBrands.includes(word) &&
-                      selectedBrands.length < MAX_BRANDS
-                    ) {
-                      handleBrandsChange(null, [...selectedBrands, word]);
-                      dispatch(showMessage(`✅ Added custom brand: ${word}`));
-                    }
-                    const chip = document.querySelector(
-                      `.MuiChip-label:contains("${word}")`
-                    );
-                    if (chip) {
-                      chip.classList.add("ai-chip-added");
-                      setTimeout(
-                        () => chip.classList.remove("ai-chip-added"),
-                        800
-                      );
-                    }
-                  }}
-                />
-              ))}
-            </div>
 
             {aiMatches.length > 0 ? (
               <>
@@ -212,25 +234,50 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
                 </div>
               </>
             ) : (
-              <p className="ai-subtitle-muted">No exact matches found</p>
+              <p className="ai-subtitle-muted">
+                No matching brands detected. Select manually below.
+              </p>
             )}
+
+            {aiCustomSuggestions.length > 0 && (
+              <>
+                <p className="ai-subtitle">Possible new brands:</p>
+                <div className="ai-chip-row">
+                  {aiCustomSuggestions.map((word) => (
+                    <Chip
+                      key={word}
+                      label={`${word} (Custom)`}
+                      size="small"
+                      variant="outlined"
+                      color="warning"
+                      onClick={() => requestAddCustomBrand(word)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {aiMatches.length === 0 &&
+              aiCustomSuggestions.length === 0 && (
+                <p className="ai-subtitle-muted">
+                  No recognizable brands detected.
+                </p>
+              )}
           </div>
         ) : (
-          <p className="ai-subtitle-muted">
-            AI detection pending or unavailable
-          </p>
+          <p className="ai-subtitle-muted">AI detection pending...</p>
         )}
       </div>
 
       <FormControl fullWidth>
-        {/* Brand picker */}
+        {/* BRAND PICKER */}
         <Autocomplete
           multiple
           freeSolo
           options={brandOptions}
           value={selectedBrands}
           inputValue={brandInput}
-          onInputChange={(_, newInput) => setBrandInput(newInput)}
+          onInputChange={(_, v) => setBrandInput(v)}
           onChange={handleBrandsChange}
           getOptionDisabled={(opt) =>
             selectedBrands.length >= MAX_BRANDS && !selectedBrands.includes(opt)
@@ -238,58 +285,23 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
           limitTags={MAX_BRANDS}
           onBlur={() => {
             const trimmed = brandInput.trim();
-            if (
-              trimmed &&
-              !selectedBrands.includes(trimmed) &&
-              selectedBrands.length < MAX_BRANDS
-            ) {
-              handleBrandsChange(null, [...selectedBrands, trimmed]);
-            }
+            if (trimmed) requestAddCustomBrand(trimmed);
             setBrandInput("");
           }}
-          renderTags={(value, getTagProps) =>
-            value.map((option, index) => {
-              const { key, ...tagProps } = getTagProps({ index });
-              const isCustom = !brandOptions.some(
-                (b) => b.toLowerCase() === option.toLowerCase()
-              );
-
-              return (
-                <Chip
-                  key={option}
-                  label={isCustom ? `${option} (Custom)` : option}
-                  color={isCustom ? "warning" : "default"}
-                  variant={isCustom ? "outlined" : "filled"}
-                  {...tagProps}
-                />
-              );
-            })
-          }
           renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Brands"
-              placeholder={`Select up to ${MAX_BRANDS}`}
-              helperText={
-                selectedBrands.length >= MAX_BRANDS
-                  ? `Max ${MAX_BRANDS} brands`
-                  : undefined
-              }
-            />
+            <TextField {...params} label="Brands" placeholder="Select brand" />
           )}
         />
 
-        {/* Product‐Type picker */}
+        {/* PRODUCT TYPES */}
         <Autocomplete
           multiple
           freeSolo
-          openOnFocus
           autoHighlight
-          filterSelectedOptions
-          options={availableTypes}
+          options={derivedProductTypes}
           value={selectedProductType}
           inputValue={typeInput}
-          onInputChange={(_, newInput) => setTypeInput(newInput)}
+          onInputChange={(_, v) => setTypeInput(v)}
           onChange={handleTypesChange}
           onBlur={() => {
             const trimmed = typeInput.trim();
@@ -298,16 +310,28 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
             }
             setTypeInput("");
           }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Product Types"
-              placeholder="e.g. beer pkg"
-            />
-          )}
           sx={{ mt: 2 }}
+          renderInput={(params) => (
+            <TextField {...params} label="Product Types" />
+          )}
         />
       </FormControl>
+
+      {/* CONFIRM CUSTOM BRAND MODAL */}
+      <CustomConfirmation
+        isOpen={confirmOpen}
+        title="Add Custom Brand?"
+        message={
+          pendingCustomBrand
+            ? `“${pendingCustomBrand}” is not a recognized company brand. Add it anyway?`
+            : ""
+        }
+        onConfirm={confirmAddCustomBrand}
+        onClose={() => {
+          setConfirmOpen(false);
+          setPendingCustomBrand(null);
+        }}
+      />
     </div>
   );
 };

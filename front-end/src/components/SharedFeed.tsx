@@ -23,7 +23,9 @@ interface SharedFeedProps {
   virtuosoRef?: React.RefObject<VirtuosoHandle>;
   postIdToScroll?: string;
   setPostIdToScroll?: React.Dispatch<React.SetStateAction<string | null>>;
- setSharedFeedPostSet?: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
+  setSharedFeedPostSet?: React.Dispatch<
+    React.SetStateAction<"posts" | "filteredPosts">
+  >;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -43,7 +45,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   const [loadingMore, setLoadingMore] = useState(false);
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
   const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
-  console.log('sharedPosts: ' , sharedPosts)
+  console.log("sharedPosts: ", sharedPosts);
   const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
   const loading = useSelector((s: RootState) => s.sharedPosts.loading);
 
@@ -111,11 +113,12 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
       ) : (
         <Virtuoso
           ref={virtuosoRef}
-          increaseViewportBy={500}
-          style={{ 
-            // height: 1000,
-            height: "calc(100vh - 100px)", // ✅ dynamic, responsive
-             width: "100%" }}
+          increaseViewportBy={{ top: 600, bottom: 800 }}
+
+          style={{
+            height: "100dvh",
+            width: "100%",
+          }}
           data={sharedPosts}
           itemContent={(index, post) => {
             if (!post?.id) return null;
@@ -164,7 +167,6 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                       addSharedPostsToIndexedDB(postsWithIds);
                       dispatch(addSharedPosts(postsWithIds));
                       dispatch(setHasMore(moreAvailable));
-
                     } else {
                       setHasMore(false);
                     }

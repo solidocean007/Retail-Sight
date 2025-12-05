@@ -5,7 +5,7 @@ import "./notificationsPage.css";
 import { RootState, useAppDispatch } from "../../utils/store";
 import {
   markAsRead,
-  selectAllNotifications,
+  selectNotifications,
 } from "../../Slices/notificationsSlice";
 import NotificationItem from "../Notifications/NotificationItem";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +22,7 @@ const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const notifications = useSelector(selectAllNotifications);
+  const notifications = useSelector(selectNotifications);
   const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
     null
   );

@@ -27,6 +27,9 @@ import { createInviteAndDraftConnection } from "./createInviteAndDraftConnection
 import { lookupConnectionTarget } from "./lookupConnectionTarget";
 import { acceptInviteAutoResolve } from "./acceptInviteAutoResolve";
 import { onPendingNewUserAndCompanyInviteCreate } from "./onPendingNewUserAndCompanyInviteCreate";
+import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
+import { sendTestPush } from "./notifications/sendTestPush";
+import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
 
 // 🧾 Braintree Billing System
 import {
@@ -47,10 +50,8 @@ import {
 } from "./braintreeHandlers";
 
 // Notification system
-import { sendNotification } from "./notifications/sendNotification";
-import { commentLikeNotification } from "./notifications/commentLikeNotification";
-import { commentNotification } from "./notifications/commentNotification";
-import { postLikeNotification } from "./notifications/postLikeNotification";
+import { onUserNotificationCreated } from "./notifications/onUserNotificationCreated";
+import { sendNotificationToUser } from "./notifications/sendNotificationToUser";
 
 import { syncPlanLimits } from "./braintreeHelpers";
 
@@ -104,10 +105,11 @@ export {
   lookupConnectionTarget,
   acceptInviteAutoResolve,
   onPendingNewUserAndCompanyInviteCreate,
+  onActivityEventCreated,
 
   // Notifications
-  sendNotification,
-  commentLikeNotification,
-  commentNotification,
-  postLikeNotification,
+  onUserNotificationCreated,
+  sendNotificationToUser,
+  supervisorDisplayAlert,
+  sendTestPush,
 };

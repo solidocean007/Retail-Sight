@@ -65,10 +65,6 @@ const AllCompanyGoalsView = ({
     return { activeGoals: active, archivedGoals: archived };
   }, [companyGoals, today]);
 
-  console.log("active goals: ", activeGoals);
-  console.log("company goals: ", companyGoals);
-
-
   // Sort goals
   const sortGoals = (goals: CompanyGoalWithIdType[]) => {
     return [...goals].sort((a, b) => {

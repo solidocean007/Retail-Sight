@@ -22,7 +22,7 @@ import {
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
-import { doc, getDoc } from "@firebase/firestore";
+import { addDoc, collection, doc, getDoc, serverTimestamp } from "@firebase/firestore";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
@@ -357,6 +357,32 @@ const CreateCompanyGoalView = () => {
       );
 
       if (createCompanyGoalInFirestore.fulfilled.match(result)) {
+        const createdGoal = result.payload as CompanyGoalType;
+
+        // ---------------------------------------------
+        // 🔥 Send goal.assignment events to each assignee
+        // ---------------------------------------------
+        if (createdGoal.goalAssignments && createdGoal.goalAssignments?.length > 0) {
+          const targetUserIds = Array.from(
+            new Set(createdGoal.goalAssignments.map((a) => a.uid))
+          );
+
+          for (const uid of targetUserIds) {
+            await addDoc(collection(db, "activityEvents"), {
+              type: "goal.assignment",
+              goalId: createdGoal.id, // Property 'id' does not exist on type 'CompanyGoalType'
+              actorUserId: currentUser.uid,
+              actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+              targetUserIds: [uid],
+
+              goalTitle: createdGoal.goalTitle,
+              goalDescription: createdGoal.goalDescription,
+
+              createdAt: serverTimestamp(),
+            });
+          }
+        }
+
         alert("Goal created!");
         setGoalTitle("");
         setGoalDescription("");
@@ -535,50 +561,52 @@ const CreateCompanyGoalView = () => {
                 />
               )}
             </Box>
-           {readyForCreation && <div className="target-accounts-and-roles">
-              <FormControl component="fieldset">
-                <Typography variant="subtitle1">Target Accounts</Typography>
-                <RadioGroup
-                  value={accountScope}
-                  onChange={(e) =>
-                    setAccountScope(e.target.value as "all" | "selected")
-                  }
-                  row
-                >
-                  <FormControlLabel
-                    value="all"
-                    control={<Radio />}
-                    label="All Accounts"
-                  />
-                  <FormControlLabel
-                    value="selected"
-                    control={<Radio />}
-                    label="Selected Accounts"
-                  />
-                </RadioGroup>
-              </FormControl>
-              <FormControl component="fieldset">
-                <Typography variant="subtitle1">Assign To</Typography>
-                <RadioGroup
-                  value={assigneeType}
-                  onChange={(e) =>
-                    setAssigneeType(e.target.value as "sales" | "supervisor")
-                  }
-                  row
-                >
-                  <FormControlLabel
-                    value="sales"
-                    control={<Radio />}
-                    label="Sales Reps"
-                  />
-                  <FormControlLabel
-                    value="supervisor"
-                    control={<Radio />}
-                    label="Supervisors"
-                  />
-                </RadioGroup>
-              </FormControl>
-            </div>}
+            {readyForCreation && (
+              <div className="target-accounts-and-roles">
+                <FormControl component="fieldset">
+                  <Typography variant="subtitle1">Target Accounts</Typography>
+                  <RadioGroup
+                    value={accountScope}
+                    onChange={(e) =>
+                      setAccountScope(e.target.value as "all" | "selected")
+                    }
+                    row
+                  >
+                    <FormControlLabel
+                      value="all"
+                      control={<Radio />}
+                      label="All Accounts"
+                    />
+                    <FormControlLabel
+                      value="selected"
+                      control={<Radio />}
+                      label="Selected Accounts"
+                    />
+                  </RadioGroup>
+                </FormControl>
+                <FormControl component="fieldset">
+                  <Typography variant="subtitle1">Assign To</Typography>
+                  <RadioGroup
+                    value={assigneeType}
+                    onChange={(e) =>
+                      setAssigneeType(e.target.value as "sales" | "supervisor")
+                    }
+                    row
+                  >
+                    <FormControlLabel
+                      value="sales"
+                      control={<Radio />}
+                      label="Sales Reps"
+                    />
+                    <FormControlLabel
+                      value="supervisor"
+                      control={<Radio />}
+                      label="Supervisors"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </div>
+            )}
 
             {accountScope === "selected" && readyForCreation && (
               <>

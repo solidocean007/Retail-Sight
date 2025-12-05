@@ -7,21 +7,15 @@ import {
   arrayRemove,
   collection,
   addDoc,
-  query,
-  where,
-  getDocs,
-  deleteDoc,
   serverTimestamp,
 } from "firebase/firestore";
 
-import { CommentType, PostWithID, UserType } from "../types";
 import { db } from "../firebase";
-import { updatePostWithNewTimestamp } from "./updatePostWithNewTimestamp";
+import { PostWithID, CommentType, UserType } from "../types";
 
 /**
  * Handles liking/unliking a comment.
- * Frontend updates comment likes + writes to commentLikes/{id}
- * Cloud Functions will generate the notification.
+ * Writes activityEvents so Cloud Functions fan-out the notifications.
  */
 export const handleCommentLike = async ({
   comment,
@@ -34,47 +28,46 @@ export const handleCommentLike = async ({
   user: UserType;
   liked: boolean;
 }) => {
-  try {
-    if (!comment.commentId) {
-      console.error("Comment missing commentId:", comment);
-      return;
-    }
+  // Guard: we must have the commentId
+  if (!comment.commentId) {
+    console.error("Comment missing commentId:", comment);
+    return;
+  }
 
+  try {
     const commentRef = doc(db, "comments", comment.commentId);
 
+    // 1️⃣ Update likes array
     const likeMutation = liked ? arrayUnion(user.uid) : arrayRemove(user.uid);
-
-    // 1️⃣ Update comment.likes array
     await updateDoc(commentRef, { likes: likeMutation });
 
-    // 2️⃣ Write to commentLikes for backend triggers
-    const commentLikesCol = collection(db, "commentLikes");
-
+    // 2️⃣ Send activity event only when liking
     if (liked) {
-      await addDoc(commentLikesCol, {
-        postId: post.id,
-        commentId: comment.commentId,
-        userId: user.uid,
-        userName: `${user.firstName} ${user.lastName}`,
-        createdAt: serverTimestamp(),
-      });
-    } else {
-      // Unlike → delete any existing like record
-      const q = query(
-        commentLikesCol,
-        where("commentId", "==", comment.commentId),
-        where("userId", "==", user.uid)
-      );
+      const targetUserIds: string[] = [];
 
-      const snap = await getDocs(q);
-      for (const d of snap.docs) {
-        await deleteDoc(d.ref);
+      // Notify the author (but not if they liked their own comment)
+      if (comment.userId && comment.userId !== user.uid) {
+        targetUserIds.push(comment.userId);
+      }
+
+      if (targetUserIds.length > 0) {
+        await addDoc(collection(db, "activityEvents"), {
+          type: "post.commentLike",
+          postId: post.id,
+          commentId: comment.commentId,
+
+          actorUserId: user.uid,
+          actorName: `${user.firstName} ${user.lastName}`,
+
+          // optional bonus: makes push previews better
+          commentText: comment.text ?? "",
+
+          targetUserIds,
+          createdAt: serverTimestamp(),
+        });
       }
     }
-
-    // 3️⃣ Update post timestamp so feed reorders
-    await updatePostWithNewTimestamp(post.id);
   } catch (error) {
-    console.error("Failed to like/unlike comment:", error);
+    console.error("Error updating comment like:", error);
   }
 };

@@ -45,6 +45,7 @@ import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.
 import BillingDashboard from "./Billing/BillingDashboard.tsx";
 import { useNavigate } from "react-router-dom";
 import useProtectedAction from "../../utils/useProtectedAction.ts";
+import NotificationSettingsPanel from "../Notifications/NotificationSettingsPanel.tsx";
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -57,11 +58,7 @@ export const Dashboard = () => {
   const companyId = user?.companyId;
   // const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
   const [drawerOpen, setDrawerOpen] = useState(true);
-  // Note from chat:
-  // Dashboard default mode race: const isEmployee = user?.role === "employee"; 
-  // runs before the user is known, so the initial dashboardMode defaults to the 
-  // non‑employee branch and never re-derives after the user loads.
-  // Placeholder for role check. Replace 'user.role' with the actual role property.
+ 
   const isEmployee = user?.role === "employee";
   // const isEmployee = true;
   const isAdmin = user?.role === "admin";
@@ -191,6 +188,9 @@ export const Dashboard = () => {
         )}
         {dashboardMode === "TeamMode" && (
           <TeamsViewer />
+        )}
+        {dashboardMode === "NotificationsMode" && (
+          <NotificationSettingsPanel />
         )}
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />

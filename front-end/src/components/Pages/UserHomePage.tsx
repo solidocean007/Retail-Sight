@@ -76,6 +76,7 @@ export const UserHomePage = () => {
     }
   }, []);
 
+
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
 
@@ -307,7 +308,7 @@ export const UserHomePage = () => {
             message="This will clear cached data and reload everything. Continue?"
             onConfirm={confirmReset}
             onClose={() => setShowConfirmReset(false)}
-            loading={resetting} // Cannot find name 'resetting'. Did you mean 'setResetting'?
+            loading={resetting}
           />
         )}
         <OnboardingSuccessModal
