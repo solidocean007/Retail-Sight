@@ -29,6 +29,7 @@ import RequestSubmitted from "../components/Pages/RequestSubmitted";
 import CompanyOnboardingAcceptForm from "../components/Pages/CompanyOnboardingAcceptForm";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PostViewer from "../components/Pages/PostViewer";
+import CookiesPolicy from "../components/Pages/CookiesPolicy";
 
 export const AppRoutes = () => {
   return (
@@ -39,6 +40,7 @@ export const AppRoutes = () => {
       <Route path="/contact-us" element={<ContactUs />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-service" element={<TermsOfService />} />
+      <Route path="/cookies" element={<CookiesPolicy />} />
       <Route path="/help-support" element={<HelpSupport />} />
       <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
       <Route path="/notifications" element={<NotificationsPage />} />

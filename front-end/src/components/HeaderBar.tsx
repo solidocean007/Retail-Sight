@@ -8,8 +8,6 @@ import { showMessage } from "../Slices/snackbarSlice";
 import { useOutsideAlerter } from "../utils/useOutsideAlerter";
 import { Badge, IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
-import { resetApp } from "../utils/resetApp";
-import { useAppConfigSync } from "../hooks/useAppConfigSync";
 import {
   selectAllNotifications,
   selectUnreadNotifications,

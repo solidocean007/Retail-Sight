@@ -1,30 +1,22 @@
 .privacy-policy-container {
-  max-width: 800px;
+  width: 100%;
+  max-width: 1200px;   /* wider so Termly layout breathes */
   margin: 40px auto;
-  padding: 20px;
-  background: var(--post-card-background);
-  color: var(--text-color);
+  padding: 0;          /* remove inner padding; Termly has its own */
+}
+
+.privacy-policy-iframe {
+  width: 100%;
+  height: 100vh;
+  border: none;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
 }
 
-.privacy-policy-container h1 {
-  color: var(--header-title);
-  text-align: center;
-}
-
-.privacy-policy-container p,
-.privacy-policy-container h2 {
-  margin-bottom: 16px;
-}
-
-.privacy-policy-container section {
-  margin-bottom: 24px;
-}
-
+/* optional: improve spacing on mobile */
 @media (max-width: 768px) {
   .privacy-policy-container {
-    margin: 20px;
-    padding: 15px;
+    margin: 10px;
   }
 }
