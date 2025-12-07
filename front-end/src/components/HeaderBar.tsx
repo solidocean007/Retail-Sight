@@ -103,7 +103,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               src={
                 isMobileLogo
                   ? "/logos/displaygram-logo.svg"
-                  : "/displaygram-logo-long-BLUE.svg"
+                  : "/displaygram-logo-long-BLUE.png"
               }
               alt="Displaygram"
               className="header-brand-logo"

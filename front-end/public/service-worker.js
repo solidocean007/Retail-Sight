@@ -1,27 +1,76 @@
 /* eslint-disable no-undef */
 
 // -------------------------------------------------------
-// 0. BASIC SERVICE WORKER LIFECYCLE
+// 0. BASIC CONFIG
 // -------------------------------------------------------
-// No skipWaiting — required so Firebase Messaging works correctly
+const OFFLINE_CACHE_NAME = "dg-offline-v1";
+const OFFLINE_FALLBACK_PAGE = "/offline.html";
 
-self.addEventListener("install", () => {
-  // minimal install — do nothing
+// -------------------------------------------------------
+// 1. INSTALL – cache offline fallback
+// -------------------------------------------------------
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(OFFLINE_CACHE_NAME).then((cache) => {
+      return cache.addAll([OFFLINE_FALLBACK_PAGE]);
+    })
+  );
 });
 
+// -------------------------------------------------------
+// 2. ACTIVATE – claim clients & clean old caches
+// -------------------------------------------------------
 self.addEventListener("activate", (event) => {
-  // Claim clients so background messages can reach pages immediately
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    Promise.all([
+      // Clean up old offline caches if you bump OFFLINE_CACHE_NAME
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== OFFLINE_CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
+      ),
+      // Ensure this SW controls open clients
+      self.clients.claim(),
+    ])
+  );
 });
 
-// IMPORTANT:
-// ❗ Remove fetch interception entirely.
-// Future offline upload logic will be added with Workbox or custom handlers.
-// self.addEventListener("fetch", () => {})
+// -------------------------------------------------------
+// 3. FETCH – network-first with safe offline fallback
+//      - Handles Safari correctly
+//      - Does NOT break Firestore/Axios when online
+// -------------------------------------------------------
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
 
+  // Only handle GET requests; let others (POST, etc.) go straight through
+  if (req.method !== "GET") {
+    return;
+  }
+
+  const isNavigateRequest =
+    req.mode === "navigate" ||
+    (req.headers.get("accept") || "").includes("text/html");
+
+  if (isNavigateRequest) {
+    // HTML navigation (page loads) → network-first, fallback to offline.html
+    event.respondWith(
+      fetch(req).catch(() => caches.match(OFFLINE_FALLBACK_PAGE))
+    );
+    return;
+  }
+
+  // For other GET requests (images, CSS, JS, API GETs)
+  // → try network, fallback to any cached match if available
+  event.respondWith(
+    fetch(req).catch(() => caches.match(req))
+  );
+});
 
 // -------------------------------------------------------
-// 1. FIREBASE MESSAGING SETUP
+// 4. FIREBASE MESSAGING SETUP
 // -------------------------------------------------------
 try {
   importScripts(
@@ -35,8 +84,8 @@ try {
   // Do NOT throw — allow SW to continue so app still loads
 }
 
-if (firebase?.initializeApp) {
-  firebase.initializeApp({
+if (self.firebase?.initializeApp) {
+  self.firebase.initializeApp({
     apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
     authDomain: "retail-sight.firebaseapp.com",
     projectId: "retail-sight",
@@ -44,13 +93,12 @@ if (firebase?.initializeApp) {
     appId: "1:484872165965:web:feb232cfe100a4b9105a04",
   });
 
-  const messaging = firebase.messaging();
+  const messaging = self.firebase.messaging();
 
-  // -------------------------------------------------------
-  // 2. BACKGROUND MESSAGE HANDLER
-  // -------------------------------------------------------
+  // -----------------------------------------------------
+  // 5. BACKGROUND MESSAGE HANDLER
+  // -----------------------------------------------------
   messaging.onBackgroundMessage((payload) => {
-
     const hasNativeNotification =
       payload.notification || (payload.data && payload.data.title);
 
@@ -71,16 +119,16 @@ if (firebase?.initializeApp) {
     });
   });
 
-  // -------------------------------------------------------
-  // 3. NOTIFICATION CLICK HANDLING
-  // -------------------------------------------------------
+  // -----------------------------------------------------
+  // 6. NOTIFICATION CLICK HANDLING
+  // -----------------------------------------------------
   self.addEventListener("notificationclick", (event) => {
     event.notification.close();
 
     const target = event.notification.data?.link || "/notifications";
 
     event.waitUntil(
-      clients
+      self.clients
         .matchAll({ type: "window", includeUncontrolled: true })
         .then((clientList) => {
           for (const client of clientList) {
@@ -92,11 +140,10 @@ if (firebase?.initializeApp) {
               return client.focus();
             }
           }
-          return clients.openWindow(target);
+          return self.clients.openWindow(target);
         })
     );
   });
-
 } else {
   console.warn("Firebase Messaging could not initialize in SW.");
 }

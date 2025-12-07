@@ -1,86 +1,135 @@
-.install-prompt-container {
+/* Dimming overlay covering entire page */
+.desktop-install-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;     /* vertical center */
-  justify-content: center;  /* horizontal center */
-  background: rgba(0, 0, 0, 0.35); /* optional: dimmed backdrop */
-  z-index: 9999;
-  animation: fadeIn 0.25s ease-out forwards;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 5000;
 }
 
-
-.install-card {
-  background: #ffffff;
-  padding: 1.4em 1.6em;
-  border-radius: 16px;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.15);
-  max-width: 320px;
-  width: 90%;
-  text-align: center;
-  animation: slideUp 0.35s ease-out forwards;
-}
-
-.install-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 0.35rem;
-}
-
-.install-subtitle {
-  font-size: 0.92rem;
-  color: #475569;
-  margin-bottom: 1rem;
-  line-height: 1.35;
-}
-
-.install-buttons {
-  display: flex;
-  gap: 0.6rem;
-}
-
-.install-btn {
-  flex: 1;
-  background: #3b82f6;
-  border: none;
+/* Arrow pointing at toolbar icon */
+.desktop-install-arrow {
+  position: fixed;
+  top: -10px; /* under the icon highlight */
+  right: 15%;
+  font-size: 80px;
   color: white;
-  font-weight: 600;
-  padding: 0.55rem 0;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s;
+  z-index: 6001;
+  animation: arrow-bounce 1.3s infinite;
 }
 
-.install-btn:hover {
-  background: #2563eb;
+@keyframes arrow-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
-.dismiss-btn {
-  flex: 1;
-  background: #e2e8f0;
+/* Toast container */
+.desktop-install-hint {
+  position: fixed;
+  top: 110px; /* Pushes it below toolbar */
+  right: 25px;
+  z-index: 6002;
+
+  background: rgba(30, 30, 30, 0.92);
+  padding: 18px 20px;
+  border-radius: 14px;
+  width: 310px;
+
+  display: flex;
+  flex-direction: column; /* <-- COLUMN now */
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+
+  animation: fadeInUp 0.25s ease-out;
+}
+
+.install-icon-img {
+  width: 250px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 0 12px rgba(255, 255, 0, 0.4); /* gold glow */
+}
+
+.desktop-install-hint-text {
+  font-size: 15px;
+  line-height: 1.35;
+  color: #e2e8f0;
+}
+
+.desktop-install-hint-close {
+  background: #facc15;
+  color: black;
+  padding: 8px 16px;
+  border-radius: 8px;
   border: none;
-  color: #475569;
-  font-weight: 500;
-  padding: 0.55rem 0;
-  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
 }
 
-.dismiss-btn:hover {
-  background: #cbd5e1;
+.desktop-install-hint-close:hover {
+  opacity: 0.9;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-@keyframes slideUp {
-  from { transform: translateY(15px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+/* Floating Install FAB (Desktop Only) */
+.desktop-install-fab {
+  position: fixed;
+  top: 100px;
+  right: 35px;
+  background: var(--gold, #facc15);
+  color: black;
+
+  padding: 12px 22px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+
+  border: none;
+  cursor: pointer;
+  z-index: 3000;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
+  animation: fab-bob 2.5s ease-in-out infinite;
+  animation-iteration-count: 2; /* gentle bobbing */
+}
+
+@keyframes fab-bob {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Hide FAB on mobile/tablet */
+@media (max-width: 990px) {
+  .desktop-install-fab {
+    display: none !important;
+  }
 }
