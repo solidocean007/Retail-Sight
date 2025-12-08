@@ -51,10 +51,12 @@ import { Timestamp } from "firebase/firestore";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
 import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
 import FadeImage from "./FadeImage";
+import { ImageSetType } from "./ActivityFeed";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
 interface PostCardProps {
+  imageSet: ImageSetType;
   id: string;
   currentUserUid: string | undefined;
   post: PostWithID;
@@ -73,6 +75,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({
+  imageSet,
   id,
   currentUserUid,
   post,
@@ -84,7 +87,8 @@ const PostCard: React.FC<PostCardProps> = ({
   setIsSearchActive,
   postIdToScroll = null, // Default to null if not provided
 }) => {
-  const { small, medium, original } = resolvePostImage(post);
+  // console.log(imageSet);
+  const { small, medium, original } = imageSet;
   const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
   const [commentCount] = useState(post.commentCount);
@@ -485,14 +489,16 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
             <div className="activity-post-image-box">
               {post.imageUrl && (
-                <FadeImage
-                  srcList={feedList}
-                  alt="Post image"
-                  onClick={() => {
-                    setFullSizeImageUrl(original[0]);
-                    setIsImageModalOpen(true);
-                  }}
-                />
+                <div className="image-aspect-wrapper">
+                  <FadeImage
+                    srcList={feedList}
+                    alt="Post image"
+                    onClick={() => {
+                      setFullSizeImageUrl(original[0]);
+                      setIsImageModalOpen(true);
+                    }}
+                  />
+                </div>
               )}
               {/* <img
               src={post.imageUrl}

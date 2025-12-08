@@ -2,8 +2,10 @@
 import React, { useEffect, useRef } from "react";
 import MemoizedPostCard from "./PostCard";
 import { PostWithID } from "../utils/types";
+import { ImageSetType } from "./ActivityFeed";
 
 interface PostCardRendererProps {
+  imageSet: ImageSetType;
   currentUserUid?: string;
   index: number;
   style: React.CSSProperties;
@@ -23,6 +25,7 @@ interface PostCardRendererProps {
 }
 
 const PostCardRenderer: React.FC<PostCardRendererProps> = ({
+  imageSet,
   currentUserUid,
   index,
   style,
@@ -70,6 +73,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   return (
     <div className="memoized-post-card" ref={cardRef}>
       <MemoizedPostCard
+        imageSet={imageSet}
         id={post.id}
         currentUserUid={currentUserUid ?? ""} // Fallback to empty string if undefined
         post={post} // Now using post.data

@@ -1,5 +1,11 @@
 // SharedFeed.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
 import PostCardRenderer from "./PostCardRenderer";
@@ -16,6 +22,7 @@ import "./activityFeed.css";
 import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
 import { addSharedPosts, setHasMore } from "../Slices/sharedPostsSlice";
 import { addSharedPostsToIndexedDB } from "../utils/database/sharedPostsStoreUtils";
+import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -49,16 +56,25 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
   const loading = useSelector((s: RootState) => s.sharedPosts.loading);
 
+  const scrollToTop = () => {
+    if(!virtuosoRef) return;
+    virtuosoRef.current?.scrollToIndex({
+      index: 0,
+      align: "start",
+      behavior: "smooth",
+    });
+  };
   // Auto-scroll handling
   const hasAutoScrolled = useRef(false);
-  const handlePostVisible = (id: string, idx: number) => {
-    if (hasAutoScrolled.current || id !== postIdToScroll) return;
-    if (virtuosoRef?.current && setPostIdToScroll) {
-      virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
-      setPostIdToScroll(null);
-      hasAutoScrolled.current = true;
-    }
-  };
+  const handlePostVisible = useCallback((id: string, idx: number) => {
+  if (hasAutoScrolled.current || id !== postIdToScroll) return;
+  if (virtuosoRef && virtuosoRef.current && setPostIdToScroll) {
+    virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
+    setPostIdToScroll(null);
+    hasAutoScrolled.current = true;
+  }
+}, [postIdToScroll]);
+
 
   // Small startup animation
   useEffect(() => {
@@ -84,13 +100,40 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
     return <NoResults />;
   }
 
-  const scrollToTop = () => {
-    virtuosoRef?.current?.scrollToIndex({
-      index: 0,
-      align: "start",
-      behavior: "smooth",
+  useEffect(() => {
+    if (!sharedPosts) return;
+
+    const sample = sharedPosts.slice(0, 5);
+
+    sample.forEach((post) => {
+      const { small, medium } = resolvePostImage(post);
+      const url = small[0] || medium[0];
+      if (!url) return;
+
+      const img = new Image();
+      img.src = url; // Type 'string[]' is not assignable to type 'string'.
     });
-  };
+  }, [sharedPosts]);
+
+  const scrollerRefCallback = useCallback(
+    (ref: HTMLElement | Window | null) => {
+      if (!ref || !(ref instanceof HTMLElement)) return;
+      const handler = (e: Event) => {
+        const scrollTop = (e.target as HTMLElement).scrollTop;
+        setShowScrollTop(scrollTop > 4000);
+      };
+      ref.addEventListener("scroll", handler);
+    },
+    []
+  );
+
+  const computedImages = useMemo(() => {
+  return sharedPosts.map(post => ({
+    id: post.id,
+    images: resolvePostImage(post)
+  }));
+}, [sharedPosts]);
+
 
   return (
     <div className="activity-feed-box">
@@ -113,23 +156,22 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
       ) : (
         <Virtuoso
           ref={virtuosoRef}
-          increaseViewportBy={{ top: 600, bottom: 800 }}
-
-          style={{
-            height: "100dvh",
-            width: "100%",
-          }}
+          overscan={300}
+          increaseViewportBy={{ top: 900, bottom: 1200 }}
+          style={{ height: "100dvh" }}
           data={sharedPosts}
+          defaultItemHeight={450}
           itemContent={(index, post) => {
             if (!post?.id) return null;
-
+            const itemImages = computedImages[index].images;
             return (
               <div
                 key={post.id}
                 className="post-card-renderer-container"
-                style={{ minHeight: 300 }}
+                // style={{ minHeight: 300 }}
               >
                 <PostCardRenderer
+                 imageSet={itemImages}
                   currentUserUid={currentUser?.uid}
                   index={index}
                   style={{ height: "100%" }}
@@ -218,14 +260,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
               return null;
             },
           }}
-          scrollerRef={(ref) => {
-            if (ref) {
-              ref.addEventListener("scroll", (e) => {
-                const scrollTop = (e.target as HTMLElement).scrollTop;
-                setShowScrollTop(scrollTop > 4000);
-              });
-            }
-          }}
+          scrollerRef={scrollerRefCallback}
         />
       )}
       {showScrollTop && !showLoader && (

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./fadeImage.css";
 
 interface FadeImageProps {
-  srcList: string[];        // fallback chain of URLs
+  srcList: string[];
   alt?: string;
   onClick?: () => void;
   className?: string;
@@ -17,22 +17,43 @@ const FadeImage: React.FC<FadeImageProps> = ({
   const [srcIndex, setSrcIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
-  const currentSrc = srcList[srcIndex];
+  const url = srcList[srcIndex];
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = url;
+
+    // 🚀 Instant-load check (best possible)
+    if (img.complete) {
+      setLoaded(true);
+      return;
+    }
+
+    // 🎨 Smooth decode attempt (no jank)
+    if ("decode" in img && img.onload) {
+      img.decode()
+        .then(() => setLoaded(true))
+        .catch(() => setLoaded(true));
+    } else {
+      img.onload = () => setLoaded(true);
+    }
+
+    img.onerror = () => {
+      // Switch to next fallback if present
+      if (srcIndex < srcList.length - 1) {
+        setLoaded(false);
+        setSrcIndex((old) => old + 1);
+      }
+    };
+  }, [url]);
 
   return (
     <img
-      src={currentSrc}
+      src={url}
       alt={alt}
       onClick={onClick}
       className={`fade-image ${loaded ? "fade-image-loaded" : ""} ${className}`}
-      onLoad={() => setLoaded(true)}
-      onError={() => {
-        // Move to next fallback image if available
-        if (srcIndex < srcList.length - 1) {
-          setLoaded(false); // reset for next attempt
-          setSrcIndex(srcIndex + 1);
-        }
-      }}
+      draggable="false"
     />
   );
 };

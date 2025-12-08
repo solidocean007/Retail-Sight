@@ -1,5 +1,11 @@
 // ActivityFeed.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Virtuoso } from "react-virtuoso";
 import { VirtuosoHandle } from "react-virtuoso";
 import { useSelector } from "react-redux";
@@ -29,8 +35,15 @@ import { PostQueryFilters } from "../utils/types";
 import { normalizePost } from "../utils/normalize";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
 
 const POSTS_BATCH_SIZE = 5;
+
+export type ImageSetType = {
+  small: string[];
+  medium: string[];
+  original: string[];
+};
 
 interface ActivityFeedProps {
   virtuosoRef: React.RefObject<VirtuosoHandle>;
@@ -78,10 +91,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   );
   const displayPosts = useMemo(() => {
     return activeCompanyPostSet === "filteredPosts" ? filteredPosts : rawPosts;
-  }, [
-    activeCompanyPostSet,
-    activeCompanyPostSet === "filteredPosts" ? filteredPosts : rawPosts,
-  ]);
+  }, [activeCompanyPostSet, filteredPosts, rawPosts]);
+
   // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
@@ -124,14 +135,17 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const hasAutoScrolled = useRef(false);
 
-  const handlePostVisible = (id: string, idx: number) => {
-    if (hasAutoScrolled.current || id !== postIdToScroll) return;
-    if (virtuosoRef.current) {
-      virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
-      setPostIdToScroll(null);
-      hasAutoScrolled.current = true;
-    }
-  };
+  const handlePostVisible = useCallback(
+    (id: string, idx: number) => {
+      if (hasAutoScrolled.current || id !== postIdToScroll) return;
+      if (virtuosoRef.current) {
+        virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
+        setPostIdToScroll(null);
+        hasAutoScrolled.current = true;
+      }
+    },
+    [postIdToScroll]
+  );
 
   useEffect(() => {
     if (!postIdToScroll || !virtuosoRef.current) return;
@@ -164,6 +178,40 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
 
+  const computedImages = useMemo(() => {
+    return displayPosts.map((post) => ({
+      id: post.id,
+      images: resolvePostImage(post),
+    }));
+  }, [displayPosts]);
+
+  useEffect(() => {
+    if (!computedImages.length) return;
+
+    const sample = computedImages.slice(0, 5); // preload first 5 posts
+
+    sample.forEach(({ images }) => {
+      const url = images.small[0] || images.medium[0];
+      if (!url) return;
+
+      const img = new Image();
+      img.src = url;
+    });
+  }, [computedImages]);
+
+  const scrollerRefCallback = useCallback(
+    (ref: HTMLElement | Window | null) => {
+      if (!ref || !(ref instanceof HTMLElement)) return;
+
+      const handler = (e: Event) => {
+        const scrollTop = (e.target as HTMLElement).scrollTop;
+        setShowScrollTop(scrollTop > 4000);
+      };
+      ref.addEventListener("scroll", handler);
+    },
+    []
+  );
+
   return (
     <div className="activity-feed-box">
       {showLoader ? (
@@ -186,24 +234,23 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         <Virtuoso
           ref={virtuosoRef}
           increaseViewportBy={{ top: 600, bottom: 800 }}
-
           style={{
-            // height: 1000,
-            height: "calc(100vh - 180px)", // ✅ dynamic, responsive
-            width: "100%",
-          }} // is this necessary?
+            height: "100dvh",
+            width: "100%", // ← REQUIRED for proper measurement
+          }}
           data={displayPosts}
           // defaultItemHeight={itemHeight}
           itemContent={(index, post) => {
             if (!post?.id) return null;
-
+            const itemImages = computedImages[index].images;
             return (
               <div
-                key={post.id}
+                // key={post.id}
                 className="post-card-renderer-container"
-                style={{ minHeight: 300 }}
+                // style={{ minHeight: 300 }}
               >
                 <PostCardRenderer
+                  imageSet={itemImages} // Property 'itemImages' is missing in type '{ small: string[]; medium: string[]; original: string[]; }' but required in type 'ImageSetType'
                   currentUserUid={currentUser?.uid}
                   index={index}
                   style={{ height: "100%" }}
@@ -294,14 +341,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
               return null;
             },
           }}
-          scrollerRef={(ref) => {
-            if (ref) {
-              ref.addEventListener("scroll", (e) => {
-                const scrollTop = (e.target as HTMLElement).scrollTop;
-                setShowScrollTop(scrollTop > 4000);
-              });
-            }
-          }}
+          scrollerRef={scrollerRefCallback}
         />
       )}
       {showScrollTop && !showLoader && (
