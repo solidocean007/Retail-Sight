@@ -1,4 +1,19 @@
 /* App.css — Global Layout & Button Styling */
+/* App-wide layout frame */
+.app-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+}
+
+/* Routes + Footer wrapper */
+.page-layout-frame {
+  display: flex;
+  flex-direction: column;
+  flex: 1;        /* fills space between header & footer */
+  min-height: 0;
+}
 
 .MuiInputBase-root {
   margin: 4px;

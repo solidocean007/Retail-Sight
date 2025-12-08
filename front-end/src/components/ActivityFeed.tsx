@@ -217,7 +217,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       {showLoader ? (
         <div
           style={{
-            height: "100vh",
+            height: "100%",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -233,13 +233,14 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       ) : (
         <Virtuoso
           ref={virtuosoRef}
-          increaseViewportBy={{ top: 600, bottom: 800 }}
+          increaseViewportBy={{ top: 1200, bottom: 1600 }}
           style={{
-            height: "100dvh",
+            height: "100%",
             width: "100%", // ← REQUIRED for proper measurement
           }}
           data={displayPosts}
           // defaultItemHeight={itemHeight}
+          defaultItemHeight={420}
           itemContent={(index, post) => {
             if (!post?.id) return null;
             const itemImages = computedImages[index].images;

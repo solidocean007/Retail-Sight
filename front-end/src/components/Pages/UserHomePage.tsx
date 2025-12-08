@@ -67,6 +67,14 @@ export const UserHomePage = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
+  const [pageReady, setPageReady] = useState(false);
+
+  useEffect(() => {
+    // When posts and user are loaded, show the page
+    if (hasLoadedOnce || rawPosts.length > 0) {
+      setPageReady(true);
+    }
+  }, [hasLoadedOnce, rawPosts.length]);
 
   useEffect(() => {
     const flag = localStorage.getItem("showOnboardingModal");
@@ -76,7 +84,6 @@ export const UserHomePage = () => {
       localStorage.removeItem("showOnboardingModal");
     }
   }, []);
-
 
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
@@ -205,7 +212,7 @@ export const UserHomePage = () => {
                 onClick={toggleFilterMenu}
                 className="icon-button"
                 title="Filters"
-                style={{ position: "fixed", top: "3.5rem", left: "2.5rem" }}
+                // style={{ position: "fixed", top: "3.5rem", left: "2.5rem" }}
               >
                 <TuneIcon />
               </Fab>
@@ -213,7 +220,7 @@ export const UserHomePage = () => {
                 color="primary"
                 aria-label="create"
                 onClick={() => navigate("/create-post")}
-                style={{ position: "fixed", top: "3.5rem", right: "2.5rem" }}
+                // style={{ position: "fixed", top: "3.5rem", right: "2.5rem" }}
               >
                 <AddAPhotoIcon />
               </Fab>

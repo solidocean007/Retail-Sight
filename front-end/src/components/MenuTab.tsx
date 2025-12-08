@@ -25,7 +25,7 @@ const MenuTab = ({
       </div>
       <div className="menu-option" onClick={() => onOptionSelect("dashboard")}>
         {/* <span>Dashboard</span> */}
-        Dashboard
+        Dashboardd
       </div>
     </div>
   );

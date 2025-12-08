@@ -10,8 +10,7 @@
   margin-top: 0;
   position: relative;
   flex: 1 1 auto;
-  min-height: 0; /* Allows Virtuoso to take over scroll */
-
+  min-height: 0;
   /* Ensures iOS Safari scrolls correctly */
   touch-action: pan-y;
 }
@@ -90,7 +89,7 @@
 
 /* Let Virtuoso manage item positioning */
 .post-card-renderer-container {
-  min-height: 250px; /* safe baseline without killing virtualization */
+  min-height: 320px;
 }
 
 /* Prevent nested container overflow issues */

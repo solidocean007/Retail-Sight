@@ -1,80 +1,155 @@
-.about-container {
-  font-family: var(--font-family);
-  line-height: var(--line-height);
+/* Full-page wrapper that scrolls independently of app layout */
+.about-page {
+  width: 100%;
+  min-height: 100%;
+  padding: 4rem 1rem 6rem;
+  background: var(--about-page-background);
+  display: flex;
+  justify-content: center;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Soft glow behind card – theme aware, no hard edges */
+.about-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1300px;
+  height: 1300px;
+  background: radial-gradient(
+    circle,
+    var(--about-page-glow) 0%,
+    transparent 70%
+  );
+  transform: translateX(-50%);
+  filter: blur(60px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Main content card */
+.about-panel {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 900px;
+  padding: 2.5rem;
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.85);
+  color: #111;
+  backdrop-filter: blur(10px);
+
+  /* subtle inner + outer glow */
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.12),
+    inset 0 0 40px rgba(255, 255, 255, 0.25);
+
+  transition: background 0.3s ease;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .about-panel {
+  background: rgba(15, 25, 40, 0.85);
   color: var(--text-color);
-  max-width: 800px;
-  margin: 1rem auto;
-  padding: 1rem;
-  background: var(--background);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 10px 60px rgba(0, 0, 0, 0.45),
+    inset 0 0 40px rgba(255, 255, 255, 0.05);
 }
 
-.about-navigation {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding-bottom: 1rem;
-}
-
-.nav-button,
-.cta-button {
-  padding: 10px 20px;
-  border: 1px solid var(--border-color);
-  background-color: var(--button-background);
-  /* color: var(--button-text-color); */
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
-  box-shadow: var(--button-shadow);
-}
-
-.nav-button:hover,
-.cta-button:hover {
-  background-color: var(--btn-primary-hover);
-}
-
-.about-content {
-  margin-bottom: 40px;
-}
-
-.about-cta {
-  margin-top: 20px;
-}
-
-.about-content h2 {
-  margin-top: 2rem;
-}
-.about-content ul {
-  margin-bottom: 2rem;
-}
-
-.about-content li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.25rem 0;
-}
-.about-content p:first-of-type {
+/* Titles & text spacing */
+.about-title {
+  font-size: 2.1rem;
+  text-align: center;
   margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.about-subtitle {
+  max-width: 650px;
+  margin: 0 auto 2rem auto;
+  text-align: center;
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.about-section {
+  margin-bottom: 2.5rem;
+}
+
+.about-section h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.about-section p {
+  line-height: 1.7;
+  margin-bottom: 0.8rem;
+}
+
+/* Values list */
+.about-values {
+  margin-left: 1rem;
+}
+
+.about-values li {
+  margin: 0.5rem 0;
+  padding-left: 0.75rem;
+  position: relative;
+}
+
+.about-values li::before {
+  content: "•";
+  position: absolute;
+  left: -0.75rem;
+  color: var(--primary-blue);
+  font-size: 1.2rem;
+}
+
+/* Call to action */
+.about-footer-cta {
+  text-align: center;
+  margin-top: 2.5rem;
+}
+
+.cta-button {
+  background: var(--primary-blue);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  transition: 0.2s ease;
+}
+
+.cta-button:hover {
+  background: var(--primary-blue-dark);
 }
 
 
-
-@media (max-width: 768px) {
-  .about-container {
-    width: auto;
-    padding: 1rem;
+/* Responsive */
+@media (max-width: 700px) {
+  .about-panel {
+    padding: 1.8rem;
   }
-
-  .about-navigation {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .nav-button,
-  .cta-button {
-    margin-bottom: 10px;
+  .about-title {
+    font-size: 1.7rem;
   }
 }
+
+/* Allow full document scrolling for this route */
+.free-scroll-page {
+  height: auto !important;
+  min-height: auto !important;
+  flex: none !important;
+}
+
+body[data-page="about"] {
+  overflow-y: auto;
+}
+
+

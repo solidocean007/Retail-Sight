@@ -5,15 +5,16 @@
 .user-home-page-container {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   width: 100%;
   max-width: 1900px;
   background-color: var(--background-body);
   position: relative;
 
-  /* Full viewport height */
-  min-height: 100vh;
+  /* 🔥 Make this container fill the viewport */
+  height: 100dvh; 
+  min-height: 0;
 }
+
 
 .header-bar-container {
   display: flex;
@@ -23,6 +24,7 @@
 
 .mobile-home-page-actions {
   width: 100%;
+  height: auto;
 }
 
 .icon-bar {
@@ -63,25 +65,35 @@
   flex-direction: row;
   justify-content: space-around;
   background-color: var(--background-body);
-  margin-top: 2rem;
+  margin-top: .5rem;
   width: 100%;
+  /* 🔥 LET THIS BE THE FLEXIBLE REGION */
+  flex: 1;
+  min-height: 0;  /* CRITICAL for scroll containers */
+}
 
-  flex: 1 0 auto;
-  min-height: 0;   /* allows children like Virtuoso to shrink */
+.activity-feed-header-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2rem;
+  margin-top: .5rem;
 }
 
 /* Activity Feed container (holds Virtuoso) */
 .activity-feed-container {
-  background-color: var(--post-card-background);
-  color: var(--text-color);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
+  flex: 1;
+  min-height: 0;            /* Let it shrink inside flex layout */
+  display: flex;
+  flex-direction: column;
+
   width: 100%;
   padding: 0 10px;
 
-  flex: 1 1 auto;  /* 🔥 replaces height:100% */
-  min-height: 0;   /* 🔥 required for proper scrolling */
+  background-color: var(--post-card-background);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
 }
+
 
 .onboarding-tutorial-intro-box {
   display: flex;

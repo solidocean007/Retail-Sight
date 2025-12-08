@@ -2,6 +2,32 @@
    🎨 Core Theme Variables
    ============================ */
 :root {
+  --about-bg-light: linear-gradient(
+    180deg,
+    #e9f0f8 0%,
+    #d6e1f0 40%,
+    #c2cfe2 100%
+  );
+  --about-glow-light: rgba(120, 160, 255, 0.2);
+
+  --about-bg-dark: linear-gradient(
+    180deg,
+    #0a1628 0%,
+    #0d1e36 40%,
+    #102544 100%
+  );
+  --about-glow-dark: rgba(0, 110, 255, 0.25);
+
+  [data-theme="light"] {
+    --about-page-background: var(--about-bg-light);
+    --about-page-glow: var(--about-glow-light);
+  }
+
+  [data-theme="dark"] {
+    --about-page-background: var(--about-bg-dark);
+    --about-page-glow: var(--about-glow-dark);
+  }
+
   /* Base Grayscale */
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;

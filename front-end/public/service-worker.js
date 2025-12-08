@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const IMAGE_CACHE = "dg-image-cache-v1";
+const IMAGE_CACHE = "dg-image-cache-v2";
 const OFFLINE_CACHE_NAME = "dg-offline-v1";
 const OFFLINE_FALLBACK_PAGE = "/offline.html";
 
@@ -35,49 +35,70 @@ self.addEventListener("activate", (event) => {
 // -------------------------------------------------------
 // 3. FETCH — image caching only (network-first refresh)
 // -------------------------------------------------------
+// ----------------------------------------------------
+// IMAGE CACHE CONFIG
+// ----------------------------------------------------
+
+const IMAGE_PATTERNS = [
+  /_800x800\.(jpg|jpeg|png|webp)$/i,
+  /_600x600\.(jpg|jpeg|png|webp)$/i,
+  /_1200x1200\.(jpg|jpeg|png|webp)$/i,
+  /resized\.(jpg|jpeg|png|webp)$/i,
+  /\.appspot\.com\/v0\/b\/retail-sight\.appspot\.com\/o\//i, // general bucket rule
+];
+
+// Utility to test URL against allowed image patterns
+function isOptimizedImageRequest(url) {
+  return IMAGE_PATTERNS.some((p) => p.test(url));
+}
+
+// ----------------------------------------------------
+// FETCH EVENT — STALE-WHILE-REVALIDATE FOR IMAGES
+// ----------------------------------------------------
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-
-  // Only cache GET requests
-  if (req.method !== "GET") return;
-
   const url = req.url;
 
-  // Detect images (local or Firebase Storage)
-  const isImage =
-    url.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i) ||
-    url.includes("firebasestorage.googleapis.com");
+  if (req.method !== "GET") return;
 
-  if (!isImage) return;
+  // Only handle Firebase Storage images
+  if (!isOptimizedImageRequest(url)) return;
 
   event.respondWith(
     caches.open(IMAGE_CACHE).then(async (cache) => {
-      // Try cache first
       const cached = await cache.match(req);
-      if (cached) {
-        // Update cache in background
-        event.waitUntil(
-          fetch(req)
-            .then((res) => {
-              if (res.ok) cache.put(req, res.clone());
-            })
-            .catch(() => {})
-        );
-        return cached;
-      }
 
-      // No cache → go to network
-      try {
-        const fresh = await fetch(req);
-        if (fresh.ok) cache.put(req, fresh.clone());
-        return fresh;
-      } catch (err) {
-        // No offline image fallback — return empty 404
-        return new Response("", { status: 404 });
-      }
+      // Kick off background update immediately
+      const fetchPromise = fetch(req)
+        .then((resp) => {
+          if (resp.ok) {
+            cache.put(req, resp.clone());
+          }
+          return resp;
+        })
+        .catch(() => null);
+
+      // Return cache FIRST if available (fastest)
+      return cached || fetchPromise;
     })
   );
 });
+
+// ----------------------------------------------------
+// CLEANUP OLD IMAGE CACHES
+// ----------------------------------------------------
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((k) => k.startsWith("dg-image-cache") && k !== IMAGE_CACHE)
+          .map((k) => caches.delete(k))
+      )
+    )
+  );
+});
+
 
 // -------------------------------------------------------
 // 4. FIREBASE MESSAGING SETUP

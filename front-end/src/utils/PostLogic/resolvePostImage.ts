@@ -1,9 +1,8 @@
-// resolvePostImage.ts — Corrected Version (800 + 600 + legacy-safe)
-// Ensures mobile NEVER picks 200px first again.
+// resolvePostImage.ts — 200px REMOVED, blur-first ready
 
 const BUCKET = "retail-sight.appspot.com";
 
-function buildDownloadUrl(path: string): string {
+function build(path: string) {
   return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(
     path
   )}?alt=media`;
@@ -17,128 +16,84 @@ export function resolvePostImage(post: {
   if (!original) return { small: [], medium: [], original: [] };
 
   const url = new URL(original);
-  const encodedFullPath = url.pathname.split("/o/")[1];
-  const fullPath = decodeURIComponent(encodedFullPath);
+  const encoded = url.pathname.split("/o/")[1];
+  const full = decodeURIComponent(encoded);
 
-  const last = fullPath.lastIndexOf("/");
-  const folder = fullPath.substring(0, last + 1);
-  const filename = fullPath.substring(last + 1);
+  const last = full.lastIndexOf("/");
+  const folder = full.substring(0, last + 1);
+  const filename = full.substring(last + 1);
   const ext = filename.split(".").pop() || "jpg";
   const base = filename.replace(/\.\w+$/, "");
 
-  // ERA DETECTION
-  const isOriginal = base === "original";
-  const isResized = base === "resized";
+  const is800 = full.includes("_800x800");
+  const is600 = full.includes("_600x600");
+  const is1200 = full.includes("_1200x1200");
 
-  const era5 = fullPath.includes("_800x800") || fullPath.includes("_1200x1200");
-  const era4 = isOriginal && !isResized;
+  // Clean name base (era5)
+  const clean = base
+    .replace("_800x800", "")
+    .replace("_600x600", "")
+    .replace("_1200x1200", "");
 
-  const era3or2 =
-    filename === "resized.jpg" ||
-    filename === "resized.jpeg" ||
-    filename === "resized.png" ||
-    filename.startsWith("resized_");
-
-  const era1 =
-    !era5 &&
-    !era4 &&
-    !era3or2 &&
-    !isOriginal &&
-    !isResized &&
-    /\d{6,}/.test(base);
-
+  // Always return an array for small + medium
   const small: string[] = [];
   const medium: string[] = [];
-  const orig: string[] = [original];
+  const orig = [original];
 
   // -------------------------------------------------------
-  // ERA 5 — Modern (800/600/200/1200 exist)
+  // ERA 5 — modern naming (800 / 600 / 1200 exist)
   // -------------------------------------------------------
-  if (era5) {
-    const clean = base
-      .replace("_800x800", "")
-      .replace("_600x600", "")
-      .replace("_1200x1200", "");
-
-    // MOBILE: 800 → 600 → 200 → original
+  if (is800 || is600 || is1200) {
     small.push(
-      buildDownloadUrl(`${folder}${clean}_800x800.jpg`),
-      buildDownloadUrl(`${folder}${clean}_600x600.jpg`),
-      buildDownloadUrl(`${folder}${clean}_200x200.jpg`),
+      build(`${folder}${clean}_800x800.jpg`),
+      build(`${folder}${clean}_600x600.jpg`),
       original
     );
 
-    // DESKTOP: 1200 → 800 → 600 → original
     medium.push(
-      buildDownloadUrl(`${folder}${clean}_1200x1200.jpg`),
-      buildDownloadUrl(`${folder}${clean}_800x800.jpg`),
-      buildDownloadUrl(`${folder}${clean}_600x600.jpg`),
+      build(`${folder}${clean}_1200x1200.jpg`),
+      build(`${folder}${clean}_800x800.jpg`),
+      build(`${folder}${clean}_600x600.jpg`),
       original
     );
   }
 
   // -------------------------------------------------------
-  // ERA 4 — Only original + 200
+  // ERA 4 — only original + maybe 200 existed before
+  // NOW: treat as 800 missing → original first
   // -------------------------------------------------------
-  else if (era4) {
-    small.push(
-      // 200px last, original first is better for this era
-      original,
-      buildDownloadUrl(`${folder}original_200x200.${ext}`)
-    );
+  else if (base === "original") {
+    small.push(original);
     medium.push(original);
   }
 
   // -------------------------------------------------------
-  // ERA 3/2 — resized era (2024)
+  // ERA 3 / 2 — resized era (resized.jpg ~1000px)
   // -------------------------------------------------------
-  else if (era3or2 || isOriginal) {
-    // MOBILE: use resized (bigger), then original, then tiny 200s
+  else if (filename.startsWith("resized") || filename === "resized.jpg") {
     small.push(
-      buildDownloadUrl(`${folder}resized.${ext}`),          // ~1000px good
-      original,                                             // fallback
-      buildDownloadUrl(`${folder}resized_200x200.${ext}`),  // tiny
-      buildDownloadUrl(`${folder}original_200x200.${ext}`)  // tiny
+      build(`${folder}resized.${ext}`),
+      original
     );
 
-    // DESKTOP:
     medium.push(
-      buildDownloadUrl(`${folder}resized.${ext}`),
+      build(`${folder}resized.${ext}`),
       original
     );
   }
 
   // -------------------------------------------------------
-  // ERA 1 — timestamp era (only original + small variants)
-  // -------------------------------------------------------
-  else if (era1) {
-    small.push(
-      buildDownloadUrl(`${folder}${base}_resized.${ext}`),  // bigger
-      original,                                             // full
-      buildDownloadUrl(`${folder}${base}_200x200.${ext}`)   // tiny fallback
-    );
-
-    medium.push(
-      buildDownloadUrl(`${folder}${base}_resized.${ext}`),
-      original
-    );
-  }
-
-  // -------------------------------------------------------
-  // UNKNOWN catch-all
+  // ERA 1 — timestamp-only era
+  // Provide resized → original
   // -------------------------------------------------------
   else {
     small.push(
-      buildDownloadUrl(`${folder}${base}_800x800.${ext}`),
-      buildDownloadUrl(`${folder}${base}_600x600.${ext}`),
-      original,
-      buildDownloadUrl(`${folder}${base}_200x200.${ext}`)
+      build(`${folder}${base}_resized.${ext}`),
+      original
     );
 
     medium.push(
-      buildDownloadUrl(`${folder}${base}_1200x1200.${ext}`),
-      buildDownloadUrl(`${folder}${base}_800x800.${ext}`),
-      buildDownloadUrl(`${folder}${base}_600x600.${ext}`),
+      build(`${folder}${base}_resized.${ext}`),
       original
     );
   }

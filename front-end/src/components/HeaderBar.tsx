@@ -151,7 +151,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             <div className="header-buttons">
               <div className="menu-buttons">
                 <button
-                  className="btn-secondary"
+                  className="btn-primary"
                   onClick={handleDashboardClick}
                   // >{`${currentUser.role} Dashboard`}</button>
                 >{`Dashboard`}</button>

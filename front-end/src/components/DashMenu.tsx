@@ -27,7 +27,7 @@ import { Handshake, Inventory2, NotificationAdd } from "@mui/icons-material";
 import UpgradePromptBanner from "./UpgradePromptBanner";
 import { useSelector } from "react-redux";
 
-const drawerWidth = 240;
+const drawerWidth = 200;
 
 const DashMenu = ({
   open,

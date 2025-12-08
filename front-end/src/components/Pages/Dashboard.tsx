@@ -45,8 +45,8 @@ import NotificationSettingsPanel from "../Notifications/NotificationSettingsPane
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
-  const isIpadMini = useMediaQuery("(max-width: 768px)");
-  const drawerWidth = 240;
+  const isIpadMini = useMediaQuery("(max-width: 767px)");
+  const drawerWidth = 200;
   // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   // const dispatch = useAppDispatch();
   const user = useSelector(selectUser);

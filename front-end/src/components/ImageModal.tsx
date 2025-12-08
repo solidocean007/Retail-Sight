@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import "./ImageModal.css";
-import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
-import CloseIcon from "@mui/icons-material/Close";
 import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
 import FadeImage from "./FadeImage";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface ImageModalProps {
   isOpen: boolean;
@@ -14,16 +13,12 @@ interface ImageModalProps {
 
 const ImageModal: React.FC<ImageModalProps> = ({ isOpen, src, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [loaded, setLoaded] = useState(false);
-  const lowResUrl = getLowResUrl(src);
+
   const { medium, original } = resolvePostImage({ imageUrl: src });
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(event.target as Node)
-      ) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
@@ -38,8 +33,10 @@ const ImageModal: React.FC<ImageModalProps> = ({ isOpen, src, onClose }) => {
     <div className="image-modal-backdrop">
       <div className="image-modal-content" ref={modalRef}>
         <FadeImage
-          srcList={[...medium, ...original]} // medium first → fallback to original (tokened)
+          srcList={[...medium, ...original]}
+          className="image-modal-img"
         />
+
         <button className="close-modal" onClick={onClose}>
           <CloseIcon fontSize="small" />
         </button>

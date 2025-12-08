@@ -80,8 +80,11 @@ function AppContent() {
             {/* Hide ThemeToggle on splash page */}
             {!isSplashPage && <ThemeToggle />}
 
-            <AppRoutes />
-            {!isSplashPage && <Footer />}
+            <div className="page-layout-frame">
+              <AppRoutes /> {/* ← Routed content */}
+              {!isSplashPage && <Footer />}{" "}
+              {/* ← Footer inside same flex container */}
+            </div>
 
             {snackbar.current && (
               <Snackbar
@@ -122,7 +125,11 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <AppContent />
+
+      {/* 🔥 create a proper flex-column frame */}
+      <div className="app-frame">
+        <AppContent />
+      </div>
     </Router>
   );
 }
