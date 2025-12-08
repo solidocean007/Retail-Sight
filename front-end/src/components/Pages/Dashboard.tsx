@@ -29,7 +29,6 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import EmployeesViewer from "../EmployeesViewer.tsx";
 import UserProfileViewer from "../UserProfileViewer.tsx";
 import CollectionsViewer from "../CollectionsViewer.tsx";
 import TutorialViewer from "../TutorialViewer.tsx";
@@ -42,14 +41,11 @@ import AdminUsersConsole from "../AdminDashboard/AdminUsersConsole.tsx";
 import TeamsViewer from "../TeamsViewer.tsx";
 import MyAccounts from "../MyAccounts.tsx";
 import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.tsx";
-import BillingDashboard from "./Billing/BillingDashboard.tsx";
-import { useNavigate } from "react-router-dom";
-import useProtectedAction from "../../utils/useProtectedAction.ts";
 import NotificationSettingsPanel from "../Notifications/NotificationSettingsPanel.tsx";
 
 export const Dashboard = () => {
-  const navigate = useNavigate();
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
+  const isIpadMini = useMediaQuery("(max-width: 768px)");
   const drawerWidth = 240;
   // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
   // const dispatch = useAppDispatch();
@@ -119,6 +115,9 @@ export const Dashboard = () => {
     // if we flip into desktop view, open the drawer
     if (isLargeScreen) {
       setDrawerOpen(true);
+    }
+    if(isIpadMini) {
+      setDrawerOpen(false);
     }
     // but if we flip into mobile, leave whatever state we were in
   }, [isLargeScreen]);
