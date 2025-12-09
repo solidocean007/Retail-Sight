@@ -44,12 +44,8 @@ import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 // import "./viewSharedPost.css";
 import LinkShareModal from "./LinkShareModal";
-import BlurUpImage from "./BlurUpImage";
-import { getLowResUrl } from "../utils/helperFunctions/getLowResUrl";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
-import { Timestamp } from "firebase/firestore";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
-import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
 import FadeImage from "./FadeImage";
 import { ImageSetType } from "./ActivityFeed";
 
@@ -111,9 +107,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [_selectedCompanyAccount, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
   const [shouldHighlight, setShouldHighlight] = useState(false);
-
-  const isMobile = window.innerWidth <= 670;
-  const feedList = isMobile ? small : medium;
+  const feedList = [...small, ...medium];
 
   useEffect(() => {
     let startTimer: NodeJS.Timeout;
@@ -131,16 +125,6 @@ const PostCard: React.FC<PostCardProps> = ({
       clearTimeout(stopTimer);
     };
   }, [postIdToScroll, post.id]);
-
-  const handleImageClick = () => {
-    // Assuming post.imageUrl is available and contains the 'resized' keyword
-    if (post.imageUrl) {
-      const originalImageUrl = post.originalImageUrl || post.imageUrl;
-
-      setFullSizeImageUrl(originalImageUrl);
-      setIsImageModalOpen(true);
-    }
-  };
 
   // Use the postId to fetch the latest post data from the Redux store
   const updatedPost = useSelector((state: RootState) =>
@@ -242,10 +226,6 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const handleVertIconClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
   };
 
   const handleShare = async () => {
@@ -500,12 +480,6 @@ const PostCard: React.FC<PostCardProps> = ({
                   />
                 </div>
               )}
-              {/* <img
-              src={post.imageUrl}
-              alt="Post image"
-              className="post-image"
-              onClick={handleImageClick}
-            /> */}
             </div>
 
             {commentCount > 0 && (

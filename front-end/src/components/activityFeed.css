@@ -9,6 +9,7 @@
   align-items: center;
   margin-top: 0;
   position: relative;
+  height: 100%;
   flex: 1 1 auto;
   min-height: 0;
   /* Ensures iOS Safari scrolls correctly */
@@ -95,13 +96,6 @@
 /* Prevent nested container overflow issues */
 .post-card-container {
   overflow: hidden;
-}
-
-/* Do NOT block Virtuoso from managing overflow */
-.home-page-content,
-.virtuoso-grid,
-.virtuoso-item-list {
-  overflow: visible !important;
 }
 
 /* Allow fade images to display immediately */

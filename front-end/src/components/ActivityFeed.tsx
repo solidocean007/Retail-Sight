@@ -39,7 +39,6 @@ import { PostQueryFilters } from "../utils/types";
 import { normalizePost } from "../utils/normalize";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
 import FeedSkeleton from "./FeedSkeleton";
 import { setFeedReady } from "../Slices/appSlice";
 import { getMemoizedImageSet } from "../utils/PostLogic/getMemoizedImageSet";
@@ -87,10 +86,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const loading = useSelector(selectPostsLoading);
 
   const [showLoader, setShowLoader] = useState(false);
-
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  let scrollTimeout = useRef<any>(null);
+
   const filteredCount = useSelector(
     (s: RootState) => s.posts.filteredPostCount
   );
@@ -209,11 +208,19 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     (ref: HTMLElement | Window | null) => {
       if (!ref || !(ref instanceof HTMLElement)) return;
 
-      const handler = (e: Event) => {
-        const scrollTop = (e.target as HTMLElement).scrollTop;
-        setShowScrollTop(scrollTop > 4000);
+      const onScroll = (e: Event) => {
+        const el = e.target as HTMLElement;
+
+        // show scroll-to-top button
+        setShowScrollTop(el.scrollTop > 4000);
+
+        // mark scrolling
+        setIsScrolling(true);
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => setIsScrolling(false), 120);
       };
-      ref.addEventListener("scroll", handler);
+
+      ref.addEventListener("scroll", onScroll);
     },
     []
   );
@@ -224,7 +231,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   }, [initialLoaded, displayPosts.length, dispatch]);
 
-  if (!initialLoaded) {
+  if (!initialLoaded && displayPosts.length === 0) {
     return <FeedSkeleton count={6} />;
   }
 
@@ -253,7 +260,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       ) : (
         <Virtuoso
           ref={virtuosoRef}
-          increaseViewportBy={{ top: 1200, bottom: 1600 }}
+          increaseViewportBy={{ top: 1600, bottom: 2600 }}
           style={{
             height: "100%",
             width: "100%", // ← REQUIRED for proper measurement
@@ -271,6 +278,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 // style={{ minHeight: 300 }}
               >
                 <PostCardRenderer
+                  isScrolling={isScrolling}
                   imageSet={itemImages} // Property 'itemImages' is missing in type '{ small: string[]; medium: string[]; original: string[]; }' but required in type 'ImageSetType'
                   currentUserUid={currentUser?.uid}
                   index={index}

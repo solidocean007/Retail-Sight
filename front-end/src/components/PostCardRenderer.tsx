@@ -5,6 +5,7 @@ import { PostWithID } from "../utils/types";
 import { ImageSetType } from "./ActivityFeed";
 
 interface PostCardRendererProps {
+  isScrolling: boolean;
   imageSet: ImageSetType;
   currentUserUid?: string;
   index: number;
@@ -18,7 +19,9 @@ interface PostCardRendererProps {
     getPostsByStarTag: (starTag: string) => Promise<PostWithID[]>;
   };
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
-  setActivePostSet?: React.Dispatch<React.SetStateAction<"posts" | "filteredPosts">>;
+  setActivePostSet?: React.Dispatch<
+    React.SetStateAction<"posts" | "filteredPosts">
+  >;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   postIdToScroll?: string | null;
   onPostVisible?: (postId: string, index: number) => void;
@@ -68,7 +71,6 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
       if (cardRef.current) observer.unobserve(cardRef.current);
     };
   }, [postIdToScroll, post.id, index, onPostVisible]);
-
 
   return (
     <div className="memoized-post-card" ref={cardRef}>

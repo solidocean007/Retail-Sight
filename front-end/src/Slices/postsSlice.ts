@@ -329,7 +329,8 @@ export const selectPostsLoading = (state: RootState) => state.posts.loading;
 
 // True once initial load completes, regardless of post count
 export const selectPostsInitialLoaded = (state: RootState) =>
-  !state.posts.loading && state.posts.error === null;
+  state.posts.status === "succeeded";
+
 
 // Only show filtered loader when first loading a filtered list
 export const selectFilteredPostsLoading = (state: RootState) =>

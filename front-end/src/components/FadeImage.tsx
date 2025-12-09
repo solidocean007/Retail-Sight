@@ -1,88 +1,86 @@
-// FadeImage.tsx — optimized blur-first, no 200px, Virtuoso-safe
 import React, { useState, useEffect, useRef } from "react";
 import "./fadeImage.css";
 
 interface FadeImageProps {
-  srcList: string[]; // e.g. [800, 600, original]
+  srcList: string[];       // ordered: [200, 800, 1200, original]
   alt?: string;
-  className?: string;
   onClick?: () => void;
+  className?: string;
 }
 
 const FadeImage: React.FC<FadeImageProps> = ({
   srcList,
   alt = "",
-  className = "",
   onClick,
+  className = "",
 }) => {
-  // First source to try
-  const [srcIndex, setSrcIndex] = useState(0);
-
-  // Loaded = sharp; not loaded = blurred
+  const [currentSrc, setCurrentSrc] = useState(srcList[0]);
   const [loaded, setLoaded] = useState(false);
 
-  // Track last srcList identity to avoid stale state in Virtuoso recycling
-  const listRef = useRef<string[] | null>(null);
+  // Ensures Virtuoso row reuse doesn't cause re-fades
+  const lastListRef = useRef<string[]>([]);
 
-  // -------------------------------------------------------
-  // When a new post arrives (srcList changes), RESET everything
-  // Virtuoso reuses rows → this is critical
-  // -------------------------------------------------------
+  // Reset only when the post's srcList truly changes
   useEffect(() => {
-    if (listRef.current !== srcList) {
-      listRef.current = srcList;
-      setSrcIndex(0);
+    const same =
+      lastListRef.current.length === srcList.length &&
+      lastListRef.current.every((v, i) => v === srcList[i]);
+
+    if (!same) {
+      lastListRef.current = srcList;
+      setCurrentSrc(srcList[0]);
       setLoaded(false);
     }
   }, [srcList]);
 
-  const url = srcList[srcIndex];
-
-  // -------------------------------------------------------
-  // Loader for each URL
-  // -------------------------------------------------------
+  // Load the currentSrc + begin fallback chain
   useEffect(() => {
-    if (!url) return;
-
     let cancelled = false;
-    const img = new Image();
 
-    img.onload = () => {
-      if (!cancelled) {
-        setLoaded(true);
+    const load = (index: number) => {
+      if (index >= srcList.length) return;
+
+      const url = srcList[index];
+      const img = new Image();
+      img.src = url;
+
+      if (img.complete) {
+        if (!cancelled) {
+          setCurrentSrc(url);
+          setLoaded(true);
+        }
+        return;
       }
+
+      img.onload = () => {
+        if (!cancelled) {
+          setCurrentSrc(url);
+          setLoaded(true);
+          // Load next variant AFTER the sharp one is shown
+          if (index + 1 < srcList.length) load(index + 1);
+        }
+      };
+
+      img.onerror = () => {
+        if (!cancelled && index + 1 < srcList.length) {
+          load(index + 1);
+        }
+      };
     };
 
-    img.onerror = () => {
-      if (cancelled) return;
-
-      // Fallback to next candidate
-      if (srcIndex < srcList.length - 1) {
-        setLoaded(false);
-        setSrcIndex((i) => i + 1);
-      }
-    };
-
-    img.src = url;
-
-    // If already in memory/SW cache, trigger immediately
-    if (img.complete) {
-      img.onload?.(null as any);
-    }
+    load(0);
 
     return () => {
       cancelled = true;
     };
-  }, [url, srcIndex, srcList]);
-
-  if (!url) return null;
+  }, [srcList]);
 
   return (
     <img
-      src={url}
+      src={currentSrc}
       alt={alt}
-      className={`fade-image ${loaded ? "fade-image-loaded" : ""} ${className}`}
       onClick={onClick}
+      className={`fade-image ${loaded ? "fade-image-loaded" : ""} ${className}`}
       draggable="false"
     />
   );
