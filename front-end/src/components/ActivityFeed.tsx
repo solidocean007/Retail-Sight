@@ -42,6 +42,7 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
 import FeedSkeleton from "./FeedSkeleton";
 import { setFeedReady } from "../Slices/appSlice";
+import { getMemoizedImageSet } from "../utils/PostLogic/getMemoizedImageSet";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -186,7 +187,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const computedImages = useMemo(() => {
     return displayPosts.map((post) => ({
       id: post.id,
-      images: resolvePostImage(post),
+      images: getMemoizedImageSet(post),
     }));
   }, [displayPosts]);
 
@@ -258,7 +259,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             width: "100%", // ← REQUIRED for proper measurement
           }}
           data={displayPosts}
-          computeItemKey={(_, post) => post.id}   // 🔥 stable keys
+          computeItemKey={(_, post) => post.id} // 🔥 stable keys
           defaultItemHeight={420}
           itemContent={(index, post) => {
             if (!post?.id) return null;
