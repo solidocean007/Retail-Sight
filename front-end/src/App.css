@@ -7,11 +7,17 @@
   min-height: 0;
 }
 
+.app-shell-hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 /* Routes + Footer wrapper */
 .page-layout-frame {
   display: flex;
   flex-direction: column;
-  flex: 1;        /* fills space between header & footer */
+  flex: 1; /* fills space between header & footer */
   min-height: 0;
 }
 

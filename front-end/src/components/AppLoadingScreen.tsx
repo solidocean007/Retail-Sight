@@ -4,10 +4,13 @@ import "./appLoadingScreen.css";
 // import logo from "../assets/displaygram-logo.png"; // ⬅ Replace with your actual path after adding to project
 
 type Props = {
+  show: boolean;
   message?: string;
 };
 
-export default function AppLoadingScreen({ message = "Loading…" }: Props) {
+export default function AppLoadingScreen({ show, message = "Loading…" }: Props) {
+  if (!show) return null;
+
   return (
     <div className="app-loading-container fade-in">
       <div className="app-loading-card">

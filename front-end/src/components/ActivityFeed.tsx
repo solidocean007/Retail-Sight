@@ -23,7 +23,11 @@ import {
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
 import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
-import { mergeAndSetPosts } from "../Slices/postsSlice";
+import {
+  mergeAndSetPosts,
+  selectPostsInitialLoaded,
+  selectPostsLoading,
+} from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import NoResults from "./NoResults";
 // import FilterSummaryBanner from "./FilterSummaryBanner";
@@ -36,6 +40,8 @@ import { normalizePost } from "../utils/normalize";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
+import FeedSkeleton from "./FeedSkeleton";
+import { setFeedReady } from "../Slices/appSlice";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -76,6 +82,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   appliedFilters,
 }) => {
   const dispatch = useAppDispatch();
+  const initialLoaded = useSelector(selectPostsInitialLoaded);
+  const loading = useSelector(selectPostsLoading);
+
   const [showLoader, setShowLoader] = useState(false);
 
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -128,10 +137,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     return () => clearTimeout(timeout);
   }, []);
-
-  if (hasLoadedOnce && displayPosts.length === 0) {
-    return <NoResults />;
-  }
 
   const hasAutoScrolled = useRef(false);
 
@@ -212,6 +217,20 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     []
   );
 
+  useEffect(() => {
+    if (initialLoaded && displayPosts.length === 0) {
+      dispatch(setFeedReady(true));
+    }
+  }, [initialLoaded, displayPosts.length, dispatch]);
+
+  if (!initialLoaded) {
+    return <FeedSkeleton count={6} />;
+  }
+
+  if (initialLoaded && displayPosts.length === 0) {
+    return <NoResults />;
+  }
+
   return (
     <div className="activity-feed-box">
       {showLoader ? (
@@ -239,14 +258,14 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             width: "100%", // ← REQUIRED for proper measurement
           }}
           data={displayPosts}
-          // defaultItemHeight={itemHeight}
+          computeItemKey={(_, post) => post.id}   // 🔥 stable keys
           defaultItemHeight={420}
           itemContent={(index, post) => {
             if (!post?.id) return null;
             const itemImages = computedImages[index].images;
             return (
               <div
-                // key={post.id}
+                key={post.id}
                 className="post-card-renderer-container"
                 // style={{ minHeight: 300 }}
               >

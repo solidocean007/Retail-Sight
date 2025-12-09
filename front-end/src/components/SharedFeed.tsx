@@ -14,11 +14,7 @@ import NoResults from "./NoResults";
 import "./activityFeed.css";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import {
-  getPostsByTag,
-  getPostsByStarTag,
-} from "../utils/PostLogic/getPostsByTag";
-import "./activityFeed.css";
+import { getPostsByTag, getPostsByStarTag } from "../utils/PostLogic/getPostsByTag";
 import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
 import { addSharedPosts, setHasMore } from "../Slices/sharedPostsSlice";
 import { addSharedPostsToIndexedDB } from "../utils/database/sharedPostsStoreUtils";
@@ -46,94 +42,79 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   setCurrentHashtag,
 }) => {
   const dispatch = useAppDispatch();
+
   const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [showLoader, setShowLoader] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
   const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
-  console.log("sharedPosts: ", sharedPosts);
   const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
   const loading = useSelector((s: RootState) => s.sharedPosts.loading);
 
   const scrollToTop = () => {
-    if(!virtuosoRef) return;
-    virtuosoRef.current?.scrollToIndex({
+    virtuosoRef?.current?.scrollToIndex({
       index: 0,
       align: "start",
       behavior: "smooth",
     });
   };
-  // Auto-scroll handling
-  const hasAutoScrolled = useRef(false);
-  const handlePostVisible = useCallback((id: string, idx: number) => {
-  if (hasAutoScrolled.current || id !== postIdToScroll) return;
-  if (virtuosoRef && virtuosoRef.current && setPostIdToScroll) {
-    virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
-    setPostIdToScroll(null);
-    hasAutoScrolled.current = true;
-  }
-}, [postIdToScroll]);
 
-
-  // Small startup animation
+  // Start-up animation
   useEffect(() => {
     setShowLoader(true);
-    const timeout = setTimeout(() => setShowLoader(false), 1000);
-    return () => clearTimeout(timeout);
+    const t = setTimeout(() => setShowLoader(false), 1000);
+    return () => clearTimeout(t);
   }, []);
 
-  // Scroll to post if deep-linked
+  // Preload first 5 images
   useEffect(() => {
-    if (!postIdToScroll || !virtuosoRef?.current) return;
-    const idx = sharedPosts.findIndex((p) => p.id === postIdToScroll);
-    if (idx !== -1) {
-      const timeout = setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({ index: idx, align: "start" });
-      }, 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [postIdToScroll, sharedPosts]);
-
-  // Fallback
-  if (!loading && sharedPosts.length === 0) {
-    return <NoResults />;
-  }
-
-  useEffect(() => {
-    if (!sharedPosts) return;
-
     const sample = sharedPosts.slice(0, 5);
-
     sample.forEach((post) => {
       const { small, medium } = resolvePostImage(post);
       const url = small[0] || medium[0];
       if (!url) return;
-
       const img = new Image();
-      img.src = url; // Type 'string[]' is not assignable to type 'string'.
+      img.src = url;
     });
   }, [sharedPosts]);
 
-  const scrollerRefCallback = useCallback(
-    (ref: HTMLElement | Window | null) => {
-      if (!ref || !(ref instanceof HTMLElement)) return;
-      const handler = (e: Event) => {
-        const scrollTop = (e.target as HTMLElement).scrollTop;
-        setShowScrollTop(scrollTop > 4000);
-      };
-      ref.addEventListener("scroll", handler);
-    },
-    []
+  // Scroll to deep-linked post
+  useEffect(() => {
+    if (!postIdToScroll || !virtuosoRef?.current) return;
+
+    const idx = sharedPosts.findIndex((p) => p.id === postIdToScroll);
+    if (idx === -1) return;
+
+    const t = setTimeout(() => {
+      virtuosoRef.current?.scrollToIndex({ index: idx, align: "start" });
+    }, 700);
+
+    return () => clearTimeout(t);
+  }, [postIdToScroll, sharedPosts, virtuosoRef]);
+
+  // Safe no-results handling
+  const noResults = !loading && sharedPosts.length === 0;
+
+  const computedImages = useMemo(
+    () =>
+      sharedPosts.map((post) => ({
+        id: post.id,
+        images: resolvePostImage(post),
+      })),
+    [sharedPosts]
   );
 
-  const computedImages = useMemo(() => {
-  return sharedPosts.map(post => ({
-    id: post.id,
-    images: resolvePostImage(post)
-  }));
-}, [sharedPosts]);
+  const scrollerRefCallback = useCallback((ref: any) => {
+    if (!ref || !(ref instanceof HTMLElement)) return;
+    ref.addEventListener("scroll", (e: any) => {
+      const y = e.target.scrollTop;
+      setShowScrollTop(y > 4000);
+    });
+  }, []);
 
+  if (noResults) return <NoResults />;
 
   return (
     <div className="activity-feed-box">
@@ -146,129 +127,93 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
             alignItems: "center",
           }}
         >
-          <BeerCaseStackAnimation
-            minDuration={4000}
-            maxStagger={2200}
-            dropMs={900}
-            loop
-          />
+          <BeerCaseStackAnimation minDuration={4000} maxStagger={2200} dropMs={900} loop />
         </div>
       ) : (
         <Virtuoso
           ref={virtuosoRef}
-          overscan={300}
-          increaseViewportBy={{ top: 900, bottom: 1200 }}
           style={{ height: "100dvh" }}
           data={sharedPosts}
           defaultItemHeight={450}
           itemContent={(index, post) => {
             if (!post?.id) return null;
-            const itemImages = computedImages[index].images;
+            const images = computedImages[index].images;
+
             return (
-              <div
-                key={post.id}
-                className="post-card-renderer-container"
-                // style={{ minHeight: 300 }}
-              >
+              <div key={post.id} className="post-card-renderer-container">
                 <PostCardRenderer
-                 imageSet={itemImages}
+                  imageSet={images}
                   currentUserUid={currentUser?.uid}
                   index={index}
                   style={{ height: "100%" }}
                   data={{ post, getPostsByTag, getPostsByStarTag }}
                   setCurrentHashtag={setCurrentHashtag}
-                  setActivePostSet={setSharedFeedPostSet} //  Type 'string' is not assignable to type '"posts" | "filteredPosts"'.
+                  setActivePostSet={setSharedFeedPostSet}
                   setIsSearchActive={setIsSearchActive}
                   postIdToScroll={postIdToScroll}
-                  onPostVisible={handlePostVisible}
                 />
               </div>
             );
           }}
           endReached={() => {
-            if (!loadingMore && hasMore) {
-              setLoadingMore(true);
+            if (loadingMore || !hasMore) return;
 
-              dispatch(
-                fetchMoreSharedPostsBatch({
-                  currentUser,
-                  lastVisible,
-                  limit: POSTS_BATCH_SIZE,
-                })
-              )
-                .then((action) => {
-                  if (fetchMoreSharedPostsBatch.fulfilled.match(action)) {
-                    const {
-                      postsWithIds,
-                      lastVisible: newCursor,
-                      hasMore: moreAvailable,
-                    } = action.payload;
-                    setLastVisible(newCursor);
+            setLoadingMore(true);
+            dispatch(
+              fetchMoreSharedPostsBatch({
+                currentUser,
+                lastVisible,
+                limit: POSTS_BATCH_SIZE,
+              })
+            )
+              .then((action) => {
+                if (fetchMoreSharedPostsBatch.fulfilled.match(action)) {
+                  const { postsWithIds, lastVisible: newCursor, hasMore: more } =
+                    action.payload;
 
-                    if (postsWithIds.length > 0) {
-                      addSharedPostsToIndexedDB(postsWithIds);
-                      dispatch(addSharedPosts(postsWithIds));
-                      dispatch(setHasMore(moreAvailable));
-                    } else {
-                      setHasMore(false);
-                    }
+                  setLastVisible(newCursor);
+
+                  if (postsWithIds.length > 0) {
+                    addSharedPostsToIndexedDB(postsWithIds);
+                    dispatch(addSharedPosts(postsWithIds));
+                    dispatch(setHasMore(more));
+                  } else {
+                    dispatch(setHasMore(false));
                   }
-                })
-                .finally(() => setLoadingMore(false));
-            }
+                }
+              })
+              .finally(() => setLoadingMore(false));
           }}
           components={{
-            Footer: () => {
-              // 🔹 Show animation while fetching next batch
-              if (loadingMore) {
-                return (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      padding: "2rem 0",
-                    }}
-                  >
-                    <BeerCaseStackAnimation
-                      minDuration={2500}
-                      maxStagger={1800}
-                      dropMs={800}
-                      loop={false}
-                    />
-                  </div>
-                );
-              }
-
-              // 🔹 Shared feed doesn’t use filters (yet)
-              // But we can still gracefully show a terminal footer when no more posts exist
-              if (!hasMore && !loading) {
-                return (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "1rem",
-                      opacity: 0.6,
-                    }}
-                  >
-                    🚩 End of shared posts
-                  </div>
-                );
-              }
-
-              // 🔹 Otherwise, show nothing
-              return null;
-            },
+            Footer: () =>
+              loadingMore ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "2rem 0",
+                  }}
+                >
+                  <BeerCaseStackAnimation
+                    minDuration={2500}
+                    maxStagger={1800}
+                    dropMs={800}
+                    loop={false}
+                  />
+                </div>
+              ) : !hasMore ? (
+                <div style={{ textAlign: "center", opacity: 0.6, padding: "1rem" }}>
+                  🚩 End of shared posts
+                </div>
+              ) : null,
           }}
           scrollerRef={scrollerRefCallback}
         />
       )}
+
       {showScrollTop && !showLoader && (
-        <button
-          className="scroll-to-top-btn"
-          aria-label="Scroll to top"
-          onClick={scrollToTop}
-        >
+        <button className="scroll-to-top-btn" onClick={scrollToTop}>
           <KeyboardArrowUpIcon />
         </button>
       )}

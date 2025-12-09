@@ -67,14 +67,6 @@ export const UserHomePage = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
-  const [pageReady, setPageReady] = useState(false);
-
-  useEffect(() => {
-    // When posts and user are loaded, show the page
-    if (hasLoadedOnce || rawPosts.length > 0) {
-      setPageReady(true);
-    }
-  }, [hasLoadedOnce, rawPosts.length]);
 
   useEffect(() => {
     const flag = localStorage.getItem("showOnboardingModal");

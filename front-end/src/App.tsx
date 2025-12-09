@@ -5,7 +5,6 @@ import { useSelector } from "react-redux";
 
 import Snackbar from "@mui/material/Snackbar";
 import { Alert, CssBaseline, ThemeProvider } from "@mui/material";
-
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
@@ -17,18 +16,16 @@ import { setDarkMode } from "./Slices/themeSlice";
 
 import { getTheme } from "./theme";
 import { ThemeToggle } from "./components/ThemeToggle";
-
 import { useFirebaseAuth } from "./utils/useFirebaseAuth";
-import { useAppBootstrap } from "./hooks/useAppBootstrap";
 
+import { useAppBootstrap } from "./hooks/useAppBootstrap";
 import AppLoadingScreen from "./components/AppLoadingScreen";
+
 import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
 
-// 🔍 NEW WRAPPER — Allows Router to stay at top,
-// while AppContent can safely use useLocation()
 function AppContent() {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
@@ -40,14 +37,11 @@ function AppContent() {
 
   const theme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
   const location = useLocation();
-
-  // Detect splash page to hide ThemeToggle
   const isSplashPage = location.pathname === "/";
 
-  // Run core bootstrap
   useAppBootstrap();
 
-  // Initialize theme
+  // Theme initialization
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
     if (storedTheme) {
@@ -59,33 +53,32 @@ function AppContent() {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  // Loader logic
-  const showLoader = (() => {
-    if (initializing) return true;
-    if (!currentUser) return false;
-    return !appReady;
-  })();
+  // Only global-blocking conditions
+  const showAppLoader = initializing || !appReady;
 
   return (
     <>
-      {showLoader && (
-        <AppLoadingScreen message={loadingMessage ?? "Loading…"} />
-      )}
+      {/* Visual overlay only — never blocks mount */}
+      <AppLoadingScreen
+        show={showAppLoader}
+        message={loadingMessage ?? "Loading…"}
+      />
 
-      {!showLoader && (
+      <div className={`app-shell ${showAppLoader ? "app-shell-hidden" : ""}`}>
+
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <ThemeProvider theme={theme}>
             <CssBaseline />
 
-            {/* Hide ThemeToggle on splash page */}
             {!isSplashPage && <ThemeToggle />}
 
+            {/* Main layout frame */}
             <div className="page-layout-frame">
-              <AppRoutes /> {/* ← Routed content */}
-              {!isSplashPage && <Footer />}{" "}
-              {/* ← Footer inside same flex container */}
+              <AppRoutes />
+              {!isSplashPage && <Footer />}
             </div>
 
+            {/* Alerts */}
             {snackbar.current && (
               <Snackbar
                 open={snackbar.open}
@@ -109,24 +102,15 @@ function AppContent() {
             {currentUser && <UserModal />}
           </ThemeProvider>
         </LocalizationProvider>
-      )}
+      </div>
     </>
   );
 }
 
-if ("scrollRestoration" in window.history) {
-  window.history.scrollRestoration = "manual";
-}
-
-// ============================
-//  MAIN APP — Router at Top
-// ============================
 export default function App() {
   return (
     <Router>
       <ScrollToTop />
-
-      {/* 🔥 create a proper flex-column frame */}
       <div className="app-frame">
         <AppContent />
       </div>

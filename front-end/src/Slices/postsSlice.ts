@@ -10,6 +10,7 @@ import {
 import { PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
 import { normalizePost } from "../utils/normalize";
+import { RootState } from "../utils/store";
 
 type CursorType = string;
 
@@ -121,28 +122,45 @@ const postsSlice = createSlice({
     addNewPost: (state, action: PayloadAction<PostWithID>) => {
       state.posts.push(action.payload);
     },
+    // mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
+    //   const newPosts = action.payload;
+    //   const existingIds = new Set(state.posts.map((p) => p.id));
+
+    //   const merged = [
+    //     ...state.posts,
+    //     ...newPosts.filter((p) => !existingIds.has(p.id)),
+    //   ];
+
+    //   const toTime = (val: any): number => {
+    //     if (val instanceof Date) return val.getTime();
+    //     const d = new Date(val);
+    //     return isNaN(d.getTime()) ? 0 : d.getTime();
+    //   };
+
+    //   state.posts = merged.sort((a, b) => {
+    //     return (
+    //       toTime(b.displayDate || b.timestamp) -
+    //       toTime(a.displayDate || a.timestamp)
+    //     );
+    //   });
+    // },
     mergeAndSetPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      const newPosts = action.payload;
-      const existingIds = new Set(state.posts.map((p) => p.id));
+  const newPosts = action.payload;
+  const existingIds = new Set(state.posts.map(p => p.id));
 
-      const merged = [
-        ...state.posts,
-        ...newPosts.filter((p) => !existingIds.has(p.id)),
-      ];
+  newPosts.forEach((p: PostWithID) => {
+    if (!existingIds.has(p.id)) {
+      state.posts.push(p); // mutation, not replacement
+    }
+  });
 
-      const toTime = (val: any): number => {
-        if (val instanceof Date) return val.getTime();
-        const d = new Date(val);
-        return isNaN(d.getTime()) ? 0 : d.getTime();
-      };
-
-      state.posts = merged.sort((a, b) => {
-        return (
-          toTime(b.displayDate || b.timestamp) -
-          toTime(a.displayDate || a.timestamp)
-        );
-      });
-    },
+  state.posts.sort((a, b) => {
+    const timeA = new Date(a.displayDate || a.timestamp).getTime();
+    const timeB = new Date(b.displayDate || b.timestamp).getTime();
+    return timeB - timeA;
+  });
+}
+,
     mergeAndSetFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
       const newFilteredPosts = action.payload;
       console.log("[REDUX] Merging", action.payload.length, "posts");
@@ -254,6 +272,7 @@ const postsSlice = createSlice({
           state.lastVisibleFiltered = lastVisible?.id ?? null;
           state.filteredPostCount = count;
           state.loading = false;
+          state.status = "succeeded";
         }
       )
       .addCase(setFilteredPostFetchedAt, (state, action) => {
@@ -322,4 +341,16 @@ export const {
   setStarTagPosts,
   clearPostsData,
 } = postsSlice.actions;
+// True when ANY post fetch is in progress
+export const selectPostsLoading = (state: RootState) =>
+  state.posts.loading;
+
+// True once initial load completes, regardless of post count
+export const selectPostsInitialLoaded = (state: RootState) =>
+  !state.posts.loading && state.posts.error === null;
+
+// Only show filtered loader when first loading a filtered list
+export const selectFilteredPostsLoading = (state: RootState) =>
+  state.posts.loading && state.posts.filteredPosts.length === 0;
+
 export default postsSlice.reducer;

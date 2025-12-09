@@ -1,0 +1,19 @@
+.skeleton-card {
+  height: 320px;
+  width: 100%;
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    var(--gray-200) 0%,
+    var(--gray-100) 50%,
+    var(--gray-200) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
