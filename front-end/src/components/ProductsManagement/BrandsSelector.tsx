@@ -10,6 +10,7 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { getBrandMatches } from "../../utils/helperFunctions/getBrandMatches";
 import CustomConfirmation from "../CustomConfirmation";
+import { BRAND_BLACKLIST } from "../../utils/helperFunctions/brandBlackList";
 
 //
 // ─────────────────────────────────────────────────────────────
@@ -35,10 +36,40 @@ function isValidCustomBrand(word: string): boolean {
   if (/^\d+$/.test(w)) return false;
 
   const junkWords = [
-    "the","and","for","with","from","this","that",
-    "mm","ml","beer","wine","case","cases","size","pkg",
-    "bottle","bottles","can","cans","lager","ipa","ale",
-    "brewing","brewery","imports","fl","oz","container",
+    "the",
+    "and",
+    "for",
+    "with",
+    "from",
+    "this",
+    "that",
+    "mm",
+    "ml",
+    "beer",
+    "wine",
+    "case",
+    "cases",
+    "size",
+    "pkg",
+    "bottle",
+    "bottles",
+    "can",
+    "cans",
+    "lager",
+    "ipa",
+    "ale",
+    "brewing",
+    "brewery",
+    "imports",
+    "fl",
+    "oz",
+    "container",
+    "retail",
+    "shelf",
+    "shelving",
+    "packaging and labeling",
+    "labeling",
+    "convenience store",
   ];
 
   return !junkWords.includes(w.toLowerCase());
@@ -91,21 +122,20 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
     const matches = getBrandMatches(rawCandidates, brandOptions);
     setAiMatches(matches);
 
-    // Extract possible custom brands
     const custom = rawCandidates
-      .map((w) => w.trim())
+      .map((w) => w.trim().toLowerCase())
       .filter((w) => {
         if (!w) return false;
-        const lower = w.toLowerCase();
-        if (brandOptions.some((b) => b.toLowerCase() === lower)) return false;
-        if (matches.some((m) => m.toLowerCase() === lower)) return false;
-        if (lower.length < 3) return false;
-        if (/^\d+$/.test(lower)) return false;
+        if (BRAND_BLACKLIST.has(w)) return false; // ← 👍 NEW
+        if (brandOptions.some((b) => b.toLowerCase() === w)) return false;
+        if (matches.some((m) => m.toLowerCase() === w)) return false;
+        if (w.length < 3) return false;
+        if (/^\d+$/.test(w)) return false;
         return true;
       });
 
     setAiCustomSuggestions(dedupeBrands(custom));
-  }, [rawCandidates, brandOptions]);
+  }, [rawCandidates]);
 
   //
   // 2️⃣ Case-insensitive product-type derivation + normalize
@@ -243,7 +273,7 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
               <>
                 <p className="ai-subtitle">Possible new brands:</p>
                 <div className="ai-chip-row">
-                  {aiCustomSuggestions.map((word) => (
+                  {aiCustomSuggestions.slice(0, 8).map((word) => (
                     <Chip
                       key={word}
                       label={`${word} (Custom)`}
@@ -257,12 +287,11 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
               </>
             )}
 
-            {aiMatches.length === 0 &&
-              aiCustomSuggestions.length === 0 && (
-                <p className="ai-subtitle-muted">
-                  No recognizable brands detected.
-                </p>
-              )}
+            {aiMatches.length === 0 && aiCustomSuggestions.length === 0 && (
+              <p className="ai-subtitle-muted">
+                No recognizable brands detected.
+              </p>
+            )}
           </div>
         ) : (
           <p className="ai-subtitle-muted">AI detection pending...</p>

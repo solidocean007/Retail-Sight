@@ -1,9 +1,13 @@
 import stringSimilarity from "string-similarity";
+import { BRAND_BLACKLIST } from "./brandBlackList";
 
 /**
  * Tuned brand matcher for beverage displays.
  */
-export function getBrandMatches(rawCandidates: string[], companyBrands: string[]) {
+export function getBrandMatches(
+  rawCandidates: string[],
+  companyBrands: string[]
+) {
   const normalize = (s: string) =>
     s
       .toLowerCase()
@@ -11,26 +15,20 @@ export function getBrandMatches(rawCandidates: string[], companyBrands: string[]
       .replace(/\s+/g, " ")
       .trim();
 
-  // Words to ignore from Vision text
-  const blacklist = new Set([
-    "beer", "label", "advertising", "packaging", "company",
-    "retail", "logo", "brand", "brew", "brewing", "alcohol"
-  ]);
-
   const normalizedCandidates = rawCandidates
     .map(normalize)
-    .filter(c => c.length > 3 && !blacklist.has(c));
+    .filter((c) => c.length > 3 && !BRAND_BLACKLIST.has(c));
 
   const normalizedBrands = companyBrands.map(normalize);
-  const matches: {brand: string; score: number}[] = [];
+  const matches: { brand: string; score: number }[] = [];
 
   normalizedBrands.forEach((brand, i) => {
-    const brandTokens = brand.split(" ").filter(t => t.length > 2);
+    const brandTokens = brand.split(" ").filter((t) => t.length > 2);
     for (const [rank, candidate] of normalizedCandidates.entries()) {
-      const candidateTokens = candidate.split(" ").filter(t => t.length > 2);
+      const candidateTokens = candidate.split(" ").filter((t) => t.length > 2);
 
       // token overlap requirement
-      const tokenHit = brandTokens.some(bt => candidateTokens.includes(bt));
+      const tokenHit = brandTokens.some((bt) => candidateTokens.includes(bt));
       if (!tokenHit) continue;
 
       // fuzzy ratio for near-matches like "lite" ↔ "miller lite"
@@ -48,7 +46,8 @@ export function getBrandMatches(rawCandidates: string[], companyBrands: string[]
   // Sort and dedupe by best score
   const unique = new Map<string, number>();
   for (const { brand, score } of matches) {
-    if (!unique.has(brand) || unique.get(brand)! < score) unique.set(brand, score);
+    if (!unique.has(brand) || unique.get(brand)! < score)
+      unique.set(brand, score);
   }
 
   // keep top 8 with score ≥ 0.5
