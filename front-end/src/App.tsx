@@ -26,7 +26,6 @@ import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
 import { setAppReady } from "./Slices/appSlice";
-import { setAppReady } from "./Slices/appSlice";
 
 function AppContent() {
   const dispatch = useAppDispatch();
