@@ -25,6 +25,8 @@ import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
+import { setAppReady } from "./Slices/appSlice";
+import { setAppReady } from "./Slices/appSlice";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -54,7 +56,15 @@ function AppContent() {
   }, [isDarkMode]);
 
   // Only global-blocking conditions
-  const showAppLoader = initializing || !appReady;
+  const showAppLoader = !isSplashPage && (initializing || !appReady);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      dispatch(setAppReady(true));
+    }, 8000);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   return (
     <>
@@ -65,7 +75,6 @@ function AppContent() {
       />
 
       <div className={`app-shell ${showAppLoader ? "app-shell-hidden" : ""}`}>
-
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <ThemeProvider theme={theme}>
             <CssBaseline />
