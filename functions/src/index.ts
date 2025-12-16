@@ -1,4 +1,3 @@
-import { ping } from "./ping";
 import { createInviteAndEmail } from "./createInviteAndEmail";
 import { deleteAuthUser } from "./deleteAuthUser";
 import { checkUserExists } from "./checkUserExists";
@@ -30,6 +29,11 @@ import { onPendingNewUserAndCompanyInviteCreate } from "./onPendingNewUserAndCom
 import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
 import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
+import {
+  galloFetchPrograms,
+  galloFetchAccounts,
+  galloFetchGoals,
+} from "./galloKeys/gallo";
 
 // 🧾 Braintree Billing System
 import {
@@ -52,20 +56,21 @@ import {
 // Notification system
 import { onUserNotificationCreated } from "./notifications/onUserNotificationCreated";
 import { sendNotificationToUser } from "./notifications/sendNotificationToUser";
-
 import { syncPlanLimits } from "./braintreeHelpers";
 
 export {
+  getExternalApiKeyStatus,
+  upsertGalloAxisKey,
+  deleteGalloAxisKey,
+  galloFetchPrograms,
+  galloFetchAccounts,
+  galloFetchGoals,
   // General functions
-  ping,
   createInviteAndEmail,
   deleteAuthUser,
   checkUserExists,
   getExternalApiKey,
-  getExternalApiKeyStatus,
   syncUserRoleClaim,
-  upsertGalloAxisKey,
-  deleteGalloAxisKey,
   resolveCompanyEmail,
   onConnectionApproved,
   sharePostWithCompany,

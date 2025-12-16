@@ -247,7 +247,7 @@ export const UserHomePage = () => {
           <div className="activity-feed-container">
             {activeFeedType === "shared" ? (
               <SharedFeed
-                virtuosoRef={virtuosoRef} // dont even think im using this
+                virtuosoRef={virtuosoRef}
                 setPostIdToScroll={setPostIdToScroll}
               />
             ) : (

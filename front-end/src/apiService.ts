@@ -103,7 +103,7 @@ export const fetchCompanyAccounts = async (
     }),
   );
 
-  return allAccounts.filter((account) =>
+  return allAccounts.filter((account: CompanyAccountType) =>
     galloAccountIds.includes(account.accountNumber),
   ); // Parameter 'account' implicitly has an 'any' type.
 };

@@ -549,6 +549,7 @@ export type GalloProgramType = {
 
 // this is a goal for a program as defined by Gallo
 export type GalloGoalType = {
+  env?: "prod" | "dev";
   marketId: string;
   programId: string;
   goalId: string;
@@ -631,6 +632,7 @@ export interface FireStoreGalloGoalDocType {
     programDisplayDate?: string;
   };
   goalDetails: {
+    goalEnv: "prod" | "dev";
     goalId: string; // Firestore document ID
     goal: string;
     goalMetric: string;

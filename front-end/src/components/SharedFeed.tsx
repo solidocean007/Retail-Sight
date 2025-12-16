@@ -18,7 +18,7 @@ import { getPostsByTag, getPostsByStarTag } from "../utils/PostLogic/getPostsByT
 import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
 import { addSharedPosts, setHasMore } from "../Slices/sharedPostsSlice";
 import { addSharedPostsToIndexedDB } from "../utils/database/sharedPostsStoreUtils";
-import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
+// import { resolvePostImage } from "../utils/PostLogic/derivePostImageVariants";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -69,16 +69,16 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   }, []);
 
   // Preload first 5 images
-  useEffect(() => {
-    const sample = sharedPosts.slice(0, 5);
-    sample.forEach((post) => {
-      const { small, medium } = resolvePostImage(post);
-      const url = small[0] || medium[0];
-      if (!url) return;
-      const img = new Image();
-      img.src = url;
-    });
-  }, [sharedPosts]);
+  // useEffect(() => {
+  //   const sample = sharedPosts.slice(0, 5);
+  //   sample.forEach((post) => {
+  //     // const { small, medium } = resolvePostImage(post);
+  //     // const url = small[0] || medium[0];
+  //     if (!url) return;
+  //     const img = new Image();
+  //     img.src = url;
+  //   });
+  // }, [sharedPosts]);
 
   // Scroll to deep-linked post
   useEffect(() => {
@@ -97,14 +97,14 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   // Safe no-results handling
   const noResults = !loading && sharedPosts.length === 0;
 
-  const computedImages = useMemo(
-    () =>
-      sharedPosts.map((post) => ({
-        id: post.id,
-        images: resolvePostImage(post),
-      })),
-    [sharedPosts]
-  );
+  // const computedImages = useMemo(
+  //   () =>
+  //     sharedPosts.map((post) => ({
+  //       id: post.id,
+  //       images: resolvePostImage(post),
+  //     })),
+  //   [sharedPosts]
+  // );
 
   const scrollerRefCallback = useCallback((ref: any) => {
     if (!ref || !(ref instanceof HTMLElement)) return;
@@ -137,11 +137,11 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
           defaultItemHeight={450}
           itemContent={(index, post) => {
             if (!post?.id) return null;
-            const images = computedImages[index].images;
+            // const images = computedImages[index].images;
 
             return (
               <div key={post.id} className="post-card-renderer-container">
-                <PostCardRenderer
+                {/* <PostCardRenderer
                   imageSet={images}
                   currentUserUid={currentUser?.uid}
                   index={index}
@@ -151,7 +151,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                   setActivePostSet={setSharedFeedPostSet}
                   setIsSearchActive={setIsSearchActive}
                   postIdToScroll={postIdToScroll}
-                />
+                /> */}
               </div>
             );
           }}

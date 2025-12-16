@@ -13,8 +13,7 @@ import CreateCompanyGoalView from "./CreateCompanyGoalView";
 import AllGoalsLayout from "./AllGoalsLayout";
 import React, { useEffect, useState } from "react";
 import { useIntegrations } from "../../hooks/useIntegrations";
-import GalloIntegration from "./GalloIntegration";
-const CreateGalloGoalView = React.lazy(() => import("./CreateGalloGoalView"));
+import GalloIntegration from "./GalloIntegration/GalloIntegration";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -60,19 +59,8 @@ const GoalManager: React.FC<GoalManagerProps> = ({ companyId }) => {
     ...(galloEnabled
       ? [
           {
-            key: "gallo",
-            label: "Gallo Program Import",
-            panel: (
-              <React.Suspense
-                fallback={<div style={{ padding: 8 }}>Loading…</div>}
-              >
-                <CreateGalloGoalView setValue={setValue} />
-              </React.Suspense>
-            ),
-          },
-          {
             key: "galloIntegation",
-            label: "Gallo Integration",
+            label: "Gallo Axis",
             panel: (
               <React.Suspense
                 fallback={<div style={{ padding: 8 }}>Loading…</div>}

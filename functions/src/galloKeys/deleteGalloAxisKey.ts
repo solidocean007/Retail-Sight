@@ -17,30 +17,41 @@ export const deleteGalloAxisKey = onCall<{ env: "prod" | "dev" }>(
     }
 
     const role = req.auth?.token?.role;
-    if (role !== "developer" && role !== "super-admin") {
+    if (role !== "developer" && role !== "super-admin" && role !== "admin") {
       throw new Error("Permission denied");
     }
 
     const { env } = req.data;
-    if (!env) {
-      throw new Error("Missing env");
-    }
-    // Remove from apiKeys/{companyId}
+    if (!env) throw new Error("Missing env");
+
+    // 🔥 Remove from apiKeys/{companyId}/gallo object
     const apiKeysRef = admin.firestore().doc(`apiKeys/${companyId}`);
     const snap = await apiKeysRef.get();
-    if (snap.exists) {
-      const data = snap.data() || {};
-      const externalApiKeys = Array.isArray(data.externalApiKeys)
-        ? data.externalApiKeys
-        : [];
-      const filtered = externalApiKeys.filter(
-        (k: { name: string }) =>
-          k.name !== `galloApiKey${env === "prod" ? "Prod" : "Dev"}`
-      );
-      await apiKeysRef.set({ externalApiKeys: filtered }, { merge: true });
+    const data = snap.data() || {};
+
+    const gallo = data.gallo || {};
+
+    // Null out the correct field
+    if (env === "dev") {
+      gallo.devKey = null;
+    } else {
+      gallo.prodKey = null;
     }
 
-    // Update status doc to mark as deleted
+    gallo.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+
+    await apiKeysRef.set({ gallo }, { merge: true });
+
+    // OPTIONAL: clean out old externalApiKeys array entries
+    const externalApiKeys = Array.isArray(data.externalApiKeys)
+      ? data.externalApiKeys.filter(
+          (k: any) => k.name !== `galloApiKey${env === "prod" ? "Prod" : "Dev"}`
+        )
+      : [];
+
+    await apiKeysRef.set({ externalApiKeys }, { merge: true });
+
+    // Update status doc
     await admin
       .firestore()
       .doc(`companies/${companyId}/integrations/galloAxis`)

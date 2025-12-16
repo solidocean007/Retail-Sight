@@ -23,6 +23,7 @@ const ProgramTable: React.FC<ProgramTableProps> = ({
   selectedProgram,
   onSelectProgram,
 }) => {
+  // i need to think about what to do if we already have goals created for accounts that come from programs fetched again.
   return (
     <TableContainer>
       {programs.length > 0 && <Typography variant="h6">Programs</Typography>}

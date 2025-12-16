@@ -8,6 +8,7 @@ import {
 import { db } from "../firebase";
 
 export const createGalloGoal = async (
+  goalEnv: "prod" | "dev",
   selectedGoal: GalloGoalType | null,
   selectedProgram: GalloProgramType | null,
   selectedAccounts: EnrichedGalloAccountType[],
@@ -62,6 +63,7 @@ export const createGalloGoal = async (
       programEndDate: selectedProgram.endDate,
     },
     goalDetails: {
+      goalEnv: goalEnv,
       goalId: selectedGoal.goalId,
       goal: selectedGoal.goal,
       goalMetric: selectedGoal.goalMetric,

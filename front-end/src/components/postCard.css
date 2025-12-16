@@ -463,7 +463,7 @@
 
 .image-aspect-wrapper {
   width: 100%;
-  aspect-ratio: 3 / 4; /* or 3/4 depending on your typical image shape */
+  /* aspect-ratio: 3 / 4; or 3/4 depending on your typical image shape */
   position: relative;
   overflow: hidden;
 }

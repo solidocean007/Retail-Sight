@@ -30,6 +30,7 @@ import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
 import { saveSingleGalloGoalToIndexedDB } from "../../utils/database/goalsStoreUtils";
 
 interface AccountTableProps {
+  selectedEnv: "prod" | "dev";
   accounts: EnrichedGalloAccountType[];
   selectedGoal: GalloGoalType | null; // Pass the selected goal from the parent
   selectedProgram: GalloProgramType | null; // Pass the selected program from the parent
@@ -37,6 +38,7 @@ interface AccountTableProps {
 }
 
 const GalloAccountImportTable: React.FC<AccountTableProps> = ({
+  selectedEnv,
   accounts,
   selectedGoal,
   selectedProgram,
@@ -139,6 +141,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
 
     try {
       const savedGoal = await createGalloGoal(
+        selectedEnv,
         selectedGoal,
         selectedProgram,
         selectedAccounts,
@@ -148,7 +151,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       console.log("✅ Saved Goal from Firestore:", savedGoal);
 
       // Use saved shape for Redux and IndexedDB
-      dispatch(addOrUpdateGalloGoal(savedGoal));
+      dispatch(addOrUpdateGalloGoal(savedGoal)); // Property 'id' is missing in type 'FireStoreGalloGoalDocType' but required in type 'FireStoreGalloGoalWithId'.ts(2345)
       await saveSingleGalloGoalToIndexedDB(savedGoal);
 
       alert("Goal saved successfully!");

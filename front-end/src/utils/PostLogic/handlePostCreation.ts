@@ -35,6 +35,7 @@ import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 import { createManualAccountThunk } from "../../thunks/manulAccountsThunk";
 import { logAiFeedback } from "../../hooks/logAiFeedback";
 import { persistCustomProductData } from "./persistCustomProductData";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
   return new Promise((resolve, reject) => {
@@ -49,7 +50,9 @@ function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
 
 export const useHandlePostSubmission = () => {
   const dispatch = useAppDispatch();
+  const functions = getFunctions();
   const userData = useSelector(selectUser);
+  const sendCF = httpsCallable(functions, "galloSendAchievement");
 
   const handlePostSubmission = async (
     post: PostInputType,
@@ -167,7 +170,14 @@ export const useHandlePostSubmission = () => {
           photos: [{ file: finalImageUrl }],
         };
 
-        await sendAchievementToGalloAxis(achievementPayload, apiKey, dispatch);
+        await sendCF({
+          env: selectedEnv, // Cannot find name 'selectedEnv'
+          oppId: post.oppId,
+          closedBy: post.closedBy ?? user.displayName ?? "",
+          closedDate: formattedClosedDate, // MM-DD-YYYY Cannot find name 'formattedClosedDate'
+          closedUnits: post.totalCaseCount || "0",
+          photos: [{ file: finalImageUrl }],
+        });
 
         if (selectedGalloGoal && post.account?.accountNumber) {
           await dispatch(
@@ -177,6 +187,7 @@ export const useHandlePostSubmission = () => {
               postId,
             })
           );
+          dispatch(showMessage("Achievement sent to Gallo!"));
         }
       }
 

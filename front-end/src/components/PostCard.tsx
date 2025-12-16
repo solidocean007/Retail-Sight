@@ -46,13 +46,12 @@ import { handlePostShare } from "../utils/handlePostShare";
 import LinkShareModal from "./LinkShareModal";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
-import FadeImage from "./FadeImage";
-import { ImageSetType } from "./ActivityFeed";
+import { FeedImageSet } from "./PostCardRenderer";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
 interface PostCardProps {
-  imageSet: ImageSetType;
+  imageSet: FeedImageSet;
   id: string;
   currentUserUid: string | undefined;
   post: PostWithID;
@@ -84,7 +83,7 @@ const PostCard: React.FC<PostCardProps> = ({
   postIdToScroll = null, // Default to null if not provided
 }) => {
   // console.log(imageSet);
-  const { small, medium, original } = imageSet;
+  // const { small, medium, original } = imageSet;
   const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
   const [commentCount] = useState(post.commentCount);
@@ -107,7 +106,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const [_selectedCompanyAccount, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
   const [shouldHighlight, setShouldHighlight] = useState(false);
-  const feedList = [...small, ...medium];
+  // const feedList = [...small, ...medium];
+  // const { feed, modal } = resolvePostImage(imageSet);
 
   useEffect(() => {
     let startTimer: NodeJS.Timeout;
@@ -470,14 +470,24 @@ const PostCard: React.FC<PostCardProps> = ({
             <div className="activity-post-image-box">
               {post.imageUrl && (
                 <div className="image-aspect-wrapper">
-                  <FadeImage
-                    srcList={feedList}
+                  {/* <FadeImage
+                    srcList={feed}
                     alt="Post image"
                     onClick={() => {
                       setFullSizeImageUrl(original[0]);
                       setIsImageModalOpen(true);
                     }}
-                  />
+                  /> */}
+                  {imageSet.feedSrc && (
+                    <img
+                      src={imageSet.feedSrc}
+                      className="post-image"
+                      loading="lazy"
+                      onClick={() => {
+                        setIsImageModalOpen(true);
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -520,9 +530,10 @@ const PostCard: React.FC<PostCardProps> = ({
       />
       <ImageModal
         isOpen={isImageModalOpen}
-        src={fullSizeImageUrl}
+        srcList={imageSet.modalChain}
         onClose={() => setIsImageModalOpen(false)}
       />
+
       <LinkShareModal
         open={shareModalOpen}
         handleClose={() => setShareModalOpen(false)}

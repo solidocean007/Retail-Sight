@@ -1,14 +1,31 @@
-import { PostWithID } from "../types";
-import { resolvePostImage } from "./resolvePostImage";
 
-const imageCache = new Map<string, ReturnType<typeof resolvePostImage>>();
 
-export function getMemoizedImageSet(post: PostWithID) {
-  if (imageCache.has(post.id)) {
-    return imageCache.get(post.id)!;
-  }
+// utils/PostLogic/getMemoizedImageSet.ts
 
-  const result = resolvePostImage(post);
-  imageCache.set(post.id, result);
-  return result;
+export type ImageSet = {
+  feed: string | null;
+  modal: string | null;
+};
+
+export function getMemoizedImageSet(post: ImageSet): {
+  feed: string | null;
+  modal: string | null;
+} {
+  const small = post.imageUrls?.small?.[0];
+  const medium = post.imageUrls?.medium?.[0];
+  const large = post.imageUrls?.large?.[0];
+  const original = post.imageUrls?.original?.[0];
+
+  // FEED: pick the BEST reasonable size
+  const feed =
+    medium ||
+    large ||
+    small ||
+    null;
+
+  return {
+    feed,
+    modal: original || feed,
+  };
 }
+

@@ -42,14 +42,34 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import FeedSkeleton from "./FeedSkeleton";
 import { setFeedReady } from "../Slices/appSlice";
 import { getMemoizedImageSet } from "../utils/PostLogic/getMemoizedImageSet";
+import { derivePostImageVariants, ImageVariants } from "../utils/PostLogic/derivePostImageVariants";
 
 const POSTS_BATCH_SIZE = 5;
 
-export type ImageSetType = {
-  small: string[];
-  medium: string[];
-  original: string[];
+export type ResolvedPostImages = {
+  feed: string | null;
+  modal: string | null;
 };
+
+export function resolveFeedImage(
+  v: ImageVariants
+): string | null {
+  return v.p800 || v.p1200 || v.p200 || null;
+}
+
+export function resolveModalImageChain(
+  v: ImageVariants
+): string[] {
+  if (v.p1200 && v.original) return [v.p1200, v.original];
+  if (v.p800 && v.original) return [v.p800, v.original];
+  return [v.original || v.p1200 || v.p800].filter(Boolean) as string[];
+}
+
+export type FeedImageSet = {
+  feedSrc: string | null;
+  modalChain: string[];
+};
+
 
 interface ActivityFeedProps {
   virtuosoRef: React.RefObject<VirtuosoHandle>;
@@ -183,26 +203,38 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
 
-  const computedImages = useMemo(() => {
-    return displayPosts.map((post) => ({
+  
+const computedImages = useMemo<
+  { id: string; image: FeedImageSet }[]
+>(() => {
+  return displayPosts.map((post) => {
+    const variants = derivePostImageVariants(post);
+    return {
       id: post.id,
-      images: getMemoizedImageSet(post),
-    }));
-  }, [displayPosts]);
+      image: {
+        feedSrc: resolveFeedImage(variants),
+        modalChain: resolveModalImageChain(variants),
+      },
+    };
+  });
+}, [displayPosts]);
 
-  useEffect(() => {
-    if (!computedImages.length) return;
 
-    const sample = computedImages.slice(0, 5); // preload first 5 posts
 
-    sample.forEach(({ images }) => {
-      const url = images.small[0] || images.medium[0];
-      if (!url) return;
 
-      const img = new Image();
-      img.src = url;
-    });
-  }, [computedImages]);
+  // useEffect(() => {
+  //   if (!computedImages.length) return;
+
+  //   const sample = computedImages.slice(0, 5); // preload first 5 posts
+
+  //   sample.forEach(({ images }) => {
+  //     const url = images.small[0] || images.medium[0];
+  //     if (!url) return;
+
+  //     const img = new Image();
+  //     img.src = url;
+  //   });
+  // }, [computedImages]);
 
   const scrollerRefCallback = useCallback(
     (ref: HTMLElement | Window | null) => {
@@ -270,7 +302,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           defaultItemHeight={420}
           itemContent={(index, post) => {
             if (!post?.id) return null;
-            const itemImages = computedImages[index].images;
+            const itemImage = computedImages[index]?.image;
+
+
             return (
               <div
                 key={post.id}
@@ -279,7 +313,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
               >
                 <PostCardRenderer
                   isScrolling={isScrolling}
-                  imageSet={itemImages} // Property 'itemImages' is missing in type '{ small: string[]; medium: string[]; original: string[]; }' but required in type 'ImageSetType'
+                  imageSet={itemImage} // Property 'itemImages' is missing in type '{ small: string[]; medium: string[]; original: string[]; }' but required in type 'ImageSetType'
                   currentUserUid={currentUser?.uid}
                   index={index}
                   style={{ height: "100%" }}

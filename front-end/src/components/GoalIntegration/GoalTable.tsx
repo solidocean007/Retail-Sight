@@ -23,6 +23,7 @@ const GoalTable: React.FC<GoalTableProps> = ({
   selectedGoal,
   onSelectGoal,
 }) => {
+  // again what to do if goals are fetched that are already created for accounts
   return (
     <TableContainer>
       <Typography variant="h6">Goals for Selected Program</Typography>

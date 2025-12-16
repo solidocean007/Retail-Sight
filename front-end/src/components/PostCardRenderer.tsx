@@ -2,11 +2,15 @@
 import React, { useEffect, useRef } from "react";
 import MemoizedPostCard from "./PostCard";
 import { PostWithID } from "../utils/types";
-import { ImageSetType } from "./ActivityFeed";
+
+export type FeedImageSet = {
+  feedSrc: string | null;
+  modalChain: string[];
+};
 
 interface PostCardRendererProps {
-  isScrolling: boolean;
-  imageSet: ImageSetType;
+  // isScrolling: boolean;
+  imageSet: FeedImageSet;
   currentUserUid?: string;
   index: number;
   style: React.CSSProperties;
@@ -39,10 +43,7 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   postIdToScroll,
   onPostVisible,
 }) => {
-  if (!post) {
-    console.error("Post data is undefined at index:", index);
-    return null;
-  }
+  if (!imageSet) return null;
 
   const cardRef = useRef<HTMLDivElement | null>(null);
 

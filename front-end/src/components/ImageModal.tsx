@@ -1,41 +1,51 @@
 import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import "./ImageModal.css";
-import { resolvePostImage } from "../utils/PostLogic/resolvePostImage";
+// import { resolvePostImage } from "../utils/PostLogic/derivePostImageVariants";
 import FadeImage from "./FadeImage";
 import CloseIcon from "@mui/icons-material/Close";
 
 interface ImageModalProps {
   isOpen: boolean;
-  src: string;
+  srcList: string[];
   onClose: () => void;
 }
 
-const ImageModal: React.FC<ImageModalProps> = ({ isOpen, src, onClose }) => {
+const ImageModal: React.FC<ImageModalProps> = ({
+  isOpen,
+  srcList,
+  onClose,
+}) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  const { medium, original } = resolvePostImage({ imageUrl: src });
-
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
 
-  if (!isOpen) return null;
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !srcList.length) return null;
 
   return ReactDOM.createPortal(
     <div className="image-modal-backdrop">
       <div className="image-modal-content" ref={modalRef}>
-        <FadeImage
-          srcList={[...medium, ...original]}
-          className="image-modal-img"
-        />
+        <FadeImage srcList={srcList} className="image-modal-img" />
 
         <button className="close-modal" onClick={onClose}>
           <CloseIcon fontSize="small" />
