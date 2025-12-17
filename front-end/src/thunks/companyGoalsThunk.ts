@@ -68,6 +68,7 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
           <div style="font-family: sans-serif; font-size: 15px; color: #333;">
             <p>You have been assigned a new goal:</p>
             <h3>${goal.goalTitle}</h3>
+            <h4>Created by ${goal.createdByFirstName} ${goal.createdByLastName}</h4>
             <p>${goal.goalDescription}</p>
             <p>
               <strong>Start:</strong> ${goal.goalStartDate}<br/>

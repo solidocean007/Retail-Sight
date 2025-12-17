@@ -29,7 +29,7 @@ const UserCompanyGoalCard: React.FC<Props> = ({
 }) => {
   const user = useSelector(selectUser);
   const allAccounts = useSelector(selectAllCompanyAccounts);
-  console.log(goal)
+  console.log(goal);
   const userSalesRoute = user?.salesRouteNum;
   const userUid = user?.uid;
 
@@ -56,7 +56,12 @@ const UserCompanyGoalCard: React.FC<Props> = ({
     }
 
     return scoped;
-  }, [allAccounts, accountNumbersForThisGoal, userSalesRoute, goal.goalAssignments]);
+  }, [
+    allAccounts,
+    accountNumbersForThisGoal,
+    userSalesRoute,
+    goal.goalAssignments,
+  ]);
 
   const totalAccounts = userAccounts.length;
 
@@ -67,7 +72,11 @@ const UserCompanyGoalCard: React.FC<Props> = ({
     return goal.submittedPosts.filter((p) => {
       const postUid = p.submittedBy?.uid;
       const acctNum = p.account?.accountNumber?.toString();
-      return postUid === userUid && acctNum && accountNumbersForThisGoal.includes(acctNum);
+      return (
+        postUid === userUid &&
+        acctNum &&
+        accountNumbersForThisGoal.includes(acctNum)
+      );
     });
   }, [goal.submittedPosts, accountNumbersForThisGoal, userUid]);
 
@@ -82,7 +91,8 @@ const UserCompanyGoalCard: React.FC<Props> = ({
   const unsubmittedAccounts = userAccounts.filter(
     (a) =>
       !userSubmissions.some(
-        (s) => s.account?.accountNumber?.toString() === a.accountNumber.toString()
+        (s) =>
+          s.account?.accountNumber?.toString() === a.accountNumber.toString()
       )
   );
 
@@ -111,9 +121,7 @@ const UserCompanyGoalCard: React.FC<Props> = ({
 
   return (
     <div className="info-box-company-goal">
-      <div className="goal-badge">
-        {goal.targetRole}
-      </div>
+      <div className="goal-badge">{goal.targetRole}</div>
 
       <div className="company-goal-card-start-end">
         <h5>Starts: {goal.goalStartDate}</h5>
@@ -126,6 +134,10 @@ const UserCompanyGoalCard: React.FC<Props> = ({
 
       <div className="info-layout-row">
         <div className="info-description">
+          <p>
+            Created by: {goal.createdByFirstName} {goal.createdByLastName}
+          </p>
+
           {goal.goalDescription}
           {goal.perUserQuota && (
             <div className="info-quota">
@@ -140,7 +152,9 @@ const UserCompanyGoalCard: React.FC<Props> = ({
           <div className="goal-progress-numbers">
             <div style={{ display: "flex", alignItems: "center" }}>
               <span>{submittedCount} Submissions</span>
-              <Tooltip title={`${submittedCount} of ${totalAccounts} submitted`}>
+              <Tooltip
+                title={`${submittedCount} of ${totalAccounts} submitted`}
+              >
                 <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
               </Tooltip>
             </div>
