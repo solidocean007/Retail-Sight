@@ -6,17 +6,18 @@
 
 ## 🔹 1. 
 
---- i need to address notifications
+--- when a goal is created let the user choose whether to send an email to the reciepients.
 
 ## 🔹 2.
---- fix the goals issue
+--- test the different filters
 
 ## 🔹 3. 
 
----
+--- validate billing
 
 ## 🔹 4. 
----
+--- 
+
 
 ## 🔹 5. 
 ---

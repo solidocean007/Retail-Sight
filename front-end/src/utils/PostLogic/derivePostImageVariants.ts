@@ -36,32 +36,52 @@ export function derivePostImageVariants(post: {
   const ext = filename.split(".").pop() || "jpg";
   const base = filename.replace(/\.\w+$/, "");
 
-  // 🔑 LEGACY DETECTION (THIS IS THE FIX)
-  const isLegacy = filename.startsWith("resized");
+  // 🔑 Capability detection
+  const isResizedEra = filename.startsWith("resized");
+  const isOriginalBase = base === "original";
 
-  // New-style variants
-  const p200 = build(`${folder}${base}_200x200.${ext}`);
-  const p800 = build(`${folder}${base}_800x800.${ext}`);
-  const p1200 = build(`${folder}${base}_1200x1200.${ext}`);
+  // Build candidates
+  const original200 = build(`${folder}${base}_200x200.${ext}`);
+  const original800 = build(`${folder}${base}_800x800.${ext}`);
+  const original1200 = build(`${folder}${base}_1200x1200.${ext}`);
 
-  // Legacy variants
   const legacyResized = build(`${folder}resized.${ext}`);
   const legacyResized200 = build(`${folder}resized_200x200.${ext}`);
 
+  /**
+   * FEED RULES (absolute)
+   * 1. Prefer resized.jpg if it exists (legacy)
+   * 2. Else prefer *_800x800 ONLY if this era supports it
+   * 3. Else fall back to original.jpg
+   */
+  let feed: string | undefined;
+
+  if (isResizedEra) {
+    feed = legacyResized;
+  } else if (isOriginalBase) {
+    // Era C or D
+    // Only Era D supports 800/1200
+    // We detect Era D by *assuming newer uploads include 1200*
+    feed = original800; // tentative
+  } else {
+    feed = original;
+  }
+
+  /**
+   * ERA C SAFETY NET:
+   * If this post only ever had original + 200,
+   * we MUST fall back to original
+   */
+  if (isOriginalBase && !filename.includes("_")) {
+    feed = original;
+  }
+
   return {
-    // Thumbnails
-    p200: isLegacy ? legacyResized200 : p200,
-
-    // FEED IMAGE
-    // Legacy → resized.jpg
-    // New → original_800x800.jpg
-    p800: isLegacy ? legacyResized : p800,
-
-    // Large (new only)
-    p1200: isLegacy ? undefined : p1200,
-
-    // Modal original
+    p200: isResizedEra ? legacyResized200 : original200,
+    p800: feed,
+    p1200: isResizedEra ? undefined : original1200,
     original,
   };
 }
+
 
