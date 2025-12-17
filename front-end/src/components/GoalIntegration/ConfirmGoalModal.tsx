@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Typography, Box } from "@mui/material";
+import { Typography, Box, FormControlLabel, Checkbox } from "@mui/material";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import { CompanyGoalType } from "../../utils/types";
 import "../customConfirmation.css";
@@ -8,10 +8,16 @@ interface ConfirmGoalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+
   goal: CompanyGoalType | null;
+
   affectedAccountsCount: number;
   affectedSalesCount: number;
   affectedSupervisorsCount: number;
+
+  // 🔽 NEW — email intent (controlled by parent)
+  emailOnCreate: boolean;
+  setEmailOnCreate: (value: boolean) => void;
 }
 
 const ConfirmGoalModal: React.FC<ConfirmGoalModalProps> = ({
@@ -22,6 +28,8 @@ const ConfirmGoalModal: React.FC<ConfirmGoalModalProps> = ({
   affectedAccountsCount,
   affectedSalesCount,
   affectedSupervisorsCount,
+  emailOnCreate,
+  setEmailOnCreate,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -38,9 +46,7 @@ const ConfirmGoalModal: React.FC<ConfirmGoalModalProps> = ({
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
+      if (e.key === "Escape") onClose();
     };
 
     document.addEventListener("keydown", handleKeyDown);
@@ -56,7 +62,7 @@ const ConfirmGoalModal: React.FC<ConfirmGoalModalProps> = ({
         className="custom-confirmation-modal"
         role="dialog"
         aria-modal="true"
-        onClick={(e) => e.stopPropagation()} // prevent close when clicking inside
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="custom-confirmation-title">
           <Box display="flex" alignItems="center" gap={1}>
@@ -70,29 +76,36 @@ const ConfirmGoalModal: React.FC<ConfirmGoalModalProps> = ({
             You are about to create a goal titled{" "}
             <strong>{goal.goalTitle}</strong>.
           </Typography>
+
           <Typography variant="body2" gutterBottom>
             Description: {goal.goalDescription}
           </Typography>
+
           <Typography variant="body2" gutterBottom>
             Metric: <strong>{goal.goalMetric}</strong> &nbsp;|&nbsp; Minimum
             Value: <strong>{goal.goalValueMin}</strong>
           </Typography>
+
           <Typography variant="body2" gutterBottom>
             Duration: {goal.goalStartDate} → {goal.goalEndDate}
           </Typography>
+
           <Typography variant="body2" gutterBottom>
             Accounts targeted: <strong>{affectedAccountsCount}</strong>
           </Typography>
+
           {affectedSalesCount > 0 && (
             <Typography variant="body2" gutterBottom>
               Sales reps affected: <strong>{affectedSalesCount}</strong>
             </Typography>
           )}
+
           {affectedSupervisorsCount > 0 && (
             <Typography variant="body2" gutterBottom>
               Supervisors affected: <strong>{affectedSupervisorsCount}</strong>
             </Typography>
           )}
+
           {goal.perUserQuota && (
             <Typography variant="body2" gutterBottom>
               Per-user quota: {goal.perUserQuota}
@@ -100,18 +113,27 @@ const ConfirmGoalModal: React.FC<ConfirmGoalModalProps> = ({
           )}
         </div>
 
+        {/* 📧 Email intent */}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={emailOnCreate}
+              onChange={(e) => setEmailOnCreate(e.target.checked)}
+            />
+          }
+          label="Email assigned users about this goal"
+        />
+
+        <Typography variant="caption" color="textSecondary">
+          This is a required operational email. Users cannot opt out.
+        </Typography>
+
         <div className="custom-confirmation-actions">
-          <button
-            className="custom-confirmation-cancel"
-            onClick={onClose}
-            autoFocus
-          >
+          <button className="custom-confirmation-cancel" onClick={onClose}>
             Cancel
           </button>
-          <button
-            className="custom-confirmation-confirm"
-            onClick={onConfirm}
-          >
+
+          <button className="custom-confirmation-confirm" onClick={onConfirm}>
             Confirm Goal
           </button>
         </div>
@@ -121,4 +143,3 @@ const ConfirmGoalModal: React.FC<ConfirmGoalModalProps> = ({
 };
 
 export default ConfirmGoalModal;
-

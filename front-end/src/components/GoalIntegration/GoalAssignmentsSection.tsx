@@ -40,7 +40,7 @@ const GoalAssignmentsSection: React.FC<Props> = ({
   const uniqueUsersCount = new Set(goalAssignments.map((g) => g.uid)).size;
   const [showAdvancedSelector, setShowAdvancedSelector] = useState(false);
 
-  const handleRemoveAssignment = (accountNumber: string, uid: string) => {
+  const handleRemoveAssignment = (accountNumber: string, uid: string) => { // unused?
     setGoalAssignments((prev) =>
       prev.filter((g) => !(g.uid === uid && g.accountNumber === accountNumber))
     );

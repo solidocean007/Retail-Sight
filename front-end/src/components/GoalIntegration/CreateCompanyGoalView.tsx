@@ -22,7 +22,13 @@ import {
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import { db } from "../../utils/firebase";
-import { addDoc, collection, doc, getDoc, serverTimestamp } from "@firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+} from "@firebase/firestore";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { createCompanyGoalInFirestore } from "../../thunks/companyGoalsThunk";
 import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
@@ -44,6 +50,7 @@ import GoalFiltersPanel from "./GoalFiltersPanel";
 import GoalAssignmentsSection from "./GoalAssignmentsSection";
 import { useFilteredAccounts } from "../../hooks/useFilteredAccounts";
 import { buildAssignments } from "./utils/buildAssignments";
+import { showMessage } from "../../Slices/snackbarSlice";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -65,6 +72,7 @@ const CreateCompanyGoalView = () => {
     [companyUsers]
   );
   const [draftGoal, setDraftGoal] = useState<CompanyGoalType | null>(null);
+  const [emailOnCreate, setEmailOnCreate] = useState(true);
   const [goalAssignments, setGoalAssignments] = useState<GoalAssignmentType[]>(
     []
   );
@@ -305,7 +313,11 @@ const CreateCompanyGoalView = () => {
       accountScope,
     });
 
-    const newGoal: CompanyGoalType = {
+    const newGoal: CompanyGoalType & {
+      notifications?: {
+        emailOnCreate: boolean;
+      };
+    } = {
       companyId,
       goalTitle,
       targetRole: assigneeType,
@@ -317,6 +329,11 @@ const CreateCompanyGoalView = () => {
       createdAt: new Date().toISOString(),
       deleted: false,
       goalAssignments: finalAssignments,
+
+      notifications: {
+        emailOnCreate,
+      },
+
       ...(enforcePerUserQuota && perUserQuota
         ? { perUserQuota: Number(perUserQuota) }
         : {}),
@@ -362,7 +379,10 @@ const CreateCompanyGoalView = () => {
         // ---------------------------------------------
         // 🔥 Send goal.assignment events to each assignee
         // ---------------------------------------------
-        if (createdGoal.goalAssignments && createdGoal.goalAssignments?.length > 0) {
+        if (
+          createdGoal.goalAssignments &&
+          createdGoal.goalAssignments?.length > 0
+        ) {
           const targetUserIds = Array.from(
             new Set(createdGoal.goalAssignments.map((a) => a.uid))
           );
@@ -383,7 +403,13 @@ const CreateCompanyGoalView = () => {
           }
         }
 
-        alert("Goal created!");
+        dispatch(
+          showMessage({
+            text: "Goal created successfully",
+            severity: "success",
+          })
+        );
+
         setGoalTitle("");
         setGoalDescription("");
         setGoalMetric("");
@@ -392,15 +418,28 @@ const CreateCompanyGoalView = () => {
         setGoalEndDate("");
         // setSelectedAccounts([]);
       } else {
-        alert(`Error: ${result.payload}`);
+        dispatch(
+          showMessage({
+            text: result.payload
+              ? `Failed to create goal: ${result.payload}`
+              : "Failed to create goal",
+            severity: "error",
+          })
+        );
       }
     } catch (err) {
       console.error("Goal creation error:", err);
-      alert("Something went wrong.");
+      dispatch(
+        showMessage({
+          text: "Something went wrong while creating the goal.",
+          severity: "error",
+        })
+      );
     } finally {
       setIsSaving(false);
       setShowConfirmModal(false);
       setDraftGoal(null);
+      setEmailOnCreate(true);
     }
   };
 
@@ -628,7 +667,7 @@ const CreateCompanyGoalView = () => {
             )}
 
             <GoalAssignmentsSection
-              readyForCreation={readyForCreation} // Type 'string | boolean' is not assignable to type 'boolean'
+              readyForCreation={readyForCreation}
               accountScope={accountScope}
               goalAssignments={goalAssignments}
               setGoalAssignments={setGoalAssignments}
@@ -693,6 +732,19 @@ const CreateCompanyGoalView = () => {
                     period.
                   </Typography>
                 )}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={emailOnCreate}
+                      onChange={(e) => setEmailOnCreate(e.target.checked)}
+                    />
+                  }
+                  label="Email assigned users about this goal"
+                />
+
+                <Typography variant="caption" color="textSecondary">
+                  Required operational email. Users cannot opt out.
+                </Typography>
 
                 <Box display="flex" justifyContent="flex-end" mt={2}>
                   <button className="button-primary" onClick={handleCreateGoal}>
@@ -712,6 +764,8 @@ const CreateCompanyGoalView = () => {
         affectedAccountsCount={affectedAccountsCount}
         affectedSalesCount={affectedSalesCount}
         affectedSupervisorsCount={affectedSupervisorsCount}
+        emailOnCreate={emailOnCreate}
+        setEmailOnCreate={setEmailOnCreate}
       />
     </Container>
   );

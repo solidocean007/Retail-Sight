@@ -8,6 +8,12 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../utils/firebase";
 
+/**
+ * User notification preferences.
+ * These settings DO NOT affect required / transactional emails
+ * such as goal assignments or access changes.
+ */
+
 // --------------------------------------------------
 // Firestore Document Shape
 // --------------------------------------------------
@@ -15,14 +21,14 @@ export interface UserNotificationSettings {
   likes: boolean;
   comments: boolean;
   commentLikes: boolean;
-  goalAssignments: boolean;
+  goalAssignmentPush: boolean;
   supervisorDisplayAlerts: boolean;
   developerAnnouncements: boolean;
 
   // optional future expansion
   quietHours?: {
     start: string; // "21:00"
-    end: string;   // "07:00"
+    end: string; // "07:00"
   };
 }
 
@@ -31,7 +37,7 @@ export const defaultNotificationSettings: UserNotificationSettings = {
   likes: true,
   comments: true,
   commentLikes: true,
-  goalAssignments: true,
+  goalAssignmentPush: true,
   supervisorDisplayAlerts: true,
   developerAnnouncements: true,
 };
@@ -56,10 +62,15 @@ export function useUserNotificationSettings() {
 
     if (!snap.exists()) {
       // initialize with defaults
-      await setDoc(ref, {
-        ...defaultNotificationSettings,
-        createdAt: serverTimestamp(),
-      });
+      await setDoc(
+        ref,
+        {
+          ...defaultNotificationSettings,
+          createdAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
       setSettings(defaultNotificationSettings);
     } else {
       setSettings(snap.data() as UserNotificationSettings);
@@ -68,18 +79,26 @@ export function useUserNotificationSettings() {
     setLoading(false);
   }, []);
 
-  // Save a single setting field
+  const ALLOWED_KEYS: (keyof UserNotificationSettings)[] = [
+    "likes",
+    "comments",
+    "commentLikes",
+    "goalAssignmentPush",
+    "supervisorDisplayAlerts",
+    "developerAnnouncements",
+  ];
+
   const updateSetting = useCallback(
-    async (key: keyof UserNotificationSettings, value: any) => {
+    async (key: keyof UserNotificationSettings, value: boolean) => {
+      if (!ALLOWED_KEYS.includes(key)) return;
+
       const current = auth.currentUser;
       if (!current) return;
 
       const ref = doc(db, `users/${current.uid}/notificationSettings/settings`);
-
       await updateDoc(ref, { [key]: value });
-      setSettings((prev) =>
-        prev ? { ...prev, [key]: value } : prev
-      );
+
+      setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
     },
     []
   );

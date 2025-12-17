@@ -141,6 +141,7 @@ export const onPendingNewUserAndCompanyInviteCreate = onDocumentCreated(
     // WRITE EMAIL JOB — this triggers your existing email system
     await db.collection("mail").add({
       to: email,
+      category: "transactional",
       message: {
         subject,
         html,

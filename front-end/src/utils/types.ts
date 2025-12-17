@@ -1,9 +1,4 @@
-// export type TPhoneInputState = [string, string, string]; // going to change this to one string
-
 import { serverTimestamp, Timestamp } from "firebase/firestore";
-import { FieldValue } from "react-hook-form";
-// import { ChannelType } from "../components/Create-Post/ChannelSelector";
-// import { CategoryType } from "../components/Create-Post/CategorySelector";
 export type NotificationAudienceType = "user" | "company" | "role" | "global";
 
 export type NotificationCategory =
@@ -65,7 +60,12 @@ export interface CompanyAddons {
 }
 
 // Existing
-export type PlanName = "free" | "team" | "network" | "enterprise" | "healy_plan";
+export type PlanName =
+  | "free"
+  | "team"
+  | "network"
+  | "enterprise"
+  | "healy_plan";
 
 // 🧩 Full plan definition
 export interface PlanType {
@@ -573,6 +573,20 @@ export interface GoalAssignmentType {
   accountNumber: string;
 }
 
+export type GoalNotificationConfig = {
+  /**
+   * If true, send a required transactional email
+   * to assigned users when the goal is created.
+   */
+  emailOnCreate?: boolean;
+};
+
+export type GoalAcknowledgment = {
+  uid: string;
+  acknowledgedAt: string; // ISO
+  source: "email" | "app";
+};
+
 export type CompanyGoalType = {
   companyId: string;
   goalTitle: string;
@@ -591,6 +605,9 @@ export type CompanyGoalType = {
   goalAssignments?: GoalAssignmentType[];
   perUserQuota?: number; // ✅ Minimum required submissions per user (if defined)
   submittedPosts?: GoalSubmissionType[];
+  // 🔔 NEW — notification intent (policy lives elsewhere)
+  notifications?: GoalNotificationConfig;
+  acknowledgments?: GoalAcknowledgment[];
   deleted: boolean;
 };
 

@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Tooltip, Typography, Button, Collapse, Box } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, updateDoc } from "firebase/firestore";
 import { CompanyGoalWithIdType } from "../../utils/types";
 import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import { selectUser } from "../../Slices/userSlice";

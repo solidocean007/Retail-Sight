@@ -10,6 +10,7 @@ import {
   Table,
   TableHead,
   TableBody,
+  Checkbox,
 } from "@mui/material";
 import {
   CompanyAccountType,
@@ -52,7 +53,7 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
   const [showUnassigned, setShowUnassigned] = useState(false);
 
   // Build a map: userUid -> count of accounts assigned
-  const userAssignmentCounts = useMemo(() => {
+  const userAssignmentCounts = useMemo(() => { // unused
     const map = new Map<string, number>();
     assignments.forEach((g) => {
       map.set(g.uid, (map.get(g.uid) || 0) + 1);
@@ -190,6 +191,8 @@ const AssignmentsPreview: React.FC<AssignmentsPreviewProps> = ({
               >
                 <div className="user-header">
                   <span className="user-name">{u.name}</span>
+                  <span className="user-email">{u.email}</span>
+                  {/* checkbox for sending an email on goal created */}
                   <span className="user-count">
                     {u.count} {u.count === 1 ? "account" : "accounts"}
                   </span>

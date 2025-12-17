@@ -95,6 +95,7 @@ export const approveAccessRequest = onCall(async (request) => {
 
   await db.collection("mail").add({
     to: reqData.workEmail,
+    category: "transactional",
     message: {
       subject: "🎉 Your Displaygram Access Has Been Approved",
       text: `Hi ${reqData.firstName},

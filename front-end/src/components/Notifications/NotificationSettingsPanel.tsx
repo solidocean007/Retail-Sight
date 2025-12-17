@@ -110,9 +110,9 @@ const NotificationSettingsPanel = () => {
 
       <SettingSwitch
         icon={<FlagIcon className="notif-icon" />}
-        label="New Goal Assignments"
-        value={settings.goalAssignments}
-        onChange={(v) => updateSetting("goalAssignments", v)}
+        label="Goal Assignment Notifications"
+        value={settings.goalAssignmentPush}
+        onChange={(v) => updateSetting("goalAssignmentPush", v)}
       />
 
       {/* Supervisor */}

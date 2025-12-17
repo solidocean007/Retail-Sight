@@ -12,11 +12,20 @@ import {
 import { db } from "../utils/firebase";
 import { CompanyGoalType, GoalAssignmentType, UserType } from "../utils/types";
 
+type GoalWithNotifications = CompanyGoalType & {
+  notifications?: {
+    emailOnCreate?: boolean;
+  };
+};
+
 // ✅ Create new goal
 export const createCompanyGoalInFirestore = createAsyncThunk(
   "companyGoals/create",
   async (
-    { goal, currentUser }: { goal: CompanyGoalType; currentUser: UserType },
+    {
+      goal,
+      currentUser,
+    }: { goal: GoalWithNotifications; currentUser: UserType },
     thunkAPI
   ) => {
     if (!goal.companyId) {
@@ -32,8 +41,54 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
         createdByFirstName: currentUser.firstName,
         createdByLastName: currentUser.lastName,
       });
+      // --------------------------------------------------
+      // 📧 Transactional email: goal created
+      // --------------------------------------------------
+      if (goal.notifications?.emailOnCreate && goal.goalAssignments?.length) {
+        const uniqueUserIds = Array.from(
+          new Set(goal.goalAssignments.map((a) => a.uid))
+        );
+
+        for (const uid of uniqueUserIds) {
+          const userSnap = await getDoc(doc(db, "users", uid));
+          if (!userSnap.exists()) continue;
+
+          const user = userSnap.data() as UserType;
+          if (!user.email) continue;
+
+          await addDoc(collection(db, "mail"), {
+            to: user.email,
+            from: "support@displaygram.com",
+            category: "transactional",
+
+            message: {
+              subject: `🎯 New Goal Assigned: ${goal.goalTitle}`,
+              text: `You have been assigned a new goal.\n\n${goal.goalTitle}\n\n${goal.goalDescription}`,
+              html: `
+          <div style="font-family: sans-serif; font-size: 15px; color: #333;">
+            <p>You have been assigned a new goal:</p>
+            <h3>${goal.goalTitle}</h3>
+            <p>${goal.goalDescription}</p>
+            <p>
+              <strong>Start:</strong> ${goal.goalStartDate}<br/>
+              <strong>End:</strong> ${goal.goalEndDate}
+            </p>
+          </div>
+        `,
+            },
+
+            goalId: goalRef.id,
+            companyId: goal.companyId,
+            createdAt: serverTimestamp(),
+          });
+        }
+      }
+
       console.log("✅ Goal created with ID:", goalRef.id);
-      return { id: goalRef.id, ...goal };
+      return {
+        ...goal,
+        id: goalRef.id,
+      };
     } catch (err: any) {
       console.error("❌ Error creating goal:", err);
       return thunkAPI.rejectWithValue(err.message);

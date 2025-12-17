@@ -117,6 +117,7 @@ export const createInviteAndEmail = onCall<CreateInvitePayload>(async (req) => {
   // 🔹 Send email
   await db.collection("mail").add({
     to: emailLower,
+    category: "transactional",
     from: "support@displaygram.com",
     replyTo: inviter.email ?? undefined,
     message: {

@@ -40,6 +40,7 @@ export const rejectAccessRequest = onCall(async (request) => {
   const appDomain = process.env.APP_DOMAIN || "https://displaygram.com";
   await db.collection("mail").add({
     to: data.workEmail,
+    category: "transactional",
     message: {
       subject: `Update on your Displaygram request for "${data.companyName}"`,
       text: `Hi ${data.firstName},

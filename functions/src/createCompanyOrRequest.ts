@@ -85,6 +85,7 @@ export const createCompanyOrRequest = onCall(async (request) => {
       // Notify admin about the new join request
       await db.collection("mail").add({
         to: "support@displaygram.com",
+        category: "transactional",
         from: "support@displaygram.com",
         replyTo: "support@displaygram.com",
         message: {
@@ -103,6 +104,7 @@ export const createCompanyOrRequest = onCall(async (request) => {
       // Confirmation email to requester
       await db.collection("mail").add({
         to: workEmail,
+        category: "transactional",
         from: "support@displaygram.com",
         replyTo: "support@displaygram.com",
         message: {
@@ -139,6 +141,7 @@ We’ll review your company (${companyName}) and notify you once approved.`,
     // Confirmation email to requester
     await db.collection("mail").add({
       to: workEmail,
+      category: "transactional",
       from: "support@displaygram.com",
       replyTo: "support@displaygram.com",
       message: {
@@ -158,6 +161,7 @@ We’ll review your company (${companyName}) and notify you once approved.`,
     // Notification email to admin
     await db.collection("mail").add({
       to: "support@displaygram.com",
+      category: "transactional",
       from: "support@displaygram.com",
       replyTo: "support@displaygram.com",
       message: {
