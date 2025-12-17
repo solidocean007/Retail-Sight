@@ -34,6 +34,7 @@ import {
   galloFetchAccounts,
   galloFetchGoals,
 } from "./galloKeys/gallo";
+import { analyzePostImages } from "./analyzePostImages";
 
 // 🧾 Braintree Billing System
 import {
@@ -117,4 +118,5 @@ export {
   sendNotificationToUser,
   supervisorDisplayAlert,
   sendTestPush,
+  analyzePostImages,
 };

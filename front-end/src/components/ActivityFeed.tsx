@@ -42,28 +42,28 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import FeedSkeleton from "./FeedSkeleton";
 import { setFeedReady } from "../Slices/appSlice";
 import { getMemoizedImageSet } from "../utils/PostLogic/getMemoizedImageSet";
-import { derivePostImageVariants, ImageVariants } from "../utils/PostLogic/derivePostImageVariants";
+import { derivePostImageVariants } from "../utils/PostLogic/derivePostImageVariants";
 
 const POSTS_BATCH_SIZE = 5;
 
-export type ResolvedPostImages = {
-  feed: string | null;
-  modal: string | null;
-};
+// export type ResolvedPostImages = {
+//   feed: string | null;
+//   modal: string | null;
+// };
 
-export function resolveFeedImage(
-  v: ImageVariants
-): string | null {
-  return v.p800 || v.p1200 || v.p200 || null;
-}
+// export function resolveFeedImage(
+//   v: ImageVariants
+// ): string | null {
+//   return v.p800 || v.p1200 || v.p200 || null;
+// }
 
-export function resolveModalImageChain(
-  v: ImageVariants
-): string[] {
-  if (v.p1200 && v.original) return [v.p1200, v.original];
-  if (v.p800 && v.original) return [v.p800, v.original];
-  return [v.original || v.p1200 || v.p800].filter(Boolean) as string[];
-}
+// export function resolveModalImageChain(
+//   v: ImageVariants
+// ): string[] {
+//   if (v.p1200 && v.original) return [v.p1200, v.original];
+//   if (v.p800 && v.original) return [v.p800, v.original];
+//   return [v.original || v.p1200 || v.p800].filter(Boolean) as string[];
+// }
 
 export type FeedImageSet = {
   feedSrc: string | null;
@@ -204,20 +204,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   }, [postIdToScroll, displayPosts]);
 
   
-const computedImages = useMemo<
-  { id: string; image: FeedImageSet }[]
->(() => {
-  return displayPosts.map((post) => {
-    const variants = derivePostImageVariants(post);
-    return {
-      id: post.id,
-      image: {
-        feedSrc: resolveFeedImage(variants),
-        modalChain: resolveModalImageChain(variants),
-      },
-    };
-  });
+const computedImages = useMemo(() => {
+  return displayPosts.map((post) => ({
+    id: post.id,
+    imageSet: derivePostImageVariants(post), // Argument of type 'PostWithID' is not assignable to parameter of type '{ imageUrl?: string | undefined; originalImageUrl?: string | undefined; displayDate?: Date | { toDate: () => Date; } | undefined; }'.
+  // Types of property 'displayDate' are incompatible.
+    // Type 'string' is not assignable to type 'Date | { toDate: () => Date; } | undefined'.ts(2345)
+  }));
 }, [displayPosts]);
+
 
 
 
@@ -302,7 +297,7 @@ const computedImages = useMemo<
           defaultItemHeight={420}
           itemContent={(index, post) => {
             if (!post?.id) return null;
-            const itemImage = computedImages[index]?.image;
+            const itemImages = computedImages[index].imageSet;
 
 
             return (
@@ -312,8 +307,7 @@ const computedImages = useMemo<
                 // style={{ minHeight: 300 }}
               >
                 <PostCardRenderer
-                  isScrolling={isScrolling}
-                  imageSet={itemImage} // Property 'itemImages' is missing in type '{ small: string[]; medium: string[]; original: string[]; }' but required in type 'ImageSetType'
+                  imageSet={itemImages} // Property 'feedSrc' is missing in type 'ImageVariants' but required in type 'FeedImageSet'.
                   currentUserUid={currentUser?.uid}
                   index={index}
                   style={{ height: "100%" }}

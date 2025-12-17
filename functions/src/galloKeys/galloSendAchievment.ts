@@ -1,6 +1,13 @@
 import { onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 
+/**
+ * Fetches the Gallo API configuration for a company.
+ *
+ * @param companyId Firestore company ID
+ * @returns Gallo configuration object
+ * @throws If no Gallo config exists
+ */
 async function getGalloConfig(companyId: string) {
   const snap = await admin.firestore().doc(`apiKeys/${companyId}`).get();
   const gallo = snap.data()?.gallo;
