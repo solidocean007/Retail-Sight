@@ -26,7 +26,7 @@ import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import {
   mergeAndSetPosts,
   selectPostsInitialLoaded,
-  selectPostsLoading,
+  // selectPostsLoading,
 } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import NoResults from "./NoResults";
@@ -35,41 +35,21 @@ import NoResults from "./NoResults";
 //   getFilterHash,
 //   getFilterSummaryText,
 // } from "./FilterSideBar/utils/filterUtils";
-import { PostQueryFilters } from "../utils/types";
+import { PostQueryFilters, PostWithID } from "../utils/types";
 import { normalizePost } from "../utils/normalize";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import FeedSkeleton from "./FeedSkeleton";
 import { setFeedReady } from "../Slices/appSlice";
-import { getMemoizedImageSet } from "../utils/PostLogic/getMemoizedImageSet";
+// import { getMemoizedImageSet } from "../utils/PostLogic/getMemoizedImageSet";
 import { derivePostImageVariants } from "../utils/PostLogic/derivePostImageVariants";
 
 const POSTS_BATCH_SIZE = 5;
-
-// export type ResolvedPostImages = {
-//   feed: string | null;
-//   modal: string | null;
-// };
-
-// export function resolveFeedImage(
-//   v: ImageVariants
-// ): string | null {
-//   return v.p800 || v.p1200 || v.p200 || null;
-// }
-
-// export function resolveModalImageChain(
-//   v: ImageVariants
-// ): string[] {
-//   if (v.p1200 && v.original) return [v.p1200, v.original];
-//   if (v.p800 && v.original) return [v.p800, v.original];
-//   return [v.original || v.p1200 || v.p800].filter(Boolean) as string[];
-// }
 
 export type FeedImageSet = {
   feedSrc: string | null;
   modalChain: string[];
 };
-
 
 interface ActivityFeedProps {
   virtuosoRef: React.RefObject<VirtuosoHandle>;
@@ -103,29 +83,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const initialLoaded = useSelector(selectPostsInitialLoaded);
-  const loading = useSelector(selectPostsLoading);
-
   const [showLoader, setShowLoader] = useState(false);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
-  let scrollTimeout = useRef<any>(null);
-
-  const filteredCount = useSelector(
-    (s: RootState) => s.posts.filteredPostCount
-  );
   const rawPosts = useSelector((state: RootState) => state.posts.posts);
-  // console.log('rawPosts: ', rawPosts)
   const filteredPosts = useSelector(
     (state: RootState) => state.posts.filteredPosts
   );
   const displayPosts = useMemo(() => {
     return activeCompanyPostSet === "filteredPosts" ? filteredPosts : rawPosts;
   }, [activeCompanyPostSet, filteredPosts, rawPosts]);
-
-  // useScrollToPost(listRef, displayPosts, AD_INTERVAL);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const currentUserCompanyId = currentUser?.companyId;
-  // hook to load posts
   const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -140,7 +107,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     });
   };
 
-  // this should only be responsible for scrolling to the top on a activePostsSet change
   const prevActivePostSet = useRef(activeCompanyPostSet);
   useEffect(() => {
     if (activeCompanyPostSet !== prevActivePostSet.current) {
@@ -161,15 +127,17 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const hasAutoScrolled = useRef(false);
 
   const handlePostVisible = useCallback(
-    (id: string, idx: number) => {
+    (id: string) => {
       if (hasAutoScrolled.current || id !== postIdToScroll) return;
-      if (virtuosoRef.current) {
-        virtuosoRef.current.scrollToIndex({ index: idx, align: "start" });
-        setPostIdToScroll(null);
-        hasAutoScrolled.current = true;
-      }
+
+      const idx = displayPosts.findIndex((p) => p.id === id);
+      if (idx === -1) return;
+
+      virtuosoRef.current?.scrollToIndex({ index: idx, align: "start" });
+      setPostIdToScroll(null);
+      hasAutoScrolled.current = true;
     },
-    [postIdToScroll]
+    [postIdToScroll, displayPosts]
   );
 
   useEffect(() => {
@@ -203,52 +171,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => clearTimeout(timeout);
   }, [postIdToScroll, displayPosts]);
 
-  
-const computedImages = useMemo(() => {
-  return displayPosts.map((post) => ({
-    id: post.id,
-    imageSet: derivePostImageVariants(post), // Argument of type 'PostWithID' is not assignable to parameter of type '{ imageUrl?: string | undefined; originalImageUrl?: string | undefined; displayDate?: Date | { toDate: () => Date; } | undefined; }'.
-  // Types of property 'displayDate' are incompatible.
-    // Type 'string' is not assignable to type 'Date | { toDate: () => Date; } | undefined'.ts(2345)
-  }));
-}, [displayPosts]);
-
-
-
-
-
-  // useEffect(() => {
-  //   if (!computedImages.length) return;
-
-  //   const sample = computedImages.slice(0, 5); // preload first 5 posts
-
-  //   sample.forEach(({ images }) => {
-  //     const url = images.small[0] || images.medium[0];
-  //     if (!url) return;
-
-  //     const img = new Image();
-  //     img.src = url;
-  //   });
-  // }, [computedImages]);
-
-  const scrollerRefCallback = useCallback(
-    (ref: HTMLElement | Window | null) => {
-      if (!ref || !(ref instanceof HTMLElement)) return;
-
-      const onScroll = (e: Event) => {
-        const el = e.target as HTMLElement;
-
-        // show scroll-to-top button
-        setShowScrollTop(el.scrollTop > 4000);
-
-        // mark scrolling
-        setIsScrolling(true);
-        clearTimeout(scrollTimeout.current);
-        scrollTimeout.current = setTimeout(() => setIsScrolling(false), 120);
-      };
-
-      ref.addEventListener("scroll", onScroll);
-    },
+  const getImageSet = useCallback(
+    (post: PostWithID) => derivePostImageVariants(post),
     []
   );
 
@@ -295,21 +219,14 @@ const computedImages = useMemo(() => {
           data={displayPosts}
           computeItemKey={(_, post) => post.id} // 🔥 stable keys
           defaultItemHeight={420}
-          itemContent={(index, post) => {
+          itemContent={(_, post) => {
             if (!post?.id) return null;
-            const itemImages = computedImages[index].imageSet;
-
 
             return (
-              <div
-                key={post.id}
-                className="post-card-renderer-container"
-                // style={{ minHeight: 300 }}
-              >
+              <div className="post-card-renderer-container">
                 <PostCardRenderer
-                  imageSet={itemImages} // Property 'feedSrc' is missing in type 'ImageVariants' but required in type 'FeedImageSet'.
+                  imageSet={derivePostImageVariants(post)}
                   currentUserUid={currentUser?.uid}
-                  index={index}
                   style={{ height: "100%" }}
                   data={{ post, getPostsByTag, getPostsByStarTag }}
                   setCurrentHashtag={setCurrentHashtag}
@@ -358,7 +275,6 @@ const computedImages = useMemo(() => {
           }
           components={{
             Footer: () => {
-              // 🔹 Show animation during fetches
               if (loadingMore) {
                 return (
                   <div
@@ -379,7 +295,6 @@ const computedImages = useMemo(() => {
                 );
               }
 
-              // 🔹 Only show footer text if filters are active
               if (activeCompanyPostSet === "filteredPosts" && !hasMore) {
                 return (
                   <div
@@ -398,10 +313,10 @@ const computedImages = useMemo(() => {
               return null;
             },
           }}
-          scrollerRef={scrollerRefCallback}
+          // scrollerRef={scrollerRefCallback}
         />
       )}
-      {showScrollTop && !showLoader && (
+      {!showLoader && (
         <button
           className="scroll-to-top-btn"
           aria-label="Scroll to top"

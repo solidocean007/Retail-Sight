@@ -9,10 +9,8 @@ export type FeedImageSet = {
 };
 
 interface PostCardRendererProps {
-  // isScrolling: boolean;
   imageSet: FeedImageSet;
   currentUserUid?: string;
-  index: number;
   style: React.CSSProperties;
   data: {
     post: PostWithID;
@@ -28,13 +26,12 @@ interface PostCardRendererProps {
   >;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   postIdToScroll?: string | null;
-  onPostVisible?: (postId: string, index: number) => void;
+  onPostVisible?: (postId: string) => void;
 }
 
 const PostCardRenderer: React.FC<PostCardRendererProps> = ({
   imageSet,
   currentUserUid,
-  index,
   style,
   data: { post, getPostsByTag, getPostsByStarTag },
   setCurrentHashtag,
@@ -52,26 +49,17 @@ const PostCardRenderer: React.FC<PostCardRendererProps> = ({
       return;
 
     const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && onPostVisible) {
-            onPostVisible(post.id, index); // Let parent know it’s visible
-          }
-          // console.log("Observed entry:", post.id, entry.isIntersecting);
-        });
+      ([entry]) => {
+        if (entry.isIntersecting && onPostVisible) {
+          onPostVisible(post.id);
+        }
       },
-      {
-        root: null,
-        threshold: 0.5, // Or 1.0 for stricter matching
-      }
+      { threshold: 0.5 }
     );
 
     observer.observe(cardRef.current);
-
-    return () => {
-      if (cardRef.current) observer.unobserve(cardRef.current);
-    };
-  }, [postIdToScroll, post.id, index, onPostVisible]);
+    return () => observer.disconnect();
+  }, [postIdToScroll, post.id, onPostVisible]);
 
   return (
     <div className="memoized-post-card" ref={cardRef}>
