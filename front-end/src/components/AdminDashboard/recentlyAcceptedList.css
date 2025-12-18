@@ -1,0 +1,65 @@
+.recent-accepted {
+  margin-bottom: 1rem;
+}
+
+.recent-accepted h4 {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+}
+
+.recent-accepted-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-accepted-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  box-shadow: var(--card-shadow);
+  animation: slideFadeIn 280ms ease-out both;
+}
+
+.recent-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.recent-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+}
+
+.recent-meta span {
+  color: var(--text-muted);
+}
+
+.recent-role {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

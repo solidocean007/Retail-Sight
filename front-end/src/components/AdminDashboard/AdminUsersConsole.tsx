@@ -70,6 +70,22 @@ import { useAppDispatch } from "../../utils/store";
 import { normalizeFirestoreData } from "../../utils/normalize";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
+import { RecentlyAcceptedList } from "./RecentlyAcceptedList";
+
+function NoPendingInvitesOverlay() {
+  return (
+    <div
+      style={{
+        padding: "1.5rem",
+        textAlign: "center",
+        color: "var(--text-muted)",
+        fontSize: "0.9rem",
+      }}
+    >
+      🎉 No pending invites
+    </div>
+  );
+}
 
 export interface InviteRow {
   id: string;
@@ -113,8 +129,50 @@ export default function AdminUsersConsole() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
   const [invites, setInvites] = useState<InviteRow[]>([]);
-
   const companyId = useSelector(selectUser)?.companyId;
+
+  const RECENT_DAYS = 70
+  ;
+
+  const recentlyAcceptedInvites = useMemo(() => {
+    const now = Date.now();
+
+    return localUsers
+      .filter((u) => {
+        if (!u.email || !u.createdAt) return false;
+
+        const wasInvited = invites.some(
+          (i) => i.email.toLowerCase() === u.email!.toLowerCase()
+        );
+        if (!wasInvited) return false;
+
+        const created =
+          typeof u.createdAt === "string"
+            ? new Date(u.createdAt).getTime()
+            : u.createdAt?.toDate?.().getTime?.();
+
+        if (!created) return false;
+
+        const ageDays = (now - created) / (1000 * 60 * 60 * 24);
+        return ageDays <= RECENT_DAYS;
+      })
+      .sort((a, b) => {
+        const aTime = new Date(a.createdAt as any).getTime();
+        const bTime = new Date(b.createdAt as any).getTime();
+        return bTime - aTime;
+      });
+  }, [localUsers, invites]);
+
+  const pendingInvites = useMemo(() => {
+    const userEmails = new Set(
+      localUsers.map((u) => u.email?.toLowerCase()).filter(Boolean)
+    );
+
+    return invites.filter(
+      (invite) => !userEmails.has(invite.email.toLowerCase())
+    );
+  }, [invites, localUsers]);
+
   useEffect(() => {
     const fetchUserLimit = async () => {
       if (!companyId) return;
@@ -591,7 +649,7 @@ export default function AdminUsersConsole() {
           <Tab label="Users" />
           <Tab
             label={`Pending Invites${
-              invites.length ? ` (${invites.length})` : ""
+              pendingInvites.length ? ` (${pendingInvites.length})` : ""
             }`}
           />
         </Tabs>
@@ -628,7 +686,7 @@ export default function AdminUsersConsole() {
               {limitLoading
                 ? "Checking available slots..."
                 : userLimitInfo.remaining > 0
-                ? `${userLimitInfo.used}/${userLimitInfo.planLimit} users used (${userLimitInfo.remaining} remaining)`
+                ? `${userLimitInfo.used}/${userLimitInfo.planLimit} users (${userLimitInfo.remaining} remaining)`
                 : `User limit reached (${userLimitInfo.planLimit} plan limit)`}
             </div>
           )}
@@ -734,6 +792,7 @@ export default function AdminUsersConsole() {
           sx={{ p: 1.5, bgcolor: "var(--dashboard-card)", borderRadius: 3 }}
         >
           <Stack spacing={2}>
+            <RecentlyAcceptedList users={recentlyAcceptedInvites} />
             <Accordion defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography fontWeight={600}>
@@ -778,10 +837,13 @@ export default function AdminUsersConsole() {
             <DataGrid<InviteRow>
               autoHeight
               disableRowSelectionOnClick
-              rows={invites}
+              rows={pendingInvites}
               getRowId={(r) => r.id}
               columns={inviteColumns}
               loading={loadingInvites}
+              slots={{
+                noRowsOverlay: NoPendingInvitesOverlay,
+              }}
             />
           </Stack>
         </Paper>

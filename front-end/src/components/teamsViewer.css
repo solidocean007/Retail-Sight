@@ -1,77 +1,268 @@
-.team-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem;
+.tv-wrap {
+  padding: 12px;
+  color: var(--text-color);
 }
 
-.team-title {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-  font-weight: 600;
+.tv-header {
+  text-align: center;
+  margin-bottom: 12px;
 }
 
-.teams-viewer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-  width: 100%;
-  max-width: 1400px;
-}
-
-.team-card {
-  background-color: var(--dashboard-card);
-  border-radius: 12px;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
-  padding: 1rem;
-  min-width: 250px;
-  max-width: 320px;
-  flex: 1 1 300px;
-}
-
-.team-header {
-  font-weight: 600;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-  color: var(--text-strong);
-}
-
-.team-members {
-  list-style: none;
-  padding-left: 0;
+.tv-title {
   margin: 0;
+  font-size: 1.25rem;
 }
 
-.team-member {
-  font-size: 0.95rem;
-  padding: 0.3rem 0;
-  display: flex;
-  flex-direction: column;
-  border-bottom: 1px solid var(--divider-light);
-}
-
-.team-member:last-child {
-  border-bottom: none;
-}
-
-.route-num {
-  font-size: 0.85rem;
+.tv-subtitle {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
   color: var(--text-muted);
 }
 
-.team select {
-  color: transparent;        /* Hide text */
-  text-shadow: 0 0 0 #000;   /* Force black arrow to remain */
-  background-color: white;
-  border-radius: 4px;
-  padding: 4px 8px;
-  width: 100%;
+.tv-empty {
+  margin: 18px auto;
+  max-width: 520px;
+  background: var(--surface-elevated);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--card-radius);
+  padding: 14px;
 }
 
-.unassigned-team {
-  background-color: #ffe4e1;
-  border: 1px solid #ff7f7f;
+.tv-empty-title {
+  margin: 0;
+  font-weight: 700;
 }
 
+.tv-empty-sub {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+}
+
+/* Mobile-first: stack columns */
+.tv-grid {
+  display: grid;
+  gap: 12px;
+}
+
+/* Desktop/tablet: columns */
+@media (min-width: 980px) {
+  .tv-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+/* Column card */
+.tv-col {
+  background: var(--surface-elevated);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  transform: translateZ(0);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.tv-col-unassigned {
+  border-style: dashed;
+  opacity: 0.95;
+}
+
+.tv-col-over {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18), var(--card-shadow);
+  transform: scale(1.01);
+}
+
+.tv-col-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+}
+
+.tv-col-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tv-col-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.tv-col-subtitle {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tv-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color);
+  background: var(--chip-bg-color);
+}
+
+.tv-drop-hint {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  animation: tvPulse 600ms ease-in-out infinite alternate;
+}
+
+@keyframes tvPulse {
+  from { opacity: 0.55; transform: translateY(0); }
+  to { opacity: 1; transform: translateY(-1px); }
+}
+
+.tv-col-body {
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.tv-col-empty {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.04);
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* Employee card (draggable) */
+.tv-emp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--dashboard-card, var(--surface-elevated));
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  cursor: grab;
+  user-select: none;
+  touch-action: none; /* important for mobile drag */
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.tv-emp:active {
+  cursor: grabbing;
+}
+
+.tv-emp:hover {
+  border-color: rgba(59,130,246,0.55);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+.tv-emp-compact {
+  padding: 8px 10px;
+}
+
+.tv-emp-dragging {
+  border-color: var(--primary-blue);
+}
+
+.tv-emp-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--primary-blue);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  flex: 0 0 auto;
+}
+
+.tv-emp-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.tv-emp-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tv-emp-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.tv-emp-email {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.tv-dot {
+  opacity: 0.6;
+}
+
+.tv-row {
+  position: relative;
+}
+
+.tv-saving {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Drag overlay (snap feel) */
+.tv-overlay {
+  transform: translateZ(0);
+  animation: tvOverlayPop 120ms ease-out;
+}
+
+@keyframes tvOverlayPop {
+  from { transform: scale(0.98); opacity: 0.7; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.tv-role-badge {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-muted);
+}
+
+.tv-role-super-admin,
+.tv-role-developer {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.tv-role-admin {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+}
 
