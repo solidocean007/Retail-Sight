@@ -38,11 +38,23 @@ function AppContent() {
 
   const theme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
   const location = useLocation();
-  const isSplashPage = location.pathname === "/";
 
-  useAppBootstrap();
+  const PUBLIC_ROUTES = new Set([
+    "/",
+    "/about",
+    "/privacy-policy",
+    "/terms-service",
+    "/cookies",
+    "/contact-us",
+    "/help-support",
+  ]);
+  const isPublicRoute = PUBLIC_ROUTES.has(location.pathname);
+
+  useAppBootstrap({ enabled: !isPublicRoute });
+
 
   // Theme initialization
+
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
     if (storedTheme) {
@@ -55,15 +67,7 @@ function AppContent() {
   }, [isDarkMode]);
 
   // Only global-blocking conditions
-  const showAppLoader = !isSplashPage && (initializing || !appReady);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      dispatch(setAppReady(true));
-    }, 8000);
-
-    return () => clearTimeout(timeout);
-  }, []);
+  const showAppLoader = !isPublicRoute && (initializing || !appReady);
 
   return (
     <>
@@ -78,12 +82,12 @@ function AppContent() {
           <ThemeProvider theme={theme}>
             <CssBaseline />
 
-            {!isSplashPage && <ThemeToggle />}
+            {!isPublicRoute && <ThemeToggle />}
 
             {/* Main layout frame */}
             <div className="page-layout-frame">
               <AppRoutes />
-              {!isSplashPage && <Footer />}
+              {!isPublicRoute && <Footer />}
             </div>
 
             {/* Alerts */}

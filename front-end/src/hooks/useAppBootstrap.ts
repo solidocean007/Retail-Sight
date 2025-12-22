@@ -34,7 +34,6 @@ import { useCustomAccountsSync } from "./useCustomAccountsSync";
 import { useCompanyConnectionsListener } from "./useCompanyConnectionsListener";
 import { useCompanyProductsListener } from "./useCompanyProductsListener";
 
-
 /**
  * useAppBootstrap – Option B
  * ------------------------------------------------
@@ -42,7 +41,9 @@ import { useCompanyProductsListener } from "./useCompanyProductsListener";
  * * All sync hooks run in background, never block appReady.*
  */
 
-export function useAppBootstrap() {
+export function useAppBootstrap({
+  enabled = true,
+}: { enabled?: boolean } = {}) {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
   const { isEnabled } = useIntegrations();
@@ -53,6 +54,12 @@ export function useAppBootstrap() {
   const companyId = currentUser?.companyId ?? null;
 
   const hasBootstrapped = useRef(false);
+
+  useEffect(() => {
+    if (!currentUser) {
+      hasBootstrapped.current = false;
+    }
+  }, [currentUser?.uid]);
 
   //
   // 🔄 Always call these (Rules of Hooks)
@@ -75,9 +82,7 @@ export function useAppBootstrap() {
   // 1️⃣ ESSENTIAL BOOTSTRAP ONLY
   //
   useEffect(() => {
-    if (initializing) return;
-
-    // Do not run bootstrap while auth is still settling
+    if (!enabled) return;
     if (initializing) return;
 
     // If auth has finished and no user → still don't bootstrap (public visitor)
