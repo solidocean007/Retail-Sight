@@ -1,5 +1,4 @@
 import { useSelector } from "react-redux";
-import { NavigateFunction } from "react-router-dom";
 import {
   FireStoreGalloGoalDocType,
   FirestorePostPayload,
@@ -24,7 +23,6 @@ import {
 import { showMessage } from "../../Slices/snackbarSlice";
 import { selectUser } from "../../Slices/userSlice";
 import { useAppDispatch } from "../store";
-import { sendAchievementToGalloAxis } from "../helperFunctions/sendAchievementToGalloAxis";
 import { updateGoalWithSubmission } from "../helperFunctions/updateGoalWithSubmission";
 import { addPostsToIndexedDB } from "../database/indexedDBUtils";
 import { addNewPost } from "../../Slices/postsSlice";
@@ -60,13 +58,11 @@ export const useHandlePostSubmission = () => {
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     setUploadStatusText: React.Dispatch<React.SetStateAction<string>>,
-    apiKey?: string,
     selectedGalloGoal?: FireStoreGalloGoalDocType | null
   ): Promise<PostWithID> => {
     if (!userData) throw new Error("User not authenticated");
     const user = auth.currentUser;
     if (!user) throw new Error("Auth missing");
-
     setIsUploading(true);
     setUploadStatusText("☁️ Preparing post...");
 
@@ -122,7 +118,7 @@ export const useHandlePostSubmission = () => {
         await dispatch(createManualAccountThunk(post.account));
       }
 
-      if (post.companyGoalId || post.oppId) {
+      if (post.companyGoalId || post.galloGoal?.oppId) {
         setUploadStatusText("🎯 Updating related goal...");
         await updateGoalWithSubmission(post, postId);
       }
@@ -159,22 +155,17 @@ export const useHandlePostSubmission = () => {
       await addPostsToIndexedDB([finalPost]);
 
       // ✅ 5. Optional: Gallo Axis integration
-      if (post.oppId && apiKey) {
+      if (post.galloGoal) {
         dispatch(showMessage("📤 Sending achievement to Gallo Axis..."));
-        const achievementPayload = {
-          oppId: post.oppId,
-          galloGoalTitle: post.galloGoalTitle,
-          closedBy: post.closedBy ?? user.displayName ?? "",
-          closedDate: post.closedDate || new Date().toISOString().split("T")[0],
-          closedUnits: post.totalCaseCount || "0",
-          photos: [{ file: finalImageUrl }],
-        };
+
+         const closedDate =
+    post.closedDate || new Date().toISOString().split("T")[0];
 
         await sendCF({
-          env: selectedEnv, // Cannot find name 'selectedEnv'
-          oppId: post.oppId,
+          env: post.galloGoal?.env, // Cannot find name 'selectedEnv'!!!
+          oppId: post.galloGoal.oppId,
           closedBy: post.closedBy ?? user.displayName ?? "",
-          closedDate: formattedClosedDate, // MM-DD-YYYY Cannot find name 'formattedClosedDate'
+          closedDate, // MM-DD-YYYY Cannot find name 'formattedClosedDate'!!
           closedUnits: post.totalCaseCount || "0",
           photos: [{ file: finalImageUrl }],
         });

@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  Box,
-  CircularProgress,
-  MenuItem,
-  Select,
-} from "@mui/material";
+import { Box, CircularProgress, MenuItem, Select } from "@mui/material";
 import { FireStoreGalloGoalDocType } from "../../utils/types";
 
 interface GalloGoalDropdownProps {
@@ -25,14 +20,14 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
   if (loading) {
     return <CircularProgress />;
   }
-
+  console.log("goals: ", goals);
   return (
     <Box>
       <Box mt={2}>
         <Select
           fullWidth
           variant="outlined"
-          value={selectedGoal || "no-goal"}
+          value={selectedGoal ?? ""}
           onChange={(e) => {
             const goal = goals.find(
               (g) => g.goalDetails.goalId === e.target.value
@@ -42,11 +37,12 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
           displayEmpty
           disabled={goals.length === 0}
         >
-          <MenuItem value="no-goal">
+          <MenuItem value="" disabled>
             {goals.length > 0
               ? `${goals.length} ${label} available`
               : `No ${label.toLowerCase()} available`}
           </MenuItem>
+
           {goals.map((goal) => (
             <MenuItem
               key={goal.goalDetails.goalId}
@@ -60,6 +56,5 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
     </Box>
   );
 };
-
 
 export default GalloGoalDropdown;

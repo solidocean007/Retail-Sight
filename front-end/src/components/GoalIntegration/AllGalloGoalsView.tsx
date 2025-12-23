@@ -26,6 +26,9 @@ const AllGalloGoalsView = () => {
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
 
+  console.log(" Gallo Goals: ", galloGoals); // logs empty
+
+
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
     setPostViewerOpen(true);

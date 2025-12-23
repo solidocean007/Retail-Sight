@@ -33,6 +33,7 @@ import useAllCompanyAccountsSync from "./useAllCompanyAccountsSync";
 import { useCustomAccountsSync } from "./useCustomAccountsSync";
 import { useCompanyConnectionsListener } from "./useCompanyConnectionsListener";
 import { useCompanyProductsListener } from "./useCompanyProductsListener";
+import { useGalloGoalsListener } from "./useGalloGoalsListener";
 
 /**
  * useAppBootstrap – Option B
@@ -48,6 +49,7 @@ export function useAppBootstrap({
   const { currentUser, initializing } = useFirebaseAuth();
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
+  console.log("gallo enabled: ", galloEnabled); // this logs true
 
   const appReady = useSelector((s: RootState) => s.app.appReady);
 
@@ -77,6 +79,9 @@ export function useAppBootstrap({
   );
   useCustomAccountsSync();
   useCompanyConnectionsListener();
+
+  // ✅ ADD THIS HERE (top-level, not inside useEffect)
+  useGalloGoalsListener(companyId, galloEnabled);
 
   //
   // 1️⃣ ESSENTIAL BOOTSTRAP ONLY
@@ -121,10 +126,6 @@ export function useAppBootstrap({
           dispatch(setupNotificationListenersForUser(currentUser));
           dispatch(setupNotificationListenersForCompany(currentUser));
           dispatch(setupCompanyGoalsListener(companyId));
-
-          if (galloEnabled) {
-            dispatch(setupGalloGoalsListener(companyId));
-          }
         }
 
         // STEP 4 — READY ✔

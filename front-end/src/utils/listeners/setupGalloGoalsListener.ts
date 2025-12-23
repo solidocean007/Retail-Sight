@@ -11,6 +11,7 @@ import { normalizeFirestoreData } from "../normalize"; // ✅ Add this
 
 export const setupGalloGoalsListener =
   (companyId: string) => (dispatch: any) => {
+    console.log('setting up gallo goals listener"') // this doestn log
     if (!companyId) {
       console.warn("Skipping Gallo goals listener: no companyId provided");
       return () => {}; // no-op unsubscribe
@@ -26,21 +27,29 @@ export const setupGalloGoalsListener =
       async (snapshot) => {
         try {
           // ✅ Deep normalize all timestamps for each document
-          const allGalloGoals = snapshot.docs.map((doc) => {
-            const normalizedData = normalizeFirestoreData(
-              doc.data()
-            ) as FireStoreGalloGoalDocType;
-            return {
-              id: doc.id,
-              ...normalizedData,
-            };
-          });
+          // const allGalloGoals = snapshot.docs.map((doc) => ({
+          //   id: doc.id,
+          //   ...(normalizeFirestoreData(
+          //     doc.data()
+          //   ) as FireStoreGalloGoalDocType),
+          // }));
 
-          // ✅ IndexedDB and Redux updates
-          await clearGoalsFromIndexedDB("galloGoals");
-          dispatch(setGalloGoals([]));
-          await saveGoalsToIndexedDB(allGalloGoals, "galloGoals");
+          const allGalloGoals = snapshot.docs
+            .map((doc) => {
+              const raw = doc.data();
+              console.log("RAW DOC", doc.id, raw);
+
+              const data = normalizeFirestoreData(doc.data());
+              if (!data?.goalDetails?.goalId) {
+                console.warn("Skipping malformed gallo goal", doc.id);
+                return null;
+              }
+              return { id: doc.id, ...data };
+            })
+            .filter(Boolean);
+
           dispatch(setGalloGoals(allGalloGoals));
+          await saveGoalsToIndexedDB(allGalloGoals, "galloGoals"); // Type '({ id: string; } | null)[]' is not assignable to type 'FireStoreGalloGoalDocType[]'
         } catch (error) {
           console.error("Error syncing Gallo goals:", error);
         }

@@ -342,9 +342,12 @@ export interface PostType {
   companyGoalDescription?: string | null;
 
   // gallo goals
-  galloGoalTitle?: string;
-  galloGoalId?: string;
-  oppId?: string;
+  galloGoal?: {
+    goalId: string;
+    title: string;
+    env: "dev" | "prod";
+    oppId?: string;
+  };
 
   // 🧾 Closure Info
   closedBy?: string | null | undefined;
@@ -374,12 +377,16 @@ export type PostInputType = {
   companyGoalTitle?: string | null;
   companyGoalDescription?: string | null;
 
-  galloGoalTitle?: string;
-  galloGoalId?: string;
+  galloGoal?: {
+    goalId: string;
+    title: string;
+    env: "dev" | "prod";
+    oppId?: string;
+  };
+
   closedBy?: string | null | undefined;
   closedDate?: string;
   closedUnits?: string | number;
-  oppId?: string;
 
   // Raw arrays (not flattened)
   hashtags?: string[];

@@ -45,7 +45,6 @@ export const CreatePost = () => {
   const companyId = userData?.companyId;
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
-  const [galloAxisApiKey, setGalloAxisApiKey] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -77,7 +76,7 @@ export const CreatePost = () => {
   const [selectedGalloGoal, setSelectedGalloGoal] =
     useState<FireStoreGalloGoalDocType | null>(null);
   const navigate = useNavigate();
-
+  
   useEffect(() => {
     setPost((prevPost) => ({
       ...prevPost,
@@ -142,7 +141,7 @@ export const CreatePost = () => {
           <PickStore
             post={post}
             setPost={setPost}
-            handleFieldChange={handleFieldChange}
+            handleFieldChange={handleFieldChange} // company goal logic uses handle field change
             setSelectedCompanyAccount={setSelectedCompanyAccount}
             setSelectedGalloGoal={setSelectedGalloGoal}
             userLocation={userLocation} // 👈 add this
@@ -202,7 +201,6 @@ export const CreatePost = () => {
 
     try {
       // 🔒 Gate gallo args right here
-      const galloApiKey = galloEnabled ? galloAxisApiKey : undefined;
       const galloGoal = galloEnabled ? selectedGalloGoal : undefined;
       const newPost = await handlePostSubmission(
         post,
@@ -210,8 +208,7 @@ export const CreatePost = () => {
         setIsUploading,
         setUploadProgress,
         setUploadStatusText,
-        galloApiKey,
-        galloGoal
+        galloGoal,
       );
       dispatch(mergeAndSetPosts([normalizePost(newPost)]));
       navigate("/user-home-page");
@@ -220,26 +217,6 @@ export const CreatePost = () => {
       alert(err.message || "An error occurred during upload.");
     }
   };
-
-  // ❗ reset apiKey if feature is turned off while component is mounted
-  useEffect(() => {
-    if (!galloEnabled && galloAxisApiKey) setGalloAxisApiKey("");
-  }, [galloEnabled, galloAxisApiKey]);
-
-  // fetch external API key only when needed (and enabled)
-  useEffect(() => {
-    // needs: feature on, company present, an oppId present, and we don't already have a key
-    if (!galloEnabled) return;
-    if (!companyId || !post.oppId) return;
-    if (galloAxisApiKey) return;
-
-    fetchExternalApiKey(companyId, "galloApiKey")
-      .then((key) => setGalloAxisApiKey(key))
-      .catch(() => {
-        console.error("Failed to fetch API key");
-        dispatch(showMessage("Failed to fetch API key."));
-      });
-  }, [galloEnabled, companyId, post.oppId, galloAxisApiKey, dispatch]);
 
   return (
     <>

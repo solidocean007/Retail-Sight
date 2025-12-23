@@ -162,6 +162,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
     selectUsersGalloGoals(state, salesRouteNum)
   );
 
+  console.log('users gallo goals: ', usersGalloGoals)
+
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
     null
   );
@@ -371,18 +373,30 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const handleGalloGoalSelection = (goal?: FireStoreGalloGoalDocType) => {
-    if (!goal) return;
-    setSelectedGalloGoalId(goal.goalDetails.goalId);
-    setSelectedGalloGoal(goal);
-    const match = goal.accounts.find(
-      (a) => a.distributorAcctId === post.account?.accountNumber
-    );
-    if (match?.oppId) {
-      handleFieldChange("oppId", match.oppId);
-      handleFieldChange("galloGoalTitle", goal.goalDetails.goal);
-      handleFieldChange("galloGoalId", goal.goalDetails.goalId);
-    }
-  };
+  if (!goal || !post.account) return;
+
+  const match = goal.accounts.find(
+    (a) => a.distributorAcctId === post.account?.accountNumber
+  );
+
+  if (!match?.oppId) {
+    dispatch(showMessage("Selected goal has no oppId for this account"));
+    return;
+  }
+
+  setSelectedGalloGoal(goal);
+
+  setPost((prev) => ({
+    ...prev,
+    galloGoal: {
+      goalId: goal.goalDetails.goalId,
+      title: goal.goalDetails.goal,
+      env: goal.goalDetails.goalEnv,
+      oppId: match.oppId,
+    },
+  }));
+};
+
 
   const handleAccountSelect = (account: CompanyAccountType) => {
     const {
