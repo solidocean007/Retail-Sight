@@ -1,5 +1,14 @@
-import React from "react";
-import { Box, CircularProgress, MenuItem, Select } from "@mui/material";
+import React, { useMemo } from "react";
+import CheckIcon from "@mui/icons-material/Check";
+import {
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  ListItemIcon,
+  ListItemText,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { FireStoreGalloGoalDocType } from "../../utils/types";
 
 interface GalloGoalDropdownProps {
@@ -7,7 +16,7 @@ interface GalloGoalDropdownProps {
   label: string;
   loading: boolean;
   onSelect: (goal: FireStoreGalloGoalDocType | undefined) => void;
-  selectedGoal?: string | null;
+  selectedGoalId?: string | null;
 }
 
 const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
@@ -15,45 +24,81 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
   label,
   loading,
   onSelect,
-  selectedGoal,
+  selectedGoalId,
 }) => {
-  if (loading) {
-    return <CircularProgress />;
-  }
-  console.log("goals: ", goals);
-  return (
-    <Box>
-      <Box mt={2}>
-        <Select
-          fullWidth
-          variant="outlined"
-          value={selectedGoal ?? ""}
-          onChange={(e) => {
-            const goal = goals.find(
-              (g) => g.goalDetails.goalId === e.target.value
-            );
-            onSelect(goal); // 🆕 Pass the full goal object
-          }}
-          displayEmpty
-          disabled={goals.length === 0}
-        >
-          <MenuItem value="" disabled>
-            {goals.length > 0
-              ? `${goals.length} ${label} available`
-              : `No ${label.toLowerCase()} available`}
-          </MenuItem>
+  const dedupedGoals = useMemo(() => {
+    const map = new Map<string, FireStoreGalloGoalDocType>();
+    for (const g of goals) {
+      const id = g?.goalDetails?.goalId;
+      if (id) map.set(id, g);
+    }
+    return Array.from(map.values());
+  }, [goals]);
 
-          {goals.map((goal) => (
+  const isValidSelection = dedupedGoals.some(
+    (g) => g.goalDetails.goalId === selectedGoalId
+  );
+
+  const selectValue = isValidSelection ? selectedGoalId ?? "" : "";
+
+  if (loading) return <CircularProgress />;
+
+  return (
+    <FormControl fullWidth sx={{ mb: 2 }} variant="outlined">
+      <InputLabel shrink id="gallo-goal-label">
+        {label}
+      </InputLabel>
+
+      <Select
+        id="gallo-goal-select"
+        labelId="gallo-goal-label"
+        label={label}
+        displayEmpty
+        value={selectValue}
+        disabled={dedupedGoals.length === 0}
+        onChange={(e) => {
+          const goal = dedupedGoals.find(
+            (g) => g.goalDetails.goalId === e.target.value
+          );
+          onSelect(goal);
+        }}
+        renderValue={(val) => {
+          if (!val) {
+            if (dedupedGoals.length === 0) return "No Gallo goals available";
+            return `${dedupedGoals.length} Gallo Goal${
+              dedupedGoals.length > 1 ? "s" : ""
+            } available`;
+          }
+          return (
+            dedupedGoals.find((g) => g.goalDetails.goalId === val)?.goalDetails
+              .goal || ""
+          );
+        }}
+      >
+        {dedupedGoals.map((goal) => {
+          const isSelected = goal.goalDetails.goalId === selectedGoalId;
+          return (
             <MenuItem
               key={goal.goalDetails.goalId}
               value={goal.goalDetails.goalId}
+              sx={{
+                ...(isSelected && {
+                  fontWeight: "bold",
+                  backgroundColor: (theme) => theme.palette.action.selected,
+                }),
+              }}
             >
-              {goal.goalDetails.goal}
+              {isSelected && (
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  <CheckIcon fontSize="small" />
+                </ListItemIcon>
+              )}
+              <ListItemText primary={goal.goalDetails.goal} />
             </MenuItem>
-          ))}
-        </Select>
-      </Box>
-    </Box>
+          );
+        })}
+      </Select>
+    </FormControl>
   );
 };
 

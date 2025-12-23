@@ -48,7 +48,7 @@ function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
 
 export const useHandlePostSubmission = () => {
   const dispatch = useAppDispatch();
-  const functions = getFunctions();
+  const functions = getFunctions(undefined, "us-central1");
   const userData = useSelector(selectUser);
   const sendCF = httpsCallable(functions, "galloSendAchievement");
 
@@ -158,27 +158,32 @@ export const useHandlePostSubmission = () => {
       if (post.galloGoal) {
         dispatch(showMessage("📤 Sending achievement to Gallo Axis..."));
 
-         const closedDate =
-    post.closedDate || new Date().toISOString().split("T")[0];
+        const closedDate =
+          post.closedDate || new Date().toISOString().split("T")[0];
 
-        await sendCF({
-          env: post.galloGoal?.env, // Cannot find name 'selectedEnv'!!!
-          oppId: post.galloGoal.oppId,
-          closedBy: post.closedBy ?? user.displayName ?? "",
-          closedDate, // MM-DD-YYYY Cannot find name 'formattedClosedDate'!!
-          closedUnits: post.totalCaseCount || "0",
-          photos: [{ file: finalImageUrl }],
-        });
+        try {
+          await sendCF({
+            env: post.galloGoal?.env, // Cannot find name 'selectedEnv'!!!
+            oppId: post.galloGoal.oppId,
+            closedBy: post.closedBy ?? user.displayName ?? "",
+            closedDate, // MM-DD-YYYY Cannot find name 'formattedClosedDate'!!
+            closedUnits: post.totalCaseCount || "0",
+            photos: [{ file: finalImageUrl }],
+          });
 
-        if (selectedGalloGoal && post.account?.accountNumber) {
-          await dispatch(
-            markGalloAccountAsSubmitted({
-              goal: selectedGalloGoal,
-              accountNumber: post.account.accountNumber,
-              postId,
-            })
-          );
-          dispatch(showMessage("Achievement sent to Gallo!"));
+          if (selectedGalloGoal && post.account?.accountNumber) {
+            await dispatch(
+              markGalloAccountAsSubmitted({
+                goal: selectedGalloGoal,
+                accountNumber: post.account.accountNumber,
+                postId,
+              })
+            );
+            dispatch(showMessage("Achievement sent to Gallo!"));
+          }
+        } catch (err) {
+          console.error("Gallo send failed (non-fatal)", err);
+          dispatch(showMessage("Post saved, but Gallo sync failed"));
         }
       }
 

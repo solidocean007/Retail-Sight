@@ -162,7 +162,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     selectUsersGalloGoals(state, salesRouteNum)
   );
 
-  console.log('users gallo goals: ', usersGalloGoals)
+  console.log("users gallo goals: ", usersGalloGoals);
 
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
     null
@@ -202,52 +202,51 @@ export const PickStore: React.FC<PickStoreProps> = ({
   }, [post.account?.accountNumber, allCompanyGoals]);
 
   const goalsForAccount = useMemo(() => {
-  if (!post.account) return [];
+    if (!post.account) return [];
 
-  const { accountNumber, salesRouteNums = [] } = post.account;
-  const accountKey = accountNumber.toString();
+    const { accountNumber, salesRouteNums = [] } = post.account;
+    const accountKey = accountNumber.toString();
 
-  return activeCompanyGoals.filter((goal) => {
-    const assignedUsersForAccount = goal.goalAssignments?.filter(
-      (a) => a.accountNumber === accountKey
-    );
-
-    if (assignedUsersForAccount?.length === 0) return false;
-
-    // 🧑‍💼 Employee — only sales goals matching this account
-    if (user?.role === "employee" && goal.targetRole === "sales") {
-      return assignedUsersForAccount?.some((a) => a.uid === user.uid);
-    }
-
-    // 🧑‍🏫 Supervisor — only supervisor goals
-    if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
-      const repsReportingToMe = companyUsers.filter(
-        (u) => u.reportsTo === user?.uid && u.salesRouteNum
-      );
-      const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
-
-      // Does any of this account's routeNums match a route from my reps?
-      const overlap = salesRouteNums.some((rn) =>
-        myRepsRouteNums.includes(rn)
+    return activeCompanyGoals.filter((goal) => {
+      const assignedUsersForAccount = goal.goalAssignments?.filter(
+        (a) => a.accountNumber === accountKey
       );
 
-      return overlap;
-    }
+      if (assignedUsersForAccount?.length === 0) return false;
 
-    // 👑 Admin sees any goal for this account
-    if (isAdminOrAbove) return true;
+      // 🧑‍💼 Employee — only sales goals matching this account
+      if (user?.role === "employee" && goal.targetRole === "sales") {
+        return assignedUsersForAccount?.some((a) => a.uid === user.uid);
+      }
 
-    return false;
-  });
-}, [
-  activeCompanyGoals,
-  post.account,
-  user?.role,
-  companyUsers,
-  user?.uid,
-  isAdminOrAbove,
-]);
+      // 🧑‍🏫 Supervisor — only supervisor goals
+      if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
+        const repsReportingToMe = companyUsers.filter(
+          (u) => u.reportsTo === user?.uid && u.salesRouteNum
+        );
+        const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
 
+        // Does any of this account's routeNums match a route from my reps?
+        const overlap = salesRouteNums.some((rn) =>
+          myRepsRouteNums.includes(rn)
+        );
+
+        return overlap;
+      }
+
+      // 👑 Admin sees any goal for this account
+      if (isAdminOrAbove) return true;
+
+      return false;
+    });
+  }, [
+    activeCompanyGoals,
+    post.account,
+    user?.role,
+    companyUsers,
+    user?.uid,
+    isAdminOrAbove,
+  ]);
 
   useEffect(() => {
     if (post.account) setOpenManualAccountForm(false);
@@ -373,30 +372,29 @@ export const PickStore: React.FC<PickStoreProps> = ({
   };
 
   const handleGalloGoalSelection = (goal?: FireStoreGalloGoalDocType) => {
-  if (!goal || !post.account) return;
+    if (!goal || !post.account) return;
 
-  const match = goal.accounts.find(
-    (a) => a.distributorAcctId === post.account?.accountNumber
-  );
+    const match = goal.accounts.find(
+      (a) => a.distributorAcctId === post.account?.accountNumber
+    );
 
-  if (!match?.oppId) {
-    dispatch(showMessage("Selected goal has no oppId for this account"));
-    return;
-  }
+    if (!match?.oppId) {
+      dispatch(showMessage("Selected goal has no oppId for this account"));
+      return;
+    }
 
-  setSelectedGalloGoal(goal);
+    setSelectedGalloGoal(goal);
 
-  setPost((prev) => ({
-    ...prev,
-    galloGoal: {
-      goalId: goal.goalDetails.goalId,
-      title: goal.goalDetails.goal,
-      env: goal.goalDetails.goalEnv,
-      oppId: match.oppId,
-    },
-  }));
-};
-
+    setPost((prev) => ({
+      ...prev,
+      galloGoal: {
+        goalId: goal.goalDetails.goalId,
+        title: goal.goalDetails.goal,
+        env: goal.goalDetails.goalEnv,
+        oppId: match.oppId,
+      },
+    }));
+  };
 
   const handleAccountSelect = (account: CompanyAccountType) => {
     const {
@@ -650,7 +648,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
                 label="Gallo Goals"
                 loading={isFetchingGoal}
                 onSelect={handleGalloGoalSelection}
-                selectedGoal={selectedGalloGoalId}
+                selectedGoalId={post.galloGoal?.goalId ?? null}
               />
             </Box>
           )}
