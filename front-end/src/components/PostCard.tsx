@@ -415,9 +415,9 @@ const PostCard: React.FC<PostCardProps> = ({
               Company Goal: {post.companyGoalTitle}
             </div>
           )}
-          {post.oppId && (
+          {post.galloGoal?.oppId && (
             <div className="gallo-goal-banner gallo-textured-background">
-              Gallo Goal: {post.galloGoalTitle}
+              Gallo Goal: {post.galloGoal.title}
             </div>
           )}
           {post.brands && post.brands.length > 0 && (
@@ -427,7 +427,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {/* {post.id} */}
+          {post.id}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>

@@ -49,7 +49,6 @@ export function useAppBootstrap({
   const { currentUser, initializing } = useFirebaseAuth();
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
-  console.log("gallo enabled: ", galloEnabled); // this logs true
 
   const appReady = useSelector((s: RootState) => s.app.appReady);
 

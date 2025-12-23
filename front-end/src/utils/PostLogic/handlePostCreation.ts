@@ -29,6 +29,7 @@ import { addNewPost } from "../../Slices/postsSlice";
 import { buildPostPayload } from "./buildPostPayload";
 import { addPostToFirestore } from "./updateFirestore";
 import { normalizePost } from "../normalize";
+import { formatGalloClosedDate } from "./formatGalloClosedDate";
 import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 import { createManualAccountThunk } from "../../thunks/manulAccountsThunk";
 import { logAiFeedback } from "../../hooks/logAiFeedback";
@@ -158,15 +159,16 @@ export const useHandlePostSubmission = () => {
       if (post.galloGoal) {
         dispatch(showMessage("📤 Sending achievement to Gallo Axis..."));
 
-        const closedDate =
-          post.closedDate || new Date().toISOString().split("T")[0];
+        const closedDate = formatGalloClosedDate(
+          post.closedDate || new Date().toISOString()
+        );
 
         try {
           await sendCF({
-            env: post.galloGoal?.env, // Cannot find name 'selectedEnv'!!!
+            env: post.galloGoal?.env,
             oppId: post.galloGoal.oppId,
             closedBy: post.closedBy ?? user.displayName ?? "",
-            closedDate, // MM-DD-YYYY Cannot find name 'formattedClosedDate'!!
+            closedDate,
             closedUnits: post.totalCaseCount || "0",
             photos: [{ file: finalImageUrl }],
           });

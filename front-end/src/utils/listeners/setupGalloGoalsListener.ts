@@ -2,10 +2,8 @@
 import { collection, onSnapshot, query, where } from "@firebase/firestore";
 import { db } from "../firebase";
 import {
-  clearGoalsFromIndexedDB,
   saveGoalsToIndexedDB,
 } from "../database/indexedDBUtils";
-import { FireStoreGalloGoalDocType } from "../types";
 import { setGalloGoals } from "../../Slices/galloGoalsSlice";
 import { normalizeFirestoreData } from "../normalize"; // ✅ Add this
 
@@ -36,9 +34,6 @@ export const setupGalloGoalsListener =
 
           const allGalloGoals = snapshot.docs
             .map((doc) => {
-              const raw = doc.data();
-              console.log("RAW DOC", doc.id, raw);
-
               const data = normalizeFirestoreData(doc.data());
               if (!data?.goalDetails?.goalId) {
                 console.warn("Skipping malformed gallo goal", doc.id);

@@ -174,7 +174,7 @@
 
   --btn-text-color: var(--text-on-button); /* already set per theme */
   --btn-border-radius: 8px;
-  --btn-padding: 0.75rem 1.5rem;
+  --btn-padding: 0.25rem 1rem;
 
   /* Access Requests Panel additions */
   --request-card-glow: rgba(59, 130, 246, 0.25); /* soft blue glow */

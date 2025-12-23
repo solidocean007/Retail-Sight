@@ -1,0 +1,17 @@
+/* dateSelector.css */
+
+.date-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-selector.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.date-selector-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}

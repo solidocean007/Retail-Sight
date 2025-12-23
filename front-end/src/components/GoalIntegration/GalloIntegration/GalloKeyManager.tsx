@@ -1,162 +1,89 @@
 import { getFunctions, httpsCallable } from "firebase/functions";
 import {
-  Box,
   Typography,
   Button,
-  Switch,
   Dialog,
   DialogTitle,
   DialogContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
   DialogActions,
+  TextField,
 } from "@mui/material";
 import React, { useState } from "react";
 import { KeyStatusType } from "./GalloIntegration";
+import "./galloKeyManager.css";
+
 interface GalloKeyManagerProps {
   selectedEnv: "prod" | "dev";
   setSelectedEnv: React.Dispatch<React.SetStateAction<"prod" | "dev">>;
   keyStatus: KeyStatusType | null;
+  setKeyStatus: React.Dispatch<React.SetStateAction<KeyStatusType | null>>;
 }
+
 const GalloKeyManager: React.FC<GalloKeyManagerProps> = ({
   selectedEnv,
   setSelectedEnv,
   keyStatus,
+  setKeyStatus,
 }) => {
   const functions = getFunctions();
   const [openKeyModal, setOpenKeyModal] = useState(false);
   const [openDeleteKeyModal, setOpenDeleteKeyModal] = useState(false);
-  const [modalEnv, setModalEnv] = useState<"prod" | "dev">("dev");
   const [modalKey, setModalKey] = useState("");
 
-  const isProduction = selectedEnv === "prod";
-
-  const setOrRotateKey = async (env: "prod" | "dev", key: string) => {
-    if (!key) {
-      alert("Please enter a key value.");
-      return;
-    }
-    try {
-      const upsertGalloAxisKey = httpsCallable<
-        { env: "prod" | "dev"; key: string },
-        { success: boolean }
-      >(functions, "upsertGalloAxisKey");
-
-      const res = await upsertGalloAxisKey({ env, key });
-      if (res.data.success) {
-        console.log("✅ Key upserted successfully");
-        await refreshKeyStatus();
-      } else {
-        alert("Failed to set key.");
-      }
-    } catch (err) {
-      console.error("setOrRotateKey error:", err);
-      alert("Error setting key. Check console for details.");
-    }
-  };
-
-  const deleteKey = async (env: "prod" | "dev") => {
-    try {
-      const deleteGalloAxisKey = httpsCallable<
-        { env: "prod" | "dev" },
-        { success: boolean }
-      >(functions, "deleteGalloAxisKey");
-
-      const res = await deleteGalloAxisKey({ env });
-      if (res.data.success) {
-        console.log("✅ Key deleted successfully");
-        await refreshKeyStatus();
-      } else {
-        alert("Failed to delete key.");
-      }
-    } catch (err) {
-      console.error("deleteKey error:", err);
-      alert("Error deleting key. Check console for details.");
-    }
-  };
-
   const refreshKeyStatus = async () => {
-    try {
-      const getExternalApiKeyStatus = httpsCallable<
-        { integration: string },
-        {
-          prod: { exists: boolean; lastFour?: string; updatedAt?: any };
-          dev: { exists: boolean; lastFour?: string; updatedAt?: any };
-        }
-      >(functions, "getExternalApiKeyStatus");
-
-      const res = await getExternalApiKeyStatus({ integration: "galloAxis" });
-      setKeyStatus(res.data);
-    } catch (err) {
-      console.error("refreshKeyStatus error:", err);
-    }
+    const fn = httpsCallable(functions, "getExternalApiKeyStatus");
+    const res = await fn({ integration: "galloAxis" });
+    setKeyStatus(res.data as KeyStatusType);
   };
+
+  const setOrRotateKey = async () => {
+    if (!modalKey) return;
+
+    const fn = httpsCallable(functions, "upsertGalloAxisKey");
+    await fn({ env: selectedEnv, key: modalKey });
+    await refreshKeyStatus();
+  };
+
+  const deleteKey = async () => {
+    const fn = httpsCallable(functions, "deleteGalloAxisKey");
+    await fn({ env: selectedEnv });
+    await refreshKeyStatus();
+  };
+
   return (
     <>
-      {/* 🔑 Key Management Section */}
-      <Box
-        sx={{
-          border: "1px solid #ccc",
-          borderRadius: "8px",
-          p: 2,
-          backgroundColor: "#fafafa",
-        }}
-      >
-        <Typography variant="h6" gutterBottom>
-          🔑 Gallo Axis Key Management
-        </Typography>
+      <div className="gallo-key-manager">
+        <div className="gallo-key-header">🔑 Gallo Axis Key Management</div>
 
-        {/* Env toggle */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-          <Typography
-            sx={{
-              fontWeight: !isProduction ? "bold" : "normal",
-              color: !isProduction ? "text.secondary" : "text.disabled",
-            }}
+        {/* Env selector */}
+        <div className="env-selector">
+          <button
+            className={`env-btn ${selectedEnv === "dev" ? "active" : ""}`}
+            onClick={() => setSelectedEnv("dev")}
           >
             Development
-          </Typography>
-
-          <Switch
-            checked={isProduction}
-            onChange={() => setSelectedEnv(isProduction ? "dev" : "prod")}
-            color="primary"
-          />
-
-          <Typography
-            sx={{
-              fontWeight: isProduction ? "bold" : "normal",
-              color: isProduction ? "primary.main" : "text.secondary",
-            }}
+          </button>
+          <button
+            className={`env-btn ${selectedEnv === "prod" ? "active" : ""}`}
+            onClick={() => setSelectedEnv("prod")}
           >
             Production
-          </Typography>
-        </Box>
+          </button>
+        </div>
 
-        {/* Key status */}
-        <Typography variant="body2" sx={{ mb: 1 }}>
-          Current Keys — prod:{" "}
-          {keyStatus?.prod?.exists ? `••••${keyStatus.prod.lastFour}` : "none"},
+        {/* Status */}
+        <div className="key-status">
+          prod:{" "}
+          {keyStatus?.prod?.exists ? `••••${keyStatus.prod.lastFour}` : "none"} |
           dev:{" "}
           {keyStatus?.dev?.exists ? `••••${keyStatus.dev.lastFour}` : "none"}
-        </Typography>
+        </div>
 
-        {/* Key actions */}
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => {
-              setModalEnv(selectedEnv);
-              setOpenKeyModal(true);
-            }}
-          >
-            Set/Rotate
+        {/* Actions */}
+        <div className="key-actions">
+          <Button variant="contained" onClick={() => setOpenKeyModal(true)}>
+            Set / Rotate
           </Button>
-
           <Button
             variant="contained"
             color="error"
@@ -164,22 +91,16 @@ const GalloKeyManager: React.FC<GalloKeyManagerProps> = ({
           >
             Delete Key
           </Button>
-        </Box>
-      </Box>
-      <Dialog
-        open={openDeleteKeyModal}
-        onClose={() => setOpenDeleteKeyModal(false)}
-      >
-        <DialogTitle>Delete Gallo Axis API Key</DialogTitle>
+        </div>
+      </div>
+
+      {/* Delete dialog */}
+      <Dialog open={openDeleteKeyModal} onClose={() => setOpenDeleteKeyModal(false)}>
+        <DialogTitle>Delete API Key</DialogTitle>
         <DialogContent>
-          <Typography color="error" sx={{ mb: 2 }}>
-            ⚠️ Deleting the {selectedEnv.toUpperCase()} key will break all
-            program imports for that environment until a new key is set. This
-            action cannot be undone.
-          </Typography>
-          <Typography variant="body2">
-            Are you sure you want to delete the{" "}
-            <strong>{selectedEnv.toUpperCase()}</strong> key?
+          <Typography color="error">
+            This will immediately break imports for{" "}
+            <strong>{selectedEnv.toUpperCase()}</strong>.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -188,34 +109,23 @@ const GalloKeyManager: React.FC<GalloKeyManagerProps> = ({
             variant="contained"
             color="error"
             onClick={async () => {
-              await deleteKey(selectedEnv); // pass env into your delete handler
+              await deleteKey();
               setOpenDeleteKeyModal(false);
             }}
           >
-            Delete Key
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Set / rotate dialog */}
       <Dialog open={openKeyModal} onClose={() => setOpenKeyModal(false)}>
-        <DialogTitle>Set or Rotate Gallo Axis API Key</DialogTitle>
-        <DialogContent
-          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-        >
-          <Typography variant="body2" color="warning.main">
-            ⚠️ Rotating this key will immediately replace the existing{" "}
-            {modalEnv.toUpperCase()} key.
-          </Typography>
-
-          <FormControl fullWidth>
-            <InputLabel id="env-label">Environment</InputLabel>
-           
-            Rotating the {selectedEnv === "prod" ? "Production" : "Development"}
-          </FormControl>
-
+        <DialogTitle>Set / Rotate API Key</DialogTitle>
+        <DialogContent>
           <TextField
             fullWidth
-            label={`Enter ${modalEnv} API Key`}
             type="password"
+            label={`${selectedEnv.toUpperCase()} API Key`}
             value={modalKey}
             onChange={(e) => setModalKey(e.target.value)}
           />
@@ -225,7 +135,7 @@ const GalloKeyManager: React.FC<GalloKeyManagerProps> = ({
           <Button
             variant="contained"
             onClick={async () => {
-              await setOrRotateKey(modalEnv, modalKey);
+              await setOrRotateKey();
               setOpenKeyModal(false);
               setModalKey("");
             }}

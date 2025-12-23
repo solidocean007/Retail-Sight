@@ -34,6 +34,7 @@ import {
   galloFetchAccounts,
   galloFetchGoals,
 } from "./galloKeys/gallo";
+import { galloSendAchievement } from "./galloKeys/galloSendAchievment";
 import { analyzePostImages } from "./analyzePostImages";
 
 // 🧾 Braintree Billing System
@@ -63,6 +64,7 @@ export {
   getExternalApiKeyStatus,
   upsertGalloAxisKey,
   deleteGalloAxisKey,
+  galloSendAchievement,
   galloFetchPrograms,
   galloFetchAccounts,
   galloFetchGoals,

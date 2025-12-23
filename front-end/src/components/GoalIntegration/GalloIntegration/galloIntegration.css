@@ -1,0 +1,103 @@
+/* galloIntegration.css */
+
+/* -----------------------------
+   Root wrapper
+--------------------------------*/
+.gallo-integration {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* -----------------------------
+   Section shell
+--------------------------------*/
+.gallo-section {
+  border-radius: 12px;
+  padding: 16px;
+  background-color: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+}
+
+/* Section header */
+.gallo-section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+/* -----------------------------
+   Controls row
+--------------------------------*/
+.gallo-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* -----------------------------
+   Empty / warning states
+--------------------------------*/
+.gallo-empty {
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
+  margin-bottom: 16px;
+}
+
+/* -----------------------------
+   Action buttons
+--------------------------------*/
+.gallo-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* -----------------------------
+   LIGHT THEME
+--------------------------------*/
+[data-theme="light"] {
+  --surface-bg: #ffffff;
+  --surface-border: #d1d5db;
+
+  --text-primary: #111827;
+
+  --warning-bg: #fff7ed;
+  --warning-text: #92400e;
+  --warning-border: #fed7aa;
+}
+
+/* -----------------------------
+   DARK THEME
+--------------------------------*/
+[data-theme="dark"] {
+  --surface-bg: #0f172a;
+  --surface-border: #1e293b;
+
+  --text-primary: #e5e7eb;
+
+  --warning-bg: #1f2937;
+  --warning-text: #fbbf24;
+  --warning-border: #374151;
+}
+
+/* -----------------------------
+   MUI normalization (important)
+--------------------------------*/
+.gallo-section .MuiTypography-root {
+  color: var(--text-primary);
+}
+
+.gallo-section .MuiButton-contained {
+  background-color: var(--accent-color, #2563eb);
+}
+
+.gallo-section .MuiButton-contained:disabled {
+  opacity: 0.5;
+}

@@ -29,7 +29,6 @@ export const useCustomAccountsSync = () => {
       dispatch(setLoading(true));
       try {
         const cached = await getCustomAccountsFromIndexedDB();
-        console.log(cached);
         if (cached.length) dispatch(setCustomAccounts(cached));
       } catch (err: any) {
         console.error("Failed to load custom accounts from IndexedDB", err);

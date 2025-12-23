@@ -101,12 +101,13 @@ button {
   background-color: transparent;
   color: var(--button-bg);
   border: 2px solid var(--button-bg);
-  padding: 0.65rem 1.2rem;
+  padding: 0.25rem 1rem;
   border-radius: 0.75rem;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, color 0.2s;
+  max-height: 50px;
 }
 
 .button-outline:hover {

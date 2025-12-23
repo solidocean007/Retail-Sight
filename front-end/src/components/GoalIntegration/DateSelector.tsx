@@ -2,41 +2,50 @@
 import React from "react";
 import { DatePicker } from "@mui/x-date-pickers";
 import { Dayjs } from "dayjs";
-import { Button, Box } from "@mui/material";
+import { Button } from "@mui/material";
+import "./dateSelector.css";
 
 interface DateSelectorProps {
   startDate: Dayjs | null;
   onDateChange: (date: Dayjs | null) => void;
   onFetchPrograms: () => void;
+  disabled?: boolean;
 }
 
 const DateSelector: React.FC<DateSelectorProps> = ({
   startDate,
   onDateChange,
   onFetchPrograms,
+  disabled = false,
 }) => {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
+    <div className={`date-selector ${disabled ? "is-disabled" : ""}`}>
       <DatePicker
         label="Start Date"
         value={startDate}
         onChange={onDateChange}
-        // sx={{ width: "20%" }}
+        disabled={disabled}
         slotProps={{
           textField: {
-            fullWidth: false,
-            margin: "normal",
-
-            InputProps: {
-              sx: { textAlign: "center", input: { textAlign: "center" } }, // Center input text
-            },
+            size: "small",
           },
         }}
       />
-      <Button variant="contained" color="primary" onClick={onFetchPrograms}>
+
+      <Button
+        variant="contained"
+        onClick={onFetchPrograms}
+        disabled={disabled}
+      >
         Search Programs
       </Button>
-    </Box>
+
+      {disabled && (
+        <div className="date-selector-hint">
+          Clear programs to change the start date
+        </div>
+      )}
+    </div>
   );
 };
 

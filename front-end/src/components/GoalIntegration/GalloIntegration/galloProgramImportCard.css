@@ -1,0 +1,123 @@
+/* galloProgramImportCard.css */
+
+/* -----------------------------
+   Card base
+--------------------------------*/
+.gallo-program-card {
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.gallo-program-card.selected {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+
+/* -----------------------------
+   Header
+--------------------------------*/
+.gallo-program-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gallo-program-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* -----------------------------
+   Meta chips row
+--------------------------------*/
+.gallo-program-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gallo-program-chip {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--chip-bg);
+  color: var(--chip-text);
+  border: 1px solid var(--chip-border);
+  white-space: nowrap;
+}
+
+/* -----------------------------
+   Description
+--------------------------------*/
+.gallo-program-desc {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* -----------------------------
+   Debug toggle + panel
+--------------------------------*/
+.gallo-debug-toggle {
+  margin-top: 10px;
+}
+
+.gallo-debug-panel {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  max-height: 600px;
+  overflow: auto;
+  background-color: var(--code-bg);
+  color: var(--code-text);
+  border: 1px solid var(--border-color);
+}
+
+/* -----------------------------
+   LIGHT THEME
+--------------------------------*/
+[data-theme="light"] {
+  --card-bg: #ffffff;
+  --border-color: #dcdcdc;
+
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+
+  --chip-bg: #f3f4f6;
+  --chip-text: #374151;
+  --chip-border: #e5e7eb;
+
+  --code-bg: #f9fafb;
+  --code-text: #1f2937;
+
+  --accent-color: #2563eb;
+}
+
+/* -----------------------------
+   DARK THEME
+--------------------------------*/
+[data-theme="dark"] {
+  --card-bg: #161b22;
+  --border-color: #2d333b;
+
+  --text-primary: #e6edf3;
+  --text-secondary: #9da7b1;
+
+  --chip-bg: #21262d;
+  --chip-text: #c9d1d9;
+  --chip-border: #30363d;
+
+  --code-bg: #0d1117;
+  --code-text: #c9d1d9;
+
+  --accent-color: #58a6ff;
+}

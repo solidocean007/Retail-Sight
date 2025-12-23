@@ -16,6 +16,7 @@ import DateSelector from "../DateSelector";
 import ProgramTable from "../ProgramTable";
 import GoalTable from "../GoalTable";
 import GalloAccountImportTable from "../GalloAccountImportTable";
+import "./galloIntegration.css";
 
 import {
   CompanyAccountType,
@@ -29,6 +30,16 @@ import getCompanyAccountId from "../../../utils/helperFunctions/getCompanyAccoun
 import { RootState } from "../../../utils/store";
 import { useSelector } from "react-redux";
 import GalloKeyManager from "./GalloKeyManager";
+import GalloProgramImportCard from "./GalloProgramImportCard";
+
+type EnrichedGalloProgram = GalloProgramType & {
+  __debug?: {
+    hasMarketId: boolean;
+    startDateUnix?: number;
+    endDateUnix?: number;
+    rawKeys: string[];
+  };
+};
 
 export type KeyStatusType = {
   prod?: { exists: boolean; lastFour?: string; updatedAt?: any };
@@ -62,7 +73,8 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
   // ---- Data state ----------------------------------------------------------
   const [keyStatus, setKeyStatus] = useState<KeyStatusType | null>(null);
 
-  const [programs, setPrograms] = useState<GalloProgramType[]>([]);
+  const [programs, setPrograms] = useState<EnrichedGalloProgram[]>([]);
+
   const [selectedProgram, setSelectedProgram] =
     useState<GalloProgramType | null>(null);
 
@@ -129,17 +141,51 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
         startDate: startDateUnix, // <-- MUST be "startDate"
       });
 
-      const programs = res.data as GalloProgramType[];
+      // const programs = res.data as GalloProgramType[];
 
-      setPrograms(programs);
+      const rawPrograms = res.data as any[];
+
+      console.group("🧪 galloFetchPrograms raw response");
+      rawPrograms.forEach((p, i) => {
+        console.log(`Program[${i}]`, p);
+      });
+      console.groupEnd();
+
+      const enrichedPrograms: EnrichedGalloProgram[] = rawPrograms.map((p) => {
+        const startUnix =
+          typeof p.startDate === "string"
+            ? dayjs(p.startDate).unix()
+            : undefined;
+
+        const endUnix =
+          typeof p.endDate === "string" ? dayjs(p.endDate).unix() : undefined;
+
+        return {
+          ...p,
+          __debug: {
+            hasMarketId: Boolean(p.marketId),
+            startDateUnix: startUnix,
+            endDateUnix: endUnix,
+            rawKeys: Object.keys(p),
+          },
+        };
+      });
+
+      setPrograms(enrichedPrograms);
+
+      // setPrograms(programs);
       setSelectedProgram(null);
       setGoals([]);
       setSelectedGoal(null);
       setEnrichedAccounts([]);
       setUnmatchedAccounts([]);
 
-      if (!Array.isArray(programs) || programs.length === 0) {
-        setNoProgramsMessage("No programs found for the selected start date.");
+      if (!Array.isArray(enrichedPrograms) || enrichedPrograms.length === 0) {
+        setNoProgramsMessage(
+          enrichedPrograms.length === 0
+            ? "No programs found for the selected start date."
+            : ""
+        );
       }
     } catch (err) {
       console.error("Error fetching programs:", err);
@@ -295,81 +341,74 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
     setGoals([]);
     setEnrichedAccounts([]);
     setUnmatchedAccounts([]);
-    setValue(0); // back to previous tab
+    // setValue(0); // back to previous tab
   };
 
   // ---- Render --------------------------------------------------------------
   return (
-    <Container>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        <GalloKeyManager
-          selectedEnv={selectedEnv}
-          setSelectedEnv={setSelectedEnv}
-          keyStatus={keyStatus}
-        />
+    <Container className="gallo-integration">
+      {/* <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}> */}
+      <GalloKeyManager
+        selectedEnv={selectedEnv}
+        setSelectedEnv={setSelectedEnv}
+        keyStatus={keyStatus}
+        setKeyStatus={setKeyStatus}
+      />
 
-        {/* 📅 Program Import Section */}
-        <Box
-          sx={{
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            p: 2,
-            backgroundColor: "#fafafa",
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            📅 Program Import
-          </Typography>
+      {/* 📅 Program Import Section */}
+      <div className="gallo-section">
+        <div className="gallo-section-title">📅 Program Import</div>
 
-          {/* Date + actions */}
-          <Box
-            sx={{
-              display: "flex",
-              width: "100%",
-              justifyContent: "space-between",
-              mb: 2,
-            }}
-          >
-            <DateSelector
-              startDate={startDate}
-              onDateChange={onDateChangeHandler}
-              onFetchPrograms={fetchPrograms}
-            />
-            {(programs.length > 0 ||
-              goals.length > 0 ||
-              enrichedAccounts.length > 0) && (
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={handleCancel}
-              >
-                Cancel
-              </Button>
-            )}
-          </Box>
+        {/* Date + actions */}
+        <div className="gallo-controls">
+          <DateSelector
+            startDate={startDate}
+            onDateChange={onDateChangeHandler}
+            onFetchPrograms={fetchPrograms}
+            disabled={programs.length > 0}
+          />
 
-          {/* Programs */}
-          {noProgramsMessage ? (
-            <Typography color="error" variant="body1">
-              {noProgramsMessage}
-            </Typography>
-          ) : (
-            <ProgramTable
-              programs={programs}
-              selectedProgram={selectedProgram}
-              onSelectProgram={setSelectedProgram}
-            />
-          )}
-
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={fetchGoals}
-              disabled={!selectedProgram}
+          {(programs.length > 0 ||
+            goals.length > 0 ||
+            enrichedAccounts.length > 0) && (
+            <button
+              className="button-outline btn-secondary"
+              onClick={handleCancel}
             >
-              Search Goals
-            </Button>
-          
+              Cancel
+            </button>
+          )}
+        </div>
+
+        {/* Programs */}
+        {!isLoading && programs.length === 0 && (
+          <div className="gallo-empty">
+            No programs found for the selected start date.
+          </div>
+        )}
+
+        {programs.map((program) => (
+          <GalloProgramImportCard
+            key={`${program.programId}-${program.marketId}`}
+            program={program}
+            selected={selectedProgram?.programId === program.programId}
+            onToggle={() =>
+              selectedProgram?.programId === program.programId
+                ? setSelectedProgram(null)
+                : setSelectedProgram(program)
+            }
+          />
+        ))}
+
+        <div className="gallo-actions">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={fetchGoals}
+            disabled={!selectedProgram}
+          >
+            Search Goals
+          </Button>
 
           {/* Goals */}
           {goals.length > 0 && (
@@ -380,45 +419,46 @@ const GalloIntegration: React.FC<GalloIntegrationProps> = ({ setValue }) => {
             />
           )}
 
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={fetchAccounts}
-              disabled={!selectedGoal}
-            >
-              Fetch Accounts
-            </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={fetchAccounts}
+            disabled={!selectedGoal}
+          >
+            Fetch Accounts
+          </Button>
+        </div>
 
-          {/* Warnings / Results */}
-          {unmatchedAccounts.length > 0 && (
-            <Box
-              sx={{
-                border: "1px solid #ffeeba",
-                borderRadius: "8px",
-                p: 1.5,
-                mb: 2,
-                backgroundColor: "#fff8e1",
-              }}
-            >
-              <Typography color="warning.main" variant="body2">
-                ⚠️ {unmatchedAccounts.length} account(s) from Gallo are not in
-                your Displaygram database. These won’t be included when saving
-                the goal.
-              </Typography>
-            </Box>
-          )}
+        {/* Warnings / Results */}
+        {unmatchedAccounts.length > 0 && (
+          <Box
+            sx={{
+              border: "1px solid #ffeeba",
+              borderRadius: "8px",
+              p: 1.5,
+              mb: 2,
+              backgroundColor: "#fff8e1",
+            }}
+          >
+            <Typography color="warning.main" variant="body2">
+              ⚠️ {unmatchedAccounts.length} account(s) from Gallo are not in
+              your Displaygram database. These won’t be included when saving the
+              goal.
+            </Typography>
+          </Box>
+        )}
 
-          {enrichedAccounts.length > 0 && (
-            <GalloAccountImportTable
-              selectedEnv={selectedEnv}
-              accounts={enrichedAccounts}
-              selectedGoal={selectedGoal}
-              selectedProgram={selectedProgram}
-              onSaveComplete={() => setValue(0)}
-            />
-          )}
-        </Box>
-      </Box>
+        {enrichedAccounts.length > 0 && (
+          <GalloAccountImportTable
+            selectedEnv={selectedEnv}
+            accounts={enrichedAccounts}
+            selectedGoal={selectedGoal}
+            selectedProgram={selectedProgram}
+            onSaveComplete={() => setValue(0)}
+          />
+        )}
+      </div>
+      {/* </Box> */}
 
       {/* Loading Overlay */}
       {isLoading && (

@@ -76,7 +76,6 @@ export const CreatePost = () => {
   const [selectedGalloGoal, setSelectedGalloGoal] =
     useState<FireStoreGalloGoalDocType | null>(null);
   const navigate = useNavigate();
-  console.log("post: ", post)
   useEffect(() => {
     setPost((prevPost) => ({
       ...prevPost,
