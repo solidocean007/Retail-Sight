@@ -29,6 +29,8 @@ import "./galloAccountImportTable.css";
 import { createGalloGoal } from "../../utils/helperFunctions/createGalloGoal";
 import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
 import { saveSingleGalloGoalToIndexedDB } from "../../utils/database/goalsStoreUtils";
+import { sendGalloGoalAssignedEmails } from "../../utils/helperFunctions/sendGalloGoalAssignedEmails";
+import { selectCompanyUsers } from "../../Slices/userSlice";
 
 interface AccountTableProps {
   selectedEnv: "prod" | "dev" | "null";
@@ -59,6 +61,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   const [searchRoute, setSearchRoute] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [searchSalesperson, setSearchSalesperson] = useState("");
+  const companyUsers = useSelector(selectCompanyUsers) || [];
 
   const handleSearchSalesperson = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -160,6 +163,12 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
 
       dispatch(addOrUpdateGalloGoal(savedGoalWithId));
       await saveSingleGalloGoalToIndexedDB(savedGoal);
+
+      await sendGalloGoalAssignedEmails({
+        savedGoal,
+        selectedAccounts,
+        companyUsers,
+      });
 
       alert("Goal saved successfully!");
       onSaveComplete();

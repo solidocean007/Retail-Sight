@@ -93,7 +93,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   //   fetchClaims();
   // }, []);
 
-  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
+  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs("2025-11-24"));
 
   // ---- Data state ----------------------------------------------------------
   const [keyStatus, setKeyStatus] = useState<KeyStatusType | null>(null);
@@ -398,6 +398,10 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       <p className="integration-note">
         Goals created here are imported from Gallo Axis programs and are managed
         externally.
+      </p>
+      <p className="integration-note">
+        “Programs are typically created after Nov 24th 2025. You usually won’t need
+        to change this.”
       </p>
       <p className="integration-note">
         Source: Gallo Axis ({selectedEnv.toUpperCase()})
