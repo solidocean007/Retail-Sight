@@ -103,6 +103,8 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const [selectedProgram, setSelectedProgram] =
     useState<GalloProgramType | null>(null);
 
+    console.log("Selected Program:", selectedProgram);
+
   const [goals, setGoals] = useState<GalloGoalType[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<GalloGoalType | null>(null);
 

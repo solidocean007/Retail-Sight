@@ -61,8 +61,8 @@ export const createGalloGoal = async (
       programId: selectedProgram.programId,
       programTitle: selectedProgram.programTitle,
       programDescription: (selectedProgram as any).programDesc ?? "",
-      programStartDate: selectedProgram.programStartDate,
-      programEndDate: selectedProgram.programEndDate,
+      programStartDate: selectedProgram.startDate,
+      programEndDate: selectedProgram.endDate,
     },
     goalDetails: {
       goalEnv: goalEnv,
@@ -73,6 +73,8 @@ export const createGalloGoal = async (
     },
     accounts: mergedAccounts,
   };
+
+  console.log("📝 Prepared goal to save:", savedGoal);
 
   if (snapshot.exists()) {
     const existing = snapshot.data() as FireStoreGalloGoalDocType;

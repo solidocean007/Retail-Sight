@@ -37,7 +37,7 @@ const GalloProgramImportCard: React.FC<Props> = ({
   onToggle,
 }) => {
   const [showDebug, setShowDebug] = useState(false);
-
+  console.log("from gallo program import card: ",program)
   return (
     <div className={`gallo-program-card ${selected ? "selected" : ""}`}>
       {/* Header */}
@@ -63,10 +63,10 @@ const GalloProgramImportCard: React.FC<Props> = ({
       <div className="gallo-program-meta">
         <span className="gallo-program-chip">Market: {program.marketId}</span>
         <span className="gallo-program-chip">
-          Start: {program.programStartDate}
+          Start: {program.startDate}
         </span>
         <span className="gallo-program-chip">
-          End: {program.programEndDate}
+          End: {program.endDate}
         </span>
         <span className="gallo-program-chip">Priority: {program.priority}</span>
         <span className="gallo-program-chip">Sales: {program.salesType}</span>
