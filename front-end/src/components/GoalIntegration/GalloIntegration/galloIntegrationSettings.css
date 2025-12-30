@@ -1,0 +1,82 @@
+/* galloKeyManager.css */
+
+.gallo-key-manager {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gallo-key-header {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text-color);
+}
+
+/* ----------------------------
+   Environment selector
+-----------------------------*/
+.env-selector {
+  display: flex;
+  /* flex-direction: column; */
+  border-radius: 999px;
+  background: var(--gray-200);
+  padding: 10px;
+  gap: 4px;
+  width: fit-content;
+  min-width: 250px
+}
+
+[data-theme="dark"] .env-selector {
+  background: var(--gray-700);
+}
+
+.env-selector p {
+  margin: 0;
+}
+
+.env-btn {
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  max-width: 120px;
+}
+
+.env-btn.active {
+  background: var(--btn-primary-bg);
+  /* color: var(--text-on-button); */
+  color: black;
+  box-shadow: var(--button-shadow);
+}
+
+/* ----------------------------
+   Key status
+-----------------------------*/
+.key-status {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ----------------------------
+   Actions
+-----------------------------*/
+.key-actions {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 600px){
+  .env-selector {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+  }
+}

@@ -8,35 +8,63 @@ import {
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { useMemo, useState } from "react";
 import "./gallo-goals.css";
-import GalloProgramCard from "./GalloProgramCard";
 import PostViewerModal from "../PostViewerModal";
 import { RootState } from "../../utils/store";
 import { useIntegrations } from "../../hooks/useIntegrations";
 import { useNavigate } from "react-router-dom";
+import GalloGoalCard from "./GalloGoalCard";
+import { LifecycleFilter } from "../../utils/types";
 
 const AllGalloGoalsView = () => {
   const navigate = useNavigate();
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
+
+  const [lifecycleFilter, setLifecycleFilter] =
+    useState<LifecycleFilter>("active");
+  const [search, setSearch] = useState("");
+
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const galloGoals = useSelector(selectAllGalloGoals);
   const isLoading = useSelector(selectGalloGoalsLoading);
   const error = useSelector(selectGalloGoalsError);
   const companyUsers = useSelector(selectCompanyUsers) || [];
+
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
 
-  console.log(" Gallo Goals: ", galloGoals); // logs empty
-
+  const lifecycleOrder: Record<string, number> = {
+    active: 0,
+    disabled: 1,
+    archived: 2,
+  };
 
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
     setPostViewerOpen(true);
   };
 
-  const closePostViewer = () => {
-    setPostViewerOpen(false);
-  };
+  /** 🔎 Filter + search + sort */
+  const visibleGoals = useMemo(() => {
+    return galloGoals
+      .filter((goal) =>
+        lifecycleFilter === "all"
+          ? true
+          : goal.lifeCycleStatus === lifecycleFilter
+      )
+      .filter((goal) =>
+        search
+          ? goal.programDetails.programTitle
+              .toLowerCase()
+              .includes(search.toLowerCase()) ||
+            goal.goalDetails.goal.toLowerCase().includes(search.toLowerCase())
+          : true
+      )
+      .sort(
+        (a, b) =>
+          lifecycleOrder[a.lifeCycleStatus] - lifecycleOrder[b.lifeCycleStatus]
+      );
+  }, [galloGoals, lifecycleFilter, search]);
 
   const employeeMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -48,20 +76,7 @@ const AllGalloGoalsView = () => {
     return map;
   }, [companyUsers]);
 
-  const programsMap = useMemo(() => {
-    const map: Record<string, any> = {};
-    galloGoals.forEach((goal) => {
-      const programId = goal.programDetails.programId;
-      if (!map[programId]) {
-        map[programId] = {
-          ...goal.programDetails,
-          goals: [],
-        };
-      }
-      map[programId].goals.push(goal);
-    });
-    return Object.values(map);
-  }, [galloGoals]);
+  /* ======================= Guards ======================= */
 
   if (isLoading) {
     return (
@@ -89,22 +104,56 @@ const AllGalloGoalsView = () => {
     );
   }
 
+  /* ======================= Render ======================= */
+
   return (
     <Container>
       <Typography variant="h4" className="gallo-goals-header">
-        Gallo Programs
+        Gallo Goals
       </Typography>
 
+      {/* Filters */}
+      <Box display="flex" gap={2} mb={2} flexWrap="wrap">
+        <select
+          value={lifecycleFilter}
+          onChange={(e) =>
+            setLifecycleFilter(e.target.value as LifecycleFilter)
+          }
+        >
+          <option value="active">Active</option>
+          <option value="archived">Archived</option>
+          <option value="disabled">Disabled</option>
+          <option value="all">All</option>
+        </select>
+
+        <input
+          placeholder="Search gallo goals…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </Box>
+
+      {/* Empty state */}
+      {visibleGoals.length === 0 && (
+        <Box textAlign="center" mt={4}>
+          <Typography color="text.secondary">
+            No goals match your current filters.
+          </Typography>
+        </Box>
+      )}
+
+      {/* Goals */}
       <Box className="programs-wrapper">
-        {programsMap.map((program) => (
-          <GalloProgramCard
-            key={program.programId}
-            program={program}
+        {visibleGoals.map((goal) => (
+          <GalloGoalCard
+            key={goal.id} // use Firestore doc id
+            goal={goal}
             employeeMap={employeeMap}
             onViewPostModal={openPostViewer}
           />
         ))}
       </Box>
+
       <PostViewerModal
         key={postIdToView}
         postId={postIdToView || ""}

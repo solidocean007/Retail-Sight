@@ -23,13 +23,17 @@ type EnrichedGalloProgram = GalloProgramType & {
 
 interface Props {
   program: EnrichedGalloProgram;
+  alreadyImported?: boolean;
   selected: boolean;
+  disabled?: boolean;
   onToggle: () => void;
 }
 
 const GalloProgramImportCard: React.FC<Props> = ({
   program,
+  alreadyImported,
   selected,
+  disabled,
   onToggle,
 }) => {
   const [showDebug, setShowDebug] = useState(false);
@@ -37,9 +41,16 @@ const GalloProgramImportCard: React.FC<Props> = ({
   return (
     <div className={`gallo-program-card ${selected ? "selected" : ""}`}>
       {/* Header */}
+      {alreadyImported && (
+        <span className="program-badge program-badge--imported">
+          Already Imported
+        </span>
+      )}
+
       <div className="gallo-program-header">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Checkbox checked={selected} onChange={onToggle} />
+          <Checkbox checked={selected} onChange={() => onToggle()} disabled={disabled} />
+
           <span className="gallo-program-title">{program.programTitle}</span>
         </div>
 
@@ -51,8 +62,12 @@ const GalloProgramImportCard: React.FC<Props> = ({
       {/* Core metadata */}
       <div className="gallo-program-meta">
         <span className="gallo-program-chip">Market: {program.marketId}</span>
-        <span className="gallo-program-chip">Start: {program.startDate}</span>
-        <span className="gallo-program-chip">End: {program.endDate}</span>
+        <span className="gallo-program-chip">
+          Start: {program.programStartDate}
+        </span>
+        <span className="gallo-program-chip">
+          End: {program.programEndDate}
+        </span>
         <span className="gallo-program-chip">Priority: {program.priority}</span>
         <span className="gallo-program-chip">Sales: {program.salesType}</span>
       </div>

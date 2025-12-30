@@ -1,6 +1,7 @@
 .all-company-goals-container {
   padding: 1rem;
   width: 100%;
+  max-width: 900px;
 }
 
 .all-company-goals-container h4 {

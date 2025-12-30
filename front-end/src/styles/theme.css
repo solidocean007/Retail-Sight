@@ -202,7 +202,7 @@
   --dashboard-header-background: var(--post-card-animated-gradient-light);
   --dashboard-header-background: var(--gray-200);
   --tab-background: var(--background-body);
-  --tab-background-selected: var(--gray-200);
+  --tab-background-selected: var(--gray-100);
   --user-modal-background: var(--muted-steel);
   --card-panel-background: var(--gray-300);
 
@@ -310,7 +310,8 @@
   --header-background: var(--post-card-animated-gradient-dark);
   --dashboard-header-background: var(--gray-800);
   --tab-background: var(--gray-800);
-  --tab-background-selected: var(--light-blue-2);
+  /* --tab-background-selected: var(--light-blue-2); */
+  --tab-background-selected: var(--gray-600);
   --user-modal-background: var(--gray-600);
   --card-panel-background: var(--gray-700);
 

@@ -1,0 +1,54 @@
+.integrations-view {
+  padding: 1rem;
+  color: var(--text-color);
+}
+
+.integrations-header {
+  margin-bottom: 1.25rem;
+}
+
+.integrations-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.integrations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.integration-panel {
+  background: var(--surface-elevated);
+  border-radius: var(--radius-xl);
+  padding: 1rem;
+  box-shadow: var(--card-shadow);
+}
+
+.integration-panel.disabled {
+  opacity: 0.6;
+}
+
+.integration-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.integration-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--warning-bg);
+  color: var(--warning-color);
+}
+
+.integration-description {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 1rem;
+}
+
+.integrations-denied {
+  color: var(--error-color);
+}

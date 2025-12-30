@@ -9,14 +9,14 @@ import {
   Typography,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
-import FlagIcon from "@mui/icons-material/Flag";
+import ExtensionIcon from "@mui/icons-material/Extension";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import CollectionsBookmarkIcon from "@mui/icons-material/CollectionsBookmark";
 import SchoolIcon from "@mui/icons-material/School";
 import GroupIcon from "@mui/icons-material/Group";
 import StoreIcon from "@mui/icons-material/Store";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
-import SettingsIcon from "@mui/icons-material/Settings";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 
 import { useNavigate } from "react-router-dom";
@@ -26,6 +26,7 @@ import { DashboardModeType } from "../utils/types";
 import { Handshake, Inventory2, NotificationAdd } from "@mui/icons-material";
 import UpgradePromptBanner from "./UpgradePromptBanner";
 import { useSelector } from "react-redux";
+import GoalIcon from "./icons/GoalIcon";
 
 const drawerWidth = 200;
 
@@ -176,11 +177,18 @@ const DashMenu = ({
             selected={selectedMode === "GoalManagerMode"}
             onClick={() => onMenuClick("GoalManagerMode")}
           >
-            <SettingsIcon sx={{ mr: 1 }} />
+            <GoalIcon />
             <ListItemText primary="Goal Manager" />
           </ListItemButton>
+          <ListItemButton
+            selected={selectedMode === "IntegrationsMode"}
+            onClick={() => onMenuClick("IntegrationsMode")}
+          >
+             <ExtensionIcon className="menu-icon" />
+            <ListItemText primary="Integrations" />
+          </ListItemButton>
           <ListItemButton onClick={() => navigate("/billing")}>
-            <SettingsIcon sx={{ mr: 1 }} />
+            <ReceiptLongIcon className="menu-icon" />
             <ListItemText primary="Billing" />
           </ListItemButton>
         </Box>

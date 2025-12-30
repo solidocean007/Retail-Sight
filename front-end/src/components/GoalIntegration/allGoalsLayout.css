@@ -1,40 +1,82 @@
-/* AllGoalsLayout.css */
+/* allGoalsLayout.css */
 
-.tabs-container {
-  border-bottom: 2px solid #ccc;
-  margin-bottom: 1rem;
-}
-
-.tabs {
+.all-goals {
   display: flex;
-  justify-content: center;
-  overflow-x: auto;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.tab-panel {
-  display: none;
+/* ================= SOURCE SWITCHER ================= */
+
+.goal-source-switcher {
+  display: flex;
+  gap: 6px;
+  background: var(--dashboard-card);
+  padding: 6px;
+  border-radius: 12px;
+  width: fit-content;
 }
 
-.tab-panel.active {
-  display: block;
+.source-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+  box-shadow: none;
 }
 
-.tab-content {
-  padding: 1rem;
-  background-color: #f9f9f9;
-  border-radius: 4px;
+.source-btn.active {
+  background: var(--tab-background-selected);
+  color: var(--color-selected);
+  box-shadow: var(--button-shadow);
 }
 
-.all-company-goals-view-container {
-  overflow-x: auto; /* Ensures responsiveness */
+.source-btn.external {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
+/* ================= BADGE ================= */
+
+.external-badge {
+  font-size: 0.65rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(236, 189, 59, 0.798);
+  color: rgb(68, 64, 63);
+  text-transform: uppercase;
+}
+
+/* ================= VIEW ================= */
+
+.goals-view {
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.goals-view.gallo {
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.01)
+  );
+}
+
+/* ================= MOBILE ================= */
 
 @media (max-width: 600px) {
-  .all-company-goals-view-container {
-    font-size: 0.875rem; /* Adjust font size for mobile */
+  .goal-source-switcher {
+    width: 100%;
+    justify-content: space-between;
   }
 
-  .tabs {
-    justify-content: start;
+  .source-btn {
+    flex: 1;
+    text-align: center;
   }
 }

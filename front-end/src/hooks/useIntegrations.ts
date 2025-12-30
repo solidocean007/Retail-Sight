@@ -3,29 +3,23 @@ import { useSelector } from "react-redux";
 import { RootState } from "../utils/store";
 import { IntegrationsMap, ProviderKey } from "../utils/types";
 
-
 export function useIntegrations() {
   const currentCompany = useSelector((s: RootState) => s.currentCompany.data);
   const loading = !currentCompany;
-  const raw = (currentCompany?.integrations ??
-               {}) as IntegrationsMap;
 
-  // normalize: missing provider => disabled
-  const byProvider: IntegrationsMap = raw;
+  const raw = (currentCompany?.integrations ?? {}) as IntegrationsMap;
+
   const enabledSet = new Set<ProviderKey>(
-    (Object.keys(byProvider) as ProviderKey[]).filter(k => !!byProvider[k]?.enabled)
+    (Object.keys(raw) as ProviderKey[]).filter(
+      (k) => raw[k]?.enabled === true
+    )
   );
 
   return {
     loading,
-    byProvider,
+    byProvider: raw,
     enabledSet,
     isEnabled: (p: ProviderKey) => enabledSet.has(p),
+    getEnv: (p: ProviderKey) => raw[p]?.env ?? "prod",
   };
 }
-
-// Optional convenience wrapper if you want a single‑provider hook
-export const useIntegrationEnabled = (p: ProviderKey) => {
-  const { loading, isEnabled } = useIntegrations();
-  return { loading, enabled: isEnabled(p) };
-};

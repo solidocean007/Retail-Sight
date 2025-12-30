@@ -16,6 +16,8 @@ import { RootState } from "../utils/store";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import PostCard from "./PostCard"; // or your renderer
+import PostCardRenderer from "./PostCardRenderer";
+import { derivePostImageVariants } from "../utils/PostLogic/derivePostImageVariants";
 
 interface PostViewerModalProps {
   postId: string;
@@ -38,6 +40,8 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const imageSet = post ? derivePostImageVariants(post) : null;
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -118,7 +122,7 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
         sx={{
           p: 0,
           overflow: "auto",
-           maxHeight: "90vh",
+          maxHeight: "90vh",
         }}
       >
         <Box
@@ -133,10 +137,11 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
             <Box sx={{ p: 4, textAlign: "center" }}>
               <CircularProgress />
             </Box>
-          ) : post ? (
+          ) : post && imageSet? (
             <PostCard
               id={post.id}
               post={post}
+              imageSet={imageSet}
               currentUserUid={currentUserUid}
               style={{}}
               postIdToScroll={post.id}

@@ -119,7 +119,16 @@ button {
 .btn-secondary {
   background-color: var(--btn-secondary-bg);
   color: var(--text-color);
+  padding: 0.85rem 2rem;
+  border-radius: 10px;
+  text-decoration: none;
+  max-height: 50px;
+  max-width: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
 .btn-secondary:hover {
   background-color: var(--btn-secondary-hover);
 }

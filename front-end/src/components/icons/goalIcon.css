@@ -1,0 +1,20 @@
+/* Icon sizing/alignment to match MUI icons */
+.menu-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+/* Multi-color target palette (theme-friendly) */
+:root {
+  --target-ring-1: var(--primary-blue);
+  --target-ring-2: var(--gold);
+  --target-ring-3: var(--accent-orange);
+  --target-core: var(--white);
+}
+
+[data-theme="dark"] {
+  --target-core: var(--gray-900);
+}

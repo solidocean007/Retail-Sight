@@ -52,11 +52,6 @@
   border-radius: var(--border-radius);
 }
 
-
-.goal-title {
-  max-width: 200px;
-}
-
 .custom-input:focus {
   border-color: var(--primary-color, #1976d2);
   outline: none;

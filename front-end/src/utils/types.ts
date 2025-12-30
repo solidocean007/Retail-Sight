@@ -46,6 +46,7 @@ export type ProviderKey = "gallo" | "manualGoals"; // extend later
 
 export type IntegrationConfig = {
   enabled: boolean;
+  env: "prod" | "dev";
   apiKeyId?: string; // reference/id (not the raw secret)
   settings?: Record<string, unknown>;
 };
@@ -545,8 +546,8 @@ export type GalloProgramType = {
   marketId: string;
   programId: string;
   displayDate: string;
-  startDate: string;
-  endDate: string;
+  programStartDate: string;
+  programEndDate: string;
   programTitle: string;
   programDesc: string;
   priority: string;
@@ -646,11 +647,15 @@ export type GalloAccountType = {
   liquorStateAcctId: string;
 };
 
+export type LifecycleFilter = "active" | "archived" | "disabled" | "all";
+
 export interface FireStoreGalloGoalDocType {
+  lifeCycleStatus: LifecycleFilter;
   companyId: string;
   programDetails: {
     programId: string;
     programTitle: string;
+    programDescription: string;
     programStartDate: string;
     programEndDate: string;
     programDisplayDate?: string;
@@ -715,7 +720,7 @@ export type DashboardModeType =
   | "MyAccountsMode"
   | "MyGoalsMode"
   | "ProfileMode"
-  | "IntegrationMode"
+  | "IntegrationsMode"
   | "GoalManagerMode"
   | "ApiMode"
   | "CollectionsMode"

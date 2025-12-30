@@ -2,9 +2,7 @@
 import { useSelector } from "react-redux";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
-import {
-  selectUser,
-} from "../../Slices/userSlice.ts";
+import { selectUser } from "../../Slices/userSlice.ts";
 // import {
 //   getCompanyUsersFromIndexedDB,
 //   saveCompanyUsersToIndexedDB,
@@ -33,7 +31,7 @@ import UserProfileViewer from "../UserProfileViewer.tsx";
 import CollectionsViewer from "../CollectionsViewer.tsx";
 import TutorialViewer from "../TutorialViewer.tsx";
 import AccountManager from "../AccountManagement/AccountsManager.tsx";
-import GoalManager from "../GoalIntegration/GoalManager.tsx";
+import GoalManager from "../GoalIntegration/GoalManagerLayout.tsx";
 import DashMenu from "../DashMenu.tsx";
 import ProductsManager from "../ProductsManagement/ProductsManager.tsx";
 import MyGoals from "../GoalIntegration/MyGoals.tsx";
@@ -42,6 +40,7 @@ import TeamsViewer from "../TeamsViewer.tsx";
 import MyAccounts from "../MyAccounts.tsx";
 import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.tsx";
 import NotificationSettingsPanel from "../Notifications/NotificationSettingsPanel.tsx";
+import IntegrationsView from "./IntegrationsView.tsx";
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -54,7 +53,7 @@ export const Dashboard = () => {
   const companyId = user?.companyId;
   // const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
   const [drawerOpen, setDrawerOpen] = useState(true);
- 
+
   const isEmployee = user?.role === "employee";
   // const isEmployee = true;
   const isAdmin = user?.role === "admin";
@@ -96,7 +95,7 @@ export const Dashboard = () => {
     setSelectedMode(mode);
     setDashboardMode(mode); // ✅ now the render logic responds!
     setDrawerOpen(false);
-    console.log(mode)
+    console.log(mode);
   };
 
   const toggleDrawer =
@@ -116,7 +115,7 @@ export const Dashboard = () => {
     if (isLargeScreen) {
       setDrawerOpen(true);
     }
-    if(isIpadMini) {
+    if (isIpadMini) {
       setDrawerOpen(false);
     }
     // but if we flip into mobile, leave whatever state we were in
@@ -185,19 +184,16 @@ export const Dashboard = () => {
         {dashboardMode === "ConnectionsMode" && (
           <CompanyConnectionsManager currentCompanyId={companyId} user={user} />
         )}
-        {dashboardMode === "TeamMode" && (
-          <TeamsViewer />
-        )}
-        {dashboardMode === "NotificationsMode" && (
-          <NotificationSettingsPanel />
-        )}
+        {dashboardMode === "IntegrationsMode" && <IntegrationsView />}
+        {dashboardMode === "TeamMode" && <TeamsViewer />}
+        {dashboardMode === "NotificationsMode" && <NotificationSettingsPanel />}
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
         {dashboardMode === "ProductsMode" && (
           <ProductsManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
-        {dashboardMode === "MyGoalsMode" && <MyGoals  />}
+        {dashboardMode === "MyGoalsMode" && <MyGoals />}
         {/* {dashboardMode === "UsersMode" && <EmployeesViewer />} */}
         {dashboardMode === "UsersMode2" && <AdminUsersConsole />}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
@@ -205,13 +201,12 @@ export const Dashboard = () => {
         {dashboardMode === "GoalManagerMode" && (
           <GoalManager companyId={companyId} />
         )}
-       
+
         {dashboardMode === "CollectionsMode" && (
           <CollectionsViewer setDashboardMode={setDashboardMode} />
         )}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
       </Box>
-     
     </div>
   );
 };

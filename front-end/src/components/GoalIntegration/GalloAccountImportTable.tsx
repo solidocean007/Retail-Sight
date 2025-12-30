@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import {
   EnrichedGalloAccountType,
+  GalloAccountType,
   GalloGoalType,
   GalloProgramType,
 } from "../../utils/types";
@@ -30,8 +31,9 @@ import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
 import { saveSingleGalloGoalToIndexedDB } from "../../utils/database/goalsStoreUtils";
 
 interface AccountTableProps {
-  selectedEnv: "prod" | "dev";
+  selectedEnv: "prod" | "dev" | "null";
   accounts: EnrichedGalloAccountType[];
+  unmatchedAccounts: GalloAccountType[]; // 👈 ADD
   selectedGoal: GalloGoalType | null; // Pass the selected goal from the parent
   selectedProgram: GalloProgramType | null; // Pass the selected program from the parent
   onSaveComplete: () => void;
@@ -40,6 +42,7 @@ interface AccountTableProps {
 const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   selectedEnv,
   accounts,
+  unmatchedAccounts,
   selectedGoal,
   selectedProgram,
   onSaveComplete,
@@ -132,26 +135,30 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   };
 
   const handleCreateGalloGoal = async () => {
-    if (!selectedGoal || !selectedProgram) {
+    if (!selectedGoal || !selectedProgram || selectedEnv === "null") {
       alert("Please select a goal and program before saving.");
       return;
     }
+
+    const env: "prod" | "dev" = selectedEnv; // ✅ explicit narrowing
 
     setIsSaving(true);
 
     try {
       const savedGoal = await createGalloGoal(
-        selectedEnv,
+        env,
         selectedGoal,
         selectedProgram,
         selectedAccounts,
         companyId || ""
       );
 
-      console.log("✅ Saved Goal from Firestore:", savedGoal);
+      const savedGoalWithId = {
+        ...savedGoal,
+        id: selectedGoal.goalId,
+      };
 
-      // Use saved shape for Redux and IndexedDB
-      dispatch(addOrUpdateGalloGoal(savedGoal)); // Property 'id' is missing in type 'FireStoreGalloGoalDocType' but required in type 'FireStoreGalloGoalWithId'.ts(2345)
+      dispatch(addOrUpdateGalloGoal(savedGoalWithId));
       await saveSingleGalloGoalToIndexedDB(savedGoal);
 
       alert("Goal saved successfully!");
@@ -201,16 +208,14 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
         </Button>
         <Button
           onClick={() => {
-            if (!selectedGoal || !selectedProgram) {
-              alert("Please select a goal and program before saving.");
-              return;
-            }
-            setShowConfirmDialog(true); // ✅ Open the dialog instead of saving immediately
+            if (!selectedGoal || !selectedProgram) return;
+            setShowConfirmDialog(true);
           }}
           color="primary"
           variant="contained"
+          disabled={isSaving}
         >
-          Confirm
+          {isSaving ? "Saving…" : "Confirm"}
         </Button>
       </Box>
 
@@ -306,6 +311,44 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
           onChange={handleSearchSalesperson}
         />
       </Box>
+      {unmatchedAccounts.length > 0 && (
+        <Box
+          sx={{
+            border: "1px solid #f5c2c7",
+            backgroundColor: "#fff5f5",
+            borderRadius: "8px",
+            padding: 1.5,
+            marginBottom: 2,
+          }}
+        >
+          <Typography variant="subtitle2" color="error">
+            ⚠️ {unmatchedAccounts.length} Gallo account(s) could not be matched
+          </Typography>
+
+          <Typography variant="body2">
+            These accounts exist in Gallo Axis but do not exist in Displaygram.
+            They will <strong>not</strong> be included in this goal.
+          </Typography>
+
+          <Box mt={1}>
+            {unmatchedAccounts.slice(0, 5).map((acc) => (
+              <Typography
+                key={acc.distributorAcctId}
+                variant="caption"
+                sx={{ display: "block" }}
+              >
+                • Gallo Account ID: {acc.distributorAcctId}
+              </Typography>
+            ))}
+
+            {unmatchedAccounts.length > 5 && (
+              <Typography variant="caption">
+                …and {unmatchedAccounts.length - 5} more
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      )}
 
       {/* Table */}
       <Table>
@@ -402,14 +445,15 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
             Cancel
           </Button>
           <Button
-            onClick={() => {
+            disabled={isSaving}
+            onClick={async () => {
               setShowConfirmDialog(false);
-              handleCreateGalloGoal();
+              await handleCreateGalloGoal();
             }}
             color="primary"
             variant="contained"
           >
-            Confirm
+            {isSaving ? "Saving…" : "Confirm"}
           </Button>
         </DialogActions>
       </Dialog>

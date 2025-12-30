@@ -55,9 +55,18 @@
 --------------------------------*/
 .gallo-actions {
   display: flex;
+  flex-direction: column;
   gap: 12px;
   margin-top: 16px;
 }
+
+button:disabled,
+button[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 
 /* -----------------------------
    LIGHT THEME

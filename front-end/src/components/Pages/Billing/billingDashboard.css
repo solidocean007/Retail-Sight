@@ -176,10 +176,10 @@
 }
 
 /* Buttons */
-.btn-upgrade,
-.btn-current,
-.btn-primary,
-.btn-secondary {
+.billing-container .btn-upgrade,
+.billing-container .btn-current,
+.billing-container .btn-primary,
+.billing-container .btn-secondary {
   padding: 0.7rem 0.9rem;
   border-radius: 8px;
   border: none;
@@ -207,7 +207,8 @@
 .btn-primary:hover {
   background: var(--btn-primary-hover);
 }
-.btn-secondary {
+
+.billing-container .btn-secondary {
   background: #e5e7eb;
   color: #111827;
 }

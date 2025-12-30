@@ -113,7 +113,8 @@ const ArchivedYearSection = ({
         tabIndex={0}
       >
         <Typography variant="h6">
-          {year} Archived Goals ({uniqueGoalCount})
+          {/* {year} Archived Goals ({uniqueGoalCount}) */}
+          {year} Archived Goals 
         </Typography>
         <span className={`arrow ${expanded ? "up" : "down"}`}>▼</span>
       </Box>

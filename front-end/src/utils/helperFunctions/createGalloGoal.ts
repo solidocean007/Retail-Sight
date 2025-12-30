@@ -12,7 +12,7 @@ export const createGalloGoal = async (
   selectedGoal: GalloGoalType | null,
   selectedProgram: GalloProgramType | null,
   selectedAccounts: EnrichedGalloAccountType[],
-  companyId: string,
+  companyId: string
 ): Promise<FireStoreGalloGoalDocType> => {
   if (!selectedGoal || !selectedProgram) {
     throw new Error("Selected goal or program is missing.");
@@ -55,12 +55,14 @@ export const createGalloGoal = async (
   }
 
   const savedGoal: FireStoreGalloGoalDocType = {
+    lifeCycleStatus: "active",
     companyId: companyId,
     programDetails: {
       programId: selectedProgram.programId,
       programTitle: selectedProgram.programTitle,
-      programStartDate: selectedProgram.startDate,
-      programEndDate: selectedProgram.endDate,
+      programDescription: (selectedProgram as any).programDesc ?? "",
+      programStartDate: selectedProgram.programStartDate,
+      programEndDate: selectedProgram.programEndDate,
     },
     goalDetails: {
       goalEnv: goalEnv,
@@ -72,6 +74,19 @@ export const createGalloGoal = async (
     accounts: mergedAccounts,
   };
 
+  if (snapshot.exists()) {
+    const existing = snapshot.data() as FireStoreGalloGoalDocType;
+
+    const isExistingProd = existing.goalDetails.goalEnv === "prod";
+    const isIncomingDev = goalEnv === "dev";
+
+    if (isExistingProd && isIncomingDev) {
+      // 🚫 do NOT update lifecycleStatus or env
+      savedGoal.lifeCycleStatus = existing.lifeCycleStatus;
+      savedGoal.goalDetails.goalEnv = "prod";
+    }
+  }
+
   // 🔥 Actually write merged goal to Firestore
   try {
     await setDoc(goalDocRef, savedGoal, { merge: true });
@@ -82,4 +97,3 @@ export const createGalloGoal = async (
     throw err;
   }
 };
-

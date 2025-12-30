@@ -121,7 +121,7 @@ const AllCompanyGoalsView = ({
         gutterBottom
         className="company-goals-header"
       >
-        Company Goals
+        All Current and past company created goals
       </Typography>
 
       {/* Sort Button */}

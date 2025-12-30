@@ -405,19 +405,15 @@ const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
           </div>
-          {!post.account && (
-            <div className="missing-account-banner">
-              🚨 Missing Account Info — Please Edit
-            </div>
-          )}
           {post.companyGoalId && (
             <div className="company-goal-banner textured-background">
               Company Goal: {post.companyGoalTitle}
             </div>
           )}
-          {post.galloGoal?.oppId && (
+          {/* {post.galloGoal?.oppId || post.oppId && post.galloGoal && ( */}
+          {post.galloGoal?.oppId  && (
             <div className="gallo-goal-banner gallo-textured-background">
-              Gallo Goal: {post.galloGoal.title}
+              Gallo Goal: {post.galloGoal?.title}
             </div>
           )}
           {post.brands && post.brands.length > 0 && (
@@ -427,7 +423,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {post.id}
+          {/* {post.id} */}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>

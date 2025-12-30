@@ -9,7 +9,7 @@ export type FeedImageSet = {
 };
 
 interface PostCardRendererProps {
-  imageSet: FeedImageSet;
+  imageSet: FeedImageSet | null;
   currentUserUid?: string;
   style: React.CSSProperties;
   data: {
