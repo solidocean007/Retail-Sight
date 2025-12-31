@@ -53,7 +53,6 @@ const GalloProgramImportCard: React.FC<Props> = ({
 
           <span className="gallo-program-title">{program.programTitle}</span>
         </div>
-
         <span className="gallo-program-chip">
           {program.programType ?? "Unknown Type"}
         </span>

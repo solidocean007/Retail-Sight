@@ -558,6 +558,9 @@ export type GalloProgramType = {
 // this is a goal for a program as defined by Gallo
 export type GalloGoalType = {
   env?: "prod" | "dev";
+  notifications?: {
+    emailOnCreate?: boolean;
+  };
   marketId: string;
   programId: string;
   goalId: string;

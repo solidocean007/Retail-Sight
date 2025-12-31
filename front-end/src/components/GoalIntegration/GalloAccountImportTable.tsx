@@ -62,6 +62,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [searchSalesperson, setSearchSalesperson] = useState("");
   const companyUsers = useSelector(selectCompanyUsers) || [];
+  const [sendEmail, setSendEmail] = useState(true);
 
   const handleSearchSalesperson = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -150,7 +151,12 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     try {
       const savedGoal = await createGalloGoal(
         env,
-        selectedGoal,
+        {
+          ...selectedGoal,
+          notifications: {
+            emailOnCreate: sendEmail,
+          },
+        },
         selectedProgram,
         selectedAccounts,
         companyId || ""
@@ -206,6 +212,12 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     <TableContainer component={Paper} className="account-table">
       {/* Buttons */}
       <Box display="flex" justifyContent="flex-end" gap={2} mb={1}>
+        <Checkbox
+          checked={sendEmail}
+          onChange={(e) => setSendEmail(e.target.checked)}
+        />
+        <Typography>Send email notification to assigned salespeople</Typography>
+
         <Button
           variant="outlined"
           onClick={() => setSelectedAccounts(accounts)}

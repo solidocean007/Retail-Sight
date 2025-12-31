@@ -98,6 +98,7 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
           <Typography variant="h6" className="program-title">
             {goal.programDetails.programTitle}
           </Typography>
+          {goal.programDetails.programId}
           <Tooltip
             arrow
             title={
