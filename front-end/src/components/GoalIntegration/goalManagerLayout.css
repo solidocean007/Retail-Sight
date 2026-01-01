@@ -15,7 +15,7 @@
 .goal-section {
   background: var(--surface-elevated);
   border-radius: var(--radius-xl);
-  padding: 1rem;
+  /* padding: 1rem; */
   margin-bottom: 1.5rem;
   box-shadow: var(--card-shadow);
 }
@@ -124,6 +124,10 @@
 @media (max-width: 600px) {
   .goal-section-tabs {
     flex-direction: column;
+  }
+
+  .goal-manager {
+    padding: 0;
   }
 
   .gm-tab {

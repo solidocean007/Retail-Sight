@@ -55,7 +55,8 @@
 
 .goals-view {
   border-radius: 12px;
-  padding: 8px;
+  /* padding: 8px; */
+  width: 100%
 }
 
 .goals-view.gallo {
