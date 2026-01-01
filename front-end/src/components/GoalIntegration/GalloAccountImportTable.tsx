@@ -336,7 +336,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
         <Box
           sx={{
             border: "1px solid #f5c2c7",
-            backgroundColor: "#fff5f5",
+            // backgroundColor: "#fff5f5",
             borderRadius: "8px",
             padding: 1.5,
             marginBottom: 2,

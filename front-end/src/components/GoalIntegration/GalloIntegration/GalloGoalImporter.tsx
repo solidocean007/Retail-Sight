@@ -103,8 +103,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const [selectedProgram, setSelectedProgram] =
     useState<GalloProgramType | null>(null);
 
-    console.log("Selected Program:", selectedProgram);
-
   const [goals, setGoals] = useState<GalloGoalType[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<GalloGoalType | null>(null);
 
@@ -212,7 +210,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       setIsLoading(false);
     }
   };
-
   const fetchGoals = async () => {
     if (!selectedProgram || hasFetchedGoals) return;
     if (!keyStatus?.[env]?.exists) {
@@ -224,7 +221,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
     try {
       const fetchGoalsCF = httpsCallable(functions, "galloFetchGoals");
-
+      console.log(env, selectedProgram.programId, selectedProgram.marketId);
       const res = await fetchGoalsCF({
         env: env, // MUST be "env"
         programId: selectedProgram.programId,
@@ -232,7 +229,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       });
 
       const goals = res.data as GalloGoalType[];
-
+      console.log("Fetched goals:", res);
       setGoals(goals);
       setSelectedGoal(null);
       setEnrichedAccounts([]);
@@ -393,6 +390,11 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const hasSelectedGoal = !!selectedGoal;
   const hasFetchedAccounts = enrichedAccounts.length > 0;
 
+  const isProgramExpired = (program: GalloProgramType) => {
+    if (!program.endDate) return false;
+    return dayjs(program.endDate).isBefore(dayjs(), "day");
+  };
+
   // ---- Render --------------------------------------------------------------
   return (
     <Container className="gallo-integration">
@@ -402,8 +404,8 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
         externally.
       </p>
       <p className="integration-note">
-        “Programs are typically created after Nov 24th 2025. You usually won’t need
-        to change this.”
+        “Programs are typically created after Nov 24th 2025. You usually won’t
+        need to change this.”
       </p>
       <p className="integration-note">
         Source: Gallo Axis ({selectedEnv.toUpperCase()})
@@ -443,6 +445,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
         {programs.map((program) => {
           const alreadyImported = importedProgramIds.has(program.programId);
+          const expired = isProgramExpired(program);
 
           return (
             <GalloProgramImportCard
@@ -450,7 +453,8 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
               program={program}
               alreadyImported={alreadyImported}
               selected={selectedProgram?.programId === program.programId}
-              disabled={hasFetchedGoals} // 🔒 lock after goals fetched
+              disabled={expired || hasFetchedGoals}
+              expired={expired}
               onToggle={() => {
                 if (hasFetchedGoals) return;
                 setSelectedProgram(
@@ -464,10 +468,25 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
         })}
 
         <div className="gallo-actions">
+          {selectedProgram && isProgramExpired(selectedProgram) && (
+            <Typography
+              variant="caption"
+              color="warning.main"
+              sx={{ display: "block", mt: 1 }}
+            >
+              This program has ended. Gallo Axis does not return goals for
+              expired programs.
+            </Typography>
+          )}
+
           <button
             className="btn-secondary"
             onClick={fetchGoals}
-            disabled={!hasSelectedProgram || hasFetchedGoals}
+            disabled={
+              !hasSelectedProgram ||
+              hasFetchedGoals ||
+              (selectedProgram && isProgramExpired(selectedProgram))
+            }
           >
             Fetch Goals
           </button>
@@ -498,7 +517,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
               borderRadius: "8px",
               p: 1.5,
               mb: 2,
-              backgroundColor: "#fff8e1",
+              // backgroundColor: "#fff8e1",
             }}
           >
             <Typography color="warning.main" variant="body2">

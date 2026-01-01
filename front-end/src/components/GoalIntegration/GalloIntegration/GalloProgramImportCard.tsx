@@ -26,6 +26,7 @@ interface Props {
   alreadyImported?: boolean;
   selected: boolean;
   disabled?: boolean;
+  expired: boolean;
   onToggle: () => void;
 }
 
@@ -34,10 +35,11 @@ const GalloProgramImportCard: React.FC<Props> = ({
   alreadyImported,
   selected,
   disabled,
+  expired,
   onToggle,
 }) => {
   const [showDebug, setShowDebug] = useState(false);
-  console.log("from gallo program import card: ",program)
+  console.log("from gallo program import card: ", program);
   return (
     <div className={`gallo-program-card ${selected ? "selected" : ""}`}>
       {/* Header */}
@@ -49,7 +51,11 @@ const GalloProgramImportCard: React.FC<Props> = ({
 
       <div className="gallo-program-header">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Checkbox checked={selected} onChange={() => onToggle()} disabled={disabled} />
+          <Checkbox
+            checked={selected}
+            onChange={() => onToggle()}
+            disabled={disabled}
+          />
 
           <span className="gallo-program-title">{program.programTitle}</span>
         </div>
@@ -59,17 +65,22 @@ const GalloProgramImportCard: React.FC<Props> = ({
       </div>
 
       {/* Core metadata */}
-      <div className="gallo-program-meta">
-        <span className="gallo-program-chip">Market: {program.marketId}</span>
-        <span className="gallo-program-chip">
-          Start: {program.startDate}
-        </span>
-        <span className="gallo-program-chip">
-          End: {program.endDate}
-        </span>
-        <span className="gallo-program-chip">Priority: {program.priority}</span>
-        <span className="gallo-program-chip">Sales: {program.salesType}</span>
-      </div>
+     <div className="gallo-program-meta">
+  <span className="gallo-program-chip">Market: {program.marketId}</span>
+  <span className="gallo-program-chip">Start: {program.startDate}</span>
+
+  <span
+    className={`gallo-program-chip ${
+      expired ? "gallo-program-chip--ended" : ""
+    }`}
+  >
+    End: {program.endDate}
+  </span>
+
+  <span className="gallo-program-chip">Priority: {program.priority}</span>
+  <span className="gallo-program-chip">Sales: {program.salesType}</span>
+</div>
+
 
       {/* Description */}
       {program.programDesc && (

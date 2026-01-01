@@ -83,6 +83,16 @@
 }
 
 /* -----------------------------
+   Expired program end date
+--------------------------------*/
+.gallo-program-chip--ended {
+  font-weight: 700;
+  color: #b42318;
+  background-color: #fee4e2;
+  border-color: #fca5a5;
+}
+
+/* -----------------------------
    LIGHT THEME
 --------------------------------*/
 [data-theme="light"] {
@@ -120,4 +130,10 @@
   --code-text: #c9d1d9;
 
   --accent-color: #58a6ff;
+}
+
+[data-theme="dark"] .gallo-program-chip--ended {
+  color: #fecaca;
+  background-color: rgba(248, 113, 113, 0.15);
+  border-color: rgba(248, 113, 113, 0.4);
 }

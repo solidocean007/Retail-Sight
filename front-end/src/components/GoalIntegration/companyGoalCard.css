@@ -345,6 +345,10 @@
     padding: 0.5rem;
   }
 
+  .info-title-row {
+    flex-direction: column;
+  }
+
   .info-title,
   .info-description,
   .info-metric {

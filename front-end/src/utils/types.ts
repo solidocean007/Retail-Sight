@@ -546,8 +546,8 @@ export type GalloProgramType = {
   marketId: string;
   programId: string;
   displayDate: string;
-  programStartDate: string;
-  programEndDate: string;
+  startDate: string;
+  endDate: string;
   programTitle: string;
   programDesc: string;
   priority: string;
