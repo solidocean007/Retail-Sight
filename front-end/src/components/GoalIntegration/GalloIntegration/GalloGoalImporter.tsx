@@ -30,6 +30,8 @@ import { useSelector } from "react-redux";
 import GalloProgramImportCard from "./GalloProgramImportCard";
 import { selectAllGalloGoals } from "../../../Slices/galloGoalsSlice";
 import { set } from "react-hook-form";
+import GalloScheduledImportPanel from "./GalloScheduledImportPanel";
+import { selectUser } from "../../../Slices/userSlice";
 
 type EnrichedGalloProgram = GalloProgramType & {
   __debug?: {
@@ -56,6 +58,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const [envLoading, setEnvLoading] = useState(true);
   const [hasFetchedPrograms, setHasFetchedPrograms] = useState(false);
   const galloGoals = useSelector(selectAllGalloGoals);
+  const user = useSelector(selectUser);
   const companyId = useSelector(
     (s: RootState) => s.user.currentUser?.companyId
   );
@@ -371,6 +374,15 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     );
   }
 
+  if (!companyId) {
+    return (
+      <Container className="gallo-integration">
+        <CircularProgress />
+        <Typography>Loading Company...</Typography>
+      </Container>
+    );
+  }
+
   if (!selectedEnv) {
     // This should never happen, but protects against bad data
     return (
@@ -414,6 +426,11 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       {/* 📅 Program Import Section */}
       <div className="gallo-section">
         <div className="gallo-section-title">📅 Program Import</div>
+
+        <GalloScheduledImportPanel
+          companyId={companyId}
+          canRunManually={user?.role === "super-admin"}
+        />
 
         {/* Date + actions */}
         <div className="gallo-controls">

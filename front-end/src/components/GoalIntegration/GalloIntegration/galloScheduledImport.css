@@ -1,0 +1,46 @@
+.gallo-scheduled-panel {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-pill.success {
+  background: rgba(26, 127, 55, 0.15);
+  color: #1a7f37;
+}
+
+.status-pill.error {
+  background: rgba(180, 35, 24, 0.15);
+  color: #b42318;
+}
+
+.error-box {
+  background: var(--error-bg);
+  color: var(--error-color);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
