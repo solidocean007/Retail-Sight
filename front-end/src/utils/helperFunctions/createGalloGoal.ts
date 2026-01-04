@@ -24,22 +24,21 @@ export const createGalloGoal = async (
   const snapshot = await getDoc(goalDocRef);
 
   let mergedAccounts = selectedAccounts.map((account) => ({
-    distributorAcctId: account.distributorAcctId,
-    accountName: account.accountName ?? "N/A",
-    accountAddress: account.accountAddress ?? "N/A",
-    salesRouteNums: Array.isArray(account.salesRouteNums)
-      ? account.salesRouteNums
-      : [],
-    oppId: account.oppId,
-    marketId: account.marketId ?? "N/A",
-  }));
+  status: account.status ?? "inactive",
+  distributorAcctId: account.distributorAcctId,
+  accountName: account.accountName ?? "N/A",
+  accountAddress: account.accountAddress ?? "N/A",
+  salesRouteNums: Array.isArray(account.salesRouteNums)
+    ? account.salesRouteNums
+    : [],
+  oppId: account.oppId,
+  marketId: account.marketId ?? "N/A",
+}));
+
 
   if (snapshot.exists()) {
     const existingGoal = snapshot.data() as FireStoreGalloGoalDocType;
 
-    console.log("📄 Existing goal found in Firestore:", existingGoal);
-
-    // Merge accounts without duplicates
     mergedAccounts = [
       ...existingGoal.accounts,
       ...mergedAccounts.filter(

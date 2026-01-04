@@ -253,7 +253,7 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
           {canRunManually && (
             <div className="actions">
               <button
-                className="btn-secondary"
+                className="button-primary"
                 disabled={runningNow}
                 onClick={runNow}
               >

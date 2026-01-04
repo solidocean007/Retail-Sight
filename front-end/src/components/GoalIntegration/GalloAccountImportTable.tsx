@@ -16,6 +16,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  MenuItem,
+  Select,
+  Chip,
 } from "@mui/material";
 import {
   EnrichedGalloAccountType,
@@ -33,7 +36,7 @@ import { sendGalloGoalAssignedEmails } from "../../utils/helperFunctions/sendGal
 import { selectCompanyUsers } from "../../Slices/userSlice";
 
 interface AccountTableProps {
-  selectedEnv: "prod" | "dev" | "null";
+  selectedEnv: "prod" | "dev" | null;
   accounts: EnrichedGalloAccountType[];
   unmatchedAccounts: GalloAccountType[]; // 👈 ADD
   selectedGoal: GalloGoalType | null; // Pass the selected goal from the parent
@@ -49,6 +52,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   selectedProgram,
   onSaveComplete,
 }) => {
+  const [editableAccounts, setEditableAccounts] =
+    useState<EnrichedGalloAccountType[]>(accounts);
   const dispatch = useAppDispatch();
   const [isSaving, setIsSaving] = useState(false); // isSaving isnt used.  should we have a loading elemetn?
   const [selectedAccounts, setSelectedAccounts] =
@@ -79,7 +84,39 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     setSearchRoute(event.target.value);
   };
 
-  const filteredAccounts = accounts.filter((account) => {
+  const salesUsers = (companyUsers ?? []).filter(
+    (u) =>
+      typeof u.salesRouteNum === "string" && u.salesRouteNum.trim().length > 0
+  );
+
+  const getAssignedUserIdsFromRoutes = (routes: string[]) => {
+    const routeSet = new Set(routes.map(String));
+    return salesUsers
+      .filter((u) => u.salesRouteNum && routeSet.has(String(u.salesRouteNum)))
+      .map((u) => u.uid);
+  };
+
+  const routesFromSelectedUserIds = (userIds: string[]) => {
+    const routes = userIds
+      .map((id) => salesUsers.find((u) => u.uid === id)?.salesRouteNum)
+      .filter((v): v is string => Boolean(v))
+      .map((v) => String(v));
+
+    // unique + stable
+    return Array.from(new Set(routes));
+  };
+
+  const nameFromRoutes = (routes: string[]) => {
+    const routeSet = new Set(routes.map(String));
+    const names = salesUsers
+      .filter((u) => u.salesRouteNum && routeSet.has(String(u.salesRouteNum)))
+      .map((u) => `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim())
+      .filter(Boolean);
+
+    return names.length ? names.join(", ") : "N/A";
+  };
+
+  const filteredAccounts = editableAccounts.filter((account) => {
     if (!account.accountName) return false;
 
     const matchesAccountName = account.accountName
@@ -106,40 +143,34 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   });
 
   useEffect(() => {
-    if (accounts.length === selectedAccounts.length) {
-      setIsAllSelected(true);
-    } else {
-      setIsAllSelected(false);
-    }
-  }, [selectedAccounts, accounts]);
+    setEditableAccounts(accounts);
+    setSelectedAccounts(accounts);
+  }, [accounts]);
 
-  const handleSelectAll = () => {
-    // unused? is this for toggling?
-    if (isAllSelected) {
-      setSelectedAccounts([]);
-    } else {
-      setSelectedAccounts(accounts);
-    }
-  };
+  useEffect(() => {
+    setIsAllSelected(
+      editableAccounts.length > 0 &&
+        editableAccounts.length === selectedAccounts.length
+    );
+  }, [selectedAccounts, editableAccounts]);
 
   const handleCheckboxChange = (account: EnrichedGalloAccountType) => {
-    const isSelected = selectedAccounts.some(
-      (selected) => selected.distributorAcctId === account.distributorAcctId
+  setSelectedAccounts((prev) => {
+    const exists = prev.some(
+      (a) => a.distributorAcctId === account.distributorAcctId
     );
 
-    if (isSelected) {
-      setSelectedAccounts(
-        selectedAccounts.filter(
-          (selected) => selected.distributorAcctId !== account.distributorAcctId
+    return exists
+      ? prev.filter(
+          (a) => a.distributorAcctId !== account.distributorAcctId
         )
-      );
-    } else {
-      setSelectedAccounts([...selectedAccounts, account]);
-    }
-  };
+      : [...prev, account];
+  });
+};
+
 
   const handleCreateGalloGoal = async () => {
-    if (!selectedGoal || !selectedProgram || selectedEnv === "null") {
+    if (!selectedGoal || !selectedProgram || selectedEnv === null) {
       alert("Please select a goal and program before saving.");
       return;
     }
@@ -220,7 +251,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
 
         <Button
           variant="outlined"
-          onClick={() => setSelectedAccounts(accounts)}
+          onClick={() => setSelectedAccounts(editableAccounts)}
         >
           Select All
         </Button>
@@ -380,6 +411,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
             <TableCell>Account Address</TableCell>
             <TableCell>Sales Route #</TableCell>
             <TableCell>Salesperson</TableCell>
+            <TableCell>Assign To</TableCell> {/* ✅ NEW */}
             <TableCell>Opp ID</TableCell>
           </TableRow>
         </TableHead>
@@ -404,6 +436,74 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                   : "N/A"}
               </TableCell>
               <TableCell>{account.salesPersonsName}</TableCell>
+              <TableCell>
+                <Select
+                  multiple
+                  size="small"
+                  fullWidth
+                  value={getAssignedUserIdsFromRoutes(
+                    account.salesRouteNums ?? []
+                  )}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {(selected as string[])
+                        .map((uid) => salesUsers.find((u) => u.uid === uid))
+                        .filter(Boolean)
+                        .map((u) => (
+                          <Chip
+                            key={u!.uid}
+                            size="small"
+                            label={`${u!.firstName ?? ""} ${
+                              u!.lastName ?? ""
+                            }`.trim()}
+                          />
+                        ))}
+                    </Box>
+                  )}
+                  onChange={(e) => {
+                    const userIds = (e.target.value as string[]) ?? [];
+                    const nextRoutes = routesFromSelectedUserIds(userIds);
+                    const nextName = nameFromRoutes(nextRoutes);
+
+                    // Update editableAccounts (what the table renders)
+                    setEditableAccounts((prev) =>
+                      prev.map((a) =>
+                        a.distributorAcctId === account.distributorAcctId
+                          ? {
+                              ...a,
+                              salesRouteNums: nextRoutes,
+                              salesPersonsName: nextName,
+                            }
+                          : a
+                      )
+                    );
+
+                    // Update selectedAccounts (what gets saved)
+                    setSelectedAccounts((prev) =>
+                      prev.map((a) =>
+                        a.distributorAcctId === account.distributorAcctId
+                          ? {
+                              ...a,
+                              salesRouteNums: nextRoutes,
+                              salesPersonsName: nextName,
+                            }
+                          : a
+                      )
+                    );
+                  }}
+                >
+                  {salesUsers.map((u) => (
+                    <MenuItem key={u.uid} value={u.uid}>
+                      {`${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()} (#
+                      {u.salesRouteNum})
+                    </MenuItem>
+                  ))}
+                </Select>
+
+                <small className="helper-text">
+                  Selecting users overrides Sales Route # for this account.
+                </small>
+              </TableCell>
               <TableCell>{account.oppId}</TableCell>
             </TableRow>
           ))}

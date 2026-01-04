@@ -1,8 +1,13 @@
 /* dateSelector.css */
-
+.manual-gallo-import-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
 .date-selector {
   display: flex;
   flex-direction: column;
+  width: 100%;
   gap: 8px;
 }
 

@@ -123,7 +123,8 @@ button {
   border-radius: 10px;
   text-decoration: none;
   max-height: 50px;
-  max-width: 150px;
+  width: fit-content;
+  max-width: 200px;
   display: flex;
   justify-content: center;
   align-items: center;

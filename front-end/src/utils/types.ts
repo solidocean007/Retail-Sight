@@ -646,6 +646,7 @@ export type GoalSubmissionType = {
 
 // This is an account as defined by gallo
 export type GalloAccountType = {
+  status?: "active" | "inactive" | "disabled";
   oppId: string;
   marketId: string;
   goalId: string;
@@ -676,6 +677,7 @@ export interface FireStoreGalloGoalDocType {
     goalValueMin: string;
   };
   accounts: Array<{
+    status: "active" | "inactive" | "disabled"; // just added status.  included disabled for future proofing
     oppId: string;
     distributorAcctId: string;
     accountName: string;

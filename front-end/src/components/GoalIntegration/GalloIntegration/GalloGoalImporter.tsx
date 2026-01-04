@@ -4,8 +4,12 @@ import { Box, Container, Typography, CircularProgress } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../utils/firebase";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import DateSelector from "../DateSelector";
+import {
+  FunctionsError,
+  getFunctions,
+  httpsCallable,
+} from "firebase/functions";
+import DateSelector from "../ManualGalloProgramImport";
 import GoalTable from "../GoalTable";
 import GalloAccountImportTable from "../GalloAccountImportTable";
 import "./galloIntegration.css";
@@ -27,6 +31,8 @@ import GalloScheduledImportPanel from "./GalloScheduledImportPanel";
 import { selectUser } from "../../../Slices/userSlice";
 import GalloProgramManager from "./GalloProgramManager";
 import { useGalloPrograms } from "../../../hooks/useGalloPrograms";
+import ManualGalloProgramImport from "../ManualGalloProgramImport";
+import { showMessage } from "../../../Slices/snackbarSlice";
 
 export type EnrichedGalloProgram = GalloProgramType & {
   status?: "active" | "expired";
@@ -51,6 +57,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const functions = getFunctions();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEnv, setSelectedEnv] = useState<"prod" | "dev" | null>(null);
+  const env: "prod" | "dev" | null = selectedEnv;
   const [envLoading, setEnvLoading] = useState(true);
   const [hasFetchedPrograms, setHasFetchedPrograms] = useState(false);
   const galloGoals = useSelector(selectAllGalloGoals);
@@ -145,73 +152,68 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const onDateChangeHandler = (newDate: Dayjs | null) => {
     setStartDate(newDate);
     setHasFetchedPrograms(false); // reset intent
-    setPrograms([]);
   };
 
-  // const fetchPrograms = async () => {
-  //   if (!keyStatus?.[env]?.exists) {
-  //     // Type 'null' cannot be used as an index type
-  //     alert(`No ${env.toUpperCase()} key configured`);
-  //     return;
-  //   }
-  //   setHasFetchedPrograms(true);
-  //   setIsLoading(true);
+  const manualFetchPrograms = async () => {
+    if (!env) return;
+    if (!keyStatus?.[env]?.exists) {
+      alert(`No ${env.toUpperCase()} key configured`);
+      return;
+    }
 
-  //   const startDateUnix = startDate?.unix()?.toString() ?? "";
+    if (!startDate) {
+      showMessage({
+        text: "Please select a start date before running import.",
+        severity: "warning",
+      });
+      return;
+    }
 
-  //   try {
-  //     const fetchProgramsCF = httpsCallable(functions, "galloFetchPrograms");
-  //     const res = await fetchProgramsCF({
-  //       env: env, // <-- MUST be "env"
-  //       startDate: startDateUnix, // <-- MUST be "startDate"
-  //     });
+    setIsLoading(true);
 
-  //     // const programs = res.data as GalloProgramType[];
+    try {
+      const fn = httpsCallable(functions, "galloFetchPrograms");
 
-  //     const rawPrograms = res.data as any[];
+      const formattedStartDate = startDate.unix();
 
-  //     console.group("🧪 galloFetchPrograms raw response");
-  //     rawPrograms.forEach((p, i) => {
-  //       console.log(`Program[${i}]`, p);
-  //     });
-  //     console.groupEnd();
+      console.log("Manual Gallo fetch payload", {
+        env,
+        formattedStartDate,
+      });
 
-  //     const enrichedPrograms: EnrichedGalloProgram[] = rawPrograms.map((p) => {
-  //       const startUnix =
-  //         typeof p.startDate === "string"
-  //           ? dayjs(p.startDate).unix()
-  //           : undefined;
+      await fn({
+        env,
+        startDate: formattedStartDate,
+      });
 
-  //       const endUnix =
-  //         typeof p.endDate === "string" ? dayjs(p.endDate).unix() : undefined;
+      // ✅ DO NOTHING ELSE
+      // Firestore listener will update programs
+    } catch (err: unknown) {
+      console.error("Manual program fetch failed", err);
 
-  //       return {
-  //         ...p,
-  //         __debug: {
-  //           hasMarketId: Boolean(p.marketId),
-  //           startDateUnix: startUnix,
-  //           endDateUnix: endUnix,
-  //           rawKeys: Object.keys(p),
-  //         },
-  //       };
-  //     });
+      let message = "Program fetch failed";
 
-  //     setPrograms(enrichedPrograms);
+      if (err instanceof FunctionsError) {
+        message =
+          (typeof err.details === "string" && err.details) ||
+          err.message ||
+          message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
 
-  //     // setPrograms(programs);
-  //     setSelectedProgram(null);
-  //     setGoals([]);
-  //     setSelectedGoal(null);
-  //     setEnrichedAccounts([]);
-  //     setUnmatchedAccounts([]);
-  //   } catch (err) {
-  //     console.error("Error fetching programs:", err);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+      showMessage({
+        text: message,
+        severity: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchPrograms = async () => {
+    // not used
+    if (!env) return;
     if (!keyStatus?.[env]?.exists) {
       alert(`No ${env.toUpperCase()} key configured`);
       return;
@@ -223,7 +225,8 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       const fn = httpsCallable(functions, "runGalloScheduledImportNow");
 
       await fn({
-        startDate: startDate?.format("YYYY-MM-DD"), // optional bootstrap hint
+        env, // REQUIRED
+        programStartDate: startDate?.format("YYYY-MM-DD"), // REQUIRED for first run
       });
 
       // 🔥 DO NOTHING ELSE
@@ -357,18 +360,32 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       const match = companyAccounts.find(
         (c) => Number(c.accountNumber) === Number(g.distributorAcctId)
       );
+
+      if (!match) {
+        return {
+          ...g,
+          status: "inactive",
+          accountName: "Not in Displaygram",
+          accountAddress: "",
+          salesRouteNums: [],
+          salesPersonsName: "N/A",
+        } as EnrichedGalloAccountType;
+      }
+
       const salesPerson = users.find(
         (u) =>
-          u.salesRouteNum && match?.salesRouteNums?.includes(u.salesRouteNum)
+          u.salesRouteNum && match.salesRouteNums?.includes(u.salesRouteNum)
       );
+
       return {
         ...g,
-        accountName: match?.accountName || "N/A",
-        accountAddress: match?.accountAddress || "N/A",
-        salesRouteNums: match?.salesRouteNums || ["N/A"],
+        status: "active",
+        accountName: match.accountName,
+        accountAddress: match.accountAddress,
+        salesRouteNums: match.salesRouteNums ?? [],
         salesPersonsName: salesPerson
           ? `${salesPerson.firstName} ${salesPerson.lastName}`
-          : "N/A",
+          : "Unassigned",
       } as EnrichedGalloAccountType;
     });
 
@@ -424,7 +441,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   }
 
   // ⬇️ MOVE THIS HERE
-  const env: "prod" | "dev" = selectedEnv;
 
   const hasSelectedProgram = !!selectedProgram;
   const hasFetchedGoals = goals.length > 0;
@@ -456,12 +472,12 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
         {/* Date + actions */}
         <div className="gallo-controls">
-          {/* <DateSelector
+          <ManualGalloProgramImport
             startDate={startDate}
             onDateChange={onDateChangeHandler}
-            onFetchPrograms={fetchPrograms}
-            disabled={programs.length > 0}
-          /> */}
+            onFetchPrograms={manualFetchPrograms} // ✅
+            disabled={loading}
+          />
 
           {(programs.length > 0 ||
             goals.length > 0 ||
@@ -512,19 +528,11 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             </Typography>
           )}
 
-          <button
-            className="btn-secondary"
-            onClick={fetchGoals}
-            disabled={
-              !hasSelectedProgram ||
-              hasFetchedGoals ||
-              (selectedProgram && isProgramExpired(selectedProgram))
-            }
-          >
-            Fetch Goals
-          </button>
+          {selectedProgram &&
+            !isProgramExpired(selectedProgram) &&
+            goals.length === 0 &&
+            !isLoading && <button onClick={fetchGoals}>Fetch Goals</button>}
 
-          {/* Goals */}
           {goals.length > 0 && (
             <GoalTable
               goals={goals}
@@ -533,13 +541,11 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             />
           )}
 
-          <button
-            className="btn-secondary"
-            onClick={fetchAccounts}
-            disabled={!hasSelectedGoal || hasFetchedAccounts}
-          >
-            Fetch Accounts
-          </button>
+          {selectedGoal && enrichedAccounts.length === 0 && (
+            <button className="btn-secondary" onClick={fetchAccounts}>
+              Fetch Accounts
+            </button>
+          )}
         </div>
 
         {/* Warnings / Results */}
@@ -563,7 +569,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
         {enrichedAccounts.length > 0 && (
           <GalloAccountImportTable
-            selectedEnv={env} // might still be null
+            selectedEnv={env}
             accounts={enrichedAccounts}
             unmatchedAccounts={unmatchedAccounts}
             selectedGoal={selectedGoal}
