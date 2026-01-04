@@ -1,10 +1,9 @@
 // components/Gallo/GalloIntegration.tsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Container,
   Typography,
-  Button,
   CircularProgress,
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
@@ -29,11 +28,12 @@ import { RootState } from "../../../utils/store";
 import { useSelector } from "react-redux";
 import GalloProgramImportCard from "./GalloProgramImportCard";
 import { selectAllGalloGoals } from "../../../Slices/galloGoalsSlice";
-import { set } from "react-hook-form";
 import GalloScheduledImportPanel from "./GalloScheduledImportPanel";
 import { selectUser } from "../../../Slices/userSlice";
+import GalloProgramManager from "./GalloProgramManager";
 
-type EnrichedGalloProgram = GalloProgramType & {
+export type EnrichedGalloProgram = GalloProgramType & {
+  status?: "active" | "expired";
   __debug?: {
     hasMarketId: boolean;
     startDateUnix?: number;
@@ -365,6 +365,14 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     // setValue(0); // back to previous tab
   };
 
+  const handleSelectProgram = (program: GalloProgramType | null) => {
+    setSelectedProgram(program);
+    setGoals([]);
+    setSelectedGoal(null);
+    setEnrichedAccounts([]);
+    setUnmatchedAccounts([]);
+  };
+
   if (envLoading) {
     return (
       <Container className="gallo-integration">
@@ -454,35 +462,25 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
         </div>
 
         {/* Programs */}
-        {hasFetchedPrograms && !isLoading && programs.length === 0 && (
-          <div className="gallo-empty">
-            No programs found for the selected start date.
-          </div>
+        {programs.length > 0 && (
+          <GalloProgramManager
+            programs={programs}
+            importedProgramIds={importedProgramIds}
+            selectedProgram={selectedProgram}
+            onSelectProgram={handleSelectProgram}
+          />
         )}
 
-        {programs.map((program) => {
-          const alreadyImported = importedProgramIds.has(program.programId);
-          const expired = isProgramExpired(program);
-
-          return (
-            <GalloProgramImportCard
-              key={`${program.programId}-${program.marketId}`}
-              program={program}
-              alreadyImported={alreadyImported}
-              selected={selectedProgram?.programId === program.programId}
-              disabled={expired || hasFetchedGoals}
-              expired={expired}
-              onToggle={() => {
-                if (hasFetchedGoals) return;
-                setSelectedProgram(
-                  selectedProgram?.programId === program.programId
-                    ? null
-                    : program
-                );
-              }}
-            />
-          );
-        })}
+        {selectedProgram && (
+          <GalloProgramImportCard
+            program={selectedProgram}
+            alreadyImported={importedProgramIds.has(selectedProgram.programId)}
+            selected
+            expired={isProgramExpired(selectedProgram)}
+            disabled={hasFetchedGoals}
+            onToggle={() => handleSelectProgram(null)}
+          />
+        )}
 
         <div className="gallo-actions">
           {selectedProgram && isProgramExpired(selectedProgram) && (

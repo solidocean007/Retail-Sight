@@ -555,6 +555,11 @@ export type GalloProgramType = {
   programType: string;
 };
 
+export type FirestoreGalloProgramType = GalloProgramType & {
+  status: "active" | "expired";
+  updatedAt: Timestamp;
+}
+
 // this is a goal for a program as defined by Gallo
 export type GalloGoalType = {
   env?: "prod" | "dev";

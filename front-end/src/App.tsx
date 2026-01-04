@@ -25,7 +25,7 @@ import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
-import { setAppReady } from "./Slices/appSlice";
+import { setAppReady } from "./Slices/appSlice"; // unused
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -48,10 +48,25 @@ function AppContent() {
     "/contact-us",
     "/help-support",
   ]);
+
+  const AUTH_ROUTES = new Set([
+    "/login",
+    "/signup",
+    "/request-access",
+    "/reset-password",
+    "/request-submitted",
+  ]);
+
+  const isAuthRoute =
+    AUTH_ROUTES.has(location.pathname) ||
+    location.pathname.startsWith("/accept-invite") ||
+    location.pathname.startsWith("/onboard-company");
+
   const isPublicRoute = PUBLIC_ROUTES.has(location.pathname);
 
-  useAppBootstrap({ enabled: !isPublicRoute });
+  const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 
+  useAppBootstrap({ enabled: shouldBootstrapApp });
 
   // Theme initialization
 
@@ -66,8 +81,8 @@ function AppContent() {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  // Only global-blocking conditions
-  const showAppLoader = !isPublicRoute && (initializing || !appReady);
+  const showAppLoader =
+    !isPublicRoute && !isAuthRoute && (initializing || !appReady);
 
   return (
     <>

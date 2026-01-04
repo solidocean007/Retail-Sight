@@ -33,6 +33,10 @@ import {
   galloFetchPrograms,
   galloFetchAccounts,
   galloFetchGoals,
+  galloSyncProgramsByChangeStamp,
+  syncGalloProgramsForCompany,
+  runGalloScheduledImportNow,
+  getGalloScheduledImportStatus,
 } from "./galloKeys/gallo";
 import { galloSendAchievement } from "./galloKeys/galloSendAchievment";
 import { analyzePostImages } from "./analyzePostImages";
@@ -68,6 +72,10 @@ export {
   galloFetchPrograms,
   galloFetchAccounts,
   galloFetchGoals,
+  galloSyncProgramsByChangeStamp,
+  syncGalloProgramsForCompany,
+  getGalloScheduledImportStatus,
+  runGalloScheduledImportNow,
   // General functions
   createInviteAndEmail,
   deleteAuthUser,

@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Container, Typography, CircularProgress } from "@mui/material";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import "./galloScheduledImport.css";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../../../utils/firebase";
+
+import "./galloScheduledImportPanel.css";
+import { useSelector } from "react-redux";
+import { selectCompanyUsers } from "../../../Slices/userSlice";
 
 type ScheduledImportStatus = {
   env: "prod" | "dev";
@@ -18,12 +23,47 @@ interface Props {
 
 const GalloScheduledImportPanel: React.FC<Props> = ({
   companyId,
-  canRunManually = false,
+  canRunManually,
 }) => {
+  const users = useSelector(selectCompanyUsers);
+  const admins = users?.filter((u) => u.role?.includes("admin")) || [];
   const functions = getFunctions();
   const [status, setStatus] = useState<ScheduledImportStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [runningNow, setRunningNow] = useState(false);
+  const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [emails, setEmails] = useState<string[]>([]);
+  const [savingNotify, setSavingNotify] = useState(false);
+
+  useEffect(() => {
+    const loadNotifySettings = async () => {
+      const ref = doc(db, "companies", companyId, "integrations", "galloAxis");
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        setNotifyEnabled(!!snap.data()?.notifyOnProgramSync);
+        setEmails(snap.data()?.notificationEmails ?? []);
+      }
+    };
+
+    loadNotifySettings();
+  }, [companyId]);
+
+  const saveNotifySettings = async () => {
+    setSavingNotify(true);
+    try {
+      await setDoc(
+        doc(db, "companies", companyId, "integrations", "galloAxis"),
+        {
+          notifyOnProgramSync: notifyEnabled,
+          notificationEmails: emails.filter(Boolean),
+        },
+        { merge: true }
+      );
+    } finally {
+      setSavingNotify(false);
+    }
+  };
 
   const fetchStatus = async () => {
     const fn = httpsCallable(functions, "getGalloScheduledImportStatus");
@@ -72,7 +112,16 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
         <p className="subtext">
           Programs and goals are automatically synced from Gallo Axis.
         </p>
+        <div className={`sync-banner ${status.lastRunStatus}`}>
+          {status.lastRunStatus === "success"
+            ? "✅ Program sync is healthy"
+            : "⚠️ Program sync requires attention"}
+        </div>
       </header>
+      <p className="subtext">
+        Gallo programs are automatically synced every 6 hours. Goals and
+        accounts are imported manually after review.
+      </p>
 
       <div className="status-grid">
         <div>
@@ -91,11 +140,7 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
 
         <div>
           <strong>Status</strong>
-          <div
-            className={`status-pill ${
-              status.lastRunStatus ?? "unknown"
-            }`}
-          >
+          <div className={`status-pill ${status.lastRunStatus ?? "unknown"}`}>
             {status.lastRunStatus ?? "unknown"}
           </div>
         </div>
@@ -109,6 +154,65 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
           </div>
         </div>
       </div>
+
+      <section className="notify-section">
+        <h4>📧 Notifications</h4>
+
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={notifyEnabled}
+            onChange={(e) => setNotifyEnabled(e.target.checked)}
+          />
+          Email admins when new programs are available
+        </label>
+
+        {notifyEnabled && (
+          <>
+            <div className="admin-email-list">
+              {admins
+                .filter((u): u is typeof u & { email: string } =>
+                  Boolean(u.email)
+                )
+                .map((u) => {
+                  const checked = emails.includes(u.email);
+
+                  return (
+                    <label key={u.uid} className="checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          setEmails((prev) =>
+                            checked
+                              ? prev.filter((e) => e !== u.email)
+                              : [...prev, u.email]
+                          );
+                        }}
+                      />
+                      <span>
+                        {u.firstName} {u.lastName}
+                        <small className="muted"> ({u.email})</small>
+                      </span>
+                    </label>
+                  );
+                })}
+            </div>
+
+            <button
+              className="btn-secondary save-notify-settings"
+              disabled={savingNotify}
+              onClick={saveNotifySettings}
+            >
+              {savingNotify ? "Saving…" : "Save Notification Settings"}
+            </button>
+
+            <small className="helper-text">
+              A single summary email will be sent per sync run.
+            </small>
+          </>
+        )}
+      </section>
 
       {status.lastRunStatus === "error" && status.lastError && (
         <div className="error-box">
@@ -126,6 +230,11 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
           >
             {runningNow ? "Running…" : "Run Sync Now"}
           </button>
+          {canRunManually && (
+            <small className="helper-text">
+              Manual sync is for validation and troubleshooting only.
+            </small>
+          )}
         </div>
       )}
     </section>

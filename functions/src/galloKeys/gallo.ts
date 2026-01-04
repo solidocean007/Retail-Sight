@@ -1,6 +1,7 @@
 // functions/src/gallo.ts
 import { onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 /**
  * Fetch the companyId for the authenticated user.
@@ -157,3 +158,242 @@ export const galloFetchAccounts = onCall<
   const url = `${baseUrl}/${orgCode}/accounts?marketId=${marketId}&goalId=${goalId}`;
   return await galloFetch(url, apiKey);
 });
+
+export const galloSyncProgramsByChangeStamp = onSchedule(
+  "every 6 hours",
+  async () => {
+    const companies = await admin
+      .firestore()
+      .collection("companies")
+      .where("integrations.galloAxis.enabled", "==", true)
+      .get();
+
+    for (const company of companies.docs) {
+      try {
+        await syncGalloProgramsForCompany(company.id);
+      } catch (err) {
+        await admin
+          .firestore()
+          .doc(`companies/${company.id}/integrations/galloAxis`)
+          .set(
+            {
+              lastProgramSyncStatus: "error",
+              lastProgramSyncError: String(err),
+              lastProgramSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+      }
+    }
+  }
+);
+
+/**
+ * Syncs Gallo programs for a company using the Gallo changestamp mechanism.
+ * Always records success or error state for admin observability.
+ */
+/**
+ * Syncs Gallo programs for a company using changestamp-based incremental updates.
+ * Automatically bootstraps on first run.
+ */
+export async function syncGalloProgramsForCompany(
+  companyId: string
+): Promise<{ newPrograms: number; bootstrap: boolean }> {
+  const db = admin.firestore();
+
+  const integrationRef = db.doc(
+    `companies/${companyId}/integrations/galloAxis`
+  );
+
+  const integrationSnap = await integrationRef.get();
+  const integration = integrationSnap.data();
+
+  if (!integration?.env) {
+    throw new Error("Gallo integration not configured");
+  }
+
+  const {
+    env,
+    lastProgramChangeStamp = 0,
+    programStartDate,
+    notifyOnProgramSync,
+    notificationEmails = [],
+  } = integration;
+
+  const isBootstrap = lastProgramChangeStamp === 0;
+
+  try {
+    const gallo = await getGalloConfig(companyId);
+    const apiKey = env === "prod" ? gallo.prodKey : gallo.devKey;
+    if (!apiKey) throw new Error("Missing Gallo API key");
+
+    if (isBootstrap && !programStartDate) {
+      throw new Error("Missing programStartDate for initial Gallo sync");
+    }
+
+    const url = isBootstrap
+      ? `${getBaseUrl(env)}/${gallo.orgCode}/programs?startDate=${programStartDate}`
+      : `${getBaseUrl(env)}/${gallo.orgCode}/programs?changestamp=${lastProgramChangeStamp}`;
+
+    const programs = await galloFetch(url, apiKey);
+
+    if (!Array.isArray(programs) || programs.length === 0) {
+      await integrationRef.set(
+        {
+          lastProgramSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastProgramSyncStatus: "success",
+        },
+        { merge: true }
+      );
+      return { newPrograms: 0, bootstrap: isBootstrap };
+    }
+
+    // 🔹 Load existing programs ONCE
+    const existingSnap = await db
+      .collection(`companies/${companyId}/galloPrograms`)
+      .select(admin.firestore.FieldPath.documentId())
+      .get();
+
+    const existingIds = new Set(existingSnap.docs.map((d) => d.id));
+
+    let maxChangeStamp = lastProgramChangeStamp;
+    let newPrograms = 0;
+
+    const batch = db.batch();
+
+    for (const p of programs) {
+      if (!p.programId || !p.changestamp) continue;
+
+      maxChangeStamp = Math.max(maxChangeStamp, p.changestamp);
+
+      if (!existingIds.has(p.programId)) {
+        newPrograms++;
+      }
+
+      const programRef = db.doc(
+        `companies/${companyId}/galloPrograms/${p.programId}`
+      );
+
+      batch.set(
+        programRef,
+        {
+          ...p,
+          status:
+            p.endDate && new Date(p.endDate).getTime() < Date.now()
+              ? "expired"
+              : "active",
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          changestamp: p.changestamp,
+        },
+        { merge: true }
+      );
+    }
+
+    batch.update(integrationRef, {
+      lastProgramChangeStamp: maxChangeStamp,
+      lastProgramSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastProgramSyncStatus: "success",
+    });
+
+    await batch.commit();
+
+    // 📧 Send ONE summary email (optional)
+    if (notifyOnProgramSync && newPrograms > 0 && notificationEmails.length) {
+      await writeProgramNotificationMail({
+        companyId,
+        newPrograms,
+        env,
+        emails: notificationEmails,
+      });
+    }
+
+    return { newPrograms, bootstrap: isBootstrap };
+  } catch (err: any) {
+    await integrationRef.set(
+      {
+        lastProgramSyncStatus: "error",
+        lastProgramSyncError: err.message ?? String(err),
+        lastProgramSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    throw err;
+  }
+}
+
+/**
+ * Manually triggers a Gallo program sync for the authenticated user's company.
+ * Intended for admin validation and troubleshooting.
+ */
+export const runGalloScheduledImportNow = onCall(async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid) throw new Error("Not authenticated");
+
+  // TODO: role check (super-admin)
+  const companyId = await getCompanyId(uid);
+
+  return await syncGalloProgramsForCompany(companyId);
+});
+
+/**
+ * Returns the current Gallo program sync status for the authenticated user's company.
+ */
+export const getGalloScheduledImportStatus = onCall(async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid) throw new Error("Not authenticated");
+
+  const companyId = await getCompanyId(uid);
+
+  const snap = await admin
+    .firestore()
+    .doc(`companies/${companyId}/integrations/galloAxis`)
+    .get();
+
+  const data = snap.data();
+  if (!data) return null;
+
+  return {
+    env: data.env,
+    lastRunAt: data.lastProgramSyncAt?.seconds,
+    lastRunStatus: data.lastProgramSyncStatus ?? "unknown",
+    lastError: data.lastProgramSyncError ?? null,
+
+    // Optional but nice UX
+    nextRunAt: null, // you can calculate later
+  };
+});
+
+async function writeProgramNotificationMail({
+  companyId,
+  newPrograms,
+  env,
+  emails,
+}: {
+  companyId: string;
+  newPrograms: number;
+  env: "prod" | "dev";
+  emails: string[];
+}) {
+  const subject = `Gallo Axis: ${newPrograms} new program${
+    newPrograms === 1 ? "" : "s"
+  } available`;
+
+  const text = `
+${newPrograms} new Gallo program${newPrograms === 1 ? "" : "s"} ${
+    newPrograms === 1 ? "is" : "are"
+  } available for review.
+
+Environment: ${env.toUpperCase()}
+
+Log into Displaygram to review and import programs.
+`;
+
+  await admin.firestore().collection("mail").add({
+    to: emails,
+    message: {
+      subject,
+      text,
+    },
+  });
+}
