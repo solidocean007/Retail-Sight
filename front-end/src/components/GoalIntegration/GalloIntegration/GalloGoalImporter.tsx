@@ -1,11 +1,6 @@
 // components/Gallo/GalloIntegration.tsx
 import { useState, useEffect } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Container, Typography, CircularProgress } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../utils/firebase";
@@ -31,6 +26,7 @@ import { selectAllGalloGoals } from "../../../Slices/galloGoalsSlice";
 import GalloScheduledImportPanel from "./GalloScheduledImportPanel";
 import { selectUser } from "../../../Slices/userSlice";
 import GalloProgramManager from "./GalloProgramManager";
+import { useGalloPrograms } from "../../../hooks/useGalloPrograms";
 
 export type EnrichedGalloProgram = GalloProgramType & {
   status?: "active" | "expired";
@@ -63,6 +59,8 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     (s: RootState) => s.user.currentUser?.companyId
   );
 
+  const { programs, loading } = useGalloPrograms(companyId);
+
   const importedProgramIds = new Set(
     galloGoals
       .filter((g) => g.programDetails?.programId)
@@ -84,6 +82,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       });
   }, [companyId]);
 
+  // i wonder why i was fetching claims here.. probbably to see who had admin role defined in firebase auth
   // useEffect(() => {
   //   const fetchClaims = async () => {
   //     const user = getAuth().currentUser;
@@ -100,8 +99,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
   // ---- Data state ----------------------------------------------------------
   const [keyStatus, setKeyStatus] = useState<KeyStatusType | null>(null);
-
-  const [programs, setPrograms] = useState<EnrichedGalloProgram[]>([]);
 
   const [selectedProgram, setSelectedProgram] =
     useState<GalloProgramType | null>(null);
@@ -151,68 +148,93 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     setPrograms([]);
   };
 
+  // const fetchPrograms = async () => {
+  //   if (!keyStatus?.[env]?.exists) {
+  //     // Type 'null' cannot be used as an index type
+  //     alert(`No ${env.toUpperCase()} key configured`);
+  //     return;
+  //   }
+  //   setHasFetchedPrograms(true);
+  //   setIsLoading(true);
+
+  //   const startDateUnix = startDate?.unix()?.toString() ?? "";
+
+  //   try {
+  //     const fetchProgramsCF = httpsCallable(functions, "galloFetchPrograms");
+  //     const res = await fetchProgramsCF({
+  //       env: env, // <-- MUST be "env"
+  //       startDate: startDateUnix, // <-- MUST be "startDate"
+  //     });
+
+  //     // const programs = res.data as GalloProgramType[];
+
+  //     const rawPrograms = res.data as any[];
+
+  //     console.group("🧪 galloFetchPrograms raw response");
+  //     rawPrograms.forEach((p, i) => {
+  //       console.log(`Program[${i}]`, p);
+  //     });
+  //     console.groupEnd();
+
+  //     const enrichedPrograms: EnrichedGalloProgram[] = rawPrograms.map((p) => {
+  //       const startUnix =
+  //         typeof p.startDate === "string"
+  //           ? dayjs(p.startDate).unix()
+  //           : undefined;
+
+  //       const endUnix =
+  //         typeof p.endDate === "string" ? dayjs(p.endDate).unix() : undefined;
+
+  //       return {
+  //         ...p,
+  //         __debug: {
+  //           hasMarketId: Boolean(p.marketId),
+  //           startDateUnix: startUnix,
+  //           endDateUnix: endUnix,
+  //           rawKeys: Object.keys(p),
+  //         },
+  //       };
+  //     });
+
+  //     setPrograms(enrichedPrograms);
+
+  //     // setPrograms(programs);
+  //     setSelectedProgram(null);
+  //     setGoals([]);
+  //     setSelectedGoal(null);
+  //     setEnrichedAccounts([]);
+  //     setUnmatchedAccounts([]);
+  //   } catch (err) {
+  //     console.error("Error fetching programs:", err);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const fetchPrograms = async () => {
     if (!keyStatus?.[env]?.exists) {
-      // Type 'null' cannot be used as an index type
       alert(`No ${env.toUpperCase()} key configured`);
       return;
     }
-    setHasFetchedPrograms(true);
+
     setIsLoading(true);
 
-    const startDateUnix = startDate?.unix()?.toString() ?? "";
-
     try {
-      const fetchProgramsCF = httpsCallable(functions, "galloFetchPrograms");
-      const res = await fetchProgramsCF({
-        env: env, // <-- MUST be "env"
-        startDate: startDateUnix, // <-- MUST be "startDate"
+      const fn = httpsCallable(functions, "runGalloScheduledImportNow");
+
+      await fn({
+        startDate: startDate?.format("YYYY-MM-DD"), // optional bootstrap hint
       });
 
-      // const programs = res.data as GalloProgramType[];
-
-      const rawPrograms = res.data as any[];
-
-      console.group("🧪 galloFetchPrograms raw response");
-      rawPrograms.forEach((p, i) => {
-        console.log(`Program[${i}]`, p);
-      });
-      console.groupEnd();
-
-      const enrichedPrograms: EnrichedGalloProgram[] = rawPrograms.map((p) => {
-        const startUnix =
-          typeof p.startDate === "string"
-            ? dayjs(p.startDate).unix()
-            : undefined;
-
-        const endUnix =
-          typeof p.endDate === "string" ? dayjs(p.endDate).unix() : undefined;
-
-        return {
-          ...p,
-          __debug: {
-            hasMarketId: Boolean(p.marketId),
-            startDateUnix: startUnix,
-            endDateUnix: endUnix,
-            rawKeys: Object.keys(p),
-          },
-        };
-      });
-
-      setPrograms(enrichedPrograms);
-
-      // setPrograms(programs);
-      setSelectedProgram(null);
-      setGoals([]);
-      setSelectedGoal(null);
-      setEnrichedAccounts([]);
-      setUnmatchedAccounts([]);
+      // 🔥 DO NOTHING ELSE
+      // Firestore listener will update programs automatically
     } catch (err) {
-      console.error("Error fetching programs:", err);
+      console.error("Program sync failed", err);
     } finally {
       setIsLoading(false);
     }
   };
+
   const fetchGoals = async () => {
     if (!selectedProgram || hasFetchedGoals) return;
     if (!keyStatus?.[env]?.exists) {
@@ -357,7 +379,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const handleCancel = () => {
     setSelectedProgram(null);
     setSelectedGoal(null);
-    setPrograms([]);
     setGoals([]);
     setEnrichedAccounts([]);
     setUnmatchedAccounts([]);
@@ -421,14 +442,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       {/* <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}> */}
       <p className="integration-note">
         Goals created here are imported from Gallo Axis programs and are managed
-        externally.
-      </p>
-      <p className="integration-note">
-        “Programs are typically created after Nov 24th 2025. You usually won’t
-        need to change this.”
-      </p>
-      <p className="integration-note">
-        Source: Gallo Axis ({selectedEnv.toUpperCase()})
+        externally. Source: Gallo Axis ({selectedEnv.toUpperCase()})
       </p>
 
       {/* 📅 Program Import Section */}
@@ -442,12 +456,12 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
         {/* Date + actions */}
         <div className="gallo-controls">
-          <DateSelector
+          {/* <DateSelector
             startDate={startDate}
             onDateChange={onDateChangeHandler}
             onFetchPrograms={fetchPrograms}
             disabled={programs.length > 0}
-          />
+          /> */}
 
           {(programs.length > 0 ||
             goals.length > 0 ||
@@ -465,8 +479,12 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
         {programs.length > 0 && (
           <GalloProgramManager
             programs={programs}
-            importedProgramIds={importedProgramIds}
             selectedProgram={selectedProgram}
+            importedProgramIds={
+              new Set(
+                programs.filter((p) => p.hasGoals).map((p) => p.programId)
+              )
+            }
             onSelectProgram={handleSelectProgram}
           />
         )}

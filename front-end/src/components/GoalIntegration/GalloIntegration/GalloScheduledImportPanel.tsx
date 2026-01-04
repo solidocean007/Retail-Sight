@@ -34,6 +34,7 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [emails, setEmails] = useState<string[]>([]);
   const [savingNotify, setSavingNotify] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const loadNotifySettings = async () => {
@@ -84,6 +85,12 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
   };
 
   useEffect(() => {
+    if (status?.lastRunStatus === "success") {
+      setExpanded(false);
+    }
+  }, [status?.lastRunStatus]);
+
+  useEffect(() => {
     fetchStatus().finally(() => setLoading(false));
   }, []);
 
@@ -107,135 +114,159 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
 
   return (
     <section className="gallo-scheduled-panel">
-      <header>
-        <h3>🔁 Gallo Axis Program Sync</h3>
-        <p className="subtext">
-          Programs and goals are automatically synced from Gallo Axis.
-        </p>
-        <div className={`sync-banner ${status.lastRunStatus}`}>
-          {status.lastRunStatus === "success"
-            ? "✅ Program sync is healthy"
-            : "⚠️ Program sync requires attention"}
-        </div>
-      </header>
-      <p className="subtext">
-        Gallo programs are automatically synced every 6 hours. Goals and
-        accounts are imported manually after review.
-      </p>
+      <header className="panel-header">
+        <div className="header-main">
+          <h3>🔁 Gallo Axis Program Sync</h3>
 
-      <div className="status-grid">
-        <div>
-          <strong>Environment</strong>
-          <div>{status.env.toUpperCase()}</div>
-        </div>
-
-        <div>
-          <strong>Last Run</strong>
-          <div>
-            {status.lastRunAt
-              ? new Date(status.lastRunAt * 1000).toLocaleString()
-              : "Never"}
-          </div>
-        </div>
-
-        <div>
-          <strong>Status</strong>
           <div className={`status-pill ${status.lastRunStatus ?? "unknown"}`}>
             {status.lastRunStatus ?? "unknown"}
           </div>
         </div>
 
-        <div>
-          <strong>Next Run</strong>
-          <div>
-            {status.nextRunAt
-              ? new Date(status.nextRunAt * 1000).toLocaleString()
-              : "Scheduled"}
-          </div>
-        </div>
-      </div>
+        <div className="header-meta">
+          <span className="muted">
+            Last run:{" "}
+            {status.lastRunAt
+              ? new Date(status.lastRunAt * 1000).toLocaleString()
+              : "Never"}
+          </span>
 
-      <section className="notify-section">
-        <h4>📧 Notifications</h4>
-
-        <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={notifyEnabled}
-            onChange={(e) => setNotifyEnabled(e.target.checked)}
-          />
-          Email admins when new programs are available
-        </label>
-
-        {notifyEnabled && (
-          <>
-            <div className="admin-email-list">
-              {admins
-                .filter((u): u is typeof u & { email: string } =>
-                  Boolean(u.email)
-                )
-                .map((u) => {
-                  const checked = emails.includes(u.email);
-
-                  return (
-                    <label key={u.uid} className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => {
-                          setEmails((prev) =>
-                            checked
-                              ? prev.filter((e) => e !== u.email)
-                              : [...prev, u.email]
-                          );
-                        }}
-                      />
-                      <span>
-                        {u.firstName} {u.lastName}
-                        <small className="muted"> ({u.email})</small>
-                      </span>
-                    </label>
-                  );
-                })}
-            </div>
-
-            <button
-              className="btn-secondary save-notify-settings"
-              disabled={savingNotify}
-              onClick={saveNotifySettings}
-            >
-              {savingNotify ? "Saving…" : "Save Notification Settings"}
-            </button>
-
-            <small className="helper-text">
-              A single summary email will be sent per sync run.
-            </small>
-          </>
-        )}
-      </section>
-
-      {status.lastRunStatus === "error" && status.lastError && (
-        <div className="error-box">
-          <strong>Last Error</strong>
-          <pre>{status.lastError}</pre>
-        </div>
-      )}
-
-      {canRunManually && (
-        <div className="actions">
           <button
-            className="btn-secondary"
-            disabled={runningNow}
-            onClick={runNow}
+            className="link-button"
+            onClick={() => setExpanded((v) => !v)}
           >
-            {runningNow ? "Running…" : "Run Sync Now"}
+            {expanded ? "Hide details ▲" : "Show details ▼"}
           </button>
-          {canRunManually && (
+        </div>
+      </header>
+
+      {expanded && (
+        <>
+          {status.lastRunAt && status.lastRunStatus === "success" && (
             <small className="helper-text">
-              Manual sync is for validation and troubleshooting only.
+              Program sync is active. Future updates run automatically every 6
+              hours. Gallo programs are automatically synced every 6 hours.
+              Goals and accounts are imported manually only after review by
+              admin.
             </small>
           )}
-        </div>
+          <div className="status-grid">
+            <div>
+              <strong>Environment</strong>
+              <div>{status.env.toUpperCase()}</div>
+            </div>
+
+            <div>
+              <strong>Last Run</strong>
+              <div>
+                {status.lastRunAt
+                  ? new Date(status.lastRunAt * 1000).toLocaleString()
+                  : "Never"}
+              </div>
+            </div>
+
+            <div>
+              <strong>Status</strong>
+              <div
+                className={`status-pill ${status.lastRunStatus ?? "unknown"}`}
+              >
+                {status.lastRunStatus ?? "unknown"}
+              </div>
+            </div>
+
+            <div>
+              <strong>Next Run</strong>
+              <div>
+                {status.nextRunAt
+                  ? new Date(status.nextRunAt * 1000).toLocaleString()
+                  : "Scheduled"}
+              </div>
+            </div>
+          </div>
+
+          <section className="notify-section">
+            <h4>📧 Notifications</h4>
+
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={notifyEnabled}
+                onChange={(e) => setNotifyEnabled(e.target.checked)}
+              />
+              Email admins when new programs are available
+            </label>
+
+            {notifyEnabled && (
+              <>
+                <div className="admin-email-list">
+                  {admins
+                    .filter((u): u is typeof u & { email: string } =>
+                      Boolean(u.email)
+                    )
+                    .map((u) => {
+                      const checked = emails.includes(u.email);
+
+                      return (
+                        <label key={u.uid} className="checkbox-row">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              setEmails((prev) =>
+                                checked
+                                  ? prev.filter((e) => e !== u.email)
+                                  : [...prev, u.email]
+                              );
+                            }}
+                          />
+                          <span>
+                            {u.firstName} {u.lastName}
+                            <small className="muted"> ({u.email})</small>
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+
+                <button
+                  className="btn-secondary save-notify-settings"
+                  disabled={savingNotify}
+                  onClick={saveNotifySettings}
+                >
+                  {savingNotify ? "Saving…" : "Save Notification Settings"}
+                </button>
+
+                <small className="helper-text">
+                  A single summary email will be sent per sync run.
+                </small>
+              </>
+            )}
+          </section>
+
+          {status.lastRunStatus === "error" && status.lastError && (
+            <div className="error-box">
+              <strong>Last Error</strong>
+              <pre>{status.lastError}</pre>
+            </div>
+          )}
+
+          {canRunManually && (
+            <div className="actions">
+              <button
+                className="btn-secondary"
+                disabled={runningNow}
+                onClick={runNow}
+              >
+                {runningNow ? "Running…" : "Run Sync Now"}
+              </button>
+              {canRunManually && (
+                <small className="helper-text">
+                  Manual sync is for validation and troubleshooting only.
+                </small>
+              )}
+            </div>
+          )}
+        </>
       )}
     </section>
   );

@@ -64,5 +64,36 @@
 }
 
 .save-notify-settings {
-  max-width: fit-content
-} 
+  max-width: fit-content;
+}
+
+.panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 5px 7px;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
