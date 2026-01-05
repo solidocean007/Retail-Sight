@@ -22,6 +22,24 @@ import {
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { markGalloAccountAsSubmitted } from "../thunks/galloGoalsThunk";
 
+export type GalloGoalStatus = "active" | "expired" | "upcoming";
+
+function isProgramCurrentlyActive(goal: FireStoreGalloGoalDocType) {
+  const now = Date.now();
+
+  const start = goal.programDetails?.programStartDate
+    ? new Date(goal.programDetails.programStartDate).getTime()
+    : null;
+
+  const end = goal.programDetails?.programEndDate
+    ? new Date(goal.programDetails.programEndDate).getTime()
+    : null;
+
+  if (start && start > now) return false;
+  if (end && end < now) return false;
+  return true;
+}
+
 const toIso = (v: any) =>
   v?.toDate?.()
     ? v.toDate().toISOString()
@@ -72,10 +90,14 @@ export const fetchAllGalloGoals = createAsyncThunk<
       const snapshot = await getDocs(
         query(collection(db, "galloGoals"), where("companyId", "==", companyId))
       );
-      return snapshot.docs.map((docSnap) => ({
-        ...(normalizeDeep(docSnap.data()) as FireStoreGalloGoalDocType),
-        id: docSnap.id,
-      }));
+      return snapshot.docs.map((docSnap) => {
+        const data = normalizeDeep(docSnap.data()) as FireStoreGalloGoalDocType;
+
+        return {
+          ...data,
+          id: docSnap.id,
+        };
+      });
     } catch (error) {
       return rejectWithValue(
         error instanceof Error ? error.message : "Unknown error"
@@ -95,7 +117,8 @@ export const fetchUserGalloGoals = createAsyncThunk<
       let userAccounts = await getUserAccountsFromIndexedDB();
       if (!userAccounts.length) {
         userAccounts = await fetchUsersAccounts(companyId, salesRouteNum);
-        if (userAccounts.length) await saveUserAccountsToIndexedDB(userAccounts);
+        if (userAccounts.length)
+          await saveUserAccountsToIndexedDB(userAccounts);
         else return [];
       }
 
@@ -224,6 +247,29 @@ export const selectUsersGalloGoals = createSelector(
   //       : account.salesRouteNums === salesRouteNum
   //   ),
   // }))
+);
+
+export const selectActiveGalloGoals = createSelector(
+  [selectAllGalloGoals],
+  (goals) => goals.filter((g) => g.lifeCycleStatus === "active")
+);
+
+export const selectUsersActiveGalloGoals = createSelector(
+  [
+    selectAllGalloGoals,
+    (_: RootState, salesRouteNum?: string) => salesRouteNum || "",
+  ],
+  (goals, salesRouteNum) =>
+    goals.filter(
+      (goal) =>
+        goal.lifeCycleStatus === "active" &&
+        isProgramCurrentlyActive(goal) &&
+        goal.accounts.some((account) =>
+          Array.isArray(account.salesRouteNums)
+            ? account.salesRouteNums.includes(salesRouteNum)
+            : account.salesRouteNums === salesRouteNum
+        )
+    )
 );
 
 export default galloGoalsSlice.reducer;

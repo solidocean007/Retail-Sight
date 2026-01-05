@@ -211,6 +211,18 @@ export const galloFetchPrograms = onCall(
     const integrationSnap = await integrationRef.get();
     const existingStamp = integrationSnap.data()?.lastProgramChangeStamp ?? 0;
 
+    const { notifyOnProgramSync, notificationEmails = [] } =
+      integrationSnap.data() || {};
+
+    if (notifyOnProgramSync && newPrograms > 0 && notificationEmails.length) {
+      await writeProgramNotificationMail({
+        companyId,
+        newPrograms,
+        env,
+        emails: notificationEmails,
+      });
+    }
+
     await integrationRef.set(
       {
         ...(existingStamp === 0
@@ -488,6 +500,14 @@ export const getGalloScheduledImportStatus = onCall(async (req) => {
   const data = snap.data();
   if (!data) return null;
 
+  const lastRunSeconds = data.lastProgramSyncAt?.seconds ?? null;
+
+  // ⏱ every 6 hours
+  const SIX_HOURS = 6 * 60 * 60;
+  const nextRunAt = lastRunSeconds
+    ? lastRunSeconds + SIX_HOURS
+    : Math.floor(Date.now() / 1000) + SIX_HOURS;
+
   return {
     env: data.env,
     lastRunAt: data.lastProgramSyncAt?.seconds,
@@ -495,7 +515,7 @@ export const getGalloScheduledImportStatus = onCall(async (req) => {
     lastError: data.lastProgramSyncError ?? null,
 
     // Optional but nice UX
-    nextRunAt: null, // you can calculate later
+    nextRunAt, // you can calculate later
   };
 });
 

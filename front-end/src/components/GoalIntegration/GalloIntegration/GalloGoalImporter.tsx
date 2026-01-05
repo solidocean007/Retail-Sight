@@ -239,6 +239,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   };
 
   const fetchGoals = async () => {
+    if(!env) return;
     if (!selectedProgram || hasFetchedGoals) return;
     if (!keyStatus?.[env]?.exists) {
       alert(`No ${env.toUpperCase()} key configured`);
@@ -270,6 +271,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   };
 
   const fetchAccounts = async () => {
+    if(!env) return;
     if (!selectedProgram || !selectedGoal || hasFetchedAccounts) return;
     if (!keyStatus?.[env]?.exists) {
       alert(`No ${env.toUpperCase()} key configured`);

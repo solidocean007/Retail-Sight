@@ -19,6 +19,7 @@ import {
   MenuItem,
   Select,
   Chip,
+  Autocomplete,
 } from "@mui/material";
 import {
   EnrichedGalloAccountType,
@@ -155,19 +156,16 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   }, [selectedAccounts, editableAccounts]);
 
   const handleCheckboxChange = (account: EnrichedGalloAccountType) => {
-  setSelectedAccounts((prev) => {
-    const exists = prev.some(
-      (a) => a.distributorAcctId === account.distributorAcctId
-    );
+    setSelectedAccounts((prev) => {
+      const exists = prev.some(
+        (a) => a.distributorAcctId === account.distributorAcctId
+      );
 
-    return exists
-      ? prev.filter(
-          (a) => a.distributorAcctId !== account.distributorAcctId
-        )
-      : [...prev, account];
-  });
-};
-
+      return exists
+        ? prev.filter((a) => a.distributorAcctId !== account.distributorAcctId)
+        : [...prev, account];
+    });
+  };
 
   const handleCreateGalloGoal = async () => {
     if (!selectedGoal || !selectedProgram || selectedEnv === null) {
@@ -412,7 +410,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
             <TableCell>Sales Route #</TableCell>
             <TableCell>Salesperson</TableCell>
             <TableCell>Assign To</TableCell> {/* ✅ NEW */}
-            <TableCell>Opp ID</TableCell>
+            {/* <TableCell>Opp ID</TableCell> */}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -437,7 +435,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
               </TableCell>
               <TableCell>{account.salesPersonsName}</TableCell>
               <TableCell>
-                <Select
+                {/* <Select
                   multiple
                   size="small"
                   fullWidth
@@ -456,6 +454,50 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                             label={`${u!.firstName ?? ""} ${
                               u!.lastName ?? ""
                             }`.trim()}
+                            onMouseDown={(e) => {
+                              e.stopPropagation(); // 🔑 PREVENT Select from opening
+                            }}
+                            onDelete={() => {
+                              const remainingUserIds = (
+                                selected as string[]
+                              ).filter((id) => id !== u!.uid);
+
+                              const nextRoutes =
+                                remainingUserIds.length > 0
+                                  ? routesFromSelectedUserIds(remainingUserIds)
+                                  : [];
+
+                              const nextName =
+                                nextRoutes.length > 0
+                                  ? nameFromRoutes(nextRoutes)
+                                  : "Unassigned";
+
+                              setEditableAccounts((prev) =>
+                                prev.map((a) =>
+                                  a.distributorAcctId ===
+                                  account.distributorAcctId
+                                    ? {
+                                        ...a,
+                                        salesRouteNums: nextRoutes,
+                                        salesPersonsName: nextName,
+                                      }
+                                    : a
+                                )
+                              );
+
+                              setSelectedAccounts((prev) =>
+                                prev.map((a) =>
+                                  a.distributorAcctId ===
+                                  account.distributorAcctId
+                                    ? {
+                                        ...a,
+                                        salesRouteNums: nextRoutes,
+                                        salesPersonsName: nextName,
+                                      }
+                                    : a
+                                )
+                              );
+                            }}
                           />
                         ))}
                     </Box>
@@ -498,13 +540,65 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                       {u.salesRouteNum})
                     </MenuItem>
                   ))}
-                </Select>
+                </Select> */}
+                <Autocomplete
+                  multiple
+                  size="small"
+                  options={salesUsers}
+                  getOptionLabel={(u) =>
+                    `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
+                  }
+                  value={salesUsers.filter((u) =>
+                    getAssignedUserIdsFromRoutes(
+                      account.salesRouteNums ?? []
+                    ).includes(u.uid)
+                  )}
+                  onChange={(_, users) => {
+                    const userIds = users.map((u) => u.uid);
+                    const nextRoutes = routesFromSelectedUserIds(userIds);
+                    const nextName =
+                      nextRoutes.length > 0
+                        ? nameFromRoutes(nextRoutes)
+                        : "Unassigned";
+
+                    setEditableAccounts((prev) =>
+                      prev.map((a) =>
+                        a.distributorAcctId === account.distributorAcctId
+                          ? {
+                              ...a,
+                              salesRouteNums: nextRoutes,
+                              salesPersonsName: nextName,
+                            }
+                          : a
+                      )
+                    );
+
+                    setSelectedAccounts((prev) =>
+                      prev.map((a) =>
+                        a.distributorAcctId === account.distributorAcctId
+                          ? {
+                              ...a,
+                              salesRouteNums: nextRoutes,
+                              salesPersonsName: nextName,
+                            }
+                          : a
+                      )
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Assign salespeople…"
+                      variant="outlined"
+                    />
+                  )}
+                />
 
                 <small className="helper-text">
                   Selecting users overrides Sales Route # for this account.
                 </small>
               </TableCell>
-              <TableCell>{account.oppId}</TableCell>
+              {/* <TableCell>{account.oppId}</TableCell> */}
             </TableRow>
           ))}
         </TableBody>
