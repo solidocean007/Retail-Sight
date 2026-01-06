@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import CheckIcon from "@mui/icons-material/Check";
 import {
   CircularProgress,
@@ -8,6 +8,7 @@ import {
   ListItemText,
   MenuItem,
   Select,
+  useMediaQuery,
 } from "@mui/material";
 import { FireStoreGalloGoalDocType } from "../../utils/types";
 
@@ -19,6 +20,8 @@ interface GalloGoalDropdownProps {
   selectedGoalId?: string | null;
 }
 
+import { GoalPickerModal } from "./GoalPickerModal";
+
 const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
   goals,
   label,
@@ -26,78 +29,114 @@ const GalloGoalDropdown: React.FC<GalloGoalDropdownProps> = ({
   onSelect,
   selectedGoalId,
 }) => {
+  const isMobile = useMediaQuery("(max-width:900px)");
+  const [openModal, setOpenModal] = useState(false);
+
   const dedupedGoals = useMemo(() => {
     const map = new Map<string, FireStoreGalloGoalDocType>();
-    for (const g of goals) {
+    goals.forEach((g) => {
       const id = g?.goalDetails?.goalId;
       if (id) map.set(id, g);
-    }
+    });
     return Array.from(map.values());
   }, [goals]);
 
-  const isValidSelection = dedupedGoals.some(
-    (g) => g.goalDetails.goalId === selectedGoalId
-  );
-
-  const selectValue = isValidSelection ? selectedGoalId ?? "" : "";
+  const isDisabled = loading || dedupedGoals.length === 0;
 
   if (loading) return <CircularProgress />;
 
-  return (
-    <FormControl fullWidth sx={{ mb: 2 }} variant="outlined">
-      <InputLabel shrink id="gallo-goal-label">
-        {label}
-      </InputLabel>
+  // ✅ MOBILE: fake select → modal
+  if (isMobile) {
+    return (
+      <>
+        <FormControl disabled={goals.length === 0} fullWidth sx={{ mb: 2 }}>
+          <InputLabel shrink>{label}</InputLabel>
+          <div
+            onClick={() => {
+              if (!isDisabled) setOpenModal(true);
+            }}
+            style={{
+              padding: "14px",
+              border: "1px solid var(--border-color)",
+              borderRadius: 8,
+              cursor: isDisabled ? "not-allowed" : "pointer",
+              opacity: isDisabled ? 0.5 : 1,
+              pointerEvents: isDisabled ? "none" : "auto",
+              background: "var(--input-background)",
+            }}
+          >
+            {isDisabled
+              ? "No Gallo goals available"
+              : selectedGoalId
+              ? dedupedGoals.find(
+                  (g) => g.goalDetails.goalId === selectedGoalId
+                )?.goalDetails.goal
+              : `${dedupedGoals.length} Gallo Goals available`}
+          </div>
+        </FormControl>
 
+        <GoalPickerModal
+          open={openModal}
+          title={label}
+          goals={dedupedGoals}
+          selectedId={selectedGoalId}
+          getId={(g) => g.goalDetails.goalId}
+          getLabel={(g) => g.goalDetails.goal}
+          onClose={() => setOpenModal(false)}
+          onSelect={onSelect}
+        />
+      </>
+    );
+  }
+
+  // ✅ DESKTOP: normal Select
+  return (
+    <FormControl fullWidth sx={{ mb: 2 }} disabled={isDisabled}>
+      <InputLabel shrink>{label}</InputLabel>
       <Select
-        id="gallo-goal-select"
-        labelId="gallo-goal-label"
+        value={selectedGoalId ?? ""}
         label={label}
+        disabled={isDisabled}
         displayEmpty
-        value={selectValue}
-        disabled={dedupedGoals.length === 0}
-        onChange={(e) => {
-          const goal = dedupedGoals.find(
-            (g) => g.goalDetails.goalId === e.target.value
-          );
-          onSelect(goal);
-        }}
         renderValue={(val) => {
           if (!val) {
-            if (dedupedGoals.length === 0) return "No Gallo goals available";
-            return `${dedupedGoals.length} Gallo Goal${
-              dedupedGoals.length > 1 ? "s" : ""
-            } available`;
+            return dedupedGoals.length === 0
+              ? "No Gallo goals available"
+              : `${dedupedGoals.length} Gallo Goals available`;
           }
-          return (
-            dedupedGoals.find((g) => g.goalDetails.goalId === val)?.goalDetails
-              .goal || ""
-          );
+
+          return dedupedGoals.find((g) => g.goalDetails.goalId === val)
+            ?.goalDetails.goal;
         }}
+        onChange={(e) =>
+          onSelect(
+            dedupedGoals.find((g) => g.goalDetails.goalId === e.target.value)
+          )
+        }
       >
-        {dedupedGoals.map((goal) => {
-          const isSelected = goal.goalDetails.goalId === selectedGoalId;
-          return (
-            <MenuItem
-              key={goal.goalDetails.goalId}
-              value={goal.goalDetails.goalId}
-              sx={{
-                ...(isSelected && {
-                  fontWeight: "bold",
-                  backgroundColor: (theme) => theme.palette.action.selected,
-                }),
-              }}
-            >
-              {isSelected && (
-                <ListItemIcon sx={{ minWidth: 32 }}>
-                  <CheckIcon fontSize="small" />
-                </ListItemIcon>
-              )}
-              <ListItemText primary={goal.goalDetails.goal} />
-            </MenuItem>
-          );
-        })}
+        {dedupedGoals.length === 0 && (
+          <MenuItem disabled value="">
+            No Gallo goals available
+          </MenuItem>
+        )}
+
+        {dedupedGoals.map((g) => (
+          <MenuItem key={g.goalDetails.goalId} value={g.goalDetails.goalId}>
+            {g.goalDetails.goal}
+          </MenuItem>
+        ))}
       </Select>
+
+      <GoalPickerModal
+        open={openModal && !isDisabled}
+        title={label}
+        goals={dedupedGoals}
+        selectedId={selectedGoalId}
+        getId={(g) => g.goalDetails.goalId}
+        getLabel={(g) => g.programDetails.programTitle}
+        onClose={() => setOpenModal(false)}
+        onSelect={onSelect}
+      />
     </FormControl>
   );
 };

@@ -33,6 +33,7 @@ import ManualAccountForm from "./ManualAccountForm";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { ResetTvOutlined } from "@mui/icons-material";
 import NoResults from "../NoResults";
+import { GoalPickerModal } from "./GoalPickerModal";
 
 // Normalize abbreviations and compare address similarity
 const normalizeCache = new Map<string, string>();

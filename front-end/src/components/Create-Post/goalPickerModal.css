@@ -1,0 +1,78 @@
+/* components/goalPickerModal.css */
+
+.goal-picker-backdrop {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  /* background: var(--background-body); */
+  height: 100%;
+  overflow-y: auto;
+}
+
+.goal-picker-card {
+  width: 100%;
+  height: fit-content;
+  max-width: 560px;
+  background: var(--surface-elevated);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+/* 🔍 Search */
+.goal-picker-search {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--menu-background-color);
+}
+
+.goal-picker-search input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--input-background);
+  color: var(--text-color);
+}
+
+/* Rows */
+.goal-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.goal-picker-row.even {
+  background-color: var(--menu-background-color);
+}
+
+.goal-picker-row.odd {
+  background-color: var(--alt-menu-background-color);
+}
+
+.goal-picker-row:hover {
+  background-color: var(--outlined-button-hover);
+}
+
+.goal-picker-row.selected {
+  background-color: rgba(59, 130, 246, 0.15);
+  font-weight: 600;
+}
+
+.goal-picker-text {
+  line-height: 1.35;
+}
+
+.goal-picker-check {
+  color: var(--primary-blue);
+}
+
+.goal-picker-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+}

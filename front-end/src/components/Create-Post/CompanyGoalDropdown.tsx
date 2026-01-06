@@ -1,5 +1,5 @@
 // components/CompanyGoalDropdown.tsx
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import CheckIcon from "@mui/icons-material/Check";
 import {
   CircularProgress,
@@ -11,6 +11,7 @@ import {
   Select,
 } from "@mui/material";
 import { CompanyGoalWithIdType } from "../../utils/types";
+import { GoalPickerModal } from "./GoalPickerModal";
 
 interface CompanyGoalDropdownProps {
   goals: CompanyGoalWithIdType[];
@@ -27,6 +28,7 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
   onSelect,
   selectedGoal,
 }) => {
+  const [openModal, setOpenModal] = useState(false);
   // 🔹 Dedupe goals in case originalGoal was appended twice
   const dedupedGoals = useMemo(() => {
     const map = new Map<string, CompanyGoalWithIdType>();
@@ -36,17 +38,19 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
     return Array.from(map.values());
   }, [goals]);
 
+  const isDisabled = loading || dedupedGoals.length === 0;
+
   // 🔹 Determine if current selected goal is valid
-  const isValidSelection = dedupedGoals.some(
-    (g) => g.id === selectedGoal?.id
-  );
+  const isValidSelection = dedupedGoals.some((g) => g.id === selectedGoal?.id);
 
   // 🔹 Choose a safe value for the Select
   const selectValue = isValidSelection ? selectedGoal?.id ?? "" : "";
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: "1rem" }}>
+      <div
+        style={{ display: "flex", justifyContent: "center", padding: "1rem" }}
+      >
         <CircularProgress size={24} />
       </div>
     );
@@ -58,6 +62,7 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
         {label}
       </InputLabel>
       <Select
+        disabled={isDisabled}
         variant="outlined"
         id="company-goal-select"
         labelId="company-goal-label"
@@ -70,7 +75,7 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
         }}
         renderValue={(val) => {
           if (!val) {
-            if (dedupedGoals.length === 0) return "No goals available";
+            if (dedupedGoals.length === 0) return "No Company goals available";
             return `${dedupedGoals.length} Company Goal${
               dedupedGoals.length > 1 ? "s" : ""
             } available`;
@@ -80,6 +85,14 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
             dedupedGoals.find((g) => g.id === val)?.goalTitle ||
             ""
           );
+        }}
+        MenuProps={{
+          disablePortal: false, // 👈 IMPORTANT
+          PaperProps: {
+            style: {
+              maxHeight: "60vh",
+            },
+          },
         }}
       >
         {dedupedGoals.map((goal) => {
@@ -91,8 +104,7 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
               sx={{
                 ...(isSelected && {
                   fontWeight: "bold",
-                  backgroundColor: (theme) =>
-                    theme.palette.action.selected,
+                  backgroundColor: (theme) => theme.palette.action.selected,
                 }),
               }}
             >
@@ -106,6 +118,16 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
           );
         })}
       </Select>
+      <GoalPickerModal
+        open={openModal}
+        title={label}
+        goals={dedupedGoals}
+        selectedId={selectedGoal?.id}
+        getId={(g) => g.id}
+        getLabel={(g) => g.goalTitle}
+        onClose={() => setOpenModal(false)}
+        onSelect={onSelect}
+      />
     </FormControl>
   );
 };

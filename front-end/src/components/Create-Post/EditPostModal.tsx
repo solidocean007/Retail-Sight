@@ -4,6 +4,7 @@ import { userDeletePost } from "../../utils/PostLogic/deletePostLogic";
 import {
   CompanyAccountType,
   CompanyGoalWithIdType,
+  FireStoreGalloGoalDocType,
   PostInputType,
   PostWithID,
   UserType,
@@ -12,7 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
-import { Chip, Dialog, Typography } from "@mui/material";
+import { Box, Chip, Dialog, Typography } from "@mui/material";
 import "./editPostModal.css";
 
 import { Button, TextField } from "@mui/material";
@@ -42,6 +43,10 @@ import CustomConfirmation from "../CustomConfirmation";
 import GoalChangeConfirmation from "./GoalChangeConfirmation";
 import { duplicatePostWithNewGoal } from "../../utils/PostLogic/dupilcatePostWithNewGoal";
 import { updatePost } from "../../Slices/postsSlice";
+import { useIntegrations } from "../../hooks/useIntegrations";
+import GalloGoalDropdown from "./GalloGoalDropdown";
+import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount";
+import { selectAllGalloGoals } from "../../Slices/galloGoalsSlice";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -55,9 +60,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   isOpen,
   setIsEditModalOpen,
 }) => {
+  const { isEnabled } = useIntegrations();
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
-
+  const galloEnabled = isEnabled("gallo");
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
@@ -87,6 +93,15 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   );
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
   const [originalGoalId] = useState(post.companyGoalId); // capture on mount
+  const allGalloGoals = useSelector(selectAllGalloGoals);
+
+  const allActiveGalloGoals = useMemo(() => {
+    if (!galloEnabled || !editablePost.account?.accountNumber) return [];
+    return getActiveGalloGoalsForAccount(
+      editablePost.account.accountNumber,
+      allGalloGoals
+    );
+  }, [galloEnabled, editablePost.account?.accountNumber, allGalloGoals]);
 
   const activeCompanyGoals = useMemo(() => {
     const acct = editablePost.account?.accountNumber;
@@ -106,6 +121,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     CompanyGoalWithIdType | undefined
   >(allCompanyGoals.find((g) => g.id === post.companyGoalId));
 
+  const editModeGalloGoals = galloEnabled
+    ? getActiveGalloGoalsForAccount(
+        editablePost.account?.accountNumber,
+        allGalloGoals
+      )
+    : [];
+
   const isDirty = useIsDirty(
     {
       description: post.description,
@@ -114,7 +136,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       companyGoalId: post.companyGoalId,
       productType: post.productType || [],
       postUserUid: post.postUserUid,
-      accountNumber: post.account?.accountNumber ?? "", // ✅ enforce string
+      accountNumber: post.account?.accountNumber ?? "",
+      galloGoal: post.galloGoal, // 👈 original
     },
     {
       description,
@@ -123,7 +146,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       companyGoalId: selectedCompanyGoal?.id ?? null,
       productType: editablePost.productType || [],
       postUserUid: onBehalf?.uid ?? post.postUserUid,
-      accountNumber: editablePost.account?.accountNumber ?? "", // ✅ enforce string
+      accountNumber: editablePost.account?.accountNumber ?? "",
+      galloOppId: editablePost.galloGoal?.oppId ?? null, // 👈 edited
     }
   );
 
@@ -255,25 +279,24 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       await updatePostWithNewTimestamp(updatedPost.id);
 
       //--------------------------------------------------------
-// ⭐ OPTIMISTIC UI UPDATE (Redux + IndexedDB + filteredSets)
-//--------------------------------------------------------
-const mergedPost: PostWithID = {
-  ...existing,
-  ...updatedFields,
-  id: updatedPost.id,
-};
+      // ⭐ OPTIMISTIC UI UPDATE (Redux + IndexedDB + filteredSets)
+      //--------------------------------------------------------
+      const mergedPost: PostWithID = {
+        ...existing,
+        ...updatedFields,
+        id: updatedPost.id,
+      };
 
-// 1. Redux main feed
-dispatch(updatePost(mergedPost));
+      // 1. Redux main feed
+      dispatch(updatePost(mergedPost));
 
-// 2. IndexedDB cached posts
-await updatePostInIndexedDB(mergedPost);
+      // 2. IndexedDB cached posts
+      await updatePostInIndexedDB(mergedPost);
 
-// 3. FilteredSets (for filter pages that were showing stale data)
-await updatePostInFilteredSets(mergedPost);
+      // 3. FilteredSets (for filter pages that were showing stale data)
+      await updatePostInFilteredSets(mergedPost);
 
-//--------------------------------------------------------
-
+      //--------------------------------------------------------
 
       // Update goal submittedPosts array
       if (selectedCompanyGoal?.id) {
@@ -303,17 +326,20 @@ await updatePostInFilteredSets(mergedPost);
   };
 
   const handleSave = () => {
-    const hadOriginalGoal = !!post.companyGoalId;
+    const hadOriginalCompanyGoal = !!post.companyGoalId;
+    const companyGoalChanged = selectedCompanyGoal?.id !== post.companyGoalId;
 
-    if (hadOriginalGoal && selectedCompanyGoal?.id !== post.companyGoalId) {
+    // ⚠️ Only show confirm when COMPANY goal changes
+    if (hadOriginalCompanyGoal && companyGoalChanged) {
       setShowGoalChangeConfirm(true);
       return;
     }
+
     const extractedHashtags = extractHashtags(description);
     const extractedStarTags = extractStarTags(description);
 
     const updatedPost: PostWithID = {
-      ...editablePost,
+      ...editablePost, // ✅ keeps galloGoal
       description,
       migratedVisibility,
       totalCaseCount: updatedCaseCount,
@@ -323,6 +349,7 @@ await updatePostInFilteredSets(mergedPost);
       productType: editablePost.productType,
       companyGoalId: selectedCompanyGoal?.id || null,
       companyGoalTitle: selectedCompanyGoal?.goalTitle || null,
+      galloGoal: editablePost.galloGoal ?? null, // ✅ explicit
     };
 
     handleSavePost(updatedPost);
@@ -360,12 +387,35 @@ await updatePostInFilteredSets(mergedPost);
     setEditablePost((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleGalloGoalSelection = (goal?: FireStoreGalloGoalDocType) => {
+    if (!goal || !editablePost.account) return;
+
+    const match = goal.accounts.find(
+      (a) => a.distributorAcctId === editablePost.account?.accountNumber
+    );
+
+    if (!match?.oppId) {
+      dispatch(showMessage("Selected goal has no oppId for this account"));
+      return;
+    }
+
+    setEditablePost((prev) => ({
+      ...prev,
+      galloGoal: {
+        goalId: goal.goalDetails.goalId,
+        title: goal.goalDetails.goal,
+        env: goal.goalDetails.goalEnv,
+        oppId: match.oppId,
+      },
+    }));
+  };
+
   const hadOriginalGoal = !!originalGoalId;
   return (
     <>
       <Dialog
         open={isOpen}
-        onClose={handleCloseEditModal} // Type '() => void' is not assignable to type 'ReactNode'.
+        onClose={handleCloseEditModal}
         aria-labelledby="edit-post-dialog"
       >
         {" "}
@@ -476,6 +526,18 @@ await updatePostInFilteredSets(mergedPost);
                   setSelectedCompanyGoal(goal);
                 }}
               />
+
+              {galloEnabled && (
+                <Box mt={2}>
+                  <GalloGoalDropdown
+                    goals={editModeGalloGoals} // ✅ ALL goals
+                    label="Gallo Goals"
+                    loading={false}
+                    onSelect={handleGalloGoalSelection}
+                    selectedGoalId={editablePost.galloGoal?.goalId ?? null}
+                  />
+                </Box>
+              )}
 
               <div className="visibility-select">
                 <label htmlFor="visibilitySelect">
