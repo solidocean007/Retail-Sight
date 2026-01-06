@@ -25,12 +25,10 @@ import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
-import { setAppReady } from "./Slices/appSlice"; // unused
 
 function AppContent() {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
-
   const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
   const snackbar = useSelector((s: RootState) => s.snackbar);
   const appReady = useSelector((s: RootState) => s.app.appReady);
@@ -102,8 +100,8 @@ function AppContent() {
             {/* Main layout frame */}
             <div className="page-layout-frame">
               <AppRoutes />
-              {!isPublicRoute && <Footer />}
             </div>
+            {!isPublicRoute && <Footer />}
 
             {/* Alerts */}
             {snackbar.current && (

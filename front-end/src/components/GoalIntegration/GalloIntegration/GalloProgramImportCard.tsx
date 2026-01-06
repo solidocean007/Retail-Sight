@@ -65,22 +65,21 @@ const GalloProgramImportCard: React.FC<Props> = ({
       </div>
 
       {/* Core metadata */}
-     <div className="gallo-program-meta">
-  <span className="gallo-program-chip">Market: {program.marketId}</span>
-  <span className="gallo-program-chip">Start: {program.startDate}</span>
+      <div className="gallo-program-meta">
+        <span className="gallo-program-chip">Market: {program.marketId}</span>
+        <span className="gallo-program-chip">Start: {program.startDate}</span>
 
-  <span
-    className={`gallo-program-chip ${
-      expired ? "gallo-program-chip--ended" : ""
-    }`}
-  >
-    End: {program.endDate}
-  </span>
+        <span
+          className={`gallo-program-chip ${
+            expired ? "gallo-program-chip--ended" : ""
+          }`}
+        >
+          End: {program.endDate}
+        </span>
 
-  <span className="gallo-program-chip">Priority: {program.priority}</span>
-  <span className="gallo-program-chip">Sales: {program.salesType}</span>
-</div>
-
+        <span className="gallo-program-chip">Priority: {program.priority}</span>
+        <span className="gallo-program-chip">Sales: {program.salesType}</span>
+      </div>
 
       {/* Description */}
       {program.programDesc && (

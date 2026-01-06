@@ -21,6 +21,7 @@ const GalloProgramManager: React.FC<GalloProgramManagerProps> = ({
       <thead>
         <tr>
           <th>Program</th>
+          <th>ProgramId</th>
           <th>Market</th>
           <th>Status</th>
           <th>Start</th>
@@ -45,6 +46,7 @@ const GalloProgramManager: React.FC<GalloProgramManagerProps> = ({
               }
             >
               <td>{p.programTitle}</td>
+              <td>{p.programId}</td>
               <td>{p.marketId}</td>
               <td>
                 <span className={`pill ${p.status}`}>{p.status}</span>
