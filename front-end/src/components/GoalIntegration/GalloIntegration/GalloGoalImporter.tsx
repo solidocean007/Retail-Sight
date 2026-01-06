@@ -1,6 +1,15 @@
 // components/Gallo/GalloIntegration.tsx
 import { useState, useEffect } from "react";
-import { Box, Container, Typography, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogActions,
+  DialogContent,
+} from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../utils/firebase";
@@ -33,6 +42,7 @@ import GalloProgramManager from "./GalloProgramManager";
 import { useGalloPrograms } from "../../../hooks/useGalloPrograms";
 import ManualGalloProgramImport from "../ManualGalloProgramImport";
 import { showMessage } from "../../../Slices/snackbarSlice";
+import { isProgramExpired } from "../utils/galloProgramGoalsHelpers";
 
 export type EnrichedGalloProgram = GalloProgramType & {
   status?: "active" | "expired";
@@ -55,6 +65,9 @@ interface GalloGoalImporterProps {
 
 const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const functions = getFunctions();
+  const [openSyncModal, setOpenSyncModal] = useState(false);
+  const [openManualSearchModal, setOpenManualSearchModal] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEnv, setSelectedEnv] = useState<"prod" | "dev" | null>(null);
   const env: "prod" | "dev" | null = selectedEnv;
@@ -211,67 +224,10 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     }
   };
 
-  const fetchPrograms = async () => {
-    // not used
-    if (!env) return;
-    if (!keyStatus?.[env]?.exists) {
-      alert(`No ${env.toUpperCase()} key configured`);
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const fn = httpsCallable(functions, "runGalloScheduledImportNow");
-
-      await fn({
-        env, // REQUIRED
-        programStartDate: startDate?.format("YYYY-MM-DD"), // REQUIRED for first run
-      });
-
-      // 🔥 DO NOTHING ELSE
-      // Firestore listener will update programs automatically
-    } catch (err) {
-      console.error("Program sync failed", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchGoals = async () => {
-    if(!env) return;
-    if (!selectedProgram || hasFetchedGoals) return;
-    if (!keyStatus?.[env]?.exists) {
-      alert(`No ${env.toUpperCase()} key configured`);
-      return;
-    }
-    if (!selectedProgram) return;
-    setIsLoading(true);
-
-    try {
-      const fetchGoalsCF = httpsCallable(functions, "galloFetchGoals");
-      console.log(env, selectedProgram.programId, selectedProgram.marketId);
-      const res = await fetchGoalsCF({
-        env: env, // MUST be "env"
-        programId: selectedProgram.programId,
-        marketId: selectedProgram.marketId,
-      });
-
-      const goals = res.data as GalloGoalType[];
-      console.log("Fetched goals:", res);
-      setGoals(goals);
-      setSelectedGoal(null);
-      setEnrichedAccounts([]);
-      setUnmatchedAccounts([]);
-    } catch (err) {
-      console.error("Error fetching goals:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  
 
   const fetchAccounts = async () => {
-    if(!env) return;
+    if (!env) return;
     if (!selectedProgram || !selectedGoal || hasFetchedAccounts) return;
     if (!keyStatus?.[env]?.exists) {
       alert(`No ${env.toUpperCase()} key configured`);
@@ -449,53 +405,66 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const hasSelectedGoal = !!selectedGoal;
   const hasFetchedAccounts = enrichedAccounts.length > 0;
 
-  const isProgramExpired = (program: GalloProgramType) => {
-    if (!program.endDate) return false;
-    return dayjs(program.endDate).isBefore(dayjs(), "day");
-  };
+  
 
   // ---- Render --------------------------------------------------------------
   return (
     <Container className="gallo-integration">
       {/* <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}> */}
-      <p className="integration-note">
-        Goals created here are imported from Gallo Axis programs and are managed
-        externally. Source: Gallo Axis ({selectedEnv.toUpperCase()})
-      </p>
 
       {/* 📅 Program Import Section */}
       <div className="gallo-section">
-        <div className="gallo-section-title">📅 Program Import</div>
+        <div className="gallo-section-title">📅 Gallo Axis Programs</div>
 
-        <GalloScheduledImportPanel
-          companyId={companyId}
-          canRunManually={user?.role === "super-admin"}
-        />
+        <div className="gallo-actions-bar">
+          <button
+            className="btn-secondary"
+            onClick={() => setOpenSyncModal(true)}
+          >
+            🔁 Program Sync Status
+          </button>
 
-        {/* Date + actions */}
-        <div className="gallo-controls">
-          <ManualGalloProgramImport
-            startDate={startDate}
-            onDateChange={onDateChangeHandler}
-            onFetchPrograms={manualFetchPrograms} // ✅
-            disabled={loading}
-          />
-
-          {(programs.length > 0 ||
-            goals.length > 0 ||
-            enrichedAccounts.length > 0) && (
-            <button
-              className="button-outline btn-secondary"
-              onClick={handleCancel}
-            >
-              Cancel
-            </button>
-          )}
+          <button
+            className="btn-secondary"
+            onClick={() => setOpenManualSearchModal(true)}
+          >
+            🔍 Manual Axis Program Search
+          </button>
         </div>
+
+        {(programs.length > 0 ||
+          goals.length > 0 ||
+          enrichedAccounts.length > 0) && (
+          <button
+            className="button-outline btn-secondary"
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
+        )}
+
+        {selectedProgram && (
+          <GalloProgramImportCard
+            env={env}
+            hasFetchedGoals={hasFetchedGoals}
+            keyStatus={keyStatus}
+            setIsLoading={setIsLoading}
+            setSelectedGoal={setSelectedGoal}
+            
+            setGoals={setGoals}
+            selectedProgram={selectedProgram}
+            alreadyImported={importedProgramIds.has(selectedProgram.programId)}
+            selected
+            expired={isProgramExpired(selectedProgram)}
+            disabled={hasFetchedGoals}
+            onToggle={() => handleSelectProgram(null)}
+          />
+        )}
 
         {/* Programs */}
         {programs.length > 0 && (
           <GalloProgramManager
+            selectedEnv={env}
             programs={programs}
             selectedProgram={selectedProgram}
             importedProgramIds={
@@ -504,17 +473,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
               )
             }
             onSelectProgram={handleSelectProgram}
-          />
-        )}
-
-        {selectedProgram && (
-          <GalloProgramImportCard
-            program={selectedProgram}
-            alreadyImported={importedProgramIds.has(selectedProgram.programId)}
-            selected
-            expired={isProgramExpired(selectedProgram)}
-            disabled={hasFetchedGoals}
-            onToggle={() => handleSelectProgram(null)}
           />
         )}
 
@@ -530,10 +488,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             </Typography>
           )}
 
-          {selectedProgram &&
-            !isProgramExpired(selectedProgram) &&
-            goals.length === 0 &&
-            !isLoading && <button onClick={fetchGoals}>Fetch Goals</button>}
+         
 
           {goals.length > 0 && (
             <GoalTable
@@ -598,6 +553,55 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
           <CircularProgress color="inherit" />
         </Box>
       )}
+      <Dialog
+        open={openSyncModal}
+        onClose={() => setOpenSyncModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>🔁 Gallo Axis Program Sync</DialogTitle>
+        <DialogContent dividers>
+          <GalloScheduledImportPanel
+            companyId={companyId}
+            canRunManually={user?.role === "super-admin"}
+          />
+        </DialogContent>
+        <DialogActions>
+          <button
+            className="btn-secondary"
+            onClick={() => setOpenSyncModal(false)}
+          >
+            Close
+          </button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openManualSearchModal}
+        onClose={() => setOpenManualSearchModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Manual Gallo Program Search</DialogTitle>
+        <DialogContent dividers>
+          <ManualGalloProgramImport
+            startDate={startDate}
+            onDateChange={onDateChangeHandler}
+            onFetchPrograms={async () => {
+              await manualFetchPrograms();
+              setOpenManualSearchModal(false);
+            }}
+            disabled={loading}
+          />
+        </DialogContent>
+        <DialogActions>
+          <button
+            className="btn-secondary"
+            onClick={() => setOpenManualSearchModal(false)}
+          >
+            Cancel
+          </button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

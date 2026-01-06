@@ -111,3 +111,9 @@ button[disabled] {
 .gallo-section .MuiButton-contained:disabled {
   opacity: 0.5;
 }
+
+.gallo-actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}

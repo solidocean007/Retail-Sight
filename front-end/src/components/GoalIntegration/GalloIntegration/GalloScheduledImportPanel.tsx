@@ -116,8 +116,6 @@ const GalloScheduledImportPanel: React.FC<Props> = ({
     <section className="gallo-scheduled-panel">
       <header className="panel-header">
         <div className="header-main">
-          <h3>🔁 Gallo Axis Program Sync</h3>
-
           <div className={`status-pill ${status.lastRunStatus ?? "unknown"}`}>
             {status.lastRunStatus ?? "unknown"}
           </div>
