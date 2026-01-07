@@ -10,7 +10,7 @@ import "./footer.css";
 import { SvgIconTypeMap } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { Link } from "react-router-dom";
-import InfoIcon from '@mui/icons-material/Info';
+import InfoIcon from "@mui/icons-material/Info";
 
 type FooterLinkProps = {
   to: string;
@@ -19,9 +19,14 @@ type FooterLinkProps = {
 };
 
 const FooterLink = ({ to, icon: Icon, children }: FooterLinkProps) => (
-  <Link to={to} className="footer-link">
+  <Link
+    to={to}
+    className="footer-link"
+    aria-label={typeof children === "string" ? children : undefined}
+    title={typeof children === "string" ? children : undefined}
+  >
     {Icon && <Icon className="footer-icon" />}
-    {children}
+    <span className="footer-text">{children}</span>
   </Link>
 );
 
