@@ -10,6 +10,7 @@ interface DirtyCheckParams {
   productType: string[];
   postUserUid: string;
   accountNumber: string;
+  galloOppId?: string | null;
 }
 
 /**
@@ -25,6 +26,7 @@ export function useIsDirty(
     | "productType"
     | "postUserUid"
     | "accountNumber"
+    | "galloGoal"
   >,
   edited: DirtyCheckParams
 ) {
@@ -59,6 +61,10 @@ export function useIsDirty(
     )
       return true;
 
+    // NEW: gallo goal changed?
+    const origOppId = original.galloGoal?.oppId ?? null;
+    if (edited.galloOppId !== origOppId) return true;
+
     // ---- NEW: postUser changed? ----
     if (edited.postUserUid !== original.postUserUid) return true;
 
@@ -76,6 +82,7 @@ export function useIsDirty(
     JSON.stringify(original.productType ?? []),
     original.postUserUid,
     original.accountNumber,
+    original.galloGoal?.oppId, // ✅ ADD THIS
 
     // edited deps
     edited.description,
@@ -85,5 +92,6 @@ export function useIsDirty(
     JSON.stringify(edited.productType),
     edited.postUserUid,
     edited.accountNumber,
+    edited.galloOppId, // ✅ ADD THIS
   ]);
 }

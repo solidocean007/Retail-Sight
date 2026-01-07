@@ -4,11 +4,21 @@
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  min-height: 100vh;
+}
+
+/* iOS Safari safety override */
+@supports (-webkit-touch-callout: none) {
+  .app-frame {
+    height: auto;
+    min-height: 100dvh;
+  }
 }
 
 .app-shell {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-height: 0;
 }
 
 .app-shell-hidden {
@@ -21,9 +31,10 @@
 .page-layout-frame {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  flex: 1; /* fills space between header & footer */
+  flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .MuiInputBase-root {
@@ -55,7 +66,6 @@ button {
   border-radius: var(--btn-border-radius);
   padding: var(--btn-padding);
   transition: background-color 0.2s ease, color 0.2s ease;
-  box-shadow: var(--button-shadow);
 }
 /* — Primary / Save */
 .button-primary {
@@ -128,6 +138,11 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.button-primary,
+.btn-secondary {
+  box-shadow: var(--button-shadow);
 }
 
 .btn-secondary:hover {

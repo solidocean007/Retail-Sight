@@ -348,7 +348,7 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="details-date">
                 <div className="store-details">
                   {" "}
-                  {/* i need to eventually add store names to the filters*/}
+                  {/* i need to eventually add store names on click to the filters*/}
                   <div className="store-name-number">
                     <h3>{post.account?.accountName} </h3>
 
@@ -400,7 +400,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 </div>
 
                 <div className="user-company-box">
-                  <p>company: {post.postUser?.company}</p>{" "}
+                  <p>{post.postUser?.company}</p>{" "}
                 </div>
               </div>
             </div>
@@ -411,7 +411,7 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
           )}
           {/* {post.galloGoal?.oppId || post.oppId && post.galloGoal && ( */}
-          {post.galloGoal?.oppId  && (
+          {post.galloGoal?.oppId && (
             <div className="gallo-goal-banner gallo-textured-background">
               Gallo Goal: {post.galloGoal?.title}
             </div>
@@ -476,6 +476,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   /> */}
                   {imageSet.feedSrc && (
                     <img
+                      title="display image"
                       src={imageSet.feedSrc}
                       className="post-image"
                       loading="lazy"
