@@ -39,7 +39,6 @@ import { getActiveCompanyGoalsForAccount } from "../../utils/helperFunctions/get
 import { useIsDirty } from "../../hooks/useIsDirty";
 import { selectUser } from "../../Slices/userSlice";
 import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
-import CustomConfirmation from "../CustomConfirmation";
 import GoalChangeConfirmation from "./GoalChangeConfirmation";
 import { duplicatePostWithNewGoal } from "../../utils/PostLogic/dupilcatePostWithNewGoal";
 import { updatePost } from "../../Slices/postsSlice";
@@ -47,6 +46,7 @@ import { useIntegrations } from "../../hooks/useIntegrations";
 import GalloGoalDropdown from "./GalloGoalDropdown";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount";
 import { selectAllGalloGoals } from "../../Slices/galloGoalsSlice";
+import { normalizePost } from "../../utils/normalize";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -72,7 +72,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     post.description || ""
   );
   const [showGoalChangeConfirm, setShowGoalChangeConfirm] = useState(false);
-
   const userData = useSelector(selectUser)!;
   const [onBehalf, setOnBehalf] = useState<UserType | null>(null);
   const [useOnBehalf, setUseOnBehalf] = useState(false);
@@ -233,6 +232,9 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       companyGoalId: selectedCompanyGoal?.id ?? null,
       companyGoalTitle: selectedCompanyGoal?.goalTitle ?? null,
 
+      // ✅ THIS WAS MISSING
+      galloGoal: updatedPost.galloGoal ?? null,
+
       // audit trail
       lastEditedByUid: creator.uid,
       lastEditedByFirstName: creator.firstName,
@@ -288,13 +290,14 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       };
 
       // 1. Redux main feed
-      dispatch(updatePost(mergedPost));
+      const normalized = normalizePost(mergedPost);
+      dispatch(updatePost(normalized));
 
       // 2. IndexedDB cached posts
-      await updatePostInIndexedDB(mergedPost);
+      await updatePostInIndexedDB(normalized);
 
       // 3. FilteredSets (for filter pages that were showing stale data)
-      await updatePostInFilteredSets(mergedPost);
+      await updatePostInFilteredSets(normalized);
 
       //--------------------------------------------------------
 
@@ -349,7 +352,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       productType: editablePost.productType,
       companyGoalId: selectedCompanyGoal?.id || null,
       companyGoalTitle: selectedCompanyGoal?.goalTitle || null,
-      galloGoal: editablePost.galloGoal ?? null, // ✅ explicit
     };
 
     handleSavePost(updatedPost);
@@ -461,6 +463,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                   }}
                 >
                   <button
+                    title="account button"
                     className="btn-outline"
                     onClick={() => setOpenAccountModal(true)}
                   >

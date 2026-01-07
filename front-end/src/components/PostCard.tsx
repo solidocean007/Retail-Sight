@@ -411,7 +411,7 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
           )}
           {/* {post.galloGoal?.oppId || post.oppId && post.galloGoal && ( */}
-          {post.galloGoal?.oppId  && (
+          {post.galloGoal?.oppId && (
             <div className="gallo-goal-banner gallo-textured-background">
               Gallo Goal: {post.galloGoal?.title}
             </div>
@@ -423,7 +423,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {post.id}
+          {/* {post.id} */}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>
@@ -476,6 +476,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   /> */}
                   {imageSet.feedSrc && (
                     <img
+                      title="display image"
                       src={imageSet.feedSrc}
                       className="post-image"
                       loading="lazy"
