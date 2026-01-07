@@ -30,7 +30,7 @@ import { updatePostWithNewTimestamp } from "../../utils/PostLogic/updatePostWith
 import { extractHashtags, extractStarTags } from "../../utils/extractHashtags";
 import TotalCaseCount from "../TotalCaseCount";
 import { fetchAllCompanyAccounts } from "../../utils/helperFunctions/fetchAllCompanyAccounts";
-import { RootState } from "../../utils/store";
+import { RootState, useAppDispatch } from "../../utils/store";
 import AccountModalSelector from "./AccountModalSelector";
 import BrandsSelector from "../ProductsManagement/BrandsSelector";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
@@ -47,6 +47,7 @@ import GalloGoalDropdown from "./GalloGoalDropdown";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount";
 import { selectAllGalloGoals } from "../../Slices/galloGoalsSlice";
 import { normalizePost } from "../../utils/normalize";
+import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -67,7 +68,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [description, setDescription] = useState<string>(
     post.description || ""
   );
@@ -288,6 +289,28 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         ...updatedFields,
         id: updatedPost.id,
       };
+
+      // after updateDoc(postRef, updatedFields);
+
+      if (
+        updatedPost.galloGoal?.goalId &&
+        updatedPost.galloGoal?.oppId &&
+        updatedPost.account?.accountNumber
+      ) {
+        const galloGoal = allGalloGoals.find(
+          (g) => g.goalDetails.goalId === updatedPost.galloGoal?.goalId
+        );
+
+        if (galloGoal) {
+          dispatch(
+            markGalloAccountAsSubmitted({
+              goal: galloGoal,
+              accountNumber: updatedPost.account.accountNumber,
+              postId: updatedPost.id,
+            })
+          );
+        }
+      }
 
       // 1. Redux main feed
       const normalized = normalizePost(mergedPost);
