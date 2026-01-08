@@ -137,3 +137,32 @@
   background-color: rgba(248, 113, 113, 0.15);
   border-color: rgba(248, 113, 113, 0.4);
 }
+
+/* Badge container */
+.program-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Mobile: keep badges subtle */
+@media (max-width: 767px) {
+  .badge-imported {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    opacity: 0.85;
+  }
+}
+
+/* Desktop: align right */
+@media (min-width: 1024px) {
+  .program-badges {
+    justify-content: flex-end;
+  }
+}
+
+.badge-imported {
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+

@@ -16,42 +16,31 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  MenuItem,
-  Select,
-  Chip,
   Autocomplete,
 } from "@mui/material";
-import {
-  EnrichedGalloAccountType,
-  GalloAccountType,
-  GalloGoalType,
-  GalloProgramType,
-} from "../../utils/types";
+import { EnrichedGalloAccountType, GalloAccountType } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import "./galloAccountImportTable.css";
-import { createGalloGoal } from "../../utils/helperFunctions/createGalloGoal";
-import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
-import { saveSingleGalloGoalToIndexedDB } from "../../utils/database/goalsStoreUtils";
-import { sendGalloGoalAssignedEmails } from "../../utils/helperFunctions/sendGalloGoalAssignedEmails";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 
 interface AccountTableProps {
-  selectedEnv: "prod" | "dev" | null;
   accounts: EnrichedGalloAccountType[];
-  unmatchedAccounts: GalloAccountType[]; // 👈 ADD
-  selectedGoal: GalloGoalType | null; // Pass the selected goal from the parent
-  selectedProgram: GalloProgramType | null; // Pass the selected program from the parent
-  onSaveComplete: () => void;
+  unmatchedAccounts: GalloAccountType[];
+  program: GalloProgramType;
+  goal: GalloGoalType;
+  onConfirm: (args: {
+    selectedAccounts: EnrichedGalloAccountType[];
+    notifyUserIds: string[]; // 👈 NEW
+  }) => Promise<void>;
 }
 
 const GalloAccountImportTable: React.FC<AccountTableProps> = ({
-  selectedEnv,
   accounts,
   unmatchedAccounts,
-  selectedGoal,
-  selectedProgram,
-  onSaveComplete,
+  program,
+  goal,
+  onConfirm,
 }) => {
   const [editableAccounts, setEditableAccounts] =
     useState<EnrichedGalloAccountType[]>(accounts);
@@ -68,7 +57,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [searchSalesperson, setSearchSalesperson] = useState("");
   const companyUsers = useSelector(selectCompanyUsers) || [];
-  const [sendEmail, setSendEmail] = useState(true);
+  const [notifyUserIds, setNotifyUserIds] = useState<string[]>([]);
 
   const handleSearchSalesperson = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -167,54 +156,6 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     });
   };
 
-  const handleCreateGalloGoal = async () => {
-    if (!selectedGoal || !selectedProgram || selectedEnv === null) {
-      alert("Please select a goal and program before saving.");
-      return;
-    }
-
-    const env: "prod" | "dev" = selectedEnv; // ✅ explicit narrowing
-
-    setIsSaving(true);
-
-    try {
-      const savedGoal = await createGalloGoal(
-        env,
-        {
-          ...selectedGoal,
-          notifications: {
-            emailOnCreate: sendEmail,
-          },
-        },
-        selectedProgram,
-        selectedAccounts,
-        companyId || ""
-      );
-
-      const savedGoalWithId = {
-        ...savedGoal,
-        id: selectedGoal.goalId,
-      };
-
-      dispatch(addOrUpdateGalloGoal(savedGoalWithId));
-      await saveSingleGalloGoalToIndexedDB(savedGoal);
-
-      await sendGalloGoalAssignedEmails({
-        savedGoal,
-        selectedAccounts,
-        companyUsers,
-      });
-
-      alert("Goal saved successfully!");
-      onSaveComplete();
-    } catch (err) {
-      console.error("Save error:", err);
-      alert("Failed to save the goal. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 25;
 
@@ -237,37 +178,63 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     selectedAccounts.length / selectedPerPage
   );
 
+  const selectAll = () => {
+    setSelectedAccounts(editableAccounts);
+  };
+
+  const deselectAll = () => {
+    setSelectedAccounts([]);
+  };
+
+  const availableNotifyUsers = companyUsers.filter((u) =>
+    selectedAccounts.some((acc) =>
+      acc.salesRouteNums?.includes(String(u.salesRouteNum))
+    )
+  );
+
+  useEffect(() => {
+    // default: notify all eligible users
+    const allEligibleIds = availableNotifyUsers.map((u) => u.uid);
+    setNotifyUserIds(allEligibleIds);
+  }, [availableNotifyUsers]);
+
   return (
     <TableContainer component={Paper} className="account-table">
       {/* Buttons */}
-      <Box display="flex" justifyContent="flex-end" gap={2} mb={1}>
-        <Checkbox
-          checked={sendEmail}
-          onChange={(e) => setSendEmail(e.target.checked)}
+      <div className="accounts-toolbar">
+        <Autocomplete
+          multiple
+          size="small"
+          options={availableNotifyUsers}
+          getOptionLabel={(u) =>
+            `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
+          }
+          value={availableNotifyUsers.filter((u) =>
+            notifyUserIds.includes(u.uid)
+          )}
+          onChange={(_, users) => setNotifyUserIds(users.map((u) => u.uid))}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Email notifications (optional)"
+              placeholder="Select users to notify…"
+              helperText="Only selected users will receive an email"
+            />
+          )}
         />
-        <Typography>Send email notification to assigned salespeople</Typography>
 
-        <Button
-          variant="outlined"
-          onClick={() => setSelectedAccounts(editableAccounts)}
-        >
-          Select All
-        </Button>
-        <Button variant="outlined" onClick={() => setSelectedAccounts([])}>
-          Deselect All
-        </Button>
-        <Button
-          onClick={() => {
-            if (!selectedGoal || !selectedProgram) return;
-            setShowConfirmDialog(true);
-          }}
-          color="primary"
-          variant="contained"
-          disabled={isSaving}
-        >
-          {isSaving ? "Saving…" : "Confirm"}
-        </Button>
-      </Box>
+        <div className="toolbar-actions">
+          <button onClick={selectAll}>Select All</button>
+          <button onClick={deselectAll}>Deselect All</button>
+          <button
+            className="button-primary"
+            disabled={!selectedAccounts.length}
+            onClick={() => setShowConfirmDialog(true)}
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
 
       {/* Selected Accounts Summary */}
       <Box
@@ -532,19 +499,29 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
           Confirm Goal Creation
         </DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to save the following goal?
+          <Typography gutterBottom>
+            You are about to create a <strong>Gallo goal</strong>:
           </Typography>
-          <Typography>
-            <strong>Program:</strong> {selectedProgram?.programTitle || "N/A"}
+
+          <Typography sx={{ mt: 1 }}>
+            <strong>Program:</strong> {program.programTitle}
           </Typography>
+
           <Typography>
-            <strong>Goal:</strong> {selectedGoal?.goal || "N/A"}
+            <strong>Goal:</strong> {goal.goal}
           </Typography>
-          <Typography>
-            <strong>Accounts Selected:</strong> {selectedAccounts.length}
+
+          <Typography sx={{ mt: 1 }}>
+            <strong>Accounts:</strong> {selectedAccounts.length}
+          </Typography>
+
+          <Typography variant="caption" sx={{ display: "block", mt: 1 }}>
+            {notifyUserIds.length === 0
+              ? "No email notifications will be sent."
+              : `${notifyUserIds.length} user(s) will be notified by email.`}
           </Typography>
         </DialogContent>
+
         <DialogActions>
           <Button
             onClick={() => setShowConfirmDialog(false)}
@@ -554,13 +531,19 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
             Cancel
           </Button>
           <Button
-            disabled={isSaving}
+            disabled={isSaving || selectedAccounts.length === 0}
             onClick={async () => {
-              setShowConfirmDialog(false);
-              await handleCreateGalloGoal();
+              setIsSaving(true);
+              try {
+                await onConfirm({
+                  selectedAccounts,
+                  notifyUserIds,
+                });
+              } finally {
+                setIsSaving(false);
+                setShowConfirmDialog(false);
+              }
             }}
-            color="primary"
-            variant="contained"
           >
             {isSaving ? "Saving…" : "Confirm"}
           </Button>

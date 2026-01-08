@@ -306,27 +306,40 @@ export const galloFetchAccounts = onCall<
 export const galloSyncProgramsByChangeStamp = onSchedule(
   "every 6 hours",
   async () => {
-    const companies = await admin
-      .firestore()
-      .collection("companies")
-      .where("integrations.galloAxis.enabled", "==", true)
-      .get();
+    const db = admin.firestore();
+
+    const companies = await db.collection("companies").get();
 
     for (const company of companies.docs) {
+      const integrationRef = db.doc(
+        `companies/${company.id}/integrations/galloAxis`
+      );
+
       try {
+        const snap = await integrationRef.get();
+
+        if (!snap.exists) continue;
+
+        const integration = snap.data();
+        if (!integration?.env) continue;
+
         await syncGalloProgramsForCompany(company.id);
       } catch (err) {
-        await admin
-          .firestore()
-          .doc(`companies/${company.id}/integrations/galloAxis`)
-          .set(
-            {
-              lastProgramSyncStatus: "error",
-              lastProgramSyncError: String(err),
-              lastProgramSyncAt: admin.firestore.FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
+        console.error(
+          "[galloSyncProgramsByChangeStamp] error for company",
+          company.id,
+          err
+        );
+
+        await integrationRef.set(
+          {
+            lastProgramSyncStatus: "error",
+            lastProgramSyncError:
+              err instanceof Error ? err.message : String(err),
+            lastProgramSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
       }
     }
   }

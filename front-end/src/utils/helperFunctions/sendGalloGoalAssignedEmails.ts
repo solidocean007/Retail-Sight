@@ -6,11 +6,14 @@ export const sendGalloGoalAssignedEmails = async ({
   savedGoal,
   selectedAccounts,
   companyUsers,
+  notifyUserIds,
 }: {
   savedGoal: FireStoreGalloGoalDocType & { id?: string };
   selectedAccounts: EnrichedGalloAccountType[];
   companyUsers: UserType[];
+  notifyUserIds: string[];
 }) => {
+
   // optional safety: only prod
   if (savedGoal.goalDetails.goalEnv !== "prod") return;
 
@@ -22,10 +25,15 @@ export const sendGalloGoalAssignedEmails = async ({
     }
   }
 
-  // map routes -> users
   const recipients = companyUsers
-    .filter((u) => u.email && u.salesRouteNum && routeNums.has(String(u.salesRouteNum)))
-    .map((u) => ({ uid: u.uid, email: u.email!, firstName: u.firstName ?? "", lastName: u.lastName ?? "" }));
+  .filter((u) => u.email && notifyUserIds.includes(u.uid))
+  .map((u) => ({
+    uid: u.uid,
+    email: u.email!,
+    firstName: u.firstName ?? "",
+    lastName: u.lastName ?? "",
+  }));
+
 
   // de-dupe by uid
   const unique = Array.from(new Map(recipients.map((r) => [r.uid, r])).values());

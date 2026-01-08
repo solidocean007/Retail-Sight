@@ -3,6 +3,12 @@
 /* -----------------------------
    Root wrapper
 --------------------------------*/
+
+.gallo-import-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
 .gallo-integration {
   display: flex;
   flex-direction: column;

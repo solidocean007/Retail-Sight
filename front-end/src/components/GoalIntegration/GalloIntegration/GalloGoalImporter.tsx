@@ -32,10 +32,13 @@ import {
   UserType,
 } from "../../../utils/types";
 import getCompanyAccountId from "../../../utils/helperFunctions/getCompanyAccountId";
-import { RootState } from "../../../utils/store";
+import { RootState, useAppDispatch } from "../../../utils/store";
 import { useSelector } from "react-redux";
 import GalloProgramImportCard from "./GalloProgramImportCard";
-import { selectAllGalloGoals } from "../../../Slices/galloGoalsSlice";
+import {
+  addOrUpdateGalloGoal,
+  selectAllGalloGoals,
+} from "../../../Slices/galloGoalsSlice";
 import GalloScheduledImportPanel from "./GalloScheduledImportPanel";
 import { selectUser } from "../../../Slices/userSlice";
 import GalloProgramManager from "./GalloProgramManager";
@@ -43,6 +46,10 @@ import { useGalloPrograms } from "../../../hooks/useGalloPrograms";
 import ManualGalloProgramImport from "../ManualGalloProgramImport";
 import { showMessage } from "../../../Slices/snackbarSlice";
 import { isProgramExpired } from "../utils/galloProgramGoalsHelpers";
+import { Stepper, Step, StepLabel } from "@mui/material";
+import { createGalloGoal } from "../../../utils/helperFunctions/createGalloGoal";
+import { saveSingleGalloGoalToIndexedDB } from "../../../utils/database/goalsStoreUtils";
+import { sendGalloGoalAssignedEmails } from "../../../utils/helperFunctions/sendGalloGoalAssignedEmails";
 
 export type EnrichedGalloProgram = GalloProgramType & {
   status?: "active" | "expired";
@@ -53,6 +60,15 @@ export type EnrichedGalloProgram = GalloProgramType & {
     rawKeys: string[];
   };
 };
+const IMPORT_STEPS: ImportStep[] = ["program", "goals", "accounts"];
+
+const stepIndexMap: Record<ImportStep, number> = {
+  program: 0,
+  goals: 1,
+  accounts: 2,
+};
+
+type ImportStep = "program" | "goals" | "accounts";
 
 export type KeyStatusType = {
   prod?: { exists: boolean; lastFour?: string; updatedAt?: any };
@@ -64,9 +80,14 @@ interface GalloGoalImporterProps {
 }
 
 const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
+  const dispatch = useAppDispatch();
   const functions = getFunctions();
   const [openSyncModal, setOpenSyncModal] = useState(false);
   const [openManualSearchModal, setOpenManualSearchModal] = useState(false);
+  const [importStep, setImportStep] = useState<ImportStep>("program");
+  const [openImportModal, setOpenImportModal] = useState(false);
+  const [hasFetchedGoals, setHasFetchedGoals] = useState(false);
+  const [hasFetchedAccounts, setHasFetchedAccounts] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEnv, setSelectedEnv] = useState<"prod" | "dev" | null>(null);
@@ -102,18 +123,25 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       });
   }, [companyId]);
 
-  // i wonder why i was fetching claims here.. probbably to see who had admin role defined in firebase auth
-  // useEffect(() => {
-  //   const fetchClaims = async () => {
-  //     const user = getAuth().currentUser;
-  //     if (user) {
-  //       const tokenResult = await user.getIdTokenResult(true); // force refresh
-  //       console.log("Custom claims:", tokenResult.claims);
-  //     }
-  //   };
+  const handleBack = () => {
+    setImportStep((prev) => {
+      if (prev === "accounts") {
+        setHasFetchedAccounts(false);
+        setEnrichedAccounts([]);
+        setUnmatchedAccounts([]);
+        return "goals";
+      }
 
-  //   fetchClaims();
-  // }, []);
+      if (prev === "goals") {
+        setHasFetchedGoals(false);
+        setGoals([]);
+        setSelectedGoal(null);
+        return "program";
+      }
+
+      return prev;
+    });
+  };
 
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs("2025-11-24"));
 
@@ -137,7 +165,116 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
   const companyUsers = useSelector((s: RootState) => s.user.companyUsers || []);
 
+  // const handleCreateGalloGoal = async () => {
+  //     if (!selectedGoal || !selectedProgram || selectedEnv === null) {
+  //       alert("Please select a goal and program before saving.");
+  //       return;
+  //     }
+
+  //     const env: "prod" | "dev" = selectedEnv; // ✅ explicit narrowing
+
+  //     setIsSaving(true);
+
+  //     try {
+  //       const savedGoal = await createGalloGoal(
+  //         env,
+  //         {
+  //           ...selectedGoal,
+  //           notifications: {
+  //             emailOnCreate: sendEmail,
+  //           },
+  //         },
+  //         selectedProgram,
+  //         selectedAccounts,
+  //         companyId || ""
+  //       );
+
+  //       const savedGoalWithId = {
+  //         ...savedGoal,
+  //         id: selectedGoal.goalId,
+  //       };
+
+  //       dispatch(addOrUpdateGalloGoal(savedGoalWithId));
+  //       await saveSingleGalloGoalToIndexedDB(savedGoal);
+
+  //       await sendGalloGoalAssignedEmails({
+  //         savedGoal,
+  //         selectedAccounts,
+  //         companyUsers,
+  //       });
+
+  //       alert("Goal saved successfully!");
+  //       onSaveComplete();
+  //     } catch (err) {
+  //       console.error("Save error:", err);
+  //       alert("Failed to save the goal. Please try again.");
+  //     } finally {
+  //       setIsSaving(false);
+  //     }
+  //   };
+
   // ---- Key status (both prod & dev) ---------------------------------------
+
+  const handleCreateGalloGoal = async (
+    selectedAccounts: EnrichedGalloAccountType[],
+    notifyUserIds: string[]
+  ) => {
+    if (!selectedGoal || !selectedProgram || !selectedEnv || !companyId) {
+      showMessage({
+        text: "Missing required data to create goal.",
+        severity: "error",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const savedGoal = await createGalloGoal(
+        selectedEnv,
+        {
+          ...selectedGoal,
+          notifications: {
+            emailOnCreate: notifyUserIds.length > 0,
+          },
+        },
+        selectedProgram,
+        selectedAccounts,
+        companyId
+      );
+
+      const goalWithId = {
+        ...savedGoal,
+        id: savedGoal.goalDetails.goalId,
+      };
+
+      dispatch(addOrUpdateGalloGoal(goalWithId));
+      await saveSingleGalloGoalToIndexedDB(goalWithId);
+
+      if (notifyUserIds.length > 0) {
+        await sendGalloGoalAssignedEmails({
+          savedGoal: goalWithId,
+          selectedAccounts,
+          companyUsers,
+          notifyUserIds,
+        });
+      }
+
+      showMessage({
+        text: "Goal created successfully.",
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("handleCreateGalloGoal error:", err);
+      showMessage({
+        text: "Failed to create goal.",
+        severity: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchStatus = async () => {
       try {
@@ -224,34 +361,44 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     }
   };
 
-  
+  const fetchGoals = async () => {
+    if (!env || !selectedProgram || hasFetchedGoals) return;
+
+    setIsLoading(true);
+    try {
+      const fetchGoalsCF = httpsCallable(functions, "galloFetchGoals");
+      const res = await fetchGoalsCF({
+        env,
+        programId: selectedProgram.programId,
+        marketId: selectedProgram.marketId,
+      });
+
+      setGoals(res.data as GalloGoalType[]);
+      setSelectedGoal(null);
+      setHasFetchedGoals(true); // ✅ explicit
+    } catch (err) {
+      console.error("Error fetching goals:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchAccounts = async () => {
-    if (!env) return;
-    if (!selectedProgram || !selectedGoal || hasFetchedAccounts) return;
-    if (!keyStatus?.[env]?.exists) {
-      alert(`No ${env.toUpperCase()} key configured`);
-      return;
-    }
-    if (!selectedProgram || !selectedGoal || !companyId) return;
-    setIsLoading(true);
+    if (!env || !selectedProgram || !selectedGoal || hasFetchedAccounts) return;
 
+    setIsLoading(true);
     try {
       const fetchAccountsCF = httpsCallable(functions, "galloFetchAccounts");
-
       const res = await fetchAccountsCF({
-        env: env, // MUST be "env"
+        env,
         marketId: selectedProgram.marketId,
         goalId: selectedGoal.goalId,
       });
 
       const galloAccs = res.data as GalloAccountType[];
-
-      // Step 2: get matching Displaygram accounts
       const galloIds = galloAccs.map((a) => String(a.distributorAcctId));
-      const companyAccs = await fetchCompanyAccounts(companyId, galloIds);
+      const companyAccs = await fetchCompanyAccounts(companyId!, galloIds);
 
-      // Step 3: Enrich & separate unmatched accounts
       const { enrichedAccounts, unmatchedAccounts } = enrichAccounts(
         galloAccs,
         companyAccs,
@@ -260,6 +407,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
       setEnrichedAccounts(enrichedAccounts);
       setUnmatchedAccounts(unmatchedAccounts);
+      setHasFetchedAccounts(true); // ✅ explicit
     } catch (err) {
       console.error("Error fetching accounts:", err);
     } finally {
@@ -352,21 +500,31 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
   // ---- Cancel / reset ------------------------------------------------------
   const handleCancel = () => {
+    setOpenImportModal(false);
+
+    setImportStep("program");
+
     setSelectedProgram(null);
     setSelectedGoal(null);
+
     setGoals([]);
     setEnrichedAccounts([]);
     setUnmatchedAccounts([]);
-    setHasFetchedPrograms(false);
-    // setValue(0); // back to previous tab
+
+    setHasFetchedGoals(false);
+    setHasFetchedAccounts(false);
   };
 
   const handleSelectProgram = (program: GalloProgramType | null) => {
+    if (!program) return;
+
     setSelectedProgram(program);
     setGoals([]);
     setSelectedGoal(null);
     setEnrichedAccounts([]);
     setUnmatchedAccounts([]);
+    setImportStep("program");
+    setOpenImportModal(true);
   };
 
   if (envLoading) {
@@ -398,15 +556,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     );
   }
 
-  // ⬇️ MOVE THIS HERE
-
-  const hasSelectedProgram = !!selectedProgram;
-  const hasFetchedGoals = goals.length > 0;
-  const hasSelectedGoal = !!selectedGoal;
-  const hasFetchedAccounts = enrichedAccounts.length > 0;
-
-  
-
   // ---- Render --------------------------------------------------------------
   return (
     <Container className="gallo-integration">
@@ -431,35 +580,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             🔍 Manual Axis Program Search
           </button>
         </div>
-
-        {(programs.length > 0 ||
-          goals.length > 0 ||
-          enrichedAccounts.length > 0) && (
-          <button
-            className="button-outline btn-secondary"
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-        )}
-
-        {selectedProgram && (
-          <GalloProgramImportCard
-            env={env}
-            hasFetchedGoals={hasFetchedGoals}
-            keyStatus={keyStatus}
-            setIsLoading={setIsLoading}
-            setSelectedGoal={setSelectedGoal}
-            
-            setGoals={setGoals}
-            selectedProgram={selectedProgram}
-            alreadyImported={importedProgramIds.has(selectedProgram.programId)}
-            selected
-            expired={isProgramExpired(selectedProgram)}
-            disabled={hasFetchedGoals}
-            onToggle={() => handleSelectProgram(null)}
-          />
-        )}
 
         {/* Programs */}
         {programs.length > 0 && (
@@ -488,21 +608,19 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             </Typography>
           )}
 
-         
-
-          {goals.length > 0 && (
+          {/* {goals.length > 0 && (
             <GoalTable
               goals={goals}
               selectedGoal={selectedGoal}
               onSelectGoal={setSelectedGoal}
             />
-          )}
+          )} */}
 
-          {selectedGoal && enrichedAccounts.length === 0 && (
+          {/* {selectedGoal && enrichedAccounts.length === 0 && (
             <button className="btn-secondary" onClick={fetchAccounts}>
               Fetch Accounts
             </button>
-          )}
+          )} */}
         </div>
 
         {/* Warnings / Results */}
@@ -524,7 +642,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
           </Box>
         )}
 
-        {enrichedAccounts.length > 0 && (
+        {/* {enrichedAccounts.length > 0 && (
           <GalloAccountImportTable
             selectedEnv={env}
             accounts={enrichedAccounts}
@@ -533,7 +651,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             selectedProgram={selectedProgram}
             onSaveComplete={() => setValue(0)}
           />
-        )}
+        )} */}
       </div>
       {/* </Box> */}
 
@@ -601,6 +719,111 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             Cancel
           </button>
         </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openImportModal}
+        onClose={(_, reason) => {
+          if (reason === "backdropClick" || reason === "escapeKeyDown") return;
+          setOpenImportModal(false);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <div className="gallo-import-header">
+          <DialogTitle>Import Gallo Program</DialogTitle>
+          <DialogActions>
+            {importStep !== "program" && (
+              <button className="btn-secondary" onClick={handleBack}>
+                ← Back
+              </button>
+            )}
+            <button
+              className="btn-secondary"
+              onClick={() => setOpenImportModal(false)}
+            >
+              Cancel
+            </button>
+          </DialogActions>
+        </div>
+
+        <DialogContent dividers>
+          <Stepper activeStep={stepIndexMap[importStep]} sx={{ mb: 3 }}>
+            <Step completed={stepIndexMap[importStep] > 0}>
+              <StepLabel>Program</StepLabel>
+            </Step>
+
+            <Step completed={stepIndexMap[importStep] > 1}>
+              <StepLabel>Goals</StepLabel>
+            </Step>
+
+            <Step>
+              <StepLabel>Accounts</StepLabel>
+            </Step>
+          </Stepper>
+
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 2 }}>
+            {importStep === "program" &&
+              "Review the Gallo program before importing goals."}
+            {importStep === "goals" &&
+              "Select a goal to import accounts from Gallo Axis."}
+            {importStep === "accounts" &&
+              "Review and save matched Displaygram accounts."}
+          </Typography>
+
+          {importStep === "program" && selectedProgram && (
+            <GalloProgramImportCard
+              program={selectedProgram}
+              alreadyImported={importedProgramIds.has(
+                selectedProgram.programId
+              )}
+              expired={isProgramExpired(selectedProgram)}
+              canFetchGoals={
+                !isProgramExpired(selectedProgram) && goals.length === 0
+              }
+              isLoading={isLoading}
+              onFetchGoals={async () => {
+                await fetchGoals();
+                setImportStep("goals");
+              }}
+            />
+          )}
+
+          {importStep === "goals" && (
+            <>
+              <GoalTable
+                goals={goals}
+                selectedGoal={selectedGoal}
+                onSelectGoal={setSelectedGoal}
+              />
+
+              {selectedGoal && (
+                <button
+                  className="btn-secondary"
+                  onClick={async () => {
+                    await fetchAccounts();
+                    setImportStep("accounts");
+                  }}
+                >
+                  Fetch Accounts
+                </button>
+              )}
+            </>
+          )}
+
+          {importStep === "accounts" && selectedProgram && selectedGoal && (
+            <GalloAccountImportTable
+              accounts={enrichedAccounts}
+              unmatchedAccounts={unmatchedAccounts}
+              program={selectedProgram}
+              goal={selectedGoal}
+              onConfirm={async ({ selectedAccounts, notifyUserIds }) => {
+                await handleCreateGalloGoal(selectedAccounts, notifyUserIds);
+                setOpenImportModal(false);
+                setValue(0);
+              }}
+            />
+          )}
+        </DialogContent>
       </Dialog>
     </Container>
   );
