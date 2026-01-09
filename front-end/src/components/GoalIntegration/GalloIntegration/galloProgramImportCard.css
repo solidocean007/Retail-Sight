@@ -141,6 +141,7 @@
 /* Badge container */
 .program-badges {
   display: flex;
+  max-height: 20px;
   gap: 6px;
   flex-wrap: wrap;
 }

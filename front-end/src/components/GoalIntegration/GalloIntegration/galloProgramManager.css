@@ -54,12 +54,6 @@
   font-size: 0.95rem;
 }
 
-.program-badges {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
 /* ---------- Meta ---------- */
 
 .program-meta,
@@ -126,6 +120,84 @@
   padding: 4px 0;
 }
 
+.muted {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.group-label {
+  font-weight: 600;
+}
+
+.group-count {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.count-action {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.program-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* LEFT: title rail */
+.program-header-left {
+  flex: 1;
+  min-width: 0; /* critical for text wrapping */
+}
+
+.program-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+/* RIGHT: fixed-width status rail */
+.program-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* NOT / IMPORTED stacked inline */
+.import-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.import-state.not-imported {
+  color: #2563eb;
+}
+
+@media (max-width: 480px) {
+  .program-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .program-header-right {
+    margin-top: 4px;
+  }
+}
 
 /* Tablet */
 @media (min-width: 768px) {
@@ -145,7 +217,7 @@
   .program-card {
     display: grid;
     gap: 1rem;
-    grid-template-columns: 2fr 1fr 1fr auto;
+    grid-template-columns: 3fr 1fr 1fr;
     align-items: center;
     padding: 10px 12px;
   }
@@ -171,4 +243,3 @@
     grid-template-columns: 2fr 1fr 1fr auto;
   }
 }
-

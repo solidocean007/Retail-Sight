@@ -49,11 +49,15 @@ const GalloProgramImportCard: React.FC<Props> = ({
 
       {/* Header */}
       <div className="gallo-program-header">
-        <span className="gallo-program-title">{program.programTitle}</span>
+        <div className="gallo-program-header-left">
+          <div className="gallo-program-title">{program.programTitle}</div>
+        </div>
 
-        <span className="gallo-program-chip">
-          {program.programType ?? "Unknown Type"}
-        </span>
+        <div className="gallo-program-header-right">
+          <span className="gallo-program-chip">
+            {program.programType ?? "Unknown Type"}
+          </span>
+        </div>
       </div>
 
       {/* Meta */}
