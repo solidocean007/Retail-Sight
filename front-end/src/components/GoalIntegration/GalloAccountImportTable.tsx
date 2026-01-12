@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   TableContainer,
   Table,
@@ -12,27 +12,33 @@ import {
   Paper,
   Box,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Autocomplete,
+  Chip,
 } from "@mui/material";
-import { EnrichedGalloAccountType, GalloAccountType } from "../../utils/types";
+import {
+  EnrichedGalloAccountType,
+  GalloAccountType,
+  GalloGoalType,
+  GalloProgramType,
+} from "../../utils/types";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import "./galloAccountImportTable.css";
 import { selectCompanyUsers } from "../../Slices/userSlice";
+import { ImportStep } from "./GalloIntegration/GalloGoalImporter";
 
 interface AccountTableProps {
   accounts: EnrichedGalloAccountType[];
   unmatchedAccounts: GalloAccountType[];
   program: GalloProgramType;
-  goal: GalloGoalType;
-  onConfirm: (args: {
+  goal: GalloGoalType | null;
+
+  notifyUserIds: string[];
+  setNotifyUserIds: (ids: string[]) => void;
+
+  onContinue: (payload: {
     selectedAccounts: EnrichedGalloAccountType[];
-    notifyUserIds: string[]; // 👈 NEW
-  }) => Promise<void>;
+  }) => void;
 }
 
 const GalloAccountImportTable: React.FC<AccountTableProps> = ({
@@ -40,7 +46,9 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   unmatchedAccounts,
   program,
   goal,
-  onConfirm,
+  notifyUserIds,
+  setNotifyUserIds,
+  onContinue,
 }) => {
   const [editableAccounts, setEditableAccounts] =
     useState<EnrichedGalloAccountType[]>(accounts);
@@ -54,10 +62,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   );
   const [searchAccounts, setSearchAccounts] = useState("");
   const [searchRoute, setSearchRoute] = useState("");
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [searchSalesperson, setSearchSalesperson] = useState("");
   const companyUsers = useSelector(selectCompanyUsers) || [];
-  const [notifyUserIds, setNotifyUserIds] = useState<string[]>([]);
 
   const handleSearchSalesperson = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -192,11 +198,22 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
     )
   );
 
+  const didInitNotify = useRef(false);
+
   useEffect(() => {
-    // default: notify all eligible users
+    if (didInitNotify.current) return;
     const allEligibleIds = availableNotifyUsers.map((u) => u.uid);
     setNotifyUserIds(allEligibleIds);
+    didInitNotify.current = true;
   }, [availableNotifyUsers]);
+
+  const selectAllNotifyUsers = () => {
+    setNotifyUserIds(availableNotifyUsers.map((u) => u.uid));
+  };
+
+  const deselectAllNotifyUsers = () => {
+    setNotifyUserIds([]);
+  };
 
   return (
     <TableContainer component={Paper} className="account-table">
@@ -204,6 +221,9 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       <div className="accounts-toolbar">
         <Autocomplete
           multiple
+          openOnFocus
+          freeSolo={false}
+          disableClearable
           size="small"
           options={availableNotifyUsers}
           getOptionLabel={(u) =>
@@ -213,6 +233,15 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
             notifyUserIds.includes(u.uid)
           )}
           onChange={(_, users) => setNotifyUserIds(users.map((u) => u.uid))}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip
+                {...getTagProps({ index })}
+                label={`${option.firstName} ${option.lastName}`}
+                clickable
+              />
+            ))
+          }
           renderInput={(params) => (
             <TextField
               {...params}
@@ -223,15 +252,12 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
           )}
         />
 
-        <div className="toolbar-actions">
-          <button onClick={selectAll}>Select All</button>
-          <button onClick={deselectAll}>Deselect All</button>
-          <button
-            className="button-primary"
-            disabled={!selectedAccounts.length}
-            onClick={() => setShowConfirmDialog(true)}
-          >
-            Confirm
+        <div className="notify-actions">
+          <button type="button" onClick={selectAllNotifyUsers}>
+            Select All
+          </button>
+          <button type="button" onClick={deselectAllNotifyUsers}>
+            Deselect All
           </button>
         </div>
       </div>
@@ -251,6 +277,23 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
             ? "All accounts selected"
             : `${selectedAccounts.length} account(s) selected:`}
         </Typography>
+
+        <div className="toolbar-actions">
+          <button onClick={selectAll}>Select All</button>
+          <button onClick={deselectAll}>Deselect All</button>
+
+          <button
+            className="button-primary"
+            disabled={!selectedAccounts.length}
+            onClick={() =>
+              onContinue({
+                selectedAccounts,
+              })
+            }
+          >
+            Review & Confirm
+          </button>
+        </div>
 
         {!isAllSelected && selectedAccounts.length > 0 && (
           <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
@@ -367,41 +410,49 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
         </Box>
       )}
 
-      {/* Table */}
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Select</TableCell>
-            <TableCell>Account Name</TableCell>
-            <TableCell>Account Address</TableCell>
-            <TableCell>Sales Route #</TableCell>
-            <TableCell>Salesperson</TableCell>
-            <TableCell>Assign To</TableCell> {/* ✅ NEW */}
-            {/* <TableCell>Opp ID</TableCell> */}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {paginatedAccounts.map((account) => (
-            <TableRow key={account.oppId}>
-              <TableCell>
+      {/* Mobile Cards */}
+      <div className="account-cards">
+        {paginatedAccounts.map((account) => {
+          const checked = selectedAccounts.some(
+            (a) => a.distributorAcctId === account.distributorAcctId
+          );
+
+          return (
+            <div
+              key={account.distributorAcctId}
+              className={`account-card ${checked ? "selected" : ""}`}
+            >
+              <div className="account-card-header">
                 <Checkbox
-                  checked={selectedAccounts.some(
-                    (selected) =>
-                      selected.distributorAcctId === account.distributorAcctId
-                  )}
+                  checked={checked}
                   onChange={() => handleCheckboxChange(account)}
                 />
-              </TableCell>
-              <TableCell>{account.accountName || "N/A"}</TableCell>
-              <TableCell>{account.accountAddress || "N/A"}</TableCell>
-              <TableCell>
-                {Array.isArray(account.salesRouteNums) &&
-                account.salesRouteNums.length > 0
-                  ? account.salesRouteNums.join(", ")
-                  : "N/A"}
-              </TableCell>
-              <TableCell>{account.salesPersonsName}</TableCell>
-              <TableCell>
+                <div className="account-card-title">
+                  {account.accountName || "N/A"}
+                </div>
+              </div>
+
+              <div className="account-card-row">
+                <span className="label">Address</span>
+                <span>{account.accountAddress || "N/A"}</span>
+              </div>
+
+              <div className="account-card-row">
+                <span className="label">Sales Route</span>
+                <span>
+                  {Array.isArray(account.salesRouteNums) &&
+                  account.salesRouteNums.length > 0
+                    ? account.salesRouteNums.join(", ")
+                    : "N/A"}
+                </span>
+              </div>
+
+              <div className="account-card-row">
+                <span className="label">Salesperson</span>
+                <span>{account.salesPersonsName || "Unassigned"}</span>
+              </div>
+
+              <div className="account-card-assign">
                 <Autocomplete
                   multiple
                   size="small"
@@ -447,23 +498,114 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                     );
                   }}
                   renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="Assign salespeople…"
-                      variant="outlined"
-                    />
+                    <TextField {...params} placeholder="Assign sales…" />
                   )}
                 />
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-                <small className="helper-text">
-                  Selecting users overrides Sales Route # for this account.
-                </small>
-              </TableCell>
-              {/* <TableCell>{account.oppId}</TableCell> */}
+      {/* Table */}
+      <div className="account-table-desktop">
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Select</TableCell>
+              <TableCell>Account Name</TableCell>
+              <TableCell>Account Address</TableCell>
+              <TableCell>Sales Route #</TableCell>
+              <TableCell>Salesperson</TableCell>
+              <TableCell>Assign To</TableCell> {/* ✅ NEW */}
+              {/* <TableCell>Opp ID</TableCell> */}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {paginatedAccounts.map((account) => (
+              <TableRow key={account.oppId}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedAccounts.some(
+                      (selected) =>
+                        selected.distributorAcctId === account.distributorAcctId
+                    )}
+                    onChange={() => handleCheckboxChange(account)}
+                  />
+                </TableCell>
+                <TableCell>{account.accountName || "N/A"}</TableCell>
+                <TableCell>{account.accountAddress || "N/A"}</TableCell>
+                <TableCell>
+                  {Array.isArray(account.salesRouteNums) &&
+                  account.salesRouteNums.length > 0
+                    ? account.salesRouteNums.join(", ")
+                    : "N/A"}
+                </TableCell>
+                <TableCell>{account.salesPersonsName}</TableCell>
+                <TableCell>
+                  <Autocomplete
+                    multiple
+                    size="small"
+                    options={salesUsers}
+                    getOptionLabel={(u) =>
+                      `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
+                    }
+                    value={salesUsers.filter((u) =>
+                      getAssignedUserIdsFromRoutes(
+                        account.salesRouteNums ?? []
+                      ).includes(u.uid)
+                    )}
+                    onChange={(_, users) => {
+                      const userIds = users.map((u) => u.uid);
+                      const nextRoutes = routesFromSelectedUserIds(userIds);
+                      const nextName =
+                        nextRoutes.length > 0
+                          ? nameFromRoutes(nextRoutes)
+                          : "Unassigned";
+
+                      setEditableAccounts((prev) =>
+                        prev.map((a) =>
+                          a.distributorAcctId === account.distributorAcctId
+                            ? {
+                                ...a,
+                                salesRouteNums: nextRoutes,
+                                salesPersonsName: nextName,
+                              }
+                            : a
+                        )
+                      );
+
+                      setSelectedAccounts((prev) =>
+                        prev.map((a) =>
+                          a.distributorAcctId === account.distributorAcctId
+                            ? {
+                                ...a,
+                                salesRouteNums: nextRoutes,
+                                salesPersonsName: nextName,
+                              }
+                            : a
+                        )
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        placeholder="Assign salespeople…"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+
+                  <small className="helper-text">
+                    Selecting users overrides Sales Route # for this account.
+                  </small>
+                </TableCell>
+                {/* <TableCell>{account.oppId}</TableCell> */}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Pagination */}
       <Box display="flex" justifyContent="center" gap={2} mt={2}>
@@ -488,67 +630,6 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
           Next
         </Button>
       </Box>
-
-      {/* Confirm Dialog */}
-      <Dialog
-        open={showConfirmDialog}
-        onClose={() => setShowConfirmDialog(false)}
-        aria-labelledby="confirm-dialog-title"
-      >
-        <DialogTitle id="confirm-dialog-title">
-          Confirm Goal Creation
-        </DialogTitle>
-        <DialogContent>
-          <Typography gutterBottom>
-            You are about to create a <strong>Gallo goal</strong>:
-          </Typography>
-
-          <Typography sx={{ mt: 1 }}>
-            <strong>Program:</strong> {program.programTitle}
-          </Typography>
-
-          <Typography>
-            <strong>Goal:</strong> {goal.goal}
-          </Typography>
-
-          <Typography sx={{ mt: 1 }}>
-            <strong>Accounts:</strong> {selectedAccounts.length}
-          </Typography>
-
-          <Typography variant="caption" sx={{ display: "block", mt: 1 }}>
-            {notifyUserIds.length === 0
-              ? "No email notifications will be sent."
-              : `${notifyUserIds.length} user(s) will be notified by email.`}
-          </Typography>
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            onClick={() => setShowConfirmDialog(false)}
-            color="secondary"
-            variant="contained"
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={isSaving || selectedAccounts.length === 0}
-            onClick={async () => {
-              setIsSaving(true);
-              try {
-                await onConfirm({
-                  selectedAccounts,
-                  notifyUserIds,
-                });
-              } finally {
-                setIsSaving(false);
-                setShowConfirmDialog(false);
-              }
-            }}
-          >
-            {isSaving ? "Saving…" : "Confirm"}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </TableContainer>
   );
 };

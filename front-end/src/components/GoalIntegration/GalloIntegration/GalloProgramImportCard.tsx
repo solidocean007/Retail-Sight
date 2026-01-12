@@ -17,18 +17,18 @@ interface Props {
   program: EnrichedGalloProgram;
   alreadyImported: boolean;
   expired: boolean;
-  canFetchGoals: boolean;
+  canContinue: boolean;
   isLoading: boolean;
-  onFetchGoals: () => Promise<void>;
+  onContinue: () => void;
 }
 
 const GalloProgramImportCard: React.FC<Props> = ({
   program,
   alreadyImported,
   expired,
-  canFetchGoals,
+  canContinue,
   isLoading,
-  onFetchGoals,
+  onContinue,
 }) => {
   const [showDebug, setShowDebug] = useState(false);
 
@@ -82,18 +82,18 @@ const GalloProgramImportCard: React.FC<Props> = ({
 
       <Divider sx={{ my: 1 }} />
 
-      {/* Actions */}
-      {canFetchGoals && (
+      {/* Action */}
+      {canContinue && !expired && (
         <button
-          className="button-primary"
+          className="button-primary gallo-program-action"
           disabled={isLoading}
-          onClick={onFetchGoals}
+          onClick={onContinue}
         >
-          {isLoading ? "Fetching…" : "Fetch Goals"}
+          {isLoading ? "Fetching…" : "Continue"}
         </button>
       )}
 
-      {!canFetchGoals && !expired && (
+      {!canContinue && !expired && (
         <Typography variant="caption" color="text.secondary">
           Goals already loaded for this program.
         </Typography>

@@ -18,10 +18,9 @@ import {
   getFunctions,
   httpsCallable,
 } from "firebase/functions";
-import DateSelector from "../ManualGalloProgramImport";
 import GoalTable from "../GoalTable";
 import GalloAccountImportTable from "../GalloAccountImportTable";
-import "./galloIntegration.css";
+import "./galloGoalImporter.css";
 
 import {
   CompanyAccountType,
@@ -50,6 +49,8 @@ import { Stepper, Step, StepLabel } from "@mui/material";
 import { createGalloGoal } from "../../../utils/helperFunctions/createGalloGoal";
 import { saveSingleGalloGoalToIndexedDB } from "../../../utils/database/goalsStoreUtils";
 import { sendGalloGoalAssignedEmails } from "../../../utils/helperFunctions/sendGalloGoalAssignedEmails";
+import ModalShell from "../../common/ModalShell";
+import ConfirmGalloGoalStep from "./ConfirmGalloGoalStep";
 
 export type EnrichedGalloProgram = GalloProgramType & {
   status?: "active" | "expired";
@@ -60,15 +61,15 @@ export type EnrichedGalloProgram = GalloProgramType & {
     rawKeys: string[];
   };
 };
-const IMPORT_STEPS: ImportStep[] = ["program", "goals", "accounts"];
 
 const stepIndexMap: Record<ImportStep, number> = {
   program: 0,
   goals: 1,
   accounts: 2,
+  confirm: 3,
 };
 
-type ImportStep = "program" | "goals" | "accounts";
+export type ImportStep = "program" | "goals" | "accounts" | "confirm";
 
 export type KeyStatusType = {
   prod?: { exists: boolean; lastFour?: string; updatedAt?: any };
@@ -87,13 +88,15 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const [importStep, setImportStep] = useState<ImportStep>("program");
   const [openImportModal, setOpenImportModal] = useState(false);
   const [hasFetchedGoals, setHasFetchedGoals] = useState(false);
-  const [hasFetchedAccounts, setHasFetchedAccounts] = useState(false);
+  const [notifyUserIds, setNotifyUserIds] = useState<string[]>([]);
+  const [direction, setDirection] = useState<"forward" | "back">("forward");
 
+  const [hasFetchedAccounts, setHasFetchedAccounts] = useState(false);
+  const [showIntegrationTools, setShowIntegrationTools] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEnv, setSelectedEnv] = useState<"prod" | "dev" | null>(null);
   const env: "prod" | "dev" | null = selectedEnv;
   const [envLoading, setEnvLoading] = useState(true);
-  const [hasFetchedPrograms, setHasFetchedPrograms] = useState(false);
   const galloGoals = useSelector(selectAllGalloGoals);
   const user = useSelector(selectUser);
   const companyId = useSelector(
@@ -123,26 +126,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       });
   }, [companyId]);
 
-  const handleBack = () => {
-    setImportStep((prev) => {
-      if (prev === "accounts") {
-        setHasFetchedAccounts(false);
-        setEnrichedAccounts([]);
-        setUnmatchedAccounts([]);
-        return "goals";
-      }
-
-      if (prev === "goals") {
-        setHasFetchedGoals(false);
-        setGoals([]);
-        setSelectedGoal(null);
-        return "program";
-      }
-
-      return prev;
-    });
-  };
-
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs("2025-11-24"));
 
   // ---- Data state ----------------------------------------------------------
@@ -164,54 +147,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   // ---- Store data ----------------------------------------------------------
 
   const companyUsers = useSelector((s: RootState) => s.user.companyUsers || []);
-
-  // const handleCreateGalloGoal = async () => {
-  //     if (!selectedGoal || !selectedProgram || selectedEnv === null) {
-  //       alert("Please select a goal and program before saving.");
-  //       return;
-  //     }
-
-  //     const env: "prod" | "dev" = selectedEnv; // ✅ explicit narrowing
-
-  //     setIsSaving(true);
-
-  //     try {
-  //       const savedGoal = await createGalloGoal(
-  //         env,
-  //         {
-  //           ...selectedGoal,
-  //           notifications: {
-  //             emailOnCreate: sendEmail,
-  //           },
-  //         },
-  //         selectedProgram,
-  //         selectedAccounts,
-  //         companyId || ""
-  //       );
-
-  //       const savedGoalWithId = {
-  //         ...savedGoal,
-  //         id: selectedGoal.goalId,
-  //       };
-
-  //       dispatch(addOrUpdateGalloGoal(savedGoalWithId));
-  //       await saveSingleGalloGoalToIndexedDB(savedGoal);
-
-  //       await sendGalloGoalAssignedEmails({
-  //         savedGoal,
-  //         selectedAccounts,
-  //         companyUsers,
-  //       });
-
-  //       alert("Goal saved successfully!");
-  //       onSaveComplete();
-  //     } catch (err) {
-  //       console.error("Save error:", err);
-  //       alert("Failed to save the goal. Please try again.");
-  //     } finally {
-  //       setIsSaving(false);
-  //     }
-  //   };
 
   // ---- Key status (both prod & dev) ---------------------------------------
 
@@ -301,7 +236,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   // ---- Handlers ------------------------------------------------------------
   const onDateChangeHandler = (newDate: Dayjs | null) => {
     setStartDate(newDate);
-    setHasFetchedPrograms(false); // reset intent
   };
 
   const manualFetchPrograms = async () => {
@@ -362,6 +296,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   };
 
   const fetchGoals = async () => {
+    if (goals.length > 0) return;
     if (!env || !selectedProgram || hasFetchedGoals) return;
 
     setIsLoading(true);
@@ -501,15 +436,14 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   // ---- Cancel / reset ------------------------------------------------------
   const handleCancel = () => {
     setOpenImportModal(false);
-
     setImportStep("program");
 
     setSelectedProgram(null);
     setSelectedGoal(null);
-
     setGoals([]);
     setEnrichedAccounts([]);
     setUnmatchedAccounts([]);
+    setNotifyUserIds([]);
 
     setHasFetchedGoals(false);
     setHasFetchedAccounts(false);
@@ -523,6 +457,9 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     setSelectedGoal(null);
     setEnrichedAccounts([]);
     setUnmatchedAccounts([]);
+    setHasFetchedGoals(false);
+    setHasFetchedAccounts(false);
+
     setImportStep("program");
     setOpenImportModal(true);
   };
@@ -556,6 +493,26 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     );
   }
 
+  const goNext = () => {
+    setDirection("forward");
+    setImportStep((prev) => {
+      if (prev === "program") return "goals";
+      if (prev === "goals") return "accounts";
+      if (prev === "accounts") return "confirm";
+      return prev;
+    });
+  };
+
+  const goBack = () => {
+    setDirection("back");
+    setImportStep((prev) => {
+      if (prev === "confirm") return "accounts";
+      if (prev === "accounts") return "goals";
+      if (prev === "goals") return "program";
+      return prev;
+    });
+  };
+
   // ---- Render --------------------------------------------------------------
   return (
     <Container className="gallo-integration">
@@ -563,22 +520,35 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
       {/* 📅 Program Import Section */}
       <div className="gallo-section">
-        <div className="gallo-section-title">📅 Gallo Axis Programs</div>
+        <div className="gallo-axis-program-header">
+          <div className="gallo-section-title">📅 Gallo Axis Programs</div>
 
-        <div className="gallo-actions-bar">
-          <button
-            className="btn-secondary"
-            onClick={() => setOpenSyncModal(true)}
-          >
-            🔁 Program Sync Status
-          </button>
+          <div className="integration-controls">
+            <button
+              className="link-button"
+              onClick={() => setShowIntegrationTools((v) => !v)}
+            >
+              ⚙ Integration Settings
+            </button>
 
-          <button
-            className="btn-secondary"
-            onClick={() => setOpenManualSearchModal(true)}
-          >
-            🔍 Manual Axis Program Search
-          </button>
+            {showIntegrationTools && (
+              <div className="integration-tools">
+                <button
+                  className="btn-secondary"
+                  onClick={() => setOpenSyncModal(true)}
+                >
+                  🔁 Program Sync Status
+                </button>
+
+                <button
+                  className="btn-secondary"
+                  onClick={() => setOpenManualSearchModal(true)}
+                >
+                  🔍 Manual Program Search
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Programs */}
@@ -607,20 +577,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
               expired programs.
             </Typography>
           )}
-
-          {/* {goals.length > 0 && (
-            <GoalTable
-              goals={goals}
-              selectedGoal={selectedGoal}
-              onSelectGoal={setSelectedGoal}
-            />
-          )} */}
-
-          {/* {selectedGoal && enrichedAccounts.length === 0 && (
-            <button className="btn-secondary" onClick={fetchAccounts}>
-              Fetch Accounts
-            </button>
-          )} */}
         </div>
 
         {/* Warnings / Results */}
@@ -641,17 +597,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             </Typography>
           </Box>
         )}
-
-        {/* {enrichedAccounts.length > 0 && (
-          <GalloAccountImportTable
-            selectedEnv={env}
-            accounts={enrichedAccounts}
-            unmatchedAccounts={unmatchedAccounts}
-            selectedGoal={selectedGoal}
-            selectedProgram={selectedProgram}
-            onSaveComplete={() => setValue(0)}
-          />
-        )} */}
       </div>
       {/* </Box> */}
 
@@ -720,111 +665,130 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
           </button>
         </DialogActions>
       </Dialog>
-      <Dialog
-        open={openImportModal}
-        onClose={(_, reason) => {
-          if (reason === "backdropClick" || reason === "escapeKeyDown") return;
-          setOpenImportModal(false);
-        }}
-        maxWidth="md"
-        fullWidth
-      >
-        <div className="gallo-import-header">
-          <DialogTitle>Import Gallo Program</DialogTitle>
-          <DialogActions>
-            {importStep !== "program" && (
-              <button className="btn-secondary" onClick={handleBack}>
-                ← Back
-              </button>
-            )}
-            <button
-              className="btn-secondary"
-              onClick={() => setOpenImportModal(false)}
-            >
-              Cancel
-            </button>
-          </DialogActions>
-        </div>
 
-        <DialogContent dividers>
-          <Stepper activeStep={stepIndexMap[importStep]} sx={{ mb: 3 }}>
-            <Step completed={stepIndexMap[importStep] > 0}>
-              <StepLabel>Program</StepLabel>
-            </Step>
+      <ModalShell open={openImportModal} onClose={handleCancel}>
+        {openImportModal && selectedProgram && (
+          <>
+            {/* Header */}
+            <div className="modal-sticky-header">
+              <div className="gallo-import-header">
+                <h2 className="gallo-import-title">Import Gallo Program</h2>
+                <div className="gallo-import-header-actions">
+                  {importStep !== "program" && (
+                    <button className="btn-secondary" onClick={goBack}>
+                      ← Back
+                    </button>
+                  )}
+                  <button className="btn-secondary" onClick={handleCancel}>
+                    Cancel
+                  </button>
+                </div>
 
-            <Step completed={stepIndexMap[importStep] > 1}>
-              <StepLabel>Goals</StepLabel>
-            </Step>
-
-            <Step>
-              <StepLabel>Accounts</StepLabel>
-            </Step>
-          </Stepper>
-
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 2 }}>
-            {importStep === "program" &&
-              "Review the Gallo program before importing goals."}
-            {importStep === "goals" &&
-              "Select a goal to import accounts from Gallo Axis."}
-            {importStep === "accounts" &&
-              "Review and save matched Displaygram accounts."}
-          </Typography>
-
-          {importStep === "program" && selectedProgram && (
-            <GalloProgramImportCard
-              program={selectedProgram}
-              alreadyImported={importedProgramIds.has(
-                selectedProgram.programId
-              )}
-              expired={isProgramExpired(selectedProgram)}
-              canFetchGoals={
-                !isProgramExpired(selectedProgram) && goals.length === 0
-              }
-              isLoading={isLoading}
-              onFetchGoals={async () => {
-                await fetchGoals();
-                setImportStep("goals");
-              }}
-            />
-          )}
-
-          {importStep === "goals" && (
-            <>
-              <GoalTable
-                goals={goals}
-                selectedGoal={selectedGoal}
-                onSelectGoal={setSelectedGoal}
-              />
-
-              {selectedGoal && (
-                <button
-                  className="btn-secondary"
-                  onClick={async () => {
-                    await fetchAccounts();
-                    setImportStep("accounts");
-                  }}
+                <Stepper
+                  activeStep={stepIndexMap[importStep]}
+                  sx={{ mb: 2, width: "100%" }}
                 >
-                  Fetch Accounts
-                </button>
-              )}
-            </>
-          )}
+                  <Step>
+                    <StepLabel>Program</StepLabel>
+                  </Step>
+                  <Step>
+                    <StepLabel>Goals</StepLabel>
+                  </Step>
+                  <Step>
+                    <StepLabel>Accounts</StepLabel>
+                  </Step>
+                  <Step>
+                    <StepLabel>Confirm</StepLabel>
+                  </Step>
+                </Stepper>
+                <p className="muted">
+                  {importStep === "program" &&
+                    "Review the Gallo program before importing goals."}
+                  {importStep === "goals" &&
+                    "Select a goal to import accounts from Gallo Axis."}
+                  {importStep === "accounts" &&
+                    "Review and save matched Displaygram accounts."}
+                </p>
+              </div>
+            </div>
 
-          {importStep === "accounts" && selectedProgram && selectedGoal && (
-            <GalloAccountImportTable
-              accounts={enrichedAccounts}
-              unmatchedAccounts={unmatchedAccounts}
-              program={selectedProgram}
-              goal={selectedGoal}
-              onConfirm={async ({ selectedAccounts, notifyUserIds }) => {
-                await handleCreateGalloGoal(selectedAccounts, notifyUserIds);
-                setOpenImportModal(false);
-                setValue(0);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+            <div className="modal-scroll-body">
+              <div key={importStep} className="step-transition">
+                {importStep === "program" && selectedProgram && (
+                  <GalloProgramImportCard
+                    program={selectedProgram}
+                    alreadyImported={importedProgramIds.has(
+                      selectedProgram.programId
+                    )}
+                    expired={isProgramExpired(selectedProgram)}
+                    canContinue={!isProgramExpired(selectedProgram)}
+                    isLoading={isLoading}
+                    onContinue={async () => {
+                      await fetchGoals();
+                      goNext();
+                    }}
+                  />
+                )}
+
+                {importStep === "goals" && (
+                  <GoalTable
+                    goals={goals}
+                    selectedGoal={selectedGoal}
+                    onSelectGoal={setSelectedGoal}
+                    canContinue={!!selectedGoal}
+                    isLoading={isLoading}
+                    onContinue={async () => {
+                      await fetchAccounts();
+                      goNext();
+                    }}
+                  />
+                )}
+
+                {importStep === "accounts" && (
+                  <GalloAccountImportTable
+                    accounts={enrichedAccounts}
+                    unmatchedAccounts={unmatchedAccounts}
+                    program={selectedProgram}
+                    goal={selectedGoal}
+                    notifyUserIds={notifyUserIds}
+                    setNotifyUserIds={setNotifyUserIds}
+                    onContinue={({ selectedAccounts }) => {
+                      setEnrichedAccounts(selectedAccounts); // freeze selection
+                      setDirection("forward");
+                      setImportStep("confirm");
+                    }}
+                  />
+                )}
+
+                {importStep === "confirm" && (
+                  <ConfirmGalloGoalStep
+                    program={selectedProgram}
+                    goal={selectedGoal}
+                    accounts={enrichedAccounts}
+                    notifyUserIds={notifyUserIds}
+                    onBack={() => {
+                      setDirection("back");
+                      setImportStep("accounts");
+                    }}
+                    onConfirm={async () => {
+                      await handleCreateGalloGoal(
+                        enrichedAccounts,
+                        notifyUserIds
+                      );
+                      handleCancel();
+                      setValue(0);
+                    }}
+                    onClose={() => {
+                      handleCancel();
+                      setValue(0);
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </ModalShell>
     </Container>
   );
 };

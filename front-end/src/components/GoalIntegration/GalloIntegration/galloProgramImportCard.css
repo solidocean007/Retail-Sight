@@ -10,6 +10,8 @@
   border: 1px solid var(--border-color);
   background-color: var(--card-bg);
   transition: background-color 0.2s ease, border-color 0.2s ease;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .gallo-program-card.selected {
@@ -22,15 +24,28 @@
 --------------------------------*/
 .gallo-program-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 12px;
+  align-items: flex-start;
+}
+
+/* LEFT: title */
+.gallo-program-header-left {
+  flex: 1;
+  min-width: 0; /* CRITICAL for wrapping */
 }
 
 .gallo-program-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+/* RIGHT: fixed-width chip */
+.gallo-program-header-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 /* -----------------------------
@@ -147,6 +162,24 @@
 }
 
 /* Mobile: keep badges subtle */
+@media (max-width: 600px) {
+  .gallo-program-header {
+    flex-direction: column;
+  }
+}
+
+.gallo-program-action {
+  width: 100%;
+  margin-top: 8px;
+}
+
+@media (min-width: 768px) {
+  .gallo-program-action {
+    width: auto;
+  }
+}
+
+/* Mobile: keep badges subtle */
 @media (max-width: 767px) {
   .badge-imported {
     font-size: 0.6rem;
@@ -165,5 +198,3 @@
 .badge-imported {
   border: 1px solid rgba(16, 185, 129, 0.4);
 }
-
-

@@ -61,7 +61,7 @@ const CheckBoxModal: React.FC<CheckboxModalProps> = ({
   };
 
   return (
-    <Dialog onClose={handleCloseModal} open={open} className="modal-container">
+    <Dialog onClose={handleCloseModal} open={open} className="channel-category-modal-container">
       <DialogTitle className="dialog-title">
         Select Channels and Categories
       </DialogTitle>
