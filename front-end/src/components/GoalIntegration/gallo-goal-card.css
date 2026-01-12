@@ -1,0 +1,69 @@
+/* components/Gallo/galloGoalCard.css */
+
+.gallo-goal-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.gallo-goal-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.gallo-goal-card__header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gallo-goal-card__badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.gallo-goal-card__badge--active {
+  background: #e6f4ea;
+  color: #1e7f3f;
+}
+
+.gallo-goal-card__badge--archived {
+  background: #eee;
+  color: #666;
+}
+
+.gallo-goal-card__badge--disabled {
+  background: #fdecea;
+  color: #b42318;
+}
+
+.gallo-goal-card__progress {
+  font-size: 14px;
+  color: #555;
+}
+
+.gallo-goal-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gallo-goal-card__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gallo-goal-card__accounts {
+  margin-top: 8px;
+}
+
+.gallo-goal-card__status--pending {
+  color: #c62828;
+  font-weight: 600;
+}

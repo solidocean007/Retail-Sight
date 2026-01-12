@@ -13,7 +13,7 @@ import {
   TableBody,
   Tooltip,
 } from "@mui/material";
-import "./gallo-goals.css";
+import "./gallo-goal-card.css";
 import { FireStoreGalloGoalDocType } from "../../utils/types";
 import { updateGalloGoalLifecycle } from "../../utils/helperFunctions/updateGalloGoalLifecycle";
 import { useSelector } from "react-redux";
@@ -42,6 +42,7 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
     {}
   );
+  const [accountsOpen, setAccountsOpen] = useState(false);
 
   const handleViewGoalPost = (postId: string) => {
     console.log("👀 Gallo View button clicked", postId);
@@ -92,133 +93,91 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
   }
 
   return (
-    <Paper elevation={20} className="program-card">
-      <Box className="program-header">
-        <Box>
-          <Typography variant="h6" className="program-title">
+    <Paper elevation={20} className="gallo-goal-card">
+      {/* Header */}
+      <div className="gallo-goal-card__header">
+        <div className="gallo-goal-card__header-text">
+          <Typography variant="h6">
             {goal.programDetails.programTitle}
           </Typography>
-          {goal.programDetails.programId}
-          <Tooltip
-            arrow
-            title={
-              goal.lifeCycleStatus === "active"
-                ? "This goal is live and accepting submissions"
-                : goal.lifeCycleStatus === "archived"
-                ? "This goal is historical and read-only"
-                : "This goal is intentionally disabled"
-            }
-          >
+
+          <Tooltip title={goal.lifeCycleStatus}>
             <span
-              className={`lifecycle-badge lifecycle-${goal.lifeCycleStatus}`}
+              className={`gallo-goal-card__badge gallo-goal-card__badge--${goal.lifeCycleStatus}`}
             >
               {goal.lifeCycleStatus.toUpperCase()}
             </span>
           </Tooltip>
 
-          <Typography variant="body2" className="program-dates">
-            {goal.programDetails.programStartDate} -{" "}
+          <div className="gallo-goal-card__dates">
+            {goal.programDetails.programStartDate} –{" "}
             {goal.programDetails.programEndDate}
-          </Typography>
-        </Box>
-        <Button
-          onClick={() => setExpanded(!expanded)}
-          variant="outlined"
-          size="small"
-          className="toggle-btn"
-        >
-          {expanded ? "Close" : "Open"}
-        </Button>
-        {canManage && (
-          <Box display="flex" gap={1}>
-            {goal.lifeCycleStatus === "active" && (
-              <>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => handleLifecycleChange("archived")}
-                >
-                  Archive
-                </Button>
-
-                <Button
-                  size="small"
-                  color="warning"
-                  variant="outlined"
-                  onClick={() => handleLifecycleChange("disabled")}
-                >
-                  Disable
-                </Button>
-              </>
-            )}
-
-            {(goal.lifeCycleStatus === "archived" ||
-              goal.lifeCycleStatus === "disabled") && (
-              <Button
-                size="small"
-                color="success"
-                variant="outlined"
-                onClick={() => handleLifecycleChange("active")}
-              >
-                Re-Enable
-              </Button>
-            )}
-          </Box>
-        )}
-      </Box>
-      <Box className="goal-progress">
-        <div className={`goal-progress-count ${progressClass}`}>
-          <strong>{submittedCount}</strong> / {totalAccounts} submitted
+          </div>
         </div>
 
-        <div className="goal-progress-bar">
-          <div
-            className={`goal-progress-fill ${progressClass}`}
-            style={{ width: `${progressRatio * 100}%` }}
-          />
-        </div>
-      </Box>
+        <div className="gallo-goal-card__header-actions">
+          <Button size="small" onClick={() => setExpanded((v) => !v)}>
+            {expanded ? "Close" : "Open"}
+          </Button>
 
+          {canManage && (
+            <>
+              {goal.lifeCycleStatus === "active" && (
+                <>
+                  <Button
+                    size="small"
+                    onClick={() => handleLifecycleChange("archived")}
+                  >
+                    Archive
+                  </Button>
+                  <Button
+                    size="small"
+                    color="warning"
+                    onClick={() => handleLifecycleChange("disabled")}
+                  >
+                    Disable
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div className="gallo-goal-card__progress">
+        <strong>{submittedCount}</strong> / {totalAccounts} submitted
+      </div>
+
+      {/* Body */}
       <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <div className="goal-container">
-          <div className="goal-details">
-            <div className="goal-text">
-              <div className="goal-title">Goal: {goal.goalDetails.goal}</div>
-
-              <div className="program-description">
-                {goal.programDetails.programDescription}
-              </div>
-
-              <div className="goal-metrics">
-                Metric: {goal.goalDetails.goalMetric} | Min Value:{" "}
-                {goal.goalDetails.goalValueMin}
-              </div>
+        <div className="gallo-goal-card__body">
+          <div className="gallo-goal-card__summary">
+            <div className="gallo-goal-card__goal">
+              <strong>Goal:</strong> {goal.goalDetails.goal}
             </div>
 
-            <div className="show-hide-gallo-accounts-button">
-              <button
-                onClick={() => toggleGoalExpansion(goal.goalDetails.goalId)}
-                className="btn-secondary"
-              >
-                {expandedGoals[goal.goalDetails.goalId]
-                  ? "Hide Accounts"
-                  : "Show Accounts"}
-              </button>
+            <div className="gallo-goal-card__metrics">
+              Metric: {goal.goalDetails.goalMetric} | Min:{" "}
+              {goal.goalDetails.goalValueMin}
             </div>
+
+            <Button
+              size="small"
+              onClick={() => setAccountsOpen((v) => !v)}
+            >
+              {accountsOpen ? "Hide Accounts" : "Show Accounts"}
+            </Button>
           </div>
 
-          <Collapse
-            in={expandedGoals[goal.goalDetails.goalId]}
-            timeout="auto"
-            unmountOnExit
-          >
-            <div className="accounts-wrapper">
-              <Table size="small" className="accounts-table">
+          {/* Accounts */}
+          <Collapse in={accountsOpen} timeout="auto" unmountOnExit>
+            <div className="gallo-goal-card__accounts">
+              <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Account Name</TableCell>
-                    <TableCell>Account Address</TableCell>
-                    <TableCell>Sales Route #</TableCell>
+                    <TableCell>Account</TableCell>
+                    <TableCell>Route</TableCell>
                     <TableCell>Salesperson</TableCell>
                     <TableCell>Status</TableCell>
                   </TableRow>
@@ -226,35 +185,31 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
 
                 <TableBody>
                   {goal.accounts.map((account, idx) => (
-                    <TableRow key={idx} className="account-row">
-                      <TableCell data-label="Account Name">
-                        {account.accountName || "N/A"}
-                      </TableCell>
-                      <TableCell data-label="Account Address">
-                        {account.accountAddress || "N/A"}
-                      </TableCell>
-                      <TableCell data-label="Sales Route #">
+                    <TableRow key={idx}>
+                      <TableCell>{account.accountName}</TableCell>
+                      <TableCell>
                         {Array.isArray(account.salesRouteNums)
                           ? account.salesRouteNums.join(", ")
-                          : account.salesRouteNums || "N/A"}
+                          : account.salesRouteNums}
                       </TableCell>
-                      <TableCell data-label="Salesperson">
-                        {Array.isArray(account.salesRouteNums)
-                          ? employeeMap[account.salesRouteNums[0]] || "Unknown"
-                          : employeeMap[account.salesRouteNums] || "Unknown"}
+                      <TableCell>
+                        {employeeMap[
+                          Array.isArray(account.salesRouteNums)
+                            ? account.salesRouteNums[0]
+                            : account.salesRouteNums
+                        ] || "Unknown"}
                       </TableCell>
-                      <TableCell data-label="Status">
+                      <TableCell>
                         {account.submittedPostId ? (
                           <button
                             onClick={() =>
-                              account.submittedPostId &&
-                              handleViewGoalPost(account.submittedPostId)
+                              onViewPostModal(account.submittedPostId!)
                             }
                           >
                             View
                           </button>
                         ) : (
-                          <span className="not-submitted-status">
+                          <span className="gallo-goal-card__status--pending">
                             Not Submitted
                           </span>
                         )}
