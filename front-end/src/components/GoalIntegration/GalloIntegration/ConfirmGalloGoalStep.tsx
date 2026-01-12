@@ -28,7 +28,7 @@ const ConfirmGalloGoalStep: React.FC<Props> = ({
   const [status, setStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
-
+  console.log(notifyUserIds)
   const handleConfirm = async () => {
     setStatus("saving");
     try {

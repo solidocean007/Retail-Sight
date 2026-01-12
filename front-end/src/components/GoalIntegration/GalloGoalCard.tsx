@@ -20,6 +20,7 @@ import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 import { useAppDispatch } from "../../utils/store";
 import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
+import EditGalloGoalModal from "./EditGalloGoalModal";
 
 interface ProgramCardProps {
   goal: FireStoreGalloGoalDocType;
@@ -34,6 +35,8 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
+  const [editOpen, setEditOpen] = useState(false);
+
   const canManage =
     user?.role === "admin" ||
     user?.role === "super-admin" ||
@@ -114,6 +117,15 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
             {goal.programDetails.programEndDate}
           </div>
         </div>
+        {canManage && (
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setEditOpen(true)}
+          >
+            Edit
+          </Button>
+        )}
 
         <div className="gallo-goal-card__header-actions">
           <Button size="small" onClick={() => setExpanded((v) => !v)}>
@@ -162,10 +174,7 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
               {goal.goalDetails.goalValueMin}
             </div>
 
-            <Button
-              size="small"
-              onClick={() => setAccountsOpen((v) => !v)}
-            >
+            <Button size="small" onClick={() => setAccountsOpen((v) => !v)}>
               {accountsOpen ? "Hide Accounts" : "Show Accounts"}
             </Button>
           </div>
@@ -222,6 +231,9 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
           </Collapse>
         </div>
       </Collapse>
+      {editOpen && (
+        <EditGalloGoalModal goal={goal} onClose={() => setEditOpen(false)} />
+      )}
     </Paper>
   );
 };

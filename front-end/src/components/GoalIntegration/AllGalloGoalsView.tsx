@@ -26,6 +26,7 @@ const AllGalloGoalsView = () => {
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const galloGoals = useSelector(selectAllGalloGoals);
+  console.log(galloGoals);
   const isLoading = useSelector(selectGalloGoalsLoading);
   const error = useSelector(selectGalloGoalsError);
   const companyUsers = useSelector(selectCompanyUsers) || [];

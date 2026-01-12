@@ -64,7 +64,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   const [searchRoute, setSearchRoute] = useState("");
   const [searchSalesperson, setSearchSalesperson] = useState("");
   const companyUsers = useSelector(selectCompanyUsers) || [];
-
+  console.log(notifyUserIds)
   const handleSearchSalesperson = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
