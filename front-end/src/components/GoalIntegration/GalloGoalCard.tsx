@@ -21,6 +21,15 @@ import { selectUser } from "../../Slices/userSlice";
 import { useAppDispatch } from "../../utils/store";
 import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
 import EditGalloGoalModal from "./EditGalloGoalModal";
+import { GoalActionsMenu } from "./GoalActionsMenu";
+import CustomConfirmation from "../CustomConfirmation";
+
+type PendingAction = {
+  status: "archived" | "disabled";
+  title: string;
+  message: string;
+  onConfirm: () => Promise<void>;
+} | null;
 
 interface ProgramCardProps {
   goal: FireStoreGalloGoalDocType;
@@ -36,6 +45,8 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const [editOpen, setEditOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const canManage =
     user?.role === "admin" ||
@@ -45,39 +56,35 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
     {}
   );
-  const [accountsOpen, setAccountsOpen] = useState(false);
+  const [accountsOpen, setAccountsOpen] = useState(true);
 
-  const handleViewGoalPost = (postId: string) => {
-    console.log("👀 Gallo View button clicked", postId);
-    onViewPostModal(postId);
-  };
+  const confirmLifecycleChange = (status: "archived" | "disabled") => {
+    setPendingAction({
+      status,
+      title: status === "archived" ? "Archive Goal" : "Disable Goal",
+      message:
+        status === "archived"
+          ? "This goal will be archived and removed from active workflows. This cannot be undone."
+          : "This goal will be temporarily disabled. Sales reps will not be able to submit new posts.",
+      onConfirm: async () => {
+        setConfirmLoading(true);
 
-  const toggleGoalExpansion = (goalId: string) => {
-    setExpandedGoals((prev) => ({
-      ...prev,
-      [goalId]: !prev[goalId],
-    }));
-  };
+        dispatch(
+          addOrUpdateGalloGoal({
+            ...goal,
+            lifeCycleStatus: status,
+            id: goal.goalDetails.goalId,
+          })
+        );
 
-  const handleLifecycleChange = async (
-    status: "active" | "archived" | "disabled"
-  ) => {
-    // optimistic
-    dispatch(
-      addOrUpdateGalloGoal({
-        // galloGoalsSlice.ts(45, 3): 'id' is declared here.
-        ...goal,
-        lifeCycleStatus: status,
-        id: goal.goalDetails.goalId, // ✅ REQUIRED
-      })
-    );
-
-    try {
-      await updateGalloGoalLifecycle(goal.goalDetails.goalId, status);
-    } catch (e) {
-      // optional rollback later
-      console.error(e);
-    }
+        try {
+          await updateGalloGoalLifecycle(goal.goalDetails.goalId, status);
+        } finally {
+          setConfirmLoading(false);
+          setPendingAction(null);
+        }
+      },
+    });
   };
 
   // derived stats (place near top of component)
@@ -100,67 +107,56 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
   return (
     <Paper elevation={20} className="gallo-goal-card">
       {/* Header */}
-      <div className="gallo-goal-card__header">
-        <div className="gallo-goal-card__header-text">
-          <Typography variant="h6">
-            {goal.programDetails.programTitle}
-          </Typography>
+      <div
+        className="gallo-goal-card-body"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <div className="gallo-goal-card__header">
+          <div className="gallo-goal-card__header-left">
+            <div className="gallo-goal-card__header-text">
+              <Typography variant="h6">
+                {goal.programDetails.programTitle}
+              </Typography>
 
-          <Tooltip title={goal.lifeCycleStatus}>
-            <span
-              className={`gallo-goal-card__badge gallo-goal-card__badge--${goal.lifeCycleStatus}`}
-            >
-              {goal.lifeCycleStatus.toUpperCase()}
-            </span>
-          </Tooltip>
+              <span
+                className={`gallo-goal-card__badge gallo-goal-card__badge--${goal.lifeCycleStatus}`}
+                title={goal.lifeCycleStatus}
+              >
+                {goal.lifeCycleStatus.toUpperCase()}
+              </span>
 
-          <div className="gallo-goal-card__dates">
-            {goal.programDetails.programStartDate} –{" "}
-            {goal.programDetails.programEndDate}
+              <div className="gallo-goal-card__dates">
+                {goal.programDetails.programStartDate} –{" "}
+                {goal.programDetails.programEndDate}
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="gallo-goal-card__header-actions"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* <Button size="small" onClick={() => setExpanded((v) => !v)}>
+              {expanded ? "Close" : "Open"}
+            </Button> */}
+
+            {canManage && (
+              <GoalActionsMenu
+                status={
+                  goal.lifeCycleStatus as "active" | "disabled" | "archived"
+                }
+                onArchive={() => confirmLifecycleChange("archived")}
+                onDisable={() => confirmLifecycleChange("disabled")}
+                onEdit={() => setEditOpen(true)}
+              />
+            )}
           </div>
         </div>
-        {canManage && (
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => setEditOpen(true)}
-          >
-            Edit
-          </Button>
-        )}
 
-        <div className="gallo-goal-card__header-actions">
-          <Button size="small" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? "Close" : "Open"}
-          </Button>
-
-          {canManage && (
-            <>
-              {goal.lifeCycleStatus === "active" && (
-                <>
-                  <Button
-                    size="small"
-                    onClick={() => handleLifecycleChange("archived")}
-                  >
-                    Archive
-                  </Button>
-                  <Button
-                    size="small"
-                    color="warning"
-                    onClick={() => handleLifecycleChange("disabled")}
-                  >
-                    Disable
-                  </Button>
-                </>
-              )}
-            </>
-          )}
+        {/* Progress */}
+        <div className="gallo-goal-card__progress">
+          <strong>{submittedCount}</strong> / {totalAccounts} submitted
         </div>
-      </div>
-
-      {/* Progress */}
-      <div className="gallo-goal-card__progress">
-        <strong>{submittedCount}</strong> / {totalAccounts} submitted
       </div>
 
       {/* Body */}
@@ -175,9 +171,9 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
               Metric: {goal.goalDetails.goalMetric} | Min:{" "}
               {goal.goalDetails.goalValueMin}
             </div>
-            <Button size="small" onClick={() => setAccountsOpen((v) => !v)}>
+            {/* <Button size="small" onClick={() => setAccountsOpen((v) => !v)}>
               {accountsOpen ? "Hide Accounts" : "Show Accounts"}
-            </Button>
+            </Button> */}
           </div>
 
           {/* Accounts */}
@@ -291,6 +287,16 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
       </Collapse>
       {editOpen && (
         <EditGalloGoalModal goal={goal} onClose={() => setEditOpen(false)} />
+      )}
+      {pendingAction && (
+        <CustomConfirmation
+          isOpen
+          title={pendingAction.title}
+          message={pendingAction.message}
+          loading={confirmLoading}
+          onClose={() => setPendingAction(null)}
+          onConfirm={pendingAction.onConfirm}
+        />
       )}
     </Paper>
   );

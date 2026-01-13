@@ -126,34 +126,18 @@ export const Dashboard = () => {
       <DashboardHelmet />
       <Box sx={{ flexGrow: 1, ml: isLargeScreen ? `${drawerWidth}px` : 0 }}>
         <AppBar position="static">
-          <Toolbar
-            sx={{
-              padding: "0.5rem 1rem",
-              backgroundColor: "var(--dashboard-header-background)",
-              // backgroundColor: "red",
-              color: "var(--text-color)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography
-              variant="h1"
-              component="h1"
+          {!isLargeScreen && (
+            <Toolbar
               sx={{
-                flexGrow: 1,
-                fontSize: "40px",
-                // backgroundColor: "var(--menu-background-color)", // ✅ THEMED
+                padding: "0.5rem 1rem",
+                backgroundColor: "var(--dashboard-header-background)",
+                // backgroundColor: "red",
                 color: "var(--text-color)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              Dashboard
-            </Typography>
-            {/* <Typography variant="caption" color="textSecondary">
-              Screen Width: {screenWidth}px
-            </Typography> */}
-
-            {!isLargeScreen && (
               <IconButton
                 edge="start"
                 color="inherit"
@@ -162,8 +146,8 @@ export const Dashboard = () => {
               >
                 <MenuIcon />
               </IconButton>
-            )}
-          </Toolbar>
+            </Toolbar>
+          )}
         </AppBar>
       </Box>
       <DashMenu

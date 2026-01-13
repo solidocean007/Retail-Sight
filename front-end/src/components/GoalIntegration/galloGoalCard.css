@@ -134,3 +134,24 @@
     font-size: 13px;
   }
 }
+
+.gallo-goal-card__header-left {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.goal-actions summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.goal-actions button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+

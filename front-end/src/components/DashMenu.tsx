@@ -178,7 +178,7 @@ const DashMenu = ({
             onClick={() => onMenuClick("GoalManagerMode")}
           >
             <GoalIcon />
-            <ListItemText primary="Goal Manager" />
+            <ListItemText primary="Goals Manager" />
           </ListItemButton>
           <ListItemButton
             selected={selectedMode === "IntegrationsMode"}
