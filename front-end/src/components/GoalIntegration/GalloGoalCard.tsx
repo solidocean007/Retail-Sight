@@ -13,7 +13,7 @@ import {
   TableBody,
   Tooltip,
 } from "@mui/material";
-import "./gallo-goal-card.css";
+import "./galloGoalCard.css";
 import { FireStoreGalloGoalDocType } from "../../utils/types";
 import { updateGalloGoalLifecycle } from "../../utils/helperFunctions/updateGalloGoalLifecycle";
 import { useSelector } from "react-redux";
@@ -81,8 +81,10 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
   };
 
   // derived stats (place near top of component)
-  const totalAccounts = goal.accounts.length;
-  const submittedCount = goal.accounts.filter((a) => a.submittedPostId).length;
+  const activeAccounts = goal.accounts.filter((a) => a.status === "active");
+
+  const totalAccounts = activeAccounts.length;
+  const submittedCount = activeAccounts.filter((a) => a.submittedPostId).length;
 
   const progressRatio = totalAccounts > 0 ? submittedCount / totalAccounts : 0;
 
@@ -173,7 +175,6 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
               Metric: {goal.goalDetails.goalMetric} | Min:{" "}
               {goal.goalDetails.goalValueMin}
             </div>
-
             <Button size="small" onClick={() => setAccountsOpen((v) => !v)}>
               {accountsOpen ? "Hide Accounts" : "Show Accounts"}
             </Button>
@@ -182,51 +183,108 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
           {/* Accounts */}
           <Collapse in={accountsOpen} timeout="auto" unmountOnExit>
             <div className="gallo-goal-card__accounts">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Account</TableCell>
-                    <TableCell>Route</TableCell>
-                    <TableCell>Salesperson</TableCell>
-                    <TableCell>Status</TableCell>
-                  </TableRow>
-                </TableHead>
+              {goal.accounts.length !== activeAccounts.length && (
+                <Typography variant="caption" color="text.secondary">
+                  {goal.accounts.length - activeAccounts.length} inactive
+                  account(s) hidden
+                </Typography>
+              )}
 
-                <TableBody>
-                  {goal.accounts.map((account, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{account.accountName}</TableCell>
-                      <TableCell>
+              {/* Mobile cards */}
+              <div className="gallo-goal-card__accounts-mobile">
+                {activeAccounts.map((account, idx) => (
+                  <div key={idx} className="account-card">
+                    <div className="account-card__title">
+                      {account.accountName}
+                    </div>
+
+                    <div className="account-card__row">
+                      <span>Route</span>
+                      <span>
                         {Array.isArray(account.salesRouteNums)
                           ? account.salesRouteNums.join(", ")
                           : account.salesRouteNums}
-                      </TableCell>
-                      <TableCell>
+                      </span>
+                    </div>
+
+                    <div className="account-card__row">
+                      <span>Salesperson</span>
+                      <span>
                         {employeeMap[
                           Array.isArray(account.salesRouteNums)
                             ? account.salesRouteNums[0]
                             : account.salesRouteNums
                         ] || "Unknown"}
-                      </TableCell>
-                      <TableCell>
-                        {account.submittedPostId ? (
-                          <button
-                            onClick={() =>
-                              onViewPostModal(account.submittedPostId!)
-                            }
-                          >
-                            View
-                          </button>
-                        ) : (
-                          <span className="gallo-goal-card__status--pending">
-                            Not Submitted
-                          </span>
-                        )}
-                      </TableCell>
+                      </span>
+                    </div>
+
+                    <div className="account-card__row">
+                      <span>Status</span>
+                      {account.submittedPostId ? (
+                        <button
+                          onClick={() =>
+                            onViewPostModal(account.submittedPostId!)
+                          }
+                        >
+                          View
+                        </button>
+                      ) : (
+                        <span className="gallo-goal-card__status--pending">
+                          Not Submitted
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="gallo-goal-card__accounts-table">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Account</TableCell>
+                      <TableCell>Route</TableCell>
+                      <TableCell>Salesperson</TableCell>
+                      <TableCell>Status</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHead>
+
+                  <TableBody>
+                    {activeAccounts.map((account, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{account.accountName}</TableCell>
+                        <TableCell>
+                          {Array.isArray(account.salesRouteNums)
+                            ? account.salesRouteNums.join(", ")
+                            : account.salesRouteNums}
+                        </TableCell>
+                        <TableCell>
+                          {employeeMap[
+                            Array.isArray(account.salesRouteNums)
+                              ? account.salesRouteNums[0]
+                              : account.salesRouteNums
+                          ] || "Unknown"}
+                        </TableCell>
+                        <TableCell>
+                          {account.submittedPostId ? (
+                            <button
+                              onClick={() =>
+                                onViewPostModal(account.submittedPostId!)
+                              }
+                            >
+                              View
+                            </button>
+                          ) : (
+                            <span className="gallo-goal-card__status--pending">
+                              Not Submitted
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </Collapse>
         </div>

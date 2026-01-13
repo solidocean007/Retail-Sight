@@ -11,7 +11,9 @@ export const createGalloGoal = async (
   goalEnv: "prod" | "dev",
   selectedGoal: GalloGoalType | null,
   selectedProgram: GalloProgramType | null,
+  allAccounts: EnrichedGalloAccountType[],
   selectedAccounts: EnrichedGalloAccountType[],
+
   companyId: string
 ): Promise<FireStoreGalloGoalDocType> => {
   if (!selectedGoal || !selectedProgram) {
@@ -23,17 +25,25 @@ export const createGalloGoal = async (
   // 📝 Fetch existing goal (if it exists)
   const snapshot = await getDoc(goalDocRef);
 
-  let mergedAccounts = selectedAccounts.map((account) => ({
-  status: account.status ?? "inactive",
-  distributorAcctId: account.distributorAcctId,
-  accountName: account.accountName ?? "N/A",
-  accountAddress: account.accountAddress ?? "N/A",
-  salesRouteNums: Array.isArray(account.salesRouteNums)
-    ? account.salesRouteNums
-    : [],
-  oppId: account.oppId,
-  marketId: account.marketId ?? "N/A",
-}));
+  const selectedIds = new Set(
+    selectedAccounts.map((a) => String(a.distributorAcctId))
+  );
+
+  let mergedAccounts: FireStoreGalloGoalDocType["accounts"] = allAccounts.map(
+  (account) => ({
+    distributorAcctId: account.distributorAcctId,
+    accountName: account.accountName ?? "N/A",
+    accountAddress: account.accountAddress ?? "N/A",
+    salesRouteNums: Array.isArray(account.salesRouteNums)
+      ? account.salesRouteNums
+      : [],
+    oppId: account.oppId,
+    marketId: account.marketId ?? "N/A",
+    status: selectedIds.has(String(account.distributorAcctId))
+      ? "active"
+      : "inactive",
+  })
+);
 
 
   if (snapshot.exists()) {
@@ -70,7 +80,8 @@ export const createGalloGoal = async (
       goalMetric: selectedGoal.goalMetric,
       goalValueMin: selectedGoal.goalValueMin,
     },
-    accounts: mergedAccounts,
+    accounts: mergedAccounts, // Types of property 'status' are incompatible.
+    // Type 'string' is not assignable to type '"active" | "inactive" | "disabled"'.
   };
 
   console.log("📝 Prepared goal to save:", savedGoal);

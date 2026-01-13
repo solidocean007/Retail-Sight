@@ -9,7 +9,8 @@ import "./confirmGalloGoalStep.css";
 interface Props {
   program: GalloProgramType | null;
   goal: GalloGoalType | null;
-  accounts: EnrichedGalloAccountType[];
+  allAccounts: EnrichedGalloAccountType[];
+  selectedAccounts: EnrichedGalloAccountType[];
   notifyUserIds: string[];
   onBack: () => void;
   onConfirm: () => Promise<void>;
@@ -19,16 +20,20 @@ interface Props {
 const ConfirmGalloGoalStep: React.FC<Props> = ({
   program,
   goal,
-  accounts,
+  allAccounts,
+  selectedAccounts,
   notifyUserIds,
   onBack,
   onConfirm,
   onClose,
 }) => {
-  const [status, setStatus] = useState<
-    "idle" | "saving" | "success" | "error"
-  >("idle");
-  console.log(notifyUserIds)
+  const activeCount = selectedAccounts.length;
+  const totalCount = allAccounts.length;
+
+  const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">(
+    "idle"
+  );
+  console.log(notifyUserIds);
   const handleConfirm = async () => {
     setStatus("saving");
     try {
@@ -41,7 +46,7 @@ const ConfirmGalloGoalStep: React.FC<Props> = ({
 
   useEffect(() => {
     if (status === "success") {
-      const t = setTimeout(onClose, 1200);
+      const t = setTimeout(onClose, 3600);
       return () => clearTimeout(t);
     }
   }, [status, onClose]);
@@ -73,7 +78,9 @@ const ConfirmGalloGoalStep: React.FC<Props> = ({
 
             <div>
               <span className="label">Accounts</span>
-              <span>{accounts.length}</span>
+              <span>
+                {activeCount} active / {totalCount} total
+              </span>
             </div>
 
             <div className="confirm-note">

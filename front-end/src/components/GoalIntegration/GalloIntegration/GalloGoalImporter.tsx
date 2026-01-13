@@ -90,7 +90,12 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
   const [hasFetchedGoals, setHasFetchedGoals] = useState(false);
   const [notifyUserIds, setNotifyUserIds] = useState<string[]>([]);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
-
+  const [allEnrichedAccounts, setAllEnrichedAccounts] = useState<
+    EnrichedGalloAccountType[]
+  >([]);
+  const [selectedAccounts, setSelectedAccounts] = useState<
+    EnrichedGalloAccountType[]
+  >([]);
   const [hasFetchedAccounts, setHasFetchedAccounts] = useState(false);
   const [showIntegrationTools, setShowIntegrationTools] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -174,6 +179,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
           },
         },
         selectedProgram,
+        allEnrichedAccounts,
         selectedAccounts,
         companyId
       );
@@ -340,7 +346,11 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
         companyUsers
       );
 
-      setEnrichedAccounts(enrichedAccounts);
+      setAllEnrichedAccounts(enrichedAccounts);
+      setSelectedAccounts(
+        enrichedAccounts.filter((a) => a.status === "active")
+      );
+
       setUnmatchedAccounts(unmatchedAccounts);
       setHasFetchedAccounts(true); // ✅ explicit
     } catch (err) {
@@ -746,7 +756,9 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
                 {importStep === "accounts" && (
                   <GalloAccountImportTable
-                    accounts={enrichedAccounts}
+                    accounts={allEnrichedAccounts}
+                    selectedAccounts={selectedAccounts}
+                    setSelectedAccounts={setSelectedAccounts}
                     unmatchedAccounts={unmatchedAccounts}
                     program={selectedProgram}
                     goal={selectedGoal}
@@ -764,7 +776,8 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
                   <ConfirmGalloGoalStep
                     program={selectedProgram}
                     goal={selectedGoal}
-                    accounts={enrichedAccounts}
+                    allAccounts={allEnrichedAccounts}
+                    selectedAccounts={enrichedAccounts}
                     notifyUserIds={notifyUserIds}
                     onBack={() => {
                       setDirection("back");
@@ -775,8 +788,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
                         enrichedAccounts,
                         notifyUserIds
                       );
-                      handleCancel();
-                      setValue(0);
                     }}
                     onClose={() => {
                       handleCancel();

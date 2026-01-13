@@ -29,10 +29,13 @@ import { ImportStep } from "./GalloIntegration/GalloGoalImporter";
 
 interface AccountTableProps {
   accounts: EnrichedGalloAccountType[];
+  selectedAccounts: EnrichedGalloAccountType[];
+  setSelectedAccounts: React.Dispatch<
+    React.SetStateAction<EnrichedGalloAccountType[]>
+  >;
   unmatchedAccounts: GalloAccountType[];
   program: GalloProgramType;
   goal: GalloGoalType | null;
-
   notifyUserIds: string[];
   setNotifyUserIds: (ids: string[]) => void;
 
@@ -43,6 +46,8 @@ interface AccountTableProps {
 
 const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   accounts,
+  selectedAccounts,
+  setSelectedAccounts,
   unmatchedAccounts,
   program,
   goal,
@@ -53,9 +58,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   const [editableAccounts, setEditableAccounts] =
     useState<EnrichedGalloAccountType[]>(accounts);
   const dispatch = useAppDispatch();
-  const [isSaving, setIsSaving] = useState(false); // isSaving isnt used.  should we have a loading elemetn?
-  const [selectedAccounts, setSelectedAccounts] =
-    useState<EnrichedGalloAccountType[]>(accounts);
+  const [isSaving, setIsSaving] = useState(false);
+
   const [isAllSelected, setIsAllSelected] = useState(false);
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId
@@ -64,7 +68,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   const [searchRoute, setSearchRoute] = useState("");
   const [searchSalesperson, setSearchSalesperson] = useState("");
   const companyUsers = useSelector(selectCompanyUsers) || [];
-  console.log(notifyUserIds)
+  console.log(notifyUserIds);
   const handleSearchSalesperson = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -140,7 +144,6 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
 
   useEffect(() => {
     setEditableAccounts(accounts);
-    setSelectedAccounts(accounts);
   }, [accounts]);
 
   useEffect(() => {
@@ -151,15 +154,11 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   }, [selectedAccounts, editableAccounts]);
 
   const handleCheckboxChange = (account: EnrichedGalloAccountType) => {
-    setSelectedAccounts((prev) => {
-      const exists = prev.some(
-        (a) => a.distributorAcctId === account.distributorAcctId
-      );
-
-      return exists
+    setSelectedAccounts((prev) =>
+      prev.some((a) => a.distributorAcctId === account.distributorAcctId)
         ? prev.filter((a) => a.distributorAcctId !== account.distributorAcctId)
-        : [...prev, account];
-    });
+        : [...prev, { ...account, status: "active" }]
+    );
   };
 
   const [currentPage, setCurrentPage] = useState(1);

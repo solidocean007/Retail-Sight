@@ -1,0 +1,136 @@
+/* components/Gallo/galloGoalCard.css */
+
+.gallo-goal-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-card);
+}
+
+.gallo-goal-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.gallo-goal-card__header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gallo-goal-card__badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* Status badges */
+.gallo-goal-card__badge--active {
+  background: var(--bg-success);
+  color: var(--text-success);
+}
+
+.gallo-goal-card__badge--archived {
+  background: var(--bg-neutral);
+  color: var(--text-secondary);
+}
+
+.gallo-goal-card__badge--disabled {
+  background: var(--bg-danger);
+  color: var(--text-danger);
+}
+
+.gallo-goal-card__progress {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.gallo-goal-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gallo-goal-card__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gallo-goal-card__accounts {
+  margin-top: 8px;
+}
+
+.gallo-goal-card__status--pending {
+  color: var(--text-danger);
+  font-weight: 600;
+}
+
+/* ---------- Accounts responsive ---------- */
+
+.gallo-goal-card__accounts-mobile {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-card {
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--bg-muted);
+}
+
+.account-card__title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.account-card__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.account-card__row span:first-child {
+  color: var(--text-secondary);
+}
+
+/* ---------- Desktop ---------- */
+
+.gallo-goal-card__accounts-table {
+  display: block;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 768px) {
+  .gallo-goal-card__accounts-table {
+    display: none;
+  }
+
+  .gallo-goal-card__accounts-mobile {
+    display: flex;
+  }
+
+  .gallo-goal-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gallo-goal-card__header-actions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .gallo-goal-card__progress {
+    font-size: 13px;
+  }
+}
