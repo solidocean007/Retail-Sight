@@ -610,22 +610,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
       </div>
       {/* </Box> */}
 
-      {/* Loading Overlay */}
-      {isLoading && (
-        <Box
-          sx={{
-            position: "fixed",
-            inset: 0,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.5)",
-            zIndex: 9999,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
       <Dialog
         open={openSyncModal}
         onClose={() => setOpenSyncModal(false)}
@@ -797,6 +781,22 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
                 )}
               </div>
             </div>
+            {/* Loading Overlay */}
+            {isLoading && (
+              <Box
+                sx={{
+                  position: "fixed",
+                  inset: 0,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  zIndex: 9999,
+                }}
+              >
+                <CircularProgress color="inherit" />
+              </Box>
+            )}
           </>
         )}
       </ModalShell>

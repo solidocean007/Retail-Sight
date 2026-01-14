@@ -10,12 +10,12 @@
 
 .goal-source-switcher {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   gap: 6px;
   background: var(--dashboard-card);
   padding: 6px;
   border-radius: 12px;
-  width: 100%;
+  margin: 0 24px;
 }
 
 .source-btn {

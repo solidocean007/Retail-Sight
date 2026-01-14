@@ -35,11 +35,7 @@ const GalloProgramImportCard: React.FC<Props> = ({
   return (
     <div className="gallo-program-card selected">
       {/* Badges */}
-      {alreadyImported && (
-        <span className="program-badge program-badge--imported">
-          Already Imported
-        </span>
-      )}
+      {/* Action area */}
 
       {expired && (
         <span className="program-badge program-badge--expired">
@@ -83,15 +79,30 @@ const GalloProgramImportCard: React.FC<Props> = ({
       <Divider sx={{ my: 1 }} />
 
       {/* Action */}
-      {canContinue && !expired && (
-        <button
-          className="button-primary gallo-program-action"
-          disabled={isLoading}
-          onClick={onContinue}
-        >
-          {isLoading ? "Fetching…" : "Continue"}
-        </button>
-      )}
+      <div className="gallo-program-actions">
+        {alreadyImported ? (
+          <div className="gallo-program-locked">
+            <p className="muted">
+              This program already has one or more Gallo goals imported.
+            </p>
+            <p className="muted">
+              You can manage this goal from All Goals - Gallo Axis.
+            </p>
+          </div>
+        ) : expired ? (
+          <p className="muted">
+            This program has ended and cannot be imported.
+          </p>
+        ) : (
+          <button
+            className="button-primary gallo-program-action"
+            disabled={isLoading}
+            onClick={onContinue}
+          >
+            {isLoading ? "Fetching…" : "Continue"}
+          </button>
+        )}
+      </div>
 
       {!canContinue && !expired && (
         <Typography variant="caption" color="text.secondary">

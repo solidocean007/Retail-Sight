@@ -17,17 +17,20 @@ import {
 import { RootState } from "../../utils/store";
 import {
   selectGalloGoalsLoading,
+  selectUsersActiveGalloGoals,
   selectUsersGalloGoals,
 } from "../../Slices/galloGoalsSlice";
 import "./gallo-goals.css";
 import PostViewerModal from "../PostViewerModal";
+import { GalloAccountType } from "../../utils/types";
+import MyGalloGoalCard from "./GalloIntegration/MyGalloGoalCard";
 
 const MyGalloGoals: React.FC = () => {
   const loading = useSelector(selectGalloGoalsLoading);
   const user = useSelector((state: RootState) => state.user.currentUser);
   const salesRouteNum = user?.salesRouteNum;
   const usersGalloGoals = useSelector((state: RootState) =>
-    selectUsersGalloGoals(state, salesRouteNum)
+    selectUsersActiveGalloGoals(state, salesRouteNum)
   );
 
   const [expandedProgramId, setExpandedProgramId] = useState<string | null>(
@@ -85,137 +88,19 @@ const MyGalloGoals: React.FC = () => {
         </Typography>
       ) : (
         <Box className="programs-wrapper">
-          {usersGalloGoals.map((goal, index) => (
-            <Paper key={index} elevation={3} className="program-card">
-              {/* Program Header */}
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                className="program-header"
-              >
-                <Box>
-                  <Typography variant="h6" className="program-title">
-                    {goal.programDetails.programTitle}
-                  </Typography>
-                  <Typography variant="body2" className="program-dates">
-                    {goal.programDetails.programStartDate} -{" "}
-                    {goal.programDetails.programEndDate}
-                  </Typography>
-                </Box>
-                <Button
-                  onClick={() =>
-                    toggleProgramExpansion(goal.programDetails.programId)
-                  }
-                  variant="outlined"
-                  size="small"
-                >
-                  {expandedProgramId === goal.programDetails.programId
-                    ? "Close"
-                    : "Open"}
-                </Button>
-              </Box>
-
-              {/* Expandable Goals Section */}
-              <Collapse
-                in={expandedProgramId === goal.programDetails.programId}
-                timeout="auto"
-                unmountOnExit
-              >
-                <Box className="goal-container">
-                  <Typography variant="subtitle1" className="goal-title">
-                    Goal: {goal.goalDetails.goal}
-                  </Typography>
-                  <Typography variant="body2" className="goal-metrics">
-                    Metric: {goal.goalDetails.goalMetric} | Min Value:{" "}
-                    {goal.goalDetails.goalValueMin}
-                  </Typography>
-
-                  <Button
-                    onClick={() => toggleGoalExpansion(goal.goalDetails.goalId)}
-                    variant="outlined"
-                    size="small"
-                    className="toggle-btn"
-                  >
-                    {expandedGoals[goal.goalDetails.goalId]
-                      ? "Hide Accounts"
-                      : "Show Accounts"}
-                  </Button>
-
-                  <Collapse
-                    in={expandedGoals[goal.goalDetails.goalId]}
-                    timeout="auto"
-                    unmountOnExit
-                  >
-                    <Box mt={2}>
-                      <Table size="small" className="accounts-table">
-                        {window.innerWidth > 600 && (
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Account Name</TableCell>
-                              <TableCell>Account Address</TableCell>
-                              <TableCell>Account Number</TableCell>
-                              <TableCell>Status</TableCell>
-                              <TableCell></TableCell>
-                            </TableRow>
-                          </TableHead>
-                        )}
-
-                        <TableBody>
-                          {goal.accounts.map((account, idx) => (
-                            <TableRow key={idx} className="account-row">
-                              <TableCell data-label="Account Name">
-                                <span className="mobile-header">
-                                  Account Name
-                                </span>
-                                {account.accountName || "N/A"}
-                              </TableCell>
-                              <TableCell data-label="Account Address">
-                                <span className="mobile-header">
-                                  Account Address
-                                </span>
-                                {account.accountAddress || "N/A"}
-                              </TableCell>
-                              <TableCell data-label="Account Number">
-                                <span className="mobile-header">
-                                  Account Number
-                                </span>
-                                {account.distributorAcctId || "N/A"}
-                              </TableCell>
-                              <TableCell data-label="Status">
-                                <span className="mobile-header">Status</span>
-                                {account.submittedPostId ? (
-                                  <Typography className="submitted-status">
-                                    Submitted
-                                  </Typography>
-                                ) : (
-                                  <Typography className="not-submitted-status">
-                                    Not Submitted
-                                  </Typography>
-                                )}
-                              </TableCell>
-                              <TableCell data-label="Action">
-                                {account.submittedPostId && (
-                                  <Button
-                                    variant="contained"
-                                    size="small"
-                                    onClick={() =>
-                                      openPostViewer(account.submittedPostId!)
-                                    }
-                                  >
-                                    View
-                                  </Button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </Box>
-                  </Collapse>
-                </Box>
-              </Collapse>
-            </Paper>
+          {usersGalloGoals.map((goal) => (
+            <MyGalloGoalCard
+              key={goal.goalDetails.goalId}
+              goal={goal}
+              expanded={expandedGoals[goal.goalDetails.goalId]}
+              onToggleExpand={(id) =>
+                setExpandedGoals((prev) => ({
+                  ...prev,
+                  [id]: !prev[id],
+                }))
+              }
+              onViewPostModal={openPostViewer}
+            />
           ))}
         </Box>
       )}

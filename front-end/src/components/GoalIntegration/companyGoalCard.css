@@ -71,6 +71,9 @@
 
 .goal-progress-section {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: end;
   max-width: 400px;
 }
 
@@ -79,7 +82,7 @@
   flex-direction: column;
   width: 100%;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 0.5rem;
 }
 
@@ -160,6 +163,11 @@
   padding: 1rem;
   border-top: 1px solid #ccc;
   transition: all 0.3s ease-in-out;
+}
+
+.account-row {
+  display: flex;
+  width: 100%;
 }
 
 .tab-wrapper {

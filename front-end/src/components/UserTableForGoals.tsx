@@ -190,7 +190,7 @@ const UserTableForGoals: React.FC<Props> = ({
                     )}
 
                     {/* Optional: show assigned account count */}
-                    {goal.goalAssignments?.length > 0 && ( // 'goal.goalAssignments.length' is possibly 'undefined'.
+                    {goal.goalAssignments?.length && goal.goalAssignments?.length > 0 && (
                       <div className="assigned-count">
                         {assignedAccounts.length > 0 ? (
                           <span>

@@ -13,9 +13,8 @@
    =============================== */
 
 .goal-section {
-  background: var(--surface-elevated);
   border-radius: var(--radius-xl);
-  /* padding: 1rem; */
+  padding: 1rem;
   margin-bottom: 1.5rem;
   box-shadow: var(--card-shadow);
 }

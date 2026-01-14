@@ -239,14 +239,6 @@ export const selectUsersGalloGoals = createSelector(
           : account.salesRouteNums === salesRouteNum
       )
     )
-  // .map((goal) => ({
-  //   ...goal,
-  //   accounts: goal.accounts.filter((account) =>
-  //     Array.isArray(account.salesRouteNums)
-  //       ? account.salesRouteNums.includes(salesRouteNum)
-  //       : account.salesRouteNums === salesRouteNum
-  //   ),
-  // }))
 );
 
 export const selectActiveGalloGoals = createSelector(

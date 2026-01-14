@@ -74,7 +74,7 @@
   flex-direction: column;
   border-radius: 12px;
   padding: 16px;
-  background-color: var(--surface-bg);
+  /* background-color: var(--surface-bg); */
   border: 1px solid var(--surface-border);
 }
 

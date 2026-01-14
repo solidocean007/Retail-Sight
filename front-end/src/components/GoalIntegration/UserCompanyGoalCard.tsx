@@ -121,62 +121,69 @@ const UserCompanyGoalCard: React.FC<Props> = ({
 
   return (
     <div className="info-box-company-goal">
-      <div className="goal-badge">{goal.targetRole}</div>
+      <div className="goal-content" onClick={() => onToggleExpand(goal.id)}>
+        <div className="goal-badge">{goal.targetRole}</div>
 
-      <div className="company-goal-card-start-end">
-        <h5>Starts: {goal.goalStartDate}</h5>
-        <h5>Ends: {goal.goalEndDate}</h5>
-      </div>
-
-      <div className="info-title-row">
-        <div className="info-title">{goal.goalTitle}</div>
-      </div>
-
-      <div className="info-layout-row">
-        <div className="info-description">
-          <p>
-            Created by: {goal.createdByFirstName} {goal.createdByLastName}
-          </p>
-
-          {goal.goalDescription}
-          {goal.perUserQuota && (
-            <div className="info-quota">
-              Requirement: at least {goal.perUserQuota} submission
-              {goal.perUserQuota > 1 ? "s" : ""}.
-            </div>
-          )}
+        <div className="company-goal-card-start-end">
+          <h5>Starts: {goal.goalStartDate}</h5>
+          <h5>Ends: {goal.goalEndDate}</h5>
         </div>
 
-        <div className="goal-progress-section">
-          <Typography variant="caption">Your Progress</Typography>
-          <div className="goal-progress-numbers">
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <span>{submittedCount} Submissions</span>
-              <Tooltip
-                title={`${submittedCount} of ${totalAccounts} submitted`}
+        <div className="info-title-row">
+          <div className="info-title">{goal.goalTitle}</div>
+        </div>
+
+        <div className="info-layout-row">
+          <div className="info-description">
+            <p>
+              Created by: {goal.createdByFirstName} {goal.createdByLastName}
+            </p>
+
+            {goal.goalDescription}
+            {goal.perUserQuota && (
+              <div className="info-quota">
+                Requirement: at least {goal.perUserQuota} submission
+                {goal.perUserQuota > 1 ? "s" : ""}.
+              </div>
+            )}
+          </div>
+
+          <div className="goal-progress-section">
+            <Typography variant="caption">Your Progress</Typography>
+            <div className="goal-progress-numbers">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                }}
               >
-                <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
-              </Tooltip>
-            </div>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <span className={getCompletionClass(percentage)}>
-                {percentage}% Completed
-              </span>
-              <Tooltip
-                title={
-                  goal.perUserQuota
-                    ? `${percentage}% of required submissions`
-                    : `${percentage}% of assigned accounts submitted`
-                }
-              >
-                <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
-              </Tooltip>
+                <span>{submittedCount} Submissions</span>
+                <Tooltip
+                  title={`${submittedCount} of ${totalAccounts} submitted`}
+                >
+                  <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
+                </Tooltip>
+              </div>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span className={getCompletionClass(percentage)}>
+                  {percentage}% Completed
+                </span>
+                <Tooltip
+                  title={
+                    goal.perUserQuota
+                      ? `${percentage}% of required submissions`
+                      : `${percentage}% of assigned accounts submitted`
+                  }
+                >
+                  <InfoIcon fontSize="small" style={{ marginLeft: 4 }} />
+                </Tooltip>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <Box display="flex" justifyContent="flex-end" mt={1}>
+        {/* <Box display="flex" justifyContent="flex-end" mt={1}>
         <Button
           variant="outlined"
           size="small"
@@ -184,7 +191,8 @@ const UserCompanyGoalCard: React.FC<Props> = ({
         >
           {expanded ? "Hide details" : "Show details"}
         </Button>
-      </Box>
+      </Box> */}
+      </div>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <Typography variant="h6" sx={{ mt: 2 }}>

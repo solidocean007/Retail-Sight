@@ -320,7 +320,7 @@
   --status-active-bg: rgba(26, 127, 55, 0.25);
   --status-pending-bg: rgba(178, 106, 0, 0.25);
   --status-inactive-bg: rgba(150, 150, 150, 0.15);
-  --surface-elevated: var(--gray-900);
+  --surface-elevated: var(--gray-800);
 
   --chip-bg-color: var(--gray-100);
   --chip-bg-color-selected: var(--primary-blue);

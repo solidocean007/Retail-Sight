@@ -347,29 +347,30 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
       </Box>
 
       {/* Search Filters */}
-      <Box display="flex" gap={2} sx={{ marginY: 2 }}>
+      <div className="account-table-filters">
+        <div /> {/* Select column spacer */}
         <TextField
-          label="Search Account Name"
-          variant="outlined"
-          fullWidth
+          placeholder="Account Name"
+          size="small"
           value={searchAccounts}
           onChange={handleSearchAccounts}
         />
+        <div /> {/* Address column spacer */}
         <TextField
-          label="Search Sales Route #"
-          variant="outlined"
-          fullWidth
+          placeholder="Sales Route #"
+          size="small"
           value={searchRoute}
           onChange={handleSearchRoute}
         />
         <TextField
-          label="Search Salesperson Name"
-          variant="outlined"
-          fullWidth
+          placeholder="Salesperson"
+          size="small"
           value={searchSalesperson}
           onChange={handleSearchSalesperson}
         />
-      </Box>
+        <div /> {/* Assign column spacer */}
+      </div>
+
       {unmatchedAccounts.length > 0 && (
         <Box
           sx={{

@@ -28,7 +28,6 @@ tr:hover {
 /* ===== Desktop vs Mobile ===== */
 .account-cards {
   display: none;
-
 }
 
 .account-table-desktop {
@@ -91,3 +90,23 @@ tr:hover {
   margin-top: 10px;
 }
 
+.account-table-filters {
+  display: grid;
+  grid-template-columns:
+    60px /* Select */
+    1.5fr /* Account */
+    2fr /* Address */
+    1fr /* Route */
+    1.5fr /* Salesperson */
+    2fr; /* Assign */
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+@media (max-width: 900px) {
+  .account-table-filters {
+    display: none;
+  }
+}

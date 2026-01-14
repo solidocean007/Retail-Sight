@@ -22,7 +22,7 @@ const MyGoals: React.FC<MyGoalsProps> = () => {
   const tabs = useMemo(
     () => [
       { key: "company", label: "Company Goals" },
-      ...(galloEnabled ? [{ key: "gallo", label: "Gallo Programs" }] : []),
+      ...(galloEnabled ? [{ key: "gallo", label: "Gallo Goals" }] : []),
     ],
     [galloEnabled]
   );
