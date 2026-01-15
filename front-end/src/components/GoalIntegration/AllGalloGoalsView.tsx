@@ -109,12 +109,8 @@ const AllGalloGoalsView = () => {
 
   return (
     <Container>
-      <Typography variant="h4" className="gallo-goals-header">
-        Gallo Goals
-      </Typography>
-
       {/* Filters */}
-      <Box display="flex" gap={2} mb={2} flexWrap="wrap">
+      <Box display="flex" gap={2} mb={2} pt={2} flexWrap="wrap">
         <select
           value={lifecycleFilter}
           onChange={(e) =>

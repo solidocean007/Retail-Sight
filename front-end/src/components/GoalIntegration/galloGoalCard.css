@@ -15,6 +15,14 @@
   gap: 12px;
 }
 
+.gallo-goal-card__header-actions {
+  width: 100%;
+  max-width: 100px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .gallo-goal-card__header-text {
   display: flex;
   flex-direction: column;
@@ -154,4 +162,3 @@
   padding: 6px 8px;
   font-size: 13px;
 }
-
