@@ -436,6 +436,10 @@ export type PostQueryFilters = {
     startDate?: string | null;
     endDate?: string | null;
   } | null;
+
+  // ✅ add these
+  galloGoalId?: string | null;
+  galloGoalTitle?: string | null;
 };
 
 export interface ProductType {
@@ -558,7 +562,7 @@ export type GalloProgramType = {
 export type FirestoreGalloProgramType = GalloProgramType & {
   status: "active" | "expired";
   updatedAt: Timestamp;
-}
+};
 
 // this is a goal for a program as defined by Gallo
 export type GalloGoalType = {

@@ -1,7 +1,7 @@
 // FilterChips.tsx
 import React, { useEffect } from "react";
 import { PostQueryFilters } from "../../utils/types";
-import "./styles/filterChips.css"; // create this if needed
+// import "./styles/filterChips.css"; // create this if needed
 import { useSelector } from "react-redux";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 
@@ -28,7 +28,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
   const user =
     filters.postUserUid &&
     companyUsers.find((u) => u.uid === filters.postUserUid);
-    
+
   return (
     <div className="active-filters-chip-row">
       {filters.hashtag && (
@@ -101,16 +101,17 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
           Chain Type: {filters.chainType} ✕
         </span>
       )}
-      {filters.companyGoalTitle && (
-        <span className="chip" onClick={() => onRemove("companyGoalTitle")}>
+      {filters.companyGoalId && filters.companyGoalTitle && (
+        <span className="chip" onClick={() => onRemove("companyGoalId")}>
           Goal: {filters.companyGoalTitle} ✕
         </span>
       )}
-      {/* {filters.companyGoalId && (
-        <span className="chip" onClick={() => onRemove("companyGoalId")}>
-          Goal ID: {filters.companyGoalId} ✕
+      {filters.galloGoalId && filters.galloGoalTitle && (
+        <span className="chip" onClick={() => onRemove("galloGoalId")}>
+          Gallo Goal: {filters.galloGoalTitle} ✕
         </span>
-      )} */}
+      )}
+
       {filters.dateRange?.startDate && (
         <span className="chip" onClick={() => onRemove("dateRange")}>
           From: {new Date(filters.dateRange.startDate).toLocaleDateString()} ✕

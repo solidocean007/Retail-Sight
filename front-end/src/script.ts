@@ -18,9 +18,55 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
 } from "firebase/firestore";
-// migrateProductsToDeterministicIds.ts
 
-// src/script/migrateProducts.ts
+/**
+ * DEV-ONLY: Backfill galloGoalId onto posts
+ * Run once, then delete.
+ */
+export async function backfillGalloGoalId() {
+  console.log("🔎 Scanning posts for missing galloGoalId…");
+
+  // Firestore client does NOT support where("field", "!=", null)
+  // So we fetch all posts and filter in-memory (dev-only, acceptable)
+  const q = query(collection(db, "posts"));
+  const snapshot = await getDocs(q);
+
+  console.log(`📦 Scanned ${snapshot.size} total posts`);
+
+  let updated = 0;
+  let skipped = 0;
+
+  for (const snap of snapshot.docs) {
+    const data = snap.data();
+
+    const nested = data.galloGoal;
+
+    // Only backfill posts that:
+    // - have galloGoal
+    // - do NOT already have galloGoalId
+    if (!nested?.goalId || data.galloGoalId) {
+      skipped++;
+      continue;
+    }
+
+    await updateDoc(doc(db, "posts", snap.id), {
+      galloGoalId: nested.goalId,
+      galloGoalTitle: nested.title ?? null,
+      updatedAt: Timestamp.now(),
+    });
+
+    updated++;
+
+    if (updated % 25 === 0) {
+      console.log(`✅ Updated ${updated} posts so far…`);
+    }
+  }
+
+  console.log("🎉 Backfill complete");
+  console.log(`✅ Updated: ${updated}`);
+  console.log(`⏭️ Skipped: ${skipped}`);
+}
+
 
 export async function migrateProducts(companyId: string) {
   console.log("🚀 Starting migration for company:", companyId);

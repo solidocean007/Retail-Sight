@@ -1,7 +1,7 @@
 // postsSlice
 import { createAction, createSlice } from "@reduxjs/toolkit";
 import {
-  fetchFilteredPostsBatch, // i need to use this now
+  fetchFilteredPostsBatch,
   // fetchLatestPosts,
   fetchInitialPostsBatch,
   fetchMorePostsBatch,
@@ -66,8 +66,11 @@ const postsSlice = createSlice({
       state.posts = sortPostsByDate(action.payload.map(normalizePost));
     },
     setFilteredPosts: (state, action: PayloadAction<PostWithID[]>) => {
-      state.filteredPosts = sortPostsByDate(action.payload.map(normalizePost));
+      const posts = action.payload.map(normalizePost);
+      state.filteredPosts = sortPostsByDate(posts);
+      state.filteredPostCount = posts.length;
     },
+
     // Add setUserPosts reducer function
     setUserPosts: (state, action: PayloadAction<PostWithID[]>) => {
       state.userPosts = sortPostsByDate(action.payload);
@@ -234,30 +237,17 @@ const postsSlice = createSlice({
         state.posts = action.payload.posts;
         state.lastVisible = action.payload.lastVisible;
       })
-      .addCase(
-        fetchFilteredPostsBatch.fulfilled,
-        (
-          state,
-          action: PayloadAction<{
-            posts: PostWithID[];
-            lastVisible: any;
-            count: number;
-          }>
-        ) => {
-          const { posts, lastVisible, count } = action.payload;
-          // on the very first page we want to _set_ them,
-          // on subsequent pages we just append:
-          if (!state.lastVisibleFiltered) {
-            state.filteredPosts = posts;
-          } else {
-            state.filteredPosts.push(...posts);
-          }
-          state.lastVisibleFiltered = lastVisible?.id ?? null;
-          state.filteredPostCount = count;
-          state.loading = false;
-          state.status = "succeeded";
-        }
-      )
+      .addCase(fetchFilteredPostsBatch.fulfilled, (state, action) => {
+        const { posts, lastVisible, count } = action.payload;
+
+        // ✅ Always replace filtered results
+        state.filteredPosts = posts;
+        state.filteredPostCount = count;
+        state.lastVisibleFiltered = lastVisible ?? null;
+
+        state.loading = false;
+        state.status = "succeeded";
+      })
       .addCase(setFilteredPostFetchedAt, (state, action) => {
         state.filteredPostFetchedAt = action.payload;
       })
@@ -330,7 +320,6 @@ export const selectPostsLoading = (state: RootState) => state.posts.loading;
 // True once initial load completes, regardless of post count
 export const selectPostsInitialLoaded = (state: RootState) =>
   state.posts.status === "succeeded";
-
 
 // Only show filtered loader when first loading a filtered list
 export const selectFilteredPostsLoading = (state: RootState) =>

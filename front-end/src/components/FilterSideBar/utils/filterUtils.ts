@@ -22,8 +22,10 @@ export const getFilterSummaryText = (
   if (filters.accountChain) parts.push(`Chain: ${filters.accountChain}`);
   if (filters.chainType) parts.push(`Chain Type: ${filters.chainType}`);
 
-  if (filters.states?.length) parts.push(`States: ${filters.states.join(", ")}`);
-  if (filters.cities?.length) parts.push(`Cities: ${filters.cities.join(", ")}`);
+  if (filters.states?.length)
+    parts.push(`States: ${filters.states.join(", ")}`);
+  if (filters.cities?.length)
+    parts.push(`Cities: ${filters.cities.join(", ")}`);
 
   if (filters.minCaseCount != null)
     parts.push(`≥ ${filters.minCaseCount} cases`);
@@ -35,6 +37,10 @@ export const getFilterSummaryText = (
 
   if (filters.companyGoalId && filters.companyGoalTitle) {
     parts.push(`Goal: ${filters.companyGoalTitle}`);
+  }
+
+  if (filters.galloGoalId && filters.galloGoalTitle) {
+    parts.push(`Gallo Goal: ${filters.galloGoalTitle}`);
   }
 
   const { startDate, endDate } = filters.dateRange || {};
@@ -51,7 +57,6 @@ export const getFilterSummaryText = (
   return parts.length > 0 ? parts.join(" • ") : "";
 };
 
-
 export function removeFilterField(
   filters: PostQueryFilters,
   field: keyof PostQueryFilters,
@@ -59,6 +64,22 @@ export function removeFilterField(
 ): PostQueryFilters {
   if (field === "dateRange") {
     return { ...filters, dateRange: { startDate: null, endDate: null } };
+  }
+
+  if (field === "companyGoalId") {
+    return {
+      ...filters,
+      companyGoalId: null,
+      companyGoalTitle: null,
+    };
+  }
+
+  if (field === "galloGoalId") {
+    return {
+      ...filters,
+      galloGoalId: null,
+      galloGoalTitle: null,
+    };
   }
 
   const current = filters[field];
@@ -75,8 +96,8 @@ export function removeFilterField(
     return { ...filters, [field]: [] };
   }
 
-  if (typeof current === "object") {
-    return { ...filters, [field]: null }; // for objects like strings or nullables
+  if (typeof current === "object" && !Array.isArray(current)) {
+    return { ...filters, [field]: null };
   }
 
   return { ...filters, [field]: null };
@@ -97,13 +118,17 @@ export function clearAllFilters(): PostQueryFilters {
     productType: null,
     companyGoalId: null,
     companyGoalTitle: null,
+
+    // ✅ ADD THESE
+    galloGoalId: null,
+    galloGoalTitle: null,
+
     states: [],
     cities: [],
     dateRange: { startDate: null, endDate: null },
     minCaseCount: null, // 👈 add missing
   };
 }
-
 
 let lastFilters: PostQueryFilters | null = null;
 let lastPosts: PostWithID[] | null = null;
@@ -116,24 +141,22 @@ export function locallyFilterPostsMemo(
   if (
     lastFilters &&
     lastPosts &&
-    shallowEqualFilters(filters, lastFilters) &&
+    deepEqualFilters(filters, lastFilters) &&
     posts === lastPosts
   ) {
     return lastResult;
   }
 
   const result = locallyFilterPosts(posts, filters); // raw version
-  lastFilters = filters;
+  lastFilters = structuredClone(filters);
+
   lastPosts = posts;
   lastResult = result;
   return result;
 }
 
-function shallowEqualFilters(
-  a: PostQueryFilters,
-  b: PostQueryFilters
-): boolean {
-  return JSON.stringify(a) === JSON.stringify(b); // quick & dirty for now
+function deepEqualFilters(a: PostQueryFilters, b: PostQueryFilters): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 export function locallyFilterPosts(
@@ -161,6 +184,15 @@ export function locallyFilterPosts(
     // Goal
     if (filters.companyGoalId && post.companyGoalId !== filters.companyGoalId) {
       return false;
+    }
+
+    // ✅ Gallo Goal
+    if (filters.galloGoalId && post.galloGoal?.goalId !== filters.galloGoalId) {
+      return false;
+    }
+    if (filters.galloGoalTitle && !filters.galloGoalId) {
+      // added this but have no idea what it means
+      console.warn("Gallo goal title without ID — hash may collide");
     }
 
     if (
@@ -199,32 +231,28 @@ export function locallyFilterPosts(
 
     if (filters.chainType && post.chainType !== filters.chainType) return false;
 
-    // State / City
-    if (
-      filters.states &&
-      filters.states.length > 0 &&
-      !filters.states.includes(post.state) // Argument of type 'string | undefined' is not assignable to parameter of type 'string'
-    )
-      return false;
-
     if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
       if (!post.totalCaseCount || post.totalCaseCount < filters.minCaseCount) {
         return false;
       }
     }
 
-    if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
-      if (!post.totalCaseCount || post.totalCaseCount < filters.minCaseCount) {
-        return false;
-      }
+    // State / City
+    if (
+      filters.states &&
+      filters.states.length > 0 &&
+      (!post.state || !filters.states.includes(post.state))
+    ) {
+      return false;
     }
 
     if (
       filters.cities &&
       filters.cities.length > 0 &&
-      !filters.cities.includes(post.city) // Argument of type 'string | undefined' is not assignable to parameter of type 'string'
-    )
+      (!post.city || !filters.cities.includes(post.city))
+    ) {
       return false;
+    }
 
     // Date Range
     if (filters.dateRange) {
@@ -245,8 +273,41 @@ export function locallyFilterPosts(
   });
 }
 
+// export function getFilterHash(filters: PostQueryFilters): string {
+//   // Step 1: Remove empty/null values
+//   const cleaned: Record<string, any> = {};
+
+//   Object.entries(filters).forEach(([key, value]) => {
+//     if (
+//       value === null ||
+//       value === undefined ||
+//       (typeof value === "string" && value.trim() === "") ||
+//       (Array.isArray(value) && value.length === 0) ||
+//       (typeof value === "object" &&
+//         value !== null &&
+//         "startDate" in value &&
+//         !value.startDate &&
+//         !value.endDate)
+//     ) {
+//       return;
+//     }
+//     cleaned[key] = value;
+//   });
+
+//   cleaned.companyGoalId = filters.companyGoalId ?? null;
+//   cleaned.galloGoalId = filters.galloGoalId ?? null;
+
+//   // Step 2: Sort keys
+//   const sorted: Record<string, any> = Object.fromEntries(
+//     Object.entries(cleaned).sort(([a], [b]) => a.localeCompare(b))
+//   );
+
+//   // Step 3: JSON stringify and base64 encode
+//   const jsonString = JSON.stringify(sorted);
+//   return btoa(jsonString);
+// }
+
 export function getFilterHash(filters: PostQueryFilters): string {
-  // Step 1: Remove empty/null values
   const cleaned: Record<string, any> = {};
 
   Object.entries(filters).forEach(([key, value]) => {
@@ -266,16 +327,24 @@ export function getFilterHash(filters: PostQueryFilters): string {
     cleaned[key] = value;
   });
 
-  // Step 2: Sort keys
-  const sorted: Record<string, any> = Object.fromEntries(
+  const sorted = Object.fromEntries(
     Object.entries(cleaned).sort(([a], [b]) => a.localeCompare(b))
   );
 
-  // Step 3: JSON stringify and base64 encode
-  const jsonString = JSON.stringify(sorted);
-  return btoa(jsonString);
+  const json = JSON.stringify(sorted);
+
+  // ✅ Unicode-safe base64
+  return base64EncodeUnicode(json);
 }
 
+/** ✅ SAFE for Unicode */
+function base64EncodeUnicode(str: string): string {
+  return btoa(
+    encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) =>
+      String.fromCharCode(parseInt(p1, 16))
+    )
+  );
+}
 
 export function doesPostMatchFilter(
   post: PostWithID,

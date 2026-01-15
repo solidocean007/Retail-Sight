@@ -15,18 +15,31 @@ const FilterSummaryBanner: React.FC<FilterSummaryBannerProps> = ({
   onClear,
   fetchedAt,
 }) => {
+  if (filteredCount === 0) {
+    return (
+      <div className="filter-summary-banner">
+        <span>No posts match the selected filters.</span>
+        <button className="btn-outline clear-filter-btn" onClick={onClear}>
+          Clear
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="filter-summary-banner">
-      <span>
-        {/* Showing {filteredCount} filtered post{filteredCount !== 1 && "s"}{" "} */}
-        Showing filtered post{filteredCount !== 1 && "s"}{" "} for:
-        {filterText && ` ${filterText}`}
+      <div className="filter-summary-text">
+        <span>
+          Showing filtered post{filteredCount !== 1 && "s"} for:
+          {filterText && ` ${filterText}`}
+        </span>
         {fetchedAt && (
           <div className="fetched-at">
             as of {new Date(fetchedAt).toLocaleString()}
           </div>
         )}
-      </span>
+      </div>
+
       <button className="btn-outline clear-filter-btn" onClick={onClear}>
         Clear
       </button>

@@ -43,6 +43,8 @@ import AccountTypeSelect from "./AccountTypeSelect";
 import ChainNameAutocomplete from "./ChainNameAutocomplete";
 import ChainTypeSelect from "./ChainTypeSelect";
 import GoalFilterGroup from "./GoalFilterGroup";
+import { useIntegrations } from "../../hooks/useIntegrations";
+import GalloGoalFilterGroup from "./GalloGoalFilterGroup";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -73,6 +75,12 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   toggleFilterMenu,
   initialFilters,
 }) => {
+  const { isEnabled } = useIntegrations();
+  const galloEnabled = isEnabled("gallo");
+  const galloGoals = useSelector(
+    (state: RootState) => state.galloGoals.galloGoals
+  );
+
   // at top of EnhancedFilterSidebar.tsx
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const allPosts = useSelector((s: RootState) => s.posts.posts);
@@ -214,7 +222,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [filters, filtersSet, filtersChanged]);
 
-  // what does this do?  should i include all other filters inside of this?
   useEffect(() => {
     if (currentHashtag) {
       setFilters((prev) => ({
@@ -270,9 +277,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   };
 
   const handleApply = async () => {
-    console.log("filters: ", filters);
+    // 🚨 Clear stale results immediately
+    dispatch(setFilteredPosts([]));
+    dispatch(setFilteredPostFetchedAt(null));
     const hash = getFilterHash(filters);
-    console.log(`[FilterHash] Generated hash: ${hash}`);
     const cached = await getFilteredSet(filters);
 
     const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
@@ -597,6 +605,31 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           />
         </div>
       </div> */}
+      {galloEnabled && (
+        <div
+          className={`filter-section ${
+            openSection === "galloGoal" ? "open" : ""
+          }`}
+        >
+          <button
+            className="section-toggle"
+            onClick={() => toggleSection("galloGoal")}
+          >
+            🍷 Gallo Goal
+          </button>
+
+          <div className="filter-group">
+            <GalloGoalFilterGroup
+              goals={galloGoals}
+              selectedGoalId={filters.galloGoalId}
+              onChange={(id, title) => {
+                handleChange("galloGoalId", id);
+                handleChange("galloGoalTitle", title);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className={`filter-section ${openSection === "date" ? "open" : ""}`}>
         <button

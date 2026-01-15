@@ -116,6 +116,7 @@
 
 .chip {
   background-color: var(--primary-blue);
+  max-width: 400px;
   color: white;
   padding: 4px 10px;
   border-radius: 999px;

@@ -18,7 +18,6 @@ import {
 } from "../utils/PostLogic/getPostsByTag";
 import {
   fetchFilteredPostsBatch,
-  // fetchInitialPostsBatch,
   fetchMorePostsBatch,
 } from "../thunks/postsThunks";
 import "./activityFeed.css";
@@ -26,15 +25,9 @@ import { addPostsToIndexedDB } from "../utils/database/indexedDBUtils";
 import {
   mergeAndSetPosts,
   selectPostsInitialLoaded,
-  // selectPostsLoading,
 } from "../Slices/postsSlice";
 import usePosts from "../hooks/usePosts";
 import NoResults from "./NoResults";
-// import FilterSummaryBanner from "./FilterSummaryBanner";
-// import {
-//   getFilterHash,
-//   getFilterSummaryText,
-// } from "./FilterSideBar/utils/filterUtils";
 import { PostQueryFilters, PostWithID } from "../utils/types";
 import { normalizePost } from "../utils/normalize";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";

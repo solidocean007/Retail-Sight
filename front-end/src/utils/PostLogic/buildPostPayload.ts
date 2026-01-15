@@ -81,8 +81,12 @@ export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
       companyGoalTitle: post.companyGoalTitle,
     }),
 
-    // 🍇 Gallo goal (account-scoped oppId, correct model)
+    // 🍇 Gallo goal (DENORMALIZED + NESTED)
     ...(post.galloGoal && {
+      galloGoalId: post.galloGoal.goalId, // ✅ REQUIRED
+      galloGoalTitle: post.galloGoal.title, // ✅ strongly recommended
+      galloGoalEnv: post.galloGoal.env ?? "prod", // optional, future-proof
+
       galloGoal: {
         goalId: post.galloGoal.goalId,
         title: post.galloGoal.title,
