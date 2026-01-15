@@ -39,6 +39,7 @@ function AppContent() {
 
   const PUBLIC_ROUTES = new Set([
     "/",
+    "/splash",
     "/about",
     "/privacy-policy",
     "/terms-service",
