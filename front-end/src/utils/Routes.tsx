@@ -30,11 +30,13 @@ import CompanyOnboardingAcceptForm from "../components/Pages/CompanyOnboardingAc
 import ProtectedRoute from "../components/ProtectedRoute";
 import PostViewer from "../components/Pages/PostViewer";
 import CookiesPolicy from "../components/Pages/CookiesPolicy";
+import SmartLanding from "../components/SmartLanding";
 
 export const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<SplashPage />} />
+      <Route path="/" element={<SmartLanding />} />
+      <Route path="/splash" element={<SplashPage />} />
       <Route path="/about" element={<About />} />
       <Route path="/features" element={<Features />} />
       <Route path="/contact-us" element={<ContactUs />} />

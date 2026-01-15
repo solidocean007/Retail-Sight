@@ -2,26 +2,20 @@
 import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../utils/store";
-
 import {
   setAppReady,
   setLoadingMessage,
   setResetting,
 } from "../Slices/appSlice";
-
 import { showMessage } from "../Slices/snackbarSlice";
 import { hydrateFromCache } from "../Slices/planSlice";
 import { fetchCurrentCompany } from "../Slices/currentCompanySlice";
 import { fetchCompanyProducts } from "../thunks/productThunks";
-
 import { getAllCompanyProductsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { setAllProducts } from "../Slices/productsSlice";
-
 import { setupNotificationListenersForUser } from "../utils/listeners/setupNotificationListenersForUser";
 import { setupNotificationListenersForCompany } from "../utils/listeners/setupNotificationListenerForCompany";
 import { setupCompanyGoalsListener } from "../utils/listeners/setupCompanyGoalsListener";
-import { setupGalloGoalsListener } from "../utils/listeners/setupGalloGoalsListener";
-
 import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 import { useIntegrations } from "./useIntegrations";
 
