@@ -210,6 +210,8 @@
 
   --chip-bg-color: var(--gray-100);
   --chip-bg-color-selected: var(--primary-blue);
+  --badge-background: var(--primary-blue);
+  --badge-font-color: white;
 
   /* Surfaces & elevations */
   --surface-elevated: white; /* cards, modals, light surfaces */
@@ -324,6 +326,9 @@
 
   --chip-bg-color: var(--gray-100);
   --chip-bg-color-selected: var(--primary-blue);
+
+  --badge-background: var(--accent-light-blue);
+  --badge-font-color: white;
 
   --dashboard-card: var(--muted-steel);
 

@@ -5,16 +5,16 @@ import {
   onSnapshot,
   query,
   where,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { GalloProgramType } from "../utils/types";
-
-export type GalloProgramUI = GalloProgramType & {
-  hasGoals: boolean;
-};
+import {
+  FirestoreGalloProgramType,
+  DisplayGalloProgram,
+} from "../utils/types";
 
 export function useGalloPrograms(companyId?: string) {
-  const [programs, setPrograms] = useState<GalloProgramUI[]>([]);
+  const [programs, setPrograms] = useState<DisplayGalloProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +23,6 @@ export function useGalloPrograms(companyId?: string) {
 
     setLoading(true);
 
-    // 1️⃣ listen to programs
     const programsRef = collection(
       db,
       "companies",
@@ -35,12 +34,14 @@ export function useGalloPrograms(companyId?: string) {
       programsRef,
       async (programSnap) => {
         try {
-          const programDocs = programSnap.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as GalloProgramType),
-          }));
+          // 1️⃣ read programs WITH Firestore fields intact
+          const programDocs: FirestoreGalloProgramType[] =
+            programSnap.docs.map((d) => ({
+              id: d.id,
+              ...(d.data() as FirestoreGalloProgramType),
+            }));
 
-          // 2️⃣ fetch goals once (not per program)
+          // 2️⃣ fetch goals once
           const goalsQuery = query(
             collection(db, "galloGoals"),
             where("companyId", "==", companyId)
@@ -63,13 +64,16 @@ export function useGalloPrograms(companyId?: string) {
               .filter(Boolean)
           );
 
-          // 3️⃣ enrich programs
-          const enriched: GalloProgramUI[] = programDocs.map((p) => ({
-            ...p,
-            hasGoals: programIdsWithGoals.has(p.programId),
-          }));
+          // 3️⃣ normalize for UI
+          const displayPrograms: DisplayGalloProgram[] = programDocs.map(
+            (p) => ({
+              ...p,
+              hasGoals: programIdsWithGoals.has(p.programId),
+              updatedAtMs: p.updatedAt.toMillis(),
+            })
+          );
 
-          setPrograms(enriched);
+          setPrograms(displayPrograms);
           setError(null);
         } catch (err: any) {
           console.error("useGalloPrograms error", err);

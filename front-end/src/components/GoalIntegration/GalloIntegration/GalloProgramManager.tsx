@@ -1,29 +1,23 @@
 import { useMemo, useState } from "react";
-import { GalloProgramType } from "../../../utils/types";
+import { DisplayGalloProgram, GalloProgramType } from "../../../utils/types";
 import { EnrichedGalloProgram } from "./GalloGoalImporter";
 import "./galloProgramManager.css";
 
 interface Props {
   selectedEnv: "prod" | "dev" | null;
-  programs: EnrichedGalloProgram[];
+  programs: DisplayGalloProgram[]; // already normalized upstream
   importedProgramIds: Set<string>;
   selectedProgram: GalloProgramType | null;
   onSelectProgram: (program: GalloProgramType | null) => void;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 const PAGE_SIZE = 15;
 
-const getCreatedAtMs = (p: EnrichedGalloProgram) => {
-  if (typeof p.__debug?.startDateUnix === "number") {
-    return p.__debug.startDateUnix * 1000;
-  }
-  const parsed = Date.parse(p.startDate);
-  return Number.isNaN(parsed) ? Date.now() : parsed;
-};
+const DAY_MS = 24 * 60 * 60 * 1000;
+const NEW_WINDOW_MS = 7 * DAY_MS; // ← tweakable UX lever
 
-const isRecent = (p: EnrichedGalloProgram) =>
-  Date.now() - getCreatedAtMs(p) < DAY_MS;
+const isRecent = (p: DisplayGalloProgram) =>
+  Date.now() - p.updatedAtMs < NEW_WINDOW_MS;
 
 const GalloProgramManager: React.FC<Props> = ({
   selectedEnv,
@@ -51,9 +45,7 @@ const GalloProgramManager: React.FC<Props> = ({
       p.programTitle.toLowerCase().includes(search.toLowerCase())
     );
 
-    const sorted = [...filtered].sort(
-      (a, b) => getCreatedAtMs(b) - getCreatedAtMs(a)
-    );
+    const sorted = [...filtered].sort((a, b) => b.updatedAtMs - a.updatedAtMs);
 
     const active = sorted.filter((p) => p.status === "active");
     const expired = sorted.filter((p) => p.status === "expired");
@@ -66,7 +58,9 @@ const GalloProgramManager: React.FC<Props> = ({
       importedProgramIds.has(p.programId)
     );
 
-    const recent = activeUnimported.filter(isRecent);
+    const recent = activeUnimported.filter(
+      (p) => isRecent(p) && !importedProgramIds.has(p.programId)
+    );
 
     return {
       recent,
@@ -107,12 +101,19 @@ const GalloProgramManager: React.FC<Props> = ({
               return (
                 <div
                   key={p.programId}
-                  className={`program-card ${selected ? "selected" : ""}`}
+                  className={`program-card ${selected ? "selected" : ""} ${
+                    isRecent(p) ? "program-card--new" : ""
+                  }`}
                   onClick={() => onSelectProgram(selected ? null : p)}
                 >
                   <div className="program-card-header">
                     <div className="program-header-left">
                       <div className="program-title">{p.programTitle}</div>
+                      {isRecent(p) && (
+                        <span className="badge badge-new">
+                          Added · {new Date(p.updatedAtMs).toLocaleDateString()}
+                        </span>
+                      )}
                     </div>
 
                     <div className="program-header-right">
@@ -127,10 +128,6 @@ const GalloProgramManager: React.FC<Props> = ({
                         <span className="badge badge-imported">
                           🟢 Imported
                         </span>
-                      )}
-
-                      {isRecent(p) && (
-                        <span className="badge badge-new">New</span>
                       )}
                     </div>
                   </div>

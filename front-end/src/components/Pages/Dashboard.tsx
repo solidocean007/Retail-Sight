@@ -3,27 +3,16 @@ import { useSelector } from "react-redux";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
 import { selectUser } from "../../Slices/userSlice.ts";
-// import {
-//   getCompanyUsersFromIndexedDB,
-//   saveCompanyUsersToIndexedDB,
-// } from "../utils/database/userDataIndexedDB";
-// import { fetchCompanyUsers } from "../thunks/usersThunks";
 import {
-  // CompanyAccountType,
   DashboardModeType,
-  // UserType,
 } from "../../utils/types.ts";
-// import { useAppDispatch } from "../utils/store";
 import "./dashboard.css";
 import { DashboardHelmet } from "../../utils/helmetConfigurations.tsx";
-// import TeamsViewer from "./TeamsViewer";
 import {
   AppBar,
   Box,
-  // Container,
   IconButton,
   Toolbar,
-  Typography,
   useMediaQuery,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -42,47 +31,61 @@ import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.
 import NotificationSettingsPanel from "../Notifications/NotificationSettingsPanel.tsx";
 import IntegrationsView from "./IntegrationsView.tsx";
 
+const ADMIN_MODES: DashboardModeType[] = [
+  "ConnectionsMode",
+  "TeamMode",
+  "AccountsMode",
+  "ProductsMode",
+  "UsersMode2",
+  "GoalManagerMode",
+  "IntegrationsMode",
+];
+
+
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const isIpadMini = useMediaQuery("(max-width: 767px)");
   const drawerWidth = 200;
-  // const [localUsers, setLocalUsers] = useState<UserType[]>([]);
-  // const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
-  // const companyUsers = useSelector(selectCompanyUsers);
   const companyId = user?.companyId;
-  // const [drawerOpen, setDrawerOpen] = useState(isLargeScreen);
   const [drawerOpen, setDrawerOpen] = useState(true);
 
   const isEmployee = user?.role === "employee";
-  // const isEmployee = true;
+  const isSupervisor = user?.role === "supervisor";
   const isAdmin = user?.role === "admin";
-  // const isDeveloper = user?.role === "developer"; // this needs to be used also
   const isSuperAdmin = user?.role === "super-admin";
-  // const allAccounts = useSelector(selectAllCompanyAccounts);
+  const isDeveloper = user?.role === "developer";
 
-  // handleUpdatePosts();
+  const canAccessAdmin = isAdmin || isSuperAdmin || isDeveloper;
 
-  const [dashboardMode, setDashboardMode] = useState<DashboardModeType>(
-    isEmployee ? "MyGoalsMode" : "GoalManagerMode"
-  );
+  const defaultMode: DashboardModeType = canAccessAdmin
+    ? "GoalManagerMode"
+    : "MyGoalsMode";
 
-  const [selectedMode, setSelectedMode] = useState<DashboardModeType>(
-    isEmployee ? "MyGoalsMode" : "GoalManagerMode"
-  );
+  const [dashboardMode, setDashboardMode] =
+    useState<DashboardModeType>(defaultMode);
+
+  const [selectedMode, setSelectedMode] =
+    useState<DashboardModeType>(defaultMode);
 
   const [_screenWidth, setScreenWidth] = useState(window.innerWidth);
 
   useEffect(() => {
-    const savedMode = sessionStorage.getItem(
-      "dashboardMode"
-    ) as DashboardModeType;
-    if (savedMode) {
+  const savedMode = sessionStorage.getItem("dashboardMode") as DashboardModeType;
+
+  if (savedMode) {
+    if (!canAccessAdmin && ADMIN_MODES.includes(savedMode)) {
+      setDashboardMode("MyGoalsMode");
+      setSelectedMode("MyGoalsMode");
+    } else {
       setDashboardMode(savedMode);
       setSelectedMode(savedMode);
-      sessionStorage.removeItem("dashboardMode");
     }
-  }, []);
+
+    sessionStorage.removeItem("dashboardMode");
+  }
+}, [canAccessAdmin]);
+
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -156,8 +159,10 @@ export const Dashboard = () => {
         variant={isLargeScreen ? "permanent" : "temporary"}
         onMenuClick={handleMenuClick}
         isEmployee={isEmployee}
-        selectedMode={selectedMode} // ✅ pass current selection
+        canAccessAdmin={canAccessAdmin}
+        selectedMode={selectedMode}
       />
+
       <Box
         sx={{
           marginLeft: isLargeScreen ? `${drawerWidth}px` : 0,
@@ -179,10 +184,12 @@ export const Dashboard = () => {
         )}
         {dashboardMode === "MyGoalsMode" && <MyGoals />}
         {/* {dashboardMode === "UsersMode" && <EmployeesViewer />} */}
-        {dashboardMode === "UsersMode2" && <AdminUsersConsole />}
+        {dashboardMode === "UsersMode2" && canAccessAdmin && (
+          <AdminUsersConsole />
+        )}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
         {dashboardMode === "MyAccountsMode" && user && <MyAccounts />}
-        {dashboardMode === "GoalManagerMode" && (
+        {dashboardMode === "GoalManagerMode" && canAccessAdmin && (
           <GoalManager companyId={companyId} />
         )}
 

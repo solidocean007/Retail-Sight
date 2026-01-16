@@ -564,6 +564,12 @@ export type FirestoreGalloProgramType = GalloProgramType & {
   updatedAt: Timestamp;
 };
 
+// UI-level enriched type
+export type DisplayGalloProgram = FirestoreGalloProgramType & {
+  updatedAtMs: number;
+  hasGoals: boolean;
+};
+
 // this is a goal for a program as defined by Gallo
 export type GalloGoalType = {
   env?: "prod" | "dev";

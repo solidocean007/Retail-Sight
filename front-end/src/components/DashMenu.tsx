@@ -36,6 +36,7 @@ const DashMenu = ({
   variant,
   onMenuClick,
   isEmployee,
+  canAccessAdmin,
   selectedMode,
 }: {
   open: boolean;
@@ -43,11 +44,18 @@ const DashMenu = ({
   variant: "temporary" | "permanent";
   onMenuClick: (mode: DashboardModeType) => void;
   isEmployee: boolean;
+  canAccessAdmin: boolean;
   selectedMode: DashboardModeType;
 }) => {
   const navigate = useNavigate();
 
-  const role = useSelector((state: any) => state.user.role);
+  const role = useSelector((state: any) => state.user.currentUser.role);
+
+  const canAccessBilling = role === "admin" || role === "super-admin"; // adjust if devs should see billing
+
+  const canAccessIntegrations =
+    role === "admin" || role === "super-admin" || role === "developer";
+
   const companyPlan = useSelector(
     (state: any) => state.currentCompany?.billing?.plan
   );
@@ -126,72 +134,78 @@ const DashMenu = ({
           <ListItemText primary="Tutorial" />
         </ListItemButton>
 
-        <Box className={`menu-section-admin ${isEmployee ? "disabled" : ""}`}>
-          <Typography variant="subtitle1" className="menu-section-title">
-            Admin
-          </Typography>
-          {/* <UpgradePromptBanner
-            // show={showUpgradeBanner}
-            show={true}
-            message="You’re nearing your current plan limits."
-            highlight="Upgrade now to keep growing your network."
-          /> */}
-          <ListItemButton
-            selected={selectedMode === "ConnectionsMode"}
-            onClick={() => onMenuClick("ConnectionsMode")}
-          >
-            <Handshake sx={{ mr: 1 }} />
-            <ListItemText primary="Connections" />
-          </ListItemButton>
-          <ListItemButton
-            selected={selectedMode === "TeamMode"}
-            onClick={() => onMenuClick("TeamMode")}
-          >
-            <GroupIcon sx={{ mr: 1 }} />
-            <ListItemText primary="Teams" />
-          </ListItemButton>
+        {canAccessAdmin && (
+          <Box className="menu-section-admin">
+            <Typography variant="subtitle1" className="menu-section-title">
+              Admin
+            </Typography>
 
-          <ListItemButton
-            selected={selectedMode === "AccountsMode"}
-            onClick={() => onMenuClick("AccountsMode")}
-          >
-            <StoreIcon sx={{ mr: 1 }} />
-            <ListItemText primary="Accounts" />
-          </ListItemButton>
-          <ListItemButton
-            selected={selectedMode === "ProductsMode"}
-            onClick={() => onMenuClick("ProductsMode")}
-          >
-            <Inventory2 sx={{ mr: 1 }} />
-            <ListItemText primary="Products" />
-          </ListItemButton>
+            <ListItemButton
+              selected={selectedMode === "ConnectionsMode"}
+              onClick={() => onMenuClick("ConnectionsMode")}
+            >
+              <Handshake sx={{ mr: 1 }} />
+              <ListItemText primary="Connections" />
+            </ListItemButton>
 
-          <ListItemButton
-            selected={selectedMode === "UsersMode2"}
-            onClick={() => onMenuClick("UsersMode2")}
-          >
-            <PeopleAltIcon sx={{ mr: 1 }} />
-            <ListItemText primary="Users" />
-          </ListItemButton>
-          <ListItemButton
-            selected={selectedMode === "GoalManagerMode"}
-            onClick={() => onMenuClick("GoalManagerMode")}
-          >
-            <GoalIcon />
-            <ListItemText primary="Goals Manager" />
-          </ListItemButton>
-          <ListItemButton
-            selected={selectedMode === "IntegrationsMode"}
-            onClick={() => onMenuClick("IntegrationsMode")}
-          >
-             <ExtensionIcon className="menu-icon" />
-            <ListItemText primary="Integrations" />
-          </ListItemButton>
-          <ListItemButton onClick={() => navigate("/billing")}>
-            <ReceiptLongIcon className="menu-icon" />
-            <ListItemText primary="Billing" />
-          </ListItemButton>
-        </Box>
+            <ListItemButton
+              selected={selectedMode === "TeamMode"}
+              onClick={() => onMenuClick("TeamMode")}
+            >
+              <GroupIcon sx={{ mr: 1 }} />
+              <ListItemText primary="Teams" />
+            </ListItemButton>
+
+            <ListItemButton
+              selected={selectedMode === "AccountsMode"}
+              onClick={() => onMenuClick("AccountsMode")}
+            >
+              <StoreIcon sx={{ mr: 1 }} />
+              <ListItemText primary="Accounts" />
+            </ListItemButton>
+
+            <ListItemButton
+              selected={selectedMode === "ProductsMode"}
+              onClick={() => onMenuClick("ProductsMode")}
+            >
+              <Inventory2 sx={{ mr: 1 }} />
+              <ListItemText primary="Products" />
+            </ListItemButton>
+
+            <ListItemButton
+              selected={selectedMode === "UsersMode2"}
+              onClick={() => onMenuClick("UsersMode2")}
+            >
+              <PeopleAltIcon sx={{ mr: 1 }} />
+              <ListItemText primary="Users" />
+            </ListItemButton>
+
+            <ListItemButton
+              selected={selectedMode === "GoalManagerMode"}
+              onClick={() => onMenuClick("GoalManagerMode")}
+            >
+              <GoalIcon />
+              <ListItemText primary="Goals Manager" />
+            </ListItemButton>
+
+            {canAccessIntegrations && (
+              <ListItemButton
+                selected={selectedMode === "IntegrationsMode"}
+                onClick={() => onMenuClick("IntegrationsMode")}
+              >
+                <ExtensionIcon className="menu-icon" />
+                <ListItemText primary="Integrations" />
+              </ListItemButton>
+            )}
+
+            {canAccessBilling && (
+              <ListItemButton onClick={() => navigate("/billing")}>
+                <ReceiptLongIcon className="menu-icon" />
+                <ListItemText primary="Billing" />
+              </ListItemButton>
+            )}
+          </Box>
+        )}
 
         <ListItem>
           <LogOutButton />
