@@ -608,6 +608,15 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       <TextField
         label="Search Account"
         variant="outlined"
+        placeholder="Walmart etc"
+        slotProps={{
+          inputLabel: {
+            shrink: true,
+            sx: {
+              transform: "translate(14px, -15px) scale(0.75)",
+            },
+          },
+        }}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         sx={{ marginBottom: 2 }}
@@ -616,6 +625,14 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       <TextField
         label="Filter by Sales Route"
         variant="outlined"
+        slotProps={{
+          inputLabel: {
+            shrink: true,
+            sx: {
+              transform: "translate(14px, -15px) scale(0.75)",
+            },
+          },
+        }}
         value={routeFilter}
         onChange={(e) => setRouteFilter(e.target.value)}
         sx={{ marginBottom: 2, marginLeft: 2 }}

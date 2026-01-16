@@ -38,7 +38,7 @@ interface AccountTableProps {
   goal: GalloGoalType | null;
   notifyUserIds: string[];
   setNotifyUserIds: (ids: string[]) => void;
-
+  assignedUserIds: string[];
   onContinue: (payload: {
     selectedAccounts: EnrichedGalloAccountType[];
   }) => void;
@@ -53,6 +53,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   goal,
   notifyUserIds,
   setNotifyUserIds,
+  assignedUserIds,
   onContinue,
 }) => {
   const [editableAccounts, setEditableAccounts] =
@@ -68,7 +69,9 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   const [searchRoute, setSearchRoute] = useState("");
   const [searchSalesperson, setSearchSalesperson] = useState("");
   const companyUsers = useSelector(selectCompanyUsers) || [];
-  console.log(notifyUserIds);
+  useEffect(() => {
+    console.log("notifyUserIds changed:", notifyUserIds);
+  }, [notifyUserIds]);
   const handleSearchSalesperson = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -192,19 +195,8 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
   };
 
   const availableNotifyUsers = companyUsers.filter((u) =>
-    selectedAccounts.some((acc) =>
-      acc.salesRouteNums?.includes(String(u.salesRouteNum))
-    )
+    assignedUserIds.includes(u.uid)
   );
-
-  const didInitNotify = useRef(false);
-
-  useEffect(() => {
-    if (didInitNotify.current) return;
-    const allEligibleIds = availableNotifyUsers.map((u) => u.uid);
-    setNotifyUserIds(allEligibleIds);
-    didInitNotify.current = true;
-  }, [availableNotifyUsers]);
 
   const selectAllNotifyUsers = () => {
     setNotifyUserIds(availableNotifyUsers.map((u) => u.uid));
@@ -456,7 +448,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                 <Autocomplete
                   multiple
                   size="small"
-                  options={salesUsers}
+                  options={availableNotifyUsers}
                   getOptionLabel={(u) =>
                     `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
                   }
@@ -467,7 +459,10 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                   )}
                   onChange={(_, users) => {
                     const userIds = users.map((u) => u.uid);
-                    const nextRoutes = routesFromSelectedUserIds(userIds);
+                    const nextRoutes = salesUsers
+                      .filter((u) => userIds.includes(u.uid))
+                      .map((u) => String(u.salesRouteNum));
+
                     const nextName =
                       nextRoutes.length > 0
                         ? nameFromRoutes(nextRoutes)
@@ -546,7 +541,7 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                   <Autocomplete
                     multiple
                     size="small"
-                    options={salesUsers}
+                    options={availableNotifyUsers}
                     getOptionLabel={(u) =>
                       `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
                     }
@@ -557,7 +552,10 @@ const GalloAccountImportTable: React.FC<AccountTableProps> = ({
                     )}
                     onChange={(_, users) => {
                       const userIds = users.map((u) => u.uid);
-                      const nextRoutes = routesFromSelectedUserIds(userIds);
+                      const nextRoutes = salesUsers
+                        .filter((u) => userIds.includes(u.uid))
+                        .map((u) => String(u.salesRouteNum));
+
                       const nextName =
                         nextRoutes.length > 0
                           ? nameFromRoutes(nextRoutes)

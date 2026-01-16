@@ -18,13 +18,10 @@
   justify-content: flex-start;
 }
 
-
-
 .enhanced-sidebar .MuiInputBase-root {
   margin-left: 0px;
   margin-right: 0px;
 }
-
 
 .filter-summary-banner-container {
   display: flex;
@@ -96,9 +93,8 @@
   margin-bottom: 5px;
   border-bottom: 2px solid var(--primary-blue);
   padding-bottom: 0.5rem;
-  margin-top: 5px
+  margin-top: 5px;
 }
-
 
 .active-filters-chip-row {
   display: flex;
@@ -148,9 +144,15 @@
   background-color: var(--outlined-button-hover);
 }
 
-.filter-actions {
-  min-height: 55px; /* i want the space the buttons will appear to always be there */
-}
+/* .filter-actions {
+  min-height: 55px;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--input-border);
+} */
 
 .filter-section {
   display: flex;
@@ -232,7 +234,6 @@
   background-color: var(--input-background);
   color: var(--text-color);
   font-size: 1rem;
-
 }
 
 @media (min-width: 900px) {

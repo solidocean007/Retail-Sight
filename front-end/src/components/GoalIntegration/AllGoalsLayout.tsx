@@ -41,7 +41,7 @@ const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
           className={`source-btn ${source === "company" ? "active" : ""}`}
           onClick={() => setSource("company")}
         >
-          Company Goals
+          Current Company Goals
         </button>
 
         {galloEnabled && (
@@ -51,7 +51,7 @@ const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
             }`}
             onClick={() => setSource("gallo")}
           >
-            Gallo Axis
+            Current Gallo Axis Goals
             <span className="external-badge">External</span>
           </button>
         )}

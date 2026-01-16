@@ -2,7 +2,7 @@
   padding: 1.25rem;
   margin-top: 1.5rem;
   margin-bottom: 1.25rem;
-  background: var(--gray-200);
+  background: var(--dashboard-card);
   border-radius: 12px;
 }
 

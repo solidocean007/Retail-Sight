@@ -117,7 +117,7 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
               <Typography variant="h6">
                 {goal.programDetails.programTitle}
               </Typography>
-
+                {goal.goalDetails.goalId}
               <span
                 className={`gallo-goal-card__badge gallo-goal-card__badge--${goal.lifeCycleStatus}`}
                 title={goal.lifeCycleStatus}

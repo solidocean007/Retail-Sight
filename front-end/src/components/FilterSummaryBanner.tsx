@@ -38,6 +38,7 @@ const FilterSummaryBanner: React.FC<FilterSummaryBannerProps> = ({
             as of {new Date(fetchedAt).toLocaleString()}
           </div>
         )}
+        {!fetchedAt && <span className="loading-text">Updating…</span>}
       </div>
 
       <button className="btn-outline clear-filter-btn" onClick={onClear}>

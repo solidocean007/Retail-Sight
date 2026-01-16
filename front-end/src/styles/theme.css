@@ -325,7 +325,7 @@
   --chip-bg-color: var(--gray-100);
   --chip-bg-color-selected: var(--primary-blue);
 
-  --dashboard-card: var(--bgColor-muted);
+  --dashboard-card: var(--muted-steel);
 
   --notification-dropdown-bg: var(--primary-dark-blue);
   --read-notification-bg: var(--gray-700);

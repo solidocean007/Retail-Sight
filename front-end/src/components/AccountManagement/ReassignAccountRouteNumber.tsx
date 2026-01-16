@@ -96,6 +96,14 @@ const ReassignAccountRouteNumber: React.FC<Props> = ({
         <TextField
           label="From Route(s)"
           placeholder="e.g. 45 or 45,46"
+          slotProps={{
+            inputLabel: {
+              shrink: true,
+              sx: {
+                transform: "translate(14px, -15px) scale(0.75)",
+              },
+            },
+          }}
           size="small"
           value={oldRoutes}
           onChange={(e) => setOldRoutes(e.target.value)}
@@ -104,6 +112,14 @@ const ReassignAccountRouteNumber: React.FC<Props> = ({
         <TextField
           label="To Route (optional)"
           placeholder="e.g. 62 (blank = remove)"
+           slotProps={{
+            inputLabel: {
+              shrink: true,
+              sx: {
+                transform: "translate(14px, -15px) scale(0.75)",
+              },
+            },
+          }}
           size="small"
           value={newRoute}
           onChange={(e) => setNewRoute(e.target.value)}

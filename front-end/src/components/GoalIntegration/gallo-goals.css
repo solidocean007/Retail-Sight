@@ -11,12 +11,6 @@
   gap: 1.5rem;
 }
 
-.program-card {
-  padding: 1rem;
-  border-radius: 8px;
-  background-color: #f8f9fa;
-}
-
 .program-header {
   display: flex;
   justify-content: space-between;

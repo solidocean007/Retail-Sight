@@ -15,7 +15,7 @@
   background: var(--dashboard-card);
   padding: 6px;
   border-radius: 12px;
-  margin: 0 24px;
+  /* margin: 0 24px; */
 }
 
 .source-btn {

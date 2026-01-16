@@ -116,14 +116,6 @@ const AllCompanyGoalsView = ({
 
   return (
     <div className="all-company-goals-container">
-      <Typography
-        variant={isMobile ? "h6" : "h4"}
-        gutterBottom
-        className="company-goals-header"
-      >
-        All Current and past company created goals
-      </Typography>
-
       {/* Sort Button */}
       <button onClick={handleSortClick} className="btn-outline">
         Sort:{" "}

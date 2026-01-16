@@ -75,6 +75,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   toggleFilterMenu,
   initialFilters,
 }) => {
+  const [isApplying, setIsApplying] = useState(false);
+
   const { isEnabled } = useIntegrations();
   const galloEnabled = isEnabled("gallo");
   const galloGoals = useSelector(
@@ -196,6 +198,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const debouncedFilters = useDebouncedValue(filters, 150);
 
+  useEffect(() => {
+    if (!filtersSet) return;
+    if (!filtersChanged) return;
+    if (isApplying) return;
+
+    handleApply();
+  }, [debouncedFilters]);
+
   // in EnhancedFilterSidebar
   useEffect(() => {
     if (!filters.brand) {
@@ -256,59 +266,75 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     const updatedFilters = removeFilterField(filters, field, value);
     setFilters(updatedFilters);
 
-    if (field === "hashtag" || field === "starTag") {
-      setTagInput("");
+    // reset local inputs
+    if (field === "hashtag" || field === "starTag") setTagInput("");
+    if (field === "brand") setBrandInput("");
+    if (field === "productType") setProductTypeInput("");
+
+    const isNowEmpty = Object.entries(updatedFilters).every(([_k, v]) => {
+      if (Array.isArray(v)) return v.length === 0;
+      if (typeof v === "object" && v !== null && "startDate" in v) {
+        return !v.startDate && !v.endDate;
+      }
+      return !v;
+    });
+
+    // ✅ HARD RESET when last filter is removed
+    if (isNowEmpty) {
+      setLastAppliedFilters(null);
+      setActiveCompanyPostSet("posts");
+      dispatch(setFilteredPosts(allPosts));
+      dispatch(setFilteredPostFetchedAt(null));
+      return;
     }
 
-    if (field === "brand") {
-      setBrandInput("");
-    }
-
-    if (field === "productType") {
-      setProductTypeInput("");
-    }
-
+    // otherwise update filtered view
     if (activePostSet === "filteredPosts") {
-      // apply local client-side filtering
-      const locallyFiltered = locallyFilterPosts(filteredPosts, updatedFilters); // Cannot find name 'filteredPosts'
+      const locallyFiltered = locallyFilterPosts(filteredPosts, updatedFilters);
       dispatch(setFilteredPosts(locallyFiltered));
       setLastAppliedFilters(updatedFilters);
     }
   };
 
   const handleApply = async () => {
-    // 🚨 Clear stale results immediately
-    dispatch(setFilteredPosts([]));
-    dispatch(setFilteredPostFetchedAt(null));
-    const hash = getFilterHash(filters);
-    const cached = await getFilteredSet(filters);
+    setIsApplying(true);
 
-    const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
+    try {
+      // 🚨 Clear stale results immediately
+      dispatch(setFilteredPosts([]));
+      dispatch(setFilteredPostFetchedAt(null));
+      const hash = getFilterHash(filters);
+      const cached = await getFilteredSet(filters);
 
-    if (!needFetch) {
-      console.log(`[FilterHash] Using cached results for hash: ${hash}`);
-      dispatch(setFilteredPosts(cached));
-      const fetchedAt = await getFetchDate(filters);
-      dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
-      setActiveCompanyPostSet("filteredPosts");
-      setLastAppliedFilters(filters);
-      onFiltersApplied?.(filters);
-      return;
-    }
-    console.log(`[FilterHash] Fetching fresh results for hash: ${hash}`);
-    // EnhancedFilterSidebar.tsx → handleApply()
-    console.log("[handleApply] Filters being applied:", filters);
+      const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
 
-    const result = await dispatch(fetchFilteredPostsBatch({ filters }));
+      if (!needFetch) {
+        console.log(`[FilterHash] Using cached results for hash: ${hash}`);
+        dispatch(setFilteredPosts(cached));
+        const fetchedAt = await getFetchDate(filters);
+        dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
+        setActiveCompanyPostSet("filteredPosts");
+        setLastAppliedFilters(filters);
+        onFiltersApplied?.(filters);
+        return;
+      }
+      console.log(`[FilterHash] Fetching fresh results for hash: ${hash}`);
+      // EnhancedFilterSidebar.tsx → handleApply()
+      console.log("[handleApply] Filters being applied:", filters);
 
-    if (fetchFilteredPostsBatch.fulfilled.match(result)) {
-      const fresh = result.payload.posts.map(normalizePost);
-      dispatch(setFilteredPosts(fresh));
-      dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
-      await storeFilteredSet(filters, fresh);
-      setActiveCompanyPostSet("filteredPosts");
-      setLastAppliedFilters(filters);
-      onFiltersApplied?.(filters);
+      const result = await dispatch(fetchFilteredPostsBatch({ filters }));
+
+      if (fetchFilteredPostsBatch.fulfilled.match(result)) {
+        const fresh = result.payload.posts.map(normalizePost);
+        dispatch(setFilteredPosts(fresh));
+        dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
+        await storeFilteredSet(filters, fresh);
+        setActiveCompanyPostSet("filteredPosts");
+        setLastAppliedFilters(filters);
+        onFiltersApplied?.(filters);
+      }
+    } finally {
+      setIsApplying(false);
     }
   };
 
@@ -338,7 +364,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   return (
     <div className="enhanced-sidebar side-bar-box">
       {/* {activePostSet === "filteredPosts" && filteredPosts.length > 0 && ( */}
-      {activePostSet === "filteredPosts" && (
+      {activePostSet === "filteredPosts" && lastAppliedFilters && (
         <div className="filter-summary-banner-container">
           <FilterSummaryBanner
             filteredCount={filteredPostCount}
@@ -364,7 +390,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           </button>
         )}
       </div>
-      <div className="filter-actions">
+      {/* <div className="filter-actions">
         {filtersSet && filtersChanged && (
           <button className="btn-secondary" onClick={handleApply}>
             Apply Filters
@@ -379,7 +405,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             Clear All Filters
           </button>
         )}
-      </div>
+      </div> */}
 
       <div className={`filter-section ${openSection === "tags" ? "open" : ""}`}>
         <button
