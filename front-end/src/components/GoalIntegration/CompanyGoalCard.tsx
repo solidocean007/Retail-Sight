@@ -48,6 +48,8 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const goalIsForSupervisor = goal.targetRole === "supervisor";
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  console.log(goal)
+
   // --- Unified account list for this goal (new or old) ---
   const accountNumbersForThisGoal = useMemo(() => {
     if (goal.goalAssignments?.length) {

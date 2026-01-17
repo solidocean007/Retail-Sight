@@ -21,7 +21,7 @@ const MyGalloGoalCard: React.FC<Props> = ({
     () => goal.accounts.filter((a) => a.status === "active"),
     [goal.accounts]
   );
-
+  console.log(goal)
   const submittedCount = activeAccounts.filter((a) => a.submittedPostId).length;
 
   const totalAccounts = activeAccounts.length;

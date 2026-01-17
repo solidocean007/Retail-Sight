@@ -35,14 +35,19 @@ export const userDeletePost = async ({
     await deleteUserCreatedPostInIndexedDB(post.id);
     await purgeDeletedPostFromFilteredSets(post.id);
 
-    // ✅ Delete image if exists
-    if (post.imageUrl) {
+    // 🛑 DO NOT delete images tied to Gallo achievements
+    if (post.imageUrl && !post.galloGoal?.oppId) {
       const imageRef = ref(storage, post.imageUrl);
       try {
         await deleteObject(imageRef);
       } catch (err) {
         console.warn(`⚠️ Could not delete image: ${post.imageUrl}`, err);
       }
+    } else if (post.galloGoal?.oppId) {
+      console.log(
+        "🔒 Skipping image deletion — image is tied to Gallo achievement",
+        post.imageUrl
+      );
     }
 
     // ✅ Remove from company goal
@@ -58,20 +63,6 @@ export const userDeletePost = async ({
           (s) => s.postId !== post.id
         );
         await updateDoc(goalRef, { submittedPosts: updatedSubmittedPosts });
-      }
-    }
-
-    // ✅ Remove from Gallo goal
-    if (post.oppId) {
-      const galloGoalRef = doc(db, "galloGoals", post.oppId);
-      const galloGoalSnap = await getDoc(galloGoalRef);
-      if (galloGoalSnap.exists()) {
-        const goalData = galloGoalSnap.data();
-        const submitted: any[] = Array.isArray(goalData.submittedPosts)
-          ? goalData.submittedPosts
-          : [];
-        const updated = submitted.filter((s) => s.postId !== post.id);
-        await updateDoc(galloGoalRef, { submittedPosts: updated });
       }
     }
 

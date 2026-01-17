@@ -2,12 +2,25 @@ import { useEffect, useState } from "react";
 import "./installPrompt.css";
 import { usePWAInstallPrompt } from "../Pages/usePWAInstallPrompt";
 
+export async function isPwaActuallyInstalled(): Promise<boolean> {
+  if ("getInstalledRelatedApps" in navigator) {
+    const apps = await (navigator as any).getInstalledRelatedApps();
+    return apps?.length > 0;
+  }
+  return false;
+}
+
 export default function InstallPrompt({ user }: { user: any }) {
   const { deferredPrompt, isInstallable, install } = usePWAInstallPrompt();
 
   const [visibleMobile, setVisibleMobile] = useState(false);
   const [fabHidden, setFabHidden] = useState(false);
   const [showDesktopHint, setShowDesktopHint] = useState(false);
+  const [isTrulyInstalled, setIsTrulyInstalled] = useState(false);
+
+  useEffect(() => {
+    isPwaActuallyInstalled().then(setIsTrulyInstalled);
+  }, []);
 
   // ------------------------------------------------------
   // PLATFORM DETECTION
@@ -26,7 +39,9 @@ export default function InstallPrompt({ user }: { user: any }) {
     (navigator as any).standalone === true;
 
   const alreadyInstalled =
-    isStandalone || localStorage.getItem("pwaInstalled") === "true";
+    isTrulyInstalled ||
+    isStandalone ||
+    localStorage.getItem("pwaInstalled") === "true";
 
   // ------------------------------------------------------
   // MOBILE INSTALL LOGIC
@@ -57,7 +72,11 @@ export default function InstallPrompt({ user }: { user: any }) {
   // ------------------------------------------------------
 
   const desktopFab =
-    isDesktop && isInstallable && !alreadyInstalled && !fabHidden ? (
+    isDesktop &&
+    isInstallable &&
+    !alreadyInstalled &&
+    !isTrulyInstalled &&
+    !fabHidden ? (
       <button
         className="desktop-install-fab"
         onClick={async () => {
@@ -103,7 +122,6 @@ export default function InstallPrompt({ user }: { user: any }) {
         <>
           {/* Dark overlay */}
           <div className="desktop-install-overlay"></div>
-
 
           {/* Arrow pointing at the actual install icon */}
           <div className="desktop-install-arrow">↑</div>
