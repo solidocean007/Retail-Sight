@@ -56,6 +56,8 @@ import { normalizeFirestoreData } from "../../utils/normalize";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { RecentlyAcceptedList } from "./RecentlyAcceptedList";
+import { getAuth } from "firebase/auth";
+import AuthClaimsDebug from "../dev/AuthClaimsDebug";
 
 function toMillis(value?: string | Timestamp): number | null {
   if (!value) return null;
@@ -207,6 +209,10 @@ export default function AdminUsersConsole() {
     onConfirm: () => void;
   } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+
+  const handleRefreshCustomClaims = async () => {
+    await getAuth().currentUser?.getIdToken(true);
+  };
 
   useEffect(() => {
     if (!db || !companyId) return;
@@ -608,6 +614,10 @@ export default function AdminUsersConsole() {
         color: "var(--text-color)",
       }}
     >
+       {/* <AuthClaimsDebug companyId={companyId} show /> */}
+      {(myRole === "developer" || myRole === "super-admin") && (
+        <AuthClaimsDebug companyId={companyId} show />
+      )}
       <Paper
         elevation={0}
         sx={{

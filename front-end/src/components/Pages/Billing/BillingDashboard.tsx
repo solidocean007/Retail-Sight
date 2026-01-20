@@ -98,7 +98,7 @@ const BillingDashboard: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showPaymentUpdate, setShowPaymentUpdate] = useState(false);
-  const [clientToken, setClientToken] = useState<string | null>(null);
+  // const [clientToken, setClientToken] = useState<string | null>(null);
   const [pendingAddonType, setPendingAddonType] = useState<
     "extraUser" | "extraConnection" | null
   >(null);
@@ -163,14 +163,14 @@ const BillingDashboard: React.FC = () => {
     }
   }, [currentCompanyId]);
 
-  useEffect(() => {
-    if (!currentCompanyId) return;
+  // useEffect(() => {
+  //   if (!currentCompanyId) return;
 
-    const getToken = httpsCallable(functions, "getClientToken");
-    getToken({ companyId: currentCompanyId })
-      .then((res: any) => setClientToken(res.data.clientToken))
-      .catch(() => setClientToken(null));
-  }, [currentCompanyId]);
+  //   const getToken = httpsCallable(functions, "getClientToken");
+  //   getToken({ companyId: currentCompanyId })
+  //     .then((res: any) => setClientToken(res.data.clientToken))
+  //     .catch(() => setClientToken(null));
+  // }, [currentCompanyId]);
 
   useEffect(() => {
     if (!currentCompanyId) return;
@@ -590,7 +590,7 @@ const BillingDashboard: React.FC = () => {
           billingInfo={billingInfo || undefined}
           initialAddonType={pendingAddonType || undefined}
           initialAddonQty={pendingAddonQty || 0}
-          clientToken={clientToken}
+          // clientToken={clientToken}
         />
       )}
 

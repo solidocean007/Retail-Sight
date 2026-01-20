@@ -188,10 +188,18 @@ export const updateSubscriptionWithProration = onCall(
       throw new HttpsError("failed-precondition", "No active subscription.");
     }
     const gateway = getBraintreeGateway();
+    const billing = snap.data()?.billing;
+    const currentPlanId = billing.plan;
+
     await gateway.subscription.update(subscriptionId, {
       planId: newPlanId,
       prorateCharges: true,
-      addOns: { remove: ["*"] },
+      addOns: {
+        remove: [
+          getAddonId(currentPlanId, "extraUser"),
+          getAddonId(currentPlanId, "extraConnection"),
+        ].filter(Boolean),
+      },
     } as any);
 
     if (addons.length) {

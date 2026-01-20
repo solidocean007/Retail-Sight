@@ -216,7 +216,6 @@ export const galloFetchPrograms = onCall(
 
     if (notifyOnProgramSync && newPrograms > 0 && notificationEmails.length) {
       await writeProgramNotificationMail({
-        companyId,
         newPrograms,
         env,
         emails: notificationEmails,
@@ -460,7 +459,6 @@ export async function syncGalloProgramsForCompany(
 
     if (notifyOnProgramSync && newPrograms > 0 && notificationEmails.length) {
       await writeProgramNotificationMail({
-        companyId,
         newPrograms,
         env,
         emails: notificationEmails,
@@ -540,7 +538,6 @@ export const getGalloScheduledImportStatus = onCall(async (req) => {
  * are detected. A single summary email is sent per sync run.
  *
  * @param {Object} params
- * @param {string} params.companyId - The company ID associated with the Gallo integration.
  * @param {number} params.newPrograms - The number of newly discovered Gallo programs.
  * @param {"prod" | "dev"} params.env - The Gallo environment the sync ran against.
  * @param {string[]} params.emails - List of recipient email addresses.
@@ -548,12 +545,10 @@ export const getGalloScheduledImportStatus = onCall(async (req) => {
  * @returns {Promise<void>} Resolves once the mail document is written.
  */
 async function writeProgramNotificationMail({
-  companyId,
   newPrograms,
   env,
   emails,
 }: {
-  companyId: string;
   newPrograms: number;
   env: "prod" | "dev";
   emails: string[];

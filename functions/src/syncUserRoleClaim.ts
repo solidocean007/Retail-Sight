@@ -7,7 +7,7 @@ if (!admin.apps.length) {
 
 /**
  * syncUserRoleClaim
- * Keeps Firebase Auth custom claims in sync with Firestore user role.
+ * Mirrors Firestore user role → Firebase Auth custom claims (authoritative)
  */
 export const syncUserRoleClaim = onDocumentWritten(
   {
@@ -20,22 +20,21 @@ export const syncUserRoleClaim = onDocumentWritten(
     const uid = event.params.uid;
     const after = event.data?.after?.data();
 
-    // 🧹 If user was deleted
+    // User deleted → clear claims
     if (!after) {
       await admin.auth().setCustomUserClaims(uid, {});
       return;
     }
 
-    // 🧩 Read role safely
-    const role = after.role || null;
+    const role = after.role ?? "employee";
+    const companyId = after.companyId ?? null;
 
-    if (["admin", "super-admin", "developer"].includes(role)) {
-      await admin.auth().setCustomUserClaims(uid, { role });
-      console.log(`✅ Synced elevated claim for ${uid}: ${role}`);
-    } else {
-      // Clear elevated claims for regular users
-      await admin.auth().setCustomUserClaims(uid, {});
-      console.log(`ℹ️ Cleared custom claims for ${uid}`);
-    }
+    // 🔑 SINGLE SOURCE OF TRUTH
+    await admin.auth().setCustomUserClaims(uid, {
+      role,
+      companyId,
+    });
+
+    console.log("🔄 Synced user claims", { uid, role, companyId });
   }
 );

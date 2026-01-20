@@ -5,6 +5,7 @@ import CartSummary from "./CartSummary";
 import { useOutsideAlerter } from "../../../utils/useOutsideAlerter";
 import { BillingInfo } from "./BillingDashboard";
 import { functions } from "../../../utils/firebase";
+import BillingAuthDebug from "./BillingAuthDebug";
 
 type ClientTokenResponse = {
   clientToken: string;
@@ -31,7 +32,7 @@ interface CheckoutModalProps {
   planAddons?: PlanAddons;
   initialAddonType?: "extraUser" | "extraConnection";
   initialAddonQty?: number;
-  clientToken?: string | null;
+  // clientToken?: string | null;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -50,7 +51,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   planAddons,
   initialAddonType,
   initialAddonQty,
-  clientToken,
+  // clientToken,
 }) => {
   const isFreePlan = planId === "free";
 
@@ -121,19 +122,33 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             { companyId: string },
             ClientTokenResponse
           >(functions, "getClientToken");
-
-          const token =
-            clientToken ??
-            (await getClientToken({ companyId })).data.clientToken;
+          const { data } = await getClientToken({ companyId });
+          const token = data.clientToken;
+          if (!token) {
+            throw new Error("Missing Braintree client token");
+          }
 
           if (!token) throw new Error("Missing Braintree client token");
 
           if (cancelled) return;
 
+          // instanceRef.current = await dropin.create({
+          //   authorization: token,
+          //   container: dropinRef.current,
+          //   paypal: { flow: "vault" },
+          //   card: {
+          //     overrides: {
+          //       fields: {
+          //         number: { placeholder: "Card number" },
+          //         cvv: { placeholder: "CVV" },
+          //         expirationDate: { placeholder: "MM/YY" },
+          //       },
+          //     },
+          //   },
+          // });
           instanceRef.current = await dropin.create({
             authorization: token,
             container: dropinRef.current,
-            paypal: { flow: "vault" },
             card: {
               overrides: {
                 fields: {
@@ -144,6 +159,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
               },
             },
           });
+
           setDropinReady(true);
         } catch (err) {
           console.error(err);
@@ -261,6 +277,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             ? "Update Payment Method"
             : "Complete Checkout"}
         </h2>
+        {import.meta.env.DEV && <BillingAuthDebug />}
 
         <p className="billing-note">
           {mode === "update-card"

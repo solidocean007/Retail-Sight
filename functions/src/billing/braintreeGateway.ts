@@ -1,8 +1,6 @@
 // functions/src/billing/braintreeGateway.ts
 import braintree from "braintree";
 
-let _gateway: braintree.BraintreeGateway | null = null;
-
 /**
  * Require an environment variable to be present.
  *
@@ -30,26 +28,19 @@ function requireEnv(name: string): string {
  * Safe for Firebase deploy + runtime.
  */
 export function getBraintreeGateway(): braintree.BraintreeGateway {
-  if (_gateway) return _gateway;
-  console.log("BRAINTREE CONFIG", {
-    env: process.env.BRAINTREE_ENVIRONMENT,
-    merchantId: process.env.BRAINTREE_MERCHANT_ID,
-    keyPrefix: process.env.BRAINTREE_PUBLIC_KEY?.slice(0, 6),
-  });
+  const env = requireEnv("BRAINTREE_ENVIRONMENT");
 
   const environment =
-    requireEnv("BRAINTREE_ENVIRONMENT") === "sandbox"
+    env === "sandbox"
       ? braintree.Environment.Sandbox
       : braintree.Environment.Production;
 
-  _gateway = new braintree.BraintreeGateway({
+  return new braintree.BraintreeGateway({
     environment,
     merchantId: requireEnv("BRAINTREE_MERCHANT_ID"),
     publicKey: requireEnv("BRAINTREE_PUBLIC_KEY"),
     privateKey: requireEnv("BRAINTREE_PRIVATE_KEY"),
   });
-
-  return _gateway;
 }
 
 /** Diagnostics only */

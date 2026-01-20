@@ -66,6 +66,9 @@ import {
 import { onUserNotificationCreated } from "./notifications/onUserNotificationCreated";
 import { sendNotificationToUser } from "./notifications/sendNotificationToUser";
 
+// Auth
+import { getMyAuthClaims } from "./billing/auth/getMyAuthClaims";
+
 export {
   getExternalApiKeyStatus,
   upsertGalloAxisKey,
@@ -99,6 +102,9 @@ export {
   enforcePlanLimits,
   generatePostShareToken,
   validatePostShareToken,
+
+  // Auth
+  getMyAuthClaims,
 
   // Billing
   testBraintreeAuth,

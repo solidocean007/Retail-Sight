@@ -57,6 +57,12 @@ export async function assertCompanyBillingAdmin(
     throw new HttpsError("permission-denied", "Admin required.");
   }
 
+  console.log("🔐 Billing auth check", {
+    uid: auth.uid,
+    tokenClaims: auth.token,
+    companyId,
+  });
+
   return { uid: auth.uid, role };
 }
 
