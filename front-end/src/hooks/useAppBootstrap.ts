@@ -17,7 +17,6 @@ import { setupNotificationListenersForUser } from "../utils/listeners/setupNotif
 import { setupNotificationListenersForCompany } from "../utils/listeners/setupNotificationListenerForCompany";
 import { setupCompanyGoalsListener } from "../utils/listeners/setupCompanyGoalsListener";
 import { useFirebaseAuth } from "../utils/useFirebaseAuth";
-import { useIntegrations } from "./useIntegrations";
 
 // ❗ Sync hooks (do NOT block appReady)
 import { useSchemaVersion } from "./useSchemaVersion";
@@ -28,6 +27,7 @@ import { useCustomAccountsSync } from "./useCustomAccountsSync";
 import { useCompanyConnectionsListener } from "./useCompanyConnectionsListener";
 import { useCompanyProductsListener } from "./useCompanyProductsListener";
 import { useGalloGoalsListener } from "./useGalloGoalsListener";
+import { useCompanyIntegrations } from "./useCompanyIntegrations";
 
 /**
  * useAppBootstrap – Option B
@@ -41,12 +41,11 @@ export function useAppBootstrap({
 }: { enabled?: boolean } = {}) {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
-  const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
+  const companyId = currentUser?.companyId ?? null;
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const galloEnabled = isEnabled("galloAxis");
 
   const appReady = useSelector((s: RootState) => s.app.appReady);
-
-  const companyId = currentUser?.companyId ?? null;
 
   const hasBootstrapped = useRef(false);
 

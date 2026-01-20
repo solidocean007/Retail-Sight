@@ -42,7 +42,7 @@ export type NotificationType = {
 export type BusinessType = "distributor" | "supplier";
 export type AccessStatus = "off" | "limited" | "on";
 
-export type ProviderKey = "gallo" | "manualGoals"; // extend later
+export type ProviderKey = "galloAxis" | "manualGoals"; // extend later
 
 export type IntegrationConfig = {
   enabled: boolean;

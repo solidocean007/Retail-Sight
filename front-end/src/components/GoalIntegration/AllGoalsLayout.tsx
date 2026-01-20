@@ -3,13 +3,13 @@ import React, { useEffect, useState } from "react";
 import { useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-import { useIntegrations } from "../../hooks/useIntegrations";
 import AllCompanyGoalsView from "./AllCompanyGoalsView";
 import AllGalloGoalsView from "./AllGalloGoalsView";
 
 import "./allGoalsLayout.css";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 type GoalSource = "company" | "gallo";
 
@@ -23,9 +23,9 @@ const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const user = useSelector(selectUser);
-  const { isEnabled, loading } = useIntegrations();
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
 
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
   const canSeeIntegrations =
     user?.role === "admin" ||
     user?.role === "super-admin" ||

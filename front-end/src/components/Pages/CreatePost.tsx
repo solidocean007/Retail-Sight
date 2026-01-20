@@ -33,18 +33,17 @@ import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import CreatePostOnBehalfOfOtherUser from "../Create-Post/CreatePostOnBehalfOfOtherUser";
 import { CancelRounded } from "@mui/icons-material";
-import { useIntegrations } from "../../hooks/useIntegrations";
 import { mergeAndSetPosts } from "../../Slices/postsSlice";
-import fetchExternalApiKey from "../ApiKeyLogic/fetchExternalApiKey";
 import { UploadImage } from "../Create-Post/UploadImage";
 import { normalizePost } from "../../utils/normalize";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 export const CreatePost = () => {
   const userData = useSelector(selectUser);
   const dispatch = useAppDispatch();
   const companyId = userData?.companyId;
-  const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const galloEnabled = isEnabled("galloAxis");
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -207,7 +206,7 @@ export const CreatePost = () => {
         setIsUploading,
         setUploadProgress,
         setUploadStatusText,
-        galloGoal,
+        galloGoal
       );
       dispatch(mergeAndSetPosts([normalizePost(newPost)]));
       navigate("/user-home-page");
@@ -270,8 +269,8 @@ export const CreatePost = () => {
               {currentStep < 5
                 ? "Next"
                 : isUploading
-                ? `Uploading ${Math.round(uploadProgress)}%`
-                : "Submit"}
+                  ? `Uploading ${Math.round(uploadProgress)}%`
+                  : "Submit"}
             </button>
           </div>
 

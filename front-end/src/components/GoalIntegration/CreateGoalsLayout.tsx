@@ -3,11 +3,11 @@ import React, { useEffect, useState } from "react";
 import { useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-import { useIntegrations } from "../../hooks/useIntegrations";
 import CreateCompanyGoalView from "./CreateCompanyGoalView";
 import GalloGoalImporter from "./GalloIntegration/GalloGoalImporter";
 
 import "./allGoalsLayout.css"; // reuse same CSS
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 type GoalCreateSource = "company" | "gallo";
 
@@ -21,9 +21,9 @@ const CreateGoalsLayout: React.FC<CreateGoalsLayoutProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
-
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const galloEnabled = isEnabled("galloAxis");
+  console.log("Gallo Integration Enabled:", galloEnabled); // false??
   const [source, setSource] = useState<GoalCreateSource>("company");
 
 
