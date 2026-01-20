@@ -78,7 +78,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const [isApplying, setIsApplying] = useState(false);
 
   const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
   const galloGoals = useSelector(
     (state: RootState) => state.galloGoals.galloGoals
   );

@@ -18,7 +18,7 @@ import { LifecycleFilter } from "../../utils/types";
 const AllGalloGoalsView = () => {
   const navigate = useNavigate();
   const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
 
   const [lifecycleFilter, setLifecycleFilter] =
     useState<LifecycleFilter>("active");

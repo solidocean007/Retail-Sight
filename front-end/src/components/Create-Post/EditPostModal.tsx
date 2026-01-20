@@ -64,7 +64,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const { isEnabled } = useIntegrations();
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
   const [allAccountsForCompany, setAllAccountsForCompany] = useState<
     CompanyAccountType[]
   >([]);

@@ -25,7 +25,7 @@ const AllGoalsLayout: React.FC<AllGoalsLayoutProps> = ({
   const user = useSelector(selectUser);
   const { isEnabled, loading } = useIntegrations();
 
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
   const canSeeIntegrations =
     user?.role === "admin" ||
     user?.role === "super-admin" ||

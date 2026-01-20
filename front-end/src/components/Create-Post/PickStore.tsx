@@ -127,7 +127,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const [openManualAccountForm, setOpenManualAccountForm] = useState(false);
   const salesRouteNum = user?.salesRouteNum;
   const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
   const [manualAccountAdded, setManualAccountAdded] = useState(false);
   const [nearbyStores, setNearbyStores] = useState<
     { name: string; address: string; placeId?: string }[]

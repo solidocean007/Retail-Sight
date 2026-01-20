@@ -22,8 +22,8 @@ const CreateGoalsLayout: React.FC<CreateGoalsLayoutProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
-
+  const galloEnabled = isEnabled("galloAxis");
+  console.log("Gallo Integration Enabled:", galloEnabled); // false??
   const [source, setSource] = useState<GoalCreateSource>("company");
 
 

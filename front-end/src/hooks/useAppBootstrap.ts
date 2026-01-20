@@ -42,7 +42,7 @@ export function useAppBootstrap({
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
   const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
 
   const appReady = useSelector((s: RootState) => s.app.appReady);
 

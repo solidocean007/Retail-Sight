@@ -13,7 +13,7 @@ interface MyGoalsProps {
 
 const MyGoals: React.FC<MyGoalsProps> = () => {
   const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
   const [tabIndex, setTabIndex] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));

@@ -44,7 +44,7 @@ export const CreatePost = () => {
   const dispatch = useAppDispatch();
   const companyId = userData?.companyId;
   const { isEnabled } = useIntegrations();
-  const galloEnabled = isEnabled("gallo");
+  const galloEnabled = isEnabled("galloAxis");
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
