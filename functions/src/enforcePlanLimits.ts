@@ -1,6 +1,7 @@
 // functions/src/enforcePlanLimits.ts
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { assertCompanyMember } from "./billing/billingAuth";
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -91,8 +92,14 @@ export async function checkPlanLimit(
  * @returns Allowed status and limit usage details
  */
 export const enforcePlanLimits = onCall(async (request) => {
-  const { companyId, type } = request.data;
+  const { companyId, type } = request.data || {};
+  if (!companyId || !type)
+    throw new HttpsError("invalid-argument", "Missing args.");
   if (!request.auth)
     throw new HttpsError("unauthenticated", "User not logged in.");
+
+  // ✅ must be in that company (admin not required to *check* limits)
+  await assertCompanyMember(request.auth, companyId);
+
   return checkPlanLimit(companyId, type);
 });

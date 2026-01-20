@@ -25,29 +25,38 @@ const CartSummary: React.FC<CartSummaryProps> = ({
   planPrice,
   addons = [],
 }) => {
-  const subtotal = useMemo(
-    () =>
-      planPrice +
-      addons.reduce((sum, a) => sum + a.price * (a.quantity ?? 1), 0),
-    [planPrice, addons]
-  );
+  const numericPlanPrice = Number(planPrice) || 0;
+
+  const subtotal = useMemo(() => {
+    return (
+      numericPlanPrice +
+      addons.reduce(
+        (sum, a) => sum + Number(a.price || 0) * Number(a.quantity ?? 1),
+        0
+      )
+    );
+  }, [numericPlanPrice, addons]);
 
   // 👇 animation trigger state
   const [flash, setFlash] = useState(false);
-  const [animatedTotal, setAnimatedTotal] = useState(subtotal);
+  const [animatedTotal, setAnimatedTotal] = useState<number>(subtotal);
 
   useEffect(() => {
-    const start = animatedTotal;
-    const end = subtotal;
+    const start = Number(animatedTotal) || 0;
+    const end = Number(subtotal) || 0;
+
+    if (start === end) return;
+
     const duration = 300;
     const startTime = performance.now();
 
     const tick = (now: number) => {
       const progress = Math.min((now - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 2); // ease-out
+      const eased = 1 - Math.pow(1 - progress, 2);
       setAnimatedTotal(start + (end - start) * eased);
       if (progress < 1) requestAnimationFrame(tick);
     };
+
     requestAnimationFrame(tick);
   }, [subtotal]);
 

@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
-// import dropin from "braintree-web-drop-in";
 import { httpsCallable } from "firebase/functions";
 import "./checkoutModal.css";
 import CartSummary from "./CartSummary";
 import { useOutsideAlerter } from "../../../utils/useOutsideAlerter";
 import { BillingInfo } from "./BillingDashboard";
 import { functions } from "../../../utils/firebase";
+
+type ClientTokenResponse = {
+  clientToken: string;
+};
 
 interface PlanAddons {
   extraUser: number;
@@ -28,6 +31,7 @@ interface CheckoutModalProps {
   planAddons?: PlanAddons;
   initialAddonType?: "extraUser" | "extraConnection";
   initialAddonQty?: number;
+  clientToken?: string | null;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -46,6 +50,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   planAddons,
   initialAddonType,
   initialAddonQty,
+  clientToken,
 }) => {
   const isFreePlan = planId === "free";
 
@@ -73,53 +78,88 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   );
 
   useEffect(() => {
+    if (!open) {
+      setError(null);
+      setSuccess(false);
+      setLoading(false);
+      setDropinReady(false);
+      setAdditionalUserCount(0);
+      setAdditionalConnectionCount(0);
+
+      if (instanceRef.current) {
+        try {
+          instanceRef.current.teardown();
+        } catch {}
+        instanceRef.current = null;
+      }
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (initialAddonType === "extraUser")
       setAdditionalUserCount(initialAddonQty || 0);
     if (initialAddonType === "extraConnection")
       setAdditionalConnectionCount(initialAddonQty || 0);
   }, [initialAddonType, initialAddonQty]);
 
+  const loadDropin = async () => {
+    const dropin = await import("braintree-web-drop-in");
+    return dropin.default;
+  };
+
   // --- Initialize Braintree drop-in ---
-  // useEffect(() => {
-  //   if (!open || !companyId) return; // ✅ guard
-  //   if (!dropinRef.current) return;
-  //   if (open && dropinRef.current) {
-  //     setDropinReady(false);
-  //     (async () => {
-  //       try {
-  //         const tokenFn = httpsCallable(functions, "getClientToken");
-  //         const tokenRes: any = await tokenFn({ companyId });
-  //         const token = tokenRes.data.clientToken;
-  //         if (!token) throw new Error("Missing Braintree client token");
+  useEffect(() => {
+    if (!open || !companyId || !dropinRef.current) return;
+    let cancelled = false;
+    if (open && dropinRef.current) {
+      setDropinReady(false);
+      (async () => {
+        try {
+          const dropin = await loadDropin();
 
-  //         instanceRef.current = await dropin.create({
-  //           authorization: token,
-  //           container: dropinRef.current,
-  //           paypal: { flow: "vault" },
-  //           card: {
-  //             overrides: {
-  //               fields: {
-  //                 number: { placeholder: "Card number" },
-  //                 cvv: { placeholder: "CVV" },
-  //                 expirationDate: { placeholder: "MM/YY" },
-  //               },
-  //             },
-  //           },
-  //         });
-  //         setDropinReady(true);
-  //       } catch (err) {
-  //         console.error(err);
-  //         setError("Failed to initialize payment form.");
-  //       }
-  //     })();
-  //   }
+          const getClientToken = httpsCallable<
+            { companyId: string },
+            ClientTokenResponse
+          >(functions, "getClientToken");
 
-  //   return () => {
-  //     instanceRef.current?.teardown?.();
-  //   };
-  // }, [open, companyId]);
+          const token =
+            clientToken ??
+            (await getClientToken({ companyId })).data.clientToken;
+
+          if (!token) throw new Error("Missing Braintree client token");
+
+          if (cancelled) return;
+
+          instanceRef.current = await dropin.create({
+            authorization: token,
+            container: dropinRef.current,
+            paypal: { flow: "vault" },
+            card: {
+              overrides: {
+                fields: {
+                  number: { placeholder: "Card number" },
+                  cvv: { placeholder: "CVV" },
+                  expirationDate: { placeholder: "MM/YY" },
+                },
+              },
+            },
+          });
+          setDropinReady(true);
+        } catch (err) {
+          console.error(err);
+          setError("Failed to initialize payment form.");
+        }
+      })();
+    }
+
+    return () => {
+      cancelled = true;
+      instanceRef.current?.teardown?.();
+    };
+  }, [open, companyId]);
 
   // --- Submit handler ---
+
   const handleSubmit = async () => {
     if (!instanceRef.current || !companyId) return;
     setLoading(true);
@@ -127,20 +167,21 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     try {
       const { nonce } = await instanceRef.current.requestPaymentMethod();
-      const isExistingSub = !!billingInfo?.subscriptionId;
+      const isExistingSub =
+        !!billingInfo?.subscriptionId && billingInfo.plan !== "free";
 
       const addons: any[] = [];
       if (additionalUserCount > 0)
         addons.push({
           id: "extraUser",
           quantity: additionalUserCount,
-          action: "add",
+          // action: "add",
         });
       if (additionalConnectionCount > 0)
         addons.push({
           id: "extraConnection",
           quantity: additionalConnectionCount,
-          action: "add",
+          // action: "add",
         });
 
       if (isExistingSub) {
@@ -225,8 +266,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {mode === "update-card"
             ? "Update your saved card details below."
             : isFreePlan
-            ? "Start your Free plan and securely add payment details for future add-ons."
-            : "Billed monthly • Cancel anytime"}
+              ? "Start your Free plan and securely add payment details for future add-ons."
+              : "Billed monthly • Cancel anytime"}
         </p>
 
         {/* === Plan Summary === */}
@@ -290,7 +331,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {!dropinReady && !error && (
           <div className="dropin-loading">
             <div className="spinner" />
-            <p>Loading secure payment form...</p>
+            <p className="secure-note">🔒 Secure payment form loading…</p>
           </div>
         )}
         {error && <p className="error-msg">{error}</p>}
@@ -310,12 +351,12 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {loading
             ? "Processing..."
             : mode === "update-card"
-            ? "Update Card"
-            : isFreePlan
-            ? "Start Free Plan"
-            : isUpgrade
-            ? `Upgrade to ${planName}`
-            : `Start ${planName || "Plan"}`}
+              ? "Update Card"
+              : isFreePlan
+                ? "Start Free Plan"
+                : isUpgrade
+                  ? `Upgrade to ${planName}`
+                  : `Start ${planName || "Plan"}`}
         </button>
       </div>
     </div>

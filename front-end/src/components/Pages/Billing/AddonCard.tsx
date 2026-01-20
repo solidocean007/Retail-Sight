@@ -2,11 +2,16 @@
 import React, { useState } from "react";
 import "./addonCard.css";
 
+export type AddonUsage = {
+  included: number;
+  purchased: number;
+};
+
 interface AddonCardProps {
   title: string;
   description: string;
   unitPrice: number;
-  current: number;
+  usage: AddonUsage;
   onAdd: (count: number) => void;
   onRemove: (count: number) => void;
   pendingRemoval?: {
@@ -20,7 +25,7 @@ const AddonCard: React.FC<AddonCardProps> = ({
   title,
   description,
   unitPrice,
-  current,
+  usage,
   onAdd,
   onRemove,
   pendingRemoval,
@@ -29,8 +34,7 @@ const AddonCard: React.FC<AddonCardProps> = ({
   const [loading, setLoading] = useState<"add" | "remove" | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Math.max(1, parseInt(e.target.value) || 1);
-    setQuantity(val);
+    setQuantity(Math.max(1, parseInt(e.target.value) || 1));
   };
 
   const handleAdd = async () => {
@@ -51,13 +55,17 @@ const AddonCard: React.FC<AddonCardProps> = ({
     }
   };
 
-  const monthlyCost = unitPrice * quantity;
-
   const formatDate = (date: any): string | null => {
     if (!date) return null;
     const d =
-      date.toDate?.() ? date.toDate() : typeof date === "string" ? new Date(date) : null;
-    return d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : null;
+      date.toDate?.() ?? (typeof date === "string" ? new Date(date) : null);
+    return d
+      ? d.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : null;
   };
 
   const isPending =
@@ -70,58 +78,63 @@ const AddonCard: React.FC<AddonCardProps> = ({
     <div className="addon-card">
       <div className="addon-header">
         <h4>{title}</h4>
-        <span className="addon-price">${unitPrice.toFixed(2)}/ea</span>
       </div>
+      <div className="addon-card-section">
+        <div className="addon-usage">
+          <div>
+            Included with plan: <strong>{usage.included}</strong>
+          </div>
+          <div>
+            Extra purchased: <strong>{usage.purchased}</strong>
+          </div>
+        </div>
 
-      <p className="addon-desc">{description}</p>
-
-      <div className="addon-current">
-        <p>
-          Current: <strong>{current}</strong>
-        </p>
-      </div>
-
-      {isPending && (
-        <div className="addon-pending">
-          <span>
+        {isPending && (
+          <div className="addon-pending">
             ⏳ Scheduled for removal on{" "}
             <strong>{removalDate || "next billing cycle"}</strong>
-          </span>
-        </div>
-      )}
+          </div>
+        )}
 
-      <div className="addon-controls">
-        <input
-          type="number"
-          min={1}
-          value={quantity}
-          onChange={handleChange}
-          className="addon-input"
-        />
-        <div className="addon-buttons">
-          <button
-            className="btn-addon-action add"
-            onClick={handleAdd}
-            disabled={loading === "add"}
-          >
-            {loading === "add" ? "Adding..." : "Add"}
-          </button>
+        <div className="addon-controls">
+          <div className="addon-controls-text">
+            <p className="addon-desc">{description}</p>
 
-          {current > 0 && (
+            <p className="addon-price">${unitPrice.toFixed(2)}/ea</p>
+          </div>
+
+          <div className="addon-buttons">
+            <input
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={handleChange}
+              className="addon-input"
+            />
             <button
-              className="btn-addon-action remove"
-              onClick={handleRemove}
-              disabled={loading === "remove"}
+              className="btn-addon-action add"
+              onClick={handleAdd}
+              disabled={loading === "add"}
             >
-              {loading === "remove" ? "Removing..." : "Remove"}
+              {loading === "add" ? "Adding..." : "Add"}
             </button>
-          )}
+
+            {usage.purchased > 0 && (
+              <button
+                className="btn-addon-action remove"
+                onClick={handleRemove}
+                disabled={loading === "remove"}
+              >
+                {loading === "remove" ? "Removing..." : "Remove"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="addon-footer">
-        <p className="addon-monthly">+${monthlyCost.toFixed(2)} / month</p>
-      </div>
+      {/* <div className="addon-footer">
+        +${(unitPrice * quantity).toFixed(2)} / month
+      </div> */}
     </div>
   );
 };

@@ -217,7 +217,7 @@ export default function CompanyOnboardingAdmin() {
         />
       </div>
 
-      {selected && (
+      {false && selected && ( // need to revisit this later
         <CompanyDrawer
           company={selected as any}
           onClose={() => setSelected(null)}

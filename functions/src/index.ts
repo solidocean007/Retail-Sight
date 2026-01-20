@@ -8,6 +8,7 @@ import { upsertGalloAxisKey } from "./galloKeys/upsertGalloAxisKey";
 import { deleteGalloAxisKey } from "./galloKeys/deleteGalloAxisKey";
 import { resolveCompanyEmail } from "./resolveCompanyEmail";
 import { onConnectionApproved } from "./onConnectionsApproved";
+import { onConnectionRemoved } from "./onConnectionRemoved";
 import { sharePostWithCompany } from "./sharePostWithCompany";
 import { onSharePost } from "./onSharePost";
 import { onConnectionBrandsUpdated } from "./onConnectionBrandsUpdated";
@@ -41,28 +42,29 @@ import {
 import { galloSendAchievement } from "./galloKeys/galloSendAchievment";
 import { analyzePostImages } from "./analyzePostImages";
 
-// 🧾 Braintree Billing System
+// 🧾 Billing – Callables
+import { testBraintreeAuth } from "./billing/billingHandlers/testBraintreeAuth";
 import {
-  updateSubscriptionWithProration,
-  createBraintreeCustomer,
-  createSubscription,
-  cancelSubscription,
-  handleBraintreeWebhook,
   getClientToken,
+  createSubscription,
+  updateSubscriptionWithProration,
   addAddon,
   removeAddon,
-  calculateSubscriptionTotal,
-  syncAddonUsage,
-  updatePaymentMethod,
-  listPlansAndAddons,
-  initCompanyBilling,
-  backfillBillingForCompanies,
-} from "./braintreeHandlers";
+  cancelSubscription,
+} from "./billing/billingHandlers/callables";
+
+// 🧾 Billing – Webhook
+import { handleBraintreeWebhook } from "./billing/billingHandlers/webhooks";
+
+// 🧾 Billing – Usage Counters
+import {
+  onUserStatusChange,
+  onConnectionStatusChange,
+} from "./billing/usageCounters";
 
 // Notification system
 import { onUserNotificationCreated } from "./notifications/onUserNotificationCreated";
 import { sendNotificationToUser } from "./notifications/sendNotificationToUser";
-import { syncPlanLimits } from "./braintreeHelpers";
 
 export {
   getExternalApiKeyStatus,
@@ -98,22 +100,17 @@ export {
   generatePostShareToken,
   validatePostShareToken,
 
-  // Billing functions
-  updateSubscriptionWithProration,
-  createBraintreeCustomer,
-  createSubscription,
-  cancelSubscription,
-  handleBraintreeWebhook,
+  // Billing
+  testBraintreeAuth,
   getClientToken,
+  createSubscription,
+  updateSubscriptionWithProration,
   addAddon,
   removeAddon,
-  calculateSubscriptionTotal,
-  syncPlanLimits,
-  syncAddonUsage,
-  updatePaymentMethod,
-  listPlansAndAddons,
-  initCompanyBilling,
-  backfillBillingForCompanies,
+  cancelSubscription,
+  handleBraintreeWebhook,
+  onUserStatusChange,
+  onConnectionStatusChange,
 
   // Connection function
   createInviteAndDraftConnection,
@@ -122,6 +119,7 @@ export {
   acceptInviteAutoResolve,
   onPendingNewUserAndCompanyInviteCreate,
   onActivityEventCreated,
+  onConnectionRemoved,
 
   // Notifications
   onUserNotificationCreated,

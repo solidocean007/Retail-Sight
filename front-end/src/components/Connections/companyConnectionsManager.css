@@ -81,7 +81,7 @@
 .connection-builder-backdrop {
   background-color: rgba(0, 0, 0, 0.6) !important;
   backdrop-filter: blur(2px);
-   z-index: 1200 !important;
+  z-index: 1200 !important;
 }
 
 .edit-zone {
@@ -307,6 +307,16 @@
   text-align: center;
   box-shadow: var(--card-shadow);
   transition: all 0.25s ease;
+}
+
+.pending-badge {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--warning-color);
+  background: var(--warning-bg);
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-block;
 }
 
 .info-banner-header {

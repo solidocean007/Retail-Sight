@@ -18,6 +18,15 @@ export const approveAccessRequest = onCall(async (request) => {
   const reqSnap = await reqRef.get();
   if (!reqSnap.exists) throw new Error("Access request not found");
 
+  const planId = "free";
+
+  const planSnap = await db.collection("plans").doc(planId).get();
+  if (!planSnap.exists) {
+    throw new Error(`Plan ${planId} not found`);
+  }
+
+  const plan = planSnap.data()!;
+
   const reqData = reqSnap.data() as {
     firstName: string;
     lastName: string;
@@ -60,6 +69,30 @@ export const approveAccessRequest = onCall(async (request) => {
     verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
     verifiedBy: "system-admin",
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // add billing info to company
+  await companyDoc.ref.update({
+    billing: {
+      plan: planId,
+      addons: {
+        extraUser: 0,
+        extraConnection: 0,
+      },
+      paymentStatus: "inactive", // free but enforceable
+      braintreeCustomerId: null,
+      subscriptionId: null,
+      renewalDate: null,
+      totalMonthlyCost: 0,
+    },
+    limits: {
+      userLimit: plan.userLimit,
+      connectionLimit: plan.connectionLimit,
+    },
+    usage: {
+      users: 0,
+      connections: 0,
+    },
   });
 
   // 📨 Create invite doc for first admin user

@@ -3,13 +3,13 @@
    =========================== */
 
 .addon-card {
-  background: var(--dashboard-card);
+  background: var(--billing-card-background);
   border: 1px solid var(--border-color);
   border-radius: var(--card-radius);
   padding: 1.25rem 2rem; /* ⬆️ added horizontal padding */
   box-shadow: var(--card-shadow);
   display: flex;
-  /* flex-direction: column; */
+  flex-direction: column;
   width: 100%;
   margin-bottom: 1rem;
   justify-content: space-between;
@@ -23,14 +23,16 @@
 
 .addon-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .addon-header h4 {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--primary-blue);
+  margin-bottom: 0;
 }
 
 .addon-price {
@@ -49,12 +51,20 @@
   margin-bottom: 0.6rem;
 }
 
+.addon-usage {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
 .addon-controls {
   display: flex;
+  width: 100%;
+  justify-content: space-between;
   align-items: center;
   gap: 0.6rem;
   margin-bottom: 0.6rem;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
 }
 
 .addon-input {
@@ -140,7 +150,7 @@
 
   .addon-buttons {
     width: 100%;
-    flex-direction: column;
+    /* flex-direction: column; */
   }
 
   .btn-addon-action {

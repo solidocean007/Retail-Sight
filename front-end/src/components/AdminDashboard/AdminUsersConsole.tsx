@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -22,38 +21,24 @@ import {
   AccordionSummary,
   AccordionDetails,
   Paper,
-  IconButton,
-  Menu,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import EditIcon from "@mui/icons-material/Edit";
 
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import PersonAddAlt1RoundedIcon from "@mui/icons-material/PersonAddAlt1Rounded";
-import {
-  DataGrid,
-  GridActionsCellItem,
-  GridColDef,
-  GridValueGetter,
-  GridValueFormatter,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
+import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
 import {
   collection,
   query,
-  where,
   orderBy,
   onSnapshot,
-  addDoc,
   doc,
   deleteDoc,
   updateDoc,
-  serverTimestamp,
   writeBatch,
-  getDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { useSelector } from "react-redux";
 import {
@@ -71,6 +56,18 @@ import { normalizeFirestoreData } from "../../utils/normalize";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { RecentlyAcceptedList } from "./RecentlyAcceptedList";
+
+function toMillis(value?: string | Timestamp): number | null {
+  if (!value) return null;
+  if (typeof value === "string") {
+    const t = new Date(value).getTime();
+    return isNaN(t) ? null : t;
+  }
+  if (value instanceof Timestamp) {
+    return value.toMillis();
+  }
+  return null;
+}
 
 function NoPendingInvitesOverlay() {
   return (
@@ -114,7 +111,6 @@ export type AdminUserRow = {
 
 export default function AdminUsersConsole() {
   const dispatch = useAppDispatch();
-  const theme = useTheme();
   const isPhone = useMediaQuery("(max-width: 640px)"); // ~tailwind 'sm'
   const isTablet = useMediaQuery("(max-width: 1024px)"); // ~tailwind 'lg
   const me = useSelector(selectUser);
@@ -130,10 +126,31 @@ export default function AdminUsersConsole() {
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const companyId = useSelector(selectUser)?.companyId;
+  const [companyLimits, setCompanyLimits] = useState<{
+    used: number;
+    limit: number;
+  } | null>(null);
 
-  const RECENT_DAYS = 70
-  ;
+  useEffect(() => {
+    if (!companyId) return;
 
+    return onSnapshot(doc(db, "companies", companyId), (snap) => {
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+
+      const baseLimit = data?.limits?.userLimit ?? 0;
+      const addon = data?.billing?.addons?.extraUser ?? 0;
+      const used = data?.usage?.users ?? 0;
+
+      setCompanyLimits({
+        used,
+        limit: baseLimit + addon,
+      });
+    });
+  }, [companyId]);
+
+  const RECENT_DAYS = 70;
   const recentlyAcceptedInvites = useMemo(() => {
     const now = Date.now();
 
@@ -146,10 +163,7 @@ export default function AdminUsersConsole() {
         );
         if (!wasInvited) return false;
 
-        const created =
-          typeof u.createdAt === "string"
-            ? new Date(u.createdAt).getTime()
-            : u.createdAt?.toDate?.().getTime?.();
+        const created = toMillis(u.createdAt as any);
 
         if (!created) return false;
 
@@ -173,37 +187,6 @@ export default function AdminUsersConsole() {
     );
   }, [invites, localUsers]);
 
-  useEffect(() => {
-    const fetchUserLimit = async () => {
-      if (!companyId) return;
-      setLimitLoading(true);
-      try {
-        const enforce = httpsCallable(functions, "enforcePlanLimits");
-        const res = await enforce({ companyId, type: "user" });
-        const data = res.data as {
-          usedUsers: number;
-          remainingConnections: number;
-          remaining: number;
-          planLimit: number;
-          used: number;
-        };
-
-        // pick safest structure from function
-        setUserLimitInfo({
-          used: data.used ?? data.usedUsers ?? 0,
-          remaining: data.remaining ?? data.remainingConnections ?? 0,
-          planLimit: data.planLimit ?? 0,
-        });
-      } catch (err) {
-        console.error("Failed to load user limit info:", err);
-      } finally {
-        setLimitLoading(false);
-      }
-    };
-
-    fetchUserLimit();
-  }, [companyId, invites.length]);
-
   const [loadingInvites, setLoadingInvites] = useState(true);
   const [tab, setTab] = useState(0);
   const [editRow, setEditRow] = useState<UserType | null>(null);
@@ -211,16 +194,13 @@ export default function AdminUsersConsole() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive" | "deleted"
   >("all");
-  const [userLimitInfo, setUserLimitInfo] = useState<{
-    used: number;
-    remaining: number;
-    planLimit: number;
-  } | null>(null);
-  const [limitLoading, setLimitLoading] = useState(false);
+  const canInviteUser = companyLimits
+    ? companyLimits.used < companyLimits.limit
+    : false;
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("employee");
-  const [inviteRoute, setInviteRoute] = useState("");
+  const [_inviteRoute, setInviteRoute] = useState("");
 
   const [confirmation, setConfirmation] = useState<{
     message: string;
@@ -309,25 +289,16 @@ export default function AdminUsersConsole() {
       setInviteEmail("");
       setInviteRole("employee");
       setInviteRoute("");
-
-      // Refresh remaining slot counter
-      const res = await enforce({ companyId, type: "user" });
-      const data = res.data as any;
-      setUserLimitInfo({
-        used: data.used ?? data.usedUsers ?? 0,
-        remaining: data.remaining ?? data.remainingConnections ?? 0,
-        planLimit: data.planLimit ?? 0,
-      });
     } catch (err: any) {
       const code = err?.code || err?.message;
       const friendly =
         code === "resource-exhausted"
           ? "You’ve reached your user limit. Upgrade your plan to add more users."
           : code === "failed-precondition"
-          ? "This user already belongs to another company."
-          : code === "already-exists"
-          ? "An invite is already pending for this email."
-          : "Error sending invite.";
+            ? "This user already belongs to another company."
+            : code === "already-exists"
+              ? "An invite is already pending for this email."
+              : "Error sending invite.";
       dispatch(showMessage({ text: friendly, severity: "error" }));
     }
   };
@@ -396,7 +367,7 @@ export default function AdminUsersConsole() {
     } catch (e: any) {
       const msg = e.message?.includes("super-admins")
         ? e.message
-        : e.message ?? "Update failed.";
+        : (e.message ?? "Update failed.");
       dispatch(showMessage({ text: msg, severity: "error" }));
     } finally {
       const updatedUser = { ...editRow };
@@ -660,34 +631,32 @@ export default function AdminUsersConsole() {
           elevation={0}
           sx={{ p: 1.5, bgcolor: "var(--dashboard-card)", borderRadius: 3 }}
         >
-          {userLimitInfo && (
+          {companyLimits && (
             <div
               style={{
                 marginBottom: "0.75rem",
                 fontSize: "0.9rem",
                 fontWeight: 500,
                 color:
-                  userLimitInfo.remaining <= 0
+                  companyLimits.used >= companyLimits.limit
                     ? "var(--error-color)"
-                    : userLimitInfo.remaining <= 2
-                    ? "var(--warning-color)"
-                    : "var(--text-secondary)",
+                    : companyLimits.limit - companyLimits.used <= 2
+                      ? "var(--warning-color)"
+                      : "var(--text-secondary)",
                 background:
-                  userLimitInfo.remaining <= 0
+                  companyLimits.used >= companyLimits.limit
                     ? "var(--error-bg)"
-                    : userLimitInfo.remaining <= 2
-                    ? "var(--warning-bg)"
-                    : "transparent",
+                    : companyLimits.limit - companyLimits.used <= 2
+                      ? "var(--warning-bg)"
+                      : "transparent",
                 padding: "0.35rem 0.75rem",
                 borderRadius: "6px",
                 display: "inline-block",
               }}
             >
-              {limitLoading
-                ? "Checking available slots..."
-                : userLimitInfo.remaining > 0
-                ? `${userLimitInfo.used}/${userLimitInfo.planLimit} users (${userLimitInfo.remaining} remaining)`
-                : `User limit reached (${userLimitInfo.planLimit} plan limit)`}
+              {companyLimits.used}/{companyLimits.limit} users
+              {companyLimits.used >= companyLimits.limit &&
+                " — User limit reached"}
             </div>
           )}
 
@@ -827,6 +796,7 @@ export default function AdminUsersConsole() {
                     variant="contained"
                     onClick={handleSendInvite}
                     startIcon={<SendRoundedIcon />}
+                    disabled={!canInviteUser}
                   >
                     Send Invite
                   </Button>

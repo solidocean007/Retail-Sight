@@ -7,22 +7,19 @@ import {
   where,
   updateDoc,
   doc,
-  CollectionReference,
   or,
   getDoc,
-  serverTimestamp,
-  addDoc,
   Timestamp,
 } from "firebase/firestore";
 import { db, functions } from "../utils/firebase";
-import { CompanyConnectionType, ConnectionRequestType } from "../utils/types";
+import { CompanyConnectionType } from "../utils/types";
 import {
   setCompanyConnectionsStore,
   updateCompanyConnectionInStore,
 } from "../utils/database/companyConnectionsDBUtils";
 import { httpsCallable } from "firebase/functions";
 
-function normalizeTimestamps(obj: any) {
+function normalizeTimestamps<T extends Record<string, any>>(obj: T): T {
   const result: any = { ...obj };
   Object.keys(result).forEach((key) => {
     if (result[key] instanceof Timestamp) {
@@ -44,71 +41,47 @@ const initialState: CompanyConnectionsState = {
   error: null,
 };
 
-// companyConnectionSlice.ts
-
+/**
+ * ✅ CREATE CONNECTION (via Cloud Function ONLY)
+ */
 export const createConnectionRequest = createAsyncThunk(
   "companyConnections/createRequest",
   async (
-    { currentCompanyId, user, usersCompany, emailInput, brandSelection }: any,
+    {
+      currentCompanyId,
+      emailInput,
+      brandSelection,
+      user,
+    }: {
+      currentCompanyId: string;
+      emailInput: string;
+      brandSelection: string[];
+      user: any;
+    },
     { rejectWithValue }
   ) => {
-    const safeBrands = Array.isArray(brandSelection) ? brandSelection : [];
-    const now = new Date().toISOString();
+    try {
+      const fn = httpsCallable(functions, "createConnectionRequest");
 
-    const lookupFn = httpsCallable(functions, "lookupConnectionTarget");
-    const result: any = await lookupFn({
-      email: emailInput,
-      fromCompanyId: currentCompanyId,
-    });
+      const res = await fn({
+        fromCompanyId: currentCompanyId,
+        email: emailInput,
+        pendingBrands: (brandSelection ?? []).map((b) => ({
+          brand: b,
+          proposedBy: user,
+        })),
+      });
 
-    if (!result?.data) throw new Error("Connection lookup failed.");
-    if (result.data.mode !== "user-found") {
-      throw new Error("Cannot create connection — invalid target company.");
+      return normalizeTimestamps(res.data as CompanyConnectionType);
+    } catch (err: any) {
+      return rejectWithValue(err?.message || "Failed to create connection.");
     }
-
-    const {
-      companyId: toCompanyId,
-      companyType: toCompanyType,
-      companyName: toCompanyName,
-    } = result.data;
-
-    // 🔥 UPDATED: Now stores full UserType object
-    const newRequest: ConnectionRequestType = {
-      requestToEmailLower: user.email,
-      requestFromCompanyType: usersCompany.companyType,
-      requestFromCompanyId: currentCompanyId,
-      requestFromCompanyName: usersCompany.companyName ?? "Unknown Company",
-      requestToCompanyId: toCompanyId,
-      requestToCompanyType: toCompanyType,
-      requestToCompanyName: toCompanyName,
-      requestedByUid: user.uid,
-      status: "pending",
-      pendingBrands: safeBrands.map((b: string) => ({
-        brand: b,
-        proposedBy: user, // ✔ full user object
-      })),
-      requestedAt: now,
-    };
-
-    // 🔥 Also stored correctly in Firestore
-    const docRef = await addDoc(collection(db, "companyConnections"), {
-      ...newRequest,
-      requestedEmail: emailInput,
-      requestToCompanyId: toCompanyId,
-      requestToCompanyType: toCompanyType,
-      requestToCompanyName: toCompanyName,
-      requestedAt: serverTimestamp(),
-      pendingBrands: safeBrands.map((b: string) => ({
-        brand: b,
-        proposedBy: user, // ✔ full user object
-      })),
-    });
-
-    return { id: docRef.id, ...newRequest };
   }
 );
 
-// ✅ Load all connections
+/**
+ * ✅ FETCH CONNECTIONS
+ */
 export const fetchCompanyConnections = createAsyncThunk(
   "companyConnections/fetch",
   async (companyId: string) => {
@@ -122,18 +95,21 @@ export const fetchCompanyConnections = createAsyncThunk(
 
     const snapshot = await getDocs(q);
 
-    const data = snapshot.docs.map((d) => {
-      const raw = d.data() as Omit<CompanyConnectionType, "id">;
-      return { id: d.id, ...normalizeTimestamps(raw) };
-    });
+    const data = snapshot.docs.map((d) =>
+      normalizeTimestamps({
+        id: d.id,
+        ...(d.data() as Omit<CompanyConnectionType, "id">),
+      })
+    );
 
-    // ✅ Cache offline
     await setCompanyConnectionsStore(companyId, data);
-
     return data;
   }
 );
 
+/**
+ * ⚠️ STATUS UPDATE (OK for now, CF later)
+ */
 export const updateConnectionStatus = createAsyncThunk(
   "companyConnections/updateStatus",
   async ({
@@ -149,15 +125,13 @@ export const updateConnectionStatus = createAsyncThunk(
     await updateDoc(ref, { status });
 
     const snap = await getDoc(ref);
-    const updatedConnection = normalizeTimestamps({
+    const updated = normalizeTimestamps({
       ...(snap.data() as CompanyConnectionType),
       id,
       status,
     });
 
-    // ✅ Update local IndexedDB (single record)
-    await updateCompanyConnectionInStore(companyId, updatedConnection);
-
+    await updateCompanyConnectionInStore(companyId, updated);
     return { id, status };
   }
 );
@@ -170,9 +144,7 @@ const companyConnectionSlice = createSlice({
       state,
       action: PayloadAction<CompanyConnectionType[]>
     ) => {
-      const incoming = action.payload;
-      const merged = [...incoming];
-      state.connections = merged;
+      state.connections = [...action.payload];
     },
   },
   extraReducers: (builder) => {
@@ -184,10 +156,14 @@ const companyConnectionSlice = createSlice({
         state.loading = false;
         state.connections = action.payload;
       })
+      .addCase(createConnectionRequest.fulfilled, (state, action) => {
+        state.connections.push(action.payload);
+      })
       .addCase(updateConnectionStatus.fulfilled, (state, action) => {
-        const { id, status } = action.payload;
-        const target = state.connections.find((c) => c.id === id);
-        if (target) target.status = status;
+        const target = state.connections.find(
+          (c) => c.id === action.payload.id
+        );
+        if (target) target.status = action.payload.status;
       });
   },
 });

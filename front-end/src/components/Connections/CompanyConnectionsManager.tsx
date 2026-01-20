@@ -60,13 +60,12 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     (c) => c.status === "approved"
   ).length;
 
+  const pendingConnections = connections.filter(
+    (c) => c.status === "pending"
+  ).length;
+
   const connectionLimitReached = // 'connectionLimitReached' is declared but its value is never read
     approvedConnections >= planLimit + extraConnections;
-
-  const totalLimit = (planLimit || 0) + (extraConnections || 0);
-  // const progressPercent = totalLimit
-  //   ? Math.min((approvedConnections / totalLimit) * 100, 100)
-  //   : 0;
 
   // ✅ Load plan once (or refresh if plan name changed)
   useEffect(() => {
@@ -114,12 +113,8 @@ const CompanyConnectionsManager: React.FC<Props> = ({
         createConnectionRequest({
           currentCompanyId,
           user,
-          usersCompany,
           emailInput,
-          pendingBrands: brandSelection.map((b) => ({
-            brand: b,
-            proposedBy: user,
-          })),
+          brandSelection,
         })
       ).unwrap();
 
@@ -166,6 +161,11 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     setIsEditOpen(false);
     setSelectedConnection(null);
   };
+
+  const totalLimit = planLimit + (extraConnections || 0);
+  const progressPercent = totalLimit
+    ? Math.min((approvedConnections / totalLimit) * 100, 100)
+    : 0;
 
   return (
     <div className="connections-dashboard">
@@ -263,20 +263,19 @@ const CompanyConnectionsManager: React.FC<Props> = ({
             <div className="tier-bar">
               <div
                 className="tier-progress"
-                style={{
-                  width: `${Math.min(
-                    (approvedConnections /
-                      (planLimit + (extraConnections || 0))) *
-                      100,
-                    100
-                  )}%`,
-                }}
+                style={{ width: `${progressPercent}%` }}
               ></div>
             </div>
             <small>
-              {approvedConnections} of {planLimit + (extraConnections || 0)}{" "}
-              connections used
+              {approvedConnections} of {totalLimit} connections used
             </small>
+
+            {pendingConnections > 0 && (
+              <div className="pending-badge">
+                {pendingConnections} pending — does not count toward your limit
+              </div>
+            )}
+
             <div className="connection-create-card">
               <h4>Create New Connection</h4>
               <p>Invite another company to connect and share brand activity.</p>

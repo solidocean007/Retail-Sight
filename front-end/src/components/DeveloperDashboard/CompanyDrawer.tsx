@@ -2,7 +2,7 @@
 import { Box, Button, Chip, Divider, Drawer, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { CheckCircle, RadioButtonUnchecked } from "@mui/icons-material";
 
-export default function CompanyDrawer({
+export default function CompanyDrawer({  // this component is redudnant as is and does too much
   company,
   onClose,
   onChanged,

@@ -70,6 +70,21 @@ export const onConnectionApproved = onDocumentUpdated(
       }
     }
 
+    // ✅ Increment usage ONLY when approved
+    await db
+      .collection("companies")
+      .doc(requestFromCompanyId)
+      .update({
+        "usage.connections": FieldValue.increment(1),
+      });
+
+    await db
+      .collection("companies")
+      .doc(requestToCompanyId)
+      .update({
+        "usage.connections": FieldValue.increment(1),
+      });
+
     const reversePostsSnap = await db
       .collection("posts")
       .where("companyId", "==", requestToCompanyId)
