@@ -27,13 +27,13 @@ import {
   selectUsersGalloGoals,
 } from "../../Slices/galloGoalsSlice";
 import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
-import { useIntegrations } from "../../hooks/useIntegrations";
 import { setAllAccounts } from "../../Slices/allAccountsSlice";
 import ManualAccountForm from "./ManualAccountForm";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { ResetTvOutlined } from "@mui/icons-material";
 import NoResults from "../NoResults";
 import { GoalPickerModal } from "./GoalPickerModal";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 // Normalize abbreviations and compare address similarity
 const normalizeCache = new Map<string, string>();
@@ -126,7 +126,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const isAdminOrAbove = ["admin", "super-admin"].includes(user?.role || "");
   const [openManualAccountForm, setOpenManualAccountForm] = useState(false);
   const salesRouteNum = user?.salesRouteNum;
-  const { isEnabled } = useIntegrations();
+  const companyId = user?.companyId;
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
   const [manualAccountAdded, setManualAccountAdded] = useState(false);
   const [nearbyStores, setNearbyStores] = useState<
@@ -170,9 +171,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
   );
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalWithIdType>();
-  const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
-  );
   const allGalloGoals = useSelector(selectAllGalloGoals);
   const [openAccountModal, setOpenAccountModal] = useState(true);
   const onlyUsersStores = !isAllStoresShown;

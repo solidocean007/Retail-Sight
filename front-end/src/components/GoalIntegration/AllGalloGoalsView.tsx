@@ -10,14 +10,17 @@ import { useMemo, useState } from "react";
 import "./gallo-goals.css";
 import PostViewerModal from "../PostViewerModal";
 import { RootState } from "../../utils/store";
-import { useIntegrations } from "../../hooks/useIntegrations";
 import { useNavigate } from "react-router-dom";
 import GalloGoalCard from "./GalloGoalCard";
 import { LifecycleFilter } from "../../utils/types";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 const AllGalloGoalsView = () => {
   const navigate = useNavigate();
-  const { isEnabled } = useIntegrations();
+  const companyId = useSelector(
+    (state: RootState) => state.user.currentUser?.companyId
+  );
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
 
   const [lifecycleFilter, setLifecycleFilter] =

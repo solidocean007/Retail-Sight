@@ -42,12 +42,12 @@ import CreatePostOnBehalfOfOtherUser from "./CreatePostOnBehalfOfOtherUser";
 import GoalChangeConfirmation from "./GoalChangeConfirmation";
 import { duplicatePostWithNewGoal } from "../../utils/PostLogic/dupilcatePostWithNewGoal";
 import { updatePost } from "../../Slices/postsSlice";
-import { useIntegrations } from "../../hooks/useIntegrations";
 import GalloGoalDropdown from "./GalloGoalDropdown";
 import { getActiveGalloGoalsForAccount } from "../../utils/helperFunctions/getActiveGalloGoalsForAccount";
 import { selectAllGalloGoals } from "../../Slices/galloGoalsSlice";
 import { normalizePost } from "../../utils/normalize";
 import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -61,7 +61,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   isOpen,
   setIsEditModalOpen,
 }) => {
-  const { isEnabled } = useIntegrations();
+  const companyId = useSelector(
+    (state: RootState) => state.user.currentUser?.companyId
+  );
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
   const galloEnabled = isEnabled("galloAxis");
@@ -87,10 +90,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     setIsEditModalOpen(false);
   };
   const [openAccountModal, setOpenAccountModal] = useState(false);
-
-  const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
-  );
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
   const [originalGoalId] = useState(post.companyGoalId); // capture on mount
   const allGalloGoals = useSelector(selectAllGalloGoals);

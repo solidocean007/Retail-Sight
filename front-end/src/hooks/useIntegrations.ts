@@ -5,6 +5,7 @@ import { IntegrationsMap, ProviderKey } from "../utils/types";
 
 export function useIntegrations() {
   const currentCompany = useSelector((s: RootState) => s.currentCompany.data);
+  console.log("current company: ", currentCompany)
   const loading = !currentCompany;
 
   const raw = (currentCompany?.integrations ?? {}) as IntegrationsMap;

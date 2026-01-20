@@ -43,8 +43,8 @@ import AccountTypeSelect from "./AccountTypeSelect";
 import ChainNameAutocomplete from "./ChainNameAutocomplete";
 import ChainTypeSelect from "./ChainTypeSelect";
 import GoalFilterGroup from "./GoalFilterGroup";
-import { useIntegrations } from "../../hooks/useIntegrations";
 import GalloGoalFilterGroup from "./GalloGoalFilterGroup";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
@@ -75,9 +75,11 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   toggleFilterMenu,
   initialFilters,
 }) => {
+  const companyId = useSelector(
+    (state: RootState) => state.user.currentUser?.companyId
+  );
   const [isApplying, setIsApplying] = useState(false);
-
-  const { isEnabled } = useIntegrations();
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
   const galloGoals = useSelector(
     (state: RootState) => state.galloGoals.galloGoals
@@ -434,8 +436,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               const normalized = value.startsWith("#")
                 ? `#${value.slice(1).toLowerCase().trim()}`
                 : value.startsWith("*")
-                ? `*${value.slice(1).toLowerCase().trim()}`
-                : value;
+                  ? `*${value.slice(1).toLowerCase().trim()}`
+                  : value;
 
               setTagInput(value);
 

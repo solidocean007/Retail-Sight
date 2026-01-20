@@ -3,16 +3,16 @@ import React, { useEffect, useState } from "react";
 import "./integrationsView.css";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
-import { useIntegrations } from "../../hooks/useIntegrations";
 import GalloIntegrationSettings from "../GoalIntegration/GalloIntegration/GalloIntegrationSettings";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { KeyStatusType } from "../GoalIntegration/GalloIntegration/GalloGoalImporter";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 const IntegrationsView: React.FC = () => {
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
-  const { byProvider, loading } = useIntegrations();
-  const galloEnabled = byProvider?.gallo?.enabled === true;
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const galloEnabled = isEnabled("galloAxis");
   const functions = getFunctions();
 
   const canManageIntegrations =

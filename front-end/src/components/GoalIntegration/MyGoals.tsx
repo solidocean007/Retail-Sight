@@ -3,7 +3,9 @@ import { Tabs, Tab, Box, Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import MyCompanyGoals from "./MyCompanyGoals";
 import "./myGoals.css";
-import { useIntegrations } from "../../hooks/useIntegrations";
+import { useSelector } from "react-redux";
+import { RootState } from "../../utils/store";
+import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 
 const MyGalloGoals = React.lazy(() => import("./MyGalloGoals"));
 
@@ -12,7 +14,10 @@ interface MyGoalsProps {
 }
 
 const MyGoals: React.FC<MyGoalsProps> = () => {
-  const { isEnabled } = useIntegrations();
+  const companyId = useSelector(
+    (state: RootState) => state.user.currentUser?.companyId
+  );
+  const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
   const [tabIndex, setTabIndex] = useState(0);
   const theme = useTheme();
