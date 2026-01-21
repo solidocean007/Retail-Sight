@@ -51,6 +51,8 @@ import {
   addAddon,
   removeAddon,
   cancelSubscription,
+  scheduleBillingDowngrade,
+  cancelScheduledDowngrade,
 } from "./billing/billingHandlers/callables";
 
 // 🧾 Billing – Webhook
@@ -117,6 +119,8 @@ export {
   handleBraintreeWebhook,
   onUserStatusChange,
   onConnectionStatusChange,
+  scheduleBillingDowngrade,
+  cancelScheduledDowngrade,
 
   // Connection function
   createInviteAndDraftConnection,

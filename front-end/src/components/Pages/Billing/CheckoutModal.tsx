@@ -177,36 +177,59 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // --- Submit handler ---
 
   const handleSubmit = async () => {
-    if (!instanceRef.current || !companyId) return;
+    if (!companyId) return;
     setLoading(true);
     setError(null);
 
     try {
-      const { nonce } = await instanceRef.current.requestPaymentMethod();
       const isExistingSub =
         !!billingInfo?.subscriptionId && billingInfo.plan !== "free";
 
       const addons: any[] = [];
       if (additionalUserCount > 0)
-        addons.push({
-          id: "extraUser",
-          quantity: additionalUserCount,
-          // action: "add",
-        });
+        addons.push({ id: "extraUser", quantity: additionalUserCount });
       if (additionalConnectionCount > 0)
         addons.push({
           id: "extraConnection",
           quantity: additionalConnectionCount,
-          // action: "add",
         });
+
+      // 🔽 DOWNGRADE — NO PAYMENT TOUCH
+      if (isExistingSub && !isUpgrade) {
+        const scheduleDowngrade = httpsCallable(
+          functions,
+          "scheduleBillingDowngrade"
+        );
+
+        await scheduleDowngrade({
+          companyId,
+          nextPlanId: planId,
+          nextAddons: addons,
+        });
+
+        setSuccess(true);
+        setTimeout(onClose, 2000);
+        return;
+      }
+
+      // 🔼 ONLY HERE do we request payment
+      if (!instanceRef.current) {
+        throw new Error("Payment form not ready.");
+      }
+
+      const { nonce } = await instanceRef.current.requestPaymentMethod();
 
       if (isExistingSub) {
         const updateFn = httpsCallable(
           functions,
           "updateSubscriptionWithProration"
         );
-        const newPlanId = planId;
-        const res: any = await updateFn({ companyId, newPlanId, addons });
+
+        const res: any = await updateFn({
+          companyId,
+          newPlanId: planId,
+          addons,
+        });
 
         if (res.data?.status?.toLowerCase?.() === "active") {
           setSuccess(true);
@@ -215,16 +238,15 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         }
       } else {
         const subscribeFn = httpsCallable(functions, "createSubscription");
-        const payload = {
+
+        const res: any = await subscribeFn({
           companyId,
           companyName,
           email,
           paymentMethodNonce: nonce,
           planId,
           addons,
-        };
-        console.log("subscription payload: ", payload);
-        const res: any = await subscribeFn(payload);
+        });
 
         if (res.data?.status?.toLowerCase?.() === "active") {
           setSuccess(true);
@@ -237,13 +259,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     } catch (err: any) {
       console.group("🔥 Checkout Error Details");
       console.error("Full error object:", err);
-      if (err?.code) console.error("Firebase Error Code:", err.code);
-      if (err?.details) console.error("Firebase Error Details:", err.details);
-      if (err?.message) console.error("Firebase Error Message:", err.message);
-      if (err?.response?.data)
-        console.error("Response Data:", err.response.data);
       console.groupEnd();
-      setError(err.message || "Payment failed. Check console for details.");
+      setError(err.message || "Payment failed.");
     } finally {
       setLoading(false);
     }
@@ -264,6 +281,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       price: addonPrices.connection,
     },
   ].filter((a) => a.quantity > 0);
+
+  const isDowngrade =
+    isUpgrade === false &&
+    !!billingInfo?.subscriptionId &&
+    billingInfo.plan !== "free";
 
   return (
     <div className="checkout-overlay">
@@ -354,16 +376,18 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {error && <p className="error-msg">{error}</p>}
         {success && <p className="success-msg">Payment successful! 🎉</p>}
 
-        <div
-          ref={dropinRef}
-          className="dropin-container"
-          style={{ display: dropinReady ? "block" : "none" }}
-        />
+        {!isDowngrade && (
+          <div
+            ref={dropinRef}
+            className="dropin-container"
+            style={{ display: dropinReady ? "block" : "none" }}
+          />
+        )}
 
         <button
           className="btn-submit"
           onClick={handleSubmit}
-          disabled={loading || !dropinReady}
+          disabled={loading || (!isDowngrade && !dropinReady)}
         >
           {loading
             ? "Processing..."
@@ -373,8 +397,19 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 ? "Start Free Plan"
                 : isUpgrade
                   ? `Upgrade to ${planName}`
-                  : `Start ${planName || "Plan"}`}
+                  : isDowngrade
+                    ? "Schedule Downgrade"
+                    : `Start ${planName || "Plan"}`}
         </button>
+        {/* {billingInfo?.pendingChange && (  */}
+        {billingInfo?.pendingChange && (
+          <div className="downgrade-notice">
+            Downgrade scheduled for{" "}
+            {new Date(
+              billingInfo.pendingChange.effectiveAt.seconds * 1000
+            ).toLocaleDateString()}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,7 +3,10 @@
 import { onRequest } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getBraintreeGateway } from "../braintreeGateway";
-import { syncBillingFromSubscription } from "../billingHelpers";
+import {
+  refreshBillingFromGateway,
+  syncBillingFromSubscription,
+} from "../billingHelpers";
 import { getAddonId } from "../addonMap";
 import {
   BRAINTREE_ENVIRONMENT,
@@ -98,6 +101,10 @@ export const handleBraintreeWebhook = onRequest(
         kind === "subscription_charged_successfully" ||
         kind === "subscription_renewed";
 
+      if (isRenewalEvent) {
+        await applyPendingBillingChange(companyId);
+      }
+
       const pending = company.billing?.pendingAddonRemoval;
 
       if (isRenewalEvent && pending) {
@@ -134,3 +141,43 @@ export const handleBraintreeWebhook = onRequest(
     }
   }
 );
+
+/**
+ * Applies a scheduled billing downgrade at renewal time.
+ *
+ * Called ONLY from the Braintree webhook after a successful renewal charge.
+ * - Updates the subscription to the pending plan/add-ons
+ * - Clears `billing.pendingChange`
+ * - Re-syncs billing state from Braintree
+ *
+ * @param companyId Firestore company document ID
+ */
+async function applyPendingBillingChange(companyId: string) {
+  const ref = admin.firestore().doc(`companies/${companyId}`);
+  const snap = await ref.get();
+
+  const billing = snap.data()?.billing;
+  const pending = billing?.pendingChange;
+  if (!pending) return;
+
+  const gateway = getBraintreeGateway();
+
+  await gateway.subscription.update(billing.subscriptionId, {
+    planId: pending.nextPlanId,
+    addOns: pending.nextAddons?.length
+      ? {
+          add: pending.nextAddons.map((a: any) => ({
+            inheritedFromId: getAddonId(pending.nextPlanId, a.id),
+            quantity: a.quantity,
+          })),
+        }
+      : undefined,
+    prorateCharges: false,
+  } as any);
+
+  await ref.update({
+    "billing.pendingChange": admin.firestore.FieldValue.delete(),
+  });
+
+  await refreshBillingFromGateway(companyId, billing.subscriptionId);
+}

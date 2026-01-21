@@ -16,7 +16,7 @@ import CheckoutModal from "./CheckoutModal";
 import AddonCard from "./AddonCard";
 import "./billingDashboard.css";
 import { RootState } from "../../../utils/store";
-import { PlanType, UserType } from "../../../utils/types";
+import { CompanyBilling, PlanType, UserType } from "../../../utils/types";
 import PlanCard from "./PlanCard";
 import { useNavigate } from "react-router-dom";
 
@@ -24,23 +24,6 @@ export type AddonUsage = {
   included: number;
   purchased: number;
 };
-
-interface BillingAddons {
-  extraUser: number;
-  extraConnection: number;
-}
-
-export interface BillingInfo {
-  plan: string;
-  planPrice: number;
-  braintreeCustomerId: string;
-  subscriptionId: string;
-  paymentStatus?: "active" | "past_due" | "canceled";
-  renewalDate?: { seconds: number };
-  lastPaymentDate?: { seconds: number };
-  addons?: BillingAddons;
-  totalMonthlyCost?: number;
-}
 
 /** Lightweight confirm dialog */
 const ConfirmDialog: React.FC<{
@@ -84,6 +67,7 @@ const ConfirmDialog: React.FC<{
 const BillingDashboard: React.FC = () => {
   const navigate = useNavigate();
   const company = useSelector(selectCurrentCompany) as any;
+  const companyId = company.id;
   const currentCompanyId = useSelector(selectCurrentCompany)?.id;
   const user = useSelector(
     (state: RootState) => state.user.currentUser
@@ -93,12 +77,12 @@ const BillingDashboard: React.FC = () => {
   const [plans, setPlans] = useState<PlanType[]>([]);
   const [freePlan, setFreePlan] = useState<PlanType | null>(null);
   const [currentPlanId, setCurrentPlanId] = useState<string>("free");
-  const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
+  const [billingInfo, setBillingInfo] = useState<CompanyBilling | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showPaymentUpdate, setShowPaymentUpdate] = useState(false);
-  // const [clientToken, setClientToken] = useState<string | null>(null);
+  const hasPendingDowngrade = !!billingInfo?.pendingChange;
   const [pendingAddonType, setPendingAddonType] = useState<
     "extraUser" | "extraConnection" | null
   >(null);
@@ -349,10 +333,13 @@ const BillingDashboard: React.FC = () => {
       return;
     }
 
-    const currentPrice = billingInfo.planPrice || 0;
+    const currentPrice = billingInfo.price || 0; // Property 'planPrice' does not exist on type 'CompanyBilling'
     const newPrice = selectedPlan.price;
-    const currentPlanName =
-      plans.find((p) => p.name === currentPlanId)?.name || "Free";
+    const currentPlan = plans.find(
+      (p) => p.braintreePlanId === billingInfo?.plan
+    );
+
+    const currentPlanName = currentPlan?.name ?? "Free";
 
     try {
       if (newPrice > currentPrice) {
@@ -369,15 +356,15 @@ const BillingDashboard: React.FC = () => {
             : `Downgrading to ${selectedPlan.name} will take effect at your next billing cycle. Continue?`
         );
         if (!confirmed) return;
-        const cancelFn = httpsCallable(functions, "cancelSubscription");
-        await cancelFn({ companyId: currentCompanyId });
+        const scheduleDowngrade = httpsCallable(
+          functions,
+          "scheduleBillingDowngrade"
+        );
 
-        // Firestore marker for upcoming downgrade
-        await updateDoc(doc(db, "companies", currentCompanyId), {
-          "billing.pendingPlan": selectedPlan.name,
-          "billing.pendingPlanName": selectedPlan.name,
-          "billing.pendingEffectiveDate": billingInfo.renewalDate || null,
-          lastUpdated: new Date(),
+        await scheduleDowngrade({
+          companyId: currentCompanyId,
+          nextPlanId: selectedPlan.braintreePlanId,
+          nextAddons: [],
         });
 
         alert(
@@ -389,6 +376,7 @@ const BillingDashboard: React.FC = () => {
         alert(`You're already on the ${currentPlanName} plan.`);
       }
     } catch (err: any) {
+      // 'try' expected.
       console.error("Plan change failed:", err);
       alert("Something went wrong updating your plan. Please try again later.");
     }
@@ -427,7 +415,9 @@ const BillingDashboard: React.FC = () => {
           )
           .map((plan) => {
             const isCurrent = plan.name === currentPlanId;
-            const currentPlan = plans.find((p) => p.name === currentPlanId);
+            const currentPlan = plans.find(
+              (p) => p.braintreePlanId === billingInfo?.plan
+            );
             const isUpgrade =
               currentPlan && plan.price > (currentPlan.price || 0);
             const isDowngrade =
@@ -447,8 +437,10 @@ const BillingDashboard: React.FC = () => {
                 isDowngrade={isDowngrade}
                 isRecommended={isRecommended}
                 onSelect={() => {
+                  if (hasPendingDowngrade) return;
                   if (!isCurrent) handlePlanSelection(plan);
                 }}
+                disabled={hasPendingDowngrade && !isCurrent}
               />
             );
           })}
@@ -463,6 +455,20 @@ const BillingDashboard: React.FC = () => {
                 /month
               </h3>
             </div>
+            {billingInfo?.pendingChange && (
+              <button
+                className="btn-secondary"
+                onClick={async () => {
+                  const cancel = httpsCallable(
+                    functions,
+                    "cancelScheduledDowngrade"
+                  );
+                  await cancel({ companyId }); // Cannot find name 'companyId'. Did you mean 'company'?
+                }}
+              >
+                Cancel scheduled downgrade
+              </button>
+            )}
 
             <div className="total-line">
               <span className="total-label">Total Monthly Cost</span>
@@ -580,11 +586,11 @@ const BillingDashboard: React.FC = () => {
           companyName={companyName}
           email={email}
           planName={selectedPlan?.name || "Payment Update"}
-          planPrice={selectedPlan?.price || billingInfo?.planPrice || 0}
+          planPrice={selectedPlan?.price || billingInfo?.price || 0}
           planFeatures={selectedPlan?.features || []}
           planAddons={selectedPlan?.addons}
           isUpgrade={
-            !!selectedPlan && selectedPlan.price > (billingInfo?.planPrice || 0)
+            !!selectedPlan && selectedPlan.price > (billingInfo?.price || 0)
           }
           mode={showPaymentUpdate ? "update-card" : "subscribe"}
           billingInfo={billingInfo || undefined}

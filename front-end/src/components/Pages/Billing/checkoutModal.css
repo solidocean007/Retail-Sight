@@ -210,7 +210,9 @@
   font-size: 0.95rem;
   color: var(--text-color);
   background: var(--dashboard-card);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .addon-field input:focus {
@@ -231,13 +233,23 @@
   background: var(--surface, #fff);
   box-shadow: var(--card-shadow);
   overflow: hidden;
-  transition: background 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 /* Animate total price when value changes */
 .cart-line.total strong {
   display: inline-block;
   animation: totalChange 0.4s ease-in-out;
+}
+
+.downgrade-notice {
+  background: var(--surface-warning);
+  border: 1px solid var(--border-warning);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 @keyframes totalChange {

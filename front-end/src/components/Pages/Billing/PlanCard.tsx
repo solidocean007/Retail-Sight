@@ -12,6 +12,7 @@ interface PlanCardProps {
   isDowngrade?: boolean;
   isRecommended?: boolean;
   onSelect: () => void;
+  disabled?: boolean;
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({
@@ -24,6 +25,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   isDowngrade,
   isRecommended = false,
   onSelect,
+  disabled,
 }) => {
   const [open, setOpen] = useState(isCurrent);
   const toggle = () => setOpen(!open);
@@ -32,6 +34,14 @@ const PlanCard: React.FC<PlanCardProps> = ({
   useEffect(() => {
     if (window.innerWidth >= 1024) setOpen(true);
   }, []);
+
+  if (disabled) {
+    return (
+      <div className="plan-card disabled">
+        <div className="overlay">Downgrade scheduled</div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -60,10 +70,10 @@ const PlanCard: React.FC<PlanCardProps> = ({
             {isCurrent
               ? "Current Plan"
               : isUpgrade
-              ? "Upgrade"
-              : isDowngrade
-              ? "Downgrade"
-              : "Select"}
+                ? "Upgrade"
+                : isDowngrade
+                  ? "Downgrade"
+                  : "Select"}
           </button>
           <button className="collapse-btn" onClick={toggle}>
             {open ? "▲" : "▼"}

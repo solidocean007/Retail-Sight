@@ -85,16 +85,27 @@ export interface PlanType {
   addons: PlanAddonsType;
 }
 
+type PendingBillingChange = {
+  nextPlanId?: string;
+  nextAddons?: {
+    id: string;
+    quantity: number;
+  }[];
+  effectiveAt: Timestamp; // renewal date
+};
+
+
 export interface CompanyBilling {
   plan: PlanName;
   addons: CompanyAddons;
-
+  totalMonthlyCost: number;
   price: number;
   braintreeCustomerId: string;
   subscriptionId: string;
   paymentStatus: BillingStatus;
   renewalDate?: Timestamp;
   lastPaymentDate?: Timestamp;
+  pendingChange?: PendingBillingChange;
 }
 
 export type CompanyType = {
