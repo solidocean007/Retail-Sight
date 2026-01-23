@@ -287,7 +287,7 @@ export const addAddon = onCall(
   }
 );
 
-export const setAddonQuantity = onCall(
+export const removeAddon = onCall(
   {
     secrets: [
       BRAINTREE_ENVIRONMENT,
@@ -297,47 +297,37 @@ export const setAddonQuantity = onCall(
     ],
   },
   async (request) => {
-    const { companyId, addonType, quantity } = request.data;
+    const { companyId, addonType, removeQty } = request.data;
 
-    if (quantity < 0) {
-      throw new HttpsError("invalid-argument", "Quantity must be >= 0.");
+    if (removeQty <= 0) {
+      throw new HttpsError("invalid-argument", "removeQty must be > 0.");
     }
 
     await assertCompanyBillingAdmin(request.auth, companyId);
 
-    const snap = await admin.firestore().doc(`companies/${companyId}`).get();
+    const ref = admin.firestore().doc(`companies/${companyId}`);
+    const snap = await ref.get();
     const billing = snap.data()?.billing;
 
     if (!billing?.subscriptionId || !billing?.plan) {
       throw new HttpsError("failed-precondition", "No active subscription.");
     }
 
-    const gateway = getBraintreeGateway();
-    const addonId = getAddonId(billing.plan, addonType);
+    const currentQty = billing.addons?.[addonType] ?? 0;
+    const nextQty = Math.max(0, currentQty - removeQty);
 
-    const result = await gateway.subscription.update(
-      billing.subscriptionId,
-      {
-        addOns: {
-          update: [
-            {
-              existingId: addonId,
-              quantity, // 👈 absolute quantity
-            },
-          ],
-        },
-        prorateCharges: false,
-      } as any
-    );
+    await ref.update({
+      "billing.pendingAddonRemoval": {
+        addonType,
+        nextQuantity: nextQty,
+        effectiveAt: billing.renewalDate,
+      },
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
-    if (!result.success) {
-      throw new HttpsError("internal", "Failed to update add-on quantity.");
-    }
-
-    return syncBillingFromSubscription(companyId, result.subscription);
+    return { scheduled: true };
   }
 );
-
 
 export const cancelSubscription = onCall(
   {

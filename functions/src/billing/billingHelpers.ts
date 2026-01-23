@@ -1,5 +1,17 @@
 // functions/src/billing/billingHelpers.ts
 
+/**
+ * BILLING RULES (LOCKED)
+ *
+ * 1. Plans start a new billing cycle immediately.
+ * 2. Plan upgrades cancel old subscription and create a new one.
+ * 3. Plan downgrades are scheduled at renewal.
+ * 4. Add-ons are charged immediately.
+ * 5. Add-on removals are scheduled and applied at renewal.
+ * 6. No proration anywhere.
+ * 7. Webhooks are the source of truth.
+ */
+
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) {

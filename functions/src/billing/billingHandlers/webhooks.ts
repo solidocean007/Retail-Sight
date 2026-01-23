@@ -105,13 +105,20 @@ export const handleBraintreeWebhook = onRequest(
         await applyScheduledDowngradeAfterRenewal(companyId);
       }
 
-      const pending = company.billing?.pendingAddonRemoval;
-
-      if (isRenewalEvent && pending) {
+      if (isRenewalEvent && company.billing?.pendingAddonRemoval) {
+        const pending = company.billing.pendingAddonRemoval;
         const addonId = getAddonId(subscription.planId, pending.addonType);
 
         const updateRes = await gateway.subscription.update(subscription.id, {
-          addOns: { remove: [addonId] },
+          addOns: {
+            update: [
+              {
+                existingId: addonId,
+                quantity: pending.nextQuantity,
+              },
+            ],
+          },
+          prorateCharges: false,
         } as any);
 
         if (updateRes.success) {
@@ -157,7 +164,6 @@ export const handleBraintreeWebhook = onRequest(
  * This does NOT create a new billing cycle —
  * it updates the plan that will govern the NEXT cycle.
  */
-
 async function applyScheduledDowngradeAfterRenewal(companyId: string) {
   const ref = admin.firestore().doc(`companies/${companyId}`);
   const snap = await ref.get();
