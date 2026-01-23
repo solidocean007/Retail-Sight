@@ -47,12 +47,12 @@ import { testBraintreeAuth } from "./billing/billingHandlers/testBraintreeAuth";
 import {
   getClientToken,
   createSubscription,
-  updateSubscriptionWithProration,
   addAddon,
   removeAddon,
   cancelSubscription,
   scheduleBillingDowngrade,
   cancelScheduledDowngrade,
+  changePlanAndRestartBillingCycle,
 } from "./billing/billingHandlers/callables";
 
 // 🧾 Billing – Webhook
@@ -112,7 +112,6 @@ export {
   testBraintreeAuth,
   getClientToken,
   createSubscription,
-  updateSubscriptionWithProration,
   addAddon,
   removeAddon,
   cancelSubscription,
@@ -121,6 +120,7 @@ export {
   onConnectionStatusChange,
   scheduleBillingDowngrade,
   cancelScheduledDowngrade,
+  changePlanAndRestartBillingCycle,
 
   // Connection function
   createInviteAndDraftConnection,

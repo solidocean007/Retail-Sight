@@ -94,18 +94,17 @@ type PendingBillingChange = {
   effectiveAt: Timestamp; // renewal date
 };
 
-
 export interface CompanyBilling {
   plan: PlanName;
   addons: CompanyAddons;
   totalMonthlyCost: number;
-  price: number;
   braintreeCustomerId: string;
   subscriptionId: string;
   paymentStatus: BillingStatus;
   renewalDate?: Timestamp;
   lastPaymentDate?: Timestamp;
   pendingChange?: PendingBillingChange;
+  cycleLockedUntil?: Timestamp;
 }
 
 export type CompanyType = {

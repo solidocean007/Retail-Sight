@@ -102,7 +102,7 @@ export const handleBraintreeWebhook = onRequest(
         kind === "subscription_renewed";
 
       if (isRenewalEvent) {
-        await applyPendingBillingChange(companyId);
+        await applyScheduledDowngradeAfterRenewal(companyId);
       }
 
       const pending = company.billing?.pendingAddonRemoval;
@@ -152,11 +152,19 @@ export const handleBraintreeWebhook = onRequest(
  *
  * @param companyId Firestore company document ID
  */
-async function applyPendingBillingChange(companyId: string) {
+/**
+ * Applies scheduled downgrade AFTER renewal charge.
+ * This does NOT create a new billing cycle —
+ * it updates the plan that will govern the NEXT cycle.
+ */
+
+async function applyScheduledDowngradeAfterRenewal(companyId: string) {
   const ref = admin.firestore().doc(`companies/${companyId}`);
   const snap = await ref.get();
 
   const billing = snap.data()?.billing;
+  if (!billing?.renewalDate) return;
+
   const pending = billing?.pendingChange;
   if (!pending) return;
 

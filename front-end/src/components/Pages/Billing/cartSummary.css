@@ -9,7 +9,10 @@
   background: var(--dashboard-card);
   margin-top: 1rem;
   box-shadow: var(--card-shadow);
-  transition: background 0.25s ease, box-shadow 0.25s ease, border 0.25s ease;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    border 0.25s ease;
 }
 
 .cart-title {
@@ -26,6 +29,18 @@
   padding: 0.25rem 0;
   font-size: 0.95rem;
   color: var(--text-color);
+}
+
+.cart-total-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cart-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .cart-divider {

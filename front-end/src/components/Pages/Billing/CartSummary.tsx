@@ -26,13 +26,12 @@ const CartSummary: React.FC<CartSummaryProps> = ({
   addons = [],
 }) => {
   const numericPlanPrice = Number(planPrice) || 0;
-
   const subtotal = useMemo(() => {
     return (
       numericPlanPrice +
       addons.reduce(
         (sum, a) => sum + Number(a.price || 0) * Number(a.quantity ?? 1),
-        0
+        0,
       )
     );
   }, [numericPlanPrice, addons]);
@@ -98,10 +97,13 @@ const CartSummary: React.FC<CartSummaryProps> = ({
       )}
 
       <hr className="cart-divider strong" />
-      <div className="cart-line total">
-        <strong>Total due today</strong>
-        <strong>${animatedTotal.toFixed(2)}</strong>
+      <div className="cart-total-block">
+        <div className="cart-total-row">
+          <strong>Total due today</strong>
+          <span className="total-value">{`$${animatedTotal.toFixed(2)}`}</span>
+        </div>
       </div>
+
       <p className="cart-note">Billed monthly • Cancel anytime</p>
     </div>
   );

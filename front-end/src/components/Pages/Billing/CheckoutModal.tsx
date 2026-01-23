@@ -3,9 +3,9 @@ import { httpsCallable } from "firebase/functions";
 import "./checkoutModal.css";
 import CartSummary from "./CartSummary";
 import { useOutsideAlerter } from "../../../utils/useOutsideAlerter";
-import { BillingInfo } from "./BillingDashboard";
 import { functions } from "../../../utils/firebase";
 import BillingAuthDebug from "./BillingAuthDebug";
+import { CompanyBilling } from "../../../utils/types";
 
 type ClientTokenResponse = {
   clientToken: string;
@@ -28,7 +28,7 @@ interface CheckoutModalProps {
   planFeatures?: string[];
   isUpgrade?: boolean;
   mode?: "subscribe" | "update-card";
-  billingInfo?: BillingInfo;
+  billingInfo?: CompanyBilling;
   planAddons?: PlanAddons;
   initialAddonType?: "extraUser" | "extraConnection";
   initialAddonQty?: number;
@@ -54,7 +54,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // clientToken,
 }) => {
   const isFreePlan = planId === "free";
-
   const dropinRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
   const wrapperRef = useRef(null);
@@ -75,7 +74,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       user: planAddons?.extraUser ?? 0,
       connection: planAddons?.extraConnection ?? 0,
     }),
-    [planAddons]
+    [planAddons],
   );
 
   useEffect(() => {
@@ -175,84 +174,96 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   }, [open, companyId]);
 
   // --- Submit handler ---
+  const hasSubscription = !!billingInfo?.subscriptionId;
+
+  const isAddonPurchase =
+    additionalUserCount > 0 || additionalConnectionCount > 0;
 
   const handleSubmit = async () => {
     if (!companyId) return;
+
     setLoading(true);
     setError(null);
 
     try {
-      const isExistingSub =
-        !!billingInfo?.subscriptionId && billingInfo.plan !== "free";
-
       const addons: any[] = [];
-      if (additionalUserCount > 0)
+
+      if (additionalUserCount > 0) {
         addons.push({ id: "extraUser", quantity: additionalUserCount });
-      if (additionalConnectionCount > 0)
+      }
+      if (additionalConnectionCount > 0) {
         addons.push({
           id: "extraConnection",
           quantity: additionalConnectionCount,
         });
+      }
 
-      // 🔽 DOWNGRADE — NO PAYMENT TOUCH
-      if (isExistingSub && !isUpgrade) {
-        const scheduleDowngrade = httpsCallable(
+      if (hasSubscription && !isUpgrade && addons.length === 0) {
+        throw new Error("No changes selected.");
+      }
+
+      /**
+       * CASE 1: Existing subscription → PLAN CHANGE ONLY
+       * (add-ons are handled AFTER upgrade)
+       */
+      if (hasSubscription && isUpgrade) {
+        const upgradeFn = httpsCallable(
           functions,
-          "scheduleBillingDowngrade"
+          "changePlanAndRestartBillingCycle",
         );
 
-        await scheduleDowngrade({
+        await upgradeFn({
           companyId,
-          nextPlanId: planId,
-          nextAddons: addons,
+          newPlanId: planId,
         });
 
         setSuccess(true);
-        setTimeout(onClose, 2000);
+        setTimeout(onClose, 1500);
         return;
       }
 
-      // 🔼 ONLY HERE do we request payment
+      /**
+       * CASE 2: Existing subscription → ADD-ONS ONLY
+       */
+      if (hasSubscription && !isUpgrade && addons.length > 0) {
+        for (const addon of addons) {
+          const addAddon = httpsCallable(functions, "addAddon");
+          await addAddon({
+            companyId,
+            addonType: addon.id,
+            quantity: addon.quantity,
+          });
+        }
+
+        setSuccess(true);
+        setTimeout(onClose, 1500);
+        return;
+      }
+
+      /**
+       * CASE 3: No subscription → CREATE (free plan + addons OR paid plan)
+       */
       if (!instanceRef.current) {
         throw new Error("Payment form not ready.");
       }
 
       const { nonce } = await instanceRef.current.requestPaymentMethod();
 
-      if (isExistingSub) {
-        const updateFn = httpsCallable(
-          functions,
-          "updateSubscriptionWithProration"
-        );
+      const subscribeFn = httpsCallable(functions, "createSubscription");
 
-        const res: any = await updateFn({
-          companyId,
-          newPlanId: planId,
-          addons,
-        });
+      const res: any = await subscribeFn({
+        companyId,
+        companyName,
+        email,
+        paymentMethodNonce: nonce,
+        planId,
+        addons,
+      });
 
-        if (res.data?.status?.toLowerCase?.() === "active") {
-          setSuccess(true);
-          setTimeout(onClose, 2000);
-          return;
-        }
-      } else {
-        const subscribeFn = httpsCallable(functions, "createSubscription");
-
-        const res: any = await subscribeFn({
-          companyId,
-          companyName,
-          email,
-          paymentMethodNonce: nonce,
-          planId,
-          addons,
-        });
-
-        if (res.data?.status?.toLowerCase?.() === "active") {
-          setSuccess(true);
-          setTimeout(onClose, 2000);
-          return;
-        }
+      if (res.data?.status?.toLowerCase?.() === "active") {
+        setSuccess(true);
+        setTimeout(onClose, 1500);
+        return;
       }
 
       throw new Error("Subscription failed.");
@@ -283,9 +294,17 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   ].filter((a) => a.quantity > 0);
 
   const isDowngrade =
-    isUpgrade === false &&
     !!billingInfo?.subscriptionId &&
-    billingInfo.plan !== "free";
+    !isUpgrade &&
+    planPrice < (billingInfo?.price ?? 0);
+
+  const isFreeAddonPurchase =
+    isFreePlan &&
+    !hasSubscription &&
+    (additionalUserCount > 0 || additionalConnectionCount > 0);
+
+  const disableAddonInputs =
+    isUpgrade || (hasSubscription && planId !== billingInfo?.plan);
 
   return (
     <div className="checkout-overlay">
@@ -304,8 +323,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <p className="billing-note">
           {mode === "update-card"
             ? "Update your saved card details below."
-            : isFreePlan
-              ? "Start your Free plan and securely add payment details for future add-ons."
+            : isFreeAddonPurchase
+              ? "Add payment details to purchase add-ons."
               : "Billed monthly • Cancel anytime"}
         </p>
 
@@ -315,32 +334,43 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <p className="plan-price">${planPrice}/month</p>
 
           {/* === Add-on Inputs === */}
-          <div className="addon-selectors">
-            <h4>Optional Add-ons</h4>
-            <div className="addon-field">
-              <label>Additional Users (${addonPrices.user} each)</label>
-              <input
-                type="number"
-                min={0}
-                value={additionalUserCount}
-                onChange={(e) => setAdditionalUserCount(Number(e.target.value))}
-              />
-            </div>
+          {!disableAddonInputs && (
+            <div className="addon-selectors">
+              <h4>Optional Add-ons</h4>
+              {disableAddonInputs && (
+                <div className="addon-lock-note">
+                  ℹ️ Add-ons can be added after upgrading your plan.
+                </div>
+              )}
+              <div className="addon-field">
+                <label>Additional Users (${addonPrices.user} each)</label>
+                <input
+                  type="number"
+                  min={0}
+                  disabled={disableAddonInputs}
+                  value={additionalUserCount}
+                  onChange={(e) =>
+                    setAdditionalUserCount(Number(e.target.value))
+                  }
+                />
+              </div>
 
-            <div className="addon-field">
-              <label>
-                Additional Connections (${addonPrices.connection} each)
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={additionalConnectionCount}
-                onChange={(e) =>
-                  setAdditionalConnectionCount(Number(e.target.value))
-                }
-              />
+              <div className="addon-field">
+                <label>
+                  Additional Connections (${addonPrices.connection} each)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  disabled={disableAddonInputs}
+                  value={additionalConnectionCount}
+                  onChange={(e) =>
+                    setAdditionalConnectionCount(Number(e.target.value))
+                  }
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* === Live Summary === */}
           <CartSummary
@@ -357,12 +387,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </ul>
           )}
 
-          {isUpgrade && (
-            <p className="proration-note">
-              ⚖️ This upgrade will be automatically prorated for the remainder
-              of your current billing cycle.
-            </p>
-          )}
           <p className="secure-note">🔒 Secure payment via Braintree</p>
         </div>
 
@@ -387,26 +411,26 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <button
           className="btn-submit"
           onClick={handleSubmit}
-          disabled={loading || (!isDowngrade && !dropinReady)}
+          disabled={loading || (!billingInfo?.subscriptionId && !dropinReady)}
         >
           {loading
             ? "Processing..."
             : mode === "update-card"
               ? "Update Card"
-              : isFreePlan
-                ? "Start Free Plan"
+              : isFreeAddonPurchase
+                ? "Confirm Add-on Purchase"
                 : isUpgrade
                   ? `Upgrade to ${planName}`
-                  : isDowngrade
-                    ? "Schedule Downgrade"
-                    : `Start ${planName || "Plan"}`}
+                  : hasSubscription
+                    ? "Confirm Changes"
+                    : "Confirm Purchase"}
         </button>
         {/* {billingInfo?.pendingChange && (  */}
         {billingInfo?.pendingChange && (
           <div className="downgrade-notice">
             Downgrade scheduled for{" "}
             {new Date(
-              billingInfo.pendingChange.effectiveAt.seconds * 1000
+              billingInfo.pendingChange.effectiveAt.seconds * 1000,
             ).toLocaleDateString()}
           </div>
         )}

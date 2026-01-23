@@ -50,7 +50,7 @@ export function extractAddonQuantities(
  * 🔄 Canonical Firestore billing sync
  * Used by:
  * - createSubscription
- * - updateSubscriptionWithProration
+ * - changePlanAndRestartBillingCycle
  * - webhooks
  * - add/remove addon flows
  */
@@ -74,8 +74,12 @@ export async function syncBillingFromSubscription(
     canceled: "canceled",
   };
 
+  const snap = await companyRef.get();
+  const existingBilling = snap.data()?.billing ?? {};
+
   await companyRef.update({
     billing: {
+      ...existingBilling, // ← preserves customerId, locks, pending changes
       plan: subscription.planId,
       subscriptionId: subscription.id,
       paymentStatus: statusMap[subscription.status] ?? "past_due",
@@ -84,14 +88,11 @@ export async function syncBillingFromSubscription(
             new Date(subscription.nextBillingDate)
           )
         : null,
-      lastPaymentDate:
-        subscription.paidThroughDate || subscription.firstBillingDate
-          ? admin.firestore.Timestamp.fromDate(
-              new Date(
-                subscription.paidThroughDate ?? subscription.firstBillingDate
-              )
-            )
-          : admin.firestore.Timestamp.now(),
+      billingPeriodEnd: subscription.paidThroughDate
+        ? admin.firestore.Timestamp.fromDate(
+            new Date(subscription.paidThroughDate)
+          )
+        : null,
 
       totalMonthlyCost: total,
       addons: extractAddonQuantities(subscription),

@@ -67,10 +67,10 @@ const ConfirmDialog: React.FC<{
 const BillingDashboard: React.FC = () => {
   const navigate = useNavigate();
   const company = useSelector(selectCurrentCompany) as any;
-  const companyId = company.id;
+  const companyId = company?.id;
   const currentCompanyId = useSelector(selectCurrentCompany)?.id;
   const user = useSelector(
-    (state: RootState) => state.user.currentUser
+    (state: RootState) => state.user.currentUser,
   ) as UserType;
   const companyName = company?.name;
   const email = user?.email;
@@ -108,7 +108,7 @@ const BillingDashboard: React.FC = () => {
       })) as PlanType[];
 
       const nonEnterprisePlans = planList.filter(
-        (p) => p.braintreePlanId !== "enterprise"
+        (p) => p.braintreePlanId !== "enterprise",
       );
 
       // Show hidden/internal plans only if Healy company
@@ -116,7 +116,7 @@ const BillingDashboard: React.FC = () => {
         currentCompanyId === "3WOAwgj3l3bnvHqE4IV3"
           ? nonEnterprisePlans
           : nonEnterprisePlans.filter(
-              (p) => p.braintreePlanId !== "healy_plan"
+              (p) => p.braintreePlanId !== "healy_plan",
             );
 
       setPlans(visiblePlans);
@@ -146,15 +146,6 @@ const BillingDashboard: React.FC = () => {
       console.error("Error fetching company billing info:", err);
     }
   }, [currentCompanyId]);
-
-  // useEffect(() => {
-  //   if (!currentCompanyId) return;
-
-  //   const getToken = httpsCallable(functions, "getClientToken");
-  //   getToken({ companyId: currentCompanyId })
-  //     .then((res: any) => setClientToken(res.data.clientToken))
-  //     .catch(() => setClientToken(null));
-  // }, [currentCompanyId]);
 
   useEffect(() => {
     if (!currentCompanyId) return;
@@ -220,7 +211,7 @@ const BillingDashboard: React.FC = () => {
   const openConfirm = (
     action: "add" | "remove",
     addonType: "extraUser" | "extraConnection",
-    count: number
+    count: number,
   ) => {
     const pricePer =
       addonType === "extraUser" ? addonPrices.user : addonPrices.connection;
@@ -276,7 +267,7 @@ const BillingDashboard: React.FC = () => {
 
   const handleAddonAdd = (
     type: "extraUser" | "extraConnection",
-    qty: number
+    qty: number,
   ) => {
     const hasCustomer = billingInfo?.braintreeCustomerId;
 
@@ -296,14 +287,16 @@ const BillingDashboard: React.FC = () => {
 
   const handleAddonRemove = (
     type: "extraUser" | "extraConnection",
-    qty: number
+    qty: number,
   ) => openConfirm("remove", type, qty);
 
   if (loading) return <p className="loading-msg">Loading plans...</p>;
 
   const currentPlan = plans.find(
-    (p) => p.braintreePlanId === billingInfo?.plan
+    (p) => p.braintreePlanId === billingInfo?.plan,
   );
+
+  const currentPlanPrice = currentPlan?.price ?? 0;
 
   const currentPlanName = currentPlan?.name ?? "Free Plan";
 
@@ -333,11 +326,12 @@ const BillingDashboard: React.FC = () => {
       return;
     }
 
-    const currentPrice = billingInfo.price || 0; // Property 'planPrice' does not exist on type 'CompanyBilling'
-    const newPrice = selectedPlan.price;
     const currentPlan = plans.find(
-      (p) => p.braintreePlanId === billingInfo?.plan
+      (p) => p.braintreePlanId === billingInfo?.plan,
     );
+    const currentPrice = currentPlan?.price ?? 0;
+
+    const newPrice = selectedPlan.price;
 
     const currentPlanName = currentPlan?.name ?? "Free";
 
@@ -353,12 +347,12 @@ const BillingDashboard: React.FC = () => {
         const confirmed = window.confirm(
           isFree
             ? `Downgrading to the Free plan will cancel your subscription immediately. Continue?`
-            : `Downgrading to ${selectedPlan.name} will take effect at your next billing cycle. Continue?`
+            : `Downgrading to ${selectedPlan.name} will take effect at your next billing cycle. Continue?`,
         );
         if (!confirmed) return;
         const scheduleDowngrade = httpsCallable(
           functions,
-          "scheduleBillingDowngrade"
+          "scheduleBillingDowngrade",
         );
 
         await scheduleDowngrade({
@@ -370,7 +364,7 @@ const BillingDashboard: React.FC = () => {
         alert(
           isFree
             ? `Your subscription has been canceled and you are now on the Free plan.`
-            : `Your downgrade to ${selectedPlan.name} will take effect on your next renewal date.`
+            : `Your downgrade to ${selectedPlan.name} will take effect on your next renewal date.`,
         );
       } else {
         alert(`You're already on the ${currentPlanName} plan.`);
@@ -382,18 +376,61 @@ const BillingDashboard: React.FC = () => {
     }
   };
 
-  async function testBraintree() {
-    const fn = httpsCallable(functions, "testBraintreeAuth");
-    const res = await fn();
-    console.log("Braintree test result:", res.data);
-  }
   return (
     <div className="billing-container">
       <h2>Billing & Subscription</h2>
       <button className="button-outline" onClick={() => navigate("/dashboard")}>
         ← Back to Dashboard
       </button>
-      <button onClick={testBraintree}>Test Braintree Auth</button>
+      <section className="billing-explainer">
+        <h3>How Billing Works</h3>
+
+        <ul className="billing-rules">
+          <li>
+            <strong>Plans start a new billing cycle.</strong>
+            <span>
+              When you upgrade or change plans, you’re charged the full plan
+              price immediately and a new monthly billing cycle begins.
+            </span>
+          </li>
+
+          <li>
+            <strong>Add-ons are charged immediately.</strong>
+            <span>
+              Add-ons (extra users or connections) unlock capacity right away
+              and are billed in full when purchased.
+            </span>
+          </li>
+
+          <li>
+            <strong>Add-ons renew with your plan.</strong>
+            <span>
+              Add-ons do not change your billing date. They renew automatically
+              on your next plan renewal.
+            </span>
+          </li>
+
+          <li>
+            <strong>No prorated charges.</strong>
+            <span>
+              We don’t prorate plans or add-ons. This keeps billing simple,
+              predictable, and transparent.
+            </span>
+          </li>
+        </ul>
+
+        <div className="billing-example">
+          <strong>Example</strong>
+          <p>
+            If you start a Team plan today, you’re charged $25 today and your
+            next renewal is one month from now.
+          </p>
+          <p>
+            If you later add extra users, those add-ons are charged immediately
+            and included in your next renewal.
+          </p>
+        </div>
+      </section>
 
       <p>Manage your plan, payments, and add-ons</p>
       {currentPlanId === "free" && (
@@ -407,16 +444,17 @@ const BillingDashboard: React.FC = () => {
         {plans
           // 🪄 Sort so current plan shows first
           .sort((a, b) =>
-            a.name === currentPlanId
+            a.braintreePlanId === currentPlanId
               ? -1
-              : b.name === currentPlanId
+              : b.braintreePlanId === currentPlanId
                 ? 1
-                : a.price - b.price
+                : a.price - b.price,
           )
+
           .map((plan) => {
             const isCurrent = plan.name === currentPlanId;
             const currentPlan = plans.find(
-              (p) => p.braintreePlanId === billingInfo?.plan
+              (p) => p.braintreePlanId === billingInfo?.plan,
             );
             const isUpgrade =
               currentPlan && plan.price > (currentPlan.price || 0);
@@ -461,9 +499,9 @@ const BillingDashboard: React.FC = () => {
                 onClick={async () => {
                   const cancel = httpsCallable(
                     functions,
-                    "cancelScheduledDowngrade"
+                    "cancelScheduledDowngrade",
                   );
-                  await cancel({ companyId }); // Cannot find name 'companyId'. Did you mean 'company'?
+                  await cancel({ companyId: currentCompanyId });
                 }}
               >
                 Cancel scheduled downgrade
@@ -504,7 +542,7 @@ const BillingDashboard: React.FC = () => {
                   onClick={() => {
                     if (!freePlan) {
                       alert(
-                        "Free plan details not loaded yet. Please try again."
+                        "Free plan details not loaded yet. Please try again.",
                       );
                       return;
                     }
@@ -541,34 +579,10 @@ const BillingDashboard: React.FC = () => {
         <div className="addons-section">
           <h3>Add-ons & Upgrades</h3>
           <p className="addons-subtext">
-            Add-ons apply immediately and recur monthly. Removing add-ons is
-            effective at your next renewal (credits/proration may apply based on
-            policy). Upgrading plans takes effect immediately with prorated
-            charges for the current cycle.
+            Add-ons apply immediately and recur monthly. Removing add-ons takes
+            effect at your next renewal. Upgrading plans takes effect
+            immediately and starts a new billing cycle.
           </p>
-
-          {/* {shouldUpgrade && ( // Cannot find name 'shouldUpgrade'
-            <div className="upgrade-banner">
-              <p>
-                🚀 Your add-ons now cost about as much as the{" "}
-                <strong>{nextPlanLabel}</strong> plan.{" "} // Cannot find name 'nextPlanLabel'
-                <button
-                  className="upgrade-banner-btn"
-                  onClick={() => {
-                    if (nextPlan) { // cannot find name 'nextPlan'
-                      setSelectedPlan(nextPlan);
-                      setModalOpen(true);
-                    }
-                  }}
-                >
-                  Upgrade Now
-                </button>
-              </p>
-              <small className="upgrade-note">
-                You’ll pay only the prorated difference for this cycle.
-              </small>
-            </div>
-          )} */}
         </div>
       </div>
       {/* === Add-ons Section === */}
@@ -586,12 +600,10 @@ const BillingDashboard: React.FC = () => {
           companyName={companyName}
           email={email}
           planName={selectedPlan?.name || "Payment Update"}
-          planPrice={selectedPlan?.price || billingInfo?.price || 0}
+          planPrice={selectedPlan?.price ?? currentPlanPrice}
           planFeatures={selectedPlan?.features || []}
           planAddons={selectedPlan?.addons}
-          isUpgrade={
-            !!selectedPlan && selectedPlan.price > (billingInfo?.price || 0)
-          }
+          isUpgrade={!!selectedPlan && selectedPlan.price > currentPlanPrice}
           mode={showPaymentUpdate ? "update-card" : "subscribe"}
           billingInfo={billingInfo || undefined}
           initialAddonType={pendingAddonType || undefined}
