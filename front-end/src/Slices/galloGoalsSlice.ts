@@ -6,14 +6,7 @@ import {
 } from "@reduxjs/toolkit";
 import { RootState } from "../utils/store";
 import { db } from "../utils/firebase";
-import {
-  collection,
-  doc,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { FireStoreGalloGoalDocType } from "../utils/types";
 import {
   saveUserAccountsToIndexedDB,
@@ -24,9 +17,32 @@ import { markGalloAccountAsSubmitted } from "../thunks/galloGoalsThunk";
 
 export type GalloGoalStatus = "active" | "expired" | "upcoming";
 
-function isProgramCurrentlyActive(goal: FireStoreGalloGoalDocType) {
+function toMillisSafe(v?: any): number | null {
+  if (!v) return null;
+
+  // ISO string
+  if (typeof v === "string") {
+    const ms = Date.parse(v);
+    return Number.isNaN(ms) ? null : ms;
+  }
+
+  // Date
+  if (v instanceof Date) return v.getTime();
+
+  return null;
+}
+
+function isGoalVisible(goal: FireStoreGalloGoalDocType): GalloGoalStatus {
   const now = Date.now();
 
+  // NEW: displayDate gate (optional)
+  const displayAt = toMillisSafe(goal.displayDate);
+
+  if (displayAt && displayAt > now) {
+    return "upcoming";
+  }
+
+  // EXISTING logic (unchanged)
   const start = goal.programDetails?.programStartDate
     ? new Date(goal.programDetails.programStartDate).getTime()
     : null;
@@ -35,28 +51,29 @@ function isProgramCurrentlyActive(goal: FireStoreGalloGoalDocType) {
     ? new Date(goal.programDetails.programEndDate).getTime()
     : null;
 
-  if (start && start > now) return false;
-  if (end && end < now) return false;
-  return true;
+  if (start && start > now) return "upcoming";
+  if (end && end < now) return "expired";
+
+  return "active";
 }
 
 const toIso = (v: any) =>
   v?.toDate?.()
     ? v.toDate().toISOString()
     : v instanceof Date
-    ? v.toISOString()
-    : typeof v === "string"
-    ? v
-    : v;
+      ? v.toISOString()
+      : typeof v === "string"
+        ? v
+        : v;
 
 const normalizeDeep = (val: any): any =>
   Array.isArray(val)
     ? val.map(normalizeDeep)
     : val && typeof val === "object"
-    ? Object.fromEntries(
-        Object.entries(val).map(([k, v]) => [k, normalizeDeep(v)])
-      )
-    : toIso(val);
+      ? Object.fromEntries(
+          Object.entries(val).map(([k, v]) => [k, normalizeDeep(v)]),
+        )
+      : toIso(val);
 
 // Extended Type with ID
 export interface FireStoreGalloGoalWithId extends FireStoreGalloGoalDocType {
@@ -88,7 +105,10 @@ export const fetchAllGalloGoals = createAsyncThunk<
   async ({ companyId }, { rejectWithValue }) => {
     try {
       const snapshot = await getDocs(
-        query(collection(db, "galloGoals"), where("companyId", "==", companyId))
+        query(
+          collection(db, "galloGoals"),
+          where("companyId", "==", companyId),
+        ),
       );
       return snapshot.docs.map((docSnap) => {
         const data = normalizeDeep(docSnap.data()) as FireStoreGalloGoalDocType;
@@ -100,10 +120,10 @@ export const fetchAllGalloGoals = createAsyncThunk<
       });
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error"
+        error instanceof Error ? error.message : "Unknown error",
       );
     }
-  }
+  },
 );
 
 export const fetchUserGalloGoals = createAsyncThunk<
@@ -123,28 +143,31 @@ export const fetchUserGalloGoals = createAsyncThunk<
       }
 
       const accountNumbers = userAccounts.map((a) =>
-        a.accountNumber.toString()
+        a.accountNumber.toString(),
       );
       const snapshot = await getDocs(
-        query(collection(db, "galloGoals"), where("companyId", "==", companyId))
+        query(
+          collection(db, "galloGoals"),
+          where("companyId", "==", companyId),
+        ),
       );
 
       return snapshot.docs
         .map(
           (docSnap) =>
-            normalizeDeep(docSnap.data()) as FireStoreGalloGoalDocType
+            normalizeDeep(docSnap.data()) as FireStoreGalloGoalDocType,
         )
         .filter((goal) =>
           goal.accounts.some((acc) =>
-            accountNumbers.includes(acc.distributorAcctId.toString())
-          )
+            accountNumbers.includes(acc.distributorAcctId.toString()),
+          ),
         );
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error"
+        error instanceof Error ? error.message : "Unknown error",
       );
     }
-  }
+  },
 );
 
 // Slice
@@ -160,11 +183,11 @@ const galloGoalsSlice = createSlice({
     // },
     addOrUpdateGalloGoal: (
       state,
-      action: PayloadAction<FireStoreGalloGoalWithId>
+      action: PayloadAction<FireStoreGalloGoalWithId>,
     ) => {
       const updatedGoal = action.payload;
       const index = state.galloGoals.findIndex(
-        (goal) => goal.goalDetails.goalId === updatedGoal.goalDetails.goalId
+        (goal) => goal.goalDetails.goalId === updatedGoal.goalDetails.goalId,
       );
 
       if (index !== -1) {
@@ -194,19 +217,19 @@ const galloGoalsSlice = createSlice({
       })
       .addCase(markGalloAccountAsSubmitted.fulfilled, (state, action) => {
         const updatedData = normalizeDeep(
-          action.payload
+          action.payload,
         ) as FireStoreGalloGoalWithId;
         state.galloGoals = state.galloGoals.map((goal) =>
           goal.goalDetails.goalId === updatedData.goalDetails.goalId
             ? { ...updatedData, id: goal.id }
-            : goal
+            : goal,
         );
       })
 
       .addCase(markGalloAccountAsSubmitted.rejected, (state, action) => {
         console.error(
           "🚨 Failed to mark account as submitted:",
-          action.payload
+          action.payload,
         );
       });
   },
@@ -226,6 +249,20 @@ export const selectGalloGoalsError = (state: RootState) =>
 export const selectGalloGoalsLastUpdated = (state: RootState) =>
   state.galloGoals.lastUpdated;
 
+export const selectUpcomingGalloGoals = createSelector(
+  [selectAllGalloGoals, (_: RootState, companyId: string) => companyId],
+  (goals, companyId) =>
+    goals
+      .filter(
+        (g) => g.companyId === companyId && isGoalVisible(g) === "upcoming",
+      )
+      .sort((a, b) => {
+        const aTime = toMillisSafe(a.displayDate) ?? 0;
+        const bTime = toMillisSafe(b.displayDate) ?? 0;
+        return aTime - bTime;
+      }),
+);
+
 export const selectUsersGalloGoals = createSelector(
   [
     selectAllGalloGoals,
@@ -236,14 +273,17 @@ export const selectUsersGalloGoals = createSelector(
       goal.accounts.some((account) =>
         Array.isArray(account.salesRouteNums)
           ? account.salesRouteNums.includes(salesRouteNum)
-          : account.salesRouteNums === salesRouteNum
-      )
-    )
+          : account.salesRouteNums === salesRouteNum,
+      ),
+    ),
 );
 
 export const selectActiveGalloGoals = createSelector(
   [selectAllGalloGoals],
-  (goals) => goals.filter((g) => g.lifeCycleStatus === "active")
+  (goals) =>
+    goals.filter(
+      (g) => g.lifeCycleStatus === "active" && isGoalVisible(g) === "active",
+    ),
 );
 
 export const selectUsersActiveGalloGoals = createSelector(
@@ -255,13 +295,13 @@ export const selectUsersActiveGalloGoals = createSelector(
     goals.filter(
       (goal) =>
         goal.lifeCycleStatus === "active" &&
-        isProgramCurrentlyActive(goal) &&
+        isGoalVisible(goal) === "active" &&
         goal.accounts.some((account) =>
           Array.isArray(account.salesRouteNums)
             ? account.salesRouteNums.includes(salesRouteNum)
-            : account.salesRouteNums === salesRouteNum
-        )
-    )
+            : account.salesRouteNums === salesRouteNum,
+        ),
+    ),
 );
 
 export default galloGoalsSlice.reducer;

@@ -670,6 +670,7 @@ export type LifecycleFilter = "active" | "archived" | "disabled" | "all";
 
 export interface FireStoreGalloGoalDocType {
   lifeCycleStatus: LifecycleFilter;
+  displayDate: Timestamp | null;
   companyId: string;
   programDetails: {
     programId: string;

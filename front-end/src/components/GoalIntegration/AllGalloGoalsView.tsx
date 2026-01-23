@@ -14,11 +14,12 @@ import { useNavigate } from "react-router-dom";
 import GalloGoalCard from "./GalloGoalCard";
 import { LifecycleFilter } from "../../utils/types";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
+import AdminGalloGoalsSection from "./AdminGalloGoalsSection";
 
 const AllGalloGoalsView = () => {
   const navigate = useNavigate();
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
@@ -48,27 +49,65 @@ const AllGalloGoalsView = () => {
     setPostViewerOpen(true);
   };
 
-  /** 🔎 Filter + search + sort */
-  const visibleGoals = useMemo(() => {
-    return galloGoals
-      .filter((goal) =>
-        lifecycleFilter === "all"
-          ? true
-          : goal.lifeCycleStatus === lifecycleFilter
-      )
-      .filter((goal) =>
-        search
-          ? goal.programDetails.programTitle
-              .toLowerCase()
-              .includes(search.toLowerCase()) ||
-            goal.goalDetails.goal.toLowerCase().includes(search.toLowerCase())
-          : true
-      )
+  const now = Date.now();
+
+  const toMillisSafe = (v?: any): number | null => {
+    if (!v) return null;
+    if (typeof v === "string") {
+      const ms = Date.parse(v);
+      return Number.isNaN(ms) ? null : ms;
+    }
+    if (v instanceof Date) return v.getTime();
+    return null;
+  };
+
+  const isUpcoming = (goal: any) => {
+    const displayAt = toMillisSafe(goal.displayDate);
+    return (
+      goal.lifeCycleStatus === "active" && displayAt !== null && displayAt > now
+    );
+  };
+
+  const isArchived = (goal: any) => {
+    if (goal.lifeCycleStatus === "archived") return true;
+
+    const end = goal.programDetails?.programEndDate
+      ? new Date(goal.programDetails.programEndDate).getTime()
+      : null;
+
+    return end !== null && end < now;
+  };
+
+  const { upcomingGoals, currentGoals, archivedGoals } = useMemo(() => {
+    const filtered = galloGoals.filter((goal) =>
+      search
+        ? goal.programDetails.programTitle
+            .toLowerCase()
+            .includes(search.toLowerCase()) ||
+          goal.goalDetails.goal.toLowerCase().includes(search.toLowerCase())
+        : true,
+    );
+
+    const upcoming = filtered
+      .filter(isUpcoming)
       .sort(
         (a, b) =>
-          lifecycleOrder[a.lifeCycleStatus] - lifecycleOrder[b.lifeCycleStatus]
+          (toMillisSafe(a.displayDate) ?? 0) -
+          (toMillisSafe(b.displayDate) ?? 0),
       );
-  }, [galloGoals, lifecycleFilter, search]);
+
+    const archived = filtered.filter(isArchived);
+
+    const current = filtered.filter(
+      (g) => g.lifeCycleStatus === "active" && !isUpcoming(g) && !isArchived(g),
+    );
+
+    return {
+      upcomingGoals: upcoming,
+      currentGoals: current,
+      archivedGoals: archived,
+    };
+  }, [galloGoals, search]);
 
   const employeeMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -133,26 +172,54 @@ const AllGalloGoalsView = () => {
         />
       </Box>
 
-      {/* Empty state */}
-      {visibleGoals.length === 0 && (
-        <Box textAlign="center" mt={4}>
-          <Typography color="text.secondary">
-            No goals match your current filters.
-          </Typography>
-        </Box>
+      {/* Upcoming */}
+      {upcomingGoals.length > 0 && (
+        <AdminGalloGoalsSection
+          title="Upcoming Goals"
+          subtitle="These goals are approved and will become active soon."
+        >
+          {upcomingGoals.map((goal) => (
+            <GalloGoalCard
+              key={goal.id}
+              goal={goal}
+              employeeMap={employeeMap}
+              onViewPostModal={openPostViewer}
+            />
+          ))}
+        </AdminGalloGoalsSection>
       )}
 
-      {/* Goals */}
-      <Box className="programs-wrapper">
-        {visibleGoals.map((goal) => (
+      {/* Current */}
+      <AdminGalloGoalsSection
+        title="Current Goals"
+        subtitle="These goals are live and can be worked on now."
+      >
+        {currentGoals.map((goal) => (
           <GalloGoalCard
-            key={goal.id} // use Firestore doc id
+            key={goal.id}
             goal={goal}
             employeeMap={employeeMap}
             onViewPostModal={openPostViewer}
           />
         ))}
-      </Box>
+      </AdminGalloGoalsSection>
+
+      {/* Archived */}
+      {archivedGoals.length > 0 && (
+        <AdminGalloGoalsSection
+          title="Archived Goals"
+          subtitle="Past programs kept for reference."
+        >
+          {archivedGoals.map((goal) => (
+            <GalloGoalCard
+              key={goal.id}
+              goal={goal}
+              employeeMap={employeeMap}
+              onViewPostModal={openPostViewer}
+            />
+          ))}
+        </AdminGalloGoalsSection>
+      )}
 
       <PostViewerModal
         key={postIdToView}
