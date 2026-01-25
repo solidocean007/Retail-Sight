@@ -212,6 +212,16 @@ export const changePlanAndRestartBillingCycle = onCall(
       }
 
       newSub = res.subscription;
+
+      // after creating newSub
+      const removeAllAddons = newSub.addOns?.map((a: any) => a.id) ?? [];
+
+      if (removeAllAddons.length) {
+        await gateway.subscription.update(newSub.id, {
+          addOns: { remove: removeAllAddons },
+          prorateCharges: false,
+        } as any);
+      }
     } catch (err) {
       console.error("❌ New subscription creation failed", err);
       throw new HttpsError(

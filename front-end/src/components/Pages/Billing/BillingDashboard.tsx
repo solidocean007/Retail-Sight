@@ -295,6 +295,19 @@ const BillingDashboard: React.FC = () => {
   ) => {
     const hasCustomer = billingInfo?.braintreeCustomerId;
 
+    const hasSubscription = !!billingInfo?.subscriptionId;
+
+    if (!hasSubscription) {
+      // user intent = "I want more capacity"
+      setPendingAddonType(type);
+      setPendingAddonQty(qty);
+
+      // force plan upgrade selection
+      setSelectedPlan(null);
+      setModalOpen(true);
+      return;
+    }
+
     // 🧩 If no Braintree customer, open checkout modal with free plan
     if (!hasCustomer) {
       console.log("🔔 No Braintree customer yet — opening checkout modal.");

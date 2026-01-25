@@ -7,6 +7,12 @@ import { functions } from "../../../utils/firebase";
 import BillingAuthDebug from "./BillingAuthDebug";
 import { CompanyBilling } from "../../../utils/types";
 
+type CheckoutIntent =
+  | "create-subscription"
+  | "upgrade-plan"
+  | "add-addons"
+  | "update-card";
+
 type ClientTokenResponse = {
   clientToken: string;
 };
@@ -32,7 +38,6 @@ interface CheckoutModalProps {
   planAddons?: PlanAddons;
   initialAddonType?: "extraUser" | "extraConnection";
   initialAddonQty?: number;
-  // clientToken?: string | null;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -51,9 +56,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   planAddons,
   initialAddonType,
   initialAddonQty,
-  // clientToken,
 }) => {
-  const isFreePlan = planId === "free";
   const dropinRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
   const wrapperRef = useRef(null);
@@ -64,11 +67,32 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [dropinReady, setDropinReady] = useState(false);
 
-  // ✅ More descriptive state
   const [additionalUserCount, setAdditionalUserCount] = useState(0);
   const [additionalConnectionCount, setAdditionalConnectionCount] = useState(0);
 
-  // --- Derive add-on prices from Firestore plan ---
+  const hasSubscription = !!billingInfo?.subscriptionId;
+
+  const checkoutIntent: CheckoutIntent = useMemo(() => {
+    if (mode === "update-card") return "update-card";
+    if (hasSubscription && isUpgrade) return "upgrade-plan";
+    if (hasSubscription) return "add-addons";
+    return "create-subscription";
+  }, [mode, hasSubscription, isUpgrade]);
+
+  // This replaces your missing isFreeAddonPurchase.
+  // It means: user is on "Free" UI plan (no subscription) but wants add-ons => needs card collection.
+  const needsCardForAddonPurchase = useMemo(() => {
+    return (
+      !hasSubscription &&
+      (additionalUserCount > 0 || additionalConnectionCount > 0)
+    );
+  }, [hasSubscription, additionalUserCount, additionalConnectionCount]);
+
+  const needsPaymentMethod =
+    checkoutIntent === "create-subscription" ||
+    checkoutIntent === "update-card" ||
+    needsCardForAddonPurchase;
+
   const addonPrices = useMemo(
     () => ({
       user: planAddons?.extraUser ?? 0,
@@ -76,6 +100,32 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }),
     [planAddons],
   );
+
+  const requiresDropin = useMemo(() => {
+    // Only needed when we're going to collect a nonce.
+    return (
+      checkoutIntent === "create-subscription" ||
+      checkoutIntent === "update-card" ||
+      needsCardForAddonPurchase
+    );
+  }, [checkoutIntent, needsCardForAddonPurchase]);
+
+  const disableAddonInputs = checkoutIntent !== "add-addons";
+
+  const submitLabel = useMemo(() => {
+    switch (checkoutIntent) {
+      case "create-subscription":
+        return "Confirm Purchase";
+      case "upgrade-plan":
+        return `Upgrade to ${planName ?? "Plan"}`;
+      case "add-addons":
+        return "Confirm Add-ons";
+      case "update-card":
+        return "Update Card";
+      default:
+        return "Confirm";
+    }
+  }, [checkoutIntent, planName]);
 
   useEffect(() => {
     if (!open) {
@@ -107,77 +157,57 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     return dropin.default;
   };
 
-  // --- Initialize Braintree drop-in ---
+  // Initialize drop-in ONLY if it’s needed
   useEffect(() => {
     if (!open || !companyId || !dropinRef.current) return;
+    if (!needsPaymentMethod) return;
+
     let cancelled = false;
-    if (open && dropinRef.current) {
-      setDropinReady(false);
-      (async () => {
-        try {
-          const dropin = await loadDropin();
 
-          const getClientToken = httpsCallable<
-            { companyId: string },
-            ClientTokenResponse
-          >(functions, "getClientToken");
-          const { data } = await getClientToken({ companyId });
-          const token = data.clientToken;
-          if (!token) {
-            throw new Error("Missing Braintree client token");
-          }
+    setDropinReady(false);
 
-          if (!token) throw new Error("Missing Braintree client token");
+    (async () => {
+      try {
+        const dropin = await loadDropin();
 
-          if (cancelled) return;
+        const getClientToken = httpsCallable<
+          { companyId: string },
+          ClientTokenResponse
+        >(functions, "getClientToken");
 
-          // instanceRef.current = await dropin.create({
-          //   authorization: token,
-          //   container: dropinRef.current,
-          //   paypal: { flow: "vault" },
-          //   card: {
-          //     overrides: {
-          //       fields: {
-          //         number: { placeholder: "Card number" },
-          //         cvv: { placeholder: "CVV" },
-          //         expirationDate: { placeholder: "MM/YY" },
-          //       },
-          //     },
-          //   },
-          // });
-          instanceRef.current = await dropin.create({
-            authorization: token,
-            container: dropinRef.current,
-            card: {
-              overrides: {
-                fields: {
-                  number: { placeholder: "Card number" },
-                  cvv: { placeholder: "CVV" },
-                  expirationDate: { placeholder: "MM/YY" },
-                },
+        const { data } = await getClientToken({ companyId });
+        const token = data.clientToken;
+        if (!token) throw new Error("Missing Braintree client token");
+        if (cancelled) return;
+
+        instanceRef.current = await dropin.create({
+          authorization: token,
+          container: dropinRef.current,
+          card: {
+            overrides: {
+              fields: {
+                number: { placeholder: "Card number" },
+                cvv: { placeholder: "CVV" },
+                expirationDate: { placeholder: "MM/YY" },
               },
             },
-          });
+          },
+        });
 
-          setDropinReady(true);
-        } catch (err) {
-          console.error(err);
-          setError("Failed to initialize payment form.");
-        }
-      })();
-    }
+        setDropinReady(true);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to initialize payment form.");
+      }
+    })();
 
     return () => {
       cancelled = true;
       instanceRef.current?.teardown?.();
+      instanceRef.current = null;
+      setDropinReady(false);
     };
-  }, [open, companyId]);
-
-  // --- Submit handler ---
-  const hasSubscription = !!billingInfo?.subscriptionId;
-
-  const isAddonPurchase =
-    additionalUserCount > 0 || additionalConnectionCount > 0;
+  }, [open, companyId, requiresDropin]);
 
   const handleSubmit = async () => {
     if (!companyId) return;
@@ -186,92 +216,97 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setError(null);
 
     try {
-      const addons: any[] = [];
+      switch (checkoutIntent) {
+        case "add-addons": {
+          // add-ons only (no drop-in)
+          if (additionalUserCount > 0) {
+            await httpsCallable(
+              functions,
+              "addAddon",
+            )({
+              companyId,
+              addonType: "extraUser",
+              quantity: additionalUserCount,
+            });
+          }
 
-      if (additionalUserCount > 0) {
-        addons.push({ id: "extraUser", quantity: additionalUserCount });
-      }
-      if (additionalConnectionCount > 0) {
-        addons.push({
-          id: "extraConnection",
-          quantity: additionalConnectionCount,
-        });
-      }
-
-      if (hasSubscription && !isUpgrade && addons.length === 0) {
-        throw new Error("No changes selected.");
-      }
-
-      /**
-       * CASE 1: Existing subscription → PLAN CHANGE ONLY
-       * (add-ons are handled AFTER upgrade)
-       */
-      if (hasSubscription && isUpgrade) {
-        const upgradeFn = httpsCallable(
-          functions,
-          "changePlanAndRestartBillingCycle",
-        );
-
-        await upgradeFn({
-          companyId,
-          newPlanId: planId,
-        });
-
-        setSuccess(true);
-        setTimeout(onClose, 1500);
-        return;
-      }
-
-      /**
-       * CASE 2: Existing subscription → ADD-ONS ONLY
-       */
-      if (hasSubscription && !isUpgrade && addons.length > 0) {
-        for (const addon of addons) {
-          const addAddon = httpsCallable(functions, "addAddon");
-          await addAddon({
-            companyId,
-            addonType: addon.id,
-            quantity: addon.quantity,
-          });
+          if (additionalConnectionCount > 0) {
+            await httpsCallable(
+              functions,
+              "addAddon",
+            )({
+              companyId,
+              addonType: "extraConnection",
+              quantity: additionalConnectionCount,
+            });
+          }
+          break;
         }
 
-        setSuccess(true);
-        setTimeout(onClose, 1500);
-        return;
+        case "upgrade-plan": {
+          await httpsCallable(
+            functions,
+            "changePlanAndRestartBillingCycle",
+          )({
+            companyId,
+            newPlanId: planId,
+          });
+          break;
+        }
+
+        case "create-subscription": {
+          if (!instanceRef.current) throw new Error("Payment form not ready.");
+
+          const { nonce } = await instanceRef.current.requestPaymentMethod();
+
+          await httpsCallable(
+            functions,
+            "createSubscription",
+          )({
+            companyId,
+            companyName,
+            email,
+            paymentMethodNonce: nonce,
+            planId,
+          });
+
+          // If user wanted add-ons as part of their first checkout, do it AFTER subscription exists
+          // (keeps backend simpler + avoids “addons on creation” issues)
+          if (additionalUserCount > 0) {
+            await httpsCallable(
+              functions,
+              "addAddon",
+            )({
+              companyId,
+              addonType: "extraUser",
+              quantity: additionalUserCount,
+            });
+          }
+          if (additionalConnectionCount > 0) {
+            await httpsCallable(
+              functions,
+              "addAddon",
+            )({
+              companyId,
+              addonType: "extraConnection",
+              quantity: additionalConnectionCount,
+            });
+          }
+
+          break;
+        }
+
+        case "update-card": {
+          if (!instanceRef.current) throw new Error("Payment form not ready.");
+          await instanceRef.current.requestPaymentMethod();
+          break;
+        }
       }
 
-      /**
-       * CASE 3: No subscription → CREATE (free plan + addons OR paid plan)
-       */
-      if (!instanceRef.current) {
-        throw new Error("Payment form not ready.");
-      }
-
-      const { nonce } = await instanceRef.current.requestPaymentMethod();
-
-      const subscribeFn = httpsCallable(functions, "createSubscription");
-
-      const res: any = await subscribeFn({
-        companyId,
-        companyName,
-        email,
-        paymentMethodNonce: nonce,
-        planId,
-        addons,
-      });
-
-      if (res.data?.status?.toLowerCase?.() === "active") {
-        setSuccess(true);
-        setTimeout(onClose, 1500);
-        return;
-      }
-
-      throw new Error("Subscription failed.");
+      setSuccess(true);
+      setTimeout(onClose, 1200);
     } catch (err: any) {
-      console.group("🔥 Checkout Error Details");
-      console.error("Full error object:", err);
-      console.groupEnd();
-      setError(err.message || "Payment failed.");
+      setError(err?.message || "Checkout failed.");
     } finally {
       setLoading(false);
     }
@@ -279,7 +314,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   if (!open) return null;
 
-  // --- Compute live total ---
   const activeAddons = [
     {
       label: "Additional Users",
@@ -293,18 +327,26 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     },
   ].filter((a) => a.quantity > 0);
 
-  const isDowngrade =
-    !!billingInfo?.subscriptionId &&
-    !isUpgrade &&
-    planPrice < (billingInfo?.price ?? 0);
+  // You aren’t doing downgrades in this modal.
+  // If you later add downgrade scheduling, handle it outside (BillingDashboard).
+  const showDropin = requiresDropin;
 
-  const isFreeAddonPurchase =
-    isFreePlan &&
-    !hasSubscription &&
-    (additionalUserCount > 0 || additionalConnectionCount > 0);
+  const billingNote = useMemo(() => {
+    if (mode === "update-card") return "Update your saved card details below.";
+    if (needsCardForAddonPurchase)
+      return "Add payment details to purchase add-ons.";
+    return "Billed monthly • Cancel anytime";
+  }, [mode, needsCardForAddonPurchase]);
 
-  const disableAddonInputs =
-    isUpgrade || (hasSubscription && planId !== billingInfo?.plan);
+  const canSubmit = useMemo(() => {
+    if (loading) return false;
+
+    if (needsPaymentMethod) {
+      return dropinReady;
+    }
+
+    return true;
+  }, [loading, needsPaymentMethod, dropinReady]);
 
   return (
     <div className="checkout-overlay">
@@ -320,34 +362,23 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         </h2>
         {import.meta.env.DEV && <BillingAuthDebug />}
 
-        <p className="billing-note">
-          {mode === "update-card"
-            ? "Update your saved card details below."
-            : isFreeAddonPurchase
-              ? "Add payment details to purchase add-ons."
-              : "Billed monthly • Cancel anytime"}
-        </p>
+        <p className="billing-note">{billingNote}</p>
 
-        {/* === Plan Summary === */}
         <div className="plan-summary">
           <h3>{planName || planId}</h3>
           <p className="plan-price">${planPrice}/month</p>
 
-          {/* === Add-on Inputs === */}
-          {!disableAddonInputs && (
+          {/* Add-on inputs: enabled only for add-ons flow OR initial “free -> add-ons” desire */}
+          {(checkoutIntent === "add-addons" || !hasSubscription) && (
             <div className="addon-selectors">
               <h4>Optional Add-ons</h4>
-              {disableAddonInputs && (
-                <div className="addon-lock-note">
-                  ℹ️ Add-ons can be added after upgrading your plan.
-                </div>
-              )}
+
               <div className="addon-field">
                 <label>Additional Users (${addonPrices.user} each)</label>
                 <input
                   type="number"
                   min={0}
-                  disabled={disableAddonInputs}
+                  disabled={disableAddonInputs && hasSubscription}
                   value={additionalUserCount}
                   onChange={(e) =>
                     setAdditionalUserCount(Number(e.target.value))
@@ -362,7 +393,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <input
                   type="number"
                   min={0}
-                  disabled={disableAddonInputs}
+                  disabled={disableAddonInputs && hasSubscription}
                   value={additionalConnectionCount}
                   onChange={(e) =>
                     setAdditionalConnectionCount(Number(e.target.value))
@@ -372,7 +403,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
           )}
 
-          {/* === Live Summary === */}
           <CartSummary
             planName={planName || "Selected"}
             planPrice={planPrice}
@@ -390,42 +420,28 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <p className="secure-note">🔒 Secure payment via Braintree</p>
         </div>
 
-        {/* === Drop-in / Feedback === */}
-        {!dropinReady && !error && (
+        {!dropinReady && showDropin && !error && (
           <div className="dropin-loading">
             <div className="spinner" />
             <p className="secure-note">🔒 Secure payment form loading…</p>
           </div>
         )}
+
         {error && <p className="error-msg">{error}</p>}
         {success && <p className="success-msg">Payment successful! 🎉</p>}
 
-        {!isDowngrade && (
-          <div
-            ref={dropinRef}
-            className="dropin-container"
-            style={{ display: dropinReady ? "block" : "none" }}
-          />
+        {needsPaymentMethod && (
+          <div ref={dropinRef} className="dropin-container" />
         )}
 
         <button
           className="btn-submit"
           onClick={handleSubmit}
-          disabled={loading || (!billingInfo?.subscriptionId && !dropinReady)}
+          disabled={!canSubmit}
         >
-          {loading
-            ? "Processing..."
-            : mode === "update-card"
-              ? "Update Card"
-              : isFreeAddonPurchase
-                ? "Confirm Add-on Purchase"
-                : isUpgrade
-                  ? `Upgrade to ${planName}`
-                  : hasSubscription
-                    ? "Confirm Changes"
-                    : "Confirm Purchase"}
+          {loading ? "Processing..." : submitLabel}
         </button>
-        {/* {billingInfo?.pendingChange && (  */}
+
         {billingInfo?.pendingChange && (
           <div className="downgrade-notice">
             Downgrade scheduled for{" "}

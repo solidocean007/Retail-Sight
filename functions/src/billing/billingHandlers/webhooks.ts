@@ -21,6 +21,27 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+function derivePaymentStatusFromWebhook(
+  kind: string,
+  previous: "active" | "past_due" | "canceled"
+): "active" | "past_due" | "canceled" {
+  switch (kind) {
+    case "subscription_canceled":
+      return "canceled";
+
+    case "subscription_charged_unsuccessfully":
+    case "subscription_went_past_due":
+      return "past_due";
+
+    case "subscription_charged_successfully":
+    case "subscription_renewed":
+      return "active";
+
+    default:
+      return previous;
+  }
+}
+
 /**
  * 🔔 Braintree Webhook Handler (Server-to-Server)
  * Authoritative source of billing truth.
@@ -74,66 +95,58 @@ export const handleBraintreeWebhook = onRequest(
 
       const companyRef = companySnap.docs[0].ref;
       const companyId = companyRef.id;
-      const company = companySnap.docs[0].data();
 
       // ==========================
       // 1️⃣ Canonical billing sync
       // ==========================
       const result = await syncBillingFromSubscription(companyId, subscription);
 
-      // ==========================
-      // 2️⃣ Payment status overrides
-      // ==========================
-      let paymentStatus = result.status;
+      // 2️⃣ Authoritative payment state
+      const afterSyncSnap = await companyRef.get();
+      const prevStatus =
+        afterSyncSnap.data()?.billing?.paymentStatus ?? "active";
 
-      if (kind.includes("subscription_past_due")) {
-        paymentStatus = "past_due";
-      }
-
-      if (
-        kind.includes("subscription_canceled") ||
-        kind.includes("subscription_expired")
-      ) {
-        paymentStatus = "canceled";
-      }
+      const nextStatus = derivePaymentStatusFromWebhook(kind, prevStatus);
 
       await companyRef.update({
-        "billing.paymentStatus": paymentStatus,
+        "billing.paymentStatus": nextStatus,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // ==========================
-      // 3️⃣ Apply deferred add-on removals (FULL removal at renewal)
-      // ==========================
+      // 3️⃣ Renewal-only operations
       const isRenewalEvent =
         kind === "subscription_charged_successfully" ||
         kind === "subscription_renewed";
 
       if (isRenewalEvent) {
         await applyScheduledDowngradeAfterRenewal(companyId);
-      }
 
-      if (isRenewalEvent && company.billing?.pendingAddonRemoval) {
-        const pending = company.billing.pendingAddonRemoval;
-        const addonId = getAddonId(subscription.planId, pending.addonType);
+        const freshSnap = await companyRef.get();
+        const freshBilling = freshSnap.data()?.billing;
 
-        const updateRes = await gateway.subscription.update(subscription.id, {
-          addOns: {
-            update: [
-              {
-                existingId: addonId,
-                quantity: pending.nextQuantity,
-              },
-            ],
-          },
-          prorateCharges: false,
-        } as any);
+        if (freshBilling?.pendingAddonRemoval) {
+          const pending = freshBilling.pendingAddonRemoval;
+          const addonId = getAddonId(subscription.planId, pending.addonType);
 
-        if (updateRes.success) {
-          await companyRef.update({
-            "billing.pendingAddonRemoval": admin.firestore.FieldValue.delete(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
+          const updateRes = await gateway.subscription.update(subscription.id, {
+            addOns: {
+              update: [
+                {
+                  existingId: addonId,
+                  quantity: pending.nextQuantity,
+                },
+              ],
+            },
+            prorateCharges: false,
+          } as any);
+
+          if (updateRes.success) {
+            await companyRef.update({
+              "billing.pendingAddonRemoval":
+                admin.firestore.FieldValue.delete(),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
         }
       }
 
@@ -144,7 +157,7 @@ export const handleBraintreeWebhook = onRequest(
         companyId,
         subscriptionId: subscription.id,
         event: kind,
-        status: paymentStatus,
+        status: nextStatus,
         amount: result.totalMonthlyCost,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });

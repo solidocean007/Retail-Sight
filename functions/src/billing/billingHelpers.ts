@@ -71,41 +71,31 @@ export async function syncBillingFromSubscription(
   subscription: any
 ) {
   if (!subscription?.id || !subscription?.planId) {
-    throw new Error(
-      "Invalid subscription object passed to syncBillingFromSubscription"
-    );
+    throw new Error("Invalid subscription object");
   }
 
   const companyRef = db.collection("companies").doc(companyId);
-
-  const total = calculateSubscriptionTotal(subscription);
-
-  function normalizePaymentStatus(
-    status: string
-  ): "active" | "past_due" | "canceled" {
-    if (status === "canceled") return "canceled";
-    if (status === "past_due") return "past_due";
-
-    // pending, active, trialing, authorized, etc.
-    return "active";
-  }
-
   const snap = await companyRef.get();
   const existingBilling = snap.data()?.billing ?? {};
+
   const addons = extractAddonQuantities(subscription);
+  const total = calculateSubscriptionTotal(subscription);
 
   await companyRef.update({
     billing: {
-      ...existingBilling, // ← preserves customerId, locks, pending changes
+      ...existingBilling,
       plan: subscription.planId,
       subscriptionId: subscription.id,
-      paymentStatus: normalizePaymentStatus(subscription.status),
+
+      // ✅ DO NOT DERIVE PAYMENT STATE HERE
+      rawPaymentStatus: subscription.status,
 
       renewalDate: subscription.nextBillingDate
         ? admin.firestore.Timestamp.fromDate(
             new Date(subscription.nextBillingDate)
           )
         : null,
+
       billingPeriodEnd: subscription.paidThroughDate
         ? admin.firestore.Timestamp.fromDate(
             new Date(subscription.paidThroughDate)
@@ -121,6 +111,7 @@ export async function syncBillingFromSubscription(
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
+  // sync plan limits
   const planSnap = await db
     .collection("plans")
     .where("braintreePlanId", "==", subscription.planId)
@@ -135,17 +126,12 @@ export async function syncBillingFromSubscription(
       "limits.connectionLimit": plan.connectionLimit,
       subscriptionTier: subscription.planId,
     });
-  } else {
-    console.warn(
-      `No plan document found for braintreePlanId=${subscription.planId}`
-    );
   }
 
   return {
     planId: subscription.planId,
-    status: subscription.status,
+    rawStatus: subscription.status,
     totalMonthlyCost: total,
-    nextBillingDate: subscription.nextBillingDate,
   };
 }
 
