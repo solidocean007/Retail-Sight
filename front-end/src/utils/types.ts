@@ -685,8 +685,16 @@ export type GalloAccountType = {
 
 export type LifecycleFilter = "active" | "archived" | "disabled" | "all";
 
+export type GoalTimingState =
+  | "scheduled" // not visible yet (displayDate in future)
+  | "upcoming"  // visible, but not started
+  | "current"   // live
+  | "archived"; // ended
+
+
 export interface FireStoreGalloGoalDocType {
   lifeCycleStatus: LifecycleFilter;
+  displayDate: Timestamp | null;
   companyId: string;
   programDetails: {
     programId: string;

@@ -5,6 +5,40 @@
   font-weight: bold;
 }
 
+/* ===== Goal Tabs ===== */
+
+.goal-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.goal-tab {
+  appearance: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.goal-tab:hover {
+  color: #1976d2;
+}
+
+.goal-tab.active {
+  background-color:var(--surface-elevated);
+
+  color: #1976d2;
+  border-bottom-color: #1976d2;
+}
+
 .programs-wrapper {
   display: flex;
   flex-direction: column;

@@ -6,6 +6,13 @@ import {
   GalloProgramType,
 } from "../types";
 import { db } from "../firebase";
+import { Timestamp } from "firebase/firestore";
+
+function dateStringToTimestamp(date?: string | null) {
+  if (!date) return null;
+  const ms = Date.parse(date);
+  return Number.isNaN(ms) ? null : Timestamp.fromMillis(ms);
+}
 
 export const createGalloGoal = async (
   goalEnv: "prod" | "dev",
@@ -14,7 +21,7 @@ export const createGalloGoal = async (
   allAccounts: EnrichedGalloAccountType[],
   selectedAccounts: EnrichedGalloAccountType[],
 
-  companyId: string
+  companyId: string,
 ): Promise<FireStoreGalloGoalDocType> => {
   if (!selectedGoal || !selectedProgram) {
     throw new Error("Selected goal or program is missing.");
@@ -26,25 +33,24 @@ export const createGalloGoal = async (
   const snapshot = await getDoc(goalDocRef);
 
   const selectedIds = new Set(
-    selectedAccounts.map((a) => String(a.distributorAcctId))
+    selectedAccounts.map((a) => String(a.distributorAcctId)),
   );
 
   let mergedAccounts: FireStoreGalloGoalDocType["accounts"] = allAccounts.map(
-  (account) => ({
-    distributorAcctId: account.distributorAcctId,
-    accountName: account.accountName ?? "N/A",
-    accountAddress: account.accountAddress ?? "N/A",
-    salesRouteNums: Array.isArray(account.salesRouteNums)
-      ? account.salesRouteNums
-      : [],
-    oppId: account.oppId,
-    marketId: account.marketId ?? "N/A",
-    status: selectedIds.has(String(account.distributorAcctId))
-      ? "active"
-      : "inactive",
-  })
-);
-
+    (account) => ({
+      distributorAcctId: account.distributorAcctId,
+      accountName: account.accountName ?? "N/A",
+      accountAddress: account.accountAddress ?? "N/A",
+      salesRouteNums: Array.isArray(account.salesRouteNums)
+        ? account.salesRouteNums
+        : [],
+      oppId: account.oppId,
+      marketId: account.marketId ?? "N/A",
+      status: selectedIds.has(String(account.distributorAcctId))
+        ? "active"
+        : "inactive",
+    }),
+  );
 
   if (snapshot.exists()) {
     const existingGoal = snapshot.data() as FireStoreGalloGoalDocType;
@@ -55,16 +61,19 @@ export const createGalloGoal = async (
         (newAcc) =>
           !existingGoal.accounts.some(
             (existingAcc) =>
-              existingAcc.distributorAcctId === newAcc.distributorAcctId
-          )
+              existingAcc.distributorAcctId === newAcc.distributorAcctId,
+          ),
       ),
     ];
   } else {
     console.log("🆕 No existing goal. Creating a new one.");
   }
 
+  const displayDateTs = dateStringToTimestamp(selectedProgram.displayDate);
+
   const savedGoal: FireStoreGalloGoalDocType = {
     lifeCycleStatus: "active",
+    displayDate: displayDateTs,
     companyId: companyId,
     programDetails: {
       programId: selectedProgram.programId,
@@ -80,8 +89,7 @@ export const createGalloGoal = async (
       goalMetric: selectedGoal.goalMetric,
       goalValueMin: selectedGoal.goalValueMin,
     },
-    accounts: mergedAccounts, // Types of property 'status' are incompatible.
-    // Type 'string' is not assignable to type '"active" | "inactive" | "disabled"'.
+    accounts: mergedAccounts,
   };
 
   console.log("📝 Prepared goal to save:", savedGoal);

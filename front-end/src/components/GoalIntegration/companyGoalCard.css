@@ -1,3 +1,8 @@
+.goal-card-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 .info-box-company-goal {
   display: flex;
   flex-direction: column;
@@ -346,6 +351,43 @@
 }
 .completion-100 {
   color: hsl(140, 100%, 40%);
+}
+
+.goal-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.goal-badge {
+  padding: 0.25em 0.75em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-current {
+  background-color: #2e7d32;
+  color: #fff;
+}
+
+.badge-upcoming {
+  background-color: #1976d2;
+  color: #fff;
+}
+
+.badge-scheduled {
+  background-color: #9e9e9e;
+  color: #fff;
+}
+
+.goal-timing-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted, #666);
+  font-weight: 500;
 }
 
 @media screen and (max-width: 600px) {

@@ -7,20 +7,52 @@
   margin-bottom: 1rem;
 }
 
+/* ============================
+   Goals Workspace Tabs
+   ============================ */
+
 .goals-tabs {
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #ddd;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--divider-color);
+  min-height: unset;
 }
 
-.goals-content {
-  padding: 0.5rem;
+/* Base tab */
+.goals-tab {
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: none;
+  color: var(--text-muted);
+  min-height: unset;
+  padding: 0.6rem 1.4rem;
+
+  border-radius: var(--btn-border-radius) var(--btn-border-radius) 0 0;
+
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
+/* Hover */
+.goals-tab:hover {
+  color: var(--primary-blue);
+  background-color: var(--btn-secondary-hover);
+}
+
+/* Selected */
+.goals-tab.Mui-selected {
+  color: var(--primary-blue);
+  background-color: var(--tab-background-selected);
+
+  /* active underline without indicator */
+  box-shadow: inset 0 -3px 0 var(--primary-blue);
+}
+
+/* Mobile */
 @media (max-width: 600px) {
-  .my-goals-title {
-    font-size: 1.2rem;
-  }
-  .goals-tabs {
-    flex-direction: column;
+  .goals-tab {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
   }
 }

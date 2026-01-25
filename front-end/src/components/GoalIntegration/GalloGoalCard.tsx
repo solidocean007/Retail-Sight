@@ -23,6 +23,7 @@ import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
 import EditGalloGoalModal from "./EditGalloGoalModal";
 import { GoalActionsMenu } from "./GoalActionsMenu";
 import CustomConfirmation from "../CustomConfirmation";
+import { formatGoalDate } from "./GalloIntegration/MyGalloGoalCard";
 
 type PendingAction = {
   status: "archived" | "disabled";
@@ -35,12 +36,40 @@ interface ProgramCardProps {
   goal: FireStoreGalloGoalDocType;
   employeeMap: Record<string, string>;
   onViewPostModal: (id: string) => void;
+
+  // NEW (optional)
+  showTimingHint?: boolean;
+  timingContext?: "scheduled" | "upcoming";
+}
+
+function formatDisplayDate(v?: any, fallback = "on a future date"): string {
+  if (!v) return fallback;
+
+  // Firestore Timestamp
+  if (typeof v.toDate === "function") {
+    return v.toDate().toLocaleDateString();
+  }
+
+  // ISO string
+  if (typeof v === "string") {
+    const ms = Date.parse(v);
+    return Number.isNaN(ms) ? fallback : new Date(ms).toLocaleDateString();
+  }
+
+  // Date
+  if (v instanceof Date) {
+    return v.toLocaleDateString();
+  }
+
+  return fallback;
 }
 
 const GalloGoalCard: React.FC<ProgramCardProps> = ({
   goal,
   employeeMap,
   onViewPostModal,
+  showTimingHint = false,
+  timingContext,
 }) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
@@ -54,7 +83,7 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
     user?.role === "developer";
   const [expanded, setExpanded] = useState(false);
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
   const [accountsOpen, setAccountsOpen] = useState(true);
 
@@ -74,7 +103,7 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
             ...goal,
             lifeCycleStatus: status,
             id: goal.goalDetails.goalId,
-          })
+          }),
         );
 
         try {
@@ -117,7 +146,9 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
               <Typography variant="h6">
                 {goal.programDetails.programTitle}
               </Typography>
-                {goal.goalDetails.goalId}
+              <div className="gallo-program-id">
+                <p>program id: {goal.goalDetails.goalId}</p>
+              </div>
               <span
                 className={`gallo-goal-card__badge gallo-goal-card__badge--${goal.lifeCycleStatus}`}
                 title={goal.lifeCycleStatus}
@@ -126,19 +157,39 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
               </span>
 
               <div className="gallo-goal-card__dates">
-                {goal.programDetails.programStartDate} –{" "}
-                {goal.programDetails.programEndDate}
+                <h5>
+                  Starts: {formatGoalDate(goal.programDetails.programStartDate)}
+                </h5>
+                <h5>
+                  Ends: {formatGoalDate(goal.programDetails.programEndDate)}
+                </h5>
               </div>
             </div>
           </div>
+          {showTimingHint && timingContext === "scheduled" && (
+            <div className="goal-timing-hint scheduled">
+              Scheduled · Displays {formatDisplayDate(goal.displayDate)}
+            </div>
+          )}
+
+          {showTimingHint && timingContext === "upcoming" && (
+            <div className="goal-timing-hint upcoming">
+              Upcoming · Starts{" "}
+              {goal.programDetails?.programStartDate
+                ? new Date(
+                    goal.programDetails.programStartDate,
+                  ).toLocaleDateString()
+                : ""}
+            </div>
+          )}
 
           <div
             className="gallo-goal-card__header-actions"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* <Button size="small" onClick={() => setExpanded((v) => !v)}>
+            <Button size="small" onClick={() => setExpanded((v) => !v)}>
               {expanded ? "Close" : "Open"}
-            </Button> */}
+            </Button>
 
             {canManage && (
               <GoalActionsMenu

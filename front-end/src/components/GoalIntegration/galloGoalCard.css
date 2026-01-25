@@ -110,6 +110,21 @@
   color: var(--text-secondary);
 }
 
+.goal-timing-hint,
+.gallo-program-id {
+  font-size: 0.75rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.goal-timing-hint.scheduled {
+  color: #6c757d; /* neutral */
+}
+
+.goal-timing-hint.upcoming {
+  color: #ed6c02; /* amber */
+}
+
 /* ---------- Desktop ---------- */
 
 .gallo-goal-card__accounts-table {
@@ -161,4 +176,60 @@
   text-align: left;
   padding: 6px 8px;
   font-size: 13px;
+}
+
+/* ============================
+   Gallo Sub Tabs (Current / Upcoming)
+   ============================ */
+
+.gallo-subtabs {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 0.75rem 0 1rem;
+}
+
+/* Base pill */
+.gallo-subtab {
+  border: 1px solid var(--outlined-button-border);
+  background: var(--btn-secondary-bg);
+  color: var(--text-muted);
+
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Hover */
+.gallo-subtab:hover {
+  background: var(--btn-secondary-hover);
+  color: var(--primary-blue);
+}
+
+/* Active */
+.gallo-subtab.active {
+  background: var(--btn-primary-bg);
+  color: black;
+  border-color: var(--btn-primary-bg);
+
+  box-shadow: var(--button-shadow);
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .gallo-subtabs {
+    justify-content: space-between;
+  }
+
+  .gallo-subtab {
+    flex: 1;
+    text-align: center;
+  }
 }
