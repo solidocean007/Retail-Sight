@@ -14,48 +14,7 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { fetchUsersAccounts } from "../utils/userData/fetchUsersAccounts";
 import { markGalloAccountAsSubmitted } from "../thunks/galloGoalsThunk";
-
-export type GalloGoalStatus = "active" | "expired" | "upcoming";
-
-function toMillisSafe(v?: any): number | null {
-  if (!v) return null;
-
-  // ISO string
-  if (typeof v === "string") {
-    const ms = Date.parse(v);
-    return Number.isNaN(ms) ? null : ms;
-  }
-
-  // Date
-  if (v instanceof Date) return v.getTime();
-
-  return null;
-}
-
-function isGoalVisible(goal: FireStoreGalloGoalDocType): GalloGoalStatus {
-  const now = Date.now();
-
-  // NEW: displayDate gate (optional)
-  const displayAt = toMillisSafe(goal.displayDate);
-
-  if (displayAt && displayAt > now) {
-    return "upcoming";
-  }
-
-  // EXISTING logic (unchanged)
-  const start = goal.programDetails?.programStartDate
-    ? new Date(goal.programDetails.programStartDate).getTime()
-    : null;
-
-  const end = goal.programDetails?.programEndDate
-    ? new Date(goal.programDetails.programEndDate).getTime()
-    : null;
-
-  if (start && start > now) return "upcoming";
-  if (end && end < now) return "expired";
-
-  return "active";
-}
+import { getGoalTimingState } from "../components/GoalIntegration/utils/getGoalTimingState";
 
 const toIso = (v: any) =>
   v?.toDate?.()
@@ -249,18 +208,29 @@ export const selectGalloGoalsError = (state: RootState) =>
 export const selectGalloGoalsLastUpdated = (state: RootState) =>
   state.galloGoals.lastUpdated;
 
+export const selectGoalsByTiming = createSelector(
+  [selectAllGalloGoals],
+  (goals) => {
+    const now = Date.now();
+
+    return {
+      scheduled: goals.filter(
+        (g) => getGoalTimingState(g, now) === "scheduled",
+      ),
+      upcoming: goals.filter((g) => getGoalTimingState(g, now) === "upcoming"),
+      current: goals.filter((g) => getGoalTimingState(g, now) === "current"),
+      archived: goals.filter((g) => getGoalTimingState(g, now) === "archived"),
+    };
+  },
+);
+
 export const selectUpcomingGalloGoals = createSelector(
   [selectAllGalloGoals, (_: RootState, companyId: string) => companyId],
   (goals, companyId) =>
-    goals
-      .filter(
-        (g) => g.companyId === companyId && isGoalVisible(g) === "upcoming",
-      )
-      .sort((a, b) => {
-        const aTime = toMillisSafe(a.displayDate) ?? 0;
-        const bTime = toMillisSafe(b.displayDate) ?? 0;
-        return aTime - bTime;
-      }),
+    goals.filter(
+      (g) =>
+        g.companyId === companyId && getGoalTimingState(g, now) === "upcoming",
+    ),
 );
 
 export const selectUsersGalloGoals = createSelector(
@@ -278,12 +248,50 @@ export const selectUsersGalloGoals = createSelector(
     ),
 );
 
+export const selectUsersGoalsByTiming = createSelector(
+  [
+    selectAllGalloGoals,
+    (_: RootState, salesRouteNum?: string) => salesRouteNum || "",
+  ],
+  (goals, salesRouteNum) => {
+    const now = Date.now();
+
+    const userGoals = goals.filter((goal) =>
+      goal.accounts.some((account) =>
+        Array.isArray(account.salesRouteNums)
+          ? account.salesRouteNums.includes(salesRouteNum)
+          : account.salesRouteNums === salesRouteNum,
+      ),
+    );
+
+    return {
+      scheduled: userGoals.filter(
+        (g) => getGoalTimingState(g, now) === "scheduled",
+      ),
+      upcoming: userGoals.filter(
+        (g) => getGoalTimingState(g, now) === "upcoming",
+      ),
+      current: userGoals.filter(
+        (g) => getGoalTimingState(g, now) === "current",
+      ),
+      archived: userGoals.filter(
+        (g) => getGoalTimingState(g, now) === "archived",
+      ),
+    };
+  },
+);
+
 export const selectActiveGalloGoals = createSelector(
   [selectAllGalloGoals],
-  (goals) =>
-    goals.filter(
-      (g) => g.lifeCycleStatus === "active" && isGoalVisible(g) === "active",
-    ),
+  (goals) => {
+    const now = Date.now();
+
+    return goals.filter(
+      (g) =>
+        g.lifeCycleStatus === "active" &&
+        getGoalTimingState(g, now) === "current",
+    );
+  },
 );
 
 export const selectUsersActiveGalloGoals = createSelector(
@@ -295,7 +303,7 @@ export const selectUsersActiveGalloGoals = createSelector(
     goals.filter(
       (goal) =>
         goal.lifeCycleStatus === "active" &&
-        isGoalVisible(goal) === "active" &&
+        getGoalTimingState(goal) === "current" &&
         goal.accounts.some((account) =>
           Array.isArray(account.salesRouteNums)
             ? account.salesRouteNums.includes(salesRouteNum)

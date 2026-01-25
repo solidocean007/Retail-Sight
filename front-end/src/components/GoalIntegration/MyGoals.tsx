@@ -15,7 +15,7 @@ interface MyGoalsProps {
 
 const MyGoals: React.FC<MyGoalsProps> = () => {
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
@@ -29,7 +29,7 @@ const MyGoals: React.FC<MyGoalsProps> = () => {
       { key: "company", label: "Company Goals" },
       ...(galloEnabled ? [{ key: "gallo", label: "Gallo Goals" }] : []),
     ],
-    [galloEnabled]
+    [galloEnabled],
   );
 
   // Clamp index if Gallo becomes disabled while user is on tab 1
@@ -46,25 +46,35 @@ const MyGoals: React.FC<MyGoalsProps> = () => {
 
   return (
     <Box className="my-goals-container">
-      {/* <Typography
-        variant={isMobile ? "h5" : "h3"}
-        className="my-goals-title"
-        gutterBottom
-      >
-        My Goals
-      </Typography> */}
-
       <Tabs
         value={tabIndex}
         onChange={(_, i) => setTabIndex(i)}
         variant={isMobile ? "fullWidth" : "standard"}
         centered={!isMobile}
         className="goals-tabs"
+        sx={{
+          "& .MuiTabs-indicator": {
+            display: "none",
+          },
+        }}
       >
         {tabs.map((t) => (
-          <Tab key={t.key} label={t.label} />
+          <Tab key={t.key} label={t.label} className="goals-tab" />
         ))}
       </Tabs>
+
+      <Typography
+        variant="body2"
+        sx={{
+          color: "var(--text-muted)",
+          textAlign: "center",
+          mb: 1,
+        }}
+      >
+        {tabIndex === 0
+          ? "Goals created and tracked by your company"
+          : "Goals synced from Gallo Axis programs"}
+      </Typography>
 
       <Box className="goals-content">
         {tabIndex === 0 && <MyCompanyGoals />}

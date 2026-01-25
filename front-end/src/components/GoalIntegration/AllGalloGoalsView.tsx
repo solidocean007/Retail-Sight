@@ -1,10 +1,11 @@
 import { useSelector } from "react-redux";
 import { Box, Typography, CircularProgress, Container } from "@mui/material";
 import {
-  selectAllGalloGoals,
+  selectGoalsByTiming,
   selectGalloGoalsLoading,
   selectGalloGoalsError,
 } from "../../Slices/galloGoalsSlice";
+
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { useMemo, useState } from "react";
 import "./gallo-goals.css";
@@ -29,8 +30,6 @@ const AllGalloGoalsView = () => {
   const [search, setSearch] = useState("");
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const galloGoals = useSelector(selectAllGalloGoals);
-  console.log(galloGoals);
   const isLoading = useSelector(selectGalloGoalsLoading);
   const error = useSelector(selectGalloGoalsError);
   const companyUsers = useSelector(selectCompanyUsers) || [];
@@ -49,65 +48,20 @@ const AllGalloGoalsView = () => {
     setPostViewerOpen(true);
   };
 
-  const now = Date.now();
+  const { scheduled, upcoming, current, archived } =
+    useSelector(selectGoalsByTiming);
 
-  const toMillisSafe = (v?: any): number | null => {
-    if (!v) return null;
-    if (typeof v === "string") {
-      const ms = Date.parse(v);
-      return Number.isNaN(ms) ? null : ms;
-    }
-    if (v instanceof Date) return v.getTime();
-    return null;
-  };
+  const matchesSearch = (goal: any) =>
+    !search ||
+    goal.programDetails.programTitle
+      .toLowerCase()
+      .includes(search.toLowerCase()) ||
+    goal.goalDetails.goal.toLowerCase().includes(search.toLowerCase());
 
-  const isUpcoming = (goal: any) => {
-    const displayAt = toMillisSafe(goal.displayDate);
-    return (
-      goal.lifeCycleStatus === "active" && displayAt !== null && displayAt > now
-    );
-  };
-
-  const isArchived = (goal: any) => {
-    if (goal.lifeCycleStatus === "archived") return true;
-
-    const end = goal.programDetails?.programEndDate
-      ? new Date(goal.programDetails.programEndDate).getTime()
-      : null;
-
-    return end !== null && end < now;
-  };
-
-  const { upcomingGoals, currentGoals, archivedGoals } = useMemo(() => {
-    const filtered = galloGoals.filter((goal) =>
-      search
-        ? goal.programDetails.programTitle
-            .toLowerCase()
-            .includes(search.toLowerCase()) ||
-          goal.goalDetails.goal.toLowerCase().includes(search.toLowerCase())
-        : true,
-    );
-
-    const upcoming = filtered
-      .filter(isUpcoming)
-      .sort(
-        (a, b) =>
-          (toMillisSafe(a.displayDate) ?? 0) -
-          (toMillisSafe(b.displayDate) ?? 0),
-      );
-
-    const archived = filtered.filter(isArchived);
-
-    const current = filtered.filter(
-      (g) => g.lifeCycleStatus === "active" && !isUpcoming(g) && !isArchived(g),
-    );
-
-    return {
-      upcomingGoals: upcoming,
-      currentGoals: current,
-      archivedGoals: archived,
-    };
-  }, [galloGoals, search]);
+  const scheduledGoals = scheduled.filter(matchesSearch);
+  const upcomingGoals = upcoming.filter(matchesSearch);
+  const currentGoals = current.filter(matchesSearch);
+  const archivedGoals = archived.filter(matchesSearch);
 
   const employeeMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -171,6 +125,24 @@ const AllGalloGoalsView = () => {
           onChange={(e) => setSearch(e.target.value)}
         />
       </Box>
+      {/* Scheduled */}
+      {scheduledGoals.length > 0 && (
+        <AdminGalloGoalsSection
+          title="Scheduled Goals"
+          subtitle="These goals are approved but are not yet visible to users."
+        >
+          {scheduledGoals.map((goal) => (
+            <GalloGoalCard
+              key={goal.id}
+              goal={goal}
+              employeeMap={employeeMap}
+              onViewPostModal={openPostViewer}
+              showTimingHint
+              timingContext="scheduled"
+            />
+          ))}
+        </AdminGalloGoalsSection>
+      )}
 
       {/* Upcoming */}
       {upcomingGoals.length > 0 && (
@@ -184,6 +156,8 @@ const AllGalloGoalsView = () => {
               goal={goal}
               employeeMap={employeeMap}
               onViewPostModal={openPostViewer}
+              showTimingHint
+              timingContext="upcoming"
             />
           ))}
         </AdminGalloGoalsSection>

@@ -1,63 +1,33 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSelector } from "react-redux";
-import { CircularProgress, Typography, Box } from "@mui/material";
+import { CircularProgress, Typography, Box, Collapse } from "@mui/material";
 import { RootState } from "../../utils/store";
 import {
   selectGalloGoalsLoading,
-  selectUsersActiveGalloGoals,
-  selectUsersGalloGoals,
+  selectUsersGoalsByTiming,
 } from "../../Slices/galloGoalsSlice";
 import "./gallo-goals.css";
 import PostViewerModal from "../PostViewerModal";
 import MyGalloGoalCard from "./GalloIntegration/MyGalloGoalCard";
 
-const toMillisSafe = (v?: any): number | null => {
-  if (!v) return null;
-  if (typeof v === "string") {
-    const ms = Date.parse(v);
-    return Number.isNaN(ms) ? null : ms;
-  }
-  if (v instanceof Date) return v.getTime();
-  return null;
-};
+type ViewMode = "current" | "upcoming";
 
 const MyGalloGoals: React.FC = () => {
   const loading = useSelector(selectGalloGoalsLoading);
   const user = useSelector((state: RootState) => state.user.currentUser);
   const salesRouteNum = user?.salesRouteNum;
-  const allUserGoals = useSelector((state: RootState) =>
-    selectUsersGalloGoals(state, salesRouteNum),
+
+  const { scheduled, upcoming, current } = useSelector((state: RootState) =>
+    selectUsersGoalsByTiming(state, salesRouteNum),
   );
 
-  const [expandedProgramId, setExpandedProgramId] = useState<string | null>(
-    null,
-  );
+  const [mode, setMode] = useState<ViewMode>("current");
   const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
     {},
   );
-
+  const [showScheduled, setShowScheduled] = useState(false);
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
-
-  const openPostViewer = (postId: string) => {
-    setPostIdToView(postId);
-    setPostViewerOpen(true);
-  };
-
-  const closePostViewer = () => {
-    setPostViewerOpen(false);
-  };
-
-  const toggleProgramExpansion = (programId: string) => {
-    setExpandedProgramId((prev) => (prev === programId ? null : programId));
-  };
-
-  const toggleGoalExpansion = (goalId: string) => {
-    setExpandedGoals((prev) => ({
-      ...prev,
-      [goalId]: !prev[goalId],
-    }));
-  };
 
   if (!salesRouteNum) {
     return (
@@ -67,105 +37,144 @@ const MyGalloGoals: React.FC = () => {
     );
   }
 
-  const now = Date.now();
-
-  const { upcomingGoals, currentGoals } = useMemo(() => {
-    const upcoming: typeof allUserGoals = [];
-    const current: typeof allUserGoals = [];
-
-    allUserGoals.forEach((goal) => {
-      if (goal.lifeCycleStatus !== "active") return;
-
-      const displayAt = toMillisSafe(goal.displayDate);
-
-      if (displayAt && displayAt > now) {
-        upcoming.push(goal);
-        return;
-      }
-
-      const end = goal.programDetails?.programEndDate
-        ? new Date(goal.programDetails.programEndDate).getTime()
-        : null;
-
-      if (end && end < now) return;
-
-      current.push(goal);
-    });
-
-    upcoming.sort(
-      (a, b) =>
-        (toMillisSafe(a.displayDate) ?? 0) - (toMillisSafe(b.displayDate) ?? 0),
-    );
-
-    return { upcomingGoals: upcoming, currentGoals: current };
-  }, [allUserGoals]);
+  const openPostViewer = (postId: string) => {
+    setPostIdToView(postId);
+    setPostViewerOpen(true);
+  };
 
   return (
     <div className="my-gallo-goals-container">
+      {/* ================= Tabs ================= */}
+      <div className="gallo-subtabs">
+        <button
+          className={`gallo-subtab ${mode === "current" ? "active" : ""}`}
+          onClick={() => setMode("current")}
+        >
+          Current
+        </button>
+
+        <button
+          className={`gallo-subtab ${mode === "upcoming" ? "active" : ""}`}
+          onClick={() => setMode("upcoming")}
+        >
+          Upcoming ({upcoming.length + scheduled.length})
+        </button>
+      </div>
+
       {loading ? (
         <Box textAlign="center" mt={4}>
           <CircularProgress />
-          <Typography variant="body1">Loading your Gallo goals…</Typography>
+          <Typography>Loading your Gallo goals…</Typography>
         </Box>
-      ) : allUserGoals.length === 0 ? (
-        <Typography className="no-goals-message">
-          No Gallo goals available for your accounts at this time.
-        </Typography>
       ) : (
         <Box className="programs-wrapper">
-          {/* Upcoming */}
-          {upcomingGoals.length > 0 && (
-            <Box mb={3}>
-              <Typography variant="h6">Upcoming Goals</Typography>
-              <Typography variant="body2" color="text.secondary" mb={1}>
-                These goals are approved and will become active soon.
-              </Typography>
-
-              {upcomingGoals.map((goal) => (
-                <MyGalloGoalCard
-                  key={goal.goalDetails.goalId}
-                  goal={goal}
-                  expanded={false}
-                  onToggleExpand={() => {}}
-                  onViewPostModal={openPostViewer}
-                  // isUpcoming // ← optional prop if you want styling later
-                />
-              ))}
-            </Box>
-          )}
-
-          {/* Current */}
-          {currentGoals.length > 0 ? (
-            <Box>
+          {/* ================= CURRENT MODE ================= */}
+          {mode === "current" && (
+            <>
               <Typography variant="h6">Current Goals</Typography>
 
-              {currentGoals.map((goal) => (
-                <MyGalloGoalCard
-                  key={goal.goalDetails.goalId}
-                  goal={goal}
-                  expanded={expandedGoals[goal.goalDetails.goalId]}
-                  onToggleExpand={(id) =>
-                    setExpandedGoals((prev) => ({
-                      ...prev,
-                      [id]: !prev[id],
-                    }))
-                  }
-                  onViewPostModal={openPostViewer}
-                />
-              ))}
-            </Box>
-          ) : (
-            <Typography className="no-goals-message">
-              You have no active Gallo goals right now.
-            </Typography>
+              {current.length > 0 ? (
+                current.map((goal) => (
+                  <MyGalloGoalCard
+                    key={goal.goalDetails.goalId}
+                    goal={goal}
+                    expanded={expandedGoals[goal.goalDetails.goalId]}
+                    onToggleExpand={(id) =>
+                      setExpandedGoals((prev) => ({
+                        ...prev,
+                        [id]: !prev[id],
+                      }))
+                    }
+                    onViewPostModal={openPostViewer}
+                  />
+                ))
+              ) : (
+                <Typography className="no-goals-message">
+                  You have no active Gallo goals right now.
+                </Typography>
+              )}
+            </>
+          )}
+
+          {/* ================= UPCOMING MODE ================= */}
+          {mode === "upcoming" && (
+            <>
+              {/* Upcoming */}
+              <Typography variant="h6">Upcoming Goals</Typography>
+              <Typography variant="body2" color="text.secondary" mb={1}>
+                These goals are visible but cannot be submitted yet.
+              </Typography>
+
+              {upcoming.length > 0 ? (
+                upcoming.map((goal) => (
+                  <MyGalloGoalCard
+                    key={goal.goalDetails.goalId}
+                    goal={goal}
+                    expanded={false}
+                    onToggleExpand={() => {}}
+                    onViewPostModal={openPostViewer}
+                  />
+                ))
+              ) : (
+                <Typography className="no-goals-message">
+                  You have no upcoming Gallo goals.
+                </Typography>
+              )}
+
+              {/* Scheduled (collapsed) */}
+              <Box mt={3}>
+                <button
+                  // className="btn-secondary"
+                  onClick={() => setShowScheduled((v) => !v)}
+                >
+                  {showScheduled ? "Hide" : "Show"} Scheduled Goals (
+                  {scheduled.length})
+                </button>
+
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 1 }}
+                >
+                  These goals are assigned to you but aren’t visible yet. They
+                  will move into Upcoming automatically as their dates approach.
+                </Typography>
+
+                <Collapse in={showScheduled}>
+                  {scheduled.length > 0 ? (
+                    <Box className="programs-wrapper">
+                      {scheduled.map((goal) => (
+                        <div
+                          key={goal.goalDetails.goalId}
+                          aria-disabled
+                          style={{ opacity: 0.5, pointerEvents: "none" }}
+                        >
+                          <MyGalloGoalCard
+                            goal={goal}
+                            expanded={false}
+                            onToggleExpand={() => {}}
+                            onViewPostModal={() => {}}
+                            disabled
+                          />
+                        </div>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography className="no-goals-message">
+                      You have no scheduled Gallo goals.
+                    </Typography>
+                  )}
+                </Collapse>
+              </Box>
+            </>
           )}
         </Box>
       )}
+
       <PostViewerModal
-        key={postIdToView}
         postId={postIdToView || ""}
         open={postViewerOpen}
-        onClose={closePostViewer}
+        onClose={() => setPostViewerOpen(false)}
         currentUserUid={user?.uid}
       />
     </div>

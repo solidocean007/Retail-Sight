@@ -228,7 +228,7 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     await saveSingleGalloGoalToIndexedDB(goalWithId);
 
     if (notifyUserIds.length > 0) {
-      await sendGalloGoalAssignedEmails({
+      await sendGalloGoalAssignedEmails({ // email logic
         savedGoal: goalWithId,
         selectedAccounts: normalizedAccounts, // optional but recommended
         companyUsers,

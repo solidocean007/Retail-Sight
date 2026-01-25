@@ -20,7 +20,7 @@ import UserProfileViewer from "../UserProfileViewer.tsx";
 import CollectionsViewer from "../CollectionsViewer.tsx";
 import TutorialViewer from "../TutorialViewer.tsx";
 import AccountManager from "../AccountManagement/AccountsManager.tsx";
-import GoalManager from "../GoalIntegration/GoalManagerLayout.tsx";
+import GoalManagerLayout from "../GoalIntegration/GoalManagerLayout.tsx";
 import DashMenu from "../DashMenu.tsx";
 import ProductsManager from "../ProductsManagement/ProductsManager.tsx";
 import MyGoals from "../GoalIntegration/MyGoals.tsx";
@@ -190,7 +190,7 @@ export const Dashboard = () => {
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
         {dashboardMode === "MyAccountsMode" && user && <MyAccounts />}
         {dashboardMode === "GoalManagerMode" && canAccessAdmin && (
-          <GoalManager companyId={companyId} />
+          <GoalManagerLayout companyId={companyId} />
         )}
 
         {dashboardMode === "CollectionsMode" && (
