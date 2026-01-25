@@ -86,8 +86,16 @@ export const handleBraintreeWebhook = onRequest(
       // ==========================
       let paymentStatus = result.status;
 
-      if (kind.includes("past_due")) paymentStatus = "past_due";
-      if (kind.includes("canceled")) paymentStatus = "canceled";
+      if (kind.includes("subscription_past_due")) {
+        paymentStatus = "past_due";
+      }
+
+      if (
+        kind.includes("subscription_canceled") ||
+        kind.includes("subscription_expired")
+      ) {
+        paymentStatus = "canceled";
+      }
 
       await companyRef.update({
         "billing.paymentStatus": paymentStatus,
@@ -175,17 +183,17 @@ async function applyScheduledDowngradeAfterRenewal(companyId: string) {
   if (!pending) return;
 
   const gateway = getBraintreeGateway();
+  const subscription = await gateway.subscription.find(billing.subscriptionId);
+
+  const removeAllAddons = subscription.addOns?.length
+    ? subscription.addOns.map((a: any) => a.id)
+    : [];
 
   await gateway.subscription.update(billing.subscriptionId, {
     planId: pending.nextPlanId,
-    addOns: pending.nextAddons?.length
-      ? {
-          add: pending.nextAddons.map((a: any) => ({
-            inheritedFromId: getAddonId(pending.nextPlanId, a.id),
-            quantity: a.quantity,
-          })),
-        }
-      : undefined,
+    addOns: {
+      remove: removeAllAddons, // 🔒 ALWAYS remove all addons on plan change
+    },
     prorateCharges: false,
   } as any);
 

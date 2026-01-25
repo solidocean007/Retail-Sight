@@ -142,7 +142,7 @@ export default function AdminUsersConsole() {
       const data = snap.data();
 
       const baseLimit = data?.limits?.userLimit ?? 0;
-      const addon = data?.billing?.addons?.extraUser ?? 0;
+      const addon = data?.billing?.addons?.extraUsers ?? 0;
       const used = data?.usage?.users ?? 0;
 
       setCompanyLimits({

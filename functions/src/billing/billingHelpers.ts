@@ -80,21 +80,27 @@ export async function syncBillingFromSubscription(
 
   const total = calculateSubscriptionTotal(subscription);
 
-  const statusMap: Record<string, "active" | "past_due" | "canceled"> = {
-    active: "active",
-    past_due: "past_due",
-    canceled: "canceled",
-  };
+  function normalizePaymentStatus(
+    status: string
+  ): "active" | "past_due" | "canceled" {
+    if (status === "canceled") return "canceled";
+    if (status === "past_due") return "past_due";
+
+    // pending, active, trialing, authorized, etc.
+    return "active";
+  }
 
   const snap = await companyRef.get();
   const existingBilling = snap.data()?.billing ?? {};
+  const addons = extractAddonQuantities(subscription);
 
   await companyRef.update({
     billing: {
       ...existingBilling, // ← preserves customerId, locks, pending changes
       plan: subscription.planId,
       subscriptionId: subscription.id,
-      paymentStatus: statusMap[subscription.status] ?? "past_due",
+      paymentStatus: normalizePaymentStatus(subscription.status),
+
       renewalDate: subscription.nextBillingDate
         ? admin.firestore.Timestamp.fromDate(
             new Date(subscription.nextBillingDate)
@@ -107,7 +113,10 @@ export async function syncBillingFromSubscription(
         : null,
 
       totalMonthlyCost: total,
-      addons: extractAddonQuantities(subscription),
+      addons: {
+        extraUser: addons.extraUser ?? 0,
+        extraConnection: addons.extraConnection ?? 0,
+      },
     },
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });

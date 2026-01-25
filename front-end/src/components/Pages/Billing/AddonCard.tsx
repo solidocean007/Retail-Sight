@@ -2,16 +2,15 @@
 import React, { useState } from "react";
 import "./addonCard.css";
 
-export type AddonUsage = {
+export type AddonCapacity = {
   included: number;
   purchased: number;
 };
-
 interface AddonCardProps {
   title: string;
   description: string;
   unitPrice: number;
-  usage: AddonUsage;
+  capacity: AddonCapacity | undefined;
   onAdd: (count: number) => void;
   onRemove: (count: number) => void;
   pendingRemoval?: {
@@ -25,7 +24,7 @@ const AddonCard: React.FC<AddonCardProps> = ({
   title,
   description,
   unitPrice,
-  usage,
+  capacity,
   onAdd,
   onRemove,
   pendingRemoval,
@@ -82,10 +81,10 @@ const AddonCard: React.FC<AddonCardProps> = ({
       <div className="addon-card-section">
         <div className="addon-usage">
           <div>
-            Included with plan: <strong>{usage.included}</strong>
+            Included with plan: <strong>{capacity?.included}</strong>
           </div>
           <div>
-            Extra purchased: <strong>{usage.purchased}</strong>
+            Extra purchased: <strong>{capacity?.purchased}</strong>
           </div>
         </div>
 
@@ -119,7 +118,7 @@ const AddonCard: React.FC<AddonCardProps> = ({
               {loading === "add" ? "Adding..." : "Add"}
             </button>
 
-            {usage.purchased > 0 && (
+            {capacity?.purchased && capacity?.purchased > 0 && (
               <button
                 className="btn-addon-action remove"
                 onClick={handleRemove}

@@ -56,8 +56,8 @@ export type IntegrationsMap = Partial<Record<ProviderKey, IntegrationConfig>>;
 export type BillingStatus = "active" | "past_due" | "canceled";
 
 export interface CompanyAddons {
-  extraUser: number;
-  extraConnection: number;
+  extraUsers: number;
+  extraConnections: number;
 }
 
 // New
@@ -87,10 +87,6 @@ export interface PlanType {
 
 type PendingBillingChange = {
   nextPlanId?: string;
-  nextAddons?: {
-    id: string;
-    quantity: number;
-  }[];
   effectiveAt: Timestamp; // renewal date
 };
 

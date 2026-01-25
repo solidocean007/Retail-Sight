@@ -2,7 +2,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getBraintreeGateway } from "../braintreeGateway";
 import { syncBillingFromSubscription } from "../billingHelpers";
-import { getAddonId, AddonType } from "../addonMap";
+import { getAddonId } from "../addonMap";
 import { assertCompanyBillingAdmin } from "../billingAuth";
 import {
   BRAINTREE_ENVIRONMENT,
@@ -58,12 +58,7 @@ export const createSubscription = onCall(
   },
   async (request) => {
     try {
-      const {
-        companyId,
-        paymentMethodNonce,
-        planId,
-        addons = [],
-      } = request.data;
+      const { companyId, paymentMethodNonce, planId } = request.data;
       if (planId === "free") {
         throw new HttpsError(
           "failed-precondition",
@@ -135,15 +130,6 @@ export const createSubscription = onCall(
         planId,
       };
 
-      if (addons.length) {
-        payload.addOns = {
-          add: addons.map((a: { id: AddonType; quantity: number }) => ({
-            id: getAddonId(planId, a.id),
-            quantity: a.quantity ?? 1,
-          })),
-        };
-      }
-
       const subRes = await gateway.subscription.create(payload);
 
       if (!subRes.success) {
@@ -210,6 +196,10 @@ export const changePlanAndRestartBillingCycle = onCall(
     const oldSub = await gateway.subscription.find(billing.subscriptionId);
 
     // 2️⃣ Create NEW subscription (starts new billing cycle)
+    // ⚠️ IMPORTANT:
+    // Braintree applies default addon quantities on subscription creation.
+    // We MUST explicitly set addon quantities to avoid ghost charges.
+
     let newSub;
     try {
       const res = await gateway.subscription.create({
@@ -229,7 +219,6 @@ export const changePlanAndRestartBillingCycle = onCall(
         "Plan change failed. No charges were made."
       );
     }
-
     // 3️⃣ Cancel OLD subscription AFTER new one exists
     try {
       await gateway.subscription.cancel(oldSub.id);
@@ -370,7 +359,7 @@ export const cancelSubscription = onCall(
 );
 
 export const scheduleBillingDowngrade = onCall(async (request) => {
-  const { companyId, nextPlanId, nextAddons = [] } = request.data;
+  const { companyId, nextPlanId } = request.data;
 
   if (!companyId || !nextPlanId) {
     throw new HttpsError("invalid-argument", "Missing args.");
@@ -389,7 +378,6 @@ export const scheduleBillingDowngrade = onCall(async (request) => {
   await ref.update({
     "billing.pendingChange": {
       nextPlanId,
-      nextAddons,
       effectiveAt: billing.renewalDate,
     },
   });

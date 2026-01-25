@@ -6,7 +6,6 @@ import {
   getDocs,
   getDoc,
   onSnapshot,
-  updateDoc,
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { useSelector } from "react-redux";
@@ -19,11 +18,6 @@ import { RootState } from "../../../utils/store";
 import { CompanyBilling, PlanType, UserType } from "../../../utils/types";
 import PlanCard from "./PlanCard";
 import { useNavigate } from "react-router-dom";
-
-export type AddonUsage = {
-  included: number;
-  purchased: number;
-};
 
 /** Lightweight confirm dialog */
 const ConfirmDialog: React.FC<{
@@ -189,22 +183,22 @@ const BillingDashboard: React.FC = () => {
   }, [billingInfo]);
 
   // Derived UI state (uses backend totalMonthlyCost)
-  const { addonPrices, addonUsage } = useMemo(() => {
+  const { addonPrices, addonCapacity } = useMemo(() => {
     const current = plans.find((p) => p.braintreePlanId === currentPlanId); // Property 'braintreePlanId' does not exist on type 'PlanType'.
 
     if (!current) {
       return {
         addonPrices: { user: 0, connection: 0 },
         addonUsage: {
-          extraUser: { included: 0, purchased: 0 },
-          extraConnection: { included: 0, purchased: 0 },
+          extraUsers: { included: 0, purchased: 0 },
+          extraConnections: { included: 0, purchased: 0 },
         },
       };
     }
 
     const purchased = billingInfo?.addons ?? {
-      extraUser: 0,
-      extraConnection: 0,
+      extraUsers: 0,
+      extraConnections: 0,
     };
 
     return {
@@ -212,18 +206,30 @@ const BillingDashboard: React.FC = () => {
         user: current.addons.extraUser ?? 0,
         connection: current.addons.extraConnection ?? 0,
       },
-      addonUsage: {
-        extraUser: {
-          included: current.userLimit, // ✅ from plan
-          purchased: purchased.extraUser ?? 0, // ✅ from billing
+      addonCapacity: {
+        extraUsers: {
+          included: current.userLimit,
+          purchased: purchased.extraUsers,
         },
-        extraConnection: {
-          included: current.connectionLimit, // ✅ from plan
-          purchased: purchased.extraConnection ?? 0, // ✅ from billing
+        extraConnections: {
+          included: current.connectionLimit,
+          purchased: purchased.extraConnections,
         },
       },
     };
   }, [plans, currentPlanId, billingInfo]);
+
+  // const purchasedAddons = useMemo(() => {
+  //   const addons = billingInfo?.addons ?? {
+  //     extraUser: 0,
+  //     extraConnection: 0,
+  //   };
+
+  //   return {
+  //     extraUser: addons.extraUsers ?? 0,
+  //     extraConnection: addons.extraConnections ?? 0,
+  //   };
+  // }, [billingInfo]);
 
   // open confirmation with context
   const openConfirm = (
@@ -318,7 +324,7 @@ const BillingDashboard: React.FC = () => {
 
   const currentPlanName = currentPlan?.name ?? "Free Plan";
 
-  const paymentStatus = derivedPaymentStatus;
+  const paymentStatus = derivedPaymentStatus || "inactive";
 
   const statusClass =
     paymentStatus === "active"
@@ -377,7 +383,6 @@ const BillingDashboard: React.FC = () => {
         await scheduleDowngrade({
           companyId: currentCompanyId,
           nextPlanId: selectedPlan.braintreePlanId,
-          nextAddons: [],
         });
 
         alert(
@@ -571,7 +576,7 @@ const BillingDashboard: React.FC = () => {
               title="Extra Users"
               description="Add more user slots"
               unitPrice={addonPrices.user}
-              usage={addonUsage.extraUser}
+              capacity={addonCapacity?.extraUsers}
               onAdd={(count) => handleAddonAdd("extraUser", count)}
               onRemove={(count) => handleAddonRemove("extraUser", count)}
               pendingRemoval={company?.billing?.pendingAddonRemoval}
@@ -581,7 +586,7 @@ const BillingDashboard: React.FC = () => {
               title="Extra Connections"
               description="Add more connection slots"
               unitPrice={addonPrices.connection}
-              usage={addonUsage.extraConnection}
+              capacity={addonCapacity?.extraConnections}
               onAdd={(count) => handleAddonAdd("extraConnection", count)}
               onRemove={(count) => handleAddonRemove("extraConnection", count)}
               pendingRemoval={company?.billing?.pendingAddonRemoval}
