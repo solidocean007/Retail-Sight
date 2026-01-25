@@ -30,7 +30,7 @@ const MyCompanyGoals: React.FC = () => {
   const allGoals = useSelector((state: RootState) => state.companyGoals.goals);
   // Right after getting the selector value
   const userCompanyGoals = useSelector(
-    makeSelectUsersCompanyGoals(user?.salesRouteNum, user?.uid, user?.role)
+    makeSelectUsersCompanyGoals(user?.salesRouteNum, user?.uid, user?.role),
   );
 
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
@@ -46,7 +46,7 @@ const MyCompanyGoals: React.FC = () => {
   };
 
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "title">(
-    "newest"
+    "newest",
   );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -76,10 +76,10 @@ const MyCompanyGoals: React.FC = () => {
     const todayStr = new Date().toISOString().split("T")[0];
 
     const current = userCompanyGoals.filter(
-      (goal) => goal.goalStartDate <= todayStr && goal.goalEndDate >= todayStr
+      (goal) => goal.goalStartDate <= todayStr && goal.goalEndDate >= todayStr,
     );
     const upcoming = userCompanyGoals.filter(
-      (goal) => goal.goalStartDate > todayStr
+      (goal) => goal.goalStartDate > todayStr,
     );
     const past = userCompanyGoals.filter((goal) => goal.goalEndDate < todayStr);
 
@@ -122,14 +122,6 @@ const MyCompanyGoals: React.FC = () => {
 
   return (
     <div className="my-company-goals-container">
-      <Typography
-        variant="h3"
-        className="my-goals-title"
-        sx={{ fontSize: "large" }}
-      >
-        My Company Goals
-      </Typography>
-
       {/* Sort Button */}
       <Button
         onClick={handleSortClick}
@@ -141,8 +133,8 @@ const MyCompanyGoals: React.FC = () => {
         {sortOrder === "newest"
           ? "Newest First"
           : sortOrder === "oldest"
-          ? "Oldest First"
-          : "Title A-Z"}
+            ? "Oldest First"
+            : "Title A-Z"}
       </Button>
       <Menu
         anchorEl={anchorEl}
