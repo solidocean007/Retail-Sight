@@ -78,27 +78,6 @@
   color: var(--primary-blue);
 }
 
-.status-pill {
-  border-radius: 12px;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: capitalize;
-  box-shadow: var(--button-shadow);
-}
-.status-active {
-  background: var(--status-active-bg);
-  color: var(--status-active-color);
-}
-.status-pending {
-  background: var(--status-pending-bg);
-  color: var(--status-pending-color);
-}
-.status-inactive {
-  background: var(--status-inactive-bg);
-  color: var(--status-inactive-color);
-}
-
 .renewal-text {
   color: var(--text-secondary);
   font-size: 0.95rem;

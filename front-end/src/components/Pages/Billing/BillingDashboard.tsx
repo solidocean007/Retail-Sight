@@ -170,6 +170,24 @@ const BillingDashboard: React.FC = () => {
     fetchCompanyPlan();
   }, [fetchCompanyPlan]);
 
+  const derivedPaymentStatus = useMemo(() => {
+    if (!billingInfo) return "inactive";
+
+    // hard cancel always wins
+    if (billingInfo.paymentStatus === "canceled") return "canceled";
+
+    // if renewal date is in the future, treat as active
+    if (billingInfo.renewalDate) {
+      const renewalMs = billingInfo.renewalDate.seconds * 1000;
+      if (renewalMs > Date.now()) {
+        return "active";
+      }
+    }
+
+    // otherwise fall back to backend status
+    return billingInfo.paymentStatus;
+  }, [billingInfo]);
+
   // Derived UI state (uses backend totalMonthlyCost)
   const { addonPrices, addonUsage } = useMemo(() => {
     const current = plans.find((p) => p.braintreePlanId === currentPlanId); // Property 'braintreePlanId' does not exist on type 'PlanType'.
@@ -300,7 +318,8 @@ const BillingDashboard: React.FC = () => {
 
   const currentPlanName = currentPlan?.name ?? "Free Plan";
 
-  const paymentStatus = billingInfo?.paymentStatus || "active";
+  const paymentStatus = derivedPaymentStatus;
+
   const statusClass =
     paymentStatus === "active"
       ? "status-active"
@@ -442,17 +461,10 @@ const BillingDashboard: React.FC = () => {
       {/* === Plan Grid === */}
       <div className="plans-grid">
         {plans
-          // 🪄 Sort so current plan shows first
-          .sort((a, b) =>
-            a.braintreePlanId === currentPlanId
-              ? -1
-              : b.braintreePlanId === currentPlanId
-                ? 1
-                : a.price - b.price,
-          )
+          .sort((a, b) => a.price - b.price)
 
           .map((plan) => {
-            const isCurrent = plan.name === currentPlanId;
+            const isCurrent = plan.braintreePlanId === currentPlanId;
             const currentPlan = plans.find(
               (p) => p.braintreePlanId === billingInfo?.plan,
             );

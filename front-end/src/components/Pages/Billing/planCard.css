@@ -113,9 +113,16 @@
 }
 
 .plan-pill.current {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--primary-blue);
+  background: var(--primary-blue);
+  color: white;
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.35);
 }
+
+[data-theme="dark"] .plan-pill.current {
+  box-shadow: 0 0 12px rgba(59,130,246,0.45);
+}
+
+
 
 .plan-header-details {
   display: flex;

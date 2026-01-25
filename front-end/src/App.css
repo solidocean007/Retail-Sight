@@ -65,7 +65,9 @@ button {
   border: none;
   border-radius: var(--btn-border-radius);
   padding: var(--btn-padding);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 /* — Primary / Save */
 .button-primary {
@@ -116,7 +118,9 @@ button {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out, color 0.2s;
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s;
   max-height: 50px;
 }
 
@@ -175,6 +179,44 @@ button {
   background-color: var(--outlined-button-hover);
 }
 
+/* - Pills  */
+.status-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+  border: 1px solid;
+  max-height: 30px;
+}
+
+/* ACTIVE */
+.status-active {
+  background: var(--status-active-color);
+  border-color: var(--status-active-color, #1a7f37);
+
+  color: white;
+}
+
+/* PAST DUE */
+.status-pending {
+  background: var(--status-pending-color);
+  border-color: var(--status-pending-color, #b26a00);
+
+  color: white;
+}
+
+/* INACTIVE */
+.status-inactive {
+  color: var(--status-inactive-color, #666);
+  border-color: var(--status-inactive-border, #999);
+  background-color: var(--status-inactive-bg, rgba(120, 120, 120, 0.1));
+}
+
 input[type="text"],
 input[type="password"] {
   background-color: var(--input-background);
@@ -185,7 +227,9 @@ input[type="password"] {
   /* border: 1px solid #ccc; */
   color: var(--text-color);
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 input[type="text"]:focus,

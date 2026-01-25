@@ -14,14 +14,6 @@
   gap: 12px;
 }
 
-.status-pill {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
 .status-pill.success {
   background: rgba(26, 127, 55, 0.15);
   color: #1a7f37;
