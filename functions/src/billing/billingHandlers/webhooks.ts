@@ -21,25 +21,31 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-function derivePaymentStatusFromWebhook(
+/**
+ * Derives the company payment status from a Braintree webhook event.
+ *
+ * IMPORTANT:
+ * - Webhooks may arrive out of order.
+ * - Unknown events should NEVER downgrade state.
+ * - `previous` is treated as the source of truth fallback.
+ */
+type PaymentStatus = "active" | "past_due" | "canceled";
+
+const WEBHOOK_STATUS_MAP: Record<string, PaymentStatus> = {
+  subscription_canceled: "canceled",
+
+  subscription_charged_unsuccessfully: "past_due",
+  subscription_went_past_due: "past_due",
+
+  subscription_charged_successfully: "active",
+  subscription_renewed: "active",
+};
+
+export function derivePaymentStatusFromWebhook(
   kind: string,
-  previous: "active" | "past_due" | "canceled"
-): "active" | "past_due" | "canceled" {
-  switch (kind) {
-    case "subscription_canceled":
-      return "canceled";
-
-    case "subscription_charged_unsuccessfully":
-    case "subscription_went_past_due":
-      return "past_due";
-
-    case "subscription_charged_successfully":
-    case "subscription_renewed":
-      return "active";
-
-    default:
-      return previous;
-  }
+  previous: PaymentStatus
+): PaymentStatus {
+  return WEBHOOK_STATUS_MAP[kind] ?? previous;
 }
 
 /**
