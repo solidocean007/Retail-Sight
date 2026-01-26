@@ -40,6 +40,7 @@ const ConfirmDialog: React.FC<{
   busy = false,
 }) => {
   if (!open) return null;
+
   return (
     <div className="confirm-overlay" role="dialog" aria-modal="true">
       <div className="confirm-card">
@@ -74,6 +75,7 @@ const BillingDashboard: React.FC = () => {
   const [billingInfo, setBillingInfo] = useState<CompanyBilling | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [showPaymentUpdate, setShowPaymentUpdate] = useState(false);
   const hasPendingDowngrade = !!billingInfo?.pendingChange;
@@ -618,7 +620,7 @@ const BillingDashboard: React.FC = () => {
       {/* === Add-ons Section === */}
 
       {/* Checkout */}
-      {(selectedPlan || showPaymentUpdate) && (
+      {modalOpen && (
         <CheckoutModal
           open={modalOpen || showPaymentUpdate}
           onClose={() => {

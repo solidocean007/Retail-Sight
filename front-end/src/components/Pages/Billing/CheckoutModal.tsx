@@ -68,6 +68,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [dropinReady, setDropinReady] = useState(false);
 
   const [additionalUserCount, setAdditionalUserCount] = useState(0);
+  console.log("additionalUserCount", additionalUserCount)
   const [additionalConnectionCount, setAdditionalConnectionCount] = useState(0);
 
   const hasSubscription = !!billingInfo?.subscriptionId;
@@ -311,8 +312,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setLoading(false);
     }
   };
-
-  if (!open) return null;
 
   const activeAddons = [
     {

@@ -89,10 +89,6 @@ export const approveAccessRequest = onCall(async (request) => {
       userLimit: plan.userLimit,
       connectionLimit: plan.connectionLimit,
     },
-    usage: {
-      users: 0,
-      connections: 0,
-    },
   });
 
   // 📨 Create invite doc for first admin user
