@@ -52,6 +52,11 @@
   color: var(--text-danger);
 }
 
+.gallo-goal-card__dates {
+  display: flex;
+  gap: 1rem;
+}
+
 .gallo-goal-card__progress {
   font-size: 14px;
   color: var(--text-secondary);
