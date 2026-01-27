@@ -104,8 +104,8 @@ export async function syncBillingFromSubscription(
 
       totalMonthlyCost: total,
       addons: {
-        extraUser: addons.extraUser ?? 0,
-        extraConnection: addons.extraConnection ?? 0,
+        extraUsers: addons.extraUser ?? 0,
+        extraConnections: addons.extraConnection ?? 0,
       },
     },
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),

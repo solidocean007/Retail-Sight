@@ -21,6 +21,8 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+type PaymentStatus = "active" | "past_due" | "canceled";
+
 /**
  * Derives the company payment status from a Braintree webhook event.
  *
@@ -29,23 +31,32 @@ const db = admin.firestore();
  * - Unknown events should NEVER downgrade state.
  * - `previous` is treated as the source of truth fallback.
  */
-type PaymentStatus = "active" | "past_due" | "canceled";
-
-const WEBHOOK_STATUS_MAP: Record<string, PaymentStatus> = {
-  subscription_canceled: "canceled",
-
-  subscription_charged_unsuccessfully: "past_due",
-  subscription_went_past_due: "past_due",
-
-  subscription_charged_successfully: "active",
-  subscription_renewed: "active",
-};
-
-export function derivePaymentStatusFromWebhook(
-  kind: string,
+function derivePaymentStatusFromSubscription(
+  subscription: any,
   previous: PaymentStatus
 ): PaymentStatus {
-  return WEBHOOK_STATUS_MAP[kind] ?? previous;
+  const status = String(subscription.status);
+
+  switch (status) {
+    case "Active":
+      return "active";
+
+    case "Past Due":
+      return "past_due";
+
+    case "Canceled":
+    case "Expired":
+      return "canceled";
+
+    case "Pending":
+    case "Pending Payment":
+      // 🔑 CRITICAL:
+      // Never downgrade on pending during upgrades
+      return previous === "active" ? "active" : previous;
+
+    default:
+      return previous;
+  }
 }
 
 /**
@@ -112,7 +123,22 @@ export const handleBraintreeWebhook = onRequest(
       const prevStatus =
         afterSyncSnap.data()?.billing?.paymentStatus ?? "active";
 
-      const nextStatus = derivePaymentStatusFromWebhook(kind, prevStatus);
+      // 1️⃣ Primary source of truth: subscription object
+      let nextStatus = derivePaymentStatusFromSubscription(
+        subscription,
+        prevStatus
+      );
+
+      // 2️⃣ Hard overrides from webhook kind
+      if (kind === "subscription_canceled") {
+        nextStatus = "canceled";
+      }
+
+      console.log("🔔 Braintree webhook", {
+        kind,
+        subscriptionStatus: subscription.status,
+        planId: subscription.planId,
+      });
 
       await companyRef.update({
         "billing.paymentStatus": nextStatus,

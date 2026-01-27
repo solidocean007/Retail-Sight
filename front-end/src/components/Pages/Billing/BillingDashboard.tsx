@@ -261,6 +261,8 @@ const BillingDashboard: React.FC = () => {
 
     try {
       if (confirmCtx.action === "add") {
+        console.log("Adding add-on:", confirmCtx);
+
         const addAddon = httpsCallable(functions, "addAddon");
 
         await addAddon({

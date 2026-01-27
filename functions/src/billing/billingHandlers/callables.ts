@@ -175,76 +175,96 @@ export const changePlanAndRestartBillingCycle = onCall(
     const snap = await companyRef.get();
     const billing = snap.data()?.billing;
 
-    if (billing?.pendingChange) {
+    if (billing?.pendingPlanChangeInProgress) {
       throw new HttpsError(
         "failed-precondition",
-        "You have a downgrade scheduled. Cancel it before upgrading."
+        "Plan change already in progress."
       );
     }
 
-    if (!billing?.subscriptionId || !billing?.braintreeCustomerId) {
-      throw new HttpsError("failed-precondition", "No active subscription.");
-    }
+    await companyRef.update({
+      "billing.pendingPlanChangeInProgress": true,
+    });
 
-    if (billing.plan === newPlanId) {
-      throw new HttpsError("failed-precondition", "Already on this plan.");
-    }
+    let newSub: any;
 
-    const gateway = getBraintreeGateway();
-
-    // 1️⃣ Fetch existing subscription (source of truth)
-    const oldSub = await gateway.subscription.find(billing.subscriptionId);
-
-    // 2️⃣ Create NEW subscription (starts new billing cycle)
-    // ⚠️ IMPORTANT:
-    // Braintree applies default addon quantities on subscription creation.
-    // We MUST explicitly set addon quantities to avoid ghost charges.
-
-    let newSub;
     try {
+      if (billing?.pendingChange) {
+        throw new HttpsError(
+          "failed-precondition",
+          "You have a downgrade scheduled. Cancel it before upgrading."
+        );
+      }
+
+      if (!billing?.subscriptionId || !billing?.braintreeCustomerId) {
+        throw new HttpsError("failed-precondition", "No active subscription.");
+      }
+
+      if (billing.plan === newPlanId) {
+        return { success: true, alreadyApplied: true };
+      }
+
+      const gateway = getBraintreeGateway();
+
+      const oldSub = await gateway.subscription.find(billing.subscriptionId);
+
+      const customer = await gateway.customer.find(billing.braintreeCustomerId);
+
+      const paymentMethodToken = customer.paymentMethods?.[0]?.token;
+
+      if (!paymentMethodToken) {
+        throw new HttpsError(
+          "failed-precondition",
+          "No valid payment method on file."
+        );
+      }
+
       const res = await gateway.subscription.create({
-        paymentMethodToken: oldSub.paymentMethodToken,
+        paymentMethodToken,
         planId: newPlanId,
       });
 
-      if (!res.success) {
-        throw new Error(res.message);
+      if (!res.success || !res.subscription) {
+        throw new HttpsError("internal", res.message);
       }
 
       newSub = res.subscription;
 
-      // after creating newSub
-      const removeAllAddons = newSub.addOns?.map((a: any) => a.id) ?? [];
+      // 🔒 Single authoritative sync
+      await syncBillingFromSubscription(companyId, newSub);
 
-      if (removeAllAddons.length) {
-        await gateway.subscription.update(newSub.id, {
-          addOns: { remove: removeAllAddons },
-          prorateCharges: false,
-        } as any);
+      // Optional cleanup (non-fatal)
+      try {
+        const removeAllAddons = newSub.addOns?.map((a: any) => a.id) ?? [];
+        if (removeAllAddons.length) {
+          await gateway.subscription.update(newSub.id, {
+            addOns: { remove: removeAllAddons },
+            prorateCharges: false,
+          } as any);
+        }
+        console.log(newSub);
+      } catch (err) {
+        console.warn("⚠️ Addon cleanup failed", newSub.id);
       }
-    } catch (err) {
-      console.error("❌ New subscription creation failed", err);
-      throw new HttpsError(
-        "internal",
-        "Plan change failed. No charges were made."
-      );
-    }
-    // 3️⃣ Cancel OLD subscription AFTER new one exists
-    try {
-      await gateway.subscription.cancel(oldSub.id);
-    } catch (err) {
-      // Non-fatal, but must be logged for cleanup
-      console.error("⚠️ Failed to cancel old subscription", {
-        companyId,
-        oldSubId: oldSub.id,
-        newSubId: newSub.id,
+
+      // Cancel old subscription
+      try {
+        await gateway.subscription.cancel(oldSub.id);
+      } catch (err) {
+        console.error("⚠️ Failed to cancel old subscription", {
+          oldSubId: oldSub.id,
+          newSubId: newSub.id,
+        });
+      }
+
+      return { success: true };
+    } finally {
+      // 🔓 ALWAYS clear lock
+      await companyRef.update({
+        "billing.pendingPlanChangeInProgress":
+          admin.firestore.FieldValue.delete(),
       });
     }
-
-    // 4️⃣ Sync Firestore from NEW subscription
-    await syncBillingFromSubscription(companyId, newSub);
-
-    return { success: true };
   }
 );
 
@@ -270,17 +290,67 @@ export const addAddon = onCall(
     }
 
     const addonId = getAddonId(billing.plan, addonType);
+    console.log("🧩 addAddon: resolved mapping", {
+      companyId,
+      plan: billing.plan,
+      addonType,
+      resolvedAddonId: addonId,
+      quantity,
+      subscriptionId: billing.subscriptionId,
+    });
+
     const gateway = getBraintreeGateway();
+    const subscription = await gateway.subscription.find(
+      billing.subscriptionId
+    );
+    console.log("subscription: ", subscription);
+
+    const existingAddon = subscription.addOns?.find((a) => a.id === addonId);
+    const addOnParams: any = {};
+
+    if (existingAddon) {
+      // Update: We add the new quantity to what they already have
+      addOnParams.update = [
+        {
+          existingId: addonId,
+          quantity: Number(existingAddon.quantity) + Number(quantity),
+        },
+      ];
+    } else {
+      // Add: Brand new addition to the subscription
+      addOnParams.add = [
+        {
+          inheritedFromId: addonId,
+          quantity: Number(quantity),
+        },
+      ];
+    }
+
     const result = await gateway.subscription.update(billing.subscriptionId, {
-      addOns: {
-        add: [{ inheritedFromId: addonId, quantity }],
-      },
+      merchantAccountId: "displaygram",
+      addOns: addOnParams,
       prorateCharges: false,
     } as any);
+
+    // const result = await gateway.subscription.update(billing.subscriptionId, {
+    //   merchantAccountId: "displaygram",
+    //   addOns: {
+    //     add: [{ inheritedFromId: addonId, quantity: quantity }],
+    //   },
+    //   prorateCharges: false,
+    // } as any);
 
     if (!result.success) {
       throw new HttpsError("internal", "Add-on failed.");
     }
+    console.log("💳 addAddon: braintree update result", {
+      success: result.success,
+      subscriptionId: result.subscription?.id,
+      addOns: result.subscription?.addOns?.map((a: any) => ({
+        id: a.id,
+        quantity: a.quantity,
+      })),
+    });
 
     return syncBillingFromSubscription(companyId, result.subscription);
   }
