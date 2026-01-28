@@ -37,7 +37,18 @@ interface ProgramCardProps {
   employeeMap: Record<string, string>;
   onViewPostModal: (id: string) => void;
 
-  // NEW (optional)
+  canManage: boolean;
+
+  activeActionsGoalId: string | null;
+  actionsAnchorEl: HTMLElement | null;
+
+  openActions: (goalId: string, anchor: HTMLElement) => void;
+  closeActions: () => void;
+
+  onEdit: (goal: FireStoreGalloGoalDocType) => void;
+  onArchive: (goal: FireStoreGalloGoalDocType) => void;
+  onDisable: (goal: FireStoreGalloGoalDocType) => void;
+
   showTimingHint?: boolean;
   timingContext?: "scheduled" | "upcoming";
 }
@@ -68,53 +79,56 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
   goal,
   employeeMap,
   onViewPostModal,
+  canManage,
+  onEdit,
+  onArchive,
+  onDisable,
   showTimingHint = false,
   timingContext,
+  activeActionsGoalId,
+  actionsAnchorEl,
+  openActions,
+  closeActions,
 }) => {
   const dispatch = useAppDispatch();
-  const user = useSelector(selectUser);
-  const [editOpen, setEditOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
-  const [confirmLoading, setConfirmLoading] = useState(false);
-
-  const canManage =
-    user?.role === "admin" ||
-    user?.role === "super-admin" ||
-    user?.role === "developer";
+  // const user = useSelector(selectUser);
+  // const [editOpen, setEditOpen] = useState(false);
+  // const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  // const [confirmLoading, setConfirmLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
-    {},
-  );
+  // const [expandedGoals, setExpandedGoals] = useState<Record<string, boolean>>(
+  //   {},
+  // );
   const [accountsOpen, setAccountsOpen] = useState(true);
 
-  const confirmLifecycleChange = (status: "archived" | "disabled") => {
-    setPendingAction({
-      status,
-      title: status === "archived" ? "Archive Goal" : "Disable Goal",
-      message:
-        status === "archived"
-          ? "This goal will be archived and removed from active workflows. This cannot be undone."
-          : "This goal will be temporarily disabled. Sales reps will not be able to submit new posts.",
-      onConfirm: async () => {
-        setConfirmLoading(true);
+  // const confirmLifecycleChange = (status: "archived" | "disabled") => {
+  //   setPendingAction({
+  //     status,
+  //     title: status === "archived" ? "Archive Goal" : "Disable Goal",
+  //     message:
+  //       status === "archived"
+  //         ? "This goal will be archived and removed from active workflows. This cannot be undone."
+  //         : "This goal will be temporarily disabled. Sales reps will not be able to submit new posts.",
+  //     onConfirm: async () => {
+  //       setConfirmLoading(true);
 
-        dispatch(
-          addOrUpdateGalloGoal({
-            ...goal,
-            lifeCycleStatus: status,
-            id: goal.goalDetails.goalId,
-          }),
-        );
+  //       dispatch(
+  //         addOrUpdateGalloGoal({
+  //           ...goal,
+  //           lifeCycleStatus: status,
+  //           id: goal.goalDetails.goalId,
+  //         }),
+  //       );
 
-        try {
-          await updateGalloGoalLifecycle(goal.goalDetails.goalId, status);
-        } finally {
-          setConfirmLoading(false);
-          setPendingAction(null);
-        }
-      },
-    });
-  };
+  //       try {
+  //         await updateGalloGoalLifecycle(goal.goalDetails.goalId, status);
+  //       } finally {
+  //         setConfirmLoading(false);
+  //         setPendingAction(null);
+  //       }
+  //     },
+  //   });
+  // };
 
   // derived stats (place near top of component)
   const activeAccounts = goal.accounts.filter((a) => a.status === "active");
@@ -140,7 +154,11 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
         className="gallo-goal-card-body"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="gallo-goal-card__header">
+        <div
+          className="gallo-goal-card__header"
+          onMouseEnter={(e) => openActions(goal.id, e.currentTarget)}
+          onMouseLeave={closeActions}
+        >
           <div className="gallo-goal-card__header-left">
             <div className="gallo-goal-card__header-text">
               <Typography variant="h6">
@@ -187,18 +205,25 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
             className="gallo-goal-card__header-actions"
             onClick={(e) => e.stopPropagation()}
           >
-            <Button size="small" onClick={() => setExpanded((v) => !v)}>
-              {expanded ? "Close" : "Open"}
+            <Button
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                openActions(goal.id, e.currentTarget);
+              }}
+            >
+              Manage
             </Button>
 
-            {canManage && (
+            {canManage && activeActionsGoalId === goal.id && (
               <GoalActionsMenu
-                status={
-                  goal.lifeCycleStatus as "active" | "disabled" | "archived"
-                }
-                onArchive={() => confirmLifecycleChange("archived")}
-                onDisable={() => confirmLifecycleChange("disabled")}
-                onEdit={() => setEditOpen(true)}
+                open
+                anchorEl={actionsAnchorEl}
+                status={goal.lifeCycleStatus}
+                onEdit={() => onEdit(goal)}
+                onArchive={() => onArchive(goal)}
+                onDisable={() => onDisable(goal)}
+                onClose={closeActions}
               />
             )}
           </div>
@@ -336,7 +361,7 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
           </Collapse>
         </div>
       </Collapse>
-      {editOpen && (
+      {/* {editOpen && (
         <EditGalloGoalModal goal={goal} onClose={() => setEditOpen(false)} />
       )}
       {pendingAction && (
@@ -348,7 +373,7 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
           onClose={() => setPendingAction(null)}
           onConfirm={pendingAction.onConfirm}
         />
-      )}
+      )} */}
     </Paper>
   );
 };

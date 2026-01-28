@@ -35,6 +35,11 @@
   padding: 2px 8px;
   border-radius: 12px;
 }
+@media (hover: hover) {
+  .gallo-goal-card__manage-btn {
+    display: none;
+  }
+}
 
 /* Status badges */
 .gallo-goal-card__badge--active {

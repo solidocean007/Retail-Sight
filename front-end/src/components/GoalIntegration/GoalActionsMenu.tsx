@@ -1,20 +1,22 @@
-interface GoalActionsMenuProps {
-  status: "active" | "archived" | "disabled";
+type GoalActionsMenuProps = {
+  open: boolean;
+  status: "active" | "disabled" | "archived";
+  onEdit: () => void;
   onArchive: () => void;
   onDisable: () => void;
-  onEdit: () => void;
-}
+};
 
 export const GoalActionsMenu: React.FC<GoalActionsMenuProps> = ({
+  open,
   status,
+  onEdit,
   onArchive,
   onDisable,
-  onEdit,
 }) => {
-  return (
-    <details className="goal-actions">
-      <summary>Manage</summary>
+  if (!open) return null;
 
+  return (
+    <div className="goal-actions-overlay">
       {status === "active" && (
         <>
           <button onClick={onEdit}>Edit</button>
@@ -22,6 +24,6 @@ export const GoalActionsMenu: React.FC<GoalActionsMenuProps> = ({
           <button onClick={onDisable}>Disable</button>
         </>
       )}
-    </details>
+    </div>
   );
 };
