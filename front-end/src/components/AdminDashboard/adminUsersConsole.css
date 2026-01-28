@@ -33,38 +33,6 @@
   margin: 2px
 }
 
-.status-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  max-height: 30px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border: 1px solid;
-  text-transform: capitalize;
-}
-
-/* Light/Dark themed variants using semantic root vars */
-.status-active {
-  color: var(--status-active-color, #1a7f37);
-  border-color: var(--status-active-color, #1a7f37);
-  background-color: var(--status-active-bg, rgba(26, 127, 55, 0.1));
-}
-
-.status-pending {
-  color: var(--status-pending-color, #b26a00);
-  border-color: var(--status-pending-color, #b26a00);
-  background-color: var(--status-pending-bg, rgba(178, 106, 0, 0.1));
-}
-
-.status-inactive {
-  color: var(--status-inactive-color, #666);
-  border-color: var(--status-inactive-border, #999);
-  background-color: var(--status-inactive-bg, rgba(120, 120, 120, 0.1));
-}
-
 .row-actions {
   position: relative;
   display: inline-block;

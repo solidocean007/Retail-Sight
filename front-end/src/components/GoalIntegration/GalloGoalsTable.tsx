@@ -106,14 +106,20 @@ export default function GalloGoalsTable({
                 )}
 
                 {canManage && activeActionsGoalId === goal.id && (
-                  <GoalActionsMenu
-                    open
-                    status={goal.lifeCycleStatus}
-                    onEdit={() => onEdit(goal)}
-                    onArchive={() => onArchive(goal)}
-                    onDisable={() => onDisable(goal)}
-                    onClose={closeActions}
-                  />
+                  <div
+                    className="manage-menu-popover"
+                    onMouseEnter={() => {}}
+                    onMouseLeave={closeActions}
+                  >
+                    <GoalActionsMenu
+                      open
+                      status={goal.lifeCycleStatus}
+                      onEdit={() => onEdit(goal)}
+                      onArchive={() => onArchive(goal)}
+                      onDisable={() => onDisable(goal)}
+                      onClose={closeActions}
+                    />
+                  </div>
                 )}
               </div>
             </div>

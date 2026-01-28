@@ -13,6 +13,7 @@
   grid-template-columns: 40px 2fr 1fr 1.5fr 1fr 120px;
   align-items: center;
   padding: 10px;
+  overflow: visible; /* allows menu to float */
 }
 
 .gallo-table-header {
@@ -22,13 +23,13 @@
 }
 
 .gallo-table-row {
-  background: var(--surface-base);
+  /* background: var(--surface-base); */
   border-radius: 10px;
   transition: background 0.15s ease;
 }
 
 .gallo-table-row:hover {
-  background: var(--gray-200);
+  /* background: var(--gray-200); */
 }
 
 .expand-btn {
@@ -46,13 +47,6 @@
 .program-id {
   font-size: 12px;
   color: var(--text-muted);
-}
-
-.status-pill {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .status-active {
@@ -124,4 +118,18 @@
 
 .status-pending {
   color: var(--status-pending-color);
+}
+
+.manage-cell {
+  position: relative;
+}
+
+.manage-menu-popover {
+  position: absolute;
+  top: calc(100% + 6px); /* below Manage button */
+  right: 0;
+  z-index: 50;
+
+  /* prevent row expansion */
+  pointer-events: auto;
 }
