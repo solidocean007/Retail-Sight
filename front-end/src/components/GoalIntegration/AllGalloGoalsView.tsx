@@ -203,7 +203,6 @@ const AllGalloGoalsView = () => {
               onViewPostModal={openPostViewer}
               canManage={canManage}
               activeActionsGoalId={activeActionsGoalId}
-              actionsAnchorEl={actionsAnchorEl}
               openActions={openActions}
               closeActions={closeActions}
               onEdit={setEditGoal}
@@ -243,7 +242,6 @@ const AllGalloGoalsView = () => {
               onViewPostModal={openPostViewer}
               canManage={canManage}
               activeActionsGoalId={activeActionsGoalId}
-              actionsAnchorEl={actionsAnchorEl}
               openActions={openActions}
               closeActions={closeActions}
               onEdit={setEditGoal}
@@ -282,7 +280,6 @@ const AllGalloGoalsView = () => {
             onViewPostModal={openPostViewer}
             canManage={canManage}
             activeActionsGoalId={activeActionsGoalId}
-            actionsAnchorEl={actionsAnchorEl}
             openActions={openActions}
             closeActions={closeActions}
             onEdit={setEditGoal}
@@ -321,7 +318,6 @@ const AllGalloGoalsView = () => {
               onViewPostModal={openPostViewer}
               canManage={canManage}
               activeActionsGoalId={activeActionsGoalId}
-              actionsAnchorEl={actionsAnchorEl}
               openActions={openActions}
               closeActions={closeActions}
               onEdit={setEditGoal}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./galloGoalsTable.css";
 import { FireStoreGalloGoalDocType } from "../../utils/types";
 import { formatGoalDate } from "./GalloIntegration/MyGalloGoalCard";
@@ -34,6 +34,25 @@ export default function GalloGoalsTable({
 }: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
 
+  useEffect(() => {
+    const handleClickAway = (e: MouseEvent) => {
+      if (!activeActionsGoalId) return;
+
+      const target = e.target as HTMLElement;
+
+      const insideManage = target.closest(
+        `[data-goal-id="${activeActionsGoalId}"]`,
+      );
+
+      if (insideManage) return;
+
+      closeActions();
+    };
+
+    document.addEventListener("click", handleClickAway);
+    return () => document.removeEventListener("click", handleClickAway);
+  }, [activeActionsGoalId, closeActions]);
+
   return (
     <div className="gallo-table">
       {/* Header */}
@@ -55,16 +74,20 @@ export default function GalloGoalsTable({
         ).length;
         const isOpen = openRow === goal.id;
 
+        const toggleRow = (id: string) => {
+          setOpenRow((prev) => (prev === id ? null : id));
+        };
+
         return (
           <div key={goal.id} className="gallo-table-row-wrapper">
             {/* Main Row */}
             <div className="gallo-table-row">
               <div>
                 <button
-                  className="expand-btn"
-                  onClick={() => setOpenRow(isOpen ? null : goal.id)}
+                  className={`expand-btn ${isOpen ? "open" : ""}`}
+                  onClick={() => toggleRow(goal.id)}
                 >
-                  {isOpen ? "▴" : "▾"}
+                  ▾
                 </button>
               </div>
 
@@ -94,23 +117,19 @@ export default function GalloGoalsTable({
                 <strong>{submittedCount}</strong> / {activeAccounts.length}
               </div>
 
-              <div className="align-right manage-cell">
-                {canManage && (
-                  <button
-                    className="manage-btn"
-                    onMouseEnter={(e) => openActions(goal.id, e.currentTarget)}
-                    onMouseLeave={closeActions}
-                  >
-                    Manage
-                  </button>
-                )}
+              <div className="align-right manage-cell" data-goal-id={goal.id}>
+                <button
+                  className="manage-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openActions(goal.id, e.currentTarget);
+                  }}
+                >
+                  Manage
+                </button>
 
                 {canManage && activeActionsGoalId === goal.id && (
-                  <div
-                    className="manage-menu-popover"
-                    onMouseEnter={() => {}}
-                    onMouseLeave={closeActions}
-                  >
+                  <div className="manage-menu-popover">
                     <GoalActionsMenu
                       open
                       status={goal.lifeCycleStatus}

@@ -37,6 +37,11 @@
   border: none;
   cursor: pointer;
   font-size: 14px;
+  transition: transform 120ms ease;
+}
+
+.expand-btn.open {
+  transform: rotate(180deg);
 }
 
 .program-title {
@@ -64,6 +69,13 @@
   position: relative;
 }
 
+.manage-menu-popover {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 50;
+}
+
 .manage-btn {
   background: transparent;
   border: 1px solid var(--outlined-button-border);
@@ -85,6 +97,9 @@
   background: var(--gray-100);
   border-radius: 10px;
   margin-top: 4px;
+  margin-left: 40px;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-elevated);
 }
 
 .goal-summary,
@@ -126,7 +141,7 @@
 
 .manage-menu-popover {
   position: absolute;
-  top: calc(100% + 6px); /* below Manage button */
+  top: calc(50% + 0px); /* below Manage button */
   right: 0;
   z-index: 50;
 
