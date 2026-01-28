@@ -1,19 +1,16 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import "./galloGoalsTable.css";
 import { FireStoreGalloGoalDocType } from "../../utils/types";
 import { formatGoalDate } from "./GalloIntegration/MyGalloGoalCard";
 import { GoalActionsMenu } from "./GoalActionsMenu";
+import { FireStoreGalloGoalWithId } from "../../Slices/galloGoalsSlice";
 
 type Props = {
-  goals: FireStoreGalloGoalDocType[];
+  goals: FireStoreGalloGoalWithId[];
   employeeMap: Record<string, string>;
   onViewPostModal: (postId: string) => void;
 
   canManage: boolean;
-  activeActionsGoalId: string | null;
-
-  openActions: (goalId: string, anchor: HTMLElement) => void;
-  closeActions: () => void;
 
   onEdit: (goal: FireStoreGalloGoalDocType) => void;
   onArchive: (goal: FireStoreGalloGoalDocType) => void;
@@ -25,33 +22,11 @@ export default function GalloGoalsTable({
   employeeMap,
   onViewPostModal,
   canManage,
-  activeActionsGoalId,
-  openActions,
-  closeActions,
   onEdit,
   onArchive,
   onDisable,
 }: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
-
-  useEffect(() => {
-    const handleClickAway = (e: MouseEvent) => {
-      if (!activeActionsGoalId) return;
-
-      const target = e.target as HTMLElement;
-
-      const insideManage = target.closest(
-        `[data-goal-id="${activeActionsGoalId}"]`,
-      );
-
-      if (insideManage) return;
-
-      closeActions();
-    };
-
-    document.addEventListener("click", handleClickAway);
-    return () => document.removeEventListener("click", handleClickAway);
-  }, [activeActionsGoalId, closeActions]);
 
   return (
     <div className="gallo-table">
@@ -69,14 +44,12 @@ export default function GalloGoalsTable({
         const activeAccounts = goal.accounts.filter(
           (a) => a.status === "active",
         );
+
         const submittedCount = activeAccounts.filter(
           (a) => a.submittedPostId,
         ).length;
-        const isOpen = openRow === goal.id;
 
-        const toggleRow = (id: string) => {
-          setOpenRow((prev) => (prev === id ? null : id));
-        };
+        const isOpen = openRow === goal.id;
 
         return (
           <div key={goal.id} className="gallo-table-row-wrapper">
@@ -85,7 +58,9 @@ export default function GalloGoalsTable({
               <div>
                 <button
                   className={`expand-btn ${isOpen ? "open" : ""}`}
-                  onClick={() => toggleRow(goal.id)}
+                  onClick={() =>
+                    setOpenRow((prev) => (prev === goal.id ? null : goal.id))
+                  }
                 >
                   ▾
                 </button>
@@ -117,27 +92,11 @@ export default function GalloGoalsTable({
                 <strong>{submittedCount}</strong> / {activeAccounts.length}
               </div>
 
-              <div className="align-right manage-cell" data-goal-id={goal.id}>
-                <button
-                  className="manage-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openActions(goal.id, e.currentTarget);
-                  }}
-                >
-                  Manage
-                </button>
-
-                {canManage && activeActionsGoalId === goal.id && (
+              {/* Manage */}
+              <div className="align-right manage-cell">
+                {canManage && (
                   <div className="manage-menu-popover">
-                    <GoalActionsMenu
-                      open
-                      status={goal.lifeCycleStatus}
-                      onEdit={() => onEdit(goal)}
-                      onArchive={() => onArchive(goal)}
-                      onDisable={() => onDisable(goal)}
-                      onClose={closeActions}
-                    />
+                    <button onClick={() => onEdit(goal)}>Edit</button>
                   </div>
                 )}
               </div>

@@ -25,12 +25,19 @@ type PendingAccountChange = {
 type Props = {
   goal: FireStoreGalloGoalDocType;
   onClose: () => void;
+  onArchive: () => void;
+  onDisable: () => void;
 };
 
 // const STATUS_OPTIONS = ["active", "inactive", "disabled"] as const;
 const STATUS_OPTIONS = ["active", "inactive"] as const;
 
-const EditGalloGoalModal: React.FC<Props> = ({ goal, onClose }) => {
+const EditGalloGoalModal: React.FC<Props> = ({
+  goal,
+  onClose,
+  onArchive,
+  onDisable,
+}) => {
   const dispatch = useAppDispatch();
   const isMobile = useMediaQuery("(max-width:900px)");
 
@@ -48,7 +55,7 @@ const EditGalloGoalModal: React.FC<Props> = ({ goal, onClose }) => {
         acc[status]++;
         return acc;
       },
-      { active: 0, inactive: 0 }
+      { active: 0, inactive: 0 },
     );
   }, [accounts]);
 
@@ -56,7 +63,7 @@ const EditGalloGoalModal: React.FC<Props> = ({ goal, onClose }) => {
     distributorAcctId: string,
     nextStatus: "active" | "inactive",
     accountName: string,
-    currentStatus?: "active" | "inactive" | "disabled"
+    currentStatus?: "active" | "inactive" | "disabled",
   ) => {
     // optional: don't confirm if no-op
     if (currentStatus === nextStatus) return;
@@ -71,8 +78,8 @@ const EditGalloGoalModal: React.FC<Props> = ({ goal, onClose }) => {
       prev.map((a) =>
         a.distributorAcctId === pendingChange.distributorAcctId
           ? { ...a, status: pendingChange.nextStatus }
-          : a
-      )
+          : a,
+      ),
     );
 
     setPendingChange(null);
@@ -86,7 +93,7 @@ const EditGalloGoalModal: React.FC<Props> = ({ goal, onClose }) => {
         ...goal,
         accounts,
         id: goal.goalDetails.goalId,
-      })
+      }),
     );
 
     try {
@@ -119,6 +126,25 @@ const EditGalloGoalModal: React.FC<Props> = ({ goal, onClose }) => {
             <Chip label={`Inactive: ${counts.inactive}`} />
           </Box>
         </DialogTitle>
+        <DialogActions sx={{ justifyContent: "space-between" }}>
+          <Box>
+            <button color="error" onClick={onArchive}>
+              Archive Goal
+            </button>
+            <button color="warning" onClick={onDisable}>
+              Disable Goal
+            </button>
+          </Box>
+
+          <Box>
+            <Button onClick={onClose} disabled={saving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} variant="contained" disabled={saving}>
+              Apply Changes
+            </Button>
+          </Box>
+        </DialogActions>
 
         <DialogContent
           dividers
@@ -162,7 +188,7 @@ const EditGalloGoalModal: React.FC<Props> = ({ goal, onClose }) => {
                           account.distributorAcctId,
                           s,
                           account.accountName,
-                          account.status as any
+                          account.status as any,
                         )
                       }
                     >
@@ -174,18 +200,6 @@ const EditGalloGoalModal: React.FC<Props> = ({ goal, onClose }) => {
             ))}
           </Box>
         </DialogContent>
-
-        <DialogActions>
-          <Typography variant="caption" color="text.secondary">
-            Changes are not saved until you click “Apply Changes”.
-          </Typography>
-          <Button onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} variant="contained" disabled={saving}>
-            Apply Changes
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* ✅ Render outside Dialog so portal overlay always sits on top */}

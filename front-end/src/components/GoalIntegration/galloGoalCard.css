@@ -1,5 +1,4 @@
 /* components/Gallo/galloGoalCard.css */
-
 .gallo-goal-card {
   display: flex;
   flex-direction: column;
@@ -17,6 +16,7 @@
 
 .gallo-goal-card__header-actions {
   width: 100%;
+  height: 100%;
   max-width: 100px;
   display: flex;
   gap: 8px;

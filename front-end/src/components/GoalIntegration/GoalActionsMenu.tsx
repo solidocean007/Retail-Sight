@@ -1,6 +1,6 @@
 import "./goalActionsMenu.css"
 type GoalActionsMenuProps = {
-  open: boolean;
+  // open: boolean;
   status: "active" | "disabled" | "archived";
   onEdit: () => void;
   onArchive: () => void;
@@ -8,21 +8,20 @@ type GoalActionsMenuProps = {
 };
 
 export const GoalActionsMenu: React.FC<GoalActionsMenuProps> = ({
-  open,
+  // open,
   status,
   onEdit,
   onArchive,
   onDisable,
 }) => {
-  if (!open) return null;
+  // if (!open) return null;
 
   return (
-    <div className="goal-actions-overlay">
+    <div className="goal-actions-menu">
       {status === "active" && (
         <div className="goal-actions-buttons">
           <button onClick={onEdit}>Edit</button>
-          <button onClick={onArchive}>Archive</button>
-          <button onClick={onDisable}>Disable</button>
+         
         </div>
       )}
     </div>

@@ -34,6 +34,7 @@
 
 .expand-btn {
   background: none;
+  color: var(--font-color);
   border: none;
   cursor: pointer;
   font-size: 14px;
@@ -63,17 +64,6 @@
 .status-archived {
   color: var(--status-inactive-color);
   background: var(--status-inactive-bg);
-}
-
-.manage-cell {
-  position: relative;
-}
-
-.manage-menu-popover {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 50;
 }
 
 .manage-btn {
@@ -133,18 +123,4 @@
 
 .status-pending {
   color: var(--status-pending-color);
-}
-
-.manage-cell {
-  position: relative;
-}
-
-.manage-menu-popover {
-  position: absolute;
-  top: calc(50% + 0px); /* below Manage button */
-  right: 0;
-  z-index: 50;
-
-  /* prevent row expansion */
-  pointer-events: auto;
 }

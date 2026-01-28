@@ -23,35 +23,28 @@ import { updateGalloGoalLifecycle } from "../../utils/helperFunctions/updateGall
 import EditGalloGoalModal from "./EditGalloGoalModal";
 import CustomConfirmation from "../CustomConfirmation";
 
+type PendingAction = {
+  status: "archived" | "disabled";
+  title: string;
+  message: string;
+  onConfirm: () => Promise<void>;
+} | null;
+
 const AllGalloGoalsView = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId,
   );
-  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+
+  const { isEnabled } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
-  const [activeActionsGoalId, setActiveActionsGoalId] = useState<string | null>(
-    null,
-  );
-
-  const [actionsAnchorEl, setActionsAnchorEl] = useState<HTMLElement | null>(
-    null,
-  );
-
-  const openActions = (goalId: string, anchor: HTMLElement) => {
-    setActiveActionsGoalId(goalId);
-    setActionsAnchorEl(anchor);
-  };
-
-  const closeActions = () => {
-    setActiveActionsGoalId(null);
-    setActionsAnchorEl(null);
-  };
 
   const [lifecycleFilter, setLifecycleFilter] =
     useState<LifecycleFilter>("active");
   const [search, setSearch] = useState("");
+
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
@@ -190,6 +183,7 @@ const AllGalloGoalsView = () => {
           onChange={(e) => setSearch(e.target.value)}
         />
       </Box>
+
       {/* Scheduled */}
       {scheduledGoals.length > 0 && (
         <AdminGalloGoalsSection
@@ -202,9 +196,6 @@ const AllGalloGoalsView = () => {
               employeeMap={employeeMap}
               onViewPostModal={openPostViewer}
               canManage={canManage}
-              activeActionsGoalId={activeActionsGoalId}
-              openActions={openActions}
-              closeActions={closeActions}
               onEdit={setEditGoal}
               onArchive={(goal) => requestLifecycleChange(goal, "archived")}
               onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
@@ -212,17 +203,14 @@ const AllGalloGoalsView = () => {
           ) : (
             scheduledGoals.map((goal) => (
               <GalloGoalCard
-                goal={goal}
+                key={goal.goalDetails.goalId}
+                goal={goal as any} // remove once GalloGoalCard prop is unified
                 employeeMap={employeeMap}
                 onViewPostModal={openPostViewer}
                 canManage={canManage}
-                activeActionsGoalId={activeActionsGoalId}
-                actionsAnchorEl={actionsAnchorEl}
-                openActions={openActions}
-                closeActions={closeActions}
                 onEdit={setEditGoal}
-                onArchive={(goal) => requestLifecycleChange(goal, "archived")}
-                onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
+                onArchive={(g) => requestLifecycleChange(g, "archived")}
+                onDisable={(g) => requestLifecycleChange(g, "disabled")}
               />
             ))
           )}
@@ -241,9 +229,6 @@ const AllGalloGoalsView = () => {
               employeeMap={employeeMap}
               onViewPostModal={openPostViewer}
               canManage={canManage}
-              activeActionsGoalId={activeActionsGoalId}
-              openActions={openActions}
-              closeActions={closeActions}
               onEdit={setEditGoal}
               onArchive={(goal) => requestLifecycleChange(goal, "archived")}
               onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
@@ -251,17 +236,14 @@ const AllGalloGoalsView = () => {
           ) : (
             upcomingGoals.map((goal) => (
               <GalloGoalCard
-                goal={goal}
+                key={goal.goalDetails.goalId}
+                goal={goal as any}
                 employeeMap={employeeMap}
                 onViewPostModal={openPostViewer}
                 canManage={canManage}
-                activeActionsGoalId={activeActionsGoalId}
-                actionsAnchorEl={actionsAnchorEl}
-                openActions={openActions}
-                closeActions={closeActions}
                 onEdit={setEditGoal}
-                onArchive={(goal) => requestLifecycleChange(goal, "archived")}
-                onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
+                onArchive={(g) => requestLifecycleChange(g, "archived")}
+                onDisable={(g) => requestLifecycleChange(g, "disabled")}
               />
             ))
           )}
@@ -279,9 +261,6 @@ const AllGalloGoalsView = () => {
             employeeMap={employeeMap}
             onViewPostModal={openPostViewer}
             canManage={canManage}
-            activeActionsGoalId={activeActionsGoalId}
-            openActions={openActions}
-            closeActions={closeActions}
             onEdit={setEditGoal}
             onArchive={(goal) => requestLifecycleChange(goal, "archived")}
             onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
@@ -289,17 +268,14 @@ const AllGalloGoalsView = () => {
         ) : (
           currentGoals.map((goal) => (
             <GalloGoalCard
-              goal={goal}
+              key={goal.goalDetails.goalId}
+              goal={goal as any}
               employeeMap={employeeMap}
               onViewPostModal={openPostViewer}
               canManage={canManage}
-              activeActionsGoalId={activeActionsGoalId}
-              actionsAnchorEl={actionsAnchorEl}
-              openActions={openActions}
-              closeActions={closeActions}
               onEdit={setEditGoal}
-              onArchive={(goal) => requestLifecycleChange(goal, "archived")}
-              onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
+              onArchive={(g) => requestLifecycleChange(g, "archived")}
+              onDisable={(g) => requestLifecycleChange(g, "disabled")}
             />
           ))
         )}
@@ -317,9 +293,6 @@ const AllGalloGoalsView = () => {
               employeeMap={employeeMap}
               onViewPostModal={openPostViewer}
               canManage={canManage}
-              activeActionsGoalId={activeActionsGoalId}
-              openActions={openActions}
-              closeActions={closeActions}
               onEdit={setEditGoal}
               onArchive={(goal) => requestLifecycleChange(goal, "archived")}
               onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
@@ -327,24 +300,27 @@ const AllGalloGoalsView = () => {
           ) : (
             archivedGoals.map((goal) => (
               <GalloGoalCard
-                goal={goal}
+                key={goal.goalDetails.goalId}
+                goal={goal as any}
                 employeeMap={employeeMap}
                 onViewPostModal={openPostViewer}
                 canManage={canManage}
-                activeActionsGoalId={activeActionsGoalId}
-                actionsAnchorEl={actionsAnchorEl}
-                openActions={openActions}
-                closeActions={closeActions}
                 onEdit={setEditGoal}
-                onArchive={(goal) => requestLifecycleChange(goal, "archived")}
-                onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
+                onArchive={(g) => requestLifecycleChange(g, "archived")}
+                onDisable={(g) => requestLifecycleChange(g, "disabled")}
               />
             ))
           )}
         </AdminGalloGoalsSection>
       )}
+
       {editGoal && (
-        <EditGalloGoalModal goal={editGoal} onClose={() => setEditGoal(null)} />
+        <EditGalloGoalModal
+          goal={editGoal}
+          onClose={() => setEditGoal(null)}
+          onArchive={() => requestLifecycleChange(editGoal, "archived")}
+          onDisable={() => requestLifecycleChange(editGoal, "disabled")}
+        />
       )}
 
       {pendingAction && (

@@ -1,12 +1,12 @@
-.goal-actions-overlay {
-  background: var(--menu-background-color);
+.goal-actions-menu {
+  margin-top: 6px;
+  background: var(--surface-elevated);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: var(--card-shadow);
-  padding: 6px;
-  min-width: 140px;
-}
 
+  z-index: 1000;
+}
 .goal-actions-menu button {
   display: block;
   width: 100%;
