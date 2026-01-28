@@ -226,11 +226,14 @@ export const selectGoalsByTiming = createSelector(
 
 export const selectUpcomingGalloGoals = createSelector(
   [selectAllGalloGoals, (_: RootState, companyId: string) => companyId],
-  (goals, companyId) =>
-    goals.filter(
+  (goals, companyId) => {
+    const now = Date.now();
+
+    return goals.filter(
       (g) =>
         g.companyId === companyId && getGoalTimingState(g, now) === "upcoming",
-    ),
+    );
+  },
 );
 
 export const selectUsersGalloGoals = createSelector(
