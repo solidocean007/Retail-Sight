@@ -189,6 +189,8 @@
     var(--deep-abyss) 0%,
     var(--shadow-slate) 100%
   );
+
+  --table-row-background: var(var(--gray-300));
 }
 
 /* ============================
@@ -300,6 +302,8 @@
   --btn-error-bg: #691a1a; /* a deep-red background */
   --btn-error-hover: #7b1f1f;
   --btn-error-text-color: #fff;
+
+  --table-row-background: var(--gray-300);
 }
 
 /* ============================
@@ -397,6 +401,8 @@
   --btn-error-bg: #691a1a;
   --btn-error-hover: #7b1f1f;
   --btn-error-text-color: #fff;
+
+  --table-row-background: var(--gray-700);
 }
 
 /* 🎨 Light Theme Scrollbar */

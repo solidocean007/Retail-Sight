@@ -23,9 +23,10 @@
 }
 
 .gallo-table-row {
-  /* background: var(--surface-base); */
+  background: var(--table-row-background);
   border-radius: 10px;
   transition: background 0.15s ease;
+  margin-bottom: 10px;
 }
 
 .gallo-table-row:hover {
@@ -84,12 +85,11 @@
 
 .gallo-row-expanded {
   padding: 12px 16px;
-  background: var(--gray-100);
+  background:var(--table-row-background);
   border-radius: 10px;
   margin-top: 4px;
   margin-left: 40px;
   border-top: 1px solid var(--border-color);
-  background: var(--surface-elevated);
 }
 
 .goal-summary,
@@ -107,6 +107,7 @@
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
   padding: 6px 0;
+  /* margin-bottom: 10px; */
 }
 
 .accounts-header {

@@ -34,7 +34,6 @@ export default function GalloGoalsTable({
       <div className="gallo-table-header">
         <div />
         <div>Program</div>
-        <div>Status</div>
         <div>Dates</div>
         <div>Progress</div>
         <div className="align-right">Manage</div>
@@ -73,11 +72,11 @@ export default function GalloGoalsTable({
                 <div className="program-id">ID: {goal.goalDetails.goalId}</div>
               </div>
 
-              <div>
+              {/* <div>
                 <span className={`status-pill status-${goal.lifeCycleStatus}`}>
                   {goal.lifeCycleStatus.toUpperCase()}
                 </span>
-              </div>
+              </div> */}
 
               <div className="dates">
                 <div>
