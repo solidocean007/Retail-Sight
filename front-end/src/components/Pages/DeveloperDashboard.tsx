@@ -42,10 +42,14 @@ import CompanyOnboardingAdmin from "../DeveloperDashboard/CompanyOnboardingAdmin
 // import { addDoc, collection } from "firebase/firestore";
 // import { db } from "../../utils/firebase";
 import AccessRequestsPanel from "../DeveloperDashboard/AccessRequestPanel";
+import { useAppConfigSync } from "../../hooks/useAppConfigSync";
+import { resetApp } from "../../utils/resetApp";
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
   const dashboardUser = useSelector(selectUser);
+  const { localVersion, serverVersion } = useAppConfigSync();
+  const upToDate = localVersion === serverVersion;
   const isDeveloper = dashboardUser?.role === "developer";
 
   const dispatch = useAppDispatch();
@@ -54,11 +58,22 @@ const DeveloperDashboard = () => {
 
   const [tabIndex, setTabIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCreateTestCompanyModalOpen, setIsCreateTestCompanyModalOpen] = useState(false);
+  const [isCreateTestCompanyModalOpen, setIsCreateTestCompanyModalOpen] =
+    useState(false);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const handleReset = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to reset the app? This will clear all stored data.",
+      )
+    ) {
+      await resetApp(dispatch);
+    }
+  };
 
   // Ask for confirmation before deleting user
   const askDelete = (uid: string): Promise<void> => {
@@ -110,7 +125,13 @@ const DeveloperDashboard = () => {
           <Button variant="outlined" onClick={() => navigate("/")}>
             Home
           </Button>
-
+          <button
+            className="btn-outline danger-button"
+            onClick={handleReset}
+            // disabled={!upToDate}
+          >
+            {localVersion != serverVersion ? `Reset App` : `App is up to date`}
+          </button>
           <Button
             variant="outlined"
             onClick={handleRefresh}

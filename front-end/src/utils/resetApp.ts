@@ -9,10 +9,15 @@ import {
   clearUserCreatedPostsInIndexedDB,
   setLastSeenTimestamp,
 } from "../utils/database/indexedDBUtils";
+import { clearAllCompanies } from "../Slices/allCompaniesSlice";
+// import { clearNotifications } from "../Slices/notificationsSlice"; // if exists
+// import { clearCompanyGoals } from "../Slices/companyGoalsSlice"; // if exists
+
 import { AppDispatch } from "../utils/store";
 import { clearPostsData } from "../Slices/postsSlice";
 import { showMessage } from "../Slices/snackbarSlice";
 import { openDB } from "./database/indexedDBOpen";
+import { clearDeveloperNotifications } from "../Slices/developerNotificationSlice";
 
 let reloadTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -49,6 +54,11 @@ export async function resetApp(dispatch: AppDispatch) {
 
     console.log("✅ IndexedDB cleared.");
     dispatch(clearPostsData());
+    dispatch(clearAllCompanies());
+    dispatch(clearDeveloperNotifications());
+    // dispatch(clearNotifications());
+    // dispatch(clearCompanyGoals());
+
     dispatch(showMessage("✅ App data cleared. Reinitializing..."));
 
     // 🔥 Instead of reloading the page:
@@ -66,7 +76,6 @@ export async function resetApp(dispatch: AppDispatch) {
     console.log("🔄 Triggering local rebootstrap...");
     dispatch(showMessage("App reset complete — syncing fresh data..."));
     safeReload();
-
   } catch (error) {
     console.error("❌ App reset failed:", error);
     dispatch(showMessage("❌ Failed to reset app. Check console for details."));

@@ -2,6 +2,7 @@ import { createSlice, PayloadAction, createSelector } from "@reduxjs/toolkit";
 import { NotificationType } from "../utils/types";
 import { RootState } from "../utils/store";
 
+
 interface NotificationsState {
   notifications: NotificationType[];
   loading: boolean;
@@ -82,7 +83,3 @@ export const selectUnreadNotifications = createSelector(
   (notifications, uid) =>
     notifications.filter((n) => !n.readBy?.includes(uid ?? ""))
 );
-
-
-
-// a notification has a sentBy which is a user.  sentBy could also be 'system' though.  

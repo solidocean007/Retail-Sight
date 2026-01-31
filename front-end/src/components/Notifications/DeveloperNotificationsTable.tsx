@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
-import { fetchCompanyNotifications } from "../../thunks/notificationsThunks";
 import {
   Table,
   TableBody,
@@ -17,6 +16,8 @@ import {
 import "./notifications/notificationsTable.css";
 import { CompanyWithUsersAndId, NotificationType } from "../../utils/types";
 import ViewDeveloperNotification from "./ViewDeveloperNotification";
+import { fetchDeveloperNotifications } from "../../thunks/developerNotificationsThunks";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 interface DeveloperNotificationsTableProps {
   allCompaniesAndUsers: CompanyWithUsersAndId[];
@@ -26,26 +27,27 @@ const DeveloperNotificationsTable: React.FC<
   DeveloperNotificationsTableProps
 > = ({ allCompaniesAndUsers }) => {
   const dispatch = useAppDispatch();
-  const { userNotifications, companyNotifications, loading, error } =
-    useSelector((state: RootState) => state.notifications);
+  const functions = getFunctions();
+  const { items, loading, error } = useSelector(
+    (state: RootState) => state.developerNotifications,
+  );
+
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
-    null
+    null,
   );
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (currentUser?.role === "developer") {
-      dispatch(fetchCompanyNotifications("all"));
-    } else if (currentUser?.companyId) {
-      dispatch(fetchCompanyNotifications(currentUser.companyId));
-    }
-  }, [dispatch, currentUser?.companyId, currentUser?.role]);
+useEffect(() => {
+  if (currentUser?.role === "developer") {
+    dispatch(fetchDeveloperNotifications());
+  }
+}, [dispatch, currentUser?.role]);
 
-  const filteredNotifications = userNotifications.filter(
-    (notification: NotificationType) =>
-      notification.title.toLowerCase().includes(searchTerm.toLowerCase())
+
+  const filteredNotifications = items.filter((n) =>
+    (n.title ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (loading) {
@@ -59,6 +61,16 @@ const DeveloperNotificationsTable: React.FC<
   if (error) {
     return <div className="error-text">Error: {error}</div>;
   }
+
+  const resendSystemNotification = httpsCallable(
+    functions,
+    "resendSystemNotification",
+  );
+
+  const deleteSystemNotification = httpsCallable(
+    functions,
+    "deleteSystemNotification",
+  );
 
   return (
     <div className="notifications-table-container">
@@ -81,7 +93,8 @@ const DeveloperNotificationsTable: React.FC<
               <TableCell>Audience</TableCell>
               <TableCell>Priority</TableCell>
               <TableCell>Sent Date</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>Resend</TableCell>
+              <TableCell>Delete</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -95,24 +108,7 @@ const DeveloperNotificationsTable: React.FC<
                 </TableCell>
                 <TableCell>{notif.priority || "Normal"}</TableCell>
                 <TableCell>
-                  {(() => {
-                    const sentAt = notif.sentAt;
-
-                    if (sentAt instanceof Date) {
-                      return sentAt.toLocaleString();
-                    }
-
-                    if (typeof sentAt === "string") {
-                      return new Date(sentAt).toLocaleString();
-                    }
-
-                    if (sentAt && "seconds" in sentAt) {
-                      // Firestore Timestamp
-                      return new Date(sentAt.seconds * 1000).toLocaleString();
-                    }
-
-                    return "—"; // fallback
-                  })()}
+                  {notif.sentAt ? new Date(notif.sentAt).toLocaleString() : "—"}
                 </TableCell>
 
                 <TableCell className="actions-cell">
@@ -131,16 +127,26 @@ const DeveloperNotificationsTable: React.FC<
                     size="small"
                     variant="outlined"
                     className="btn-resend"
-                    onClick={() => console.log("Resend", notif.id)}
+                    onClick={async () => {
+                      await resendSystemNotification({
+                        notificationId: notif.id,
+                        sendEmail: true, // optional toggle later
+                      });
+                    }}
                   >
                     Resend
                   </Button>
+                </TableCell>
+                <TableCell>
                   <Button
                     size="small"
-                    variant="contained"
                     color="error"
-                    className="btn-delete"
-                    onClick={() => console.log("Delete", notif.id)}
+                    variant="contained"
+                    onClick={async () => {
+                      await deleteSystemNotification({
+                        notificationId: notif.id,
+                      });
+                    }}
                   >
                     Delete
                   </Button>

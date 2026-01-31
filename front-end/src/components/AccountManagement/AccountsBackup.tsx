@@ -22,6 +22,7 @@ import { db } from "../../utils/firebase";
 import CustomConfirmation from "../CustomConfirmation";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
+import { normalizeFirestoreData } from "../../utils/normalize";
 
 interface BackupMeta {
   id: string;
@@ -86,23 +87,29 @@ const AccountsBackup: React.FC<AccountsBackupProps> = ({
 
   const fetchBackups = async () => {
     const snapshot = await getDocs(collection(db, "accounts_backup"));
-    const results: BackupMeta[] = [];
 
-    for (const docSnap of snapshot.docs) {
-      const data = docSnap.data();
-      if (data.deleted) continue; // Soft delete filter
-      const accounts = data.accounts as CompanyAccountType[];
-      results.push({
-        id: docSnap.id,
-        createdAt: docSnap.id.replace("backup_", ""),
-        accountCount: accounts.length,
-        data: accounts,
-      });
-    }
+    const results: BackupMeta[] = snapshot.docs
+      .map((docSnap) => {
+        const raw = docSnap.data();
+        if (raw.deleted) return null;
+
+        const data = normalizeFirestoreData(raw);
+
+        const accounts = (data.accounts || []) as CompanyAccountType[];
+
+        return {
+          id: docSnap.id,
+          createdAt: docSnap.id.replace("backup_", ""),
+          accountCount: accounts.length,
+          data: accounts,
+        };
+      })
+      .filter(Boolean) as BackupMeta[];
 
     results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     setBackups(results);
   };
+
   useEffect(() => {
     if (companyId) fetchBackups();
   }, [companyId, refreshTrigger]); // 👈 re-run when flag changes

@@ -4,6 +4,7 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 if (!admin.apps.length) admin.initializeApp();
 
 /**
+ * “A user did something that another user should be notified about.”
  * Intakes activityEvents and fans out notifications to users.
  * Cloud Function #1 in the pipeline.
  *

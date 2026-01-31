@@ -20,15 +20,62 @@ const db = admin.firestore();
  * The credentials are pulled from Firebase environment variables set via:
  *    firebase functions:config:set braintree.merchant_id="..." braintree.public_key="..." ...
  */
-export const gateway = new braintree.BraintreeGateway({
-  environment:
-    process.env.BRAINTREE_ENVIRONMENT === "sandbox"
-      ? braintree.Environment.Sandbox
-      : braintree.Environment.Production,
-  merchantId: process.env.BRAINTREE_MERCHANT_ID!,
-  publicKey: process.env.BRAINTREE_PUBLIC_KEY!,
-  privateKey: process.env.BRAINTREE_PRIVATE_KEY!,
-});
+let gateway: braintree.BraintreeGateway | null = null;
+
+/**
+ * 🔐 getGateway
+ *
+ * Lazily initializes and returns a singleton BraintreeGateway instance.
+ *
+ * This function ensures that:
+ * - Braintree credentials are only read at runtime (not at module load)
+ * - Cloud Functions deploy analysis does NOT fail due to missing env vars
+ * - All billing-related Cloud Functions share a single gateway instance
+ *
+ * The gateway is created on first use and cached in memory for subsequent calls
+ * within the same Cloud Functions instance.
+ *
+ * @throws {Error} If required Braintree environment variables are missing.
+ *
+ * @returns {braintree.BraintreeGateway} An initialized Braintree gateway client.
+ *
+ * @example
+ * ```ts
+ * const gateway = getGateway();
+ * const result = await gateway.subscription.find(subscriptionId);
+ * ```
+ */
+function getGateway(): braintree.BraintreeGateway {
+  if (gateway) return gateway;
+
+  const {
+    BRAINTREE_ENVIRONMENT,
+    BRAINTREE_MERCHANT_ID,
+    BRAINTREE_PUBLIC_KEY,
+    BRAINTREE_PRIVATE_KEY,
+  } = process.env;
+
+  if (
+    !BRAINTREE_ENVIRONMENT ||
+    !BRAINTREE_MERCHANT_ID ||
+    !BRAINTREE_PUBLIC_KEY ||
+    !BRAINTREE_PRIVATE_KEY
+  ) {
+    throw new Error("Missing Braintree environment variables");
+  }
+
+  gateway = new braintree.BraintreeGateway({
+    environment:
+      BRAINTREE_ENVIRONMENT === "sandbox"
+        ? braintree.Environment.Sandbox
+        : braintree.Environment.Production,
+    merchantId: BRAINTREE_MERCHANT_ID,
+    publicKey: BRAINTREE_PUBLIC_KEY,
+    privateKey: BRAINTREE_PRIVATE_KEY,
+  });
+
+  return gateway;
+}
 
 /**
  * 🧩 syncPlanLimits
@@ -118,6 +165,8 @@ export async function updateBraintreeSubscription(
   console.log("🔄 Updating subscription:", { subscriptionId, updateData });
 
   try {
+    const gateway = getGateway();
+
     const result = await gateway.subscription.update(subscriptionId, {
       ...updateData,
       options: {

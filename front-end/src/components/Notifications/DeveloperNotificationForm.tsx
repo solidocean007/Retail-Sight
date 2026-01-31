@@ -1,4 +1,3 @@
-// components/Admin/DeveloperNotificationForm.tsx
 import { useState } from "react";
 import {
   TextField,
@@ -7,24 +6,23 @@ import {
   InputLabel,
   FormControl,
   Button,
-  // Chip,
   Stack,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
-import { Timestamp } from "firebase/firestore";
-import {
-  // CompanyType,
-  UserType,
-  PriorityType,
-  NotificationType,
-  // CompanyTypeWithId,
-  CompanyWithUsersAndId,
-} from "../../utils/types";
-import { useAppDispatch } from "../../utils/store";
-// import { LocalizationProvider } from "@mui/x-date-pickers";
-// import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-// import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../../utils/firebase";
+
+import { UserType, CompanyWithUsersAndId } from "../../utils/types";
 
 import NotificationAudienceBuilder from "./NotificationAudiencePicker";
+
+type MessageType = "announcement" | "tutorial";
+
+const createDeveloperNotification = httpsCallable(
+  functions,
+  "createDeveloperNotification",
+);
 
 const DeveloperNotificationForm = ({
   currentUser,
@@ -33,101 +31,136 @@ const DeveloperNotificationForm = ({
   currentUser: UserType;
   allCompaniesAndUsers: CompanyWithUsersAndId[];
 }) => {
-  const dispatch = useAppDispatch();
+  const [messageType, setMessageType] = useState<MessageType>("announcement");
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [priority, setPriority] = useState<PriorityType>("normal");
-  const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
+  const [tutorialUrl, setTutorialUrl] = useState("");
 
-  const [audienceCompanies, setAudienceCompanies] = useState<CompanyWithUsersAndId[]>([]);
+  const [sendEmail, setSendEmail] = useState(true);
+  const [dryRun, setDryRun] = useState(false);
+
+  const [audienceCompanies, setAudienceCompanies] = useState<
+    CompanyWithUsersAndId[]
+  >([]);
   const [audienceUsers, setAudienceUsers] = useState<UserType[]>([]);
   const [audienceRoles, setAudienceRoles] = useState<string[]>([]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title || !message) return;
+    if (messageType === "tutorial" && !tutorialUrl) return;
 
-    const notification: NotificationType = {
-      id: "",
+    await createDeveloperNotification({
+      type: messageType, // announcement | tutorial
       title,
       message,
-      priority,
-      sentAt: Timestamp.now(),
-      sentBy: currentUser,
+      tutorialUrl: messageType === "tutorial" ? tutorialUrl : undefined,
+
       recipientCompanyIds: audienceCompanies.map((c) => c.id),
       recipientUserIds: audienceUsers.map((u) => u.uid),
       recipientRoles: audienceRoles,
-      scheduledAt: scheduledAt ? Timestamp.fromDate(scheduledAt) : null,
-      readBy: [],
-      pinned: false,
-    };
 
-    // dispatch(
-    //   sendNotification({
-    //     // companyId: currentUser.companyId || "global",
-    //     notification,
-    //   })
-    // );
+      sendEmail,
+      dryRun,
+    });
 
+    // reset
     setTitle("");
     setMessage("");
-    setScheduledAt(null);
-    setAudienceCompanies([]);
-    setAudienceUsers([]);
-    setAudienceRoles([]);
+    setTutorialUrl("");
+    setDryRun(false);
   };
 
   return (
     <div className="dev-notification-form">
+      {/* Message type */}
+      <FormControl size="small" fullWidth sx={{ mb: 1 }}>
+        <InputLabel>Message Type</InputLabel>
+        <Select
+          value={messageType}
+          label="Message Type"
+          onChange={(e) => setMessageType(e.target.value as MessageType)}
+        >
+          <MenuItem value="announcement">Announcement</MenuItem>
+          <MenuItem value="tutorial">Tutorial</MenuItem>
+        </Select>
+      </FormControl>
+
+      {/* Title */}
       <TextField
         label="Title"
         fullWidth
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        style={{ marginBottom: "0.5rem" }}
+        sx={{ mb: 1 }}
+        placeholder={
+          messageType === "tutorial"
+            ? "Install Displaygram on Your Phone"
+            : "Displaygram Update"
+        }
       />
+
+      {/* Message */}
       <TextField
         label="Message"
         fullWidth
         multiline
-        rows={4}
+        rows={3}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        style={{ marginBottom: "0.5rem" }}
+        sx={{ mb: 1 }}
+        placeholder={
+          messageType === "tutorial"
+            ? "Watch this short video to learn how to install Displaygram and submit displays more easily."
+            : "We’ve made a few improvements to help you submit displays faster."
+        }
       />
 
-      <Stack direction="row" spacing={2} style={{ marginBottom: "0.5rem" }}>
-        <FormControl size="small" style={{ minWidth: 120 }}>
-          <InputLabel>Priority</InputLabel>
-          <Select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as PriorityType)}
-          >
-            <MenuItem value="high">High</MenuItem>
-            <MenuItem value="normal">Normal</MenuItem>
-            <MenuItem value="low">Low</MenuItem>
-          </Select>
-        </FormControl>
+      {/* Tutorial URL */}
+      {messageType === "tutorial" && (
+        <TextField
+          label="Tutorial Video URL"
+          fullWidth
+          value={tutorialUrl}
+          onChange={(e) => setTutorialUrl(e.target.value)}
+          sx={{ mb: 1 }}
+          placeholder="https://www.youtube.com/watch?v=..."
+        />
+      )}
 
-        {/* <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <DateTimePicker
-            label="Schedule for later (optional)"
-            value={scheduledAt}
-            onChange={(newValue: Date | null) => setScheduledAt(newValue)}
-            slotProps={{ textField: { size: "small" } }}
-          />
-        </LocalizationProvider> */}
-      </Stack>
-
+      {/* Audience */}
       <NotificationAudienceBuilder
         companies={allCompaniesAndUsers}
         selectedCompanies={audienceCompanies}
-        onCompanyChange={setAudienceCompanies} 
+        onCompanyChange={setAudienceCompanies}
         selectedUsers={audienceUsers}
         onUserChange={setAudienceUsers}
         selectedRoles={audienceRoles}
         onRoleChange={setAudienceRoles}
       />
+
+      {/* Delivery options */}
+      <Stack direction="row" spacing={2} sx={{ my: 1 }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={sendEmail}
+              onChange={(e) => setSendEmail(e.target.checked)}
+            />
+          }
+          label="Send email"
+        />
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={dryRun}
+              onChange={(e) => setDryRun(e.target.checked)}
+            />
+          }
+          label="Dry run (preview only)"
+        />
+      </Stack>
 
       <Button
         variant="contained"
@@ -135,7 +168,7 @@ const DeveloperNotificationForm = ({
         disabled={!title || !message}
         onClick={handleSubmit}
       >
-        Send Notification
+        Send Message
       </Button>
     </div>
   );

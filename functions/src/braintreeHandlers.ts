@@ -16,15 +16,62 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 // --- Configure Braintree Gateway ---
-const gateway = new braintree.BraintreeGateway({
-  environment:
-    process.env.BRAINTREE_ENVIRONMENT === "sandbox"
-      ? braintree.Environment.Sandbox
-      : braintree.Environment.Production,
-  merchantId: process.env.BRAINTREE_MERCHANT_ID!,
-  publicKey: process.env.BRAINTREE_PUBLIC_KEY!,
-  privateKey: process.env.BRAINTREE_PRIVATE_KEY!,
-});
+let gateway: braintree.BraintreeGateway | null = null;
+
+/**
+ * 🔐 getGateway
+ *
+ * Lazily initializes and returns a singleton BraintreeGateway instance.
+ *
+ * This function ensures that:
+ * - Braintree credentials are only read at runtime (not at module load)
+ * - Cloud Functions deploy analysis does NOT fail due to missing env vars
+ * - All billing-related Cloud Functions share a single gateway instance
+ *
+ * The gateway is created on first use and cached in memory for subsequent calls
+ * within the same Cloud Functions instance.
+ *
+ * @throws {Error} If required Braintree environment variables are missing.
+ *
+ * @returns {braintree.BraintreeGateway} An initialized Braintree gateway client.
+ *
+ * @example
+ * ```ts
+ * const gateway = getGateway();
+ * const result = await gateway.subscription.find(subscriptionId);
+ * ```
+ */
+function getGateway(): braintree.BraintreeGateway {
+  if (gateway) return gateway;
+
+  const {
+    BRAINTREE_ENVIRONMENT,
+    BRAINTREE_MERCHANT_ID,
+    BRAINTREE_PUBLIC_KEY,
+    BRAINTREE_PRIVATE_KEY,
+  } = process.env;
+
+  if (
+    !BRAINTREE_ENVIRONMENT ||
+    !BRAINTREE_MERCHANT_ID ||
+    !BRAINTREE_PUBLIC_KEY ||
+    !BRAINTREE_PRIVATE_KEY
+  ) {
+    throw new Error("Missing Braintree environment variables");
+  }
+
+  gateway = new braintree.BraintreeGateway({
+    environment:
+      BRAINTREE_ENVIRONMENT === "sandbox"
+        ? braintree.Environment.Sandbox
+        : braintree.Environment.Production,
+    merchantId: BRAINTREE_MERCHANT_ID,
+    publicKey: BRAINTREE_PUBLIC_KEY,
+    privateKey: BRAINTREE_PRIVATE_KEY,
+  });
+
+  return gateway;
+}
 
 const ADDON_IDS: Record<string, Record<string, string>> = {
   free: {
@@ -91,7 +138,7 @@ export const updateSubscriptionWithProration = onCall(async (request) => {
       "networkPlanExtraUser",
       "networkPlanExtraConnection",
     ];
-
+    const gateway = getGateway();
     const updateResult = await gateway.subscription.update(subscriptionId, {
       planId: newPlanId,
       prorateCharges: true,
@@ -199,7 +246,7 @@ export const createBraintreeCustomer = onCall(async (request) => {
       "Missing required fields: companyId, companyName, email."
     );
   }
-
+  const gateway = getGateway();
   const result = await gateway.customer.create({
     firstName: companyName,
     email,
@@ -244,7 +291,8 @@ export const createSubscription = onCall(async (request) => {
       `🔄 Canceling old subscription ${existingSubId} before upgrade.`
     );
     try {
-      await gateway.subscription.cancel(existingSubId);
+      const gateway = getGateway();
+      await gateway?.subscription.cancel(existingSubId);
     } catch (err) {
       console.warn("⚠️ Failed to cancel old subscription:", err);
     }
@@ -253,7 +301,8 @@ export const createSubscription = onCall(async (request) => {
   // 1️⃣ Ensure customer exists
   let customerId = billing?.braintreeCustomerId;
   if (!customerId) {
-    const custResult = await gateway.customer.create({
+    const gateway = getGateway();
+    const custResult = await gateway?.customer.create({
       firstName: companyName || "Unnamed Company",
       company: companyName || "Unnamed Company",
       email: email || "unknown@displaygram.com",
@@ -273,7 +322,8 @@ export const createSubscription = onCall(async (request) => {
   }
 
   // 2️⃣ Vault payment method for recurring use
-  const paymentRes = await gateway.paymentMethod.create({
+  const gateway = getGateway();
+  const paymentRes = await gateway?.paymentMethod.create({
     customerId,
     paymentMethodNonce,
     options: { makeDefault: true },
@@ -393,6 +443,7 @@ export const cancelSubscription = onCall(async (request) => {
   }
 
   // 1️⃣ Cancel active sub
+  const gateway = getGateway();
   const cancelResult = (await gateway.subscription.cancel(
     billing.subscriptionId
   )) as unknown as braintree.ValidatedResponse<braintree.Subscription>;
@@ -429,7 +480,7 @@ export const cancelSubscription = onCall(async (request) => {
 ======================================================== */
 export const handleBraintreeWebhook = onCall(async (request) => {
   const { btSignature, btPayload } = request.data;
-
+  const gateway = getGateway();
   const notification = (await gateway.webhookNotification.parse(
     btSignature,
     btPayload
@@ -620,7 +671,7 @@ export const getClientToken = onCall(async (request) => {
 
   const billing = companySnap.data()?.billing;
   const customerId = billing?.braintreeCustomerId || undefined;
-
+  const gateway = getGateway();
   const result = await gateway.clientToken.generate(
     customerId ? { customerId } : {}
   );
@@ -661,6 +712,7 @@ export const addAddon = onCall(async (request) => {
   const customerId = billing.braintreeCustomerId;
 
   // 🔹 Retrieve customer from Braintree
+  const gateway = getGateway();
   const customer = await gateway.customer.find(customerId).catch((err) => {
     console.error("❌ gateway.customer.find failed:", err);
     return null;
@@ -884,6 +936,7 @@ export const removeAddon = onCall(async (request) => {
 
   // 🔹 Optionally tell Braintree to apply this change at next billing
   try {
+    const gateway = getGateway();
     const result = await gateway.subscription.update(billing.subscriptionId, {
       addOns: {
         update: [{ existingId: addonId, quantity: newQty }],
@@ -977,7 +1030,7 @@ export const syncAddonUsage = onDocumentUpdated(
               },
               prorateCharges: true,
             };
-
+      const gateway = getGateway();
       const result = await gateway.subscription.update(
         after.billing.subscriptionId,
         updatePayload
@@ -1052,7 +1105,7 @@ export const syncConnectionAddonUsage = onDocumentUpdated(
               },
               prorateCharges: true,
             };
-
+      const gateway = getGateway();
       const result = await gateway.subscription.update(
         after.billing.subscriptionId,
         updatePayload
@@ -1092,7 +1145,7 @@ export const calculateSubscriptionTotal = async (companyId: string) => {
   if (!billing?.subscriptionId) {
     return 0;
   }
-
+  const gateway = getGateway();
   const sub = await gateway.subscription.find(billing.subscriptionId);
 
   let total = parseFloat(sub.price ?? "0");
@@ -1119,6 +1172,7 @@ export const updatePaymentMethod = onCall(async (request) => {
   }
 
   // Add new payment method
+  const gateway = getGateway();
   const result = await gateway.paymentMethod.create({
     customerId: billing.braintreeCustomerId,
     paymentMethodNonce,
@@ -1139,6 +1193,7 @@ export const updatePaymentMethod = onCall(async (request) => {
 
 export const listPlansAndAddons = onCall(async () => {
   try {
+    const gateway = getGateway();
     const result = await gateway.plan.all();
 
     return result.plans.map((p) => ({
@@ -1185,6 +1240,7 @@ export const initCompanyBilling = onDocumentUpdated(
         "unknown@displaygram.com";
 
       // 1️⃣ Create Braintree customer for this company
+      const gateway = getGateway();
       const result = await gateway.customer.create({
         company: companyName,
         email: companyEmail,
@@ -1251,6 +1307,7 @@ export const backfillBillingForCompanies = onCall(async (request) => {
       }
 
       // 1️⃣ Create Braintree customer
+      const gateway = getGateway();
       const customerRes = await gateway.customer.create({
         company: data.name || id,
       });

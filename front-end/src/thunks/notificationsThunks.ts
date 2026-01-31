@@ -98,27 +98,6 @@ export const removeNotification = createAsyncThunk(
 );
 
 // -------------------------------------------------
-// Send Developer Notification (global broadcast)
-// Stored under /notifications/{id}
-// -------------------------------------------------
-export const sendDeveloperNotification = createAsyncThunk(
-  "notifications/sendDeveloperNotification",
-  async (notification: NotificationType) => {
-    const newRef = doc(collection(db, "notifications"));
-
-    const payload = {
-      ...notification,
-      id: newRef.id,
-      sentAt: Timestamp.now(),
-    };
-
-    await setDoc(newRef, payload);
-
-    return payload;
-  }
-);
-
-// -------------------------------------------------
 // Write user-specific notification
 // Called when your backend
 // triggers goal assignments, likes, comments, etc.

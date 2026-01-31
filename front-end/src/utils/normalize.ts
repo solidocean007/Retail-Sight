@@ -1,14 +1,14 @@
 // utils/normalize.ts
 import { Timestamp } from "firebase/firestore";
 
-/** 🔁 Universal Firestore normalizer */
+/** 🔁 Universal Firestore normalizer (Timestamp → ms) */
 export const normalizeFirestoreData = <T>(input: T): T => {
   const walk = (val: any): any => {
-    if (val instanceof Timestamp) return val.toDate().toISOString();
+    if (val instanceof Timestamp) return val.toMillis();
     if (Array.isArray(val)) return val.map(walk);
     if (val && typeof val === "object") {
       const out: any = {};
-      for (const [k, v2] of Object.entries(val)) out[k] = walk(v2);
+      for (const [k, v] of Object.entries(val)) out[k] = walk(v);
       return out;
     }
     return val;
@@ -31,10 +31,7 @@ export const normalizePost = (raw: any, indexOrId?: string | number) => {
 
   // If it's being used in .map(), indexOrId will be a number
   // If it's called manually, indexOrId may be a Firestore doc ID
-  const id =
-    typeof indexOrId === "string"
-      ? indexOrId
-      : (raw.id ?? undefined); // fallback to existing id
+  const id = typeof indexOrId === "string" ? indexOrId : (raw.id ?? undefined); // fallback to existing id
 
   return {
     id,

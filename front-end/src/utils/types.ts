@@ -11,11 +11,11 @@ export type NotificationCategory =
 
 export type PriorityType = "high" | "normal" | "low";
 
-export type NotificationType = {
+export interface NotificationType  {
   id: string;
   title: string;
   message: string;
-  sentAt: Timestamp | string;
+  sentAt: number | string;
   scheduledAt?: Timestamp | null;
 
   sentBy: UserType | "system";

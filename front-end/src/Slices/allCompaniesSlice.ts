@@ -9,6 +9,7 @@ import { getDocs, collection } from "firebase/firestore";
 import { RootState } from "../utils/store"; // ✅ fixed
 import { db } from "../utils/firebase";
 import { fetchCompanyUsersFromFirestore } from "../thunks/usersThunks";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 export const fetchAllCompanies = createAsyncThunk<
   CompanyTypeWithId[],
@@ -22,13 +23,14 @@ export const fetchAllCompanies = createAsyncThunk<
       v?.toDate?.()
         ? v.toDate().toISOString()
         : v instanceof Date
-        ? v.toISOString()
-        : typeof v === "string"
-        ? v
-        : null;
+          ? v.toISOString()
+          : typeof v === "string"
+            ? v
+            : null;
 
     return snap.docs.map((d) => {
-      const data = d.data() as CompanyType;
+      const raw = d.data() as CompanyType;
+      const data = normalizeFirestoreData(raw);
       const { createdAt, lastUpdated, updatedAt, ...rest } = data;
 
       // ✅ Prefer explicit lastUpdated, else fall back to updatedAt
@@ -46,7 +48,6 @@ export const fetchAllCompanies = createAsyncThunk<
   }
 });
 
-
 // Slices/allCompaniesSlice.ts  ➜  ADD BELOW fetchAllCompanies
 // what is this for?
 export const fetchCompaniesWithUsers = createAsyncThunk<
@@ -62,17 +63,17 @@ export const fetchCompaniesWithUsers = createAsyncThunk<
     const enriched = await Promise.all(
       companies.map(async (c) => {
         const users = await dispatch(
-          fetchCompanyUsersFromFirestore(c.id)
+          fetchCompanyUsersFromFirestore(c.id),
         ).unwrap();
-        return {
-          ...c, // already normalized
+        return normalizeFirestoreData({
+          ...c,
           users,
           superAdminDetails: users.filter((u) => u.role === "super-admin"),
           adminDetails: users.filter((u) => u.role === "admin"),
           employeeDetails: users.filter((u) => u.role === "employee"),
           pendingDetails: users.filter((u) => u.role === "status-pending"),
-        };
-      })
+        });
+      }),
     );
 
     return enriched;
@@ -98,7 +99,15 @@ const initialState: CompaniesState = {
 const allCompaniesSlice = createSlice({
   name: "allCompanies",
   initialState,
-  reducers: {},
+  reducers: {
+    clearAllCompanies(state) {
+      state.plain = [];
+      state.withUsers = [];
+      state.loading = false;
+      state.error = null;
+    },
+  },
+
   extraReducers: (builder) => {
     // plain list
     builder
@@ -131,6 +140,8 @@ const allCompaniesSlice = createSlice({
 });
 
 export default allCompaniesSlice.reducer;
+export const { clearAllCompanies } = allCompaniesSlice.actions;
+
 export const selectAllCompanies = (s: RootState) => s.allCompanies.plain;
 export const selectCompaniesWithUsers = (s: RootState) =>
   s.allCompanies.withUsers;
