@@ -101,8 +101,8 @@ function AppContent() {
             {/* Main layout frame */}
             <div className="page-layout-frame">
               <AppRoutes />
+              {!isPublicRoute && <Footer />}
             </div>
-            {!isPublicRoute && <Footer />}
 
             {/* Alerts */}
             {snackbar.current && (
