@@ -12,8 +12,9 @@
   align-items: center;
   justify-content: center;
   box-shadow: var(--card-shadow);
-  z-index: 5000;
+  /* z-index: 5000; */
   transition: background 0.3s ease, color 0.3s ease;
+  margin-top: auto;
 }
 
 /* --- Links Row --- */
