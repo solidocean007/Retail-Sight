@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { NotificationType } from "../utils/types";
+import { DeveloperNotificationType } from "../utils/types";
 import { RootState } from "../utils/store";
 import { fetchDeveloperNotifications } from "../thunks/developerNotificationsThunks";
 
 interface DeveloperNotificationsState {
-  items: NotificationType[];
+  items: DeveloperNotificationType[];
   loading: boolean;
   error: string | null;
 }
@@ -21,12 +21,14 @@ export const developerNotificationsSlice = createSlice({
   reducers: {
     setDeveloperNotifications(
       state,
-      action: PayloadAction<NotificationType[]>,
+      action: PayloadAction<DeveloperNotificationType[]>,
     ) {
       state.items = action.payload;
     },
-
-    addDeveloperNotification(state, action: PayloadAction<NotificationType>) {
+    addDeveloperNotification(
+      state,
+      action: PayloadAction<DeveloperNotificationType>,
+    ) {
       state.items.unshift(action.payload);
     },
 

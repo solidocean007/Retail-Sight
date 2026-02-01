@@ -28,6 +28,8 @@ import { useCompanyConnectionsListener } from "./useCompanyConnectionsListener";
 import { useCompanyProductsListener } from "./useCompanyProductsListener";
 import { useGalloGoalsListener } from "./useGalloGoalsListener";
 import { useCompanyIntegrations } from "./useCompanyIntegrations";
+import { setupDeveloperNotificationsListener } from "../utils/listeners/setupDeveloperNotificationsListener";
+import { setupForegroundMessaging } from "../utils/notifications/setupForegroundMessaging";
 
 /**
  * useAppBootstrap – Option B
@@ -55,6 +57,13 @@ export function useAppBootstrap({
     }
   }, [currentUser?.uid]);
 
+  useEffect(() => {
+    if (!enabled) return;
+    if (!currentUser) return;
+
+    setupForegroundMessaging();
+  }, [enabled, currentUser?.uid]);
+
   //
   // 🔄 Always call these (Rules of Hooks)
   //
@@ -67,7 +76,7 @@ export function useAppBootstrap({
   useAllCompanyAccountsSync(
     currentUser?.role === "admin" ||
       currentUser?.role === "super-admin" ||
-      currentUser?.role === "supervisor"
+      currentUser?.role === "supervisor",
   );
   useCustomAccountsSync();
   useCompanyConnectionsListener();
@@ -118,6 +127,10 @@ export function useAppBootstrap({
           dispatch(setupNotificationListenersForUser(currentUser));
           dispatch(setupNotificationListenersForCompany(currentUser));
           dispatch(setupCompanyGoalsListener(companyId));
+
+          if (currentUser?.role === "developer") {
+            dispatch(setupDeveloperNotificationsListener());
+          }
         }
 
         // STEP 4 — READY ✔

@@ -16,6 +16,7 @@ import { functions } from "../../utils/firebase";
 import { UserType, CompanyWithUsersAndId } from "../../utils/types";
 
 import NotificationAudienceBuilder from "./NotificationAudiencePicker";
+import DeveloperNotificationPreviewModal from "./DeveloperNotificationPreviewModal";
 
 type MessageType = "announcement" | "tutorial";
 
@@ -39,6 +40,7 @@ const DeveloperNotificationForm = ({
 
   const [sendEmail, setSendEmail] = useState(true);
   const [dryRun, setDryRun] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const [audienceCompanies, setAudienceCompanies] = useState<
     CompanyWithUsersAndId[]
@@ -46,25 +48,49 @@ const DeveloperNotificationForm = ({
   const [audienceUsers, setAudienceUsers] = useState<UserType[]>([]);
   const [audienceRoles, setAudienceRoles] = useState<string[]>([]);
 
+  const payload = {
+    type: messageType,
+    title,
+    message,
+    tutorialUrl: messageType === "tutorial" ? tutorialUrl : undefined,
+
+    recipientCompanyIds: audienceCompanies.map((c) => c.id),
+    recipientUserIds: audienceUsers.map((u) => u.uid),
+    recipientRoles: audienceRoles,
+
+    sendEmail,
+  };
+
   const handleSubmit = async () => {
     if (!title || !message) return;
     if (messageType === "tutorial" && !tutorialUrl) return;
 
+    if (dryRun) {
+      setPreviewOpen(true);
+      return;
+    }
+
     await createDeveloperNotification({
-      type: messageType, // announcement | tutorial
-      title,
-      message,
-      tutorialUrl: messageType === "tutorial" ? tutorialUrl : undefined,
-
-      recipientCompanyIds: audienceCompanies.map((c) => c.id),
-      recipientUserIds: audienceUsers.map((u) => u.uid),
-      recipientRoles: audienceRoles,
-
-      sendEmail,
-      dryRun,
+      ...payload,
+      dryRun: false,
     });
 
     // reset
+    setTitle("");
+    setMessage("");
+    setTutorialUrl("");
+    setDryRun(false);
+  };
+
+  const handleConfirmSend = async () => {
+    setPreviewOpen(false);
+
+    await createDeveloperNotification({
+      ...payload,
+      dryRun: false,
+    });
+
+    // optional reset after confirmed send
     setTitle("");
     setMessage("");
     setTutorialUrl("");
@@ -170,6 +196,19 @@ const DeveloperNotificationForm = ({
       >
         Send Message
       </Button>
+      <DeveloperNotificationPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        onConfirmSend={handleConfirmSend}
+        title={title}
+        message={message}
+        priority="normal"
+        recipientCompanyIds={audienceCompanies.map((c) => c.id)}
+        recipientUserIds={audienceUsers.map((u) => u.uid)}
+        recipientRoles={audienceRoles}
+        sendEmail={sendEmail}
+        allCompaniesAndUsers={allCompaniesAndUsers}
+      />
     </div>
   );
 };

@@ -7,7 +7,8 @@ type CreateDeveloperNotificationInput = {
   message: string;
   priority?: "low" | "normal" | "high";
 
-  recipientCompanyIds: string[] | ["all"];
+  recipientCompanyIds?: string[] | ["all"];
+  recipientUserIds?: string[];
 
   sendEmail?: boolean;
   dryRun?: boolean;
@@ -55,9 +56,19 @@ export async function createDeveloperNotificationCore(
     message,
     priority = "normal",
     recipientCompanyIds,
+    recipientUserIds,
     sendEmail = false,
     dryRun = false,
   } = input;
+
+  if (
+    (!recipientCompanyIds || recipientCompanyIds.length === 0) &&
+    (!recipientUserIds || recipientUserIds.length === 0)
+  ) {
+    throw new Error(
+      "Developer notification must target at least one company or user"
+    );
+  }
 
   if (dryRun) {
     return {
@@ -75,7 +86,8 @@ export async function createDeveloperNotificationCore(
     message,
     priority,
 
-    recipientCompanyIds,
+    recipientCompanyIds: recipientCompanyIds ?? [],
+    recipientUserIds: recipientUserIds ?? [],
 
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     sentAt: admin.firestore.FieldValue.serverTimestamp(),

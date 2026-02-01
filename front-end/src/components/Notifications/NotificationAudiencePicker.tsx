@@ -1,6 +1,12 @@
 // components/Admin/NotificationAudienceBuilder.tsx
 import React from "react";
-import { Autocomplete, Chip, Stack, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  Chip,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { CompanyWithUsersAndId, UserType } from "../../utils/types";
 
 interface Props {
@@ -24,14 +30,24 @@ const NotificationAudienceBuilder: React.FC<Props> = ({
   selectedRoles,
   onRoleChange,
 }) => {
-  const allUsers: (UserType & { companyName: string })[] = companies.flatMap((company) =>
-    [
-      ...company.superAdminDetails,
-      ...company.adminDetails,
-      ...company.employeeDetails,
-      ...company.pendingDetails,
-    ].map((user) => ({ ...user, companyName: company.companyName }))
-  );
+  const allowedCompanyIds = new Set(selectedCompanies.map((c) => c.id));
+
+  const allUsers = companies
+    .filter((c) => allowedCompanyIds.size === 0 || allowedCompanyIds.has(c.id))
+    .flatMap((company) =>
+      [
+        ...company.superAdminDetails,
+        ...company.adminDetails,
+        ...company.employeeDetails,
+        ...company.pendingDetails,
+      ].map((user) => ({
+        ...user,
+        companyName: company.companyName,
+      })),
+    );
+
+  const formatUserLabel = (u: UserType & { companyName?: string }) =>
+    `${u.firstName} ${u.lastName} — ${u.companyName ?? "No company"} · ${u.uid}`;
 
   return (
     <Stack spacing={2} style={{ marginBottom: "0.5rem" }}>
@@ -44,10 +60,16 @@ const NotificationAudienceBuilder: React.FC<Props> = ({
         onChange={(e, value) => onCompanyChange(value)}
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
-            <Chip label={option.companyName} {...getTagProps({ index })} key={option.id} />
+            <Chip
+              label={option.companyName}
+              {...getTagProps({ index })}
+              key={option.id}
+            />
           ))
         }
-        renderInput={(params) => <TextField {...params} label="Companies" variant="outlined" />}
+        renderInput={(params) => (
+          <TextField {...params} label="Companies" variant="outlined" />
+        )}
       />
 
       <Typography variant="subtitle2">Select Roles</Typography>
@@ -62,26 +84,30 @@ const NotificationAudienceBuilder: React.FC<Props> = ({
             <Chip label={role} {...getTagProps({ index })} key={role} />
           ))
         }
-        renderInput={(params) => <TextField {...params} label="Roles" variant="outlined" />}
+        renderInput={(params) => (
+          <TextField {...params} label="Roles" variant="outlined" />
+        )}
       />
 
       <Typography variant="subtitle2">Select Specific Users</Typography>
       <Autocomplete
         multiple
         options={allUsers}
-        getOptionLabel={(option) => `${option.firstName} ${option.lastName} (${option.company})`}
+        getOptionLabel={formatUserLabel}
         value={selectedUsers}
         onChange={(e, value) => onUserChange(value)}
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
             <Chip
-              label={`${option.firstName} ${option.lastName} (${option.company})`}
+              label={formatUserLabel(option)}
               {...getTagProps({ index })}
               key={option.uid}
             />
           ))
         }
-        renderInput={(params) => <TextField {...params} label="Users" variant="outlined" />}
+        renderInput={(params) => (
+          <TextField {...params} label="Users" variant="outlined" />
+        )}
       />
     </Stack>
   );

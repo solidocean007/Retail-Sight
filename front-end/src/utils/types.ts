@@ -39,6 +39,29 @@ export interface NotificationType  {
   commentId?: string;
 };
 
+// utils/types.ts
+export type DeveloperNotificationType = {
+  id: string;
+  title: string;
+  message: string;
+  priority: "low" | "normal" | "high";
+  recipientCompanyIds: string[] | ["all"];
+
+  createdAt: string | null;
+  sentAt: string | null;
+
+  createdBy: {
+    uid: string;
+    role: "developer";
+  };
+
+  channels: {
+    inApp: boolean;
+    email: boolean;
+  };
+};
+
+
 export type BusinessType = "distributor" | "supplier";
 export type AccessStatus = "off" | "limited" | "on";
 
