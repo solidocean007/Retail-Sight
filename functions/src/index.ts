@@ -67,7 +67,7 @@ import { sendSystemNotification } from "./notifications/sendSystemNotification";
 import { resendSystemNotification } from "./notifications/resendSystemNotification";
 import { deleteSystemNotification } from "./notifications/deleteSystemNotification";
 import { createDeveloperNotificationCore } from "./notifications/createDeveloperNotificationCore";
-import { createDeveloperNotification } from "./createDeveloperNotification";
+import { createDeveloperNotification } from "./notifications/createDeveloperNotification";
 
 export {
   getExternalApiKeyStatus,

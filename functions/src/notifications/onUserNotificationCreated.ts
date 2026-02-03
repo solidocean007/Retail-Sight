@@ -38,15 +38,14 @@ export const onUserNotificationCreated = onDocumentCreated(
       // ------------------------------------------
       const msg = {
         tokens,
-        notification: {
+        data: {
           title: notification.title || "New Notification",
           body: notification.message || "",
-        },
-        data: {
-          notificationId: notification.id || "",
+          notificationId: event.params.notificationId,
           type: notification.type || "generic",
           postId: notification.postId || "",
           goalId: notification.goalId || "",
+          link: "/notifications",
         },
       };
 

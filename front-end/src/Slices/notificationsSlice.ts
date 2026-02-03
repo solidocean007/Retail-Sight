@@ -2,7 +2,6 @@ import { createSlice, PayloadAction, createSelector } from "@reduxjs/toolkit";
 import { NotificationType } from "../utils/types";
 import { RootState } from "../utils/store";
 
-
 interface NotificationsState {
   notifications: NotificationType[];
   loading: boolean;
@@ -34,11 +33,16 @@ const notificationsSlice = createSlice({
       const id = action.payload;
       state.notifications = state.notifications.filter((n) => n.id !== id);
     },
+    clearNotifications(state) {
+      state.notifications = [];
+      state.loading = false;
+      state.error = null;
+    },
 
     // Mark as read
     markAsRead(
       state,
-      action: PayloadAction<{ notificationId: string; userId: string }>
+      action: PayloadAction<{ notificationId: string; userId: string }>,
     ) {
       const { notificationId, userId } = action.payload;
       const notif = state.notifications.find((n) => n.id === notificationId);
@@ -59,6 +63,7 @@ const notificationsSlice = createSlice({
 
 export const {
   setNotifications,
+  clearNotifications,
   addNotification,
   deleteNotification,
   markAsRead,
@@ -81,5 +86,5 @@ export const selectCurrentUserId = (state: RootState) =>
 export const selectUnreadNotifications = createSelector(
   [selectNotifications, selectCurrentUserId],
   (notifications, uid) =>
-    notifications.filter((n) => !n.readBy?.includes(uid ?? ""))
+    notifications.filter((n) => !n.readBy?.includes(uid ?? "")),
 );

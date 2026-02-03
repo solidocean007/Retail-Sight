@@ -35,6 +35,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const notifications = useSelector(selectNotifications);
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
+  const currentCompany = useSelector((state: RootState)=> state.currentCompany.data?.companyName);
   const { currentUser } = useSelector((state: RootState) => state.user);
   const [showMenuTab, setShowMenuTab] = useState(false);
   const unreadNotifications = useSelector(selectUnreadNotifications);
@@ -125,7 +126,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             )}
           </div>
           <div className="company-name-app-state">
-            <h5>{currentUser?.company}</h5>
+            <h5>{currentCompany}</h5>
             {!upToDate ? (
               <button
                 className="btn-outline danger-button"

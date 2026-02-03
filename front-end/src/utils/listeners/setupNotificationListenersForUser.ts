@@ -3,54 +3,47 @@ import {
   onSnapshot,
   orderBy,
   query,
-  where,
   Unsubscribe,
-  DocumentData,
   QuerySnapshot,
+  DocumentData,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { AppDispatch } from "../store";
-import { setNotifications } from "../../Slices/notificationsSlice";
+import {
+  setNotifications,
+  clearNotifications,
+} from "../../Slices/notificationsSlice";
 import { NotificationType, UserType } from "../types";
-import { normalizeFirestoreData } from "../normalize"; // ✅ Add this import
+import { normalizeFirestoreData } from "../normalize";
 
 export const setupNotificationListenersForUser = (user: UserType) => {
   return (dispatch: AppDispatch) => {
-    const unsubscribers: Unsubscribe[] = [];
-    const userNotifications: Record<string, NotificationType> = {};
+    const q = query(
+      collection(db, "users", user.uid, "notifications"),
+      orderBy("sentAt", "desc"),
+    );
 
-    const dispatchUserNotifications = () => {
-      dispatch(setNotifications(Object.values(userNotifications)));
-    };
+    const unsub = onSnapshot(q, (snapshot) => {
+      // ✅ ignore cache echoes
+      if (snapshot.metadata.fromCache) return;
 
-    // 🔥 The correct notifications path
-    const baseRef = collection(db, "users", user.uid, "notifications");
+      // ✅ hard clear when empty
+      if (snapshot.empty) {
+        dispatch(clearNotifications());
+        return;
+      }
 
-    // If you want ordering:
-    const userQuery = query(baseRef, orderBy("sentAt", "desc"));
+      const items: NotificationType[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(normalizeFirestoreData(doc.data()) as Omit<
+          NotificationType,
+          "id"
+        >),
+      }));
 
-    const handleSnapshot = (snapshot: QuerySnapshot<DocumentData>) => {
-      snapshot.docChanges().forEach((change) => {
-        const doc = change.doc;
+      dispatch(setNotifications(items));
+    });
 
-        const normalizedData = normalizeFirestoreData(doc.data()) as NotificationType;
-
-        if (change.type === "removed") {
-          delete userNotifications[doc.id];
-        } else {
-          userNotifications[doc.id] = {
-            id: doc.id, // 'id' is specified more than once, so this usage will be overwritten.
-            ...normalizedData,
-          };
-        }
-      });
-
-      dispatchUserNotifications();
-    };
-
-    unsubscribers.push(onSnapshot(userQuery, handleSnapshot));
-
-    return () => unsubscribers.forEach((unsub) => unsub());
+    return unsub;
   };
 };
-

@@ -36,14 +36,14 @@ export const fetchUserNotifications = createAsyncThunk(
   }
 );
 
-// -------------------------------------------------
+// -------------------------------------------------depracated.. no longer using
 // Fetch global + company developer notifications
 // Called by DeveloperNotificationsTable
 // -------------------------------------------------
 export const fetchCompanyNotifications = createAsyncThunk(
   "notifications/fetchCompanyNotifications",
   async (companyId: string | "all") => {
-    const ref = collection(db, "notifications");
+    const ref = collection(db, "notifications"); // this is wrong right?
 
     const q =
       companyId === "all"
@@ -116,7 +116,7 @@ export const writeUserNotification = createAsyncThunk(
     const payload: NotificationType = {
       ...data,
       id: newRef.id,
-      sentAt: Timestamp.now(),
+      sentAt: Timestamp.now(), // Type 'Timestamp' is not assignable to type 'string | number' should i change it back to timestamp?
     };
 
     await setDoc(newRef, payload);

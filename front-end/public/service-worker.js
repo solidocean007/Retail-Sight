@@ -1,3 +1,4 @@
+// front-end/pulic/service-worker.js
 /* eslint-disable no-undef */
 const IMAGE_CACHE = "dg-image-cache-v2";
 const OFFLINE_CACHE_NAME = "dg-offline-v1";
@@ -8,9 +9,9 @@ const OFFLINE_FALLBACK_PAGE = "/offline.html";
 // -------------------------------------------------------
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(OFFLINE_CACHE_NAME).then((cache) => cache.addAll([
-      OFFLINE_FALLBACK_PAGE
-    ]))
+    caches
+      .open(OFFLINE_CACHE_NAME)
+      .then((cache) => cache.addAll([OFFLINE_FALLBACK_PAGE])),
   );
 });
 
@@ -20,15 +21,19 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
-      caches.keys().then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => key !== OFFLINE_CACHE_NAME && key !== IMAGE_CACHE)
-            .map((key) => caches.delete(key))
-        )
-      ),
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(
+            keys
+              .filter(
+                (key) => key !== OFFLINE_CACHE_NAME && key !== IMAGE_CACHE,
+              )
+              .map((key) => caches.delete(key)),
+          ),
+        ),
       self.clients.claim(),
-    ])
+    ]),
   );
 });
 
@@ -80,7 +85,7 @@ self.addEventListener("fetch", (event) => {
 
       // Return cache FIRST if available (fastest)
       return cached || fetchPromise;
-    })
+    }),
   );
 });
 
@@ -89,26 +94,27 @@ self.addEventListener("fetch", (event) => {
 // ----------------------------------------------------
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k.startsWith("dg-image-cache") && k !== IMAGE_CACHE)
-          .map((k) => caches.delete(k))
-      )
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k.startsWith("dg-image-cache") && k !== IMAGE_CACHE)
+            .map((k) => caches.delete(k)),
+        ),
+      ),
   );
 });
-
 
 // -------------------------------------------------------
 // 4. FIREBASE MESSAGING SETUP
 // -------------------------------------------------------
 try {
   importScripts(
-    "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
+    "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js",
   );
   importScripts(
-    "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"
+    "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js",
   );
 } catch (err) {
   console.error("SW importScripts error:", err);
@@ -130,26 +136,23 @@ if (self.firebase?.initializeApp) {
   // 5. BACKGROUND MESSAGE HANDLER
   // -------------------------------------------------------
   messaging.onBackgroundMessage((payload) => {
-  const title =
-    payload.notification?.title ||
-    payload.data?.title ||
-    "New Notification";
+    const title = payload.data?.title || "BG HIT";
 
-  const body =
-    payload.notification?.body ||
-    payload.data?.body ||
-    "";
+    const body =
+      payload.data?.body || "Service worker received background message";
 
-  const link = payload.data?.link || "/notifications";
+    const link = payload.data?.link || "/notifications";
 
-  self.registration.showNotification(title, {
-    body,
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
-    data: { link },
+    self.registration.showNotification(`🟢 ${title}`, {
+      body: `SW OK @ ${new Date().toLocaleTimeString()}`,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: {
+        link: payload.data?.link || "/notifications",
+        debug: true,
+      },
+    });
   });
-});
-
 
   // -------------------------------------------------------
   // 6. NOTIFICATION CLICK HANDLING
@@ -172,8 +175,8 @@ if (self.firebase?.initializeApp) {
               return client.focus();
             }
           }
-          return self.clients.openWindow(target);
-        })
+          return self.clients.openWindow(`${target}?fromPush=1`);
+        }),
     );
   });
 } else {

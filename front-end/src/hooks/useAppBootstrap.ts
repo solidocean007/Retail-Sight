@@ -14,7 +14,7 @@ import { fetchCompanyProducts } from "../thunks/productThunks";
 import { getAllCompanyProductsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { setAllProducts } from "../Slices/productsSlice";
 import { setupNotificationListenersForUser } from "../utils/listeners/setupNotificationListenersForUser";
-import { setupNotificationListenersForCompany } from "../utils/listeners/setupNotificationListenerForCompany";
+// import { setupNotificationListenersForCompany } from "../utils/listeners/setupNotificationListenerForCompany";
 import { setupCompanyGoalsListener } from "../utils/listeners/setupCompanyGoalsListener";
 import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 
@@ -29,7 +29,7 @@ import { useCompanyProductsListener } from "./useCompanyProductsListener";
 import { useGalloGoalsListener } from "./useGalloGoalsListener";
 import { useCompanyIntegrations } from "./useCompanyIntegrations";
 import { setupDeveloperNotificationsListener } from "../utils/listeners/setupDeveloperNotificationsListener";
-import { setupForegroundMessaging } from "../utils/notifications/setupForegroundMessaging";
+import { clearDeveloperNotifications } from "../Slices/developerNotificationSlice";
 
 /**
  * useAppBootstrap – Option B
@@ -53,16 +53,15 @@ export function useAppBootstrap({
 
   useEffect(() => {
     if (!currentUser) {
+      dispatch(clearDeveloperNotifications());
+    }
+  }, [currentUser, dispatch]);
+
+  useEffect(() => {
+    if (!currentUser) {
       hasBootstrapped.current = false;
     }
   }, [currentUser?.uid]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    if (!currentUser) return;
-
-    setupForegroundMessaging();
-  }, [enabled, currentUser?.uid]);
 
   //
   // 🔄 Always call these (Rules of Hooks)
@@ -125,7 +124,7 @@ export function useAppBootstrap({
           dispatch(setLoadingMessage("Connecting live updates…"));
 
           dispatch(setupNotificationListenersForUser(currentUser));
-          dispatch(setupNotificationListenersForCompany(currentUser));
+          // dispatch(setupNotificationListenersForCompany(currentUser)); // no longer using
           dispatch(setupCompanyGoalsListener(companyId));
 
           if (currentUser?.role === "developer") {

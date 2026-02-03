@@ -15,7 +15,7 @@ export interface NotificationType  {
   id: string;
   title: string;
   message: string;
-  sentAt: number | string;
+  sentAt: Timestamp;
   scheduledAt?: Timestamp | null;
 
   sentBy: UserType | "system";

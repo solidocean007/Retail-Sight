@@ -14,6 +14,8 @@ import { setNotifications } from "../../Slices/notificationsSlice";
 import { NotificationType, UserType } from "../types";
 import { normalizeFirestoreData } from "../normalize"; // ✅ add this
 
+
+// depracted no longer using
 export const setupNotificationListenersForCompany = (user: UserType) => {
   return (dispatch: AppDispatch) => {
     const unsubscribers: Unsubscribe[] = [];

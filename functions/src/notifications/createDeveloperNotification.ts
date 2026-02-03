@@ -1,7 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import { createDeveloperNotificationCore } from "./notifications/createDeveloperNotificationCore";
-import { sendSystemNotificationCore } from "./notifications/sendSystemNotificationCore";
+import { createDeveloperNotificationCore } from "./createDeveloperNotificationCore";
+import { sendSystemNotificationCore } from "./sendSystemNotificationCore";
 
 if (!admin.apps.length) {
   admin.initializeApp();

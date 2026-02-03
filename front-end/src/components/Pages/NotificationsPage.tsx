@@ -22,21 +22,35 @@ const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const appReady = useSelector((state: RootState) => state.app.appReady);
+
   const notifications = useSelector(selectNotifications);
   const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
     null
   );
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
 
-  if (!currentUser) return null;
+if (!currentUser || !appReady) {
+  return <div className="page-loading">Loading notifications…</div>;
+}
 
-  
+  console.log('notifications page')
+//   useEffect(() => {
+//   // Only redirect if we KNOW notifications have loaded
+//   if (!currentUser) return;
 
-  useEffect(() => {
-    if (notifications.length === 0) {
-      navigate("/");
-    }
-  }, [notifications]);
+//   if (notifications.length === 0) {
+//     // give hydration time on cold start
+//     const t = setTimeout(() => {
+//       if (notifications.length === 0) {
+//         navigate("/");
+//       }
+//     }, 500);
+
+//     return () => clearTimeout(t);
+//   }
+// }, [notifications, currentUser, navigate]);
+
 
   const handleMarkAllRead = () => {
     notifications.forEach((notif) => {

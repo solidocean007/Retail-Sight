@@ -24,9 +24,14 @@ export const deleteSystemNotification = onCall(
 
     const callerSnap = await db.doc(`users/${auth.uid}`).get();
     const caller = callerSnap.data();
-
-    if (!caller || caller.role !== "admin") {
-      throw new HttpsError("permission-denied", "Admins only");
+    if (
+      !caller ||
+      !["admin", "developer", "super-admin"].includes(caller.role)
+    ) {
+      throw new HttpsError(
+        "permission-denied",
+        "Admins, developer or super-admin only"
+      );
     }
 
     const ref = db.collection("notifications").doc(notificationId);

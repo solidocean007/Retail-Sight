@@ -82,7 +82,6 @@ const PostCard: React.FC<PostCardProps> = ({
   setIsSearchActive,
   postIdToScroll = null, // Default to null if not provided
 }) => {
-  // console.log(imageSet);
   // const { small, medium, original } = imageSet;
   const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
