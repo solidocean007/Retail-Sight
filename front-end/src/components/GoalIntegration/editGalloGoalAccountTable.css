@@ -1,0 +1,55 @@
+.edit-goal-accounts-root {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-goal-accounts-warning {
+  background: #fff8e1;
+  border: 1px solid #ffe08a;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.edit-goal-accounts-search {
+  margin-bottom: 12px;
+}
+
+.edit-goal-accounts-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edit-goal-accounts-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.edit-goal-accounts-card.unresolved {
+  background: #fff8e1;
+  border-color: #ffe08a;
+}
+
+.edit-goal-accounts-card .card-row {
+  margin-bottom: 8px;
+}
+
+.edit-goal-accounts-card .card-row.title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.edit-goal-accounts-card .label {
+  font-size: 11px;
+  color: #666;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.edit-goal-accounts-row-unresolved {
+  background-color: #fff8e1;
+}

@@ -14,13 +14,10 @@ import { FireStoreGalloGoalDocType } from "../../utils/types";
 import { useAppDispatch } from "../../utils/store";
 import { addOrUpdateGalloGoal } from "../../Slices/galloGoalsSlice";
 import { updateGalloGoalAccounts } from "./utils/galloProgramGoalsHelpers";
-import CustomConfirmation from "../CustomConfirmation";
-
-type PendingAccountChange = {
-  distributorAcctId: string;
-  nextStatus: "active" | "inactive";
-  accountName: string;
-} | null;
+import { useSelector } from "react-redux";
+import { selectCompanyUsers } from "../../Slices/userSlice";
+import { showMessage } from "../../Slices/snackbarSlice";
+import EditGalloGoalAccountTable from "./EditGalloGoalAccountTable";
 
 type Props = {
   goal: FireStoreGalloGoalDocType;
@@ -39,14 +36,32 @@ const EditGalloGoalModal: React.FC<Props> = ({
   onDisable,
 }) => {
   const dispatch = useAppDispatch();
+  const companyUsers = useSelector(selectCompanyUsers) || [];
   const isMobile = useMediaQuery("(max-width:900px)");
 
-  const [accounts, setAccounts] = useState(goal.accounts);
+  const normalizeAccounts = (accounts: FireStoreGalloGoalDocType["accounts"]) =>
+    accounts.map((a) => ({
+      ...a,
+      status: a.status ?? "active", // ✅ guarantee status
+    }));
+
+  const [accounts, setAccounts] = useState(() =>
+    normalizeAccounts(goal.accounts),
+  );
+
   const [saving, setSaving] = useState(false);
 
-  // ✅ MUST be inside component
-  const [pendingChange, setPendingChange] =
-    useState<PendingAccountChange>(null);
+  // ✅ For edit mode, don’t limit assignment options to “already assigned users”.
+  // Provide ALL sales users (users with a salesRouteNum).
+  const assignedUserIds = useMemo(() => {
+    return companyUsers
+      .filter(
+        (u) =>
+          typeof u.salesRouteNum === "string" &&
+          u.salesRouteNum.trim().length > 0,
+      )
+      .map((u) => u.uid);
+  }, [companyUsers]);
 
   const counts = useMemo(() => {
     return accounts.reduce(
@@ -59,33 +74,16 @@ const EditGalloGoalModal: React.FC<Props> = ({
     );
   }, [accounts]);
 
-  const requestStatusChange = (
-    distributorAcctId: string,
-    nextStatus: "active" | "inactive",
-    accountName: string,
-    currentStatus?: "active" | "inactive" | "disabled",
-  ) => {
-    // optional: don't confirm if no-op
-    if (currentStatus === nextStatus) return;
-
-    setPendingChange({ distributorAcctId, nextStatus, accountName });
-  };
-
-  const confirmStatusChange = () => {
-    if (!pendingChange) return;
-
-    setAccounts((prev) =>
-      prev.map((a) =>
-        a.distributorAcctId === pendingChange.distributorAcctId
-          ? { ...a, status: pendingChange.nextStatus }
-          : a,
-      ),
+  const handleSave = async () => {
+    const unassigned = accounts.some(
+      (a) => !Array.isArray(a.salesRouteNums) || a.salesRouteNums.length === 0,
     );
 
-    setPendingChange(null);
-  };
+    if (unassigned) {
+      alert("Cannot save goal: some accounts have no assigned salesperson.");
+      return;
+    }
 
-  const handleSave = async () => {
     setSaving(true);
 
     dispatch(
@@ -100,11 +98,22 @@ const EditGalloGoalModal: React.FC<Props> = ({
       await updateGalloGoalAccounts(goal.goalDetails.goalId, accounts);
       onClose();
     } catch (e) {
-      console.error("Failed to update goal accounts", e);
+      dispatch(
+        showMessage({
+          text: "Failed to save changes",
+          severity: "error",
+        }),
+      );
     } finally {
       setSaving(false);
     }
   };
+
+  const hasInvalidAccounts = accounts.some(
+    (a) =>
+      a.status === "active" &&
+      (!a.salesRouteNums || a.salesRouteNums.length !== 1),
+  );
 
   return (
     <>
@@ -124,102 +133,37 @@ const EditGalloGoalModal: React.FC<Props> = ({
           <Box display="flex" gap={1} mt={1} flexWrap="wrap">
             <Chip label={`Active: ${counts.active}`} color="success" />
             <Chip label={`Inactive: ${counts.inactive}`} />
+            <Chip label={`Accounts: ${accounts.length}`} />
           </Box>
         </DialogTitle>
+
         <DialogActions sx={{ justifyContent: "space-between" }}>
           <Box>
-            <button color="error" onClick={onArchive}>
-              Archive Goal
-            </button>
-            <button color="warning" onClick={onDisable}>
-              Disable Goal
-            </button>
+            <button onClick={onArchive}>Archive Goal</button>
+            <button onClick={onDisable}>Disable Goal</button>
           </Box>
 
           <Box>
             <Button onClick={onClose} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={handleSave} variant="contained" disabled={saving}>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              disabled={saving || hasInvalidAccounts}
+            >
               Apply Changes
             </Button>
           </Box>
         </DialogActions>
 
-        <DialogContent
-          dividers
-          sx={{
-            maxHeight: "60vh",
-            overflowY: "auto",
-          }}
-        >
-          <Box display="flex" flexDirection="column" gap={1}>
-            {accounts.map((account) => (
-              <Box
-                key={account.distributorAcctId}
-                sx={{
-                  border: "1px solid var(--border-color)",
-                  borderRadius: 2,
-                  p: 1,
-                  display: "flex",
-                  flexDirection: isMobile ? "column" : "row",
-                  justifyContent: "space-between",
-                  gap: 1,
-                }}
-              >
-                <Box>
-                  <Typography fontWeight={600}>
-                    {account.accountName}
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    {account.accountAddress}
-                  </Typography>
-                </Box>
-
-                <Box display="flex" gap={1}>
-                  {STATUS_OPTIONS.map((s) => (
-                    <Button
-                      key={s}
-                      size="small"
-                      variant={account.status === s ? "contained" : "outlined"}
-                      color={s === "active" ? "success" : "inherit"}
-                      onClick={() =>
-                        requestStatusChange(
-                          account.distributorAcctId,
-                          s,
-                          account.accountName,
-                          account.status as any,
-                        )
-                      }
-                    >
-                      {s}
-                    </Button>
-                  ))}
-                </Box>
-              </Box>
-            ))}
-          </Box>
+        <DialogContent dividers sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <EditGalloGoalAccountTable
+            accounts={accounts}
+            onChange={setAccounts}
+          />
         </DialogContent>
       </Dialog>
-
-      {/* ✅ Render outside Dialog so portal overlay always sits on top */}
-      {pendingChange && (
-        <CustomConfirmation
-          isOpen
-          title={
-            pendingChange.nextStatus === "inactive"
-              ? "Exclude account from goal"
-              : "Include account in goal"
-          }
-          message={
-            pendingChange.nextStatus === "inactive"
-              ? `${pendingChange.accountName} will be excluded from this goal and cannot submit posts.`
-              : `${pendingChange.accountName} will be reactivated and included in this goal.`
-          }
-          onConfirm={confirmStatusChange}
-          onClose={() => setPendingChange(null)}
-        />
-      )}
     </>
   );
 };

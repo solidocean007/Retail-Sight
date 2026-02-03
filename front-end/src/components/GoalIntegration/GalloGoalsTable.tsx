@@ -27,6 +27,7 @@ export default function GalloGoalsTable({
   onDisable,
 }: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
+  console.log(goals);
 
   return (
     <div className="gallo-table">
@@ -42,6 +43,10 @@ export default function GalloGoalsTable({
       {goals.map((goal) => {
         const activeAccounts = goal.accounts.filter(
           (a) => a.status === "active",
+        );
+
+        const inActiveAccounts = goal.accounts.filter(
+          (a) => a.status !== "active",
         );
 
         const submittedCount = activeAccounts.filter(

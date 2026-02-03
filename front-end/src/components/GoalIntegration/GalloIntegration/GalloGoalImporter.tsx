@@ -19,7 +19,7 @@ import {
   httpsCallable,
 } from "firebase/functions";
 import GoalTable from "../GoalTable";
-import GalloAccountImportTable from "../GalloAccountImportTable";
+import GalloAccountImportTable from "../GalloAccountImportTableCreate";
 import "./galloGoalImporter.css";
 
 import {
@@ -51,6 +51,7 @@ import { saveSingleGalloGoalToIndexedDB } from "../../../utils/database/goalsSto
 import { sendGalloGoalAssignedEmails } from "../../../utils/helperFunctions/sendGalloGoalAssignedEmails";
 import ModalShell from "../../common/ModalShell";
 import ConfirmGalloGoalStep from "./ConfirmGalloGoalStep";
+import GalloAccountImportTableCreate from "../GalloAccountImportTableCreate";
 
 export type EnrichedGalloProgram = GalloProgramType & {
   status?: "active" | "expired";
@@ -266,7 +267,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
         const res = await getExternalApiKeyStatus({ integration: "galloAxis" });
         setKeyStatus(res.data);
-        console.log("Gallo Axis key status:", res.data);
       } catch (err) {
         console.error("getExternalApiKeyStatus error:", err);
       }
@@ -775,16 +775,16 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
                 )}
 
                 {importStep === "accounts" && (
-                  <GalloAccountImportTable
+                  <GalloAccountImportTableCreate
                     accounts={allEnrichedAccounts}
                     selectedAccounts={selectedAccounts}
                     setSelectedAccounts={setSelectedAccounts}
                     unmatchedAccounts={unmatchedAccounts}
                     program={selectedProgram}
-                    goal={selectedGoal}
-                    notifyUserIds={notifyUserIds}
-                    setNotifyUserIds={safeSetNotifyUserIds}
-                    assignedUserIds={assignedUserIds}
+                    // goal={selectedGoal}
+                    // notifyUserIds={notifyUserIds}
+                    // setNotifyUserIds={safeSetNotifyUserIds}
+                    // assignedUserIds={assignedUserIds}
                     onContinue={({ selectedAccounts }) => {
                       setEnrichedAccounts(selectedAccounts); // freeze selection
                       setDirection("forward");
