@@ -1,5 +1,6 @@
 /* notificationItem.css */
 .notification-item {
+  display: flex;
   background-color: var(--dashboard-card);
   padding: 1rem;
   margin-bottom: 10px;

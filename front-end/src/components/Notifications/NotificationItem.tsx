@@ -31,6 +31,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const touchEndX = useRef<number | null>(null);
   const didSwipe = useRef(false);
 
+  const isTouchDevice =
+    typeof window !== "undefined" &&
+    ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     didSwipe.current = false;
     touchStartX.current = e.changedTouches[0].screenX;
@@ -82,23 +86,38 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       onTouchEnd={handleTouchEnd}
       style={{ cursor: "pointer" }} // 👈 Add this
     >
-      <div className="notification-title">{notification.title}</div>
-      <div className="notification-message">{notification.message}</div>
-      {isUnread && <div className="swipe-tip">Swipe to manage</div>}
+      <div>
+        <div className="notification-title">{notification.title}</div>
+        <div className="notification-message">{notification.message}</div>
+        {isUnread && <div className="swipe-tip">Swipe to manage</div>}
 
-      <div className="notification-timestamp">
-        {toDate(notification.sentAt).toLocaleString()}
+        <div className="notification-timestamp">
+          {toDate(notification.sentAt).toLocaleString()}
+        </div>
+
+        {notification.postId && (
+          <button
+            className="button-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onClick) onClick();
+            }}
+          >
+            View Post
+          </button>
+        )}
       </div>
 
-      {notification.postId && (
+      {!isTouchDevice && !isUnread && onDelete && (
         <button
-          className="button-primary"
+          className="notification-delete-btn"
           onClick={(e) => {
             e.stopPropagation();
-            if (onClick) onClick();
+            onDelete();
           }}
+          aria-label="Delete notification"
         >
-          View Post
+          ✕
         </button>
       )}
     </div>
