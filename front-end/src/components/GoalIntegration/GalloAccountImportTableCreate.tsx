@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Checkbox,
   Button,
@@ -11,6 +11,7 @@ import {
   EnrichedGalloAccountType,
   GalloAccountType,
   GalloProgramType,
+  UserType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { selectCompanyUsers } from "../../Slices/userSlice";
@@ -26,16 +27,37 @@ const usersFromRoutes = (routes: string[] | undefined, users: any[]) => {
   );
 };
 
-const routesFromUsers = (users: any[]) =>
-  users.map((u) => String(u.salesRouteNum)).filter(Boolean);
+const unmappedRoutesForRow = (
+  row: EnrichedGalloAccountType,
+  users: UserType[]
+): string[] => {
+  if (!Array.isArray(row.salesRouteNums)) return [];
+
+  const userRouteSet = new Set(users.map((u) => String(u.salesRouteNum)));
+
+  return row.salesRouteNums.filter((r) => !userRouteSet.has(String(r)));
+};
 
 const ensureActiveStatus = (a: EnrichedGalloAccountType) => ({
   ...a,
   status: a.status ?? "active",
 });
 
-const isResolved = (a: EnrichedGalloAccountType) =>
-  Array.isArray(a.salesRouteNums) && a.salesRouteNums.length === 1;
+const isResolved = (
+  row: EnrichedGalloAccountType,
+  selectedAccounts: EnrichedGalloAccountType[],
+  salesUsers: UserType[]
+) => {
+  const selected = selectedAccounts.find(
+    (a) => a.distributorAcctId === row.distributorAcctId
+  );
+
+  if (!selected) return true; // not selected → irrelevant
+
+  const assignedUsers = usersFromRoutes(selected.salesRouteNums, salesUsers);
+
+  return assignedUsers.length === 1;
+};
 
 /* ---------------- props ---------------- */
 
@@ -64,7 +86,6 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
   const [rows, setRows] = useState(accounts);
   const [searchName, setSearchName] = useState("");
   const [searchRoute, setSearchRoute] = useState("");
-
   const companyUsers = useSelector(selectCompanyUsers) || [];
 
   const salesUsers = useMemo(
@@ -76,6 +97,17 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
       ),
     [companyUsers]
   );
+
+  useEffect(() => {
+    setSelectedAccounts((prev) =>
+      prev.map((a) => {
+        const assigned = usersFromRoutes(a.salesRouteNums, salesUsers);
+        return assigned.length === 1
+          ? { ...a, salesRouteNums: [String(assigned[0].salesRouteNum)] }
+          : a;
+      })
+    );
+  }, [salesUsers]);
 
   const selectedUsersForRow = (row: EnrichedGalloAccountType) => {
     const selected = selectedAccounts.find(
@@ -97,8 +129,9 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
     );
   };
 
-  const assignUsers = (row: EnrichedGalloAccountType, users: any[]) => {
-    const nextRoutes = routesFromUsers(users);
+  const assignUsers = (row: EnrichedGalloAccountType, users: UserType[]) => {
+    const nextRoutes =
+      users.length === 1 ? [String(users[0].salesRouteNum)] : [];
 
     const updated = rows.map((a) =>
       a.distributorAcctId === row.distributorAcctId
@@ -119,9 +152,10 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
 
   /* ---------- validation ---------- */
 
-  const invalidSelectedCount = selectedAccounts.filter(
-    (a) => !isResolved(a)
-  ).length;
+  const invalidSelectedCount = selectedAccounts.filter((a) => {
+    const assignedUsers = usersFromRoutes(a.salesRouteNums, salesUsers);
+    return assignedUsers.length !== 1;
+  }).length;
 
   /* ---------- filtering ---------- */
 
@@ -141,6 +175,16 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
 
   return (
     <div className="gallo-create-root">
+      {/* footer */}
+      {/* <div className="gallo-create-footer">
+        <Button
+          variant="contained"
+          disabled={selectedAccounts.length === 0 || invalidSelectedCount > 0}
+          onClick={() => onContinue({ selectedAccounts })}
+        >
+          Review & Confirm
+        </Button>
+      </div> */}
       {/* warning */}
       {invalidSelectedCount > 0 && (
         <div className="gallo-create-warning">
@@ -186,12 +230,15 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
           );
 
           const assignedUsers = selectedUsersForRow(row);
+          const unmappedRoutes = unmappedRoutesForRow(row, salesUsers);
 
           return (
             <div
               key={row.distributorAcctId}
               className={`gallo-create-row ${
-                isResolved(row) ? "" : "unresolved"
+                isResolved(row, selectedAccounts, salesUsers)
+                  ? ""
+                  : "unresolved"
               }`}
             >
               <div className="gallo-create-row-header">
@@ -206,6 +253,25 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
                 <span className="label">Route</span>
                 <span>{row.salesRouteNums?.join(", ") || "—"}</span>
               </div>
+              {checked && assignedUsers.length !== 1 && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "var(--warning-color)" }}
+                >
+                  Please select exactly one salesperson
+                </Typography>
+              )}
+              {checked && unmappedRoutes.length > 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "var(--warning-color)" }}
+                >
+                  Route{unmappedRoutes.length > 1 ? "s" : ""}{" "}
+                  <strong>{unmappedRoutes.join(", ")}</strong>{" "}
+                  {unmappedRoutes.length > 1 ? "do" : "does"} not match any
+                  salesperson
+                </Typography>
+              )}
 
               <div
                 className={`gallo-create-assign ${
@@ -245,17 +311,6 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
             </div>
           );
         })}
-      </div>
-
-      {/* footer */}
-      <div className="gallo-create-footer">
-        <Button
-          variant="contained"
-          disabled={selectedAccounts.length === 0 || invalidSelectedCount > 0}
-          onClick={() => onContinue({ selectedAccounts })}
-        >
-          Review & Confirm
-        </Button>
       </div>
     </div>
   );

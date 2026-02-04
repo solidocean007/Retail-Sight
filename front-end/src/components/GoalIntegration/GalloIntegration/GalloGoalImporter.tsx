@@ -557,6 +557,10 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     });
   };
 
+  const canConfirmAccounts =
+    selectedAccounts.length > 0 &&
+    selectedAccounts.every((a) => a.salesRouteNums?.length === 1);
+
   // ---- Render --------------------------------------------------------------
   return (
     <Container className="gallo-integration">
@@ -706,12 +710,36 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
                       ← Back
                     </button>
                   )}
+
                   <h2 className="gallo-import-title">Import Gallo Program</h2>
+
+                  {importStep === "accounts" && (
+                    <button
+                      className="button-primary"
+                      disabled={!canConfirmAccounts}
+                      onClick={() => {
+                        setEnrichedAccounts(selectedAccounts); // freeze selection
+                        setDirection("forward");
+                        setImportStep("confirm");
+                      }}
+                    >
+                      Review & Confirm
+                    </button>
+                  )}
 
                   <button className="btn-secondary" onClick={handleCancel}>
                     Cancel
                   </button>
                 </div>
+
+                {importStep === "accounts" && !canConfirmAccounts && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "var(--warning-color)" }}
+                  >
+                    All selected accounts must have exactly one salesperson
+                  </Typography>
+                )}
 
                 <Stepper
                   activeStep={stepIndexMap[importStep]}
