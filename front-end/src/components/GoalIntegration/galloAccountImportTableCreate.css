@@ -1,0 +1,199 @@
+/* =========================
+   Root layout
+   ========================= */
+
+.gallo-create-root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-color);
+}
+
+/* =========================
+   Warnings & notices
+   ========================= */
+
+.gallo-create-warning {
+  border: 1px solid var(--warning-color);
+  background: var(--warning-bg);
+  padding: 10px;
+  border-radius: var(--btn-border-radius);
+  font-size: 0.85rem;
+  color: var(--text-color);
+}
+
+.gallo-create-unmatched {
+  border: 1px solid var(--error-color);
+  background: var(--error-bg);
+  padding: 10px;
+  border-radius: var(--btn-border-radius);
+  font-size: 0.85rem;
+  color: var(--text-color);
+}
+
+.gallo-create-unmatched ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+/* =========================
+   Filters
+   ========================= */
+
+.gallo-create-filters {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .gallo-create-filters {
+    flex-direction: column;
+  }
+}
+
+/* =========================
+   Account list
+   ========================= */
+
+.gallo-create-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* =========================
+   Account row / card
+   ========================= */
+
+.gallo-create-row {
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  padding: 12px;
+  background: var(--surface-elevated);
+  box-shadow: var(--card-shadow);
+}
+
+.gallo-create-row.unresolved {
+  background: var(--warning-bg);
+  border-color: var(--warning-color);
+}
+
+/* =========================
+   Row header
+   ========================= */
+
+.gallo-create-row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.gallo-create-row-header .account-name {
+  font-size: 0.95rem;
+}
+
+/* =========================
+   Meta info (route)
+   ========================= */
+
+.gallo-create-meta {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.gallo-create-meta .label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* =========================
+   Assignment control
+   ========================= */
+
+.gallo-create-assign {
+  margin-top: 10px;
+}
+
+/* =========================
+   Chip state colors
+   ========================= */
+
+/* Base chip styling */
+.gallo-create-assign .MuiChip-root {
+  background-color: var(--chip-bg-color);
+  color: var(--text-color);
+  border-radius: 16px;
+  font-size: 0.75rem;
+}
+
+/* =========================
+   ✅ Exactly ONE user
+   ========================= */
+.gallo-create-assign.single-user .MuiChip-root {
+  background-color: var(--status-active-bg);
+  color: var(--status-active-color);
+  border: 1px solid var(--status-active-color);
+}
+
+/* =========================
+   ⚠️ Multiple users
+   ========================= */
+.gallo-create-assign.multi-user .MuiChip-root {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-color);
+  border: 1px solid var(--status-pending-color);
+}
+
+/* =========================
+   Hover / focus polish
+   ========================= */
+.gallo-create-assign .MuiChip-root:hover {
+  filter: brightness(0.95);
+}
+
+/* Delete (x) icon */
+.gallo-create-assign .MuiChip-deleteIcon {
+  color: inherit;
+}
+
+/* =========================
+   Footer actions
+   ========================= */
+
+.gallo-create-footer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 12px;
+  padding-bottom: 1rem;
+}
+
+/* =========================
+   Desktop layout enhancement
+   ========================= */
+
+@media (min-width: 900px) {
+  .gallo-create-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 3fr;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .gallo-create-row-header {
+    grid-column: 1;
+  }
+
+  .gallo-create-meta {
+    grid-column: 2;
+    margin-top: 0;
+  }
+
+  .gallo-create-assign {
+    grid-column: 3;
+    margin-top: 0;
+  }
+}

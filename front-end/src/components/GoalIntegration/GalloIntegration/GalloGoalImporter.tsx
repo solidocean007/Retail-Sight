@@ -19,9 +19,7 @@ import {
   httpsCallable,
 } from "firebase/functions";
 import GoalTable from "../GoalTable";
-import GalloAccountImportTable from "../GalloAccountImportTableCreate";
 import "./galloGoalImporter.css";
-
 import {
   CompanyAccountType,
   EnrichedGalloAccountType,
@@ -179,79 +177,79 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     didInitNotify.current = true;
   }, [assignedUserIds]);
 
- const handleCreateGalloGoal = async (
-  selectedAccounts: EnrichedGalloAccountType[],
-  notifyUserIds: string[]
-) => {
-  if (!selectedGoal || !selectedProgram || !selectedEnv || !companyId) {
-    showMessage({
-      text: "Missing required data to create goal.",
-      severity: "error",
-    });
-    return;
-  }
-
-  setIsLoading(true);
-
-  try {
-    // ✅ FINAL NORMALIZATION GATE (correct place)
-    const normalizedAccounts = selectedAccounts.map(acc => ({
-      ...acc,
-      salesRouteNums: acc.salesRouteNums?.filter(route =>
-        companyUsers.some(
-          u =>
-            String(u.salesRouteNum) === route &&
-            assignedUserIds.includes(u.uid)
-        )
-      ),
-    }));
-
-    const savedGoal = await createGalloGoal(
-      selectedEnv,
-      {
-        ...selectedGoal,
-        notifications: {
-          emailOnCreate: notifyUserIds.length > 0,
-        },
-      },
-      selectedProgram,
-      allEnrichedAccounts,
-      normalizedAccounts, // ✅ use normalized
-      companyId
-    );
-
-    const goalWithId = {
-      ...savedGoal,
-      id: savedGoal.goalDetails.goalId,
-    };
-
-    dispatch(addOrUpdateGalloGoal(goalWithId));
-    await saveSingleGalloGoalToIndexedDB(goalWithId);
-
-    if (notifyUserIds.length > 0) {
-      await sendGalloGoalAssignedEmails({ // email logic
-        savedGoal: goalWithId,
-        selectedAccounts: normalizedAccounts, // optional but recommended
-        companyUsers,
-        notifyUserIds,
+  const handleCreateGalloGoal = async (
+    selectedAccounts: EnrichedGalloAccountType[],
+    notifyUserIds: string[]
+  ) => {
+    if (!selectedGoal || !selectedProgram || !selectedEnv || !companyId) {
+      showMessage({
+        text: "Missing required data to create goal.",
+        severity: "error",
       });
+      return;
     }
 
-    showMessage({
-      text: "Goal created successfully.",
-      severity: "success",
-    });
-  } catch (err) {
-    console.error("handleCreateGalloGoal error:", err);
-    showMessage({
-      text: "Failed to create goal.",
-      severity: "error",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+    setIsLoading(true);
 
+    try {
+      // ✅ FINAL NORMALIZATION GATE (correct place)
+      const normalizedAccounts = selectedAccounts.map((acc) => ({
+        ...acc,
+        salesRouteNums: acc.salesRouteNums?.filter((route) =>
+          companyUsers.some(
+            (u) =>
+              String(u.salesRouteNum) === route &&
+              assignedUserIds.includes(u.uid)
+          )
+        ),
+      }));
+
+      const savedGoal = await createGalloGoal(
+        selectedEnv,
+        {
+          ...selectedGoal,
+          notifications: {
+            emailOnCreate: notifyUserIds.length > 0,
+          },
+        },
+        selectedProgram,
+        allEnrichedAccounts,
+        normalizedAccounts, // ✅ use normalized
+        companyId
+      );
+
+      const goalWithId = {
+        ...savedGoal,
+        id: savedGoal.goalDetails.goalId,
+      };
+
+      dispatch(addOrUpdateGalloGoal(goalWithId));
+      await saveSingleGalloGoalToIndexedDB(goalWithId);
+
+      if (notifyUserIds.length > 0) {
+        await sendGalloGoalAssignedEmails({
+          // email logic
+          savedGoal: goalWithId,
+          selectedAccounts: normalizedAccounts, // optional but recommended
+          companyUsers,
+          notifyUserIds,
+        });
+      }
+
+      showMessage({
+        text: "Goal created successfully.",
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("handleCreateGalloGoal error:", err);
+      showMessage({
+        text: "Failed to create goal.",
+        severity: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -702,13 +700,14 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             {/* Header */}
             <div className="modal-sticky-header">
               <div className="gallo-import-header">
-                <h2 className="gallo-import-title">Import Gallo Program</h2>
                 <div className="gallo-import-header-actions">
                   {importStep !== "program" && (
                     <button className="btn-secondary" onClick={goBack}>
                       ← Back
                     </button>
                   )}
+                  <h2 className="gallo-import-title">Import Gallo Program</h2>
+
                   <button className="btn-secondary" onClick={handleCancel}>
                     Cancel
                   </button>

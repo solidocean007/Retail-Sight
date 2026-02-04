@@ -1,18 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Typography,
   Checkbox,
   Button,
-  Paper,
   Box,
   TextField,
   Autocomplete,
+  Typography,
 } from "@mui/material";
 import {
   EnrichedGalloAccountType,
@@ -20,26 +13,23 @@ import {
   GalloProgramType,
 } from "../../utils/types";
 import { useSelector } from "react-redux";
-import { RootState } from "../../utils/store";
 import { selectCompanyUsers } from "../../Slices/userSlice";
-import "./galloAccountImportTable.css";
+import "./galloAccountImportTableCreate.css";
 
-/* -------------------------------- helpers -------------------------------- */
+/* ---------------- helpers ---------------- */
 
 const usersFromRoutes = (routes: string[] | undefined, users: any[]) => {
   if (!Array.isArray(routes)) return [];
   const routeSet = new Set(routes.map(String));
   return users.filter(
-    (u) => u.salesRouteNum && routeSet.has(String(u.salesRouteNum)),
+    (u) => u.salesRouteNum && routeSet.has(String(u.salesRouteNum))
   );
 };
 
 const routesFromUsers = (users: any[]) =>
   users.map((u) => String(u.salesRouteNum)).filter(Boolean);
 
-const ensureActiveStatus = (
-  a: EnrichedGalloAccountType,
-): EnrichedGalloAccountType => ({
+const ensureActiveStatus = (a: EnrichedGalloAccountType) => ({
   ...a,
   status: a.status ?? "active",
 });
@@ -47,7 +37,7 @@ const ensureActiveStatus = (
 const isResolved = (a: EnrichedGalloAccountType) =>
   Array.isArray(a.salesRouteNums) && a.salesRouteNums.length === 1;
 
-/* -------------------------------- props -------------------------------- */
+/* ---------------- props ---------------- */
 
 interface Props {
   accounts: EnrichedGalloAccountType[];
@@ -62,20 +52,17 @@ interface Props {
   }) => void;
 }
 
-/* -------------------------------- component -------------------------------- */
+/* ---------------- component ---------------- */
 
 const GalloAccountImportTableCreate: React.FC<Props> = ({
   accounts,
   selectedAccounts,
   setSelectedAccounts,
   unmatchedAccounts,
-  program,
   onContinue,
 }) => {
-  const [editableAccounts, setEditableAccounts] =
-    useState<EnrichedGalloAccountType[]>(accounts);
-
-  const [searchAccounts, setSearchAccounts] = useState("");
+  const [rows, setRows] = useState(accounts);
+  const [searchName, setSearchName] = useState("");
   const [searchRoute, setSearchRoute] = useState("");
 
   const companyUsers = useSelector(selectCompanyUsers) || [];
@@ -85,125 +72,103 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
       companyUsers.filter(
         (u) =>
           typeof u.salesRouteNum === "string" &&
-          u.salesRouteNum.trim().length > 0,
+          u.salesRouteNum.trim().length > 0
       ),
-    [companyUsers],
+    [companyUsers]
   );
 
-  /* --------------------------- derived account lists -------------------------- */
+  const selectedUsersForRow = (row: EnrichedGalloAccountType) => {
+    const selected = selectedAccounts.find(
+      (a) => a.distributorAcctId === row.distributorAcctId
+    );
 
-  const unresolvedAccounts = useMemo(
-    () => editableAccounts.filter((a) => !isResolved(a)),
-    [editableAccounts],
-  );
+    return selected?.salesRouteNums
+      ? usersFromRoutes(selected.salesRouteNums, salesUsers)
+      : [];
+  };
 
-  const unresolvedSelectedCount = selectedAccounts.filter(
-    (a) => !isResolved(a),
-  ).length;
+  /* ---------- selection ---------- */
 
-  const filteredAccounts = editableAccounts.filter((account) => {
-    const matchesName =
-      !searchAccounts ||
-      (account.accountName ?? "")
-        .toLowerCase()
-        .includes(searchAccounts.toLowerCase());
-
-    const matchesRoute =
-      !searchRoute ||
-      (Array.isArray(account.salesRouteNums) &&
-        account.salesRouteNums.some((r) => String(r).includes(searchRoute)));
-
-    return matchesName && matchesRoute;
-  });
-
-  /* ------------------------------ selection logic ----------------------------- */
-
-  const toggleAccount = (account: EnrichedGalloAccountType) => {
+  const toggleAccount = (row: EnrichedGalloAccountType) => {
     setSelectedAccounts((prev) =>
-      prev.some((a) => a.distributorAcctId === account.distributorAcctId)
-        ? prev.filter((a) => a.distributorAcctId !== account.distributorAcctId)
-        : [...prev, ensureActiveStatus(account)],
+      prev.some((a) => a.distributorAcctId === row.distributorAcctId)
+        ? prev.filter((a) => a.distributorAcctId !== row.distributorAcctId)
+        : [...prev, ensureActiveStatus(row)]
     );
   };
 
-  const assignUsers = (account: EnrichedGalloAccountType, users: any[]) => {
+  const assignUsers = (row: EnrichedGalloAccountType, users: any[]) => {
     const nextRoutes = routesFromUsers(users);
 
-    setEditableAccounts((prev) =>
-      prev.map((a) =>
-        a.distributorAcctId === account.distributorAcctId
-          ? { ...a, salesRouteNums: nextRoutes }
-          : a,
-      ),
+    const updated = rows.map((a) =>
+      a.distributorAcctId === row.distributorAcctId
+        ? { ...a, salesRouteNums: nextRoutes }
+        : a
     );
+
+    setRows(updated);
 
     setSelectedAccounts((prev) =>
       prev.map((a) =>
-        a.distributorAcctId === account.distributorAcctId
+        a.distributorAcctId === row.distributorAcctId
           ? ensureActiveStatus({ ...a, salesRouteNums: nextRoutes })
-          : a,
-      ),
+          : a
+      )
     );
   };
 
-  const hasInvalidSelectedAccounts = selectedAccounts.some(
-    (a) => !Array.isArray(a.salesRouteNums) || a.salesRouteNums.length !== 1,
-  );
+  /* ---------- validation ---------- */
 
-  /* ---------------------------------- render ---------------------------------- */
+  const invalidSelectedCount = selectedAccounts.filter(
+    (a) => !isResolved(a)
+  ).length;
+
+  /* ---------- filtering ---------- */
+
+  const filtered = rows.filter((a) => {
+    const nameMatch =
+      !searchName ||
+      a.accountName?.toLowerCase().includes(searchName.toLowerCase());
+
+    const routeMatch =
+      !searchRoute ||
+      a.salesRouteNums?.some((r) => String(r).includes(searchRoute));
+
+    return nameMatch && routeMatch;
+  });
+
+  /* ---------- render ---------- */
 
   return (
-    <TableContainer component={Paper} className="account-table">
-      {/* 🚨 Creation warning */}
-      {unresolvedSelectedCount > 0 && (
-        <Box sx={{ p: 2, mb: 2, border: "1px solid #ffe08a", borderRadius: 1 }}>
-          <Typography variant="subtitle2">
-            {unresolvedSelectedCount} selected account(s) need exactly one
-            salesperson
-          </Typography>
-          <Typography variant="caption">
-            Remove extra users or assign one to continue.
-          </Typography>
-        </Box>
+    <div className="gallo-create-root">
+      {/* warning */}
+      {invalidSelectedCount > 0 && (
+        <div className="gallo-create-warning">
+          <strong>{invalidSelectedCount}</strong> selected account(s) need
+          exactly one salesperson.
+        </div>
       )}
 
+      {/* unmatched */}
       {unmatchedAccounts.length > 0 && (
-        <Box
-          sx={{
-            border: "1px solid #f5c2c7",
-            backgroundColor: "#fff5f5",
-            borderRadius: 1,
-            p: 2,
-            mb: 2,
-          }}
-        >
-          <Typography variant="subtitle2" color="error">
-            {unmatchedAccounts.length} Gallo account(s) could not be matched
-          </Typography>
-
-          <Typography variant="caption" display="block" sx={{ mb: 1 }}>
-            These accounts exist in Gallo Axis but do not exist in Displaygram.
-            They will not be included in this goal.
-          </Typography>
-
-          <ul className="unmatched-account-list">
+        <div className="gallo-create-unmatched">
+          <strong>{unmatchedAccounts.length}</strong> Gallo account(s) could not
+          be matched.
+          <ul>
             {unmatchedAccounts.slice(0, 5).map((a) => (
               <li key={a.distributorAcctId}>{a.distributorAcctId}</li>
             ))}
-            {unmatchedAccounts.length > 5 && (
-              <li>…and {unmatchedAccounts.length - 5} more</li>
-            )}
           </ul>
-        </Box>
+        </div>
       )}
 
-      {/* Search */}
-      <Box display="flex" gap={1} mb={2}>
+      {/* filters */}
+      <div className="gallo-create-filters">
         <TextField
           size="small"
           placeholder="Account name"
-          value={searchAccounts}
-          onChange={(e) => setSearchAccounts(e.target.value)}
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
         />
         <TextField
           size="small"
@@ -211,92 +176,88 @@ const GalloAccountImportTableCreate: React.FC<Props> = ({
           value={searchRoute}
           onChange={(e) => setSearchRoute(e.target.value)}
         />
-      </Box>
+      </div>
 
-      {/* Table */}
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell />
-            <TableCell>Account</TableCell>
-            <TableCell>Route(s)</TableCell>
-            <TableCell>Assign salesperson</TableCell>
-          </TableRow>
-        </TableHead>
+      {/* rows */}
+      <div className="gallo-create-list">
+        {filtered.map((row) => {
+          const checked = selectedAccounts.some(
+            (a) => a.distributorAcctId === row.distributorAcctId
+          );
 
-        <TableBody>
-          {filteredAccounts.map((account) => {
-            const checked = selectedAccounts.some(
-              (a) => a.distributorAcctId === account.distributorAcctId,
-            );
+          const assignedUsers = selectedUsersForRow(row);
 
-            const assignedUsers = usersFromRoutes(
-              account.salesRouteNums,
-              salesUsers,
-            );
+          return (
+            <div
+              key={row.distributorAcctId}
+              className={`gallo-create-row ${
+                isResolved(row) ? "" : "unresolved"
+              }`}
+            >
+              <div className="gallo-create-row-header">
+                <Checkbox
+                  checked={checked}
+                  onChange={() => toggleAccount(row)}
+                />
+                <span className="account-name">{row.accountName}</span>
+              </div>
 
-            return (
-              <TableRow
-                key={account.distributorAcctId}
-                sx={{
-                  backgroundColor: isResolved(account) ? "inherit" : "#fff8e1",
-                }}
+              <div className="gallo-create-meta">
+                <span className="label">Route</span>
+                <span>{row.salesRouteNums?.join(", ") || "—"}</span>
+              </div>
+
+              <div
+                className={`gallo-create-assign ${
+                  assignedUsers.length === 1
+                    ? "single-user"
+                    : assignedUsers.length > 1
+                      ? "multi-user"
+                      : ""
+                }`}
               >
-                <TableCell>
-                  <Checkbox
-                    checked={checked}
-                    onChange={() => toggleAccount(account)}
-                  />
-                </TableCell>
+                <Autocomplete
+                  multiple
+                  size="small"
+                  disablePortal
+                  openOnFocus
+                  options={salesUsers}
+                  value={assignedUsers}
+                  getOptionLabel={(u) =>
+                    `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
+                  }
+                  isOptionEqualToValue={(o, v) => o.uid === v.uid}
+                  onChange={(_, users) => assignUsers(row, users)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder={
+                        assignedUsers.length === 0
+                          ? "Select salesperson"
+                          : assignedUsers.length > 1
+                            ? "Remove extra users"
+                            : ""
+                      }
+                    />
+                  )}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-                <TableCell>{account.accountName}</TableCell>
-
-                <TableCell>
-                  {account.salesRouteNums?.join(", ") || "—"}
-                </TableCell>
-
-                <TableCell>
-                  <Autocomplete
-                    multiple
-                    size="small"
-                    options={salesUsers}
-                    value={assignedUsers}
-                    getOptionLabel={(u) => `${u.firstName} ${u.lastName}`}
-                    isOptionEqualToValue={(option, value) =>
-                      option.uid === value.uid
-                    }
-                    onChange={(_, users) => assignUsers(account, users)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        placeholder={
-                          assignedUsers.length === 0
-                            ? "Select salesperson"
-                            : assignedUsers.length > 1
-                              ? "Remove extra users"
-                              : ""
-                        }
-                      />
-                    )}
-                  />
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-
-      {/* Continue */}
-      <Box display="flex" justifyContent="flex-end" mt={2}>
+      {/* footer */}
+      <div className="gallo-create-footer">
         <Button
           variant="contained"
-          disabled={selectedAccounts.length === 0 || hasInvalidSelectedAccounts}
+          disabled={selectedAccounts.length === 0 || invalidSelectedCount > 0}
           onClick={() => onContinue({ selectedAccounts })}
         >
           Review & Confirm
         </Button>
-      </Box>
-    </TableContainer>
+      </div>
+    </div>
   );
 };
 
