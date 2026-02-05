@@ -1,0 +1,8 @@
+.gallo-edit-row.inactive {
+  opacity: 0.6;
+}
+
+.gallo-edit-row.invalid {
+  border-color: var(--warning-color);
+  background: var(--warning-bg);
+}

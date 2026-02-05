@@ -216,7 +216,7 @@
   --badge-font-color: white;
 
   /* Surfaces & elevations */
-  --surface-elevated: white; /* cards, modals, light surfaces */
+  --surface-elevated: var(--gray-300); /* cards, modals, light surfaces */
   --surface-base: #f5f7fa; /* page background base */
 
   /* pill status colors */
@@ -296,7 +296,7 @@
 
   --btn-primary-bg: var(--primary-blue);
   --btn-primary-hover: var(--primary-blue-dark);
-  --btn-secondary-bg: var(--gray-100);
+  --btn-secondary-bg: var(--gray-300);
   --btn-secondary-hover: var(--gray-200);
 
   --btn-error-bg: #691a1a; /* a deep-red background */

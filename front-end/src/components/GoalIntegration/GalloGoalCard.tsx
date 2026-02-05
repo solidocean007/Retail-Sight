@@ -94,6 +94,13 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
         // onMouseEnter={(e) => openActions(goal.id, e.currentTarget)}
         // onMouseLeave={closeActions}
       >
+        <div className="gallo-goal-card__header-actions">
+          {canManage && (
+            <button className="btn-secondary" onClick={() => onEdit(goal)}>
+              Edit
+            </button>
+          )}
+        </div>
         <div className="gallo-goal-card__header-left">
           <div className="gallo-goal-card__header-text">
             <Typography variant="h6">
@@ -110,12 +117,12 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
             </span>
 
             <div className="gallo-goal-card__dates">
-              <h5>
+              <h3>
                 Starts: {formatGoalDate(goal.programDetails.programStartDate)}
-              </h5>
-              <h5>
+              </h3>
+              <h3>
                 Ends: {formatGoalDate(goal.programDetails.programEndDate)}
-              </h5>
+              </h3>
             </div>
           </div>
         </div>
@@ -135,13 +142,9 @@ const GalloGoalCard: React.FC<ProgramCardProps> = ({
               : ""}
           </div>
         )}
-
-        <div className="gallo-goal-card__header-actions">
-          {canManage && <button onClick={() => onEdit(goal)}>Edit</button>}
-        </div>
       </div>
       <button
-        className="expand-goal-btn"
+        className="btn-secondary"
         onClick={(e) => {
           e.stopPropagation();
           setExpanded((v) => !v);

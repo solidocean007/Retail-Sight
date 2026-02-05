@@ -29,9 +29,30 @@
   background: #fff;
 }
 
-.edit-goal-accounts-card.unresolved {
-  background: #fff8e1;
-  border-color: #ffe08a;
+.edit-gallo-card-account-user {
+  display: flex;
+  width: 100%;
+}
+
+.edit-gallo-goal-card, .edit-gallo-card-account-status {
+  display: flex;
+  width: 100%;
+}
+
+.edit-gallo-card-account-header {
+  display: flex;
+}
+
+.edit-goal-accounts-row-resolved {
+  background: none;
+  border-color: none;
+  border-bottom: 1px solid black;
+  margin-bottom: 1rem;
+}
+
+.edit-goal-accounts-row-unresolved {
+  background: var(--warning-bg);
+  border-left: 4px solid var(--warning-color);
 }
 
 .edit-goal-accounts-card .card-row {
@@ -50,6 +71,12 @@
   margin-bottom: 2px;
 }
 
-.edit-goal-accounts-row-unresolved {
-  background-color: #fff8e1;
+.gallo-edit-row.inactive {
+  opacity: var(--inactive-opacity);
 }
+
+.gallo-edit-row.invalid {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+}
+

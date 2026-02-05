@@ -83,7 +83,7 @@ export default function GalloGoalsTable({
                 </span>
               </div> */}
 
-              <div className="dates">
+              <div className="gallo-goals-table-dates">
                 <div>
                   Start: {formatGoalDate(goal.programDetails.programStartDate)}
                 </div>
@@ -92,7 +92,7 @@ export default function GalloGoalsTable({
                 </div>
               </div>
 
-              <div>
+              <div className="gallo-goals-table-submitted-count">
                 <strong>{submittedCount}</strong> / {activeAccounts.length}
               </div>
 

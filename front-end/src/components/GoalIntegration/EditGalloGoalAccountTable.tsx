@@ -10,8 +10,10 @@ import {
   TextField,
   Autocomplete,
   useMediaQuery,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
-import { EnrichedGalloAccountType } from "../../utils/types";
+import { EnrichedGalloAccountType, UserType } from "../../utils/types";
 import { useSelector } from "react-redux";
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import "./editGalloGoalAccountTable.css";
@@ -36,15 +38,22 @@ interface Props {
 
 /* ------------------------------ helpers ------------------------------ */
 
-const isResolved = (a: EnrichedGalloAccountType) =>
-  Array.isArray(a.salesRouteNums) && a.salesRouteNums.length === 1;
+const getAssignedUsers = (
+  account: EnrichedGalloAccountType,
+  salesUsers: UserType[],
+) => usersFromRoutes(account.salesRouteNums, salesUsers);
+
+const isAccountResolved = (
+  account: EnrichedGalloAccountType,
+  salesUsers: UserType[],
+) => usersFromRoutes(account.salesRouteNums, salesUsers).length === 1;
 
 /* ------------------------------ component ------------------------------ */
 
 const EditGalloGoalAccountTable: React.FC<Props> = ({ accounts, onChange }) => {
   const [rows, setRows] = useState(accounts);
   const [search, setSearch] = useState("");
-  const isMobile = useMediaQuery("(max-width:900px)");
+  const isMobile = useMediaQuery("(max-width:700px)");
 
   const companyUsers = useSelector(selectCompanyUsers) || [];
 
@@ -57,6 +66,9 @@ const EditGalloGoalAccountTable: React.FC<Props> = ({ accounts, onChange }) => {
       ),
     [companyUsers],
   );
+
+  const isResolved = (a: EnrichedGalloAccountType) =>
+    isAccountResolved(a, salesUsers);
 
   useEffect(() => {
     setRows(accounts);
@@ -83,12 +95,11 @@ const EditGalloGoalAccountTable: React.FC<Props> = ({ accounts, onChange }) => {
 
   return (
     <div className="edit-goal-accounts-root">
-      {unresolvedCount > 0 && (
+      {/* {anySelectedAccountNotResolved.length > 0 && (
         <div className="edit-goal-accounts-warning">
-          <strong>{unresolvedCount}</strong> account(s) need a salesperson. Each
-          active account must have exactly one assigned user.
+          <strong>{anySelectedAccountNotResolved.length}</strong> selected account or account(s) need one salesperson. 
         </div>
-      )}
+      )} */}
 
       <div className="edit-goal-accounts-search">
         <TextField
@@ -110,45 +121,77 @@ const EditGalloGoalAccountTable: React.FC<Props> = ({ accounts, onChange }) => {
             );
 
             return (
-              <TableRow
+              <div
                 key={account.distributorAcctId}
                 className={
-                  isResolved(account) ? "" : "edit-goal-accounts-row-unresolved"
+                  isResolved(account)
+                    ? "edit-goal-accounts-row-resolved"
+                    : "edit-goal-accounts-row-unresolved"
                 }
               >
-                <TableCell>{account.accountName}</TableCell>
-
-                <TableCell>
-                  {account.salesRouteNums?.join(", ") || "—"}
-                </TableCell>
-
-                <TableCell>
-                  <Autocomplete
-                    multiple
-                    size="small"
-                    getOptionDisabled={(option) =>
-                      assignedUsers.length >= 1 &&
-                      !assignedUsers.some((u) => u.uid === option.uid)
-                    }
-                    options={salesUsers}
-                    getOptionLabel={(u) => `${u.firstName} ${u.lastName}`}
-                    value={assignedUsers}
-                    onChange={(_, users) => assignUsers(account, users)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        placeholder={
-                          assignedUsers.length === 0
-                            ? "Select user"
-                            : assignedUsers.length > 1
-                              ? "Remove extra users"
-                              : ""
+                <div className="edit-gallo-goal-card">
+                  <div className="edit-gallo-goal-card-content">
+                    <div className="edit-gallo-card-account-header">
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={account.status === "active"}
+                            onChange={(e) =>
+                              onChange(
+                                accounts.map((a) =>
+                                  a.distributorAcctId ===
+                                  account.distributorAcctId
+                                    ? {
+                                        ...a,
+                                        status: e.target.checked
+                                          ? "active"
+                                          : "inactive",
+                                      }
+                                    : a,
+                                ),
+                              )
+                            }
+                          />
                         }
+                        label=""
                       />
-                    )}
-                  />
-                </TableCell>
-              </TableRow>
+                      <div className="edit-gallo-card-account-name">
+                        <TableCell>{account.accountName}</TableCell>
+                      </div>
+                    </div>
+
+                    <div className="edit-gallo-card-account-user">
+                      <div>{account.salesRouteNums?.join(", ") || "—"}</div>
+                      <div>
+                        <Autocomplete
+                          multiple
+                          size="small"
+                          getOptionDisabled={(option) =>
+                            assignedUsers.length >= 1 &&
+                            !assignedUsers.some((u) => u.uid === option.uid)
+                          }
+                          options={salesUsers}
+                          getOptionLabel={(u) => `${u.firstName} ${u.lastName}`}
+                          value={assignedUsers}
+                          onChange={(_, users) => assignUsers(account, users)}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder={
+                                assignedUsers.length === 0
+                                  ? "Select user"
+                                  : assignedUsers.length > 1
+                                    ? "Remove extra users"
+                                    : ""
+                              }
+                            />
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>
@@ -160,6 +203,7 @@ const EditGalloGoalAccountTable: React.FC<Props> = ({ accounts, onChange }) => {
           <Table size="small">
             <TableHead>
               <TableRow>
+                <TableCell>Status</TableCell>
                 <TableCell>Account</TableCell>
                 <TableCell>Sales Route</TableCell>
                 <TableCell>Assigned Salesperson</TableCell>
@@ -182,6 +226,30 @@ const EditGalloGoalAccountTable: React.FC<Props> = ({ accounts, onChange }) => {
                         : "edit-goal-accounts-row-unresolved"
                     }
                   >
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={account.status === "active"}
+                          onChange={(e) =>
+                            onChange(
+                              accounts.map((a) =>
+                                a.distributorAcctId ===
+                                account.distributorAcctId
+                                  ? {
+                                      ...a,
+                                      status: e.target.checked
+                                        ? "active"
+                                        : "inactive",
+                                    }
+                                  : a,
+                              ),
+                            )
+                          }
+                        />
+                      }
+                      label=""
+                    />
+
                     <TableCell>{account.accountName}</TableCell>
 
                     <TableCell>
@@ -189,6 +257,16 @@ const EditGalloGoalAccountTable: React.FC<Props> = ({ accounts, onChange }) => {
                     </TableCell>
 
                     <TableCell>
+                      {account.status === "active" &&
+                        !isAccountResolved(account, salesUsers) && (
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "var(--warning-color)" }}
+                          >
+                            This account needs exactly one salesperson
+                          </Typography>
+                        )}
+
                       <Autocomplete
                         multiple
                         size="small"
