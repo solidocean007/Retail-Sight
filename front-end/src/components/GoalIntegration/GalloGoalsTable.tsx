@@ -27,7 +27,6 @@ export default function GalloGoalsTable({
   onDisable,
 }: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
-  console.log(goals);
 
   return (
     <div className="gallo-table">

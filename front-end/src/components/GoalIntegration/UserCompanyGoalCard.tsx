@@ -125,8 +125,8 @@ const UserCompanyGoalCard: React.FC<Props> = ({
         <div className="goal-badge">{goal.targetRole}</div>
 
         <div className="company-goal-card-start-end">
-          <h5>Starts: {goal.goalStartDate}</h5>
-          <h5>Ends: {goal.goalEndDate}</h5>
+          <h3>Starts: {goal.goalStartDate}</h3>
+          <h3>Ends: {goal.goalEndDate}</h3>
         </div>
 
         <div className="info-title-row">

@@ -90,10 +90,10 @@ const MyGalloGoalCard: React.FC<Props> = ({
 
         {/* Dates */}
         <div className="company-goal-card-start-end">
-          <h5>
+          <h3>
             Starts: {formatGoalDate(goal.programDetails.programStartDate)}
-          </h5>
-          <h5>Ends: {formatGoalDate(goal.programDetails.programEndDate)}</h5>
+          </h3>
+          <h3>Ends: {formatGoalDate(goal.programDetails.programEndDate)}</h3>
         </div>
 
         {/* Title */}

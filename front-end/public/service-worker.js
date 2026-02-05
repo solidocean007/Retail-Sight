@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-const IMAGE_CACHE = "dg-image-cache-v2";
-const OFFLINE_CACHE_NAME = "dg-offline-v1";
+const IMAGE_CACHE = "dg-image-cache-v3";
+const OFFLINE_CACHE_NAME = "dg-offline-v3";
 const OFFLINE_FALLBACK_PAGE = "/offline.html";
 
 // -------------------------------------------------------
