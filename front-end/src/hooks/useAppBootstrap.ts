@@ -124,7 +124,6 @@ export function useAppBootstrap({
           dispatch(setLoadingMessage("Connecting live updates…"));
 
           dispatch(setupNotificationListenersForUser(currentUser));
-          // dispatch(setupNotificationListenersForCompany(currentUser)); // no longer using
           dispatch(setupCompanyGoalsListener(companyId));
 
           if (currentUser?.role === "developer") {
