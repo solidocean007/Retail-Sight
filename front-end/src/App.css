@@ -133,7 +133,7 @@ button {
 .btn-secondary {
   background-color: var(--btn-secondary-bg);
   color: var(--text-color);
-  padding: 0.85rem 2rem;
+  /* padding: 0.85rem 2rem; */
   border-radius: 10px;
   text-decoration: none;
   max-height: 50px;
@@ -142,6 +142,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-bottom: .5rem;
 }
 
 .button-primary,

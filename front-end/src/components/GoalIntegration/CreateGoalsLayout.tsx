@@ -23,7 +23,6 @@ const CreateGoalsLayout: React.FC<CreateGoalsLayoutProps> = ({
 
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
-  console.log("Gallo Integration Enabled:", galloEnabled); // false??
   const [source, setSource] = useState<GoalCreateSource>("company");
 
 

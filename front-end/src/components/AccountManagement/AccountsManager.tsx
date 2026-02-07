@@ -130,10 +130,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const handleAccountsUpload = async (file: File) => {
     try {
       const parsed = await parseAccountsFromFile(file);
-      console.log("✅ Parsed rows:", Object.keys(parsed).length);
 
       const diffs = getAccountDiffs(parsed, accounts); // now returns UnifiedDiff[]
-      console.log("🔍 Diffs:", diffs);
 
       if (diffs.length === 0) {
         dispatch(showMessage("No changes found."));

@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# build / report artifacts
+front-end/stats.html
+
+# Firebase local cache
+.firebase/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

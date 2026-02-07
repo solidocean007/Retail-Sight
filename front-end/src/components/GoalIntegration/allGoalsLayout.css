@@ -73,6 +73,7 @@
 
 @media (max-width: 600px) {
   .goal-source-switcher {
+    flex-direction: column;
     width: 100%;
     justify-content: space-between;
   }

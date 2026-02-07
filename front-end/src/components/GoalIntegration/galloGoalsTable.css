@@ -10,7 +10,7 @@
 .gallo-table-header,
 .gallo-table-row {
   display: grid;
-  grid-template-columns: 40px 2fr 1fr 1.5fr 1fr 120px;
+  grid-template-columns: 40px 3fr 2fr .5fr 80px;
   align-items: center;
   padding: 10px;
   overflow: visible; /* allows menu to float */
@@ -27,6 +27,17 @@
   border-radius: 10px;
   transition: background 0.15s ease;
   margin-bottom: 10px;
+}
+
+.gallo-goals-table-dates {
+  display: flex;
+  justify-content: space-around;
+}
+
+.gallo-goals-table-submitted-count {
+  display: flex;
+  justify-content: center;
+  max-width: 100px;
 }
 
 .gallo-table-row:hover {

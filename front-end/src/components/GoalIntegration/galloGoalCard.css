@@ -100,7 +100,7 @@
   border: 1px solid var(--border-default);
   border-radius: 8px;
   padding: 12px;
-  background: var(--bg-muted);
+  background: var(--surface-elevated);
 }
 
 .account-card__title {

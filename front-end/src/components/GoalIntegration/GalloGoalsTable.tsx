@@ -44,6 +44,10 @@ export default function GalloGoalsTable({
           (a) => a.status === "active",
         );
 
+        const inActiveAccounts = goal.accounts.filter(
+          (a) => a.status !== "active",
+        );
+
         const submittedCount = activeAccounts.filter(
           (a) => a.submittedPostId,
         ).length;
@@ -78,7 +82,7 @@ export default function GalloGoalsTable({
                 </span>
               </div> */}
 
-              <div className="dates">
+              <div className="gallo-goals-table-dates">
                 <div>
                   Start: {formatGoalDate(goal.programDetails.programStartDate)}
                 </div>
@@ -87,7 +91,7 @@ export default function GalloGoalsTable({
                 </div>
               </div>
 
-              <div>
+              <div className="gallo-goals-table-submitted-count">
                 <strong>{submittedCount}</strong> / {activeAccounts.length}
               </div>
 

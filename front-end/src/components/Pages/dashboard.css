@@ -1,11 +1,12 @@
 /* dashboard.css */
 
 .dashboard-container {
-  /* display: flex; */
+  display: flex;
+  flex-direction: column;
   background-color: var(--dashboard-background-color);
   color: var(--text-color);
-  flex: 1;
-  min-height: 0;
+  /* flex: 1; */
+  /* min-height: 0; */
   width: 100%;
   padding: 1rem;
 }
