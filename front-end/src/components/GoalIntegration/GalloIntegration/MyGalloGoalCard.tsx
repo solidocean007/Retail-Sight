@@ -5,6 +5,8 @@ import { FireStoreGalloGoalDocType } from "../../../utils/types";
 import GoalProgressRow from "../GoalProgressRow";
 import { getGoalTimingState } from "../utils/getGoalTimingState";
 import { daysFromNow, toMillisSafe } from "../utils/goalTimingUtils";
+import { useSelector } from "react-redux";
+import { selectUser } from "../../../Slices/userSlice";
 
 export function formatGoalDate(v?: any) {
   if (!v) return "—";
@@ -42,14 +44,25 @@ const MyGalloGoalCard: React.FC<Props> = ({
   onViewPostModal,
   disabled = false,
 }) => {
-  const activeAccounts = useMemo(
-    () => goal.accounts.filter((a) => a.status === "active"),
-    [goal.accounts],
-  );
-  console.log(goal);
-  const submittedCount = activeAccounts.filter((a) => a.submittedPostId).length;
+  const user = useSelector(selectUser);
+  const userRoute = user?.salesRouteNum;
 
-  const totalAccounts = activeAccounts.length;
+  const userActiveAccounts = useMemo(() => {
+    if (!userRoute) return [];
+
+    return goal.accounts.filter(
+      (a) =>
+        a.status === "active" &&
+        Array.isArray(a.salesRouteNums) &&
+        a.salesRouteNums.includes(userRoute),
+    );
+  }, [goal.accounts, userRoute]);
+
+  const submittedCount = userActiveAccounts.filter(
+    (a) => a.submittedPostId,
+  ).length;
+
+  const totalAccounts = userActiveAccounts.length;
   const percentage =
     totalAccounts > 0 ? Math.round((submittedCount / totalAccounts) * 100) : 0;
 
@@ -145,14 +158,13 @@ const MyGalloGoalCard: React.FC<Props> = ({
           <GoalProgressRow
             title="Your Accounts"
             completionPercentage={percentage}
-            submissions={activeAccounts
+            submissions={userActiveAccounts
               .filter((a) => a.submittedPostId)
               .map((a) => ({
                 postId: a.submittedPostId!,
                 storeName: a.accountName,
-                // submittedAt: a.submittedAt ?? "",
               }))}
-            unsubmittedAccounts={activeAccounts
+            unsubmittedAccounts={userActiveAccounts
               .filter((a) => !a.submittedPostId)
               .map((a) => ({
                 accountName: a.accountName,
