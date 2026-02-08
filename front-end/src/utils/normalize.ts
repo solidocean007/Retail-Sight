@@ -1,5 +1,6 @@
 // utils/normalize.ts
 import { Timestamp } from "firebase/firestore";
+import { UserNotificationType } from "./types";
 
 /** 🔁 Universal Firestore normalizer (Timestamp → ms) */
 export const normalizeFirestoreData = <T>(input: T): T => {
@@ -17,13 +18,25 @@ export const normalizeFirestoreData = <T>(input: T): T => {
 };
 
 /** 📨 Notification normalizer (keeps ID as 2nd arg for backward compatibility) */
-export const normalizeNotification = (raw: any, id?: string) => {
-  const data = normalizeFirestoreData(raw);
-  return {
-    id: id ?? raw.id, // preserve id if provided
-    ...data,
-  };
+const toDate = (v: any): Date | null => {
+  if (!v) return null;
+  if (v instanceof Date) return v;
+  if (v instanceof Timestamp) return v.toDate();
+  if (typeof v?.toDate === "function") return v.toDate();
+  return null;
 };
+
+export function normalizeUserNotification(
+  raw: UserNotificationType
+): UserNotificationType {
+  return {
+    ...raw,
+    createdAt: toDate(raw.createdAt) as any,
+    readAt: toDate(raw.readAt) as any,
+    interactedAt: toDate(raw.interactedAt) as any,
+    deliveredVia: raw.deliveredVia,
+  };
+}
 
 /** 📝 Works with `.map(normalizePost)` or called manually */
 export const normalizePost = (raw: any, indexOrId?: string | number) => {

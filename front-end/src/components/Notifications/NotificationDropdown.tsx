@@ -11,7 +11,7 @@ import {
   removeNotification,
 } from "../../thunks/notificationsThunks";
 import ViewNotificationModal from "./ViewNotificationModal";
-import { NotificationType } from "../../utils/types";
+import { UserNotificationType } from "../../utils/types";
 
 const NotificationDropdown: React.FC<{
   onClose: () => void;
@@ -23,19 +23,19 @@ const NotificationDropdown: React.FC<{
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedNotif, setSelectedNotif] =
-    useState<NotificationType | null>(null);
+    useState<UserNotificationType | null>(null);
 
   useOutsideAlerter(dropdownRef, onClose);
 
   if (!currentUser) return null;
 
-  const handleOpen = (notif: NotificationType) => {
-    if (!notif.readBy?.includes(currentUser.uid)) {
+  const handleOpen = (notif: UserNotificationType) => {
+    if (!notif.readAt) {
       dispatch(
         markNotificationRead({
           notificationId: notif.id,
           uid: currentUser.uid,
-        }),
+        })
       );
     }
 
@@ -62,20 +62,32 @@ const NotificationDropdown: React.FC<{
       </div>
 
       <div className="dropdown-body">
-        {notifications.length === 0 ? (
-          <div className="no-notifications">No notifications.</div>
-        ) : (
-          notifications.slice(0, 5).map((notif) => (
-            <div key={notif.id} className="notification-row">
-              <NotificationItem
-                notification={notif}
-                currentUserId={currentUser.uid}
-                onClick={() => handleOpen(notif)}
-                onDelete={() => handleDelete(notif.id)}
-              />
-            </div>
-          ))
-        )}
+        {notifications.slice(0, 5).map((notif) => (
+          <div key={notif.id} className="notification-row">
+            <NotificationItem
+              notification={notif}
+              onOpen={() => {
+                if (!notif.readAt) {
+                  dispatch(
+                    markNotificationRead({
+                      notificationId: notif.id,
+                      uid: currentUser.uid,
+                    })
+                  );
+                }
+
+                if (notif.postId && openPostViewer) {
+                  openPostViewer(notif.postId);
+                } else {
+                  setSelectedNotif(notif);
+                }
+              }}
+              onDelete={() => {
+                dispatch(removeNotification({ notificationId: notif.id }));
+              }}
+            />
+          </div>
+        ))}
       </div>
 
       <ViewNotificationModal

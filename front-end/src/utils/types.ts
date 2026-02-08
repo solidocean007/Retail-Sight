@@ -53,22 +53,28 @@ export interface UserNotificationType {
 
   title: string;
   message: string;
+
+  // 🔗 Deep-link targets
+  postId?: string;
+  commentId?: string;
+  goalId?: string;
   link?: string;
 
-  createdAt: Timestamp;
+  createdAt: Date;
 
   // read / interaction
-  readAt?: Timestamp;
-  interactedAt?: Timestamp;
+  readAt?: Date;
+  interactedAt?: Date;
 
   // delivery tracking
-  deliveredVia?: Partial<Record<NotificationDeliveryChannel, Timestamp>>;
+  deliveredVia?: Partial<Record<NotificationDeliveryChannel,
+    Date
+  >>;
 
   pinned?: boolean;
   priority: PriorityType;
   type?: NotificationCategory;
 }
-
 
 
 // utils/types.ts
@@ -81,6 +87,7 @@ export type DeveloperNotificationType = {
 
   createdAt: string | null;
   sentAt: string | null;
+  scheduledAt: string | null;
 
   createdBy: {
     uid: string;

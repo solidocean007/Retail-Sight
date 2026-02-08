@@ -22,11 +22,10 @@ type MessageType = "announcement" | "tutorial";
 
 const createDeveloperNotification = httpsCallable(
   functions,
-  "createDeveloperNotification",
+  "createDeveloperNotification"
 );
 
 const DeveloperNotificationForm = ({
-  currentUser,
   allCompaniesAndUsers,
 }: {
   currentUser: UserType;
@@ -47,23 +46,30 @@ const DeveloperNotificationForm = ({
   >([]);
   const [audienceUsers, setAudienceUsers] = useState<UserType[]>([]);
   const [audienceRoles, setAudienceRoles] = useState<string[]>([]);
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
 
   const payload = {
-    type: messageType,
-    title,
-    message,
-    tutorialUrl: messageType === "tutorial" ? tutorialUrl : undefined,
+  type: messageType,
+  title,
+  message,
+  tutorialUrl: messageType === "tutorial" ? tutorialUrl : undefined,
 
-    recipientCompanyIds: audienceCompanies.map((c) => c.id),
-    recipientUserIds: audienceUsers.map((u) => u.uid),
-    recipientRoles: audienceRoles,
+  recipientCompanyIds: audienceCompanies.map((c) => c.id),
+  recipientUserIds: audienceUsers.map((u) => u.uid),
+  recipientRoles: audienceRoles,
 
-    sendEmail,
-  };
+  sendEmail,
+  scheduledAt: isScheduled && scheduledAt ? scheduledAt : null,
+};
+
 
   const handleSubmit = async () => {
     if (!title || !message) return;
     if (messageType === "tutorial" && !tutorialUrl) return;
+    if (isScheduled && !scheduledAt) return;
+if (isScheduled && scheduledAt && scheduledAt.getTime() < Date.now()) return;
+
 
     if (dryRun) {
       setPreviewOpen(true);
@@ -188,6 +194,44 @@ const DeveloperNotificationForm = ({
         />
       </Stack>
 
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={isScheduled}
+            onChange={(e) => {
+              setIsScheduled(e.target.checked);
+              if (!e.target.checked) setScheduledAt(null);
+            }}
+          />
+        }
+        label="Schedule for later"
+      />
+
+      {isScheduled && (
+        <TextField
+          label="Send At"
+          type="datetime-local"
+          value={
+            scheduledAt
+              ? new Date(
+                  scheduledAt.getTime() -
+                    scheduledAt.getTimezoneOffset() * 60000
+                )
+                  .toISOString()
+                  .slice(0, 16)
+              : ""
+          }
+          onChange={(e) => {
+            const val = e.target.value;
+            setScheduledAt(val ? new Date(val) : null);
+          }}
+          fullWidth
+          size="small"
+          sx={{ mb: 1 }}
+          InputLabelProps={{ shrink: true }}
+        />
+      )}
+
       <Button
         variant="contained"
         color="primary"
@@ -203,6 +247,7 @@ const DeveloperNotificationForm = ({
         title={title}
         message={message}
         priority="normal"
+        scheduledAt={scheduledAt}
         recipientCompanyIds={audienceCompanies.map((c) => c.id)}
         recipientUserIds={audienceUsers.map((u) => u.uid)}
         recipientRoles={audienceRoles}

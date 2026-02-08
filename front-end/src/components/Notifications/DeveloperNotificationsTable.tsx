@@ -12,12 +12,17 @@ import {
   CircularProgress,
   Button,
   TextField,
+  Chip,
 } from "@mui/material";
 import "./notifications/notificationsTable.css";
-import { CompanyWithUsersAndId, NotificationType } from "../../utils/types";
+import {
+  CompanyWithUsersAndId,
+  DeveloperNotificationType,
+} from "../../utils/types";
 import ViewDeveloperNotification from "./ViewDeveloperNotification";
 import { fetchDeveloperNotifications } from "../../thunks/developerNotificationsThunks";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { getNotificationStatus } from "./utils/getNotificationStatus";
 
 interface DeveloperNotificationsTableProps {
   allCompaniesAndUsers: CompanyWithUsersAndId[];
@@ -28,26 +33,26 @@ const DeveloperNotificationsTable: React.FC<
 > = ({ allCompaniesAndUsers }) => {
   const dispatch = useAppDispatch();
   const functions = getFunctions();
+
   const { items, loading, error } = useSelector(
-    (state: RootState) => state.developerNotifications,
+    (state: RootState) => state.developerNotifications
   );
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
-    null,
-  );
+  const [selectedNotif, setSelectedNotif] =
+    useState<DeveloperNotificationType | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-useEffect(() => {
-  if (currentUser?.role === "developer") {
-    dispatch(fetchDeveloperNotifications());
-  }
-}, [dispatch, currentUser?.role]);
-
+  useEffect(() => {
+    if (currentUser?.role === "developer") {
+      dispatch(fetchDeveloperNotifications());
+    }
+  }, [dispatch, currentUser?.role]);
 
   const filteredNotifications = items.filter((n) =>
-    (n.title ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
+    (n.title ?? "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -64,13 +69,14 @@ useEffect(() => {
 
   const resendSystemNotification = httpsCallable(
     functions,
-    "resendSystemNotification",
+    "resendSystemNotification"
   );
 
   const deleteSystemNotification = httpsCallable(
     functions,
-    "deleteSystemNotification",
+    "deleteSystemNotification"
   );
+
 
   return (
     <div className="notifications-table-container">
@@ -92,30 +98,60 @@ useEffect(() => {
               <TableCell>Title</TableCell>
               <TableCell>Audience</TableCell>
               <TableCell>Priority</TableCell>
-              <TableCell>Sent Date</TableCell>
-              <TableCell>Resend</TableCell>
-              <TableCell>Delete</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+              <TableCell />
             </TableRow>
           </TableHead>
+
           <TableBody>
             {filteredNotifications.map((notif) => (
+  const status = getNotificationStatus(notif);
+
               <TableRow key={notif.id} hover className="table-row">
                 <TableCell>{notif.title}</TableCell>
+
                 <TableCell>
-                  {notif.recipientCompanyIds?.length === 0
+                  {!notif.recipientCompanyIds?.length
                     ? "All Companies"
-                    : `${notif.recipientCompanyIds?.length} Companies`}
+                    : `${notif.recipientCompanyIds.length} Companies`}
                 </TableCell>
+
                 <TableCell>{notif.priority || "Normal"}</TableCell>
+
                 <TableCell>
-                  {notif.sentAt ? new Date(notif.sentAt).toLocaleString() : "—"}
+                  {notif.sentAt
+                    ? `Sent • ${new Date(notif.sentAt).toLocaleString()}`
+                    : notif.scheduledAt
+                      ? `Scheduled • ${new Date(
+                          notif.scheduledAt
+                        ).toLocaleString()}`
+                      : "Draft"}
                 </TableCell>
+                <TableCell>
+  <Chip
+    size="small"
+    label={
+      status === "sent"
+        ? "Sent"
+        : status === "scheduled"
+        ? "Scheduled"
+        : "Draft"
+    }
+    color={
+      status === "sent"
+        ? "success"
+        : status === "scheduled"
+        ? "warning"
+        : "default"
+    }
+  />
+</TableCell>
 
                 <TableCell className="actions-cell">
                   <Button
                     size="small"
                     variant="contained"
-                    className="btn-view"
                     onClick={() => {
                       setSelectedNotif(notif);
                       setModalOpen(true);
@@ -123,26 +159,35 @@ useEffect(() => {
                   >
                     View
                   </Button>
+
                   <Button
                     size="small"
                     variant="outlined"
-                    className="btn-resend"
+                    disabled={!notif.sentAt}
                     onClick={async () => {
                       await resendSystemNotification({
                         notificationId: notif.id,
-                        sendEmail: true, // optional toggle later
+                        sendEmail: true,
                       });
                     }}
                   >
                     Resend
                   </Button>
                 </TableCell>
+
                 <TableCell>
                   <Button
                     size="small"
                     color="error"
                     variant="contained"
                     onClick={async () => {
+                      if (notif.scheduledAt && !notif.sentAt) {
+                        const ok = window.confirm(
+                          "This notification is scheduled but not yet sent. Delete it?"
+                        );
+                        if (!ok) return;
+                      }
+
                       await deleteSystemNotification({
                         notificationId: notif.id,
                       });
@@ -155,6 +200,7 @@ useEffect(() => {
             ))}
           </TableBody>
         </Table>
+
         <ViewDeveloperNotification
           open={modalOpen}
           onClose={() => setModalOpen(false)}

@@ -10,10 +10,7 @@ import {
   Stack,
   Chip,
 } from "@mui/material";
-import {
-  CompanyWithUsersAndId,
-  UserType,
-} from "../../utils/types";
+import { CompanyWithUsersAndId, UserType } from "../../utils/types";
 
 interface Props {
   open: boolean;
@@ -23,6 +20,7 @@ interface Props {
   title: string;
   message: string;
   priority?: string;
+  scheduledAt?: Date | null;
 
   recipientCompanyIds: string[];
   recipientUserIds: string[];
@@ -39,6 +37,7 @@ const DeveloperNotificationPreviewModal: React.FC<Props> = ({
   title,
   message,
   priority,
+  scheduledAt,
   recipientCompanyIds,
   recipientUserIds,
   recipientRoles,
@@ -83,26 +82,40 @@ const DeveloperNotificationPreviewModal: React.FC<Props> = ({
 
   const resolved = resolveRecipients();
 
+  const deliveryLabel = scheduledAt
+    ? `Scheduled for ${scheduledAt.toLocaleString()}`
+    : "Send immediately";
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>🔍 Preview Notification (Dry Run)</DialogTitle>
+      <DialogTitle>🔍 Preview Notification</DialogTitle>
 
       <DialogContent dividers>
+        {/* Meta */}
         <Typography variant="subtitle2" gutterBottom>
           Priority: {priority ?? "normal"}
         </Typography>
+        <Typography variant="subtitle2" gutterBottom>
+          Delivery: {deliveryLabel}
+        </Typography>
 
-        <Typography variant="h6">{title}</Typography>
+        {/* Content */}
+        <Typography variant="h6" sx={{ mt: 1 }}>
+          {title}
+        </Typography>
         <Typography variant="body1" paragraph>
           {message}
         </Typography>
 
+        {/* Channels */}
         <Stack direction="row" spacing={1} mb={2}>
           <Chip label="In-App" />
           {sendEmail && <Chip label="Email" />}
+          {scheduledAt && <Chip color="info" label="Scheduled" />}
           <Chip color="warning" label="Dry Run" />
         </Stack>
 
+        {/* Audience */}
         <Typography variant="h6" gutterBottom>
           Intended Recipients
         </Typography>
@@ -129,12 +142,8 @@ const DeveloperNotificationPreviewModal: React.FC<Props> = ({
         <Button onClick={onClose} variant="outlined">
           Cancel
         </Button>
-        <Button
-          onClick={onConfirmSend}
-          variant="contained"
-          color="primary"
-        >
-          Send for Real
+        <Button onClick={onConfirmSend} variant="contained" color="primary">
+          {scheduledAt ? "Schedule Notification" : "Send Now"}
         </Button>
       </DialogActions>
     </Dialog>

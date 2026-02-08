@@ -1,22 +1,21 @@
 // Pages/NotificationsPage.tsx
-import React, { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import "./notificationsPage.css";
 import { RootState, useAppDispatch } from "../../utils/store";
 import {
-  markAsRead,
   selectNotifications,
 } from "../../Slices/notificationsSlice";
 import NotificationItem from "../Notifications/NotificationItem";
 import { useNavigate } from "react-router-dom";
 // import { markAllNotificationsRead } from "../Slices/notificationsSlice"; // <-- Create this thunk
 import ViewNotificationModal from "../Notifications/ViewNotificationModal";
-import { NotificationType } from "../../utils/types";
 import {
   markNotificationRead,
   removeNotification,
 } from "../../thunks/notificationsThunks";
 import PostViewerModal from "../PostViewerModal";
+import { UserNotificationType } from "../../utils/types";
 
 const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,36 +24,34 @@ const NotificationsPage: React.FC = () => {
   const appReady = useSelector((state: RootState) => state.app.appReady);
 
   const notifications = useSelector(selectNotifications);
-  const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
-    null
-  );
+  const [selectedNotif, setSelectedNotif] =
+    useState<UserNotificationType | null>(null);
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
 
-if (!currentUser || !appReady) {
-  return <div className="page-loading">Loading notifications…</div>;
-}
+  if (!currentUser || !appReady) {
+    return <div className="page-loading">Loading notifications…</div>;
+  }
 
-  console.log('notifications page')
-//   useEffect(() => {
-//   // Only redirect if we KNOW notifications have loaded
-//   if (!currentUser) return;
+  console.log("notifications page");
+  //   useEffect(() => {
+  //   // Only redirect if we KNOW notifications have loaded
+  //   if (!currentUser) return;
 
-//   if (notifications.length === 0) {
-//     // give hydration time on cold start
-//     const t = setTimeout(() => {
-//       if (notifications.length === 0) {
-//         navigate("/");
-//       }
-//     }, 500);
+  //   if (notifications.length === 0) {
+  //     // give hydration time on cold start
+  //     const t = setTimeout(() => {
+  //       if (notifications.length === 0) {
+  //         navigate("/");
+  //       }
+  //     }, 500);
 
-//     return () => clearTimeout(t);
-//   }
-// }, [notifications, currentUser, navigate]);
-
+  //     return () => clearTimeout(t);
+  //   }
+  // }, [notifications, currentUser, navigate]);
 
   const handleMarkAllRead = () => {
     notifications.forEach((notif) => {
-      if (!notif.readBy?.includes(currentUser.uid)) {
+      if (!notif.readAt) {
         dispatch(
           markNotificationRead({
             notificationId: notif.id,
@@ -96,9 +93,8 @@ if (!currentUser || !appReady) {
             <NotificationItem
               key={notif.id}
               notification={notif}
-              currentUserId={currentUser.uid}
-              onClick={() => {
-                if (!notif.readBy?.includes(currentUser.uid)) {
+              onOpen={() => {
+                if (!notif.readAt) {
                   dispatch(
                     markNotificationRead({
                       notificationId: notif.id,

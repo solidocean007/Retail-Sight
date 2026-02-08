@@ -5,15 +5,9 @@ import "./notifications/notification-item.css";
 
 interface NotificationItemProps {
   notification: UserNotificationType;
-  onOpen?: () => void;     // mark read + open
-  onDelete?: () => void;   // delete after read
+  onOpen?: () => void; // mark read + open
+  onDelete?: () => void; // delete after read
 }
-
-const toDate = (value: any): Date => {
-  if (!value) return new Date();
-  if (typeof value.toDate === "function") return value.toDate();
-  return new Date(value);
-};
 
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
@@ -49,18 +43,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     // Swipe left → open / mark read
     if (diff < -50 && !isRead) {
       setDismissed(true);
-      setTimeout(() => {
-        onOpen?.();
-      }, 250);
+      setTimeout(() => onOpen?.(), 250);
     }
 
     // Swipe right → delete (read only)
-    if (diff > 50) {
-      if (!isRead) return;
+    if (diff > 50 && isRead) {
       setDismissed(true);
-      setTimeout(() => {
-        onDelete?.();
-      }, 250);
+      setTimeout(() => onDelete?.(), 250);
     }
   };
 
@@ -70,7 +59,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         isRead ? "read" : "unread"
       } ${dismissed ? "dismissed" : ""}`}
       onClick={() => {
-        if (!didSwipe.current) {
+        if (!didSwipe.current && !isRead) {
           onOpen?.();
         }
       }}
@@ -79,24 +68,16 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       style={{ cursor: "pointer" }}
     >
       <div className="notification-content">
-        <div className="notification-title">
-          {notification.title}
-        </div>
+        <div className="notification-title">{notification.title}</div>
 
-        <p
-          className={`notification-body ${
-            !isRead ? "truncated" : ""
-          }`}
-        >
+        <p className={`notification-body ${!isRead ? "truncated" : ""}`}>
           {notification.message}
         </p>
 
-        {!isRead && (
-          <div className="swipe-tip">Swipe to manage</div>
-        )}
+        {!isRead && <div className="swipe-tip">Swipe to manage</div>}
 
         <div className="notification-timestamp">
-          {toDate(notification.createdAt).toLocaleString()}
+          {notification.createdAt.toLocaleString()}
         </div>
       </div>
 
