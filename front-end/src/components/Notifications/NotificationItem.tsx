@@ -1,14 +1,12 @@
 // components/Notifications/NotificationItem.tsx
 import React, { useRef, useState } from "react";
-import { NotificationType } from "../../utils/types";
+import { UserNotificationType } from "../../utils/types";
 import "./notifications/notification-item.css";
 
 interface NotificationItemProps {
-  notification: NotificationType;
-  currentUserId: string;
-  onClick?: () => void;
-  openPostViewer?: () => void;
-  onDelete?: () => void; // 👈 add this
+  notification: UserNotificationType;
+  onOpen?: () => void;     // mark read + open
+  onDelete?: () => void;   // delete after read
 }
 
 const toDate = (value: any): Date => {
@@ -19,13 +17,11 @@ const toDate = (value: any): Date => {
 
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
-  currentUserId,
-  onClick,
+  onOpen,
   onDelete,
 }) => {
-  const isUnread = !notification.readBy?.includes(currentUserId);
+  const isRead = Boolean(notification.readAt);
   const [dismissed, setDismissed] = useState(false);
-  const priorityClass = notification.priority?.toLowerCase() || "normal";
 
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
@@ -42,7 +38,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     touchEndX.current = e.changedTouches[0].screenX;
-    if (touchStartX.current === null || touchEndX.current === null) return;
+    if (touchStartX.current == null || touchEndX.current == null) return;
 
     const diff = touchEndX.current - touchStartX.current;
 
@@ -50,65 +46,61 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       didSwipe.current = true;
     }
 
-    if (diff < -50) {
-      // Swipe left → Mark read only
-      if (isUnread) {
-        setDismissed(true);
-        setTimeout(() => {
-          onClick?.(); // mark read happens in parent
-        }, 300);
-      }
+    // Swipe left → open / mark read
+    if (diff < -50 && !isRead) {
+      setDismissed(true);
+      setTimeout(() => {
+        onOpen?.();
+      }, 250);
     }
 
+    // Swipe right → delete (read only)
     if (diff > 50) {
-      // Swipe right → Delete (read only)
-      if (isUnread) {
-        alert("Mark as read before deleting.");
-        return;
-      }
-
+      if (!isRead) return;
       setDismissed(true);
       setTimeout(() => {
         onDelete?.();
-      }, 300);
+      }, 250);
     }
   };
 
   return (
     <div
-      className={`notification-item ${priorityClass} ${
-        isUnread ? "unread" : "read"
+      className={`notification-item ${
+        isRead ? "read" : "unread"
       } ${dismissed ? "dismissed" : ""}`}
       onClick={() => {
-        if (!didSwipe.current) onClick?.();
+        if (!didSwipe.current) {
+          onOpen?.();
+        }
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      style={{ cursor: "pointer" }} // 👈 Add this
+      style={{ cursor: "pointer" }}
     >
-      <div>
-        <div className="notification-title">{notification.title}</div>
-        <div className="notification-message">{notification.message}</div>
-        {isUnread && <div className="swipe-tip">Swipe to manage</div>}
-
-        <div className="notification-timestamp">
-          {toDate(notification.sentAt).toLocaleString()}
+      <div className="notification-content">
+        <div className="notification-title">
+          {notification.title}
         </div>
 
-        {notification.postId && (
-          <button
-            className="button-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onClick) onClick();
-            }}
-          >
-            View Post
-          </button>
+        <p
+          className={`notification-body ${
+            !isRead ? "truncated" : ""
+          }`}
+        >
+          {notification.message}
+        </p>
+
+        {!isRead && (
+          <div className="swipe-tip">Swipe to manage</div>
         )}
+
+        <div className="notification-timestamp">
+          {toDate(notification.createdAt).toLocaleString()}
+        </div>
       </div>
 
-      {!isTouchDevice && !isUnread && onDelete && (
+      {!isTouchDevice && isRead && onDelete && (
         <button
           className="notification-delete-btn"
           onClick={(e) => {

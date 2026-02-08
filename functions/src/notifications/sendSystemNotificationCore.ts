@@ -9,31 +9,44 @@ type SendSystemNotificationInput = {
   recipientUserIds?: string[];
   recipientCompanyIds?: string[];
   recipientRoles?: string[];
-
   sendEmail?: boolean;
+  systemNotificationId?: string; // optional traceability
   dryRun?: boolean;
 };
 
 /**
  * sendSystemNotificationCore
  *
- * Shared backend helper that handles ALL system-level notification delivery.
- * This function is intentionally framework-agnostic and contains no HTTP,
- * auth, or Cloud Function trigger logic.
+ * Shared backend helper that fans out a system notification
+ * to user inboxes.
+ *
+ * This function is intentionally framework-agnostic and contains
+ * no HTTP, auth, scheduling, push, or email logic.
  *
  * Responsibilities:
- * - Resolve recipient users by explicit IDs and/or company + role
- * - Create a system notification artifact in `/notifications`
- * - Fan out user inbox notifications under `/users/{uid}/notifications`
- * - Optionally enqueue transactional emails via the `mail` collection
+ * - Resolve recipient users by:
+ *   - explicit user IDs
+ *   - company IDs with optional role filtering
+ * - Fan out per-user notification documents under:
+ *   `/users/{uid}/notifications/{notificationId}`
+ * - Record in-app delivery via `deliveredVia.inApp`
+ *
+ * Explicitly DOES NOT:
+ * - Send push notifications
+ * - Send emails
+ * - Write to any top-level notifications collection
+ * - Mutate read state
+ * - Perform auth or permission checks
  *
  * This function is used by:
- * - sendSystemNotification (callable CF)
- * - resendSystemNotification (callable CF)
+ * - Immediate system notification senders
+ * - Scheduled notification processors
+ * - Resend workflows
  *
  * IMPORTANT:
  * - UI must never call this directly
- * - Auth and permission checks must happen in the caller
+ * - Auth, role checks, and scheduling decisions
+ *   must occur in the caller
  *
  * @param input - Notification payload and targeting instructions
  * @param input.title - Notification title shown to users
@@ -41,10 +54,12 @@ type SendSystemNotificationInput = {
  * @param input.recipientUserIds - Explicit user IDs to notify
  * @param input.recipientCompanyIds - Company IDs whose users should be notified
  * @param input.recipientRoles - Optional role filter when targeting companies
- * @param input.sendEmail - Whether to enqueue transactional emails
+ * @param input.sendEmail - Intent flag only (not acted on here)
+ * @param input.systemNotificationId - Optional ID used to generate
+ *        deterministic per-user notification IDs
  * @param input.dryRun - If true, resolves recipients but performs no writes
  *
- * @returns Result metadata including recipient count and notification ID
+ * @returns Result metadata including recipient count
  */
 export async function sendSystemNotificationCore(
   input: SendSystemNotificationInput
@@ -55,13 +70,13 @@ export async function sendSystemNotificationCore(
     recipientUserIds = [],
     recipientCompanyIds = [],
     recipientRoles = [],
-    sendEmail = false,
+    systemNotificationId,
     dryRun = false,
   } = input;
 
-  // ----------------------------------
+  // -------------------------------
   // Resolve recipients
-  // ----------------------------------
+  // -------------------------------
   const users = new Map<string, any>();
 
   recipientUserIds.forEach((uid) => users.set(uid, null));
@@ -88,69 +103,42 @@ export async function sendSystemNotificationCore(
     return {
       dryRun: true,
       recipients: users.size,
-      sendEmail,
     };
   }
 
-  // ----------------------------------
-  // Write system notification artifact
-  // ----------------------------------
-  const notifRef = db.collection("notifications").doc();
-
-  await notifRef.set({
-    id: notifRef.id,
-    title,
-    message,
-    type: "system",
-    sentAt: admin.firestore.FieldValue.serverTimestamp(),
-    recipientUserIds,
-    recipientCompanyIds,
-    recipientRoles,
-  });
-
-  // ----------------------------------
-  // Fan-out user notifications
-  // ----------------------------------
+  // -------------------------------
+  // Fan out user notifications
+  // -------------------------------
   const batch = db.batch();
   const now = admin.firestore.FieldValue.serverTimestamp();
 
   users.forEach((_u, uid) => {
-    const ref = db.collection(`users/${uid}/notifications`).doc();
+    const notificationId = systemNotificationId
+      ? `${systemNotificationId}_${uid}`
+      : db.collection("_").doc().id;
+
+    const ref = db.doc(`users/${uid}/notifications/${notificationId}`);
+
     batch.set(ref, {
-      id: ref.id,
+      id: notificationId,
+      userId: uid,
+
       title,
       message,
       type: "system",
-      sentAt: now,
-      readBy: [],
+
+      createdAt: now,
+
+      deliveredVia: {
+        inApp: now,
+      },
     });
   });
 
   await batch.commit();
 
-  // ----------------------------------
-  // Optional email fan-out
-  // ----------------------------------
-  if (sendEmail) {
-    for (const [uid, cached] of users.entries()) {
-      const user = cached ?? (await db.doc(`users/${uid}`).get()).data();
-
-      if (!user?.email || user.emailOptOut) continue;
-
-      await db.collection("mail").add({
-        to: user.email,
-        category: "transactional",
-        message: {
-          subject: title,
-          text: message,
-        },
-      });
-    }
-  }
-
   return {
     success: true,
-    notificationId: notifRef.id,
     recipients: users.size,
   };
 }

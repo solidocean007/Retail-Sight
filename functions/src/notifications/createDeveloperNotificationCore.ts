@@ -11,6 +11,7 @@ type CreateDeveloperNotificationInput = {
   recipientUserIds?: string[];
 
   sendEmail?: boolean;
+  scheduledAt?: admin.firestore.Timestamp | null;
   dryRun?: boolean;
 };
 
@@ -58,6 +59,7 @@ export async function createDeveloperNotificationCore(
     recipientCompanyIds,
     recipientUserIds,
     sendEmail = false,
+    scheduledAt,
     dryRun = false,
   } = input;
 
@@ -90,7 +92,8 @@ export async function createDeveloperNotificationCore(
     recipientUserIds: recipientUserIds ?? [],
 
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    sentAt: admin.firestore.FieldValue.serverTimestamp(),
+    scheduledAt: scheduledAt ?? null,
+    sentAt: null, // ← important
 
     createdBy: {
       uid: createdBy.uid,

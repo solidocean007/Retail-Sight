@@ -61,13 +61,13 @@ import {
 
 // Notification system
 import { onUserNotificationCreated } from "./notifications/onUserNotificationCreated";
-import { sendNotificationToUser } from "./notifications/sendNotificationToUser";
 import { syncPlanLimits } from "./braintreeHelpers";
 import { sendSystemNotification } from "./notifications/sendSystemNotification";
 import { resendSystemNotification } from "./notifications/resendSystemNotification";
 import { deleteSystemNotification } from "./notifications/deleteSystemNotification";
 import { createDeveloperNotificationCore } from "./notifications/createDeveloperNotificationCore";
 import { createDeveloperNotification } from "./notifications/createDeveloperNotification";
+import { processScheduledDeveloperNotifications } from "./notifications/processScheduledDeveloperNotifications";
 
 export {
   getExternalApiKeyStatus,
@@ -130,7 +130,6 @@ export {
 
   // Notifications
   onUserNotificationCreated,
-  sendNotificationToUser,
   supervisorDisplayAlert,
   sendTestPush,
   analyzePostImages,
@@ -139,4 +138,5 @@ export {
   deleteSystemNotification,
   createDeveloperNotificationCore,
   createDeveloperNotification,
+  processScheduledDeveloperNotifications,
 };

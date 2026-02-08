@@ -3,18 +3,10 @@ import { useSelector } from "react-redux";
 import "./dashboard.css";
 import React, { useEffect, useState } from "react";
 import { selectUser } from "../../Slices/userSlice.ts";
-import {
-  DashboardModeType,
-} from "../../utils/types.ts";
+import { DashboardModeType } from "../../utils/types.ts";
 import "./dashboard.css";
 import { DashboardHelmet } from "../../utils/helmetConfigurations.tsx";
-import {
-  AppBar,
-  Box,
-  IconButton,
-  Toolbar,
-  useMediaQuery,
-} from "@mui/material";
+import { AppBar, Box, IconButton, Toolbar, useMediaQuery } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import UserProfileViewer from "../UserProfileViewer.tsx";
 import CollectionsViewer from "../CollectionsViewer.tsx";
@@ -30,6 +22,7 @@ import MyAccounts from "../MyAccounts.tsx";
 import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.tsx";
 import NotificationSettingsPanel from "../Notifications/NotificationSettingsPanel.tsx";
 import IntegrationsView from "./IntegrationsView.tsx";
+import { ComingSoonCard } from "../ComingSoonCard.tsx";
 
 const ADMIN_MODES: DashboardModeType[] = [
   "ConnectionsMode",
@@ -39,8 +32,8 @@ const ADMIN_MODES: DashboardModeType[] = [
   "UsersMode2",
   "GoalManagerMode",
   "IntegrationsMode",
+  "AnnouncementsMode",
 ];
-
 
 export const Dashboard = () => {
   const isLargeScreen = useMediaQuery("(min-width: 768px)");
@@ -71,21 +64,22 @@ export const Dashboard = () => {
   const [_screenWidth, setScreenWidth] = useState(window.innerWidth);
 
   useEffect(() => {
-  const savedMode = sessionStorage.getItem("dashboardMode") as DashboardModeType;
+    const savedMode = sessionStorage.getItem(
+      "dashboardMode",
+    ) as DashboardModeType;
 
-  if (savedMode) {
-    if (!canAccessAdmin && ADMIN_MODES.includes(savedMode)) {
-      setDashboardMode("MyGoalsMode");
-      setSelectedMode("MyGoalsMode");
-    } else {
-      setDashboardMode(savedMode);
-      setSelectedMode(savedMode);
+    if (savedMode) {
+      if (!canAccessAdmin && ADMIN_MODES.includes(savedMode)) {
+        setDashboardMode("MyGoalsMode");
+        setSelectedMode("MyGoalsMode");
+      } else {
+        setDashboardMode(savedMode);
+        setSelectedMode(savedMode);
+      }
+
+      sessionStorage.removeItem("dashboardMode");
     }
-
-    sessionStorage.removeItem("dashboardMode");
-  }
-}, [canAccessAdmin]);
-
+  }, [canAccessAdmin]);
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -170,6 +164,12 @@ export const Dashboard = () => {
           height: "100%",
         }}
       >
+        {dashboardMode === "AnnouncementsMode" && (
+          <ComingSoonCard
+            title="Announcements"
+            description="Create and schedule announcements for your team."
+          />
+        )}
         {dashboardMode === "ConnectionsMode" && (
           <CompanyConnectionsManager currentCompanyId={companyId} user={user} />
         )}

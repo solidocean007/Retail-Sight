@@ -11,15 +11,16 @@ export type NotificationCategory =
 
 export type PriorityType = "high" | "normal" | "low";
 
-export interface NotificationType  {
+export interface SystemNotificationType  {
   id: string;
   title: string;
   message: string;
-  sentAt: Timestamp;
+
+  createdAt: Timestamp;
+  sentAt?: Timestamp;
   scheduledAt?: Timestamp | null;
 
   sentBy: UserType | "system";
-  postId?: string;
 
   // 🧠 New fields for clearer targeting
   recipientUserIds?: string[];
@@ -32,12 +33,43 @@ export interface NotificationType  {
   relatedGoalId?: string;
   relatedAccountNumber?: string; // optional tie to a store/account
 
-  readBy: string[];
-  pinned: boolean;
   priority: PriorityType;
   type?: NotificationCategory;
-  commentId?: string;
+  pinned?: boolean;
 };
+
+type NotificationDeliveryChannel =
+  | "inApp"
+  | "push"
+  | "email"
+  | "sms";
+
+
+export interface UserNotificationType {
+  id: string;
+  systemNotificationId?: string;
+
+  userId: string;
+
+  title: string;
+  message: string;
+  link?: string;
+
+  createdAt: Timestamp;
+
+  // read / interaction
+  readAt?: Timestamp;
+  interactedAt?: Timestamp;
+
+  // delivery tracking
+  deliveredVia?: Partial<Record<NotificationDeliveryChannel, Timestamp>>;
+
+  pinned?: boolean;
+  priority: PriorityType;
+  type?: NotificationCategory;
+}
+
+
 
 // utils/types.ts
 export type DeveloperNotificationType = {
@@ -775,4 +807,5 @@ export type DashboardModeType =
   | "GoalManagerMode"
   | "ApiMode"
   | "CollectionsMode"
-  | "TutorialMode";
+  | "TutorialMode"
+  | "AnnouncementsMode";

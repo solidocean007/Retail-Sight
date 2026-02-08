@@ -24,8 +24,9 @@ export const sendSystemNotification = onCall(
       .doc(`users/${request.auth.uid}`)
       .get();
 
-    if (callerSnap.data()?.role !== "admin") {
-      throw new HttpsError("permission-denied", "Admins only");
+    const role = callerSnap.data()?.role;
+    if (!["developer", "super-admin"].includes(role)) {
+      throw new HttpsError("permission-denied", "Developer only");
     }
 
     return await sendSystemNotificationCore(request.data);

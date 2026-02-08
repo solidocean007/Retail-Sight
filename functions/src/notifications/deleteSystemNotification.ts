@@ -24,24 +24,37 @@ export const deleteSystemNotification = onCall(
 
     const callerSnap = await db.doc(`users/${auth.uid}`).get();
     const caller = callerSnap.data();
+
     if (
       !caller ||
       !["admin", "developer", "super-admin"].includes(caller.role)
     ) {
       throw new HttpsError(
         "permission-denied",
-        "Admins, developer or super-admin only"
+        "Admins, developer, or super-admin only"
       );
     }
 
-    const ref = db.collection("notifications").doc(notificationId);
+    const ref = db.collection("developerNotifications").doc(notificationId);
+
     const snap = await ref.get();
 
     if (!snap.exists) {
-      throw new HttpsError("not-found", "Notification not found");
+      return {
+        success: true,
+        alreadyDeleted: true,
+        notificationId,
+      };
     }
 
+    // Hard delete (simple + fine for now)
     await ref.delete();
+
+    // OR soft delete (optional)
+    // await ref.update({
+    //   deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+    //   deletedBy: auth.uid,
+    // });
 
     return {
       success: true,

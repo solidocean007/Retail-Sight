@@ -24,12 +24,13 @@ export const resendSystemNotification = onCall(
     }
 
     const callerSnap = await db.doc(`users/${auth.uid}`).get();
-    if (callerSnap.data()?.role !== "admin") {
+    const role = callerSnap.data()?.role;
+    if (!["admin", "developer", "super-admin"].includes(role)) {
       throw new HttpsError("permission-denied", "Admins only");
     }
 
     const notifSnap = await db
-      .collection("notifications")
+      .collection("developerNotifications")
       .doc(notificationId)
       .get();
 

@@ -7,6 +7,7 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 const db = admin.firestore();
+
 export const createDeveloperNotification = onCall(
   { cors: true },
   async (request) => {
@@ -34,19 +35,32 @@ export const createDeveloperNotification = onCall(
       };
     }
 
-    // 3️⃣ Deliver ONLY on confirm
+    // 3️⃣ Decide if delivery should happen now
+    const shouldSendNow =
+      !input.scheduledAt || input.scheduledAt.toMillis() <= Date.now();
+
+    if (!shouldSendNow) {
+      return {
+        success: true,
+        scheduled: true,
+        developerNotificationId: devResult.developerNotificationId,
+      };
+    }
+
+    // 4️⃣ Deliver immediately
     await sendSystemNotificationCore({
       title: input.title,
       message: input.message,
       recipientUserIds: input.recipientUserIds ?? [],
       recipientCompanyIds: input.recipientCompanyIds?.includes("all")
-        ? [] // means global
+        ? [] // global
         : (input.recipientCompanyIds ?? []),
       sendEmail: input.sendEmail,
     });
 
     return {
       success: true,
+      delivered: true,
       developerNotificationId: devResult.developerNotificationId,
     };
   }

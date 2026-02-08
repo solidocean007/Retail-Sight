@@ -57,10 +57,10 @@ const DashMenu = ({
     role === "admin" || role === "super-admin" || role === "developer";
 
   const companyPlan = useSelector(
-    (state: any) => state.currentCompany?.billing?.plan
+    (state: any) => state.currentCompany?.billing?.plan,
   );
   const connectionCount = useSelector(
-    (state: any) => state.currentCompany?.connectionCount
+    (state: any) => state.currentCompany?.connectionCount,
   );
 
   // Example condition: show banner if company is free or near limit
@@ -140,6 +140,14 @@ const DashMenu = ({
               Admin
             </Typography>
 
+            <ListItemButton
+              selected={selectedMode === "AnnouncementsMode"}
+              onClick={() => onMenuClick("AnnouncementsMode")}
+            >
+              <NotificationAdd sx={{ mr: 1 }} />
+
+              <ListItemText primary="Announcements" />
+            </ListItemButton>
             <ListItemButton
               selected={selectedMode === "ConnectionsMode"}
               onClick={() => onMenuClick("ConnectionsMode")}
