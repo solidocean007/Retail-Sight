@@ -35,7 +35,7 @@ const DeveloperNotificationsTable: React.FC<
   const functions = getFunctions();
 
   const { items, loading, error } = useSelector(
-    (state: RootState) => state.developerNotifications
+    (state: RootState) => state.developerNotifications,
   );
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
@@ -52,7 +52,7 @@ const DeveloperNotificationsTable: React.FC<
   }, [dispatch, currentUser?.role]);
 
   const filteredNotifications = items.filter((n) =>
-    (n.title ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+    (n.title ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (loading) {
@@ -69,14 +69,13 @@ const DeveloperNotificationsTable: React.FC<
 
   const resendSystemNotification = httpsCallable(
     functions,
-    "resendSystemNotification"
+    "resendSystemNotification",
   );
 
   const deleteSystemNotification = httpsCallable(
     functions,
-    "deleteSystemNotification"
+    "deleteSystemNotification",
   );
-
 
   return (
     <div className="notifications-table-container">
@@ -105,99 +104,92 @@ const DeveloperNotificationsTable: React.FC<
           </TableHead>
 
           <TableBody>
-            {filteredNotifications.map((notif) => (
-  const status = getNotificationStatus(notif);
+            {filteredNotifications.map((notif) => {
+              const status = getNotificationStatus(notif);
 
-              <TableRow key={notif.id} hover className="table-row">
-                <TableCell>{notif.title}</TableCell>
+              return (
+                <TableRow key={notif.id} hover className="table-row">
+                  <TableCell>{notif.title}</TableCell>
 
-                <TableCell>
-                  {!notif.recipientCompanyIds?.length
-                    ? "All Companies"
-                    : `${notif.recipientCompanyIds.length} Companies`}
-                </TableCell>
+                  <TableCell>
+                    {!notif.recipientCompanyIds?.length
+                      ? "All Companies"
+                      : `${notif.recipientCompanyIds.length} Companies`}
+                  </TableCell>
 
-                <TableCell>{notif.priority || "Normal"}</TableCell>
+                  <TableCell>{notif.priority || "Normal"}</TableCell>
 
-                <TableCell>
-                  {notif.sentAt
-                    ? `Sent • ${new Date(notif.sentAt).toLocaleString()}`
-                    : notif.scheduledAt
-                      ? `Scheduled • ${new Date(
-                          notif.scheduledAt
-                        ).toLocaleString()}`
-                      : "Draft"}
-                </TableCell>
-                <TableCell>
-  <Chip
-    size="small"
-    label={
-      status === "sent"
-        ? "Sent"
-        : status === "scheduled"
-        ? "Scheduled"
-        : "Draft"
-    }
-    color={
-      status === "sent"
-        ? "success"
-        : status === "scheduled"
-        ? "warning"
-        : "default"
-    }
-  />
-</TableCell>
-
-                <TableCell className="actions-cell">
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => {
-                      setSelectedNotif(notif);
-                      setModalOpen(true);
-                    }}
-                  >
-                    View
-                  </Button>
-
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    disabled={!notif.sentAt}
-                    onClick={async () => {
-                      await resendSystemNotification({
-                        notificationId: notif.id,
-                        sendEmail: true,
-                      });
-                    }}
-                  >
-                    Resend
-                  </Button>
-                </TableCell>
-
-                <TableCell>
-                  <Button
-                    size="small"
-                    color="error"
-                    variant="contained"
-                    onClick={async () => {
-                      if (notif.scheduledAt && !notif.sentAt) {
-                        const ok = window.confirm(
-                          "This notification is scheduled but not yet sent. Delete it?"
-                        );
-                        if (!ok) return;
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={
+                        status === "sent"
+                          ? "Sent"
+                          : status === "scheduled"
+                            ? "Scheduled"
+                            : "Draft"
                       }
+                      color={
+                        status === "sent"
+                          ? "success"
+                          : status === "scheduled"
+                            ? "warning"
+                            : "default"
+                      }
+                    />
+                  </TableCell>
 
-                      await deleteSystemNotification({
-                        notificationId: notif.id,
-                      });
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell className="actions-cell">
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => {
+                        setSelectedNotif(notif);
+                        setModalOpen(true);
+                      }}
+                    >
+                      View
+                    </Button>
+
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      disabled={status !== "sent"}
+                      onClick={async () => {
+                        await resendSystemNotification({
+                          notificationId: notif.id,
+                          sendEmail: true,
+                        });
+                      }}
+                    >
+                      Resend
+                    </Button>
+                  </TableCell>
+
+                  <TableCell>
+                    <Button
+                      size="small"
+                      color="error"
+                      variant="contained"
+                      onClick={async () => {
+                        if (status === "scheduled") {
+                          const ok = window.confirm(
+                            "This notification is scheduled but not yet sent. Delete it?",
+                          );
+                          if (!ok) return;
+                        }
+
+                        await deleteSystemNotification({
+                          notificationId: notif.id,
+                        });
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
 
