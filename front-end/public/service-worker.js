@@ -129,23 +129,27 @@ if (self.firebase?.initializeApp) {
   // -------------------------------------------------------
   // 5. BACKGROUND MESSAGE HANDLER
   // -------------------------------------------------------
-  messaging.onBackgroundMessage((payload) => {
-    const hasNative =
-      payload.notification || (payload.data && payload.data.title);
+ messaging.onBackgroundMessage((payload) => {
+  const title =
+    payload.notification?.title ||
+    payload.data?.title ||
+    "New Notification";
 
-    if (hasNative) return;
+  const body =
+    payload.notification?.body ||
+    payload.data?.body ||
+    "";
 
-    const title = payload.data?.title || "New Notification";
-    const body = payload.data?.body || "";
-    const link = payload.data?.link || "/notifications";
+  const link = payload.data?.link || "/notifications";
 
-    self.registration.showNotification(title, {
-      body,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      data: { link },
-    });
+  self.registration.showNotification(title, {
+    body,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    data: { link },
   });
+});
+
 
   // -------------------------------------------------------
   // 6. NOTIFICATION CLICK HANDLING
