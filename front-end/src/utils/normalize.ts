@@ -1,6 +1,6 @@
 // utils/normalize.ts
 import { Timestamp } from "firebase/firestore";
-import { UserNotificationType } from "./types";
+import { DeveloperNotificationType, UserNotificationType } from "./types";
 
 /** 🔁 Universal Firestore normalizer (Timestamp → ms) */
 export const normalizeFirestoreData = <T>(input: T): T => {
@@ -51,3 +51,37 @@ export const normalizePost = (raw: any, indexOrId?: string | number) => {
     ...data,
   };
 };
+
+const toISO = (v: any): string | null => {
+  if (!v) return null;
+  if (typeof v === "string") return v;
+  if (v instanceof Date) return v.toISOString();
+  if (v instanceof Timestamp) return v.toDate().toISOString();
+  if (typeof v?.toDate === "function") return v.toDate().toISOString();
+  return null;
+};
+
+export function normalizeDeveloperNotification(raw: any): DeveloperNotificationType {
+  return {
+    id: raw.id,
+    title: raw.title,
+    message: raw.message,
+    priority: raw.priority ?? "normal",
+
+    recipientCompanyIds: raw.recipientCompanyIds ?? [],
+    recipientUserIds: raw.recipientUserIds ?? [],
+    recipientRoles: raw.recipientRoles ?? [],
+
+    createdAt: toDate(raw.createdAt)?.toISOString() ?? null,
+    scheduledAt: toDate(raw.scheduledAt)?.toISOString() ?? null,
+    sentAt: toDate(raw.sentAt)?.toISOString() ?? null,
+
+    createdBy: raw.createdBy,
+    channels: raw.channels ?? { inApp: true, email: false },
+
+    audience:
+      raw.audience ??
+      (raw.recipientCompanyIds?.length ? "targeted" : "all"),
+  };
+}
+

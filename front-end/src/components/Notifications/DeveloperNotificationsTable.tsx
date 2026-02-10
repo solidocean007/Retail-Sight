@@ -23,6 +23,10 @@ import ViewDeveloperNotification from "./ViewDeveloperNotification";
 import { fetchDeveloperNotifications } from "../../thunks/developerNotificationsThunks";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getNotificationStatus } from "./utils/getNotificationStatus";
+import {
+  markDeveloperNotificationResent,
+  removeDeveloperNotification,
+} from "../../Slices/developerNotificationSlice";
 
 interface DeveloperNotificationsTableProps {
   allCompaniesAndUsers: CompanyWithUsersAndId[];
@@ -112,9 +116,15 @@ const DeveloperNotificationsTable: React.FC<
                   <TableCell>{notif.title}</TableCell>
 
                   <TableCell>
-                    {!notif.recipientCompanyIds?.length
-                      ? "All Companies"
-                      : `${notif.recipientCompanyIds.length} Companies`}
+                    {notif.recipientUserIds?.length
+                      ? `${notif.recipientUserIds.length} Direct User${
+                          notif.recipientUserIds.length !== 1 ? "s" : ""
+                        }`
+                      : notif.recipientCompanyIds?.length
+                        ? `${notif.recipientCompanyIds.length} Compan${
+                            notif.recipientCompanyIds.length !== 1 ? "ies" : "y"
+                          }`
+                        : "All Companies"}
                   </TableCell>
 
                   <TableCell>{notif.priority || "Normal"}</TableCell>
@@ -156,10 +166,21 @@ const DeveloperNotificationsTable: React.FC<
                       variant="outlined"
                       disabled={status !== "sent"}
                       onClick={async () => {
-                        await resendSystemNotification({
-                          notificationId: notif.id,
-                          sendEmail: true,
-                        });
+                        dispatch(
+                          markDeveloperNotificationResent({
+                            id: notif.id,
+                            sentAt: new Date().toISOString(),
+                          }),
+                        );
+
+                        try {
+                          await resendSystemNotification({
+                            notificationId: notif.id,
+                            sendEmail: true,
+                          });
+                        } catch {
+                          dispatch(fetchDeveloperNotifications());
+                        }
                       }}
                     >
                       Resend
@@ -179,9 +200,16 @@ const DeveloperNotificationsTable: React.FC<
                           if (!ok) return;
                         }
 
-                        await deleteSystemNotification({
-                          notificationId: notif.id,
-                        });
+                        dispatch(removeDeveloperNotification(notif.id));
+
+                        try {
+                          await deleteSystemNotification({
+                            notificationId: notif.id,
+                          });
+                        } catch (err) {
+                          // optional: refetch on failure
+                          dispatch(fetchDeveloperNotifications());
+                        }
                       }}
                     >
                       Delete

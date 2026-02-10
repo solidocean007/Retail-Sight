@@ -22,28 +22,42 @@ export const createDeveloperNotification = onCall(
 
     const input = request.data;
 
+    // ✅ Convert ONCE at the boundary
+    const scheduledAt =
+      typeof input.scheduledAt === "number"
+        ? admin.firestore.Timestamp.fromMillis(input.scheduledAt)
+        : null;
+
     // 1️⃣ Always record audit (or preview)
-    const devResult = await createDeveloperNotificationCore(input, {
-      uid: request.auth.uid,
-    });
+    const devResult = await createDeveloperNotificationCore(
+      {
+        ...input,
+        scheduledAt, // ✅ Firestore Timestamp or null
+      },
+      { uid: request.auth.uid }
+    );
+
+    const developerNotificationId = devResult.developerNotificationId;
+    if (!developerNotificationId) {
+      throw new Error("Missing developerNotificationId after creation");
+    }
 
     // 2️⃣ STOP HERE if dry-run
     if (input.dryRun) {
       return {
         dryRun: true,
-        developerNotificationId: devResult.developerNotificationId,
+        developerNotificationId,
       };
     }
 
     // 3️⃣ Decide if delivery should happen now
-    const shouldSendNow =
-      !input.scheduledAt || input.scheduledAt.toMillis() <= Date.now();
+    const shouldSendNow = !scheduledAt || scheduledAt.toMillis() <= Date.now();
 
     if (!shouldSendNow) {
       return {
         success: true,
         scheduled: true,
-        developerNotificationId: devResult.developerNotificationId,
+        developerNotificationId,
       };
     }
 
@@ -53,15 +67,23 @@ export const createDeveloperNotification = onCall(
       message: input.message,
       recipientUserIds: input.recipientUserIds ?? [],
       recipientCompanyIds: input.recipientCompanyIds?.includes("all")
-        ? [] // global
+        ? []
         : (input.recipientCompanyIds ?? []),
       sendEmail: input.sendEmail,
     });
 
+    // ✅ MARK AS SENT
+    await db
+      .collection("developerNotifications")
+      .doc(developerNotificationId)
+      .update({
+        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
     return {
       success: true,
       delivered: true,
-      developerNotificationId: devResult.developerNotificationId,
+      developerNotificationId,
     };
   }
 );

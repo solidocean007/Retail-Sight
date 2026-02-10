@@ -32,8 +32,21 @@ export const developerNotificationsSlice = createSlice({
       state.items.unshift(action.payload);
     },
 
+    // Slices/developerNotificationsSlice.ts
+
     removeDeveloperNotification(state, action: PayloadAction<string>) {
       state.items = state.items.filter((n) => n.id !== action.payload);
+    },
+
+    markDeveloperNotificationResent(
+      state,
+      action: PayloadAction<{ id: string; sentAt: string }>,
+    ) {
+      const n = state.items.find((i) => i.id === action.payload.id);
+      if (n) {
+        n.sentAt = action.payload.sentAt;
+        n.scheduledAt = null;
+      }
     },
 
     clearDeveloperNotifications(state) {
@@ -72,6 +85,7 @@ export const {
   setDeveloperNotifications,
   addDeveloperNotification,
   removeDeveloperNotification,
+  markDeveloperNotificationResent,
   clearDeveloperNotifications,
 } = developerNotificationsSlice.actions;
 

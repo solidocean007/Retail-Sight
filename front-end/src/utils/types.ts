@@ -11,7 +11,7 @@ export type NotificationCategory =
 
 export type PriorityType = "high" | "normal" | "low";
 
-export interface SystemNotificationType  {
+export interface SystemNotificationType {
   id: string;
   title: string;
   message: string;
@@ -36,14 +36,9 @@ export interface SystemNotificationType  {
   priority: PriorityType;
   type?: NotificationCategory;
   pinned?: boolean;
-};
+}
 
-type NotificationDeliveryChannel =
-  | "inApp"
-  | "push"
-  | "email"
-  | "sms";
-
+type NotificationDeliveryChannel = "inApp" | "push" | "email" | "sms";
 
 export interface UserNotificationType {
   id: string;
@@ -60,22 +55,17 @@ export interface UserNotificationType {
   goalId?: string;
   link?: string;
 
-  createdAt: Date;
-
-  // read / interaction
-  readAt?: Date;
-  interactedAt?: Date;
+  createdAt: string | null;
+  readAt?: string | null;
+  interactedAt?: string | null;
 
   // delivery tracking
-  deliveredVia?: Partial<Record<NotificationDeliveryChannel,
-    Date
-  >>;
+  deliveredVia?: Partial<Record<NotificationDeliveryChannel, Date>>;
 
   pinned?: boolean;
   priority: PriorityType;
   type?: NotificationCategory;
 }
-
 
 // utils/types.ts
 export type DeveloperNotificationType = {
@@ -83,7 +73,11 @@ export type DeveloperNotificationType = {
   title: string;
   message: string;
   priority: "low" | "normal" | "high";
-  recipientCompanyIds: string[] | ["all"];
+  recipientCompanyIds: string[];
+  audience: "all" | "targeted";
+
+  recipientUserIds?: string[];
+  recipientRoles?: string[];
 
   createdAt: string | null;
   sentAt: string | null;
@@ -94,12 +88,11 @@ export type DeveloperNotificationType = {
     role: "developer";
   };
 
-  channels: {
+  channels?: {
     inApp: boolean;
     email: boolean;
   };
 };
-
 
 export type BusinessType = "distributor" | "supplier";
 export type AccessStatus = "off" | "limited" | "on";
@@ -732,10 +725,9 @@ export type LifecycleFilter = "active" | "archived" | "disabled" | "all";
 
 export type GoalTimingState =
   | "scheduled" // not visible yet (displayDate in future)
-  | "upcoming"  // visible, but not started
-  | "current"   // live
+  | "upcoming" // visible, but not started
+  | "current" // live
   | "archived"; // ended
-
 
 export interface FireStoreGalloGoalDocType {
   lifeCycleStatus: LifecycleFilter;

@@ -3,6 +3,13 @@ import React, { useRef, useState } from "react";
 import { UserNotificationType } from "../../utils/types";
 import "./notifications/notification-item.css";
 
+const formatDate = (value?: string | null) => {
+  if (!value) return "—";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+};
+
+
 interface NotificationItemProps {
   notification: UserNotificationType;
   onOpen?: () => void; // mark read + open
@@ -77,7 +84,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         {!isRead && <div className="swipe-tip">Swipe to manage</div>}
 
         <div className="notification-timestamp">
-          {notification.createdAt.toLocaleString()}
+          {formatDate(notification.createdAt)}
         </div>
       </div>
 

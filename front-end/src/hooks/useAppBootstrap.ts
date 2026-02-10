@@ -30,6 +30,7 @@ import { useGalloGoalsListener } from "./useGalloGoalsListener";
 import { useCompanyIntegrations } from "./useCompanyIntegrations";
 import { setupDeveloperNotificationsListener } from "../utils/listeners/setupDeveloperNotificationsListener";
 import { clearDeveloperNotifications } from "../Slices/developerNotificationSlice";
+import { useUserNotificationsListener } from "./useUserNotificationsListener";
 
 /**
  * useAppBootstrap – Option B
@@ -67,6 +68,8 @@ export function useAppBootstrap({
   // 🔄 Always call these (Rules of Hooks)
   //
   useSchemaVersion();
+  useUserNotificationsListener(currentUser);
+
 
   // 👥 Re-enable dependent sync hooks (required for full goal hydration)
   useCompanyProductsListener(companyId);
@@ -123,7 +126,6 @@ export function useAppBootstrap({
         if (companyId && currentUser) {
           dispatch(setLoadingMessage("Connecting live updates…"));
 
-          dispatch(setupNotificationListenersForUser(currentUser));
           dispatch(setupCompanyGoalsListener(companyId));
 
           if (currentUser?.role === "developer") {

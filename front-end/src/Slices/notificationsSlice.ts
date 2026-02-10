@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction, createSelector } from "@reduxjs/toolkit";
 import { UserNotificationType } from "../utils/types";
 import { RootState } from "../utils/store";
-import { Timestamp } from "firebase/firestore";
 
 interface NotificationsState {
   notifications: UserNotificationType[];
@@ -33,7 +32,7 @@ const notificationsSlice = createSlice({
     deleteNotification(state, action: PayloadAction<string>) {
       const id = action.payload;
       state.notifications = state.notifications.filter(
-        (n: UserNotificationType) => n.id !== id
+        (n: UserNotificationType) => n.id !== id,
       );
     },
     clearNotifications(state) {
@@ -43,16 +42,15 @@ const notificationsSlice = createSlice({
     },
     markAsReadLocal(
       state,
-      action: PayloadAction<{ notificationId: string; readAt: Date }>
+      action: PayloadAction<{ notificationId: string; readAt: string }>,
     ) {
       const notif = state.notifications.find(
-        (n) => n.id === action.payload.notificationId
+        (n) => n.id === action.payload.notificationId,
       );
       if (notif) {
         notif.readAt = action.payload.readAt;
       }
     },
-
     setLoading(state, action: PayloadAction<boolean>) {
       state.loading = action.payload;
     },
@@ -84,5 +82,5 @@ export const selectNotifications = (state: RootState) =>
 
 export const selectUnreadNotifications = createSelector(
   [selectNotifications],
-  (notifications) => notifications.filter((n) => !n.readAt)
+  (notifications) => notifications.filter((n) => !n.readAt),
 );

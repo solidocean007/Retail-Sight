@@ -16,14 +16,14 @@ import {
 } from "@mui/material";
 import {
   CompanyWithUsersAndId,
-  NotificationType,
+  DeveloperNotificationType,
   UserType,
 } from "../../utils/types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  notification: NotificationType | null;
+  notification: DeveloperNotificationType | null;
   allCompaniesAndUsers: CompanyWithUsersAndId[];
 }
 
@@ -61,7 +61,7 @@ const ViewDeveloperNotification: React.FC<Props> = ({
       .filter(
         (company) =>
           !recipientCompanyIds?.length ||
-          recipientCompanyIds.includes(company.id)
+          recipientCompanyIds.includes(company.id),
       )
       .map((company) => {
         const allUsers: UserType[] = [
@@ -76,14 +76,14 @@ const ViewDeveloperNotification: React.FC<Props> = ({
         // If explicit users were selected, filter to them
         if (recipientUserIds?.length) {
           targetedUsers = allUsers.filter((u) =>
-            recipientUserIds.includes(u.uid)
+            recipientUserIds.includes(u.uid),
           );
         }
 
         // If roles were selected, filter to them
         if (recipientRoles?.length) {
           targetedUsers = targetedUsers.filter((u) =>
-            recipientRoles.includes(u.role)
+            recipientRoles.includes(u.role),
           );
         }
 
@@ -136,18 +136,26 @@ const ViewDeveloperNotification: React.FC<Props> = ({
 
         {/* Audience summary */}
         <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-          {recipientCompanyIds?.length ? (
-            <Chip label={`${recipientCompanyIds.length} Companies`} />
+          {recipientUserIds?.length ? (
+            <Chip
+              color="primary"
+              label={`${recipientUserIds.length} Direct User${
+                recipientUserIds.length !== 1 ? "s" : ""
+              }`}
+            />
+          ) : recipientCompanyIds?.length ? (
+            <Chip
+              color="primary"
+              label={`${recipientCompanyIds.length} Compan${
+                recipientCompanyIds.length !== 1 ? "ies" : "y"
+              }`}
+            />
           ) : (
-            <Chip label="All Companies" />
+            <Chip color="primary" label="All Companies" />
           )}
 
           {recipientRoles?.length ? (
             <Chip label={`Roles: ${recipientRoles.join(", ")}`} />
-          ) : null}
-
-          {recipientUserIds?.length ? (
-            <Chip label={`${recipientUserIds.length} Direct Users`} />
           ) : null}
         </Stack>
 

@@ -20,15 +20,15 @@ export const fetchUserNotifications = createAsyncThunk(
   async (uid: string) => {
     const q = query(
       collection(db, `users/${uid}/notifications`),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
     );
 
     const snapshot = await getDocs(q);
 
     return snapshot.docs.map((docSnap) =>
-      normalizeUserNotification(docSnap.data() as UserNotificationType)
+      normalizeUserNotification(docSnap.data() as UserNotificationType),
     );
-  }
+  },
 );
 
 // -------------------------------------------------
@@ -45,9 +45,9 @@ export const markNotificationRead = createAsyncThunk(
 
     return {
       notificationId,
-      readAt: Timestamp.now(), // optimistic update
+      readAt: new Date().toISOString(),
     };
-  }
+  },
 );
 
 // -------------------------------------------------
@@ -63,5 +63,5 @@ export const removeNotification = createAsyncThunk(
     await deleteDoc(notifRef);
 
     return { notificationId };
-  }
+  },
 );

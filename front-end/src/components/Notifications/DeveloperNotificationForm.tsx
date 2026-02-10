@@ -12,8 +12,13 @@ import {
 } from "@mui/material";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../../utils/firebase";
+import { Timestamp } from "firebase/firestore";
 
-import { UserType, CompanyWithUsersAndId } from "../../utils/types";
+import {
+  UserType,
+  CompanyWithUsersAndId,
+  PriorityType,
+} from "../../utils/types";
 
 import NotificationAudienceBuilder from "./NotificationAudiencePicker";
 import DeveloperNotificationPreviewModal from "./DeveloperNotificationPreviewModal";
@@ -22,7 +27,7 @@ type MessageType = "announcement" | "tutorial";
 
 const createDeveloperNotification = httpsCallable(
   functions,
-  "createDeveloperNotification"
+  "createDeveloperNotification",
 );
 
 const DeveloperNotificationForm = ({
@@ -32,6 +37,7 @@ const DeveloperNotificationForm = ({
   allCompaniesAndUsers: CompanyWithUsersAndId[];
 }) => {
   const [messageType, setMessageType] = useState<MessageType>("announcement");
+  const [priority, setPriority] = useState<PriorityType>("normal");
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -49,43 +55,58 @@ const DeveloperNotificationForm = ({
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
 
+    const clearFormState =() => {
+      setMessageType("announcement");
+      setPriority("normal");
+      setTitle("");
+      setMessage("");
+      setTutorialUrl("");
+      setSendEmail(true);
+      setDryRun(false);
+      setPreviewOpen(false);
+      setAudienceCompanies([]);
+      setAudienceUsers([]);
+      setAudienceRoles([]);
+      setIsScheduled(false);
+      setScheduledAt(null);
+  }
+
   const payload = {
-  type: messageType,
-  title,
-  message,
-  tutorialUrl: messageType === "tutorial" ? tutorialUrl : undefined,
+    title,
+    message,
+    priority,
+    recipientCompanyIds: audienceCompanies.map((c) => c.id),
+    recipientUserIds: audienceUsers.map((u) => u.uid),
+    recipientRoles: audienceRoles,
+    sendEmail,
+    scheduledAt:
+      isScheduled && scheduledAt
+        ? scheduledAt.getTime() // number (ms)
+        : null,
+  };
 
-  recipientCompanyIds: audienceCompanies.map((c) => c.id),
-  recipientUserIds: audienceUsers.map((u) => u.uid),
-  recipientRoles: audienceRoles,
-
-  sendEmail,
-  scheduledAt: isScheduled && scheduledAt ? scheduledAt : null,
-};
 
 
   const handleSubmit = async () => {
     if (!title || !message) return;
     if (messageType === "tutorial" && !tutorialUrl) return;
     if (isScheduled && !scheduledAt) return;
-if (isScheduled && scheduledAt && scheduledAt.getTime() < Date.now()) return;
+    if (isScheduled && scheduledAt && scheduledAt.getTime() < Date.now())
+      return;
 
+    console.log(payload)
 
     if (dryRun) {
       setPreviewOpen(true);
       return;
     }
-
     await createDeveloperNotification({
       ...payload,
+      priority,
       dryRun: false,
     });
 
-    // reset
-    setTitle("");
-    setMessage("");
-    setTutorialUrl("");
-    setDryRun(false);
+    clearFormState();
   };
 
   const handleConfirmSend = async () => {
@@ -115,6 +136,18 @@ if (isScheduled && scheduledAt && scheduledAt.getTime() < Date.now()) return;
         >
           <MenuItem value="announcement">Announcement</MenuItem>
           <MenuItem value="tutorial">Tutorial</MenuItem>
+        </Select>
+      </FormControl>
+      <FormControl size="small" fullWidth sx={{ mb: 1 }}>
+        <InputLabel>Priority</InputLabel>
+        <Select
+          value={priority}
+          label="Priority"
+          onChange={(e) => setPriority(e.target.value as any)}
+        >
+          <MenuItem value="low">Low</MenuItem>
+          <MenuItem value="normal">Normal</MenuItem>
+          <MenuItem value="high">High (Push)</MenuItem>
         </Select>
       </FormControl>
 
@@ -200,7 +233,9 @@ if (isScheduled && scheduledAt && scheduledAt.getTime() < Date.now()) return;
             checked={isScheduled}
             onChange={(e) => {
               setIsScheduled(e.target.checked);
-              if (!e.target.checked) setScheduledAt(null);
+              if (!e.target.checked) {
+                setScheduledAt(null);
+              }
             }}
           />
         }
@@ -215,19 +250,18 @@ if (isScheduled && scheduledAt && scheduledAt.getTime() < Date.now()) return;
             scheduledAt
               ? new Date(
                   scheduledAt.getTime() -
-                    scheduledAt.getTimezoneOffset() * 60000
+                    scheduledAt.getTimezoneOffset() * 60000,
                 )
                   .toISOString()
                   .slice(0, 16)
               : ""
           }
           onChange={(e) => {
-            const val = e.target.value;
+            const val = e.target.value; // "2026-02-09T12:08"
             setScheduledAt(val ? new Date(val) : null);
           }}
           fullWidth
           size="small"
-          sx={{ mb: 1 }}
           InputLabelProps={{ shrink: true }}
         />
       )}
