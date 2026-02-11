@@ -9,16 +9,26 @@ export type NotificationCategory =
   | "goal"
   | "announcement";
 
-export type PriorityType = "high" | "normal" | "low";
+export type PriorityType = "high" | "normal";
 
 export interface SystemNotificationType {
   id: string;
   title: string;
   message: string;
 
+  link?: string; // ← what to open
+  linkType?: "internal" | "external";
+
+  intent: "activity" | "message" | "system" | "silent";
+
   createdAt: Timestamp;
   sentAt?: Timestamp;
   scheduledAt?: Timestamp | null;
+
+  analytics?: {
+    clickedAt?: Timestamp
+    clickedFrom?: "modal" | "dropdown" | "push"
+  }
 
   sentBy: UserType | "system";
 

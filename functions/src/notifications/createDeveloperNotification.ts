@@ -22,6 +22,12 @@ export const createDeveloperNotification = onCall(
 
     const input = request.data;
 
+    const normalizedInput = {
+      ...input,
+      intent: input.intent ?? "system",
+      priority: input.priority ?? "normal",
+    };
+
     // ✅ Convert ONCE at the boundary
     const scheduledAt =
       typeof input.scheduledAt === "number"
@@ -29,10 +35,11 @@ export const createDeveloperNotification = onCall(
         : null;
 
     // 1️⃣ Always record audit (or preview)
+    // 1️⃣ Always record audit (or preview)
     const devResult = await createDeveloperNotificationCore(
       {
-        ...input,
-        scheduledAt, // ✅ Firestore Timestamp or null
+        ...normalizedInput,
+        scheduledAt,
       },
       { uid: request.auth.uid }
     );
@@ -63,13 +70,15 @@ export const createDeveloperNotification = onCall(
 
     // 4️⃣ Deliver immediately
     await sendSystemNotificationCore({
-      title: input.title,
-      message: input.message,
-      recipientUserIds: input.recipientUserIds ?? [],
-      recipientCompanyIds: input.recipientCompanyIds?.includes("all")
+      title: normalizedInput.title,
+      message: normalizedInput.message,
+      intent: normalizedInput.intent,
+      priority: normalizedInput.priority,
+      recipientUserIds: normalizedInput.recipientUserIds ?? [],
+      recipientCompanyIds: normalizedInput.recipientCompanyIds?.includes("all")
         ? []
-        : (input.recipientCompanyIds ?? []),
-      sendEmail: input.sendEmail,
+        : (normalizedInput.recipientCompanyIds ?? []),
+      sendEmail: normalizedInput.sendEmail,
     });
 
     // ✅ MARK AS SENT

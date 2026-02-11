@@ -10,11 +10,6 @@ export const processScheduledDeveloperNotifications = onSchedule(
   async () => {
     const now = admin.firestore.Timestamp.now();
 
-    console.log("⏰ Scheduler fired");
-    console.log("• now (Timestamp):", now);
-    console.log("• now (Date):", now.toDate());
-    console.log("• now.seconds:", now.seconds);
-
     // 🔍 STEP 1: fetch ALL unsent notifications (no time filter yet)
     const allUnsentSnap = await db
       .collection("developerNotifications")
@@ -57,6 +52,9 @@ export const processScheduledDeveloperNotifications = onSchedule(
 
       await sendSystemNotificationCore({
         title: notif.title,
+        intent: notif.intent,
+        priority: notif.priority,
+        link: notif.link,
         message: notif.message,
         recipientUserIds: notif.recipientUserIds ?? [],
         recipientCompanyIds: notif.recipientCompanyIds ?? [],

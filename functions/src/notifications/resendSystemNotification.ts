@@ -42,6 +42,8 @@ export const resendSystemNotification = onCall(
 
     return await sendSystemNotificationCore({
       title: notif.title,
+      intent: notif.intent,
+      priority: notif.priority,
       message: notif.message,
       recipientUserIds: notif.recipientUserIds,
       recipientCompanyIds: notif.recipientCompanyIds,

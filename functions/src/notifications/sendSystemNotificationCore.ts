@@ -5,7 +5,9 @@ const db = admin.firestore();
 type SendSystemNotificationInput = {
   title: string;
   message: string;
-
+  intent: string;
+  priority: string;
+  link?: string; // ✅ ADD
   recipientUserIds?: string[];
   recipientCompanyIds?: string[];
   recipientRoles?: string[];
@@ -67,6 +69,8 @@ export async function sendSystemNotificationCore(
   const {
     title,
     message,
+    intent = "system",
+    priority = "normal",
     recipientUserIds = [],
     recipientCompanyIds = [],
     recipientRoles = [],
@@ -125,8 +129,13 @@ export async function sendSystemNotificationCore(
 
       title,
       message,
-      type: "system",
 
+      // semantic classification
+      type: "system", // optional, for UI grouping
+      intent, // ✅ REQUIRED
+      priority, // ✅ REQUIRED
+
+      link: input.link ?? null, // ✅ ADD
       createdAt: now,
 
       deliveredVia: {

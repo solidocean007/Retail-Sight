@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TextField,
   MenuItem,
@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../../utils/firebase";
-import { Timestamp } from "firebase/firestore";
 
 import {
   UserType,
@@ -22,8 +21,13 @@ import {
 
 import NotificationAudienceBuilder from "./NotificationAudiencePicker";
 import DeveloperNotificationPreviewModal from "./DeveloperNotificationPreviewModal";
+import { useAppDispatch } from "../../utils/store";
+import { showMessage } from "../../Slices/snackbarSlice";
 
 type MessageType = "announcement" | "tutorial";
+
+type Intent = "activity" | "message" | "system" | "silent";
+type LinkType = "internal" | "external"; // unused add to backend later
 
 const createDeveloperNotification = httpsCallable(
   functions,
@@ -36,13 +40,14 @@ const DeveloperNotificationForm = ({
   currentUser: UserType;
   allCompaniesAndUsers: CompanyWithUsersAndId[];
 }) => {
+  const dispatch = useAppDispatch();
   const [messageType, setMessageType] = useState<MessageType>("announcement");
   const [priority, setPriority] = useState<PriorityType>("normal");
-
+  const [intent, setIntent] = useState<Intent>("system");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [tutorialUrl, setTutorialUrl] = useState("");
-
+  const [linkType, setLinkType] = useState<LinkType>("external");
   const [sendEmail, setSendEmail] = useState(true);
   const [dryRun, setDryRun] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -55,37 +60,40 @@ const DeveloperNotificationForm = ({
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
 
-    const clearFormState =() => {
-      setMessageType("announcement");
-      setPriority("normal");
-      setTitle("");
-      setMessage("");
-      setTutorialUrl("");
-      setSendEmail(true);
-      setDryRun(false);
-      setPreviewOpen(false);
-      setAudienceCompanies([]);
-      setAudienceUsers([]);
-      setAudienceRoles([]);
-      setIsScheduled(false);
-      setScheduledAt(null);
-  }
+  useEffect(() => {
+    if (messageType === "announcement") setIntent("system");
+    if (messageType === "tutorial") setIntent("system");
+  }, [messageType]);
+
+  const clearFormState = () => {
+    setMessageType("announcement");
+    setPriority("normal");
+    setTitle("");
+    setMessage("");
+    setTutorialUrl("");
+    setSendEmail(true);
+    setDryRun(false);
+    setPreviewOpen(false);
+    setAudienceCompanies([]);
+    setAudienceUsers([]);
+    setAudienceRoles([]);
+    setIsScheduled(false);
+    setScheduledAt(null);
+  };
 
   const payload = {
+    link: tutorialUrl,
+    linkType,
     title,
     message,
     priority,
+    intent,
     recipientCompanyIds: audienceCompanies.map((c) => c.id),
     recipientUserIds: audienceUsers.map((u) => u.uid),
     recipientRoles: audienceRoles,
     sendEmail,
-    scheduledAt:
-      isScheduled && scheduledAt
-        ? scheduledAt.getTime() // number (ms)
-        : null,
+    scheduledAt: isScheduled && scheduledAt ? scheduledAt.getTime() : null,
   };
-
-
 
   const handleSubmit = async () => {
     if (!title || !message) return;
@@ -94,7 +102,19 @@ const DeveloperNotificationForm = ({
     if (isScheduled && scheduledAt && scheduledAt.getTime() < Date.now())
       return;
 
-    console.log(payload)
+    if (
+      audienceCompanies.length === 0 &&
+      audienceUsers.length === 0 &&
+      audienceRoles.length === 0
+    ) {
+      dispatch(
+        showMessage({
+          text: "Please select at least one recipient.",
+          severity: "warning",
+        }),
+      );
+      return;
+    }
 
     if (dryRun) {
       setPreviewOpen(true);
@@ -102,7 +122,6 @@ const DeveloperNotificationForm = ({
     }
     await createDeveloperNotification({
       ...payload,
-      priority,
       dryRun: false,
     });
 
@@ -150,6 +169,19 @@ const DeveloperNotificationForm = ({
           <MenuItem value="high">High (Push)</MenuItem>
         </Select>
       </FormControl>
+      <FormControl size="small" fullWidth sx={{ mb: 1 }}>
+        <InputLabel>Intent</InputLabel>
+        <Select
+          value={intent}
+          label="Intent"
+          onChange={(e) => setIntent(e.target.value as any)}
+        >
+          <MenuItem value="activity">Activity (likes, comments)</MenuItem>
+          <MenuItem value="message">Message (important)</MenuItem>
+          <MenuItem value="system">System announcement</MenuItem>
+          <MenuItem value="silent">Silent (no push)</MenuItem>
+        </Select>
+      </FormControl>
 
       {/* Title */}
       <TextField
@@ -182,16 +214,14 @@ const DeveloperNotificationForm = ({
       />
 
       {/* Tutorial URL */}
-      {messageType === "tutorial" && (
-        <TextField
-          label="Tutorial Video URL"
-          fullWidth
-          value={tutorialUrl}
-          onChange={(e) => setTutorialUrl(e.target.value)}
-          sx={{ mb: 1 }}
-          placeholder="https://www.youtube.com/watch?v=..."
-        />
-      )}
+      <TextField
+        label="Optional Link URL"
+        fullWidth
+        value={tutorialUrl}
+        onChange={(e) => setTutorialUrl(e.target.value)}
+        sx={{ mb: 1 }}
+        placeholder="https://www.youtube.com/watch?v=..."
+      />
 
       {/* Audience */}
       <NotificationAudienceBuilder
@@ -280,7 +310,7 @@ const DeveloperNotificationForm = ({
         onConfirmSend={handleConfirmSend}
         title={title}
         message={message}
-        priority="normal"
+        priority={priority}
         scheduledAt={scheduledAt}
         recipientCompanyIds={audienceCompanies.map((c) => c.id)}
         recipientUserIds={audienceUsers.map((u) => u.uid)}

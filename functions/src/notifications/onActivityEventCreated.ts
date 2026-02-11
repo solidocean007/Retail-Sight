@@ -83,8 +83,9 @@ export const onActivityEventCreated = onDocumentCreated(
           title,
           message,
 
-          type,
-          priority: "normal",
+          type, // activity type (post.like, etc.)
+          intent: "activity", // ✅ REQUIRED
+          priority: "normal", // delivery quality only
 
           postId: postId || null,
           commentId: commentId || null,
