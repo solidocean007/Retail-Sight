@@ -6,7 +6,8 @@ type CreateDeveloperNotificationInput = {
   title: string;
   message: string;
   priority?: "low" | "normal" | "high";
-
+  link?: string; // ✅ ADD THIS
+  intent?: "activity" | "message" | "system" | "silent";
   recipientCompanyIds?: string[] | ["all"];
   recipientUserIds?: string[];
 
@@ -56,6 +57,8 @@ export async function createDeveloperNotificationCore(
     title,
     message,
     priority = "normal",
+    link = null,
+    intent = "system",
     recipientCompanyIds,
     recipientUserIds,
     sendEmail = false,
@@ -86,7 +89,8 @@ export async function createDeveloperNotificationCore(
     title,
     message,
     priority,
-
+    link,
+    intent,
     recipientCompanyIds: recipientCompanyIds ?? [],
     recipientUserIds: recipientUserIds ?? [],
 
