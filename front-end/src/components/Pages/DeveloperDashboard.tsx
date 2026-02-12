@@ -43,6 +43,27 @@ import CompanyOnboardingAdmin from "../DeveloperDashboard/CompanyOnboardingAdmin
 import AccessRequestsPanel from "../DeveloperDashboard/AccessRequestPanel";
 import { useAppConfigSync } from "../../hooks/useAppConfigSync";
 import { resetApp } from "../../utils/resetApp";
+import NotificationStatsCard from "../Notifications/NotificationsStatsCard";
+import NotificationEngagementBreakdown from "../Notifications/NotificationEngagementBreakdown";
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+// Next Upgrade (Optional)
+
+// Instead of scanning collectionGroup every time:
+
+// Add stats object to developerNotifications and increment counters inside:
+
+// onUserNotificationCreated
+
+// click tracking updates
+
+// read updates
+
+// Then analytics becomes a single doc read.
+
+// But this version is perfectly fine for v1.
+
+// You now officially have a real notification analytics system.
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
@@ -50,6 +71,19 @@ const DeveloperDashboard = () => {
   const { localVersion, serverVersion } = useAppConfigSync();
   const upToDate = localVersion === serverVersion;
   const isDeveloper = dashboardUser?.role === "developer";
+  const functions = getFunctions();
+  const [analytics, setAnalytics] = useState({
+    sent: 0,
+    read: 0,
+    clicked: 0,
+    ctr: 0,
+    readRate: 0,
+    clickedFrom: {
+      push: 0,
+      modal: 0,
+      dropdown: 0,
+    },
+  });
 
   const dispatch = useAppDispatch();
   const allCompaniesAndUsers = useSelector(selectCompaniesWithUsers);
@@ -63,6 +97,19 @@ const DeveloperDashboard = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const getNotificationAnalytics = httpsCallable(
+    functions,
+    "getNotificationAnalytics",
+  );
+
+  const loadAnalytics = async (id: string) => {
+    const res: any = await getNotificationAnalytics({
+      developerNotificationId: id,
+    });
+
+    setAnalytics(res.data);
+  };
 
   const handleReset = async () => {
     if (
@@ -177,6 +224,32 @@ const DeveloperDashboard = () => {
             <Tab label="Notifications" />
             <Tab label="API Keys" />
           </Tabs>
+          {analytics && (
+            <>
+              <NotificationStatsCard
+                sent={analytics.sent}
+                read={analytics.read}
+                clicked={analytics.clicked}
+                ctr={analytics.ctr}
+                readRate={analytics.readRate}
+              />
+
+              <NotificationEngagementBreakdown
+                clickedFrom={analytics.clickedFrom}
+              />
+            </>
+          )}
+          <NotificationStatsCard
+            sent={analytics.sent}
+            read={analytics.read}
+            clicked={analytics.clicked}
+            ctr={analytics.ctr}
+            readRate={analytics.readRate}
+          />
+
+          <NotificationEngagementBreakdown
+            clickedFrom={analytics.clickedFrom}
+          />
 
           {/* ─────────────────── TAB CONTENT ─────────────────── */}
           <Box sx={{ mt: 2 }}>

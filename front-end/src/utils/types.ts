@@ -88,7 +88,7 @@ export type DeveloperNotificationType = {
 
   recipientUserIds?: string[];
   recipientRoles?: string[];
-
+  link: string;
   createdAt: string | null;
   sentAt: string | null;
   scheduledAt: string | null;

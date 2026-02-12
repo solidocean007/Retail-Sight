@@ -34,11 +34,12 @@ const ViewDeveloperNotification: React.FC<Props> = ({
   allCompaniesAndUsers,
 }) => {
   if (!notification) return null;
-
+  console.log(notification, " : view dev notif");
   const {
     title,
     message,
     sentAt,
+    link,
     recipientCompanyIds,
     recipientUserIds,
     recipientRoles,
@@ -132,6 +133,9 @@ const ViewDeveloperNotification: React.FC<Props> = ({
 
         <Typography variant="body1" paragraph>
           {message}
+        </Typography>
+        <Typography variant="body1" paragraph>
+          <button>{link}</button>
         </Typography>
 
         {/* Audience summary */}

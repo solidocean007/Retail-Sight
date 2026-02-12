@@ -69,6 +69,7 @@ import { createDeveloperNotificationCore } from "./notifications/createDeveloper
 import { createDeveloperNotification } from "./notifications/createDeveloperNotification";
 import { processScheduledDeveloperNotifications } from "./notifications/processScheduledDeveloperNotifications";
 import { updateSystemNotificationSchedule } from "./notifications/updateSystemNotificationSchedule";
+import { getNotificationAnalytics } from "./notifications/getNotificationAnalytics";
 
 export {
   getExternalApiKeyStatus,
@@ -141,4 +142,5 @@ export {
   createDeveloperNotification,
   processScheduledDeveloperNotifications,
   updateSystemNotificationSchedule,
+  getNotificationAnalytics,
 };

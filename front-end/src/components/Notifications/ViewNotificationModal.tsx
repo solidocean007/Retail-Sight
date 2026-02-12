@@ -135,7 +135,7 @@ const ViewNotificationModal: React.FC<Props> = ({
             variant="outlined"
             onClick={() => handleNotificationClick(notification, "modal")}
           >
-            Open Link
+            {notification.link}
           </Button>
         )}
 

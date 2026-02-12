@@ -28,7 +28,25 @@ export const sendSystemNotification = onCall(
     if (!["developer", "super-admin"].includes(role)) {
       throw new HttpsError("permission-denied", "Developer only");
     }
+    const input = request.data ?? {};
 
-    return await sendSystemNotificationCore(request.data);
+    if (!input.title || !input.message) {
+      throw new HttpsError("invalid-argument", "Missing title or message");
+    }
+
+    const normalizedInput = {
+      title: input.title,
+      message: input.message,
+      intent: input.intent ?? "system",
+      priority: input.priority ?? "normal",
+      link: input.link ?? null,
+      recipientUserIds: input.recipientUserIds ?? [],
+      recipientCompanyIds: input.recipientCompanyIds ?? [],
+      recipientRoles: input.recipientRoles ?? [],
+      sendEmail: input.sendEmail ?? false,
+      dryRun: input.dryRun ?? false,
+    };
+
+    return await sendSystemNotificationCore(normalizedInput);
   }
 );

@@ -135,7 +135,6 @@ export async function sendSystemNotificationCore(
       type: "system", // optional, for UI grouping
       intent, // ✅ REQUIRED
       priority, // ✅ REQUIRED
-      
       link: link ?? null, // ✅ ADD
       createdAt: now,
 
