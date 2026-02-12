@@ -71,6 +71,7 @@ export async function sendSystemNotificationCore(
     message,
     intent = "system",
     priority = "normal",
+    link,
     recipientUserIds = [],
     recipientCompanyIds = [],
     recipientRoles = [],
@@ -134,8 +135,8 @@ export async function sendSystemNotificationCore(
       type: "system", // optional, for UI grouping
       intent, // ✅ REQUIRED
       priority, // ✅ REQUIRED
-
-      link: input.link ?? null, // ✅ ADD
+      
+      link: link ?? null, // ✅ ADD
       createdAt: now,
 
       deliveredVia: {

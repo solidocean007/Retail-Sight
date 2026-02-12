@@ -74,6 +74,7 @@ export const createDeveloperNotification = onCall(
       message: normalizedInput.message,
       intent: normalizedInput.intent,
       priority: normalizedInput.priority,
+      link: normalizedInput.link ?? null,
       recipientUserIds: normalizedInput.recipientUserIds ?? [],
       recipientCompanyIds: normalizedInput.recipientCompanyIds?.includes("all")
         ? []
