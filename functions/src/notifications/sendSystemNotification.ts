@@ -35,6 +35,7 @@ export const sendSystemNotification = onCall(
     }
 
     const normalizedInput = {
+      systemNotificationId: input.systemNotificationId ?? undefined,
       title: input.title,
       message: input.message,
       intent: input.intent ?? "system",

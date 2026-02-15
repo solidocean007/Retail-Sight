@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import { sendEmailNotificationCore } from "./sendEmailNotificationCore";
 
 const db = admin.firestore();
 
@@ -72,6 +73,7 @@ export async function sendSystemNotificationCore(
     intent = "system",
     priority = "normal",
     link,
+    sendEmail,
     recipientUserIds = [],
     recipientCompanyIds = [],
     recipientRoles = [],
@@ -117,27 +119,25 @@ export async function sendSystemNotificationCore(
   const batch = db.batch();
   const now = admin.firestore.FieldValue.serverTimestamp();
 
+  // Generate a base ID once
+  const baseId = systemNotificationId ?? db.collection("_").doc().id;
+
   users.forEach((_u, uid) => {
-    const notificationId = systemNotificationId
-      ? `${systemNotificationId}_${uid}`
-      : db.collection("_").doc().id;
+    const notificationId = `${baseId}_${uid}`;
 
     const ref = db.doc(`users/${uid}/notifications/${notificationId}`);
 
     batch.set(ref, {
       id: notificationId,
+      systemNotificationId: baseId,
       userId: uid,
-
       title,
       message,
-
-      // semantic classification
-      type: "system", // optional, for UI grouping
-      intent, // ✅ REQUIRED
-      priority, // ✅ REQUIRED
-      link: link ?? null, // ✅ ADD
+      type: "system",
+      intent,
+      priority,
+      link: link ?? null,
       createdAt: now,
-
       deliveredVia: {
         inApp: now,
       },
@@ -145,6 +145,16 @@ export async function sendSystemNotificationCore(
   });
 
   await batch.commit();
+
+  if (sendEmail) {
+    await sendEmailNotificationCore({
+      title,
+      message,
+      link,
+      notificationId: baseId, // ✅ now always valid
+      recipientUserIds: Array.from(users.keys()),
+    });
+  }
 
   return {
     success: true,

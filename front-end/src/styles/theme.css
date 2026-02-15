@@ -123,7 +123,7 @@
   --bgColor-muted: #151b23;
 
   /* Gradients — Light Theme */
-  --muted-steel: rgba(100, 116, 139, 0.95);
+  --muted-steel: rgba(100, 116, 139, 1);
   --blue-gray: rgba(107, 124, 147, 0.92);
   --soft-denim: rgba(113, 131, 158, 0.88);
   --medium-slate-blue: rgba(88, 106, 135, 0.85);

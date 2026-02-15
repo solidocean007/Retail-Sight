@@ -39,9 +39,9 @@ import { resetApp } from "../../utils/resetApp";
 import NotificationStatsCard from "../Notifications/NotificationsStatsCard";
 import NotificationEngagementBreakdown from "../Notifications/NotificationEngagementBreakdown";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import DeveloperOperations from "./DeveloperOperations";
-import DeveloperMessaging from "./DeveloperMessaging";
-import DeveloperPlatform from "./DeveloperPlatform";
+import DeveloperMessaging from "../Notifications/DeveloperMessaging";
+import DeveloperPlatform from "../Notifications/DeveloperPlatform";
+import DeveloperOperations from "../Notifications/DeveloperOperations";
 
 // Next Upgrade (Optional)
 

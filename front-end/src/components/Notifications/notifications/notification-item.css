@@ -1,7 +1,9 @@
 /* notificationItem.css */
 .notification-item {
   display: flex;
+  justify-content: space-between;
   background-color: var(--dashboard-card);
+  width: 100%;
   padding: 1rem;
   margin-bottom: 10px;
   border-radius: var(--btn-border-radius);

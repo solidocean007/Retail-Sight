@@ -27,6 +27,7 @@ import {
   markDeveloperNotificationResent,
   removeDeveloperNotification,
 } from "../../Slices/developerNotificationSlice";
+import DeveloperAnalyticsModal from "./DeveloperAnalyticsModal";
 
 interface DeveloperNotificationsTableProps {
   allCompaniesAndUsers: CompanyWithUsersAndId[];
@@ -37,7 +38,8 @@ const DeveloperNotificationsTable: React.FC<
 > = ({ allCompaniesAndUsers }) => {
   const dispatch = useAppDispatch();
   const functions = getFunctions();
-
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [analyticsId, setAnalyticsId] = useState<string | null>(null);
   const { items, loading, error } = useSelector(
     (state: RootState) => state.developerNotifications,
   );
@@ -151,14 +153,10 @@ const DeveloperNotificationsTable: React.FC<
 
                   <TableCell className="actions-cell">
                     <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => {
-                        setSelectedNotif(notif);
-                        setModalOpen(true);
-                      }}
+                      variant="outlined"
+                      onClick={() => setAnalyticsId(notif.id)}
                     >
-                      View
+                      Analytics
                     </Button>
 
                     <Button
@@ -220,6 +218,11 @@ const DeveloperNotificationsTable: React.FC<
             })}
           </TableBody>
         </Table>
+        <DeveloperAnalyticsModal
+          open={!!analyticsId}
+          onClose={() => setAnalyticsId(null)}
+          developerNotificationId={analyticsId}
+        />
 
         <ViewDeveloperNotification
           open={modalOpen}

@@ -55,6 +55,7 @@ export const processScheduledDeveloperNotifications = onSchedule(
         intent: notif.intent,
         priority: notif.priority,
         link: notif.link,
+        sendEmail: notif.channels?.email ?? false,
         message: notif.message,
         recipientUserIds: notif.recipientUserIds ?? [],
         recipientCompanyIds: notif.recipientCompanyIds ?? [],

@@ -1,5 +1,5 @@
 // components/Notifications/NotificationItem.tsx
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { UserNotificationType } from "../../utils/types";
 import "./notifications/notification-item.css";
 
@@ -8,7 +8,6 @@ const formatDate = (value?: string | null) => {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
 };
-
 
 interface NotificationItemProps {
   notification: UserNotificationType;
@@ -28,9 +27,17 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const touchEndX = useRef<number | null>(null);
   const didSwipe = useRef(false);
 
-  const isTouchDevice =
-    typeof window !== "undefined" &&
-    ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    setIsTouchDevice(mq.matches);
+
+    const handler = (e: MediaQueryListEvent) => setIsTouchDevice(e.matches);
+    mq.addEventListener("change", handler);
+
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     didSwipe.current = false;
@@ -66,7 +73,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         isRead ? "read" : "unread"
       } ${dismissed ? "dismissed" : ""}`}
       onClick={() => {
-        if (!didSwipe.current && !isRead) {
+        if (!didSwipe.current) {
           onOpen?.();
         }
       }}

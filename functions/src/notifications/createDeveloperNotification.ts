@@ -70,6 +70,7 @@ export const createDeveloperNotification = onCall(
 
     // 4️⃣ Deliver immediately
     await sendSystemNotificationCore({
+      systemNotificationId: developerNotificationId,
       title: normalizedInput.title,
       message: normalizedInput.message,
       intent: normalizedInput.intent,

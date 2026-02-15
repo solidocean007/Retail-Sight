@@ -41,10 +41,12 @@ export const resendSystemNotification = onCall(
     const notif = notifSnap.data()!;
 
     return await sendSystemNotificationCore({
+      systemNotificationId: notificationId,
       title: notif.title,
       intent: notif.intent,
       priority: notif.priority,
       message: notif.message,
+      link: notif.link ?? null, // ← ADD THIS
       recipientUserIds: notif.recipientUserIds,
       recipientCompanyIds: notif.recipientCompanyIds,
       recipientRoles: notif.recipientRoles,

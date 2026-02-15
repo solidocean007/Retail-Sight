@@ -29,6 +29,7 @@ import { onPendingNewUserAndCompanyInviteCreate } from "./onPendingNewUserAndCom
 import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
 import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
+
 import {
   galloFetchPrograms,
   galloFetchAccounts,
@@ -70,6 +71,7 @@ import { createDeveloperNotification } from "./notifications/createDeveloperNoti
 import { processScheduledDeveloperNotifications } from "./notifications/processScheduledDeveloperNotifications";
 import { updateSystemNotificationSchedule } from "./notifications/updateSystemNotificationSchedule";
 import { getNotificationAnalytics } from "./notifications/getNotificationAnalytics";
+import { trackEmailClick } from "./notifications/sendEmailNotificationCore";
 
 export {
   getExternalApiKeyStatus,
@@ -143,4 +145,5 @@ export {
   processScheduledDeveloperNotifications,
   updateSystemNotificationSchedule,
   getNotificationAnalytics,
+  trackEmailClick,
 };

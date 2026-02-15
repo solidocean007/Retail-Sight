@@ -1,9 +1,10 @@
 /* notificationsPage.css */
 
 .notifications-page {
+  flex: 1;
   padding: 1rem;
   background-color: var(--background-body);
-  min-height: 100vh;
+  overflow-y: auto;
 }
 
 .notifications-card {
