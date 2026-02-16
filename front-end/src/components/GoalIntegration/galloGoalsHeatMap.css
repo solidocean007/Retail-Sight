@@ -1,0 +1,114 @@
+/* ================= CONTAINER ================= */
+
+.gallo-heatmap-container {
+  padding: 24px;
+  margin-bottom: 2rem;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #0f172a, #111827);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  color: #e5e7eb; /* force readable text */
+}
+
+/* ================= HEADER ================= */
+
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.heatmap-header h3 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.heatmap-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 0.75rem;
+  opacity: 1;
+}
+
+.legend-box {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  border-radius: 2px;
+}
+
+.l0 {
+  background: #2c2c2c;
+}
+.l1 {
+  background: #7f1d1d;
+}
+.l2 {
+  background: #b45309;
+}
+.l3 {
+  background: #15803d;
+}
+.l4 {
+  background: #065f46;
+}
+
+/* ================= GRID ================= */
+
+.gallo-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+}
+
+/* ================= CELL ================= */
+
+.gallo-heatmap-cell {
+  position: relative; /* critical */
+  aspect-ratio: 1;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #fff;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.gallo-heatmap-cell:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ================= TOOLTIP ================= */
+
+.heatmap-tooltip {
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  padding: 10px 14px;
+  border-radius: 8px;
+  width: 260px;
+  font-size: 0.8rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 20;
+}
+
+.gallo-heatmap-cell:hover .heatmap-tooltip {
+  opacity: 1;
+}
+
+.tooltip-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}

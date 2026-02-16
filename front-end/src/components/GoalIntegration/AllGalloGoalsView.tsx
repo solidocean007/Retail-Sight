@@ -5,6 +5,7 @@ import {
   selectGalloGoalsLoading,
   selectGalloGoalsError,
   addOrUpdateGalloGoal,
+  FireStoreGalloGoalWithId,
 } from "../../Slices/galloGoalsSlice";
 import { useMediaQuery, useTheme } from "@mui/material";
 
@@ -22,6 +23,8 @@ import GalloGoalsTable from "./GalloGoalsTable";
 import { updateGalloGoalLifecycle } from "../../utils/helperFunctions/updateGalloGoalLifecycle";
 import EditGalloGoalModal from "./EditGalloGoalModal";
 import CustomConfirmation from "../CustomConfirmation";
+import GalloGoalsHeatMap from "./GalloGoalsHeatMap";
+import GalloGoalProgressOverlay from "./GalloGoalProgressOverlay";
 
 type PendingAction = {
   status: "archived" | "disabled";
@@ -52,6 +55,8 @@ const AllGalloGoalsView = () => {
   const isLoading = useSelector(selectGalloGoalsLoading);
   const error = useSelector(selectGalloGoalsError);
   const companyUsers = useSelector(selectCompanyUsers) || [];
+  const [selectedGoal, setSelectedGoal] =
+    useState<FireStoreGalloGoalWithId | null>(null);
 
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
@@ -249,6 +254,15 @@ const AllGalloGoalsView = () => {
           )}
         </AdminGalloGoalsSection>
       )}
+      {isDesktop && currentGoals.length > 0 && (
+        <GalloGoalsHeatMap
+          goals={currentGoals}
+          onClickGoal={(goalId) => {
+            const found = currentGoals.find((g) => g.id === goalId);
+            if (found) setSelectedGoal(found);
+          }}
+        />
+      )}
 
       {/* Current */}
       <AdminGalloGoalsSection
@@ -339,6 +353,17 @@ const AllGalloGoalsView = () => {
           loading={confirmLoading}
           onClose={() => setPendingAction(null)}
           onConfirm={confirmLifecycleChange}
+        />
+      )}
+      {selectedGoal && (
+        <GalloGoalProgressOverlay
+          goal={selectedGoal}
+          onClose={() => setSelectedGoal(null)}
+          onEdit={() => {
+            setEditGoal(selectedGoal);
+            setSelectedGoal(null);
+          }}
+          onViewPost={(postId) => openPostViewer(postId)}
         />
       )}
 

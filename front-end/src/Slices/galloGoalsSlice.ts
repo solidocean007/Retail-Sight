@@ -239,16 +239,21 @@ export const selectUpcomingGalloGoals = createSelector(
 export const selectUsersGalloGoals = createSelector(
   [
     selectAllGalloGoals,
-    (state: RootState, salesRouteNum?: string) => salesRouteNum || "",
+    (state: RootState, salesRouteNum?: string) => salesRouteNum,
   ],
-  (galloGoals, salesRouteNum) =>
-    galloGoals.filter((goal) =>
+  (galloGoals, salesRouteNum) => {
+    if (!salesRouteNum) return [];
+
+    const normalizedUserRoute = salesRouteNum.toString().trim();
+
+    return galloGoals.filter((goal) =>
       goal.accounts.some((account) =>
-        Array.isArray(account.salesRouteNums)
-          ? account.salesRouteNums.includes(salesRouteNum)
-          : account.salesRouteNums === salesRouteNum,
+        account.salesRouteNums
+          ?.map((r) => r?.toString().trim())
+          .includes(normalizedUserRoute),
       ),
-    ),
+    );
+  },
 );
 
 export const selectUsersGoalsByTiming = createSelector(
@@ -298,6 +303,7 @@ export const selectActiveGalloGoals = createSelector(
 );
 
 export const selectUsersActiveGalloGoals = createSelector(
+  // probably should use this selector instead
   [
     selectAllGalloGoals,
     (_: RootState, salesRouteNum?: string) => salesRouteNum || "",
