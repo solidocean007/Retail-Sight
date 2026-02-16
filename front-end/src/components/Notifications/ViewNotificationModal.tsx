@@ -99,6 +99,11 @@ const ViewNotificationModal: React.FC<Props> = ({
     }
   };
 
+  const truncateLink = (url: string, max = 35) => {
+    if (url.length <= max) return url;
+    return url.slice(0, max) + "…";
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{notification.title}</DialogTitle>
@@ -115,13 +120,22 @@ const ViewNotificationModal: React.FC<Props> = ({
         </Typography>
       </DialogContent>
 
-      <DialogActions>
+      <DialogActions
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
         {notification.link && (
           <Button
             variant="outlined"
             onClick={() => handleNotificationClick(notification, "modal")}
+            sx={{
+              maxWidth: 300,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={notification.link} // 👈 full URL on hover
           >
-            {notification.link}
+            {truncateLink(notification.link)}
           </Button>
         )}
 
@@ -129,9 +143,9 @@ const ViewNotificationModal: React.FC<Props> = ({
           <Button onClick={handleViewPost}>View Post</Button>
         )}
 
-        <Button onClick={onClose} variant="contained">
+        {/* <Button onClick={onClose} variant="contained">
           Close
-        </Button>
+        </Button> */}
       </DialogActions>
     </Dialog>
   );
