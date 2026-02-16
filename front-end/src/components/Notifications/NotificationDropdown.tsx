@@ -6,12 +6,10 @@ import { selectNotifications } from "../../Slices/notificationsSlice";
 import NotificationItem from "./NotificationItem";
 import "./notifications/notification-dropdown.css";
 import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
-import {
-  markNotificationRead,
-  removeNotification,
-} from "../../thunks/notificationsThunks";
+import { removeNotification } from "../../thunks/notificationsThunks";
 import ViewNotificationModal from "./ViewNotificationModal";
 import { UserNotificationType } from "../../utils/types";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const NotificationDropdown: React.FC<{
   onClose: () => void;
@@ -20,6 +18,15 @@ const NotificationDropdown: React.FC<{
   const dispatch = useAppDispatch();
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
   const notifications = useSelector(selectNotifications);
+  const functions = getFunctions();
+  const markReadCallable = httpsCallable(
+    functions,
+    "markNotificationReadCallable",
+  );
+  const trackNotificationClick = httpsCallable(
+    functions,
+    "trackNotificationClickCallable",
+  );
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedNotif, setSelectedNotif] =
@@ -29,25 +36,26 @@ const NotificationDropdown: React.FC<{
 
   if (!currentUser) return null;
 
-  const handleOpen = (notif: UserNotificationType) => {
+  const handleOpen = async (notif: UserNotificationType) => {
     if (!notif.readAt) {
-      dispatch(
-        markNotificationRead({
-          notificationId: notif.id,
-          uid: currentUser.uid,
-        })
-      );
+      await markReadCallable({
+        notificationId: notif.id,
+      });
     }
 
     if (notif.postId && openPostViewer) {
+      await trackNotificationClick({
+        notificationId: notif.id,
+        source: "dropdown",
+      });
       openPostViewer(notif.postId);
     } else {
+      await trackNotificationClick({
+        notificationId: notif.id,
+        source: "dropdown",
+      });
       setSelectedNotif(notif);
     }
-  };
-
-  const handleDelete = (id: string) => {
-    dispatch(removeNotification({ notificationId: id }));
   };
 
   return (
@@ -66,25 +74,10 @@ const NotificationDropdown: React.FC<{
           <div key={notif.id} className="notification-row">
             <NotificationItem
               notification={notif}
-              onOpen={() => {
-                if (!notif.readAt) {
-                  dispatch(
-                    markNotificationRead({
-                      notificationId: notif.id,
-                      uid: currentUser.uid,
-                    })
-                  );
-                }
-
-                if (notif.postId && openPostViewer) {
-                  openPostViewer(notif.postId);
-                } else {
-                  setSelectedNotif(notif);
-                }
-              }}
-              onDelete={() => {
-                dispatch(removeNotification({ notificationId: notif.id }));
-              }}
+              onOpen={() => handleOpen(notif)}
+              onDelete={() =>
+                dispatch(removeNotification({ notificationId: notif.id }))
+              }
             />
           </div>
         ))}

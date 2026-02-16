@@ -26,9 +26,9 @@ export interface SystemNotificationType {
   scheduledAt?: Timestamp | null;
 
   analytics?: {
-    clickedAt?: Timestamp
-    clickedFrom?: "modal" | "dropdown" | "push"
-  }
+    clickedAt?: Timestamp;
+    clickedFrom?: "modal" | "dropdown" | "push";
+  };
 
   sentBy: UserType | "system";
 
@@ -92,6 +92,18 @@ export type DeveloperNotificationType = {
   createdAt: string | null;
   sentAt: string | null;
   scheduledAt: string | null;
+
+  stats?: {
+    sent?: number;
+    read?: number;
+    clicked?: number;
+    clickedFrom?: {
+      push?: number;
+      modal?: number;
+      dropdown?: number;
+      email?: number;
+    };
+  };
 
   createdBy: {
     uid: string;

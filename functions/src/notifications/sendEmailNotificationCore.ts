@@ -124,29 +124,48 @@ export async function sendEmailNotificationCore(
  */
 export const trackEmailClick = onRequest(async (req, res) => {
   try {
-    const { notificationId, uid } = req.query;
+    const { notificationId, uid } = req.query as {
+      notificationId?: string;
+      uid?: string;
+    };
 
     if (!notificationId || !uid) {
       return res.redirect("https://displaygram.com/notifications");
     }
 
     const perUserId = `${notificationId}_${uid}`;
-
     const notifRef = admin
       .firestore()
       .doc(`users/${uid}/notifications/${perUserId}`);
 
-    const notifSnap = await notifRef.get();
-    if (!notifSnap.exists) {
+    const snap = await notifRef.get();
+    if (!snap.exists) {
       return res.redirect("https://displaygram.com/notifications");
     }
 
+    const data = snap.data();
+
+    const alreadyClicked = Boolean(data?.analytics?.emailClickedAt);
+
+    // Write analytics on user notification
     await notifRef.update({
       "analytics.emailClickedAt": admin.firestore.FieldValue.serverTimestamp(),
       "analytics.clickedFrom": "email",
     });
 
-    const link = notifSnap.data()?.link;
+    // Increment global stats ONLY if first click
+    if (data?.systemNotificationId && !alreadyClicked) {
+      await admin
+        .firestore()
+        .collection("developerNotifications")
+        .doc(data.systemNotificationId)
+        .update({
+          "stats.clicked": admin.firestore.FieldValue.increment(1),
+          "stats.clickedFrom.email": admin.firestore.FieldValue.increment(1),
+        });
+    }
+
+    const link = data?.link;
 
     return res.redirect(link || "https://displaygram.com/notifications");
   } catch (err) {

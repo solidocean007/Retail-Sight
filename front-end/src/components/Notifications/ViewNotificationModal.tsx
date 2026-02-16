@@ -9,9 +9,8 @@ import {
   Typography,
 } from "@mui/material";
 import { UserNotificationType } from "../../utils/types";
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "../../utils/firebase";
 import { useNavigate } from "react-router-dom";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 interface Props {
   open: boolean;
@@ -27,22 +26,11 @@ const ViewNotificationModal: React.FC<Props> = ({
   openPostViewer,
 }) => {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!notification || notification.readAt) return;
-
-    const ref = doc(
-      db,
-      "users",
-      notification.userId,
-      "notifications",
-      notification.id,
-    );
-
-    updateDoc(ref, {
-      readAt: serverTimestamp(),
-    }).catch(() => {});
-  }, [notification]);
+  const functions = getFunctions();
+  const trackNotificationClick = httpsCallable(
+    functions,
+    "trackNotificationClickCallable",
+  );
 
   if (!notification) return null;
 
@@ -85,11 +73,9 @@ const ViewNotificationModal: React.FC<Props> = ({
     source: "modal" | "dropdown" | "push",
   ) => {
     try {
-      const ref = doc(db, "users", notif.userId, "notifications", notif.id);
-
-      await updateDoc(ref, {
-        "analytics.clickedAt": serverTimestamp(),
-        "analytics.clickedFrom": source,
+      await trackNotificationClick({
+        notificationId: notif.id,
+        source: source,
       });
     } catch (err) {
       console.error("Failed to track notification click", err);

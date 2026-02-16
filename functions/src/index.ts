@@ -29,6 +29,7 @@ import { onPendingNewUserAndCompanyInviteCreate } from "./onPendingNewUserAndCom
 import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
 import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
+import { markNotificationReadCallable } from "./notifications/markNotificationReadCallable";
 
 import {
   galloFetchPrograms,
@@ -146,4 +147,5 @@ export {
   updateSystemNotificationSchedule,
   getNotificationAnalytics,
   trackEmailClick,
+  markNotificationReadCallable,
 };

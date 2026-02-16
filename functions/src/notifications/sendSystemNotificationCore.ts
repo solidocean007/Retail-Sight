@@ -85,6 +85,7 @@ export async function sendSystemNotificationCore(
   // Resolve recipients
   // -------------------------------
   const users = new Map<string, any>();
+  const recipientCount = users.size;
 
   recipientUserIds.forEach((uid) => users.set(uid, null));
 
@@ -145,6 +146,18 @@ export async function sendSystemNotificationCore(
   });
 
   await batch.commit();
+
+  await db
+    .collection("developerNotifications")
+    .doc(baseId)
+    .set(
+      {
+        stats: {
+          sent: admin.firestore.FieldValue.increment(recipientCount),
+        },
+      },
+      { merge: true }
+    );
 
   if (sendEmail) {
     await sendEmailNotificationCore({
