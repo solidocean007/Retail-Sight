@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
-import { fetchCompanyNotifications } from "../../thunks/notificationsThunks";
 import {
   Table,
   TableBody,
@@ -13,41 +12,127 @@ import {
   CircularProgress,
   Button,
   TextField,
+  Chip,
+  Box,
 } from "@mui/material";
 import "./notifications/notificationsTable.css";
-import { CompanyWithUsersAndId, NotificationType } from "../../utils/types";
+import {
+  CompanyWithUsersAndId,
+  DeveloperNotificationType,
+} from "../../utils/types";
 import ViewDeveloperNotification from "./ViewDeveloperNotification";
+import { fetchDeveloperNotifications } from "../../thunks/developerNotificationsThunks";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { getNotificationStatus } from "./utils/getNotificationStatus";
+import {
+  markDeveloperNotificationResent,
+  removeDeveloperNotification,
+} from "../../Slices/developerNotificationSlice";
+import DeveloperAnalyticsModal from "./DeveloperAnalyticsModal";
 
-interface DeveloperNotificationsTableProps {
+interface Props {
   allCompaniesAndUsers: CompanyWithUsersAndId[];
 }
 
-const DeveloperNotificationsTable: React.FC<
-  DeveloperNotificationsTableProps
-> = ({ allCompaniesAndUsers }) => {
+const DeveloperNotificationsTable: React.FC<Props> = ({
+  allCompaniesAndUsers,
+}) => {
   const dispatch = useAppDispatch();
-  const { userNotifications, companyNotifications, loading, error } =
-    useSelector((state: RootState) => state.notifications);
-  const currentUser = useSelector((state: RootState) => state.user.currentUser);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
-    null
-  );
-  const [modalOpen, setModalOpen] = useState(false);
+  const functions = getFunctions();
 
+  const resendSystemNotification = httpsCallable(
+    functions,
+    "resendSystemNotification"
+  );
+  const deleteSystemNotification = httpsCallable(
+    functions,
+    "deleteSystemNotification"
+  );
+
+  const { items, loading, error } = useSelector(
+    (state: RootState) => state.developerNotifications
+  );
+
+  const currentUser = useSelector(
+    (state: RootState) => state.user.currentUser
+  );
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [analyticsId, setAnalyticsId] = useState<string | null>(null);
+
+  // ---------------------------------------
+  // Initial Load
+  // ---------------------------------------
   useEffect(() => {
     if (currentUser?.role === "developer") {
-      dispatch(fetchCompanyNotifications("all"));
-    } else if (currentUser?.companyId) {
-      dispatch(fetchCompanyNotifications(currentUser.companyId));
+      dispatch(fetchDeveloperNotifications());
     }
-  }, [dispatch, currentUser?.companyId, currentUser?.role]);
+  }, [dispatch, currentUser?.role]);
 
-  const filteredNotifications = userNotifications.filter(
-    (notification: NotificationType) =>
-      notification.title.toLowerCase().includes(searchTerm.toLowerCase())
+  // ---------------------------------------
+  // Memoized Filter
+  // ---------------------------------------
+  const filteredNotifications = useMemo(() => {
+    const lower = searchTerm.toLowerCase();
+    return items.filter((n) =>
+      (n.title ?? "").toLowerCase().includes(lower)
+    );
+  }, [items, searchTerm]);
+
+  // ---------------------------------------
+  // Resend Handler
+  // ---------------------------------------
+  const handleResend = useCallback(
+    async (notif: DeveloperNotificationType) => {
+      try {
+        dispatch(
+          markDeveloperNotificationResent({
+            id: notif.id,
+            sentAt: new Date().toISOString(),
+          })
+        );
+
+        await resendSystemNotification({
+          notificationId: notif.id,
+          sendEmail: true,
+        });
+      } catch (err) {
+        console.error("Resend failed:", err);
+        dispatch(fetchDeveloperNotifications());
+      }
+    },
+    [dispatch, resendSystemNotification]
   );
 
+  // ---------------------------------------
+  // Delete Handler
+  // ---------------------------------------
+  const handleDelete = useCallback(
+    async (notif: DeveloperNotificationType, status: string) => {
+      if (status === "scheduled") {
+        const ok = window.confirm(
+          "This notification is scheduled but not yet sent. Delete it?"
+        );
+        if (!ok) return;
+      }
+
+      dispatch(removeDeveloperNotification(notif.id));
+
+      try {
+        await deleteSystemNotification({
+          notificationId: notif.id,
+        });
+      } catch (err) {
+        console.error("Delete failed:", err);
+        dispatch(fetchDeveloperNotifications());
+      }
+    },
+    [dispatch, deleteSystemNotification]
+  );
+
+  // ---------------------------------------
+  // Loading / Error
+  // ---------------------------------------
   if (loading) {
     return (
       <div className="spinner-container">
@@ -60,6 +145,9 @@ const DeveloperNotificationsTable: React.FC<
     return <div className="error-text">Error: {error}</div>;
   }
 
+  // ---------------------------------------
+  // Render
+  // ---------------------------------------
   return (
     <div className="notifications-table-container">
       <div className="table-header">
@@ -73,87 +161,125 @@ const DeveloperNotificationsTable: React.FC<
         />
       </div>
 
-      <TableContainer component={Paper} style={{ marginTop: "1rem" }}>
+      <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
-            <TableRow className="table-header-row">
+            <TableRow>
               <TableCell>Title</TableCell>
               <TableCell>Audience</TableCell>
               <TableCell>Priority</TableCell>
-              <TableCell>Sent Date</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Stats</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {filteredNotifications.map((notif) => (
-              <TableRow key={notif.id} hover className="table-row">
-                <TableCell>{notif.title}</TableCell>
-                <TableCell>
-                  {notif.recipientCompanyIds?.length === 0
-                    ? "All Companies"
-                    : `${notif.recipientCompanyIds?.length} Companies`}
-                </TableCell>
-                <TableCell>{notif.priority || "Normal"}</TableCell>
-                <TableCell>
-                  {(() => {
-                    const sentAt = notif.sentAt;
+            {filteredNotifications.map((notif) => {
+              const status = getNotificationStatus(notif);
 
-                    if (sentAt instanceof Date) {
-                      return sentAt.toLocaleString();
-                    }
+              const sent = notif.stats?.sent ?? 0;
+              const read = notif.stats?.read ?? 0;
+              const clicked = notif.stats?.clicked ?? 0;
+              const readRate = sent ? Math.round((read / sent) * 100) : 0;
 
-                    if (typeof sentAt === "string") {
-                      return new Date(sentAt).toLocaleString();
-                    }
+              return (
+                <TableRow key={notif.id} hover>
+                  <TableCell>{notif.title}</TableCell>
 
-                    if (sentAt && "seconds" in sentAt) {
-                      // Firestore Timestamp
-                      return new Date(sentAt.seconds * 1000).toLocaleString();
-                    }
+                  <TableCell>
+                    {notif.recipientUserIds?.length
+                      ? `${notif.recipientUserIds.length} User${
+                          notif.recipientUserIds.length !== 1 ? "s" : ""
+                        }`
+                      : notif.recipientCompanyIds?.length
+                      ? `${notif.recipientCompanyIds.length} Compan${
+                          notif.recipientCompanyIds.length !== 1
+                            ? "ies"
+                            : "y"
+                        }`
+                      : "All Companies"}
+                  </TableCell>
 
-                    return "—"; // fallback
-                  })()}
-                </TableCell>
+                  <TableCell>{notif.priority ?? "Normal"}</TableCell>
 
-                <TableCell className="actions-cell">
-                  <Button
-                    size="small"
-                    variant="contained"
-                    className="btn-view"
-                    onClick={() => {
-                      setSelectedNotif(notif);
-                      setModalOpen(true);
-                    }}
-                  >
-                    View
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    className="btn-resend"
-                    onClick={() => console.log("Resend", notif.id)}
-                  >
-                    Resend
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="error"
-                    className="btn-delete"
-                    onClick={() => console.log("Delete", notif.id)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={
+                        status === "sent"
+                          ? "Sent"
+                          : status === "scheduled"
+                          ? "Scheduled"
+                          : "Draft"
+                      }
+                      color={
+                        status === "sent"
+                          ? "success"
+                          : status === "scheduled"
+                          ? "warning"
+                          : "default"
+                      }
+                    />
+                  </TableCell>
+
+                  {/* STATS */}
+                  <TableCell>
+                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                      <Chip size="small" label={`Sent ${sent}`} />
+                      <Chip
+                        size="small"
+                        color="primary"
+                        label={`Read ${read} (${readRate}%)`}
+                      />
+                      <Chip
+                        size="small"
+                        color="secondary"
+                        label={`Clicked ${clicked}`}
+                      />
+                    </Box>
+                  </TableCell>
+
+                  {/* ACTIONS */}
+                  <TableCell>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => setAnalyticsId(notif.id)}
+                      >
+                        Analytics
+                      </Button>
+
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={status !== "sent"}
+                        onClick={() => handleResend(notif)}
+                      >
+                        Resend
+                      </Button>
+
+                      <Button
+                        size="small"
+                        color="error"
+                        variant="contained"
+                        onClick={() => handleDelete(notif, status)}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
-        <ViewDeveloperNotification
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          notification={selectedNotif}
-          allCompaniesAndUsers={allCompaniesAndUsers}
+
+        <DeveloperAnalyticsModal
+          open={!!analyticsId}
+          onClose={() => setAnalyticsId(null)}
+          developerNotificationId={analyticsId}
         />
       </TableContainer>
     </div>

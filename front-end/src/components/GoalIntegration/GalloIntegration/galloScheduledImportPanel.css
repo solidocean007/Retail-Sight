@@ -14,16 +14,6 @@
   gap: 12px;
 }
 
-.status-pill.success {
-  background: rgba(26, 127, 55, 0.15);
-  color: #1a7f37;
-}
-
-.status-pill.error {
-  background: rgba(180, 35, 24, 0.15);
-  color: #b42318;
-}
-
 .error-box {
   background: var(--error-bg);
   color: var(--error-color);

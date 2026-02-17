@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction, createSelector } from "@reduxjs/toolkit";
-import { NotificationType } from "../utils/types";
+import { UserNotificationType } from "../utils/types";
 import { RootState } from "../utils/store";
 
 interface NotificationsState {
-  notifications: NotificationType[];
+  notifications: UserNotificationType[];
   loading: boolean;
   error: string | null;
 }
@@ -19,33 +19,38 @@ const notificationsSlice = createSlice({
   initialState,
   reducers: {
     // Replace all notifications for the current user
-    setNotifications(state, action: PayloadAction<NotificationType[]>) {
+    setNotifications(state, action: PayloadAction<UserNotificationType[]>) {
       state.notifications = action.payload;
     },
 
     // Add a single notification (real-time)
-    addNotification(state, action: PayloadAction<NotificationType>) {
+    addNotification(state, action: PayloadAction<UserNotificationType>) {
       state.notifications.unshift(action.payload);
     },
 
     // Delete a notification
     deleteNotification(state, action: PayloadAction<string>) {
       const id = action.payload;
-      state.notifications = state.notifications.filter((n) => n.id !== id);
+      state.notifications = state.notifications.filter(
+        (n: UserNotificationType) => n.id !== id,
+      );
     },
-
-    // Mark as read
-    markAsRead(
+    clearNotifications(state) {
+      state.notifications = [];
+      state.loading = false;
+      state.error = null;
+    },
+    markAsReadLocal(
       state,
-      action: PayloadAction<{ notificationId: string; userId: string }>
+      action: PayloadAction<{ notificationId: string; readAt: string }>,
     ) {
-      const { notificationId, userId } = action.payload;
-      const notif = state.notifications.find((n) => n.id === notificationId);
-      if (notif && !notif.readBy.includes(userId)) {
-        notif.readBy.push(userId);
+      const notif = state.notifications.find(
+        (n) => n.id === action.payload.notificationId,
+      );
+      if (notif) {
+        notif.readAt = action.payload.readAt;
       }
     },
-
     setLoading(state, action: PayloadAction<boolean>) {
       state.loading = action.payload;
     },
@@ -58,9 +63,10 @@ const notificationsSlice = createSlice({
 
 export const {
   setNotifications,
+  clearNotifications,
   addNotification,
   deleteNotification,
-  markAsRead,
+  markAsReadLocal,
   setLoading,
   setError,
 } = notificationsSlice.actions;
@@ -74,15 +80,7 @@ export default notificationsSlice.reducer;
 export const selectNotifications = (state: RootState) =>
   state.notifications.notifications;
 
-export const selectCurrentUserId = (state: RootState) =>
-  state.user.currentUser?.uid;
-
 export const selectUnreadNotifications = createSelector(
-  [selectNotifications, selectCurrentUserId],
-  (notifications, uid) =>
-    notifications.filter((n) => !n.readBy?.includes(uid ?? ""))
+  [selectNotifications],
+  (notifications) => notifications.filter((n) => !n.readAt),
 );
-
-
-
-// a notification has a sentBy which is a user.  sentBy could also be 'system' though.  

@@ -1,5 +1,4 @@
 /* components/Gallo/galloGoalCard.css */
-
 .gallo-goal-card {
   display: flex;
   flex-direction: column;
@@ -17,6 +16,7 @@
 
 .gallo-goal-card__header-actions {
   width: 100%;
+  height: 100%;
   max-width: 100px;
   display: flex;
   gap: 8px;
@@ -35,6 +35,11 @@
   padding: 2px 8px;
   border-radius: 12px;
 }
+@media (hover: hover) {
+  .gallo-goal-card__manage-btn {
+    display: none;
+  }
+}
 
 /* Status badges */
 .gallo-goal-card__badge--active {
@@ -50,6 +55,11 @@
 .gallo-goal-card__badge--disabled {
   background: var(--bg-danger);
   color: var(--text-danger);
+}
+
+.gallo-goal-card__dates {
+  display: flex;
+  gap: 1rem;
 }
 
 .gallo-goal-card__progress {
@@ -90,7 +100,7 @@
   border: 1px solid var(--border-default);
   border-radius: 8px;
   padding: 12px;
-  background: var(--bg-muted);
+  background: var(--surface-elevated);
 }
 
 .account-card__title {

@@ -48,6 +48,8 @@ import { selectAllGalloGoals } from "../../Slices/galloGoalsSlice";
 import { normalizePost } from "../../utils/normalize";
 import { markGalloAccountAsSubmitted } from "../../thunks/galloGoalsThunk";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { formatGalloClosedDate } from "../../utils/PostLogic/formatGalloClosedDate";
 
 interface EditPostModalProps {
   post: PostWithID;
@@ -62,9 +64,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   setIsEditModalOpen,
 }) => {
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
+  const functions = getFunctions(undefined, "us-central1");
+  const sendGalloCF = httpsCallable(functions, "galloSendAchievement");
+
   const wrapperRef = useRef(null); // its used on a div
   const [editablePost, setEditablePost] = useState<PostWithID>(post);
   const galloEnabled = isEnabled("galloAxis");
@@ -73,7 +78,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   >([]);
   const dispatch = useAppDispatch();
   const [description, setDescription] = useState<string>(
-    post.description || ""
+    post.description || "",
   );
   const [showGoalChangeConfirm, setShowGoalChangeConfirm] = useState(false);
   const userData = useSelector(selectUser)!;
@@ -98,7 +103,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     if (!galloEnabled || !editablePost.account?.accountNumber) return [];
     return getActiveGalloGoalsForAccount(
       editablePost.account.accountNumber,
-      allGalloGoals
+      allGalloGoals,
     );
   }, [galloEnabled, editablePost.account?.accountNumber, allGalloGoals]);
 
@@ -123,7 +128,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
   const editModeGalloGoals = galloEnabled
     ? getActiveGalloGoalsForAccount(
         editablePost.account?.accountNumber,
-        allGalloGoals
+        allGalloGoals,
       )
     : [];
 
@@ -147,7 +152,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       postUserUid: onBehalf?.uid ?? post.postUserUid,
       accountNumber: editablePost.account?.accountNumber ?? "",
       galloOppId: editablePost.galloGoal?.oppId ?? null, // 👈 edited
-    }
+    },
   );
 
   useEffect(() => setEditablePost(post), [post]);
@@ -291,23 +296,56 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
       // after updateDoc(postRef, updatedFields);
 
-      if (
-        updatedPost.galloGoal?.goalId &&
-        updatedPost.galloGoal?.oppId &&
-        updatedPost.account?.accountNumber
-      ) {
-        const galloGoal = allGalloGoals.find(
-          (g) => g.goalDetails.goalId === updatedPost.galloGoal?.goalId
-        );
+      //--------------------------------------------------------
+      // 🚀 Gallo Axis Re-Send Logic (EDIT MODE)
+      //--------------------------------------------------------
 
-        if (galloGoal) {
-          dispatch(
-            markGalloAccountAsSubmitted({
-              goal: galloGoal,
-              accountNumber: updatedPost.account.accountNumber,
-              postId: updatedPost.id,
-            })
+      const previousOppId = existing.galloGoal?.oppId;
+      const newOppId = updatedPost.galloGoal?.oppId;
+
+      const shouldSend =
+        newOppId &&
+        updatedPost.account?.accountNumber &&
+        previousOppId !== newOppId;
+
+      if (shouldSend) {
+        dispatch(showMessage("📤 Sending achievement to Gallo Axis..."));
+
+        try {
+          const closedDate = formatGalloClosedDate(
+            updatedPost.closedDate || new Date().toISOString(),
           );
+
+          await sendGalloCF({
+            env: updatedPost.galloGoal?.env,
+            oppId: updatedPost.galloGoal?.oppId,
+            closedBy:
+              updatedPost.postUserFirstName +
+              " " +
+              updatedPost.postUserLastName,
+            closedDate,
+            closedUnits: updatedPost.totalCaseCount || "0",
+            photos: [{ file: updatedPost.imageUrl }],
+          });
+
+          const galloGoal = allGalloGoals.find(
+            (g) => g.goalDetails.goalId === updatedPost.galloGoal?.goalId,
+          );
+
+          if (galloGoal) {
+            await dispatch(
+              markGalloAccountAsSubmitted({
+                goal: galloGoal,
+                accountNumber: updatedPost.account.accountNumber,
+                postId: updatedPost.id,
+              }),
+            );
+          }
+
+          dispatch(showMessage("✅ Achievement sent to Gallo!"));
+        } catch (err) {
+          console.error("Gallo send failed on edit:", err);
+          dispatch(showMessage("⚠️ Post updated, but Gallo sync failed."));
         }
       }
 
@@ -330,7 +368,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
         const existingPosts: any[] = snap.data()?.submittedPosts || [];
 
         const filtered = existingPosts.filter(
-          (e) => e.postId !== updatedPost.id
+          (e) => e.postId !== updatedPost.id,
         );
         filtered.push({
           postId: updatedPost.id,
@@ -406,7 +444,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
   const handleFieldChange = <K extends keyof PostInputType>(
     field: K,
-    value: PostInputType[K]
+    value: PostInputType[K],
   ) => {
     setEditablePost((prev) => ({ ...prev, [field]: value }));
   };
@@ -415,7 +453,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
     if (!goal || !editablePost.account) return;
 
     const match = goal.accounts.find(
-      (a) => a.distributorAcctId === editablePost.account?.accountNumber
+      (a) => a.distributorAcctId === editablePost.account?.accountNumber,
     );
 
     if (!match?.oppId) {
@@ -573,7 +611,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
                   value={migratedVisibility}
                   onChange={(e) =>
                     setMigratedVisibility(
-                      e.target.value as "companyOnly" | "network"
+                      e.target.value as "companyOnly" | "network",
                     )
                   }
                   className="input-select"
@@ -642,7 +680,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
             editablePost,
             selectedCompanyGoal.id,
             selectedCompanyGoal.goalTitle,
-            dispatch
+            dispatch,
           );
 
           setShowGoalChangeConfirm(false);

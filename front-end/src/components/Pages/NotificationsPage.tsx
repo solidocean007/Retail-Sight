@@ -1,54 +1,85 @@
 // Pages/NotificationsPage.tsx
-import React, { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import "./notificationsPage.css";
 import { RootState, useAppDispatch } from "../../utils/store";
-import {
-  markAsRead,
-  selectNotifications,
-} from "../../Slices/notificationsSlice";
+import { selectNotifications } from "../../Slices/notificationsSlice";
 import NotificationItem from "../Notifications/NotificationItem";
 import { useNavigate } from "react-router-dom";
 // import { markAllNotificationsRead } from "../Slices/notificationsSlice"; // <-- Create this thunk
 import ViewNotificationModal from "../Notifications/ViewNotificationModal";
-import { NotificationType } from "../../utils/types";
-import {
-  markNotificationRead,
-  removeNotification,
-} from "../../thunks/notificationsThunks";
+import { removeNotification } from "../../thunks/notificationsThunks";
 import PostViewerModal from "../PostViewerModal";
+import { UserNotificationType } from "../../utils/types";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const appReady = useSelector((state: RootState) => state.app.appReady);
+
   const notifications = useSelector(selectNotifications);
-  const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
-    null
-  );
+  const [selectedNotif, setSelectedNotif] =
+    useState<UserNotificationType | null>(null);
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  const functions = getFunctions();
+  const markReadCallable = httpsCallable(
+    functions,
+    "markNotificationReadCallable",
+  );
+  const trackNotificationClick = httpsCallable(
+    functions,
+    "trackNotificationClickCallable",
+  );
 
-  if (!currentUser) return null;
+  if (!currentUser || !appReady) {
+    return <div className="page-loading">Loading notifications…</div>;
+  }
 
-  
+  console.log("notifications page");
+  //   useEffect(() => {
+  //   // Only redirect if we KNOW notifications have loaded
+  //   if (!currentUser) return;
 
-  useEffect(() => {
-    if (notifications.length === 0) {
-      navigate("/");
-    }
-  }, [notifications]);
+  //   if (notifications.length === 0) {
+  //     // give hydration time on cold start
+  //     const t = setTimeout(() => {
+  //       if (notifications.length === 0) {
+  //         navigate("/");
+  //       }
+  //     }, 500);
 
-  const handleMarkAllRead = () => {
-    notifications.forEach((notif) => {
-      if (!notif.readBy?.includes(currentUser.uid)) {
-        dispatch(
-          markNotificationRead({
-            notificationId: notif.id,
-            uid: currentUser.uid,
-          })
-        );
+  //     return () => clearTimeout(t);
+  //   }
+  // }, [notifications, currentUser, navigate]);
+
+  const handleMarkAllRead = async () => {
+    for (const notif of notifications) {
+      if (!notif.readAt) {
+        await markReadCallable({
+          notificationId: notif.id,
+        });
       }
-    });
+    }
+  };
+
+  const handleOpen = async (notif: UserNotificationType) => {
+    if (!notif.readAt) {
+      await markReadCallable({
+        notificationId: notif.id,
+      });
+    }
+
+    if (notif.postId) {
+      await trackNotificationClick({
+        notificationId: notif.id,
+        source: "modal",
+      });
+      setPostIdToView(notif.postId);
+    } else {
+      setSelectedNotif(notif);
+    }
   };
 
   return (
@@ -82,23 +113,7 @@ const NotificationsPage: React.FC = () => {
             <NotificationItem
               key={notif.id}
               notification={notif}
-              currentUserId={currentUser.uid}
-              onClick={() => {
-                if (!notif.readBy?.includes(currentUser.uid)) {
-                  dispatch(
-                    markNotificationRead({
-                      notificationId: notif.id,
-                      uid: currentUser.uid,
-                    })
-                  );
-                }
-
-                if (notif.postId) {
-                  setPostIdToView(notif.postId);
-                } else {
-                  setSelectedNotif(notif);
-                }
-              }}
+              onOpen={() => handleOpen(notif)}
               onDelete={() => {
                 dispatch(removeNotification({ notificationId: notif.id }));
               }}

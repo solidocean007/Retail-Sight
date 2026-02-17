@@ -1,0 +1,67 @@
+.gallo-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.gallo-overlay {
+  background: #111827;
+  width: 95%;
+  max-width: 1100px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.overlay-percent {
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.overlay-actions button {
+  margin-left: 8px;
+}
+
+.overlay-account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.account-cell {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  text-align: center;
+}
+
+.account-cell:hover {
+  transform: scale(1.05);
+}
+
+.account-cell.submitted {
+  background: #065f46;
+}
+
+.account-cell.pending {
+  background: #7f1d1d;
+}
+
+.account-name {
+  pointer-events: none;
+}

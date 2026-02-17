@@ -1,20 +1,33 @@
 /* notificationItem.css */
 .notification-item {
+  display: flex;
+  justify-content: space-between;
   background-color: var(--dashboard-card);
+  width: 100%;
   padding: 1rem;
   margin-bottom: 10px;
   border-radius: var(--btn-border-radius);
   box-shadow: var(--card-shadow, 0 2px 6px rgba(0, 0, 0, 0.1));
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
   cursor: pointer;
   border-left: 4px solid var(--primary-blue);
+}
+
+.notification-body.truncated {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: 0.75;
 }
 
 .notification-item.unread {
   border-left: 6px solid var(--primary-blue);
   background-color: var(--unread-notification-bg);
   font-weight: 600;
-  box-shadow: 0 0 0 2px var(--primary-blue-light, rgba(59,130,246,0.3));
+  box-shadow: 0 0 0 2px var(--primary-blue-light, rgba(59, 130, 246, 0.3));
 }
 
 .notification-item.unread {
@@ -32,8 +45,6 @@
   }
 }
 
-
-
 .notification-item.read {
   background-color: var(--read-notification-bg);
   opacity: 0.7;
@@ -50,7 +61,6 @@
   margin-bottom: 6px;
   color: var(--text-color); /* instead of #333 */
 }
-
 
 .swipe-tip {
   position: absolute;
@@ -72,7 +82,6 @@
   display: block;
 }
 
-
 /* Swipe Dismissal Animation (optional trigger class) */
 .notification-item.dismissed {
   transform: translateX(-100%);
@@ -83,7 +92,6 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-
 
 /* Add this to notification-item.css */
 .notification-item.high {

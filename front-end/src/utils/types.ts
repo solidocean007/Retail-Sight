@@ -9,17 +9,28 @@ export type NotificationCategory =
   | "goal"
   | "announcement";
 
-export type PriorityType = "high" | "normal" | "low";
+export type PriorityType = "high" | "normal";
 
-export type NotificationType = {
+export interface SystemNotificationType {
   id: string;
   title: string;
   message: string;
-  sentAt: Timestamp | string;
+
+  link?: string; // ← what to open
+  linkType?: "internal" | "external";
+
+  intent: "activity" | "message" | "system" | "silent";
+
+  createdAt: Timestamp;
+  sentAt?: Timestamp;
   scheduledAt?: Timestamp | null;
 
+  analytics?: {
+    clickedAt?: Timestamp;
+    clickedFrom?: "modal" | "dropdown" | "push";
+  };
+
   sentBy: UserType | "system";
-  postId?: string;
 
   // 🧠 New fields for clearer targeting
   recipientUserIds?: string[];
@@ -32,11 +43,77 @@ export type NotificationType = {
   relatedGoalId?: string;
   relatedAccountNumber?: string; // optional tie to a store/account
 
-  readBy: string[];
-  pinned: boolean;
   priority: PriorityType;
   type?: NotificationCategory;
+  pinned?: boolean;
+}
+
+type NotificationDeliveryChannel = "inApp" | "push" | "email" | "sms";
+
+export interface UserNotificationType {
+  id: string;
+  systemNotificationId?: string;
+
+  userId: string;
+
+  title: string;
+  message: string;
+
+  // 🔗 Deep-link targets
+  postId?: string;
   commentId?: string;
+  goalId?: string;
+  link?: string;
+
+  createdAt: string | null;
+  readAt?: string | null;
+  interactedAt?: string | null;
+
+  // delivery tracking
+  deliveredVia?: Partial<Record<NotificationDeliveryChannel, Date>>;
+
+  pinned?: boolean;
+  priority: PriorityType;
+  type?: NotificationCategory;
+}
+
+// utils/types.ts
+export type DeveloperNotificationType = {
+  id: string;
+  title: string;
+  message: string;
+  priority: "low" | "normal" | "high";
+  recipientCompanyIds: string[];
+  audience: "all" | "targeted";
+
+  recipientUserIds?: string[];
+  recipientRoles?: string[];
+  link: string;
+  createdAt: string | null;
+  sentAt: string | null;
+  scheduledAt: string | null;
+
+  stats?: {
+    sent?: number;
+    read?: number;
+    clicked?: number;
+    clickedFrom?: {
+      push?: number;
+      modal?: number;
+      dropdown?: number;
+      email?: number;
+    };
+  };
+
+  createdBy: {
+    uid: string;
+    role: "developer";
+  };
+
+  channels?: {
+    inApp: boolean;
+    email: boolean;
+  };
 };
 
 export type BusinessType = "distributor" | "supplier";
@@ -764,4 +841,5 @@ export type DashboardModeType =
   | "GoalManagerMode"
   | "ApiMode"
   | "CollectionsMode"
-  | "TutorialMode";
+  | "TutorialMode"
+  | "AnnouncementsMode";

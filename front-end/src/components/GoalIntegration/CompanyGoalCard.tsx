@@ -282,8 +282,8 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
       <div className="company-goal-card-header">
         <div className="company-goal-card-start-end">
-          <h5>Starts: {goal.goalStartDate}</h5>
-          <h5>Ends: {goal.goalEndDate}</h5>
+          <h3>Starts: {goal.goalStartDate}</h3>
+          <h3>Ends: {goal.goalEndDate}</h3>
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>

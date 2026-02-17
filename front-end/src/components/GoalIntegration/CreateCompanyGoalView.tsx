@@ -51,6 +51,7 @@ import GoalAssignmentsSection from "./GoalAssignmentsSection";
 import { useFilteredAccounts } from "../../hooks/useFilteredAccounts";
 import { buildAssignments } from "./utils/buildAssignments";
 import { showMessage } from "../../Slices/snackbarSlice";
+import { normalizeFirestoreData } from "../../utils/normalize";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -69,12 +70,12 @@ const CreateCompanyGoalView = () => {
   const activeCompanyUsers = useMemo(
     () =>
       (companyUsers ?? []).filter((u) => (u.status ?? "active") === "active"),
-    [companyUsers]
+    [companyUsers],
   );
   const [draftGoal, setDraftGoal] = useState<CompanyGoalType | null>(null);
   const [emailOnCreate, setEmailOnCreate] = useState(true);
   const [goalAssignments, setGoalAssignments] = useState<GoalAssignmentType[]>(
-    []
+    [],
   );
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -90,7 +91,7 @@ const CreateCompanyGoalView = () => {
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
   const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(
-    "sales"
+    "sales",
   );
   const [goalMetric, setGoalMetric] = useState("cases");
   const [goalValueMin, setGoalValueMin] = useState(1);
@@ -151,9 +152,8 @@ const CreateCompanyGoalView = () => {
       try {
         const accountsId = usersCompany?.accountsId;
         if (!accountsId) throw new Error("Missing accountsId");
-        const firestoreAccounts = await fetchAllAccountsFromFirestore(
-          accountsId
-        );
+        const firestoreAccounts =
+          await fetchAllAccountsFromFirestore(accountsId);
         if (!cancelled && firestoreAccounts?.length) {
           setAccounts(firestoreAccounts);
           dispatch(setAllAccounts(firestoreAccounts));
@@ -202,7 +202,7 @@ const CreateCompanyGoalView = () => {
 
   const getUserIdsForAccount = (
     account: CompanyAccountType,
-    users: { uid: string; salesRouteNum?: string }[]
+    users: { uid: string; salesRouteNum?: string }[],
   ): string[] => {
     if (!account.salesRouteNums || account.salesRouteNums.length === 0)
       return [];
@@ -211,7 +211,7 @@ const CreateCompanyGoalView = () => {
       .filter(
         (user) =>
           user.salesRouteNum &&
-          account.salesRouteNums.includes(user.salesRouteNum)
+          account.salesRouteNums.includes(user.salesRouteNum),
       )
       .map((user) => user.uid);
   };
@@ -221,7 +221,7 @@ const CreateCompanyGoalView = () => {
     for (const account of accounts) {
       map[account.accountNumber] = getUserIdsForAccount(
         account,
-        normalizedCompanyUsers
+        normalizedCompanyUsers,
       );
     }
     return map;
@@ -279,7 +279,8 @@ const CreateCompanyGoalView = () => {
     getDoc(configRef)
       .then((docSnap) => {
         if (docSnap.exists()) {
-          const data = docSnap.data();
+          const data = normalizeFirestoreData(docSnap.data());
+
           setCustomerTypes(data.customerTypes || defaultCustomerTypes);
           setChainNames(data.chains || []);
         } else {
@@ -349,7 +350,7 @@ const CreateCompanyGoalView = () => {
 
     setGoalAssignments((prev) => {
       const inView = new Set(
-        filteredAccounts.map((a) => a.accountNumber.toString())
+        filteredAccounts.map((a) => a.accountNumber.toString()),
       );
 
       // Remove any assignments whose accountNumber is no longer visible
@@ -370,7 +371,7 @@ const CreateCompanyGoalView = () => {
     setIsSaving(true);
     try {
       const result = await dispatch(
-        createCompanyGoalInFirestore({ goal: draftGoal, currentUser })
+        createCompanyGoalInFirestore({ goal: draftGoal, currentUser }),
       );
 
       if (createCompanyGoalInFirestore.fulfilled.match(result)) {
@@ -384,7 +385,7 @@ const CreateCompanyGoalView = () => {
           createdGoal.goalAssignments?.length > 0
         ) {
           const targetUserIds = Array.from(
-            new Set(createdGoal.goalAssignments.map((a) => a.uid))
+            new Set(createdGoal.goalAssignments.map((a) => a.uid)),
           );
 
           for (const uid of targetUserIds) {
@@ -407,7 +408,7 @@ const CreateCompanyGoalView = () => {
           showMessage({
             text: "Goal created successfully",
             severity: "success",
-          })
+          }),
         );
 
         setGoalTitle("");
@@ -424,7 +425,7 @@ const CreateCompanyGoalView = () => {
               ? `Failed to create goal: ${result.payload}`
               : "Failed to create goal",
             severity: "error",
-          })
+          }),
         );
       }
     } catch (err) {
@@ -433,7 +434,7 @@ const CreateCompanyGoalView = () => {
         showMessage({
           text: "Something went wrong while creating the goal.",
           severity: "error",
-        })
+        }),
       );
     } finally {
       setIsSaving(false);
@@ -448,7 +449,7 @@ const CreateCompanyGoalView = () => {
   const confirmAssignments = draftGoal?.goalAssignments ?? [];
 
   const affectedAccountsCount = new Set(
-    confirmAssignments.map((a) => a.accountNumber)
+    confirmAssignments.map((a) => a.accountNumber),
   ).size;
 
   const affectedUsersCount = new Set(confirmAssignments.map((a) => a.uid)).size;

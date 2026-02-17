@@ -3,18 +3,10 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 
 if (!admin.apps.length) admin.initializeApp();
 
-/**
- * Intakes activityEvents and fans out notifications to users.
- * Cloud Function #1 in the pipeline.
- *
- * This creates in-app notification docs. Your existing
- * onUserNotificationCreated.ts handles push notifications.
- */
 export const onActivityEventCreated = onDocumentCreated(
   "activityEvents/{eventId}",
   async (event) => {
     const data = event.data?.data();
-
     if (!data) return;
 
     const {
@@ -33,7 +25,9 @@ export const onActivityEventCreated = onDocumentCreated(
 
     const db = admin.firestore();
 
-    // Create notification text
+    // -----------------------------
+    // Build notification content
+    // -----------------------------
     let title = "";
     let message = "";
 
@@ -52,20 +46,16 @@ export const onActivityEventCreated = onDocumentCreated(
 
       case "post.commentLike":
         title = `${actorName} liked your comment`;
-
-        // Use real comment text when available
         message = data.commentText
           ? data.commentText.slice(0, 120)
           : "Tap to view the comment.";
-
         break;
 
       case "post.mention":
         title = `${actorName} mentioned you`;
         message = data.goalDescription
           ? data.goalDescription.slice(0, 120)
-          : "You have a new goal assignment.";
-
+          : "You were mentioned.";
         break;
 
       case "goal.assignment":
@@ -78,22 +68,40 @@ export const onActivityEventCreated = onDocumentCreated(
         return;
     }
 
-    // Write a notification document for each target user
-    const writes = targetUserIds.map((uid: string) =>
-      db.collection(`users/${uid}/notifications`).add({
-        title,
-        message,
-        type,
-        postId: postId || null,
-        commentId: commentId || null,
+    // -----------------------------
+    // Fan out per user (idempotent)
+    // -----------------------------
+    const writes = targetUserIds.map((uid: string) => {
+      const notificationId = `${event.id}_${uid}`;
+      const ref = db.doc(`users/${uid}/notifications/${notificationId}`);
 
-        actorUserId, // 👈 REQUIRED
-        actorName, // 👈 also needed for UI
+      return ref.set(
+        {
+          id: notificationId,
+          userId: uid,
 
-        readBy: [],
-        sentAt: admin.firestore.FieldValue.serverTimestamp(),
-      })
-    );
+          title,
+          message,
+
+          type, // activity type (post.like, etc.)
+          intent: "activity", // ✅ REQUIRED
+          priority: "normal", // delivery quality only
+
+          postId: postId || null,
+          commentId: commentId || null,
+
+          actorUserId,
+          actorName,
+
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+
+          deliveredVia: {
+            inApp: admin.firestore.FieldValue.serverTimestamp(),
+          },
+        },
+        { merge: false }
+      );
+    });
 
     await Promise.all(writes);
   }

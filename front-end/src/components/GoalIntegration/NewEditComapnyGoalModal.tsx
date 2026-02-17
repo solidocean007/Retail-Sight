@@ -44,6 +44,7 @@ import {
 } from "../../Slices/allAccountsSlice";
 import { getAllCompanyAccountsFromIndexedDB } from "../../utils/database/accountStoreUtils";
 import { fetchAllAccountsFromFirestore } from "../../utils/helperFunctions/fetchAllAccountsFromFirestore";
+import { normalizeFirestoreData } from "../../utils/normalize";
 
 const defaultCustomerTypes: string[] = [
   "CONVENIENCE",
@@ -74,7 +75,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
   const activeCompanyUsers = useMemo(
     () =>
       (companyUsers ?? []).filter((u) => (u.status ?? "active") === "active"),
-    [companyUsers]
+    [companyUsers],
   );
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
@@ -87,7 +88,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
   const [goalDescription, setGoalDescription] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
   const [assigneeType, setAssigneeType] = useState<"sales" | "supervisor">(
-    "sales"
+    "sales",
   );
   const [goalMetric, setGoalMetric] = useState("cases");
   const [goalValueMin, setGoalValueMin] = useState(1);
@@ -100,7 +101,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
   const [filterSetName, setFilterSetName] = useState("");
   // 🧩 Initialize from new or old goal data
   const [goalAssignments, setGoalAssignments] = useState<GoalAssignmentType[]>(
-    goal.goalAssignments || []
+    goal.goalAssignments || [],
   );
   const [accountNumbersForThisGoal, setAccountNumbersForThisGoal] = useState<
     string[]
@@ -135,7 +136,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     setGoalStartDate(goal.goalStartDate);
     setGoalEndDate(goal.goalEndDate);
     setAccountScope(
-      goal.accountNumbersForThisGoal?.length ? "selected" : "all"
+      goal.accountNumbersForThisGoal?.length ? "selected" : "all",
     );
     setGoalAssignments(goal.goalAssignments || []);
     setAccountNumbersForThisGoal(goal.accountNumbersForThisGoal || []);
@@ -176,9 +177,8 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
       try {
         const accountsId = usersCompany?.accountsId;
         if (!accountsId) throw new Error("Missing accountsId");
-        const firestoreAccounts = await fetchAllAccountsFromFirestore(
-          accountsId
-        );
+        const firestoreAccounts =
+          await fetchAllAccountsFromFirestore(accountsId);
         if (!cancelled && firestoreAccounts?.length) {
           setAccounts(firestoreAccounts);
           dispatch(setAllAccounts(firestoreAccounts));
@@ -227,7 +227,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
 
   const getUserIdsForAccount = (
     account: CompanyAccountType,
-    users: { uid: string; salesRouteNum?: string }[]
+    users: { uid: string; salesRouteNum?: string }[],
   ): string[] => {
     if (!account.salesRouteNums || account.salesRouteNums.length === 0)
       return [];
@@ -236,7 +236,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
       .filter(
         (user) =>
           user.salesRouteNum &&
-          account.salesRouteNums.includes(user.salesRouteNum)
+          account.salesRouteNums.includes(user.salesRouteNum),
       )
       .map((user) => user.uid);
   };
@@ -246,7 +246,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     for (const account of accounts) {
       map[account.accountNumber] = getUserIdsForAccount(
         account,
-        normalizedCompanyUsers
+        normalizedCompanyUsers,
       );
     }
     return map;
@@ -257,20 +257,20 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
       (a) =>
         (!filters.chains.length ||
           filters.chains.some(
-            (c) => c.toLowerCase() === (a.chain || "").toLowerCase()
+            (c) => c.toLowerCase() === (a.chain || "").toLowerCase(),
           )) &&
         (!filters.chainType || a.chainType === filters.chainType) &&
         (!filters.typeOfAccounts.length ||
           filters.typeOfAccounts.includes(a.typeOfAccount || "")) &&
         (!filters.userIds.length ||
           userIdsByAccount[a.accountNumber]?.some((id) =>
-            filters.userIds.includes(id)
+            filters.userIds.includes(id),
           )) &&
         (!filters.supervisorIds.length ||
           userIdsByAccount[a.accountNumber]?.some((repUid) => {
             const supUid = reportsToMap.get(repUid);
             return supUid && filters.supervisorIds.includes(supUid);
-          }))
+          })),
     );
   }, [accounts, filters, userIdsByAccount, reportsToMap]);
 
@@ -303,7 +303,8 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     getDoc(configRef)
       .then((docSnap) => {
         if (docSnap.exists()) {
-          const data = docSnap.data();
+          const data = normalizeFirestoreData(docSnap.data());
+
           setCustomerTypes(data.customerTypes || defaultCustomerTypes);
           setChainNames(data.chains || []);
         } else {
@@ -323,15 +324,15 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
         accountScope === "all"
           ? accounts
           : accounts.filter((a) =>
-              accountNumbersForThisGoal.includes(a.accountNumber.toString())
+              accountNumbersForThisGoal.includes(a.accountNumber.toString()),
             );
 
       const routeNums = new Set(
-        scopedAccounts.flatMap((a) => a.salesRouteNums || [])
+        scopedAccounts.flatMap((a) => a.salesRouteNums || []),
       );
 
       const reps = normalizedCompanyUsers.filter(
-        (u) => u.salesRouteNum && routeNums.has(u.salesRouteNum)
+        (u) => u.salesRouteNum && routeNums.has(u.salesRouteNum),
       );
 
       if (assigneeType === "sales") {
@@ -343,11 +344,11 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
 
       // 🔹 supervisors who manage at least one of those reps
       const supervisorUids = new Set(
-        reps.map((r) => reportsToMap.get(r.uid)).filter(Boolean) as string[]
+        reps.map((r) => reportsToMap.get(r.uid)).filter(Boolean) as string[],
       );
 
       const supervisors = normalizedCompanyUsers.filter((u) =>
-        supervisorUids.has(u.uid)
+        supervisorUids.has(u.uid),
       );
 
       return {
@@ -368,7 +369,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     if (accountScope !== "selected") return;
     setAccountNumbersForThisGoal((prev) => {
       const inView = new Set(
-        filteredAccounts.map((a) => a.accountNumber.toString())
+        filteredAccounts.map((a) => a.accountNumber.toString()),
       );
       return prev.filter((id) => inView.has(id));
     });
@@ -390,25 +391,25 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     accountScope === "all"
       ? accounts
       : accounts.filter((a) =>
-          accountNumbersForThisGoal.includes(a.accountNumber.toString())
+          accountNumbersForThisGoal.includes(a.accountNumber.toString()),
         );
 
   const routeNums = new Set(
-    scopedAccounts.flatMap((a) => a.salesRouteNums || [])
+    scopedAccounts.flatMap((a) => a.salesRouteNums || []),
   );
 
   const repsForScope = normalizedCompanyUsers.filter(
-    (u) => u.salesRouteNum && routeNums.has(u.salesRouteNum)
+    (u) => u.salesRouteNum && routeNums.has(u.salesRouteNum),
   );
 
   let supervisorsForScope: typeof normalizedCompanyUsers = [];
 
   if (assigneeType === "supervisor") {
     const supervisorUids = new Set(
-      repsForScope.map((r) => r.reportsTo).filter(Boolean) as string[]
+      repsForScope.map((r) => r.reportsTo).filter(Boolean) as string[],
     );
     supervisorsForScope = normalizedCompanyUsers.filter((u) =>
-      supervisorUids.has(u.uid)
+      supervisorUids.has(u.uid),
     );
   }
 
@@ -419,7 +420,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
 
   const handleRemoveAssignment = (accountNumber: string, uid: string) => {
     setGoalAssignments((prev) =>
-      prev.filter((g) => !(g.uid === uid && g.accountNumber === accountNumber))
+      prev.filter((g) => !(g.uid === uid && g.accountNumber === accountNumber)),
     );
   };
 
@@ -685,7 +686,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                   <FilterMultiSelect
                     label="Salesperson"
                     options={normalizedCompanyUsers.map(
-                      (u) => `${u.firstName} ${u.lastName}`
+                      (u) => `${u.firstName} ${u.lastName}`,
                     )}
                     selected={filters.userIds.map((id) =>
                       `${
@@ -694,15 +695,15 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                       } ${
                         normalizedCompanyUsers.find((u) => u.uid === id)
                           ?.lastName || ""
-                      }`.trim()
+                      }`.trim(),
                     )}
                     onChange={(selectedNames) => {
                       const userIds = selectedNames
                         .map(
                           (name) =>
                             normalizedCompanyUsers.find(
-                              (u) => `${u.firstName} ${u.lastName}` === name
-                            )?.uid
+                              (u) => `${u.firstName} ${u.lastName}` === name,
+                            )?.uid,
                         )
                         .filter(Boolean) as string[];
                       setFilters((prev) => ({ ...prev, userIds }));
@@ -721,7 +722,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                       } ${
                         normalizedCompanyUsers.find((u) => u.uid === id)
                           ?.lastName || ""
-                      }`.trim()
+                      }`.trim(),
                     )}
                     onChange={(selectedNames) => {
                       const supervisorIds = selectedNames
@@ -730,8 +731,8 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                             normalizedCompanyUsers.find(
                               (u) =>
                                 `${u.firstName} ${u.lastName}` === name &&
-                                u.role === "supervisor"
-                            )?.uid
+                                u.role === "supervisor",
+                            )?.uid,
                         )
                         .filter(Boolean) as string[];
                       setFilters((prev) => ({ ...prev, supervisorIds }));
@@ -801,7 +802,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                             setFilters({
                               ...filters,
                               typeOfAccounts: filters.typeOfAccounts.filter(
-                                (x) => x !== t
+                                (x) => x !== t,
                               ),
                             })
                           }
@@ -818,7 +819,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                         </Typography>
                         {filters.userIds.map((uid) => {
                           const user = normalizedCompanyUsers.find(
-                            (u) => u.uid === uid
+                            (u) => u.uid === uid,
                           );
                           const name = user
                             ? `${user.firstName} ${user.lastName}`
@@ -831,8 +832,8 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                               color={
                                 filteredAccounts.some((account) =>
                                   account.salesRouteNums?.includes(
-                                    user?.salesRouteNum || ""
-                                  )
+                                    user?.salesRouteNum || "",
+                                  ),
                                 )
                                   ? "default"
                                   : "error"
@@ -841,7 +842,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                                 setFilters({
                                   ...filters,
                                   userIds: filters.userIds.filter(
-                                    (id) => id !== uid
+                                    (id) => id !== uid,
                                   ),
                                 })
                               }
@@ -865,7 +866,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                         </Typography>
                         {filters.supervisorIds.map((uid) => {
                           const sup = normalizedCompanyUsers.find(
-                            (u) => u.uid === uid
+                            (u) => u.uid === uid,
                           );
                           const name = sup
                             ? `${sup.firstName} ${sup.lastName}`
@@ -878,7 +879,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                                 setFilters({
                                   ...filters,
                                   supervisorIds: filters.supervisorIds.filter(
-                                    (id) => id !== uid
+                                    (id) => id !== uid,
                                   ),
                                 })
                               }
@@ -917,7 +918,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                             setSavedFilterSets(updated);
                             localStorage.setItem(
                               "displaygram_filter_sets",
-                              JSON.stringify(updated)
+                              JSON.stringify(updated),
                             );
                           }}
                         />
@@ -967,12 +968,12 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                   allAccounts={filteredAccounts}
                   selectedAccounts={accounts.filter((acc) =>
                     accountNumbersForThisGoal.includes(
-                      acc.accountNumber.toString()
-                    )
+                      acc.accountNumber.toString(),
+                    ),
                   )}
                   setSelectedAccounts={(updated) =>
                     setAccountNumbersForThisGoal(
-                      updated.map((a) => a.accountNumber.toString())
+                      updated.map((a) => a.accountNumber.toString()),
                     )
                   }
                   selectedAssignments={goalAssignments}

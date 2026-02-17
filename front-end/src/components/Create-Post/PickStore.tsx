@@ -34,6 +34,7 @@ import { ResetTvOutlined } from "@mui/icons-material";
 import NoResults from "../NoResults";
 import { GoalPickerModal } from "./GoalPickerModal";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
+import DebugValues from "./DebugValues";
 
 // Normalize abbreviations and compare address similarity
 const normalizeCache = new Map<string, string>();
@@ -103,7 +104,7 @@ interface PickStoreProps {
   setPost: React.Dispatch<React.SetStateAction<PostInputType>>;
   handleFieldChange: (
     field: keyof PostInputType,
-    value: PostType[keyof PostType]
+    value: PostType[keyof PostType],
   ) => void;
   setSelectedCompanyAccount: (account: CompanyAccountType | null) => void;
   setSelectedGalloGoal: (goal: FireStoreGalloGoalDocType | null) => void;
@@ -118,6 +119,10 @@ export const PickStore: React.FC<PickStoreProps> = ({
   setSelectedGalloGoal,
   userLocation,
 }) => {
+  const [showDebug, setShowDebug] = useState(false);
+
+  const handleDebug = () => setShowDebug((prev) => !prev);
+
   const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY!;
   const [locationChecked, setLocationChecked] = useState(false);
   const dispatch = useAppDispatch();
@@ -141,19 +146,19 @@ export const PickStore: React.FC<PickStoreProps> = ({
   } | null>(null);
 
   const allCompanyAccounts = useSelector(
-    (state: RootState) => state.allAccounts.accounts
+    (state: RootState) => state.allAccounts.accounts,
   );
   const userAccounts = useSelector(
-    (state: RootState) => state.userAccounts.accounts
+    (state: RootState) => state.userAccounts.accounts,
   );
 
   const [isAllStoresShown, setIsAllStoresShown] = useState(
-    isAdminOrAbove || user?.role === "supervisor"
+    isAdminOrAbove || user?.role === "supervisor",
   );
 
   const combinedAccounts = useMemo(
     () => (isAllStoresShown ? allCompanyAccounts : userAccounts),
-    [isAllStoresShown, allCompanyAccounts, userAccounts]
+    [isAllStoresShown, allCompanyAccounts, userAccounts],
   );
 
   const [loadingAccounts, setLoadingAccounts] = useState(true);
@@ -161,13 +166,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const allCompanyGoals = useSelector(selectAllCompanyGoals);
 
   const usersGalloGoals = useSelector((state: RootState) =>
-    selectUsersGalloGoals(state, salesRouteNum)
+    selectUsersGalloGoals(state, salesRouteNum),
   );
 
   console.log("users gallo goals: ", usersGalloGoals);
 
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
-    null
+    null,
   );
   const [selectedCompanyGoal, setSelectedCompanyGoal] =
     useState<CompanyGoalWithIdType>();
@@ -178,7 +183,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
   const usersActiveGalloGoals = galloEnabled
     ? getActiveGalloGoalsForAccount(
         post.account?.accountNumber,
-        usersGalloGoals
+        usersGalloGoals,
       )
     : [];
 
@@ -196,7 +201,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     if (!post.account?.accountNumber || !allCompanyGoals.length) return [];
     return getActiveCompanyGoalsForAccount(
       post.account.accountNumber,
-      allCompanyGoals
+      allCompanyGoals,
     );
   }, [post.account?.accountNumber, allCompanyGoals]);
 
@@ -208,7 +213,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
     return activeCompanyGoals.filter((goal) => {
       const assignedUsersForAccount = goal.goalAssignments?.filter(
-        (a) => a.accountNumber === accountKey
+        (a) => a.accountNumber === accountKey,
       );
 
       if (assignedUsersForAccount?.length === 0) return false;
@@ -221,13 +226,13 @@ export const PickStore: React.FC<PickStoreProps> = ({
       // 🧑‍🏫 Supervisor — only supervisor goals
       if (user?.role === "supervisor" && goal.targetRole === "supervisor") {
         const repsReportingToMe = companyUsers.filter(
-          (u) => u.reportsTo === user?.uid && u.salesRouteNum
+          (u) => u.reportsTo === user?.uid && u.salesRouteNum,
         );
         const myRepsRouteNums = repsReportingToMe.map((r) => r.salesRouteNum);
 
         // Does any of this account's routeNums match a route from my reps?
         const overlap = salesRouteNums.some((rn) =>
-          myRepsRouteNums.includes(rn)
+          myRepsRouteNums.includes(rn),
         );
 
         return overlap;
@@ -274,7 +279,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
               },
             },
           }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -327,8 +332,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
             handleAccountSelect(bestMatch.account);
             dispatch(
               showMessage(
-                `Auto-detected store: ${bestMatch.account.accountName}`
-              )
+                `Auto-detected store: ${bestMatch.account.accountName}`,
+              ),
             );
             setOpenAccountModal(false);
           } else {
@@ -340,7 +345,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         }
       },
       (err) => console.warn("Location lookup failed:", err),
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, timeout: 15000 },
     );
   }, [combinedAccounts.length, locationChecked]);
 
@@ -374,7 +379,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
     if (!goal || !post.account) return;
 
     const match = goal.accounts.find(
-      (a) => a.distributorAcctId === post.account?.accountNumber
+      (a) => a.distributorAcctId === post.account?.accountNumber,
     );
 
     if (!match?.oppId) {
@@ -470,6 +475,23 @@ export const PickStore: React.FC<PickStoreProps> = ({
           </Button>
         )}
       </Box>
+      {showDebug && (
+        <>
+       
+        <DebugValues
+          userRoute={salesRouteNum}
+          galloEnabled={galloEnabled}
+          isAllStoresShown={isAllStoresShown}
+          allGalloGoalsCount={allGalloGoals.length}
+          usersGalloGoalsCount={usersGalloGoals.length}
+          usersActiveGalloGoalsCount={usersActiveGalloGoals.length}
+          allActiveGalloGoalsCount={allActiveGalloGoals.length}
+          finalDropdownCount={galloGoals.length}
+          selectedAccountNumber={post.account?.accountNumber?.toString()}
+        />
+        </>
+        
+      )}
 
       <Box className="store-selection">
         {combinedAccounts.length > 0 && (
@@ -642,6 +664,8 @@ export const PickStore: React.FC<PickStoreProps> = ({
           />
           {galloEnabled && (
             <Box mt={2}>
+              <button onClick={handleDebug}>🎯</button>
+
               <GalloGoalDropdown
                 goals={galloGoals}
                 label="Gallo Goals"

@@ -124,7 +124,7 @@
   --bgColor-muted: #151b23;
 
   /* Gradients — Light Theme */
-  --muted-steel: rgba(100, 116, 139, 0.95);
+  --muted-steel: rgba(100, 116, 139, 1);
   --blue-gray: rgba(107, 124, 147, 0.92);
   --soft-denim: rgba(113, 131, 158, 0.88);
   --medium-slate-blue: rgba(88, 106, 135, 0.85);
@@ -190,6 +190,8 @@
     var(--deep-abyss) 0%,
     var(--shadow-slate) 100%
   );
+
+  --table-row-background: var(var(--gray-300));
 }
 
 /* ============================
@@ -215,7 +217,7 @@
   --badge-font-color: white;
 
   /* Surfaces & elevations */
-  --surface-elevated: white; /* cards, modals, light surfaces */
+  --surface-elevated: var(--gray-300); /* cards, modals, light surfaces */
   --surface-base: #f5f7fa; /* page background base */
 
   /* pill status colors */
@@ -295,12 +297,14 @@
 
   --btn-primary-bg: var(--primary-blue);
   --btn-primary-hover: var(--primary-blue-dark);
-  --btn-secondary-bg: var(--gray-100);
+  --btn-secondary-bg: var(--gray-300);
   --btn-secondary-hover: var(--gray-200);
 
   --btn-error-bg: #691a1a; /* a deep-red background */
   --btn-error-hover: #7b1f1f;
   --btn-error-text-color: #fff;
+
+  --table-row-background: var(--gray-300);
 }
 
 /* ============================
@@ -398,6 +402,8 @@
   --btn-error-bg: #691a1a;
   --btn-error-hover: #7b1f1f;
   --btn-error-text-color: #fff;
+
+  --table-row-background: var(--gray-700);
 }
 
 /* 🎨 Light Theme Scrollbar */

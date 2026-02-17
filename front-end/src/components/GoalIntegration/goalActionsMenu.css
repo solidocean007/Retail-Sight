@@ -1,0 +1,26 @@
+.goal-actions-menu {
+  margin-top: 6px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+
+  z-index: 1000;
+}
+.goal-actions-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.goal-actions-buttons {
+  display: flex;
+}
+
+.goal-actions-menu button:hover {
+  background: var(--outlined-button-hover);
+}

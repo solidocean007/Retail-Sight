@@ -6,37 +6,62 @@ import { selectNotifications } from "../../Slices/notificationsSlice";
 import NotificationItem from "./NotificationItem";
 import "./notifications/notification-dropdown.css";
 import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
-import {
-  markNotificationRead,
-  removeNotification,
-} from "../../thunks/notificationsThunks";
+import { removeNotification } from "../../thunks/notificationsThunks";
 import ViewNotificationModal from "./ViewNotificationModal";
-import { NotificationType } from "../../utils/types";
+import { UserNotificationType } from "../../utils/types";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const NotificationDropdown: React.FC<{
   onClose: () => void;
   openPostViewer?: (postId: string) => void;
 }> = ({ onClose, openPostViewer }) => {
   const dispatch = useAppDispatch();
-
-  const currentUser = useSelector((state: RootState) => state.user.currentUser);
-
-  // 🔥 Correct unified selector
+  const currentUser = useSelector((s: RootState) => s.user.currentUser);
   const notifications = useSelector(selectNotifications);
+  const functions = getFunctions();
+  const markReadCallable = httpsCallable(
+    functions,
+    "markNotificationReadCallable",
+  );
+  const trackNotificationClick = httpsCallable(
+    functions,
+    "trackNotificationClickCallable",
+  );
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [selectedNotif, setSelectedNotif] = useState<NotificationType | null>(
-    null
-  );
+  const [selectedNotif, setSelectedNotif] =
+    useState<UserNotificationType | null>(null);
 
   useOutsideAlerter(dropdownRef, onClose);
 
   if (!currentUser) return null;
 
+  const handleOpen = async (notif: UserNotificationType) => {
+    if (!notif.readAt) {
+      await markReadCallable({
+        notificationId: notif.id,
+      });
+    }
+
+    if (notif.postId && openPostViewer) {
+      await trackNotificationClick({
+        notificationId: notif.id,
+        source: "dropdown",
+      });
+      openPostViewer(notif.postId);
+    } else {
+      await trackNotificationClick({
+        notificationId: notif.id,
+        source: "dropdown",
+      });
+      setSelectedNotif(notif);
+    }
+  };
+
   return (
     <div
-      className="notification-dropdown"
       ref={dropdownRef}
+      className="notification-dropdown"
       role="dialog"
       aria-label="Notifications"
     >
@@ -45,57 +70,17 @@ const NotificationDropdown: React.FC<{
       </div>
 
       <div className="dropdown-body">
-        {notifications.length === 0 ? (
-          <div className="no-notifications">No notifications.</div>
-        ) : (
-          notifications.slice(0, 5).map((notif) => (
-            <div key={notif.id} className="notification-row">
-              
-              {/* TEMP dismiss — can be removed */}
-              <button
-                className="notification-action dismiss"
-                onClick={() =>
-                  dispatch({
-                    type: "notifications/tempDismiss",
-                    payload: notif.id,
-                  })
-                }
-              >
-                ↩
-              </button>
-
-              <NotificationItem
-                notification={notif}
-                currentUserId={currentUser.uid}
-                onClick={() => {
-                  if (!notif.readBy?.includes(currentUser.uid)) {
-                    dispatch(
-                      markNotificationRead({
-                        notificationId: notif.id,
-                        uid: currentUser.uid,
-                      })
-                    );
-                  }
-                  if (notif.postId && openPostViewer)
-                    openPostViewer(notif.postId);
-                  setSelectedNotif(notif);
-                }}
-                onDelete={() =>
-                  dispatch(removeNotification({ notificationId: notif.id }))
-                }
-              />
-
-              <button
-                className="notification-action delete"
-                onClick={() =>
-                  dispatch(removeNotification({ notificationId: notif.id }))
-                }
-              >
-                ❌
-              </button>
-            </div>
-          ))
-        )}
+        {notifications.slice(0, 5).map((notif) => (
+          <div key={notif.id} className="notification-row">
+            <NotificationItem
+              notification={notif}
+              onOpen={() => handleOpen(notif)}
+              onDelete={() =>
+                dispatch(removeNotification({ notificationId: notif.id }))
+              }
+            />
+          </div>
+        ))}
       </div>
 
       <ViewNotificationModal

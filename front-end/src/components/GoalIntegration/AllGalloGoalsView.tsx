@@ -1,10 +1,13 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Box, Typography, CircularProgress, Container } from "@mui/material";
 import {
   selectGoalsByTiming,
   selectGalloGoalsLoading,
   selectGalloGoalsError,
+  addOrUpdateGalloGoal,
+  FireStoreGalloGoalWithId,
 } from "../../Slices/galloGoalsSlice";
+import { useMediaQuery, useTheme } from "@mui/material";
 
 import { selectCompanyUsers } from "../../Slices/userSlice";
 import { useMemo, useState } from "react";
@@ -13,35 +16,95 @@ import PostViewerModal from "../PostViewerModal";
 import { RootState } from "../../utils/store";
 import { useNavigate } from "react-router-dom";
 import GalloGoalCard from "./GalloGoalCard";
-import { LifecycleFilter } from "../../utils/types";
+import { FireStoreGalloGoalDocType, LifecycleFilter } from "../../utils/types";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 import AdminGalloGoalsSection from "./AdminGalloGoalsSection";
+import GalloGoalsTable from "./GalloGoalsTable";
+import { updateGalloGoalLifecycle } from "../../utils/helperFunctions/updateGalloGoalLifecycle";
+import EditGalloGoalModal from "./EditGalloGoalModal";
+import CustomConfirmation from "../CustomConfirmation";
+import GalloGoalsHeatMap from "./GalloGoalsHeatMap";
+import GalloGoalProgressOverlay from "./GalloGoalProgressOverlay";
+
+type PendingAction = {
+  status: "archived" | "disabled";
+  title: string;
+  message: string;
+  onConfirm: () => Promise<void>;
+} | null;
 
 const AllGalloGoalsView = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const companyId = useSelector(
     (state: RootState) => state.user.currentUser?.companyId,
   );
-  const { isEnabled, loading } = useCompanyIntegrations(companyId);
+
+  const { isEnabled } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
 
   const [lifecycleFilter, setLifecycleFilter] =
     useState<LifecycleFilter>("active");
   const [search, setSearch] = useState("");
 
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const isLoading = useSelector(selectGalloGoalsLoading);
   const error = useSelector(selectGalloGoalsError);
   const companyUsers = useSelector(selectCompanyUsers) || [];
+  const [selectedGoal, setSelectedGoal] =
+    useState<FireStoreGalloGoalWithId | null>(null);
 
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
 
-  const lifecycleOrder: Record<string, number> = {
-    active: 0,
-    disabled: 1,
-    archived: 2,
+  const [editGoal, setEditGoal] = useState<FireStoreGalloGoalDocType | null>(
+    null,
+  );
+
+  const [pendingAction, setPendingAction] = useState<{
+    goal: FireStoreGalloGoalDocType;
+    status: "archived" | "disabled";
+  } | null>(null);
+
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+  const requestLifecycleChange = (
+    goal: FireStoreGalloGoalDocType,
+    status: "archived" | "disabled",
+  ) => {
+    setPendingAction({ goal, status });
   };
+
+  const confirmLifecycleChange = async () => {
+    if (!pendingAction) return;
+
+    const { goal, status } = pendingAction;
+    setConfirmLoading(true);
+
+    try {
+      dispatch(
+        addOrUpdateGalloGoal({
+          ...goal,
+          lifeCycleStatus: status,
+          id: goal.goalDetails.goalId,
+        }),
+      );
+
+      await updateGalloGoalLifecycle(goal.goalDetails.goalId, status);
+    } finally {
+      setConfirmLoading(false);
+      setPendingAction(null);
+    }
+  };
+
+  const canManage =
+    currentUser?.role === "admin" ||
+    currentUser?.role === "super-admin" ||
+    currentUser?.role === "developer";
 
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
@@ -125,22 +188,37 @@ const AllGalloGoalsView = () => {
           onChange={(e) => setSearch(e.target.value)}
         />
       </Box>
+
       {/* Scheduled */}
       {scheduledGoals.length > 0 && (
         <AdminGalloGoalsSection
           title="Scheduled Goals"
           subtitle="These goals are approved but are not yet visible to users."
         >
-          {scheduledGoals.map((goal) => (
-            <GalloGoalCard
-              key={goal.id}
-              goal={goal}
+          {isDesktop ? (
+            <GalloGoalsTable
+              goals={scheduledGoals}
               employeeMap={employeeMap}
               onViewPostModal={openPostViewer}
-              showTimingHint
-              timingContext="scheduled"
+              canManage={canManage}
+              onEdit={setEditGoal}
+              onArchive={(goal) => requestLifecycleChange(goal, "archived")}
+              onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
             />
-          ))}
+          ) : (
+            scheduledGoals.map((goal) => (
+              <GalloGoalCard
+                key={goal.goalDetails.goalId}
+                goal={goal as any} // remove once GalloGoalCard prop is unified
+                employeeMap={employeeMap}
+                onViewPostModal={openPostViewer}
+                canManage={canManage}
+                onEdit={setEditGoal}
+                onArchive={(g) => requestLifecycleChange(g, "archived")}
+                onDisable={(g) => requestLifecycleChange(g, "disabled")}
+              />
+            ))
+          )}
         </AdminGalloGoalsSection>
       )}
 
@@ -150,17 +228,40 @@ const AllGalloGoalsView = () => {
           title="Upcoming Goals"
           subtitle="These goals are approved and will become active soon."
         >
-          {upcomingGoals.map((goal) => (
-            <GalloGoalCard
-              key={goal.id}
-              goal={goal}
+          {isDesktop ? (
+            <GalloGoalsTable
+              goals={upcomingGoals}
               employeeMap={employeeMap}
               onViewPostModal={openPostViewer}
-              showTimingHint
-              timingContext="upcoming"
+              canManage={canManage}
+              onEdit={setEditGoal}
+              onArchive={(goal) => requestLifecycleChange(goal, "archived")}
+              onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
             />
-          ))}
+          ) : (
+            upcomingGoals.map((goal) => (
+              <GalloGoalCard
+                key={goal.goalDetails.goalId}
+                goal={goal as any}
+                employeeMap={employeeMap}
+                onViewPostModal={openPostViewer}
+                canManage={canManage}
+                onEdit={setEditGoal}
+                onArchive={(g) => requestLifecycleChange(g, "archived")}
+                onDisable={(g) => requestLifecycleChange(g, "disabled")}
+              />
+            ))
+          )}
         </AdminGalloGoalsSection>
+      )}
+      {isDesktop && currentGoals.length > 0 && (
+        <GalloGoalsHeatMap
+          goals={currentGoals}
+          onClickGoal={(goalId) => {
+            const found = currentGoals.find((g) => g.id === goalId);
+            if (found) setSelectedGoal(found);
+          }}
+        />
       )}
 
       {/* Current */}
@@ -168,14 +269,30 @@ const AllGalloGoalsView = () => {
         title="Current Goals"
         subtitle="These goals are live and can be worked on now."
       >
-        {currentGoals.map((goal) => (
-          <GalloGoalCard
-            key={goal.id}
-            goal={goal}
+        {isDesktop ? (
+          <GalloGoalsTable
+            goals={currentGoals}
             employeeMap={employeeMap}
             onViewPostModal={openPostViewer}
+            canManage={canManage}
+            onEdit={setEditGoal}
+            onArchive={(goal) => requestLifecycleChange(goal, "archived")}
+            onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
           />
-        ))}
+        ) : (
+          currentGoals.map((goal) => (
+            <GalloGoalCard
+              key={goal.goalDetails.goalId}
+              goal={goal as any}
+              employeeMap={employeeMap}
+              onViewPostModal={openPostViewer}
+              canManage={canManage}
+              onEdit={setEditGoal}
+              onArchive={(g) => requestLifecycleChange(g, "archived")}
+              onDisable={(g) => requestLifecycleChange(g, "disabled")}
+            />
+          ))
+        )}
       </AdminGalloGoalsSection>
 
       {/* Archived */}
@@ -184,15 +301,70 @@ const AllGalloGoalsView = () => {
           title="Archived Goals"
           subtitle="Past programs kept for reference."
         >
-          {archivedGoals.map((goal) => (
-            <GalloGoalCard
-              key={goal.id}
-              goal={goal}
+          {isDesktop ? (
+            <GalloGoalsTable
+              goals={archivedGoals}
               employeeMap={employeeMap}
               onViewPostModal={openPostViewer}
+              canManage={canManage}
+              onEdit={setEditGoal}
+              onArchive={(goal) => requestLifecycleChange(goal, "archived")}
+              onDisable={(goal) => requestLifecycleChange(goal, "disabled")}
             />
-          ))}
+          ) : (
+            archivedGoals.map((goal) => (
+              <GalloGoalCard
+                key={goal.goalDetails.goalId}
+                goal={goal as any}
+                employeeMap={employeeMap}
+                onViewPostModal={openPostViewer}
+                canManage={canManage}
+                onEdit={setEditGoal}
+                onArchive={(g) => requestLifecycleChange(g, "archived")}
+                onDisable={(g) => requestLifecycleChange(g, "disabled")}
+              />
+            ))
+          )}
         </AdminGalloGoalsSection>
+      )}
+
+      {editGoal && (
+        <EditGalloGoalModal
+          goal={editGoal}
+          onClose={() => setEditGoal(null)}
+          onArchive={() => requestLifecycleChange(editGoal, "archived")}
+          onDisable={() => requestLifecycleChange(editGoal, "disabled")}
+        />
+      )}
+
+      {pendingAction && (
+        <CustomConfirmation
+          isOpen
+          title={
+            pendingAction.status === "archived"
+              ? "Archive Goal"
+              : "Disable Goal"
+          }
+          message={
+            pendingAction.status === "archived"
+              ? "This goal will be archived and removed from active workflows. This cannot be undone."
+              : "This goal will be temporarily disabled. Sales reps will not be able to submit new posts."
+          }
+          loading={confirmLoading}
+          onClose={() => setPendingAction(null)}
+          onConfirm={confirmLifecycleChange}
+        />
+      )}
+      {selectedGoal && (
+        <GalloGoalProgressOverlay
+          goal={selectedGoal}
+          onClose={() => setSelectedGoal(null)}
+          onEdit={() => {
+            setEditGoal(selectedGoal);
+            setSelectedGoal(null);
+          }}
+          onViewPost={(postId) => openPostViewer(postId)}
+        />
       )}
 
       <PostViewerModal

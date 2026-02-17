@@ -567,7 +567,6 @@ export default function AdminUsersConsole() {
     () => [
       { field: "email", headerName: "Email", flex: 1.2 },
       { field: "role", headerName: "Role", flex: 1 },
-
       { field: "salesRoute", headerName: "Sales Route #", flex: 1 },
       {
         field: "createdAt",

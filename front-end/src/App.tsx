@@ -25,6 +25,8 @@ import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { db } from "./utils/firebase";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -67,6 +69,32 @@ function AppContent() {
 
   useAppBootstrap({ enabled: shouldBootstrapApp });
 
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    const handler = async (event: MessageEvent) => {
+      if (event.data?.type !== "NOTIFICATION_CLICK") return;
+
+      const { notificationId } = event.data?.data || {};
+      const uid = currentUser?.uid;
+
+      if (!notificationId || !uid) return;
+
+      const ref = doc(db, "users", uid, "notifications", notificationId);
+
+      await updateDoc(ref, {
+        "analytics.clickedAt": serverTimestamp(),
+        "analytics.clickedFrom": "push",
+      });
+    };
+
+    navigator.serviceWorker.addEventListener("message", handler);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handler);
+    };
+  }, [currentUser]);
+
   // Theme initialization
 
   useEffect(() => {
@@ -101,8 +129,8 @@ function AppContent() {
             {/* Main layout frame */}
             <div className="page-layout-frame">
               <AppRoutes />
+              {!isPublicRoute && <Footer />}
             </div>
-            {!isPublicRoute && <Footer />}
 
             {/* Alerts */}
             {snackbar.current && (

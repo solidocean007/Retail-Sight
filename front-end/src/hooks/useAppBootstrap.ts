@@ -14,7 +14,7 @@ import { fetchCompanyProducts } from "../thunks/productThunks";
 import { getAllCompanyProductsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { setAllProducts } from "../Slices/productsSlice";
 import { setupNotificationListenersForUser } from "../utils/listeners/setupNotificationListenersForUser";
-import { setupNotificationListenersForCompany } from "../utils/listeners/setupNotificationListenerForCompany";
+// import { setupNotificationListenersForCompany } from "../utils/listeners/setupNotificationListenerForCompany";
 import { setupCompanyGoalsListener } from "../utils/listeners/setupCompanyGoalsListener";
 import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 
@@ -28,6 +28,9 @@ import { useCompanyConnectionsListener } from "./useCompanyConnectionsListener";
 import { useCompanyProductsListener } from "./useCompanyProductsListener";
 import { useGalloGoalsListener } from "./useGalloGoalsListener";
 import { useCompanyIntegrations } from "./useCompanyIntegrations";
+import { setupDeveloperNotificationsListener } from "../utils/listeners/setupDeveloperNotificationsListener";
+import { clearDeveloperNotifications } from "../Slices/developerNotificationSlice";
+import { useUserNotificationsListener } from "./useUserNotificationsListener";
 
 /**
  * useAppBootstrap – Option B
@@ -51,6 +54,12 @@ export function useAppBootstrap({
 
   useEffect(() => {
     if (!currentUser) {
+      dispatch(clearDeveloperNotifications());
+    }
+  }, [currentUser, dispatch]);
+
+  useEffect(() => {
+    if (!currentUser) {
       hasBootstrapped.current = false;
     }
   }, [currentUser?.uid]);
@@ -59,6 +68,8 @@ export function useAppBootstrap({
   // 🔄 Always call these (Rules of Hooks)
   //
   useSchemaVersion();
+  useUserNotificationsListener(currentUser);
+
 
   // 👥 Re-enable dependent sync hooks (required for full goal hydration)
   useCompanyProductsListener(companyId);
@@ -67,7 +78,7 @@ export function useAppBootstrap({
   useAllCompanyAccountsSync(
     currentUser?.role === "admin" ||
       currentUser?.role === "super-admin" ||
-      currentUser?.role === "supervisor"
+      currentUser?.role === "supervisor",
   );
   useCustomAccountsSync();
   useCompanyConnectionsListener();
@@ -115,9 +126,11 @@ export function useAppBootstrap({
         if (companyId && currentUser) {
           dispatch(setLoadingMessage("Connecting live updates…"));
 
-          dispatch(setupNotificationListenersForUser(currentUser));
-          dispatch(setupNotificationListenersForCompany(currentUser));
           dispatch(setupCompanyGoalsListener(companyId));
+
+          if (currentUser?.role === "developer") {
+            dispatch(setupDeveloperNotificationsListener());
+          }
         }
 
         // STEP 4 — READY ✔

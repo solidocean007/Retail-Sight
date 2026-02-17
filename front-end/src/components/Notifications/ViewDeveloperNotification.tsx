@@ -16,14 +16,14 @@ import {
 } from "@mui/material";
 import {
   CompanyWithUsersAndId,
-  NotificationType,
+  DeveloperNotificationType,
   UserType,
 } from "../../utils/types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  notification: NotificationType | null;
+  notification: DeveloperNotificationType | null;
   allCompaniesAndUsers: CompanyWithUsersAndId[];
 }
 
@@ -34,30 +34,25 @@ const ViewDeveloperNotification: React.FC<Props> = ({
   allCompaniesAndUsers,
 }) => {
   if (!notification) return null;
-
+  console.log(notification, " : view dev notif");
   const {
     title,
     message,
     sentAt,
+    link,
     recipientCompanyIds,
     recipientUserIds,
     recipientRoles,
-    readBy = [],
     priority,
-    pinned,
   } = notification;
 
   const formatDate = (date: any) => {
     try {
-      if (typeof date === "string") {
-        const parsed = new Date(date);
-        if (!isNaN(parsed.getTime())) return parsed.toLocaleString();
-      }
+      if (typeof date === "string") return new Date(date).toLocaleString();
       if (date?.toDate) return date.toDate().toLocaleString();
       if (date instanceof Date) return date.toLocaleString();
-      if (date?.seconds) return new Date(date.seconds * 1000).toLocaleString();
-    } catch (e) {
-      console.warn("Invalid date:", date);
+    } catch {
+      /* noop */
     }
     return "Unknown";
   };
@@ -67,7 +62,7 @@ const ViewDeveloperNotification: React.FC<Props> = ({
       .filter(
         (company) =>
           !recipientCompanyIds?.length ||
-          recipientCompanyIds.includes(company.id)
+          recipientCompanyIds.includes(company.id),
       )
       .map((company) => {
         const allUsers: UserType[] = [
@@ -77,44 +72,47 @@ const ViewDeveloperNotification: React.FC<Props> = ({
           ...company.pendingDetails,
         ];
 
-        const targetedUsers = recipientUserIds?.length
-          ? allUsers.filter((user) => recipientUserIds.includes(user.uid))
-          : allUsers;
+        let targetedUsers = allUsers;
 
-        if (targetedUsers.length === 0) return null;
+        // If explicit users were selected, filter to them
+        if (recipientUserIds?.length) {
+          targetedUsers = allUsers.filter((u) =>
+            recipientUserIds.includes(u.uid),
+          );
+        }
 
-        const readUsers = targetedUsers.filter((u) => readBy.includes(u.uid));
-        const unreadUsers = targetedUsers.filter(
-          (u) => !readBy.includes(u.uid)
-        );
+        // If roles were selected, filter to them
+        if (recipientRoles?.length) {
+          targetedUsers = targetedUsers.filter((u) =>
+            recipientRoles.includes(u.role),
+          );
+        }
+
+        if (!targetedUsers.length) return null;
 
         return (
           <div key={company.id} style={{ marginBottom: "1.5rem" }}>
             <Typography variant="subtitle1">
               📦 {company.companyName}
             </Typography>
+
             <Typography variant="body2" color="textSecondary">
-              {readUsers.length} read, {unreadUsers.length} unread
+              {targetedUsers.length} intended recipient
+              {targetedUsers.length !== 1 ? "s" : ""}
             </Typography>
+
             <List dense>
-              {readUsers.map((user) => (
+              {targetedUsers.map((user) => (
                 <ListItem key={user.uid}>
                   <ListItemText
                     primary={`${user.firstName} ${user.lastName}`}
-                    secondary="✅ Read"
-                  />
-                </ListItem>
-              ))}
-              {unreadUsers.map((user) => (
-                <ListItem key={user.uid}>
-                  <ListItemText
-                    primary={`${user.firstName} ${user.lastName}`}
-                    secondary="❌ Unread"
+                    secondary={`Role: ${user.role}`}
                   />
                 </ListItem>
               ))}
             </List>
-            <Divider style={{ marginTop: "0.5rem" }} />
+
+            <Divider sx={{ mt: 1 }} />
           </div>
         );
       });
@@ -123,37 +121,55 @@ const ViewDeveloperNotification: React.FC<Props> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{title}</DialogTitle>
+
       <DialogContent dividers>
         <Typography variant="subtitle2" gutterBottom>
           Sent: {formatDate(sentAt)}
         </Typography>
+
         <Typography variant="subtitle2" gutterBottom>
-          Priority: {priority} {pinned ? "📌" : ""}
+          Priority: {priority ?? "normal"}
         </Typography>
 
         <Typography variant="body1" paragraph>
           {message}
         </Typography>
+        <Typography variant="body1" paragraph>
+          <button>{link}</button>
+        </Typography>
 
-        <Stack direction="row" spacing={1} flexWrap="wrap" marginBottom={2}>
-          {recipientCompanyIds?.length ? (
-            <Chip label={`${recipientCompanyIds.length} Company Targets`} />
+        {/* Audience summary */}
+        <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+          {recipientUserIds?.length ? (
+            <Chip
+              color="primary"
+              label={`${recipientUserIds.length} Direct User${
+                recipientUserIds.length !== 1 ? "s" : ""
+              }`}
+            />
+          ) : recipientCompanyIds?.length ? (
+            <Chip
+              color="primary"
+              label={`${recipientCompanyIds.length} Compan${
+                recipientCompanyIds.length !== 1 ? "ies" : "y"
+              }`}
+            />
           ) : (
-            <Chip label="All Companies" />
+            <Chip color="primary" label="All Companies" />
           )}
-          {recipientRoles && recipientRoles?.length > 0 && (
+
+          {recipientRoles?.length ? (
             <Chip label={`Roles: ${recipientRoles.join(", ")}`} />
-          )}
-          {recipientUserIds && recipientUserIds?.length > 0 && (
-            <Chip label={`${recipientUserIds.length} Direct Users`} />
-          )}
+          ) : null}
         </Stack>
 
         <Typography variant="h6" gutterBottom>
-          Recipient Breakdown
+          Intended Recipients
         </Typography>
+
         {renderCompanyBreakdown()}
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose} variant="contained">
           Close

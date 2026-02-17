@@ -3,6 +3,12 @@ import {
   GoalTimingState,
 } from "../../../utils/types";
 
+function endOfDay(ms: number): number {
+  const d = new Date(ms);
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
 function toMillisSafe(v?: any): number | null {
   if (!v) return null;
 
@@ -46,7 +52,7 @@ export function getGoalTimingState(
   }
 
   // 2️⃣ Finished programs are archived
-  if (endAt && endAt < now) {
+  if (endAt && endOfDay(endAt) < now) {
     return "archived";
   }
 

@@ -19,9 +19,7 @@ import {
   httpsCallable,
 } from "firebase/functions";
 import GoalTable from "../GoalTable";
-import GalloAccountImportTable from "../GalloAccountImportTable";
 import "./galloGoalImporter.css";
-
 import {
   CompanyAccountType,
   EnrichedGalloAccountType,
@@ -51,6 +49,7 @@ import { saveSingleGalloGoalToIndexedDB } from "../../../utils/database/goalsSto
 import { sendGalloGoalAssignedEmails } from "../../../utils/helperFunctions/sendGalloGoalAssignedEmails";
 import ModalShell from "../../common/ModalShell";
 import ConfirmGalloGoalStep from "./ConfirmGalloGoalStep";
+import GalloAccountImportTableCreate from "../GalloAccountImportTableCreate";
 
 export type EnrichedGalloProgram = GalloProgramType & {
   status?: "active" | "expired";
@@ -178,79 +177,79 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     didInitNotify.current = true;
   }, [assignedUserIds]);
 
- const handleCreateGalloGoal = async (
-  selectedAccounts: EnrichedGalloAccountType[],
-  notifyUserIds: string[]
-) => {
-  if (!selectedGoal || !selectedProgram || !selectedEnv || !companyId) {
-    showMessage({
-      text: "Missing required data to create goal.",
-      severity: "error",
-    });
-    return;
-  }
-
-  setIsLoading(true);
-
-  try {
-    // ✅ FINAL NORMALIZATION GATE (correct place)
-    const normalizedAccounts = selectedAccounts.map(acc => ({
-      ...acc,
-      salesRouteNums: acc.salesRouteNums?.filter(route =>
-        companyUsers.some(
-          u =>
-            String(u.salesRouteNum) === route &&
-            assignedUserIds.includes(u.uid)
-        )
-      ),
-    }));
-
-    const savedGoal = await createGalloGoal(
-      selectedEnv,
-      {
-        ...selectedGoal,
-        notifications: {
-          emailOnCreate: notifyUserIds.length > 0,
-        },
-      },
-      selectedProgram,
-      allEnrichedAccounts,
-      normalizedAccounts, // ✅ use normalized
-      companyId
-    );
-
-    const goalWithId = {
-      ...savedGoal,
-      id: savedGoal.goalDetails.goalId,
-    };
-
-    dispatch(addOrUpdateGalloGoal(goalWithId));
-    await saveSingleGalloGoalToIndexedDB(goalWithId);
-
-    if (notifyUserIds.length > 0) {
-      await sendGalloGoalAssignedEmails({ // email logic
-        savedGoal: goalWithId,
-        selectedAccounts: normalizedAccounts, // optional but recommended
-        companyUsers,
-        notifyUserIds,
+  const handleCreateGalloGoal = async (
+    selectedAccounts: EnrichedGalloAccountType[],
+    notifyUserIds: string[]
+  ) => {
+    if (!selectedGoal || !selectedProgram || !selectedEnv || !companyId) {
+      showMessage({
+        text: "Missing required data to create goal.",
+        severity: "error",
       });
+      return;
     }
 
-    showMessage({
-      text: "Goal created successfully.",
-      severity: "success",
-    });
-  } catch (err) {
-    console.error("handleCreateGalloGoal error:", err);
-    showMessage({
-      text: "Failed to create goal.",
-      severity: "error",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+    setIsLoading(true);
 
+    try {
+      // ✅ FINAL NORMALIZATION GATE (correct place)
+      const normalizedAccounts = selectedAccounts.map((acc) => ({
+        ...acc,
+        salesRouteNums: acc.salesRouteNums?.filter((route) =>
+          companyUsers.some(
+            (u) =>
+              String(u.salesRouteNum) === route &&
+              assignedUserIds.includes(u.uid)
+          )
+        ),
+      }));
+
+      const savedGoal = await createGalloGoal(
+        selectedEnv,
+        {
+          ...selectedGoal,
+          notifications: {
+            emailOnCreate: notifyUserIds.length > 0,
+          },
+        },
+        selectedProgram,
+        allEnrichedAccounts,
+        normalizedAccounts, // ✅ use normalized
+        companyId
+      );
+
+      const goalWithId = {
+        ...savedGoal,
+        id: savedGoal.goalDetails.goalId,
+      };
+
+      dispatch(addOrUpdateGalloGoal(goalWithId));
+      await saveSingleGalloGoalToIndexedDB(goalWithId);
+
+      if (notifyUserIds.length > 0) {
+        await sendGalloGoalAssignedEmails({
+          // email logic
+          savedGoal: goalWithId,
+          selectedAccounts: normalizedAccounts, // optional but recommended
+          companyUsers,
+          notifyUserIds,
+        });
+      }
+
+      showMessage({
+        text: "Goal created successfully.",
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("handleCreateGalloGoal error:", err);
+      showMessage({
+        text: "Failed to create goal.",
+        severity: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -266,7 +265,6 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
 
         const res = await getExternalApiKeyStatus({ integration: "galloAxis" });
         setKeyStatus(res.data);
-        console.log("Gallo Axis key status:", res.data);
       } catch (err) {
         console.error("getExternalApiKeyStatus error:", err);
       }
@@ -559,6 +557,10 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
     });
   };
 
+  const canConfirmAccounts =
+    selectedAccounts.length > 0 &&
+    selectedAccounts.every((a) => a.salesRouteNums?.length === 1);
+
   // ---- Render --------------------------------------------------------------
   return (
     <Container className="gallo-integration">
@@ -702,17 +704,42 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
             {/* Header */}
             <div className="modal-sticky-header">
               <div className="gallo-import-header">
-                <h2 className="gallo-import-title">Import Gallo Program</h2>
                 <div className="gallo-import-header-actions">
                   {importStep !== "program" && (
                     <button className="btn-secondary" onClick={goBack}>
                       ← Back
                     </button>
                   )}
+
+                  <h2 className="gallo-import-title">Import Gallo Program</h2>
+
+                  {importStep === "accounts" && (
+                    <button
+                      className="button-primary"
+                      disabled={!canConfirmAccounts}
+                      onClick={() => {
+                        setEnrichedAccounts(selectedAccounts); // freeze selection
+                        setDirection("forward");
+                        setImportStep("confirm");
+                      }}
+                    >
+                      Review & Confirm
+                    </button>
+                  )}
+
                   <button className="btn-secondary" onClick={handleCancel}>
                     Cancel
                   </button>
                 </div>
+
+                {importStep === "accounts" && !canConfirmAccounts && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "var(--warning-color)" }}
+                  >
+                    All selected accounts must have exactly one salesperson
+                  </Typography>
+                )}
 
                 <Stepper
                   activeStep={stepIndexMap[importStep]}
@@ -775,16 +802,16 @@ const GalloGoalImporter: React.FC<GalloGoalImporterProps> = ({ setValue }) => {
                 )}
 
                 {importStep === "accounts" && (
-                  <GalloAccountImportTable
+                  <GalloAccountImportTableCreate
                     accounts={allEnrichedAccounts}
                     selectedAccounts={selectedAccounts}
                     setSelectedAccounts={setSelectedAccounts}
                     unmatchedAccounts={unmatchedAccounts}
                     program={selectedProgram}
-                    goal={selectedGoal}
-                    notifyUserIds={notifyUserIds}
-                    setNotifyUserIds={safeSetNotifyUserIds}
-                    assignedUserIds={assignedUserIds}
+                    // goal={selectedGoal}
+                    // notifyUserIds={notifyUserIds}
+                    // setNotifyUserIds={safeSetNotifyUserIds}
+                    // assignedUserIds={assignedUserIds}
                     onContinue={({ selectedAccounts }) => {
                       setEnrichedAccounts(selectedAccounts); // freeze selection
                       setDirection("forward");

@@ -1,3 +1,4 @@
+// front-end/src/firebase/messaging.ts
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import {
   doc,
@@ -104,7 +105,7 @@ export async function registerFcmToken(): Promise<string | null> {
     // SAFE iOS DETECTION (never blocks page render)
     // ─────────────────────────────────────────────
     const iOS = /iphone|ipad|ipod/.test(
-      window.navigator.userAgent.toLowerCase()
+      window.navigator.userAgent.toLowerCase(),
     );
 
     const standalone =
@@ -128,9 +129,17 @@ export async function registerFcmToken(): Promise<string | null> {
     // ─────────────────────────────────────────────
     // GET FCM TOKEN
     // ─────────────────────────────────────────────
+    const reg =
+      await navigator.serviceWorker.getRegistration("/service-worker.js");
+
+    if (!reg) {
+      console.error("Expected service-worker.js not registered");
+      return null;
+    }
+
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: await navigator.serviceWorker.ready,
+      serviceWorkerRegistration: reg,
     });
 
     if (!token) {
@@ -163,6 +172,21 @@ export async function hasExistingFcmToken(uid: string): Promise<boolean> {
     return snap.size > 0;
   } catch (err) {
     console.error("hasExistingFcmToken error:", err);
+    return false;
+  }
+}
+
+export async function hasTokenForThisDevice(uid: string): Promise<boolean> {
+  if (!uid) return false;
+
+  try {
+    const ua = navigator.userAgent;
+    const colRef = collection(db, `users/${uid}/fcmTokens`);
+    const snap = await getDocs(colRef);
+
+    return snap.docs.some((d) => d.data().device === ua);
+  } catch (err) {
+    console.error("hasTokenForThisDevice error:", err);
     return false;
   }
 }

@@ -1,0 +1,138 @@
+.gallo-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-xl);
+  padding: 8px;
+}
+
+.gallo-table-header,
+.gallo-table-row {
+  display: grid;
+  grid-template-columns: 40px 3fr 2fr .5fr 80px;
+  align-items: center;
+  padding: 10px;
+  overflow: visible; /* allows menu to float */
+}
+
+.gallo-table-header {
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.gallo-table-row {
+  background: var(--table-row-background);
+  border-radius: 10px;
+  transition: background 0.15s ease;
+  margin-bottom: 10px;
+}
+
+.gallo-goals-table-dates {
+  display: flex;
+  justify-content: space-around;
+}
+
+.gallo-goals-table-submitted-count {
+  display: flex;
+  justify-content: center;
+  max-width: 100px;
+}
+
+.gallo-table-row:hover {
+  /* background: var(--gray-200); */
+}
+
+.expand-btn {
+  background: none;
+  color: var(--font-color);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform 120ms ease;
+}
+
+.expand-btn.open {
+  transform: rotate(180deg);
+}
+
+.program-title {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.program-id {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.status-active {
+  color: var(--status-active-color);
+  background: var(--status-active-bg);
+}
+
+.status-disabled,
+.status-archived {
+  color: var(--status-inactive-color);
+  background: var(--status-inactive-bg);
+}
+
+.manage-btn {
+  background: transparent;
+  border: 1px solid var(--outlined-button-border);
+  border-radius: var(--btn-border-radius);
+  padding: var(--btn-padding);
+  cursor: pointer;
+}
+
+.manage-btn:hover {
+  background: var(--outlined-button-hover);
+}
+
+.align-right {
+  text-align: right;
+}
+
+.gallo-row-expanded {
+  padding: 12px 16px;
+  background:var(--table-row-background);
+  border-radius: 10px;
+  margin-top: 4px;
+  margin-left: 40px;
+  border-top: 1px solid var(--border-color);
+}
+
+.goal-summary,
+.goal-metric {
+  margin-bottom: 8px;
+}
+
+.accounts-table {
+  display: grid;
+  gap: 6px;
+}
+
+.accounts-header,
+.accounts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 6px 0;
+  /* margin-bottom: 10px; */
+}
+
+.accounts-header {
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--link-color);
+  cursor: pointer;
+}
+
+.status-pending {
+  color: var(--status-pending-color);
+}

@@ -1,0 +1,82 @@
+.edit-goal-accounts-root {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-goal-accounts-warning {
+  background: #fff8e1;
+  border: 1px solid #ffe08a;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.edit-goal-accounts-search {
+  margin-bottom: 12px;
+}
+
+.edit-goal-accounts-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edit-goal-accounts-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.edit-gallo-card-account-user {
+  display: flex;
+  width: 100%;
+}
+
+.edit-gallo-goal-card, .edit-gallo-card-account-status {
+  display: flex;
+  width: 100%;
+}
+
+.edit-gallo-card-account-header {
+  display: flex;
+}
+
+.edit-goal-accounts-row-resolved {
+  background: none;
+  border-color: none;
+  border-bottom: 1px solid black;
+  margin-bottom: 1rem;
+}
+
+.edit-goal-accounts-row-unresolved {
+  background: var(--warning-bg);
+  border-left: 4px solid var(--warning-color);
+}
+
+.edit-goal-accounts-card .card-row {
+  margin-bottom: 8px;
+}
+
+.edit-goal-accounts-card .card-row.title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.edit-goal-accounts-card .label {
+  font-size: 11px;
+  color: #666;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.gallo-edit-row.inactive {
+  opacity: var(--inactive-opacity);
+}
+
+.gallo-edit-row.invalid {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+}
+

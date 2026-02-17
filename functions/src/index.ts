@@ -30,6 +30,8 @@ import { onPendingNewUserAndCompanyInviteCreate } from "./onPendingNewUserAndCom
 import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
 import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
+import { markNotificationReadCallable } from "./notifications/markNotificationReadCallable";
+
 import {
   galloFetchPrograms,
   galloFetchAccounts,
@@ -66,10 +68,16 @@ import {
 
 // Notification system
 import { onUserNotificationCreated } from "./notifications/onUserNotificationCreated";
-import { sendNotificationToUser } from "./notifications/sendNotificationToUser";
-
-// Auth
-import { getMyAuthClaims } from "./billing/auth/getMyAuthClaims";
+import { syncPlanLimits } from "./braintreeHelpers";
+import { sendSystemNotification } from "./notifications/sendSystemNotification";
+import { resendSystemNotification } from "./notifications/resendSystemNotification";
+import { deleteSystemNotification } from "./notifications/deleteSystemNotification";
+import { createDeveloperNotificationCore } from "./notifications/createDeveloperNotificationCore";
+import { createDeveloperNotification } from "./notifications/createDeveloperNotification";
+import { processScheduledDeveloperNotifications } from "./notifications/processScheduledDeveloperNotifications";
+import { updateSystemNotificationSchedule } from "./notifications/updateSystemNotificationSchedule";
+import { getNotificationAnalytics } from "./notifications/getNotificationAnalytics";
+import { trackEmailClick } from "./notifications/sendEmailNotificationCore";
 
 export {
   getExternalApiKeyStatus,
@@ -133,8 +141,17 @@ export {
 
   // Notifications
   onUserNotificationCreated,
-  sendNotificationToUser,
   supervisorDisplayAlert,
   sendTestPush,
   analyzePostImages,
+  sendSystemNotification,
+  resendSystemNotification,
+  deleteSystemNotification,
+  createDeveloperNotificationCore,
+  createDeveloperNotification,
+  processScheduledDeveloperNotifications,
+  updateSystemNotificationSchedule,
+  getNotificationAnalytics,
+  trackEmailClick,
+  markNotificationReadCallable,
 };

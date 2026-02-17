@@ -1,27 +1,29 @@
-interface GoalActionsMenuProps {
-  status: "active" | "archived" | "disabled";
+import "./goalActionsMenu.css"
+type GoalActionsMenuProps = {
+  // open: boolean;
+  status: "active" | "disabled" | "archived";
+  onEdit: () => void;
   onArchive: () => void;
   onDisable: () => void;
-  onEdit: () => void;
-}
+};
 
 export const GoalActionsMenu: React.FC<GoalActionsMenuProps> = ({
+  // open,
   status,
+  onEdit,
   onArchive,
   onDisable,
-  onEdit,
 }) => {
-  return (
-    <details className="goal-actions">
-      <summary>Manage</summary>
+  // if (!open) return null;
 
+  return (
+    <div className="goal-actions-menu">
       {status === "active" && (
-        <>
+        <div className="goal-actions-buttons">
           <button onClick={onEdit}>Edit</button>
-          <button onClick={onArchive}>Archive</button>
-          <button onClick={onDisable}>Disable</button>
-        </>
+         
+        </div>
       )}
-    </details>
+    </div>
   );
 };

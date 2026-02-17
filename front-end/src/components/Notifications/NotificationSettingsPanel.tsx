@@ -13,21 +13,28 @@ import FlagIcon from "@mui/icons-material/Flag";
 import GroupIcon from "@mui/icons-material/Group";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
-import { registerFcmToken, hasExistingFcmToken } from "../../firebase/messaging";
+import {
+  registerFcmToken,
+  hasExistingFcmToken,
+  hasTokenForThisDevice,
+} from "../../firebase/messaging";
 import "./notificationSettingsPanel.css";
 
 const NotificationSettingsPanel = () => {
   const { settings, loading, updateSetting } = useUserNotificationSettings();
   const user = useSelector(selectUser);
 
-  const [tokenStatus, setTokenStatus] = useState<"none" | "ok" | "error">("none");
+  const [tokenStatus, setTokenStatus] = useState<"none" | "ok" | "error">(
+    "none",
+  );
 
-   // Check status without generating a token
+  // Check status without generating a token
   useEffect(() => {
     const check = async () => {
       try {
         if (user) {
-          const exists = await hasExistingFcmToken(user.uid);
+          const exists = await hasTokenForThisDevice(user.uid);
+
           setTokenStatus(exists ? "ok" : "none");
         }
       } catch {
