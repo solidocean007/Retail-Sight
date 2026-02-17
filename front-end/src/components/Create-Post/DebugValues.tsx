@@ -36,6 +36,7 @@ const DebugValues: React.FC<DebugValuesProps> = ({
         fontFamily: "monospace",
       }}
     >
+      <h4>Temporary Debug Panel</h4>
       <div>Route: {userRoute ?? "undefined"}</div>
       <div>Gallo Enabled: {String(galloEnabled)}</div>
       <div>All Stores Mode: {String(isAllStoresShown)}</div>
@@ -43,7 +44,9 @@ const DebugValues: React.FC<DebugValuesProps> = ({
       <hr />
       <div>All Gallo Goals: {allGalloGoalsCount}</div>
       <div>User Gallo Goals: {usersGalloGoalsCount}</div>
-      <div>User Active Goals (account filtered): {usersActiveGalloGoalsCount}</div>
+      <div>
+        User Active Goals (account filtered): {usersActiveGalloGoalsCount}
+      </div>
       <div>All Active Goals (account filtered): {allActiveGalloGoalsCount}</div>
       <hr />
       <div>Final Dropdown Goals: {finalDropdownCount}</div>
