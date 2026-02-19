@@ -52,19 +52,18 @@ export async function assertWithinSeatLimit(
   const data = snap.data()!;
   const limits = data.limits || {};
   const usage = data.usage || {};
-  const addons = data.billing?.addons || {};
 
   const limit =
-    type === "user"
-      ? (limits.userLimit ?? 0) + (addons.extraUser ?? 0)
-      : (limits.connectionLimit ?? 0) + (addons.extraConnection ?? 0);
+    type === "user" ? (limits.userLimit ?? 0) : (limits.connectionLimit ?? 0);
 
   const used = type === "user" ? (usage.users ?? 0) : (usage.connections ?? 0);
 
   if (used >= limit) {
     throw new HttpsError(
       "resource-exhausted",
-      "Seat limit reached. Please upgrade your plan or add more seats."
+      type === "user"
+        ? "User limit reached. Please upgrade your plan."
+        : "Connection limit reached. Please upgrade your plan."
     );
   }
 }

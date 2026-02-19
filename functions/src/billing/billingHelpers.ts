@@ -6,11 +6,11 @@
  * 1. Plans start a new billing cycle immediately.
  * 2. Plan upgrades cancel old subscription and create a new one.
  * 3. Plan downgrades are scheduled at renewal.
- * 4. Add-ons are charged immediately.
- * 5. Add-on removals are scheduled and applied at renewal.
- * 6. No proration anywhere.
- * 7. Webhooks are the source of truth.
+ * 4. No add-ons.
+ * 5. No proration.
+ * 6. Webhooks are source of truth.
  */
+
 
 import * as admin from "firebase-admin";
 
@@ -19,7 +19,6 @@ if (!admin.apps.length) {
 }
 
 import { getBraintreeGateway } from "./braintreeGateway";
-import { addonIdToAddonType, AddonType } from "./addonMap";
 
 const db = admin.firestore();
 
@@ -27,36 +26,15 @@ const db = admin.firestore();
  * Calculates total monthly cost from a Braintree subscription.
  * Canonical source of truth for billing math.
  */
-export function calculateSubscriptionTotal(subscription: any): number {
-  let total = parseFloat(subscription.price ?? "0");
+// export function calculateSubscriptionTotal(subscription: any): number {
+//   let total = parseFloat(subscription.price ?? "0");
 
-  subscription.addOns?.forEach((addon: any) => {
-    total += parseFloat(addon.amount ?? "0") * (addon.quantity ?? 1);
-  });
+//   subscription.addOns?.forEach((addon: any) => {
+//     total += parseFloat(addon.amount ?? "0") * (addon.quantity ?? 1);
+//   });
 
-  return Number(total.toFixed(2));
-}
-
-/**
- * Converts Braintree add-ons → Firestore billing.addons map
- */
-export function extractAddonQuantities(
-  subscription: any
-): Record<AddonType, number> {
-  const addons: Record<AddonType, number> = {
-    extraUser: 0,
-    extraConnection: 0,
-  };
-
-  subscription.addOns?.forEach((addon: any) => {
-    const type = addonIdToAddonType(addon.id);
-    if (type) {
-      addons[type] = addon.quantity ?? 0;
-    }
-  });
-
-  return addons;
-}
+//   return Number(total.toFixed(2));
+// }
 
 /**
  * 🔄 Canonical Firestore billing sync
@@ -75,41 +53,17 @@ export async function syncBillingFromSubscription(
   }
 
   const companyRef = db.collection("companies").doc(companyId);
-  const snap = await companyRef.get();
-  const existingBilling = snap.data()?.billing ?? {};
-
-  const addons = extractAddonQuantities(subscription);
-  const total = calculateSubscriptionTotal(subscription);
 
   await companyRef.update({
-    billing: {
-      ...existingBilling,
-      plan: subscription.planId,
-      subscriptionId: subscription.id,
+  "billing.plan": subscription.planId,
+  "billing.subscriptionId": subscription.id,
+  "billing.rawPaymentStatus": subscription.status,
+  "billing.renewalDate": subscription.nextBillingDate,
+  "billing.billingPeriodEnd": subscription.billingPeriodEndDate,
+  "billing.totalMonthlyCost": subscription.price ? Number(subscription.price) : 0,
+  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+});
 
-      // ✅ DO NOT DERIVE PAYMENT STATE HERE
-      rawPaymentStatus: subscription.status,
-
-      renewalDate: subscription.nextBillingDate
-        ? admin.firestore.Timestamp.fromDate(
-            new Date(subscription.nextBillingDate)
-          )
-        : null,
-
-      billingPeriodEnd: subscription.paidThroughDate
-        ? admin.firestore.Timestamp.fromDate(
-            new Date(subscription.paidThroughDate)
-          )
-        : null,
-
-      totalMonthlyCost: total,
-      addons: {
-        extraUsers: addons.extraUser ?? 0,
-        extraConnections: addons.extraConnection ?? 0,
-      },
-    },
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
 
   // sync plan limits
   const planSnap = await db
@@ -131,7 +85,7 @@ export async function syncBillingFromSubscription(
   return {
     planId: subscription.planId,
     rawStatus: subscription.status,
-    totalMonthlyCost: total,
+    totalMonthlyCost: subscription.price ? Number(subscription.price) : 0,
   };
 }
 

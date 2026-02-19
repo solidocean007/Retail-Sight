@@ -7,7 +7,6 @@ import {
   refreshBillingFromGateway,
   syncBillingFromSubscription,
 } from "../billingHelpers";
-import { getAddonId } from "../addonMap";
 import {
   BRAINTREE_ENVIRONMENT,
   BRAINTREE_MERCHANT_ID,
@@ -152,34 +151,6 @@ export const handleBraintreeWebhook = onRequest(
 
       if (isRenewalEvent) {
         await applyScheduledDowngradeAfterRenewal(companyId);
-
-        const freshSnap = await companyRef.get();
-        const freshBilling = freshSnap.data()?.billing;
-
-        if (freshBilling?.pendingAddonRemoval) {
-          const pending = freshBilling.pendingAddonRemoval;
-          const addonId = getAddonId(subscription.planId, pending.addonType);
-
-          const updateRes = await gateway.subscription.update(subscription.id, {
-            addOns: {
-              update: [
-                {
-                  existingId: addonId,
-                  quantity: pending.nextQuantity,
-                },
-              ],
-            },
-            prorateCharges: false,
-          } as any);
-
-          if (updateRes.success) {
-            await companyRef.update({
-              "billing.pendingAddonRemoval":
-                admin.firestore.FieldValue.delete(),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-          }
-        }
       }
 
       // ==========================
@@ -220,25 +191,36 @@ export const handleBraintreeWebhook = onRequest(
 async function applyScheduledDowngradeAfterRenewal(companyId: string) {
   const ref = admin.firestore().doc(`companies/${companyId}`);
   const snap = await ref.get();
-
   const billing = snap.data()?.billing;
-  if (!billing?.renewalDate) return;
+
+  if (!billing?.subscriptionId) return;
 
   const pending = billing?.pendingChange;
   if (!pending) return;
 
   const gateway = getBraintreeGateway();
-  const subscription = await gateway.subscription.find(billing.subscriptionId);
 
-  const removeAllAddons = subscription.addOns?.length
-    ? subscription.addOns.map((a: any) => a.id)
-    : [];
+  // ✅ SPECIAL CASE: Downgrade to Free
+  if (pending.nextPlanId === "free") {
+    // Cancel paid subscription
+    await gateway.subscription.cancel(billing.subscriptionId);
 
+    // Clear subscription + move to free tier
+    await ref.update({
+      "billing.plan": "free",
+      "billing.subscriptionId": admin.firestore.FieldValue.delete(),
+      "billing.rawPaymentStatus": "canceled",
+      "billing.pendingChange": admin.firestore.FieldValue.delete(),
+      subscriptionTier: "free",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return;
+  }
+
+  // ✅ Paid → Paid downgrade
   await gateway.subscription.update(billing.subscriptionId, {
     planId: pending.nextPlanId,
-    addOns: {
-      remove: removeAllAddons, // 🔒 ALWAYS remove all addons on plan change
-    },
     prorateCharges: false,
   } as any);
 

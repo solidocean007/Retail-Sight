@@ -2,7 +2,6 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getBraintreeGateway } from "../braintreeGateway";
 import { syncBillingFromSubscription } from "../billingHelpers";
-import { getAddonId } from "../addonMap";
 import { assertCompanyBillingAdmin } from "../billingAuth";
 import {
   BRAINTREE_ENVIRONMENT,
@@ -67,11 +66,11 @@ export const createSubscription = onCall(
       }
 
       const validPlanIds = [
-        "free",
+        "starter",
         "team",
-        "network",
+        "pro",
         "enterprise",
-        "healy_plan",
+        "healy_plan", // keep
       ];
 
       if (!validPlanIds.includes(planId)) {
@@ -164,6 +163,11 @@ export const changePlanAndRestartBillingCycle = onCall(
   },
   async (request) => {
     const { companyId, newPlanId } = request.data;
+    const validPlanIds = ["starter", "team", "pro", "enterprise", "healy_plan"];
+
+    if (!validPlanIds.includes(newPlanId)) {
+      throw new HttpsError("invalid-argument", "Invalid plan.");
+    }
 
     if (!companyId || !newPlanId) {
       throw new HttpsError("invalid-argument", "Missing args.");
@@ -210,7 +214,9 @@ export const changePlanAndRestartBillingCycle = onCall(
 
       const customer = await gateway.customer.find(billing.braintreeCustomerId);
 
-      const paymentMethodToken = customer.paymentMethods?.[0]?.token;
+      const paymentMethodToken =
+        customer.paymentMethods?.find((pm: any) => pm.default)?.token ||
+        customer.paymentMethods?.[0]?.token;
 
       if (!paymentMethodToken) {
         throw new HttpsError(
@@ -233,20 +239,6 @@ export const changePlanAndRestartBillingCycle = onCall(
       // 🔒 Single authoritative sync
       await syncBillingFromSubscription(companyId, newSub);
 
-      // Optional cleanup (non-fatal)
-      try {
-        const removeAllAddons = newSub.addOns?.map((a: any) => a.id) ?? [];
-        if (removeAllAddons.length) {
-          await gateway.subscription.update(newSub.id, {
-            addOns: { remove: removeAllAddons },
-            prorateCharges: false,
-          } as any);
-        }
-        console.log(newSub);
-      } catch (err) {
-        console.warn("⚠️ Addon cleanup failed", newSub.id);
-      }
-
       // Cancel old subscription
       try {
         await gateway.subscription.cancel(oldSub.id);
@@ -268,136 +260,6 @@ export const changePlanAndRestartBillingCycle = onCall(
   }
 );
 
-export const addAddon = onCall(
-  {
-    secrets: [
-      BRAINTREE_ENVIRONMENT,
-      BRAINTREE_MERCHANT_ID,
-      BRAINTREE_PUBLIC_KEY,
-      BRAINTREE_PRIVATE_KEY,
-    ],
-  },
-  async (request) => {
-    const { companyId, addonType, quantity = 1 } = request.data;
-
-    await assertCompanyBillingAdmin(request.auth, companyId);
-
-    const snap = await admin.firestore().doc(`companies/${companyId}`).get();
-    const billing = snap.data()?.billing;
-
-    if (!billing?.subscriptionId || !billing?.plan) {
-      throw new HttpsError("failed-precondition", "No active subscription.");
-    }
-
-    const addonId = getAddonId(billing.plan, addonType);
-    console.log("🧩 addAddon: resolved mapping", {
-      companyId,
-      plan: billing.plan,
-      addonType,
-      resolvedAddonId: addonId,
-      quantity,
-      subscriptionId: billing.subscriptionId,
-    });
-
-    const gateway = getBraintreeGateway();
-    const subscription = await gateway.subscription.find(
-      billing.subscriptionId
-    );
-    console.log("subscription: ", subscription);
-
-    const existingAddon = subscription.addOns?.find((a) => a.id === addonId);
-    const addOnParams: any = {};
-
-    if (existingAddon) {
-      // Update: We add the new quantity to what they already have
-      addOnParams.update = [
-        {
-          existingId: addonId,
-          quantity: Number(existingAddon.quantity) + Number(quantity),
-        },
-      ];
-    } else {
-      // Add: Brand new addition to the subscription
-      addOnParams.add = [
-        {
-          inheritedFromId: addonId,
-          quantity: Number(quantity),
-        },
-      ];
-    }
-
-    const result = await gateway.subscription.update(billing.subscriptionId, {
-      merchantAccountId: "displaygram",
-      addOns: addOnParams,
-      prorateCharges: false,
-    } as any);
-
-    // const result = await gateway.subscription.update(billing.subscriptionId, {
-    //   merchantAccountId: "displaygram",
-    //   addOns: {
-    //     add: [{ inheritedFromId: addonId, quantity: quantity }],
-    //   },
-    //   prorateCharges: false,
-    // } as any);
-
-    if (!result.success) {
-      throw new HttpsError("internal", "Add-on failed.");
-    }
-    console.log("💳 addAddon: braintree update result", {
-      success: result.success,
-      subscriptionId: result.subscription?.id,
-      addOns: result.subscription?.addOns?.map((a: any) => ({
-        id: a.id,
-        quantity: a.quantity,
-      })),
-    });
-
-    return syncBillingFromSubscription(companyId, result.subscription);
-  }
-);
-
-export const removeAddon = onCall(
-  {
-    secrets: [
-      BRAINTREE_ENVIRONMENT,
-      BRAINTREE_MERCHANT_ID,
-      BRAINTREE_PUBLIC_KEY,
-      BRAINTREE_PRIVATE_KEY,
-    ],
-  },
-  async (request) => {
-    const { companyId, addonType, removeQty } = request.data;
-
-    if (removeQty <= 0) {
-      throw new HttpsError("invalid-argument", "removeQty must be > 0.");
-    }
-
-    await assertCompanyBillingAdmin(request.auth, companyId);
-
-    const ref = admin.firestore().doc(`companies/${companyId}`);
-    const snap = await ref.get();
-    const billing = snap.data()?.billing;
-
-    if (!billing?.subscriptionId || !billing?.plan) {
-      throw new HttpsError("failed-precondition", "No active subscription.");
-    }
-
-    const currentQty = billing.addons?.[addonType] ?? 0;
-    const nextQty = Math.max(0, currentQty - removeQty);
-
-    await ref.update({
-      "billing.pendingAddonRemoval": {
-        addonType,
-        nextQuantity: nextQty,
-        effectiveAt: billing.renewalDate,
-      },
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    return { scheduled: true };
-  }
-);
-
 export const cancelSubscription = onCall(
   {
     secrets: [
@@ -414,27 +276,22 @@ export const cancelSubscription = onCall(
 
     const ref = admin.firestore().doc(`companies/${companyId}`);
     const snap = await ref.get();
-
     const billing = snap.data()?.billing;
-    if (!billing?.subscriptionId || !billing?.renewalDate) {
-      throw new HttpsError("failed-precondition", "No active subscription.");
-    }
 
-    const subId = snap.data()?.billing?.subscriptionId;
-
-    if (!subId) {
+    if (!billing?.subscriptionId) {
       throw new HttpsError("failed-precondition", "No subscription.");
     }
+
     const gateway = getBraintreeGateway();
-    await gateway.subscription.cancel(subId);
 
-    await admin.firestore().doc(`companies/${companyId}`).update({
-      "billing.paymentStatus": "canceled",
-      "billing.canceledAt": admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    // Cancel in Braintree
+    await gateway.subscription.cancel(billing.subscriptionId);
 
-    return { success: true };
+    // Fetch fresh state
+    const canceled = await gateway.subscription.find(billing.subscriptionId);
+
+    // Canonical sync
+    return await syncBillingFromSubscription(companyId, canceled);
   }
 );
 
@@ -445,12 +302,18 @@ export const scheduleBillingDowngrade = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Missing args.");
   }
 
+  const paidPlans = ["starter", "team", "pro", "enterprise", "healy_plan"];
+
+  if (nextPlanId !== "free" && !paidPlans.includes(nextPlanId)) {
+    throw new HttpsError("invalid-argument", "Invalid plan.");
+  }
+
   await assertCompanyBillingAdmin(request.auth, companyId);
 
   const ref = admin.firestore().doc(`companies/${companyId}`);
   const snap = await ref.get();
-
   const billing = snap.data()?.billing;
+
   if (!billing?.subscriptionId || !billing?.renewalDate) {
     throw new HttpsError("failed-precondition", "No active subscription.");
   }
