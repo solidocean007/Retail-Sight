@@ -13,7 +13,7 @@
   padding: 1rem;
   border-radius: var(--card-radius, 5px);
   width: 100%;
-  margin: 40px 0 10px;
+  /* margin: 40px 0 10px; */
   position: relative;
   height: 100%;
 }
@@ -58,6 +58,7 @@
 @media (max-width: 600px) {
   .create-post-navigation {
     padding: 0.5rem;
+    margin: 0;
   }
   .btn-placeholder {
     width: 80px;

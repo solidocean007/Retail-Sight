@@ -57,7 +57,7 @@ const CompanyGoalDropdown: React.FC<CompanyGoalDropdownProps> = ({
   }
 
   return (
-    <FormControl fullWidth sx={{ mb: 2 }} variant="outlined">
+    <FormControl fullWidth sx={{ mb: 1 }} variant="outlined">
       <InputLabel shrink id="company-goal-label">
         {label}
       </InputLabel>

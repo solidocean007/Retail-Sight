@@ -461,7 +461,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mt={2}
+        mt={0}
         px={3}
       >
         {post.account && (
@@ -520,7 +520,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       {/* My Stores / All Stores toggle */}
       {!post.account?.accountNumber && combinedAccounts.length > 0 && (
         <Box mt={3}>
-          <Box mt={2} display="flex" justifyContent="center" gap={2}>
+          <Box mt={0} display="flex" justifyContent="center" gap={2}>
             <Typography
               className={`toggle-label ${!isAllStoresShown ? "selected" : ""}`}
               onClick={() => setIsAllStoresShown(false)}
@@ -539,7 +539,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
       {/* Display selected store */}
       {post.account && (
-        <Box mt={3} p={2} sx={{ border: "1px solid #ccc", borderRadius: 2 }}>
+        <Box mt={1} p={2} sx={{ border: "1px solid #ccc", borderRadius: 2 }}>
           <Typography variant="h6" fontWeight="bold">
             {post.account.accountName}
           </Typography>
@@ -554,7 +554,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Box>
       )}
       {!combinedAccounts.length && nearbyStores.length > 0 && (
-        <Box mt={3} p={2}>
+        <Box mt={1} p={2}>
           <Typography variant="subtitle1" color="textSecondary">
             No company accounts found. Choose a nearby store to create one:
           </Typography>
@@ -565,7 +565,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
       {/* Nearby stores (new API results) */}
       {!combinedAccounts.length && nearbyStores.length > 0 && (
         <Box
-          mt={3}
+          mt={1}
           p={2}
           className={nearbyStores.length === 0 ? "nearby-stores-hidden" : ""}
         >
@@ -605,7 +605,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
         </Box>
       )}
       {!post.account && !nearbyStores.length && (
-        <Box textAlign="center" mt={2}>
+        <Box textAlign="center" mt={1}>
           <Typography variant="body2" color="textSecondary" mb={1}>
             Can’t find the store in your list?
           </Typography>
@@ -654,7 +654,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
 
       {/* Goal dropdowns */}
       {post.account && (
-        <Box mt={3}>
+        <Box mt={1}>
           <CompanyGoalDropdown
             goals={goalsForAccount}
             label="Company Goals"
@@ -663,7 +663,7 @@ export const PickStore: React.FC<PickStoreProps> = ({
             selectedGoal={selectedCompanyGoal}
           />
           {galloEnabled && (
-            <Box mt={2}>
+            <Box mt={0}>
               <button onClick={handleDebug}>🎯</button>
 
               <GalloGoalDropdown
