@@ -66,9 +66,10 @@ import {
   onConnectionStatusChange,
 } from "./billing/usageCounters";
 
+import { getMyAuthClaims } from "./billing/auth/getMyAuthClaims";
+
 // Notification system
 import { onUserNotificationCreated } from "./notifications/onUserNotificationCreated";
-import { syncPlanLimits } from "./braintreeHelpers";
 import { sendSystemNotification } from "./notifications/sendSystemNotification";
 import { resendSystemNotification } from "./notifications/resendSystemNotification";
 import { deleteSystemNotification } from "./notifications/deleteSystemNotification";

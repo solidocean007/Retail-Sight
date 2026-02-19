@@ -141,7 +141,7 @@ export interface CompanyAddons {
 export type PlanName =
   | "free"
   | "team"
-  | "network"
+  | "pro"
   | "enterprise"
   | "healy_plan";
 

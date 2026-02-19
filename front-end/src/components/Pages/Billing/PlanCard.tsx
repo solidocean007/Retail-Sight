@@ -2,17 +2,16 @@ import React, { useEffect, useState } from "react";
 import "./planCard.css";
 
 interface PlanCardProps {
-  planId: string;
   name: string;
   description: string;
   price: number;
   features: string[];
-  isCurrent?: boolean;
+  isCurrent: boolean;
   isUpgrade?: boolean;
   isDowngrade?: boolean;
   isRecommended?: boolean;
-  onSelect: () => void;
   disabled?: boolean;
+  onSelect: () => void;
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({
@@ -35,20 +34,14 @@ const PlanCard: React.FC<PlanCardProps> = ({
     if (window.innerWidth >= 1024) setOpen(true);
   }, []);
 
-  if (disabled) {
-    return (
-      <div className="plan-card disabled">
-        <div className="overlay">Downgrade scheduled</div>
-      </div>
-    );
-  }
-
   return (
     <div
       className={`billing-plan-card ${isCurrent ? "current" : ""} ${
         isRecommended ? "recommended" : ""
-      }`}
+      } ${disabled ? "disabled" : ""}`}
     >
+      {disabled && <div className="overlay">Downgrade scheduled</div>}
+
       <div className="plan-header">
         <div className="plan-header-info" onClick={toggle}>
           <div className="plan-title">
@@ -65,7 +58,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
           <button
             className={`btn-select ${isCurrent ? "btn-disabled" : ""}`}
             onClick={onSelect}
-            disabled={isCurrent}
+            disabled={isCurrent || disabled}
           >
             {isCurrent
               ? "Current Plan"

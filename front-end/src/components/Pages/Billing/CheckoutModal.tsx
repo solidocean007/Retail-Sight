@@ -7,20 +7,11 @@ import { functions } from "../../../utils/firebase";
 import BillingAuthDebug from "./BillingAuthDebug";
 import { CompanyBilling } from "../../../utils/types";
 
-type CheckoutIntent =
-  | "create-subscription"
-  | "upgrade-plan"
-  | "add-addons"
-  | "update-card";
+type CheckoutIntent = "create-subscription" | "upgrade-plan" | "update-card";
 
 type ClientTokenResponse = {
   clientToken: string;
 };
-
-interface PlanAddons {
-  extraUser: number;
-  extraConnection: number;
-}
 
 interface CheckoutModalProps {
   open: boolean;
@@ -35,9 +26,6 @@ interface CheckoutModalProps {
   isUpgrade?: boolean;
   mode?: "subscribe" | "update-card";
   billingInfo?: CompanyBilling;
-  planAddons?: PlanAddons;
-  initialAddonType?: "extraUser" | "extraConnection";
-  initialAddonQty?: number;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -53,9 +41,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isUpgrade = false,
   mode = "subscribe",
   billingInfo,
-  planAddons,
-  initialAddonType,
-  initialAddonQty,
 }) => {
   const dropinRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
@@ -67,63 +52,34 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [dropinReady, setDropinReady] = useState(false);
 
-  const [additionalUserCount, setAdditionalUserCount] = useState(0);
-  const [additionalConnectionCount, setAdditionalConnectionCount] = useState(0);
-
   const hasSubscription = !!billingInfo?.subscriptionId;
 
   const checkoutIntent: CheckoutIntent = useMemo(() => {
     if (mode === "update-card") return "update-card";
     if (hasSubscription && isUpgrade) return "upgrade-plan";
-    if (hasSubscription) return "add-addons";
     return "create-subscription";
   }, [mode, hasSubscription, isUpgrade]);
 
-  // This replaces your missing isFreeAddonPurchase.
-  // It means: user is on "Free" UI plan (no subscription) but wants add-ons => needs card collection.
-  const needsCardForAddonPurchase = useMemo(() => {
-    return (
-      !hasSubscription &&
-      (additionalUserCount > 0 || additionalConnectionCount > 0)
-    );
-  }, [hasSubscription, additionalUserCount, additionalConnectionCount]);
-
   const needsPaymentMethod =
     checkoutIntent === "create-subscription" ||
-    checkoutIntent === "update-card" ||
-    needsCardForAddonPurchase;
-
-  const addonPrices = useMemo(
-    () => ({
-      user: planAddons?.extraUser ?? 0,
-      connection: planAddons?.extraConnection ?? 0,
-    }),
-    [planAddons],
-  );
+    checkoutIntent === "update-card";
 
   const requiresDropin = useMemo(() => {
     // Only needed when we're going to collect a nonce.
     return (
       checkoutIntent === "create-subscription" ||
-      checkoutIntent === "update-card" ||
-      needsCardForAddonPurchase
+      checkoutIntent === "update-card"
     );
-  }, [checkoutIntent, needsCardForAddonPurchase]);
-
-  const disableAddonInputs = checkoutIntent !== "add-addons";
+  }, [checkoutIntent]);
 
   const submitLabel = useMemo(() => {
     switch (checkoutIntent) {
       case "create-subscription":
         return "Confirm Purchase";
-      case "upgrade-plan":
-        return `Upgrade to ${planName ?? "Plan"}`;
-      case "add-addons":
-        return "Confirm Add-ons";
       case "update-card":
         return "Update Card";
-      default:
-        return "Confirm";
+      case "upgrade-plan":
+        return "Upgrade Plan";
     }
   }, [checkoutIntent, planName]);
 
@@ -133,9 +89,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setSuccess(false);
       setLoading(false);
       setDropinReady(false);
-      setAdditionalUserCount(0);
-      setAdditionalConnectionCount(0);
-
       if (instanceRef.current) {
         try {
           instanceRef.current.teardown();
@@ -144,13 +97,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       }
     }
   }, [open]);
-
-  useEffect(() => {
-    if (initialAddonType === "extraUser")
-      setAdditionalUserCount(initialAddonQty || 0);
-    if (initialAddonType === "extraConnection")
-      setAdditionalConnectionCount(initialAddonQty || 0);
-  }, [initialAddonType, initialAddonQty]);
 
   const loadDropin = async () => {
     const dropin = await import("braintree-web-drop-in");
@@ -207,44 +153,18 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       instanceRef.current = null;
       setDropinReady(false);
     };
-  }, [open, companyId, requiresDropin]);
+  }, [open, companyId, needsPaymentMethod]);
 
   const handleSubmit = async () => {
     if (!companyId) return;
+    if (loading) return;
 
     setLoading(true);
     setError(null);
 
     try {
       switch (checkoutIntent) {
-        case "add-addons": {
-          // add-ons only (no drop-in)
-          if (additionalUserCount > 0) {
-            await httpsCallable(
-              functions,
-              "addAddon",
-            )({
-              companyId,
-              addonType: "extraUser",
-              quantity: additionalUserCount,
-            });
-          }
-
-          if (additionalConnectionCount > 0) {
-            await httpsCallable(
-              functions,
-              "addAddon",
-            )({
-              companyId,
-              addonType: "extraConnection",
-              quantity: additionalConnectionCount,
-            });
-          }
-          break;
-        }
-
         case "upgrade-plan": {
-          console.log("Upgrading plan to", planId); // this logs 'network'
           await httpsCallable(
             functions,
             "changePlanAndRestartBillingCycle",
@@ -271,35 +191,22 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             planId,
           });
 
-          // If user wanted add-ons as part of their first checkout, do it AFTER subscription exists
-          // (keeps backend simpler + avoids “addons on creation” issues)
-          if (additionalUserCount > 0) {
-            await httpsCallable(
-              functions,
-              "addAddon",
-            )({
-              companyId,
-              addonType: "extraUser",
-              quantity: additionalUserCount,
-            });
-          }
-          if (additionalConnectionCount > 0) {
-            await httpsCallable(
-              functions,
-              "addAddon",
-            )({
-              companyId,
-              addonType: "extraConnection",
-              quantity: additionalConnectionCount,
-            });
-          }
-
           break;
         }
 
         case "update-card": {
           if (!instanceRef.current) throw new Error("Payment form not ready.");
-          await instanceRef.current.requestPaymentMethod();
+
+          const { nonce } = await instanceRef.current.requestPaymentMethod();
+
+          await httpsCallable(
+            functions,
+            "updatePaymentMethod",
+          )({
+            companyId,
+            paymentMethodNonce: nonce,
+          });
+
           break;
         }
       }
@@ -312,30 +219,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setLoading(false);
     }
   };
-
-  const activeAddons = [
-    {
-      label: "Additional Users",
-      quantity: additionalUserCount,
-      price: addonPrices.user,
-    },
-    {
-      label: "Additional Connections",
-      quantity: additionalConnectionCount,
-      price: addonPrices.connection,
-    },
-  ].filter((a) => a.quantity > 0);
-
-  // You aren’t doing downgrades in this modal.
-  // If you later add downgrade scheduling, handle it outside (BillingDashboard).
-  const showDropin = requiresDropin;
+  const showDropin = needsPaymentMethod;
 
   const billingNote = useMemo(() => {
     if (mode === "update-card") return "Update your saved card details below.";
-    if (needsCardForAddonPurchase)
-      return "Add payment details to purchase add-ons.";
+
     return "Billed monthly • Cancel anytime";
-  }, [mode, needsCardForAddonPurchase]);
+  }, [mode]);
 
   const canSubmit = useMemo(() => {
     if (loading) return false;
@@ -367,45 +257,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <h3>{planName || planId}</h3>
           <p className="plan-price">${planPrice}/month</p>
 
-          {/* Add-on inputs: enabled only for add-ons flow OR initial “free -> add-ons” desire */}
-          {(checkoutIntent === "add-addons" || !hasSubscription) && (
-            <div className="addon-selectors">
-              <h4>Optional Add-ons</h4>
-
-              <div className="addon-field">
-                <label>Additional Users (${addonPrices.user} each)</label>
-                <input
-                  type="number"
-                  min={0}
-                  disabled={disableAddonInputs && hasSubscription}
-                  value={additionalUserCount}
-                  onChange={(e) =>
-                    setAdditionalUserCount(Number(e.target.value))
-                  }
-                />
-              </div>
-
-              <div className="addon-field">
-                <label>
-                  Additional Connections (${addonPrices.connection} each)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  disabled={disableAddonInputs && hasSubscription}
-                  value={additionalConnectionCount}
-                  onChange={(e) =>
-                    setAdditionalConnectionCount(Number(e.target.value))
-                  }
-                />
-              </div>
-            </div>
-          )}
-
           <CartSummary
             planName={planName || "Selected"}
             planPrice={planPrice}
-            addons={activeAddons}
           />
 
           {planFeatures.length > 0 && (
