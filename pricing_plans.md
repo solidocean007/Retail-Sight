@@ -13,7 +13,7 @@ company grows.
 
 For evaluation and very small teams.
 
--   👥 Up to **3 users**
+-   👥 Up to **5 users**
 -   🤝 Up to **2 company connections**
 -   📸 Create & share posts
 -   🏷️ Brand approvals
@@ -27,7 +27,7 @@ For evaluation and very small teams.
 
 For small distributors or supplier pilot programs.
 
--   👥 Up to **8 users**
+-   👥 Up to **25 users**
 -   🤝 Up to **5 company connections**
 -   📊 **Gallo Axis goal integration**
 -   📸 Create & share posts
@@ -37,11 +37,11 @@ For small distributors or supplier pilot programs.
 
 ------------------------------------------------------------------------
 
-## 💼 Team --- \$49/month
+## 💼 Team --- \$39/month
 
 For growing distributors and active supplier networks.
 
--   👥 Up to **20 users**
+-   👥 Up to **50 users**
 -   🤝 Up to **10 company connections**
 -   📊 **Gallo Axis goal integration**
 -   📸 Create & share posts
@@ -55,7 +55,7 @@ For growing distributors and active supplier networks.
 
 For regional organizations with larger teams.
 
--   👥 Up to **60 users**
+-   👥 Up to **150 users**
 -   🤝 Up to **25 company connections**
 -   📊 **Gallo Axis goal integration**
 -   📤 CSV export
@@ -70,8 +70,8 @@ For regional organizations with larger teams.
 
 For large organizations with complex collaboration needs.
 
--   👥 Up to **120 users**
--   🤝 Up to **60 company connections**
+-   👥 Up to **300 users**
+-   🤝 Up to **40 company connections**
 -   📊 **Gallo Axis goal integration**
 -   📤 CSV export
 -   📸 Create & share posts
@@ -98,10 +98,10 @@ company connections - Gallo integration availability
 
 ## 🧱 Internal Plan Limit Reference (Engineering)
 
-    free:        users 3   | connections 2   | gallo false
-    starter:     users 8   | connections 5   | gallo true
-    team:        users 20  | connections 10  | gallo true
-    pro:         users 60  | connections 25  | gallo true
-    enterprise:  users 120 | connections 60  | gallo true
+    free:        users 5   | connections 2   | gallo false
+    starter:     users 25   | connections 5   | gallo true
+    team:        users 50  | connections 10  | gallo true
+    pro:         users 150  | connections 25  | gallo true
+    enterprise:  users 300 | connections 40  | gallo true
 
 No add-ons. No per-seat pricing. No incremental billing logic.

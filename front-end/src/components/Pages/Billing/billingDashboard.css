@@ -4,7 +4,6 @@
   flex-direction: column;
   align-items: center;
   padding: 1rem 1.25rem;
-  min-height: 100vh;
   background: linear-gradient(
     160deg,
     var(--background-pop-out-body),
@@ -25,6 +24,77 @@
   font-size: 1rem;
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
+}
+
+.billing-top {
+  display: flex;
+  gap: 1rem
+}
+
+.billing-summary-card {
+  position: relative;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.75rem;
+  max-width: 600px;
+  /* margin: 0  1rem 3rem; */
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.billing-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.billing-summary-title h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.billing-summary-price {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+.billing-summary-price span {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.billing-summary-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.billing-summary-details {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.billing-summary-renewal {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.billing-summary-renewal.downgrade {
+  color: var(--warning-color);
+  font-weight: 600;
+}
+
+.billing-summary-actions {
+  display: flex;
+  justify-content: flex-start;
 }
 
 /* === Summary card === */
@@ -324,6 +394,7 @@
   border-radius: 10px;
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
+  height: fit-content;
 }
 
 .billing-explainer h3 {

@@ -138,28 +138,14 @@ export interface CompanyAddons {
 }
 
 // New
-export type PlanName =
-  | "free"
-  | "team"
-  | "pro"
-  | "enterprise"
-  | "healy_plan";
-
-export type PlanAddonsType = {
-  extraUser: number;
-  extraConnection: number;
-};
+export type PlanName = "free" | "team" | "pro" | "enterprise" | "healy_plan";
 
 // 🧩 Full plan definition
 export interface PlanType {
-  name: PlanName;
   braintreePlanId: string;
-  description: string;
   price: number;
   connectionLimit: number;
   userLimit: number;
-  features?: string[];
-  addons: PlanAddonsType;
 }
 
 type PendingBillingChange = {

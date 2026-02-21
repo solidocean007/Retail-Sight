@@ -117,8 +117,9 @@
   --card-radius: 16px;
   --radius-xl: 16px;
   --card-shadow: 0 5px 5px -2px rgba(0, 0, 0, 0.08);
-  --button-shadow: 1px 2px 2px 2px rgba(0, 0, 0, 0.25),
-    0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+  --button-shadow:
+    1px 2px 2px 2px rgba(0, 0, 0, 0.25), 0px 2px 2px 0px rgba(0, 0, 0, 0.14),
+    0px 1px 5px 0px rgba(0, 0, 0, 0.12);
 
   /* Custom Color Groups */
   --bgColor-muted: #151b23;
@@ -217,7 +218,7 @@
   --badge-font-color: white;
 
   /* Surfaces & elevations */
-  --surface-elevated: var(--gray-300); /* cards, modals, light surfaces */
+  --surface-elevated: #c3d3d4; /* cards, modals, light surfaces */
   --surface-base: #f5f7fa; /* page background base */
 
   /* pill status colors */
@@ -238,6 +239,7 @@
   --unread-notification-bg: var(var(--gray-100));
   --read-notification-bg: var(--gray-200);
 
+   --warning-color: red;
   --text-color: var(--gray-900);
   --text-muted: #6f7a8a;
   --text-on-button: black;
@@ -263,7 +265,7 @@
 
   --header-title: var(--gray-900);
   --accent-orange: #ff8a3d;
-  --link-color: var(--gold);
+  --link-color: var(--accent-orange);
   --link-hover-color: var(--dark-gold);
 
   --button-background: transparent;
@@ -342,6 +344,7 @@
   --unread-notification-bg: var(--accent-light-blue);
   --card-outline: var(--gray-200);
 
+   --warning-color: #ffb020;
   --text-secondary: var(--gray-300);
   --text-color: var(--gray-100);
   --text-muted: #a2a7af;
@@ -358,7 +361,7 @@
     var(--primary-blue)
   );
   --header-title: var(--white);
-  --link-color: #93c5fd; /* Light-blue-300 (Tailwind-ish) */
+  --link-color: var(--accent-orange);
   --link-hover-color: var(--primary-blue); /* Slightly brighter */
   --accent-orange: #ff8a3d;
   --button-background: var(--primary-blue);

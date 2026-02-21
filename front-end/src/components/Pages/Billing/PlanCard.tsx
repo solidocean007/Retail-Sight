@@ -1,11 +1,54 @@
 import React, { useEffect, useState } from "react";
 import "./planCard.css";
 
+export function formatPlanLabel(planId: string) {
+  switch (planId) {
+    case "healy_plan":
+      return "Healy";
+    case "free":
+      return "Free";
+    case "starter":
+      return "Starter";
+    case "team":
+      return "Team";
+    case "pro":
+      return "Pro";
+    case "enterprise":
+      return "Enterprise";
+    default:
+      return planId;
+  }
+}
+
+export const PLAN_COPY = {
+  free: {
+    title: "Free",
+    description: "Best for evaluation and very small teams.",
+  },
+  starter: {
+    title: "Starter",
+    description: "For small distributors and supplier pilot programs.",
+  },
+  team: {
+    title: "Team",
+    description: "For growing distributors building active supplier networks.",
+  },
+  pro: {
+    title: "Pro",
+    description:
+      "For regional organizations with larger teams and reporting needs.",
+  },
+  enterprise: {
+    title: "Enterprise",
+    description: "For large organizations with complex collaboration needs.",
+  },
+};
+
 interface PlanCardProps {
-  name: string;
-  description: string;
+  planId: string;
   price: number;
-  features: string[];
+  userLimit: number;
+  connectionLimit: number;
   isCurrent: boolean;
   isUpgrade?: boolean;
   isDowngrade?: boolean;
@@ -15,10 +58,10 @@ interface PlanCardProps {
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({
-  name,
-  description,
+  planId,
   price,
-  features,
+  userLimit,
+  connectionLimit,
   isCurrent = false,
   isUpgrade,
   isDowngrade,
@@ -35,55 +78,61 @@ const PlanCard: React.FC<PlanCardProps> = ({
   }, []);
 
   return (
-    <div
-      className={`billing-plan-card ${isCurrent ? "current" : ""} ${
-        isRecommended ? "recommended" : ""
-      } ${disabled ? "disabled" : ""}`}
-    >
+    <div className="billing-plan-card">
+      {isRecommended && !isCurrent && (
+        <div className="plan-badge">Most Popular</div>
+      )}
+
+      {isCurrent && <div className="plan-badge current">Current Plan</div>}
+
       {disabled && <div className="overlay">Downgrade scheduled</div>}
 
-      <div className="plan-header">
-        <div className="plan-header-info" onClick={toggle}>
-          <div className="plan-title">
-            <h3>{name}</h3>
-            <p className="price">{price === 0 ? "Free" : `$${price}/month`}</p>
-          </div>
-          {isRecommended && !isCurrent && (
-            <span className="plan-pill recommended">Recommended</span>
-          )}
-          {isCurrent && <span className="plan-pill current">Current</span>}
-        </div>
+      <div className="plan-top">
+        <h3 className="plan-name">
+          {PLAN_COPY[planId as keyof typeof PLAN_COPY]?.title ??
+            formatPlanLabel(planId)}
+        </h3>
 
-        <div className="plan-header-details">
-          <button
-            className={`btn-select ${isCurrent ? "btn-disabled" : ""}`}
-            onClick={onSelect}
-            disabled={isCurrent || disabled}
-          >
-            {isCurrent
-              ? "Current Plan"
-              : isUpgrade
-                ? "Upgrade"
-                : isDowngrade
-                  ? "Downgrade"
-                  : "Select"}
-          </button>
-          <button className="collapse-btn" onClick={toggle}>
-            {open ? "▲" : "▼"}
-          </button>
+        <div className="plan-price-block">
+          <span className="price-amount">
+            {price === 0 ? "Free" : `$${price}`}
+          </span>
+          {price !== 0 && <span className="price-period">/month</span>}
         </div>
       </div>
 
-      {open && (
-        <div className="plan-body">
-          <p className="desc">{description}</p>
-          <ul className="feature-list">
-            {features.map((f, i) => (
-              <li key={i}>✅ {f}</li>
-            ))}
-          </ul>
+      <div className="plan-capacity-block">
+        <div className="capacity-item">
+          <span className="capacity-number">{userLimit}</span>
+          <span className="capacity-label">Users</span>
         </div>
-      )}
+        <div className="capacity-divider" />
+        <div className="capacity-item">
+          <span className="capacity-number">{connectionLimit}</span>
+          <span className="capacity-label">Connections</span>
+        </div>
+      </div>
+
+      <p className="plan-description">
+        {PLAN_COPY[planId as keyof typeof PLAN_COPY]?.description ??
+          "Contact us for details."}
+      </p>
+
+      <button
+        className={`plan-cta ${
+          isCurrent ? "btn-secondary btn-disabled" : "button-primary"
+        }`}
+        onClick={onSelect}
+        disabled={isCurrent || disabled}
+      >
+        {isCurrent
+          ? "Current Plan"
+          : isUpgrade
+            ? "Upgrade"
+            : isDowngrade
+              ? "Downgrade"
+              : "Select Plan"}
+      </button>
     </div>
   );
 };

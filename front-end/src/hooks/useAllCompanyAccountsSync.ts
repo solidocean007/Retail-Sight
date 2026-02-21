@@ -28,7 +28,7 @@ const useAllCompanyAccountsSync = (enabled=true) => {
       const fresh = await fetchAllCompanyAccounts(user.companyId);
       if (!fresh || fresh.length === 0) {
         dispatch(setAllAccounts([]));
-        dispatch(showMessage("No accounts have been imported for this company yet."));
+        // dispatch(showMessage("No accounts have been imported for this company yet."));
         return;
       }
 

@@ -11,7 +11,6 @@
  * 6. Webhooks are source of truth.
  */
 
-
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) {
@@ -55,15 +54,16 @@ export async function syncBillingFromSubscription(
   const companyRef = db.collection("companies").doc(companyId);
 
   await companyRef.update({
-  "billing.plan": subscription.planId,
-  "billing.subscriptionId": subscription.id,
-  "billing.rawPaymentStatus": subscription.status,
-  "billing.renewalDate": subscription.nextBillingDate,
-  "billing.billingPeriodEnd": subscription.billingPeriodEndDate,
-  "billing.totalMonthlyCost": subscription.price ? Number(subscription.price) : 0,
-  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-});
-
+    "billing.plan": subscription.planId,
+    "billing.subscriptionId": subscription.id,
+    "billing.rawPaymentStatus": subscription.status,
+    "billing.renewalDate": subscription.nextBillingDate,
+    "billing.billingPeriodEnd": subscription.billingPeriodEndDate,
+    "billing.totalMonthlyCost": subscription.price
+      ? Number(subscription.price)
+      : 0,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
 
   // sync plan limits
   const planSnap = await db

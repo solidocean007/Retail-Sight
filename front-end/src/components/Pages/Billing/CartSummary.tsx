@@ -66,47 +66,43 @@ const CartSummary: React.FC<CartSummaryProps> = ({
   }, [subtotal]);
 
   return (
-    <div className={`cart-summary ${flash ? "flash" : ""}`}>
-      <h4 className="cart-title">Order Summary</h4>
-
-      <div className="cart-line">
-        <span>{planName} Plan</span>
-        {/* <span>${planPrice.toFixed(2)}</span> */}
-        <span>${planPrice}</span>
-      </div>
-
-      {addons.length > 0 && (
-        <>
-          <hr className="cart-divider" />
-          {addons.map((addon, idx) => (
-            <div key={idx} className="cart-line cart-addon">
-              <span>{addon.label}</span>
-              <div className="addon-inline">
-                {addon.quantity !== undefined && (
-                  <>
-                    <span>x{addon.quantity}</span>
-                    <span>
-                      ${(addon.price * (addon.quantity ?? 1)).toFixed(2)}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-
-      <hr className="cart-divider strong" />
-      <div className="cart-total-block">
-        <div className="cart-total-row">
-          <strong>Total due today</strong>
-          <span className="total-value">{`$${animatedTotal.toFixed(2)}`}</span>
-        </div>
-      </div>
-
-      <p className="cart-note">Billed monthly • Cancel anytime</p>
+  <div className={`cart-summary ${flash ? "flash" : ""}`}>
+    <div className="cart-header">
+      <h4>Order Summary</h4>
     </div>
-  );
+
+    <div className="cart-line">
+      <span>{planName}</span>
+      <span>${planPrice.toFixed(2)}</span>
+    </div>
+
+    {addons.length > 0 && (
+      <>
+        {addons.map((addon, idx) => (
+          <div key={idx} className="cart-line addon">
+            <span>
+              {addon.label}
+              {addon.quantity ? ` x${addon.quantity}` : ""}
+            </span>
+            <span>
+              ${(addon.price * (addon.quantity ?? 1)).toFixed(2)}
+            </span>
+          </div>
+        ))}
+      </>
+    )}
+
+    <div className="cart-divider" />
+
+    <div className="cart-total">
+      <span>Total due today</span>
+      <strong>${animatedTotal.toFixed(2)}</strong>
+    </div>
+
+    <p className="cart-note">Billed monthly • Cancel anytime</p>
+  </div>
+);
+
 };
 
 export default CartSummary;

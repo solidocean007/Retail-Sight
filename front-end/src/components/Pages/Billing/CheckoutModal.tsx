@@ -9,9 +9,7 @@ import { CompanyBilling } from "../../../utils/types";
 
 type CheckoutIntent = "create-subscription" | "upgrade-plan" | "update-card";
 
-type ClientTokenResponse = {
-  clientToken: string;
-};
+type ClientTokenResponse = { clientToken: string };
 
 interface CheckoutModalProps {
   open: boolean;
@@ -23,9 +21,12 @@ interface CheckoutModalProps {
   planName?: string;
   planPrice?: number;
   planFeatures?: string[];
+  planUserLimit?: number;
+  planConnectionLimit?: number;
   isUpgrade?: boolean;
   mode?: "subscribe" | "update-card";
   billingInfo?: CompanyBilling;
+  prefetchedClientToken?: string;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -38,13 +39,16 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   planName,
   planPrice = 0,
   planFeatures = [],
+  planUserLimit = 0,
+  planConnectionLimit = 0,
   isUpgrade = false,
   mode = "subscribe",
   billingInfo,
+  prefetchedClientToken,
 }) => {
   const dropinRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
-  const wrapperRef = useRef(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   useOutsideAlerter(wrapperRef, onClose);
 
   const [loading, setLoading] = useState(false);
@@ -61,16 +65,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   }, [mode, hasSubscription, isUpgrade]);
 
   const needsPaymentMethod =
-    checkoutIntent === "create-subscription" ||
-    checkoutIntent === "update-card";
-
-  const requiresDropin = useMemo(() => {
-    // Only needed when we're going to collect a nonce.
-    return (
-      checkoutIntent === "create-subscription" ||
-      checkoutIntent === "update-card"
-    );
-  }, [checkoutIntent]);
+    checkoutIntent === "create-subscription" || checkoutIntent === "update-card";
 
   const submitLabel = useMemo(() => {
     switch (checkoutIntent) {
@@ -81,7 +76,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       case "upgrade-plan":
         return "Upgrade Plan";
     }
-  }, [checkoutIntent, planName]);
+  }, [checkoutIntent]);
 
   useEffect(() => {
     if (!open) {
@@ -103,13 +98,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     return dropin.default;
   };
 
-  // Initialize drop-in ONLY if it’s needed
   useEffect(() => {
     if (!open || !companyId || !dropinRef.current) return;
     if (!needsPaymentMethod) return;
 
     let cancelled = false;
-
     setDropinReady(false);
 
     (async () => {
@@ -121,8 +114,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           ClientTokenResponse
         >(functions, "getClientToken");
 
-        const { data } = await getClientToken({ companyId });
-        const token = data.clientToken;
+        let token = prefetchedClientToken;
+
+        if (!token) {
+          const { data } = await getClientToken({ companyId });
+          token = data.clientToken;
+        }
+
         if (!token) throw new Error("Missing Braintree client token");
         if (cancelled) return;
 
@@ -153,7 +151,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       instanceRef.current = null;
       setDropinReady(false);
     };
-  }, [open, companyId, needsPaymentMethod]);
+  }, [open, companyId, needsPaymentMethod, prefetchedClientToken]);
 
   const handleSubmit = async () => {
     if (!companyId) return;
@@ -165,10 +163,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     try {
       switch (checkoutIntent) {
         case "upgrade-plan": {
-          await httpsCallable(
-            functions,
-            "changePlanAndRestartBillingCycle",
-          )({
+          await httpsCallable(functions, "changePlanAndRestartBillingCycle")({
             companyId,
             newPlanId: planId,
           });
@@ -177,36 +172,26 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         case "create-subscription": {
           if (!instanceRef.current) throw new Error("Payment form not ready.");
-
           const { nonce } = await instanceRef.current.requestPaymentMethod();
 
-          await httpsCallable(
-            functions,
-            "createSubscription",
-          )({
+          await httpsCallable(functions, "createSubscription")({
             companyId,
             companyName,
             email,
             paymentMethodNonce: nonce,
             planId,
           });
-
           break;
         }
 
         case "update-card": {
           if (!instanceRef.current) throw new Error("Payment form not ready.");
-
           const { nonce } = await instanceRef.current.requestPaymentMethod();
 
-          await httpsCallable(
-            functions,
-            "updatePaymentMethod",
-          )({
+          await httpsCallable(functions, "updatePaymentMethod")({
             companyId,
             paymentMethodNonce: nonce,
           });
-
           break;
         }
       }
@@ -219,21 +204,15 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setLoading(false);
     }
   };
-  const showDropin = needsPaymentMethod;
 
   const billingNote = useMemo(() => {
     if (mode === "update-card") return "Update your saved card details below.";
-
     return "Billed monthly • Cancel anytime";
   }, [mode]);
 
   const canSubmit = useMemo(() => {
     if (loading) return false;
-
-    if (needsPaymentMethod) {
-      return dropinReady;
-    }
-
+    if (needsPaymentMethod) return dropinReady;
     return true;
   }, [loading, needsPaymentMethod, dropinReady]);
 
@@ -245,22 +224,36 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         </button>
 
         <h2>
-          {mode === "update-card"
-            ? "Update Payment Method"
-            : "Complete Checkout"}
+          {mode === "update-card" ? "Update Payment Method" : "Complete Checkout"}
         </h2>
-        {import.meta.env.DEV && <BillingAuthDebug />}
+
+        {/* {import.meta.env.DEV && <BillingAuthDebug />} */}
 
         <p className="billing-note">{billingNote}</p>
 
-        <div className="plan-summary">
-          <h3>{planName || planId}</h3>
-          <p className="plan-price">${planPrice}/month</p>
+        <div className="checkout-plan-card">
+          <div className="checkout-plan-header">
+            <h3>{planName || planId}</h3>
+            <div className="checkout-price">
+              <span className="checkout-price-amount">
+                {planPrice === 0 ? "Free" : `$${planPrice}`}
+              </span>
+              {planPrice !== 0 && <span>/month</span>}
+            </div>
+          </div>
 
-          <CartSummary
-            planName={planName || "Selected"}
-            planPrice={planPrice}
-          />
+          <div className="checkout-capacity">
+            <div className="checkout-capacity-item">
+              <strong>{planUserLimit}</strong>
+              <span>Users</span>
+            </div>
+            <div className="checkout-capacity-item">
+              <strong>{planConnectionLimit}</strong>
+              <span>Connections</span>
+            </div>
+          </div>
+
+          <CartSummary planName={planName || "Selected"} planPrice={planPrice} />
 
           {planFeatures.length > 0 && (
             <ul className="plan-features">
@@ -273,7 +266,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <p className="secure-note">🔒 Secure payment via Braintree</p>
         </div>
 
-        {!dropinReady && showDropin && !error && (
+        {!dropinReady && needsPaymentMethod && !error && (
           <div className="dropin-loading">
             <div className="spinner" />
             <p className="secure-note">🔒 Secure payment form loading…</p>
@@ -283,15 +276,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {error && <p className="error-msg">{error}</p>}
         {success && <p className="success-msg">Payment successful! 🎉</p>}
 
-        {needsPaymentMethod && (
-          <div ref={dropinRef} className="dropin-container" />
-        )}
+        {needsPaymentMethod && <div ref={dropinRef} className="dropin-container" />}
 
-        <button
-          className="btn-submit"
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-        >
+        <button className="btn-submit" onClick={handleSubmit} disabled={!canSubmit}>
           {loading ? "Processing..." : submitLabel}
         </button>
 
@@ -299,7 +286,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div className="downgrade-notice">
             Downgrade scheduled for{" "}
             {new Date(
-              billingInfo.pendingChange.effectiveAt.seconds * 1000,
+              billingInfo.pendingChange.effectiveAt.seconds * 1000
             ).toLocaleDateString()}
           </div>
         )}

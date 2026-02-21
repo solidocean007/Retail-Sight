@@ -49,8 +49,6 @@ import { testBraintreeAuth } from "./billing/billingHandlers/testBraintreeAuth";
 import {
   getClientToken,
   createSubscription,
-  addAddon,
-  removeAddon,
   cancelSubscription,
   scheduleBillingDowngrade,
   cancelScheduledDowngrade,
@@ -64,6 +62,8 @@ import { handleBraintreeWebhook } from "./billing/billingHandlers/webhooks";
 import {
   onUserStatusChange,
   onConnectionStatusChange,
+  onUserDeleted,
+  onConnectionDeleted,
 } from "./billing/usageCounters";
 
 import { getMyAuthClaims } from "./billing/auth/getMyAuthClaims";
@@ -121,11 +121,11 @@ export {
   testBraintreeAuth,
   getClientToken,
   createSubscription,
-  addAddon,
-  removeAddon,
   cancelSubscription,
   handleBraintreeWebhook,
   onUserStatusChange,
+  onUserDeleted,
+  onConnectionDeleted,
   onConnectionStatusChange,
   scheduleBillingDowngrade,
   cancelScheduledDowngrade,
