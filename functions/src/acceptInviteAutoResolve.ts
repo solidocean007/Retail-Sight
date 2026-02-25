@@ -1,8 +1,9 @@
-import { onCall } from "firebase-functions/v2/https";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { recomputeCompanyCountsInternal } from "./billing/recomputeCompanyCounts";
+import { enforcePlanLimitsInternal } from "./billing/enforePlanLimitsInternal";
 
 const db = admin.firestore();
-import { HttpsError } from "firebase-functions/https";
 
 export const acceptInviteAutoResolve = onCall(async (request) => {
   const { email, newCompanyId } = request.data;
@@ -10,6 +11,12 @@ export const acceptInviteAutoResolve = onCall(async (request) => {
   if (!email || !newCompanyId) {
     throw new HttpsError("invalid-argument", "Missing email or companyId");
   }
+
+  //
+  // 🔐 PRE-ENFORCEMENT
+  //
+  await recomputeCompanyCountsInternal(newCompanyId);
+  await enforcePlanLimitsInternal(newCompanyId, "addConnection");
 
   const draftsSnap = await db
     .collection("companyConnectionDrafts")
@@ -27,17 +34,26 @@ export const acceptInviteAutoResolve = onCall(async (request) => {
     const newConnRef = db.collection("companyConnections").doc();
 
     batch.set(newConnRef, {
-      initiatorCompanyId: draft.initiatorCompanyId,
-      receiverCompanyId: newCompanyId,
+      requestFromCompanyId: draft.initiatorCompanyId,
+      requestToCompanyId: newCompanyId,
       pendingBrands: draft.pendingBrands || [],
       sharedBrands: [],
       status: "pending",
-      createdAt: new Date(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    batch.update(docSnap.ref, { status: "resolved", resolvedAt: new Date() });
+    batch.update(docSnap.ref, {
+      status: "resolved",
+      resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
   });
 
   await batch.commit();
+
+  //
+  // 🔁 POST-RECOMPUTE
+  //
+  await recomputeCompanyCountsInternal(newCompanyId);
+
   return { ok: true };
 });

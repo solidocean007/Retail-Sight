@@ -13,6 +13,7 @@ import PlanCard, { formatPlanLabel } from "./PlanCard";
 import { useNavigate } from "react-router-dom";
 import { showMessage } from "../../../Slices/snackbarSlice";
 import CustomConfirmation from "../../CustomConfirmation";
+import UpcomingDowngradeBanner from "./UpcomingDowngradeBanner";
 
 const BillingDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -290,6 +291,7 @@ const BillingDashboard: React.FC = () => {
       <button className="button-outline" onClick={() => navigate("/dashboard")}>
         ← Back to Dashboard
       </button>
+      <UpcomingDowngradeBanner />
       <div className="billing-top">
         <section className="billing-explainer">
           <h3>How Billing Works</h3>

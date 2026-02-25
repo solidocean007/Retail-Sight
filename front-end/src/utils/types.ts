@@ -196,10 +196,10 @@ export type CompanyType = {
 
   // not sure about this object here.
   counts?: {
-    usersTotal?: number;
-    usersPending?: number;
-    connectionsApproved?: number;
-    connectionsPending?: number;
+    usersActiveTotal?: number;
+    usersPendingTotal?: number;
+    connectionsApprovedTotal?: number;
+    connectionsPendingTotal?: number;
   };
 };
 

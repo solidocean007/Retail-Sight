@@ -31,7 +31,7 @@ import { supervisorDisplayAlert } from "./notifications/supervisorDisplayAlert";
 import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
 import { markNotificationReadCallable } from "./notifications/markNotificationReadCallable";
-
+import { developerRecomputeCompanyCounts } from "./billing/developerRecomputeCompanyCounts";
 import {
   galloFetchPrograms,
   galloFetchAccounts,
@@ -55,16 +55,12 @@ import {
   changePlanAndRestartBillingCycle,
 } from "./billing/billingHandlers/callables";
 
+import { acceptCompanyInvite } from "./acceptCompanyInvite";
+
 // 🧾 Billing – Webhook
 import { handleBraintreeWebhook } from "./billing/billingHandlers/webhooks";
 
 // 🧾 Billing – Usage Counters
-import {
-  onUserStatusChange,
-  onConnectionStatusChange,
-  onUserDeleted,
-  onConnectionDeleted,
-} from "./billing/usageCounters";
 
 import { getMyAuthClaims } from "./billing/auth/getMyAuthClaims";
 
@@ -81,6 +77,8 @@ import { getNotificationAnalytics } from "./notifications/getNotificationAnalyti
 import { trackEmailClick } from "./notifications/sendEmailNotificationCore";
 
 export {
+  developerRecomputeCompanyCounts,
+  acceptCompanyInvite,
   getExternalApiKeyStatus,
   upsertGalloAxisKey,
   deleteGalloAxisKey,
@@ -123,10 +121,6 @@ export {
   createSubscription,
   cancelSubscription,
   handleBraintreeWebhook,
-  onUserStatusChange,
-  onUserDeleted,
-  onConnectionDeleted,
-  onConnectionStatusChange,
   scheduleBillingDowngrade,
   cancelScheduledDowngrade,
   changePlanAndRestartBillingCycle,

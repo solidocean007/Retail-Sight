@@ -1,0 +1,37 @@
+.downgrade-banner {
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+}
+
+.downgrade-banner__content h3 {
+  margin-top: 0;
+}
+
+.downgrade-banner__limits {
+  margin-top: 12px;
+  display: flex;
+  gap: 24px;
+}
+
+.downgrade-banner__limits div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.limit-warning {
+  margin-left: 8px;
+  color: var(--danger-color);
+  font-weight: 600;
+}
+
+.downgrade-banner__alert {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--danger-bg);
+  border-radius: 8px;
+  font-weight: 500;
+}

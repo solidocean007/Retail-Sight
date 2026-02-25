@@ -10,7 +10,7 @@ import {
   signInWithPopup,
   linkWithCredential,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db, functions } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
@@ -22,10 +22,10 @@ const toIso = (v: any): string =>
   v?.toDate?.()
     ? v.toDate().toISOString()
     : v instanceof Date
-    ? v.toISOString()
-    : typeof v === "string"
-    ? v
-    : new Date().toISOString();
+      ? v.toISOString()
+      : typeof v === "string"
+        ? v
+        : new Date().toISOString();
 
 export default function InviteAcceptForm() {
   const { inviteId, companyId } = useParams();
@@ -45,7 +45,7 @@ export default function InviteAcceptForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
-    null
+    null,
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -54,7 +54,7 @@ export default function InviteAcceptForm() {
     (async () => {
       try {
         const snap = await getDoc(
-          doc(db, `companies/${companyId}/invites/${inviteId}`)
+          doc(db, `companies/${companyId}/invites/${inviteId}`),
         );
 
         if (!snap.exists()) {
@@ -62,13 +62,13 @@ export default function InviteAcceptForm() {
         } else {
           const data = snap.data();
 
-          if (data.accepted) {
+          if (data.status === "accepted") {
             setError("This invite has already been accepted.");
           } else {
             try {
               const checkUserExists = httpsCallable(
                 functions,
-                "checkUserExists"
+                "checkUserExists",
               );
               const res = await checkUserExists({
                 email: data.inviteeEmail,
@@ -88,7 +88,7 @@ export default function InviteAcceptForm() {
                 !signInMethods.includes("password")
               ) {
                 setError(
-                  "This account uses Google sign-in. Please continue with Google instead of creating a password."
+                  "This account uses Google sign-in. Please continue with Google instead of creating a password.",
                 );
               } else {
                 if (!exists) {
@@ -102,7 +102,7 @@ export default function InviteAcceptForm() {
             } catch (err: any) {
               if (err.code === "failed-precondition") {
                 setError(
-                  "This email is already associated with another company. Please contact support to transfer accounts."
+                  "This email is already associated with another company. Please contact support to transfer accounts.",
                 );
               } else {
                 setError("Unable to validate invite. Please try again later.");
@@ -125,6 +125,10 @@ export default function InviteAcceptForm() {
 
   const handleGoogleSignIn = async () => {
     if (!invite) return; // Add this line to avoid runtime errors
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -138,37 +142,17 @@ export default function InviteAcceptForm() {
       if (user.email?.toLowerCase() !== invite.inviteeEmail.toLowerCase()) {
         await auth.signOut(); // clean up auth record
         throw new Error(
-          "Signed-in Google account does not match invited email."
+          "Signed-in Google account does not match invited email.",
         );
       }
 
-      const nowIso = new Date().toISOString();
-      const createdAtIso = toIso(invite.createdAt);
+      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      // Create Firestore user
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          email: user.email,
-          firstName,
-          lastName,
-          company: invite.companyName, // 👈 add this
-          companyName: invite.companyName, // 👈 add this
-          companyId: invite.companyId,
-          role: invite.role || "employee",
-          createdAt: createdAtIso,
-          lastUpdated: nowIso,
-        },
-        { merge: true }
-      );
-
-      // Mark invite as accepted
-      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
-        accepted: true,
-        acceptedBy: user.uid,
-        acceptedAt: nowIso,
-        status: "accepted",
+      await acceptInvite({
+        inviteId,
+        companyId,
+        firstName,
+        lastName,
       });
 
       dispatch(showMessage("✅ Invite accepted with Google!"));
@@ -180,7 +164,7 @@ export default function InviteAcceptForm() {
         if (cred && email) {
           setPendingLink({ email, cred });
           setError(
-            "This email has a password login. Please enter password to link Google."
+            "This email has a password login. Please enter password to link Google.",
           );
         } else {
           setError("An account already exists for this email.");
@@ -196,7 +180,7 @@ export default function InviteAcceptForm() {
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setPasswordError(
-      value.length < 8 ? "Password must be at least 8 characters." : null
+      value.length < 8 ? "Password must be at least 8 characters." : null,
     );
     if (verifyPassword && value !== verifyPassword) {
       setVerifyPasswordError("Passwords do not match.");
@@ -208,33 +192,32 @@ export default function InviteAcceptForm() {
   const handleVerifyPasswordChange = (value: string) => {
     setVerifyPassword(value);
     setVerifyPasswordError(
-      password && value !== password ? "Passwords do not match." : null
+      password && value !== password ? "Passwords do not match." : null,
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!invite) return;
     if (passwordError || verifyPasswordError) return;
-    if (firstName.trim().length === 0 || lastName.trim().length === 0) return;
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
     try {
       const auth = getAuth();
-      let userCred;
       try {
-        userCred = await createUserWithEmailAndPassword(
+        await createUserWithEmailAndPassword(
           auth,
           invite.inviteeEmail,
-          password
+          password,
         );
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
-          userCred = await signInWithEmailAndPassword(
-            auth,
-            invite.inviteeEmail,
-            password
-          );
+          await signInWithEmailAndPassword(auth, invite.inviteeEmail, password);
 
           // ✅ Link Google if pending after sign-in
           if (
@@ -251,30 +234,13 @@ export default function InviteAcceptForm() {
         }
       }
 
-      const nowIso = new Date().toISOString();
-      const createdAtIso = toIso(invite.createdAt);
+      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      await setDoc(
-        doc(db, "users", userCred.user.uid),
-        {
-          uid: userCred.user.uid,
-          email: invite.inviteeEmail,
-          firstName,
-          lastName,
-          company: invite.companyName, // 👈 add this
-          companyName: invite.companyName, // 👈 add this
-          companyId: invite.companyId,
-          role: invite.role || "employee",
-          createdAt: createdAtIso,
-          lastUpdated: nowIso,
-        },
-        { merge: true }
-      );
-
-      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
-        accepted: true,
-        acceptedBy: userCred.user.uid,
-        acceptedAt: nowIso,
+      await acceptInvite({
+        inviteId,
+        companyId,
+        firstName,
+        lastName,
       });
 
       dispatch(showMessage("✅ Invite accepted. Welcome!"));

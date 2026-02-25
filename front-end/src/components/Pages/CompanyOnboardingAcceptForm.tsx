@@ -16,8 +16,6 @@ import {
   getDocs,
   limit,
   query,
-  setDoc,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "../../utils/firebase";
@@ -28,20 +26,11 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import "./CompanyOnboardingAcceptForm.css";
 
-const toIso = (v: any): string =>
-  v?.toDate?.()
-    ? v.toDate().toISOString()
-    : v instanceof Date
-    ? v.toISOString()
-    : typeof v === "string"
-    ? v
-    : new Date().toISOString();
-
 export default function CompanyOnboardingAcceptForm() {
   const { inviteId, companyId } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-   
+
   const [invite, setInvite] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,18 +42,18 @@ export default function CompanyOnboardingAcceptForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
-    null
+    null,
   );
   const [submitting, setSubmitting] = useState(false);
   const functions = getFunctions();
   const markAccessRequestComplete = httpsCallable(
     functions,
-    "markAccessRequestComplete"
+    "markAccessRequestComplete",
   );
 
   const resolveStagedConnections = async (
     email: string,
-    newCompanyId: string
+    newCompanyId: string,
   ) => {
     try {
       const fn = httpsCallable(functions, "acceptInviteAutoResolve");
@@ -74,8 +63,8 @@ export default function CompanyOnboardingAcceptForm() {
       // Optional: surface a non-blocking warning
       dispatch(
         showMessage(
-          "Company activated, but connection setup may take a moment."
-        )
+          "Company activated, but connection setup may take a moment.",
+        ),
       );
     }
   };
@@ -86,7 +75,7 @@ export default function CompanyOnboardingAcceptForm() {
     (async () => {
       try {
         const inviteSnap = await getDoc(
-          doc(db, `companies/${companyId}/invites/${inviteId}`)
+          doc(db, `companies/${companyId}/invites/${inviteId}`),
         );
         if (!inviteSnap.exists()) {
           setError("Invite not found or already used.");
@@ -94,7 +83,7 @@ export default function CompanyOnboardingAcceptForm() {
         }
 
         const inviteData = inviteSnap.data();
-        if (inviteData.accepted) {
+        if (inviteData.status === "accepted") {
           setError("This invite has already been accepted.");
           return;
         }
@@ -106,8 +95,8 @@ export default function CompanyOnboardingAcceptForm() {
           query(
             collection(db, "accessRequests"),
             where("inviteId", "==", inviteId),
-            limit(1)
-          )
+            limit(1),
+          ),
         );
 
         if (!qSnap.empty) {
@@ -131,6 +120,10 @@ export default function CompanyOnboardingAcceptForm() {
 
   const handleGoogleSignIn = async () => {
     if (!invite) return;
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -144,36 +137,17 @@ export default function CompanyOnboardingAcceptForm() {
       if (user.email?.toLowerCase() !== invite.inviteeEmail.toLowerCase()) {
         await auth.signOut();
         throw new Error(
-          "Signed-in Google account does not match invited email."
+          "Signed-in Google account does not match invited email.",
         );
       }
 
-      const nowIso = new Date().toISOString();
-      const createdAtIso = toIso(invite.createdAt);
+      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          email: user.email,
-          firstName,
-          lastName,
-          company: invite.companyName,
-          companyName: invite.companyName,
-          companyId: invite.companyId,
-          role: "admin",
-          approvedViaRequest: true,
-          createdAt: createdAtIso,
-          lastUpdated: nowIso,
-        },
-        { merge: true }
-      );
-
-      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
-        accepted: true,
-        acceptedBy: user.uid,
-        acceptedAt: nowIso,
-        status: "accepted",
+      await acceptInvite({
+        inviteId,
+        companyId,
+        firstName,
+        lastName,
       });
 
       dispatch(showMessage("✅ Account activated!"));
@@ -203,7 +177,7 @@ export default function CompanyOnboardingAcceptForm() {
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setPasswordError(
-      value.length < 8 ? "Password must be at least 8 characters." : null
+      value.length < 8 ? "Password must be at least 8 characters." : null,
     );
     if (verifyPassword && value !== verifyPassword) {
       setVerifyPasswordError("Passwords do not match.");
@@ -215,32 +189,37 @@ export default function CompanyOnboardingAcceptForm() {
   const handleVerifyPasswordChange = (value: string) => {
     setVerifyPassword(value);
     setVerifyPasswordError(
-      password && value !== password ? "Passwords do not match." : null
+      password && value !== password ? "Passwords do not match." : null,
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!invite) return;
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required.");
+      return;
+    }
+
     if (passwordError || verifyPasswordError) return;
+
     setSubmitting(true);
     setError(null);
 
     try {
       const auth = getAuth();
-      let userCred;
+
       try {
-        userCred = await createUserWithEmailAndPassword(
+        await createUserWithEmailAndPassword(
           auth,
           invite.inviteeEmail,
-          password
+          password,
         );
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
-          userCred = await signInWithEmailAndPassword(
-            auth,
-            invite.inviteeEmail,
-            password
-          );
+          await signInWithEmailAndPassword(auth, invite.inviteeEmail, password);
 
           if (
             pendingLink &&
@@ -256,40 +235,16 @@ export default function CompanyOnboardingAcceptForm() {
         }
       }
 
-      const nowIso = new Date().toISOString();
-      const createdAtIso = toIso(invite.createdAt);
+      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      await setDoc(
-        doc(db, "users", userCred.user.uid),
-        {
-          uid: userCred.user.uid,
-          email: invite.inviteeEmail,
-          firstName,
-          lastName,
-          company: invite.companyName,
-          companyName: invite.companyName,
-          companyId: invite.companyId,
-          role: "admin",
-          approvedViaRequest: true,
-          createdAt: createdAtIso,
-          lastUpdated: nowIso,
-        },
-        { merge: true }
-      );
-
-      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
-        accepted: true,
-        acceptedBy: userCred.user.uid,
-        acceptedAt: nowIso,
-      });
+      await acceptInvite({ inviteId, companyId, firstName, lastName });
 
       await markAccessRequestComplete({
         companyId: invite.companyId,
-        inviteId: inviteId,
+        inviteId,
         inviteeEmail: invite.inviteeEmail,
       });
 
-      // 🆕 Auto-resolve staged connections for this new company
       await resolveStagedConnections(invite.inviteeEmail, invite.companyId);
 
       dispatch(showMessage("✅ Company activated! Redirecting..."));
@@ -340,6 +295,23 @@ export default function CompanyOnboardingAcceptForm() {
           </button>
 
           <div className="auth-divider">or</div>
+          <label>First Name</label>
+          <input
+            type="text"
+            className="auth-input"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+
+          <label>Last Name</label>
+          <input
+            type="text"
+            className="auth-input"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
 
           <label>Password</label>
           <div className="password-wrapper">

@@ -18,7 +18,7 @@ interface FirebaseError extends Error {
 type RoleType = "admin" | "super-admin" | "employee" | "status-pending";
 type UserTypeChoice = "distributor" | "supplier" | "";
 
-export const handleSignUp = async (
+export const deprecatedHandleSignUp = async (
   firstNameInput: string,
   lastNameInput: string,
   emailRaw: string,
@@ -105,7 +105,7 @@ export const handleSignUp = async (
   }
 };
 
-export const handleLogin = async (
+export const deprecatedHandleLogin = async (
   email: string,
   password: string
 ): Promise<UserType | null> => {

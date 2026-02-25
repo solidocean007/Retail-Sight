@@ -1,7 +1,8 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { checkPlanLimit } from "./enforcePlanLimits";
 import * as admin from "firebase-admin";
 import { defineString } from "firebase-functions/params";
+import { recomputeCompanyCountsInternal } from "./billing/recomputeCompanyCounts";
+import { enforcePlanLimitsInternal } from "./billing/enforePlanLimitsInternal";
 
 const PUBLIC_BASE_URL = defineString("PUBLIC_BASE_URL");
 
@@ -43,8 +44,11 @@ export const createInviteAndEmail = onCall<CreateInvitePayload>(async (req) => {
   const emailRaw = (req.data?.email ?? "").trim();
   if (!emailRaw) throw new HttpsError("invalid-argument", "Email is required.");
 
-  // ✅ Enforce user plan limit before creating invite
-  await checkPlanLimit(companyId, "user");
+  // 🔐 Recompute latest usage snapshot
+  await recomputeCompanyCountsInternal(companyId);
+
+  // 🔐 Enforce plan limit BEFORE creating invite
+  await enforcePlanLimitsInternal(companyId, "addUser");
 
   const emailLower = emailRaw.toLowerCase();
   const role = (req.data?.role ?? "employee") as CreateInvitePayload["role"];
@@ -113,6 +117,9 @@ export const createInviteAndEmail = onCall<CreateInvitePayload>(async (req) => {
       link: inviteLink,
     });
   });
+
+  // 🔁 Refresh usage snapshot after invite creation
+  await recomputeCompanyCountsInternal(companyId);
 
   // 🔹 Send email
   await db.collection("mail").add({

@@ -31,6 +31,7 @@ import { useCompanyIntegrations } from "./useCompanyIntegrations";
 import { setupDeveloperNotificationsListener } from "../utils/listeners/setupDeveloperNotificationsListener";
 import { clearDeveloperNotifications } from "../Slices/developerNotificationSlice";
 import { useUserNotificationsListener } from "./useUserNotificationsListener";
+import { fetchAllPlans } from "../thunks/planThunks";
 
 /**
  * useAppBootstrap – Option B
@@ -70,7 +71,6 @@ export function useAppBootstrap({
   useSchemaVersion();
   useUserNotificationsListener(currentUser);
 
-
   // 👥 Re-enable dependent sync hooks (required for full goal hydration)
   useCompanyProductsListener(companyId);
   useCompanyUsersSync();
@@ -105,8 +105,8 @@ export function useAppBootstrap({
         dispatch(setResetting(true));
 
         // STEP 1 — hydrate plan cache
-        dispatch(setLoadingMessage("Loading plan cache…"));
-        await dispatch(hydrateFromCache());
+        dispatch(setLoadingMessage("Loading plans…"));
+        await dispatch(fetchAllPlans());
 
         // STEP 2 — essential company info
         if (companyId) {
