@@ -14,6 +14,8 @@ import { useNavigate } from "react-router-dom";
 import { showMessage } from "../../../Slices/snackbarSlice";
 import CustomConfirmation from "../../CustomConfirmation";
 import UpcomingDowngradeBanner from "./UpcomingDowngradeBanner";
+import PlanUsageBanner from "../PlanUsageBanner";
+import { Link } from "react-router-dom";
 
 const BillingDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -288,26 +290,12 @@ const BillingDashboard: React.FC = () => {
   return (
     <div className="billing-container">
       <h2>Billing & Subscription</h2>
-      <button className="button-outline" onClick={() => navigate("/dashboard")}>
-        ← Back to Dashboard
-      </button>
+
+      <Link to="/dashboard" className="billing-back-link">
+        ← Dashboard
+      </Link>
       <UpcomingDowngradeBanner />
       <div className="billing-top">
-        <section className="billing-explainer">
-          <h3>How Billing Works</h3>
-          <ul className="billing-rules">
-            <li>
-              <strong>Flat monthly pricing.</strong>
-              <span>No contracts. Clear capacity limits.</span>
-            </li>
-            <li>
-              <strong>Flexible changes.</strong>
-              <span>
-                Upgrades start immediately. Downgrades apply at renewal.
-              </span>
-            </li>
-          </ul>
-        </section>
         <div className="billing-summary-card">
           <div className="billing-summary-header">
             <div className="billing-summary-title">
@@ -338,6 +326,8 @@ const BillingDashboard: React.FC = () => {
           {/* <p>Manage your plan, payments</p> */}
 
           <div className="billing-summary-details">
+            <PlanUsageBanner />
+
             {billingInfo?.pendingChange ? (
               <p className="billing-summary-renewal downgrade">
                 Downgrades to{" "}
@@ -380,50 +370,68 @@ const BillingDashboard: React.FC = () => {
           )}
         </div>
       </div>
-      <div className="billing-bottom"></div>
 
-      {currentPlanId === "free" && (
-        <p className="upgrade-hint">
-          🚀 Unlock more capacity by upgrading your plan below.
-        </p>
-      )}
+      <div className="billing-middle">
+        {currentPlanId === "free" && (
+          <p className="upgrade-hint">
+            🚀 Unlock more capacity by upgrading your plan below.
+          </p>
+        )}
 
-      {/* === Plan Grid === */}
-      <div className="plans-grid">
-        {[...plans]
-          .filter((plan) => plan.braintreePlanId !== billingInfo?.plan)
-          .sort((a, b) => a.price - b.price)
-          .map((plan) => {
-            const isCurrent = plan.braintreePlanId === billingInfo?.plan;
+        {/* === Plan Grid === */}
+        <div className="plans-grid">
+          {[...plans]
+            .filter((plan) => plan.braintreePlanId !== billingInfo?.plan)
+            .sort((a, b) => a.price - b.price)
+            .map((plan) => {
+              const isCurrent = plan.braintreePlanId === billingInfo?.plan;
 
-            const currentPlan = plans.find(
-              (p) => p.braintreePlanId === billingInfo?.plan,
-            );
-            const isUpgrade =
-              currentPlan && plan.price > (currentPlan.price || 0);
-            const isDowngrade =
-              currentPlan && plan.price < (currentPlan.price || 0);
-            const isRecommended = plan.braintreePlanId === "team";
+              const currentPlan = plans.find(
+                (p) => p.braintreePlanId === billingInfo?.plan,
+              );
+              const isUpgrade =
+                currentPlan && plan.price > (currentPlan.price || 0);
+              const isDowngrade =
+                currentPlan && plan.price < (currentPlan.price || 0);
+              const isRecommended = plan.braintreePlanId === "team";
 
-            return (
-              <PlanCard
-                key={plan.braintreePlanId}
-                planId={plan.braintreePlanId}
-                price={plan.price}
-                userLimit={plan.userLimit}
-                connectionLimit={plan.connectionLimit}
-                isCurrent={isCurrent}
-                isUpgrade={isUpgrade}
-                isDowngrade={isDowngrade}
-                isRecommended={isRecommended}
-                onSelect={() => {
-                  if (hasPendingDowngrade) return;
-                  if (!isCurrent) handlePlanSelection(plan);
-                }}
-                disabled={hasPendingDowngrade && !isCurrent}
-              />
-            );
-          })}
+              return (
+                <PlanCard
+                  key={plan.braintreePlanId}
+                  planId={plan.braintreePlanId}
+                  price={plan.price}
+                  userLimit={plan.userLimit}
+                  connectionLimit={plan.connectionLimit}
+                  isCurrent={isCurrent}
+                  isUpgrade={isUpgrade}
+                  isDowngrade={isDowngrade}
+                  isRecommended={isRecommended}
+                  onSelect={() => {
+                    if (hasPendingDowngrade) return;
+                    if (!isCurrent) handlePlanSelection(plan);
+                  }}
+                  disabled={hasPendingDowngrade && !isCurrent}
+                />
+              );
+            })}
+        </div>
+      </div>
+      <div className="billing-bottom">
+        <section className="billing-explainer">
+          <h3>How Billing Works</h3>
+          <ul className="billing-rules">
+            <li>
+              <strong>Flat monthly pricing.</strong>
+              <span>No contracts. Clear capacity limits.</span>
+            </li>
+            <li>
+              <strong>Flexible changes.</strong>
+              <span>
+                Upgrades start immediately. Downgrades apply at renewal.
+              </span>
+            </li>
+          </ul>
+        </section>
       </div>
 
       {/* Checkout */}

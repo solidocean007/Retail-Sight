@@ -16,7 +16,6 @@ import {
   TextField,
   Typography,
   useMediaQuery,
-  useTheme,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -51,13 +50,13 @@ import { db, functions } from "../../utils/firebase";
 import { httpsCallable } from "firebase/functions";
 import CustomConfirmation from "../CustomConfirmation";
 import { showMessage } from "../../Slices/snackbarSlice";
-import { useAppDispatch } from "../../utils/store";
+import { RootState, useAppDispatch } from "../../utils/store";
 import { normalizeFirestoreData } from "../../utils/normalize";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { RecentlyAcceptedList } from "./RecentlyAcceptedList";
 import { getAuth } from "firebase/auth";
-import AuthClaimsDebug from "../dev/AuthClaimsDebug";
+import PlanUsageBanner from "../Pages/PlanUsageBanner";
 
 function toMillis(value?: string | Timestamp): number | null {
   if (!value) return null;
@@ -120,37 +119,29 @@ export default function AdminUsersConsole() {
   const canHardDelete = myRole === "super-admin" || myRole === "developer";
   const isAdminOrUp = canHardDelete || myRole === "admin";
 
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  // const isMobile = useMediaQuery("(max-width: 768px)");
   const localUsers = (useSelector(selectCompanyUsers) ?? []) as UserType[];
-  // console.log(localUsers)
   const activeUsers = localUsers.filter((u) => u.status === "active");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const companyId = useSelector(selectUser)?.companyId;
-  const [companyLimits, setCompanyLimits] = useState<{
-    used: number;
-    limit: number;
-  } | null>(null);
+  const { currentPlan } = useSelector((state: RootState) => state.plans);
+  const billingInfo = useSelector(
+    (state: RootState) => state.currentCompany?.data?.billing,
+  );
 
-  useEffect(() => {
-    if (!companyId) return;
+  const userLimit = useMemo(() => {
+    if (!currentPlan) return 0;
 
-    return onSnapshot(doc(db, "companies", companyId), (snap) => {
-      if (!snap.exists()) return;
+    return currentPlan.userLimit ?? 0;
+  }, [currentPlan, billingInfo]);
 
-      const data = snap.data();
+  const usedUsers = useMemo(() => {
+    return localUsers.length;
+  }, [localUsers]);
 
-      const baseLimit = data?.limits?.userLimit ?? 0;
-      const addon = data?.billing?.addons?.extraUsers ?? 0;
-      const used = data?.usage?.users ?? 0;
-
-      setCompanyLimits({
-        used,
-        limit: baseLimit + addon,
-      });
-    });
-  }, [companyId]);
+  const canInviteUser = usedUsers < userLimit;
 
   const RECENT_DAYS = 70;
   const recentlyAcceptedInvites = useMemo(() => {
@@ -161,7 +152,7 @@ export default function AdminUsersConsole() {
         if (!u.email || !u.createdAt) return false;
 
         const wasInvited = invites.some(
-          (i) => i.email.toLowerCase() === u.email!.toLowerCase()
+          (i) => i.email.toLowerCase() === u.email!.toLowerCase(),
         );
         if (!wasInvited) return false;
 
@@ -181,11 +172,11 @@ export default function AdminUsersConsole() {
 
   const pendingInvites = useMemo(() => {
     const userEmails = new Set(
-      localUsers.map((u) => u.email?.toLowerCase()).filter(Boolean)
+      localUsers.map((u) => u.email?.toLowerCase()).filter(Boolean),
     );
 
     return invites.filter(
-      (invite) => !userEmails.has(invite.email.toLowerCase())
+      (invite) => !userEmails.has(invite.email.toLowerCase()),
     );
   }, [invites, localUsers]);
 
@@ -196,9 +187,6 @@ export default function AdminUsersConsole() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive" | "deleted"
   >("all");
-  const canInviteUser = companyLimits
-    ? companyLimits.used < companyLimits.limit
-    : false;
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("employee");
@@ -210,16 +198,12 @@ export default function AdminUsersConsole() {
   } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
-  const handleRefreshCustomClaims = async () => {
-    await getAuth().currentUser?.getIdToken(true);
-  };
-
   useEffect(() => {
     if (!db || !companyId) return;
     const unsub = onSnapshot(
       query(
         collection(db, `companies/${companyId}/invites`),
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "desc"),
       ),
       (snap) => {
         setInvites(
@@ -233,10 +217,10 @@ export default function AdminUsersConsole() {
               createdAt: data.createdAt,
               role: data.role || "employee",
             };
-          }) as InviteRow[]
+          }) as InviteRow[],
         );
         setLoadingInvites(false);
-      }
+      },
     );
     return () => unsub();
   }, [db, companyId]);
@@ -247,11 +231,14 @@ export default function AdminUsersConsole() {
 
     // Prevent duplicates in current company list
     const alreadyInList = localUsers?.some(
-      (u) => (u.email || "").toLowerCase() === normalizedEmail
+      (u) => (u.email || "").toLowerCase() === normalizedEmail,
     );
     if (alreadyInList) {
       dispatch(
-        showMessage({ text: "User already in your company.", severity: "info" })
+        showMessage({
+          text: "User already in your company.",
+          severity: "info",
+        }),
       );
       return;
     }
@@ -274,14 +261,14 @@ export default function AdminUsersConsole() {
           showMessage({
             text: "User already registered or eligible. Sending invite...",
             severity: "info",
-          })
+          }),
         );
       }
 
       // 🧩 3️⃣ Create invite + send email
       const createInviteAndEmail = httpsCallable(
         functions,
-        "createInviteAndEmail"
+        "createInviteAndEmail",
       );
       const BASE_URL =
         (import.meta as any).env?.VITE_APP_PUBLIC_URL || window.location.origin;
@@ -326,7 +313,7 @@ export default function AdminUsersConsole() {
           await deleteDoc(doc(db, mutexPath));
 
           dispatch(
-            showMessage({ text: "Invite revoked.", severity: "success" })
+            showMessage({ text: "Invite revoked.", severity: "success" }),
           );
         } catch (e: any) {
           console.error("Revoke failed", e);
@@ -334,7 +321,7 @@ export default function AdminUsersConsole() {
             showMessage({
               text: e.message ?? "Failed to revoke invite.",
               severity: "error",
-            })
+            }),
           );
         } finally {
           setConfirmLoading(false);
@@ -378,7 +365,7 @@ export default function AdminUsersConsole() {
     } finally {
       const updatedUser = { ...editRow };
       const updatedUsers = localUsers.map((u) =>
-        u.uid === updatedUser.uid ? updatedUser : u
+        u.uid === updatedUser.uid ? updatedUser : u,
       );
       dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
       setEditRow(null);
@@ -391,7 +378,6 @@ export default function AdminUsersConsole() {
     "super-admin",
     "developer",
     "supervisor",
-    "status-pending",
   ];
 
   const filteredUsers = useMemo(() => {
@@ -407,7 +393,7 @@ export default function AdminUsersConsole() {
     return base.filter((u) =>
       [u.firstName, u.lastName, u.email, u.phone]
         .filter(Boolean)
-        .some((field) => field!.toLowerCase().includes(query))
+        .some((field) => field!.toLowerCase().includes(query)),
     );
   }, [localUsers, statusFilter, debouncedSearch]);
 
@@ -420,11 +406,11 @@ export default function AdminUsersConsole() {
           const batch = writeBatch(db);
 
           const usersToUpdate = localUsers.filter(
-            (u) => !u.status || u.status !== "active"
+            (u) => !u.status || u.status !== "active",
           );
 
           usersToUpdate.forEach((u) =>
-            batch.update(doc(db, "users", u.uid), { status: "active" })
+            batch.update(doc(db, "users", u.uid), { status: "active" }),
           );
 
           // Optimistically update Redux state
@@ -433,7 +419,7 @@ export default function AdminUsersConsole() {
             payload: localUsers.map((u) =>
               usersToUpdate.some((toUpdate) => toUpdate.uid === u.uid)
                 ? { ...u, status: "active" }
-                : u
+                : u,
             ),
           });
 
@@ -443,14 +429,14 @@ export default function AdminUsersConsole() {
             showMessage({
               text: "All users set to Active.",
               severity: "success",
-            })
+            }),
           );
         } catch (e: any) {
           dispatch(
             showMessage({
               text: e.message ?? "Bulk update failed.",
               severity: "error",
-            })
+            }),
           );
         } finally {
           setConfirmLoading(false);
@@ -462,27 +448,45 @@ export default function AdminUsersConsole() {
 
   // Hard delete with optimistic removal ✅
   const handleDeleteUser = async (uid: string) => {
+    if (uid === me?.uid) {
+      dispatch(
+        showMessage({
+          text: "You cannot delete your own account.",
+          severity: "error",
+        }),
+      );
+      return;
+    }
     setConfirmLoading(true);
-    const prev = [...localUsers];
-    try {
-      // optimistic: remove from grid immediately
-      const remaining = prev.filter((u) => u.uid !== uid); // what do i do with remaining?
 
+    // Snapshot current users for rollback
+    const previousUsers = [...localUsers];
+
+    // Optimistically remove from Redux immediately
+    const updatedUsers = previousUsers.filter((u) => u.uid !== uid);
+    dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
+
+    try {
       const deleteUser = httpsCallable(functions, "deleteAuthUser");
       const result = await deleteUser({ uid });
       const data = result.data as { message?: string };
+
       dispatch(
         showMessage({
           text: data?.message || "User deleted.",
           severity: "success",
-        })
+        }),
       );
     } catch (e: any) {
+      // Rollback on failure
+      dispatch(setCompanyUsers(normalizeFirestoreData(previousUsers)));
+
       dispatch(
-        showMessage({ text: e.message ?? "Delete failed.", severity: "error" })
+        showMessage({
+          text: e.message ?? "Delete failed.",
+          severity: "error",
+        }),
       );
-      // revert optimistic change if you keep a local rows state
-      // setLocalRows(prev)
     } finally {
       setConfirmLoading(false);
       setConfirmation(null);
@@ -553,14 +557,14 @@ export default function AdminUsersConsole() {
                     onConfirm: () => handleDeleteUser(row.uid),
                   });
                 }}
-              />
+              />,
             );
           }
           return actions;
         },
       },
     ],
-    [canHardDelete]
+    [canHardDelete],
   );
 
   const inviteColumns = useMemo<GridColDef<InviteRow>[]>(
@@ -592,7 +596,7 @@ export default function AdminUsersConsole() {
         ],
       },
     ],
-    [invites]
+    [invites],
   );
 
   // Column visibility by breakpoint — keep just the essentials on tablets
@@ -613,10 +617,6 @@ export default function AdminUsersConsole() {
         color: "var(--text-color)",
       }}
     >
-       {/* <AuthClaimsDebug companyId={companyId} show /> */}
-      {(myRole === "developer" || myRole === "super-admin") && (
-        <AuthClaimsDebug companyId={companyId} show />
-      )}
       <Paper
         elevation={0}
         sx={{
@@ -628,11 +628,12 @@ export default function AdminUsersConsole() {
         <Tabs value={tab} onChange={(_, v) => setTab(v)}>
           <Tab label="Users" />
           <Tab
-            label={`Pending Invites${
+            label={`Invites New Users${
               pendingInvites.length ? ` (${pendingInvites.length})` : ""
             }`}
           />
         </Tabs>
+        <PlanUsageBanner />
       </Paper>
 
       {tab === 0 && (
@@ -640,22 +641,22 @@ export default function AdminUsersConsole() {
           elevation={0}
           sx={{ p: 1.5, bgcolor: "var(--dashboard-card)", borderRadius: 3 }}
         >
-          {companyLimits && (
+          {currentPlan && (
             <div
               style={{
                 marginBottom: "0.75rem",
                 fontSize: "0.9rem",
                 fontWeight: 500,
                 color:
-                  companyLimits.used >= companyLimits.limit
+                  usedUsers >= userLimit
                     ? "var(--error-color)"
-                    : companyLimits.limit - companyLimits.used <= 2
+                    : userLimit - usedUsers <= 2
                       ? "var(--warning-color)"
                       : "var(--text-secondary)",
                 background:
-                  companyLimits.used >= companyLimits.limit
+                  usedUsers >= userLimit
                     ? "var(--error-bg)"
-                    : companyLimits.limit - companyLimits.used <= 2
+                    : userLimit - usedUsers <= 2
                       ? "var(--warning-bg)"
                       : "transparent",
                 padding: "0.35rem 0.75rem",
@@ -663,9 +664,8 @@ export default function AdminUsersConsole() {
                 display: "inline-block",
               }}
             >
-              {companyLimits.used}/{companyLimits.limit} users
-              {companyLimits.used >= companyLimits.limit &&
-                " — User limit reached"}
+              {usedUsers}/{userLimit} users
+              {usedUsers >= userLimit && " — User limit reached"}
             </div>
           )}
 
@@ -687,7 +687,7 @@ export default function AdminUsersConsole() {
 
             {isAdminOrUp &&
               filteredUsers.some(
-                (u) => (u.status ?? "active") !== "active"
+                (u) => (u.status ?? "active") !== "active",
               ) && (
                 <Button
                   size="small"
@@ -781,7 +781,7 @@ export default function AdminUsersConsole() {
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <Stack direction={isMobile ? "column" : "row"} spacing={2}>
+                <Stack direction={isPhone ? "column" : "row"} spacing={2}>
                   <TextField
                     fullWidth
                     size="small"
@@ -829,7 +829,7 @@ export default function AdminUsersConsole() {
       )}
 
       <Dialog
-        fullScreen={isMobile}
+        fullScreen={isPhone}
         open={!!editRow}
         onClose={() => setEditRow(null)}
       >
@@ -869,7 +869,7 @@ export default function AdminUsersConsole() {
               value={editRow?.salesRouteNum || ""}
               onChange={(e) =>
                 setEditRow((r) =>
-                  r ? { ...r, salesRouteNum: e.target.value } : r
+                  r ? { ...r, salesRouteNum: e.target.value } : r,
                 )
               }
             />
@@ -880,7 +880,7 @@ export default function AdminUsersConsole() {
                 value={editRow?.role || "employee"}
                 onChange={(e) =>
                   setEditRow((r) =>
-                    r ? { ...r, role: e.target.value as UserType["role"] } : r
+                    r ? { ...r, role: e.target.value as UserType["role"] } : r,
                   )
                 }
               >
@@ -903,7 +903,7 @@ export default function AdminUsersConsole() {
                           ...r,
                           status: e.target.value as "active" | "inactive",
                         }
-                      : r
+                      : r,
                   )
                 }
               >
@@ -918,7 +918,7 @@ export default function AdminUsersConsole() {
                 value={editRow?.reportsTo || ""}
                 onChange={(e) =>
                   setEditRow((r) =>
-                    r ? { ...r, reportsTo: e.target.value } : r
+                    r ? { ...r, reportsTo: e.target.value } : r,
                   )
                 }
               >

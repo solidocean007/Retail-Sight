@@ -155,7 +155,6 @@ type PendingBillingChange = {
 
 export interface CompanyBilling {
   plan: PlanName;
-  addons: CompanyAddons;
   totalMonthlyCost: number;
   braintreeCustomerId: string;
   subscriptionId: string;

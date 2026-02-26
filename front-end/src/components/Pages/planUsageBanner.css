@@ -1,0 +1,32 @@
+.plan-usage-banner {
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: var(--card-panel-background);
+  color: var(--text-color);
+}
+
+.plan-usage-banner h3 {
+  margin: 0;
+}
+
+.plan-usage-banner.warning {
+  border-left: 6px solid var(--warning-color);
+}
+
+.plan-usage-banner.limit {
+  border-left: 6px solid var(--error-color);
+  background: var(--error-bg);
+}
+
+.plan-usage-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.plan-usage-alert {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
