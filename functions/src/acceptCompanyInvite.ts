@@ -41,7 +41,6 @@ export const acceptCompanyInvite = onCall(async (request) => {
 
   // 🔐 PRE ENFORCEMENT
   const counts = await recomputeCompanyCountsInternal(companyId);
-  await enforcePlanLimitsInternal(companyId, "addUser");
 
   const isFirstUser = (counts.usersActiveTotal ?? 0) === 0;
   const role = isFirstUser ? "admin" : invite?.role || "employee";

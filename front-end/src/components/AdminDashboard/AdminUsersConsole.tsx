@@ -36,7 +36,6 @@ import {
   doc,
   deleteDoc,
   updateDoc,
-  writeBatch,
   Timestamp,
 } from "firebase/firestore";
 import { useSelector } from "react-redux";
@@ -55,7 +54,6 @@ import { normalizeFirestoreData } from "../../utils/normalize";
 import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { RecentlyAcceptedList } from "./RecentlyAcceptedList";
-import { getAuth } from "firebase/auth";
 import PlanUsageBanner from "../Pages/PlanUsageBanner";
 
 function toMillis(value?: string | Timestamp): number | null {
@@ -229,10 +227,10 @@ export default function AdminUsersConsole() {
     const normalizedEmail = inviteEmail.trim().toLowerCase();
     if (!normalizedEmail || !companyId) return;
 
-    // Prevent duplicates in current company list
     const alreadyInList = localUsers?.some(
       (u) => (u.email || "").toLowerCase() === normalizedEmail,
     );
+
     if (alreadyInList) {
       dispatch(
         showMessage({
@@ -244,32 +242,31 @@ export default function AdminUsersConsole() {
     }
 
     try {
-      // 🧩 1️⃣ Enforce user limit before sending invite
-      const enforce = httpsCallable(functions, "enforcePlanLimits");
-      await enforce({ companyId, type: "user" });
-
-      // 🧩 2️⃣ Check if user already exists or belongs elsewhere
+      // 1️⃣ Check if user exists or belongs elsewhere
       const checkUserExists = httpsCallable(functions, "checkUserExists");
+
       const response = await checkUserExists({
         email: normalizedEmail,
         companyId,
       });
+
       const { exists } = response.data as { exists: boolean };
 
       if (exists) {
         dispatch(
           showMessage({
-            text: "User already registered or eligible. Sending invite...",
+            text: "User already registered. Sending invite...",
             severity: "info",
           }),
         );
       }
 
-      // 🧩 3️⃣ Create invite + send email
+      // 2️⃣ Create invite (this CF enforces plan limits internally)
       const createInviteAndEmail = httpsCallable(
         functions,
         "createInviteAndEmail",
       );
+
       const BASE_URL =
         (import.meta as any).env?.VITE_APP_PUBLIC_URL || window.location.origin;
 
@@ -278,20 +275,31 @@ export default function AdminUsersConsole() {
         role: inviteRole,
         baseUrl: BASE_URL,
       });
-      dispatch(showMessage({ text: "Invite sent!", severity: "success" }));
+
+      dispatch(
+        showMessage({
+          text: "Invite sent!",
+          severity: "success",
+        }),
+      );
+
       setInviteEmail("");
       setInviteRole("employee");
       setInviteRoute("");
     } catch (err: any) {
-      const code = err?.code || err?.message;
-      const friendly =
-        code === "resource-exhausted"
-          ? "You’ve reached your user limit. Upgrade your plan to add more users."
-          : code === "failed-precondition"
-            ? "This user already belongs to another company."
-            : code === "already-exists"
-              ? "An invite is already pending for this email."
-              : "Error sending invite.";
+      const code = err?.code;
+
+      let friendly = "Error sending invite.";
+
+      if (code === "failed-precondition") {
+        friendly =
+          "You’ve reached your plan limit. Upgrade your plan to add more users.";
+      }
+
+      if (code === "already-exists") {
+        friendly = "An invite is already pending for this email.";
+      }
+
       dispatch(showMessage({ text: friendly, severity: "error" }));
     }
   };
@@ -331,43 +339,35 @@ export default function AdminUsersConsole() {
     });
   };
 
-  // Save incl. status ✅
   const handleSaveUser = async () => {
-    // should we define this as a usertype return?
     if (!editRow) return;
+
     try {
-      // const enforceLimit = httpsCallable(functions, "enforceSuperAdminLimit");
+      const fn = httpsCallable(functions, "adminUpdateCompanyUser");
 
-      // ask backend if this is allowed
-      // await enforceLimit({
-      //   companyId,
-      //   uid: editRow.uid,
-      //   newRole: editRow.role,
-      // });
-
-      await updateDoc(doc(db, "users", editRow.uid), {
-        firstName: editRow.firstName ?? null,
-        lastName: editRow.lastName ?? null,
-        email: editRow.email ?? null,
-        phone: editRow.phone ?? null,
-        salesRouteNum: editRow.salesRouteNum ?? null,
-        role: editRow.role,
-        reportsTo: editRow.reportsTo ?? "",
-        status: editRow.status ?? "active", // 👈 include status
+      await fn({
+        uid: editRow.uid,
+        patch: {
+          firstName: editRow.firstName ?? null,
+          lastName: editRow.lastName ?? null,
+          phone: editRow.phone ?? null,
+          salesRouteNum: editRow.salesRouteNum ?? null,
+          reportsTo: editRow.reportsTo ?? "",
+          role: editRow.role,
+          status: editRow.status ?? "active",
+          // email: editRow.email ?? null, // only if you truly support changing auth email (usually don’t)
+        },
       });
 
       dispatch(showMessage({ text: "User updated.", severity: "success" }));
     } catch (e: any) {
-      const msg = e.message?.includes("super-admins")
-        ? e.message
-        : (e.message ?? "Update failed.");
-      dispatch(showMessage({ text: msg, severity: "error" }));
-    } finally {
-      const updatedUser = { ...editRow };
-      const updatedUsers = localUsers.map((u) =>
-        u.uid === updatedUser.uid ? updatedUser : u,
+      dispatch(
+        showMessage({
+          text: e?.message ?? "Update failed.",
+          severity: "error",
+        }),
       );
-      dispatch(setCompanyUsers(normalizeFirestoreData(updatedUsers)));
+    } finally {
       setEditRow(null);
     }
   };
@@ -396,55 +396,6 @@ export default function AdminUsersConsole() {
         .some((field) => field!.toLowerCase().includes(query)),
     );
   }, [localUsers, statusFilter, debouncedSearch]);
-
-  const handleSetAllToActive = () => {
-    setConfirmation({
-      message: "Set ALL users in this company to Active?",
-      onConfirm: async () => {
-        setConfirmLoading(true);
-        try {
-          const batch = writeBatch(db);
-
-          const usersToUpdate = localUsers.filter(
-            (u) => !u.status || u.status !== "active",
-          );
-
-          usersToUpdate.forEach((u) =>
-            batch.update(doc(db, "users", u.uid), { status: "active" }),
-          );
-
-          // Optimistically update Redux state
-          dispatch({
-            type: "user/setCompanyUsers", // you may need to adjust this if your slice uses a thunk or builder
-            payload: localUsers.map((u) =>
-              usersToUpdate.some((toUpdate) => toUpdate.uid === u.uid)
-                ? { ...u, status: "active" }
-                : u,
-            ),
-          });
-
-          await batch.commit();
-
-          dispatch(
-            showMessage({
-              text: "All users set to Active.",
-              severity: "success",
-            }),
-          );
-        } catch (e: any) {
-          dispatch(
-            showMessage({
-              text: e.message ?? "Bulk update failed.",
-              severity: "error",
-            }),
-          );
-        } finally {
-          setConfirmLoading(false);
-          setConfirmation(null);
-        }
-      },
-    });
-  };
 
   // Hard delete with optimistic removal ✅
   const handleDeleteUser = async (uid: string) => {
@@ -685,18 +636,6 @@ export default function AdminUsersConsole() {
               </Select>
             </FormControl>
 
-            {isAdminOrUp &&
-              filteredUsers.some(
-                (u) => (u.status ?? "active") !== "active",
-              ) && (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={handleSetAllToActive}
-                >
-                  Set All Active
-                </Button>
-              )}
             <div className="user-search-wrapper">
               <input
                 name="user-search"

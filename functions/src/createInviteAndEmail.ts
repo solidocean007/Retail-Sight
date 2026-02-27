@@ -44,12 +44,6 @@ export const createInviteAndEmail = onCall<CreateInvitePayload>(async (req) => {
   const emailRaw = (req.data?.email ?? "").trim();
   if (!emailRaw) throw new HttpsError("invalid-argument", "Email is required.");
 
-  // 🔐 Recompute latest usage snapshot
-  await recomputeCompanyCountsInternal(companyId);
-
-  // 🔐 Enforce plan limit BEFORE creating invite
-  await enforcePlanLimitsInternal(companyId, "addUser");
-
   const emailLower = emailRaw.toLowerCase();
   const role = (req.data?.role ?? "employee") as CreateInvitePayload["role"];
 
@@ -79,6 +73,9 @@ export const createInviteAndEmail = onCall<CreateInvitePayload>(async (req) => {
   const companyName = companySnap.exists
     ? companySnap.get("companyName")
     : null;
+
+  await recomputeCompanyCountsInternal(companyId);
+  await enforcePlanLimitsInternal(companyId, "addUser");
 
   // 🔹 Transaction to create invite + mutex
   await db.runTransaction(async (tx) => {

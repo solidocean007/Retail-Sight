@@ -75,10 +75,7 @@ export const approveAccessRequest = onCall(async (request) => {
   await companyDoc.ref.update({
     billing: {
       plan: planId,
-      addons: {
-        extraUser: 0,
-        extraConnection: 0,
-      },
+      
       paymentStatus: "inactive", // free but enforceable
       braintreeCustomerId: null,
       subscriptionId: null,

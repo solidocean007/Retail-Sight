@@ -1,5 +1,7 @@
 import { onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { enforcePlanLimitsInternal } from "./billing/enforePlanLimitsInternal";
+import { recomputeCompanyCountsInternal } from "./billing/recomputeCompanyCounts";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -16,6 +18,9 @@ export const createInviteAndDraftConnection = onCall(async (request) => {
     }
 
     const cleanEmail = String(targetEmail).trim().toLowerCase();
+
+    await recomputeCompanyCountsInternal(fromCompanyId);
+    await enforcePlanLimitsInternal(fromCompanyId, "addConnection");
 
     // Get inviting company details
     const invitingCompanySnap = await db

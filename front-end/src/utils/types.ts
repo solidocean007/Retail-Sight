@@ -132,11 +132,6 @@ export type IntegrationsMap = Partial<Record<ProviderKey, IntegrationConfig>>;
 
 export type BillingStatus = "active" | "past_due" | "canceled";
 
-export interface CompanyAddons {
-  extraUsers: number;
-  extraConnections: number;
-}
-
 // New
 export type PlanName = "free" | "team" | "pro" | "enterprise" | "healy_plan";
 

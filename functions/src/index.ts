@@ -20,7 +20,6 @@ import { markAccessRequestComplete } from "./markAccessRequestComplete";
 import { rejectAccessRequest } from "./rejectAccessRequest";
 import { approveAccessRequest } from "./approveAccessRequest";
 import { getPlanDetails } from "./planHandlers";
-import { enforcePlanLimits } from "./enforcePlanLimits";
 import { generatePostShareToken } from "./generatePostShareToken";
 import { validatePostShareToken } from "./validatePostShareToken";
 import { createInviteAndDraftConnection } from "./createInviteAndDraftConnection";
@@ -32,6 +31,7 @@ import { sendTestPush } from "./notifications/sendTestPush";
 import { onActivityEventCreated } from "./notifications/onActivityEventCreated";
 import { markNotificationReadCallable } from "./notifications/markNotificationReadCallable";
 import { developerRecomputeCompanyCounts } from "./billing/developerRecomputeCompanyCounts";
+import { adminUpdateCompanyUser } from "./adminUpdateCompanyUser";
 import {
   galloFetchPrograms,
   galloFetchAccounts,
@@ -108,12 +108,12 @@ export {
   markAccessRequestComplete,
   rejectAccessRequest,
   getPlanDetails,
-  enforcePlanLimits,
   generatePostShareToken,
   validatePostShareToken,
 
   // Auth
   getMyAuthClaims,
+  adminUpdateCompanyUser,
 
   // Billing
   testBraintreeAuth,
