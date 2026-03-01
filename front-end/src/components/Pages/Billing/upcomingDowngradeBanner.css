@@ -4,6 +4,7 @@
   margin-bottom: 24px;
   background: var(--warning-bg);
   border: 1px solid var(--warning-border);
+  max-width: 700px;
 }
 
 .downgrade-banner__content h3 {

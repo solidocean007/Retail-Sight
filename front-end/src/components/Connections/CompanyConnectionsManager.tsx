@@ -19,6 +19,7 @@ import InviteAndConnectModal from "./InviteAndConnectModal";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import IdentifyCompany from "./IdentifyCompany";
 import PlanUsageBanner from "../Pages/PlanUsageBanner";
+import UpcomingDowngradeBanner from "../Pages/Billing/UpcomingDowngradeBanner";
 
 interface Props {
   currentCompanyId: string | undefined;
@@ -31,14 +32,18 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 }) => {
   const dispatch = useAppDispatch();
   const functions = getFunctions();
-  const usersCompany = useSelector(selectCurrentCompany);
+  const company = useSelector(selectCurrentCompany);
+  const allPlans = useSelector((state: RootState) => state.plans.allPlans);
   const { connections } = useSelector(
     (state: RootState) => state.companyConnections,
   );
 
   // ✅ Access plan data from Redux (cached + persisted)
 
-  const { currentPlan } = useSelector((state: RootState) => state.plans);
+  const currentPlan = useMemo(() => {
+    if (!company?.billing?.plan) return null;
+    return allPlans[company.billing.plan] ?? null;
+  }, [allPlans, company]);
 
   const [inviteMode, setInviteMode] = useState(false);
   const [selectedConnection, setSelectedConnection] =
@@ -61,13 +66,20 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     [connections],
   );
 
-  const isPlanReady = Boolean(currentPlan);
+  const upcomingPlanId = company?.billing?.pendingChange?.nextPlanId;
+  const upcomingPlan = upcomingPlanId ? allPlans[upcomingPlanId] : null;
 
-  const connectionLimit = currentPlan?.connectionLimit ?? 0;
+  const effectiveConnectionLimit = upcomingPlan
+    ? Math.min(currentPlan?.connectionLimit ?? 0, upcomingPlan.connectionLimit)
+    : (currentPlan?.connectionLimit ?? 0);
+  const isPlanReady = typeof effectiveConnectionLimit === "number";
+
+  const totalConnectionsUsed = approvedConnections + pendingConnections;
+
   const connectionLimitReached =
     isPlanReady &&
-    connectionLimit > 0 &&
-    approvedConnections >= connectionLimit;
+    effectiveConnectionLimit > 0 &&
+    totalConnectionsUsed >= effectiveConnectionLimit;
 
   // ✅ Load connections (cached + remote)
   useEffect(() => {
@@ -92,7 +104,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     emailInput: string,
     brandSelection: string[],
   ) => {
-    if (!user || !usersCompany || !currentCompanyId) return;
+    if (!user || !company || !currentCompanyId) return;
     try {
       await dispatch(
         createConnectionRequest({
@@ -151,12 +163,14 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 
   const isNearLimit =
     isPlanReady &&
-    connectionLimit > 0 &&
-    approvedConnections >= connectionLimit - 1;
+    effectiveConnectionLimit > 0 &&
+    approvedConnections >= effectiveConnectionLimit - 1;
 
   return (
     <div className="connections-dashboard">
-      <PlanUsageBanner />
+      {company?.billing?.pendingChange && !isNearLimit && (
+        <UpcomingDowngradeBanner />
+      )}
       {/* === MERGED CONNECTIONS OVERVIEW PANEL === */}
       <div className="connections-overview">
         <div className="overview-header" onClick={() => setShowInfo(!showInfo)}>
@@ -242,8 +256,8 @@ const CompanyConnectionsManager: React.FC<Props> = ({
         <div className="tier-status">
           <strong>
             {isPlanReady
-              ? `${approvedConnections} / ${connectionLimit} connections used`
-              : "Loading plan limits..."}
+              ? `${approvedConnections} / ${effectiveConnectionLimit} connections used`
+              : `${approvedConnections} / — connections used`}
           </strong>
 
           <div className="tier-bar">
@@ -251,15 +265,16 @@ const CompanyConnectionsManager: React.FC<Props> = ({
               className="tier-progress"
               style={{
                 width:
-                  connectionLimit > 0
+                  effectiveConnectionLimit > 0
                     ? `${Math.min(
-                        (approvedConnections / connectionLimit) * 100,
+                        (approvedConnections / effectiveConnectionLimit) * 100,
                         100,
                       )}%`
                     : "0%",
               }}
             />
           </div>
+          <PlanUsageBanner />
 
           {pendingConnections > 0 && (
             <div className="pending-badge">
@@ -320,7 +335,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
             <IdentifyCompany
               fromCompanyId={currentCompanyId!}
               currentUser={user}
-              currentCompany={usersCompany}
+              currentCompany={company}
               currentConnections={connections}
               onContinue={handleIdentifyContinue}
               onInvite={handleInviteFlow}

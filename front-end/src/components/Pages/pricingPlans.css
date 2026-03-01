@@ -80,7 +80,7 @@
 
 /* ===== BADGE ===== */
 .plan-badge {
-  background: var(--accent);
+  /* background: var(--accent); */
   color: #fff;
   padding: 4px 10px;
   border-radius: 12px;
@@ -99,8 +99,8 @@
     transform: scale(1);
   }
   50% {
-    opacity: 0.85;
-    transform: scale(1.05);
+    opacity: 0.95;
+    transform: scale(1.10);
   }
 }
 

@@ -55,6 +55,8 @@ import AdminUserCard, { StatusPill } from "./AdminUserCard";
 import { useDebouncedValue } from "../../hooks/useDebounce";
 import { RecentlyAcceptedList } from "./RecentlyAcceptedList";
 import PlanUsageBanner from "../Pages/PlanUsageBanner";
+import { Navigate, useNavigate } from "react-router-dom";
+import { selectCurrentCompany } from "../../Slices/currentCompanySlice";
 
 function toMillis(value?: string | Timestamp): number | null {
   if (!value) return null;
@@ -109,6 +111,7 @@ export type AdminUserRow = {
 };
 
 export default function AdminUsersConsole() {
+  const company = useSelector(selectCurrentCompany);
   const dispatch = useAppDispatch();
   const isPhone = useMediaQuery("(max-width: 640px)"); // ~tailwind 'sm'
   const isTablet = useMediaQuery("(max-width: 1024px)"); // ~tailwind 'lg
@@ -116,7 +119,7 @@ export default function AdminUsersConsole() {
   const myRole = me?.role;
   const canHardDelete = myRole === "super-admin" || myRole === "developer";
   const isAdminOrUp = canHardDelete || myRole === "admin";
-
+  const navigate = useNavigate();
   // const isMobile = useMediaQuery("(max-width: 768px)");
   const localUsers = (useSelector(selectCompanyUsers) ?? []) as UserType[];
   const activeUsers = localUsers.filter((u) => u.status === "active");
@@ -124,7 +127,12 @@ export default function AdminUsersConsole() {
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const companyId = useSelector(selectUser)?.companyId;
-  const { currentPlan } = useSelector((state: RootState) => state.plans);
+  const allPlans = useSelector((state: RootState) => state.plans.allPlans);
+
+  const currentPlan = useMemo(() => {
+    if (!company?.billing?.plan) return null;
+    return allPlans[company.billing.plan] ?? null;
+  }, [allPlans, company]);
   const billingInfo = useSelector(
     (state: RootState) => state.currentCompany?.data?.billing,
   );
@@ -138,8 +146,6 @@ export default function AdminUsersConsole() {
   const usedUsers = useMemo(() => {
     return localUsers.length;
   }, [localUsers]);
-
-  const canInviteUser = usedUsers < userLimit;
 
   const RECENT_DAYS = 70;
   const recentlyAcceptedInvites = useMemo(() => {
@@ -558,6 +564,19 @@ export default function AdminUsersConsole() {
     return {} as any; // desktop: show all
   }, [isTablet, isPhone]);
 
+  const canInviteUser = useMemo(() => {
+    if (!currentPlan) return false;
+
+    const limit = currentPlan.userLimit ?? 0;
+
+    const active = company?.counts?.usersActiveTotal ?? 0;
+    const pending = company?.counts?.usersPendingTotal ?? 0;
+
+    console.log("active users: ", active, "pending users: ", pending); // doesnt log
+
+    return active + pending < limit;
+  }, [currentPlan, company]);
+
   return (
     <Box
       sx={{
@@ -572,11 +591,13 @@ export default function AdminUsersConsole() {
         elevation={0}
         sx={{
           p: { xs: 1, sm: 2 },
-          bgcolor: "var(--dashboard-card)",
+          // bgcolor: "var(--dashboard-card)",
+
+
           borderRadius: 3,
         }}
       >
-        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{mb: 2}}>
           <Tab label="Users" />
           <Tab
             label={`Invites New Users${
@@ -711,49 +732,63 @@ export default function AdminUsersConsole() {
           <Stack spacing={2}>
             <RecentlyAcceptedList users={recentlyAcceptedInvites} />
             <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography fontWeight={600}>
-                  <PersonAddAlt1RoundedIcon
-                    style={{ verticalAlign: "text-bottom", marginRight: 8 }}
-                  />
-                  Send a New Invite
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack direction={isPhone ? "column" : "row"} spacing={2}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Employee Email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                  />
-                  <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel id="role">Role</InputLabel>
-                    <Select
-                      labelId="role"
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(String(e.target.value))}
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                <PersonAddAlt1RoundedIcon
+                  style={{ verticalAlign: "text-bottom", marginRight: 8 }}
+                />
+                Send a New Invite
+              </Typography>
+              {!canInviteUser && (
+                <div className="limit-hint">
+                  You’ve reached your plan limit. Upgrade in Billing to add more
+                  users.
+                  <button onClick={() => navigate("/billing")}>Upgrade</button>
+                </div>
+              )}{" "}
+              {canInviteUser && (
+                <AccordionDetails>
+                  <Stack direction={isPhone ? "column" : "row"} spacing={2}>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      // label="Employee Email"
+                      placeholder="Employee Email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      disabled={!canInviteUser}
+                      sx={{
+                        maxWidth: isPhone ? "100%" : 400,
+                      }}
+                    />
+
+                    <Button
+                      variant="contained"
+                      onClick={handleSendInvite}
+                      startIcon={<SendRoundedIcon />}
+                      disabled={!canInviteUser}
                     >
-                      <MenuItem value="employee">Employee</MenuItem>
-                      {/* <MenuItem value="manager">Manager</MenuItem> */}
-                      <MenuItem value="admin">Admin</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Button
-                    variant="contained"
-                    onClick={handleSendInvite}
-                    startIcon={<SendRoundedIcon />}
-                    disabled={!canInviteUser}
-                  >
-                    Send Invite
-                  </Button>
-                </Stack>
-              </AccordionDetails>
+                      Send Invite
+                    </Button>
+                  </Stack>
+
+                  {!canInviteUser && (
+                    <div className="limit-hint">
+                      You’ve reached your plan limit. Upgrade in Billing to add
+                      more users.
+                      <button
+                        type="button"
+                        onClick={() => navigate("/billing")}
+                        className="upgrade-link"
+                      >
+                        Upgrade
+                      </button>
+                    </div>
+                  )}
+                </AccordionDetails>
+              )}
             </Accordion>
 
             <DataGrid<InviteRow>
-              autoHeight
               disableRowSelectionOnClick
               rows={pendingInvites}
               getRowId={(r) => r.id}

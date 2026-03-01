@@ -10,15 +10,12 @@ import "./billingDashboard.css";
 import { RootState, useAppDispatch } from "../../../utils/store";
 import { CompanyBilling, PlanType, UserType } from "../../../utils/types";
 import PlanCard, { formatPlanLabel } from "./PlanCard";
-import { useNavigate } from "react-router-dom";
 import { showMessage } from "../../../Slices/snackbarSlice";
 import CustomConfirmation from "../../CustomConfirmation";
-import UpcomingDowngradeBanner from "./UpcomingDowngradeBanner";
 import PlanUsageBanner from "../PlanUsageBanner";
 import { Link } from "react-router-dom";
 
 const BillingDashboard: React.FC = () => {
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const company = useSelector(selectCurrentCompany) as any;
   const currentCompanyId = useSelector(selectCurrentCompany)?.id;
@@ -112,8 +109,6 @@ const BillingDashboard: React.FC = () => {
           : planList.filter((p) => p.braintreePlanId !== "healy_plan");
 
       setPlans(visiblePlans);
-
-      console.log(planList);
 
       const freePlan =
         planList.find((plan) => plan.braintreePlanId === "free") || null;
@@ -294,7 +289,6 @@ const BillingDashboard: React.FC = () => {
       <Link to="/dashboard" className="billing-back-link">
         ← Dashboard
       </Link>
-      <UpcomingDowngradeBanner />
       <div className="billing-top">
         <div className="billing-summary-card">
           <div className="billing-summary-header">
@@ -303,6 +297,21 @@ const BillingDashboard: React.FC = () => {
               <div className="billing-summary-price">
                 ${basePlanPrice.toFixed(2)}
                 <span>/month</span>
+              </div>
+              <div className="plan-capacity-block">
+                <div className="capacity-item">
+                  <span className="capacity-number">
+                    {currentPlan?.userLimit}
+                  </span>
+                  <span className="capacity-label">Users</span>
+                </div>
+                <div className="capacity-divider" />
+                <div className="capacity-item">
+                  <span className="capacity-number">
+                    {currentPlan?.connectionLimit}
+                  </span>
+                  <span className="capacity-label">Connections</span>
+                </div>
               </div>
             </div>
             {/* {isCurrent && ( */}
@@ -328,46 +337,18 @@ const BillingDashboard: React.FC = () => {
           <div className="billing-summary-details">
             <PlanUsageBanner />
 
-            {billingInfo?.pendingChange ? (
-              <p className="billing-summary-renewal downgrade">
-                Downgrades to{" "}
-                <strong>
-                  {billingInfo?.pendingChange?.nextPlanId && (
-                    <strong>
-                      {formatPlanLabel(billingInfo.pendingChange.nextPlanId)}
-                    </strong>
-                  )}
-                </strong>{" "}
-                on{" "}
-                {new Date(
-                  billingInfo.pendingChange.effectiveAt.seconds * 1000,
-                ).toLocaleDateString()}
-              </p>
-            ) : (
-              renewalDate && (
-                <p className="billing-summary-renewal">
-                  Renews on {renewalDate}
-                </p>
-              )
-            )}
+            {billingInfo?.pendingChange
+              ? renewalDate && (
+                  <p className="billing-summary-downgrade">
+                    {/* Downgrades on {renewalDate} */}
+                  </p>
+                )
+              : renewalDate && (
+                  <p className="billing-summary-renewal">
+                    Renews on {renewalDate}
+                  </p>
+                )}
           </div>
-
-          {billingInfo?.pendingChange && (
-            <div className="billing-summary-actions">
-              <button
-                className="btn-secondary"
-                onClick={async () => {
-                  const cancel = httpsCallable(
-                    functions,
-                    "cancelScheduledDowngrade",
-                  );
-                  await cancel({ companyId: currentCompanyId });
-                }}
-              >
-                Cancel Downgrade
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
