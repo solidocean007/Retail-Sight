@@ -12,20 +12,32 @@ function endOfDay(ms: number): number {
 function toMillisSafe(v?: any): number | null {
   if (!v) return null;
 
+  // Firestore Timestamp
   if (typeof v?.toDate === "function") {
-    return v.toDate().getTime(); // Firestore Timestamp
+    return v.toDate().getTime();
   }
 
-  if (v instanceof Date) return v.getTime();
+  // Date object
+  if (v instanceof Date) {
+    return v.getTime();
+  }
 
+  // String handling
   if (typeof v === "string") {
+    // Handle YYYY-MM-DD explicitly as LOCAL date
+    const parts = v.split("-");
+    if (parts.length === 3) {
+      const [year, month, day] = parts.map(Number);
+      const localDate = new Date(year, month - 1, day); // LOCAL
+      return localDate.getTime();
+    }
+
     const ms = Date.parse(v);
     return Number.isNaN(ms) ? null : ms;
   }
 
   return null;
 }
-
 /**
  * Determines how a Gallo goal should be presented in the UI.
  *

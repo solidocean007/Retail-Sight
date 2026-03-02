@@ -20,6 +20,14 @@ export function formatGoalDate(v?: any) {
   }
 
   if (typeof v === "string") {
+    // Handle YYYY-MM-DD explicitly as LOCAL date
+    const parts = v.split("-");
+    if (parts.length === 3) {
+      const [year, month, day] = parts.map(Number);
+      const localDate = new Date(year, month - 1, day); // LOCAL
+      return localDate.toLocaleDateString();
+    }
+
     const ms = Date.parse(v);
     if (!Number.isNaN(ms)) {
       return new Date(ms).toLocaleDateString();
