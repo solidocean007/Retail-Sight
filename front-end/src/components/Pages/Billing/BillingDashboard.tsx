@@ -14,6 +14,7 @@ import { showMessage } from "../../../Slices/snackbarSlice";
 import CustomConfirmation from "../../CustomConfirmation";
 import PlanUsageBanner from "../PlanUsageBanner";
 import { Link } from "react-router-dom";
+import UpcomingDowngradeBanner from "./UpcomingDowngradeBanner";
 
 const BillingDashboard: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -339,9 +340,7 @@ const BillingDashboard: React.FC = () => {
 
             {billingInfo?.pendingChange
               ? renewalDate && (
-                  <p className="billing-summary-downgrade">
-                    {/* Downgrades on {renewalDate} */}
-                  </p>
+                 <UpcomingDowngradeBanner />
                 )
               : renewalDate && (
                   <p className="billing-summary-renewal">

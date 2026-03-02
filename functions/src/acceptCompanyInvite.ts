@@ -1,7 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { recomputeCompanyCountsInternal } from "./billing/recomputeCompanyCounts";
-import { enforcePlanLimitsInternal } from "./billing/enforePlanLimitsInternal";
 if (!admin.apps.length) {
   admin.initializeApp();
 }

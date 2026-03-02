@@ -59,6 +59,7 @@ import { acceptCompanyInvite } from "./acceptCompanyInvite";
 
 // 🧾 Billing – Webhook
 import { handleBraintreeWebhook } from "./billing/billingHandlers/webhooks";
+import { enforcePastDueGracePeriod } from "./billing/billingHandlers/grace";
 
 // 🧾 Billing – Usage Counters
 
@@ -124,6 +125,7 @@ export {
   scheduleBillingDowngrade,
   cancelScheduledDowngrade,
   changePlanAndRestartBillingCycle,
+  enforcePastDueGracePeriod,
 
   // Connection function
   createInviteAndDraftConnection,

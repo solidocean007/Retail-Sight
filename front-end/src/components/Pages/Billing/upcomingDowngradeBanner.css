@@ -12,6 +12,8 @@
 }
 
 .downgrade-banner__limits {
+  display: flex;
+  flex-direction: column;
   margin-top: 12px;
   display: flex;
   gap: 24px;

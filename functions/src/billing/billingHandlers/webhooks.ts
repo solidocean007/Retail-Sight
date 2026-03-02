@@ -128,21 +128,47 @@ export const handleBraintreeWebhook = onRequest(
         prevStatus
       );
 
-      // 2️⃣ Hard overrides from webhook kind
+      // Hard override FIRST
       if (kind === "subscription_canceled") {
         nextStatus = "canceled";
       }
 
-      console.log("🔔 Braintree webhook", {
-        kind,
-        subscriptionStatus: subscription.status,
-        planId: subscription.planId,
-      });
-
-      await companyRef.update({
+      // Build single atomic billing patch
+      const billingPatch: Record<string, any> = {
         "billing.paymentStatus": nextStatus,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      };
+
+      // Entering past_due → set once
+      if (nextStatus === "past_due") {
+        billingPatch["billing.pastDueSince"] =
+          afterSyncSnap.data()?.billing?.pastDueSince ??
+          admin.firestore.FieldValue.serverTimestamp();
+      }
+
+      // Leaving past_due → clear
+      if (nextStatus === "active" || nextStatus === "canceled") {
+        billingPatch["billing.pastDueSince"] =
+          admin.firestore.FieldValue.delete();
+      }
+
+      await companyRef.update(billingPatch);
+
+      // If subscription truly canceled outside scheduled downgrade → move to free
+      if (nextStatus === "canceled" && subscription.status === "Canceled") {
+        const currentBilling = afterSyncSnap.data()?.billing;
+
+        // If already free, do nothing
+        if (currentBilling?.plan !== "free") {
+          await companyRef.update({
+            "billing.plan": "free",
+            "billing.subscriptionId": admin.firestore.FieldValue.delete(),
+            "billing.pendingChange": admin.firestore.FieldValue.delete(),
+            subscriptionTier: "free",
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+      }
 
       // 3️⃣ Renewal-only operations
       const isRenewalEvent =
