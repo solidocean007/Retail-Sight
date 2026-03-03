@@ -37,6 +37,7 @@ import { mergeAndSetPosts } from "../../Slices/postsSlice";
 import { UploadImage } from "../Create-Post/UploadImage";
 import { normalizePost } from "../../utils/normalize";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
+import { canPostOnBehalf } from "../../utils/userData/permissions";
 
 export const CreatePost = () => {
   const userData = useSelector(selectUser);
@@ -98,7 +99,7 @@ export const CreatePost = () => {
         [field]: value,
       }));
     },
-    []
+    [],
   );
 
   const isStep1Valid = !!selectedFile; // UploadImage picked a file
@@ -175,10 +176,7 @@ export const CreatePost = () => {
     }
   };
 
-  const authToCreateOnBehalf =
-    userData?.role === "admin" ||
-    userData?.role === "super-admin" ||
-    userData?.role === "employee";
+  const authToCreateOnBehalf = canPostOnBehalf(userData);
 
   const appBarStyle = {
     width: "100%",
@@ -206,7 +204,7 @@ export const CreatePost = () => {
         setIsUploading,
         setUploadProgress,
         setUploadStatusText,
-        galloGoal
+        galloGoal,
       );
       dispatch(mergeAndSetPosts([normalizePost(newPost)]));
       navigate("/user-home-page");
