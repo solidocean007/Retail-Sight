@@ -27,6 +27,10 @@ import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "./utils/firebase";
+import { getAuth } from "firebase/auth";
+
+const token = await getAuth().currentUser?.getIdTokenResult(true);
+console.log("CLAIMS:", token?.claims);
 
 function AppContent() {
   const dispatch = useAppDispatch();

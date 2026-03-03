@@ -154,6 +154,7 @@ export interface CompanyBilling {
   braintreeCustomerId: string;
   subscriptionId: string;
   paymentStatus: BillingStatus;
+  pastDueSince?: Timestamp;
   renewalDate?: Timestamp;
   billingPeriodEnd?: Timestamp;
   pendingChange?: PendingBillingChange;
