@@ -29,9 +29,6 @@ import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "./utils/firebase";
 import { getAuth } from "firebase/auth";
 
-const token = await getAuth().currentUser?.getIdTokenResult(true);
-console.log("CLAIMS:", token?.claims);
-
 function AppContent() {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
@@ -72,6 +69,23 @@ function AppContent() {
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 
   useAppBootstrap({ enabled: shouldBootstrapApp });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const res = await user.getIdTokenResult(); // no force refresh
+      if (!cancelled) console.log("CLAIMS:", res.claims);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.uid]);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
