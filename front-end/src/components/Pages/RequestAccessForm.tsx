@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import {
-  Link,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import { AccessRequestDraft } from "../DeveloperDashboard/deverloperTypes";
@@ -13,6 +10,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import "./signUpLogIn.css";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
+import { checkUserExists } from "../../utils/validation/checkUserExists";
 
 type UserTypeHint = "distributor" | "supplier";
 
@@ -38,7 +36,7 @@ export default function RequestAccessForm({
 
   const createCompanyOrRequest = httpsCallable(
     functions,
-    "createCompanyOrRequest"
+    "createCompanyOrRequest",
   );
 
   const [submitting, setSubmitting] = useState(false);
@@ -46,15 +44,28 @@ export default function RequestAccessForm({
   const navigate = useNavigate();
 
   const { inviteId } = useParams();
+  const location = useLocation();
 
   // 🔵 Invite context
   const [inviteData, setInviteData] = useState<any>(null);
 
   function invertCompanyType(
-    type: "supplier" | "distributor"
+    type: "supplier" | "distributor",
   ): "supplier" | "distributor" {
     return type === "supplier" ? "distributor" : "supplier";
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const plan = params.get("plan");
+
+    if (!plan) return;
+
+    setForm((prev) => ({
+      ...prev,
+      notes: `Interested in the ${plan} plan.`,
+    }));
+  }, [location.search]);
 
   // Load pendingInvite context if inviteId exists
   useEffect(() => {
@@ -70,7 +81,6 @@ export default function RequestAccessForm({
 
         const data = snap.data();
         setInviteData(data);
-        console.log(inviteData);
         // PREFILL FIELDS
         setForm((prev) => ({
           ...prev,
@@ -115,6 +125,24 @@ export default function RequestAccessForm({
         throw new Error("Enter a valid work email.");
       }
 
+      const normalizedEmail = form.workEmail.trim().toLowerCase();
+
+      // 🚨 Prevent duplicate requests for existing accounts
+      const exists = await checkUserExists(normalizedEmail);
+
+      if (exists) {
+  setSubmitting(false); // prevent stuck loading state
+
+  dispatch(
+    showMessage(
+      "An account already exists for this email. Try logging in or resetting your password.",
+    ),
+  );
+
+  navigate(`/login?email=${encodeURIComponent(normalizedEmail)}`);
+  return;
+}
+
       // Build request payload dynamically
       const payload: any = {
         ...form,
@@ -126,7 +154,7 @@ export default function RequestAccessForm({
         payload.inviteId = inviteId;
         payload.invitedByCompanyId = inviteData.fromCompanyId;
         payload.inferredCompanyType = invertCompanyType(
-          inviteData.fromCompanyType
+          inviteData.fromCompanyType,
         );
       }
 
@@ -218,6 +246,13 @@ export default function RequestAccessForm({
         </header>
 
         {error && <div className="auth-alert">{error}</div>}
+        {new URLSearchParams(location.search).get("plan") && (
+          <div className="plan-interest-banner">
+            🚀 You're requesting access for the{" "}
+            <strong>{new URLSearchParams(location.search).get("plan")}</strong>{" "}
+            plan.
+          </div>
+        )}
 
         <form className="auth-form" onSubmit={submitAccessRequest} noValidate>
           <label className="auth-label">First name</label>
@@ -313,8 +348,8 @@ export default function RequestAccessForm({
           </div> */}
 
           <div className="auth-footnote">
-            Already have an invite? Use your link or{" "}
-            <Link to="/login">log in</Link>.
+            Already have a Displaygram account?{" "}
+            <Link to="/login">Log in instead</Link>.
           </div>
         </form>
 

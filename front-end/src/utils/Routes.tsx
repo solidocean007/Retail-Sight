@@ -1,11 +1,6 @@
 // Routes.tsx
-import { Route, Routes } from "react-router-dom";
-// import { SignUpLogin } from "../components/SignUpLogIn";
-import { UserHomePage } from "../components/Pages/UserHomePage";
-import { CreatePost } from "../components/Pages/CreatePost";
-import { Dashboard } from "../components/Pages/Dashboard";
+import { Route, Routes, Navigate } from "react-router-dom";
 import About from "../components/Pages/About/About";
-import Features from "../components/Pages/Features";
 import ContactUs from "../components/Pages/ContactUs";
 import PrivacyPolicy from "../components/Pages/PrivacyPolicy";
 import TermsOfService from "../components/Pages/TermsService";
@@ -14,27 +9,33 @@ import SplashPage from "../components/Pages/SplashPage";
 import ViewCollection from "../components/Pages/ViewCollection";
 import { PageNotFound } from "../components/Pages/ErrorPages/PageNotFound";
 import { AccessDenied } from "../components/Pages/ErrorPages/AccessDenied";
-import DeveloperDashboard from "../components/Pages/DeveloperDashboard";
-import NotificationsPage from "../components/Pages/NotificationsPage";
-import LoginForm from "../components/Pages/LoginForm";
-// import SignupRequestForm from "../components/Auth/SignUpRequestForm";
 import RequestAccessForm from "../components/Pages/RequestAccessForm";
-import { Navigate } from "react-router-dom"; // add this import
 import InviteAcceptForm from "../components/Pages/InviteAcceptForm";
 import { PublicPostViewer } from "../components/Pages/ViewPostByLink";
 import ResetPassword from "../components/Pages/ResetPassword";
-import PricingPlans from "../components/Pages/PricingPlans";
-import BillingDashboard from "../components/Pages/Billing/BillingDashboard";
 import RequestSubmitted from "../components/Pages/RequestSubmitted";
 import CompanyOnboardingAcceptForm from "../components/Pages/CompanyOnboardingAcceptForm";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PostViewer from "../components/Pages/PostViewer";
 import CookiesPolicy from "../components/Pages/CookiesPolicy";
 import SmartLanding from "../components/SmartLanding";
+import { lazy, Suspense } from "react";
+import AppLoadingScreen from "../components/AppLoadingScreen";
+
+const PricingPlans = lazy(() => import("../components/Pages/PricingPlans"));
+const Features = lazy(() => import("../components/Pages/Features"));
+const LoginForm = lazy(() => import("../components/Pages/LoginForm"));
+const UserHomePage = lazy(() => import("../components/Pages/UserHomePage"));
+const Dashboard = lazy(() => import("../components/Pages/Dashboard"));
+const CreatePost = lazy(() => import("../components/Pages/CreatePost"));
+const BillingDashboard = lazy(() => import("../components/Pages/Billing/BillingDashboard"));
+const DeveloperDashboard = lazy(() => import("../components/Pages/DeveloperDashboard"));
+const NotificationsPage = lazy(() => import("../components/Pages/NotificationsPage"));
 
 export const AppRoutes = () => {
   return (
-    <Routes>
+    <Suspense fallback={<AppLoadingScreen show message="Loading page…" />}>
+      <Routes>
       <Route path="/" element={<SmartLanding />} />
       <Route path="/splash" element={<SplashPage />} />
       <Route path="/about" element={<About />} />
@@ -108,6 +109,7 @@ export const AppRoutes = () => {
       <Route path="/p/:postId" element={<PublicPostViewer />} />
       <Route path="/access-denied" element={<AccessDenied />} />
       <Route path="*" element={<PageNotFound />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };

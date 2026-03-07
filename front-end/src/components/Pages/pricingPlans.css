@@ -47,6 +47,7 @@
 
 /* ===== PLAN CARD ===== */
 .plan-card {
+  position: relative;
   flex: 1 1 240px;
   max-width: 280px;
   background: var(--dashboard-card);
@@ -57,7 +58,9 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
   opacity: 0;
   transform: translateY(20px);
   animation: fadeUp 0.6s ease-out forwards;
@@ -72,10 +75,22 @@
   background: var(--post-card-animated-gradient-light);
   border: 1px solid var(--accent);
   box-shadow: 0 0 20px rgba(0, 102, 204, 0.25);
-  transform: scale(1.02);
+  transform: scale(1.05);
   /* color: var(--text-color); */
   color: white;
   z-index: 2;
+}
+
+.plan-card.featured::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--accent-gradient);
+  border-top-left-radius: var(--card-radius);
+  border-top-right-radius: var(--card-radius);
 }
 
 /* ===== BADGE ===== */
@@ -125,6 +140,7 @@
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--accent);
+  margin: 0.5rem 0 0.75rem;
 }
 
 /* ===== FEATURES ===== */
@@ -144,10 +160,10 @@
   gap: 0.5rem;
 }
 
-.featured li, .featured .plan-price {
-  color:white;
+.featured li,
+.featured .plan-price {
+  color: white;
 }
-
 
 /* ===== BUTTONS ===== */
 .plan-button {
@@ -159,6 +175,7 @@
   font-size: 1rem;
   transition: all 0.2s ease;
   width: 100%;
+  letter-spacing: 0.02em;
 }
 
 .plan-button.primary {
@@ -285,7 +302,7 @@
 
 @media (min-width: 900px) {
   .pricing-footer {
-    width: 100%
+    width: 100%;
   }
   .plan-card {
     padding: 1.5rem;
@@ -293,10 +310,9 @@
 }
 
 @media (max-width: 1100px) {
-  .pricing-grid  {
+  .pricing-grid {
     max-width: 700px;
   }
-
 }
 
 /* ===== RESPONSIVE ===== */
@@ -307,6 +323,4 @@
   .plan-card {
     padding: 1.5rem;
   }
-
 }
-

@@ -5,56 +5,88 @@ import "./pricingPlans.css";
 const PricingPlans: React.FC = () => {
   const navigate = useNavigate();
 
-
   const plans = [
     {
       id: "free",
-      name: "Free Tier",
+      name: "Free",
       price: "$0 / month",
-      tagline: "For small teams getting started",
-      features: ["👥 Up to 5 users", "🤝 2 active company connections"],
+      tagline: "For evaluation and very small teams",
+      features: [
+        "👥 Up to 5 users",
+        "🤝 Up to 2 company connections",
+        "📸 Create & share posts",
+        "🏷️ Brand approvals",
+        "🔐 Role-based permissions",
+      ],
       button: "Start Free",
     },
     {
-      id: "team",
-      name: "Team Plan",
-      price: "$25 / month",
-      tagline: "For growing companies building partnerships",
+      id: "starter",
+      name: "Starter",
+      price: "$19 / month",
+      tagline: "For small distributors or supplier pilots",
       features: [
-        "👥 Up to 10 users (add more for $2 each)",
-        "🤝 3 active company connections",
+        "👥 Up to 25 users",
+        "🤝 Up to 5 company connections",
+        "📊 Gallo Axis goal integration",
+        "📸 Create & share posts",
+        "🏷️ Brand approvals",
       ],
-      button: "Team",
-      badge: "Best Value",
+      button: "Choose Starter",
     },
     {
-      id: "network",
-      name: "Network Plan",
-      price: "$59 / month",
-      tagline: "For regional or multi-branch organizations",
+      id: "team",
+      name: "Team",
+      price: "$39 / month",
+      tagline: "For growing distributor teams",
       features: [
-        "👥 Up to 40 users (add more for $1 each)",
-        "🤝 10 active company connections",
-        "🧩 Third party Goal importing",
+        "👥 Up to 50 users",
+        "🤝 Up to 10 company connections",
+        "📊 Gallo Axis goal integration",
+        "📸 Create & share posts",
+        "🏷️ Brand approvals",
       ],
-      button: "Network",
+      button: "Choose Team",
+      badge: "Most Popular",
+    },
+    {
+      id: "pro",
+      name: "Pro",
+      price: "$99 / month",
+      tagline: "For regional organizations",
+      features: [
+        "👥 Up to 150 users",
+        "🤝 Up to 25 company connections",
+        "📊 Gallo Axis goal integration",
+        "📤 CSV export",
+        "📸 Create & share posts",
+      ],
+      button: "Choose Pro",
     },
     {
       id: "enterprise",
-      name: "Enterprise Plan",
-      price: "Custom (starts at $99 / month)",
-      tagline: "For multi-division or complex networks",
+      name: "Enterprise",
+      price: "$199 / month",
+      tagline: "For large organizations",
       features: [
-        "👥 Custom user & connection limits",
-        "🧭 Dedicated onboarding + support",
+        "👥 Up to 300 users",
+        "🤝 Up to 40 company connections",
+        "📊 Gallo Axis goal integration",
+        "📤 CSV export",
+        "📸 Create & share posts",
+        "Priority onboarding support",
       ],
       button: "Contact Sales",
     },
   ];
 
   const handleSelect = (planId: string) => {
-    if (planId === "free") navigate("/request-access");
-    else navigate(`/checkout?plan=${planId}`); // i need a new route that handles this case
+    if (planId === "enterprise") {
+      navigate("/contact-us");
+      return;
+    }
+
+    navigate(`/request-access?plan=${planId}`);
   };
 
   return (

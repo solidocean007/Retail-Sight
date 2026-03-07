@@ -39,7 +39,7 @@ import { normalizePost } from "../../utils/normalize";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
 import { canPostOnBehalf } from "../../utils/userData/permissions";
 
-export const CreatePost = () => {
+  const CreatePost = () => {
   const userData = useSelector(selectUser);
   const dispatch = useAppDispatch();
   const companyId = userData?.companyId;
@@ -287,3 +287,5 @@ export const CreatePost = () => {
     </>
   );
 };
+
+export default CreatePost;

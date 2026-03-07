@@ -71,7 +71,11 @@ function AppContent() {
 
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 
-  useAppBootstrap({ enabled: shouldBootstrapApp });
+  useAppBootstrap({
+    enabled: shouldBootstrapApp,
+    currentUser,
+    initializing,
+  });
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;

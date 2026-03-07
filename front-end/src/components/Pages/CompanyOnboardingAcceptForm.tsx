@@ -32,16 +32,16 @@ const toIso = (v: any): string =>
   v?.toDate?.()
     ? v.toDate().toISOString()
     : v instanceof Date
-    ? v.toISOString()
-    : typeof v === "string"
-    ? v
-    : new Date().toISOString();
+      ? v.toISOString()
+      : typeof v === "string"
+        ? v
+        : new Date().toISOString();
 
 export default function CompanyOnboardingAcceptForm() {
   const { inviteId, companyId } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-   
+
   const [invite, setInvite] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,18 +53,18 @@ export default function CompanyOnboardingAcceptForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
-    null
+    null,
   );
   const [submitting, setSubmitting] = useState(false);
   const functions = getFunctions();
   const markAccessRequestComplete = httpsCallable(
     functions,
-    "markAccessRequestComplete"
+    "markAccessRequestComplete",
   );
 
   const resolveStagedConnections = async (
     email: string,
-    newCompanyId: string
+    newCompanyId: string,
   ) => {
     try {
       const fn = httpsCallable(functions, "acceptInviteAutoResolve");
@@ -74,8 +74,8 @@ export default function CompanyOnboardingAcceptForm() {
       // Optional: surface a non-blocking warning
       dispatch(
         showMessage(
-          "Company activated, but connection setup may take a moment."
-        )
+          "Company activated, but connection setup may take a moment.",
+        ),
       );
     }
   };
@@ -86,7 +86,7 @@ export default function CompanyOnboardingAcceptForm() {
     (async () => {
       try {
         const inviteSnap = await getDoc(
-          doc(db, `companies/${companyId}/invites/${inviteId}`)
+          doc(db, `companies/${companyId}/invites/${inviteId}`),
         );
         if (!inviteSnap.exists()) {
           setError("Invite not found or already used.");
@@ -106,8 +106,8 @@ export default function CompanyOnboardingAcceptForm() {
           query(
             collection(db, "accessRequests"),
             where("inviteId", "==", inviteId),
-            limit(1)
-          )
+            limit(1),
+          ),
         );
 
         if (!qSnap.empty) {
@@ -144,7 +144,7 @@ export default function CompanyOnboardingAcceptForm() {
       if (user.email?.toLowerCase() !== invite.inviteeEmail.toLowerCase()) {
         await auth.signOut();
         throw new Error(
-          "Signed-in Google account does not match invited email."
+          "Signed-in Google account does not match invited email.",
         );
       }
 
@@ -166,7 +166,7 @@ export default function CompanyOnboardingAcceptForm() {
           createdAt: createdAtIso,
           lastUpdated: nowIso,
         },
-        { merge: true }
+        { merge: true },
       );
 
       await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
@@ -203,7 +203,7 @@ export default function CompanyOnboardingAcceptForm() {
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setPasswordError(
-      value.length < 8 ? "Password must be at least 8 characters." : null
+      value.length < 8 ? "Password must be at least 8 characters." : null,
     );
     if (verifyPassword && value !== verifyPassword) {
       setVerifyPasswordError("Passwords do not match.");
@@ -215,7 +215,7 @@ export default function CompanyOnboardingAcceptForm() {
   const handleVerifyPasswordChange = (value: string) => {
     setVerifyPassword(value);
     setVerifyPasswordError(
-      password && value !== password ? "Passwords do not match." : null
+      password && value !== password ? "Passwords do not match." : null,
     );
   };
 
@@ -232,14 +232,14 @@ export default function CompanyOnboardingAcceptForm() {
         userCred = await createUserWithEmailAndPassword(
           auth,
           invite.inviteeEmail,
-          password
+          password,
         );
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
           userCred = await signInWithEmailAndPassword(
             auth,
             invite.inviteeEmail,
-            password
+            password,
           );
 
           if (
@@ -274,7 +274,7 @@ export default function CompanyOnboardingAcceptForm() {
           createdAt: createdAtIso,
           lastUpdated: nowIso,
         },
-        { merge: true }
+        { merge: true },
       );
 
       await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
@@ -295,6 +295,27 @@ export default function CompanyOnboardingAcceptForm() {
       dispatch(showMessage("✅ Company activated! Redirecting..."));
       setTimeout(() => navigate("/user-home-page"), 800);
     } catch (err: any) {
+      if (err.code === "auth/wrong-password") {
+        setError(
+          "An account already exists for this email. Please reset your password from the login page.",
+        );
+        dispatch(
+          showMessage(
+            "Existing account detected. Please reset your password before accepting the invite.",
+          ),
+        );
+        navigate(`/login?email=${encodeURIComponent(invite.inviteeEmail)}`);
+        return;
+      }
+
+      if (err.code === "auth/email-already-in-use") {
+        setError(
+          "An account already exists for this email. Please log in instead.",
+        );
+        navigate(`/login?email=${encodeURIComponent(invite.inviteeEmail)}`);
+        return;
+      }
+
       setError(err.message || "Failed to accept invite.");
     } finally {
       setSubmitting(false);
@@ -329,6 +350,10 @@ export default function CompanyOnboardingAcceptForm() {
             <label>Email</label>
             <div className="readonly-value">{invite.inviteeEmail}</div>
           </div>
+          <p className="onboarding-hint">
+            If you already have a Displaygram account with this email, log in
+            instead.
+          </p>
 
           <button
             type="button"

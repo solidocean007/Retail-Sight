@@ -34,7 +34,7 @@ import { resetApp } from "../../utils/resetApp";
 import { showMessage } from "../../Slices/snackbarSlice";
 import InstallPrompt from "../PWA/InstallPrompt";
 
-export const UserHomePage = () => {
+  const UserHomePage = () => {
   const navigate = useNavigate();
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -321,3 +321,5 @@ export const UserHomePage = () => {
     </>
   );
 };
+
+export default UserHomePage;

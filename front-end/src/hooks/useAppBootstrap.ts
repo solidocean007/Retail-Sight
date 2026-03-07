@@ -13,10 +13,7 @@ import { fetchCurrentCompany } from "../Slices/currentCompanySlice";
 import { fetchCompanyProducts } from "../thunks/productThunks";
 import { getAllCompanyProductsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { setAllProducts } from "../Slices/productsSlice";
-import { setupNotificationListenersForUser } from "../utils/listeners/setupNotificationListenersForUser";
-// import { setupNotificationListenersForCompany } from "../utils/listeners/setupNotificationListenerForCompany";
 import { setupCompanyGoalsListener } from "../utils/listeners/setupCompanyGoalsListener";
-import { useFirebaseAuth } from "../utils/useFirebaseAuth";
 
 // ❗ Sync hooks (do NOT block appReady)
 import { useSchemaVersion } from "./useSchemaVersion";
@@ -41,9 +38,14 @@ import { useUserNotificationsListener } from "./useUserNotificationsListener";
 
 export function useAppBootstrap({
   enabled = true,
-}: { enabled?: boolean } = {}) {
+  currentUser,
+  initializing,
+}: {
+  enabled?: boolean;
+  currentUser: any;
+  initializing: boolean;
+}) {
   const dispatch = useAppDispatch();
-  const { currentUser, initializing } = useFirebaseAuth();
   const companyId = currentUser?.companyId ?? null;
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");

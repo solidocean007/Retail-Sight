@@ -52,13 +52,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
   } | null>(null);
   const [showRedirectBanner, setShowRedirectBanner] = useState(false);
 
-
-
   useEffect(() => {
     if (localStorage.getItem("postRedirect")) {
       setShowRedirectBanner(true);
     }
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const emailParam = params.get("email");
+    if (emailParam) setEmail(emailParam);
+  }, [location.search]);
 
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -99,7 +103,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         if (cred && emailFromErr) {
           setPendingLink({ email: emailFromErr, cred });
           setErr(
-            "This email already has a password login. Please sign in with your password to link Google."
+            "This email already has a password login. Please sign in with your password to link Google.",
           );
         } else {
           setErr("We found an existing account for this email.");
@@ -109,7 +113,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           await signInWithRedirect(auth, google);
         } catch (e2: any) {
           setErr(
-            ERROR_MAP[e2.code] || "Google sign-in failed. Please try again."
+            ERROR_MAP[e2.code] || "Google sign-in failed. Please try again.",
           );
         }
       } else {
@@ -170,8 +174,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
       if (!exists) {
         dispatch(
           showMessage(
-            "This email isn’t registered. Check for typos or request access."
-          )
+            "This email isn’t registered. Check for typos or request access.",
+          ),
         );
         return;
       }
@@ -179,21 +183,23 @@ const LoginForm: React.FC<LoginFormProps> = ({
       // ✅ If the account is Google-only, don’t “send” a reset that won’t help
       const methods = await fetchSignInMethodsForEmail(
         getAuth(),
-        normalizedEmail
+        normalizedEmail,
       );
       const hasPassword = methods.includes("password");
       if (!hasPassword) {
         dispatch(
           showMessage(
-            "This account signs in with Google. Use “Continue with Google” instead."
-          )
+            "This account signs in with Google. Use “Continue with Google” instead.",
+          ),
         );
         return;
       }
 
       await sendPasswordResetEmail(getAuth(), normalizedEmail);
       dispatch(
-        showMessage("Password reset sent! (Check your inbox and spam/junk.)")
+        showMessage(
+          "Reset email sent. Check your inbox and spam folder. Search for 'support'.",
+        ),
       );
       setSubmittedReset(true);
     } catch (error: any) {
@@ -204,11 +210,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
         dispatch(showMessage("No account found for this email."));
       } else if (error.code === "auth/operation-not-allowed") {
         dispatch(
-          showMessage("Email/Password sign-in is disabled for this project.")
+          showMessage("Email/Password sign-in is disabled for this project."),
         );
       } else {
         dispatch(
-          showMessage("Unable to send reset email. Please try again later.")
+          showMessage("Unable to send reset email. Please try again later."),
         );
       }
     }
@@ -236,8 +242,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
         )}
         {submittedReset && (
           <div className="auth-banner">
-            ✅ Password reset email sent. Check your inbox and follow the link
-            to set a new password.
+            📧 Reset email sent. Check your inbox and spam folder for a message
+            from Displaygram.
           </div>
         )}
 
@@ -346,10 +352,42 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </div> */}
 
           <footer className="auth-footnote" aria-label="New user options">
-            <span>New here?</span>{" "}
-            <Link to="/request-access" className="auth-link">
+            <span>Don't see your password email?</span>{" "}
+            <button
+              type="button"
+              className="auth-link"
+              onClick={handleResetPassword}
+            >
+              Resend reset link
+            </button>
+            {" • "}
+            <button
+              type="button"
+              className="auth-link"
+              onClick={async () => {
+                if (!email) {
+                  navigate("/request-access");
+                  return;
+                }
+
+                const exists = await checkUserExists(
+                  email.trim().toLowerCase(),
+                );
+
+                if (exists) {
+                  dispatch(
+                    showMessage(
+                      "This email already has an account. Use 'Forgot password?' to regain access.",
+                    ),
+                  );
+                  return;
+                }
+
+                navigate("/request-access");
+              }}
+            >
               Request access
-            </Link>
+            </button>
           </footer>
         </form>
       </div>

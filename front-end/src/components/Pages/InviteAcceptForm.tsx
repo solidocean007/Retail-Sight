@@ -22,10 +22,10 @@ const toIso = (v: any): string =>
   v?.toDate?.()
     ? v.toDate().toISOString()
     : v instanceof Date
-    ? v.toISOString()
-    : typeof v === "string"
-    ? v
-    : new Date().toISOString();
+      ? v.toISOString()
+      : typeof v === "string"
+        ? v
+        : new Date().toISOString();
 
 export default function InviteAcceptForm() {
   const { inviteId, companyId } = useParams();
@@ -45,7 +45,7 @@ export default function InviteAcceptForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [verifyPasswordError, setVerifyPasswordError] = useState<string | null>(
-    null
+    null,
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -54,7 +54,7 @@ export default function InviteAcceptForm() {
     (async () => {
       try {
         const snap = await getDoc(
-          doc(db, `companies/${companyId}/invites/${inviteId}`)
+          doc(db, `companies/${companyId}/invites/${inviteId}`),
         );
 
         if (!snap.exists()) {
@@ -68,7 +68,7 @@ export default function InviteAcceptForm() {
             try {
               const checkUserExists = httpsCallable(
                 functions,
-                "checkUserExists"
+                "checkUserExists",
               );
               const res = await checkUserExists({
                 email: data.inviteeEmail,
@@ -88,7 +88,7 @@ export default function InviteAcceptForm() {
                 !signInMethods.includes("password")
               ) {
                 setError(
-                  "This account uses Google sign-in. Please continue with Google instead of creating a password."
+                  "This account uses Google sign-in. Please continue with Google instead of creating a password.",
                 );
               } else {
                 if (!exists) {
@@ -102,7 +102,7 @@ export default function InviteAcceptForm() {
             } catch (err: any) {
               if (err.code === "failed-precondition") {
                 setError(
-                  "This email is already associated with another company. Please contact support to transfer accounts."
+                  "This email is already associated with another company. Please contact support to transfer accounts.",
                 );
               } else {
                 setError("Unable to validate invite. Please try again later.");
@@ -138,7 +138,7 @@ export default function InviteAcceptForm() {
       if (user.email?.toLowerCase() !== invite.inviteeEmail.toLowerCase()) {
         await auth.signOut(); // clean up auth record
         throw new Error(
-          "Signed-in Google account does not match invited email."
+          "Signed-in Google account does not match invited email.",
         );
       }
 
@@ -160,7 +160,7 @@ export default function InviteAcceptForm() {
           createdAt: createdAtIso,
           lastUpdated: nowIso,
         },
-        { merge: true }
+        { merge: true },
       );
 
       // Mark invite as accepted
@@ -180,7 +180,7 @@ export default function InviteAcceptForm() {
         if (cred && email) {
           setPendingLink({ email, cred });
           setError(
-            "This email has a password login. Please enter password to link Google."
+            "This email has a password login. Please enter password to link Google.",
           );
         } else {
           setError("An account already exists for this email.");
@@ -196,7 +196,7 @@ export default function InviteAcceptForm() {
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setPasswordError(
-      value.length < 8 ? "Password must be at least 8 characters." : null
+      value.length < 8 ? "Password must be at least 8 characters." : null,
     );
     if (verifyPassword && value !== verifyPassword) {
       setVerifyPasswordError("Passwords do not match.");
@@ -208,7 +208,7 @@ export default function InviteAcceptForm() {
   const handleVerifyPasswordChange = (value: string) => {
     setVerifyPassword(value);
     setVerifyPasswordError(
-      password && value !== password ? "Passwords do not match." : null
+      password && value !== password ? "Passwords do not match." : null,
     );
   };
 
@@ -226,14 +226,14 @@ export default function InviteAcceptForm() {
         userCred = await createUserWithEmailAndPassword(
           auth,
           invite.inviteeEmail,
-          password
+          password,
         );
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
           userCred = await signInWithEmailAndPassword(
             auth,
             invite.inviteeEmail,
-            password
+            password,
           );
 
           // ✅ Link Google if pending after sign-in
@@ -268,7 +268,7 @@ export default function InviteAcceptForm() {
           createdAt: createdAtIso,
           lastUpdated: nowIso,
         },
-        { merge: true }
+        { merge: true },
       );
 
       await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
@@ -280,6 +280,30 @@ export default function InviteAcceptForm() {
       dispatch(showMessage("✅ Invite accepted. Welcome!"));
       navigate("/user-home-page");
     } catch (err: any) {
+      if (err.code === "auth/wrong-password") {
+        setError(
+          "An account already exists for this email. Please reset your password before accepting the invite.",
+        );
+
+        dispatch(
+          showMessage(
+            "Existing account detected. Please reset your password first.",
+          ),
+        );
+
+        navigate(`/login?email=${encodeURIComponent(invite.inviteeEmail)}`);
+        return;
+      }
+
+      if (err.code === "auth/email-already-in-use") {
+        setError(
+          "An account already exists for this email. Please log in instead.",
+        );
+
+        navigate(`/login?email=${encodeURIComponent(invite.inviteeEmail)}`);
+        return;
+      }
+
       setError(err.message || "Failed to accept invite.");
     } finally {
       setSubmitting(false);
@@ -320,6 +344,10 @@ export default function InviteAcceptForm() {
           <div className="auth-email">
             Email: <strong>{invite.inviteeEmail}</strong>
           </div>
+          <p className="auth-hint">
+            If you already have a Displaygram account with this email, log in
+            instead.
+          </p>
 
           {(!signInMethods.length || signInMethods.includes("google.com")) && (
             <button

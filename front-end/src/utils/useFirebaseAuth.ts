@@ -7,8 +7,12 @@ import { fetchUserDocFromFirestore } from "./userData/fetchUserDocFromFirestore"
 import { RootState } from "./store";
 import { UserType } from "./types";
 
-const toIso = (val: any) =>
-  val?.toDate ? val.toDate().toISOString() : val || null;
+const toIso = (val: any) => {
+  if (!val) return null;
+  if (val?.toDate) return val.toDate().toISOString();
+  if (val instanceof Date) return val.toISOString();
+  return val;
+};
 
 function normalizeUserData(raw: UserType) {
   if (!raw) return raw;
@@ -30,10 +34,16 @@ export const useFirebaseAuth = () => {
       if (user) {
         try {
           const userData = (await fetchUserDocFromFirestore(
-            user.uid
+            user.uid,
           )) as UserType;
 
-          dispatch(setUser(userData ? normalizeUserData(userData) : null));
+          dispatch(
+            setUser(
+              userData
+                ? normalizeUserData(userData)
+                : ({ uid: user.uid, email: user.email } as UserType),
+            ),
+          );
         } catch (err) {
           console.error("Error fetching user:", err);
           dispatch(setUser(null));
@@ -42,15 +52,20 @@ export const useFirebaseAuth = () => {
         dispatch(setUser(null));
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   useEffect(() => {
     const auth = getAuth();
 
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
-      await handleUserChange(fbUser);   // ⬅️ Wait for Firestore load
-      setInitializing(false);           // ⬅️ AFTER currentUser is known
+      setInitializing(false); // auth state is now known
+
+      try {
+        await handleUserChange(fbUser);
+      } catch (err) {
+        console.error("User load failed:", err);
+      }
     });
 
     return () => unsub();
