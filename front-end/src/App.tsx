@@ -41,6 +41,8 @@ function AppContent() {
 
   const PUBLIC_ROUTES = new Set([
     "/",
+    "/pricing",
+    "/features",
     "/splash",
     "/about",
     "/privacy-policy",
@@ -63,7 +65,9 @@ function AppContent() {
     location.pathname.startsWith("/accept-invite") ||
     location.pathname.startsWith("/onboard-company");
 
-  const isPublicRoute = PUBLIC_ROUTES.has(location.pathname);
+  const isPublicRoute = [...PUBLIC_ROUTES].some((route) =>
+    location.pathname.startsWith(route),
+  );
 
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 
@@ -108,8 +112,7 @@ function AppContent() {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  const showAppLoader =
-    !isPublicRoute && !isAuthRoute && (initializing || !appReady);
+  const showAppLoader = shouldBootstrapApp && (initializing || !appReady);
 
   return (
     <>
