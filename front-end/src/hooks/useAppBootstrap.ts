@@ -8,12 +8,10 @@ import {
   setResetting,
 } from "../Slices/appSlice";
 import { showMessage } from "../Slices/snackbarSlice";
-import { hydrateFromCache } from "../Slices/planSlice";
 import { fetchCurrentCompany } from "../Slices/currentCompanySlice";
 import { fetchCompanyProducts } from "../thunks/productThunks";
 import { getAllCompanyProductsFromIndexedDB } from "../utils/database/indexedDBUtils";
 import { setAllProducts } from "../Slices/productsSlice";
-import { setupNotificationListenersForUser } from "../utils/listeners/setupNotificationListenersForUser";
 // import { setupNotificationListenersForCompany } from "../utils/listeners/setupNotificationListenerForCompany";
 import { setupCompanyGoalsListener } from "../utils/listeners/setupCompanyGoalsListener";
 import { useFirebaseAuth } from "../utils/useFirebaseAuth";
@@ -32,6 +30,7 @@ import { setupDeveloperNotificationsListener } from "../utils/listeners/setupDev
 import { clearDeveloperNotifications } from "../Slices/developerNotificationSlice";
 import { useUserNotificationsListener } from "./useUserNotificationsListener";
 import { fetchAllPlans } from "../thunks/planThunks";
+import { listenForClaimChanges } from "./listenForClaimChanges";
 
 /**
  * useAppBootstrap – Option B
@@ -63,6 +62,11 @@ export function useAppBootstrap({
     if (!currentUser) {
       hasBootstrapped.current = false;
     }
+  }, [currentUser?.uid]);
+
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    return listenForClaimChanges(currentUser.uid);
   }, [currentUser?.uid]);
 
   //

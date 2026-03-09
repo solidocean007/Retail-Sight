@@ -1,26 +1,17 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+if (!admin.apps.length) admin.initializeApp();
 
-/**
- * syncUserRoleClaim
- * Mirrors Firestore user role → Firebase Auth custom claims (authoritative)
- */
-export const syncUserRoleClaim = onDocumentWritten(
+export const syncUserClaims = onDocumentWritten(
   {
     region: "us-central1",
     document: "users/{uid}",
-    cpu: 1,
-    memory: "256MiB",
   },
   async (event) => {
     const uid = event.params.uid;
     const after = event.data?.after?.data();
 
-    // User deleted → clear claims
     if (!after) {
       await admin.auth().setCustomUserClaims(uid, {});
       return;
@@ -29,12 +20,22 @@ export const syncUserRoleClaim = onDocumentWritten(
     const role = after.role ?? "employee";
     const companyId = after.companyId ?? null;
 
-    // 🔑 SINGLE SOURCE OF TRUTH
+    const user = await admin.auth().getUser(uid);
+    const existing = user.customClaims || {};
+
+    const changed =
+      existing.role !== role || existing.companyId !== companyId;
+
+    if (!changed) {
+      return;
+    }
+
     await admin.auth().setCustomUserClaims(uid, {
+      ...existing,
       role,
       companyId,
     });
 
-    console.log("🔄 Synced user claims", { uid, role, companyId });
+    console.log("Claims updated", { uid, role, companyId });
   }
 );

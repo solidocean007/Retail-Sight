@@ -23,6 +23,7 @@ import CompanyConnectionsManager from "../Connections/CompanyConnectionsManager.
 import NotificationSettingsPanel from "../Notifications/NotificationSettingsPanel.tsx";
 import IntegrationsView from "./IntegrationsView.tsx";
 import { ComingSoonCard } from "../ComingSoonCard.tsx";
+import PastDueBanner from "./Billing/PastDueBanner.tsx";
 
 const ADMIN_MODES: DashboardModeType[] = [
   "ConnectionsMode",
@@ -146,6 +147,8 @@ export const Dashboard = () => {
             </Toolbar>
           )}
         </AppBar>
+
+        <PastDueBanner />
       </Box>
       <DashMenu
         open={drawerOpen}
