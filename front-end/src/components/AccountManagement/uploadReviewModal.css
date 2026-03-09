@@ -2,3 +2,18 @@
   background-color: var(--gray-50);
   font-style: italic;
 }
+
+.route-diff {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.route-added {
+  color: #1a7f37;
+  font-weight: 500;
+}
+
+.route-removed {
+  color: #b42318;
+  font-weight: 500;
+}

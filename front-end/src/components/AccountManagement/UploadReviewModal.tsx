@@ -21,19 +21,24 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { CompanyAccountType } from "../../utils/types";
 import "./uploadReviewModal.css";
 
-export type UnifiedDiff = {
+export type UnifiedDiffType = {
   type: "new" | "update";
   accountNumber: string;
   updated: CompanyAccountType;
   old?: CompanyAccountType;
   fieldsChanged: (keyof CompanyAccountType)[]; // ✅ strict typing
-  routeNumChange?: { old: string[]; new: string[] };
+  routeNumChange?: {
+    old: string[];
+    new: string[];
+    added: string[];
+    removed: string[];
+  };
 };
 
 interface UploadReviewModalProps {
-  diffs: UnifiedDiff[];
+  diffs: UnifiedDiffType[];
   onClose: () => void;
-  onConfirm: (selected: UnifiedDiff[]) => void;
+  onConfirm: (selected: UnifiedDiffType[]) => void;
 }
 
 const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
@@ -44,15 +49,13 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
 
-  // inside UploadReviewModal
-
   const newDiffs = diffs.filter((d) => d.type === "new");
   const updateDiffs = diffs.filter((d) => d.type === "update");
 
   const totalNew = newDiffs.length;
   const totalUpdates = updateDiffs.length;
 
-  const renderDiffRow = (diff: UnifiedDiff) => {
+  const renderDiffRow = (diff: UnifiedDiffType) => {
     const {
       accountNumber,
       updated,
@@ -92,15 +95,34 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
             {type === "update" && fieldsChanged.length > 0
               ? fieldsChanged.join(", ")
               : type === "new"
-              ? "All fields new"
-              : "—"}
+                ? "All fields new"
+                : "—"}
           </TableCell>
           <TableCell>
-            {type === "update" && routeNumChange
-              ? `${routeNumChange.old.join(", ")} → ${routeNumChange.new.join(
-                  ", "
-                )}`
-              : (updated.salesRouteNums || []).join(", ")}
+            {type === "update" && routeNumChange ? (
+              <Box className="route-diff">
+                <div>
+                  <strong>Current:</strong>{" "}
+                  {routeNumChange.old.length
+                    ? routeNumChange.old.join(", ")
+                    : "none"}
+                </div>
+
+                {routeNumChange.added.length > 0 && (
+                  <div className="route-added">
+                    + Added: {routeNumChange.added.join(", ")}
+                  </div>
+                )}
+
+                {routeNumChange.removed.length > 0 && (
+                  <div className="route-removed">
+                    − Removed: {routeNumChange.removed.join(", ")}
+                  </div>
+                )}
+              </Box>
+            ) : (
+              (updated.salesRouteNums || []).join(", ")
+            )}
           </TableCell>
           <TableCell>
             <Checkbox
@@ -143,10 +165,9 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
-  console.log("diffs: ", diffs);
   return (
     <Dialog open fullWidth maxWidth="md" onClose={onClose}>
       <DialogTitle>Review Account Changes ({diffs.length})</DialogTitle>
@@ -219,7 +240,7 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
           variant="contained"
           onClick={() => {
             const selected = diffs.filter((d) =>
-              selectedIds.includes(d.accountNumber)
+              selectedIds.includes(d.accountNumber),
             );
             onConfirm(selected);
           }}
