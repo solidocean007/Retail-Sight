@@ -13,6 +13,3 @@
   color: var(--button-text-color);
 }
 
-.Mui-selected:hover {
-  background-color: var(--button-background);
-}

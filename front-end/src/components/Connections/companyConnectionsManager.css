@@ -415,13 +415,14 @@
   background: var(--gray-200);
   border-radius: 8px;
   overflow: hidden;
-  margin: 4px 0;
+  margin: 1rem 0;
 }
 
 .tier-progress {
   height: 100%;
   background: var(--primary-blue);
   transition: width 0.4s ease;
+  margin-bottom: 1rem;
 }
 
 .section-divider {

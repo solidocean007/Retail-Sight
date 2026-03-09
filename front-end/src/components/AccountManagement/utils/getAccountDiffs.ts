@@ -1,5 +1,5 @@
 import { CompanyAccountType } from "../../../utils/types";
-import { UnifiedDiff } from "../UploadReviewModal";
+import { UnifiedDiffType } from "../UploadReviewModal";
 
 // Fields we care about when checking updates
 const FIELDS_TO_CHECK: (keyof CompanyAccountType)[] = [
@@ -14,12 +14,27 @@ const FIELDS_TO_CHECK: (keyof CompanyAccountType)[] = [
   "salesRouteNums",
 ];
 
+const normalizeRoutes = (routes?: string[]) =>
+  [...(routes || [])].map(String).sort();
+
+const mergeRoutesSafely = (oldRoutes: string[], newRoutes: string[]) => {
+  return Array.from(new Set([...oldRoutes, ...newRoutes])).sort();
+};
+
+const computeRouteDelta = (oldRoutes: string[], newRoutes: string[]) => {
+  const added = newRoutes.filter((r) => !oldRoutes.includes(r));
+  const removed = oldRoutes.filter((r) => !newRoutes.includes(r));
+  return { added, removed };
+};
+
 export function getAccountDiffs(
   parsed: Record<string, Partial<CompanyAccountType>>,
-  existingAccounts: CompanyAccountType[]
-): UnifiedDiff[] {
-  const existingMap = new Map(existingAccounts.map((a) => [a.accountNumber, a]));
-  const diffs: UnifiedDiff[] = [];
+  existingAccounts: CompanyAccountType[],
+): UnifiedDiffType[] {
+  const existingMap = new Map(
+    existingAccounts.map((a) => [a.accountNumber, a]),
+  );
+  const diffs: UnifiedDiffType[] = [];
 
   for (const [accNum, incoming] of Object.entries(parsed)) {
     const existing = existingMap.get(accNum);
@@ -50,14 +65,20 @@ export function getAccountDiffs(
 
     // ✏️ Existing account: check for changes
     let fieldsChanged: (keyof CompanyAccountType)[] = [];
-    let routeNumChange: { old: string[]; new: string[] } | undefined;
+    let routeNumChange:
+      | {
+          old: string[];
+          new: string[];
+          added: string[];
+          removed: string[];
+        }
+      | undefined;
     const updated: CompanyAccountType = { ...existing };
 
     FIELDS_TO_CHECK.forEach((field) => {
       const newValue = incoming[field];
       const oldValue = existing[field];
 
-      // Normalize arrays
       const normNew =
         field === "salesRouteNums" && Array.isArray(newValue)
           ? newValue.map(String)
@@ -68,19 +89,37 @@ export function getAccountDiffs(
           ? oldValue.map(String)
           : oldValue;
 
-      if (
-        normNew !== undefined &&
-        JSON.stringify(normNew) !== JSON.stringify(normOld)
-      ) {
-        updated[field] = normNew as any;
-        fieldsChanged.push(field);
+      if (normNew === undefined) return;
 
-        if (field === "salesRouteNums") {
+      // ROUTE FIELD SPECIAL HANDLING
+      if (field === "salesRouteNums") {
+        const oldRoutes = normalizeRoutes(normOld as string[]);
+        const newRoutes = normalizeRoutes(normNew as string[]);
+
+        const mergedRoutes = mergeRoutesSafely(oldRoutes, newRoutes);
+
+        const delta = computeRouteDelta(oldRoutes, mergedRoutes);
+
+        if (delta.added.length || delta.removed.length) {
+          updated[field] = mergedRoutes as any;
+
+          fieldsChanged.push(field);
+
           routeNumChange = {
-            old: (normOld as string[]) || [],
-            new: (normNew as string[]) || [],
+            old: oldRoutes,
+            new: mergedRoutes,
+            added: delta.added,
+            removed: delta.removed,
           };
         }
+
+        return;
+      }
+
+      // NORMAL FIELD COMPARISON
+      if (JSON.stringify(normNew) !== JSON.stringify(normOld)) {
+        updated[field] = normNew as any;
+        fieldsChanged.push(field);
       }
     });
 

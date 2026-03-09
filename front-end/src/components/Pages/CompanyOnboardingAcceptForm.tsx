@@ -16,8 +16,6 @@ import {
   getDocs,
   limit,
   query,
-  setDoc,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "../../utils/firebase";
@@ -94,7 +92,7 @@ export default function CompanyOnboardingAcceptForm() {
         }
 
         const inviteData = inviteSnap.data();
-        if (inviteData.accepted) {
+        if (inviteData.status === "accepted") {
           setError("This invite has already been accepted.");
           return;
         }
@@ -131,6 +129,10 @@ export default function CompanyOnboardingAcceptForm() {
 
   const handleGoogleSignIn = async () => {
     if (!invite) return;
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -148,32 +150,13 @@ export default function CompanyOnboardingAcceptForm() {
         );
       }
 
-      const nowIso = new Date().toISOString();
-      const createdAtIso = toIso(invite.createdAt);
+      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          email: user.email,
-          firstName,
-          lastName,
-          company: invite.companyName,
-          companyName: invite.companyName,
-          companyId: invite.companyId,
-          role: "admin",
-          approvedViaRequest: true,
-          createdAt: createdAtIso,
-          lastUpdated: nowIso,
-        },
-        { merge: true },
-      );
-
-      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
-        accepted: true,
-        acceptedBy: user.uid,
-        acceptedAt: nowIso,
-        status: "accepted",
+      await acceptInvite({
+        inviteId,
+        companyId,
+        firstName,
+        lastName,
       });
 
       dispatch(showMessage("✅ Account activated!"));
@@ -221,26 +204,31 @@ export default function CompanyOnboardingAcceptForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!invite) return;
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required.");
+      return;
+    }
+
     if (passwordError || verifyPasswordError) return;
+
     setSubmitting(true);
     setError(null);
 
     try {
       const auth = getAuth();
-      let userCred;
+
       try {
-        userCred = await createUserWithEmailAndPassword(
+        await createUserWithEmailAndPassword(
           auth,
           invite.inviteeEmail,
           password,
         );
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
-          userCred = await signInWithEmailAndPassword(
-            auth,
-            invite.inviteeEmail,
-            password,
-          );
+          await signInWithEmailAndPassword(auth, invite.inviteeEmail, password);
 
           if (
             pendingLink &&
@@ -256,40 +244,16 @@ export default function CompanyOnboardingAcceptForm() {
         }
       }
 
-      const nowIso = new Date().toISOString();
-      const createdAtIso = toIso(invite.createdAt);
+      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      await setDoc(
-        doc(db, "users", userCred.user.uid),
-        {
-          uid: userCred.user.uid,
-          email: invite.inviteeEmail,
-          firstName,
-          lastName,
-          company: invite.companyName,
-          companyName: invite.companyName,
-          companyId: invite.companyId,
-          role: "admin",
-          approvedViaRequest: true,
-          createdAt: createdAtIso,
-          lastUpdated: nowIso,
-        },
-        { merge: true },
-      );
-
-      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
-        accepted: true,
-        acceptedBy: userCred.user.uid,
-        acceptedAt: nowIso,
-      });
+      await acceptInvite({ inviteId, companyId, firstName, lastName });
 
       await markAccessRequestComplete({
         companyId: invite.companyId,
-        inviteId: inviteId,
+        inviteId,
         inviteeEmail: invite.inviteeEmail,
       });
 
-      // 🆕 Auto-resolve staged connections for this new company
       await resolveStagedConnections(invite.inviteeEmail, invite.companyId);
 
       dispatch(showMessage("✅ Company activated! Redirecting..."));
@@ -365,6 +329,23 @@ export default function CompanyOnboardingAcceptForm() {
           </button>
 
           <div className="auth-divider">or</div>
+          <label>First Name</label>
+          <input
+            type="text"
+            className="auth-input"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+
+          <label>Last Name</label>
+          <input
+            type="text"
+            className="auth-input"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
 
           <label>Password</label>
           <div className="password-wrapper">

@@ -47,7 +47,7 @@ const store = configureStore({
     notifications: notificationsSlice, // 🆕 Notifications slice
     customAccounts: customAccountsSlice,
     sharedPosts: sharedPostsSlice,
-    planSlice: planSlice,
+    plans: planSlice,
     app: appSlice,
     developerNotifications: developerNotificationsSlice,
   },

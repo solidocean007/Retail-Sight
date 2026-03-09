@@ -10,7 +10,7 @@ import {
   signInWithPopup,
   linkWithCredential,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db, functions } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
@@ -62,7 +62,7 @@ export default function InviteAcceptForm() {
         } else {
           const data = snap.data();
 
-          if (data.accepted) {
+          if (data.status === "accepted") {
             setError("This invite has already been accepted.");
           } else {
             try {
@@ -125,6 +125,10 @@ export default function InviteAcceptForm() {
 
   const handleGoogleSignIn = async () => {
     if (!invite) return; // Add this line to avoid runtime errors
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -142,33 +146,13 @@ export default function InviteAcceptForm() {
         );
       }
 
-      const nowIso = new Date().toISOString();
-      const createdAtIso = toIso(invite.createdAt);
+      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      // Create Firestore user
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          email: user.email,
-          firstName,
-          lastName,
-          company: invite.companyName, // 👈 add this
-          companyName: invite.companyName, // 👈 add this
-          companyId: invite.companyId,
-          role: invite.role || "employee",
-          createdAt: createdAtIso,
-          lastUpdated: nowIso,
-        },
-        { merge: true },
-      );
-
-      // Mark invite as accepted
-      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
-        accepted: true,
-        acceptedBy: user.uid,
-        acceptedAt: nowIso,
-        status: "accepted",
+      await acceptInvite({
+        inviteId,
+        companyId,
+        firstName,
+        lastName,
       });
 
       dispatch(showMessage("✅ Invite accepted with Google!"));
@@ -214,27 +198,26 @@ export default function InviteAcceptForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!invite) return;
     if (passwordError || verifyPasswordError) return;
-    if (firstName.trim().length === 0 || lastName.trim().length === 0) return;
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
     try {
       const auth = getAuth();
-      let userCred;
       try {
-        userCred = await createUserWithEmailAndPassword(
+        await createUserWithEmailAndPassword(
           auth,
           invite.inviteeEmail,
           password,
         );
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
-          userCred = await signInWithEmailAndPassword(
-            auth,
-            invite.inviteeEmail,
-            password,
-          );
+          await signInWithEmailAndPassword(auth, invite.inviteeEmail, password);
 
           // ✅ Link Google if pending after sign-in
           if (
@@ -251,30 +234,13 @@ export default function InviteAcceptForm() {
         }
       }
 
-      const nowIso = new Date().toISOString();
-      const createdAtIso = toIso(invite.createdAt);
+      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      await setDoc(
-        doc(db, "users", userCred.user.uid),
-        {
-          uid: userCred.user.uid,
-          email: invite.inviteeEmail,
-          firstName,
-          lastName,
-          company: invite.companyName, // 👈 add this
-          companyName: invite.companyName, // 👈 add this
-          companyId: invite.companyId,
-          role: invite.role || "employee",
-          createdAt: createdAtIso,
-          lastUpdated: nowIso,
-        },
-        { merge: true },
-      );
-
-      await updateDoc(doc(db, `companies/${companyId}/invites/${inviteId}`), {
-        accepted: true,
-        acceptedBy: userCred.user.uid,
-        acceptedAt: nowIso,
+      await acceptInvite({
+        inviteId,
+        companyId,
+        firstName,
+        lastName,
       });
 
       dispatch(showMessage("✅ Invite accepted. Welcome!"));

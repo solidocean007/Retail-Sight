@@ -1,22 +1,8 @@
-import { useEffect, useState } from "react";
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
-import {
-  Box,
-  Chip,
-  LinearProgress,
-  Button,
-  Typography,
-} from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import { Box, Chip, LinearProgress, Button, Typography } from "@mui/material";
 import { Verified } from "@mui/icons-material";
-import {
-  collection,
-  onSnapshot,
-  query,
-} from "firebase/firestore";
+import { collection, getDoc, doc, onSnapshot, query } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import CompanyDrawer from "./CompanyDrawer";
 
@@ -33,73 +19,85 @@ type Row = {
 };
 
 export default function CompanyOnboardingAdmin() {
-  const [rows, setRows] = useState<Row[]>([]);
+  const [requests, setRequests] = useState<Row[]>([]);
+  const [companies, setCompanies] = useState<Row[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Row | null>(null);
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "verified" | "suspended">("all");
+  const [filter, setFilter] = useState<
+    "all" | "pending" | "approved" | "verified" | "suspended"
+  >("all");
 
+  //
+  // ACCESS REQUESTS LISTENER
+  //
   useEffect(() => {
-    const unsubRequests = onSnapshot(
+    const unsub = onSnapshot(
       query(collection(db, "accessRequests")),
       (snap) => {
-        const requests = snap.docs.map((d) => {
+        const mapped = snap.docs.map((d) => {
           const data = d.data();
           return {
             id: d.id,
             companyName: data.companyName ?? "Unknown",
             requesterEmail: data.workEmail,
-            requesterName: `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim(),
+            requesterName:
+              `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim(),
             status: (data.status ?? "pending-approval") as Row["status"],
             createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? "",
           } as Row;
         });
-        setRows((prev) => {
-          // Merge with any existing company rows (optional step)
-          const existing = prev.filter((p) => p.status === "live");
-          return [...requests, ...existing];
-        });
+
+        setRequests(mapped);
         setLoading(false);
-      }
+      },
     );
 
-    const unsubCompanies = onSnapshot(
-      query(collection(db, "companies")),
-      (snap) => {
-        const companies = snap.docs.map((d) => {
-          const data = d.data();
-          return {
-            id: d.id,
-            companyName: data.companyName ?? "Unnamed Company",
-            status: "live" as const,
-            companyVerified: !!data.verified,
-            onboardingScore: data.onboardingScore ?? 0,
-            accessStatus: data.accessStatus ?? "on",
-          };
-        });
-        setRows((prev) => {
-          const requests = prev.filter((p) => p.status !== "live");
-          return [...requests, ...companies];
-        });
-      }
-    );
-
-    return () => {
-      unsubRequests();
-      unsubCompanies();
-    };
+    return () => unsub();
   }, []);
 
-  const filteredRows =
-    filter === "all"
-      ? rows
-      : rows.filter((r) => {
-          if (filter === "pending") return r.status === "pending-approval";
-          if (filter === "approved") return r.status === "approved";
-          if (filter === "verified") return !!r.companyVerified;
-          if (filter === "suspended") return r.accessStatus === "off";
-          return true;
-        });
+  //
+  // COMPANIES LISTENER
+  //
+  useEffect(() => {
+    const unsub = onSnapshot(query(collection(db, "companies")), (snap) => {
+      const mapped = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          companyName: data.companyName ?? "Unnamed Company",
+          status: "live" as const,
+          companyVerified: !!data.verified,
+          onboardingScore: data.onboardingScore ?? 0,
+          accessStatus: data.accessStatus ?? "on",
+        } as Row;
+      });
 
+      setCompanies(mapped);
+    });
+
+    return () => unsub();
+  }, []);
+
+  //
+  // DERIVED ROWS
+  //
+  const rows = useMemo(() => {
+    const all = [...requests, ...companies];
+
+    if (filter === "all") return all;
+
+    return all.filter((r) => {
+      if (filter === "pending") return r.status === "pending-approval";
+      if (filter === "approved") return r.status === "approved";
+      if (filter === "verified") return !!r.companyVerified;
+      if (filter === "suspended") return r.accessStatus === "off";
+      return true;
+    });
+  }, [requests, companies, filter]);
+
+  //
+  // COLUMNS
+  //
   const columns: GridColDef<Row>[] = [
     {
       field: "companyName",
@@ -107,7 +105,9 @@ export default function CompanyOnboardingAdmin() {
       flex: 1.2,
       renderCell: (params: GridRenderCellParams<Row>) => (
         <Box display="flex" alignItems="center" gap={1}>
-          {params.row.companyVerified && <Verified fontSize="small" color="success" />}
+          {params.row.companyVerified && (
+            <Verified fontSize="small" color="success" />
+          )}
           <Typography variant="body2" fontWeight={600}>
             {params.row.companyName}
           </Typography>
@@ -120,14 +120,16 @@ export default function CompanyOnboardingAdmin() {
       width: 150,
       renderCell: (params: GridRenderCellParams<Row>) => {
         const status = params.row.status;
+
         const color =
           status === "approved"
             ? "success"
             : status === "pending-approval"
-            ? "warning"
-            : status === "rejected"
-            ? "error"
-            : "default";
+              ? "warning"
+              : status === "rejected"
+                ? "error"
+                : "default";
+
         return (
           <Chip
             size="small"
@@ -170,62 +172,56 @@ export default function CompanyOnboardingAdmin() {
 
   return (
     <Box>
+      {/* FILTER BAR */}
       <Box display="flex" justifyContent="space-between" mb={2}>
         <Box display="flex" gap={1}>
-          <Button
-            variant={filter === "all" ? "contained" : "outlined"}
-            onClick={() => setFilter("all")}
-          >
-            All
-          </Button>
-          <Button
-            variant={filter === "pending" ? "contained" : "outlined"}
-            onClick={() => setFilter("pending")}
-          >
-            Pending
-          </Button>
-          <Button
-            variant={filter === "approved" ? "contained" : "outlined"}
-            onClick={() => setFilter("approved")}
-          >
-            Approved
-          </Button>
-          <Button
-            variant={filter === "verified" ? "contained" : "outlined"}
-            onClick={() => setFilter("verified")}
-          >
-            Verified
-          </Button>
-          <Button
-            variant={filter === "suspended" ? "contained" : "outlined"}
-            onClick={() => setFilter("suspended")}
-          >
-            Suspended
-          </Button>
+          {["all", "pending", "approved", "verified", "suspended"].map(
+            (key) => (
+              <Button
+                key={key}
+                variant={filter === key ? "contained" : "outlined"}
+                onClick={() => setFilter(key as typeof filter)}
+              >
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </Button>
+            ),
+          )}
         </Box>
+
         <Button variant="contained">Export CSV</Button>
       </Box>
 
+      {/* GRID */}
       <div style={{ height: 640, width: "100%" }}>
         <DataGrid<Row>
-          rows={filteredRows}
+          rows={rows}
           columns={columns}
           loading={loading}
           density="compact"
           disableRowSelectionOnClick
-          onRowClick={(p) => setSelected(p.row)}
+          onRowClick={async (p) => {
+            const snap = await getDoc(doc(db, "companies", p.row.id));
+            if (snap.exists()) {
+              setSelectedCompany({
+                id: snap.id,
+                ...snap.data(),
+              });
+            }
+          }}
+          sx={{
+            "& .MuiDataGrid-row": {
+              cursor: "pointer",
+            },
+          }}
         />
       </div>
 
-      {false && selected && ( // need to revisit this later
+      {/* DRAWER */}
+      {selectedCompany && (
         <CompanyDrawer
-          company={selected as any}
-          onClose={() => setSelected(null)}
-          onChanged={(updated) =>
-            setRows((prev) =>
-              prev.map((r) => (r.id === updated.id ? updated : r))
-            )
-          }
+          company={selectedCompany}
+          onClose={() => setSelectedCompany(null)}
+          onChanged={(updated) => setSelectedCompany(updated)}
         />
       )}
     </Box>

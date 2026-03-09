@@ -27,6 +27,7 @@ import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "./utils/firebase";
+import { getAuth } from "firebase/auth";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -76,6 +77,23 @@ function AppContent() {
     currentUser,
     initializing,
   });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const res = await user.getIdTokenResult(); // no force refresh
+      if (!cancelled) console.log("CLAIMS:", res.claims);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.uid]);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;

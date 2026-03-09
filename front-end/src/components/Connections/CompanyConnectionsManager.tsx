@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "./companyConnectionsManager.css";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
@@ -15,11 +15,11 @@ import { CompanyConnectionType, UserType } from "../../utils/types";
 import ConnectionBuilder from "./ConnectionBuilder";
 import ConnectionEditModal from "./ConnectionEditModal";
 import { Modal } from "@mui/material";
-import { getPlanDetails } from "../../utils/getPlanDetails";
-import { setPlan, setLoading } from "../../Slices/planSlice";
 import InviteAndConnectModal from "./InviteAndConnectModal";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import IdentifyCompany from "./IdentifyCompany";
+import PlanUsageBanner from "../Pages/PlanUsageBanner";
+import UpcomingDowngradeBanner from "../Pages/Billing/UpcomingDowngradeBanner";
 
 interface Props {
   currentCompanyId: string | undefined;
@@ -32,13 +32,19 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 }) => {
   const dispatch = useAppDispatch();
   const functions = getFunctions();
-  const usersCompany = useSelector(selectCurrentCompany);
+  const company = useSelector(selectCurrentCompany);
+  const allPlans = useSelector((state: RootState) => state.plans.allPlans);
   const { connections } = useSelector(
-    (state: RootState) => state.companyConnections
+    (state: RootState) => state.companyConnections,
   );
 
   // ✅ Access plan data from Redux (cached + persisted)
-  const { currentPlan, loading } = useSelector((s: RootState) => s.planSlice);
+
+  const currentPlan = useMemo(() => {
+    if (!company?.billing?.plan) return null;
+    return allPlans[company.billing.plan] ?? null;
+  }, [allPlans, company]);
+
   const [inviteMode, setInviteMode] = useState(false);
   const [selectedConnection, setSelectedConnection] =
     useState<CompanyConnectionType | null>(null);
@@ -50,41 +56,30 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lookup, setLookup] = useState<any | null>(null);
 
-  const [lookupCompanyName, setLookupCompanyName] = useState("");
-  const [lookupCompanyType, setLookupCompanyType] = useState("");
+  const approvedConnections = useMemo(
+    () => connections.filter((c) => c.status === "approved").length,
+    [connections],
+  );
 
-  // 🧮 Derive limits and usage
-  const planLimit = currentPlan?.connectionLimit ?? 0;
-  const extraConnections = usersCompany?.billing?.addons?.extraConnection ?? 0;
-  const approvedConnections = connections.filter(
-    (c) => c.status === "approved"
-  ).length;
+  const pendingConnections = useMemo(
+    () => connections.filter((c) => c.status === "pending").length,
+    [connections],
+  );
 
-  const pendingConnections = connections.filter(
-    (c) => c.status === "pending"
-  ).length;
+  const upcomingPlanId = company?.billing?.pendingChange?.nextPlanId;
+  const upcomingPlan = upcomingPlanId ? allPlans[upcomingPlanId] : null;
 
-  const connectionLimitReached = // 'connectionLimitReached' is declared but its value is never read
-    approvedConnections >= planLimit + extraConnections;
+  const effectiveConnectionLimit = upcomingPlan
+    ? Math.min(currentPlan?.connectionLimit ?? 0, upcomingPlan.connectionLimit)
+    : (currentPlan?.connectionLimit ?? 0);
+  const isPlanReady = typeof effectiveConnectionLimit === "number";
 
-  // ✅ Load plan once (or refresh if plan name changed)
-  useEffect(() => {
-    const loadPlan = async () => {
-      if (currentPlan?.name === usersCompany?.billing?.plan) return; // only reload if different
-      if (!usersCompany?.billing?.plan) return;
+  const totalConnectionsUsed = approvedConnections + pendingConnections;
 
-      dispatch(setLoading(true));
-      try {
-        const plan = await getPlanDetails(usersCompany.billing.plan);
-        dispatch(setPlan(plan));
-      } catch (err) {
-        console.error("Failed to fetch plan details:", err);
-      } finally {
-        dispatch(setLoading(false));
-      }
-    };
-    loadPlan();
-  }, [usersCompany?.billing?.plan]);
+  const connectionLimitReached =
+    isPlanReady &&
+    effectiveConnectionLimit > 0 &&
+    totalConnectionsUsed >= effectiveConnectionLimit;
 
   // ✅ Load connections (cached + remote)
   useEffect(() => {
@@ -94,7 +89,9 @@ const CompanyConnectionsManager: React.FC<Props> = ({
         const cached = await getCompanyConnectionsStore(currentCompanyId);
         if (cached?.connections)
           dispatch(setCachedConnections(cached.connections));
-        await dispatch(fetchCompanyConnections(currentCompanyId));
+        if (!connections.length) {
+          await dispatch(fetchCompanyConnections(currentCompanyId));
+        }
       } catch (error) {
         console.error("Error loading cached connections:", error);
       }
@@ -105,9 +102,9 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   // 🧩 Handle connection creation
   const handleConfirmRequest = async (
     emailInput: string,
-    brandSelection: string[]
+    brandSelection: string[],
   ) => {
-    if (!user || !usersCompany || !currentCompanyId) return;
+    if (!user || !company || !currentCompanyId) return;
     try {
       await dispatch(
         createConnectionRequest({
@@ -115,11 +112,13 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           user,
           emailInput,
           brandSelection,
-        })
+        }),
       ).unwrap();
 
       dispatch(showMessage("Connection request sent successfully."));
-      await dispatch(fetchCompanyConnections(currentCompanyId));
+      if (!connections.length) {
+        await dispatch(fetchCompanyConnections(currentCompanyId));
+      }
       setStep(0);
     } catch (err: any) {
       if (err.code === "already-exists") {
@@ -162,13 +161,16 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     setSelectedConnection(null);
   };
 
-  const totalLimit = planLimit + (extraConnections || 0);
-  const progressPercent = totalLimit
-    ? Math.min((approvedConnections / totalLimit) * 100, 100)
-    : 0;
+  const isNearLimit =
+    isPlanReady &&
+    effectiveConnectionLimit > 0 &&
+    approvedConnections >= effectiveConnectionLimit - 1;
 
   return (
     <div className="connections-dashboard">
+      {company?.billing?.pendingChange && !isNearLimit && (
+        <UpcomingDowngradeBanner />
+      )}
       {/* === MERGED CONNECTIONS OVERVIEW PANEL === */}
       <div className="connections-overview">
         <div className="overview-header" onClick={() => setShowInfo(!showInfo)}>
@@ -235,8 +237,8 @@ const CompanyConnectionsManager: React.FC<Props> = ({
                 <div>
                   <strong>Your plan has limits.</strong>
                   <p>
-                    Free plans include 2 connections. Upgrading raises your
-                    limit instantly.
+                    Your current plan allows {connectionLimit} connections.
+                    Upgrading increases this instantly.
                   </p>
                 </div>
               </li>
@@ -251,50 +253,59 @@ const CompanyConnectionsManager: React.FC<Props> = ({
       </div>
 
       <div className="connections-list-card">
-        {!loading && (
-          <div className="tier-status">
-            <strong>
-              Your Plan:{" "}
-              {currentPlan?.name
-                ? currentPlan.name.charAt(0).toUpperCase() +
-                  currentPlan.name.slice(1)
-                : "—"}
-            </strong>
-            <div className="tier-bar">
-              <div
-                className="tier-progress"
-                style={{ width: `${progressPercent}%` }}
-              ></div>
-            </div>
-            <small>
-              {approvedConnections} of {totalLimit} connections used
-            </small>
+        <div className="tier-status">
+          <strong>
+            {isPlanReady
+              ? `${approvedConnections} / ${effectiveConnectionLimit} connections used`
+              : `${approvedConnections} / — connections used`}
+          </strong>
 
-            {pendingConnections > 0 && (
-              <div className="pending-badge">
-                {pendingConnections} pending — does not count toward your limit
-              </div>
-            )}
-
-            <div className="connection-create-card">
-              <h4>Create New Connection</h4>
-              <p>Invite another company to connect and share brand activity.</p>
-
-              <button
-                className="button-primary create-connection-btn"
-                onClick={() => setStep(1)}
-                disabled={connectionLimitReached}
-              >
-                + New Connection
-              </button>
-            </div>
+          <div className="tier-bar">
+            <div
+              className="tier-progress"
+              style={{
+                width:
+                  effectiveConnectionLimit > 0
+                    ? `${Math.min(
+                        (approvedConnections / effectiveConnectionLimit) * 100,
+                        100,
+                      )}%`
+                    : "0%",
+              }}
+            />
           </div>
-        )}
+          <PlanUsageBanner />
+
+          {pendingConnections > 0 && (
+            <div className="pending-badge">
+              {pendingConnections} pending — does not count toward limit
+            </div>
+          )}
+
+          <button
+            className="button-primary create-connection-btn"
+            onClick={() => setStep(1)}
+            disabled={!isPlanReady || connectionLimitReached}
+          >
+            + New Connection
+          </button>
+
+          {connectionLimitReached && (
+            <div className="limit-message">
+              You’ve reached your connection limit.
+            </div>
+          )}
+        </div>
 
         <h3>Existing Connections</h3>
         <p className="section-hint">
           Review current connections, pending requests, and shared brands.
         </p>
+        {isNearLimit && !connectionLimitReached && (
+          <div className="limit-message">
+            You are close to your connection limit.
+          </div>
+        )}
 
         <CompanyConnectionList
           connections={connections}
@@ -324,7 +335,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
             <IdentifyCompany
               fromCompanyId={currentCompanyId!}
               currentUser={user}
-              currentCompany={usersCompany}
+              currentCompany={company}
               currentConnections={connections}
               onContinue={handleIdentifyContinue}
               onInvite={handleInviteFlow}
@@ -381,8 +392,8 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 
           dispatch(
             showMessage(
-              "Invite sent. The connection will auto-stage when they join."
-            )
+              "Invite sent. The connection will auto-stage when they join.",
+            ),
           );
 
           setShowInviteModal(false);

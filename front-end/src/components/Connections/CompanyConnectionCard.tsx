@@ -106,7 +106,7 @@ const pendingFromThem = useMemo(
 
 
   const checkConnectionLimit = async (companyId: string) => {
-    const fn = httpsCallable(functions, "enforcePlanLimits");
+    // const fn = httpsCallable(functions, "enforcePlanLimits");
     const res = await fn({ companyId, type: "connection" });
     return res.data as {
       allowed: boolean;

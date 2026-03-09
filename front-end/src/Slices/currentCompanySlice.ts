@@ -15,7 +15,7 @@ export const fetchCurrentCompany = createAsyncThunk<
     const snap = await getDoc(doc(db, "companies", companyId));
     if (!snap.exists()) throw new Error("Company not found");
 
-    // ✅ normalize all nested timestamps (billing, addons, etc.)
+    // ✅ normalize all nested timestamps (billing etc.)
     const normalizedData = normalizeFirestoreData(snap.data()) as CompanyType;
 
     return {

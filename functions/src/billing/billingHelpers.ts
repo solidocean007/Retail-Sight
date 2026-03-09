@@ -22,26 +22,11 @@ import { getBraintreeGateway } from "./braintreeGateway";
 const db = admin.firestore();
 
 /**
- * Calculates total monthly cost from a Braintree subscription.
- * Canonical source of truth for billing math.
- */
-// export function calculateSubscriptionTotal(subscription: any): number {
-//   let total = parseFloat(subscription.price ?? "0");
-
-//   subscription.addOns?.forEach((addon: any) => {
-//     total += parseFloat(addon.amount ?? "0") * (addon.quantity ?? 1);
-//   });
-
-//   return Number(total.toFixed(2));
-// }
-
-/**
  * 🔄 Canonical Firestore billing sync
  * Used by:
  * - createSubscription
  * - changePlanAndRestartBillingCycle
  * - webhooks
- * - add/remove addon flows
  */
 export async function syncBillingFromSubscription(
   companyId: string,

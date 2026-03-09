@@ -8,7 +8,6 @@ import {
   setResetting,
 } from "../Slices/appSlice";
 import { showMessage } from "../Slices/snackbarSlice";
-import { hydrateFromCache } from "../Slices/planSlice";
 import { fetchCurrentCompany } from "../Slices/currentCompanySlice";
 import { fetchCompanyProducts } from "../thunks/productThunks";
 import { getAllCompanyProductsFromIndexedDB } from "../utils/database/indexedDBUtils";
@@ -28,6 +27,8 @@ import { useCompanyIntegrations } from "./useCompanyIntegrations";
 import { setupDeveloperNotificationsListener } from "../utils/listeners/setupDeveloperNotificationsListener";
 import { clearDeveloperNotifications } from "../Slices/developerNotificationSlice";
 import { useUserNotificationsListener } from "./useUserNotificationsListener";
+import { fetchAllPlans } from "../thunks/planThunks";
+import { listenForClaimChanges } from "./listenForClaimChanges";
 
 /**
  * useAppBootstrap – Option B
@@ -66,12 +67,16 @@ export function useAppBootstrap({
     }
   }, [currentUser?.uid]);
 
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    return listenForClaimChanges(currentUser.uid);
+  }, [currentUser?.uid]);
+
   //
   // 🔄 Always call these (Rules of Hooks)
   //
   useSchemaVersion();
   useUserNotificationsListener(currentUser);
-
 
   // 👥 Re-enable dependent sync hooks (required for full goal hydration)
   useCompanyProductsListener(companyId);
@@ -107,8 +112,8 @@ export function useAppBootstrap({
         dispatch(setResetting(true));
 
         // STEP 1 — hydrate plan cache
-        dispatch(setLoadingMessage("Loading plan cache…"));
-        await dispatch(hydrateFromCache());
+        dispatch(setLoadingMessage("Loading plans…"));
+        await dispatch(fetchAllPlans());
 
         // STEP 2 — essential company info
         if (companyId) {

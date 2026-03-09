@@ -1,16 +1,20 @@
 // components/admin/CompanyDrawer.tsx
 import { Box, Button, Chip, Divider, Drawer, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { CheckCircle, RadioButtonUnchecked } from "@mui/icons-material";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { CompanyType } from "../../utils/types";
 
 export default function CompanyDrawer({  // this component is redudnant as is and does too much
   company,
   onClose,
   onChanged,
 }: {
-  company: any;
+  company: CompanyType;
   onClose: () => void;
   onChanged: (c: any) => void;
 }) {
+  const functions = getFunctions();
+  const tallyCompanyCounts = httpsCallable(functions, "developerRecomputeCompanyCounts");
   const steps = [
     { key: "hasMinUsers", label: "Invite at least 1 admin & 1 employee", done: company.onboarding?.hasMinUsers },
     { key: "hasAccounts", label: "Add accounts", done: company.onboarding?.hasAccounts },
@@ -32,14 +36,46 @@ export default function CompanyDrawer({  // this component is redudnant as is an
       <Box p={2} width={420} display="flex" flexDirection="column" gap={2}>
         <Typography variant="h6">{company.companyName}</Typography>
         <Box display="flex" gap={1} alignItems="center">
-          <Chip label={`Tier: ${company.tier}`} size="small" />
-          <Chip label={`Access: ${company.accessStatus.toUpperCase()}`} size="small" />
+          {/* <Chip label={`Tier: ${company.tier}`} size="small" /> */}
+          <Chip label={`Access: ${company?.accessStatus?.toUpperCase()}`} size="small" />
           {company.companyVerified && <Chip label="Verified" color="success" size="small" />}
         </Box>
 
         <Divider />
+        <Button
+  variant="outlined"
+  onClick={async () => {
+    try {
+      const result = await tallyCompanyCounts({
+        companyId: company.id,
+      });
 
-        <Typography variant="subtitle2">Onboarding ({company.onboardingScore}%)</Typography>
+      console.log("Recomputed counts:", result.data);
+
+      // Optionally refresh parent state
+      onChanged({
+        ...company,
+        counts: result.data,
+      });
+    } catch (err: any) {
+      console.error("Failed to recompute counts:", err);
+    }
+  }}
+>
+  Sync Counts
+</Button>
+
+        <h3>
+          company counts
+        </h3>
+        <h4>{company.counts?.usersActiveTotal} active users</h4>
+        <h4>{company.counts?.usersPendingTotal} pending users</h4>
+        <h4>{company.counts?.connectionsApprovedTotal} approved connections</h4>
+        <h4>{company.counts?.connectionsPendingTotal} pending connections</h4>
+        <h4>{company.counts?.connectionsApprovedTotal} approved connections</h4>
+        
+
+        {/* <Typography variant="subtitle2">Onboarding ({company.onboardingScore}%)</Typography> */}
         <List dense>
           {steps.map(s => (
             <ListItem key={s.key}>

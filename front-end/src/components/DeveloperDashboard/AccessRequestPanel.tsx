@@ -38,7 +38,7 @@ export default function AccessRequestsPanel() {
   useEffect(() => {
     const q = query(
       collection(db, "accessRequests"),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
     );
     const unsub = onSnapshot(q, (snap) => {
       const items = snap.docs.map((d) => ({
@@ -74,10 +74,10 @@ export default function AccessRequestsPanel() {
       status === "completed"
         ? "success"
         : status === "approved-pending-user"
-        ? "warning"
-        : status === "pending-approval"
-        ? "default"
-        : "error";
+          ? "warning"
+          : status === "pending-approval"
+            ? "default"
+            : "error";
     return (
       <Chip
         size="small"

@@ -132,11 +132,6 @@ export type IntegrationsMap = Partial<Record<ProviderKey, IntegrationConfig>>;
 
 export type BillingStatus = "active" | "past_due" | "canceled";
 
-export interface CompanyAddons {
-  extraUsers: number;
-  extraConnections: number;
-}
-
 // New
 export type PlanName = "free" | "team" | "pro" | "enterprise" | "healy_plan";
 
@@ -155,11 +150,11 @@ type PendingBillingChange = {
 
 export interface CompanyBilling {
   plan: PlanName;
-  addons: CompanyAddons;
   totalMonthlyCost: number;
   braintreeCustomerId: string;
   subscriptionId: string;
   paymentStatus: BillingStatus;
+  pastDueSince?: Timestamp;
   renewalDate?: Timestamp;
   billingPeriodEnd?: Timestamp;
   pendingChange?: PendingBillingChange;
@@ -196,10 +191,10 @@ export type CompanyType = {
 
   // not sure about this object here.
   counts?: {
-    usersTotal?: number;
-    usersPending?: number;
-    connectionsApproved?: number;
-    connectionsPending?: number;
+    usersActiveTotal?: number;
+    usersPendingTotal?: number;
+    connectionsApprovedTotal?: number;
+    connectionsPendingTotal?: number;
   };
 };
 
