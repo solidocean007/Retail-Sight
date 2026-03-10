@@ -1,4 +1,3 @@
-// firebase.ts
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -10,9 +9,7 @@ import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
 
-// Firebase configuration
 const firebaseConfig = {
-  // apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
   authDomain: "retail-sight.firebaseapp.com",
   projectId: "retail-sight",
@@ -22,26 +19,13 @@ const firebaseConfig = {
   measurementId: "G-XSXPNG7BCB",
 };
 
-// Initialize Firebase with the config
 export const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Storage
-const storage = getStorage(app);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const functions = getFunctions(app, "us-central1");
 
-const functions = getFunctions(app, "us-central1");
+setPersistence(auth, browserLocalPersistence);
 
-// Get a reference to the auth service
-const auth = getAuth(app);
-
-// Get a reference to the Firestore service
-const db = getFirestore(app);
-
-setPersistence(auth, browserLocalPersistence)
-  .then(() => {
-    // console.log("Persistence set to local");
-  })
-  .catch((error) => {
-    console.error("Error setting persistence", error);
-  });
-
-export { auth, db, updateProfile, storage, functions };
+export { updateProfile };

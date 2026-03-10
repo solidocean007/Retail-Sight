@@ -4,8 +4,8 @@ import { User, getAuth, onAuthStateChanged } from "firebase/auth";
 import { setUser } from "../Slices/userSlice";
 
 import { fetchUserDocFromFirestore } from "./userData/fetchUserDocFromFirestore";
-import { RootState } from "./store";
 import { UserType } from "./types";
+import { auth } from "./firebase";
 
 const toIso = (val: any) => {
   if (!val) return null;
@@ -25,8 +25,7 @@ function normalizeUserData(raw: UserType) {
 
 export const useFirebaseAuth = () => {
   const dispatch = useDispatch();
-  const currentUser = useSelector((state: RootState) => state.user.currentUser);
-
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [initializing, setInitializing] = useState(true);
 
   const handleUserChange = useCallback(
@@ -56,19 +55,15 @@ export const useFirebaseAuth = () => {
   );
 
   useEffect(() => {
-    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
 
-    const unsub = onAuthStateChanged(auth, async (fbUser) => {
-      setInitializing(false); // auth state is now known
+      await handleUserChange(user);
 
-      try {
-        await handleUserChange(fbUser);
-      } catch (err) {
-        console.error("User load failed:", err);
-      }
+      setInitializing(false);
     });
 
-    return () => unsub();
+    return unsubscribe;
   }, [handleUserChange]);
 
   return { currentUser, initializing };
