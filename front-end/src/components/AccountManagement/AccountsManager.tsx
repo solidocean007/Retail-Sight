@@ -46,10 +46,21 @@ import AccountForm from "./AccountForm";
 import UploadTemplateModal from "./UploadTemplateModal";
 import "./styles/accountsManager.css";
 import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
-import UploadReviewModal, { UnifiedDiff } from "./UploadReviewModal";
+import UploadReviewModal, { UnifiedDiffType } from "./UploadReviewModal";
 import { getAccountDiffs } from "./utils/getAccountDiffs";
 import AccountsBackup from "./AccountsBackup";
 import ReassignAccountRouteNumber from "./ReassignAccountRouteNumber";
+
+// Utility: normalize strings (lowercase, collapse spaces)
+// Normalize helper
+// Utility: normalize strings (lowercase, collapse spaces)
+// Utility: normalize strings (lowercase, strip punctuation, strip spaces)
+const normalize = (val: any) =>
+  String(val ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 interface AccountManagerProps {
   isAdmin: boolean;
@@ -71,7 +82,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [accountDiffs, setAccountDiffs] = useState<UnifiedDiff[]>([]);
+  const [accountDiffs, setAccountDiffs] = useState<UnifiedDiffType[]>([]);
 
   const [confirmMessage, setConfirmMessage] = useState("");
   const [pendingUpdates, setPendingUpdates] = useState<
@@ -122,7 +133,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setPendingUpdates(updated);
     setFileData(updated);
     setConfirmMessage(
-      `Reassign all accounts from route ${oldRoute} → ${newRoute}?`
+      `Reassign all accounts from route ${oldRoute} → ${newRoute}?`,
     );
     setShowReassignConfirm(true);
   };
@@ -241,7 +252,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   };
 
   const saveAccountsToFirestore = async (
-    mergedAccounts: CompanyAccountType[]
+    mergedAccounts: CompanyAccountType[],
   ) => {
     if (!user?.companyId) return;
 
@@ -257,8 +268,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           await updateDoc(accountsDocRef, {
             accounts: mergedAccounts.map((a) =>
               Object.fromEntries(
-                Object.entries(a).filter(([, v]) => v !== undefined)
-              )
+                Object.entries(a).filter(([, v]) => v !== undefined),
+              ),
             ),
           });
         } else {
@@ -301,10 +312,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
         } catch (configErr) {
           console.warn(
             "Accounts saved, but failed to update customer types:",
-            configErr
+            configErr,
           );
           dispatch(
-            showMessage("Accounts saved, but failed to update customer types.")
+            showMessage("Accounts saved, but failed to update customer types."),
           );
         }
 
@@ -313,8 +324,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           showMessage(
             `${pendingUpdates?.length || 0} account(s) ${
               mode === "initial" ? "added" : "updated"
-            }.`
-          )
+            }.`,
+          ),
         );
       }
     } catch (err) {
@@ -348,7 +359,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             "companies",
             user.companyId,
             "config",
-            "general"
+            "general",
           );
           const configSnap = await getDoc(configRef);
 
@@ -360,7 +371,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             await setDoc(
               configRef,
               { customerTypes: updatedTypes },
-              { merge: true }
+              { merge: true },
             );
 
             console.log(`Removed unused customer type: ${deletedType}`);
@@ -378,10 +389,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
     // Filter to only accounts that don't already exist
     const existingAccountNumbers = new Set(
-      accounts.map((a) => a.accountNumber)
+      accounts.map((a) => a.accountNumber),
     );
     const trulyNewAccounts = newAccounts.filter(
-      (a) => !existingAccountNumbers.has(a.accountNumber)
+      (a) => !existingAccountNumbers.has(a.accountNumber),
     );
 
     if (trulyNewAccounts.length === 0) {
@@ -392,7 +403,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setPendingUpdates(trulyNewAccounts);
     setFileData([...accounts, ...trulyNewAccounts]);
     setConfirmMessage(
-      `Add ${trulyNewAccounts.length} completely new account(s)?`
+      `Add ${trulyNewAccounts.length} completely new account(s)?`,
     );
     setShowConfirm(true);
   };
@@ -462,49 +473,39 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setShowConfirm(true);
   };
 
-  // Utility: normalize strings (lowercase, collapse spaces)
-  // Normalize helper
-  // Utility: normalize strings (lowercase, collapse spaces)
-  // Utility: normalize strings (lowercase, strip punctuation, strip spaces)
-  const normalize = (val: any) =>
-    String(val ?? "")
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, routeFilter]);
 
-  const filteredAccounts = accounts.filter((a) => {
+  const filteredAccounts = React.useMemo(() => {
     const query = normalize(searchTerm);
+    const routeQ = routeFilter.trim();
 
-    const searchable = normalize(
-      [
-        a.accountNumber,
-        a.accountName,
-        a.accountAddress,
-        a.streetAddress,
-        a.city,
-        a.state,
-        a.typeOfAccount,
-        a.chain,
-        a.chainType,
-        (a.salesRouteNums || []).join(" "),
-      ].join(" ")
-    );
-
-    // search: AND over tokens; if query empty, pass
-    const matchesSearch =
-      !query || query.split(" ").every((token) => searchable.includes(token));
-
-    // route: substring match on any route; if filter empty, pass
-    const routeQ = routeFilter.trim().toLowerCase();
-    const matchesRoute =
-      !routeQ ||
-      (a.salesRouteNums || []).some((r) =>
-        String(r).toLowerCase().includes(routeQ)
+    return accounts.filter((a) => {
+      const searchable = normalize(
+        [
+          a.accountNumber,
+          a.accountName,
+          a.accountAddress,
+          a.streetAddress,
+          a.city,
+          a.state,
+          a.typeOfAccount,
+          a.chain,
+          a.chainType,
+          (a.salesRouteNums || []).join(" "),
+        ].join(" "),
       );
 
-    return matchesSearch && matchesRoute;
-  });
+      const matchesSearch =
+        !query || query.split(" ").every((token) => searchable.includes(token));
+
+      const matchesRoute =
+        !routeQ || (a.salesRouteNums || []).map(String).includes(routeQ);
+
+      return matchesSearch && matchesRoute;
+    });
+  }, [accounts, searchTerm, routeFilter]);
 
   const handleCloseDiffModal = () => {
     setShowDiffModal(false);
@@ -679,10 +680,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             {filteredAccounts
               .slice(
                 (currentPage - 1) * itemsPerPage,
-                currentPage * itemsPerPage
+                currentPage * itemsPerPage,
               )
               .map((a, i) => (
-                <TableRow key={i}>
+                <TableRow key={a.accountNumber}>
                   <TableCell>{a.accountNumber}</TableCell>
                   <TableCell>{a.accountName}</TableCell>
                   <TableCell>{a.accountAddress}</TableCell>
@@ -703,7 +704,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                       onClick={() => {
                         setPendingUpdates([a]);
                         setConfirmMessage(
-                          `Are you sure you want to delete "${a.accountName}"?`
+                          `Are you sure you want to delete "${a.accountName}"?`,
                         );
                         setShowConfirm(true);
                       }}
