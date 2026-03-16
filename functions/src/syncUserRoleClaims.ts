@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 
 if (!admin.apps.length) admin.initializeApp();
 
-export const syncUserClaims = onDocumentWritten(
+export const syncUserRoleClaims = onDocumentWritten(
   {
     region: "us-central1",
     document: "users/{uid}",
@@ -23,8 +23,7 @@ export const syncUserClaims = onDocumentWritten(
     const user = await admin.auth().getUser(uid);
     const existing = user.customClaims || {};
 
-    const changed =
-      existing.role !== role || existing.companyId !== companyId;
+    const changed = existing.role !== role || existing.companyId !== companyId;
 
     if (!changed) {
       return;

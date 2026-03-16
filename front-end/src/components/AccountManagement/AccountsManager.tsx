@@ -19,6 +19,7 @@ import {
   collection,
   doc,
   getDoc,
+  serverTimestamp,
   setDoc,
   updateDoc,
 } from "@firebase/firestore";
@@ -47,9 +48,12 @@ import UploadTemplateModal from "./UploadTemplateModal";
 import "./styles/accountsManager.css";
 import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
 import UploadReviewModal, { UnifiedDiffType } from "./UploadReviewModal";
-import { getAccountDiffs } from "./utils/getAccountDiffs";
 import AccountsBackup from "./AccountsBackup";
 import ReassignAccountRouteNumber from "./ReassignAccountRouteNumber";
+import { getAccountDiffs } from "./utils/getAccountDiffs";
+import PendingAccountImportBanner from "./PendingAccountImportBanner";
+import { useAccountImportListener } from "../../hooks/useAccountImportListener";
+import { selectPendingAccountImports } from "../../Slices/accountImportSlice";
 
 // Utility: normalize strings (lowercase, collapse spaces)
 // Normalize helper
@@ -94,7 +98,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   >(null);
 
   const [showDiffModal, setShowDiffModal] = useState(false);
-
+  const [showImportReview, setShowImportReview] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showBackupPrompt, setShowBackupPrompt] = useState(false);
   const [refreshBackupsFlag, setRefreshBackupsFlag] = useState(0);
@@ -164,7 +168,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     e.target.value = ""; // reset so same file can retrigger
   };
 
-  const handleConfirmDiffUpload = async (selectedDiffs: UnifiedDiff[]) => {
+  const handleConfirmDiffUpload = async (selectedDiffs: UnifiedDiffType[]) => {
     setShowDiffModal(false);
 
     try {
@@ -473,6 +477,35 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setShowConfirm(true);
   };
 
+  const handleConfirmImportChanges = async (
+    selectedDiffs: UnifiedDiffType[],
+  ) => {
+    try {
+      const updates = selectedDiffs.map((d) => d.updated);
+
+      const map = new Map(accounts.map((a) => [a.accountNumber, a]));
+      updates.forEach((acc) => map.set(acc.accountNumber, acc));
+
+      const merged = Array.from(map.values());
+
+      await saveAccountsToFirestore(merged);
+
+      dispatch(showMessage(`${updates.length} account(s) applied.`));
+
+      const pendingImport = pendingImports?.[0];
+
+      await updateDoc(doc(db, "accountImports", pendingImport.id), {
+        status: "applied",
+        appliedAt: serverTimestamp(),
+      });
+
+      setShowImportReview(false);
+    } catch (err) {
+      console.error("Import apply failed", err);
+      dispatch(showMessage("Failed to apply account changes."));
+    }
+  };
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, routeFilter]);
@@ -513,11 +546,36 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setFileData([]);
   };
 
+  const pendingImports = useSelector(selectPendingAccountImports);
+
   return (
     <Box className="account-manager-container account-manager">
       <Typography variant="h2" gutterBottom>
         Accounts Manager
       </Typography>
+      {pendingImports?.length > 0 && (
+        <Box
+          sx={{
+            background: "#fff3cd",
+            border: "1px solid #ffeeba",
+            padding: 2,
+            marginBottom: 2,
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="body1">
+            ⚠️ {pendingImports[0].totalChanges} account changes detected.
+          </Typography>
+
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            These changes require review before they are applied.
+          </Typography>
+
+          <Button variant="contained" onClick={() => setShowImportReview(true)}>
+            Review Changes
+          </Button>
+        </Box>
+      )}
 
       {(isAdmin || isSuperAdmin) && (
         <>
@@ -803,6 +861,13 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           diffs={accountDiffs}
           onClose={handleCloseDiffModal}
           onConfirm={handleConfirmDiffUpload}
+        />
+      )}
+      {showImportReview && pendingImports?.length > 0 && (
+        <UploadReviewModal
+          diffs={pendingImports[0].changes}
+          onClose={() => setShowImportReview(false)}
+          onConfirm={handleConfirmImportChanges}
         />
       )}
     </Box>

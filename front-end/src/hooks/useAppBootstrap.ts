@@ -29,6 +29,7 @@ import { clearDeveloperNotifications } from "../Slices/developerNotificationSlic
 import { useUserNotificationsListener } from "./useUserNotificationsListener";
 import { fetchAllPlans } from "../thunks/planThunks";
 import { listenForClaimChanges } from "./listenForClaimChanges";
+import { useAccountImportListener } from "./useAccountImportListener";
 
 /**
  * useAppBootstrap – Option B
@@ -47,7 +48,11 @@ export function useAppBootstrap({
   initializing: boolean;
 }) {
   const dispatch = useAppDispatch();
-  const companyId = currentUser?.companyId ?? null;
+  // const companyId = currentUser?.companyId ?? null;
+  const user = useSelector((state: RootState) => state.user.currentUser);
+  const companyId = user?.companyId ?? null;
+  console.log(companyId)
+  const company = useSelector((state: RootState) => state.currentCompany.data);
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
 
@@ -87,6 +92,7 @@ export function useAppBootstrap({
       currentUser?.role === "super-admin" ||
       currentUser?.role === "supervisor",
   );
+  useAccountImportListener(companyId);
   useCustomAccountsSync();
   useCompanyConnectionsListener();
 

@@ -25,6 +25,7 @@ import sharedPostsSlice from "../Slices/sharedPostsSlice";
 import planSlice from "../Slices/planSlice";
 import appSlice from "../Slices/appSlice";
 import developerNotificationsSlice from "../Slices/developerNotificationSlice";
+import accountImportSlice from "../Slices/accountImportSlice"
 
 const store = configureStore({
   reducer: {
@@ -50,6 +51,7 @@ const store = configureStore({
     plans: planSlice,
     app: appSlice,
     developerNotifications: developerNotificationsSlice,
+    accountImports: accountImportSlice,
   },
   devTools: process.env.NODE_ENV !== "production",
 });

@@ -1,7 +1,5 @@
-//front-end/src/components/AccountManagement/getAccountDiffs.ts
-
-import { CompanyAccountType } from "../../../utils/types";
-import { UnifiedDiffType } from "../UploadReviewModal";
+//functions/src/accounts/utils/getAccountDiffs.ts
+import { CompanyAccountType, UnifiedDiffType } from "./types";
 
 // Fields we care about when checking updates
 const FIELDS_TO_CHECK: (keyof CompanyAccountType)[] = [
@@ -17,7 +15,9 @@ const FIELDS_TO_CHECK: (keyof CompanyAccountType)[] = [
 ];
 
 const normalizeRoutes = (routes?: string[]) =>
-  [...new Set((routes || []).map((r) => String(r).trim()).filter(Boolean))].sort();
+  [
+    ...new Set((routes || []).map((r) => String(r).trim()).filter(Boolean)),
+  ].sort();
 
 /**
  * Compare imported accounts with existing Firestore accounts

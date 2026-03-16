@@ -27,6 +27,7 @@ import { Handshake, Inventory2, NotificationAdd } from "@mui/icons-material";
 import UpgradePromptBanner from "./UpgradePromptBanner";
 import { useSelector } from "react-redux";
 import GoalIcon from "./icons/GoalIcon";
+import { selectPendingAccountImports } from "../Slices/accountImportSlice";
 
 const drawerWidth = 200;
 
@@ -67,6 +68,8 @@ const DashMenu = ({
   const showUpgradeBanner =
     (role === "admin" || role === "super-admin") &&
     (companyPlan === "free" || connectionCount >= 3);
+
+  const pendingImports = useSelector(selectPendingAccountImports);
 
   return (
     <Drawer
@@ -169,7 +172,9 @@ const DashMenu = ({
               onClick={() => onMenuClick("AccountsMode")}
             >
               <StoreIcon sx={{ mr: 1 }} />
-              <ListItemText primary="Accounts" />
+              <ListItemText
+                primary={`Accounts ${pendingImports?.length ? `(${pendingImports.length})` : ""}`}
+              />
             </ListItemButton>
 
             <ListItemButton

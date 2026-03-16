@@ -3,7 +3,7 @@ import { deleteAuthUser } from "./deleteAuthUser";
 import { checkUserExists } from "./checkUserExists";
 import { getExternalApiKey } from "./galloKeys/getExternalApiKey";
 import { getExternalApiKeyStatus } from "./galloKeys/getExternalApiKeyStatus";
-import { syncUserRoleClaim } from "./syncUserRoleClaim";
+import { syncUserRoleClaims } from "./syncUserRoleClaims";
 import { upsertGalloAxisKey } from "./galloKeys/upsertGalloAxisKey";
 import { deleteGalloAxisKey } from "./galloKeys/deleteGalloAxisKey";
 import { resolveCompanyEmail } from "./resolveCompanyEmail";
@@ -57,6 +57,13 @@ import {
 
 import { acceptCompanyInvite } from "./acceptCompanyInvite";
 
+// Account automation
+
+// Email reading
+import { readEncompassEmails } from "./encompass/readEncompassEmails";
+import { processAccountImport } from "./encompass/processAccountImport";
+import { onAccountImportCreated } from "./accounts/onAccountImportCreated";
+
 // 🧾 Billing – Webhook
 import { handleBraintreeWebhook } from "./billing/billingHandlers/webhooks";
 import { enforcePastDueGracePeriod } from "./billing/billingHandlers/grace";
@@ -96,7 +103,7 @@ export {
   deleteAuthUser,
   checkUserExists,
   getExternalApiKey,
-  syncUserRoleClaim,
+  syncUserRoleClaims,
   resolveCompanyEmail,
   onConnectionApproved,
   sharePostWithCompany,
@@ -111,6 +118,9 @@ export {
   getPlanDetails,
   generatePostShareToken,
   validatePostShareToken,
+  readEncompassEmails,
+  processAccountImport,
+  onAccountImportCreated,
 
   // Auth
   getMyAuthClaims,
