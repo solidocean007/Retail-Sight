@@ -1,4 +1,4 @@
-//functions/src/accounts/utils/getAccountDiffs.ts
+// functions/src/accounts/utils/getAccountDiffs.ts
 import { CompanyAccountType, UnifiedDiffType } from "./types";
 
 // Fields we care about when checking updates

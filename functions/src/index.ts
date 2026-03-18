@@ -58,6 +58,7 @@ import {
 import { acceptCompanyInvite } from "./acceptCompanyInvite";
 
 // Account automation
+import { autoApplyAccountImports } from "./accounts/autoApplyAccountImports";
 
 // Email reading
 import { readEncompassEmails } from "./encompass/readEncompassEmails";
@@ -121,6 +122,9 @@ export {
   readEncompassEmails,
   processAccountImport,
   onAccountImportCreated,
+
+  // Accounts
+  autoApplyAccountImports,
 
   // Auth
   getMyAuthClaims,

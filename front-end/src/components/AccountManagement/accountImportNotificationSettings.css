@@ -1,0 +1,129 @@
+.account-import-panel {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  padding: 20px;
+  margin-top: 20px;
+}
+
+/* Header */
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.panel-header h3 {
+  margin: 0;
+}
+
+/* Section */
+
+.notify-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Checkbox rows */
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.checkbox-row input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Admin email list */
+
+.admin-email-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+}
+
+/* Helper text */
+
+.helper-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Save button */
+
+.save-notify-settings {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+/* Muted text */
+
+.muted {
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.status-pill {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-pill.success {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.status-pill.disabled {
+  background: var(--gray-100);
+  color: var(--text-muted);
+}
+
+/* -------------------------------- */
+/* Mobile responsiveness */
+/* -------------------------------- */
+
+@media (max-width: 768px) {
+  .account-import-panel {
+    padding: 16px;
+  }
+
+  .admin-email-list {
+    padding: 10px;
+  }
+
+  .checkbox-row {
+    font-size: 0.9rem;
+  }
+
+  .save-notify-settings {
+    width: 100%;
+  }
+}
+
+/* Very small phones */
+
+@media (max-width: 480px) {
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .checkbox-row {
+    gap: 8px;
+  }
+}

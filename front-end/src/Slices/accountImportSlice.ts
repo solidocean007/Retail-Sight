@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { RootState } from "../utils/store";
 
 const accountImportSlice = createSlice({
   name: "accountImports",

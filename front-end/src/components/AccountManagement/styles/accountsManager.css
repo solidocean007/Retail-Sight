@@ -1,37 +1,33 @@
-/* front-end/src/components/AccountManagement/styles/accountsManager.css */
 .account-manager-container {
   background-color: var(--form-background-color);
   color: var(--text-color);
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 8px;
-  position: relative;
   width: 100%;
 }
 
-.account-manager h2 {
+.account-header-title {
+  font-size: 1.6rem;
+  font-weight: 600;
   color: var(--header-title);
+  margin-bottom: 1rem;
 }
 
-.account-header-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
+/* Instructions */
 
 .account-instructions {
   text-align: left;
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
   color: var(--text-color);
-  max-width: 700px;
-  line-height: 1.5;
+  max-width: 720px;
+  line-height: 1.4;
 }
 
 .account-instructions code {
   background-color: var(--gray-200);
-  padding: 0.1rem 0.4rem;
+  padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.85rem;
 }
 
 .account-instructions strong {
@@ -39,40 +35,47 @@
   color: var(--primary-blue);
 }
 
+/* Buttons */
+
 .account-management-buttons {
   display: flex;
-  width: 100%;
-  justify-content: space-around;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 1rem;
 }
 
-.account-upload-button,
-.account-submit-button,
-.account-edit-button {
-  background-color: var(--button-background);
-  color: var(--button-text-color);
-  border: none;
-  padding: 8px 16px;
-  border-radius: 5px;
-  cursor: pointer;
+/* Search row */
+
+.account-search-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-.account-upload-button:hover,
-.account-submit-button:hover,
-.account-edit-button:hover {
-  background-color: var(--button-background-hover);
+/* Table styling */
+
+.MuiTableCell-root {
+  font-size: 0.85rem;
+  padding: 8px 10px;
 }
 
-.account-table th,
-.account-table td {
-  background-color: var(--post-card-background);
-  color: var(--text-color);
+.MuiTableHead-root .MuiTableCell-root {
+  font-weight: 600;
+  background-color: var(--gray-100);
 }
 
-.account-search-field {
-  background-color: var(--input-background);
-  color: var(--input-text-color);
+.MuiTableRow-root:nth-child(even) {
+  background-color: var(--gray-50);
 }
+
+/* Pagination */
+
+.MuiPagination-root {
+  margin: 10px 0;
+}
+
+/* Mobile */
 
 @media (max-width: 768px) {
   .account-manager-container {
@@ -81,19 +84,19 @@
 
   .account-management-buttons {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .account-manager h2 {
-    font-size: 1.25rem;
+  .account-search-row {
+    flex-direction: column;
   }
 
   .account-header-title {
-    font-size: 1rem;
+    font-size: 1.3rem;
   }
 
-  table th,
-  table td {
-    font-size: 0.875rem;
-    padding: 6px;
+  .MuiTableCell-root {
+    font-size: 0.8rem;
+    padding: 6px 8px;
   }
 }

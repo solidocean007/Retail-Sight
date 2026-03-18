@@ -18,7 +18,7 @@ const NotificationsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
   const appReady = useSelector((state: RootState) => state.app.appReady);
-
+  console.log(appReady); // this logs false
   const notifications = useSelector(selectNotifications);
   const [selectedNotif, setSelectedNotif] =
     useState<UserNotificationType | null>(null);

@@ -66,9 +66,7 @@ function AppContent() {
     location.pathname.startsWith("/accept-invite") ||
     location.pathname.startsWith("/onboard-company");
 
-  const isPublicRoute = [...PUBLIC_ROUTES].some((route) =>
-    location.pathname.startsWith(route),
-  );
+  const isPublicRoute = PUBLIC_ROUTES.has(location.pathname);
 
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 

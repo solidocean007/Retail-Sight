@@ -61,6 +61,7 @@ export function useAppBootstrap({
   const hasBootstrapped = useRef(false);
 
   useEffect(() => {
+    console.log("appBootstrap running") // this logs
     if (!currentUser) {
       dispatch(clearDeveloperNotifications());
     }
@@ -76,7 +77,7 @@ export function useAppBootstrap({
     if (!currentUser?.uid) return;
     return listenForClaimChanges(currentUser.uid);
   }, [currentUser?.uid]);
-
+  console.log('appbootsrap still running?') // yes
   //
   // 🔄 Always call these (Rules of Hooks)
   //
@@ -103,9 +104,12 @@ export function useAppBootstrap({
   // 1️⃣ ESSENTIAL BOOTSTRAP ONLY
   //
   useEffect(() => {
+    console.log('does this useEffect run?') // yes
+    console.log('enabled =', enabled) // false
+    console.log(initializing) // also false
     if (!enabled) return;
     if (initializing) return;
-
+    console.log('other appbootstrap logging?') // no this doesnt log
     // If auth has finished and no user → still don't bootstrap (public visitor)
     if (!currentUser) return;
 
@@ -155,7 +159,7 @@ export function useAppBootstrap({
         dispatch(setResetting(false));
       }
     };
-
+    console.log(appReady)
     run();
-  }, [initializing, currentUser?.uid, companyId, galloEnabled, dispatch]);
+  }, [enabled, initializing, currentUser?.uid, companyId, galloEnabled, dispatch]);
 }

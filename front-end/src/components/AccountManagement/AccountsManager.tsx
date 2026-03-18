@@ -54,6 +54,7 @@ import { getAccountDiffs } from "./utils/getAccountDiffs";
 import PendingAccountImportBanner from "./PendingAccountImportBanner";
 import { useAccountImportListener } from "../../hooks/useAccountImportListener";
 import { selectPendingAccountImports } from "../../Slices/accountImportSlice";
+import AccountImportNotificationSettings from "./AccountImportNotificationSettings";
 
 // Utility: normalize strings (lowercase, collapse spaces)
 // Normalize helper
@@ -172,7 +173,16 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setShowDiffModal(false);
 
     try {
-      const updates = selectedDiffs.map((d) => d.updated);
+      const updates = selectedDiffs.map((d) => {
+        const acc = { ...d.updated };
+
+        // force replace routes with snapshot version
+        if (d.routeNumChange) {
+          acc.salesRouteNums = d.routeNumChange.new;
+        }
+
+        return acc;
+      });
       const map = new Map(accounts.map((a) => [a.accountNumber, a]));
 
       updates.forEach((acc) => map.set(acc.accountNumber, acc));
@@ -481,7 +491,16 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     selectedDiffs: UnifiedDiffType[],
   ) => {
     try {
-      const updates = selectedDiffs.map((d) => d.updated);
+      const updates = selectedDiffs.map((d) => {
+        const acc = { ...d.updated };
+
+        // force replace routes with snapshot version
+        if (d.routeNumChange) {
+          acc.salesRouteNums = d.routeNumChange.new;
+        }
+
+        return acc;
+      });
 
       const map = new Map(accounts.map((a) => [a.accountNumber, a]));
       updates.forEach((acc) => map.set(acc.accountNumber, acc));
@@ -548,11 +567,38 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   const pendingImports = useSelector(selectPendingAccountImports);
 
+  const [timeRemaining, setTimeRemaining] = useState("");
+
+  useEffect(() => {
+    const update = () => {
+      if (!pendingImports?.length) return;
+
+      const expire = pendingImports[0].autoApplyAfter;
+      const diff = expire - Date.now();
+
+      if (diff <= 0) {
+        setTimeRemaining("Applying soon...");
+        return;
+      }
+
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      setTimeRemaining(`${hrs}h ${mins}m`);
+    };
+
+    update();
+    const i = setInterval(update, 60000);
+
+    return () => clearInterval(i);
+  }, [pendingImports]);
+
   return (
     <Box className="account-manager-container account-manager">
-      <Typography variant="h2" gutterBottom>
+      <Typography variant="h4" className="account-header-title">
         Accounts Manager
       </Typography>
+      <AccountImportNotificationSettings companyId={companyId} />
       {pendingImports?.length > 0 && (
         <Box
           sx={{
@@ -567,8 +613,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({
             ⚠️ {pendingImports[0].totalChanges} account changes detected.
           </Typography>
 
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            These changes require review before they are applied.
+          <Typography variant="body2">
+            Changes will automatically apply in {timeRemaining}
           </Typography>
 
           <Button variant="contained" onClick={() => setShowImportReview(true)}>
@@ -612,12 +658,12 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           </Box>
           <div
             className="account-management-buttons"
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "12px",
-              marginBottom: "16px",
-            }}
+            // style={{
+            //   display: "flex",
+            //   flexWrap: "wrap",
+            //   gap: "12px",
+            //   marginBottom: "16px",
+            // }}
           >
             <button className="btn-outline" onClick={handleTemplateModal}>
               View Upload File Template
@@ -661,7 +707,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           </div>
         </>
       )}
-
+<Box className="account-search-row">
       <TextField
         label="Search Account"
         variant="outlined"
@@ -704,7 +750,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           fetchAccounts(); // refresh state + IndexedDB
         }}
       />
-
+</Box>
       <Typography variant="body2" sx={{ marginTop: 1 }}>
         {filteredAccounts.length} account
         {filteredAccounts.length !== 1 ? "s" : ""} found.
@@ -718,7 +764,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       />
 
       <TableContainer component={Paper}>
-        <Table>
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Account Number</TableCell>
@@ -865,7 +911,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       )}
       {showImportReview && pendingImports?.length > 0 && (
         <UploadReviewModal
-          diffs={pendingImports[0].changes}
+          diffs={pendingImports[0].changes} // Property 'changes' does not exist on type 'never'.
           onClose={() => setShowImportReview(false)}
           onConfirm={handleConfirmImportChanges}
         />

@@ -25,7 +25,7 @@ type SendEmailNotificationInput = {
  *
  * IMPORTANT:
  * - This does NOT send email directly.
- * - A Firestore email extension or mail processor must be installed.
+ * - This writes an email to the mail collection.  Firestore extenstion handles the email delivery.
  * - Tracking works by redirecting through `trackEmailClick`.
  *
  * @param input - Email payload configuration
