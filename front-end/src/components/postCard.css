@@ -5,7 +5,8 @@
 .card-border {
   padding: 3px;
   background-color: var(--text-color);
-  border-radius: var(--card-radius);
+  /* border-radius: var(--card-radius); */
+  border-radius: 20px;
 }
 
 .post-card-container {
