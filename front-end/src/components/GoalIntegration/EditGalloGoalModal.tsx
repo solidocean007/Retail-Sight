@@ -141,7 +141,7 @@ const EditGalloGoalModal: React.FC<Props> = ({
 
   return (
     <>
-      <Dialog open fullWidth maxWidth="md" onClose={onClose}>
+      <Dialog open={true} fullWidth maxWidth="md" onClose={onClose}>
         <DialogTitle>
           <Typography variant="h6">Edit Goal Accounts</Typography>
 
@@ -174,12 +174,20 @@ const EditGalloGoalModal: React.FC<Props> = ({
 
         <DialogActions sx={{ justifyContent: "space-between" }}>
           <Box>
-            <button className="btn-secondary" onClick={onArchive}>Archive Goal</button>
-            <button className="btn-secondary" onClick={onDisable}>Disable Goal</button>
+            <button className="btn-secondary" onClick={onArchive}>
+              Archive Goal
+            </button>
+            <button className="btn-secondary" onClick={onDisable}>
+              Disable Goal
+            </button>
           </Box>
 
           <Box>
-            <button className="btn-secondary" onClick={onClose} disabled={saving}>
+            <button
+              className="btn-secondary"
+              onClick={onClose}
+              disabled={saving}
+            >
               Cancel
             </button>
             <button

@@ -15,13 +15,14 @@ module.exports = {
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: "./tsconfig.json", // ✅ move it here
-    sourceType: "module",
+    project: ["./tsconfig.json"],
+    tsconfigRootDir: __dirname,
   },
   plugins: ["@typescript-eslint", "import", "prettier"],
   ignorePatterns: [".eslintrc.js", "/lib/**/*"],
   rules: {
-     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
     quotes: ["error", "double"],
     indent: ["off"],
     "linebreak-style": ["error", "unix"],

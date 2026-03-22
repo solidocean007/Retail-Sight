@@ -47,7 +47,10 @@ import AccountForm from "./AccountForm";
 import UploadTemplateModal from "./UploadTemplateModal";
 import "./styles/accountsManager.css";
 import { writeCustomerTypesToCompany } from "./utils/accountsHelper";
-import UploadReviewModal, { UnifiedDiffType } from "./UploadReviewModal";
+import UploadReviewModal, {
+  AccountImport,
+  UnifiedDiffType,
+} from "./UploadReviewModal";
 import AccountsBackup from "./AccountsBackup";
 import ReassignAccountRouteNumber from "./ReassignAccountRouteNumber";
 import { getAccountDiffs } from "./utils/getAccountDiffs";
@@ -565,7 +568,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     setFileData([]);
   };
 
-  const pendingImports = useSelector(selectPendingAccountImports);
+  const pendingImports = useSelector(
+    selectPendingAccountImports,
+  ) as AccountImport[];
 
   const [timeRemaining, setTimeRemaining] = useState("");
 
@@ -573,7 +578,10 @@ const AccountManager: React.FC<AccountManagerProps> = ({
     const update = () => {
       if (!pendingImports?.length) return;
 
-      const expire = pendingImports[0].autoApplyAfter;
+      const pendingImport = pendingImports?.[0];
+      if (!pendingImport) return;
+
+      const expire = pendingImport.autoApplyAfter;
       const diff = expire - Date.now();
 
       if (diff <= 0) {
@@ -592,6 +600,19 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
     return () => clearInterval(i);
   }, [pendingImports]);
+
+  const handleRejectImport = async () => {
+    const pendingImport = pendingImports?.[0];
+    if (!pendingImport) return;
+
+    await updateDoc(doc(db, "accountImports", pendingImport.id), {
+      status: "rejected",
+      rejectedAt: serverTimestamp(),
+    });
+
+    dispatch(showMessage("Changes declined."));
+    setShowImportReview(false);
+  };
 
   return (
     <Box className="account-manager-container account-manager">
@@ -707,50 +728,50 @@ const AccountManager: React.FC<AccountManagerProps> = ({
           </div>
         </>
       )}
-<Box className="account-search-row">
-      <TextField
-        label="Search Account"
-        variant="outlined"
-        placeholder="Walmart etc"
-        slotProps={{
-          inputLabel: {
-            shrink: true,
-            sx: {
-              transform: "translate(14px, -15px) scale(0.75)",
+      <Box className="account-search-row">
+        <TextField
+          label="Search Account"
+          variant="outlined"
+          placeholder="Walmart etc"
+          slotProps={{
+            inputLabel: {
+              shrink: true,
+              sx: {
+                transform: "translate(14px, -15px) scale(0.75)",
+              },
             },
-          },
-        }}
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ marginBottom: 2 }}
-      />
+          }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ marginBottom: 2 }}
+        />
 
-      <TextField
-        label="Filter by Sales Route"
-        variant="outlined"
-        slotProps={{
-          inputLabel: {
-            shrink: true,
-            sx: {
-              transform: "translate(14px, -15px) scale(0.75)",
+        <TextField
+          label="Filter by Sales Route"
+          variant="outlined"
+          slotProps={{
+            inputLabel: {
+              shrink: true,
+              sx: {
+                transform: "translate(14px, -15px) scale(0.75)",
+              },
             },
-          },
-        }}
-        value={routeFilter}
-        onChange={(e) => setRouteFilter(e.target.value)}
-        sx={{ marginBottom: 2, marginLeft: 2 }}
-        placeholder="e.g., 45"
-      />
+          }}
+          value={routeFilter}
+          onChange={(e) => setRouteFilter(e.target.value)}
+          sx={{ marginBottom: 2, marginLeft: 2 }}
+          placeholder="e.g., 45"
+        />
 
-      <ReassignAccountRouteNumber
-        accounts={accounts}
-        onSubmit={async (updatedList) => {
-          await saveAccountsToFirestore(updatedList);
-          dispatch(showMessage("Route reassignment complete."));
-          fetchAccounts(); // refresh state + IndexedDB
-        }}
-      />
-</Box>
+        <ReassignAccountRouteNumber
+          accounts={accounts}
+          onSubmit={async (updatedList) => {
+            await saveAccountsToFirestore(updatedList);
+            dispatch(showMessage("Route reassignment complete."));
+            fetchAccounts(); // refresh state + IndexedDB
+          }}
+        />
+      </Box>
       <Typography variant="body2" sx={{ marginTop: 1 }}>
         {filteredAccounts.length} account
         {filteredAccounts.length !== 1 ? "s" : ""} found.
@@ -911,8 +932,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       )}
       {showImportReview && pendingImports?.length > 0 && (
         <UploadReviewModal
-          diffs={pendingImports[0].changes} // Property 'changes' does not exist on type 'never'.
+          diffs={pendingImports[0].changes}
           onClose={() => setShowImportReview(false)}
+          onReject={handleRejectImport}
           onConfirm={handleConfirmImportChanges}
         />
       )}

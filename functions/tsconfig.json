@@ -12,5 +12,5 @@
     "moduleResolution": "node",
     "lib": ["ES2022", "DOM"]
   },
-  "include": ["src/**/*.ts", "src/createInviteAndEmail.ts", "src/galloKeys"]
+  "include": ["src/**/*.ts"]
 }

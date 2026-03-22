@@ -35,15 +35,29 @@ export type UnifiedDiffType = {
   };
 };
 
+export interface AccountImport {
+  id: string;
+  companyId: string;
+  status: "pending" | "applied" | "rejected";
+  totalChanges: number;
+  changes: UnifiedDiffType[];
+  autoApplyAfter: number;
+  createdAt?: any;
+  appliedAt?: any;
+  rejectedAt?: any;
+}
+
 interface UploadReviewModalProps {
   diffs: UnifiedDiffType[];
   onClose: () => void;
+  onReject?: () => void;
   onConfirm: (selected: UnifiedDiffType[]) => void;
 }
 
 const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
   diffs,
   onClose,
+  onReject,
   onConfirm,
 }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -169,28 +183,29 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
     );
   };
   return (
-    <Dialog open fullWidth maxWidth="md" onClose={onClose}>
+    <Dialog open={true} fullWidth maxWidth="md" onClose={onClose}>
       <DialogTitle>Review Account Changes ({diffs.length})</DialogTitle>
-      <Button
-        size="small"
-        onClick={() => {
-          if (selectedIds.length === diffs.length) {
-            setSelectedIds([]);
-          } else {
-            setSelectedIds(diffs.map((d) => d.accountNumber));
-          }
-        }}
-      >
-        {selectedIds.length === diffs.length ? "Deselect All" : "Select All"}
-      </Button>
 
       <DialogContent>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-            Found {totalNew} new account{totalNew !== 1 ? "s" : ""}
-            {" + "}
-            {totalUpdates} update{totalUpdates !== 1 ? "s" : ""}
+        <Box className="diff-header">
+          <Typography variant="subtitle1">
+            Found {totalNew} new + {totalUpdates} updates
           </Typography>
+
+          <Button
+            size="small"
+            onClick={() => {
+              setSelectedIds(
+                selectedIds.length === diffs.length
+                  ? []
+                  : diffs.map((d) => d.accountNumber),
+              );
+            }}
+          >
+            {selectedIds.length === diffs.length
+              ? "Deselect All"
+              : "Select All"}
+          </Button>
         </Box>
         <TableContainer>
           <Table>
@@ -236,6 +251,11 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
+        {onReject && (
+          <Button color="error" onClick={onReject}>
+            Decline All
+          </Button>
+        )}
         <Button
           variant="contained"
           onClick={() => {
@@ -246,7 +266,7 @@ const UploadReviewModal: React.FC<UploadReviewModalProps> = ({
           }}
           disabled={selectedIds.length === 0}
         >
-          Confirm ({selectedIds.length})
+          Apply Selected ({selectedIds.length})
         </Button>
       </DialogActions>
     </Dialog>
