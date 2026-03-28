@@ -96,6 +96,20 @@ export const handleBraintreeWebhook = onRequest(
         return;
       }
 
+      const eventId = `${notification.timestamp}_${kind}_${subscription.id}`;
+
+      const eventRef = db.collection("webhookEvents").doc(eventId);
+      const existing = await eventRef.get();
+
+      if (existing.exists) {
+        res.status(200).json({ duplicate: true });
+        return;
+      }
+
+      await eventRef.set({
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
       // 🔍 Find company by subscriptionId
       const companySnap = await db
         .collection("companies")
@@ -118,47 +132,55 @@ export const handleBraintreeWebhook = onRequest(
       const result = await syncBillingFromSubscription(companyId, subscription);
 
       // 2️⃣ Authoritative payment state
-      const afterSyncSnap = await companyRef.get();
-      const prevStatus =
-        afterSyncSnap.data()?.billing?.paymentStatus ?? "active";
+      let nextStatus: PaymentStatus | undefined;
 
-      // 1️⃣ Primary source of truth: subscription object
-      let nextStatus = derivePaymentStatusFromSubscription(
-        subscription,
-        prevStatus
-      );
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(companyRef);
+        const prevStatus = snap.data()?.billing?.paymentStatus ?? "active";
 
-      // Hard override FIRST
-      if (kind === "subscription_canceled") {
-        nextStatus = "canceled";
+        let computed = derivePaymentStatusFromSubscription(
+          subscription,
+          prevStatus
+        );
+
+        if (kind === "subscription_canceled") {
+          computed = "canceled";
+        }
+
+        nextStatus = computed;
+
+        const update: Record<string, any> = {
+          "billing.paymentStatus": computed,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        if (computed === "past_due") {
+          update["billing.pastDueSince"] =
+            snap.data()?.billing?.pastDueSince ??
+            admin.firestore.FieldValue.serverTimestamp();
+        }
+
+        if (computed === "active" || computed === "canceled") {
+          update["billing.pastDueSince"] = admin.firestore.FieldValue.delete();
+        }
+
+        tx.update(companyRef, update);
+      });
+
+      if (!nextStatus) {
+        console.warn("Missing nextStatus after transaction");
+        res.status(200).json({ ignored: true });
+        return;
       }
-
-      // Build single atomic billing patch
-      const billingPatch: Record<string, any> = {
-        "billing.paymentStatus": nextStatus,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      };
-
-      // Entering past_due → set once
-      if (nextStatus === "past_due") {
-        billingPatch["billing.pastDueSince"] =
-          afterSyncSnap.data()?.billing?.pastDueSince ??
-          admin.firestore.FieldValue.serverTimestamp();
-      }
-
-      // Leaving past_due → clear
-      if (nextStatus === "active" || nextStatus === "canceled") {
-        billingPatch["billing.pastDueSince"] =
-          admin.firestore.FieldValue.delete();
-      }
-
-      await companyRef.update(billingPatch);
 
       // If subscription truly canceled outside scheduled downgrade → move to free
-      if (nextStatus === "canceled" && subscription.status === "Canceled") {
-        const currentBilling = afterSyncSnap.data()?.billing;
+      if (
+        nextStatus === "canceled" &&
+        String(subscription.status) === "Canceled"
+      ) {
+        const snap = await companyRef.get();
+        const currentBilling = snap.data()?.billing;
 
-        // If already free, do nothing
         if (currentBilling?.plan !== "free") {
           await companyRef.update({
             "billing.plan": "free",
@@ -192,6 +214,7 @@ export const handleBraintreeWebhook = onRequest(
       });
 
       res.status(200).json({ received: true });
+      return;
     } catch (err: any) {
       console.error("🔥 Webhook failed:", err.message);
       res.status(500).send("Webhook error");

@@ -49,11 +49,10 @@ export async function assertCompanyBillingAdmin(
     throw new HttpsError("permission-denied", "Wrong company.");
   }
 
-  const role = user.role || user.companyRole;
-  const isAdmin =
-    role === "admin" || role === "owner" || role === "super-admin";
+  const role = user.companyRole ?? user.role;
+  const ADMIN_ROLES = new Set(["admin", "owner", "super-admin"]);
 
-  if (!isAdmin) {
+  if (!ADMIN_ROLES.has(role)) {
     throw new HttpsError("permission-denied", "Admin required.");
   }
 
