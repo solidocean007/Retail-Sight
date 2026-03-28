@@ -101,7 +101,7 @@ export const createSubscription = onCall(
         const res = await gateway.customer.create({
           company: snap.data()?.name ?? companyId,
         });
-        if (!res.success) {
+        if (!res.success || !res.customer?.id) {
           throw new HttpsError("internal", "Failed to create customer.");
         }
         customerId = res.customer.id;
@@ -121,6 +121,13 @@ export const createSubscription = onCall(
       if (!pmRes.success) {
         console.error("Payment method error:", pmRes);
         throw new HttpsError("internal", "Payment method failed.");
+      }
+
+      if (billing?.subscriptionId) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Subscription already exists."
+        );
       }
 
       // Build subscription payload

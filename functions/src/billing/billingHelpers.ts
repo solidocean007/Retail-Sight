@@ -38,18 +38,6 @@ export async function syncBillingFromSubscription(
 
   const companyRef = db.collection("companies").doc(companyId);
 
-  await companyRef.update({
-    "billing.plan": subscription.planId,
-    "billing.subscriptionId": subscription.id,
-    "billing.rawPaymentStatus": subscription.status,
-    "billing.renewalDate": subscription.nextBillingDate,
-    "billing.billingPeriodEnd": subscription.billingPeriodEndDate,
-    "billing.totalMonthlyCost": subscription.price
-      ? Number(subscription.price)
-      : 0,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
   // sync plan limits
   const planSnap = await db
     .collection("plans")
@@ -57,20 +45,37 @@ export async function syncBillingFromSubscription(
     .limit(1)
     .get();
 
+  if (planSnap.empty) {
+    console.warn("⚠️ No plan found for:", subscription.planId);
+  }
+
+  const price = Number(subscription.price || 0);
+  const toDate = (d: any) => (d?.toDate ? d.toDate() : new Date(d));
+
+  const update: any = {
+    "billing.plan": subscription.planId,
+    "billing.subscriptionId": subscription.id,
+    "billing.rawPaymentStatus": subscription.status,
+    "billing.renewalDate": toDate(subscription.nextBillingDate),
+    "billing.billingPeriodEnd": subscription.billingPeriodEndDate,
+    "billing.totalMonthlyCost": price,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
   if (!planSnap.empty) {
     const plan = planSnap.docs[0].data();
 
-    await companyRef.update({
-      "limits.userLimit": plan.userLimit,
-      "limits.connectionLimit": plan.connectionLimit,
-      subscriptionTier: subscription.planId,
-    });
+    update["limits.userLimit"] = plan.userLimit;
+    update["limits.connectionLimit"] = plan.connectionLimit;
+    update["subscriptionTier"] = subscription.planId;
   }
+
+  await companyRef.update(update);
 
   return {
     planId: subscription.planId,
     rawStatus: subscription.status,
-    totalMonthlyCost: subscription.price ? Number(subscription.price) : 0,
+    totalMonthlyCost: price,
   };
 }
 
