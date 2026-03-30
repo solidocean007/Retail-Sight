@@ -10,7 +10,7 @@ export const setupAccountImportListener =
     const q = query(
       collection(db, "accountImports"),
       where("companyId", "==", companyId),
-      where("status", "==", "pending")
+      where("status", "==", "pending"),
     );
 
     return onSnapshot(q, (snap) => {
@@ -20,7 +20,5 @@ export const setupAccountImportListener =
       }));
 
       dispatch(setPendingAccountImports(imports));
-
-      console.log("imports", imports);
     });
   };

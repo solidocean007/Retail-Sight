@@ -141,7 +141,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         setDropinReady(true);
       } catch (err) {
         console.error(err);
-        setError("Failed to initialize payment form.");
+        setError("Failed to initialize payment form."); // this logs
       }
     })();
 

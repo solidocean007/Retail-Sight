@@ -24,25 +24,51 @@ export const getClientToken = onCall(
     ],
   },
   async (request) => {
-    const { companyId } = request.data || {};
-    if (!companyId) {
-      throw new HttpsError("invalid-argument", "Missing companyId.");
+    try {
+      console.log("=== getClientToken START ===");
+
+      const { companyId } = request.data || {};
+      console.log("companyId:", companyId);
+
+      if (!companyId) {
+        throw new HttpsError("invalid-argument", "Missing companyId.");
+      }
+
+      console.log("auth uid:", request.auth?.uid);
+
+      await assertCompanyBillingAdmin(request.auth, companyId);
+      console.log("auth check passed");
+
+      const snap = await admin.firestore().doc(`companies/${companyId}`).get();
+      console.log("company exists:", snap.exists);
+
+      const customerId = snap.data()?.billing?.braintreeCustomerId;
+      console.log("braintree customerId:", customerId);
+
+      const gateway = getBraintreeGateway(); // maybe this isnt working??
+      console.log("gateway created", gateway);
+
+      console.log("calling clientToken.generate...");
+
+      // Try this simplified version for new customers
+      const result = await gateway.clientToken.generate({});
+
+      console.log("clientToken success");
+
+      return { clientToken: result.clientToken };
+    } catch (err: any) {
+      // Braintree errors often hide details in 'type' or 'name'
+      console.error("BRAINTREE DETAIL:", {
+        name: err.name,
+        type: err.type,
+        message: err.message,
+      });
+
+      throw new HttpsError(
+        "internal",
+        err.message || "Failed to generate client token"
+      );
     }
-
-    await assertCompanyBillingAdmin(request.auth, companyId);
-
-    const snap = await admin.firestore().doc(`companies/${companyId}`).get();
-    if (!snap.exists) {
-      throw new HttpsError("not-found", "Company not found.");
-    }
-
-    const customerId = snap.data()?.billing?.braintreeCustomerId;
-    const gateway = getBraintreeGateway();
-    const result = await gateway.clientToken.generate(
-      customerId ? { customerId } : {}
-    );
-
-    return { clientToken: result.clientToken };
   }
 );
 
