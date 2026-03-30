@@ -12,12 +12,23 @@ import {
  * Uses Firebase Secret Manager values.
  */
 export function getBraintreeGateway(): braintree.BraintreeGateway {
-  const env = BRAINTREE_ENVIRONMENT.value();
+  const envRaw = BRAINTREE_ENVIRONMENT.value();
+  const env = envRaw?.toLowerCase().trim();
+
+  console.log("ENV RAW:", envRaw);
+  console.log("ENV NORMALIZED:", env);
+  console.log("MERCHANT:", BRAINTREE_MERCHANT_ID.value());
+  console.log("MERCHANT LENGTH:", BRAINTREE_MERCHANT_ID.value()?.length);
+  console.log("PUBLIC:", BRAINTREE_PUBLIC_KEY.value());
+  console.log("PUBLIC LENGTH:", BRAINTREE_PUBLIC_KEY.value()?.length);
+  console.log("PRIVATE LENGTH:", BRAINTREE_PRIVATE_KEY.value()?.length);
 
   const environment =
     env === "sandbox"
       ? braintree.Environment.Sandbox
       : braintree.Environment.Production;
+
+  console.log("ENV OBJECT:", environment);
 
   return new braintree.BraintreeGateway({
     environment,

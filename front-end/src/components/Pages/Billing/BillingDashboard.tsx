@@ -91,8 +91,9 @@ const BillingDashboard: React.FC = () => {
       .then(({ data }) => {
         setPrefetchedClientToken(data.clientToken);
       })
-      .catch(() => {
+      .catch((e: Error) => {
         // silent fail, modal will fetch normally
+        console.log("Error: ", e) // Error:  FirebaseError: INTERNAL
       });
   }, [currentCompanyId]);
 
@@ -294,7 +295,7 @@ const BillingDashboard: React.FC = () => {
         <div className="billing-summary-card">
           <div className="billing-summary-header">
             <div className="billing-summary-title">
-              <h3>{formatPlanLabel(currentPlanName)} Plan</h3>
+              <h3>{formatPlanLabel(currentPlanName)}</h3>
               <div className="billing-summary-price">
                 ${basePlanPrice.toFixed(2)}
                 <span>/month</span>

@@ -400,6 +400,8 @@
 
 .billing-middle {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   justify-content: center;
   margin: 1rem;;
