@@ -13,7 +13,6 @@ import { fetchCompanyProducts } from "../thunks/productThunks";
 import {
   closeAndDeleteIndexedDB,
   getAllCompanyProductsFromIndexedDB,
-  getAllGalloGoalsFromIndexedDB,
   getGoalsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { setAllProducts } from "../Slices/productsSlice";
@@ -57,14 +56,11 @@ export function useAppBootstrap({
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);
   const companyId = user?.companyId ?? null;
-  const company = useSelector((state: RootState) => state.currentCompany.data);
   const prevCompanyIdRef = useRef<string | null>(null);
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
 
   const appReady = useSelector((s: RootState) => s.app.appReady);
-
-  const hasBootstrapped = useRef(false);
 
   useEffect(() => {
     const current = companyId;
@@ -87,12 +83,6 @@ export function useAppBootstrap({
       dispatch(clearDeveloperNotifications());
     }
   }, [currentUser, dispatch]);
-
-  useEffect(() => {
-    if (!currentUser) {
-      hasBootstrapped.current = false;
-    }
-  }, [currentUser?.uid]);
 
   useEffect(() => {
     if (!currentUser?.uid) return;
