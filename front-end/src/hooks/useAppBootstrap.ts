@@ -1,7 +1,7 @@
 // hooks/useAppBootstrap.ts
 import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../utils/store";
+import { resetStore, RootState, useAppDispatch } from "../utils/store";
 import {
   setAppReady,
   setLoadingMessage,
@@ -10,7 +10,10 @@ import {
 import { showMessage } from "../Slices/snackbarSlice";
 import { fetchCurrentCompany } from "../Slices/currentCompanySlice";
 import { fetchCompanyProducts } from "../thunks/productThunks";
-import { getAllCompanyProductsFromIndexedDB } from "../utils/database/indexedDBUtils";
+import {
+  closeAndDeleteIndexedDB,
+  getAllCompanyProductsFromIndexedDB,
+} from "../utils/database/indexedDBUtils";
 import { setAllProducts } from "../Slices/productsSlice";
 import { setupCompanyGoalsListener } from "../utils/listeners/setupCompanyGoalsListener";
 
@@ -47,12 +50,12 @@ export function useAppBootstrap({
   currentUser: any;
   initializing: boolean;
 }) {
+  const isResetting = useSelector((s: RootState) => s.app.resetting);
   const dispatch = useAppDispatch();
-  // const companyId = currentUser?.companyId ?? null;
   const user = useSelector((state: RootState) => state.user.currentUser);
   const companyId = user?.companyId ?? null;
-  console.log(companyId)
   const company = useSelector((state: RootState) => state.currentCompany.data);
+  const prevCompanyIdRef = useRef<string | null>(null);
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
 
@@ -61,7 +64,22 @@ export function useAppBootstrap({
   const hasBootstrapped = useRef(false);
 
   useEffect(() => {
-    console.log("appBootstrap running") // this logs
+    const current = companyId;
+
+    if (prevCompanyIdRef.current && prevCompanyIdRef.current !== current) {
+      console.log("🔥 Company changed → clearing EVERYTHING");
+
+      (async () => {
+        dispatch(setResetting(true)); // ✅ FIRST
+        await closeAndDeleteIndexedDB(); // ✅ wipe DB
+        dispatch(resetStore()); // ✅ reset redux
+      })();
+    }
+
+    prevCompanyIdRef.current = current;
+  }, [companyId, dispatch]);
+
+  useEffect(() => {
     if (!currentUser) {
       dispatch(clearDeveloperNotifications());
     }
@@ -77,43 +95,34 @@ export function useAppBootstrap({
     if (!currentUser?.uid) return;
     return listenForClaimChanges(currentUser.uid);
   }, [currentUser?.uid]);
-  console.log('appbootsrap still running?') // yes
   //
   // 🔄 Always call these (Rules of Hooks)
   //
   useSchemaVersion();
   useUserNotificationsListener(currentUser);
+  useCompanyProductsListener(companyId);
+  useAccountImportListener(companyId);
 
   // 👥 Re-enable dependent sync hooks (required for full goal hydration)
-  useCompanyProductsListener(companyId);
   useCompanyUsersSync();
   useUserAccountsSync();
   useAllCompanyAccountsSync(
-    currentUser?.role === "admin" ||
-      currentUser?.role === "super-admin" ||
-      currentUser?.role === "supervisor",
+      (currentUser?.role === "admin" ||
+        currentUser?.role === "super-admin" ||
+        currentUser?.role === "supervisor"),
   );
-  useAccountImportListener(companyId);
   useCustomAccountsSync();
   useCompanyConnectionsListener();
-
-  // ✅ ADD THIS HERE (top-level, not inside useEffect)
   useGalloGoalsListener(companyId, galloEnabled);
 
   //
   // 1️⃣ ESSENTIAL BOOTSTRAP ONLY
   //
   useEffect(() => {
-    console.log('does this useEffect run?') // yes
-    console.log('enabled =', enabled) // false
-    console.log(initializing) // also false
     if (!enabled) return;
     if (initializing) return;
-    console.log('other appbootstrap logging?') // no this doesnt log
-    // If auth has finished and no user → still don't bootstrap (public visitor)
     if (!currentUser) return;
 
-    // Logged in user → ensure bootstrap runs ONE time
     if (hasBootstrapped.current) return;
     hasBootstrapped.current = true;
 
@@ -159,7 +168,14 @@ export function useAppBootstrap({
         dispatch(setResetting(false));
       }
     };
-    console.log(appReady)
+    console.log(appReady);
     run();
-  }, [enabled, initializing, currentUser?.uid, companyId, galloEnabled, dispatch]);
+  }, [
+    enabled,
+    initializing,
+    currentUser?.uid,
+    companyId,
+    galloEnabled,
+    dispatch,
+  ]);
 }

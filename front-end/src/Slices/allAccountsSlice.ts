@@ -34,6 +34,11 @@ const allAccountsSlice = createSlice({
     setAllAccounts: (state, action: PayloadAction<CompanyAccountType[]>) => {
       state.accounts = action.payload;
     },
+     clearAllAccounts: (state) => {
+      state.accounts = [];
+      state.loading = "idle";
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -54,7 +59,7 @@ const allAccountsSlice = createSlice({
 // Export the selector to access the matched accounts in components
 export const selectMatchedAccounts = (state: RootState) =>
   state.allAccounts.accounts;
-export const { setAllAccounts } = allAccountsSlice.actions;
+export const { setAllAccounts, clearAllAccounts } = allAccountsSlice.actions;
 export const selectAllCompanyAccounts = (state: RootState) =>
   state.allAccounts.accounts;
 

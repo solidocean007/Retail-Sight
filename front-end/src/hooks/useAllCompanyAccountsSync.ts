@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useAppDispatch } from "../utils/store";
+import { selectCanSync, useAppDispatch } from "../utils/store";
 import { fetchAllCompanyAccounts } from "../utils/helperFunctions/fetchAllCompanyAccounts";
 import {
   getAllCompanyAccountsFromIndexedDB,
@@ -8,15 +8,15 @@ import {
 } from "../utils/database/indexedDBUtils";
 import { setAllAccounts } from "../Slices/allAccountsSlice";
 import { RootState } from "../utils/store";
-import { showMessage } from "../Slices/snackbarSlice";
 
 const useAllCompanyAccountsSync = (enabled=true) => {
+  const canSync = useSelector(selectCanSync);
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);
   // const allAccounts = useSelector((state: RootState) => state.allAccounts.accounts);
 
   useEffect(() => {
-    if (!enabled || !user?.companyId) return;
+    if (!enabled || !user?.companyId || !canSync) return;
     const loadAccounts = async () => {
 
       const cached = await getAllCompanyAccountsFromIndexedDB();
@@ -42,7 +42,7 @@ const useAllCompanyAccountsSync = (enabled=true) => {
     };
 
     loadAccounts();
-  }, [user?.companyId, dispatch, enabled]);
+  }, [user?.companyId, dispatch, canSync, enabled]);
 };
 
 export default useAllCompanyAccountsSync;

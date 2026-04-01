@@ -139,7 +139,8 @@ form {
   display: grid;
   place-items: center;
   padding: 2rem 1rem;
-  background: radial-gradient(
+  background:
+    radial-gradient(
       1200px 600px at 20% -10%,
       rgba(59, 130, 246, 0.12),
       transparent
@@ -209,7 +210,9 @@ form {
   color: var(--input-text-color);
   padding: 0.9rem 0.95rem;
   outline: none;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   flex: 1;
   padding-right: 2.5rem; /* space for button */
   line-height: 1.4; /* or 1.5 for comfy touch targets */
@@ -263,17 +266,21 @@ form {
   display: flex;
   justify-content: center;
 }
-.auth-link {
-  color: var(--link-color);
-  text-decoration: none;
-}
 
-.reset-password-link {
-  background-color: var(--reset-button-background);
+.auth-link {
+  /* background: none; */
+  border: none;
+  padding: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-color);
+  text-decoration: underline;
+  max-width: 400px;
 }
 
 .auth-link:hover {
-  color: var(--link-hover-color);
+  opacity: 0.8;
+  /* color: var(--link-hover-color); */
 }
 
 /* Divider */
@@ -299,6 +306,11 @@ form {
 }
 
 .auth-form footer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
+  padding: 1rem;
   background-color: var(--auth-footer-background);
   color: var(--auth-footer-text);
 }

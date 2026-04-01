@@ -1,16 +1,18 @@
 // hooks/useGalloGoalsListener.ts
 import { useEffect } from "react";
-import { useAppDispatch } from "../utils/store";
+import { selectCanSync, useAppDispatch } from "../utils/store";
 import { setupGalloGoalsListener } from "../utils/listeners/setupGalloGoalsListener";
+import { useSelector } from "react-redux";
 
 export function useGalloGoalsListener(
   companyId?: string | null,
   enabled = false
 ) {
+  const canSync = useSelector(selectCanSync);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!companyId || !enabled) return;
+    if (!companyId || !enabled || !canSync) return;
 
     console.log("🟢 Attaching Gallo goals listener");
 
@@ -21,5 +23,5 @@ export function useGalloGoalsListener(
     return () => {
       if (typeof unsubscribe === "function") unsubscribe();
     };
-  }, [companyId, enabled, dispatch]);
+  }, [companyId, enabled, canSync,dispatch]);
 }

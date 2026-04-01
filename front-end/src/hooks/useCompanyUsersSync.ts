@@ -1,22 +1,37 @@
 import { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { selectUser, selectCompanyUsers, setCompanyUsers } from "../Slices/userSlice";
+import {
+  selectUser,
+  selectCompanyUsers,
+  setCompanyUsers,
+} from "../Slices/userSlice";
 import {
   getCompanyUsersFromIndexedDB,
   saveCompanyUsersToIndexedDB,
 } from "../utils/database/userDataIndexedDB";
 import { db } from "../utils/firebase";
-import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import { normalizeFirestoreData } from "../utils/normalize";
+import { selectCanSync } from "../utils/store";
 
 export default function useCompanyUsersSync() {
+  const canSync = useSelector(selectCanSync);
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const companyUsers = useSelector(selectCompanyUsers);
   const usersRef = useRef(companyUsers);
-  useEffect(() => { usersRef.current = companyUsers; }, [companyUsers]);
+  useEffect(() => {
+    usersRef.current = companyUsers;
+  }, [companyUsers]);
 
   useEffect(() => {
+    if (!canSync) return;
     if (!user?.companyId) return;
     let unsub = () => {};
 
@@ -28,13 +43,22 @@ export default function useCompanyUsersSync() {
         dispatch(setCompanyUsers(normalized));
       }
 
-      const q = query(collection(db, "users"), where("companyId", "==", user.companyId));
+      const q = query(
+        collection(db, "users"),
+        where("companyId", "==", user.companyId),
+      );
 
       // Manual fetch only if Redux & cache were empty
-      if ((!companyUsers || companyUsers.length === 0) && (!cached || cached.length === 0)) {
+      if (
+        (!companyUsers || companyUsers.length === 0) &&
+        (!cached || cached.length === 0)
+      ) {
         try {
           const snap = await getDocs(q);
-          const users = snap.docs.map((d) => ({ ...(d.data() as any), uid: d.id }));
+          const users = snap.docs.map((d) => ({
+            ...(d.data() as any),
+            uid: d.id,
+          }));
           const normalized = normalizeFirestoreData(users);
           dispatch(setCompanyUsers(normalized));
           await saveCompanyUsersToIndexedDB(normalized); // <-- save normalized
@@ -45,7 +69,10 @@ export default function useCompanyUsersSync() {
 
       // Real-time
       unsub = onSnapshot(q, async (snap) => {
-        const fresh = snap.docs.map((d) => ({ ...(d.data() as any), uid: d.id }));
+        const fresh = snap.docs.map((d) => ({
+          ...(d.data() as any),
+          uid: d.id,
+        }));
         const normalized = normalizeFirestoreData(fresh);
 
         // compare with latest Redux (via ref)
@@ -65,5 +92,5 @@ export default function useCompanyUsersSync() {
     })();
 
     return () => unsub();
-  }, [dispatch, user?.companyId]);
+  }, [dispatch, canSync, user?.companyId]);
 }

@@ -1,6 +1,6 @@
 // src/hooks/useCustomAccountsSync.ts
 import { useEffect } from "react";
-import { useAppDispatch } from "../utils/store";
+import { selectCanSync, useAppDispatch } from "../utils/store";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { CompanyAccountType } from "../utils/types";
@@ -18,12 +18,13 @@ import {
 import { normalizeAccount } from "../thunks/manulAccountsThunk";
 
 export const useCustomAccountsSync = () => {
+  const canSync = useSelector(selectCanSync);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
 
   useEffect(() => {
-    if (!companyId) return;
+    if (!companyId || !canSync) return;
 
     const loadFromIndexedDB = async () => {
       dispatch(setLoading(true));
@@ -41,7 +42,7 @@ export const useCustomAccountsSync = () => {
       collection(db, `companies/${companyId}/customAccounts`),
       (snapshot) => {
         const docs: CompanyAccountType[] = snapshot.docs.map((doc) =>
-          normalizeAccount(doc.data(), doc.id)
+          normalizeAccount(doc.data(), doc.id),
         );
 
         dispatch(setCustomAccounts(docs));
@@ -52,9 +53,9 @@ export const useCustomAccountsSync = () => {
         console.error("Failed to sync custom accounts:", error);
         dispatch(setError(error.message || "Sync error"));
         dispatch(setLoading(false));
-      }
+      },
     );
 
     return () => unsub();
-  }, [companyId, dispatch]);
+  }, [companyId, canSync,dispatch]);
 };

@@ -340,10 +340,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
           <nav className="auth-links" aria-label="Account help">
             <button
               type="button"
-              className="auth-link reset-password-link"
+              className="auth-link"
               onClick={handleResetPassword}
             >
-              Forgot password?
+              {submittedReset
+                ? "Resend password reset email"
+                : "Forgot password?"}
             </button>
           </nav>
 
@@ -352,18 +354,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </div> */}
 
           <footer className="auth-footnote" aria-label="New user options">
-            <span>Don't see your password email?</span>{" "}
+            <p>New to Displaygram?</p>
+
             <button
               type="button"
-              className="auth-link"
-              onClick={handleResetPassword}
-            >
-              Resend reset link
-            </button>
-            {" • "}
-            <button
-              type="button"
-              className="auth-link"
+              className="btn-secondary auth-link"
               onClick={async () => {
                 if (!email) {
                   navigate("/request-access");
@@ -386,7 +381,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 navigate("/request-access");
               }}
             >
-              Request access
+              <h3>Request access for new company</h3>
             </button>
           </footer>
         </form>

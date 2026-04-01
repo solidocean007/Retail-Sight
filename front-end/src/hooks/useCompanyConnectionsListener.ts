@@ -8,7 +8,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { RootState, useAppDispatch } from "../utils/store";
+import { RootState, selectCanSync, useAppDispatch } from "../utils/store";
 import { CompanyConnectionType } from "../utils/types";
 import { setCachedConnections } from "../Slices/companyConnectionSlice";
 import { useSelector } from "react-redux";
@@ -25,11 +25,13 @@ function normalizeTimestamps(obj: any) {
 }
 
 export const useCompanyConnectionsListener = () => {
+  const canSync = useSelector(selectCanSync);
   const user = useSelector((state: RootState) => state.user.currentUser);
   const dispatch = useAppDispatch();
   const companyId = user?.companyId;
+
   useEffect(() => {
-    if (!companyId) return;
+    if (!companyId || !canSync) return;
 
     const q = query(
       collection(db, "companyConnections"),
@@ -56,5 +58,5 @@ export const useCompanyConnectionsListener = () => {
     });
 
     return () => unsubscribe();
-  }, [companyId, dispatch]);
+  }, [companyId, canSync, dispatch]);
 };
