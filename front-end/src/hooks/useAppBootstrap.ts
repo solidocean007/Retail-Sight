@@ -13,6 +13,8 @@ import { fetchCompanyProducts } from "../thunks/productThunks";
 import {
   closeAndDeleteIndexedDB,
   getAllCompanyProductsFromIndexedDB,
+  getAllGalloGoalsFromIndexedDB,
+  getGoalsFromIndexedDB,
 } from "../utils/database/indexedDBUtils";
 import { setAllProducts } from "../Slices/productsSlice";
 import { setupCompanyGoalsListener } from "../utils/listeners/setupCompanyGoalsListener";
@@ -33,6 +35,7 @@ import { useUserNotificationsListener } from "./useUserNotificationsListener";
 import { fetchAllPlans } from "../thunks/planThunks";
 import { listenForClaimChanges } from "./listenForClaimChanges";
 import { useAccountImportListener } from "./useAccountImportListener";
+import { setCompanyGoals } from "../Slices/companyGoalsSlice";
 
 /**
  * useAppBootstrap – Option B
@@ -107,9 +110,9 @@ export function useAppBootstrap({
   useCompanyUsersSync();
   useUserAccountsSync();
   useAllCompanyAccountsSync(
-      (currentUser?.role === "admin" ||
-        currentUser?.role === "super-admin" ||
-        currentUser?.role === "supervisor"),
+    currentUser?.role === "admin" ||
+      currentUser?.role === "super-admin" ||
+      currentUser?.role === "supervisor",
   );
   useCustomAccountsSync();
   useCompanyConnectionsListener();
@@ -123,9 +126,6 @@ export function useAppBootstrap({
     if (initializing) return;
     if (!currentUser) return;
 
-    if (hasBootstrapped.current) return;
-    hasBootstrapped.current = true;
-
     const run = async () => {
       try {
         dispatch(setResetting(true));
@@ -137,6 +137,12 @@ export function useAppBootstrap({
         // STEP 2 — essential company info
         if (companyId) {
           dispatch(setLoadingMessage("Loading company info…"));
+
+          // preload company goals
+          const cachedGoals = await getGoalsFromIndexedDB("companyGoals");
+          if (cachedGoals?.length) {
+            dispatch(setCompanyGoals(cachedGoals));
+          }
 
           // cached product preload
           const cached = await getAllCompanyProductsFromIndexedDB();

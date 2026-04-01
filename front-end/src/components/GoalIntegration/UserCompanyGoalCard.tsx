@@ -29,7 +29,6 @@ const UserCompanyGoalCard: React.FC<Props> = ({
 }) => {
   const user = useSelector(selectUser);
   const allAccounts = useSelector(selectAllCompanyAccounts);
-  console.log(goal);
   const userSalesRoute = user?.salesRouteNum;
   const userUid = user?.uid;
 

@@ -1,7 +1,4 @@
-import {
-  CompanyGoalType,
-  FireStoreGalloGoalDocType,
-} from "../types";
+import { CompanyGoalType, FireStoreGalloGoalDocType } from "../types";
 import { openDB } from "./indexedDBOpen";
 
 export const saveGoalsToIndexedDB = async (
@@ -46,7 +43,7 @@ export const saveGoalsToIndexedDB = async (
         store.put({
           ...goal,
           id: goal.goalDetails?.goalId || crypto.randomUUID(), // Property 'goalDetails' does not exist on type 'CompanyGoalType | FireStoreGalloGoalDocType'.
-  // Property 'goalDetails' does not exist on type 'CompanyGoalType'
+          // Property 'goalDetails' does not exist on type 'CompanyGoalType'
         });
       });
     }
@@ -54,7 +51,7 @@ export const saveGoalsToIndexedDB = async (
 };
 
 export const saveSingleGalloGoalToIndexedDB = async (
-  goal: FireStoreGalloGoalDocType
+  goal: FireStoreGalloGoalDocType,
 ): Promise<void> => {
   const db = await openDB();
   const transaction = db.transaction(["allGalloGoals"], "readwrite");
@@ -63,9 +60,7 @@ export const saveSingleGalloGoalToIndexedDB = async (
   return new Promise<void>((resolve, reject) => {
     if (!goal.goalDetails?.goalId) {
       console.error("Cannot save goal: Missing goalDetails.goalId", goal);
-      reject(
-        new Error("Invalid goal: Missing goalDetails.goalId")
-      );
+      reject(new Error("Invalid goal: Missing goalDetails.goalId"));
       return;
     }
 
@@ -73,7 +68,7 @@ export const saveSingleGalloGoalToIndexedDB = async (
     transaction.onerror = (event) => {
       console.error(
         "Error saving single Gallo goal to IndexedDB:",
-        (event.target as IDBRequest).error
+        (event.target as IDBRequest).error,
       );
       reject((event.target as IDBRequest).error);
     };
@@ -88,7 +83,21 @@ export const saveSingleGalloGoalToIndexedDB = async (
   });
 };
 
+export async function getGoalsFromIndexedDB(
+  storeName: string,
+): Promise<any[] | null> {
+  const db = await openDB();
+  const tx = db.transaction(storeName, "readonly");
+  const store = tx.objectStore(storeName);
+  const request = store.getAll();
 
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => {
+      resolve(request.result?.length ? request.result : null);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
 
 export const saveAllGalloGoalsToIndexedDB = async (
   goals: FireStoreGalloGoalDocType[],

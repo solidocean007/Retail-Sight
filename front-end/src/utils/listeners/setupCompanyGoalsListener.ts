@@ -46,7 +46,6 @@ export const setupCompanyGoalsListener =
           );
 
           await clearGoalsFromIndexedDB("companyGoals");
-          dispatch(setCompanyGoals([]));
           await saveGoalsToIndexedDB(allCompanyGoals, "companyGoals");
           dispatch(setCompanyGoals(allCompanyGoals));
         } catch (error) {

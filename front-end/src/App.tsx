@@ -83,9 +83,6 @@ function AppContent() {
       const auth = getAuth();
       const user = auth.currentUser;
       if (!user) return;
-
-      const res = await user.getIdTokenResult(); // no force refresh
-      if (!cancelled) console.log("CLAIMS:", res.claims);
     })();
 
     return () => {

@@ -1,12 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import {
-  Typography,
-  Collapse,
-  Box,
-  Button,
-  Tooltip,
-} from "@mui/material";
+import { Typography, Collapse, Box, Button, Tooltip } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { Timestamp } from "firebase/firestore";
 import { CompanyAccountType, CompanyGoalWithIdType } from "../../utils/types";
@@ -26,7 +20,7 @@ interface CompanyGoalCardProps {
   onDelete?: (id: string) => void;
   onEdit?: (
     goalId: string,
-    updatedFields: Partial<CompanyGoalWithIdType>
+    updatedFields: Partial<CompanyGoalWithIdType>,
   ) => void;
   onViewPostModal: (postId: string, target?: HTMLElement) => void;
 }
@@ -48,13 +42,11 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const goalIsForSupervisor = goal.targetRole === "supervisor";
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  console.log(goal)
-
   // --- Unified account list for this goal (new or old) ---
   const accountNumbersForThisGoal = useMemo(() => {
     if (goal.goalAssignments?.length) {
       return Array.from(
-        new Set(goal.goalAssignments.map((g) => g.accountNumber))
+        new Set(goal.goalAssignments.map((g) => g.accountNumber)),
       );
     }
     return goal.accountNumbersForThisGoal || [];
@@ -63,11 +55,11 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   // --- Accounts directly tied to this goal ---
   const effectiveAccounts = useMemo(() => {
     const baseAccounts = allCompanyAccounts.filter((acc) =>
-      accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+      accountNumbersForThisGoal.includes(acc.accountNumber.toString()),
     );
     if (salesRouteNum) {
       return baseAccounts.filter((acc) =>
-        (acc.salesRouteNums || []).includes(salesRouteNum)
+        (acc.salesRouteNums || []).includes(salesRouteNum),
       );
     }
     return baseAccounts;
@@ -83,8 +75,8 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       // Filter posts whose (uid, accountNumber) pair matches any assignment
       const validPairs = new Set(
         goal.goalAssignments.map(
-          (a) => `${a.uid}-${a.accountNumber.toString()}`
-        )
+          (a) => `${a.uid}-${a.accountNumber.toString()}`,
+        ),
       );
       return goal.submittedPosts.filter((p) => {
         const postUid = p.submittedBy?.uid;
@@ -96,12 +88,12 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
     // Fallback legacy
     if (salesRouteNum) {
       const userAccounts = effectiveAccounts.map((acc) =>
-        acc.accountNumber.toString()
+        acc.accountNumber.toString(),
       );
       return goal.submittedPosts.filter(
         (post) =>
           post.account &&
-          userAccounts.includes(post.account.accountNumber?.toString())
+          userAccounts.includes(post.account.accountNumber?.toString()),
       ).length;
     }
 
@@ -122,14 +114,14 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       Array.isArray(goal.goalAssignments) && goal.goalAssignments.length > 0;
 
     const accountsForGoal = allCompanyAccounts.filter((acc) =>
-      accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+      accountNumbersForThisGoal.includes(acc.accountNumber.toString()),
     );
 
     // 🧩 Step 1 — If salesRouteNum is passed, limit users to that single user
     let scopedUsers = companyUsers;
     if (salesRouteNum) {
       scopedUsers = companyUsers.filter(
-        (u) => u.salesRouteNum === salesRouteNum
+        (u) => u.salesRouteNum === salesRouteNum,
       );
     }
 
@@ -142,7 +134,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
             .goalAssignments!.filter((g) => g.uid === u.uid)
             .map((g) => g.accountNumber.toString());
           const accountsForUser = allCompanyAccounts.filter((acc) =>
-            assignedAccountNumbers.includes(acc.accountNumber.toString())
+            assignedAccountNumbers.includes(acc.accountNumber.toString()),
           );
           return { user: u, accounts: accountsForUser };
         });
@@ -157,15 +149,15 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
 
         if (goal.targetRole === "sales") {
           accountsForUser = accountsForGoal.filter((acc) =>
-            (acc.salesRouteNums || []).includes(u.salesRouteNum || "")
+            (acc.salesRouteNums || []).includes(u.salesRouteNum || ""),
           );
         } else if (goal.targetRole === "supervisor") {
           const reps = companyUsers.filter(
-            (rep) => rep.reportsTo === u.uid && rep.salesRouteNum
+            (rep) => rep.reportsTo === u.uid && rep.salesRouteNum,
           );
           const repRouteNums = reps.map((r) => r.salesRouteNum);
           accountsForUser = accountsForGoal.filter((acc) =>
-            (acc.salesRouteNums || []).some((rn) => repRouteNums.includes(rn))
+            (acc.salesRouteNums || []).some((rn) => repRouteNums.includes(rn)),
           );
         }
 
@@ -187,7 +179,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
   const userRows: UserRowType[] = useMemo(() => {
     return userBasedRows.map(({ user, accounts }) => {
       const postsForUser = (goal.submittedPosts || []).filter(
-        (p) => p.submittedBy?.uid === user.uid
+        (p) => p.submittedBy?.uid === user.uid,
       );
 
       const submissions = postsForUser.map((p) => ({
@@ -197,19 +189,19 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
           typeof p.submittedAt === "string"
             ? p.submittedAt
             : p.submittedAt instanceof Timestamp
-            ? p.submittedAt.toDate().toISOString()
-            : "",
+              ? p.submittedAt.toDate().toISOString()
+              : "",
       }));
 
       const submittedAccountNums = new Set(
         postsForUser
           .map((p) => p.account?.accountNumber?.toString())
-          .filter(Boolean)
+          .filter(Boolean),
       );
 
       const unsubmittedAccounts = accounts
         .filter(
-          (acc) => !submittedAccountNums.has(acc.accountNumber.toString())
+          (acc) => !submittedAccountNums.has(acc.accountNumber.toString()),
         )
         .map((acc) => ({
           accountName: acc.accountName,
@@ -226,7 +218,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
       if (goal.perUserQuota && goal.perUserQuota > 0) {
         userCompletionPercentage = Math.min(
           100,
-          Math.round((completed / goal.perUserQuota) * 100)
+          Math.round((completed / goal.perUserQuota) * 100),
         );
       } else {
         // fallback: percentage of assigned accounts

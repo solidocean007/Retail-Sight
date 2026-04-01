@@ -27,13 +27,7 @@ export default function GalloGoalsTable({
   onDisable,
 }: Props) {
   const [openRow, setOpenRow] = useState<string | null>(null);
-  console.log(goals)
-  console.log(
-    "goal with programId of '186246': ",
-    goals.find(
-      (g: FireStoreGalloGoalDocType) => g.programDetails.programId === "186246",
-    ),
-  );
+  
   return (
     <div className="gallo-table">
       {/* Header */}
