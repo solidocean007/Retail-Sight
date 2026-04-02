@@ -93,6 +93,7 @@ export const createSubscription = onCall(
 
       const validPlanIds = [
         "starter",
+        "test",
         "team",
         "pro",
         "enterprise",

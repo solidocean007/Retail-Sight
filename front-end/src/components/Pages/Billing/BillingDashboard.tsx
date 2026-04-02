@@ -93,7 +93,7 @@ const BillingDashboard: React.FC = () => {
       })
       .catch((e: Error) => {
         // silent fail, modal will fetch normally
-        console.log("Error: ", e) // Error:  FirebaseError: INTERNAL
+        console.log("Error: ", e); // Error:  FirebaseError: INTERNAL
       });
   }, [currentCompanyId]);
 
@@ -300,19 +300,22 @@ const BillingDashboard: React.FC = () => {
                 ${basePlanPrice.toFixed(2)}
                 <span>/month</span>
               </div>
-              <div className="plan-capacity-block">
-                <div className="capacity-item">
-                  <span className="capacity-number">
-                    {currentPlan?.userLimit}
-                  </span>
-                  <span className="capacity-label">Users</span>
-                </div>
-                <div className="capacity-divider" />
-                <div className="capacity-item">
-                  <span className="capacity-number">
-                    {currentPlan?.connectionLimit}
-                  </span>
-                  <span className="capacity-label">Connections</span>
+              <div className="capacity-block">
+                <p>Usage Limits</p>
+                <div className="plan-capacity-block">
+                  <div className="capacity-item">
+                    <span className="capacity-number">
+                      {currentPlan?.userLimit}
+                    </span>
+                    <span className="capacity-label">Users</span>
+                  </div>
+                  <div className="capacity-divider" />
+                  <div className="capacity-item">
+                    <span className="capacity-number">
+                      {currentPlan?.connectionLimit}
+                    </span>
+                    <span className="capacity-label">Connections</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -340,9 +343,7 @@ const BillingDashboard: React.FC = () => {
             <PlanUsageBanner />
 
             {billingInfo?.pendingChange
-              ? renewalDate && (
-                 <UpcomingDowngradeBanner />
-                )
+              ? renewalDate && <UpcomingDowngradeBanner />
               : renewalDate && (
                   <p className="billing-summary-renewal">
                     Renews on {renewalDate}

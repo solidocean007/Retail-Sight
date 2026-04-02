@@ -237,7 +237,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
                 <div>
                   <strong>Your plan has limits.</strong>
                   <p>
-                    Your current plan allows {connectionLimit} connections.
+                    Your current plan allows {effectiveConnectionLimit} connections.
                     Upgrading increases this instantly.
                   </p>
                 </div>

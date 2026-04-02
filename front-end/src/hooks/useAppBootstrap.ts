@@ -35,6 +35,7 @@ import { fetchAllPlans } from "../thunks/planThunks";
 import { listenForClaimChanges } from "./listenForClaimChanges";
 import { useAccountImportListener } from "./useAccountImportListener";
 import { setCompanyGoals } from "../Slices/companyGoalsSlice";
+import useCompanySync from "./useCompanySync";
 
 /**
  * useAppBootstrap – Option B
@@ -97,6 +98,7 @@ export function useAppBootstrap({
   useAccountImportListener(companyId);
 
   // 👥 Re-enable dependent sync hooks (required for full goal hydration)
+  useCompanySync();
   useCompanyUsersSync();
   useUserAccountsSync();
   useAllCompanyAccountsSync(

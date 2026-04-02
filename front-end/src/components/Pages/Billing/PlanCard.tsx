@@ -101,15 +101,19 @@ const PlanCard: React.FC<PlanCardProps> = ({
         </div>
       </div>
 
-      <div className="plan-capacity-block">
-        <div className="capacity-item">
-          <span className="capacity-number">{userLimit}</span>
-          <span className="capacity-label">Users</span>
-        </div>
-        <div className="capacity-divider" />
-        <div className="capacity-item">
-          <span className="capacity-number">{connectionLimit}</span>
-          <span className="capacity-label">Connections</span>
+      <div className="capacity-block">
+        <p>Usage Limits</p>
+
+        <div className="plan-capacity-block">
+          <div className="capacity-item">
+            <span className="capacity-number">{userLimit}</span>
+            <span className="capacity-label">Users</span>
+          </div>
+          <div className="capacity-divider" />
+          <div className="capacity-item">
+            <span className="capacity-number">{connectionLimit}</span>
+            <span className="capacity-label">Connections</span>
+          </div>
         </div>
       </div>
 
