@@ -15,13 +15,10 @@ export function getBraintreeGateway(): braintree.BraintreeGateway {
   const envRaw = BRAINTREE_ENVIRONMENT.value();
   const env = envRaw?.toLowerCase().trim();
 
-  console.log("ENV RAW:", envRaw);
-  console.log("ENV NORMALIZED:", env);
+  console.log("ENV NORMALIZED 2:", env);
   console.log("MERCHANT:", BRAINTREE_MERCHANT_ID.value());
-  console.log("MERCHANT LENGTH:", BRAINTREE_MERCHANT_ID.value()?.length);
-  console.log("PUBLIC:", BRAINTREE_PUBLIC_KEY.value());
-  console.log("PUBLIC LENGTH:", BRAINTREE_PUBLIC_KEY.value()?.length);
-  console.log("PRIVATE LENGTH:", BRAINTREE_PRIVATE_KEY.value()?.length);
+  console.log("PUBLIC 2:", BRAINTREE_PUBLIC_KEY.value());
+  console.log("PRIVATE 2:", BRAINTREE_PRIVATE_KEY.value());
 
   const environment =
     env === "sandbox"

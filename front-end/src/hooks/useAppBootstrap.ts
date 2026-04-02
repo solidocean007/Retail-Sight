@@ -164,7 +164,6 @@ export function useAppBootstrap({
         dispatch(setResetting(false));
       }
     };
-    console.log(appReady);
     run();
   }, [
     enabled,

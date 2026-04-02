@@ -7,8 +7,6 @@ export const useAccountImportListener = (companyId?: string | null) => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    console.log("AccountImportListener companyId:", companyId);
-
     if (!companyId) return;
 
     const unsubscribe = dispatch(setupAccountImportListener(companyId));
