@@ -18,6 +18,7 @@ import { getPostsByTag, getPostsByStarTag } from "../utils/PostLogic/getPostsByT
 import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
 import { addSharedPosts, setHasMore } from "../Slices/sharedPostsSlice";
 import { addSharedPostsToIndexedDB } from "../utils/database/sharedPostsStoreUtils";
+import { normalizeFirestoreData } from "../utils/normalize";
 // import { resolvePostImage } from "../utils/PostLogic/derivePostImageVariants";
 
 const POSTS_BATCH_SIZE = 5;
@@ -170,12 +171,12 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                 if (fetchMoreSharedPostsBatch.fulfilled.match(action)) {
                   const { postsWithIds, lastVisible: newCursor, hasMore: more } =
                     action.payload;
-
+                  const normalizedPosts = normalizeFirestoreData(postsWithIds);
                   setLastVisible(newCursor);
 
                   if (postsWithIds.length > 0) {
                     addSharedPostsToIndexedDB(postsWithIds);
-                    dispatch(addSharedPosts(postsWithIds));
+                    dispatch(addSharedPosts(normalizedPosts));
                     dispatch(setHasMore(more));
                   } else {
                     dispatch(setHasMore(false));

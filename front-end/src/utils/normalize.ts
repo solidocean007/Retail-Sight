@@ -27,7 +27,7 @@ const toDate = (v: any): Date | null => {
 };
 
 export function normalizeUserNotification(
-  raw: UserNotificationType
+  raw: UserNotificationType,
 ): UserNotificationType {
   return {
     ...raw,
@@ -47,7 +47,7 @@ export const normalizePost = (raw: any, indexOrId?: string | number) => {
   const id = typeof indexOrId === "string" ? indexOrId : (raw.id ?? undefined); // fallback to existing id
 
   return {
-    id,
+    id: id ?? raw.id,
     ...data,
   };
 };
@@ -61,7 +61,10 @@ const toISO = (v: any): string | null => {
   return null;
 };
 
-export function normalizeDeveloperNotification(raw: any): DeveloperNotificationType {
+export function normalizeDeveloperNotification(
+  raw: any,
+): DeveloperNotificationType {
+  // Property 'link' is missing in type '{ id: any; title: any; message: any; priority: any; recipientCompanyIds: any; recipientUserIds: any; recipientRoles: any; createdAt: string | null; scheduledAt: string | null; sentAt: string | null; createdBy: any; channels: any; audience: any; }' but required in type 'DeveloperNotificationType'
   return {
     id: raw.id,
     title: raw.title,
@@ -80,8 +83,6 @@ export function normalizeDeveloperNotification(raw: any): DeveloperNotificationT
     channels: raw.channels ?? { inApp: true, email: false },
 
     audience:
-      raw.audience ??
-      (raw.recipientCompanyIds?.length ? "targeted" : "all"),
+      raw.audience ?? (raw.recipientCompanyIds?.length ? "targeted" : "all"),
   };
 }
-

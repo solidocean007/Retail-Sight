@@ -77,7 +77,7 @@ useEffect(() => {
     );
     //  console.log("Developer fetched docs:", snap.size);
     const allPosts = snap.docs.map((doc) =>
-      normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+      normalizePost(doc.data(), doc.id)
     );
     dispatch(setPosts(allPosts));
     await addPostsToIndexedDB(allPosts);
@@ -97,7 +97,7 @@ useEffect(() => {
     );
     //  console.log("Public fetched docs:", snap.size);
     const publicPosts = snap.docs.map((doc) =>
-      normalizePost({ id: doc.id, ...doc.data() } as PostWithID)
+      normalizePost(doc.data(), doc.id)
     );
     dispatch(setPosts(publicPosts));
     setInitialLoaded(true);
@@ -162,10 +162,7 @@ useEffect(() => {
             (change.type === "added" || change.type === "modified") &&
             data.imageUrl
           ) {
-            const normalized = normalizePost({
-              id: change.doc.id,
-              ...data,
-            } as PostWithID);
+            const normalized = normalizePost(data, change.doc.id);
             updates.push(normalized);
             await updatePostInIndexedDB(normalized);
             await updatePostInFilteredSets(normalized);

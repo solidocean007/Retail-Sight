@@ -5,6 +5,7 @@ import { db } from "../utils/firebase";
 import { selectUser } from "../Slices/userSlice";
 import { setCurrentCompany } from "../Slices/currentCompanySlice";
 import { CompanyType } from "../utils/types";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 export default function useCompanySync() {
   const dispatch = useDispatch();
@@ -22,8 +23,8 @@ export default function useCompanySync() {
         id: snap.id,
         ...(snap.data() as CompanyType),
       };
-
-      dispatch(setCurrentCompany(data));
+      const normalizedCompany = normalizeFirestoreData(data);
+      dispatch(setCurrentCompany(normalizedCompany));
     });
 
     return () => unsub();

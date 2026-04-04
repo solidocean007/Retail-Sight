@@ -27,17 +27,18 @@ import {
   getSharedPostsFromIndexedDB,
 } from "../utils/database/sharedPostsStoreUtils";
 import { useSelector } from "react-redux";
+import { normalizePost } from "../utils/normalize";
 
 export const useSharedPosts = (
   companyId: string | undefined,
-  batchSize: number = 10
+  batchSize: number = 10,
 ) => {
   const dispatch = useAppDispatch();
   const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
   const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
   const loading = useSelector((s: RootState) => s.sharedPosts.loading);
   const lastVisibleRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(
-    null
+    null,
   );
 
   // 🔹 Load cached posts first
@@ -46,7 +47,7 @@ export const useSharedPosts = (
     (async () => {
       const cached = await getSharedPostsFromIndexedDB();
       if (cached?.length) {
-        dispatch(setSharedPosts(cached));
+        dispatch(setSharedPosts(cached.map(normalizePost)));
       } else {
         await fetchInitialBatch();
       }
@@ -64,12 +65,12 @@ export const useSharedPosts = (
         collection(db, "posts"),
         where("sharedWithCompanies", "array-contains", companyId),
         orderBy("displayDate", "desc"),
-        limit(batchSize)
+        limit(batchSize),
       );
 
       const snap = await getDocs(q);
-      const docs = snap.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as PostWithID)
+      const docs = snap.docs.map((doc) =>
+        normalizePost(doc.data(), doc.id),
       );
 
       dispatch(setSharedPosts(docs));
@@ -97,17 +98,19 @@ export const useSharedPosts = (
         where("sharedWithCompanies", "array-contains", companyId),
         orderBy("displayDate", "desc"),
         startAfter(lastVisibleRef.current),
-        limit(batchSize)
+        limit(batchSize),
       );
 
       const snap = await getDocs(q);
-      const morePosts = snap.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as PostWithID)
+      const morePosts = snap.docs.map((doc) =>
+        normalizePost(doc.data(), doc.id),
       );
 
       if (morePosts.length > 0) {
         dispatch(addSharedPosts(morePosts));
-        await addSharedPostsToIndexedDB([...sharedPosts, ...morePosts]);
+        const merged = [...sharedPosts, ...morePosts].map(normalizePost);
+
+        await addSharedPostsToIndexedDB(merged);
         lastVisibleRef.current = snap.docs[snap.docs.length - 1] || null;
         dispatch(setHasMore(morePosts.length === batchSize));
       } else {
@@ -129,12 +132,15 @@ export const useSharedPosts = (
       collection(db, "posts"),
       where("sharedWithCompanies", "array-contains", companyId),
       orderBy("displayDate", "desc"),
-      limit(batchSize)
+      limit(batchSize),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
-        const post = { id: change.doc.id, ...change.doc.data() } as PostWithID;
+        const post = normalizePost({
+          id: change.doc.id,
+          ...change.doc.data(),
+        } as PostWithID);
 
         if (change.type === "added") {
           dispatch(addSharedPosts([post]));

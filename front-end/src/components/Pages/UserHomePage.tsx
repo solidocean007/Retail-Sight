@@ -80,6 +80,8 @@ import InstallPrompt from "../PWA/InstallPrompt";
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
 
+  console.log(sharedPosts);
+
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
     setPostViewerOpen(true);
