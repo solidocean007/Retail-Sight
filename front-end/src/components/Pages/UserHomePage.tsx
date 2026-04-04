@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { VirtuosoHandle } from "react-virtuoso";
 import ActivityFeed from "./../ActivityFeed";
 import "./userHomePage.css";
-import { AppDispatch, RootState } from "../../utils/store";
+import { AppDispatch, RootState, useAppDispatch } from "../../utils/store";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLocationOptions } from "../../Slices/locationSlice";
 import HeaderBar from "./../HeaderBar";
@@ -34,19 +34,19 @@ import { resetApp } from "../../utils/resetApp";
 import { showMessage } from "../../Slices/snackbarSlice";
 import InstallPrompt from "../PWA/InstallPrompt";
 
-  const UserHomePage = () => {
+const UserHomePage = () => {
   const navigate = useNavigate();
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const { resetting } = useSelector((state: RootState) => state.app);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
   const [activeFeedType, setActiveFeedType] = useState<"company" | "shared">(
-    "company"
+    "company",
   );
   const [activeCompanyPostSet, setActiveCompanyPostSet] = useState<
     "posts" | "filteredPosts"
@@ -57,7 +57,7 @@ import InstallPrompt from "../PWA/InstallPrompt";
   const [lastFilters, setLastFilters] = useState<PostQueryFilters | null>(null);
   const filterText = useMemo(
     () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
-    [lastFilters, companyUsers]
+    [lastFilters, companyUsers],
   );
   const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
   const [postIdToView, setPostIdToView] = useState<string | null>(null);
@@ -78,9 +78,26 @@ import InstallPrompt from "../PWA/InstallPrompt";
   }, []);
 
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
-  const { posts: sharedPosts } = useSharedPosts(user?.companyId, batchSize);
+  const { posts: sharedPosts, loading: sharedLoading } = useSharedPosts(
+    user?.companyId,
+    batchSize,
+  );
+  const hasShownSharedEmpty = useRef(false);
 
-  console.log(sharedPosts);
+  useEffect(() => {
+    if (
+      activeFeedType === "shared" &&
+      sharedPosts.length === 0 &&
+      !hasShownSharedEmpty.current
+    ) {
+      dispatch(showMessage("No shared posts available."));
+      hasShownSharedEmpty.current = true;
+    }
+
+    if (sharedPosts.length > 0) {
+      hasShownSharedEmpty.current = false;
+    }
+  }, [activeFeedType, sharedPosts.length, dispatch]);
 
   const openPostViewer = (postId: string) => {
     setPostIdToView(postId);
@@ -120,7 +137,7 @@ import InstallPrompt from "../PWA/InstallPrompt";
         dispatch(setFilteredPosts(cached));
       } else {
         const result = await dispatch(
-          fetchFilteredPostsBatch({ filters: initialFilters })
+          fetchFilteredPostsBatch({ filters: initialFilters }),
         );
         if (fetchFilteredPostsBatch.fulfilled.match(result)) {
           dispatch(setFilteredPosts(result.payload.posts.map(normalizePost)));
@@ -131,10 +148,10 @@ import InstallPrompt from "../PWA/InstallPrompt";
 
   // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
   const filteredCount = useSelector(
-    (state: RootState) => state.posts.filteredPostCount
+    (state: RootState) => state.posts.filteredPostCount,
   );
   const fetchedAt = useSelector(
-    (s: RootState) => s.posts.filteredPostFetchedAt
+    (s: RootState) => s.posts.filteredPostFetchedAt,
   );
 
   const toggleFilterMenu = () => {
@@ -181,6 +198,22 @@ import InstallPrompt from "../PWA/InstallPrompt";
     dispatch(fetchLocationOptions());
   }, [dispatch]);
 
+  const handleFeedSwitch = (type: "company" | "shared") => {
+    if (type === "shared") {
+      if (sharedLoading) {
+        dispatch(showMessage("Loading shared posts..."));
+        return;
+      }
+
+      if (sharedPosts.length === 0) {
+        dispatch(showMessage("No shared posts available."));
+        return;
+      }
+    }
+
+    setActiveFeedType(type);
+  };
+
   return (
     <>
       <UserHomePageHelmet />
@@ -222,31 +255,31 @@ import InstallPrompt from "../PWA/InstallPrompt";
           )}
         </div>
 
-        {user?.companyId && sharedPosts.length > 0 && (
-          <div className="feed-tabs">
-            <button
-              className={`btn-tabs ${
-                activeFeedType === "company" ? "active" : ""
-              }`}
-              onClick={() => setActiveFeedType("company")}
-            >
-              Company
-            </button>
-            <button
-              className={`btn-tabs ${
-                activeFeedType === "shared" ? "active" : ""
-              }`}
-              onClick={() => setActiveFeedType("shared")}
-            >
-              Shared
-            </button>
-          </div>
-        )}
-
         <div className="home-page-content">
-          {/* insert tabs to switch to sharedFeed.tsx */}
-
           <div className="activity-feed-container">
+            <div className="feed-toggle">
+              <button
+                className={
+                  activeFeedType === "company"
+                    ? "btn-secondary active"
+                    : "status-inactive"
+                }
+                onClick={() => handleFeedSwitch("company")}
+              >
+                Company
+              </button>
+
+              <button
+                className={
+                  activeFeedType === "shared"
+                    ? "btn-secondary active"
+                    : "status-inactive"
+                }
+                onClick={() => handleFeedSwitch("shared")}
+              >
+                Shared
+              </button>
+            </div>
             {activeFeedType === "shared" ? (
               <SharedFeed
                 virtuosoRef={virtuosoRef}

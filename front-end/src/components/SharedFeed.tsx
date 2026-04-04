@@ -14,11 +14,15 @@ import NoResults from "./NoResults";
 import "./activityFeed.css";
 import BeerCaseStackAnimation from "./CaseStackAnimation/BeerCaseStackAnimation";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { getPostsByTag, getPostsByStarTag } from "../utils/PostLogic/getPostsByTag";
+import {
+  getPostsByTag,
+  getPostsByStarTag,
+} from "../utils/PostLogic/getPostsByTag";
 import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
 import { addSharedPosts, setHasMore } from "../Slices/sharedPostsSlice";
 import { addSharedPostsToIndexedDB } from "../utils/database/sharedPostsStoreUtils";
-import { normalizeFirestoreData } from "../utils/normalize";
+import { normalizeFirestoreData, normalizePost } from "../utils/normalize";
+import { derivePostImageVariants } from "../utils/PostLogic/derivePostImageVariants";
 // import { resolvePostImage } from "../utils/PostLogic/derivePostImageVariants";
 
 const POSTS_BATCH_SIZE = 5;
@@ -69,18 +73,6 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
     return () => clearTimeout(t);
   }, []);
 
-  // Preload first 5 images
-  // useEffect(() => {
-  //   const sample = sharedPosts.slice(0, 5);
-  //   sample.forEach((post) => {
-  //     // const { small, medium } = resolvePostImage(post);
-  //     // const url = small[0] || medium[0];
-  //     if (!url) return;
-  //     const img = new Image();
-  //     img.src = url;
-  //   });
-  // }, [sharedPosts]);
-
   // Scroll to deep-linked post
   useEffect(() => {
     if (!postIdToScroll || !virtuosoRef?.current) return;
@@ -97,15 +89,6 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
 
   // Safe no-results handling
   const noResults = !loading && sharedPosts.length === 0;
-
-  // const computedImages = useMemo(
-  //   () =>
-  //     sharedPosts.map((post) => ({
-  //       id: post.id,
-  //       images: resolvePostImage(post),
-  //     })),
-  //   [sharedPosts]
-  // );
 
   const scrollerRefCallback = useCallback((ref: any) => {
     if (!ref || !(ref instanceof HTMLElement)) return;
@@ -128,31 +111,39 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
             alignItems: "center",
           }}
         >
-          <BeerCaseStackAnimation minDuration={4000} maxStagger={2200} dropMs={900} loop />
+          <BeerCaseStackAnimation
+            minDuration={4000}
+            maxStagger={2200}
+            dropMs={900}
+            loop
+          />
         </div>
       ) : (
         <Virtuoso
           ref={virtuosoRef}
-          style={{ height: "100dvh" }}
+          increaseViewportBy={{ top: 1600, bottom: 2600 }}
+          computeItemKey={(_, post) => post.id}
+          style={{
+            height: "100%",
+            width: "100%", // 🔥 REQUIRED
+          }}
           data={sharedPosts}
           defaultItemHeight={450}
           itemContent={(index, post) => {
             if (!post?.id) return null;
-            // const images = computedImages[index].images;
-
+            console.log("Rendering post:", post.id);
             return (
               <div key={post.id} className="post-card-renderer-container">
-                {/* <PostCardRenderer
-                  imageSet={images}
+                <PostCardRenderer
+                  imageSet={derivePostImageVariants(post)}
                   currentUserUid={currentUser?.uid}
-                  index={index}
                   style={{ height: "100%" }}
                   data={{ post, getPostsByTag, getPostsByStarTag }}
                   setCurrentHashtag={setCurrentHashtag}
                   setActivePostSet={setSharedFeedPostSet}
                   setIsSearchActive={setIsSearchActive}
                   postIdToScroll={postIdToScroll}
-                /> */}
+                />
               </div>
             );
           }}
@@ -165,13 +156,18 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                 currentUser,
                 lastVisible,
                 limit: POSTS_BATCH_SIZE,
-              })
+              }),
             )
               .then((action) => {
                 if (fetchMoreSharedPostsBatch.fulfilled.match(action)) {
-                  const { postsWithIds, lastVisible: newCursor, hasMore: more } =
-                    action.payload;
-                  const normalizedPosts = normalizeFirestoreData(postsWithIds);
+                  const {
+                    postsWithIds,
+                    lastVisible: newCursor,
+                    hasMore: more,
+                  } = action.payload;
+                  const normalizedPosts = postsWithIds.map((p) =>
+                    normalizePost(p),
+                  );
                   setLastVisible(newCursor);
 
                   if (postsWithIds.length > 0) {
@@ -204,7 +200,9 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
                   />
                 </div>
               ) : !hasMore ? (
-                <div style={{ textAlign: "center", opacity: 0.6, padding: "1rem" }}>
+                <div
+                  style={{ textAlign: "center", opacity: 0.6, padding: "1rem" }}
+                >
                   🚩 End of shared posts
                 </div>
               ) : null,

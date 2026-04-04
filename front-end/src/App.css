@@ -143,7 +143,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: .5rem;
+  /* margin-bottom: .5rem; */
 }
 
 .button-primary,

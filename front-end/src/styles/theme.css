@@ -74,7 +74,7 @@
   --success-glow: rgba(46, 204, 113, 0.45);
 
   /* Backgrounds */
-  --background-body: var(--gray-50);
+  --background-body: var(--gray-200);
   --input-background: var(--gray-300);
   --user-modal-background: var(--muted-steel);
   --alert-background: red;
@@ -199,7 +199,7 @@
        🌞 Light Theme
      ============================ */
 [data-theme="light"] {
-  --background-body: var(--gray-300);
+  --background-body: var(--gray-200);
   --background-pop-out-body: var(--gray-50);
   --post-card-background: var(--post-card-animated-gradient-light);
   --header-background: var(--post-card-animated-gradient-light);
