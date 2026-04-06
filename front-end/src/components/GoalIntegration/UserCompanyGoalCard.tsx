@@ -44,13 +44,13 @@ const UserCompanyGoalCard: React.FC<Props> = ({
 
   const userAccounts = useMemo(() => {
     const scoped = allAccounts.filter((acc) =>
-      accountNumbersForThisGoal.includes(acc.accountNumber.toString())
+      accountNumbersForThisGoal.includes(acc.accountNumber.toString()),
     );
 
     // legacy fallback
     if (!goal.goalAssignments?.length && userSalesRoute) {
       return scoped.filter((acc) =>
-        (acc.salesRouteNums || []).includes(userSalesRoute)
+        (acc.salesRouteNums || []).includes(userSalesRoute),
       );
     }
 
@@ -84,15 +84,15 @@ const UserCompanyGoalCard: React.FC<Props> = ({
     goal.perUserQuota && goal.perUserQuota > 0
       ? Math.min(100, Math.round((submittedCount / goal.perUserQuota) * 100))
       : totalAccounts > 0
-      ? Math.round((submittedCount / totalAccounts) * 100)
-      : 0;
+        ? Math.round((submittedCount / totalAccounts) * 100)
+        : 0;
 
   const unsubmittedAccounts = userAccounts.filter(
     (a) =>
       !userSubmissions.some(
         (s) =>
-          s.account?.accountNumber?.toString() === a.accountNumber.toString()
-      )
+          s.account?.accountNumber?.toString() === a.accountNumber.toString(),
+      ),
   );
 
   const userRow: UserRowType = {
@@ -107,8 +107,8 @@ const UserCompanyGoalCard: React.FC<Props> = ({
         p.submittedAt instanceof Timestamp
           ? p.submittedAt.toDate().toISOString()
           : typeof p.submittedAt === "string"
-          ? p.submittedAt
-          : "",
+            ? p.submittedAt
+            : "",
     })),
     userCompletionPercentage: percentage,
     unsubmittedAccounts: unsubmittedAccounts.map((a) => ({
@@ -127,7 +127,7 @@ const UserCompanyGoalCard: React.FC<Props> = ({
           <h3>Starts: {goal.goalStartDate}</h3>
           <h3>Ends: {goal.goalEndDate}</h3>
         </div>
-
+        {/* {goal.id} */}
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
         </div>

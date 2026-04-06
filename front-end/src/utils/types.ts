@@ -480,6 +480,7 @@ export type FirestorePostPayload = Omit<
   PostType,
   "displayDate" | "timestamp" | "createdAt" | "updatedAt"
 > & {
+  sharedWithCompanies?: string[];
   displayDate: Date | ReturnType<typeof serverTimestamp> | Timestamp;
   timestamp: Date | ReturnType<typeof serverTimestamp> | Timestamp;
   createdAt: Date | ReturnType<typeof serverTimestamp> | Timestamp;
@@ -686,6 +687,7 @@ export type GoalAcknowledgment = {
 
 export type CompanyGoalType = {
   companyId: string;
+  supplierIdForGoal?: string | null;
   goalTitle: string;
   targetRole?: "sales" | "supervisor";
   targetMode?: "goalForSelectedUsers" | "goalForAccounts";

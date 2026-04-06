@@ -26,7 +26,7 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
       goal,
       currentUser,
     }: { goal: GoalWithNotifications; currentUser: UserType },
-    thunkAPI
+    thunkAPI,
   ) => {
     if (!goal.companyId) {
       console.error("Missing companyId in goal creation");
@@ -46,7 +46,7 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
       // --------------------------------------------------
       if (goal.notifications?.emailOnCreate && goal.goalAssignments?.length) {
         const uniqueUserIds = Array.from(
-          new Set(goal.goalAssignments.map((a) => a.uid))
+          new Set(goal.goalAssignments.map((a) => a.uid)),
         );
 
         for (const uid of uniqueUserIds) {
@@ -68,7 +68,7 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
           <div style="font-family: sans-serif; font-size: 15px; color: #333;">
             <p>You have been assigned a new goal:</p>
             <h3>${goal.goalTitle}</h3>
-            <h4>Created by ${goal.createdByFirstName} ${goal.createdByLastName}</h4>
+            <h4>Created by ${currentUser.firstName} ${currentUser.lastName}</h4>
             <p>${goal.goalDescription}</p>
             <p>
               <strong>Start:</strong> ${goal.goalStartDate}<br/>
@@ -94,7 +94,7 @@ export const createCompanyGoalInFirestore = createAsyncThunk(
       console.error("❌ Error creating goal:", err);
       return thunkAPI.rejectWithValue(err.message);
     }
-  }
+  },
 );
 
 // ✅ Update existing goal (supports new goalAssignments)
@@ -121,16 +121,16 @@ export const updateCompanyGoalInFirestore = createAsyncThunk(
         (a: GoalAssignmentType) => ({
           uid: a.uid,
           accountNumber: a.accountNumber.toString(),
-        })
+        }),
       );
 
       // 🔹 Maintain backward compatibility
       const accountNumbers = Array.from(
         new Set(
           cleanedFields.goalAssignments.map(
-            (a: GoalAssignmentType) => a.accountNumber
-          )
-        )
+            (a: GoalAssignmentType) => a.accountNumber,
+          ),
+        ),
       );
       cleanedFields.accountNumbersForThisGoal = accountNumbers;
     }
@@ -146,14 +146,14 @@ export const updateCompanyGoalInFirestore = createAsyncThunk(
       const existing = snap.data();
       const merged = { ...existing, ...cleanedFields };
 
-      await updateDoc(goalRef, merged);
+      await updateDoc(goalRef, cleanedFields);
       console.log("✅ Goal updated:", goalId);
       return { goalId, updatedFields: merged };
     } catch (err: any) {
       console.error("❌ Error updating goal:", err);
       throw err;
     }
-  }
+  },
 );
 
 // ✅ Delete (soft-delete)

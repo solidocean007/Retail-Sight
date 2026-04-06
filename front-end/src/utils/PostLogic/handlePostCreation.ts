@@ -35,6 +35,7 @@ import { createManualAccountThunk } from "../../thunks/manulAccountsThunk";
 import { logAiFeedback } from "../../hooks/logAiFeedback";
 import { persistCustomProductData } from "./persistCustomProductData";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { selectAllCompanyGoals } from "../../Slices/companyGoalsSlice";
 
 function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
   return new Promise((resolve, reject) => {
@@ -42,7 +43,7 @@ function uploadTaskAsPromise(task: UploadTask): Promise<UploadTaskSnapshot> {
       "state_changed",
       () => {},
       reject,
-      () => resolve(task.snapshot)
+      () => resolve(task.snapshot),
     );
   });
 }
@@ -52,6 +53,7 @@ export const useHandlePostSubmission = () => {
   const functions = getFunctions(undefined, "us-central1");
   const userData = useSelector(selectUser);
   const sendCF = httpsCallable(functions, "galloSendAchievement");
+  const allCompanyGoals = useSelector(selectAllCompanyGoals);
 
   const handlePostSubmission = async (
     post: PostInputType,
@@ -59,7 +61,7 @@ export const useHandlePostSubmission = () => {
     setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
     setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
     setUploadStatusText: React.Dispatch<React.SetStateAction<string>>,
-    selectedGalloGoal?: FireStoreGalloGoalDocType | null
+    selectedGalloGoal?: FireStoreGalloGoalDocType | null,
   ): Promise<PostWithID> => {
     if (!userData) throw new Error("User not authenticated");
     const user = auth.currentUser;
@@ -72,7 +74,7 @@ export const useHandlePostSubmission = () => {
     try {
       // ✅ 1. Check if image already uploaded (pre-processed in UploadImage)
       const alreadyUploaded = post.imageUrl?.startsWith(
-        "https://firebasestorage.googleapis.com"
+        "https://firebasestorage.googleapis.com",
       );
 
       let finalImageUrl = post.imageUrl || "";
@@ -86,7 +88,7 @@ export const useHandlePostSubmission = () => {
         const folderId = `${user.uid}-${Date.now()}`;
         const originalRef = storageRef(
           storage,
-          `images/${dateString}/${folderId}/original.jpg`
+          `images/${dateString}/${folderId}/original.jpg`,
         );
 
         const task = uploadBytesResumable(originalRef, selectedFile);
@@ -104,12 +106,17 @@ export const useHandlePostSubmission = () => {
         console.log("✅ Skipping image upload — already uploaded earlier");
       }
 
+      const goal = allCompanyGoals.find((g) => g.id === post.companyGoalId);
+
       // ✅ 2. Prepare and save Firestore doc
-      const payload: FirestorePostPayload = buildPostPayload({
-        ...post,
-        imageUrl: finalImageUrl,
-        postUser: post.postUser ?? userData,
-      });
+      const payload = buildPostPayload(
+        {
+          ...post,
+          imageUrl: finalImageUrl,
+          postUser: post.postUser ?? userData,
+        },
+        goal,
+      );
 
       newDocRef = await addPostToFirestore(db, payload);
       const postId = newDocRef.id;
@@ -160,7 +167,7 @@ export const useHandlePostSubmission = () => {
         dispatch(showMessage("📤 Sending achievement to Gallo Axis..."));
 
         const closedDate = formatGalloClosedDate(
-          post.closedDate || new Date().toISOString()
+          post.closedDate || new Date().toISOString(),
         );
 
         try {
@@ -179,7 +186,7 @@ export const useHandlePostSubmission = () => {
                 goal: selectedGalloGoal,
                 accountNumber: post.account.accountNumber,
                 postId,
-              })
+              }),
             );
             dispatch(showMessage("Achievement sent to Gallo!"));
           }
@@ -208,8 +215,8 @@ export const useHandlePostSubmission = () => {
     } catch (error) {
       dispatch(
         showMessage(
-          `❌ Error: ${error instanceof Error ? error.message : error}`
-        )
+          `❌ Error: ${error instanceof Error ? error.message : error}`,
+        ),
       );
       if (newDocRef) {
         try {

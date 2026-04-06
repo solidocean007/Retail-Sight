@@ -78,6 +78,11 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     [companyUsers],
   );
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
+  const [isSupplierGoal, setIsSupplierGoal] = useState(false);
+  const [supplierIdForGoal, setSupplierIdForGoal] = useState<string | null>(
+    null,
+  );
+  const [supplierMap, setSupplierMap] = useState<Record<string, string>>({});
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
   const [perUserQuota, setPerUserQuota] = useState<number | string>("1");
@@ -143,7 +148,58 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     setAssigneeType(goal.targetRole || "sales");
     setEnforcePerUserQuota(!!goal.perUserQuota);
     setPerUserQuota(goal.perUserQuota?.toString() || "1");
+    setIsSupplierGoal(!!goal.supplierIdForGoal);
+    setSupplierIdForGoal(goal.supplierIdForGoal || null);
   }, [goal]);
+
+  const connections = useSelector(
+    (state: RootState) => state.companyConnections.connections,
+  );
+
+  const supplierOptions = useMemo(() => {
+    if (!companyId) return [];
+
+    return connections
+      .filter((c) => c.status === "approved")
+      .map((c) => {
+        const isRequester = c.requestFromCompanyId === companyId;
+
+        return {
+          companyId: isRequester
+            ? c.requestToCompanyId
+            : c.requestFromCompanyId,
+        };
+      });
+  }, [connections, companyId]);
+
+  useEffect(() => {
+    async function loadSupplierNames() {
+      const ids = supplierOptions.map((s) => s.companyId);
+
+      const results: Record<string, string> = {};
+
+      await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const snap = await getDoc(doc(db, "companies", id));
+            if (snap.exists()) {
+              results[id] = snap.data().companyName || id;
+            } else {
+              results[id] = id;
+            }
+          } catch {
+            results[id] = id;
+          }
+        }),
+      );
+
+      setSupplierMap(results);
+    }
+
+    if (supplierOptions.length) {
+      loadSupplierNames();
+    }
+  }, [supplierOptions]);
 
   useEffect(() => {
     let cancelled = false;
@@ -428,6 +484,12 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
     if (!goal || !currentUser) return;
     setIsSaving(true);
 
+    if (isSupplierGoal && !supplierIdForGoal) {
+      alert("Please select a supplier");
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const updatedGoal: Partial<CompanyGoalType> = {
         goalTitle,
@@ -442,7 +504,10 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
         targetRole: assigneeType,
         perUserQuota: enforcePerUserQuota
           ? Math.max(1, Number(perUserQuota) || 0)
-          : null,
+          : undefined,
+        ...(isSupplierGoal
+          ? { supplierIdForGoal }
+          : { supplierIdForGoal: null }),
       };
 
       await onSave(updatedGoal);
@@ -471,6 +536,40 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
             <div className="goal-form-group">
               <GoalTitleInput value={goalTitle} setValue={setGoalTitle} />
             </div>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isSupplierGoal}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsSupplierGoal(checked);
+
+                    if (!checked) {
+                      setSupplierIdForGoal(null);
+                    }
+                  }}
+                />
+              }
+              label="Supplier Goal"
+            />
+
+            {isSupplierGoal && (
+              <TextField
+                select
+                label="Select Supplier"
+                value={supplierIdForGoal || ""}
+                onChange={(e) => setSupplierIdForGoal(e.target.value || null)}
+                size="small"
+                sx={{ minWidth: 250 }}
+              >
+                <MenuItem value="">Select Supplier</MenuItem>
+                {supplierOptions.map((s) => (
+                  <MenuItem key={s.companyId} value={s.companyId}>
+                    {supplierMap[s.companyId] || "Loading..."}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
 
             <div className="goal-form-group">
               <label htmlFor="goalDescription">Goal Description</label>
@@ -646,7 +745,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                   {/* Chain Filter */}
                   <FilterMultiSelect
                     label="Chain"
-                    options={chainNames}
+                    options={chainNames} // Type 'string[]' is not assignable to type 'OptionItem[]'
                     selected={filters.chains}
                     onChange={(newChains) =>
                       setFilters((prev) => ({ ...prev, chains: newChains }))
@@ -672,7 +771,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                   {/* Type of Account */}
                   <FilterMultiSelect
                     label="Type of Account"
-                    options={customerTypes}
+                    options={customerTypes} // Type 'string[]' is not assignable to type 'OptionItem[]'
                     selected={filters.typeOfAccounts}
                     onChange={(newTypes) =>
                       setFilters((prev) => ({
@@ -686,6 +785,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                   <FilterMultiSelect
                     label="Salesperson"
                     options={normalizedCompanyUsers.map(
+                      // Type 'string[]' is not assignable to type 'OptionItem[]'
                       (u) => `${u.firstName} ${u.lastName}`,
                     )}
                     selected={filters.userIds.map((id) =>
@@ -712,7 +812,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                   {/* Salesperson */}
                   <FilterMultiSelect
                     label="Supervisor"
-                    options={normalizedCompanyUsers
+                    options={normalizedCompanyUsers // Type 'string[]' is not assignable to type 'OptionItem[]'
                       .filter((u) => u.role === "supervisor")
                       .map((u) => `${u.firstName} ${u.lastName}`)}
                     selected={filters.supervisorIds.map((id) =>
@@ -959,7 +1059,7 @@ const NewEditCompanyGoalModal: React.FC<NewEditCompanyGoalModalProps> = ({
                     assignments={goalAssignments}
                     accounts={accounts}
                     users={normalizedCompanyUsers}
-                    onRemoveAssignment={handleRemoveAssignment}
+                    onRemoveAssignment={handleRemoveAssignment} //  Property 'onRemoveAssignment' does not exist on type 'IntrinsicAttributes & AssignmentsPreviewProps'.ts(2322)
                     onClearAll={() => setGoalAssignments([])}
                   />
                 )}

@@ -13,6 +13,8 @@ import {
   FormControlLabel,
   Radio,
   Checkbox,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   CompanyAccountType,
@@ -78,7 +80,14 @@ const CreateCompanyGoalView = () => {
     [],
   );
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-
+  const [supplierMap, setSupplierMap] = useState<Record<string, string>>({});
+  const [supplierIdForGoal, setSupplierIdForGoal] = useState<string | null>(
+    null,
+  );
+  const connections = useSelector(
+    (state: RootState) => state.companyConnections.connections,
+  );
+  const [isSupplierGoal, setIsSupplierGoal] = useState(false);
   const [customerTypes, setCustomerTypes] = useState<string[]>([]);
   const [chainNames, setChainNames] = useState<string[]>([]);
   const [enforcePerUserQuota, setEnforcePerUserQuota] = useState(false);
@@ -117,6 +126,52 @@ const CreateCompanyGoalView = () => {
   //   filters.typeOfAccounts.length > 0 ||
   //   filters.userIds.length > 0 ||
   //   filters.supervisorIds.length > 0;
+
+  const supplierOptions = useMemo(() => {
+    if (!companyId) return [];
+
+    return connections
+      .filter((c) => c.status === "approved")
+      .map((c) => {
+        const isRequester = c.requestFromCompanyId === companyId;
+
+        return {
+          companyId: isRequester
+            ? c.requestToCompanyId
+            : c.requestFromCompanyId,
+          connectionId: c.id,
+        };
+      });
+  }, [connections, companyId]);
+
+  useEffect(() => {
+    async function loadSupplierNames() {
+      const ids = supplierOptions.map((s) => s.companyId);
+
+      const results: Record<string, string> = {};
+
+      await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const snap = await getDoc(doc(db, "companies", id));
+            if (snap.exists()) {
+              results[id] = snap.data().companyName || id;
+            } else {
+              results[id] = id;
+            }
+          } catch {
+            results[id] = id;
+          }
+        }),
+      );
+
+      setSupplierMap(results);
+    }
+
+    if (supplierOptions.length) {
+      loadSupplierNames();
+    }
+  }, [supplierOptions]);
 
   type SavedFilterSet = typeof filters;
 
@@ -296,6 +351,11 @@ const CreateCompanyGoalView = () => {
   const numberOfAffectedUsers = new Set(goalAssignments.map((a) => a.uid)).size;
 
   const handleCreateGoal = async () => {
+    if (isSupplierGoal && !supplierIdForGoal) {
+      dispatch(showMessage("Please select a supplier."));
+      return;
+    }
+    const cleanSupplierId = supplierIdForGoal || null;
     if (!readyForCreation) {
       alert("Please fill out all required fields.");
       return;
@@ -321,6 +381,7 @@ const CreateCompanyGoalView = () => {
     } = {
       companyId,
       goalTitle,
+      ...(cleanSupplierId ? { supplierIdForGoal: cleanSupplierId } : {}),
       targetRole: assigneeType,
       goalDescription,
       goalMetric,
@@ -476,6 +537,49 @@ const CreateCompanyGoalView = () => {
           <Box display="flex" flexDirection="column" gap={3}>
             <div className="goal-form-group">
               <GoalTitleInput value={goalTitle} setValue={setGoalTitle} />
+            </div>
+            <div className="incentive-box">
+              <div className="incentive-check-box">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={isSupplierGoal}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+
+                        setIsSupplierGoal(checked);
+
+                        if (!checked) {
+                          setSupplierIdForGoal(null); // clear supplier on uncheck
+                        }
+                      }}
+                    />
+                  }
+                  label="Share this goal with a supplier"
+                />
+              </div>
+
+              {isSupplierGoal && (
+                <div className="select-supplier-for-incentive">
+                  <Select
+                    value={supplierIdForGoal || ""}
+                    onChange={(e) =>
+                      setSupplierIdForGoal(e.target.value || null)
+                    }
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 250 }}
+                  >
+                    <MenuItem value="">-- Select Supplier --</MenuItem>
+
+                    {supplierOptions.map((s) => (
+                      <MenuItem key={s.companyId} value={s.companyId}>
+                        {supplierMap[s.companyId] || "Loading..."}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="goal-form-group">

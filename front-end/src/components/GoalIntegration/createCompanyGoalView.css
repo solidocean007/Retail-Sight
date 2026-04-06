@@ -37,6 +37,22 @@
   max-width: 600px;
 }
 
+.incentive-box {
+  background-color: beige;
+  max-width: 400px;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+}
+
+.incentive-check-box {
+  max-width: 500px;
+}
+
+.select-supplier-for-incentive {
+  display: flex;
+  max-width: 900px;
+}
+
 .target-accounts-and-roles {
   display: flex;
   align-items: center;

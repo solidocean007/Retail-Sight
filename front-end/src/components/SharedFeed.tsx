@@ -131,7 +131,6 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
           defaultItemHeight={450}
           itemContent={(index, post) => {
             if (!post?.id) return null;
-            console.log("Rendering post:", post.id);
             return (
               <div key={post.id} className="post-card-renderer-container">
                 <PostCardRenderer

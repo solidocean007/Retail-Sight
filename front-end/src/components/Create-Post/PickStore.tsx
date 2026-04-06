@@ -169,8 +169,6 @@ export const PickStore: React.FC<PickStoreProps> = ({
     selectUsersGalloGoals(state, salesRouteNum),
   );
 
-  console.log("users gallo goals: ", usersGalloGoals);
-
   const [selectedGalloGoalId, setSelectedGalloGoalId] = useState<string | null>(
     null,
   );
@@ -477,20 +475,18 @@ export const PickStore: React.FC<PickStoreProps> = ({
       </Box>
       {showDebug && (
         <>
-       
-        <DebugValues
-          userRoute={salesRouteNum}
-          galloEnabled={galloEnabled}
-          isAllStoresShown={isAllStoresShown}
-          allGalloGoalsCount={allGalloGoals.length}
-          usersGalloGoalsCount={usersGalloGoals.length}
-          usersActiveGalloGoalsCount={usersActiveGalloGoals.length}
-          allActiveGalloGoalsCount={allActiveGalloGoals.length}
-          finalDropdownCount={galloGoals.length}
-          selectedAccountNumber={post.account?.accountNumber?.toString()}
-        />
+          <DebugValues
+            userRoute={salesRouteNum}
+            galloEnabled={galloEnabled}
+            isAllStoresShown={isAllStoresShown}
+            allGalloGoalsCount={allGalloGoals.length}
+            usersGalloGoalsCount={usersGalloGoals.length}
+            usersActiveGalloGoalsCount={usersActiveGalloGoals.length}
+            allActiveGalloGoalsCount={allActiveGalloGoals.length}
+            finalDropdownCount={galloGoals.length}
+            selectedAccountNumber={post.account?.accountNumber?.toString()}
+          />
         </>
-        
       )}
 
       <Box className="store-selection">

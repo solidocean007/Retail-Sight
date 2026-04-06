@@ -85,7 +85,10 @@ import { updateSystemNotificationSchedule } from "./notifications/updateSystemNo
 import { getNotificationAnalytics } from "./notifications/getNotificationAnalytics";
 import { trackEmailClick } from "./notifications/sendEmailNotificationCore";
 
+import { backfillSupplierGoalPosts } from "./backFillISupplierGoalPosts";
+
 export {
+  backfillSupplierGoalPosts,
   developerRecomputeCompanyCounts,
   acceptCompanyInvite,
   getExternalApiKeyStatus,

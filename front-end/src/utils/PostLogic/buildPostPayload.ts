@@ -6,17 +6,27 @@ import {
 import { extractHashtags, extractStarTags } from "../extractHashtags";
 import { Timestamp } from "@firebase/firestore";
 
-export const buildPostPayload = (post: PostInputType): FirestorePostPayload => {
+export const buildPostPayload = (
+  post: PostInputType,
+  goal?: { supplierIdForGoal?: string | null },
+): FirestorePostPayload => {
   const hashtags = extractHashtags(post.description ?? "");
   const starTags = extractStarTags(post.description ?? "");
-
+ const shared = new Set<string>();
   const account = post.account as CompanyAccountType;
+
+  if (goal?.supplierIdForGoal) {
+    shared.add(goal.supplierIdForGoal);
+  }
 
   const cleanedDescription = post.description
     ?.replace(/(#|[*])\s+/g, "$1") // Remove spaces after # or *
     .trim(); // Trim any leading/trailing spaces
 
   return {
+    ...(shared.size > 0 && {
+      sharedWithCompanies: Array.from(shared),
+    }),
     description: cleanedDescription || "",
     companyId: post.postUser?.companyId || "",
     imageUrl: post.imageUrl || "",

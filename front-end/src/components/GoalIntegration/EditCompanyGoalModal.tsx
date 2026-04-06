@@ -258,7 +258,7 @@ const EditCompanyGoalModal: React.FC<EditCompanyGoalModalProps> = ({
       fullWidth
       PaperProps={{ className: "goal-modal" }}
     >
-      <DialogTitle className="goal-modal__title">Edit Company Goal</DialogTitle>
+      <DialogTitle className="goal-modal__title">Edit Company Goalaadfa</DialogTitle>
 
       <DialogContent dividers className="goal-modal-content">
         {/* 📝 Goal Basics */}
