@@ -37,7 +37,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   const { connections } = useSelector(
     (state: RootState) => state.companyConnections,
   );
-
+  const [inviteLoading, setInviteLoading] = useState(false);
   // ✅ Access plan data from Redux (cached + persisted)
 
   const currentPlan = useMemo(() => {
@@ -105,6 +105,12 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     brandSelection: string[],
   ) => {
     if (!user || !company || !currentCompanyId) return;
+
+    console.log("CALLING CF WITH:", {
+      targetEmail: emailInput,
+      fromCompanyId: currentCompanyId,
+      sharedBrands: brandSelection,
+    });
     try {
       await dispatch(
         createConnectionRequest({
@@ -237,8 +243,8 @@ const CompanyConnectionsManager: React.FC<Props> = ({
                 <div>
                   <strong>Your plan has limits.</strong>
                   <p>
-                    Your current plan allows {effectiveConnectionLimit} connections.
-                    Upgrading increases this instantly.
+                    Your current plan allows {effectiveConnectionLimit}{" "}
+                    connections. Upgrading increases this instantly.
                   </p>
                 </div>
               </li>
@@ -322,16 +328,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           slotProps={{ backdrop: { className: "connection-builder-backdrop" } }}
         >
           <div className="connection-builder-modal">
-            {/* <IdentifyCompany
-              onContinue={(email, lookup) => {
-                setIdentifiedEmail(email);
-                setStep(2);
-              }}
-              onInvite={(email) => {
-                setIdentifiedEmail(email);
-                setShowInviteModal(true);
-              }}
-            /> */}
+          
             <IdentifyCompany
               fromCompanyId={currentCompanyId!}
               currentUser={user}
@@ -359,12 +356,12 @@ const CompanyConnectionsManager: React.FC<Props> = ({
               onConfirm={(email, brandSelection) => {
                 setBrandSelectionFromStep2(brandSelection);
 
-                if (inviteMode) {
+                if (lookup?.mode === "invitable") {
                   setShowInviteModal(true);
-                  return Promise.resolve(); // don't send request yet
+                  return Promise.resolve();
                 }
 
-                return handleConfirmRequest(email, brandSelection); // existing user path
+                return handleConfirmRequest(email, brandSelection);
               }}
             />
           </div>
@@ -374,30 +371,41 @@ const CompanyConnectionsManager: React.FC<Props> = ({
       <InviteAndConnectModal
         email={identifiedEmail}
         isOpen={showInviteModal}
+        loading={inviteLoading}
         onCancel={() => setShowInviteModal(false)}
         onConfirm={async () => {
-          const fn = httpsCallable(functions, "createInviteAndDraftConnection");
+          try {
+            setInviteLoading(true);
 
-          await fn({
-            targetEmail: identifiedEmail,
-            fromCompanyId: currentCompanyId,
-            sharedBrands: brandSelectionFromStep2.map((b) => ({
-              brand: b,
-              proposedBy: user,
-            })),
-          });
+            const fn = httpsCallable(
+              functions,
+              "createInviteAndDraftConnection",
+            );
 
-          // ✅ Correct location
-          setInviteMode(false);
+            await fn({
+              targetEmail: identifiedEmail,
+              fromCompanyId: currentCompanyId,
+              sharedBrands: brandSelectionFromStep2.map((b) => ({
+                brand: b,
+                proposedBy: user,
+              })),
+            });
 
-          dispatch(
-            showMessage(
-              "Invite sent. The connection will auto-stage when they join.",
-            ),
-          );
+            setInviteMode(false);
 
-          setShowInviteModal(false);
-          setStep(0);
+            dispatch(
+              showMessage(
+                "Invite sent. The connection will auto-stage when they join.",
+              ),
+            );
+
+            setShowInviteModal(false);
+            setStep(0);
+          } catch (err) {
+            dispatch(showMessage("Failed to send invite."));
+          } finally {
+            setInviteLoading(false);
+          }
         }}
       />
 

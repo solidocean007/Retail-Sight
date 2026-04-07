@@ -46,7 +46,7 @@ const currentCompanySlice = createSlice({
     // Manual setter (e.g., after profile update)
     setCurrentCompany(
       state,
-      action: PayloadAction<CompanyType & { id: string }>
+      action: PayloadAction<CompanyType & { id: string }>,
     ) {
       // ✅ ensure serializable data here as well
       state.data = normalizeFirestoreData(action.payload);
@@ -73,5 +73,12 @@ export default currentCompanySlice.reducer;
 
 // ───────────── Selectors ─────────────
 export const selectCurrentCompany = (s: RootState) => s.currentCompany.data;
+export const selectCompanyType = (s: RootState) => s.currentCompany.data?.companyType;
+
+export const selectIsSupplier = (s: RootState) =>
+  s.currentCompany.data?.companyType === "supplier";
+
+export const selectIsDistributor = (s: RootState) =>
+  s.currentCompany.data?.companyType === "distributor";
 export const selectCompanyLoading = (s: RootState) => s.currentCompany.loading;
 export const selectCompanyError = (s: RootState) => s.currentCompany.error;

@@ -58,17 +58,17 @@ export const createConnectionRequest = createAsyncThunk(
       brandSelection: string[];
       user: any;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
-      const fn = httpsCallable(functions, "createConnectionRequest");
+      const fn = httpsCallable(functions, "createInviteAndDraftConnection");
 
       const res = await fn({
         fromCompanyId: currentCompanyId,
-        email: emailInput,
-        pendingBrands: (brandSelection ?? []).map((b) => ({
+        targetEmail: emailInput,
+        sharedBrands: (brandSelection ?? []).map((b) => ({
           brand: b,
-          proposedBy: user,
+          proposedBy: user?.uid, // safer
         })),
       });
 
@@ -76,7 +76,7 @@ export const createConnectionRequest = createAsyncThunk(
     } catch (err: any) {
       return rejectWithValue(err?.message || "Failed to create connection.");
     }
-  }
+  },
 );
 
 /**
@@ -89,8 +89,8 @@ export const fetchCompanyConnections = createAsyncThunk(
       collection(db, "companyConnections"),
       or(
         where("requestFromCompanyId", "==", companyId),
-        where("requestToCompanyId", "==", companyId)
-      )
+        where("requestToCompanyId", "==", companyId),
+      ),
     );
 
     const snapshot = await getDocs(q);
@@ -99,12 +99,12 @@ export const fetchCompanyConnections = createAsyncThunk(
       normalizeTimestamps({
         id: d.id,
         ...(d.data() as Omit<CompanyConnectionType, "id">),
-      })
+      }),
     );
 
     await setCompanyConnectionsStore(companyId, data);
     return data;
-  }
+  },
 );
 
 /**
@@ -133,7 +133,7 @@ export const updateConnectionStatus = createAsyncThunk(
 
     await updateCompanyConnectionInStore(companyId, updated);
     return { id, status };
-  }
+  },
 );
 
 const companyConnectionSlice = createSlice({
@@ -142,7 +142,7 @@ const companyConnectionSlice = createSlice({
   reducers: {
     setCachedConnections: (
       state,
-      action: PayloadAction<CompanyConnectionType[]>
+      action: PayloadAction<CompanyConnectionType[]>,
     ) => {
       state.connections = [...action.payload];
     },
@@ -161,7 +161,7 @@ const companyConnectionSlice = createSlice({
       })
       .addCase(updateConnectionStatus.fulfilled, (state, action) => {
         const target = state.connections.find(
-          (c) => c.id === action.payload.id
+          (c) => c.id === action.payload.id,
         );
         if (target) target.status = action.payload.status;
       });

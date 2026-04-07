@@ -36,7 +36,7 @@ const toIso = (v: any): string =>
         : new Date().toISOString();
 
 export default function CompanyOnboardingAcceptForm() {
-  const { inviteId, companyId } = useParams();
+  const { inviteId } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -45,7 +45,7 @@ export default function CompanyOnboardingAcceptForm() {
   const [error, setError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-
+  const [companyName, setCompanyName] = useState("");
   const [password, setPassword] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -54,44 +54,27 @@ export default function CompanyOnboardingAcceptForm() {
     null,
   );
   const [submitting, setSubmitting] = useState(false);
+
   const functions = getFunctions();
   const markAccessRequestComplete = httpsCallable(
     functions,
     "markAccessRequestComplete",
   );
 
-  const resolveStagedConnections = async (
-    email: string,
-    newCompanyId: string,
-  ) => {
-    try {
-      const fn = httpsCallable(functions, "acceptInviteAutoResolve");
-      await fn({ email, newCompanyId });
-    } catch (err) {
-      console.error("Failed to auto-resolve staged connections:", err);
-      // Optional: surface a non-blocking warning
-      dispatch(
-        showMessage(
-          "Company activated, but connection setup may take a moment.",
-        ),
-      );
-    }
-  };
-
   useEffect(() => {
-    if (!inviteId || !companyId) return;
+    if (!inviteId) return;
 
     (async () => {
       try {
-        const inviteSnap = await getDoc(
-          doc(db, `companies/${companyId}/invites/${inviteId}`),
-        );
+        const inviteSnap = await getDoc(doc(db, "pendingInvites", inviteId!));
+
         if (!inviteSnap.exists()) {
           setError("Invite not found or already used.");
           return;
         }
 
         const inviteData = inviteSnap.data();
+
         if (inviteData.status === "accepted") {
           setError("This invite has already been accepted.");
           return;
@@ -120,7 +103,7 @@ export default function CompanyOnboardingAcceptForm() {
         setLoading(false);
       }
     })();
-  }, [inviteId, companyId]);
+  }, [inviteId]);
 
   const [pendingLink, setPendingLink] = useState<{
     email: string;
@@ -143,7 +126,7 @@ export default function CompanyOnboardingAcceptForm() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      if (user.email?.toLowerCase() !== invite.inviteeEmail.toLowerCase()) {
+      if (user.email?.toLowerCase() !== invite.email.toLowerCase()) {
         await auth.signOut();
         throw new Error(
           "Signed-in Google account does not match invited email.",
@@ -154,15 +137,13 @@ export default function CompanyOnboardingAcceptForm() {
 
       await acceptInvite({
         inviteId,
-        companyId,
+        fromCompanyId: invite.fromCompanyId,
         firstName,
         lastName,
+        companyName,
       });
 
       dispatch(showMessage("✅ Account activated!"));
-
-      // 🆕 Auto-resolve staged connections for this new company
-      await resolveStagedConnections(invite.inviteeEmail, invite.companyId);
 
       navigate("/user-home-page");
     } catch (e: any) {
@@ -212,6 +193,11 @@ export default function CompanyOnboardingAcceptForm() {
       return;
     }
 
+    if (!companyName.trim()) {
+      setError("Company name is required.");
+      return;
+    }
+
     if (passwordError || verifyPasswordError) return;
 
     setSubmitting(true);
@@ -221,14 +207,10 @@ export default function CompanyOnboardingAcceptForm() {
       const auth = getAuth();
 
       try {
-        await createUserWithEmailAndPassword(
-          auth,
-          invite.inviteeEmail,
-          password,
-        );
+        await createUserWithEmailAndPassword(auth, invite.email, password);
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
-          await signInWithEmailAndPassword(auth, invite.inviteeEmail, password);
+          await signInWithEmailAndPassword(auth, invite.email, password);
 
           if (
             pendingLink &&
@@ -246,15 +228,19 @@ export default function CompanyOnboardingAcceptForm() {
 
       const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
 
-      await acceptInvite({ inviteId, companyId, firstName, lastName });
-
-      await markAccessRequestComplete({
-        companyId: invite.companyId,
+      await acceptInvite({
         inviteId,
-        inviteeEmail: invite.inviteeEmail,
+        fromCompanyId: invite.fromCompanyId,
+        firstName,
+        lastName,
+        companyName,
       });
 
-      await resolveStagedConnections(invite.inviteeEmail, invite.companyId);
+      await markAccessRequestComplete({
+        companyId: invite.fromCompanyId,
+        inviteId,
+        inviteeEmail: invite.email,
+      });
 
       dispatch(showMessage("✅ Company activated! Redirecting..."));
       setTimeout(() => navigate("/user-home-page"), 800);
@@ -268,7 +254,7 @@ export default function CompanyOnboardingAcceptForm() {
             "Existing account detected. Please reset your password before accepting the invite.",
           ),
         );
-        navigate(`/login?email=${encodeURIComponent(invite.inviteeEmail)}`);
+        navigate(`/login?email=${encodeURIComponent(invite.email)}`);
         return;
       }
 
@@ -276,7 +262,7 @@ export default function CompanyOnboardingAcceptForm() {
         setError(
           "An account already exists for this email. Please log in instead.",
         );
-        navigate(`/login?email=${encodeURIComponent(invite.inviteeEmail)}`);
+        navigate(`/login?email=${encodeURIComponent(invite.email)}`);
         return;
       }
 
@@ -289,7 +275,7 @@ export default function CompanyOnboardingAcceptForm() {
   if (loading)
     return <div className="onboarding-loading">Loading company setup…</div>;
   if (error) return <div className="onboarding-error">{error}</div>;
-  // if (!invite) return null;
+  if (!invite) return null;
 
   return (
     <div className="onboarding-page">
@@ -312,7 +298,7 @@ export default function CompanyOnboardingAcceptForm() {
         <form onSubmit={handleSubmit} className="onboarding-form">
           <div className="readonly-field">
             <label>Email</label>
-            <div className="readonly-value">{invite.inviteeEmail}</div>
+            <div className="readonly-value">{invite.email}</div>
           </div>
           <p className="onboarding-hint">
             If you already have a Displaygram account with this email, log in
@@ -327,6 +313,14 @@ export default function CompanyOnboardingAcceptForm() {
           >
             Continue with Google
           </button>
+          <label>Company Name</label>
+          <input
+            type="text"
+            className="auth-input"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            required
+          />
 
           <div className="auth-divider">or</div>
           <label>First Name</label>
@@ -391,7 +385,7 @@ export default function CompanyOnboardingAcceptForm() {
 
           <button
             type="submit"
-            className="btn-primary"
+            className="button-primary"
             disabled={submitting || !!passwordError || !!verifyPasswordError}
           >
             {submitting ? "Activating…" : "Activate Account"}

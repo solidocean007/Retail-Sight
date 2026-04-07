@@ -28,11 +28,39 @@ export const onPendingNewUserAndCompanyInviteCreate = onDocumentCreated(
     const fromCompany = fromCompanySnap.data();
     const companyName = fromCompany?.companyName || "A Displaygram Company";
 
-    // Logo hosted in Firebase Storage
-    const logoUrl =
-      "https://firebasestorage.googleapis.com/v0/b/retail-sight.appspot.com/o/displaygram%2Fdisplaygram-logo.png?alt=media";
+    const draftsSnap = await db
+      .collection("companyConnectionDrafts")
+      .where("targetEmail", "==", email.toLowerCase())
+      .where("status", "==", "pending-user-creation")
+      .get();
 
-    const onboardingUrl = `https://displaygram.com/onboard-company/${inviteId}`;
+    let brands: string[] = [];
+
+    draftsSnap.forEach((doc) => {
+      const draft = doc.data();
+      if (Array.isArray(draft.pendingBrands)) {
+        draft.pendingBrands.forEach((b: any) => {
+          if (typeof b === "string") {
+            brands.push(b);
+          } else if (b?.brand) {
+            brands.push(b.brand);
+          }
+        });
+      }
+    });
+
+    // remove duplicates
+    brands = [...new Set(brands)];
+
+    if (!fromCompanyId) {
+      console.error("Missing fromCompanyId on invite");
+      return;
+    }
+
+    // Logo hosted in Firebase Storage
+    const logoUrl = "https://displaygram.com/displaygram-logo.png";
+
+    const onboardingUrl = `https://displaygram.com/onboard-company/${fromCompanyId}/${inviteId}`;
 
     const subject = `${companyName} invited you to join Displaygram`;
 
@@ -85,10 +113,46 @@ export const onPendingNewUserAndCompanyInviteCreate = onDocumentCreated(
                       has invited you to join Displaygram and create your company profile.
                     </p>
 
-                    <p>
-                      They have already proposed shared brands to collaborate on.
-                      You will see these during onboarding.
-                    </p>
+                    ${
+                      brands.length > 0
+                        ? `
+  <div style="margin:24px 0;">
+    <p style="margin-bottom:10px;">
+      <strong>Proposed Shared Brands:</strong>
+    </p>
+
+    <ul style="
+      padding-left:20px;
+      margin:0;
+      color:#374151;
+      font-size:15px;
+    ">
+      ${brands
+        .map(
+          (b) => `
+            <li style="
+  display:inline-block;
+  background:#e0e7ff;
+  color:#1e40af;
+  padding:6px 10px;
+  border-radius:6px;
+  margin:4px 4px 0 0;
+  font-size:13px;
+">
+  ${b}
+</li>
+          `
+        )
+        .join("")}
+    </ul>
+  </div>
+`
+                        : `
+  <p>
+    They have invited you to connect and collaborate on Displaygram.
+  </p>
+`
+                    }
 
                     <!-- CTA BUTTON -->
                     <div style="text-align:center; margin:32px 0;">

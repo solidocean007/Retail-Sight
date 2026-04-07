@@ -70,7 +70,7 @@ const rootReducer = (state: any, action: any) => {
 // ✅ store uses rootReducer (THIS is the key fix)
 const store = configureStore({
   reducer: rootReducer,
-  devTools: process.env.NODE_ENV !== "production",
+  devTools: process.env.NODE_ENV !== "production", // Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.ts(2591)
 });
 
 // types

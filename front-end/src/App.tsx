@@ -149,7 +149,7 @@ function AppContent() {
             {/* Main layout frame */}
             <div className="page-layout-frame">
               <AppRoutes />
-              {!isPublicRoute && <Footer />}
+              {!isPublicRoute && !isAuthRoute && <Footer />}
             </div>
 
             {/* Alerts */}

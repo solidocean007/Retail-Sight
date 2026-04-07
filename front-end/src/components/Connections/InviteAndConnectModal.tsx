@@ -4,6 +4,7 @@ import CustomConfirmation from "../CustomConfirmation";
 interface Props {
   email: string;
   isOpen: boolean;
+  loading: boolean;
   onCancel: () => void;
 
   // When confirmed, the parent will send:
@@ -16,12 +17,14 @@ interface Props {
 const InviteAndConnectModal: React.FC<Props> = ({
   email,
   isOpen,
+  loading,
   onCancel,
   onConfirm,
 }) => {
   return (
     <CustomConfirmation
       isOpen={isOpen}
+      loading={loading}
       title="Invite This Company?"
       message={`This admin (${email}) is not yet on Displaygram.\n\nWhen they join, your pending brand proposals will be included and they'll be prompted to approve the connection.`}
       onConfirm={onConfirm}

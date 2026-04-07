@@ -45,15 +45,15 @@ export const createInviteAndDraftConnection = onCall(async (request) => {
     });
 
     // 2️⃣ Create draft connection for shared brands
-    const draftConnectionRef = await db
-      .collection("companyConnectionDrafts")
-      .add({
-        targetEmail: cleanEmail,
-        fromCompanyId,
-        pendingBrands: sharedBrands,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        inviteId: inviteRef.id,
-      });
+    const draftConnectionRef = await db.collection("companyConnectionDrafts");
+    await db.collection("companyConnectionDrafts").add({
+      targetEmail: cleanEmail,
+      initiatorCompanyId: fromCompanyId, // ✅ FIX NAME
+      pendingBrands: sharedBrands,
+      status: "pending-user-creation", // ✅ REQUIRED
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      inviteId: inviteRef.id,
+    });
 
     return {
       inviteId: inviteRef.id,

@@ -24,7 +24,7 @@
 }
 
 .onboarding-card {
-  background: var(--background-pop-out-body);
+  background: var(--onboarding-accept-card);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
   max-width: 420px;
@@ -75,7 +75,7 @@
 }
 
 .readonly-value {
-  background: var(--gray-100);
+  background: none;
   border-radius: 8px;
   padding: 0.6rem;
   color: var(--text-color);

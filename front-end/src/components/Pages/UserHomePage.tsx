@@ -33,9 +33,12 @@ import { setResetting } from "../../Slices/appSlice";
 import { resetApp } from "../../utils/resetApp";
 import { showMessage } from "../../Slices/snackbarSlice";
 import InstallPrompt from "../PWA/InstallPrompt";
+import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 
 const UserHomePage = () => {
   const navigate = useNavigate();
+  const isSupplier = useSelector(selectIsSupplier);
+
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
@@ -46,8 +49,8 @@ const UserHomePage = () => {
   const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
   const [activeFeedType, setActiveFeedType] = useState<"company" | "shared">(
-    "company",
-  );
+  isSupplier ? "shared" : "company"
+);
   const [activeCompanyPostSet, setActiveCompanyPostSet] = useState<
     "posts" | "filteredPosts"
   >("posts");
@@ -67,6 +70,14 @@ const UserHomePage = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
+
+  const isSharedFeed = activeFeedType === "shared";
+
+  useEffect(() => {
+  if (isSupplier) {
+    setActiveFeedType("shared");
+  }
+}, [isSupplier]);
 
   useEffect(() => {
     const flag = localStorage.getItem("showOnboardingModal");
