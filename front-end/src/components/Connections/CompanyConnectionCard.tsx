@@ -15,9 +15,10 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
-import { getProposerCompanyId, getProposerName } from "../../utils/connectionHelper";
-
-
+import {
+  getProposerCompanyId,
+  getProposerName,
+} from "../../utils/connectionHelper";
 
 interface Props {
   connection: CompanyConnectionType;
@@ -39,7 +40,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [brandSelection, setBrandSelection] = useState<string[]>([]);
   const [sharedBrands, setSharedBrands] = useState<string[]>(
-    connection.sharedBrands || []
+    connection.sharedBrands || [],
   );
   const [manualBrand, setManualBrand] = useState("");
   const [saving, setSaving] = useState(false);
@@ -50,10 +51,10 @@ const CompanyConnectionCard: React.FC<Props> = ({
   >(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   // fade out visual feedback
-
+  console.log("connection in card: ", connection)
   const currentBrands = useMemo(() => {
     const supplier = supplierBrandList.find(
-      (s) => s.supplier === selectedSupplier
+      (s) => s.supplier === selectedSupplier,
     );
     return supplier ? supplier.brands : [];
   }, [supplierBrandList, selectedSupplier]);
@@ -81,29 +82,28 @@ const CompanyConnectionCard: React.FC<Props> = ({
   const declinedBrands = connection.declinedBrands || [];
 
   const pendingFromUs = useMemo(
-  () =>
-    pendingBrands.filter((b) => {
-      const proposer = b.proposedBy;
-      if (typeof proposer === "string") {
-        return proposer === currentCompanyId; // old shape
-      }
-      return proposer.companyId === currentCompanyId; // new shape
-    }),
-  [pendingBrands, currentCompanyId]
-);
+    () =>
+      pendingBrands.filter((b) => {
+        const proposer = b.proposedBy;
+        if (typeof proposer === "string") {
+          return proposer === currentCompanyId; // old shape
+        }
+        return proposer.companyId === currentCompanyId; // new shape
+      }),
+    [pendingBrands, currentCompanyId],
+  );
 
-const pendingFromThem = useMemo(
-  () =>
-    pendingBrands.filter((b) => {
-      const proposer = b.proposedBy;
-      if (typeof proposer === "string") {
-        return proposer !== currentCompanyId; // old shape
-      }
-      return proposer.companyId !== currentCompanyId; // new shape
-    }),
-  [pendingBrands, currentCompanyId]
-);
-
+  const pendingFromThem = useMemo(
+    () =>
+      pendingBrands.filter((b) => {
+        const proposer = b.proposedBy;
+        if (typeof proposer === "string") {
+          return proposer !== currentCompanyId; // old shape
+        }
+        return proposer.companyId !== currentCompanyId; // new shape
+      }),
+    [pendingBrands, currentCompanyId],
+  );
 
   const checkConnectionLimit = async (companyId: string) => {
     // const fn = httpsCallable(functions, "enforcePlanLimits");
@@ -129,7 +129,7 @@ const pendingFromThem = useMemo(
 
   const toggleBrand = (brand: string) => {
     setBrandSelection((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand],
     );
   };
 
@@ -171,7 +171,7 @@ const pendingFromThem = useMemo(
 
   const openConfirm = (
     action: "accept" | "reject" | "cancel" | "removeShared",
-    brand: string
+    brand: string,
   ) => {
     setConfirmBrand(brand);
     setConfirmAction(action);
@@ -190,7 +190,7 @@ const pendingFromThem = useMemo(
 
       // Common update skeleton
       const updatedPending = (connection.pendingBrands || []).filter(
-        (b) => b.brand !== confirmBrand
+        (b) => b.brand !== confirmBrand,
       );
 
       const updateData: any = {
@@ -205,8 +205,8 @@ const pendingFromThem = useMemo(
           if (!result.allowed) {
             dispatch(
               showMessage(
-                `You’ve reached your connection limit (${result.planLimit}). Please upgrade to add more.`
-              )
+                `You’ve reached your connection limit (${result.planLimit}). Please upgrade to add more.`,
+              ),
             );
             setConfirmOpen(false);
             setConfirmLoading(false);
@@ -218,8 +218,8 @@ const pendingFromThem = useMemo(
               showMessage(
                 `You have ${result.remainingConnections} connection${
                   result.remainingConnections === 1 ? "" : "s"
-                } remaining.`
-              )
+                } remaining.`,
+              ),
             );
           }
 
@@ -232,8 +232,8 @@ const pendingFromThem = useMemo(
           dispatch(
             showMessage(
               err.message ||
-                "You’ve reached your connection limit. Upgrade to add more connections."
-            )
+                "You’ve reached your connection limit. Upgrade to add more connections.",
+            ),
           );
           setConfirmOpen(false);
           setConfirmLoading(false);
@@ -247,7 +247,7 @@ const pendingFromThem = useMemo(
       } else if (confirmAction === "removeShared") {
         // remove from sharedBrands only
         const updatedShared = (connection.sharedBrands || []).filter(
-          (b) => b !== confirmBrand
+          (b) => b !== confirmBrand,
         );
         await updateDoc(doc(db, "companyConnections", connection.id), {
           sharedBrands: updatedShared,
@@ -469,10 +469,9 @@ const pendingFromThem = useMemo(
               <div className="brand-chip-grid">
                 {currentBrands.map((brand) => (
                   <button
-  className={`chip brand-chip ${brandSelection.includes(brand) ? "selected" : ""}`}
-  onClick={() => toggleBrand(brand)}
->
-
+                    className={`chip brand-chip ${brandSelection.includes(brand) ? "selected" : ""}`}
+                    onClick={() => toggleBrand(brand)}
+                  >
                     {brand}
                   </button>
                 ))}
@@ -510,19 +509,19 @@ const pendingFromThem = useMemo(
           confirmAction === "removeShared"
             ? "Remove Shared Brand"
             : confirmAction === "accept"
-            ? "Accept Brand Proposal"
-            : confirmAction === "reject"
-            ? "Reject Brand Proposal"
-            : "Cancel Proposal"
+              ? "Accept Brand Proposal"
+              : confirmAction === "reject"
+                ? "Reject Brand Proposal"
+                : "Cancel Proposal"
         }
         message={
           confirmAction === "accept"
             ? `Are you sure you want to accept ${confirmBrand} as a shared brand with ${theirCompany}?`
             : confirmAction === "reject"
-            ? `Reject ${confirmBrand} from being shared? This action cannot be undone.`
-            : confirmAction === "cancel"
-            ? `Withdraw your proposal to share ${confirmBrand}?`
-            : `Remove ${confirmBrand} from your shared brands? This will stop mutual visibility for this brand.`
+              ? `Reject ${confirmBrand} from being shared? This action cannot be undone.`
+              : confirmAction === "cancel"
+                ? `Withdraw your proposal to share ${confirmBrand}?`
+                : `Remove ${confirmBrand} from your shared brands? This will stop mutual visibility for this brand.`
         }
         loading={confirmLoading}
         onConfirm={handleConfirm}

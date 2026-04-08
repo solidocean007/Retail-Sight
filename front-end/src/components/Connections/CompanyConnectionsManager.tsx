@@ -56,15 +56,15 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lookup, setLookup] = useState<any | null>(null);
 
-  const approvedConnections = useMemo(
-    () => connections.filter((c) => c.status === "approved").length,
-    [connections],
-  );
+  const approvedConnections = company?.counts?.connectionsApprovedTotal ?? 0;
+  const pendingInitiatedConnections =
+    company?.counts?.connectionsPendingInitiatedTotal ?? 0;
 
-  const pendingConnections = useMemo(
-    () => connections.filter((c) => c.status === "pending").length,
-    [connections],
-  );
+  const pendingReceivedConnections =
+    company?.counts?.connectionsPendingReceivedTotal ?? 0;
+
+  const totalConnectionsUsed =
+    approvedConnections + pendingInitiatedConnections;
 
   const upcomingPlanId = company?.billing?.pendingChange?.nextPlanId;
   const upcomingPlan = upcomingPlanId ? allPlans[upcomingPlanId] : null;
@@ -73,8 +73,6 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     ? Math.min(currentPlan?.connectionLimit ?? 0, upcomingPlan.connectionLimit)
     : (currentPlan?.connectionLimit ?? 0);
   const isPlanReady = typeof effectiveConnectionLimit === "number";
-
-  const totalConnectionsUsed = approvedConnections + pendingConnections;
 
   const connectionLimitReached =
     isPlanReady &&
@@ -273,7 +271,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
                 width:
                   effectiveConnectionLimit > 0
                     ? `${Math.min(
-                        (approvedConnections / effectiveConnectionLimit) * 100,
+                        (totalConnectionsUsed / effectiveConnectionLimit) * 100,
                         100,
                       )}%`
                     : "0%",
@@ -282,9 +280,15 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           </div>
           <PlanUsageBanner />
 
-          {pendingConnections > 0 && (
+          {pendingInitiatedConnections > 0 && (
             <div className="pending-badge">
-              {pendingConnections} pending — does not count toward limit
+              {pendingInitiatedConnections} pending (initiated by you)
+            </div>
+          )}
+
+          {pendingReceivedConnections > 0 && (
+            <div className="pending-badge secondary">
+              {pendingReceivedConnections} incoming requests
             </div>
           )}
 
@@ -328,7 +332,6 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           slotProps={{ backdrop: { className: "connection-builder-backdrop" } }}
         >
           <div className="connection-builder-modal">
-          
             <IdentifyCompany
               fromCompanyId={currentCompanyId!}
               currentUser={user}

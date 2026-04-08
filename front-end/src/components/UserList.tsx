@@ -57,6 +57,7 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
             <th>Name</th>
             <th>Email</th>
             <th>Phone Number</th>
+            <th>firestore id</th>
             <th>Sales Route Number</th>
             <th>Role</th>
             <th>Actions</th>
@@ -97,6 +98,13 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
                   onChange={(e) =>
                     handleEditChange(user.uid, "phone", e.target.value)
                   }
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={user.uid ?? ""}
+                 
                 />
               </td>
               <td>

@@ -61,6 +61,15 @@ export default function CompanyOnboardingAcceptForm() {
     "markAccessRequestComplete",
   );
 
+  // useEffect(() => {
+  //   setInvite({
+  //     email: "test@example.com",
+  //     companyName: "Test Company",
+  //     fromCompanyId: "test123",
+  //   });
+  //   setLoading(false);
+  // }, []);
+
   useEffect(() => {
     if (!inviteId) return;
 
@@ -281,10 +290,10 @@ export default function CompanyOnboardingAcceptForm() {
     <div className="onboarding-page">
       <div className="onboarding-card">
         <h1>Activate Your Company Account</h1>
-        <p>
+        {/* <p>
           <strong>{invite.companyName}</strong> is now approved and live on
           Displaygram.
-        </p>
+        </p> */}
         <p>You’re being registered as the company admin.</p>
 
         <div className="plan-summary">
@@ -300,87 +309,89 @@ export default function CompanyOnboardingAcceptForm() {
             <label>Email</label>
             <div className="readonly-value">{invite.email}</div>
           </div>
-          <p className="onboarding-hint">
+          {/* <p className="onboarding-hint">
             If you already have a Displaygram account with this email, log in
             instead.
-          </p>
+          </p> */}
 
-          <button
+          {/* <button
             type="button"
             onClick={handleGoogleSignIn}
             className="btn-google"
             disabled={submitting}
           >
             Continue with Google
-          </button>
-          <label>Company Name</label>
-          <input
-            type="text"
-            className="auth-input"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            required
-          />
-
-          <div className="auth-divider">or</div>
-          <label>First Name</label>
-          <input
-            type="text"
-            className="auth-input"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            required
-          />
-
-          <label>Last Name</label>
-          <input
-            type="text"
-            className="auth-input"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-          />
-
-          <label>Password</label>
-          <div className="password-wrapper">
+          </button> */}
+          <div className="onboard-form-inputs">
+            <label>Company Name</label>
             <input
-              type={showPassword ? "text" : "password"}
+              type="text"
               className="auth-input"
-              disabled={submitting}
-              value={password}
-              onChange={(e) => handlePasswordChange(e.target.value)}
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              required
             />
-            <IconButton
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <VisibilityOff /> : <Visibility />}
-            </IconButton>
-          </div>
-          {passwordError && (
-            <div className="onboarding-error">{passwordError}</div>
-          )}
 
-          <label>Verify Password</label>
-          <div className="password-wrapper">
+            <div className="auth-divider">or</div>
+            <label>First Name</label>
             <input
-              type={showPassword ? "text" : "password"}
-              disabled={submitting}
+              type="text"
               className="auth-input"
-              value={verifyPassword}
-              onChange={(e) => handleVerifyPasswordChange(e.target.value)}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
             />
-            {verifyPasswordError && (
-              <div className="onboarding-error">{verifyPasswordError}</div>
+
+            <label>Last Name</label>
+            <input
+              type="text"
+              className="auth-input"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+            />
+
+            <label>Password</label>
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="auth-input"
+                disabled={submitting}
+                value={password}
+                onChange={(e) => handlePasswordChange(e.target.value)}
+              />
+              <IconButton
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </div>
+            {passwordError && (
+              <div className="onboarding-error">{passwordError}</div>
             )}
-            <IconButton
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <VisibilityOff /> : <Visibility />}
-            </IconButton>
+
+            <label>Verify Password</label>
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                disabled={submitting}
+                className="auth-input"
+                value={verifyPassword}
+                onChange={(e) => handleVerifyPasswordChange(e.target.value)}
+              />
+              {verifyPasswordError && (
+                <div className="onboarding-error">{verifyPasswordError}</div>
+              )}
+              <IconButton
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </div>
           </div>
 
           <button

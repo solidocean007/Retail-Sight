@@ -52,53 +52,67 @@ export async function recomputeCompanyCountsInternal(companyId: string) {
   const usersActiveTotal = usersSnap.size;
 
   //
-  // PENDING INVITES
+  // PENDING INVITES TO JOIN THE COMPANY
   //
   const invitesSnap = await db
     .collection(`companies/${companyId}/invites`)
     .where("status", "==", "pending")
     .get();
 
-  console.log(
-    "Pending invite IDs:",
-    invitesSnap.docs.map((d) => d.id)
-  );
-
   const usersPendingTotal = invitesSnap.size;
 
   //
-  // CONNECTIONS (both directions)
+  // CONNECTIONS — ONLY COUNT WHAT THIS COMPANY INITIATED
   //
-  const fromSnap = await db
+
+  // ✅ Approved connections (initiated by this company)
+  const approvedSnap = await db
     .collection("companyConnections")
     .where("requestFromCompanyId", "==", companyId)
+    .where("status", "==", "approved")
     .get();
 
-  const toSnap = await db
+  // ✅ Pending connections (initiated by this company)
+  const pendingInitiatedSnap = await db
+    .collection("companyConnections")
+    .where("requestFromCompanyId", "==", companyId)
+    .where("status", "==", "pending")
+    .get();
+
+  // ✅ Draft connections (pre-user creation, initiated by this company)
+  const draftSnap = await db
+    .collection("companyConnectionDrafts")
+    .where("initiatorCompanyId", "==", companyId)
+    .get();
+
+  // ❌ DO NOT count incoming pending toward limits
+  const pendingReceivedSnap = await db
     .collection("companyConnections")
     .where("requestToCompanyId", "==", companyId)
+    .where("status", "==", "pending")
     .get();
 
-  const allConnections = [...fromSnap.docs, ...toSnap.docs];
+  //
+  // TOTALS
+  //
+  const connectionsApprovedTotal = approvedSnap.size;
 
-  let connectionsApprovedTotal = 0;
-  let connectionsPendingTotal = 0;
+  const connectionsPendingInitiatedTotal =
+    pendingInitiatedSnap.size + draftSnap.size;
 
-  for (const doc of allConnections) {
-    const data = doc.data();
-    if (data.status === "approved") {
-      connectionsApprovedTotal++;
-    } else if (data.status === "pending") {
-      connectionsPendingTotal++;
-    }
-  }
+  const connectionsPendingReceivedTotal = pendingReceivedSnap.size;
 
+  //
+  // WRITE COUNTS
+  //
   await db.doc(`companies/${companyId}`).update({
     counts: {
       usersActiveTotal,
       usersPendingTotal,
+
       connectionsApprovedTotal,
-      connectionsPendingTotal,
+      connectionsPendingInitiatedTotal,
+      connectionsPendingReceivedTotal,
     },
     countsUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
@@ -106,7 +120,9 @@ export async function recomputeCompanyCountsInternal(companyId: string) {
   return {
     usersActiveTotal,
     usersPendingTotal,
+
     connectionsApprovedTotal,
-    connectionsPendingTotal,
+    connectionsPendingInitiatedTotal,
+    connectionsPendingReceivedTotal,
   };
 }

@@ -50,17 +50,44 @@ export async function resolveDraftConnections(
 
   const batch = db.batch();
 
-  draftsSnap.forEach((docSnap) => {
+  for (const docSnap of draftsSnap.docs) {
     const draft = docSnap.data();
+
+    const fromCompanySnap = await db
+      .collection("companies")
+      .doc(draft.initiatorCompanyId)
+      .get();
+
+    const toCompanySnap = await db
+      .collection("companies")
+      .doc(newCompanyId)
+      .get();
+
+    if (!fromCompanySnap.exists || !toCompanySnap.exists) {
+      continue; // skip bad data safely
+    }
+
+    const fromCompany = fromCompanySnap.data()!;
+    const toCompany = toCompanySnap.data()!;
 
     const newConnRef = db.collection("companyConnections").doc();
 
     batch.set(newConnRef, {
       requestFromCompanyId: draft.initiatorCompanyId,
+      requestFromCompanyName: fromCompany.companyName,
+      requestFromCompanyType: fromCompany.companyType,
+
       requestToCompanyId: newCompanyId,
-      pendingBrands: draft.pendingBrands || [],
-      sharedBrands: [],
-      status: "pending",
+      requestToCompanyName: toCompany.companyName,
+      requestToCompanyType: toCompany.companyType,
+
+      requestedByUid: null,
+
+      // 🔥 BETTER: move to shared since approved
+      sharedBrands: draft.pendingBrands || [],
+      pendingBrands: [],
+
+      status: "approved",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -68,7 +95,7 @@ export async function resolveDraftConnections(
       status: "resolved",
       resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-  });
+  }
 
   await batch.commit();
   await recomputeCompanyCountsInternal(newCompanyId);
