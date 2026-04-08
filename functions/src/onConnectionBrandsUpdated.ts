@@ -3,6 +3,38 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 const db = getFirestore();
 
+export const updateVisibility = async (
+  sourceCompanyId: string,
+  targetCompanyId: string,
+  brands: string[],
+  mode: "add" | "remove"
+) => {
+  if (brands.length === 0) {
+    return;
+  }
+  const postsSnap = await db
+    .collection("posts")
+    .where("companyId", "==", sourceCompanyId)
+    .where("migratedVisibility", "==", "network")
+    .where("brands", "array-contains-any", brands)
+    .get();
+
+  if (postsSnap.empty) {
+    return;
+  }
+
+  const batch = db.batch();
+  postsSnap.forEach((doc) => {
+    batch.update(doc.ref, {
+      sharedWithCompanies:
+        mode === "add"
+          ? FieldValue.arrayUnion(targetCompanyId)
+          : FieldValue.arrayRemove(targetCompanyId),
+    });
+  });
+  await batch.commit();
+};
+
 /**
  * Trigger: companyConnections/{connectionId}
  * Keeps posts in sync with shared brand changes.
@@ -33,48 +65,6 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
     const removedShared = beforeShared.filter(
       (b: string) => !afterShared.includes(b)
     );
-
-    console.log(`🔁 Brand sync for ${connectionId}`);
-    console.log(`🟢 Added: ${newShared}`);
-    console.log(`🔴 Removed: ${removedShared}`);
-
-    const updateVisibility = async (
-      sourceCompanyId: string,
-      targetCompanyId: string,
-      brands: string[],
-      mode: "add" | "remove"
-    ) => {
-      if (brands.length === 0) {
-        return;
-      }
-      const postsSnap = await db
-        .collection("posts")
-        .where("companyId", "==", sourceCompanyId)
-        .where("migratedVisibility", "==", "network")
-        .where("brands", "array-contains-any", brands)
-        .get();
-
-      if (postsSnap.empty) {
-        return;
-      }
-
-      const batch = db.batch();
-      postsSnap.forEach((doc) => {
-        batch.update(doc.ref, {
-          sharedWithCompanies:
-            mode === "add"
-              ? FieldValue.arrayUnion(targetCompanyId)
-              : FieldValue.arrayRemove(targetCompanyId),
-        });
-      });
-      await batch.commit();
-
-      console.log(
-        `${mode === "add" ? "➕" : "➖"} ${
-          postsSnap.size
-        } posts updated for ${sourceCompanyId} → ${targetCompanyId}`
-      );
-    };
 
     try {
       // Add new shares

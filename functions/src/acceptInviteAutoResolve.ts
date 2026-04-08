@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { recomputeCompanyCountsInternal } from "./billing/recomputeCompanyCounts";
+import { updateVisibility } from "./onConnectionBrandsUpdated";
 
 const db = admin.firestore();
 
@@ -50,6 +51,9 @@ export async function resolveDraftConnections(
 
   const batch = db.batch();
 
+  // 🔥 collect visibility updates
+  const visibilityTasks: Promise<any>[] = [];
+
   for (const docSnap of draftsSnap.docs) {
     const draft = docSnap.data();
 
@@ -64,13 +68,15 @@ export async function resolveDraftConnections(
       .get();
 
     if (!fromCompanySnap.exists || !toCompanySnap.exists) {
-      continue; // skip bad data safely
+      continue;
     }
 
     const fromCompany = fromCompanySnap.data()!;
     const toCompany = toCompanySnap.data()!;
 
     const newConnRef = db.collection("companyConnections").doc();
+
+    const sharedBrands = draft.pendingBrands || [];
 
     batch.set(newConnRef, {
       requestFromCompanyId: draft.initiatorCompanyId,
@@ -83,8 +89,7 @@ export async function resolveDraftConnections(
 
       requestedByUid: null,
 
-      // 🔥 BETTER: move to shared since approved
-      sharedBrands: draft.pendingBrands || [],
+      sharedBrands,
       pendingBrands: [],
 
       status: "approved",
@@ -95,15 +100,32 @@ export async function resolveDraftConnections(
       status: "resolved",
       resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    // 🔥 backfill visibility
+    visibilityTasks.push(
+      updateVisibility(
+        draft.initiatorCompanyId,
+        newCompanyId,
+        sharedBrands,
+        "add"
+      ),
+      updateVisibility(
+        newCompanyId,
+        draft.initiatorCompanyId,
+        sharedBrands,
+        "add"
+      )
+    );
   }
 
   await batch.commit();
+  await Promise.all(visibilityTasks);
+
   await recomputeCompanyCountsInternal(newCompanyId);
 
   return { ok: true };
 }
 
-// ✅ CALLABLE WRAPPER
 export const acceptInviteAutoResolve = onCall(async (request) => {
   const { email, newCompanyId } = request.data;
   return await resolveDraftConnections(email, newCompanyId);

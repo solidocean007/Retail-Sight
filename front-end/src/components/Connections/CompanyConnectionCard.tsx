@@ -105,16 +105,16 @@ const CompanyConnectionCard: React.FC<Props> = ({
     [pendingBrands, currentCompanyId],
   );
 
-  const checkConnectionLimit = async (companyId: string) => {
-    // const fn = httpsCallable(functions, "enforcePlanLimits");
-    const res = await fn({ companyId, type: "connection" });
-    return res.data as {
-      allowed: boolean;
-      usedConnections?: number;
-      remainingConnections?: number;
-      planLimit?: number;
-    };
-  };
+  // const checkConnectionLimit = async (companyId: string) => {
+  //   // const fn = httpsCallable(functions, "enforcePlanLimits");
+  //   const res = await fn({ companyId, type: "connection" });
+  //   return res.data as {
+  //     allowed: boolean;
+  //     usedConnections?: number;
+  //     remainingConnections?: number;
+  //     planLimit?: number;
+  //   };
+  // };
 
   // --- Add or remove brands inline ---
   const handleAddManualBrand = () => {
@@ -200,7 +200,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
 
       if (confirmAction === "accept") {
         try {
-          const result = await checkConnectionLimit(currentCompanyId!);
+          // const result = await checkConnectionLimit(currentCompanyId!);
 
           if (!result.allowed) {
             dispatch(
