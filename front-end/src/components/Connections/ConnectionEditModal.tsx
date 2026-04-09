@@ -165,7 +165,7 @@ const pendingFromThem =
 
           <ul className="pending-brands-list">
             {connection.pendingBrands.map((p, idx) => (
-              <li key={idx} className="pending-brand-item">
+              <li key={p.brand} className="pending-brand-item">
                 <span>{renderPendingBrand(p)}</span>
 
                 {/* 

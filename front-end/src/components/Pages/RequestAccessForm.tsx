@@ -131,17 +131,17 @@ export default function RequestAccessForm({
       const exists = await checkUserExists(normalizedEmail);
 
       if (exists) {
-  setSubmitting(false); // prevent stuck loading state
+        setSubmitting(false); // prevent stuck loading state
 
-  dispatch(
-    showMessage(
-      "An account already exists for this email. Try logging in or resetting your password.",
-    ),
-  );
+        dispatch(
+          showMessage(
+            "An account already exists for this email. Try logging in or resetting your password.",
+          ),
+        );
 
-  navigate(`/login?email=${encodeURIComponent(normalizedEmail)}`);
-  return;
-}
+        navigate(`/login?email=${encodeURIComponent(normalizedEmail)}`);
+        return;
+      }
 
       // Build request payload dynamically
       const payload: any = {
@@ -225,9 +225,9 @@ export default function RequestAccessForm({
                 <div className="brand-preview-box">
                   <p>They proposed these brands to collaborate on:</p>
                   <div className="brand-list">
-                    {inviteData.pendingBrands.map((b: string) => (
-                      <span key={b} className="brand-pill">
-                        {b}
+                    {inviteData.pendingBrands.map((b: { brand: string }) => (
+                      <span key={b.brand} className="brand-pill">
+                        {b.brand}
                       </span>
                     ))}
                   </div>

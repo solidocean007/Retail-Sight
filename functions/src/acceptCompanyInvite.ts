@@ -9,7 +9,8 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 export const acceptCompanyInvite = onCall(async (request) => {
-  const { inviteId, firstName, lastName, companyName } = request.data;
+  const { inviteId, firstName, lastName, companyName, companyType } =
+    request.data;
 
   if (!firstName?.trim() || !lastName?.trim()) {
     throw new HttpsError(
@@ -43,7 +44,7 @@ export const acceptCompanyInvite = onCall(async (request) => {
 
   await newCompanyRef.set({
     companyName: companyName || invite.email,
-    companyType: invite.fromCompanyType || "supplier",
+    companyType: companyType || invite.fromCompanyType || "supplier",
     createdAt: now,
 
     billing: {

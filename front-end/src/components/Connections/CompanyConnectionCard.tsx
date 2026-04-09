@@ -51,7 +51,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
   >(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   // fade out visual feedback
-  console.log("connection in card: ", connection)
+  console.log("connection in card: ", connection);
   const currentBrands = useMemo(() => {
     const supplier = supplierBrandList.find(
       (s) => s.supplier === selectedSupplier,
@@ -202,26 +202,26 @@ const CompanyConnectionCard: React.FC<Props> = ({
         try {
           // const result = await checkConnectionLimit(currentCompanyId!);
 
-          if (!result.allowed) {
-            dispatch(
-              showMessage(
-                `You’ve reached your connection limit (${result.planLimit}). Please upgrade to add more.`,
-              ),
-            );
-            setConfirmOpen(false);
-            setConfirmLoading(false);
-            return;
-          }
+          // if (!result.allowed) { // cannot find name result
+          //   dispatch(
+          //     showMessage(
+          //       `You’ve reached your connection limit (${result.planLimit}). Please upgrade to add more.`,
+          //     ),
+          //   );
+          //   setConfirmOpen(false);
+          //   setConfirmLoading(false);
+          //   return;
+          // }
 
-          if (result.remainingConnections !== undefined) {
-            dispatch(
-              showMessage(
-                `You have ${result.remainingConnections} connection${
-                  result.remainingConnections === 1 ? "" : "s"
-                } remaining.`,
-              ),
-            );
-          }
+          // if (result.remainingConnections !== undefined) {
+          //   dispatch(
+          //     showMessage(
+          //       `You have ${result.remainingConnections} connection${
+          //         result.remainingConnections === 1 ? "" : "s"
+          //       } remaining.`,
+          //     ),
+          //   );
+          // }
 
           updateData.sharedBrands = [
             ...(connection.sharedBrands || []),
@@ -270,6 +270,8 @@ const CompanyConnectionCard: React.FC<Props> = ({
       setConfirmLoading(false);
     }
   };
+
+  console.log("sharedBrands: ", sharedBrands);
 
   return (
     <div className={`connection-card ${connection.status}`}>
@@ -322,20 +324,23 @@ const CompanyConnectionCard: React.FC<Props> = ({
         <h5 className="section-title">Active Shared Brands</h5>
         {sharedBrands.length ? (
           <div className="brand-list">
-            {sharedBrands.map((brand) => (
-              <span key={brand} className="chip brand-chip shared">
-                {brand}
-                {isEditing && (
-                  <button
-                    className="remove-brand-btn"
-                    onClick={() => openConfirm("removeShared", brand)}
-                    title="Remove shared brand"
-                  >
-                    ×
-                  </button>
-                )}
-              </span>
-            ))}
+            {sharedBrands.map((b: any) => {
+              const label = typeof b === "string" ? b : b.brand || "UNKNOWN";
+
+              return (
+                <span key={label} className="chip brand-chip shared">
+                  {label}
+                  {isEditing && (
+                    <button
+                      className="remove-brand-btn"
+                      onClick={() => openConfirm("removeShared", label)}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              );
+            })}
           </div>
         ) : (
           <p className="empty-text">No active shared brands yet.</p>
@@ -348,11 +353,11 @@ const CompanyConnectionCard: React.FC<Props> = ({
           {/* Proposed by us */}
           {pendingFromUs.length > 0 && (
             <div className="pending-column">
-              <h5>📤 Proposed by 1 {ourCompany}</h5>
+              <h5>📤 Proposed by {ourCompany}</h5>
               <div className="brand-list">
                 {pendingFromUs.map((b: PendingBrandType, i) => (
                   <div
-                    key={i}
+                    key={`${b.brand}-${getProposerCompanyId(b)}`}
                     className="pending-brand-row"
                     data-brand={b.brand}
                   >
@@ -384,7 +389,10 @@ const CompanyConnectionCard: React.FC<Props> = ({
               <h5>📥 Proposed by {theirCompany}</h5>
               <div className="brand-list">
                 {pendingFromThem.map((b: PendingBrandType, i) => (
-                  <div key={i} className="pending-brand-row">
+                  <div
+                    key={`${b.brand}-${getProposerCompanyId(b)}`}
+                    className="pending-brand-row"
+                  >
                     <span className="brand-chip pending">{b.brand}</span>
                     {isAdminView && (
                       <div className="pending-actions">
@@ -469,6 +477,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
               <div className="brand-chip-grid">
                 {currentBrands.map((brand) => (
                   <button
+                    key={brand}
                     className={`chip brand-chip ${brandSelection.includes(brand) ? "selected" : ""}`}
                     onClick={() => toggleBrand(brand)}
                   >

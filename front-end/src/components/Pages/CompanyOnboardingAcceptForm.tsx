@@ -21,10 +21,11 @@ import {
 import { db } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
-import { IconButton } from "@mui/material";
+import { IconButton, Switch } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import "./CompanyOnboardingAcceptForm.css";
+import { BusinessType } from "../../utils/types";
 
 const toIso = (v: any): string =>
   v?.toDate?.()
@@ -54,7 +55,7 @@ export default function CompanyOnboardingAcceptForm() {
     null,
   );
   const [submitting, setSubmitting] = useState(false);
-
+  const [companyType, setCompanyType] = useState<BusinessType>("supplier");
   const functions = getFunctions();
   const markAccessRequestComplete = httpsCallable(
     functions,
@@ -150,6 +151,7 @@ export default function CompanyOnboardingAcceptForm() {
         firstName,
         lastName,
         companyName,
+        companyType,
       });
 
       dispatch(showMessage("✅ Account activated!"));
@@ -243,6 +245,7 @@ export default function CompanyOnboardingAcceptForm() {
         firstName,
         lastName,
         companyName,
+        companyType,
       });
 
       await markAccessRequestComplete({
@@ -332,7 +335,41 @@ export default function CompanyOnboardingAcceptForm() {
               required
             />
 
-            <div className="auth-divider">or</div>
+            <label>Business Type</label>
+
+            <div className="business-toggle">
+              {/* <label>Business Type</label> */}
+              <div
+                className="business-type-pill"
+                role="radiogroup"
+                aria-label="Business Type"
+              >
+                <button
+                  type="button"
+                  className={`business-type-option ${companyType === "distributor" ? "active" : ""}`}
+                  onClick={() => setCompanyType("distributor")}
+                  aria-pressed={companyType === "distributor"}
+                >
+                  Distributor
+                </button>
+
+                <button
+                  type="button"
+                  className={`business-type-option ${companyType === "supplier" ? "active" : ""}`}
+                  onClick={() => setCompanyType("supplier")}
+                  aria-pressed={companyType === "supplier"}
+                >
+                  Supplier
+                </button>
+
+                <div
+                  className={`business-type-slider ${companyType === "supplier" ? "right" : "left"}`}
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+
+            {/* <div className="auth-divider">or</div> */}
             <label>First Name</label>
             <input
               type="text"

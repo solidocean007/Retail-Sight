@@ -35,8 +35,14 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .onboarding-card h1 {
@@ -175,4 +181,71 @@
   color: var(--text-color);
   text-align: center;
   padding: 2rem;
+}
+
+.business-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.business-type-pill {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  width: 100%;
+  max-width: 320px;
+  background: var(--dashboard-card);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.business-type-option {
+  position: relative;
+  z-index: 2;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    opacity 0.22s ease,
+    color 0.22s ease;
+  opacity: 0.55;
+}
+
+.business-type-option.active {
+  opacity: 1;
+}
+
+.business-type-slider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: calc(50% - 4px);
+  border-radius: 999px;
+  background: var(--primary-blue);
+  transition: transform 0.22s ease;
+  z-index: 1;
+}
+
+.business-type-slider.left {
+  left: 4px;
+  transform: translateX(0);
+}
+
+.business-type-slider.right {
+  left: 4px;
+  transform: translateX(100%);
+}
+
+.business-type-option.active {
+  color: white;
 }
