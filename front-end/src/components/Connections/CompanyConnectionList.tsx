@@ -26,7 +26,7 @@ const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
   return (
     <div className="connections-list">
       {connections.map((c) => (
-        <CompanyConnectionCard // this is broken because we are missing the fn call 
+        <CompanyConnectionCard
           key={c.id}
           connection={c}
           currentCompanyId={currentCompanyId}

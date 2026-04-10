@@ -31,7 +31,16 @@ export const acceptCompanyInvite = onCall(async (request) => {
     throw new HttpsError("not-found", "Invite not found.");
   }
 
+  if (!companyType) {
+    throw new HttpsError("invalid-argument", "companyType is required");
+  }
+
   const invite = inviteSnap.data()!;
+
+  console.log("acceptCompanyInvite payload:", {
+    companyType,
+    inviteFromType: invite.fromCompanyType,
+  });
 
   if (invite.status === "accepted") {
     throw new HttpsError("failed-precondition", "Invite already used.");
@@ -44,7 +53,7 @@ export const acceptCompanyInvite = onCall(async (request) => {
 
   await newCompanyRef.set({
     companyName: companyName || invite.email,
-    companyType: companyType || invite.fromCompanyType || "supplier",
+    companyType,
     createdAt: now,
 
     billing: {

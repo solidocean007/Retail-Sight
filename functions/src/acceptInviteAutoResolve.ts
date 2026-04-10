@@ -76,7 +76,13 @@ export async function resolveDraftConnections(
 
     const newConnRef = db.collection("companyConnections").doc();
 
-    const sharedBrands = draft.pendingBrands || [];
+    const normalizeBrands = (arr: any[]): string[] =>
+      (arr || [])
+        .map((b) => (typeof b === "string" ? b : b?.brand))
+        .filter(Boolean);
+
+    const sharedBrandsRaw = draft.pendingBrands || [];
+    const sharedBrands = normalizeBrands(sharedBrandsRaw);
 
     batch.set(newConnRef, {
       requestFromCompanyId: draft.initiatorCompanyId,
@@ -89,7 +95,7 @@ export async function resolveDraftConnections(
 
       requestedByUid: null,
 
-      sharedBrands,
+      sharedBrands: sharedBrandsRaw,
       pendingBrands: [],
 
       status: "approved",

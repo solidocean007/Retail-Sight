@@ -9,6 +9,11 @@ export const updateVisibility = async (
   brands: string[],
   mode: "add" | "remove"
 ) => {
+  console.log("🔥 updateVisibility called", {
+    sourceCompanyId,
+    targetCompanyId,
+    brands,
+  });
   if (brands.length === 0) {
     return;
   }
@@ -23,6 +28,8 @@ export const updateVisibility = async (
     return;
   }
 
+  console.log("🔥 posts found:", postsSnap.size);
+
   const batch = db.batch();
   postsSnap.forEach((doc) => {
     batch.update(doc.ref, {
@@ -34,6 +41,11 @@ export const updateVisibility = async (
   });
   await batch.commit();
 };
+
+const extractBrands = (arr: any[]): string[] =>
+  (arr || [])
+    .map((b) => (typeof b === "string" ? b : b?.brand))
+    .filter(Boolean);
 
 /**
  * Trigger: companyConnections/{connectionId}
@@ -56,15 +68,12 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
       return;
     }
 
-    const beforeShared = before.sharedBrands || [];
-    const afterShared = after.sharedBrands || [];
+    const beforeBrands = extractBrands(before.sharedBrands);
+    const afterBrands = extractBrands(after.sharedBrands);
 
-    const newShared = afterShared.filter(
-      (b: string) => !beforeShared.includes(b)
-    );
-    const removedShared = beforeShared.filter(
-      (b: string) => !afterShared.includes(b)
-    );
+    const newShared = afterBrands.filter((b) => !beforeBrands.includes(b));
+
+    const removedShared = beforeBrands.filter((b) => !afterBrands.includes(b));
 
     try {
       // Add new shares
