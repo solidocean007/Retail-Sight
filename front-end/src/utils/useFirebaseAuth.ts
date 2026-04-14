@@ -6,6 +6,7 @@ import { setUser } from "../Slices/userSlice";
 import { fetchUserDocFromFirestore } from "./userData/fetchUserDocFromFirestore";
 import { UserType } from "./types";
 import { auth } from "./firebase";
+import { normalizeFirestoreData } from "./normalize";
 
 const toIso = (val: any) => {
   if (!val) return null;
@@ -14,14 +15,15 @@ const toIso = (val: any) => {
   return val;
 };
 
-function normalizeUserData(raw: UserType) {
-  if (!raw) return raw;
-  return {
-    ...raw,
-    createdAt: toIso(raw.createdAt),
-    updatedAt: toIso(raw.updatedAt),
-  };
-}
+// function normalizeUserData(raw: UserType) {
+//   if (!raw) return raw;
+//   return {
+//     ...raw,
+//     createdAt: toIso(raw.createdAt),
+//     updatedAt: toIso(raw.updatedAt),
+//     lastUpdatedAt: toIso(raw.lastUpdatedAt),
+//   };
+// }
 
 export const useFirebaseAuth = () => {
   const dispatch = useDispatch();
@@ -39,7 +41,7 @@ export const useFirebaseAuth = () => {
           dispatch(
             setUser(
               userData
-                ? normalizeUserData(userData)
+                ? normalizeFirestoreData(userData)
                 : ({ uid: user.uid, email: user.email } as UserType),
             ),
           );
