@@ -5,11 +5,12 @@ import { RootState } from "../../utils/store";
 import { CompanyAccountType } from "../../utils/types";
 
 interface Props {
+  options: string[];
   selectedValue: string | null | undefined;
   onSelect: (val: string | null) => void;
 }
 
-const AccountTypeSelect: React.FC<Props> = ({ selectedValue, onSelect }) => {
+const AccountTypeSelect: React.FC<Props> = ({ options, selectedValue, onSelect }) => {
   const allAccounts = useSelector(
     (state: RootState) => state.allAccounts.accounts
   ) as CompanyAccountType[];

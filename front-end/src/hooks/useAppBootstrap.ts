@@ -53,9 +53,11 @@ export function useAppBootstrap({
   currentUser: any;
   initializing: boolean;
 }) {
+  // console.log(currentUser);
   const isResetting = useSelector((s: RootState) => s.app.resetting);
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);
+  // console.log("currentUser role in useAppBootstrap: ", user?.role); // this logs super-admin
   const companyId = user?.companyId ?? null;
   const prevCompanyIdRef = useRef<string | null>(null);
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
@@ -101,10 +103,12 @@ export function useAppBootstrap({
   useCompanySync();
   useCompanyUsersSync();
   useUserAccountsSync();
+  const role = currentUser?.role;
+
   useAllCompanyAccountsSync(
-    currentUser?.role === "admin" ||
-      currentUser?.role === "super-admin" ||
-      currentUser?.role === "supervisor",
+    role
+      ? role === "admin" || role === "super-admin" || role === "supervisor"
+      : false,
   );
   useCustomAccountsSync();
   useCompanyConnectionsListener();

@@ -38,7 +38,7 @@ import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 const UserHomePage = () => {
   const navigate = useNavigate();
   const isSupplier = useSelector(selectIsSupplier);
-
+  const companyId = useSelector(selectUser)?.companyId;
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
@@ -49,9 +49,12 @@ const UserHomePage = () => {
   const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [currentStarTag, setCurrentStarTag] = useState<string | null>(null);
   const [activeFeedType, setActiveFeedType] = useState<"company" | "shared">(
-  isSupplier ? "shared" : "company"
-);
+    isSupplier ? "shared" : "company",
+  );
   const [activeCompanyPostSet, setActiveCompanyPostSet] = useState<
+    "posts" | "filteredPosts"
+  >("posts");
+  const [activeSharedPostSet, setActiveSharedPostSet] = useState<
     "posts" | "filteredPosts"
   >("posts");
   const [clearInput, setClearInput] = useState(false);
@@ -71,13 +74,11 @@ const UserHomePage = () => {
   const [showModal, setShowModal] = useState(false);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
 
-  const isSharedFeed = activeFeedType === "shared";
-
   useEffect(() => {
-  if (isSupplier) {
-    setActiveFeedType("shared");
-  }
-}, [isSupplier]);
+    if (isSupplier) {
+      setActiveFeedType("shared");
+    }
+  }, [isSupplier]);
 
   useEffect(() => {
     const flag = localStorage.getItem("showOnboardingModal");
@@ -138,7 +139,7 @@ const UserHomePage = () => {
 
   // 1) When we get new filters, load the full set
   useEffect(() => {
-    if (!initialFilters) return;
+    if (!initialFilters || !companyId) return;
     setActiveCompanyPostSet("filteredPosts");
     setLastFilters(initialFilters);
 
@@ -148,14 +149,14 @@ const UserHomePage = () => {
         dispatch(setFilteredPosts(cached));
       } else {
         const result = await dispatch(
-          fetchFilteredPostsBatch({ filters: initialFilters }),
+          fetchFilteredPostsBatch({ filters: initialFilters, companyId }),
         );
         if (fetchFilteredPostsBatch.fulfilled.match(result)) {
           dispatch(setFilteredPosts(result.payload.posts.map(normalizePost)));
         }
       }
     })();
-  }, [initialFilters, dispatch]);
+  }, [initialFilters, dispatch, companyId]);
 
   // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
   const filteredCount = useSelector(
@@ -295,6 +296,8 @@ const UserHomePage = () => {
               <SharedFeed
                 virtuosoRef={virtuosoRef}
                 setPostIdToScroll={setPostIdToScroll}
+                activeSharedPostSet={activeSharedPostSet}
+                setSharedFeedPostSet={setActiveSharedPostSet}
               />
             ) : (
               <ActivityFeed
@@ -324,7 +327,9 @@ const UserHomePage = () => {
           >
             <EnhancedFilterSidebar
               activePostSet={activeCompanyPostSet}
+              activeSharedPostSet={activeSharedPostSet}
               setActiveCompanyPostSet={setActiveCompanyPostSet}
+              setActiveSharedPostSet={setActiveSharedPostSet}
               isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
               onFiltersApplied={setLastFilters}
@@ -334,6 +339,7 @@ const UserHomePage = () => {
               setCurrentStarTag={setCurrentStarTag}
               toggleFilterMenu={toggleFilterMenu}
               initialFilters={initialFilters}
+              isSharedFeed={activeFeedType === "shared"}
             />
           </div>
         </div>

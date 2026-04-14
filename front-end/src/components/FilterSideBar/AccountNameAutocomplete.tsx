@@ -5,6 +5,7 @@ import { RootState } from "../../utils/store";
 import { CompanyAccountType } from "../../utils/types";
 
 interface Props {
+  options: string[];
   inputValue: string;
   selectedValue: string | null | undefined;
   onInputChange: (val: string) => void;
@@ -14,6 +15,7 @@ interface Props {
 const normalize = (str: string) => str.toLowerCase().replace(/[\s\-]+/g, "");
 
 const AccountNameAutocomplete: React.FC<Props> = ({
+  options,
   inputValue,
   selectedValue,
   onInputChange,

@@ -36,6 +36,7 @@ import FeedSkeleton from "./FeedSkeleton";
 import { setFeedReady } from "../Slices/appSlice";
 // import { getMemoizedImageSet } from "../utils/PostLogic/getMemoizedImageSet";
 import { derivePostImageVariants } from "../utils/PostLogic/derivePostImageVariants";
+import { selectUser } from "../Slices/userSlice";
 
 const POSTS_BATCH_SIZE = 5;
 
@@ -85,6 +86,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return activeCompanyPostSet === "filteredPosts" ? filteredPosts : rawPosts;
   }, [activeCompanyPostSet, filteredPosts, rawPosts]);
   const currentUser = useSelector((state: RootState) => state.user.currentUser);
+  const companyId = useSelector(selectUser)?.companyId;
   const currentUserCompanyId = currentUser?.companyId;
   const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -145,7 +147,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     if (idx === -1 && appliedFilters) {
       console.warn("Post not found. Refetching...");
-      dispatch(fetchFilteredPostsBatch({ filters: appliedFilters })).then(
+      dispatch(fetchFilteredPostsBatch({ filters: appliedFilters, companyId })).then(
         (action) => {
           if (fetchFilteredPostsBatch.fulfilled.match(action)) {
             const newPosts = action.payload.posts;

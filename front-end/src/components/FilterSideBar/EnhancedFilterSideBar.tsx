@@ -1,9 +1,10 @@
 // EnhancedFilterSidebar.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../utils/store";
 import {
   CompanyAccountType,
+  // CompanyAccountType,
   PostQueryFilters,
   UserType,
 } from "../../utils/types";
@@ -34,7 +35,7 @@ import { useDebouncedValue } from "../../hooks/useDebounce";
 import { normalizePost } from "../../utils/normalize";
 // import { clear } from "console";
 // import { Autocomplete, TextField } from "@mui/material";
-import ProductTypeAutocomplete from "./ProductTypeAutoComplete";
+// import ProductTypeAutocomplete from "./ProductTypeAutoComplete";
 import BrandAutoComplete from "./BrandAutoComplete";
 import UserFilterAutocomplete from "./UserFilterAutocomplete";
 import { selectCompanyUsers } from "../../Slices/userSlice";
@@ -45,12 +46,31 @@ import ChainTypeSelect from "./ChainTypeSelect";
 import GoalFilterGroup from "./GoalFilterGroup";
 import GalloGoalFilterGroup from "./GalloGoalFilterGroup";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
+import { useBrandOptions } from "../../hooks/useBrandOptions";
+import { selectIsSupplier } from "../../Slices/currentCompanySlice";
+import DistributorAutoComplete from "./DistributorAutoComplete";
+import { useAvailableGoals } from "../../hooks/useAvailableGoals";
+import { useAvailableBrands } from "../../hooks/useAvailableBrands";
+import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
+import {
+  setFilteredSharedPostFetchedAt,
+  setFilteredSharedPosts,
+} from "../../Slices/sharedPostsSlice";
+
+interface DistributorOption {
+  id: string;
+  name: string;
+}
 
 interface EnhancedFilterSideBarProps {
   activePostSet: string;
   setActiveCompanyPostSet: React.Dispatch<
     React.SetStateAction<"posts" | "filteredPosts">
   >;
+  setActiveSharedPostSet: React.Dispatch<
+    React.SetStateAction<"posts" | "filteredPosts">
+  >;
+  activeSharedPostSet: string;
   isSearchActive: boolean;
   setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
   onFiltersApplied?: (filters: PostQueryFilters) => void;
@@ -60,13 +80,14 @@ interface EnhancedFilterSideBarProps {
   currentStarTag?: string | null;
   setCurrentStarTag?: React.Dispatch<React.SetStateAction<string | null>>;
   initialFilters: PostQueryFilters | undefined;
+  isSharedFeed: boolean;
 }
 
 const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   activePostSet,
   setActiveCompanyPostSet,
-  // isSearchActive,
-  // setIsSearchActive,
+  setActiveSharedPostSet,
+  activeSharedPostSet,
   onFiltersApplied,
   currentHashtag,
   // setCurrentHashtag,
@@ -74,30 +95,34 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   // setCurrentStarTag,
   toggleFilterMenu,
   initialFilters,
+  isSharedFeed,
 }) => {
   const companyId = useSelector(
-    (state: RootState) => state.user.currentUser?.companyId
+    (state: RootState) => state.user.currentUser?.companyId,
   );
+  const isSupplier = useSelector(selectIsSupplier);
   const [isApplying, setIsApplying] = useState(false);
   const { isEnabled, loading } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
   const galloGoals = useSelector(
-    (state: RootState) => state.galloGoals.galloGoals
+    (state: RootState) => state.galloGoals.galloGoals,
   );
-
-  // at top of EnhancedFilterSidebar.tsx
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const allPosts = useSelector((s: RootState) => s.posts.posts);
+  const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
+  // console.log("sharedPosts size: ", sharedPosts.length)
+  const sourcePosts = isSharedFeed ? sharedPosts : allPosts;
+  // console.log("sourcePosts size: ", sourcePosts.length)
   const [brandOpen, setBrandOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [lastAppliedFilters, setLastAppliedFilters] =
     useState<PostQueryFilters | null>(null);
   const newestRaw = useSelector(
-    (state: RootState) => state.posts.posts[0]?.displayDate ?? null
+    (state: RootState) => state.posts.posts[0]?.displayDate ?? null,
   ); // optional: lift to param
   const areFiltersEqual = (
     a: PostQueryFilters,
-    b: PostQueryFilters
+    b: PostQueryFilters,
   ): boolean => {
     return JSON.stringify(a) === JSON.stringify(b);
   };
@@ -106,31 +131,36 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const [productTypeInput, setProductTypeInput] = useState("");
   const [selectedUserInput, setSelectedUserInput] = useState("");
   const [selectedProductType, setSelectedProductType] = useState<string | null>(
-    null
+    null,
   );
+  const [distributorInput, setDistributorInput] = useState("");
+  const [selectedDistributor, setSelectedDistributor] =
+    useState<DistributorOption | null>(null);
   const [accountNameInput, setAccountNameInput] = useState("");
   const [accountTypeInput, setAccountTypeInput] = useState("");
   const [accountChainInput, setAccountChainInput] = useState("");
 
   const [selectedFilterUser, setSelectedFilterUser] = useState<UserType | null>(
-    null
+    null,
   );
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const brandOptions = useBrandOptions(); // ✅ always called at top level // fallback?  not sure if i should do this.  might be better to show nothing
 
   const toggleSection = (section: string) => {
     setOpenSection((prev) => (prev === section ? null : section));
   };
 
   const filteredPosts = useSelector(
-    (state: RootState) => state.posts.filteredPosts
+    (state: RootState) => state.posts.filteredPosts,
   );
+
   const filteredPostCount = useSelector(
-    (state: RootState) => state.posts.filteredPostCount
+    (state: RootState) => state.posts.filteredPostCount,
   );
   const dispatch = useAppDispatch();
 
   const companyGoals = useSelector(
-    (state: RootState) => state.companyGoals.goals
+    (state: RootState) => state.companyGoals.goals,
   );
 
   const [filters, setFilters] = useState<PostQueryFilters>({
@@ -150,15 +180,80 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     states: [],
     cities: [],
     dateRange: { startDate: null, endDate: null },
+    minCaseCount: null,
+    feedType: isSharedFeed ? "shared" : "company", // ✅ set feedType based on isSharedFeed prop
   });
 
-  const filtersSet: boolean = Object.entries(filters).some(([_key, val]) => {
+  // console.log("filters: ", filters);
+
+  const filtersSet: boolean = Object.entries(filters).some(([key, val]) => {
+    if (key === "feedType") return false; // ✅ ignore feedType
+
     if (Array.isArray(val)) return val.length > 0;
+
     if (typeof val === "object" && val !== null && "startDate" in val) {
       return val.startDate || val.endDate;
     }
+
     return !!val;
   });
+
+  const availableBrands = useAvailableBrands();
+
+  const availableDistributors = useMemo(() => {
+    const map = new Map<string, string>();
+
+    sourcePosts.forEach((p) => {
+      if (!p.companyId || !p.postUserCompanyName) return;
+
+      // ✅ only include posts that have brands (shared relevance)
+      if (!p.brands || p.brands.length === 0) return;
+
+      map.set(p.companyId, p.postUserCompanyName);
+    });
+
+    return Array.from(map.entries()).map(([id, name]) => ({
+      id,
+      name,
+    }));
+  }, [sourcePosts]);
+
+  const availableUsers = useMemo(() => {
+    if (!isSharedFeed) return companyUsers;
+
+    const ids = new Set(sourcePosts.map((p) => p.postUserUid));
+    return companyUsers.filter((u) => ids.has(u.uid));
+  }, [isSharedFeed, sourcePosts, companyUsers]);
+
+  const accounts = useSelector(
+    (state: RootState) => state.allAccounts.accounts,
+  ) as CompanyAccountType[];
+
+  const availableAccounts = useMemo(() => {
+    return accounts.map((a) => a.accountName);
+  }, [accounts]);
+
+  const availableChains = useMemo(() => {
+    const set = new Set<string>();
+
+    sourcePosts.forEach((p) => {
+      if (p.chain) set.add(p.chain);
+    });
+
+    return Array.from(set).sort();
+  }, [sourcePosts]);
+
+  const availableAccountTypes = useMemo(() => {
+    const set = new Set<string>();
+
+    sourcePosts.forEach((p) => {
+      if (p.accountType) set.add(p.accountType);
+    });
+
+    return Array.from(set).sort();
+  }, [sourcePosts]);
+
+  const availableGoals = useAvailableGoals(isSupplier, companyId);
 
   useEffect(() => {
     if (activePostSet === "posts") {
@@ -185,17 +280,23 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     setFilters(empty);
     setLastAppliedFilters(empty);
     resetInputs();
-    setActiveCompanyPostSet("posts");
 
-    dispatch(setFilteredPosts(allPosts));
-    dispatch(setFilteredPostFetchedAt(null));
+    if (isSharedFeed) {
+      setActiveSharedPostSet("posts");
+      dispatch(setFilteredSharedPosts([]));
+      dispatch(setFilteredSharedPostFetchedAt(null));
+    } else {
+      setActiveCompanyPostSet("posts");
+      dispatch(setFilteredPosts(allPosts));
+      dispatch(setFilteredPostFetchedAt(null));
+    }
   };
 
   const filtersChanged =
     !lastAppliedFilters || !areFiltersEqual(filters, lastAppliedFilters);
 
   const fetchedAt = useSelector(
-    (s: RootState) => s.posts.filteredPostFetchedAt
+    (s: RootState) => s.posts.filteredPostFetchedAt,
   );
 
   const debouncedFilters = useDebouncedValue(filters, 150);
@@ -208,7 +309,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     handleApply();
   }, [debouncedFilters]);
 
-  // in EnhancedFilterSidebar
+  // in EnhancedFilterSidebar.. what is this for?  why is specifically watching filters.brand?
   useEffect(() => {
     if (!filters.brand) {
       setBrandInput("");
@@ -263,7 +364,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const handleRemoveFilter = (
     field: keyof PostQueryFilters,
-    value?: string
+    value?: string,
   ) => {
     const updatedFilters = removeFilterField(filters, field, value);
     setFilters(updatedFilters);
@@ -300,37 +401,56 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const handleApply = async () => {
     setIsApplying(true);
+    console.log("Applying filters: ", filters);
 
     try {
-      // 🚨 Clear stale results immediately
-      dispatch(setFilteredPosts([]));
+      // ✅ SHARED FEED (local only)
+      if (isSharedFeed) {
+        const locallyFiltered = locallyFilterPosts(sourcePosts, filters);
+
+        dispatch(setFilteredSharedPosts(locallyFiltered));
+        dispatch(setFilteredSharedPostFetchedAt(new Date().toISOString()));
+
+        setActiveSharedPostSet("filteredPosts"); // ✅ correct
+        setLastAppliedFilters(filters);
+        onFiltersApplied?.(filters);
+        return; // ✅ EXIT EARLY (important)
+      }
+
+      // ✅ COMPANY FEED (Firestore + cache)
+      if (!companyId) return;
+
+      // clear stale results
       dispatch(setFilteredPostFetchedAt(null));
+
       const hash = getFilterHash(filters);
       const cached = await getFilteredSet(filters);
-
       const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
 
       if (!needFetch) {
-        console.log(`[FilterHash] Using cached results for hash: ${hash}`);
         dispatch(setFilteredPosts(cached));
         const fetchedAt = await getFetchDate(filters);
         dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
+
         setActiveCompanyPostSet("filteredPosts");
         setLastAppliedFilters(filters);
         onFiltersApplied?.(filters);
         return;
+      } else {
+        dispatch(setFilteredPosts([]));
       }
-      console.log(`[FilterHash] Fetching fresh results for hash: ${hash}`);
-      // EnhancedFilterSidebar.tsx → handleApply()
-      console.log("[handleApply] Filters being applied:", filters);
 
-      const result = await dispatch(fetchFilteredPostsBatch({ filters }));
+      const result = await dispatch(
+        fetchFilteredPostsBatch({ filters, companyId }),
+      );
 
       if (fetchFilteredPostsBatch.fulfilled.match(result)) {
         const fresh = result.payload.posts.map(normalizePost);
+
         dispatch(setFilteredPosts(fresh));
         dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
         await storeFilteredSet(filters, fresh);
+
         setActiveCompanyPostSet("filteredPosts");
         setLastAppliedFilters(filters);
         onFiltersApplied?.(filters);
@@ -363,18 +483,33 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }
   }, [filters.brand, filters.productType, filters.hashtag, filters.starTag]);
 
+  const filteredSharedPostCount = useSelector(
+    (s: RootState) => s.sharedPosts.filteredSharedPostCount,
+  );
+
+  const filteredSharedFetchedAt = useSelector(
+    (s: RootState) => s.sharedPosts.filteredSharedPostFetchedAt,
+  );
+
+  const displayFilteredCount = isSharedFeed
+    ? filteredSharedPostCount
+    : filteredPostCount;
+
+  const displayFetchedAt = isSharedFeed ? filteredSharedFetchedAt : fetchedAt;
+
+  const isFilteredMode = isSharedFeed
+    ? activeSharedPostSet === "filteredPosts"
+    : activePostSet === "filteredPosts";
+
   return (
     <div className="enhanced-sidebar side-bar-box">
-      {/* {activePostSet === "filteredPosts" && filteredPosts.length > 0 && ( */}
-      {activePostSet === "filteredPosts" && lastAppliedFilters && (
-        <div className="filter-summary-banner-container">
-          <FilterSummaryBanner
-            filteredCount={filteredPostCount}
-            filterText={getFilterSummaryText(lastAppliedFilters, companyUsers)}
-            onClear={handleClearFilters}
-            fetchedAt={fetchedAt}
-          />
-        </div>
+      {isFilteredMode && lastAppliedFilters && (
+        <FilterSummaryBanner
+          filteredCount={displayFilteredCount}
+          filterText={getFilterSummaryText(lastAppliedFilters, companyUsers)}
+          onClear={handleClearFilters}
+          fetchedAt={displayFetchedAt}
+        />
       )}
 
       <h3 className="filter-title">🔎 Filters</h3>
@@ -455,6 +590,30 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           />
         </div>
       </div>
+      {isSupplier && (
+        <div
+          className={`filter-section ${openSection === "distributor" ? "open" : ""}`}
+        >
+          <button
+            className="section-toggle"
+            onClick={() => toggleSection("distributor")}
+          >
+            🍻 Distributor
+          </button>
+          <div className="filter-group">
+            <DistributorAutoComplete
+              options={availableDistributors}
+              inputValue={distributorInput}
+              selectedDistributor={selectedDistributor}
+              onInputChange={setDistributorInput}
+              onDistributorChange={(val) => {
+                setSelectedDistributor(val);
+                handleChange("distributorCompanyId", val?.id ?? null); // ✅ CORRECT FIELD
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <div
         className={`filter-section ${openSection === "product" ? "open" : ""}`}
@@ -467,6 +626,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         </button>
         <div className="filter-group">
           <BrandAutoComplete
+            options={availableBrands}
             inputValue={brandInput}
             selectedBrand={selectedBrand}
             onInputChange={setBrandInput}
@@ -475,7 +635,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               handleChange("brand", val);
             }}
           />
-          <ProductTypeAutocomplete
+          {/* <ProductTypeAutocomplete
             inputValue={productTypeInput}
             selectedType={selectedProductType}
             onInputChange={setProductTypeInput}
@@ -483,6 +643,17 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               setSelectedProductType(val);
               handleChange("productType", val);
             }}
+          /> */}
+          <input
+            type="number"
+            placeholder="Min Display Qty"
+            value={filters.minCaseCount || ""}
+            onChange={(e) =>
+              handleChange(
+                "minCaseCount",
+                e.target.value ? Number(e.target.value) : null,
+              )
+            }
           />
         </div>
       </div>
@@ -496,6 +667,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         </button>
         <div className="filter-group">
           <UserFilterAutocomplete
+            options={availableUsers}
             inputValue={selectedUserInput}
             selectedUserId={filters.postUserUid ?? null} // coalesce undefined → null
             onInputChange={setSelectedUserInput}
@@ -504,7 +676,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               const user = companyUsers.find((u) => u.uid === uid) || null;
               setSelectedFilterUser(user);
               setSelectedUserInput(
-                user ? `${user.firstName} ${user.lastName}` : ""
+                user ? `${user.firstName} ${user.lastName}` : "",
               );
               handleChange("postUserUid", uid);
             }}
@@ -521,37 +693,25 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
           🏪 Account Info search
         </button>
         <div className="filter-group">
-          {/* <input // instead of account number we should probably search by account name
-            placeholder="Store Account name"
-            value={filters.accountName || ""}
-            onChange={(e) => handleChange("accountName", e.target.value)}
-          /> */}
           <AccountNameAutocomplete
+            options={availableAccounts as string[]}
             inputValue={accountNameInput}
             selectedValue={filters.accountName}
             onInputChange={setAccountNameInput}
             onSelect={(val) => handleChange("accountName", val)}
           />
-          {/* <input
-            placeholder="Type of Account search coming soon"
-            value={filters.accountType || ""}
-            onChange={(e) => handleChange("accountType", e.target.value)}
-            disabled
-          /> */}
+
           <AccountTypeSelect
+            options={availableAccountTypes}
             selectedValue={filters.accountType}
             onSelect={(val) => {
               setAccountTypeInput(val || "");
               handleChange("accountType", val);
             }}
           />
-          {/* <input
-            placeholder="Chain Name search coming soon"
-            value={filters.accountChain || ""}
-            onChange={(e) => handleChange("accountChain", e.target.value)}
-            disabled
-          /> */}
+
           <ChainNameAutocomplete
+            options={availableChains}
             selectedValue={filters.accountChain}
             onSelect={(val) => {
               setAccountChainInput(val || "");
@@ -562,13 +722,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             selectedValue={filters.chainType}
             onSelect={(val) => handleChange("chainType", val)}
           />
-
-          {/* <input
-            placeholder="Chain Type (chain/independent) search coming soon"
-            value={filters.chainType || ""}
-            onChange={(e) => handleChange("chainType", e.target.value)}
-            disabled
-          /> */}
         </div>
       </div>
 
@@ -579,31 +732,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         >
           🎯 Goal
         </button>
-        {/* <div className="filter-group">
-          <select
-            title="goal-selection"
-            className="dropdown"
-            value={filters.companyGoalId || ""}
-            onChange={(e) => {
-              const selectedId = e.target.value;
-              const selectedGoal = companyGoals.find(
-                (goal) => goal.id === selectedId
-              );
-              handleChange("companyGoalId", selectedId);
-              handleChange("companyGoalTitle", selectedGoal?.goalTitle || "");
-            }}
-          >
-            <option value="">Select a goal...</option>
-            {companyGoals.map((goal) => (
-              <option key={goal.id} value={goal.id}>
-                {goal.goalTitle}
-              </option>
-            ))}
-          </select>
-        </div> */}
+
         <div className="filter-group">
           <GoalFilterGroup
-            goals={companyGoals}
+            goals={availableGoals}
             selectedGoalId={filters.companyGoalId}
             onChange={(id, title) => {
               handleChange("companyGoalId", id);
@@ -675,7 +807,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             onChange={(e) =>
               handleDateChange(
                 e.target.value || null,
-                filters.dateRange?.endDate || null
+                filters.dateRange?.endDate || null,
               )
             }
           />
@@ -687,7 +819,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
             onChange={(e) =>
               handleDateChange(
                 filters.dateRange?.startDate || null,
-                e.target.value || null
+                e.target.value || null,
               )
             }
           />

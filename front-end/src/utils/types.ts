@@ -247,6 +247,11 @@ export interface PendingBrandType {
   proposedBy: UserType;
 }
 
+export interface SharedBrandType {
+  brand: string;
+  proposedBy: UserType;
+}
+
 export interface CompanyConnectionType {
   id: string;
   requestFromCompanyId: string;
@@ -257,7 +262,7 @@ export interface CompanyConnectionType {
   requestToCompanyName: string;
   requestedBy: string; // user UID
   status: "pending" | "approved" | "rejected" | "cancelled";
-  sharedBrands: string[];
+  sharedBrands: SharedBrandType[];
   pendingBrands?: PendingBrandType[];
   declinedBrands?: PendingBrandType[];
   requestedAt: Timestamp | string;
@@ -487,6 +492,8 @@ export type FirestorePostPayload = Omit<
   updatedAt: Date | ReturnType<typeof serverTimestamp> | Timestamp;
 };
 
+type FeedType = "company" | "shared" | "network";
+
 export type PostQueryFilters = {
   companyId?: string | null;
   postUserUid?: string | null;
@@ -512,6 +519,8 @@ export type PostQueryFilters = {
   // ✅ add these
   galloGoalId?: string | null;
   galloGoalTitle?: string | null;
+  distributorCompanyId?: string | null;
+  feedType: FeedType;
 };
 
 export interface ProductType {

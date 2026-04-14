@@ -40,7 +40,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
   "posts/fetchInitial",
   async (
     { POSTS_BATCH_SIZE, currentUser }: FetchInitialPostsArgs,
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const isDeveloper = currentUser?.role === "developer";
@@ -54,7 +54,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
         postsQuery = query(
           postsCollectionRef,
           orderBy("displayDate", "desc"),
-          limit(POSTS_BATCH_SIZE)
+          limit(POSTS_BATCH_SIZE),
         );
       }
       // 🔹 Regular company user: only their company posts (network or companyOnly)
@@ -64,7 +64,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
           where("companyId", "==", companyId),
           where("migratedVisibility", "in", ["network", "companyOnly"]),
           orderBy("displayDate", "desc"),
-          limit(POSTS_BATCH_SIZE)
+          limit(POSTS_BATCH_SIZE),
         );
       }
       // 🔹 Public fallback (non-auth)
@@ -73,7 +73,7 @@ export const fetchInitialPostsBatch = createAsyncThunk(
           postsCollectionRef,
           where("visibility", "==", "public"),
           orderBy("displayDate", "desc"),
-          limit(POSTS_BATCH_SIZE)
+          limit(POSTS_BATCH_SIZE),
         );
       }
 
@@ -92,10 +92,10 @@ export const fetchInitialPostsBatch = createAsyncThunk(
     } catch (error) {
       console.error("❌ Error fetching initial posts:", error);
       return rejectWithValue(
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
     }
-  }
+  },
 );
 
 type FetchMorePostsArgs = {
@@ -108,7 +108,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
   "posts/fetchMore",
   async (
     { lastVisible, limit: batchSize, currentUser }: FetchMorePostsArgs,
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const isDeveloper = currentUser?.role === "developer";
@@ -116,7 +116,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
 
       if (!companyId && !isDeveloper) {
         console.warn(
-          "⚠️ fetchMorePostsBatch called without a valid companyId."
+          "⚠️ fetchMorePostsBatch called without a valid companyId.",
         );
         return { posts: [], lastVisible: null };
       }
@@ -128,19 +128,19 @@ export const fetchMorePostsBatch = createAsyncThunk(
       if (isDeveloper) {
         if (lastVisible) {
           const lastVisibleSnapshot = await getDoc(
-            doc(db, "posts", lastVisible)
+            doc(db, "posts", lastVisible),
           );
           postsQuery = query(
             postsCollectionRef,
             orderBy("displayDate", "desc"),
             startAfter(lastVisibleSnapshot),
-            limit(batchSize)
+            limit(batchSize),
           );
         } else {
           postsQuery = query(
             postsCollectionRef,
             orderBy("displayDate", "desc"),
-            limit(batchSize)
+            limit(batchSize),
           );
         }
       }
@@ -149,7 +149,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
       else if (companyId) {
         if (lastVisible) {
           const lastVisibleSnapshot = await getDoc(
-            doc(db, "posts", lastVisible)
+            doc(db, "posts", lastVisible),
           );
           postsQuery = query(
             postsCollectionRef,
@@ -157,7 +157,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
             where("migratedVisibility", "in", ["companyOnly", "network"]),
             orderBy("displayDate", "desc"),
             startAfter(lastVisibleSnapshot),
-            limit(batchSize)
+            limit(batchSize),
           );
         } else {
           postsQuery = query(
@@ -165,7 +165,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
             where("companyId", "==", companyId),
             where("migratedVisibility", "in", ["companyOnly", "network"]),
             orderBy("displayDate", "desc"),
-            limit(batchSize)
+            limit(batchSize),
           );
         }
       }
@@ -174,21 +174,21 @@ export const fetchMorePostsBatch = createAsyncThunk(
       else {
         if (lastVisible) {
           const lastVisibleSnapshot = await getDoc(
-            doc(db, "posts", lastVisible)
+            doc(db, "posts", lastVisible),
           );
           postsQuery = query(
             postsCollectionRef,
             where("visibility", "==", "public"),
             orderBy("displayDate", "desc"),
             startAfter(lastVisibleSnapshot),
-            limit(batchSize)
+            limit(batchSize),
           );
         } else {
           postsQuery = query(
             postsCollectionRef,
             where("visibility", "==", "public"),
             orderBy("displayDate", "desc"),
-            limit(batchSize)
+            limit(batchSize),
           );
         }
       }
@@ -197,7 +197,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
       // console.log("🔥 fetchMorePostsBatch → Firestore returned:", snapshot.size);
 
       const postsWithIds: PostWithID[] = snapshot.docs.map((docSnap) =>
-        normalizePost({ id: docSnap.id, ...(docSnap.data() as PostType) })
+        normalizePost({ id: docSnap.id, ...(docSnap.data() as PostType) }),
       );
 
       const newLastVisible =
@@ -212,7 +212,7 @@ export const fetchMorePostsBatch = createAsyncThunk(
       }
       return rejectWithValue("An unknown error occurred");
     }
-  }
+  },
 );
 
 // type FetchFilteredPostsArgs = {
@@ -232,27 +232,29 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
   "posts/fetchPostsBatch",
   async ({
     filters,
+    companyId,
   }: {
     filters: PostQueryFilters;
+    companyId: string | null;
     lastVisible?: DocumentData | null; // now unused
     batchSize?: number; // now unused
   }) => {
     let baseQuery: Query<DocumentData> = collection(db, "posts");
     // console.log("[FILTER DEBUG] Incoming filters:", filters);
 
-    // Date filtering
-    if (filters.dateRange?.startDate) {
-      const start = Timestamp.fromDate(new Date(filters.dateRange.startDate));
-      baseQuery = query(baseQuery, where("displayDate", ">=", start));
-    }
+      // Date filtering
+      if (filters.dateRange?.startDate) {
+        const start = Timestamp.fromDate(new Date(filters.dateRange.startDate));
+        baseQuery = query(baseQuery, where("displayDate", ">=", start));
+      }
 
-    if (filters.dateRange?.endDate) {
-      // 🔧 Add time to include the entire end day
-      const end = Timestamp.fromDate(
-        new Date(`${filters.dateRange.endDate}T23:59:59.999Z`)
-      );
-      baseQuery = query(baseQuery, where("displayDate", "<=", end));
-    }
+      if (filters.dateRange?.endDate) {
+        // 🔧 Add time to include the entire end day
+        const end = Timestamp.fromDate(
+          new Date(`${filters.dateRange.endDate}T23:59:59.999Z`),
+        );
+        baseQuery = query(baseQuery, where("displayDate", "<=", end));
+      }
 
     if (filters.companyId) {
       baseQuery = filterExactMatch(
@@ -359,21 +361,10 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       baseQuery = filterExactMatch("city", filters.cities[0], baseQuery);
     }
 
-    // ❌ REMOVE: ordering, pagination
-    // const constraints: QueryConstraint[] = [orderBy("displayDate", "desc")];
-    // if (lastVisible) constraints.push(startAfter(lastVisible));
-    // constraints.push(limit(batchSize));
-    // const finalQuery = query(baseQuery, ...constraints);
+      // const finalQuery = query(baseQuery, orderBy("displayDate", "desc"));
+      const finalQuery = baseQuery;
 
-    const finalQuery = baseQuery; // 👈 Just use filtered baseQuery
-    // console.log("finalQuery (no sort/pagination):", finalQuery);
-
-    const snapshot = await getDocs(finalQuery);
-    // console.log("[FETCH] Documents fetched:", snapshot.size);
-
-    // if (snapshot.size === 0) {
-    //   console.warn("[FILTER DEBUG] No documents matched these filters");
-    // }
+      const snapshot = await getDocs(finalQuery);
 
     const posts: PostWithID[] = snapshot.docs.map((doc) =>
       normalizePost({
@@ -399,7 +390,7 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
       // Firestore query to fetch user posts
       const q = query(
         collection(db, "posts"),
-        where("postUserId", "==", userId)
+        where("postUserId", "==", userId),
       );
       const querySnapshot = await getDocs(q);
       console.log(querySnapshot);
@@ -407,14 +398,14 @@ export const fetchUserCreatedPosts = createAsyncThunk<PostWithID[], string>(
         normalizePost({
           id: doc.id,
           ...(doc.data() as PostType),
-        })
+        }),
       );
       return userCreatedPosts;
     } catch (error) {
       // showMessage
       return rejectWithValue("Error fetching user posts");
     }
-  }
+  },
 );
 
 // Define the arguments for the fetchPostsByIds thunk
@@ -440,7 +431,7 @@ export const fetchPostsByIds = createAsyncThunk<
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ postId, token: token || "" }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -511,5 +502,5 @@ export const fetchPostsByCollectionId = createAsyncThunk<
       console.error("Error fetching posts for collection:", error);
       return rejectWithValue("Error fetching posts for collection.");
     }
-  }
+  },
 );

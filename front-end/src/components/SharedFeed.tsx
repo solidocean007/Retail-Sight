@@ -34,6 +34,7 @@ interface SharedFeedProps {
   setSharedFeedPostSet?: React.Dispatch<
     React.SetStateAction<"posts" | "filteredPosts">
   >;
+  activeSharedPostSet: "posts" | "filteredPosts"
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -43,20 +44,34 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   postIdToScroll,
   setPostIdToScroll,
   setSharedFeedPostSet,
+  activeSharedPostSet,
   setIsSearchActive,
   setCurrentHashtag,
 }) => {
   const dispatch = useAppDispatch();
-
   const [lastVisible, setLastVisible] = useState<string | null>(null);
   const [showLoader, setShowLoader] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
-  const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
   const hasMore = useSelector((s: RootState) => s.sharedPosts.hasMore);
   const loading = useSelector((s: RootState) => s.sharedPosts.loading);
+
+  const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
+
+  const filteredSharedPosts = useSelector(
+    (s: RootState) => s.sharedPosts.filteredSharedPosts,
+  );
+
+  const filteredCount = useSelector(
+    (s: RootState) => s.sharedPosts.filteredSharedPostCount,
+  );
+
+  const displayPosts = useMemo(() => {
+    return activeSharedPostSet === "filteredPosts"
+      ? filteredSharedPosts
+      : sharedPosts;
+  }, [activeSharedPostSet, filteredSharedPosts, sharedPosts]);
 
   const scrollToTop = () => {
     virtuosoRef?.current?.scrollToIndex({
@@ -77,7 +92,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
   useEffect(() => {
     if (!postIdToScroll || !virtuosoRef?.current) return;
 
-    const idx = sharedPosts.findIndex((p) => p.id === postIdToScroll);
+    const idx = displayPosts.findIndex((p) => p.id === postIdToScroll);
     if (idx === -1) return;
 
     const t = setTimeout(() => {
@@ -85,10 +100,10 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
     }, 700);
 
     return () => clearTimeout(t);
-  }, [postIdToScroll, sharedPosts, virtuosoRef]);
+  }, [postIdToScroll, displayPosts, virtuosoRef]);
 
   // Safe no-results handling
-  const noResults = !loading && sharedPosts.length === 0;
+  const noResults = !loading && displayPosts.length === 0;
 
   const scrollerRefCallback = useCallback((ref: any) => {
     if (!ref || !(ref instanceof HTMLElement)) return;
@@ -127,7 +142,7 @@ const SharedFeed: React.FC<SharedFeedProps> = ({
             height: "100%",
             width: "100%", // 🔥 REQUIRED
           }}
-          data={sharedPosts}
+          data={displayPosts}
           defaultItemHeight={450}
           itemContent={(index, post) => {
             if (!post?.id) return null;

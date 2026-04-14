@@ -32,6 +32,7 @@ import { getAuth } from "firebase/auth";
 function AppContent() {
   const dispatch = useAppDispatch();
   const { currentUser, initializing } = useFirebaseAuth();
+  const user = useSelector((state: RootState) => state.user.currentUser);
   const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
   const snackbar = useSelector((s: RootState) => s.snackbar);
   const appReady = useSelector((s: RootState) => s.app.appReady);
@@ -72,7 +73,7 @@ function AppContent() {
 
   useAppBootstrap({
     enabled: shouldBootstrapApp,
-    currentUser,
+    currentUser: user,
     initializing,
   });
 

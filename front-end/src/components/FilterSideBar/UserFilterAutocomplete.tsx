@@ -6,6 +6,7 @@ import { selectCompanyUsers } from "../../Slices/userSlice";
 import { UserType } from "../../utils/types";
 
 interface UserFilterAutocompleteProps {
+  options: UserType[];
   inputValue: string;
   selectedUserId: string | null;
   onInputChange: (v: string) => void;
@@ -13,6 +14,7 @@ interface UserFilterAutocompleteProps {
 }
 
 export default function UserFilterAutocomplete({
+  options,
   inputValue,
   selectedUserId,
   onInputChange,

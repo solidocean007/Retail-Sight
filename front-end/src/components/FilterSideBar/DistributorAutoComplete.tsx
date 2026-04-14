@@ -1,36 +1,41 @@
 import { Autocomplete, TextField } from "@mui/material";
-import { useBrandOptions } from "../../hooks/useBrandOptions";
 import { useState } from "react";
 
-interface BrandAutocompleteProps {
-  options: string[];
+interface DistributorOption {
+  id: string;
+  name: string;
+}
+
+interface DistributorAutocompleteProps {
+  options: DistributorOption[];
   inputValue: string;
-  selectedBrand: string | null;
+  selectedDistributor: DistributorOption | null;
   onInputChange: (v: string) => void;
-  onBrandChange: (v: string | null) => void;
+  onDistributorChange: (v: DistributorOption | null) => void;
 }
 
 const normalize = (str: string) => str.toLowerCase().replace(/[\s\-]+/g, "");
 
-const BrandAutoComplete: React.FC<BrandAutocompleteProps> = ({
+const DistributorAutoComplete: React.FC<DistributorAutocompleteProps> = ({
   options,
   inputValue,
-  selectedBrand,
+  selectedDistributor,
   onInputChange,
-  onBrandChange,
+  onDistributorChange,
 }) => {
-  const brandOptions = useBrandOptions();
   const [open, setOpen] = useState<boolean>(false);
 
   return (
     <Autocomplete
       open={open}
-      options={brandOptions}
-      value={selectedBrand || ""}
+      options={options}
+      value={selectedDistributor}
       inputValue={inputValue}
+      // 🔥 KEY FIX (how MUI displays label)
+      getOptionLabel={(option) => option?.name || ""}
+      isOptionEqualToValue={(opt, val) => opt.id === val.id}
       onOpen={() => setOpen(inputValue.length > 0)}
       onClose={(_, reason) => {
-        // close on blur, escape key, or when input toggles
         if (
           reason === "blur" ||
           reason === "escape" ||
@@ -44,26 +49,19 @@ const BrandAutoComplete: React.FC<BrandAutocompleteProps> = ({
         setOpen(v.length > 0);
       }}
       onChange={(_, v) => {
-        onBrandChange(v);
-        onInputChange(v ?? "");
+        onDistributorChange(v);
+        onInputChange(v?.name ?? "");
         setOpen(false);
       }}
-      // onClose={() => setOpen(false)}
-      // onInputChange={(_, newVal) => {
-      //   onInputChange(newVal);
-      // }}
-      // onChange={(_, newVal) => {
-      //   onTypeChange(newVal);
-      //   onInputChange(newVal || "");
-      // }}
+      // 🔥 FIX filtering for object
       filterOptions={(opts, { inputValue: iv }) =>
-        opts.filter((opt) => normalize(opt).includes(normalize(iv)))
+        opts.filter((opt) => normalize(opt.name).includes(normalize(iv)))
       }
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Brand"
-          placeholder="Type to search brands"
+          label="Distributor"
+          placeholder="Search distributors"
           onBlur={() => setOpen(false)}
         />
       )}
@@ -73,4 +71,4 @@ const BrandAutoComplete: React.FC<BrandAutocompleteProps> = ({
   );
 };
 
-export default BrandAutoComplete;
+export default DistributorAutoComplete;

@@ -7,7 +7,7 @@ const normalizeBrand = (brand: string): string =>
 
 export const getFilterSummaryText = (
   filters: PostQueryFilters | null | undefined,
-  users: UserType[]
+  users: UserType[],
 ): string => {
   if (!filters) return "";
   const parts: string[] = [];
@@ -50,7 +50,7 @@ export const getFilterSummaryText = (
     parts.push(
       start && end && start !== end
         ? `From ${start} to ${end}`
-        : `Date: ${start || end}`
+        : `Date: ${start || end}`,
     );
   }
 
@@ -60,7 +60,7 @@ export const getFilterSummaryText = (
 export function removeFilterField(
   filters: PostQueryFilters,
   field: keyof PostQueryFilters,
-  valueToRemove?: string
+  valueToRemove?: string,
 ): PostQueryFilters {
   if (field === "dateRange") {
     return { ...filters, dateRange: { startDate: null, endDate: null } };
@@ -118,6 +118,8 @@ export function clearAllFilters(): PostQueryFilters {
     productType: null,
     companyGoalId: null,
     companyGoalTitle: null,
+    distributorCompanyId: null,
+    // feedType: "company",
 
     // ✅ ADD THESE
     galloGoalId: null,
@@ -136,7 +138,7 @@ let lastResult: PostWithID[] = [];
 
 export function locallyFilterPostsMemo(
   posts: PostWithID[],
-  filters: PostQueryFilters
+  filters: PostQueryFilters,
 ): PostWithID[] {
   if (
     lastFilters &&
@@ -161,9 +163,16 @@ function deepEqualFilters(a: PostQueryFilters, b: PostQueryFilters): boolean {
 
 export function locallyFilterPosts(
   posts: PostWithID[],
-  filters: PostQueryFilters
+  filters: PostQueryFilters,
 ): PostWithID[] {
   return posts.filter((post) => {
+    // Distributor filter
+    if (
+      filters.distributorCompanyId &&
+      post.companyId !== filters.distributorCompanyId
+    ) {
+      return false;
+    }
     // Hashtag (match any)
     if (filters.hashtag) {
       const tag = filters.hashtag.toLowerCase();
@@ -198,7 +207,7 @@ export function locallyFilterPosts(
     if (
       filters.brand &&
       !post.brands?.some(
-        (b) => normalizeBrand(b) === normalizeBrand(filters.brand!)
+        (b) => normalizeBrand(b) === normalizeBrand(filters.brand!),
       )
     ) {
       return false;
@@ -231,10 +240,12 @@ export function locallyFilterPosts(
 
     if (filters.chainType && post.chainType !== filters.chainType) return false;
 
-    if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
-      if (!post.totalCaseCount || post.totalCaseCount < filters.minCaseCount) {
-        return false;
-      }
+    if (
+      filters.minCaseCount !== null &&
+      filters.minCaseCount !== undefined &&
+      (post.totalCaseCount ?? 0) < filters.minCaseCount
+    ) {
+      return false;
     }
 
     // State / City
@@ -328,7 +339,7 @@ export function getFilterHash(filters: PostQueryFilters): string {
   });
 
   const sorted = Object.fromEntries(
-    Object.entries(cleaned).sort(([a], [b]) => a.localeCompare(b))
+    Object.entries(cleaned).sort(([a], [b]) => a.localeCompare(b)),
   );
 
   const json = JSON.stringify(sorted);
@@ -341,14 +352,14 @@ export function getFilterHash(filters: PostQueryFilters): string {
 function base64EncodeUnicode(str: string): string {
   return btoa(
     encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) =>
-      String.fromCharCode(parseInt(p1, 16))
-    )
+      String.fromCharCode(parseInt(p1, 16)),
+    ),
   );
 }
 
 export function doesPostMatchFilter(
   post: PostWithID,
-  filter: PostQueryFilters
+  filter: PostQueryFilters,
 ): boolean {
   // locallyFilterPosts expects an array
   return locallyFilterPosts([post], filter).length > 0;

@@ -10,6 +10,7 @@ import { setAllAccounts } from "../Slices/allAccountsSlice";
 import { RootState } from "../utils/store";
 
 const useAllCompanyAccountsSync = (enabled=true) => {
+  // console.log('running useAllCompanyAccountsSync with enabled:', enabled); // this logs false for some reason
   const canSync = useSelector(selectCanSync);
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);

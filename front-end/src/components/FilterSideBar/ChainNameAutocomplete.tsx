@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../utils/store";
 
 interface ChainNameAutocompleteProps {
+  options: string[];
   // inputValue: string;
   selectedValue: string | null | undefined;
   // onInputChange: (value: string) => void;
@@ -14,6 +15,7 @@ interface ChainNameAutocompleteProps {
 }
 
 const ChainNameAutocomplete: React.FC<ChainNameAutocompleteProps> = ({
+  options,
   // inputValue,
   selectedValue,
   // onInputChange,

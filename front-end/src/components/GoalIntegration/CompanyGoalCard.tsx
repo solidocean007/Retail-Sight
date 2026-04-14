@@ -279,6 +279,7 @@ const CompanyGoalCard: React.FC<CompanyGoalCardProps> = ({
         </div>
         <div className="info-title-row">
           <div className="info-title">{goal.goalTitle}</div>
+          {/* <div className="info-title">{goal.id}</div> */}
           {onDelete &&
             (user?.role === "admin" || user?.role === "super-admin") && (
               <Box display="flex" gap={1}>
