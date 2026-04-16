@@ -86,6 +86,7 @@ import { getNotificationAnalytics } from "./notifications/getNotificationAnalyti
 import { trackEmailClick } from "./notifications/sendEmailNotificationCore";
 
 import { backfillSupplierGoalPosts } from "./backFillISupplierGoalPosts";
+import { onPostBrandsUpdated } from "./onPostBrandsUpdated";
 
 export {
   backfillSupplierGoalPosts,
@@ -147,6 +148,7 @@ export {
   // Connection function
   createInviteAndDraftConnection,
   onConnectionBrandsUpdated,
+  onPostBrandsUpdated,
   lookupConnectionTarget,
   acceptInviteAutoResolve,
   onPendingNewUserAndCompanyInviteCreate,

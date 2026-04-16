@@ -93,7 +93,9 @@ export async function resolveDraftConnections(
       requestToCompanyName: toCompany.companyName,
       requestToCompanyType: toCompany.companyType,
 
-      requestedByUid: null,
+      requestedBy: draft.initiatorCompanyId,
+      companyIds: [draft.initiatorCompanyId, newCompanyId],
+      sharedBrandNames: sharedBrands,
 
       sharedBrands: sharedBrandsRaw,
       pendingBrands: [],

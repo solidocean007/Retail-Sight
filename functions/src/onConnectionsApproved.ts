@@ -15,18 +15,23 @@ export const onConnectionApproved = onDocumentUpdated(
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    if (!before || !after) {
-      return;
-    }
+    if (!before || !after) return;
 
-    // Only run when status transitions to "approved"
-    if (before.status === after.status || after.status !== "approved") {
-      return;
-    }
+    // Only run when status transitions to approved
+    if (before.status === after.status || after.status !== "approved") return;
 
-    const { requestFromCompanyId, requestToCompanyId, sharedBrands } = after;
+    const {
+      requestFromCompanyId,
+      requestToCompanyId,
+      sharedBrands = [],
+    } = after;
     const connectionId = event.params.connectionId;
 
+    const normalize = (s: string) => s.trim().toUpperCase();
+
+    const sharedBrandNames = sharedBrands.map((b: any) => normalize(b.brand));
+
+    // 🔹 Mirror connection
     const connDoc = {
       connectionId,
       sharedBrands,
@@ -34,7 +39,6 @@ export const onConnectionApproved = onDocumentUpdated(
       updatedAt: FieldValue.serverTimestamp(),
     };
 
-    // 🔹 Mirror to both companies’ subcollections
     await Promise.all([
       db
         .collection("companies")
@@ -50,65 +54,75 @@ export const onConnectionApproved = onDocumentUpdated(
         .set(connDoc),
     ]);
 
-    // 🔹 Retroactively share posts with matching brands
-    if (Array.isArray(sharedBrands) && sharedBrands.length > 0) {
-      const postsSnap = await db
+    // 🔥 Reusable sharing function
+    const sharePosts = async (
+      sourceCompanyId: string,
+      targetCompanyId: string
+    ) => {
+      const snap = await db
         .collection("posts")
-        .where("companyId", "==", requestFromCompanyId)
+        .where("companyId", "==", sourceCompanyId)
         .where("migratedVisibility", "==", "network")
-        .where("brands", "array-contains-any", sharedBrands)
         .get();
 
-      if (!postsSnap.empty) {
-        const batch = db.batch();
-        for (const doc of postsSnap.docs) {
-          batch.update(doc.ref, {
-            sharedWithCompanies: FieldValue.arrayUnion(requestToCompanyId),
-          });
-        }
-        await batch.commit();
-      }
-    }
+      if (snap.empty) return;
 
-    // ✅ Increment usage ONLY when approved
-    await db
-      .collection("companies")
-      .doc(requestFromCompanyId)
-      .update({
-        "usage.connections": FieldValue.increment(1),
-      });
+      const batch = db.batch();
 
-    await db
-      .collection("companies")
-      .doc(requestToCompanyId)
-      .update({
-        "usage.connections": FieldValue.increment(1),
-      });
+      snap.forEach((doc) => {
+        const post = doc.data();
 
-    const reversePostsSnap = await db
-      .collection("posts")
-      .where("companyId", "==", requestToCompanyId)
-      .where("migratedVisibility", "==", "network")
-      .where("brands", "array-contains-any", sharedBrands)
-      .get();
+        const postBrands = (
+          Array.isArray(post.brands)
+            ? post.brands
+            : Object.keys(post.brands || {})
+        ).map(normalize);
 
-    if (!reversePostsSnap.empty) {
-      const reverseBatch = db.batch();
-      for (const doc of reversePostsSnap.docs) {
-        reverseBatch.update(doc.ref, {
-          sharedWithCompanies: FieldValue.arrayUnion(requestFromCompanyId),
+        const matches = sharedBrandNames.some((b: string) =>
+          postBrands.includes(b)
+        );
+
+        if (!matches) return;
+
+        batch.update(doc.ref, {
+          sharedWithCompanies: FieldValue.arrayUnion(targetCompanyId),
         });
-      }
-      await reverseBatch.commit();
-    }
+      });
 
-    // 🔹 Optional: Audit log
+      await batch.commit();
+    };
+
+    // 🔹 Share both directions
+    await Promise.all([
+      sharePosts(requestFromCompanyId, requestToCompanyId),
+      sharePosts(requestToCompanyId, requestFromCompanyId),
+    ]);
+
+    // 🔹 Increment usage
+    await Promise.all([
+      db
+        .collection("companies")
+        .doc(requestFromCompanyId)
+        .update({
+          "usage.connections": FieldValue.increment(1),
+        }),
+      db
+        .collection("companies")
+        .doc(requestToCompanyId)
+        .update({
+          "usage.connections": FieldValue.increment(1),
+        }),
+    ]);
+
+    // 🔹 Audit log
     await db.collection("connectionHistory").add({
       event: "connection_approved",
       fromCompanyId: requestFromCompanyId,
       toCompanyId: requestToCompanyId,
+      companyIds: [requestFromCompanyId, requestToCompanyId],
+      sharedBrandNames,
       sharedBrands,
-      postCount: sharedBrands?.length ?? 0,
+      brandCount: sharedBrands.length,
       timestamp: FieldValue.serverTimestamp(),
     });
   }

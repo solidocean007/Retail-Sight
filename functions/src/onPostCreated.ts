@@ -24,12 +24,13 @@ export const onPostCreated = onDocumentCreated(
 
     const { companyId, migratedVisibility, brands } = postData;
 
-    // Only run for network-visible posts with brands
-    if (
-      migratedVisibility !== "network" ||
-      !Array.isArray(brands) ||
-      brands.length === 0
-    ) {
+    const normalize = (s: string) => s.trim().toUpperCase();
+
+    const brandList = (
+      Array.isArray(brands) ? brands : Object.keys(brands || {})
+    ).map(normalize);
+
+    if (migratedVisibility !== "network" || brandList.length === 0) {
       console.log(
         `ℹ️ Skipping post ${postId}: not network-visible or has no brands.`
       );
@@ -41,7 +42,7 @@ export const onPostCreated = onDocumentCreated(
       const connectionsSnap = await db
         .collection("companyConnections")
         .where("status", "==", "approved")
-        .where("sharedBrands", "array-contains-any", brands)
+        .where("companyIds", "array-contains", companyId)
         .get();
 
       if (connectionsSnap.empty) {
@@ -51,15 +52,21 @@ export const onPostCreated = onDocumentCreated(
 
       const sharedWith = new Set<string>();
 
-      // 2️⃣ Determine which connected companies should receive this post
       connectionsSnap.forEach((connDoc) => {
         const conn = connDoc.data();
-        const { requestFromCompanyId, requestToCompanyId } = conn;
 
-        if (companyId === requestFromCompanyId) {
-          sharedWith.add(requestToCompanyId);
-        } else if (companyId === requestToCompanyId) {
-          sharedWith.add(requestFromCompanyId);
+        const sharedBrandNames = (conn.sharedBrandNames || []).map(normalize);
+
+        const matches = brandList.some((b) => sharedBrandNames.includes(b));
+
+        if (!matches) return;
+
+        const otherCompanyId = conn.companyIds.find(
+          (id: string) => id !== companyId
+        );
+
+        if (otherCompanyId) {
+          sharedWith.add(otherCompanyId);
         }
       });
 
@@ -82,6 +89,8 @@ export const onPostCreated = onDocumentCreated(
         event: "post_auto_shared",
         postId,
         sourceCompanyId: companyId,
+        companyIds: [companyId, ...Array.from(sharedWith)],
+        sharedBrandNames: brandList,
         sharedBrands: brands,
         sharedWithCompanies: Array.from(sharedWith),
         timestamp: FieldValue.serverTimestamp(),

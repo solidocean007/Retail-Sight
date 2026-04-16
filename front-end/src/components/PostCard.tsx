@@ -1,6 +1,5 @@
 // PostCard.tsx
-import React, { useEffect } from "react";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   // Card,
   IconButton,
@@ -58,7 +57,7 @@ interface PostCardProps {
   style?: React.CSSProperties;
   getPostsByTag?: (
     hashTag: string,
-    companyID?: string
+    companyID?: string,
   ) => Promise<PostWithID[]>;
   getPostsByStarTag?: (starTag: string) => Promise<PostWithID[]>;
   setCurrentHashtag?: React.Dispatch<React.SetStateAction<string | null>>;
@@ -83,9 +82,13 @@ const PostCard: React.FC<PostCardProps> = ({
   postIdToScroll = null, // Default to null if not provided
 }) => {
   // const { small, medium, original } = imageSet;
+  const updatedPost = useSelector((state: RootState) =>
+    state.posts.posts.find((p) => p.id === post.id),
+  );
+
   const dispatch = useDispatch();
   const protectedAction = useProtectedAction();
-  const [commentCount] = useState(post.commentCount);
+  const commentCount = updatedPost?.commentCount ?? post.commentCount;
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [comments, setComments] = useState<CommentType[]>([]);
   const [showAllComments] = useState(false);
@@ -105,30 +108,27 @@ const PostCard: React.FC<PostCardProps> = ({
   const [_selectedCompanyAccount, setSelectedCompanyAccount] =
     useState<CompanyAccountType | null>(null);
   const [shouldHighlight, setShouldHighlight] = useState(false);
-  // const feedList = [...small, ...medium];
-  // const { feed, modal } = resolvePostImage(imageSet);
+  const isOwner = user?.uid === post.postUser?.uid;
+  const isAdmin = user?.role === "admin" || user?.role === "super-admin";
+  const isSharedPost = post.companyId !== user?.companyId;
+
+  const canEditPost = (isOwner || isAdmin) && !isSharedPost;
 
   useEffect(() => {
-    let startTimer: NodeJS.Timeout;
-    let stopTimer: NodeJS.Timeout;
+    if (postIdToScroll !== post.id) return;
 
-    if (postIdToScroll === post.id) {
-      startTimer = setTimeout(() => {
-        setShouldHighlight(true);
-        stopTimer = setTimeout(() => setShouldHighlight(false), 4000);
-      }, 600);
-    }
+    const startTimer = setTimeout(() => {
+      setShouldHighlight(true);
 
-    return () => {
-      clearTimeout(startTimer);
-      clearTimeout(stopTimer);
-    };
+      const stopTimer = setTimeout(() => {
+        setShouldHighlight(false);
+      }, 4000);
+
+      return () => clearTimeout(stopTimer);
+    }, 600);
+
+    return () => clearTimeout(startTimer);
   }, [postIdToScroll, post.id]);
-
-  // Use the postId to fetch the latest post data from the Redux store
-  const updatedPost = useSelector((state: RootState) =>
-    state.posts.posts.find((p) => p.id === post.id)
-  );
 
   // Extract the likes count and likedByUser status from the updated post object
   const likesCount = updatedPost?.likes?.length || 0;
@@ -144,7 +144,7 @@ const PostCard: React.FC<PostCardProps> = ({
     try {
       const commentQuery = query(
         collection(db, "comments"),
-        where("postId", "==", postId)
+        where("postId", "==", postId),
       );
       const commentSnapshot = await getDocs(commentQuery);
       const comments: CommentType[] = commentSnapshot.docs.map((doc) => ({
@@ -187,7 +187,7 @@ const PostCard: React.FC<PostCardProps> = ({
       await updatePostInIndexedDB(updatedPost);
 
       setComments(
-        comments.filter((comment) => comment.commentId !== commentId)
+        comments.filter((comment) => comment.commentId !== commentId),
       );
 
       await updatePostWithNewTimestamp(post.id); // ✅ Only if everything else worked
@@ -198,7 +198,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const handleLikeComment = async (
     comment: CommentType,
-    likes: string[] | undefined
+    likes: string[] | undefined,
   ) => {
     if (user?.uid && !likes?.includes(user.uid)) {
       try {
@@ -239,7 +239,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
       // ⏳ Timeout fallback (5 seconds)
       const timeoutPromise = new Promise<string>((resolve) =>
-        setTimeout(() => resolve(longUrl), 5000)
+        setTimeout(() => resolve(longUrl), 5000),
       );
 
       // 🏁 Whichever resolves first wins
@@ -269,6 +269,12 @@ const PostCard: React.FC<PostCardProps> = ({
     } finally {
       setIsSharing(false);
     }
+  };
+
+  const handleOpenEdit = () => {
+    if (!canEditPost) return;
+    setAnchorEl(null);
+    setIsEditModalOpen(true);
   };
 
   const createdOnBehalf =
@@ -310,15 +316,8 @@ const PostCard: React.FC<PostCardProps> = ({
                         >
                           {isSharing ? <CircularProgress size={20} /> : "Share"}
                         </MenuItem>
-                        {(user?.uid === post.postUser?.uid ||
-                          user?.role === "admin" ||
-                          user?.role === "super-admin") && (
-                          <MenuItem
-                            onClick={() => {
-                              setAnchorEl(null); // Close menu completely
-                              setIsEditModalOpen(true); // Open edit modal
-                            }}
-                          >
+                        {canEditPost && (
+                          <MenuItem onClick={handleOpenEdit}>
                             Update Post
                           </MenuItem>
                         )}
@@ -422,7 +421,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-             {/* {post.id} */}
+          {/* {post.id} */}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>

@@ -21,7 +21,6 @@ export const updateVisibility = async (
     .collection("posts")
     .where("companyId", "==", sourceCompanyId)
     .where("migratedVisibility", "==", "network")
-    .where("brands", "array-contains-any", brands)
     .get();
 
   if (postsSnap.empty) {
@@ -31,7 +30,20 @@ export const updateVisibility = async (
   console.log("🔥 posts found:", postsSnap.size);
 
   const batch = db.batch();
+  const normalize = (s: string) => s.trim().toUpperCase();
+  const targetBrands = brands.map(normalize);
+
   postsSnap.forEach((doc) => {
+    const post = doc.data();
+
+    const postBrands = (
+      Array.isArray(post.brands) ? post.brands : Object.keys(post.brands || {})
+    ).map(normalize);
+
+    const matches = targetBrands.some((b) => postBrands.includes(b));
+
+    if (!matches) return;
+
     batch.update(doc.ref, {
       sharedWithCompanies:
         mode === "add"
@@ -115,6 +127,8 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
         removed: removedShared,
         fromCompanyId: requestFromCompanyId,
         toCompanyId: requestToCompanyId,
+        companyIds: [requestFromCompanyId, requestToCompanyId],
+        sharedBrandNames: afterBrands,
         timestamp: FieldValue.serverTimestamp(),
       });
 

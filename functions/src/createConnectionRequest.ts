@@ -26,10 +26,6 @@ export const createConnectionRequest = onCall(async (request) => {
     throw new HttpsError("permission-denied", "User not in company.");
   }
 
-  if (userSnap.data()?.companyId !== fromCompanyId) {
-    throw new HttpsError("permission-denied", "User not in company.");
-  }
-
   if (!fromCompanyId || !toCompanyId || !requestedByUid) {
     throw new HttpsError("invalid-argument", "Missing required fields.");
   }
@@ -73,7 +69,8 @@ export const createConnectionRequest = onCall(async (request) => {
     requestToCompanyName: toSnap.data()!.companyName,
     requestToCompanyType: toSnap.data()!.companyType,
 
-    requestedByUid,
+    companyIds: [fromCompanyId, toCompanyId],
+    requestedBy: requestedByUid,
     status: "pending",
     pendingBrands,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),

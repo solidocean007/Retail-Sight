@@ -44,20 +44,23 @@ export const createInviteAndDraftConnection = onCall(async (request) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // 2️⃣ Create draft connection for shared brands
-    const draftConnectionRef = await db.collection("companyConnectionDrafts");
-    await db.collection("companyConnectionDrafts").add({
+    // ✅ create draft correctly
+    const draftRef = await db.collection("companyConnectionDrafts").add({
       targetEmail: cleanEmail,
-      initiatorCompanyId: fromCompanyId, // ✅ FIX NAME
+      initiatorCompanyId: fromCompanyId,
       pendingBrands: sharedBrands,
-      status: "pending-user-creation", // ✅ REQUIRED
+
+      // ✅ keep minimal for draft
+      companyIds: [fromCompanyId],
+
+      status: "pending-user-creation",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       inviteId: inviteRef.id,
     });
 
     return {
       inviteId: inviteRef.id,
-      draftId: draftConnectionRef.id,
+      draftId: draftRef.id,
     };
   } catch (err: any) {
     console.error("Error in createInviteAndDraftConnection:", err);
