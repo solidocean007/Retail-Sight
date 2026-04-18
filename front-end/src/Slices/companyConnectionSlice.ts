@@ -66,10 +66,7 @@ export const createConnectionRequest = createAsyncThunk(
       const res = await fn({
         fromCompanyId: currentCompanyId,
         targetEmail: emailInput,
-        sharedBrands: (brandSelection ?? []).map((b) => ({
-          brand: b,
-          proposedBy: user?.uid, // safer
-        })),
+        sharedBrandNames: brandSelection ?? []
       });
 
       return normalizeTimestamps(res.data as CompanyConnectionType);

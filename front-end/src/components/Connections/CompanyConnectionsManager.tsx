@@ -13,7 +13,6 @@ import {
 } from "../../Slices/companyConnectionSlice";
 import { CompanyConnectionType, UserType } from "../../utils/types";
 import ConnectionBuilder from "./ConnectionBuilder";
-import ConnectionEditModal from "./ConnectionEditModal";
 import { Modal } from "@mui/material";
 import InviteAndConnectModal from "./InviteAndConnectModal";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -46,9 +45,6 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   }, [allPlans, company]);
 
   const [inviteMode, setInviteMode] = useState(false);
-  const [selectedConnection, setSelectedConnection] =
-    useState<CompanyConnectionType | null>(null);
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   // 🆕 Step-based flow management
   const [step, setStep] = useState<0 | 1 | 2>(0);
@@ -58,7 +54,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 
   const approvedConnections = company?.counts?.connectionsApprovedTotal ?? 0;
   const pendingInitiatedConnections =
-    company?.counts?.connectionsPendingInitiatedTotal ?? 0;
+    company?.counts?.connectionsPendingInitiatedTotal ?? 0; // Did you mean 'connectionsPendingTotal'?ts(2551)
 
   const pendingReceivedConnections =
     company?.counts?.connectionsPendingReceivedTotal ?? 0;
@@ -154,16 +150,6 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   const [brandSelectionFromStep2, setBrandSelectionFromStep2] = useState<
     string[]
   >([]);
-
-  const handleEdit = (connection: CompanyConnectionType) => {
-    setSelectedConnection(connection);
-    setIsEditOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setIsEditOpen(false);
-    setSelectedConnection(null);
-  };
 
   const isNearLimit =
     isPlanReady &&
@@ -321,7 +307,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           connections={connections}
           currentCompanyId={currentCompanyId}
           isAdminView={user?.role === "admin" || user?.role === "super-admin"}
-          onEdit={handleEdit}
+          // onEdit={handleEdit}
         />
       </div>
       {/* === STEP 1: Identify Company === */}
@@ -411,24 +397,6 @@ const CompanyConnectionsManager: React.FC<Props> = ({
           }
         }}
       />
-
-      {/* 🧩 Edit Modal */}
-      {selectedConnection && (
-        <Modal
-          open={isEditOpen}
-          onClose={handleModalClose}
-          slotProps={{ backdrop: { className: "connection-builder-backdrop" } }}
-        >
-          <div className="connection-builder-modal">
-            <ConnectionEditModal
-              isOpen={isEditOpen}
-              onClose={handleModalClose}
-              connection={selectedConnection}
-              currentCompanyId={currentCompanyId}
-            />
-          </div>
-        </Modal>
-      )}
     </div>
   );
 };

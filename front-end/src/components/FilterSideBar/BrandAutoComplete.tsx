@@ -1,5 +1,4 @@
 import { Autocomplete, TextField } from "@mui/material";
-import { useBrandOptions } from "../../hooks/useBrandOptions";
 import { useState } from "react";
 
 interface BrandAutocompleteProps {
@@ -19,13 +18,13 @@ const BrandAutoComplete: React.FC<BrandAutocompleteProps> = ({
   onInputChange,
   onBrandChange,
 }) => {
-  const brandOptions = useBrandOptions();
   const [open, setOpen] = useState<boolean>(false);
-
+  console.log("BrandAutoComplete options: ", options);
   return (
     <Autocomplete
       open={open}
-      options={brandOptions}
+      // options={brandOptions}
+      options={options}
       value={selectedBrand || ""}
       inputValue={inputValue}
       onOpen={() => setOpen(inputValue.length > 0)}

@@ -20,7 +20,6 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const { supplierBrandList } = useSupplierBrands();
-
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const [manualBrand, setManualBrand] = useState("");
   const [brandSelection, setBrandSelection] = useState<string[]>([]);
@@ -30,13 +29,13 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
 
   const currentBrands = useMemo(() => {
     const supplier = supplierBrandList.find(
-      (s) => s.supplier === selectedSupplier
+      (s) => s.supplier === selectedSupplier,
     );
     return supplier ? supplier.brands : [];
   }, [supplierBrandList, selectedSupplier]);
 
   const handleAddManualBrand = () => {
-    const newBrand = manualBrand.trim();
+    const newBrand = manualBrand.trim().toUpperCase();
     if (!newBrand) return;
     if (!brandSelection.includes(newBrand)) {
       setBrandSelection((prev) => [...prev, newBrand]);
@@ -141,10 +140,9 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
           <div className="brand-chip-grid">
             {currentBrands.map((brand) => (
               <button
-  className={`chip brand-chip ${brandSelection.includes(brand) ? "selected" : ""}`}
-  onClick={() => toggleBrand(brand)}
->
-
+                className={`chip brand-chip ${brandSelection.includes(brand) ? "selected" : ""}`}
+                onClick={() => toggleBrand(brand)}
+              >
                 {brand}
               </button>
             ))}
@@ -186,9 +184,7 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
                 <button
                   className="remove-brand-btn"
                   onClick={() =>
-                    setBrandSelection((prev) =>
-                      prev.filter((b) => b !== brand)
-                    )
+                    setBrandSelection((prev) => prev.filter((b) => b !== brand))
                   }
                 >
                   ×

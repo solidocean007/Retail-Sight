@@ -262,7 +262,7 @@ export interface CompanyConnectionType {
   requestToCompanyName: string;
   requestedBy: string; // user UID
   status: "pending" | "approved" | "rejected" | "cancelled";
-  sharedBrands: SharedBrandType[];
+  // sharedBrands: SharedBrandType[];
 
   // ✅ NEW (add these)
   companyIds: string[];

@@ -11,7 +11,7 @@ const db = admin.firestore();
 export const createInviteAndDraftConnection = onCall(async (request) => {
   try {
     const data = request.data || {};
-    const { targetEmail, fromCompanyId, sharedBrands = [] } = data;
+    const { targetEmail, fromCompanyId, sharedBrandNames = [] } = data;
 
     if (!targetEmail || !fromCompanyId) {
       throw new Error("Missing required fields: targetEmail, fromCompanyId");
@@ -44,11 +44,15 @@ export const createInviteAndDraftConnection = onCall(async (request) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    const normalize = (s: string) => s.trim().toUpperCase();
+
+    const normalizedBrands = sharedBrandNames.map(normalize);
+
     // ✅ create draft correctly
     const draftRef = await db.collection("companyConnectionDrafts").add({
       targetEmail: cleanEmail,
       initiatorCompanyId: fromCompanyId,
-      pendingBrands: sharedBrands,
+      sharedBrandNames: normalizedBrands,
 
       // ✅ keep minimal for draft
       companyIds: [fromCompanyId],

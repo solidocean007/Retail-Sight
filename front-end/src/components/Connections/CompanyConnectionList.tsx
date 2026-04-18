@@ -6,14 +6,14 @@ interface CompanyConnectionListProps {
   connections: CompanyConnectionType[];
   currentCompanyId?: string;
   isAdminView?: boolean;
-  onEdit: (connection: CompanyConnectionType) => void;
+  // onEdit: (connection: CompanyConnectionType) => void;
 }
 
 const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
   connections,
   currentCompanyId,
   isAdminView = false,
-  onEdit,
+  // onEdit,
 }) => {
   if (connections.length === 0) {
     return (

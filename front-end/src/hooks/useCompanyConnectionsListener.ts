@@ -37,23 +37,26 @@ export const useCompanyConnectionsListener = () => {
       collection(db, "companyConnections"),
       or(
         where("requestFromCompanyId", "==", companyId),
-        where("requestToCompanyId", "==", companyId)
-      )
+        where("requestToCompanyId", "==", companyId),
+      ),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const connections = snapshot.docs.map((doc) =>
         normalizeTimestamps({
           id: doc.id,
+          sharedBrandNames: [],
+          pendingBrands: [],
+          declinedBrands: [],
           ...doc.data(),
-        })
+        }),
       ) as CompanyConnectionType[];
 
       // ✅ Update Redux state so UI reacts in real time
       dispatch(setCachedConnections(connections));
       // ✅ update cache in background (non-blocking)
       setCompanyConnectionsStore(companyId, connections).catch((e) =>
-        console.warn("Failed to update IndexedDB cache:", e)
+        console.warn("Failed to update IndexedDB cache:", e),
       );
     });
 

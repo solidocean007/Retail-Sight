@@ -87,6 +87,8 @@ import { trackEmailClick } from "./notifications/sendEmailNotificationCore";
 
 import { backfillSupplierGoalPosts } from "./backFillISupplierGoalPosts";
 import { onPostBrandsUpdated } from "./onPostBrandsUpdated";
+import { onConnectionNotifications } from "./onConnectionNotifications";
+import { repairConnectionVisibility } from "./repairConnectionVisibility";
 
 export {
   backfillSupplierGoalPosts,
@@ -154,6 +156,8 @@ export {
   onPendingNewUserAndCompanyInviteCreate,
   onActivityEventCreated,
   onConnectionRemoved,
+  onConnectionNotifications,
+  repairConnectionVisibility,
 
   // Notifications
   onUserNotificationCreated,

@@ -76,13 +76,10 @@ export async function resolveDraftConnections(
 
     const newConnRef = db.collection("companyConnections").doc();
 
-    const normalizeBrands = (arr: any[]): string[] =>
-      (arr || [])
-        .map((b) => (typeof b === "string" ? b : b?.brand))
-        .filter(Boolean);
+    const normalizeBrands = (arr: string[]): string[] =>
+      (arr || []).map((b) => b?.trim().toUpperCase()).filter(Boolean);
 
-    const sharedBrandsRaw = draft.pendingBrands || [];
-    const sharedBrands = normalizeBrands(sharedBrandsRaw);
+    const sharedBrands = normalizeBrands(draft.sharedBrandNames || []);
 
     batch.set(newConnRef, {
       requestFromCompanyId: draft.initiatorCompanyId,
@@ -95,9 +92,8 @@ export async function resolveDraftConnections(
 
       requestedBy: draft.initiatorCompanyId,
       companyIds: [draft.initiatorCompanyId, newCompanyId],
-      sharedBrandNames: sharedBrands,
 
-      sharedBrands: sharedBrandsRaw,
+      sharedBrandNames: sharedBrands,
       pendingBrands: [],
 
       status: "approved",

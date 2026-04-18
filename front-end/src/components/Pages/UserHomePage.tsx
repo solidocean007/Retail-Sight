@@ -74,6 +74,26 @@ const UserHomePage = () => {
   const [showModal, setShowModal] = useState(false);
   const [variant, setVariant] = useState<"submitted" | "approved">("submitted");
 
+  // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
+  const filteredCount = useSelector(
+    (state: RootState) => state.posts.filteredPostCount,
+  );
+  const fetchedAt = useSelector(
+    (s: RootState) => s.posts.filteredPostFetchedAt,
+  );
+
+  const filteredSharedPostCount = useSelector(
+    (s: RootState) => s.sharedPosts.filteredSharedPostCount,
+  );
+
+  const isFilteredMode =
+    activeFeedType === "shared"
+      ? activeSharedPostSet === "filteredPosts"
+      : activeCompanyPostSet === "filteredPosts";
+
+  const displayCount =
+    activeFeedType === "shared" ? filteredSharedPostCount : filteredCount;
+
   useEffect(() => {
     if (isSupplier) {
       setActiveFeedType("shared");
@@ -158,14 +178,6 @@ const UserHomePage = () => {
     })();
   }, [initialFilters, dispatch, companyId]);
 
-  // ─── ADD THIS AT THE TOP WITH YOUR OTHER HOOKS ───
-  const filteredCount = useSelector(
-    (state: RootState) => state.posts.filteredPostCount,
-  );
-  const fetchedAt = useSelector(
-    (s: RootState) => s.posts.filteredPostFetchedAt,
-  );
-
   const toggleFilterMenu = () => {
     if (isFilterMenuOpen) {
       setIsClosing(true);
@@ -238,28 +250,29 @@ const UserHomePage = () => {
           />
         </div>
         <div className="mobile-home-page-actions">
-          {activeCompanyPostSet === "filteredPosts" && filteredCount > 0 ? (
+          {isFilteredMode && (
             <FilterSummaryBanner
-              filteredCount={filteredCount}
+              filteredCount={displayCount}
               filterText={filterText}
               onClear={clearSearch}
               fetchedAt={fetchedAt}
             />
-          ) : (
+          )}
+
+          {!isFilterMenuOpen && !isClosing && (
             <div className="activity-feed-header-bar icon-bar">
               <Fab
                 onClick={toggleFilterMenu}
                 className="icon-button"
                 title="Filters"
-                // style={{ position: "fixed", top: "3.5rem", left: "2.5rem" }}
               >
                 <TuneIcon />
               </Fab>
+
               <Fab
                 color="primary"
                 aria-label="create"
                 onClick={() => navigate("/create-post")}
-                // style={{ position: "fixed", top: "3.5rem", right: "2.5rem" }}
               >
                 <AddAPhotoIcon />
               </Fab>

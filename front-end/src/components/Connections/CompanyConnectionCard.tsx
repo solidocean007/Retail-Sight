@@ -11,7 +11,6 @@ import { useSupplierBrands } from "../../hooks/useSupplierBrands";
 import { useAppDispatch } from "../../utils/store";
 import CustomConfirmation from "../CustomConfirmation";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { getFunctions, httpsCallable } from "firebase/functions";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
@@ -33,14 +32,13 @@ const CompanyConnectionCard: React.FC<Props> = ({
 }) => {
   const user = useSelector(selectUser);
   const dispatch = useAppDispatch();
-  const functions = getFunctions();
   const { supplierBrandList } = useSupplierBrands();
   const [animationComplete, setAnimationComplete] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [brandSelection, setBrandSelection] = useState<string[]>([]);
-  const [sharedBrands, setSharedBrands] = useState<string[]>(
-    connection.sharedBrands || [],
+  const [sharedBrandNames, setSharedBrandNames] = useState<string[]>(
+    connection.sharedBrandNames || [],
   );
   const [manualBrand, setManualBrand] = useState("");
   const [saving, setSaving] = useState(false);
@@ -58,6 +56,10 @@ const CompanyConnectionCard: React.FC<Props> = ({
     );
     return supplier ? supplier.brands : [];
   }, [supplierBrandList, selectedSupplier]);
+
+  useEffect(() => {
+    setSharedBrandNames(connection.sharedBrandNames || []);
+  }, [connection.sharedBrandNames]);
 
   useEffect(() => {
     if (connection.status === "approved") {
@@ -79,7 +81,6 @@ const CompanyConnectionCard: React.FC<Props> = ({
     : connection.requestFromCompanyName;
 
   const pendingBrands = connection.pendingBrands || [];
-  const declinedBrands = connection.declinedBrands || [];
 
   const pendingFromUs = useMemo(
     () =>
@@ -105,22 +106,10 @@ const CompanyConnectionCard: React.FC<Props> = ({
     [pendingBrands, currentCompanyId],
   );
 
-  // const checkConnectionLimit = async (companyId: string) => {
-  //   // const fn = httpsCallable(functions, "enforcePlanLimits");
-  //   const res = await fn({ companyId, type: "connection" });
-  //   return res.data as {
-  //     allowed: boolean;
-  //     usedConnections?: number;
-  //     remainingConnections?: number;
-  //     planLimit?: number;
-  //   };
-  // };
-
   // --- Add or remove brands inline ---
   const handleAddManualBrand = () => {
-    const newBrand = manualBrand.trim();
+    const newBrand = manualBrand.trim().toUpperCase();
     if (!newBrand) return;
-    // Instead of adding to sharedBrands, treat it like supplier proposals
     if (!brandSelection.includes(newBrand)) {
       setBrandSelection((prev) => [...prev, newBrand]);
     }
@@ -163,7 +152,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
 
   const handleCancel = () => {
     setSelectedSupplier("");
-    setSharedBrands(connection.sharedBrands || []);
+    setSharedBrandNames(connection.sharedBrandNames || []);
     setBrandSelection([]);
     setManualBrand("");
     setIsEditing(false);
@@ -200,33 +189,9 @@ const CompanyConnectionCard: React.FC<Props> = ({
 
       if (confirmAction === "accept") {
         try {
-          // const result = await checkConnectionLimit(currentCompanyId!);
-
-          // if (!result.allowed) { // cannot find name result
-          //   dispatch(
-          //     showMessage(
-          //       `You’ve reached your connection limit (${result.planLimit}). Please upgrade to add more.`,
-          //     ),
-          //   );
-          //   setConfirmOpen(false);
-          //   setConfirmLoading(false);
-          //   return;
-          // }
-
-          // if (result.remainingConnections !== undefined) {
-          //   dispatch(
-          //     showMessage(
-          //       `You have ${result.remainingConnections} connection${
-          //         result.remainingConnections === 1 ? "" : "s"
-          //       } remaining.`,
-          //     ),
-          //   );
-          // }
-
-          updateData.sharedBrands = [
-            ...(connection.sharedBrands || []),
-            confirmBrand,
-          ];
+          updateData.sharedBrandNames = Array.from(
+            new Set([...(connection.sharedBrandNames || []), confirmBrand]),
+          );
         } catch (err: any) {
           console.error("Limit enforcement failed:", err);
           dispatch(
@@ -245,15 +210,14 @@ const CompanyConnectionCard: React.FC<Props> = ({
           confirmBrand,
         ];
       } else if (confirmAction === "removeShared") {
-        // remove from sharedBrands only
-        const updatedShared = (connection.sharedBrands || []).filter(
+        const updatedShared = (connection.sharedBrandNames || []).filter(
           (b) => b !== confirmBrand,
         );
         await updateDoc(doc(db, "companyConnections", connection.id), {
-          sharedBrands: updatedShared,
+          sharedBrandNames: updatedShared,
           updatedAt: serverTimestamp(),
         });
-        setSharedBrands(updatedShared);
+        setSharedBrandNames(updatedShared);
         setConfirmOpen(false);
         return; // ✅ done early
       }
@@ -262,7 +226,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
       await updateDoc(doc(db, "companyConnections", connection.id), updateData);
 
       // update local state for visual sync
-      setSharedBrands(updateData.sharedBrands || sharedBrands);
+      setSharedBrandNames(updateData.sharedBrandNames || sharedBrandNames);
       setConfirmOpen(false);
     } catch (err) {
       console.error("Error updating brand decision:", err);
@@ -271,7 +235,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
     }
   };
 
-  console.log("sharedBrands: ", sharedBrands);
+  console.log("sharedBrandNames: ", sharedBrandNames);
 
   return (
     <div className={`connection-card ${connection.status}`}>
@@ -322,18 +286,16 @@ const CompanyConnectionCard: React.FC<Props> = ({
       {/* Shared brands */}
       <section className="brands-section">
         <h5 className="section-title">Active Shared Brands</h5>
-        {sharedBrands.length ? (
+        {sharedBrandNames.length ? (
           <div className="brand-list">
-            {sharedBrands.map((b: any) => {
-              const label = typeof b === "string" ? b : b.brand || "UNKNOWN";
-
+            {sharedBrandNames.map((brand: string) => {
               return (
-                <span key={label} className="chip brand-chip shared">
-                  {label}
+                <span key={brand} className="chip brand-chip shared">
+                  {brand}
                   {isEditing && (
                     <button
                       className="remove-brand-btn"
-                      onClick={() => openConfirm("removeShared", label)}
+                      onClick={() => openConfirm("removeShared", brand)}
                     >
                       ×
                     </button>
@@ -355,7 +317,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
             <div className="pending-column">
               <h5>📤 Proposed by {ourCompany}</h5>
               <div className="brand-list">
-                {pendingFromUs.map((b: PendingBrandType, i) => (
+                {pendingFromUs.map((b: PendingBrandType) => (
                   <div
                     key={`${b.brand}-${getProposerCompanyId(b)}`}
                     className="pending-brand-row"
@@ -388,7 +350,7 @@ const CompanyConnectionCard: React.FC<Props> = ({
             <div className="pending-column">
               <h5>📥 Proposed by {theirCompany}</h5>
               <div className="brand-list">
-                {pendingFromThem.map((b: PendingBrandType, i) => (
+                {pendingFromThem.map((b: PendingBrandType) => (
                   <div
                     key={`${b.brand}-${getProposerCompanyId(b)}`}
                     className="pending-brand-row"

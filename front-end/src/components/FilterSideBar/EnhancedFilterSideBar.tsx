@@ -46,7 +46,6 @@ import ChainTypeSelect from "./ChainTypeSelect";
 import GoalFilterGroup from "./GoalFilterGroup";
 import GalloGoalFilterGroup from "./GalloGoalFilterGroup";
 import { useCompanyIntegrations } from "../../hooks/useCompanyIntegrations";
-import { useBrandOptions } from "../../hooks/useBrandOptions";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import DistributorAutoComplete from "./DistributorAutoComplete";
 import { useAvailableGoals } from "../../hooks/useAvailableGoals";
@@ -144,7 +143,6 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     null,
   );
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const brandOptions = useBrandOptions(); // ✅ always called at top level // fallback?  not sure if i should do this.  might be better to show nothing
 
   const toggleSection = (section: string) => {
     setOpenSection((prev) => (prev === section ? null : section));
@@ -397,6 +395,14 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       dispatch(setFilteredPosts(locallyFiltered));
       setLastAppliedFilters(updatedFilters);
     }
+
+    if (isSharedFeed) {
+      setActiveSharedPostSet("posts");
+      dispatch(setFilteredSharedPosts([]));
+    } else {
+      setActiveCompanyPostSet("posts");
+      dispatch(setFilteredPosts(allPosts));
+    }
   };
 
   const handleApply = async () => {
@@ -501,6 +507,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     ? activeSharedPostSet === "filteredPosts"
     : activePostSet === "filteredPosts";
 
+  console.log(activePostSet, filteredPostCount);
   return (
     <div className="enhanced-sidebar side-bar-box">
       {isFilteredMode && lastAppliedFilters && (
@@ -517,7 +524,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <FilterChips filters={filters} onRemove={handleRemoveFilter} />
       </div>
       <div className="mobile-filter-close-button">
-        {activePostSet === "filteredPosts" && filteredPostCount > 0 ? (
+        {/* {activePostSet === "filteredPosts" && filteredPostCount > 0 ? ( */}
+        {isFilteredMode ? (
           <button className="btn-outline" onClick={toggleFilterMenu}>
             Show {filteredPostCount} Posts
           </button>

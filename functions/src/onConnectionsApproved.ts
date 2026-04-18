@@ -7,7 +7,7 @@ const db = getFirestore();
  * Trigger: companyConnections/{connectionId}
  * Purpose:
  *  1. Mirror approved connection into each company's subcollection
- *  2. Retroactively share posts between companies based on sharedBrands
+ *  2. Retroactively share posts between companies based on sharedBrandNames
  *  3. Write connection audit log
  */
 export const onConnectionApproved = onDocumentUpdated(
@@ -23,18 +23,18 @@ export const onConnectionApproved = onDocumentUpdated(
     const {
       requestFromCompanyId,
       requestToCompanyId,
-      sharedBrands = [],
+      sharedBrandNames = [],
     } = after;
     const connectionId = event.params.connectionId;
 
     const normalize = (s: string) => s.trim().toUpperCase();
 
-    const sharedBrandNames = sharedBrands.map((b: any) => normalize(b.brand));
+    const normalizedBrands = sharedBrandNames.map(normalize);
 
     // 🔹 Mirror connection
     const connDoc = {
       connectionId,
-      sharedBrands,
+      sharedBrandNames: normalizedBrands,
       status: "approved",
       updatedAt: FieldValue.serverTimestamp(),
     };
@@ -78,7 +78,7 @@ export const onConnectionApproved = onDocumentUpdated(
             : Object.keys(post.brands || {})
         ).map(normalize);
 
-        const matches = sharedBrandNames.some((b: string) =>
+        const matches = normalizedBrands.some((b: string) =>
           postBrands.includes(b)
         );
 
@@ -120,9 +120,8 @@ export const onConnectionApproved = onDocumentUpdated(
       fromCompanyId: requestFromCompanyId,
       toCompanyId: requestToCompanyId,
       companyIds: [requestFromCompanyId, requestToCompanyId],
-      sharedBrandNames,
-      sharedBrands,
-      brandCount: sharedBrands.length,
+      sharedBrandNames: normalizedBrands,
+      brandCount: normalizedBrands.length,
       timestamp: FieldValue.serverTimestamp(),
     });
   }

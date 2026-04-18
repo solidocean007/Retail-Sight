@@ -27,8 +27,6 @@ export const updateVisibility = async (
     return;
   }
 
-  console.log("🔥 posts found:", postsSnap.size);
-
   const batch = db.batch();
   const normalize = (s: string) => s.trim().toUpperCase();
   const targetBrands = brands.map(normalize);
@@ -54,11 +52,6 @@ export const updateVisibility = async (
   await batch.commit();
 };
 
-const extractBrands = (arr: any[]): string[] =>
-  (arr || [])
-    .map((b) => (typeof b === "string" ? b : b?.brand))
-    .filter(Boolean);
-
 /**
  * Trigger: companyConnections/{connectionId}
  * Keeps posts in sync with shared brand changes.
@@ -69,26 +62,32 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    if (!before || !after) {
-      return;
-    }
+    if (!before || !after) return;
 
     const { requestFromCompanyId, requestToCompanyId } = after;
     const connectionId = event.params.connectionId;
 
-    if (after.status !== "approved") {
-      return;
-    }
+    if (after.status !== "approved") return;
 
-    const beforeBrands = extractBrands(before.sharedBrands);
-    const afterBrands = extractBrands(after.sharedBrands);
+    const normalize = (s: string) => s.trim().toUpperCase();
 
-    const newShared = afterBrands.filter((b) => !beforeBrands.includes(b));
+    const beforeBrands = (before.sharedBrandNames || []).map(normalize);
+    const afterBrands = (after.sharedBrandNames || []).map(normalize);
 
-    const removedShared = beforeBrands.filter((b) => !afterBrands.includes(b));
+    const newShared = afterBrands.filter(
+      (b: string) => !beforeBrands.includes(b)
+    );
+    const removedShared = beforeBrands.filter(
+      (b: string) => !afterBrands.includes(b)
+    );
+
+    console.log("🔍 connectionId:", connectionId);
+    console.log("🔍 beforeBrands:", beforeBrands);
+    console.log("🔍 afterBrands:", afterBrands);
+    console.log("🔍 newShared:", newShared);
+    console.log("🔍 removedShared:", removedShared);
 
     try {
-      // Add new shares
       await Promise.all([
         updateVisibility(
           requestFromCompanyId,
@@ -104,7 +103,6 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
         ),
       ]);
 
-      // Remove revoked shares
       await Promise.all([
         updateVisibility(
           requestFromCompanyId,
@@ -131,6 +129,10 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
         sharedBrandNames: afterBrands,
         timestamp: FieldValue.serverTimestamp(),
       });
+
+      console.log("before", before.sharedBrandNames);
+      console.log("after", after.sharedBrandNames);
+      console.log("removedShared", removedShared);
 
       console.log(`✅ Brand sync complete for ${connectionId}`);
     } catch (err) {
