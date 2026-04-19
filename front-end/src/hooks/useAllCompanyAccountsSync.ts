@@ -9,17 +9,15 @@ import {
 import { setAllAccounts } from "../Slices/allAccountsSlice";
 import { RootState } from "../utils/store";
 
-const useAllCompanyAccountsSync = (enabled=true) => {
-  // console.log('running useAllCompanyAccountsSync with enabled:', enabled); // this logs false for some reason
+const useAllCompanyAccountsSync = (enabled = true, shouldStartSync = true) => {
   const canSync = useSelector(selectCanSync);
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);
   // const allAccounts = useSelector((state: RootState) => state.allAccounts.accounts);
 
   useEffect(() => {
-    if (!enabled || !user?.companyId || !canSync) return;
+    if (!enabled || !user?.companyId || !canSync || !shouldStartSync) return;
     const loadAccounts = async () => {
-
       const cached = await getAllCompanyAccountsFromIndexedDB();
       if (cached && cached.length > 0) {
         dispatch(setAllAccounts(cached));
@@ -47,4 +45,3 @@ const useAllCompanyAccountsSync = (enabled=true) => {
 };
 
 export default useAllCompanyAccountsSync;
-

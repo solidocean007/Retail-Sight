@@ -25,12 +25,14 @@ import { AppRoutes } from "./utils/Routes";
 import UserModal from "./components/UserModal";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./components/Footer/Footer";
+
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "./utils/firebase";
-import { getAuth } from "firebase/auth";
 
 function AppContent() {
   const dispatch = useAppDispatch();
+  const location = useLocation();
+
   const { currentUser, initializing } = useFirebaseAuth();
   const user = useSelector((state: RootState) => state.user.currentUser);
   const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
@@ -39,35 +41,44 @@ function AppContent() {
   const loadingMessage = useSelector((s: RootState) => s.app.loadingMessage);
 
   const theme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
-  const location = useLocation();
 
-  const PUBLIC_ROUTES = new Set([
-    "/",
-    "/pricing",
-    "/features",
-    "/splash",
-    "/about",
-    "/privacy-policy",
-    "/terms-service",
-    "/cookies",
-    "/contact-us",
-    "/help-support",
-  ]);
+  const PUBLIC_ROUTES = useMemo(
+    () =>
+      new Set([
+        "/",
+        "/pricing",
+        "/features",
+        "/splash",
+        "/about",
+        "/privacy-policy",
+        "/terms-service",
+        "/cookies",
+        "/contact-us",
+        "/help-support",
+      ]),
+    [],
+  );
 
-  const AUTH_ROUTES = new Set([
-    "/login",
-    "/signup",
-    "/request-access",
-    "/reset-password",
-    "/request-submitted",
-  ]);
+  const AUTH_ROUTES = useMemo(
+    () =>
+      new Set([
+        "/login",
+        "/signup",
+        "/request-access",
+        "/reset-password",
+        "/request-submitted",
+      ]),
+    [],
+  );
+
+  const pathname = location.pathname;
 
   const isAuthRoute =
-    AUTH_ROUTES.has(location.pathname) ||
-    location.pathname.startsWith("/accept-invite") ||
-    location.pathname.startsWith("/onboard-company");
+    AUTH_ROUTES.has(pathname) ||
+    pathname.startsWith("/accept-invite") ||
+    pathname.startsWith("/onboard-company");
 
-  const isPublicRoute = PUBLIC_ROUTES.has(location.pathname);
+  const isPublicRoute = PUBLIC_ROUTES.has(pathname);
 
   const shouldBootstrapApp = !isPublicRoute && !isAuthRoute && !!currentUser;
 
@@ -77,37 +88,47 @@ function AppContent() {
     initializing,
   });
 
+  // Theme init from localStorage
   useEffect(() => {
-    let cancelled = false;
+    const storedTheme = localStorage.getItem("theme");
 
-    (async () => {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) return;
-    })();
+    if (storedTheme) {
+      dispatch(setDarkMode(storedTheme === "dark"));
+    }
+  }, [dispatch]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [currentUser?.uid]);
+  // Sync body theme attr
+  useEffect(() => {
+    document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
 
+  // Push notification click tracking
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
+    if (!currentUser?.uid) return;
 
     const handler = async (event: MessageEvent) => {
       if (event.data?.type !== "NOTIFICATION_CLICK") return;
 
       const { notificationId } = event.data?.data || {};
-      const uid = currentUser?.uid;
+      if (!notificationId) return;
 
-      if (!notificationId || !uid) return;
+      try {
+        const ref = doc(
+          db,
+          "users",
+          currentUser.uid,
+          "notifications",
+          notificationId,
+        );
 
-      const ref = doc(db, "users", uid, "notifications", notificationId);
-
-      await updateDoc(ref, {
-        "analytics.clickedAt": serverTimestamp(),
-        "analytics.clickedFrom": "push",
-      });
+        await updateDoc(ref, {
+          "analytics.clickedAt": serverTimestamp(),
+          "analytics.clickedFrom": "push",
+        });
+      } catch (error) {
+        console.error("Notification analytics update failed:", error);
+      }
     };
 
     navigator.serviceWorker.addEventListener("message", handler);
@@ -115,37 +136,23 @@ function AppContent() {
     return () => {
       navigator.serviceWorker.removeEventListener("message", handler);
     };
-  }, [currentUser]);
-
-  // Theme initialization
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("theme");
-    if (storedTheme) {
-      dispatch(setDarkMode(storedTheme === "dark"));
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
+  }, [currentUser?.uid]);
 
   const showAppLoader = shouldBootstrapApp && (initializing || !appReady);
 
+  // IMPORTANT:
+  // Do NOT mount routes/feed/UI while bootstrapping.
+  if (showAppLoader) {
+    return <AppLoadingScreen show message={loadingMessage ?? "Loading…"} />;
+  }
+
   return (
-    <>
-      {/* Visual overlay only — never blocks mount */}
-      <AppLoadingScreen
-        show={showAppLoader}
-        message={loadingMessage ?? "Loading…"}
-      />
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
 
-      <div className={`app-shell ${showAppLoader ? "app-shell-hidden" : ""}`}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-
-            {!isPublicRoute && <ThemeToggle />}
+        <div className="app-shell">
+          {!isPublicRoute && <ThemeToggle />}
 
             {/* Main layout frame */}
             <div className="page-layout-frame">
@@ -153,32 +160,36 @@ function AppContent() {
               {!isPublicRoute && !isAuthRoute && <Footer />}
             </div>
 
-            {/* Alerts */}
-            {snackbar.current && (
-              <Snackbar
-                open={snackbar.open}
-                onClose={() => {
-                  dispatch(hideMessage());
-                  setTimeout(() => dispatch(nextMessage()), 500);
-                }}
-                autoHideDuration={snackbar.current.duration ?? 5000}
-                anchorOrigin={{ vertical: "top", horizontal: "center" }}
-              >
-                <Alert
-                  severity={snackbar.current.severity || "info"}
-                  sx={{ width: "100%" }}
-                  onClose={() => dispatch(hideMessage())}
-                >
-                  {snackbar.current.text}
-                </Alert>
-              </Snackbar>
-            )}
+          {snackbar.current && (
+            <Snackbar
+              open={snackbar.open}
+              onClose={() => {
+                dispatch(hideMessage());
 
-            {currentUser && <UserModal />}
-          </ThemeProvider>
-        </LocalizationProvider>
-      </div>
-    </>
+                setTimeout(() => {
+                  dispatch(nextMessage());
+                }, 500);
+              }}
+              autoHideDuration={snackbar.current.duration ?? 5000}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "center",
+              }}
+            >
+              <Alert
+                severity={snackbar.current.severity || "info"}
+                sx={{ width: "100%" }}
+                onClose={() => dispatch(hideMessage())}
+              >
+                {snackbar.current.text}
+              </Alert>
+            </Snackbar>
+          )}
+
+          {currentUser && <UserModal />}
+        </div>
+      </ThemeProvider>
+    </LocalizationProvider>
   );
 }
 
@@ -186,6 +197,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
+
       <div className="app-frame">
         <AppContent />
       </div>

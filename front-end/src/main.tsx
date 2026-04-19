@@ -32,12 +32,17 @@ if ("serviceWorker" in navigator) {
     }
 
     // Register SW with small delay for hydration
-    setTimeout(() => {
+    const registerSW = () => {
       navigator.serviceWorker
         .register("/service-worker.js")
-        // .then((reg) => console.log("SW registered:", reg))
         .catch((err) => console.error("SW registration failed:", err));
-    }, 300);
+    };
+
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(registerSW);
+    } else {
+      setTimeout(registerSW, 1000);
+    }
   });
 }
 
@@ -46,5 +51,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <Provider store={store}>
       <App />
     </Provider>
-  </HelmetProvider>
+  </HelmetProvider>,
 );

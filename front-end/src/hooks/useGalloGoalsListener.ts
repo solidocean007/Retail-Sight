@@ -6,13 +6,14 @@ import { useSelector } from "react-redux";
 
 export function useGalloGoalsListener(
   companyId?: string | null,
-  enabled = false
+  enabled = false,
+  shouldStartSync = true
 ) {
   const canSync = useSelector(selectCanSync);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!companyId || !enabled || !canSync) return;
+    if (!companyId || !enabled || !canSync || !shouldStartSync) return;
 
     console.log("🟢 Attaching Gallo goals listener");
 
