@@ -4,7 +4,6 @@ import "./checkoutModal.css";
 import CartSummary from "./CartSummary";
 import { useOutsideAlerter } from "../../../utils/useOutsideAlerter";
 import { functions } from "../../../utils/firebase";
-import BillingAuthDebug from "./BillingAuthDebug";
 import { CompanyBilling } from "../../../utils/types";
 
 type CheckoutIntent = "create-subscription" | "upgrade-plan" | "update-card";
