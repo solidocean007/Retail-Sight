@@ -7,12 +7,12 @@ import { setCurrentCompany } from "../Slices/currentCompanySlice";
 import { CompanyType } from "../utils/types";
 import { normalizeFirestoreData } from "../utils/normalize";
 
-export default function useCompanySync() {
+export default function useCompanySync(shouldStartSync = true) {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
 
   useEffect(() => {
-    if (!user?.companyId) return;
+    if (!user?.companyId || !shouldStartSync) return;
 
     const ref = doc(db, "companies", user.companyId);
 

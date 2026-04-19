@@ -20,8 +20,8 @@ import {
 import { normalizeFirestoreData } from "../utils/normalize";
 import { selectCanSync } from "../utils/store";
 
-export default function useCompanyUsersSync() {
-  const canSync = useSelector(selectCanSync);
+export default function useCompanyUsersSync(shouldStartSync= true) {
+  const canSync = useSelector(selectCanSync); // this one
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const companyUsers = useSelector(selectCompanyUsers);
@@ -31,6 +31,7 @@ export default function useCompanyUsersSync() {
   }, [companyUsers]);
 
   useEffect(() => {
+    if(!shouldStartSync) return;
     if (!canSync) return;
     if (!user?.companyId) return;
     let unsub = () => {};

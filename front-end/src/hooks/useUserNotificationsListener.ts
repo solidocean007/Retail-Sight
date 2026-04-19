@@ -3,11 +3,11 @@ import { useAppDispatch } from "../utils/store";
 import { setupNotificationListenersForUser } from "../utils/listeners/setupNotificationListenersForUser";
 import { UserType } from "../utils/types";
 
-export function useUserNotificationsListener(user: UserType | null) {
+export function useUserNotificationsListener(user: UserType | null, shouldStartSync = true) {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !shouldStartSync) return;
 
     const unsub = dispatch(
       setupNotificationListenersForUser(user)

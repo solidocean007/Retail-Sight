@@ -17,14 +17,14 @@ import {
 } from "../utils/database/customAccountsStoreUtils";
 import { normalizeAccount } from "../thunks/manulAccountsThunk";
 
-export const useCustomAccountsSync = () => {
+export const useCustomAccountsSync = (shouldStartSync = true) => {
   const canSync = useSelector(selectCanSync);
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
 
   useEffect(() => {
-    if (!companyId || !canSync) return;
+    if (!companyId || !canSync || !shouldStartSync) return;
 
     const loadFromIndexedDB = async () => {
       dispatch(setLoading(true));

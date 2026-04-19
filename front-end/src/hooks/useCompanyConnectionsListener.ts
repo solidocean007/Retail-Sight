@@ -24,14 +24,14 @@ function normalizeTimestamps(obj: any) {
   return result;
 }
 
-export const useCompanyConnectionsListener = () => {
+export const useCompanyConnectionsListener = (shouldStartSync = true) => {
   const canSync = useSelector(selectCanSync);
   const user = useSelector((state: RootState) => state.user.currentUser);
   const dispatch = useAppDispatch();
   const companyId = user?.companyId;
 
   useEffect(() => {
-    if (!companyId || !canSync) return;
+    if (!companyId || !canSync || !shouldStartSync) return;
 
     const q = query(
       collection(db, "companyConnections"),

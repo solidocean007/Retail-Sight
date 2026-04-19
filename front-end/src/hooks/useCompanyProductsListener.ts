@@ -23,11 +23,11 @@ import { saveAllCompanyProductsToIndexedDB } from "../utils/database/indexedDBUt
  * Real-time listener for company products.
  * Keeps Redux + IndexedDB synced across devices instantly.
  */
-export function useCompanyProductsListener(companyId: string | null) {
+export function useCompanyProductsListener(companyId: string | null, shouldStartSync = true) {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!companyId) return;
+    if (!companyId || !shouldStartSync) return;
 
     const productsRef = collection(db, "products", companyId, "items");
 
