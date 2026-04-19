@@ -46,7 +46,8 @@ export function useAppBootstrap({
   initializing: boolean;
 }) {
   const dispatch = useAppDispatch();
-  const companyId = currentUser?.companyId ?? null;
+  const user = useSelector((state: RootState) => state.user.currentUser);
+  const companyId = user?.companyId ?? null;
   const prevCompanyIdRef = useRef<string | null>(null);
   const { isEnabled } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
@@ -88,7 +89,7 @@ export function useAppBootstrap({
   useSchemaVersion();
 
   // gate these
-  const shouldStartSync = enabled && appReady && !!currentUser;
+  const shouldStartSync = enabled && appReady && !!user?.companyId;
   useCompanyUsersSync(shouldStartSync);
   useUserAccountsSync(shouldStartSync);
   useCompanyConnectionsListener(shouldStartSync);
@@ -111,7 +112,7 @@ export function useAppBootstrap({
   // 1️⃣ ESSENTIAL BOOTSTRAP ONLY
   //
   useEffect(() => {
-    if (!enabled || initializing || !currentUser) return;
+    if (!enabled || initializing || !currentUser || !companyId) return;
     if (hasBootstrapped.current) return;
 
     hasBootstrapped.current = true;
