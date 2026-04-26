@@ -1,5 +1,5 @@
 const dbName = "myRetailAppDB";
-const dbVersion = 34;
+const dbVersion = 36;
 
 const objectStores: {
   name: string;
@@ -19,7 +19,7 @@ const objectStores: {
   { name: "hashtagPosts", options: { keyPath: "id" } },
   { name: "starTagPosts", options: { keyPath: "id" } },
   { name: "userCreatedPosts", options: { keyPath: "id" } },
-  { name: "userCompanyEmployees", options: { keyPath: "uid" }, replaceIfExists: true },
+  { name: "userCompanyEmployees", options: { keyPath: "uid" } },
   { name: "localSchemaVersion", options: { keyPath: "id" } },
   {
     name: "collections",
@@ -35,7 +35,9 @@ const objectStores: {
   { name: "allGalloGoals", options: { keyPath: "id" } },
   { name: "allCompanySpecificGoals", options: { keyPath: "id" } },
   { name: "companyProducts", options: { keyPath: "companyProductId" } },
-  { name: "companyConnectionsStore", options: { keyPath: "companyId" } }, // ✅ NEW
+  { name: "companyConnectionsStore", options: { keyPath: "companyId" } },
+  { name: "networkAccountFacets", options: { keyPath: "companyId" } }, // ✅ NEW
+  { name: "networkUsers", options: { keyPath: "companyId" } }, // ✅ NEW
 ];
 
 export function openDB(): Promise<IDBDatabase> {
@@ -58,6 +60,15 @@ export function openDB(): Promise<IDBDatabase> {
         if (db.objectStoreNames.contains(name)) {
           if (replaceIfExists) db.deleteObjectStore(name);
           else continue;
+        }
+
+        if (db.objectStoreNames.contains("userCompanyEmployees")) {
+          const tx = (event.target as IDBOpenDBRequest).transaction;
+          const store = tx?.objectStore("userCompanyEmployees");
+
+          if (store && !store.indexNames.contains("byCompanyId")) {
+            store.createIndex("byCompanyId", "companyId", { unique: false });
+          }
         }
 
         const objectStore = db.createObjectStore(name, options);

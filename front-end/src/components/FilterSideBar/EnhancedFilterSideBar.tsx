@@ -55,6 +55,9 @@ import {
   setFilteredSharedPostFetchedAt,
   setFilteredSharedPosts,
 } from "../../Slices/sharedPostsSlice";
+import { useAvailableFilterUsers } from "../../hooks/useAvailableFilterUsers";
+import { useNetworkAccountFacets } from "../../hooks/useNetworkAccountFacets";
+// import { useNetworkUsers } from "../../hooks/useNetworkUsers";
 
 interface DistributorOption {
   id: string;
@@ -107,6 +110,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     (state: RootState) => state.galloGoals.galloGoals,
   );
   const companyUsers = useSelector(selectCompanyUsers) || [];
+  const useNetworkFilters = isSupplier && isSharedFeed;
+
+  const { users: availableUsers, loading: usersLoading } =
+    useAvailableFilterUsers(isSharedFeed);
   const allPosts = useSelector((s: RootState) => s.posts.posts);
   const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
   // console.log("sharedPosts size: ", sharedPosts.length)
@@ -160,6 +167,46 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const companyGoals = useSelector(
     (state: RootState) => state.companyGoals.goals,
   );
+  const useNetworkAccountFilters =
+    isSupplier && isSharedFeed && openSection === "account";
+  const accounts = useSelector(
+    (state: RootState) => state.allAccounts.accounts,
+  ) as CompanyAccountType[];
+
+  const {
+    accountTypes: networkAccountTypes,
+    chains: networkChains,
+    chainTypes: networkChainTypes,
+    getAccountNameOptions,
+    loading: networkAccountsLoading,
+  } = useNetworkAccountFacets(useNetworkAccountFilters);
+
+  const availableAccountNameFacets = useMemo(() => {
+    if (!useNetworkAccountFilters) return [];
+    return getAccountNameOptions(accountNameInput);
+  }, [useNetworkAccountFilters, getAccountNameOptions, accountNameInput]);
+
+  const availableAccountTypes = useMemo(() => {
+    if (useNetworkFilters) return networkAccountTypes;
+
+    const set = new Set<string>();
+    accounts.forEach((a) => {
+      if (a.typeOfAccount) set.add(a.typeOfAccount);
+    });
+
+    return Array.from(set).sort();
+  }, [useNetworkFilters, networkAccountTypes, accounts]);
+
+  const availableChains = useMemo(() => {
+    if (useNetworkFilters) return networkChains;
+
+    const set = new Set<string>();
+    accounts.forEach((a) => {
+      if (a.chain) set.add(a.chain);
+    });
+
+    return Array.from(set).sort();
+  }, [useNetworkFilters, networkChains, accounts]);
 
   const [filters, setFilters] = useState<PostQueryFilters>({
     companyId: null,
@@ -216,40 +263,13 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     }));
   }, [sourcePosts]);
 
-  const availableUsers = useMemo(() => {
-    if (!isSharedFeed) return companyUsers;
-
-    const ids = new Set(sourcePosts.map((p) => p.postUserUid));
-    return companyUsers.filter((u) => ids.has(u.uid));
-  }, [isSharedFeed, sourcePosts, companyUsers]);
-
-  const accounts = useSelector(
-    (state: RootState) => state.allAccounts.accounts,
-  ) as CompanyAccountType[];
-
   const availableAccounts = useMemo(() => {
-    return accounts.map((a) => a.accountName);
-  }, [accounts]);
+    if (useNetworkAccountFilters) {
+      return availableAccountNameFacets;
+    }
 
-  const availableChains = useMemo(() => {
-    const set = new Set<string>();
-
-    sourcePosts.forEach((p) => {
-      if (p.chain) set.add(p.chain);
-    });
-
-    return Array.from(set).sort();
-  }, [sourcePosts]);
-
-  const availableAccountTypes = useMemo(() => {
-    const set = new Set<string>();
-
-    sourcePosts.forEach((p) => {
-      if (p.accountType) set.add(p.accountType);
-    });
-
-    return Array.from(set).sort();
-  }, [sourcePosts]);
+    return accounts.map((a) => a.accountName).filter(Boolean) as string[];
+  }, [useNetworkAccountFilters, availableAccountNameFacets, accounts]);
 
   const availableGoals = useAvailableGoals(isSupplier, companyId);
 
@@ -676,16 +696,21 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <div className="filter-group">
           <UserFilterAutocomplete
             options={availableUsers}
+            loading={usersLoading}
             inputValue={selectedUserInput}
-            selectedUserId={filters.postUserUid ?? null} // coalesce undefined → null
+            selectedUserId={filters.postUserUid ?? null}
             onInputChange={setSelectedUserInput}
             onTypeChange={(uid) => {
-              // look up the full user so we can show their name
-              const user = companyUsers.find((u) => u.uid === uid) || null;
+              const user = availableUsers.find((u) => u.uid === uid) || null;
+
               setSelectedFilterUser(user);
+
               setSelectedUserInput(
-                user ? `${user.firstName} ${user.lastName}` : "",
+                user
+                  ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                  : "",
               );
+
               handleChange("postUserUid", uid);
             }}
           />
@@ -702,7 +727,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         </button>
         <div className="filter-group">
           <AccountNameAutocomplete
-            options={availableAccounts as string[]}
+            options={availableAccounts}
             inputValue={accountNameInput}
             selectedValue={filters.accountName}
             onInputChange={setAccountNameInput}

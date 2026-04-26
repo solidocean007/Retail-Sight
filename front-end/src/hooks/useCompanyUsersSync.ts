@@ -20,25 +20,41 @@ import {
 import { normalizeFirestoreData } from "../utils/normalize";
 import { selectCanSync } from "../utils/store";
 
-export default function useCompanyUsersSync(shouldStartSync= true) {
-  const canSync = useSelector(selectCanSync); // this one
+const haveUsersChanged = (current: any[], fresh: any[]) => {
+  if (current.length !== fresh.length) return true;
+
+  const currentByUid = new Map(current.map((u) => [u.uid, u]));
+
+  return fresh.some((freshUser) => {
+    const currentUser = currentByUid.get(freshUser.uid);
+    if (!currentUser) return true;
+
+    return JSON.stringify(currentUser) !== JSON.stringify(freshUser);
+  });
+};
+
+export default function useCompanyUsersSync(shouldStartSync = true) {
+  const canSync = useSelector(selectCanSync);
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const companyUsers = useSelector(selectCompanyUsers);
   const usersRef = useRef(companyUsers);
+
   useEffect(() => {
     usersRef.current = companyUsers;
   }, [companyUsers]);
 
   useEffect(() => {
-    if(!shouldStartSync) return;
+    if (!shouldStartSync) return;
     if (!canSync) return;
     if (!user?.companyId) return;
+
+    const companyId = user.companyId;
     let unsub = () => {};
 
     (async () => {
-      // If Redux already has users, you can skip the initial fetch, but keep the live listener.
-      const cached = await getCompanyUsersFromIndexedDB();
+      const cached = await getCompanyUsersFromIndexedDB(companyId);
+
       if (cached?.length && (!companyUsers || companyUsers.length === 0)) {
         const normalized = normalizeFirestoreData(cached);
         dispatch(setCompanyUsers(normalized));
@@ -46,52 +62,46 @@ export default function useCompanyUsersSync(shouldStartSync= true) {
 
       const q = query(
         collection(db, "users"),
-        where("companyId", "==", user.companyId),
+        where("companyId", "==", companyId)
       );
 
-      // Manual fetch only if Redux & cache were empty
       if (
         (!companyUsers || companyUsers.length === 0) &&
         (!cached || cached.length === 0)
       ) {
         try {
           const snap = await getDocs(q);
+
           const users = snap.docs.map((d) => ({
             ...(d.data() as any),
             uid: d.id,
           }));
+
           const normalized = normalizeFirestoreData(users);
+
           dispatch(setCompanyUsers(normalized));
-          await saveCompanyUsersToIndexedDB(normalized); // <-- save normalized
+          await saveCompanyUsersToIndexedDB(companyId, normalized);
         } catch (err) {
           console.warn("[UserSync] Manual fetch failed:", err);
         }
       }
 
-      // Real-time
       unsub = onSnapshot(q, async (snap) => {
         const fresh = snap.docs.map((d) => ({
           ...(d.data() as any),
           uid: d.id,
         }));
+
         const normalized = normalizeFirestoreData(fresh);
-
-        // compare with latest Redux (via ref)
         const curr = usersRef.current ?? [];
-        const currIds = new Set(curr.map((u: any) => u.uid));
-        const freshIds = new Set(normalized.map((u: any) => u.uid));
 
-        const changed =
-          normalized.length !== curr.length ||
-          [...freshIds].some((id) => !currIds.has(id));
-
-        if (changed) {
+        if (haveUsersChanged(curr, normalized)) {
           dispatch(setCompanyUsers(normalized));
-          await saveCompanyUsersToIndexedDB(normalized); // <-- save normalized
+          await saveCompanyUsersToIndexedDB(companyId, normalized);
         }
       });
     })();
 
     return () => unsub();
-  }, [dispatch, canSync, user?.companyId]);
+  }, [dispatch, canSync, user?.companyId, shouldStartSync]);
 }

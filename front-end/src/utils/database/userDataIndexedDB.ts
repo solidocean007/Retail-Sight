@@ -2,54 +2,19 @@
 import { UserType } from "../types";
 import { openDB } from "./indexedDBOpen";
 
-const USER_DATA_STORE = "users"; // Name of the IndexedDB store for user data
-const USER_DATA_KEY = "currentUser"; // Assuming you use a single key for storing current user data
+const USER_DATA_STORE = "users";
+const USER_DATA_KEY = "currentUser";
 const USERS_COMPANY_USERS = "userCompanyEmployees";
 
 export const saveUserDataToIndexedDB = async (userData: UserType) => {
   const db = await openDB();
   const transaction = db.transaction([USER_DATA_STORE], "readwrite");
   const store = transaction.objectStore(USER_DATA_STORE);
-  const request = store.put(userData, USER_DATA_KEY); // Use put if you want to update existing entries, add if not
+  const request = store.put(userData, USER_DATA_KEY);
+
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
-  });
-};
-
-export const updateUserRoleInIndexedDB = async (
-  userId: string,
-  newRole: string,
-) => {
-  const db = await openDB();
-  const transaction = db.transaction([USERS_COMPANY_USERS], "readwrite");
-  const store = transaction.objectStore(USERS_COMPANY_USERS);
-
-  // First, get the user by their ID
-  const userRequest = store.get(userId);
-
-  return new Promise<void>((resolve, reject) => {
-    userRequest.onsuccess = () => {
-      const user = userRequest.result;
-      if (user) {
-        // Update the user's role
-        user.role = newRole;
-
-        // Put the updated user back into the store
-        const updateRequest = store.put(user);
-        updateRequest.onsuccess = () => resolve();
-        updateRequest.onerror = () => reject(updateRequest.error);
-      } else {
-        reject(new Error("User not found"));
-      }
-    };
-
-    userRequest.onerror = () => {
-      reject(userRequest.error);
-    };
-
-    // Optional: handle transaction errors
-    transaction.onerror = () => reject(transaction.error);
   });
 };
 
@@ -60,13 +25,7 @@ export const getUserDataFromIndexedDB = async (): Promise<UserType | null> => {
   const request = store.get(USER_DATA_KEY);
 
   return new Promise((resolve, reject) => {
-    request.onsuccess = () => {
-      if (request.result) {
-        resolve(request.result as UserType);
-      } else {
-        resolve(null);
-      }
-    };
+    request.onsuccess = () => resolve((request.result as UserType) || null);
     request.onerror = () => reject(request.error);
   });
 };
@@ -76,43 +35,52 @@ export const clearUserDataFromIndexedDB = async () => {
   const transaction = db.transaction([USER_DATA_STORE], "readwrite");
   const store = transaction.objectStore(USER_DATA_STORE);
   const request = store.delete(USER_DATA_KEY);
+
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 };
 
-export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
+export const saveCompanyUsersToIndexedDB = async (
+  companyId: string,
+  companyUsers: UserType[],
+) => {
   const db = await openDB();
-  const transaction = db.transaction(["userCompanyEmployees"], "readwrite");
-  const store = transaction.objectStore("userCompanyEmployees");
+  const transaction = db.transaction([USERS_COMPANY_USERS], "readwrite");
+  const store = transaction.objectStore(USERS_COMPANY_USERS);
 
   return new Promise<void>((resolve, reject) => {
     let hasError = false;
 
-  companyUsers.forEach((user, index) => {
-  if (!user || typeof user !== "object") {
-    console.warn(`Skipped invalid user at index ${index}:`, user);
-    return;
-  }
+    companyUsers.forEach((user, index) => {
+      if (!user || typeof user !== "object") {
+        console.warn(`Skipped invalid user at index ${index}:`, user);
+        return;
+      }
 
-  if (!user.uid || typeof user.uid !== "string") {
-    console.warn(`Skipped user with invalid uid at index ${index}:`, user);
-    return;
-  }
+      if (!user.uid || typeof user.uid !== "string") {
+        console.warn(`Skipped user with invalid uid at index ${index}:`, user);
+        return;
+      }
 
-  try {
-    const request = store.put(user);
-    request.onerror = () => {
-      hasError = true;
-      console.error("Error putting user into IndexedDB:", request.error);
-    };
-  } catch (err) {
-    hasError = true;
-    console.error("Exception during IndexedDB put():", err, user);
-  }
-});
+      try {
+        const userWithCompanyId = {
+          ...user,
+          companyId: user.companyId || companyId,
+        };
 
+        const request = store.put(userWithCompanyId);
+
+        request.onerror = () => {
+          hasError = true;
+          console.error("Error putting user into IndexedDB:", request.error);
+        };
+      } catch (err) {
+        hasError = true;
+        console.error("Exception during IndexedDB put():", err, user);
+      }
+    });
 
     transaction.oncomplete = () => {
       if (!hasError) resolve();
@@ -126,15 +94,62 @@ export const saveCompanyUsersToIndexedDB = async (companyUsers: UserType[]) => {
   });
 };
 
-
-export const getCompanyUsersFromIndexedDB = async (): Promise<UserType[]> => {
+export const getCompanyUsersFromIndexedDB = async (
+  companyId: string,
+): Promise<UserType[]> => {
   const db = await openDB();
   const transaction = db.transaction([USERS_COMPANY_USERS], "readonly");
-  const store = transaction.objectStore("userCompanyEmployees");
-  const request = store.getAll();
+  const store = transaction.objectStore(USERS_COMPANY_USERS);
 
   return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result as UserType[]);
+    // Preferred if index exists
+    if (store.indexNames.contains("byCompanyId")) {
+      const index = store.index("byCompanyId");
+      const request = index.getAll(companyId);
+
+      request.onsuccess = () => resolve(request.result as UserType[]);
+      request.onerror = () => reject(request.error);
+      return;
+    }
+
+    // Safe fallback if index has not been added yet
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      const allUsers = request.result as UserType[];
+      resolve(allUsers.filter((u) => u.companyId === companyId));
+    };
+
     request.onerror = () => reject(request.error);
+  });
+};
+
+export const updateUserRoleInIndexedDB = async (
+  userId: string,
+  newRole: string,
+) => {
+  const db = await openDB();
+  const transaction = db.transaction([USERS_COMPANY_USERS], "readwrite");
+  const store = transaction.objectStore(USERS_COMPANY_USERS);
+  const userRequest = store.get(userId);
+
+  return new Promise<void>((resolve, reject) => {
+    userRequest.onsuccess = () => {
+      const user = userRequest.result;
+
+      if (!user) {
+        reject(new Error("User not found"));
+        return;
+      }
+
+      user.role = newRole;
+
+      const updateRequest = store.put(user);
+      updateRequest.onsuccess = () => resolve();
+      updateRequest.onerror = () => reject(updateRequest.error);
+    };
+
+    userRequest.onerror = () => reject(userRequest.error);
+    transaction.onerror = () => reject(transaction.error);
   });
 };

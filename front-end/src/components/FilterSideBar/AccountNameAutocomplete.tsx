@@ -1,18 +1,32 @@
 import React, { useMemo, useState } from "react";
 import { Autocomplete, TextField } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "../../utils/store";
-import { CompanyAccountType } from "../../utils/types";
+import { NetworkAccountFacet } from "../../utils/database/networkFilterCacheDB";
 
 interface Props {
-  options: string[];
+  options: NetworkAccountFacet[] | string[];
   inputValue: string;
   selectedValue: string | null | undefined;
   onInputChange: (val: string) => void;
   onSelect: (val: string | null) => void;
 }
 
-const normalize = (str: string) => str.toLowerCase().replace(/[\s\-]+/g, "");
+const MIN_SEARCH_LENGTH = 2;
+
+const normalize = (str: string) =>
+  str.toLowerCase().replace(/[\s\-#]+/g, "").trim();
+
+const isFacet = (
+  option: NetworkAccountFacet | string,
+): option is NetworkAccountFacet => typeof option !== "string";
+
+const getAccountLabel = (option: NetworkAccountFacet | string): string => {
+  if (typeof option === "string") return option;
+
+  const name = option.accountName || "";
+  return option.originCompanyName
+    ? `${name} (${option.originCompanyName})`
+    : name;
+};
 
 const AccountNameAutocomplete: React.FC<Props> = ({
   options,
@@ -21,60 +35,117 @@ const AccountNameAutocomplete: React.FC<Props> = ({
   onInputChange,
   onSelect,
 }) => {
-  const allAccounts = useSelector(
-    (state: RootState) => state.allAccounts.accounts
-  ) as CompanyAccountType[];
+  const [open, setOpen] = useState(false);
 
-  const [open, setOpen] = useState<boolean>(false);
+  const normalizedOptions = useMemo(() => {
+    if (inputValue.trim().length < MIN_SEARCH_LENGTH) return [];
 
-  // const userAccounts = useSelector(
-  //   (state: RootState) => state.userAccounts.accounts
-  // ) as CompanyAccountType[];
-
-  // console.log('userAccounts: ', userAccounts)
-
-  const accountNames = useMemo(() => {
-    const set = new Set<string>();
-    allAccounts.forEach((acc) => {
-      if (acc.accountName) set.add(acc.accountName.trim());
+    return options.filter((opt) => {
+      if (typeof opt === "string") return Boolean(opt.trim());
+      return Boolean(opt.accountName?.trim());
     });
-    return Array.from(set).sort();
-  }, [allAccounts]);
+  }, [options, inputValue]);
+
+  const selectedOption = useMemo(() => {
+    if (!selectedValue) return null;
+
+    return (
+      normalizedOptions.find((opt) => {
+        if (typeof opt === "string") return opt === selectedValue;
+        return opt.accountName === selectedValue;
+      }) ?? null
+    );
+  }, [normalizedOptions, selectedValue]);
 
   return (
-    <Autocomplete
+    <Autocomplete<NetworkAccountFacet | string, false, false, true>
       freeSolo
-      options={accountNames}
-      value={selectedValue ?? ""}
+      options={normalizedOptions}
+      value={selectedOption}
       inputValue={inputValue}
-      open={open}
-      onOpen={() => setOpen(inputValue.length > 0)}
-      onClose={() => setOpen(false)}
-      onInputChange={(_, val) => {
-        onInputChange(val);
-        setOpen(val.length > 0);
+      open={open && normalizedOptions.length > 0}
+      onOpen={() => {
+        if (inputValue.trim().length >= MIN_SEARCH_LENGTH) {
+          setOpen(true);
+        }
       }}
-      onChange={(_, val) => onSelect(val ?? null)}
-      filterOptions={(opts, { inputValue: iv }) =>
-        opts.filter((opt) => {
-          const normalizedOpt = normalize(opt);
-          const normalizedIv = normalize(iv);
+      onClose={() => setOpen(false)}
+      getOptionLabel={getAccountLabel}
+      isOptionEqualToValue={(option, value) => {
+        if (typeof option === "string" || typeof value === "string") {
+          return getAccountLabel(option) === getAccountLabel(value);
+        }
 
-          // return true if all characters in normalizedIv appear in normalizedOpt in order
-          let i = 0;
-          for (const c of normalizedIv) {
-            i = normalizedOpt.indexOf(c, i);
-            if (i === -1) return false;
-            i++;
-          }
-          return true;
-        })
-      }
+        return (
+          option.originCompanyId === value.originCompanyId &&
+          (option.accountNumber || option.accountName) ===
+            (value.accountNumber || value.accountName)
+        );
+      }}
+      onInputChange={(_, val, reason) => {
+        if (reason !== "input" && reason !== "clear") return;
+
+        onInputChange(val);
+        setOpen(val.trim().length >= MIN_SEARCH_LENGTH);
+      }}
+      onChange={(_, val) => {
+        if (!val) {
+          onSelect(null);
+          setOpen(false);
+          return;
+        }
+
+        if (typeof val === "string") {
+          onSelect(val);
+          setOpen(false);
+          return;
+        }
+
+        onSelect(val.accountName ?? null);
+        onInputChange(val.accountName ?? "");
+        setOpen(false);
+      }}
+      filterOptions={(opts, { inputValue: iv }) => {
+        const normalizedIv = normalize(iv);
+
+        if (normalizedIv.length < MIN_SEARCH_LENGTH) return [];
+
+        return opts.filter((opt) => {
+          const label = getAccountLabel(opt);
+          const normalizedOpt = normalize(label);
+
+          return normalizedOpt.includes(normalizedIv);
+        });
+      }}
+      renderOption={(props, option) => {
+        if (!isFacet(option)) {
+          return (
+            <li {...props} key={option}>
+              {option}
+            </li>
+          );
+        }
+
+        return (
+          <li
+            {...props}
+            key={`${option.originCompanyId}-${option.accountNumber || option.accountName}`}
+          >
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span>{option.accountName}</span>
+              <span style={{ fontSize: "0.75em", color: "var(--text-color)" }}>
+                {option.originCompanyName}
+                {option.accountNumber ? ` • #${option.accountNumber}` : ""}
+              </span>
+            </div>
+          </li>
+        );
+      }}
       renderInput={(params) => (
         <TextField
           {...params}
           label="Account Name"
-          placeholder="e.g. Walmart #123"
+          placeholder="Type 2+ characters"
         />
       )}
       fullWidth

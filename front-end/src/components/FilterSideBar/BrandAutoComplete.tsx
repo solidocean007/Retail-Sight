@@ -19,7 +19,6 @@ const BrandAutoComplete: React.FC<BrandAutocompleteProps> = ({
   onBrandChange,
 }) => {
   const [open, setOpen] = useState<boolean>(false);
-  console.log("BrandAutoComplete options: ", options);
   return (
     <Autocomplete
       open={open}

@@ -1,16 +1,19 @@
 // UserFilterAutocomplete.tsx
 import React, { useState } from "react";
 import { Autocomplete, TextField } from "@mui/material";
-import { useSelector } from "react-redux";
-import { selectCompanyUsers } from "../../Slices/userSlice";
 import { UserType } from "../../utils/types";
 
+type FilterUserOption = UserType & {
+  originCompanyName?: string;
+};
+
 interface UserFilterAutocompleteProps {
-  options: UserType[];
+  options: FilterUserOption[];
   inputValue: string;
   selectedUserId: string | null;
   onInputChange: (v: string) => void;
   onTypeChange: (v: string | null) => void;
+  loading?: boolean;
 }
 
 export default function UserFilterAutocomplete({
@@ -19,64 +22,68 @@ export default function UserFilterAutocomplete({
   selectedUserId,
   onInputChange,
   onTypeChange,
+  loading = false,
 }: UserFilterAutocompleteProps) {
-  const companyUsers = useSelector(selectCompanyUsers) || [];
   const [open, setOpen] = useState(false);
 
-  const filterFn = (opts: UserType[], params: { inputValue: string }) => {
-    return opts.filter((u) =>
-      `${u.firstName} ${u.lastName}`
-        .toLowerCase()
-        .includes(params.inputValue.toLowerCase())
-    );
-  };
+  const selectedUser = options.find((u) => u.uid === selectedUserId) || null;
 
   return (
-    <Autocomplete<UserType, false, false, false>
+    <Autocomplete<FilterUserOption, false, false, false>
       open={open}
-      onOpen={() => {
-        // console.log("[UserFilterAutocomplete] onOpen");
-        setOpen(true);
-      }}
+      onOpen={() => setOpen(inputValue.length > 0)}
       onClose={(_, reason) => {
-        // console.log("[UserFilterAutocomplete] onClose", reason);
-        if (["blur", "escape", "toggleInput"].includes(reason)) {
+        if (["blur", "escape", "toggleInput", "selectOption"].includes(reason)) {
           setOpen(false);
         }
       }}
-      options={companyUsers}
-      getOptionLabel={(u) => `${u.firstName} ${u.lastName}`}
-      filterOptions={filterFn}
-      value={companyUsers.find((u) => u.uid === selectedUserId) || null}
+      options={options}
+      loading={loading}
+      getOptionLabel={(u) => {
+        const name = `${u.firstName || ""} ${u.lastName || ""}`.trim();
+        return u.originCompanyName ? `${name} (${u.originCompanyName})` : name;
+      }}
+      filterOptions={(opts, params) => {
+        const search = params.inputValue.toLowerCase().trim();
+
+        return opts.filter((u) => {
+          const label = `${u.firstName || ""} ${u.lastName || ""} ${
+            u.email || ""
+          } ${u.originCompanyName || ""}`.toLowerCase();
+
+          return label.includes(search);
+        });
+      }}
+      value={selectedUser}
       inputValue={inputValue}
       onInputChange={(_, v, reason) => {
-        // console.log("[UserFilterAutocomplete] onInputChange", {
-        //   newInput: v,
-        //   reason,
-        // });
         onInputChange(v);
         if (reason === "input") setOpen(v.length > 0);
       }}
       onChange={(_, u) => {
-        // console.log("[UserFilterAutocomplete] onChange", u);
         onTypeChange(u?.uid ?? null);
+        onInputChange(
+          u
+            ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
+            : ""
+        );
         setOpen(false);
       }}
+      isOptionEqualToValue={(option, value) => option.uid === value.uid}
       renderInput={(params) => (
         <TextField
           {...params}
           label="User"
           placeholder="Type to search users"
-          onBlur={() => {
-            setOpen(false);
-          }}
+          onBlur={() => setOpen(false)}
         />
       )}
       renderOption={(props, option) => (
-        <li {...props} key={option.uid}>
+        <li {...props} key={`${option.companyId || "own"}-${option.uid}`}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <span>
               {option.firstName} {option.lastName}
+              {option.originCompanyName ? ` (${option.originCompanyName})` : ""}
             </span>
             <span style={{ fontSize: "0.75em", color: "var(--text-color)" }}>
               {option.email}
