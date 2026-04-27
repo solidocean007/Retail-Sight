@@ -23,31 +23,50 @@ export const backfillSupplierGoalPosts = onDocumentUpdated(
       .where("companyGoalId", "==", goalId)
       .get();
 
-    if (postsSnap.empty) return;
+    if (postsSnap.empty) {
+      console.log(
+        `[backfillSupplierGoalPosts] No posts found for goal ${goalId}`
+      );
+      return;
+    }
 
-    console.log(`Backfilling ${postsSnap.size} posts for goal ${goalId}`, {
+    console.log("[backfillSupplierGoalPosts] Backfilling posts", {
+      goalId,
+      postCount: postsSnap.size,
       oldSupplier,
       newSupplier,
     });
 
     const batch = db.batch();
 
-    postsSnap.docs.forEach((doc) => {
+    postsSnap.docs.forEach((postDoc) => {
+      const post = postDoc.data();
+
+      const existingSharedWith = Array.isArray(post.sharedWithCompanies)
+        ? post.sharedWithCompanies
+        : [];
+
+      const nextSharedWith = new Set(existingSharedWith);
+
       if (oldSupplier) {
-        batch.update(doc.ref, {
-          sharedWithCompanies:
-            admin.firestore.FieldValue.arrayRemove(oldSupplier),
-        });
+        nextSharedWith.delete(oldSupplier);
       }
 
       if (newSupplier) {
-        batch.update(doc.ref, {
-          sharedWithCompanies:
-            admin.firestore.FieldValue.arrayUnion(newSupplier),
-        });
+        nextSharedWith.add(newSupplier);
       }
+
+      batch.update(postDoc.ref, {
+        sharedWithCompanies: Array.from(nextSharedWith),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     });
 
     await batch.commit();
+
+    console.log("[backfillSupplierGoalPosts] Complete", {
+      goalId,
+      postCount: postsSnap.size,
+    });
   }
 );

@@ -271,7 +271,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     return accounts.map((a) => a.accountName).filter(Boolean) as string[];
   }, [useNetworkAccountFilters, availableAccountNameFacets, accounts]);
 
-  const availableGoals = useAvailableGoals(isSupplier, companyId);
+  const { goals: availableGoals, loading: goalsLoading } = useAvailableGoals(
+    isSupplier,
+    companyId,
+  );
 
   useEffect(() => {
     if (activePostSet === "posts") {
@@ -769,6 +772,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         <div className="filter-group">
           <GoalFilterGroup
             goals={availableGoals}
+            loading={goalsLoading}
             selectedGoalId={filters.companyGoalId}
             onChange={(id, title) => {
               handleChange("companyGoalId", id);
