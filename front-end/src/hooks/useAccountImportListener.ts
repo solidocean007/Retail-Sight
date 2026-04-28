@@ -1,9 +1,12 @@
-//front-end/src/hooks/useAccountImportListener.ts
+// front-end/src/hooks/useAccountImportListener.ts
 import { useEffect } from "react";
 import { useAppDispatch } from "../utils/store";
 import { setupAccountImportListener } from "../utils/listeners/setupAccountImportListener";
 
-export const useAccountImportListener = (companyId?: string | null, shouldStartSync = true) => {
+export const useAccountImportListener = (
+  companyId?: string | null,
+  shouldStartSync = true,
+) => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -11,6 +14,10 @@ export const useAccountImportListener = (companyId?: string | null, shouldStartS
 
     const unsubscribe = dispatch(setupAccountImportListener(companyId));
 
-    return unsubscribe;
-  }, [companyId, dispatch]);
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, [companyId, shouldStartSync, dispatch]);
 };

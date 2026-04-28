@@ -3,58 +3,137 @@ import * as admin from "firebase-admin";
 
 const db = admin.firestore();
 
+const ACCOUNT_IMPORT_SETTINGS_DOC = "accountImports";
+
 export const onAccountImportCreated = onDocumentCreated(
   "accountImports/{importId}",
   async (event) => {
+    const importRef = event.data?.ref;
     const importData = event.data?.data();
-    if (!importData) return;
 
-    const { companyId, totalChanges } = importData;
+    if (!importRef || !importData) return;
 
+    const {
+      companyId,
+      totalChanges,
+      changes,
+      status,
+      notificationEmailSent,
+      source,
+    } = importData;
+
+    // Guard against fake/manual/incomplete docs
     if (!companyId) {
-      console.log("Import missing companyId");
+      console.log("[onAccountImportCreated] Import missing companyId");
       return;
     }
 
-    const usersSnap = {
-      docs: [
-        await db.collection("users").doc("TbL2z246iBbshTSIMskByZNa2bQ2").get(),
-      ],
-    };
+    if (status !== "pending") {
+      console.log("[onAccountImportCreated] Import is not pending", {
+        status,
+      });
+      return;
+    }
 
-    for (const doc of usersSnap.docs) {
-      const uid = doc.id;
+    if (notificationEmailSent === true) {
+      console.log("[onAccountImportCreated] Notification already sent");
+      return;
+    }
 
-      //   await db
-      //     .collection("users")
-      //     .doc(uid)
-      //     .collection("notifications")
-      //     .add({
-      //       type: "account-import",
-      //       message: `${totalChanges} account changes detected`,
-      //       link: "/admin/account-imports",
-      //       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      //       read: false,
-      //     });
-      // }
+    if (source === "manual-test") {
+      console.log("[onAccountImportCreated] Skipping manual-test import");
+      return;
+    }
 
-      await db
+    if (!Array.isArray(changes) || changes.length === 0) {
+      console.log("[onAccountImportCreated] Import has no changes");
+      return;
+    }
+
+    const safeTotalChanges =
+      typeof totalChanges === "number" && totalChanges > 0
+        ? totalChanges
+        : changes.length;
+
+    if (safeTotalChanges <= 0) {
+      console.log("[onAccountImportCreated] Import has zero total changes");
+      return;
+    }
+
+    // 1) Preferred: company/settings/accountImports notificationEmails
+    const settingsSnap = await db
+      .collection("companies")
+      .doc(companyId)
+      .collection("settings")
+      .doc(ACCOUNT_IMPORT_SETTINGS_DOC)
+      .get();
+
+    const settings = settingsSnap.exists ? settingsSnap.data() : null;
+
+    const notifyOnImport = settings?.notifyOnImport !== false;
+
+    if (!notifyOnImport) {
+      console.log("[onAccountImportCreated] Notifications disabled", {
+        companyId,
+      });
+      return;
+    }
+
+    const configuredEmails = Array.isArray(settings?.notificationEmails)
+      ? settings.notificationEmails
+          .map((email: unknown) =>
+            typeof email === "string" ? email.trim().toLowerCase() : ""
+          )
+          .filter((email: string) => email.includes("@"))
+      : [];
+
+    let emails = Array.from(new Set(configuredEmails));
+
+    // 2) Fallback: company admin users
+    if (emails.length === 0) {
+      const usersSnap = await db
         .collection("users")
-        .doc(uid)
-        .collection("notifications")
-        .add({
+        .where("companyId", "==", companyId)
+        .where("role", "in", ["admin", "super-admin"])
+        .get();
+
+      emails = Array.from(
+        new Set(
+          usersSnap.docs
+            .map((doc) => doc.data()?.email)
+            .filter((email): email is string => Boolean(email))
+            .map((email) => email.trim().toLowerCase())
+        )
+      );
+
+      // Optional in-app notifications for fallback users
+      const batch = db.batch();
+
+      usersSnap.docs.forEach((doc) => {
+        const notificationRef = db
+          .collection("users")
+          .doc(doc.id)
+          .collection("notifications")
+          .doc();
+
+        batch.set(notificationRef, {
           type: "account-import",
-          message: `${totalChanges} account changes detected`,
+          message: `${safeTotalChanges} account changes detected`,
           link: "https://displaygram.com/dashboard",
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           read: false,
+          companyId,
+          accountImportId: event.params.importId,
         });
+      });
+
+      await batch.commit();
     }
 
-    const emails = usersSnap.docs.map((d) => d.data()?.email).filter(Boolean);
-
     if (!emails.length) {
-      console.log("No admin emails found");
+      console.log("[onAccountImportCreated] No notification emails found", {
+        companyId,
+      });
       return;
     }
 
@@ -62,15 +141,26 @@ export const onAccountImportCreated = onDocumentCreated(
       to: emails,
       message: {
         subject: "Displaygram Account Sync Pending",
-        text: `${totalChanges} account changes were detected and require review.`,
+        text: `${safeTotalChanges} account changes were detected and require review. Pending changes will automatically be 
+        applied after 12 hours if no action is taken.`,
         html: `
-          <p><strong>${totalChanges} account changes</strong> were detected.</p>
+          <p><strong>${safeTotalChanges} account changes</strong> were detected.</p>
           <p>Review them in Displaygram.</p>
-          <p> Pending changes will automatically be applied after 12 hours if no action is taken. </p>
+          <p>Pending changes will automatically be applied after 12 hours if no action is taken.</p>
         `,
       },
     });
 
-    console.log("Admin notification email queued");
+    await importRef.update({
+      notificationEmailSent: true,
+      notificationEmailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+      notificationRecipients: emails,
+    });
+
+    console.log("[onAccountImportCreated] Notification email queued", {
+      companyId,
+      importId: event.params.importId,
+      recipients: emails.length,
+    });
   }
 );
