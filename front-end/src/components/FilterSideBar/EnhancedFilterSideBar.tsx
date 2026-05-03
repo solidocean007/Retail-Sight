@@ -550,7 +550,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         {/* {activePostSet === "filteredPosts" && filteredPostCount > 0 ? ( */}
         {isFilteredMode ? (
           <button className="btn-outline" onClick={toggleFilterMenu}>
-            Show {filteredPostCount} Posts
+            Show {displayFilteredCount} Posts
           </button>
         ) : (
           <button className="btn-outline" onClick={toggleFilterMenu}>

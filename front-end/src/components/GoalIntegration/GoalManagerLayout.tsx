@@ -3,6 +3,9 @@ import React, { useState } from "react";
 import "./goalManagerLayout.css";
 import AllGoalsLayout from "./AllGoalsLayout";
 import CreateGoalsLayout from "./CreateGoalsLayout";
+import { useSelector } from "react-redux";
+import { selectIsSupplier } from "../../Slices/currentCompanySlice";
+import SupplierGoalsLayout from "./SupplierGoalsLayout";
 
 interface GoalManagerLayoutProps {
   companyId?: string;
@@ -11,10 +14,18 @@ interface GoalManagerLayoutProps {
 type goalManagerMode = "all" | "create";
 
 const GoalManagerLayout: React.FC<GoalManagerLayoutProps> = ({ companyId }) => {
-  
-
+  const isSupplier = useSelector(selectIsSupplier);
   const [goalManagerMode, setGoalManagerMode] =
     useState<goalManagerMode>("all");
+
+  if (isSupplier) {
+    return (
+      <section className="goal-manager">
+        <h2 className="goal-manager-title">Supplier Goals</h2>
+        <SupplierGoalsLayout companyId={companyId} />
+      </section>
+    );
+  }
 
   return (
     <section className="goal-manager">
@@ -25,13 +36,10 @@ const GoalManagerLayout: React.FC<GoalManagerLayoutProps> = ({ companyId }) => {
          =============================== */}
       <section className="goal-section">
         <header className="goal-section-header">
-
           <div className="goal-section-tabs">
             <button
               className={
-                goalManagerMode === "all"
-                  ? "gm-tab gm-tab-active"
-                  : "gm-tab"
+                goalManagerMode === "all" ? "gm-tab gm-tab-active" : "gm-tab"
               }
               onClick={() => setGoalManagerMode("all")}
             >
@@ -40,9 +48,7 @@ const GoalManagerLayout: React.FC<GoalManagerLayoutProps> = ({ companyId }) => {
 
             <button
               className={
-                goalManagerMode === "create"
-                  ? "gm-tab gm-tab-active"
-                  : "gm-tab"
+                goalManagerMode === "create" ? "gm-tab gm-tab-active" : "gm-tab"
               }
               onClick={() => setGoalManagerMode("create")}
             >
@@ -50,16 +56,17 @@ const GoalManagerLayout: React.FC<GoalManagerLayoutProps> = ({ companyId }) => {
             </button>
           </div>
         </header>
-        
+
         <div className="goal-section-body">
           {goalManagerMode === "all" && (
             <AllGoalsLayout companyId={companyId} />
           )}
 
-          {goalManagerMode === "create" && <CreateGoalsLayout companyId={companyId} />}
+          {goalManagerMode === "create" && (
+            <CreateGoalsLayout companyId={companyId} />
+          )}
         </div>
       </section>
-
     </section>
   );
 };

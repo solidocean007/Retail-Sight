@@ -20,48 +20,52 @@ const GoalFilterGroup: React.FC<GoalFilterGroupProps> = ({
 }) => {
   // ✅ Safely compute year from goalStartDate
   const processedGoals = useMemo(() => {
-  const counts = new Map<string, number>();
+    const counts = new Map<string, number>();
 
-  goals.forEach((g) => {
-    counts.set(g.goalTitle, (counts.get(g.goalTitle) || 0) + 1);
-  });
-
-  return goals
-    .map((g) => {
-      const date = g.goalStartDate
-        ? new Date(g.goalStartDate)
-        : new Date(g.createdAt);
-
-      const year = isNaN(date.getTime())
-        ? "Unknown"
-        : date.getFullYear().toString();
-
-      const isDuplicate = (counts.get(g.goalTitle) || 0) > 1;
-
-      return {
-        ...g,
-        year,
-        isDuplicate,
-      };
-    })
-    .sort((a, b) => {
-      if (a.year === "Unknown" && b.year !== "Unknown") return 1;
-      if (b.year === "Unknown" && a.year !== "Unknown") return -1;
-
-      return (
-        parseInt(b.year) - parseInt(a.year) ||
-        a.goalTitle.localeCompare(b.goalTitle)
-      );
+    goals.forEach((g) => {
+      counts.set(g.goalTitle, (counts.get(g.goalTitle) || 0) + 1);
     });
-}, [goals]);
+
+    return goals
+      .map((g) => {
+        const date = g.goalStartDate
+          ? new Date(g.goalStartDate)
+          : new Date(g.createdAt);
+
+        const year = isNaN(date.getTime())
+          ? "Unknown"
+          : date.getFullYear().toString();
+
+        const isDuplicate = (counts.get(g.goalTitle) || 0) > 1;
+
+        return {
+          ...g,
+          year,
+          isDuplicate,
+        };
+      })
+      .sort((a, b) => {
+        if (a.year === "Unknown" && b.year !== "Unknown") return 1;
+        if (b.year === "Unknown" && a.year !== "Unknown") return -1;
+
+        return (
+          parseInt(b.year) - parseInt(a.year) ||
+          a.goalTitle.localeCompare(b.goalTitle)
+        );
+      });
+  }, [goals]);
 
   const selectedGoal =
     processedGoals.find((g) => g.id === selectedGoalId) || null;
 
   const filterOptions = createFilterOptions({
     matchFrom: "any",
-    stringify: (option: CompanyGoalWithIdType & { year: string }) =>
-      `${option.goalTitle} ${option.year}`,
+    stringify: (
+      option: CompanyGoalWithIdType & {
+        year: string;
+        originCompanyName?: string;
+      },
+    ) => `${option.goalTitle} ${option.originCompanyName || ""} ${option.year}`,
   });
 
   return (
@@ -70,7 +74,11 @@ const GoalFilterGroup: React.FC<GoalFilterGroupProps> = ({
         className="goal-filter-autocomplete"
         options={processedGoals}
         groupBy={(goal) => goal.year}
-        getOptionLabel={(goal) => `${goal.goalTitle} (${goal.id.slice(0, 6)})`}
+        getOptionLabel={(goal: any) =>
+          goal.originCompanyName
+            ? `${goal.goalTitle} — ${goal.originCompanyName}`
+            : goal.goalTitle
+        }
         value={selectedGoal}
         onChange={(_, value) =>
           onChange(value?.id ?? null, value?.goalTitle ?? null)
