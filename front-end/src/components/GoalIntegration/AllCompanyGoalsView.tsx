@@ -1,8 +1,6 @@
 import { useState, useMemo } from "react";
 import {
-  Typography,
   useMediaQuery,
-  Button,
   Menu,
   MenuItem,
 } from "@mui/material";

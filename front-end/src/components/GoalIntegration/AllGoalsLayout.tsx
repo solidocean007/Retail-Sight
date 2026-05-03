@@ -1,5 +1,5 @@
 // components/Goals/AllGoalsLayout.tsx
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 

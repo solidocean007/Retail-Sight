@@ -50,7 +50,6 @@ import { selectIsSupplier } from "../../Slices/currentCompanySlice";
 import DistributorAutoComplete from "./DistributorAutoComplete";
 import { useAvailableGoals } from "../../hooks/useAvailableGoals";
 import { useAvailableBrands } from "../../hooks/useAvailableBrands";
-import { selectAllCompanyAccounts } from "../../Slices/allAccountsSlice";
 import {
   setFilteredSharedPostFetchedAt,
   setFilteredSharedPosts,

@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./userTableForGoals.css";
-import { getCompletionClass } from "../utils/helperFunctions/getCompletionClass";
 import { CompanyGoalWithIdType, GoalAssignmentType } from "../utils/types";
 
 export interface UserRowType {
