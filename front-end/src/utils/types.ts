@@ -563,6 +563,7 @@ export interface LocationState {
 }
 
 export interface CollectionType {
+  companyId: string;
   name: string;
   description?: string;
   ownerId: string;
@@ -574,6 +575,11 @@ export interface CollectionType {
 }
 
 export type CollectionWithId = CollectionType & { id: string };
+
+export type CreateCollectionInput = Omit<
+  CollectionType,
+  "companyId" | "ownerId"
+>;
 
 export interface TokenData {
   sharedToken: string;

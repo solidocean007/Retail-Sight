@@ -1,14 +1,12 @@
 // CollectionForm.tsx
 import React, { useState } from "react";
-import { CollectionType } from "../utils/types";
-import { useSelector } from "react-redux";
-import { selectUser } from "../Slices/userSlice";
-import "./collectionForm.css";
 import { Box, Modal } from "@mui/material";
+import { CreateCollectionInput } from "../utils/types";
+import "./collectionForm.css";
 
 interface CollectionFormProps {
   isOpen: boolean;
-  onAddCollection: (newCollection: CollectionType) => Promise<void>;
+  onAddCollection: (newCollection: CreateCollectionInput) => Promise<void>;
   onClose: () => void;
 }
 
@@ -17,83 +15,104 @@ const CollectionForm: React.FC<CollectionFormProps> = ({
   onAddCollection,
   onClose,
 }) => {
-  if (!isOpen) return null;
-
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const user = useSelector(selectUser);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    if (!name.trim()) {
-      e.preventDefault();
-      // Optionally show an error message to the user here
-      return;
-    }
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (user && user.uid) {
-      onAddCollection({
-        name,
-        description,
-        ownerId: user.uid,
+
+    const trimmedName = name.trim();
+
+    if (!trimmedName || isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      await onAddCollection({
+        name: trimmedName,
+        description: description.trim(),
         posts: [],
+        previewImages: [],
         sharedWith: [],
-        isShareableOutsideCompany: true,
+        isShareableOutsideCompany: false,
       });
-      setName("");
-      setDescription("");
+
+      resetForm();
       onClose();
-    } else {
-      console.error("User not defined.");
+    } catch (error) {
+      console.error("Error creating collection:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // You may want to also call onClose when the user decides not to proceed
-  const handleCancel = () => {
-    onClose(); // Call the onClose prop function
-  };
+  if (!isOpen) return null;
+
   return (
     <Modal
       open={isOpen}
-      onClose={onClose}
-      aria-labelledby="modal-title"
-      aria-describedby="modal-description"
+      onClose={handleClose}
+      aria-labelledby="collection-modal-title"
+      aria-describedby="collection-modal-description"
     >
       <Box
+        className="collection-form-modal"
         sx={{
           position: "absolute",
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: 400,
+          width: "min(92vw, 420px)",
           bgcolor: "background.paper",
-          border: "2px solid #000",
+          borderRadius: "12px",
           boxShadow: 24,
-          p: 4,
+          p: 3,
         }}
       >
         <form className="collection-form" onSubmit={handleSubmit}>
+          <h3 id="collection-modal-title">Create Collection</h3>
+
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Collection Name"
             required
+            autoFocus
           />
+
           <textarea
+            id="collection-modal-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description"
-            // how can i let a user hit use the enter button like a submit button if there is also a value in the input above?
+            rows={4}
           />
-          <button
-            type="submit"
-            className={!name.trim() ? "disabled-button" : ""}
-          >
-            Add Collection
-          </button>
-          <button type="button" onClick={handleCancel}>
-            Cancel
-          </button>
+
+          <div className="collection-form-actions">
+            <button
+              type="submit"
+              disabled={!name.trim() || isSubmitting}
+              className={!name.trim() || isSubmitting ? "disabled-button" : ""}
+            >
+              {isSubmitting ? "Creating..." : "Add Collection"}
+            </button>
+
+            <button type="button" onClick={handleClose}>
+              Cancel
+            </button>
+          </div>
         </form>
       </Box>
     </Modal>
