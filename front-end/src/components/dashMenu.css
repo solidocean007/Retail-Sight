@@ -8,8 +8,17 @@
   pointer-events: none;
 }
 
-.Mui-selected {
-  background-color: var(--button-background-hover);
-  color: var(--button-text-color);
+.MuiListItemButton-root.Mui-selected {
+  background-color: var(--dashboard-background-color);
+  color: var(--text-color);
+}
+
+.MuiListItemButton-root.Mui-selected:hover {
+  background-color: var(--dashboard-background-color);
+  color: var(--text-color);
+}
+
+.MuiListItemButton-root.Mui-selected {
+  border-left: 4px solid var(--primary-blue);
 }
 

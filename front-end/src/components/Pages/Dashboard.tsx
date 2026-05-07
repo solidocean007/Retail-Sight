@@ -24,6 +24,7 @@ import NotificationSettingsPanel from "../Notifications/NotificationSettingsPane
 import IntegrationsView from "./IntegrationsView.tsx";
 import { ComingSoonCard } from "../ComingSoonCard.tsx";
 import PastDueBanner from "./Billing/PastDueBanner.tsx";
+import { selectIsSupplier } from "../../Slices/currentCompanySlice.ts";
 
 const ADMIN_MODES: DashboardModeType[] = [
   "ConnectionsMode",
@@ -43,7 +44,7 @@ export const Dashboard = () => {
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
   const [drawerOpen, setDrawerOpen] = useState(true);
-
+  const isSupplier = useSelector(selectIsSupplier);
   const isEmployee = user?.role === "employee";
   const isSupervisor = user?.role === "supervisor";
   const isAdmin = user?.role === "admin";
@@ -52,7 +53,9 @@ export const Dashboard = () => {
 
   const canAccessAdmin = isAdmin || isSuperAdmin || isDeveloper;
 
-  const defaultMode: DashboardModeType = canAccessAdmin
+  const defaultMode: DashboardModeType = isSupplier
+  ? "ConnectionsMode"
+  : canAccessAdmin
     ? "GoalManagerMode"
     : "MyGoalsMode";
 
@@ -64,23 +67,42 @@ export const Dashboard = () => {
 
   const [_screenWidth, setScreenWidth] = useState(window.innerWidth);
 
-  useEffect(() => {
-    const savedMode = sessionStorage.getItem(
-      "dashboardMode",
-    ) as DashboardModeType;
+  const SUPPLIER_BLOCKED_MODES: DashboardModeType[] = [
+  "MyGoalsMode",
+  "MyAccountsMode",
+  "AccountsMode",
+  "ProductsMode",
+  "GoalManagerMode",
+  "TeamMode",
+];
 
-    if (savedMode) {
-      if (!canAccessAdmin && ADMIN_MODES.includes(savedMode)) {
-        setDashboardMode("MyGoalsMode");
-        setSelectedMode("MyGoalsMode");
-      } else {
-        setDashboardMode(savedMode);
-        setSelectedMode(savedMode);
-      }
+useEffect(() => {
+  const savedMode = sessionStorage.getItem(
+    "dashboardMode",
+  ) as DashboardModeType;
 
-      sessionStorage.removeItem("dashboardMode");
+  if (savedMode) {
+    if (isSupplier && SUPPLIER_BLOCKED_MODES.includes(savedMode)) {
+      setDashboardMode("ConnectionsMode");
+      setSelectedMode("ConnectionsMode");
+    } else if (!canAccessAdmin && ADMIN_MODES.includes(savedMode)) {
+      setDashboardMode("MyGoalsMode");
+      setSelectedMode("MyGoalsMode");
+    } else {
+      setDashboardMode(savedMode);
+      setSelectedMode(savedMode);
     }
-  }, [canAccessAdmin]);
+
+    sessionStorage.removeItem("dashboardMode");
+  }
+}, [canAccessAdmin, isSupplier]);
+
+useEffect(() => {
+  if (isSupplier && SUPPLIER_BLOCKED_MODES.includes(dashboardMode)) {
+    setDashboardMode("ConnectionsMode");
+    setSelectedMode("ConnectionsMode");
+  }
+}, [isSupplier, dashboardMode]);
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -177,22 +199,22 @@ export const Dashboard = () => {
           <CompanyConnectionsManager currentCompanyId={companyId} user={user} />
         )}
         {dashboardMode === "IntegrationsMode" && <IntegrationsView />}
-        {dashboardMode === "TeamMode" && <TeamsViewer />}
+        {dashboardMode === "TeamMode" && !isSupplier && <TeamsViewer />}
         {dashboardMode === "NotificationsMode" && <NotificationSettingsPanel />}
         {dashboardMode === "AccountsMode" && (
           <AccountManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
-        {dashboardMode === "ProductsMode" && (
+        {dashboardMode === "ProductsMode" && !isSupplier && (
           <ProductsManager isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} />
         )}
-        {dashboardMode === "MyGoalsMode" && <MyGoals />}
+        {dashboardMode === "MyGoalsMode" && !isSupplier && <MyGoals />}
         {/* {dashboardMode === "UsersMode" && <EmployeesViewer />} */}
         {dashboardMode === "UsersMode2" && canAccessAdmin && (
           <AdminUsersConsole />
         )}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
-        {dashboardMode === "MyAccountsMode" && user && <MyAccounts />}
-        {dashboardMode === "GoalManagerMode" && canAccessAdmin && (
+        {dashboardMode === "MyAccountsMode" && user && !isSupplier && <MyAccounts />}
+        {dashboardMode === "GoalManagerMode" && canAccessAdmin && !isSupplier && (
           <GoalManagerLayout companyId={companyId} />
         )}
 

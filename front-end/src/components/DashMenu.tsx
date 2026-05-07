@@ -8,6 +8,7 @@ import {
   ListItemText,
   Typography,
 } from "@mui/material";
+
 import HomeIcon from "@mui/icons-material/Home";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
@@ -18,28 +19,25 @@ import StoreIcon from "@mui/icons-material/Store";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import { Handshake, Inventory2, NotificationAdd } from "@mui/icons-material";
 
 import { useNavigate } from "react-router-dom";
-import LogOutButton from "./LogOutButton";
-import "./dashMenu.css";
-import { DashboardModeType } from "../utils/types";
-import { Handshake, Inventory2, NotificationAdd } from "@mui/icons-material";
-import UpgradePromptBanner from "./UpgradePromptBanner";
 import { useSelector } from "react-redux";
+
+import LogOutButton from "./LogOutButton";
+import UpgradePromptBanner from "./UpgradePromptBanner";
 import GoalIcon from "./icons/GoalIcon";
+
+import "./dashMenu.css";
+
+import { DashboardModeType } from "../utils/types";
+import { RootState } from "../utils/store";
 import { selectPendingAccountImports } from "../Slices/accountImportSlice";
+import { selectIsSupplier } from "../Slices/currentCompanySlice";
 
 const drawerWidth = 200;
 
-const DashMenu = ({
-  open,
-  onClose,
-  variant,
-  onMenuClick,
-  isEmployee,
-  canAccessAdmin,
-  selectedMode,
-}: {
+type DashMenuProps = {
   open: boolean;
   onClose: () => void;
   variant: "temporary" | "permanent";
@@ -47,29 +45,41 @@ const DashMenu = ({
   isEmployee: boolean;
   canAccessAdmin: boolean;
   selectedMode: DashboardModeType;
-}) => {
+};
+
+const DashMenu = ({
+  open,
+  onClose,
+  variant,
+  onMenuClick,
+  canAccessAdmin,
+  selectedMode,
+}: DashMenuProps) => {
   const navigate = useNavigate();
 
-  const role = useSelector((state: any) => state.user.currentUser.role);
+  const role = useSelector((state: RootState) => state.user.currentUser?.role);
+  const isSupplier = useSelector(selectIsSupplier);
+  const pendingImports = useSelector(selectPendingAccountImports);
 
-  const canAccessBilling = role === "admin" || role === "super-admin"; // adjust if devs should see billing
+  // const companyPlan = useSelector(
+  //   (state: RootState) => state.currentCompany?.data?.billing?.plan || "free",
+  // );
+
+  // const connectionCount = useSelector(
+  //   (state: RootState) => state.currentCompany?.connectionCount,
+  // );
+
+  const canAccessBilling = role === "admin" || role === "super-admin";
 
   const canAccessIntegrations =
     role === "admin" || role === "super-admin" || role === "developer";
 
-  const companyPlan = useSelector(
-    (state: any) => state.currentCompany?.billing?.plan,
-  );
-  const connectionCount = useSelector(
-    (state: any) => state.currentCompany?.connectionCount,
-  );
+  // const showUpgradeBanner =
+  //   (role === "admin" || role === "super-admin") &&
+  //   (companyPlan === "free" || connectionCount >= 3);
 
-  // Example condition: show banner if company is free or near limit
-  const showUpgradeBanner =
-    (role === "admin" || role === "super-admin") &&
-    (companyPlan === "free" || connectionCount >= 3);
-
-  const pendingImports = useSelector(selectPendingAccountImports);
+  const showDistributorAdminTools = canAccessAdmin && !isSupplier;
+  const showSupplierAdminTools = canAccessAdmin && isSupplier;
 
   return (
     <Drawer
@@ -83,7 +93,7 @@ const DashMenu = ({
         "& .MuiDrawer-paper": {
           width: drawerWidth,
           boxSizing: "border-box",
-          backgroundColor: "var(--drawer-background)", // ✅ themed
+          backgroundColor: "var(--drawer-background)",
           color: "var(--text-color)",
         },
       }}
@@ -93,13 +103,16 @@ const DashMenu = ({
           <HomeIcon sx={{ mr: 1 }} />
           <ListItemText primary="Home" />
         </ListItemButton>
-        <ListItemButton
-          selected={selectedMode === "MyGoalsMode"}
-          onClick={() => onMenuClick("MyGoalsMode")}
-        >
-          <TrackChangesIcon sx={{ mr: 1 }} />
-          <ListItemText primary="My Goals" />
-        </ListItemButton>
+
+        {!isSupplier && (
+          <ListItemButton
+            selected={selectedMode === "MyGoalsMode"}
+            onClick={() => onMenuClick("MyGoalsMode")}
+          >
+            <TrackChangesIcon sx={{ mr: 1 }} />
+            <ListItemText primary="My Goals" />
+          </ListItemButton>
+        )}
 
         <ListItemButton
           selected={selectedMode === "ProfileMode"}
@@ -108,13 +121,17 @@ const DashMenu = ({
           <AccountCircleIcon sx={{ mr: 1 }} />
           <ListItemText primary="Profile" />
         </ListItemButton>
-        <ListItemButton
-          selected={selectedMode === "MyAccountsMode"}
-          onClick={() => onMenuClick("MyAccountsMode")}
-        >
-          <StoreIcon sx={{ mr: 1 }} />
-          <ListItemText primary="MyAccounts" />
-        </ListItemButton>
+
+        {!isSupplier && (
+          <ListItemButton
+            selected={selectedMode === "MyAccountsMode"}
+            onClick={() => onMenuClick("MyAccountsMode")}
+          >
+            <StoreIcon sx={{ mr: 1 }} />
+            <ListItemText primary="My Accounts" />
+          </ListItemButton>
+        )}
+
         <ListItemButton
           selected={selectedMode === "CollectionsMode"}
           onClick={() => onMenuClick("CollectionsMode")}
@@ -122,6 +139,7 @@ const DashMenu = ({
           <CollectionsBookmarkIcon sx={{ mr: 1 }} />
           <ListItemText primary="Collections" />
         </ListItemButton>
+
         <ListItemButton
           selected={selectedMode === "NotificationsMode"}
           onClick={() => onMenuClick("NotificationsMode")}
@@ -129,6 +147,7 @@ const DashMenu = ({
           <NotificationAdd sx={{ mr: 1 }} />
           <ListItemText primary="Notifications" />
         </ListItemButton>
+
         <ListItemButton
           selected={selectedMode === "TutorialMode"}
           onClick={() => onMenuClick("TutorialMode")}
@@ -137,7 +156,56 @@ const DashMenu = ({
           <ListItemText primary="Tutorial" />
         </ListItemButton>
 
-        {canAccessAdmin && (
+        {showSupplierAdminTools && (
+          <Box className="menu-section-admin">
+            <Typography variant="subtitle1" className="menu-section-title">
+              Supplier Admin
+            </Typography>
+
+            <ListItemButton
+              selected={selectedMode === "AnnouncementsMode"}
+              onClick={() => onMenuClick("AnnouncementsMode")}
+            >
+              <NotificationAdd sx={{ mr: 1 }} />
+              <ListItemText primary="Announcements" />
+            </ListItemButton>
+
+            <ListItemButton
+              selected={selectedMode === "ConnectionsMode"}
+              onClick={() => onMenuClick("ConnectionsMode")}
+            >
+              <Handshake sx={{ mr: 1 }} />
+              <ListItemText primary="Connections" />
+            </ListItemButton>
+
+            <ListItemButton
+              selected={selectedMode === "UsersMode2"}
+              onClick={() => onMenuClick("UsersMode2")}
+            >
+              <PeopleAltIcon sx={{ mr: 1 }} />
+              <ListItemText primary="Users" />
+            </ListItemButton>
+
+            {canAccessIntegrations && (
+              <ListItemButton
+                selected={selectedMode === "IntegrationsMode"}
+                onClick={() => onMenuClick("IntegrationsMode")}
+              >
+                <ExtensionIcon className="menu-icon" />
+                <ListItemText primary="Integrations" />
+              </ListItemButton>
+            )}
+
+            {canAccessBilling && (
+              <ListItemButton onClick={() => navigate("/billing")}>
+                <ReceiptLongIcon className="menu-icon" />
+                <ListItemText primary="Billing" />
+              </ListItemButton>
+            )}
+          </Box>
+        )}
+
+        {showDistributorAdminTools && (
           <Box className="menu-section-admin">
             <Typography variant="subtitle1" className="menu-section-title">
               Admin
@@ -148,9 +216,9 @@ const DashMenu = ({
               onClick={() => onMenuClick("AnnouncementsMode")}
             >
               <NotificationAdd sx={{ mr: 1 }} />
-
               <ListItemText primary="Announcements" />
             </ListItemButton>
+
             <ListItemButton
               selected={selectedMode === "ConnectionsMode"}
               onClick={() => onMenuClick("ConnectionsMode")}
@@ -173,7 +241,9 @@ const DashMenu = ({
             >
               <StoreIcon sx={{ mr: 1 }} />
               <ListItemText
-                primary={`Accounts ${pendingImports?.length ? `(${pendingImports.length})` : ""}`}
+                primary={`Accounts ${
+                  pendingImports?.length ? `(${pendingImports.length})` : ""
+                }`}
               />
             </ListItemButton>
 
@@ -219,6 +289,8 @@ const DashMenu = ({
             )}
           </Box>
         )}
+
+        {/* {showUpgradeBanner && <UpgradePromptBanner />} */}
 
         <ListItem>
           <LogOutButton />
