@@ -89,6 +89,8 @@ import { backfillSupplierGoalPosts } from "./backFillISupplierGoalPosts";
 import { onPostBrandsUpdated } from "./onPostBrandsUpdated";
 import { onConnectionNotifications } from "./onConnectionNotifications";
 import { repairConnectionVisibility } from "./repairConnectionVisibility";
+import { uploadCompanyProducts } from "./products/uploadCompanyProducts";
+import { syncCompanyBrandCatalog } from "./products/syncCompanyBrandCatalog";
 
 export {
   backfillSupplierGoalPosts,
@@ -174,4 +176,8 @@ export {
   getNotificationAnalytics,
   trackEmailClick,
   markNotificationReadCallable,
+
+  // products
+  uploadCompanyProducts,
+  syncCompanyBrandCatalog,
 };

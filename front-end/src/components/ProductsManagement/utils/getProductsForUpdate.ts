@@ -49,7 +49,7 @@ const parseProductsFromFile = (
   });
 };
 
-export const getProductsForAdd = async (file: File): Promise<ProductType[]> => {
+export const parseProductUploadFile = async (file: File): Promise<ProductType[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -109,62 +109,4 @@ export const getProductsForAdd = async (file: File): Promise<ProductType[]> => {
 
     reader.readAsArrayBuffer(file);
   });
-};
-
-export const getProductsForUpdate = async (
-  file: File,
-  existingProducts: ProductType[]
-): Promise<ProductType[]> => {
-  const raw = await parseProductsFromFile(file);
-
-  // ✅ Check headers in the first row
-  const requiredHeaders = [
-    "companyProductId",
-    "productName",
-    "package",
-    "productType",
-    "brand",
-    "brandFamily",
-    "productSupplier",
-    "supplierProductNumber",
-  ];
-
-  const firstEntry = Object.values(raw)[0];
-  if (!firstEntry) {
-    throw new Error("No rows found in uploaded file.");
-  }
-
-  const headersInFile = Object.keys(firstEntry);
-  const missingHeaders = requiredHeaders.filter(
-    (h) => !headersInFile.includes(h)
-  );
-
-  if (missingHeaders.length > 0) {
-    throw new Error(
-      `Missing column headers: ${missingHeaders.join(
-        ", "
-      )}. Please use the correct upload template.`
-    );
-  }
-
-  // ✅ Proceed to create update list
-  const productMap = new Map(
-    existingProducts.map((p) => [p.companyProductId, p])
-  );
-
-  const updates: ProductType[] = [];
-
-  for (const [productId, fields] of Object.entries(raw)) {
-    const existing = productMap.get(productId);
-    if (!existing) continue;
-
-    updates.push({
-      ...existing,
-      ...Object.fromEntries(
-        Object.entries(fields).filter(([, v]) => v !== undefined)
-      ),
-    });
-  }
-
-  return updates;
 };

@@ -10,43 +10,54 @@ import {
   TableCell,
   TableBody,
 } from "@mui/material";
-// import "./styles/uploadTemplateModal.css";
+import "./styles/uploadProductTemplateModal.css";
 
 interface UploadProductTemplateModalProps {
   open: boolean;
   onClose: () => void;
 }
 
+const productHeaders = [
+  "companyProductId",
+  "productName",
+  "package",
+  "productType",
+  "brand",
+  "brandFamily",
+  "productSupplier",
+  "supplierProductNumber",
+];
+
 const mockProducts = [
   {
-    companyProductId: "1001",
-    productName: "Mountain Spring Water 24pk",
-    package: "24 x 16.9oz Bottles",
-    productType: "Water",
-    brand: "Mountain Spring",
-    brandFamily: "Essentials",
-    productSupplier: "Blue Ridge Beverages",
-    supplierProductNumber: "BR12345",
+    companyProductId: "252",
+    productName: "Lite 4/3/24cn",
+    package: "12/4.0 oz 4/3 CN",
+    productType: "BEER PKG",
+    brand: "LITE",
+    brandFamily: "LITE",
+    productSupplier: "MILLERCOORS",
+    supplierProductNumber: "700982",
   },
   {
-    companyProductId: "1002",
-    productName: "",
+    companyProductId: "418",
+    productName: "Coors Light 24/12oz Cans",
+    package: "24 x 12oz Cans",
+    productType: "BEER PKG",
+    brand: "COORS LT",
+    brandFamily: "COORS LIGHT",
+    productSupplier: "MILLERCOORS",
+    supplierProductNumber: "701114",
+  },
+  {
+    companyProductId: "1003",
+    productName: "Sample Product Name",
     package: "",
     productType: "",
     brand: "",
     brandFamily: "",
     productSupplier: "",
     supplierProductNumber: "",
-  },
-  {
-    companyProductId: "1003",
-    productName: "Sunburst Soda 12oz",
-    package: "12 x 12oz Cans",
-    productType: "Soda",
-    brand: "Sunburst",
-    brandFamily: "Refreshers",
-    productSupplier: "SunCo",
-    supplierProductNumber: "SC2022",
   },
 ];
 
@@ -58,6 +69,7 @@ const UploadProductTemplateModal: React.FC<UploadProductTemplateModalProps> = ({
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
+
     setTimeout(() => onClose(), 0);
   };
 
@@ -66,53 +78,107 @@ const UploadProductTemplateModal: React.FC<UploadProductTemplateModalProps> = ({
       open={open}
       onClose={handleClose}
       maxWidth="lg"
+      fullWidth
       disableEnforceFocus
       disableAutoFocus
+      PaperProps={{
+        className: "upload-product-template-paper",
+      }}
     >
-      <DialogTitle>
-        <div className="upload-template-modal-header">
-          <span>Example Product File Template</span>
-          <button className="close-text-button" onClick={onClose}>
+      <DialogTitle className="upload-product-template-title">
+        <div className="upload-product-template-header">
+          <div>
+            <p className="upload-product-template-eyebrow">
+              Product Upload Template
+            </p>
+            <h2>Example Product File</h2>
+          </div>
+
+          <button
+            type="button"
+            className="upload-product-template-close"
+            onClick={handleClose}
+          >
             Close
           </button>
         </div>
       </DialogTitle>
 
-      <DialogContent className="upload-template-modal">
-        <p>
-          Upload your product list in <strong>CSV or Excel</strong> format. The
-          first row must include headers exactly as shown. Each row represents
-          one product.
-        </p>
-        <p>
-          <strong>Required:</strong> <code>companyProductId</code>, <code>productName</code>, <code>package</code>
-          <br />
-          <strong>Optional:</strong> <code>productType</code>, <code>brand</code>,
-          <code>brandFamily</code>, <code>productSupplier</code>, <code>supplierProductNumber</code>
-        </p>
-        <p>
-          Leave optional fields blank if not applicable. Only filled fields will
-          update existing products — blanks will not overwrite.
-        </p>
+      <DialogContent className="upload-product-template-content">
+        <section className="upload-product-template-intro">
+          <p>
+            Upload your current product list in <strong>CSV or Excel</strong>{" "}
+            format. Displaygram uses this file to save products and maintain the
+            company brand catalog used for filtering and shared visibility.
+          </p>
 
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              {Object.keys(mockProducts[0]).map((key) => (
-                <TableCell key={key}>{key}</TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {mockProducts.map((product, i) => (
-              <TableRow key={i}>
-                {Object.values(product).map((val, j) => (
-                  <TableCell key={j}>{val || "-"}</TableCell>
+          <div className="upload-product-template-note">
+            <strong>Important:</strong> keep the header row exactly as shown.
+            Cells may be blank, but the column names should not be changed.
+          </div>
+        </section>
+
+        <section className="upload-product-template-rules">
+          <div>
+            <h3>Required headers</h3>
+            <p>
+              These columns must exist in the first row of the file, even if
+              some values are blank.
+            </p>
+          </div>
+
+          <div className="upload-product-template-chip-row">
+            {productHeaders.map((header) => (
+              <code key={header}>{header}</code>
+            ))}
+          </div>
+        </section>
+
+        <section className="upload-product-template-guidance">
+          <div className="upload-product-template-card">
+            <h3>Most important fields</h3>
+            <p>
+              <code>companyProductId</code>, <code>productName</code>,{" "}
+              <code>brand</code>, <code>productSupplier</code>, and{" "}
+              <code>supplierProductNumber</code> help Displaygram identify
+              products and preserve brand aliases when names change.
+            </p>
+          </div>
+
+          <div className="upload-product-template-card">
+            <h3>Brand cleanup</h3>
+            <p>
+              If a distributor later changes <strong>LITE</strong> to{" "}
+              <strong>MILLER LITE</strong>, the backend can use supplier product
+              numbers and product IDs to connect the renamed brand to the
+              existing catalog record.
+            </p>
+          </div>
+        </section>
+
+        <div className="upload-product-template-table-wrap">
+          <Table size="small" className="upload-product-template-table">
+            <TableHead>
+              <TableRow>
+                {productHeaders.map((key) => (
+                  <TableCell key={key}>{key}</TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+
+            <TableBody>
+              {mockProducts.map((product, i) => (
+                <TableRow key={i}>
+                  {productHeaders.map((key) => (
+                    <TableCell key={key}>
+                      {product[key as keyof typeof product] || "—"}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,0 +1,211 @@
+.product-upload-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.product-upload-confirm-modal {
+  width: min(820px, 100%);
+  max-height: min(86vh, 860px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--form-background-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+}
+
+.product-upload-confirm-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.product-upload-confirm-eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--primary-blue);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.product-upload-confirm-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--header-title);
+}
+
+.product-upload-confirm-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--btn-secondary-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.product-upload-confirm-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+}
+
+.product-upload-confirm-intro {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.product-upload-confirm-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.product-upload-confirm-stat {
+  padding: 0.9rem;
+  border-radius: 14px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+}
+
+.product-upload-confirm-stat span {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.product-upload-confirm-stat strong {
+  font-size: 1.5rem;
+  color: var(--header-title);
+}
+
+.product-upload-confirm-stat-new strong {
+  color: var(--success-color, #2e7d32);
+}
+
+.product-upload-confirm-stat-updated strong {
+  color: var(--primary-blue);
+}
+
+.product-upload-confirm-brand-note,
+.product-upload-confirm-warning,
+.product-upload-confirm-empty {
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  line-height: 1.45;
+}
+
+.product-upload-confirm-brand-note {
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--border-color);
+}
+
+.product-upload-confirm-warning {
+  background: var(--warning-bg, rgba(255, 193, 7, 0.14));
+  color: var(--warning-color, var(--text-color));
+  border: 1px solid var(--warning-color, rgba(255, 193, 7, 0.5));
+}
+
+.product-upload-confirm-empty {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.product-upload-confirm-section {
+  margin-top: 1rem;
+}
+
+.product-upload-confirm-section h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  color: var(--header-title);
+}
+
+.product-upload-confirm-list,
+.product-upload-confirm-updates {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.product-upload-confirm-list-row,
+.product-upload-confirm-update-card {
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+}
+
+.product-upload-confirm-update-card h4 {
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+}
+
+.product-upload-confirm-change-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.product-upload-confirm-change {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.86rem;
+}
+
+.product-upload-confirm-change span {
+  color: var(--text-muted);
+}
+
+.product-upload-confirm-change p {
+  margin: 0;
+}
+
+.product-upload-confirm-change del {
+  color: var(--text-muted);
+}
+
+.product-upload-confirm-change strong {
+  color: var(--header-title);
+}
+
+.product-upload-confirm-more {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.product-upload-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 700px) {
+  .product-upload-confirm-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .product-upload-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .product-upload-confirm-actions .products-button {
+    width: 100%;
+  }
+}

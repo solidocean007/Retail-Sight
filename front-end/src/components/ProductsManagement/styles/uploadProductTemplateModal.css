@@ -1,0 +1,153 @@
+.upload-product-template-paper {
+  background: var(--form-background-color);
+  color: var(--text-color);
+  border-radius: 18px;
+}
+
+.upload-product-template-title {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.upload-product-template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.upload-product-template-eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--primary-blue);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.upload-product-template-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--header-title);
+}
+
+.upload-product-template-close {
+  border: 1px solid var(--border-color);
+  background: var(--btn-secondary-bg);
+  color: var(--text-color);
+  border-radius: var(--btn-border-radius, 10px);
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+.upload-product-template-content {
+  padding: 1.25rem;
+}
+
+.upload-product-template-intro p {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.upload-product-template-note {
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--border-color);
+  line-height: 1.45;
+}
+
+.upload-product-template-note strong {
+  color: var(--primary-blue);
+}
+
+.upload-product-template-rules {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+}
+
+.upload-product-template-rules h3,
+.upload-product-template-card h3 {
+  margin: 0 0 0.35rem;
+  color: var(--header-title);
+  font-size: 1rem;
+}
+
+.upload-product-template-rules p,
+.upload-product-template-card p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.upload-product-template-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.upload-product-template-chip-row code,
+.upload-product-template-card code {
+  background: var(--gray-200);
+  color: var(--text-color);
+  padding: 0.18rem 0.4rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.upload-product-template-guidance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.upload-product-template-card {
+  padding: 1rem;
+  border-radius: 14px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+}
+
+.upload-product-template-table-wrap {
+  margin-top: 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+}
+
+.upload-product-template-table {
+  min-width: 980px;
+}
+
+.upload-product-template-table .MuiTableCell-root {
+  color: var(--text-color);
+  border-bottom-color: var(--border-color);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.upload-product-template-table .MuiTableHead-root .MuiTableCell-root {
+  background: var(--alt-menu-background-color);
+  color: var(--header-title);
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .upload-product-template-header {
+    flex-direction: column;
+  }
+
+  .upload-product-template-close {
+    width: 100%;
+  }
+
+  .upload-product-template-guidance {
+    grid-template-columns: 1fr;
+  }
+}
