@@ -18,24 +18,24 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
   const brands = post.brands ?? [];
   const productTypes = post.productType ?? [];
   const detected = post.autoDetectedBrands ?? [];
-  
+
   const isValid = useMemo(
     () => brands.length > 0 && productTypes.length > 0,
-    [brands, productTypes]
+    [brands, productTypes],
   );
 
   const handleBrandsChange = useCallback(
-    (newBrands: string[], newProductTypes: string[]) => {
+    (newBrands: string[], newProductTypes: string[], brandIds: string[]) => {
       setPost((prev) => ({
         ...prev,
         brands: newBrands,
+        brandIds,
         productType: newProductTypes,
       }));
     },
-    [setPost]
+    [setPost],
   );
 
-  
   return (
     <div className="setDisplayDetails">
       <section className="property-zone">
@@ -65,7 +65,7 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
           selectedProductType={productTypes}
           onChange={handleBrandsChange}
           rawCandidates={post.rawCandidates}
-          autoDetectedBrands={post.autoDetectedBrands}
+          // autoDetectedBrands={post.autoDetectedBrands}
         />
 
         <TotalCaseCount

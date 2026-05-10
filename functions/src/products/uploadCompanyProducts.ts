@@ -20,10 +20,13 @@ type ExistingBrandDoc = {
   id: string;
   brandId?: string;
   displayName?: string;
+  brandName?: string;
   normalizedName?: string;
+  normalizedBrandName?: string;
   aliases?: string[];
   productSupplier?: string;
   brandFamily?: string;
+  productTypes?: string[];
   companyProductIds?: string[];
   supplierProductNumbers?: string[];
   supplierProductKeys?: string[];
@@ -231,6 +234,7 @@ export const uploadCompanyProducts = onCall(
         normalizedName: string;
         productSupplier: string;
         brandFamily: string;
+        productTypes: Set<string>;
         companyProductIds: Set<string>;
         supplierProductNumbers: Set<string>;
         supplierProductKeys: Set<string>;
@@ -246,6 +250,7 @@ export const uploadCompanyProducts = onCall(
         normalizedName: string;
         productSupplier: string;
         brandFamily: string;
+        productTypes: Set<string>;
         companyProductIds: Set<string>;
         supplierProductNumbers: Set<string>;
         supplierProductKeys: Set<string>;
@@ -277,6 +282,7 @@ export const uploadCompanyProducts = onCall(
 
       const displayName = product.brand.trim();
       const normalizedName = normalizeText(product.brand);
+      const productType = cleanString(product.productType);
       const productSupplier = product.productSupplier || "";
       const brandFamily = product.brandFamily || "";
 
@@ -288,6 +294,7 @@ export const uploadCompanyProducts = onCall(
           normalizedName,
           productSupplier,
           brandFamily,
+          productTypes: new Set(existing.productTypes || []),
           companyProductIds: new Set(existing.companyProductIds || []),
           supplierProductNumbers: new Set(
             existing.supplierProductNumbers || []
@@ -309,6 +316,10 @@ export const uploadCompanyProducts = onCall(
         target.productSupplier = productSupplier || target.productSupplier;
         target.brandFamily = brandFamily || target.brandFamily;
         target.companyProductIds.add(product.companyProductId);
+
+        if (productType) {
+          target.productTypes.add(productType);
+        }
 
         if (product.supplierProductNumber) {
           target.supplierProductNumbers.add(product.supplierProductNumber);
@@ -332,6 +343,7 @@ export const uploadCompanyProducts = onCall(
         normalizedName,
         productSupplier,
         brandFamily,
+        productTypes: new Set<string>(),
         companyProductIds: new Set<string>(),
         supplierProductNumbers: new Set<string>(),
         supplierProductKeys: new Set<string>(),
@@ -340,6 +352,10 @@ export const uploadCompanyProducts = onCall(
       };
 
       target.companyProductIds.add(product.companyProductId);
+
+      if (productType) {
+        target.productTypes.add(productType);
+      }
 
       if (product.supplierProductNumber) {
         target.supplierProductNumbers.add(product.supplierProductNumber);
@@ -406,11 +422,22 @@ export const uploadCompanyProducts = onCall(
         {
           brandId: brand.refId,
           companyId,
+
           displayName: brand.displayName,
+          brandName: brand.displayName,
+
           normalizedName: brand.normalizedName,
+          normalizedBrandName: brand.normalizedName,
+
           aliases,
+
           brandFamily: brand.brandFamily,
           productSupplier: brand.productSupplier,
+
+          productTypes: Array.from(brand.productTypes).sort((a, b) =>
+            a.localeCompare(b)
+          ),
+
           companyProductIds: Array.from(brand.companyProductIds),
           supplierProductNumbers: Array.from(brand.supplierProductNumbers),
           supplierProductKeys: Array.from(brand.supplierProductKeys),
@@ -431,11 +458,22 @@ export const uploadCompanyProducts = onCall(
       writer.set(brandRef, {
         brandId: brandRef.id,
         companyId,
+
         displayName: brand.displayName,
+        brandName: brand.displayName,
+
         normalizedName: brand.normalizedName,
+        normalizedBrandName: brand.normalizedName,
+
         aliases: [],
+
         brandFamily: brand.brandFamily,
         productSupplier: brand.productSupplier,
+
+        productTypes: Array.from(brand.productTypes).sort((a, b) =>
+          a.localeCompare(b)
+        ),
+
         companyProductIds: Array.from(brand.companyProductIds),
         supplierProductNumbers: Array.from(brand.supplierProductNumbers),
         supplierProductKeys: Array.from(brand.supplierProductKeys),

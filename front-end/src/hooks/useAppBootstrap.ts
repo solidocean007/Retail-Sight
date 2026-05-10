@@ -28,6 +28,7 @@ import { fetchAllPlans } from "../thunks/planThunks";
 import { listenForClaimChanges } from "./listenForClaimChanges";
 import { useAccountImportListener } from "./useAccountImportListener";
 import useCompanySync from "./useCompanySync";
+import { useCompanyBrandCatalogSync } from "./useCompanyBrandCatalogSync";
 
 /**
  * useAppBootstrap – Option B
@@ -94,6 +95,7 @@ export function useAppBootstrap({
   useCompanyUsersSync(shouldStartSync);
   useUserAccountsSync(shouldStartSync);
   useCompanyConnectionsListener(shouldStartSync);
+  useCompanyBrandCatalogSync(companyId, shouldStartSync);
 
   useUserNotificationsListener(currentUser, shouldStartSync);
   useCompanyProductsListener(companyId, shouldStartSync);

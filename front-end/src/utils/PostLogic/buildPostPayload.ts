@@ -12,7 +12,7 @@ export const buildPostPayload = (
 ): FirestorePostPayload => {
   const hashtags = extractHashtags(post.description ?? "");
   const starTags = extractStarTags(post.description ?? "");
- const shared = new Set<string>();
+  const shared = new Set<string>();
   const account = post.account as CompanyAccountType;
 
   if (goal?.supplierIdForGoal) {
@@ -79,7 +79,9 @@ export const buildPostPayload = (
 
     hashtags,
     starTags,
-    brands: post.brands ?? [],
+    // 🍻 Brand fields
+    brands: post.brands ?? [], // legacy/display fallback
+    brandIds: post.brandIds ?? [], // durable query/filter/share field
     autoDetectedBrands: post.autoDetectedBrands ?? [],
     productNames: post.productNames ?? [],
     productType: post.productType ?? [],

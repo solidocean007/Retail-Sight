@@ -27,6 +27,7 @@ import planSlice from "../Slices/planSlice";
 import appSlice from "../Slices/appSlice";
 import developerNotificationsSlice from "../Slices/developerNotificationSlice";
 import accountImportSlice from "../Slices/accountImportSlice";
+import brandCatalogSlice from "../Slices/brandCatalogSlice";
 
 // ✅ global reset action
 export const resetStore = createAction("RESET_STORE");
@@ -57,6 +58,7 @@ const appReducer = combineReducers({
   app: appSlice,
   developerNotifications: developerNotificationsSlice,
   accountImports: accountImportSlice,
+  brandCatalog: brandCatalogSlice,
 });
 
 // ✅ root reducer handles reset

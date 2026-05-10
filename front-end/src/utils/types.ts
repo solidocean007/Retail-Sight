@@ -344,6 +344,21 @@ export interface UserType {
 //   | "Meat"
 //   | "Cookies and Pastries"
 
+export interface BrandCatalogItem {
+  brandId: string; // stable id: normalized brand key
+  brandName: string; // display name: "Heineken"
+  normalizedBrandName: string; // "heineken"
+  companyId: string;
+  companyName?: string;
+
+  productTypes?: string[];
+  aliases?: string[];
+  supplierName?: string;
+  productCount?: number;
+
+  updatedAt?: string | null;
+}
+
 export interface PostTokenType {
   token: { sharedToken: string; tokenExpiry?: string };
 }
@@ -355,6 +370,7 @@ export interface PostType {
   productType?: string[];
   productNames?: string[];
   brands?: string[];
+  brandIds?: string[];
   aiEnabled?: boolean;
   autoDetectedBrands?: string[];
   rawCandidates?: string[];
@@ -474,6 +490,7 @@ export type PostInputType = {
   hashtags?: string[];
   starTags?: string[];
   brands?: string[];
+  brandIds?: string[];
   aiEnabled?: boolean;
   autoDetectedBrands?: string[];
   rawCandidates?: string[];
@@ -510,6 +527,7 @@ export type PostQueryFilters = {
   hashtag?: string | null;
   starTag?: string | null;
   brand?: string | null;
+  brandId?: string | null;
   productType: string | null;
   companyGoalId?: string | null;
   companyGoalTitle?: string | null;

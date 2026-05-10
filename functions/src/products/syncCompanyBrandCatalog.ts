@@ -125,6 +125,7 @@ export const syncCompanyBrandCatalog = onCall(
         normalizedName: string;
         productSupplier: string;
         brandFamily: string;
+        productTypes: Set<string>;
         companyProductIds: Set<string>;
         supplierProductNumbers: Set<string>;
         supplierProductKeys: Set<string>;
@@ -150,6 +151,7 @@ export const syncCompanyBrandCatalog = onCall(
         normalizedName: normalizeText(brand),
         productSupplier,
         brandFamily: cleanString(data.brandFamily),
+        productTypes: new Set<string>(),
         companyProductIds: new Set<string>(),
         supplierProductNumbers: new Set<string>(),
         supplierProductKeys: new Set<string>(),
@@ -157,6 +159,11 @@ export const syncCompanyBrandCatalog = onCall(
       };
 
       existing.companyProductIds.add(companyProductId);
+      const productType = cleanString(data.productType);
+
+      if (productType) {
+        existing.productTypes.add(productType);
+      }
 
       const supplierProductNumber = cleanString(data.supplierProductNumber);
 
@@ -206,11 +213,19 @@ export const syncCompanyBrandCatalog = onCall(
         companyId,
 
         displayName: brand.displayName,
+        brandName: brand.displayName,
+
         normalizedName: brand.normalizedName,
+        normalizedBrandName: brand.normalizedName,
+
         aliases: [],
 
         brandFamily: brand.brandFamily,
         productSupplier: brand.productSupplier,
+
+        productTypes: Array.from(brand.productTypes).sort((a, b) =>
+          a.localeCompare(b)
+        ),
 
         companyProductIds: Array.from(brand.companyProductIds),
         supplierProductNumbers: Array.from(brand.supplierProductNumbers),

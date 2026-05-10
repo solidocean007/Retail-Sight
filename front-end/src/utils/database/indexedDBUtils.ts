@@ -6,6 +6,7 @@ export * from './goalsStoreUtils';
 export * from './collectionStoreUtils';
 export * from './productStoreUtils';
 export * from './networkFilterCacheDB';
+export * from './brandCatalogStoreUtils'
 import { openDB } from "./indexedDBOpen";
 
 // store locations in indexedDB

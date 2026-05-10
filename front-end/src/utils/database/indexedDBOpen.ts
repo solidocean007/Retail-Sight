@@ -1,5 +1,5 @@
 const dbName = "myRetailAppDB";
-const dbVersion = 36;
+const dbVersion = 37;
 
 const objectStores: {
   name: string;
@@ -38,6 +38,15 @@ const objectStores: {
   { name: "companyConnectionsStore", options: { keyPath: "companyId" } },
   { name: "networkAccountFacets", options: { keyPath: "companyId" } }, // ✅ NEW
   { name: "networkUsers", options: { keyPath: "companyId" } }, // ✅ NEW
+  {
+    name: "companyBrandCatalog",
+    options: { keyPath: "brandId" },
+    index: {
+      name: "byCompanyId",
+      keyPath: "companyId",
+      options: { unique: false },
+    },
+  },
 ];
 
 export function openDB(): Promise<IDBDatabase> {

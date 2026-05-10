@@ -64,6 +64,7 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
 
   const [post, setPost] = useState<PostInputType>(() => ({
     brands: [],
+    brandIds: [],
     productType: [],
     description: "",
     imageUrl: "",
