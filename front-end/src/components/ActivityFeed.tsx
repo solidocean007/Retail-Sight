@@ -147,7 +147,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
     if (idx === -1 && appliedFilters) {
       console.warn("Post not found. Refetching...");
-      dispatch(fetchFilteredPostsBatch({ filters: appliedFilters, companyId })).then(
+      dispatch(fetchFilteredPostsBatch({ filters: appliedFilters, companyId })).then( // Type 'string | undefined' is not assignable to type 'string | null'
         (action) => {
           if (fetchFilteredPostsBatch.fulfilled.match(action)) {
             const newPosts = action.payload.posts;

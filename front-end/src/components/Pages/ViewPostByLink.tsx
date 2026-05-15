@@ -1,5 +1,5 @@
-import { useState, useEffect} from "react";
-import {  useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { PostWithID } from "../../utils/types";
 import HeaderBar from "./../HeaderBar";
 import { CircularProgress, Button, Box, Typography } from "@mui/material";
@@ -9,6 +9,7 @@ import "./viewSharedPost.css";
 import MemoizedPostCard from "./../PostCard";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
+import { derivePostImageVariants } from "../../utils/PostLogic/derivePostImageVariants";
 
 export const PublicPostViewer = () => {
   const navigate = useNavigate();
@@ -115,6 +116,8 @@ export const PublicPostViewer = () => {
                 post={post}
                 id={post.id}
                 currentUserUid={user?.uid || ""}
+                imageSet={derivePostImageVariants(post)}
+                style={{ height: "100%" }}
               />
             </div>
           )}
@@ -132,9 +135,11 @@ export const PublicPostViewer = () => {
           )}
         </div>
       </div>
-      <div>
-        <h3>Click Image For Larger View</h3>
-      </div>
+      {post?.imageUrl && (
+        <div>
+          <h3>Click image to enlarge</h3>
+        </div>
+      )}
     </div>
   );
 };

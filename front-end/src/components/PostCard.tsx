@@ -50,7 +50,7 @@ import { FeedImageSet } from "./PostCardRenderer";
 // import TotalCaseCount from "./TotalCaseCount";
 
 interface PostCardProps {
-  imageSet: FeedImageSet;
+  imageSet?: FeedImageSet;
   id: string;
   currentUserUid: string | undefined;
   post: PostWithID;
@@ -280,6 +280,14 @@ const PostCard: React.FC<PostCardProps> = ({
   const createdOnBehalf =
     post.postedBy && post.postUser?.uid !== post.postedBy.uid;
 
+  // const safeImageSet: FeedImageSet = imageSet ?? {
+  const safeImageSet = imageSet ?? {
+    feedSrc: post.imageUrl || post.originalImageUrl || undefined,
+    modalChain: [post.originalImageUrl, post.imageUrl].filter(
+      (src): src is string => Boolean(src),
+    ),
+  };
+
   return (
     <>
       <div className="card-border">
@@ -472,15 +480,13 @@ const PostCard: React.FC<PostCardProps> = ({
                       setIsImageModalOpen(true);
                     }}
                   /> */}
-                  {imageSet.feedSrc && (
+                  {safeImageSet.feedSrc && (
                     <img
                       title="display image"
-                      src={imageSet.feedSrc}
+                      src={safeImageSet.feedSrc}
                       className="post-image"
                       loading="lazy"
-                      onClick={() => {
-                        setIsImageModalOpen(true);
-                      }}
+                      onClick={() => setIsImageModalOpen(true)}
                     />
                   )}
                 </div>
@@ -525,7 +531,7 @@ const PostCard: React.FC<PostCardProps> = ({
       />
       <ImageModal
         isOpen={isImageModalOpen}
-        srcList={imageSet.modalChain}
+        srcList={safeImageSet.modalChain}
         onClose={() => setIsImageModalOpen(false)}
       />
 
