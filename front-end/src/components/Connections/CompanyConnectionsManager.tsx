@@ -11,7 +11,7 @@ import {
   fetchCompanyConnections,
   setCachedConnections,
 } from "../../Slices/companyConnectionSlice";
-import { CompanyConnectionType, UserType } from "../../utils/types";
+import { UserType } from "../../utils/types";
 import ConnectionBuilder from "./ConnectionBuilder";
 import { Modal } from "@mui/material";
 import InviteAndConnectModal from "./InviteAndConnectModal";
@@ -80,6 +80,19 @@ const CompanyConnectionsManager: React.FC<Props> = ({
     isPlanReady &&
     effectiveConnectionLimit > 0 &&
     totalConnectionsUsed >= effectiveConnectionLimit;
+
+  const handleRemoveCompanyFromSharedPosts = async () => {
+    try {
+      const fn = httpsCallable(functions, "removeCompanyFromSharedWithPosts");
+      const result = await fn();
+
+      console.log("Shared company cleanup result:", result.data);
+      dispatch(showMessage("Shared company cleanup completed."));
+    } catch (err: any) {
+      console.error("Shared company cleanup failed:", err);
+      dispatch(showMessage(err?.message || "Shared company cleanup failed."));
+    }
+  };
 
   // ✅ Load connections (cached + remote)
   useEffect(() => {
@@ -170,6 +183,15 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 
   return (
     <div className="connections-dashboard">
+      {user?.role === "super-admin" && (
+        <button
+          type="button"
+          className="app-btn small danger"
+          onClick={handleRemoveCompanyFromSharedPosts}
+        >
+          Remove test supplier from shared posts
+        </button>
+      )}
       {company?.billing?.pendingChange && !isNearLimit && (
         <UpcomingDowngradeBanner />
       )}
@@ -177,6 +199,13 @@ const CompanyConnectionsManager: React.FC<Props> = ({
       <div className="connections-overview">
         <div className="overview-header" onClick={() => setShowInfo(!showInfo)}>
           <h2>Company Connections</h2>
+          <button
+            type="button"
+            className="app-btn small danger"
+            onClick={handleRemoveCompanyFromSharedPosts}
+          >
+            Remove test supplier from shared posts
+          </button>
           <p className="overview-summary">
             Understand how connections, shared brands, and partner visibility
             work.

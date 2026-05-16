@@ -1,8 +1,6 @@
 // PostCard.tsx
 import React, { useEffect, useState } from "react";
 import {
-  // Card,
-  IconButton,
   Menu,
   MenuItem,
   Dialog,
@@ -41,7 +39,6 @@ import ImageModal from "./ImageModal";
 import { MoreVert } from "@mui/icons-material";
 import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
-// import "./viewSharedPost.css";
 import LinkShareModal from "./LinkShareModal";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
@@ -429,7 +426,7 @@ const PostCard: React.FC<PostCardProps> = ({
               ))}
             </div>
           )}
-          {/* {post.id} */}
+          {post.id}
           <div className="description-image">
             <div className="like-quantity-row">
               <h4>

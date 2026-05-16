@@ -6,7 +6,6 @@ interface SnackbarMessage {
   severity?: "success" | "error" | "info" | "warning";
 }
 
-
 interface SnackbarState {
   queue: SnackbarMessage[];
   current: SnackbarMessage | null;
@@ -24,10 +23,16 @@ const snackbarSlice = createSlice({
   initialState,
   reducers: {
     showMessage: (state, action: PayloadAction<string | SnackbarMessage>) => {
-      const newMessage: SnackbarMessage =
+      const raw =
         typeof action.payload === "string"
           ? { text: action.payload }
           : action.payload;
+
+      const newMessage: SnackbarMessage = {
+        text: String(raw.text || ""),
+        duration: raw.duration,
+        severity: raw.severity,
+      };
 
       if (state.open || state.current) {
         state.queue.push(newMessage);

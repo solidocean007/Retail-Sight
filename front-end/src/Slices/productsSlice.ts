@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ProductType } from "../utils/types";
 import { RootState } from "../utils/store";
 import { fetchCompanyProducts } from "../thunks/productThunks";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 interface ProductsState {
   allProducts: ProductType[];
@@ -21,19 +22,28 @@ const productsSlice = createSlice({
   initialState,
   reducers: {
     setAllProducts: (state, action: PayloadAction<ProductType[]>) => {
-      state.allProducts = action.payload;
+      state.allProducts = normalizeFirestoreData(action.payload);
     },
+
     addProduct: (state, action: PayloadAction<ProductType>) => {
-      state.allProducts.push(action.payload);
+      state.allProducts.push(normalizeFirestoreData(action.payload));
     },
+
     updateProduct: (state, action: PayloadAction<ProductType>) => {
-      const index = state.allProducts.findIndex((p) => p.companyProductId=== action.payload.companyProductId);
+      const normalizedProduct = normalizeFirestoreData(action.payload);
+
+      const index = state.allProducts.findIndex(
+        (p) => p.companyProductId === normalizedProduct.companyProductId,
+      );
+
       if (index !== -1) {
-        state.allProducts[index] = action.payload;
+        state.allProducts[index] = normalizedProduct;
       }
     },
     deleteProduct: (state, action: PayloadAction<string>) => {
-      state.allProducts = state.allProducts.filter((p) => p.companyProductId !== action.payload);
+      state.allProducts = state.allProducts.filter(
+        (p) => p.companyProductId !== action.payload,
+      );
     },
   },
   extraReducers: (builder) => {
@@ -44,21 +54,17 @@ const productsSlice = createSlice({
       })
       .addCase(fetchCompanyProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.allProducts = action.payload;
+        state.allProducts = normalizeFirestoreData(action.payload);
       })
       .addCase(fetchCompanyProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Unknown error"; // Type '{}' is not assignable to type 'string'.
+        state.error = action.payload || "Unknown error";
       });
   },
 });
 
-export const {
-  setAllProducts,
-  addProduct,
-  updateProduct,
-  deleteProduct,
-} = productsSlice.actions;
+export const { setAllProducts, addProduct, updateProduct, deleteProduct } =
+  productsSlice.actions;
 
 export const selectAllProducts = (state: RootState) =>
   state.companyProducts.allProducts;

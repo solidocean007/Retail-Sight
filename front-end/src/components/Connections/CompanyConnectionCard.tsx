@@ -60,7 +60,6 @@ const CompanyConnectionCard: React.FC<Props> = ({
   >(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   // fade out visual feedback
-  console.log("connection in card: ", connection);
   const getBrandDisplayName = (brand: any) =>
     String(
       brand.displayName ||
@@ -462,8 +461,6 @@ const CompanyConnectionCard: React.FC<Props> = ({
       setConfirmLoading(false);
     }
   };
-
-  console.log("sharedBrandNames: ", sharedBrandNames);
 
   return (
     <div className={`connection-card ${connection.status}`}>

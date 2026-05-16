@@ -93,6 +93,7 @@ import { uploadCompanyProducts } from "./products/uploadCompanyProducts";
 import { syncCompanyBrandCatalog } from "./products/syncCompanyBrandCatalog";
 import { createConnectionRequest } from "./createConnectionRequest";
 import { onCompanyConnectionRequestCreated } from "./onCompanyConnectionRequestCreated";
+import { removeCompanyFromSharedWithPosts } from "./removeCompanyFromSharedWithPosts";
 
 export {
   backfillSupplierGoalPosts,
@@ -152,6 +153,7 @@ export {
   enforcePastDueGracePeriod,
 
   // Connection function
+  removeCompanyFromSharedWithPosts,
   createConnectionRequest,
   onCompanyConnectionRequestCreated,
   createInviteAndDraftConnection,
