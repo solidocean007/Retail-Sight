@@ -124,18 +124,20 @@ export async function resolveDraftConnections(
 
     // 🔥 backfill visibility
     visibilityTasks.push(
-      updateVisibility(
-        draft.initiatorCompanyId,
-        newCompanyId,
-        sharedBrandNames,
-        "add"
-      ),
-      updateVisibility(
-        newCompanyId,
-        draft.initiatorCompanyId,
-        sharedBrandNames,
-        "add"
-      )
+      updateVisibility({
+        sourceCompanyId: draft.initiatorCompanyId,
+        targetCompanyId: newCompanyId,
+        brandIds: sharedBrandIds,
+        brandNames: sharedBrandNames,
+        mode: "add",
+      }),
+      updateVisibility({
+        sourceCompanyId: newCompanyId,
+        targetCompanyId: draft.initiatorCompanyId,
+        brandIds: sharedBrandIds,
+        brandNames: sharedBrandNames,
+        mode: "add",
+      })
     );
   }
 

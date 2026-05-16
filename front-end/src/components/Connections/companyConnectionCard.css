@@ -15,7 +15,10 @@
   font-weight: 500;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .btn-approve {
@@ -48,7 +51,9 @@
   padding: 1rem;
   margin-bottom: 1rem;
   box-shadow: var(--card-shadow);
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
   width: 100%;
   max-width: 700px;
 }
@@ -218,7 +223,9 @@
   border-radius: 6px;
   font-size: 0.8rem;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
   border: 1px solid transparent;
 }
 
@@ -251,7 +258,10 @@
   border-radius: 50%;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .cancel-btn {
@@ -287,6 +297,30 @@
   }
 }
 
+.pending-handshake {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 3.5rem;
+  color: var(--status-pending-color);
+  line-height: 1;
+}
+
+.pending-hand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  filter: grayscale(0.2);
+}
+
+.pending-hand-gap {
+  font-size: 1rem;
+  color: var(--status-pending-color);
+  opacity: 0.75;
+  letter-spacing: 0.05rem;
+}
 
 /* === RESPONSIVE === */
 @media (max-width: 640px) {

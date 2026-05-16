@@ -3,121 +3,193 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 const db = getFirestore();
 
+const normalize = (value: string) =>
+  String(value || "")
+    .trim()
+    .toUpperCase();
+
+const cleanStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value.map((item) => String(item || "").trim()).filter(Boolean);
+};
+
+const getBrandNames = (brands: unknown): string[] => {
+  return (
+    Array.isArray(brands) ? brands : Object.keys((brands as any) || {})
+  ).map(normalize);
+};
+
+const arraysChanged = (beforeArray: string[], afterArray: string[]) => {
+  if (beforeArray.length !== afterArray.length) return true;
+
+  const beforeSet = new Set(beforeArray);
+  const afterSet = new Set(afterArray);
+
+  return (
+    beforeArray.some((item) => !afterSet.has(item)) ||
+    afterArray.some((item) => !beforeSet.has(item))
+  );
+};
+
 export const onPostBrandsUpdated = onDocumentUpdated(
   "posts/{postId}",
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
+
     if (!before || !after) return;
 
     const postId = event.params.postId;
 
     if (after.migratedVisibility !== "network") return;
 
-    const normalize = (s: string) => s.trim().toUpperCase();
+    const companyId = after.companyId;
 
-    // i dont understnad how this funcion works below
-    const getBrands = (b: any) =>
-      (Array.isArray(b) ? b : Object.keys(b || {})).map(normalize);
+    if (!companyId) {
+      console.warn(`⚠️ Skipping post ${postId}: missing companyId`);
+      return;
+    }
 
-    const beforeBrands = getBrands(before.brands);
-    const afterBrands = getBrands(after.brands);
+    const beforeBrandIds = cleanStringArray(before.brandIds);
+    const afterBrandIds = cleanStringArray(after.brandIds);
 
-    const beforeSet = new Set(beforeBrands);
-    const afterSet = new Set(afterBrands);
+    const beforeBrandNames = getBrandNames(before.brands);
+    const afterBrandNames = getBrandNames(after.brands);
 
-    const brandsChanged =
-      beforeBrands.length !== afterBrands.length ||
-      beforeBrands.some((b) => !afterSet.has(b)) ||
-      afterBrands.some((b) => !beforeSet.has(b));
+    const brandIdsChanged = arraysChanged(beforeBrandIds, afterBrandIds);
+    const brandNamesChanged = arraysChanged(beforeBrandNames, afterBrandNames);
 
-    if (!brandsChanged) return;
-    const { companyId } = after;
+    if (!brandIdsChanged && !brandNamesChanged) return;
 
-    // 🔥 get relevant connections
+    console.log("🔥 onPostBrandsUpdated fired", {
+      postId,
+      companyId,
+      beforeBrandIds,
+      afterBrandIds,
+      beforeBrandNames,
+      afterBrandNames,
+    });
+
     const connectionsSnap = await db
       .collection("companyConnections")
       .where("status", "==", "approved")
       .where("companyIds", "array-contains", companyId)
       .get();
 
-    if (connectionsSnap.empty) return;
+    if (connectionsSnap.empty) {
+      console.log(`ℹ️ No approved connections found for post ${postId}.`);
+      return;
+    }
 
-    const nextShared = new Set<string>();
+    /**
+     * Supplier-goal guard:
+     * If this post is shared with a supplier because of a goal,
+     * do not remove that supplier from sharedWithCompanies just because brands changed.
+     */
+    let goalSupplierId: string | null = null;
 
-    console.log("🔥 onPostBrandsUpdated fired", postId);
+    if (after.companyGoalId) {
+      const goalSnap = await db
+        .collection("companyGoals")
+        .doc(after.companyGoalId)
+        .get();
 
-    console.log("📦 BEFORE brands:", before.brands);
-    console.log("📦 AFTER brands:", after.brands);
+      const goalData = goalSnap.data();
 
-    console.log("🧠 beforeBrands:", beforeBrands);
-    console.log("🧠 afterBrands:", afterBrands);
+      goalSupplierId =
+        typeof goalData?.supplierIdForGoal === "string"
+          ? goalData.supplierIdForGoal
+          : null;
+    }
 
-    connectionsSnap.forEach((doc) => {
-      const conn = doc.data();
+    const connectedCompanyIds = new Set<string>();
+    const nextBrandShared = new Set<string>();
 
-      console.log("🔥 connections returned:", connectionsSnap.size);
+    connectionsSnap.forEach((connDoc) => {
+      const conn = connDoc.data();
 
-      connectionsSnap.forEach((doc) => {
-        console.log("➡️ connection id:", doc.id);
-      });
-      console.log("📦 post companyId:", companyId);
-      console.log("📦 connection companyIds:", conn.companyIds);
-      console.log("🔗 connection:", {
-        id: doc.id,
-        companyIds: conn.companyIds,
-        sharedBrandNames: conn.sharedBrandNames,
-      });
+      const otherCompanyId = Array.isArray(conn.companyIds)
+        ? conn.companyIds.find((id: string) => id !== companyId)
+        : null;
 
-      const sharedBrandNames = (conn.sharedBrandNames || []).map(normalize);
+      if (!otherCompanyId) return;
 
-      console.log("🔍 comparing:", {
-        postBrands: afterBrands,
-        connectionBrands: sharedBrandNames,
-      });
+      connectedCompanyIds.add(otherCompanyId);
 
-      const matches = afterBrands.some((b: string) =>
-        sharedBrandNames.includes(b)
+      const sharedBrandIds = cleanStringArray(conn.sharedBrandIds);
+
+      const sharedBrandNames = cleanStringArray(conn.sharedBrandNames).map(
+        normalize
       );
 
-      console.log("✅ match result:", matches);
+      const idMatch =
+        sharedBrandIds.length > 0 &&
+        afterBrandIds.some((id) => sharedBrandIds.includes(id));
 
-      if (!matches) return;
+      const nameMatch =
+        sharedBrandNames.length > 0 &&
+        afterBrandNames.some((name) => sharedBrandNames.includes(name));
 
-      const otherCompanyId = conn.companyIds.find(
-        (id: string) => id !== companyId
-      );
-
-      console.log("➡️ adding company:", otherCompanyId);
-
-      if (otherCompanyId) {
-        nextShared.add(otherCompanyId);
+      if (idMatch || nameMatch) {
+        nextBrandShared.add(otherCompanyId);
       }
     });
+
     const prevShared = new Set<string>(
-      (after.sharedWithCompanies || []) as string[]
+      cleanStringArray(after.sharedWithCompanies)
     );
 
-    const toAdd = [...nextShared].filter((id) => !prevShared.has(id));
-    const toRemove = [...prevShared].filter((id) => !nextShared.has(id));
+    const toAdd = Array.from(nextBrandShared).filter(
+      (id) => !prevShared.has(id)
+    );
 
-    console.log("📊 nextShared:", Array.from(nextShared));
-    console.log("📊 prevShared:", Array.from(prevShared));
-    console.log("➕ toAdd:", toAdd);
-    console.log("➖ toRemove:", toRemove);
+    const toRemove = Array.from(connectedCompanyIds).filter((id) => {
+      const wasShared = prevShared.has(id);
+      const stillBrandShared = nextBrandShared.has(id);
+      const stillGoalShared = goalSupplierId === id;
 
-    const updates: any = {};
+      return wasShared && !stillBrandShared && !stillGoalShared;
+    });
+
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      console.log(`ℹ️ No sharedWithCompanies changes needed for ${postId}.`);
+      return;
+    }
+
+    const postRef = db.collection("posts").doc(postId);
 
     if (toAdd.length > 0) {
-      updates.sharedWithCompanies = FieldValue.arrayUnion(...toAdd);
+      await postRef.update({
+        sharedWithCompanies: FieldValue.arrayUnion(...toAdd),
+        autoSharedAt: FieldValue.serverTimestamp(),
+        visibilityRecheckedAt: FieldValue.serverTimestamp(),
+      });
     }
 
     if (toRemove.length > 0) {
-      updates.sharedWithCompanies = FieldValue.arrayRemove(...toRemove);
+      await postRef.update({
+        sharedWithCompanies: FieldValue.arrayRemove(...toRemove),
+        visibilityRecheckedAt: FieldValue.serverTimestamp(),
+      });
     }
 
-    if (Object.keys(updates).length === 0) return;
+    await db.collection("connectionHistory").add({
+      event: "post_brand_visibility_updated",
+      postId,
+      sourceCompanyId: companyId,
+      addedSharedWithCompanies: toAdd,
+      removedSharedWithCompanies: toRemove,
+      protectedGoalSupplierId: goalSupplierId,
+      afterBrandIds,
+      afterBrandNames,
+      timestamp: FieldValue.serverTimestamp(),
+    });
 
-    await db.collection("posts").doc(postId).update(updates);
+    console.log(`✅ Post ${postId} sharedWithCompanies updated`, {
+      added: toAdd,
+      removed: toRemove,
+      protectedGoalSupplierId: goalSupplierId,
+    });
   }
 );

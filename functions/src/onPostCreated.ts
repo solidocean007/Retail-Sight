@@ -3,13 +3,30 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 const db = getFirestore();
 
+const normalize = (value: string) =>
+  String(value || "")
+    .trim()
+    .toUpperCase();
+
+const cleanStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value.map((item) => String(item || "").trim()).filter(Boolean);
+};
+
+const getBrandNames = (brands: unknown): string[] => {
+  return (
+    Array.isArray(brands) ? brands : Object.keys((brands as any) || {})
+  ).map(normalize);
+};
+
 /**
  * Trigger: posts/{postId}
  * Purpose:
- *  1. When a new post is created, find all approved companyConnections
- *     whose sharedBrands overlap with this post’s brands.
- *  2. Write those connected companyIds into the post.sharedWithCompanies array.
- *  3. Write an audit log entry for visibility tracking.
+ *  1. When a new network-visible post is created, find approved connections
+ *     whose sharedBrandIds/sharedBrandNames overlap with the post.
+ *  2. Write matching connected companyIds into post.sharedWithCompanies.
+ *  3. Write an audit log entry.
  */
 export const onPostCreated = onDocumentCreated(
   "posts/{postId}",
@@ -22,15 +39,20 @@ export const onPostCreated = onDocumentCreated(
       return;
     }
 
-    const { companyId, migratedVisibility, brands } = postData;
+    const { companyId, migratedVisibility, brands, brandIds = [] } = postData;
 
-    const normalize = (s: string) => s.trim().toUpperCase();
+    if (!companyId) {
+      console.warn(`⚠️ Skipping post ${postId}: missing companyId`);
+      return;
+    }
 
-    const brandList = (
-      Array.isArray(brands) ? brands : Object.keys(brands || {})
-    ).map(normalize);
+    const postBrandIds = cleanStringArray(brandIds);
+    const postBrandNames = getBrandNames(brands);
 
-    if (migratedVisibility !== "network" || brandList.length === 0) {
+    if (
+      migratedVisibility !== "network" ||
+      (postBrandIds.length === 0 && postBrandNames.length === 0)
+    ) {
       console.log(
         `ℹ️ Skipping post ${postId}: not network-visible or has no brands.`
       );
@@ -38,7 +60,6 @@ export const onPostCreated = onDocumentCreated(
     }
 
     try {
-      // 1️⃣ Get all approved connections where this company is either sender or receiver
       const connectionsSnap = await db
         .collection("companyConnections")
         .where("status", "==", "approved")
@@ -46,7 +67,7 @@ export const onPostCreated = onDocumentCreated(
         .get();
 
       if (connectionsSnap.empty) {
-        console.log(`ℹ️ No matching connections found for post ${postId}.`);
+        console.log(`ℹ️ No approved connections found for post ${postId}.`);
         return;
       }
 
@@ -55,15 +76,24 @@ export const onPostCreated = onDocumentCreated(
       connectionsSnap.forEach((connDoc) => {
         const conn = connDoc.data();
 
-        const sharedBrandNames = (conn.sharedBrandNames || []).map(normalize);
-
-        const matches = brandList.some((b) => sharedBrandNames.includes(b));
-
-        if (!matches) return;
-
-        const otherCompanyId = conn.companyIds.find(
-          (id: string) => id !== companyId
+        const sharedBrandIds = cleanStringArray(conn.sharedBrandIds);
+        const sharedBrandNames = cleanStringArray(conn.sharedBrandNames).map(
+          normalize
         );
+
+        const idMatch =
+          sharedBrandIds.length > 0 &&
+          postBrandIds.some((id) => sharedBrandIds.includes(id));
+
+        const nameMatch =
+          sharedBrandNames.length > 0 &&
+          postBrandNames.some((name) => sharedBrandNames.includes(name));
+
+        if (!idMatch && !nameMatch) return;
+
+        const otherCompanyId = Array.isArray(conn.companyIds)
+          ? conn.companyIds.find((id: string) => id !== companyId)
+          : null;
 
         if (otherCompanyId) {
           sharedWith.add(otherCompanyId);
@@ -71,11 +101,10 @@ export const onPostCreated = onDocumentCreated(
       });
 
       if (sharedWith.size === 0) {
-        console.log(`ℹ️ No reciprocal connections for post ${postId}.`);
+        console.log(`ℹ️ No reciprocal brand matches for post ${postId}.`);
         return;
       }
 
-      // 3️⃣ Update post.sharedWithCompanies
       await db
         .collection("posts")
         .doc(postId)
@@ -84,13 +113,13 @@ export const onPostCreated = onDocumentCreated(
           autoSharedAt: FieldValue.serverTimestamp(),
         });
 
-      // 4️⃣ Write audit entry
       await db.collection("connectionHistory").add({
         event: "post_auto_shared",
         postId,
         sourceCompanyId: companyId,
         companyIds: [companyId, ...Array.from(sharedWith)],
-        sharedBrandNames: brandList,
+        sharedBrandIds: postBrandIds,
+        sharedBrandNames: postBrandNames,
         sharedBrands: brands,
         sharedWithCompanies: Array.from(sharedWith),
         timestamp: FieldValue.serverTimestamp(),

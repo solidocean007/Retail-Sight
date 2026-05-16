@@ -56,6 +56,8 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
     const set = new Set<string>();
 
     brands.forEach((brand: any) => {
+      if (!brand || brand.active === false) return;
+
       const supplier = String(brand.productSupplier || "").trim();
       if (supplier) set.add(supplier);
     });
@@ -63,10 +65,12 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [brands]);
 
-  const currentBrands = useMemo(() => {
+  const currentBrands = useMemo<ConnectionBrandSelection[]>(() => {
     return brands
       .filter((brand: any) => {
+        if (!brand) return false;
         if (brand.active === false) return false;
+
         if (!selectedSupplier) return true;
 
         return (
@@ -76,9 +80,10 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
         );
       })
       .map((brand: any) => ({
-        brandId: brand.brandId,
+        brandId: String(brand.brandId || "").trim(),
         brandName: getBrandDisplayName(brand),
-        productSupplier: brand.productSupplier,
+        productSupplier:
+          String(brand.productSupplier || "").trim() || undefined,
       }))
       .filter((brand) => brand.brandId && brand.brandName)
       .sort((a, b) => a.brandName.localeCompare(b.brandName));
@@ -109,10 +114,14 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
   };
 
   const handleConfirm = async () => {
+    const validBrandSelection = brandSelection.filter(
+      (brand) => brand.brandId && brand.brandName,
+    );
+
     setLoadingConfirm(true);
 
     try {
-      await onConfirm(email, brandSelection);
+      await onConfirm(email, validBrandSelection);
       setIsConfirmOpen(false);
     } finally {
       setLoadingConfirm(false);
@@ -274,8 +283,10 @@ const ConnectionBuilder: React.FC<ConnectionBuilderProps> = ({
           lookup.companyName || email
         }.${
           brandSelection.length > 0
-            ? `\n\nIncluded: ${brandSelection.length} proposed brand(s).`
-            : ""
+            ? `\n\nProposed brands: ${brandSelection
+                .map((brand) => brand.brandName)
+                .join(", ")}`
+            : "\n\nNo brands are proposed yet. You can propose brands later."
         }`}
       />
     </div>

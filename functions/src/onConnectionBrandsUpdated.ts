@@ -3,53 +3,91 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 const db = getFirestore();
 
-export const updateVisibility = async (
-  sourceCompanyId: string,
-  targetCompanyId: string,
-  brands: string[],
-  mode: "add" | "remove"
-) => {
+export const updateVisibility = async ({
+  sourceCompanyId,
+  targetCompanyId,
+  brandIds = [],
+  brandNames = [],
+  mode,
+}: {
+  sourceCompanyId: string;
+  targetCompanyId: string;
+  brandIds?: string[];
+  brandNames?: string[];
+  mode: "add" | "remove";
+}) => {
   console.log("🔥 updateVisibility called", {
     sourceCompanyId,
     targetCompanyId,
-    brands,
+    brandIds,
+    brandNames,
+    mode,
   });
-  if (brands.length === 0) {
-    return;
-  }
+
+  if (brandIds.length === 0 && brandNames.length === 0) return;
+
   const postsSnap = await db
     .collection("posts")
     .where("companyId", "==", sourceCompanyId)
     .where("migratedVisibility", "==", "network")
     .get();
 
-  if (postsSnap.empty) {
-    return;
-  }
+  if (postsSnap.empty) return;
+
+  const normalize = (s: string) =>
+    String(s || "")
+      .trim()
+      .toUpperCase();
+
+  const targetBrandIds = new Set(brandIds.map((id) => String(id).trim()));
+  const targetBrandNames = new Set(brandNames.map(normalize));
 
   const batch = db.batch();
-  const normalize = (s: string) => s.trim().toUpperCase();
-  const targetBrands = brands.map(normalize);
+  let updateCount = 0;
 
-  postsSnap.forEach((doc) => {
-    const post = doc.data();
+  postsSnap.forEach((docSnap) => {
+    const post = docSnap.data();
 
-    const postBrands = (
+    const postBrandIds = Array.isArray(post.brandIds)
+      ? post.brandIds.map((id: string) => String(id).trim())
+      : [];
+
+    const postBrandNames = (
       Array.isArray(post.brands) ? post.brands : Object.keys(post.brands || {})
     ).map(normalize);
 
-    const matches = targetBrands.some((b) => postBrands.includes(b));
+    const idMatch =
+      targetBrandIds.size > 0 &&
+      postBrandIds.some((id: string) => targetBrandIds.has(id));
 
-    if (!matches) return;
+    const nameMatch =
+      targetBrandNames.size > 0 &&
+      postBrandNames.some((name: string) => targetBrandNames.has(name));
 
-    batch.update(doc.ref, {
+    if (!idMatch && !nameMatch) return;
+
+    batch.update(docSnap.ref, {
       sharedWithCompanies:
         mode === "add"
           ? FieldValue.arrayUnion(targetCompanyId)
           : FieldValue.arrayRemove(targetCompanyId),
     });
+
+    updateCount += 1;
   });
+
+  if (updateCount === 0) {
+    console.log("ℹ️ updateVisibility found no matching posts");
+    return;
+  }
+
   await batch.commit();
+
+  console.log(`✅ updateVisibility ${mode} complete`, {
+    sourceCompanyId,
+    targetCompanyId,
+    updateCount,
+  });
 };
 
 /**
@@ -69,70 +107,87 @@ export const onConnectionBrandsUpdated = onDocumentUpdated(
 
     if (after.status !== "approved") return;
 
-    const normalize = (s: string) => s.trim().toUpperCase();
+    const cleanArray = (value: unknown): string[] =>
+      Array.isArray(value)
+        ? value.map((v) => String(v || "").trim()).filter(Boolean)
+        : [];
 
-    const beforeBrands = (before.sharedBrandNames || []).map(normalize);
-    const afterBrands = (after.sharedBrandNames || []).map(normalize);
+    const normalize = (s: string) =>
+      String(s || "")
+        .trim()
+        .toUpperCase();
 
-    const newShared = afterBrands.filter(
-      (b: string) => !beforeBrands.includes(b)
+    const beforeBrandIds = cleanArray(before.sharedBrandIds);
+    const afterBrandIds = cleanArray(after.sharedBrandIds);
+
+    const beforeBrandNames = cleanArray(before.sharedBrandNames).map(normalize);
+    const afterBrandNames = cleanArray(after.sharedBrandNames).map(normalize);
+
+    const newSharedBrandIds = afterBrandIds.filter(
+      (id) => !beforeBrandIds.includes(id)
     );
-    const removedShared = beforeBrands.filter(
-      (b: string) => !afterBrands.includes(b)
+
+    const removedSharedBrandIds = beforeBrandIds.filter(
+      (id) => !afterBrandIds.includes(id)
     );
 
-    console.log("🔍 connectionId:", connectionId);
-    console.log("🔍 beforeBrands:", beforeBrands);
-    console.log("🔍 afterBrands:", afterBrands);
-    console.log("🔍 newShared:", newShared);
-    console.log("🔍 removedShared:", removedShared);
+    const newSharedBrandNames = afterBrandNames.filter(
+      (name) => !beforeBrandNames.includes(name)
+    );
+
+    const removedSharedBrandNames = beforeBrandNames.filter(
+      (name) => !afterBrandNames.includes(name)
+    );
 
     try {
       await Promise.all([
-        updateVisibility(
-          requestFromCompanyId,
-          requestToCompanyId,
-          newShared,
-          "add"
-        ),
-        updateVisibility(
-          requestToCompanyId,
-          requestFromCompanyId,
-          newShared,
-          "add"
-        ),
+        updateVisibility({
+          sourceCompanyId: requestFromCompanyId,
+          targetCompanyId: requestToCompanyId,
+          brandIds: newSharedBrandIds,
+          brandNames: newSharedBrandNames,
+          mode: "add",
+        }),
+        updateVisibility({
+          sourceCompanyId: requestToCompanyId,
+          targetCompanyId: requestFromCompanyId,
+          brandIds: newSharedBrandIds,
+          brandNames: newSharedBrandNames,
+          mode: "add",
+        }),
       ]);
 
       await Promise.all([
-        updateVisibility(
-          requestFromCompanyId,
-          requestToCompanyId,
-          removedShared,
-          "remove"
-        ),
-        updateVisibility(
-          requestToCompanyId,
-          requestFromCompanyId,
-          removedShared,
-          "remove"
-        ),
+        updateVisibility({
+          sourceCompanyId: requestFromCompanyId,
+          targetCompanyId: requestToCompanyId,
+          brandIds: removedSharedBrandIds,
+          brandNames: removedSharedBrandNames,
+          mode: "remove",
+        }),
+        updateVisibility({
+          sourceCompanyId: requestToCompanyId,
+          targetCompanyId: requestFromCompanyId,
+          brandIds: removedSharedBrandIds,
+          brandNames: removedSharedBrandNames,
+          mode: "remove",
+        }),
       ]);
 
       await db.collection("connectionHistory").add({
         event: "connection_brands_sync",
         connectionId,
-        added: newShared,
-        removed: removedShared,
+        addedBrandIds: newSharedBrandIds,
+        removedBrandIds: removedSharedBrandIds,
+        addedBrandNames: newSharedBrandNames,
+        removedBrandNames: removedSharedBrandNames,
         fromCompanyId: requestFromCompanyId,
         toCompanyId: requestToCompanyId,
         companyIds: [requestFromCompanyId, requestToCompanyId],
-        sharedBrandNames: afterBrands,
+        sharedBrandIds: afterBrandIds,
+        sharedBrandNames: afterBrandNames,
         timestamp: FieldValue.serverTimestamp(),
       });
-
-      console.log("before", before.sharedBrandNames);
-      console.log("after", after.sharedBrandNames);
-      console.log("removedShared", removedShared);
 
       console.log(`✅ Brand sync complete for ${connectionId}`);
     } catch (err) {
