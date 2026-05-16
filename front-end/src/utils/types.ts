@@ -268,6 +268,9 @@ export interface CompanyConnectionType {
   companyIds: string[];
   sharedBrandNames: string[];
 
+  // New durable field
+  sharedBrandIds?: string[];
+
   pendingBrands?: PendingBrandType[];
   declinedBrands?: PendingBrandType[];
   requestedAt: Timestamp | string;

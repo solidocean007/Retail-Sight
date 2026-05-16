@@ -262,3 +262,36 @@
   color: var(--text-secondary);
   margin: 0.25rem 0;
 }
+
+.connection-target-card {
+  background: var(--card-background, #f4f7fb);
+  border: 1px solid var(--border-color, #d8e0ea);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.connection-target-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted, #667085);
+  margin-bottom: 0.25rem;
+}
+
+.connection-target-name {
+  display: block;
+  font-size: 1.15rem;
+  color: var(--text-color, #1f2937);
+  margin-bottom: 0.25rem;
+}
+
+.connection-target-type {
+  display: inline-block;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+  background: var(--chip-background, #e8eef7);
+  color: var(--text-color, #1f2937);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.75rem;
+}

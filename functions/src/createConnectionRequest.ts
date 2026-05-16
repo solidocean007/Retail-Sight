@@ -8,11 +8,23 @@ if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
 
 export const createConnectionRequest = onCall(async (request) => {
-  const { fromCompanyId, toCompanyId, pendingBrands = [] } = request.data || {};
+  const {
+    fromCompanyId,
+    toCompanyId,
+    pendingBrandIds = [],
+    pendingBrandNames = [],
+    pendingBrands = [],
+  } = request.data || {};
 
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Auth required.");
   }
+
+  const cleanStringArray = (value: unknown): string[] => {
+    if (!Array.isArray(value)) return [];
+
+    return value.map((item) => String(item || "").trim()).filter(Boolean);
+  };
 
   const requestedByUid = request.auth.uid;
 
@@ -43,12 +55,17 @@ export const createConnectionRequest = onCall(async (request) => {
   // 🔁 Prevent duplicate connections
   const existing = await db
     .collection("companyConnections")
-    .where("requestFromCompanyId", "==", fromCompanyId)
-    .where("requestToCompanyId", "==", toCompanyId)
-    .limit(1)
+    .where("companyIds", "array-contains", fromCompanyId)
     .get();
 
-  if (!existing.empty) {
+  const duplicate = existing.docs.find((docSnap) => {
+    const data = docSnap.data();
+    return (
+      Array.isArray(data.companyIds) && data.companyIds.includes(toCompanyId)
+    );
+  });
+
+  if (duplicate) {
     throw new HttpsError("already-exists", "Connection already exists.");
   }
 
@@ -59,8 +76,19 @@ export const createConnectionRequest = onCall(async (request) => {
   await recomputeCompanyCountsInternal(fromCompanyId);
   await enforcePlanLimitsInternal(fromCompanyId, "addConnection");
 
-  // 🧾 Create connection
-  const ref = await db.collection("companyConnections").add({
+  const cleanPendingBrandIds = Array.from(
+    new Set(cleanStringArray(pendingBrandIds))
+  );
+
+  const cleanPendingBrandNames = Array.from(
+    new Set(
+      cleanStringArray(pendingBrandNames).length
+        ? cleanStringArray(pendingBrandNames)
+        : cleanStringArray(pendingBrands)
+    )
+  );
+
+  const connectionPayload = {
     requestFromCompanyId: fromCompanyId,
     requestFromCompanyName: fromCompany.companyName,
     requestFromCompanyType: fromCompany.companyType,
@@ -72,12 +100,26 @@ export const createConnectionRequest = onCall(async (request) => {
     companyIds: [fromCompanyId, toCompanyId],
     requestedBy: requestedByUid,
     status: "pending",
-    pendingBrands,
+
+    sharedBrandIds: [],
+    sharedBrandNames: [],
+
+    pendingBrandIds: cleanPendingBrandIds,
+    pendingBrandNames: cleanPendingBrandNames,
+
+    // legacy compatibility
+    pendingBrands: cleanPendingBrandNames,
+
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  const ref = await db.collection("companyConnections").add(connectionPayload);
 
   return {
     id: ref.id,
-    status: "pending",
+    ...connectionPayload,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 });

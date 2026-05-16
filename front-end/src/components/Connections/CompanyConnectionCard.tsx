@@ -25,6 +25,19 @@ interface Props {
   isAdminView?: boolean;
 }
 
+type PendingBrandView = {
+  brandId?: string;
+  brandName: string;
+  proposedByCompanyId: string;
+  proposedByName: string;
+};
+
+const toStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value.map((item) => String(item || "").trim()).filter(Boolean);
+};
+
 const CompanyConnectionCard: React.FC<Props> = ({
   connection,
   currentCompanyId,
@@ -80,30 +93,75 @@ const CompanyConnectionCard: React.FC<Props> = ({
     ? connection.requestToCompanyName
     : connection.requestFromCompanyName;
 
-  const pendingBrands = connection.pendingBrands || [];
+  const pendingBrandViews = useMemo<PendingBrandView[]>(() => {
+    const pendingBrandIds = toStringArray(connection.pendingBrandIds);
+    const pendingBrandNames = toStringArray(connection.pendingBrandNames);
+
+    // New shape: pendingBrandIds + pendingBrandNames.
+    if (pendingBrandNames.length > 0) {
+      return pendingBrandNames.map((brandName, index) => ({
+        brandId: pendingBrandIds[index],
+        brandName,
+        proposedByCompanyId: connection.requestFromCompanyId,
+        proposedByName:
+          connection.requestFromCompanyName || "Requesting company",
+      }));
+    }
+
+    // Legacy shape fallback: pendingBrands can be strings or objects.
+    const legacy = Array.isArray(connection.pendingBrands)
+      ? connection.pendingBrands
+      : [];
+
+    return legacy
+      .map((item: any) => {
+        if (typeof item === "string") {
+          return {
+            brandName: item,
+            proposedByCompanyId: connection.requestFromCompanyId,
+            proposedByName:
+              connection.requestFromCompanyName || "Requesting company",
+          };
+        }
+
+        return {
+          brandName: item?.brand || "",
+          proposedByCompanyId:
+            typeof item?.proposedBy === "string"
+              ? item.proposedBy
+              : item?.proposedBy?.companyId || connection.requestFromCompanyId,
+          proposedByName:
+            typeof item?.proposedBy === "string"
+              ? "Requesting company"
+              : item?.proposedBy?.company ||
+                item?.proposedBy?.companyName ||
+                connection.requestFromCompanyName ||
+                "Requesting company",
+        };
+      })
+      .filter((item) => Boolean(item.brandName));
+  }, [
+    connection.pendingBrandIds,
+    connection.pendingBrandNames,
+    connection.pendingBrands,
+    connection.requestFromCompanyId,
+    connection.requestFromCompanyName,
+  ]);
 
   const pendingFromUs = useMemo(
     () =>
-      pendingBrands.filter((b) => {
-        const proposer = b.proposedBy;
-        if (typeof proposer === "string") {
-          return proposer === currentCompanyId; // old shape
-        }
-        return proposer.companyId === currentCompanyId; // new shape
-      }),
-    [pendingBrands, currentCompanyId],
+      pendingBrandViews.filter(
+        (b) => b.proposedByCompanyId === currentCompanyId,
+      ),
+    [pendingBrandViews, currentCompanyId],
   );
 
   const pendingFromThem = useMemo(
     () =>
-      pendingBrands.filter((b) => {
-        const proposer = b.proposedBy;
-        if (typeof proposer === "string") {
-          return proposer !== currentCompanyId; // old shape
-        }
-        return proposer.companyId !== currentCompanyId; // new shape
-      }),
-    [pendingBrands, currentCompanyId],
+      pendingBrandViews.filter(
+        (b) => b.proposedByCompanyId !== currentCompanyId,
+      ),
+    [pendingBrandViews, currentCompanyId],
   );
 
   // --- Add or remove brands inline ---
@@ -317,23 +375,23 @@ const CompanyConnectionCard: React.FC<Props> = ({
             <div className="pending-column">
               <h5>📤 Proposed by {ourCompany}</h5>
               <div className="brand-list">
-                {pendingFromUs.map((b: PendingBrandType) => (
+                {pendingFromUs.map((b) => (
                   <div
-                    key={`${b.brand}-${getProposerCompanyId(b)}`}
+                    key={`${b.brandId || b.brandName}-${b.proposedByCompanyId}`}
                     className="pending-brand-row"
-                    data-brand={b.brand}
+                    data-brand={b.brandName}
                   >
                     <span className="brand-chip pending">
-                      {b.brand}
+                      {b.brandName}
                       <small className="proposer-label">
-                        {getProposerName(b)}
+                        {b.proposedByName}
                       </small>
                     </span>
 
                     {isAdminView && (
                       <button
                         className="icon-btn cancel-btn"
-                        onClick={() => openConfirm("cancel", b.brand)}
+                        onClick={() => openConfirm("cancel", b.brandName)}
                         title="Withdraw proposal"
                       >
                         <DeleteOutlineIcon fontSize="small" />
@@ -350,23 +408,24 @@ const CompanyConnectionCard: React.FC<Props> = ({
             <div className="pending-column">
               <h5>📥 Proposed by {theirCompany}</h5>
               <div className="brand-list">
-                {pendingFromThem.map((b: PendingBrandType) => (
+                {pendingFromThem.map((b) => (
                   <div
-                    key={`${b.brand}-${getProposerCompanyId(b)}`}
+                    key={`${b.brandId || b.brandName}-${b.proposedByCompanyId}`}
                     className="pending-brand-row"
                   >
-                    <span className="brand-chip pending">{b.brand}</span>
+                    <span className="brand-chip pending">{b.brandName}</span>
+
                     {isAdminView && (
                       <div className="pending-actions">
                         <button
                           className="accept-btn"
-                          onClick={() => openConfirm("accept", b.brand)}
+                          onClick={() => openConfirm("accept", b.brandName)}
                         >
                           Accept
                         </button>
                         <button
                           className="reject-btn"
-                          onClick={() => openConfirm("reject", b.brand)}
+                          onClick={() => openConfirm("reject", b.brandName)}
                         >
                           Reject
                         </button>

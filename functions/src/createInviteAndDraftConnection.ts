@@ -6,12 +6,25 @@ import { recomputeCompanyCountsInternal } from "./billing/recomputeCompanyCounts
 if (!admin.apps.length) {
   admin.initializeApp();
 }
+
 const db = admin.firestore();
+
+const cleanStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value.map((item) => String(item || "").trim()).filter(Boolean);
+};
 
 export const createInviteAndDraftConnection = onCall(async (request) => {
   try {
     const data = request.data || {};
-    const { targetEmail, fromCompanyId, sharedBrandNames = [] } = data;
+
+    const {
+      targetEmail,
+      fromCompanyId,
+      sharedBrandIds = [],
+      sharedBrandNames = [],
+    } = data;
 
     if (!targetEmail || !fromCompanyId) {
       throw new Error("Missing required fields: targetEmail, fromCompanyId");
@@ -22,7 +35,6 @@ export const createInviteAndDraftConnection = onCall(async (request) => {
     await recomputeCompanyCountsInternal(fromCompanyId);
     await enforcePlanLimitsInternal(fromCompanyId, "addConnection");
 
-    // Get inviting company details
     const invitingCompanySnap = await db
       .collection("companies")
       .doc(fromCompanyId)
@@ -33,9 +45,14 @@ export const createInviteAndDraftConnection = onCall(async (request) => {
     }
 
     const invitingCompany = invitingCompanySnap.data();
-    const fromCompanyType = invitingCompany?.companyType; // "distributor" | "supplier"
+    const fromCompanyType = invitingCompany?.companyType;
 
-    // 1️⃣ Create pendingInvite
+    const cleanBrandIds = Array.from(new Set(cleanStringArray(sharedBrandIds)));
+
+    const cleanBrandNames = Array.from(
+      new Set(cleanStringArray(sharedBrandNames))
+    );
+
     const inviteRef = await db.collection("pendingInvites").add({
       email: cleanEmail,
       fromCompanyId,
@@ -44,17 +61,16 @@ export const createInviteAndDraftConnection = onCall(async (request) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    const normalize = (s: string) => s.trim().toUpperCase();
-
-    const normalizedBrands = sharedBrandNames.map(normalize);
-
-    // ✅ create draft correctly
     const draftRef = await db.collection("companyConnectionDrafts").add({
       targetEmail: cleanEmail,
       initiatorCompanyId: fromCompanyId,
-      sharedBrandNames: normalizedBrands,
 
-      // ✅ keep minimal for draft
+      sharedBrandIds: cleanBrandIds,
+      sharedBrandNames: cleanBrandNames,
+
+      pendingBrandIds: cleanBrandIds,
+      pendingBrandNames: cleanBrandNames,
+
       companyIds: [fromCompanyId],
 
       status: "pending-user-creation",

@@ -35,7 +35,7 @@ const IdentifyCompany: React.FC<IdentifyCompanyProps> = ({
     const el = document.querySelector(".error-banner");
     if (!el) return;
     el.classList.remove("shake");
-    void el.offsetWidth;
+    void el.offsetWidth; // Property 'offsetWidth' does not exist on type 'Element'
     el.classList.add("shake");
   };
 
@@ -79,17 +79,17 @@ const IdentifyCompany: React.FC<IdentifyCompanyProps> = ({
       console.log(
         "%c[lookup raw result]",
         "color: cyan; font-weight: bold;",
-        res
+        res,
       );
       console.log(
         "%c[lookup data]",
         "color: cyan; font-weight: bold;",
-        res?.data
+        res?.data,
       );
       console.log(
         "%c[lookup mode]",
         "color: yellow; font-weight: bold;",
-        res?.data?.mode
+        res?.data?.mode,
       );
 
       const data = res.data;
@@ -99,34 +99,29 @@ const IdentifyCompany: React.FC<IdentifyCompanyProps> = ({
         return;
       }
 
-      // INVITE MODE
       if (data.mode === "invite" || data.mode === "invitable") {
-        console.log(
-          "%c[invite mode triggered]",
-          "color: lightgreen; font-weight: bold;"
-        );
         onInvite(cleanEmail);
         return;
       }
 
-      // USER FOUND MODE
-      if (data.companyName) {
-        console.log(
-          "%c[company preview]",
-          "color: lightblue; font-weight: bold;",
-          {
-            name: data.companyName,
-            type: data.companyType,
-          }
-        );
+      if (data.mode !== "user-found") {
+        showError("Unexpected lookup result.");
+        return;
+      }
 
+      if (!data.companyId) {
+        console.error("[IdentifyCompany] lookup missing companyId:", data);
+        showError("Company found, but its company ID was missing.");
+        return;
+      }
+
+      if (data.companyName) {
         setCompanyPreview({
           companyName: data.companyName,
           companyType: data.companyType,
         });
       }
 
-      // 3️⃣ CHECK LOCAL DUPLICATES
       const duplicate = currentConnections.some((c: any) => {
         return (
           (c.requestFromCompanyId === fromCompanyId &&
@@ -141,13 +136,6 @@ const IdentifyCompany: React.FC<IdentifyCompanyProps> = ({
         return;
       }
 
-      // Invite flow → do NOT call Step 2
-      if (data.mode === "invitable") {
-        onInvite(cleanEmail);
-        return;
-      }
-
-      // Continue to Step 2 with mode
       onContinue(cleanEmail, data);
     } catch (err: any) {
       console.error("Lookup error:", err);

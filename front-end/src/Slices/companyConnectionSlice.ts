@@ -49,24 +49,41 @@ export const createConnectionRequest = createAsyncThunk(
   async (
     {
       currentCompanyId,
-      emailInput,
+      toCompanyId,
       brandSelection,
       user,
     }: {
       currentCompanyId: string;
-      emailInput: string;
-      brandSelection: string[];
+      toCompanyId: string;
+      emailInput?: string;
+      brandSelection: {
+        brandId: string;
+        brandName: string;
+        productSupplier?: string;
+      }[];
       user: any;
     },
     { rejectWithValue },
   ) => {
     try {
-      const fn = httpsCallable(functions, "createInviteAndDraftConnection");
+      const fn = httpsCallable(functions, "createConnectionRequest");
+
+      const pendingBrandIds = (brandSelection ?? [])
+        .map((brand) => brand.brandId)
+        .filter(Boolean);
+
+      const pendingBrandNames = (brandSelection ?? [])
+        .map((brand) => brand.brandName)
+        .filter(Boolean);
 
       const res = await fn({
         fromCompanyId: currentCompanyId,
-        targetEmail: emailInput,
-        sharedBrandNames: brandSelection ?? []
+        toCompanyId,
+        pendingBrandIds,
+        pendingBrandNames,
+
+        // temporary legacy field
+        pendingBrands: pendingBrandNames,
       });
 
       return normalizeTimestamps(res.data as CompanyConnectionType);
@@ -154,7 +171,27 @@ const companyConnectionSlice = createSlice({
         state.connections = action.payload;
       })
       .addCase(createConnectionRequest.fulfilled, (state, action) => {
-        state.connections.push(action.payload);
+        const connection = action.payload;
+
+        // Guard against old/minimal callable responses like { id, status }
+        if (
+          !connection?.id ||
+          !connection?.requestFromCompanyId ||
+          !connection?.requestToCompanyId ||
+          !Array.isArray(connection?.companyIds)
+        ) {
+          return;
+        }
+
+        const existingIndex = state.connections.findIndex(
+          (c) => c.id === connection.id,
+        );
+
+        if (existingIndex >= 0) {
+          state.connections[existingIndex] = connection;
+        } else {
+          state.connections.push(connection);
+        }
       })
       .addCase(updateConnectionStatus.fulfilled, (state, action) => {
         const target = state.connections.find(

@@ -91,6 +91,8 @@ import { onConnectionNotifications } from "./onConnectionNotifications";
 import { repairConnectionVisibility } from "./repairConnectionVisibility";
 import { uploadCompanyProducts } from "./products/uploadCompanyProducts";
 import { syncCompanyBrandCatalog } from "./products/syncCompanyBrandCatalog";
+import { createConnectionRequest } from "./createConnectionRequest";
+import { onCompanyConnectionRequestCreated } from "./onCompanyConnectionRequestCreated";
 
 export {
   backfillSupplierGoalPosts,
@@ -150,6 +152,8 @@ export {
   enforcePastDueGracePeriod,
 
   // Connection function
+  createConnectionRequest,
+  onCompanyConnectionRequestCreated,
   createInviteAndDraftConnection,
   onConnectionBrandsUpdated,
   onPostBrandsUpdated,

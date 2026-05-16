@@ -22,7 +22,7 @@ const CompanyConnectionList: React.FC<CompanyConnectionListProps> = ({
       </div>
     );
   }
-  // console.log(connections)
+  console.log(connections)
   return (
     <div className="connections-list">
       {connections.map((c) => (

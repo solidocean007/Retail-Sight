@@ -76,10 +76,19 @@ export async function resolveDraftConnections(
 
     const newConnRef = db.collection("companyConnections").doc();
 
-    const normalizeBrands = (arr: string[]): string[] =>
-      (arr || []).map((b) => b?.trim().toUpperCase()).filter(Boolean);
+    const cleanStringArray = (value: unknown): string[] => {
+      if (!Array.isArray(value)) return [];
 
-    const sharedBrands = normalizeBrands(draft.sharedBrandNames || []);
+      return value.map((item) => String(item || "").trim()).filter(Boolean);
+    };
+
+    const sharedBrandIds = Array.from(
+      new Set(cleanStringArray(draft.sharedBrandIds))
+    );
+
+    const sharedBrandNames = Array.from(
+      new Set(cleanStringArray(draft.sharedBrandNames))
+    );
 
     batch.set(newConnRef, {
       requestFromCompanyId: draft.initiatorCompanyId,
@@ -93,7 +102,15 @@ export async function resolveDraftConnections(
       requestedBy: draft.initiatorCompanyId,
       companyIds: [draft.initiatorCompanyId, newCompanyId],
 
-      sharedBrandNames: sharedBrands,
+      // New durable fields
+      sharedBrandIds,
+      pendingBrandIds: [],
+
+      // Legacy/display fields
+      sharedBrandNames,
+      pendingBrandNames: [],
+
+      // Keep old field temporarily so old UI does not break if anything still reads it
       pendingBrands: [],
 
       status: "approved",
@@ -110,13 +127,13 @@ export async function resolveDraftConnections(
       updateVisibility(
         draft.initiatorCompanyId,
         newCompanyId,
-        sharedBrands,
+        sharedBrandNames,
         "add"
       ),
       updateVisibility(
         newCompanyId,
         draft.initiatorCompanyId,
-        sharedBrands,
+        sharedBrandNames,
         "add"
       )
     );

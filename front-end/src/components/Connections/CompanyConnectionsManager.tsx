@@ -25,6 +25,12 @@ interface Props {
   user: UserType | null;
 }
 
+type ConnectionBrandSelection = {
+  brandId: string;
+  brandName: string;
+  productSupplier?: string;
+};
+
 const CompanyConnectionsManager: React.FC<Props> = ({
   currentCompanyId,
   user,
@@ -94,31 +100,37 @@ const CompanyConnectionsManager: React.FC<Props> = ({
   }, [currentCompanyId, dispatch]);
 
   // 🧩 Handle connection creation
+
   const handleConfirmRequest = async (
     emailInput: string,
-    brandSelection: string[],
+    brandSelection: ConnectionBrandSelection[],
   ) => {
     if (!user || !company || !currentCompanyId) return;
 
     console.log("CALLING CF WITH:", {
       targetEmail: emailInput,
       fromCompanyId: currentCompanyId,
-      sharedBrands: brandSelection,
+      sharedBrandIds: brandSelection.map((b) => b.brandId),
+      sharedBrandNames: brandSelection.map((b) => b.brandName),
     });
+
     try {
       await dispatch(
         createConnectionRequest({
           currentCompanyId,
+          toCompanyId: lookup.companyId,
           user,
           emailInput,
           brandSelection,
         }),
       ).unwrap();
-
+      await dispatch(fetchCompanyConnections(currentCompanyId));
       dispatch(showMessage("Connection request sent successfully."));
+
       if (!connections.length) {
         await dispatch(fetchCompanyConnections(currentCompanyId));
       }
+
       setStep(0);
     } catch (err: any) {
       if (err.code === "already-exists") {
@@ -148,7 +160,7 @@ const CompanyConnectionsManager: React.FC<Props> = ({
 
   // === Store brand selections from Step 2 ===
   const [brandSelectionFromStep2, setBrandSelectionFromStep2] = useState<
-    string[]
+    ConnectionBrandSelection[]
   >([]);
 
   const isNearLimit =
@@ -374,10 +386,12 @@ const CompanyConnectionsManager: React.FC<Props> = ({
             await fn({
               targetEmail: identifiedEmail,
               fromCompanyId: currentCompanyId,
-              sharedBrands: brandSelectionFromStep2.map((b) => ({
-                brand: b,
-                proposedBy: user,
-              })),
+              sharedBrandIds: brandSelectionFromStep2
+                .map((b) => b.brandId)
+                .filter(Boolean),
+              sharedBrandNames: brandSelectionFromStep2
+                .map((b) => b.brandName)
+                .filter(Boolean),
             });
 
             setInviteMode(false);
