@@ -866,4 +866,5 @@ export type DashboardModeType =
   | "ApiMode"
   | "CollectionsMode"
   | "TutorialMode"
-  | "AnnouncementsMode";
+  | "AnnouncementsMode"
+  | "DeveloperViewAsMode";

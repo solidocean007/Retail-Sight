@@ -28,14 +28,16 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const { localVersion, serverVersion, resetting } = useSelector(
-    (s: RootState) => s.app
+    (s: RootState) => s.app,
   );
   const upToDate = !!serverVersion && localVersion === serverVersion;
   const mobile = useMediaQuery("(max-width: 900px)");
   const notifications = useSelector(selectNotifications);
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
-  const currentCompany = useSelector((state: RootState)=> state.currentCompany.data?.companyName);
+  // const currentCompany = useSelector(
+  //   (state: RootState) => state.currentCompany.data?.companyName,
+  // );
   const { currentUser } = useSelector((state: RootState) => state.user);
   const [showMenuTab, setShowMenuTab] = useState(false);
   const unreadNotifications = useSelector(selectUnreadNotifications);
@@ -60,14 +62,28 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const goToSignUpLogin = () => navigate("/sign-up-login"); // i ll need to think about where this should take someone?  this page or signup? or login?
   const handleCreatePostClick = () =>
     protectedAction(() => navigate("/create-post"));
+
   const handleTutorialClick = () =>
     protectedAction(() => navigate("/tutorial"));
+
   const handleDashboardClick = () => {
     protectedAction(() => {
-      if (currentUser?.role !== "developer") navigate("/dashboard");
-      else if (currentUser?.role === "developer")
+      if (isImpersonating) {
+        navigate("/dashboard");
+        return;
+      }
+
+      if (currentUser?.role === "developer") {
         navigate("/developer-dashboard");
-      else showMessage("Not Logged in.");
+        return;
+      }
+
+      if (currentUser) {
+        navigate("/dashboard");
+        return;
+      }
+
+      dispatch(showMessage("Not Logged in."));
     });
   };
 
@@ -94,6 +110,32 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       setShowMenuTab(false);
     }
   };
+
+  const isImpersonating = useSelector(
+    (state: RootState) => state.impersonation.active,
+  );
+
+  const impersonatedCompanyId = useSelector(
+    (state: RootState) => state.impersonation.companyId,
+  );
+
+  const realCompanyName = useSelector(
+    (state: RootState) => state.currentCompany.data?.companyName,
+  );
+
+  const companiesState = useSelector((state: RootState) => state.allCompanies);
+
+  const companies = Array.isArray(companiesState)
+    ? companiesState
+    : companiesState.plain || [];
+
+  const impersonatedCompany = companies.find(
+    (c: any) => c.id === impersonatedCompanyId,
+  );
+
+  const currentCompany = isImpersonating
+    ? `👁 ${impersonatedCompany?.companyName || impersonatedCompanyId}`
+    : realCompanyName;
 
   return (
     <>

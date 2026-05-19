@@ -25,6 +25,8 @@ import IntegrationsView from "./IntegrationsView.tsx";
 import { ComingSoonCard } from "../ComingSoonCard.tsx";
 import PastDueBanner from "./Billing/PastDueBanner.tsx";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice.ts";
+import { selectEffectiveCompanyId } from "../../Slices/impersonationSlice.ts";
+import DeveloperViewAsPanel from "../DeveloperDashboard/DeveloperViewAsPanel.tsx";
 
 const ADMIN_MODES: DashboardModeType[] = [
   "ConnectionsMode",
@@ -42,7 +44,7 @@ export const Dashboard = () => {
   const isIpadMini = useMediaQuery("(max-width: 767px)");
   const drawerWidth = 200;
   const user = useSelector(selectUser);
-  const companyId = user?.companyId;
+  const companyId = useSelector(selectEffectiveCompanyId);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const isSupplier = useSelector(selectIsSupplier);
   const isEmployee = user?.role === "employee";
@@ -54,10 +56,10 @@ export const Dashboard = () => {
   const canAccessAdmin = isAdmin || isSuperAdmin || isDeveloper;
 
   const defaultMode: DashboardModeType = isSupplier
-  ? "ConnectionsMode"
-  : canAccessAdmin
-    ? "GoalManagerMode"
-    : "MyGoalsMode";
+    ? "ConnectionsMode"
+    : canAccessAdmin
+      ? "GoalManagerMode"
+      : "MyGoalsMode";
 
   const [dashboardMode, setDashboardMode] =
     useState<DashboardModeType>(defaultMode);
@@ -68,41 +70,41 @@ export const Dashboard = () => {
   const [_screenWidth, setScreenWidth] = useState(window.innerWidth);
 
   const SUPPLIER_BLOCKED_MODES: DashboardModeType[] = [
-  "MyGoalsMode",
-  "MyAccountsMode",
-  "AccountsMode",
-  "ProductsMode",
-  "GoalManagerMode",
-  "TeamMode",
-];
+    "MyGoalsMode",
+    "MyAccountsMode",
+    "AccountsMode",
+    "ProductsMode",
+    "GoalManagerMode",
+    "TeamMode",
+  ];
 
-useEffect(() => {
-  const savedMode = sessionStorage.getItem(
-    "dashboardMode",
-  ) as DashboardModeType;
+  useEffect(() => {
+    const savedMode = sessionStorage.getItem(
+      "dashboardMode",
+    ) as DashboardModeType;
 
-  if (savedMode) {
-    if (isSupplier && SUPPLIER_BLOCKED_MODES.includes(savedMode)) {
+    if (savedMode) {
+      if (isSupplier && SUPPLIER_BLOCKED_MODES.includes(savedMode)) {
+        setDashboardMode("ConnectionsMode");
+        setSelectedMode("ConnectionsMode");
+      } else if (!canAccessAdmin && ADMIN_MODES.includes(savedMode)) {
+        setDashboardMode("MyGoalsMode");
+        setSelectedMode("MyGoalsMode");
+      } else {
+        setDashboardMode(savedMode);
+        setSelectedMode(savedMode);
+      }
+
+      sessionStorage.removeItem("dashboardMode");
+    }
+  }, [canAccessAdmin, isSupplier]);
+
+  useEffect(() => {
+    if (isSupplier && SUPPLIER_BLOCKED_MODES.includes(dashboardMode)) {
       setDashboardMode("ConnectionsMode");
       setSelectedMode("ConnectionsMode");
-    } else if (!canAccessAdmin && ADMIN_MODES.includes(savedMode)) {
-      setDashboardMode("MyGoalsMode");
-      setSelectedMode("MyGoalsMode");
-    } else {
-      setDashboardMode(savedMode);
-      setSelectedMode(savedMode);
     }
-
-    sessionStorage.removeItem("dashboardMode");
-  }
-}, [canAccessAdmin, isSupplier]);
-
-useEffect(() => {
-  if (isSupplier && SUPPLIER_BLOCKED_MODES.includes(dashboardMode)) {
-    setDashboardMode("ConnectionsMode");
-    setSelectedMode("ConnectionsMode");
-  }
-}, [isSupplier, dashboardMode]);
+  }, [isSupplier, dashboardMode]);
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -196,7 +198,7 @@ useEffect(() => {
           />
         )}
         {dashboardMode === "ConnectionsMode" && (
-          <CompanyConnectionsManager currentCompanyId={companyId} user={user} />
+          <CompanyConnectionsManager currentCompanyId={companyId} user={user} /> // Type 'string | null' is not assignable to type 'string | undefined'.
         )}
         {dashboardMode === "IntegrationsMode" && <IntegrationsView />}
         {dashboardMode === "TeamMode" && !isSupplier && <TeamsViewer />}
@@ -213,15 +215,20 @@ useEffect(() => {
           <AdminUsersConsole />
         )}
         {dashboardMode === "ProfileMode" && user && <UserProfileViewer />}
-        {dashboardMode === "MyAccountsMode" && user && !isSupplier && <MyAccounts />}
-        {dashboardMode === "GoalManagerMode" && canAccessAdmin && !isSupplier && (
-          <GoalManagerLayout companyId={companyId} />
+        {dashboardMode === "MyAccountsMode" && user && !isSupplier && (
+          <MyAccounts />
         )}
+        {dashboardMode === "GoalManagerMode" &&
+          canAccessAdmin &&
+          !isSupplier && <GoalManagerLayout companyId={companyId} />} // Type 'string | null' is not assignable to type 'string | undefined'.
 
         {dashboardMode === "CollectionsMode" && (
           <CollectionsViewer setDashboardMode={setDashboardMode} />
         )}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
+        {dashboardMode === "DeveloperViewAsMode" && isDeveloper && (
+          <DeveloperViewAsPanel />
+        )}
       </Box>
     </div>
   );

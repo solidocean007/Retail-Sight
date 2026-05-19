@@ -421,6 +421,30 @@ tr:nth-child(even) {
   gap: 8px;
 }
 
+.view-as-banner {
+  position: fixed;
+  top: 0px;
+  left: 50px;
+  width: 300px;
+  right: 0;
+  z-index: 99999;
+  background: #7c2d12;
+  color: white;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.view-as-banner button {
+  background: white;
+  color: #7c2d12;
+  border: none;
+  border-radius: 6px;
+  padding: 0.25rem 0.75rem;
+  font-weight: 700;
+}
+
 /* Sidebar Toggle Visibility */
 @media (max-width: 768px) {
   .toggle-sidebar-button {

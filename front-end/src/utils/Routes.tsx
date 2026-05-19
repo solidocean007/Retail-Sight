@@ -21,6 +21,8 @@ import CookiesPolicy from "../components/Pages/CookiesPolicy";
 import SmartLanding from "../components/SmartLanding";
 import { lazy, Suspense } from "react";
 import AppLoadingScreen from "../components/AppLoadingScreen";
+import { useSelector } from "react-redux/es/hooks/useSelector";
+import { RootState } from "./store";
 
 const PricingPlans = lazy(() => import("../components/Pages/PricingPlans"));
 const Features = lazy(() => import("../components/Pages/Features"));
@@ -28,87 +30,108 @@ const LoginForm = lazy(() => import("../components/Pages/LoginForm"));
 const UserHomePage = lazy(() => import("../components/Pages/UserHomePage"));
 const Dashboard = lazy(() => import("../components/Pages/Dashboard"));
 const CreatePost = lazy(() => import("../components/Pages/CreatePost"));
-const BillingDashboard = lazy(() => import("../components/Pages/Billing/BillingDashboard"));
-const DeveloperDashboard = lazy(() => import("../components/Pages/DeveloperDashboard"));
-const NotificationsPage = lazy(() => import("../components/Pages/NotificationsPage"));
+const BillingDashboard = lazy(
+  () => import("../components/Pages/Billing/BillingDashboard"),
+);
+const DeveloperDashboard = lazy(
+  () => import("../components/Pages/DeveloperDashboard"),
+);
+const NotificationsPage = lazy(
+  () => import("../components/Pages/NotificationsPage"),
+);
 
 export const AppRoutes = () => {
+  const isImpersonating = useSelector((s: RootState) => s.impersonation.active);
   return (
     <Suspense fallback={<AppLoadingScreen show message="Loading page…" />}>
       <Routes>
-      <Route path="/" element={<SmartLanding />} />
-      <Route path="/splash" element={<SplashPage />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/features" element={<Features />} />
-      <Route path="/contact-us" element={<ContactUs />} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/terms-service" element={<TermsOfService />} />
-      <Route path="/cookies" element={<CookiesPolicy />} />
-      <Route path="/help-support" element={<HelpSupport />} />
-      <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
-      <Route path="/notifications" element={<NotificationsPage />} />
-      <Route path="/sign-up-login" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<LoginForm />} />
-      <Route path="/signup" element={<RequestAccessForm />} />
-      <Route path="/request-access" element={<RequestAccessForm />} />
-      <Route path="/request-submitted" element={<RequestSubmitted />} />
-      <Route
-        path="/accept-invite/:companyId/:inviteId"
-        element={<InviteAcceptForm />}
-      />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/pricing" element={<PricingPlans />} />
-      <Route
-        path="/view-collection/:collectionId"
-        element={<ViewCollection />}
-      />
-      <Route path="/post/:postId" element={<PostViewer />} />
-      <Route
-        path="/user-home-page"
-        element={
-          <ProtectedRoute>
-            <UserHomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/create-post"
-        element={
-          <ProtectedRoute>
-            <CreatePost />
-          </ProtectedRoute>
-        }
-      />
+        <Route path="/" element={<SmartLanding />} />
+        <Route path="/splash" element={<SplashPage />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/contact-us" element={<ContactUs />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-service" element={<TermsOfService />} />
+        <Route path="/cookies" element={<CookiesPolicy />} />
+        <Route path="/help-support" element={<HelpSupport />} />
+        <Route
+          path="/developer-dashboard"
+          element={
+            <ProtectedRoute>
+              {isImpersonating ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <DeveloperDashboard />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route
+          path="/sign-up-login"
+          element={<Navigate to="/login" replace />}
+        />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/signup" element={<RequestAccessForm />} />
+        <Route path="/request-access" element={<RequestAccessForm />} />
+        <Route path="/request-submitted" element={<RequestSubmitted />} />
+        <Route
+          path="/accept-invite/:companyId/:inviteId"
+          element={<InviteAcceptForm />}
+        />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/pricing" element={<PricingPlans />} />
+        <Route
+          path="/view-collection/:collectionId"
+          element={<ViewCollection />}
+        />
+        <Route path="/post/:postId" element={<PostViewer />} />
+        <Route
+          path="/user-home-page"
+          element={
+            <ProtectedRoute>
+              <UserHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-post"
+          element={
+            <ProtectedRoute>
+              <CreatePost />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/billing"
-        element={
-          <ProtectedRoute>
-            <BillingDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute>
+              <BillingDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/onboard-company/:companyId/:inviteId"
-        element={<CompanyOnboardingAcceptForm />}
-      />
-      <Route
-        path="/new-company-invite/:inviteId"
-        element={<RequestAccessForm inviteMode={true} />}
-      />
+        <Route
+          path="/onboard-company/:companyId/:inviteId"
+          element={<CompanyOnboardingAcceptForm />}
+        />
+        <Route
+          path="/new-company-invite/:inviteId"
+          element={<RequestAccessForm inviteMode={true} />}
+        />
 
-      <Route path="/p/:postId" element={<PublicPostViewer />} />
-      <Route path="/access-denied" element={<AccessDenied />} />
-      <Route path="*" element={<PageNotFound />} />
+        <Route path="/p/:postId" element={<PublicPostViewer />} />
+        <Route path="/access-denied" element={<AccessDenied />} />
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </Suspense>
   );

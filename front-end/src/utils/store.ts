@@ -28,10 +28,14 @@ import appSlice from "../Slices/appSlice";
 import developerNotificationsSlice from "../Slices/developerNotificationSlice";
 import accountImportSlice from "../Slices/accountImportSlice";
 import brandCatalogSlice from "../Slices/brandCatalogSlice";
+import impersonationSlice from "../Slices/impersonationSlice";
 
 // ✅ global reset action
 export const resetStore = createAction("RESET_STORE");
 export const selectCanSync = (state: RootState) => !state.app.resetting;
+export const clearCompanyScopedState = createAction(
+  "CLEAR_COMPANY_SCOPED_STATE",
+);
 
 // ✅ all reducers in ONE place
 const appReducer = combineReducers({
@@ -59,13 +63,37 @@ const appReducer = combineReducers({
   developerNotifications: developerNotificationsSlice,
   accountImports: accountImportSlice,
   brandCatalog: brandCatalogSlice,
+  impersonation: impersonationSlice,
 });
 
-// ✅ root reducer handles reset
 const rootReducer = (state: any, action: any) => {
   if (action.type === "RESET_STORE") {
     state = undefined;
   }
+
+  if (action.type === "CLEAR_COMPANY_SCOPED_STATE") {
+    return appReducer(
+      {
+        ...state,
+        posts: undefined,
+        sharedPosts: undefined,
+        companyGoals: undefined,
+        companyConnections: undefined,
+        companyProducts: undefined,
+        allAccounts: undefined,
+        user: {
+          ...state.user,
+          companyUsers: [],
+          otherUsers: {},
+        },
+        brandCatalog: undefined,
+        locations: undefined,
+        accountImports: undefined,
+      },
+      action,
+    );
+  }
+
   return appReducer(state, action);
 };
 

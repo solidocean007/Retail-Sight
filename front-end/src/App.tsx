@@ -28,17 +28,24 @@ import Footer from "./components/Footer/Footer";
 
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "./utils/firebase";
+import { stopViewAsCompany } from "./Slices/impersonationSlice";
 
 function AppContent() {
   const dispatch = useAppDispatch();
   const location = useLocation();
-
   const { currentUser, initializing } = useFirebaseAuth();
   const user = useSelector((state: RootState) => state.user.currentUser);
   const isDarkMode = useSelector((s: RootState) => s.theme.isDarkMode);
   const snackbar = useSelector((s: RootState) => s.snackbar);
   const appReady = useSelector((s: RootState) => s.app.appReady);
   const loadingMessage = useSelector((s: RootState) => s.app.loadingMessage);
+  const isImpersonating = useSelector(
+    (state: RootState) => state.impersonation.active,
+  );
+
+  const impersonatedCompanyId = useSelector(
+    (state: RootState) => state.impersonation.companyId,
+  );
 
   const theme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
@@ -152,13 +159,21 @@ function AppContent() {
         <CssBaseline />
 
         <div className="app-shell">
+          {isImpersonating && (
+            <div className="view-as-banner">
+              👁 View-As Active: {impersonatedCompanyId}
+              <button onClick={() => dispatch(stopViewAsCompany())}>
+                Exit
+              </button>
+            </div>
+          )}
           {!isPublicRoute && <ThemeToggle />}
 
-            {/* Main layout frame */}
-            <div className="page-layout-frame">
-              <AppRoutes />
-              {!isPublicRoute && !isAuthRoute && <Footer />}
-            </div>
+          {/* Main layout frame */}
+          <div className="page-layout-frame">
+            <AppRoutes />
+            {!isPublicRoute && !isAuthRoute && <Footer />}
+          </div>
 
           {snackbar.current && (
             <Snackbar

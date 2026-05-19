@@ -30,6 +30,7 @@ import { resetApp } from "../../utils/resetApp";
 import DeveloperMessaging from "../Notifications/DeveloperMessaging";
 import DeveloperPlatform from "../Notifications/DeveloperPlatform";
 import DeveloperOperations from "../Notifications/DeveloperOperations";
+import DeveloperViewAsPanel from "../DeveloperDashboard/DeveloperViewAsPanel";
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate();
@@ -136,6 +137,11 @@ const DeveloperDashboard = () => {
             {tabIndex === 2 && (
               <>
                 <DeveloperPlatform />
+              </>
+            )}
+            {tabIndex === 3 && (
+              <>
+                <DeveloperViewAsPanel/>
               </>
             )}
           </Box>

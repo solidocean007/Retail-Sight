@@ -31,9 +31,11 @@ import GoalIcon from "./icons/GoalIcon";
 import "./dashMenu.css";
 
 import { DashboardModeType } from "../utils/types";
-import { RootState } from "../utils/store";
+import { RootState, useAppDispatch } from "../utils/store";
 import { selectPendingAccountImports } from "../Slices/accountImportSlice";
 import { selectIsSupplier } from "../Slices/currentCompanySlice";
+import { selectUser } from "../Slices/userSlice";
+import { stopImpersonation, stopViewAsCompany } from "../Slices/impersonationSlice";
 
 const drawerWidth = 200;
 
@@ -55,8 +57,11 @@ const DashMenu = ({
   canAccessAdmin,
   selectedMode,
 }: DashMenuProps) => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+  const realUser = useSelector(selectUser);
+  const isDeveloper = realUser?.role === "developer";
+  const isImpersonating = useSelector((s: RootState) => s.impersonation.active);
   const role = useSelector((state: RootState) => state.user.currentUser?.role);
   const isSupplier = useSelector(selectIsSupplier);
   const pendingImports = useSelector(selectPendingAccountImports);
@@ -103,7 +108,11 @@ const DashMenu = ({
           <HomeIcon sx={{ mr: 1 }} />
           <ListItemText primary="Home" />
         </ListItemButton>
-
+        {isDeveloper && isImpersonating && (
+          <button onClick={() => dispatch(stopViewAsCompany())}>
+            Exit View-As
+          </button>
+        )}
         {!isSupplier && (
           <ListItemButton
             selected={selectedMode === "MyGoalsMode"}
