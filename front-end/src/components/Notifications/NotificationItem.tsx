@@ -46,30 +46,37 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     touchEndX.current = e.changedTouches[0].screenX;
+
     if (touchStartX.current == null || touchEndX.current == null) return;
 
     const diff = touchEndX.current - touchStartX.current;
+    const swiped = Math.abs(diff) > 50;
 
-    if (Math.abs(diff) > 50) {
+    if (swiped) {
       didSwipe.current = true;
     }
 
-    // Swipe left → open / mark read
     if (diff < -50 && !isRead) {
       setDismissed(true);
-      setTimeout(() => onOpen?.(), 250);
+      window.setTimeout(() => onOpen?.(), 250);
     }
 
-    // Swipe right → delete (read only)
     if (diff > 50 && isRead) {
       setDismissed(true);
-      setTimeout(() => onDelete?.(), 250);
+      window.setTimeout(() => onDelete?.(), 250);
     }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+
+    window.setTimeout(() => {
+      didSwipe.current = false;
+    }, 300);
   };
 
   return (
     <div
-      className={`notification-item ${
+      className={`notification-item ${notification.priority || "normal"} ${
         isRead ? "read" : "unread"
       } ${dismissed ? "dismissed" : ""}`}
       onClick={() => {

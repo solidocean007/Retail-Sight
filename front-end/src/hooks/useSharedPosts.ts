@@ -41,20 +41,6 @@ export const useSharedPosts = (
     null,
   );
 
-  // 🔹 Load cached posts first
-  useEffect(() => {
-    if (!companyId) return;
-    (async () => {
-      const cached = await getSharedPostsFromIndexedDB();
-      if (cached?.length) {
-        dispatch(setSharedPosts(cached.map(normalizePost)));
-      } else {
-        await fetchInitialBatch();
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId]);
-
   // 🔹 Initial batch
   const fetchInitialBatch = useCallback(async () => {
     if (!companyId) return;
@@ -69,9 +55,7 @@ export const useSharedPosts = (
       );
 
       const snap = await getDocs(q);
-      const docs = snap.docs.map((doc) =>
-        normalizePost(doc.data(), doc.id),
-      );
+      const docs = snap.docs.map((doc) => normalizePost(doc.data(), doc.id));
 
       dispatch(setSharedPosts(docs));
       await addSharedPostsToIndexedDB(docs);
@@ -85,6 +69,25 @@ export const useSharedPosts = (
       dispatch(setLoading(false));
     }
   }, [companyId, batchSize, dispatch]);
+
+  // 🔹 Load cached posts first
+  // useEffect(() => {
+  //   if (!companyId) return;
+  //   (async () => {
+  //     const cached = await getSharedPostsFromIndexedDB();
+  //     if (cached?.length) {
+  //       dispatch(setSharedPosts(cached.map(normalizePost)));
+  //     } else {
+  //       await fetchInitialBatch();
+  //     }
+  //   })();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [companyId]);
+
+  useEffect(() => {
+    if (!companyId) return;
+    fetchInitialBatch();
+  }, [companyId, fetchInitialBatch]);
 
   // 🔹 Fetch more posts (pagination)
   const fetchMore = useCallback(async () => {

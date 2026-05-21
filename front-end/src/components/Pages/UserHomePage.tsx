@@ -13,7 +13,11 @@ import {
   getPostsFromIndexedDB,
 } from "../../utils/database/indexedDBUtils";
 import { mergeAndSetPosts, setFilteredPosts } from "../../Slices/postsSlice";
-import { PostQueryFilters, PostWithID } from "../../utils/types";
+import {
+  OpenPostViewerOptions,
+  PostQueryFilters,
+  PostWithID,
+} from "../../utils/types";
 import { selectCompanyUsers, selectUser } from "../../Slices/userSlice";
 import FilterSummaryBanner from "./../FilterSummaryBanner";
 import EnhancedFilterSidebar from "./../FilterSideBar/EnhancedFilterSideBar";
@@ -34,11 +38,13 @@ import { resetApp } from "../../utils/resetApp";
 import { showMessage } from "../../Slices/snackbarSlice";
 import InstallPrompt from "../PWA/InstallPrompt";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice";
+import { selectEffectiveCompanyId } from "../../Slices/impersonationSlice";
 
 const UserHomePage = () => {
   const navigate = useNavigate();
   const isSupplier = useSelector(selectIsSupplier);
-  const companyId = useSelector(selectUser)?.companyId;
+  // const companyId = useSelector(selectUser)?.companyId;
+  const effectiveCompanyId = useSelector(selectEffectiveCompanyId);
   const companyUsers = useSelector(selectCompanyUsers) || [];
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [postIdToScroll, setPostIdToScroll] = useState<string | null>(null);
@@ -65,8 +71,9 @@ const UserHomePage = () => {
     () => (lastFilters ? getFilterSummaryText(lastFilters, companyUsers) : ""),
     [lastFilters, companyUsers],
   );
-  const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
-  const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  // const [viewCompanyPosts, setViewCompanyPosts] = useState(true);
+  const [postViewerOptions, setPostViewerOptions] =
+    useState<OpenPostViewerOptions | null>(null);
   const [postViewerOpen, setPostViewerOpen] = useState(false);
   const batchSize = 5;
   const [showConfirmReset, setShowConfirmReset] = useState(false);
@@ -111,7 +118,7 @@ const UserHomePage = () => {
 
   // make sure sharedPosts are loaded so we can conditionally show the feed-tabs
   const { posts: sharedPosts, loading: sharedLoading } = useSharedPosts(
-    user?.companyId,
+    effectiveCompanyId || "",
     batchSize,
   );
   const hasShownSharedEmpty = useRef(false);
@@ -131,9 +138,8 @@ const UserHomePage = () => {
     }
   }, [activeFeedType, sharedPosts.length, dispatch]);
 
-  const openPostViewer = (postId: string) => {
-    setPostIdToView(postId);
-    setPostViewerOpen(true);
+  const openPostViewer = (options: OpenPostViewerOptions) => {
+    setPostViewerOptions(options);
   };
 
   // at top of UserHomePage.tsx
@@ -159,7 +165,7 @@ const UserHomePage = () => {
 
   // 1) When we get new filters, load the full set
   useEffect(() => {
-    if (!initialFilters || !companyId) return;
+    if (!initialFilters || !effectiveCompanyId) return;
     setActiveCompanyPostSet("filteredPosts");
     setLastFilters(initialFilters);
 
@@ -169,14 +175,17 @@ const UserHomePage = () => {
         dispatch(setFilteredPosts(cached));
       } else {
         const result = await dispatch(
-          fetchFilteredPostsBatch({ filters: initialFilters, companyId }),
+          fetchFilteredPostsBatch({
+            filters: initialFilters,
+            companyId: effectiveCompanyId,
+          }),
         );
         if (fetchFilteredPostsBatch.fulfilled.match(result)) {
           dispatch(setFilteredPosts(result.payload.posts.map(normalizePost)));
         }
       }
     })();
-  }, [initialFilters, dispatch, companyId]);
+  }, [initialFilters, dispatch, effectiveCompanyId]);
 
   const toggleFilterMenu = () => {
     if (isFilterMenuOpen) {
@@ -356,13 +365,14 @@ const UserHomePage = () => {
             />
           </div>
         </div>
-        {postViewerOpen && postIdToView && (
+        {postViewerOpen && (
           <PostViewerModal
-            key={postIdToView} // ✅ here is fine
-            postId={postIdToView}
-            open={postViewerOpen}
-            onClose={() => setPostViewerOpen(false)}
+            postId={postViewerOptions?.postId ?? null}
+            open={Boolean(postViewerOptions?.postId)}
+            onClose={() => setPostViewerOptions(null)}
             currentUserUid={user?.uid}
+            initialOpenComments={postViewerOptions?.openComments ?? false}
+            focusCommentId={postViewerOptions?.focusCommentId ?? null}
           />
         )}
         {/* ✅ Confirmation Modal */}

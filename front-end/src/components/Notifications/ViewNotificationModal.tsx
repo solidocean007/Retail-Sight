@@ -8,15 +8,19 @@ import {
   Button,
   Typography,
 } from "@mui/material";
-import { UserNotificationType } from "../../utils/types";
+import { OpenPostViewerOptions, UserNotificationType } from "../../utils/types";
 import { useNavigate } from "react-router-dom";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import {
+  getNotificationPostId,
+  isCommentNotification,
+} from "./utils/notificationHelpers";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   notification: UserNotificationType | null;
-  openPostViewer?: (postId: string) => void;
+  openPostViewer?: (options: OpenPostViewerOptions) => void;
 }
 
 const ViewNotificationModal: React.FC<Props> = ({
@@ -92,11 +96,29 @@ const ViewNotificationModal: React.FC<Props> = ({
     onClose();
   };
 
-  const handleViewPost = () => {
-    if (notification.postId && openPostViewer) {
-      openPostViewer(notification.postId);
-      onClose();
+  const handleViewPost = async () => {
+    if (!notification || !openPostViewer) return;
+
+    const targetPostId = getNotificationPostId(notification);
+    if (!targetPostId) return;
+
+    try {
+      await trackNotificationClick({
+        notificationId: notification.id,
+        source: "modal",
+      });
+    } catch (err) {
+      console.error("Failed to track notification click", err);
     }
+
+    openPostViewer({
+      postId: targetPostId,
+      focusCommentId: notification.commentId ?? null,
+      openComments: isCommentNotification(notification),
+      source: "notification",
+    });
+
+    onClose();
   };
 
   const truncateLink = (url: string, max = 35) => {
@@ -139,7 +161,7 @@ const ViewNotificationModal: React.FC<Props> = ({
           </Button>
         )}
 
-        {notification.postId && (
+        {getNotificationPostId(notification) && (
           <Button onClick={handleViewPost}>View Post</Button>
         )}
 

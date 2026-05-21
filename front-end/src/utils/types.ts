@@ -50,6 +50,13 @@ export interface SystemNotificationType {
 
 type NotificationDeliveryChannel = "inApp" | "push" | "email" | "sms";
 
+export type OpenPostViewerOptions = {
+  postId: string;
+  focusCommentId?: string | null;
+  openComments?: boolean;
+  source?: "notification" | "feed" | "shared" | "goal";
+};
+
 export interface UserNotificationType {
   id: string;
   systemNotificationId?: string;
@@ -61,6 +68,7 @@ export interface UserNotificationType {
 
   // 🔗 Deep-link targets
   postId?: string;
+  relatedPostId?: string; // ✅ add fallback support
   commentId?: string;
   goalId?: string;
   link?: string;

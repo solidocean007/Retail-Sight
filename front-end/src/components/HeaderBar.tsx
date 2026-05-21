@@ -14,10 +14,11 @@ import {
 } from "../Slices/notificationsSlice";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
+import { OpenPostViewerOptions } from "../utils/types";
 
 type HeaderBarProps = {
   toggleFilterMenu: () => void;
-  openPostViewer?: (postId: string) => void;
+  openPostViewer?: (options: OpenPostViewerOptions) => void;
   onRequestReset?: () => void; // ✅ new
 };
 
@@ -96,18 +97,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       navigate("/notifications"); // 👈 Full-page for mobile
     } else {
       setShowNotificationDropdown(true); // 👈 Coming up next
-    }
-  };
-
-  const handleMenuOptionSelect = (option: string) => {
-    if (option === "filters") {
-      toggleFilterMenu();
-      setTimeout(() => setShowMenuTab(false), 200);
-    } else {
-      if (option === "createPost") handleCreatePostClick();
-      else if (option === "tutorial") handleTutorialClick();
-      else if (option === "dashboard") handleDashboardClick();
-      setShowMenuTab(false);
     }
   };
 
@@ -208,15 +197,14 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 </button>
               </div>
             </div>
-            <div
+            <button
+              type="button"
               className="hamburger-menu-button"
               onClick={handleDashboardClick}
-              aria-haspopup="true"
-              aria-expanded={showMenuTab} // Elements must only use supported ARIA attributes: ARIA attribute is not allowed: aria-expanded="{expression}"
-              // style={{ visibility: showMenuTab ? "hidden" : "visible" }}
+              aria-label="Open dashboard"
             >
               ☰
-            </div>
+            </button>
             <div className="notification-box">
               <IconButton
                 onClick={handleNotificationViewer}
@@ -228,7 +216,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               </IconButton>
 
               {showNotificationDropdown && (
-                <div style={{ position: "relative" }}>
+                <div className="notification-dropdown-anchor">
                   <NotificationDropdown
                     onClose={() => setShowNotificationDropdown(false)}
                     openPostViewer={openPostViewer}

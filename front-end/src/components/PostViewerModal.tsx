@@ -20,10 +20,12 @@ import PostCardRenderer from "./PostCardRenderer";
 import { derivePostImageVariants } from "../utils/PostLogic/derivePostImageVariants";
 
 interface PostViewerModalProps {
-  postId: string;
+  postId: string | null;
   open: boolean;
   onClose: () => void;
-  currentUserUid: string | undefined;
+  currentUserUid?: string;
+  initialOpenComments?: boolean;
+  focusCommentId?: string | null;
 }
 
 const PostViewerModal: React.FC<PostViewerModalProps> = ({
@@ -31,11 +33,13 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
   open,
   onClose,
   currentUserUid,
+  initialOpenComments = false,
+  focusCommentId = null,
 }) => {
   const [post, setPost] = useState<PostWithID | null>(null);
   const [loading, setLoading] = useState(true);
   const cachedPost = useSelector((state: RootState) =>
-    state.posts.posts.find((p) => p.id === postId)
+    state.posts.posts.find((p) => p.id === postId),
   );
 
   const theme = useTheme();
@@ -44,32 +48,38 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
   const imageSet = post ? derivePostImageVariants(post) : null;
 
   useEffect(() => {
+    // if (!postId || typeof postId !== "string") {
+    //   setPost(null);
+    //   setLoading(false);
+    //   return;
+    // }
+    if (!open || !postId) return;
+
     const fetchPost = async () => {
+      setPost(null);
+      setLoading(true);
+
       if (cachedPost) {
-        console.log("using cached post to display modal: ", postId);
         setPost(cachedPost);
         setLoading(false);
-      } else {
-        try {
-          const docRef = doc(db, "posts", postId);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            console.log("fetching post to display modal: ", postId);
-            setPost({ ...(docSnap.data() as PostWithID), id: postId });
-          }
-        } catch (err) {
-          console.error("Error fetching post:", err);
-        } finally {
-          setLoading(false);
+        return;
+      }
+
+      try {
+        const docRef = doc(db, "posts", postId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setPost({ ...(docSnap.data() as PostWithID), id: postId });
         }
+      } catch (err) {
+        console.error("Error fetching post:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (open) {
-      setPost(null);
-      setLoading(true);
-      fetchPost();
-    }
+    fetchPost();
   }, [postId, open, cachedPost]);
 
   return (
@@ -137,7 +147,7 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
             <Box sx={{ p: 4, textAlign: "center" }}>
               <CircularProgress />
             </Box>
-          ) : post && imageSet? (
+          ) : post && imageSet ? (
             <PostCard
               id={post.id}
               post={post}
@@ -145,6 +155,8 @@ const PostViewerModal: React.FC<PostViewerModalProps> = ({
               currentUserUid={currentUserUid}
               style={{}}
               postIdToScroll={post.id}
+              initialOpenComments={initialOpenComments}
+              focusCommentId={focusCommentId}
             />
           ) : (
             <Box p={2}>

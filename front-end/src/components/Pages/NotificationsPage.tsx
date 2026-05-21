@@ -10,8 +10,12 @@ import { useNavigate } from "react-router-dom";
 import ViewNotificationModal from "../Notifications/ViewNotificationModal";
 import { removeNotification } from "../../thunks/notificationsThunks";
 import PostViewerModal from "../PostViewerModal";
-import { UserNotificationType } from "../../utils/types";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { OpenPostViewerOptions, UserNotificationType } from "../../utils/types";
+import {
+  getNotificationPostId,
+  isCommentNotification,
+} from "../Notifications/utils/notificationHelpers";
 
 const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,7 +26,8 @@ const NotificationsPage: React.FC = () => {
   const notifications = useSelector(selectNotifications);
   const [selectedNotif, setSelectedNotif] =
     useState<UserNotificationType | null>(null);
-  const [postIdToView, setPostIdToView] = useState<string | null>(null);
+  const [postViewerOptions, setPostViewerOptions] =
+    useState<OpenPostViewerOptions | null>(null);
   const functions = getFunctions();
   const markReadCallable = httpsCallable(
     functions,
@@ -33,26 +38,9 @@ const NotificationsPage: React.FC = () => {
     "trackNotificationClickCallable",
   );
 
-  if (!currentUser || !appReady) {
+  if (!currentUser) {
     return <div className="page-loading">Loading notifications…</div>;
   }
-
-  console.log("notifications page");
-  //   useEffect(() => {
-  //   // Only redirect if we KNOW notifications have loaded
-  //   if (!currentUser) return;
-
-  //   if (notifications.length === 0) {
-  //     // give hydration time on cold start
-  //     const t = setTimeout(() => {
-  //       if (notifications.length === 0) {
-  //         navigate("/");
-  //       }
-  //     }, 500);
-
-  //     return () => clearTimeout(t);
-  //   }
-  // }, [notifications, currentUser, navigate]);
 
   const handleMarkAllRead = async () => {
     for (const notif of notifications) {
@@ -65,21 +53,31 @@ const NotificationsPage: React.FC = () => {
   };
 
   const handleOpen = async (notif: UserNotificationType) => {
+    const targetPostId = getNotificationPostId(notif);
+
     if (!notif.readAt) {
       await markReadCallable({
         notificationId: notif.id,
       });
     }
 
-    if (notif.postId) {
+    if (targetPostId) {
       await trackNotificationClick({
         notificationId: notif.id,
         source: "modal",
       });
-      setPostIdToView(notif.postId);
-    } else {
-      setSelectedNotif(notif);
+
+      setPostViewerOptions({
+        postId: targetPostId,
+        focusCommentId: notif.commentId ?? null,
+        openComments: isCommentNotification(notif),
+        source: "notification",
+      });
+
+      return;
     }
+
+    setSelectedNotif(notif);
   };
 
   return (
@@ -122,20 +120,19 @@ const NotificationsPage: React.FC = () => {
         </div>
       )}
 
-      {postIdToView && (
-        <PostViewerModal
-          key={postIdToView}
-          postId={postIdToView}
-          open={!!postIdToView}
-          onClose={() => setPostIdToView(null)}
-          currentUserUid={currentUser?.uid}
-        />
-      )}
+      <PostViewerModal
+        postId={postViewerOptions?.postId ?? null}
+        open={Boolean(postViewerOptions?.postId)}
+        onClose={() => setPostViewerOptions(null)}
+        initialOpenComments={postViewerOptions?.openComments ?? false}
+        focusCommentId={postViewerOptions?.focusCommentId ?? null}
+      />
 
       <ViewNotificationModal
         open={!!selectedNotif}
         onClose={() => setSelectedNotif(null)}
         notification={selectedNotif}
+        openPostViewer={setPostViewerOptions}
       />
     </div>
   );

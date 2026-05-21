@@ -1,3 +1,4 @@
+// front-end/src/utils/firebase.ts
 import { initializeApp } from "firebase/app";
 import {
   getAuth,

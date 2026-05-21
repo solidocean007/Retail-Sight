@@ -10,18 +10,6 @@ import {
 } from "firebase/firestore";
 import { app, auth, db } from "../utils/firebase";
 
-// --------------------------------------------
-// CONFIG
-// --------------------------------------------
-const firebaseConfig = {
-  // 'firebaseConfig' is declared but its value is never read. why is it here?
-  apiKey: "AIzaSyDnyLMk-Ng1SoFCKe69rJK_96nURAmNLzE",
-  authDomain: "retail-sight.firebaseapp.com",
-  projectId: "retail-sight",
-  messagingSenderId: "484872165965",
-  appId: "1:484872165965:web:feb232cfe100a4b9105a04",
-};
-
 // IMPORTANT: Your VAPID key from Firebase Console > Cloud Messaging > Web Push Certificate
 const VAPID_KEY =
   "BJiNiXm0teEtgSz77WuMwg9LtT84oOCqQpKTd1B4375arXLaKh__2vT2Mod2ZSSl3vGQoPrCUBgqSnYg6RbbjGc";
@@ -129,8 +117,7 @@ export async function registerFcmToken(): Promise<string | null> {
     // ─────────────────────────────────────────────
     // GET FCM TOKEN
     // ─────────────────────────────────────────────
-    const reg =
-      await navigator.serviceWorker.getRegistration("/service-worker.js");
+    const reg = await navigator.serviceWorker.ready;
 
     if (!reg) {
       console.error("Expected service-worker.js not registered");

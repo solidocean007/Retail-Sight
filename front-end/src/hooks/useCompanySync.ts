@@ -2,19 +2,20 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../utils/firebase";
-import { selectUser } from "../Slices/userSlice";
 import { setCurrentCompany } from "../Slices/currentCompanySlice";
 import { CompanyType } from "../utils/types";
 import { normalizeFirestoreData } from "../utils/normalize";
+import { selectEffectiveCompanyId } from "../Slices/impersonationSlice";
 
 export default function useCompanySync(shouldStartSync = true) {
   const dispatch = useDispatch();
-  const user = useSelector(selectUser);
+
+  const companyId = useSelector(selectEffectiveCompanyId);
 
   useEffect(() => {
-    if (!user?.companyId || !shouldStartSync) return;
+    if (!companyId || !shouldStartSync) return;
 
-    const ref = doc(db, "companies", user.companyId);
+    const ref = doc(db, "companies", companyId);
 
     const unsub = onSnapshot(ref, (snap) => {
       if (!snap.exists()) return;
@@ -23,10 +24,11 @@ export default function useCompanySync(shouldStartSync = true) {
         id: snap.id,
         ...(snap.data() as CompanyType),
       };
+
       const normalizedCompany = normalizeFirestoreData(data);
       dispatch(setCurrentCompany(normalizedCompany));
     });
 
     return () => unsub();
-  }, [dispatch, user?.companyId]);
+  }, [dispatch, companyId, shouldStartSync]);
 }

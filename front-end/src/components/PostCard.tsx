@@ -63,6 +63,8 @@ interface PostCardProps {
   >;
   setIsSearchActive?: React.Dispatch<React.SetStateAction<boolean>>;
   postIdToScroll?: string | null; // New prop to control highlighting
+  initialOpenComments?: boolean;
+  focusCommentId?: string | null;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -77,6 +79,8 @@ const PostCard: React.FC<PostCardProps> = ({
   setActivePostSet,
   setIsSearchActive,
   postIdToScroll = null, // Default to null if not provided
+  initialOpenComments = false,
+  focusCommentId = null,
 }) => {
   // const { small, medium, original } = imageSet;
   const updatedPost = useSelector((state: RootState) =>
@@ -110,6 +114,45 @@ const PostCard: React.FC<PostCardProps> = ({
   const isSharedPost = post.companyId !== user?.companyId;
 
   const canEditPost = (isOwner || isAdmin) && !isSharedPost;
+
+  useEffect(() => {
+    if (!initialOpenComments) return;
+
+    let cancelled = false;
+
+    const openAndLoadComments = async () => {
+      setIsCommentModalOpen(true);
+
+      try {
+        const commentQuery = query(
+          collection(db, "comments"),
+          where("postId", "==", post.id),
+        );
+
+        const commentSnapshot = await getDocs(commentQuery);
+
+        if (cancelled) return;
+
+        const loadedComments: CommentType[] = commentSnapshot.docs.map(
+          (doc) => ({
+            ...(doc.data() as CommentType),
+            commentId: doc.id,
+            likes: doc.data().likes || [],
+          }),
+        );
+
+        setComments(loadedComments);
+      } catch (error) {
+        console.error("Failed to fetch comments from Firestore:", error);
+      }
+    };
+
+    openAndLoadComments();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialOpenComments, focusCommentId, post.id]);
 
   useEffect(() => {
     if (postIdToScroll !== post.id) return;
@@ -206,12 +249,6 @@ const PostCard: React.FC<PostCardProps> = ({
       }
     }
   };
-
-  useEffect(() => {
-    if (comments.length === 0) {
-      setIsCommentModalOpen(false);
-    }
-  }, [comments]);
 
   const handleOnUserNameClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault(); // Call this if you need to prevent the default action
@@ -497,9 +534,7 @@ const PostCard: React.FC<PostCardProps> = ({
                     className="view-comment-button"
                     onClick={openCommentModal}
                   >
-                    {showAllComments
-                      ? "Hide Comments"
-                      : `${commentCount} Comments`}
+                    {commentCount} Comments
                   </button>
                 )}
               </div>
@@ -525,6 +560,7 @@ const PostCard: React.FC<PostCardProps> = ({
         comments={comments}
         onLikeComment={handleLikeComment}
         onDeleteComment={handleDeleteComment}
+        focusCommentId={focusCommentId}
       />
       <ImageModal
         isOpen={isImageModalOpen}

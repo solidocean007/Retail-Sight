@@ -1,4 +1,5 @@
 /* eslint-disable no-undef */
+// front-end/public/service-worker.js
 const IMAGE_CACHE = "dg-image-cache-v3";
 const OFFLINE_CACHE_NAME = "dg-offline-v3";
 const OFFLINE_FALLBACK_PAGE = "/offline.html";

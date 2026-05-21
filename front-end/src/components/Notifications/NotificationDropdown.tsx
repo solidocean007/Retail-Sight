@@ -1,61 +1,83 @@
-// components/Notifications/NotificationDropdown.tsx
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../../utils/store";
-import { selectNotifications } from "../../Slices/notificationsSlice";
-import NotificationItem from "./NotificationItem";
-import "./notifications/notification-dropdown.css";
-import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
-import { removeNotification } from "../../thunks/notificationsThunks";
-import ViewNotificationModal from "./ViewNotificationModal";
-import { UserNotificationType } from "../../utils/types";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
-const NotificationDropdown: React.FC<{
+import { RootState, useAppDispatch } from "../../utils/store";
+import { selectNotifications } from "../../Slices/notificationsSlice";
+import { removeNotification } from "../../thunks/notificationsThunks";
+import { OpenPostViewerOptions, UserNotificationType } from "../../utils/types";
+import { useOutsideAlerter } from "../../utils/useOutsideAlerter";
+
+import NotificationItem from "./NotificationItem";
+import ViewNotificationModal from "./ViewNotificationModal";
+import "./notifications/notification-dropdown.css";
+import {
+  getNotificationPostId,
+  isCommentNotification,
+} from "./utils/notificationHelpers";
+
+interface NotificationDropdownProps {
   onClose: () => void;
-  openPostViewer?: (postId: string) => void;
-}> = ({ onClose, openPostViewer }) => {
+  openPostViewer?: (options: OpenPostViewerOptions) => void;
+}
+
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
+  onClose,
+  openPostViewer,
+}) => {
   const dispatch = useAppDispatch();
   const currentUser = useSelector((s: RootState) => s.user.currentUser);
   const notifications = useSelector(selectNotifications);
-  const functions = getFunctions();
-  const markReadCallable = httpsCallable(
-    functions,
-    "markNotificationReadCallable",
-  );
-  const trackNotificationClick = httpsCallable(
-    functions,
-    "trackNotificationClickCallable",
-  );
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedNotif, setSelectedNotif] =
     useState<UserNotificationType | null>(null);
+
+  const functions = useMemo(() => getFunctions(), []);
+
+  const markReadCallable = useMemo(
+    () => httpsCallable(functions, "markNotificationReadCallable"),
+    [functions],
+  );
+
+  const trackNotificationClick = useMemo(
+    () => httpsCallable(functions, "trackNotificationClickCallable"),
+    [functions],
+  );
 
   useOutsideAlerter(dropdownRef, onClose);
 
   if (!currentUser) return null;
 
   const handleOpen = async (notif: UserNotificationType) => {
-    if (!notif.readAt) {
-      await markReadCallable({
+    const targetPostId = getNotificationPostId(notif);
+
+    try {
+      if (!notif.readAt) {
+        await markReadCallable({ notificationId: notif.id });
+      }
+
+      await trackNotificationClick({
         notificationId: notif.id,
+        source: "dropdown",
       });
+    } catch (err) {
+      console.error("Failed to process notification click:", err);
     }
 
-    if (notif.postId && openPostViewer) {
-      await trackNotificationClick({
-        notificationId: notif.id,
-        source: "dropdown",
+    if (targetPostId && openPostViewer) {
+      openPostViewer({
+        postId: targetPostId,
+        focusCommentId: notif.commentId ?? null,
+        openComments: isCommentNotification(notif),
+        source: "notification",
       });
-      openPostViewer(notif.postId);
-    } else {
-      await trackNotificationClick({
-        notificationId: notif.id,
-        source: "dropdown",
-      });
-      setSelectedNotif(notif);
+
+      onClose();
+      return;
     }
+
+    setSelectedNotif(notif);
   };
 
   return (
@@ -70,17 +92,21 @@ const NotificationDropdown: React.FC<{
       </div>
 
       <div className="dropdown-body">
-        {notifications.slice(0, 5).map((notif) => (
-          <div key={notif.id} className="notification-row">
-            <NotificationItem
-              notification={notif}
-              onOpen={() => handleOpen(notif)}
-              onDelete={() =>
-                dispatch(removeNotification({ notificationId: notif.id }))
-              }
-            />
-          </div>
-        ))}
+        {notifications.length === 0 ? (
+          <div className="notification-empty-state">No notifications yet.</div>
+        ) : (
+          notifications.slice(0, 5).map((notif) => (
+            <div key={notif.id} className="notification-row">
+              <NotificationItem
+                notification={notif}
+                onOpen={() => handleOpen(notif)}
+                onDelete={() =>
+                  dispatch(removeNotification({ notificationId: notif.id }))
+                }
+              />
+            </div>
+          ))
+        )}
       </div>
 
       <ViewNotificationModal

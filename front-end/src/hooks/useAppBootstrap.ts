@@ -1,7 +1,7 @@
 // hooks/useAppBootstrap.ts
 import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { resetStore, RootState, useAppDispatch } from "../utils/store";
+import { clearCompanyScopedState, RootState, useAppDispatch } from "../utils/store";
 import {
   setAppReady,
   setLoadingMessage,
@@ -29,6 +29,7 @@ import { listenForClaimChanges } from "./listenForClaimChanges";
 import { useAccountImportListener } from "./useAccountImportListener";
 import useCompanySync from "./useCompanySync";
 import { useCompanyBrandCatalogSync } from "./useCompanyBrandCatalogSync";
+import { selectEffectiveCompanyId } from "../Slices/impersonationSlice";
 
 /**
  * useAppBootstrap – Option B
@@ -49,7 +50,7 @@ export function useAppBootstrap({
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.user.currentUser);
   // console.log("currentUser role in useAppBootstrap: ", user?.role); // this logs super-admin
-  const companyId = user?.companyId ?? null;
+  const companyId = useSelector(selectEffectiveCompanyId);
   const prevCompanyIdRef = useRef<string | null>(null);
   const { isEnabled } = useCompanyIntegrations(companyId);
   const galloEnabled = isEnabled("galloAxis");
@@ -66,7 +67,7 @@ export function useAppBootstrap({
       (async () => {
         dispatch(setResetting(true)); // ✅ FIRST
         await closeAndDeleteIndexedDB(); // ✅ wipe DB
-        dispatch(resetStore()); // ✅ reset redux
+        dispatch(clearCompanyScopedState());
       })();
     }
 

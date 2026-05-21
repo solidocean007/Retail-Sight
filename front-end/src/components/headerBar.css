@@ -14,6 +14,22 @@
   /* margin-bottom: 20px; */
 }
 
+.notification-dropdown-anchor {
+  position: relative;
+}
+
+.hamburger-menu-button {
+  display: flex;
+  cursor: pointer;
+  z-index: 5;
+  font-size: 30px;
+  color: var(--button-text-color);
+  margin-right: 0.5rem;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
 .header-brand-logo {
   height: 50px;
   width: auto;
@@ -72,7 +88,7 @@
   z-index: 5;
   font-size: 30px;
   color: var(--button-text-color);
-  margin-right: .5rem;
+  margin-right: 0.5rem;
 }
 
 .notification-box {
@@ -132,8 +148,8 @@
 }
 
 .danger-button {
- padding: 5px 5px;
- width: 200px;
+  padding: 5px 5px;
+  width: 200px;
 }
 
 .company-name-app-state {
@@ -158,8 +174,6 @@
 .company-name-app-state p {
   margin: 0px;
 }
-
-
 
 /* Responsive Breakpoints */
 
