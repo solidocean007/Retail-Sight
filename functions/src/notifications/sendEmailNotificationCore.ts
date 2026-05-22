@@ -13,6 +13,19 @@ type SendEmailNotificationInput = {
 };
 
 /**
+ * Escapes HTML characters in a string.
+ * @param value - The string to escape.
+ * @returns The escaped string.
+ */
+function escapeHtml(value: string) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("'", "&#039;");
+}
+
+/**
  * sendEmailNotificationCore
  *
  * Enqueues transactional email notifications for a set of users.
@@ -60,14 +73,14 @@ export async function sendEmailNotificationCore(
       encodeURIComponent(uid);
 
     const html = `
-      <h2>${title}</h2>
-      <p>${message}</p>
-      ${
-        link
-          ? `<p><a href="${trackingUrl}" target="_blank">View Message</a></p>`
-          : ""
-      }
-    `;
+  <h2>${escapeHtml(title)}</h2>
+  <p>${escapeHtml(message)}</p>
+  ${
+    link
+      ? `<p><a href="${trackingUrl}" target="_blank">View Display</a></p>`
+      : ""
+  }
+`;
 
     writes.push(
       db.collection("mail").add({

@@ -24,6 +24,9 @@ export interface UserNotificationSettings {
   goalAssignmentPush: boolean;
   supervisorDisplayAlerts: boolean;
   developerAnnouncements: boolean;
+  emailComments?: boolean;
+  emailGoalAssignments?: boolean;
+  emailWeeklySummary?: boolean;
 
   // optional future expansion
   quietHours?: {
@@ -40,6 +43,10 @@ export const defaultNotificationSettings: UserNotificationSettings = {
   goalAssignmentPush: true,
   supervisorDisplayAlerts: true,
   developerAnnouncements: true,
+
+  emailComments: true,
+  emailGoalAssignments: true,
+  emailWeeklySummary: false,
 };
 
 // --------------------------------------------------
@@ -47,7 +54,7 @@ export const defaultNotificationSettings: UserNotificationSettings = {
 // --------------------------------------------------
 export function useUserNotificationSettings() {
   const [settings, setSettings] = useState<UserNotificationSettings | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
 
@@ -68,7 +75,7 @@ export function useUserNotificationSettings() {
           ...defaultNotificationSettings,
           createdAt: serverTimestamp(),
         },
-        { merge: true }
+        { merge: true },
       );
 
       setSettings(defaultNotificationSettings);
@@ -86,6 +93,9 @@ export function useUserNotificationSettings() {
     "goalAssignmentPush",
     "supervisorDisplayAlerts",
     "developerAnnouncements",
+    "emailComments",
+    "emailGoalAssignments",
+    "emailWeeklySummary",
   ];
 
   const updateSetting = useCallback(
@@ -100,7 +110,7 @@ export function useUserNotificationSettings() {
 
       setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
     },
-    []
+    [],
   );
 
   useEffect(() => {

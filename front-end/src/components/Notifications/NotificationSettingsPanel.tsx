@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useUserNotificationSettings } from "../../hooks/useUserNotificationSettings";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../Slices/userSlice";
 
 import Switch from "@mui/material/Switch";
-import IconButton from "@mui/material/IconButton";
+// import IconButton from "@mui/material/IconButton";
 
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import ChatBubbleIcon from "@mui/icons-material/ChatBubble";
@@ -15,50 +15,55 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
 import {
   registerFcmToken,
-  hasExistingFcmToken,
-  hasTokenForThisDevice,
+  // hasExistingFcmToken,
+  // hasTokenForThisDevice,
 } from "../../firebase/messaging";
 import "./notificationSettingsPanel.css";
+import { useNotificationHealth } from "../../hooks/useNotificationHealth";
 
 const NotificationSettingsPanel = () => {
   const { settings, loading, updateSetting } = useUserNotificationSettings();
   const user = useSelector(selectUser);
 
-  const [tokenStatus, setTokenStatus] = useState<"none" | "ok" | "error">(
-    "none",
-  );
+  const {
+    permission,
+    tokenStatus,
+    notificationsBlocked,
+    notificationsUnset,
+    notificationsUnsupported,
+    refreshHealth,
+  } = useNotificationHealth(user?.uid);
 
   // Check status without generating a token
-  useEffect(() => {
-    const check = async () => {
-      try {
-        if (user) {
-          const exists = await hasTokenForThisDevice(user.uid);
+  // useEffect(() => {
+  //   const check = async () => {
+  //     try {
+  //       if (user) {
+  //         const exists = await hasTokenForThisDevice(user.uid);
 
-          setTokenStatus(exists ? "ok" : "none");
-        }
-      } catch {
-        setTokenStatus("error");
-      }
-    };
+  //         setTokenStatus(exists ? "ok" : "none");
+  //       }
+  //     } catch {
+  //       setTokenStatus("error");
+  //     }
+  //   };
 
-    check();
-  }, [user]);
+  //   check();
+  // }, [user]);
 
   const enablePush = async () => {
-    // 1. Ask user’s permission
     const perm = await Notification.requestPermission();
+
     if (perm !== "granted") {
-      setTokenStatus("none");
+      await refreshHealth();
       return;
     }
 
-    // 2. Only now try to register token
     try {
-      const token = await registerFcmToken();
-      setTokenStatus(token ? "ok" : "none");
+      await registerFcmToken();
+      await refreshHealth();
     } catch {
-      setTokenStatus("error");
+      await refreshHealth();
     }
   };
 
@@ -76,17 +81,40 @@ const NotificationSettingsPanel = () => {
           <strong>Push Notifications:</strong>
           <div className={`push-status-text ${tokenStatus}`}>
             {tokenStatus === "ok" && "Enabled on this device"}
-            {tokenStatus === "none" && "Not enabled"}
-            {tokenStatus === "error" && "Could not register"}
+            {tokenStatus === "none" &&
+              permission === "granted" &&
+              "Permission granted, but this device needs to be registered again"}
+            {tokenStatus === "none" &&
+              notificationsUnset &&
+              "Not enabled on this device"}
+            {notificationsBlocked && "Blocked in browser/device settings"}
+            {notificationsUnsupported &&
+              "Not supported on this device or browser"}
+            {tokenStatus === "error" && "Could not verify this device"}
           </div>
         </div>
 
-        {tokenStatus !== "ok" && (
-          <button className="push-enable-btn" onClick={enablePush}>
-            Enable
-          </button>
+        {tokenStatus !== "ok" &&
+          !notificationsBlocked &&
+          !notificationsUnsupported && (
+            <button className="push-enable-btn" onClick={enablePush}>
+              Enable
+            </button>
+          )}
+        {tokenStatus === "unknown" && "Checking this device..."}
+        {notificationsBlocked && (
+          <p className="push-help-text">
+            Enable notifications in your browser or device settings, then return
+            here.
+          </p>
         )}
       </div>
+
+      <p className="push-help-text">
+        Push notifications depend on your device and browser. On iPhone, you may
+        need to add Displaygram to your Home Screen before enabling push
+        notifications.
+      </p>
 
       {/* Posts */}
       <h3 className="notif-settings-section">Posts</h3>
@@ -120,6 +148,27 @@ const NotificationSettingsPanel = () => {
         label="Goal Assignment Notifications"
         value={settings.goalAssignmentPush}
         onChange={(v) => updateSetting("goalAssignmentPush", v)}
+      />
+
+      <h3 className="notif-settings-section">Email</h3>
+
+      <p className="notif-section-helper">
+        Email notifications help you stay updated even when push notifications
+        are not available on this device.
+      </p>
+
+      <SettingSwitch
+        icon={<ChatBubbleIcon className="notif-icon" />}
+        label="Email me when someone comments on my displays"
+        value={settings.emailComments ?? true}
+        onChange={(v) => updateSetting("emailComments", v)}
+      />
+
+      <SettingSwitch
+        icon={<FlagIcon className="notif-icon" />}
+        label="Email me when I’m assigned a goal"
+        value={settings.emailGoalAssignments ?? true}
+        onChange={(v) => updateSetting("emailGoalAssignments", v)}
       />
 
       {/* Supervisor */}
