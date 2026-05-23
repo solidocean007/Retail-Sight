@@ -106,18 +106,30 @@ export const onConnectionNotifications = onDocumentUpdated(
       const accepted = afterShared.filter((b) => !beforeShared.includes(b));
 
       if (accepted.length > 0) {
-        const emails = await getAdminEmails(fromCompanyId);
+        const [fromEmails, toEmails] = await Promise.all([
+          getAdminEmails(fromCompanyId),
+          getAdminEmails(toCompanyId),
+        ]);
+
+        const emails = Array.from(new Set([...fromEmails, ...toEmails]));
 
         await queueEmail(
           emails,
-          `${toCompanyName} accepted shared brands`,
+          `${fromCompanyName} and ${toCompanyName} now share brands on Displaygram`,
           `
-          <h2>Brand Proposal Accepted</h2>
-          <p><strong>${toCompanyName}</strong> accepted:</p>
-          <ul>
-            ${accepted.map((b) => `<li>${b}</li>`).join("")}
-          </ul>
-        `
+      <h2>New Shared Brand Connection</h2>
+      <p>
+        <strong>${fromCompanyName}</strong> and 
+        <strong>${toCompanyName}</strong> are now connected for:
+      </p>
+      <ul>
+        ${accepted.map((b) => `<li>${b}</li>`).join("")}
+      </ul>
+      <p>
+        Relevant display posts for these brands can now appear in the supplier shared feed.
+      </p>
+      <p>Log in to Displaygram to view shared activity.</p>
+    `
         );
       }
 
