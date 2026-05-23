@@ -34,22 +34,13 @@ const NotificationSettingsPanel = () => {
     refreshHealth,
   } = useNotificationHealth(user?.uid);
 
-  // Check status without generating a token
-  // useEffect(() => {
-  //   const check = async () => {
-  //     try {
-  //       if (user) {
-  //         const exists = await hasTokenForThisDevice(user.uid);
+  const pushFullyEnabled = permission === "granted" && tokenStatus === "ok";
 
-  //         setTokenStatus(exists ? "ok" : "none");
-  //       }
-  //     } catch {
-  //       setTokenStatus("error");
-  //     }
-  //   };
-
-  //   check();
-  // }, [user]);
+  const pushStatusClass = pushFullyEnabled
+    ? "ok"
+    : notificationsBlocked || tokenStatus === "error"
+      ? "error"
+      : "none";
 
   const enablePush = async () => {
     const perm = await Notification.requestPermission();
@@ -79,29 +70,36 @@ const NotificationSettingsPanel = () => {
 
         <div className="push-status-content">
           <strong>Push Notifications:</strong>
-          <div className={`push-status-text ${tokenStatus}`}>
-            {tokenStatus === "ok" && "Enabled on this device"}
-            {tokenStatus === "none" &&
-              permission === "granted" &&
-              "Permission granted, but this device needs to be registered again"}
-            {tokenStatus === "none" &&
-              notificationsUnset &&
-              "Not enabled on this device"}
+          <div className={`push-status-text ${pushStatusClass}`}>
+            {tokenStatus === "unknown" && "Checking this device..."}
+
+            {pushFullyEnabled && "Enabled on this device"}
+
+            {permission === "default" && "Not enabled on this browser/device"}
+
             {notificationsBlocked && "Blocked in browser/device settings"}
+
             {notificationsUnsupported &&
               "Not supported on this device or browser"}
-            {tokenStatus === "error" && "Could not verify this device"}
+
+            {permission === "granted" &&
+              tokenStatus === "none" &&
+              "Permission granted, but this device needs to be registered again"}
+
+            {permission === "granted" &&
+              tokenStatus === "error" &&
+              "Could not verify this device"}
           </div>
         </div>
 
-        {tokenStatus !== "ok" &&
+        {tokenStatus !== "unknown" &&
+          !pushFullyEnabled &&
           !notificationsBlocked &&
           !notificationsUnsupported && (
             <button className="push-enable-btn" onClick={enablePush}>
               Enable
             </button>
           )}
-        {tokenStatus === "unknown" && "Checking this device..."}
         {notificationsBlocked && (
           <p className="push-help-text">
             Enable notifications in your browser or device settings, then return
