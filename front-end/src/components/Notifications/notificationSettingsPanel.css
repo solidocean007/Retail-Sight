@@ -118,3 +118,14 @@
   background: #145fa8;
 }
 
+.push-help-text,
+.notif-section-helper {
+  margin: 0.35rem 0 1rem;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--text-muted, #777);
+}
+
+.push-help-text {
+  flex-basis: 100%;
+}

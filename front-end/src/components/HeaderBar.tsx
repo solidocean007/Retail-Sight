@@ -14,7 +14,7 @@ import {
 } from "../Slices/notificationsSlice";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
-import { OpenPostViewerOptions } from "../utils/types";
+import { useNotificationHealth } from "../hooks/useNotificationHealth";
 
 type HeaderBarProps = {
   toggleFilterMenu: () => void;
@@ -36,9 +36,9 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const notifications = useSelector(selectNotifications);
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
-  // const currentCompany = useSelector(
-  //   (state: RootState) => state.currentCompany.data?.companyName,
-  // );
+  const currentCompany = useSelector(
+    (state: RootState) => state.currentCompany.data?.companyName,
+  );
   const { currentUser } = useSelector((state: RootState) => state.user);
   const [showMenuTab, setShowMenuTab] = useState(false);
   const unreadNotifications = useSelector(selectUnreadNotifications);
@@ -47,6 +47,61 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const protectedAction = useProtectedAction();
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isMobileLogo, setIsMobileLogo] = useState(false);
+
+  const {
+    permission,
+    tokenStatus,
+    notificationsNeedAttention,
+    notificationsBlocked,
+    notificationsUnset,
+    notificationsUnsupported,
+    missingDeviceToken,
+  } = useNotificationHealth(currentUser?.uid);
+
+  const shouldShowNotificationWarning =
+    !!currentUser && notificationsNeedAttention;
+
+  useEffect(() => {
+    console.log("[HeaderBar notification health]", {
+      uid: currentUser?.uid,
+      permission,
+      tokenStatus,
+      notificationsNeedAttention,
+      notificationsBlocked,
+      notificationsUnset,
+      notificationsUnsupported,
+      missingDeviceToken,
+    });
+  }, [
+    currentUser?.uid,
+    permission,
+    tokenStatus,
+    notificationsNeedAttention,
+    notificationsBlocked,
+    notificationsUnset,
+    notificationsUnsupported,
+    missingDeviceToken,
+  ]);
+
+  const getNotificationWarningMessage = () => {
+    if (notificationsBlocked) {
+      return "Notifications are blocked on this device. Open notification settings to fix them.";
+    }
+
+    if (notificationsUnset) {
+      return "Notifications are not enabled on this device.";
+    }
+
+    if (notificationsUnsupported) {
+      return "Notifications are not supported on this device or browser.";
+    }
+
+    if (missingDeviceToken) {
+      return "Notifications need to be re-enabled on this device.";
+    }
+
+    return "Notifications need attention.";
+  };
 
   /* --------------------------------------
      Detect small screens for logo swap
@@ -88,15 +143,32 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     });
   };
 
+  const goToNotificationSettings = () => {
+    sessionStorage.setItem("dashboardMode", "NotificationsMode");
+
+    if (currentUser?.role === "developer") {
+      navigate("/developer-dashboard");
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
   const handleNotificationViewer = () => {
+    if (shouldShowNotificationWarning) {
+      dispatch(showMessage(getNotificationWarningMessage()));
+      goToNotificationSettings();
+      return;
+    }
+
     if (notifications.length === 0) {
       dispatch(showMessage("No notifications right now."));
       return;
     }
+
     if (window.innerWidth < 768) {
-      navigate("/notifications"); // 👈 Full-page for mobile
+      navigate("/notifications");
     } else {
-      setShowNotificationDropdown(true); // 👈 Coming up next
+      setShowNotificationDropdown(true);
     }
   };
 
@@ -206,14 +278,36 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
               ☰
             </button>
             <div className="notification-box">
-              <IconButton
-                onClick={handleNotificationViewer}
-                sx={mobile ? { padding: "4px" } : {}}
+              <Tooltip
+                title={
+                  shouldShowNotificationWarning
+                    ? notificationsBlocked
+                      ? "Notifications are blocked on this device"
+                      : "Enable notifications on this device"
+                    : unreadCount > 0
+                      ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
+                      : "Notifications"
+                }
               >
-                <Badge badgeContent={unreadCount} color="secondary">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
+                <IconButton
+                  onClick={handleNotificationViewer}
+                  sx={mobile ? { padding: "4px" } : {}}
+                >
+                  <Badge
+                    badgeContent={
+                      shouldShowNotificationWarning ? "!" : unreadCount
+                    }
+                    color={
+                      shouldShowNotificationWarning ? "warning" : "secondary"
+                    }
+                    invisible={
+                      !shouldShowNotificationWarning && unreadCount === 0
+                    }
+                  >
+                    <NotificationsIcon />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
 
               {showNotificationDropdown && (
                 <div className="notification-dropdown-anchor">

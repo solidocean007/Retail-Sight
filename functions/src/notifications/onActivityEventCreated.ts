@@ -1,7 +1,50 @@
 import * as admin from "firebase-admin";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { sendEmailNotificationCore } from "./sendEmailNotificationCore";
 
 if (!admin.apps.length) admin.initializeApp();
+
+const APP_ORIGIN = "https://displaygram.com";
+
+type ActivityEventType =
+  | "post.like"
+  | "post.comment"
+  | "post.commentLike"
+  | "post.mention"
+  | "goal.assignment";
+
+const db = admin.firestore();
+
+/**
+ * Returns users whose email notification setting is enabled.
+ *
+ * Defaults to enabled when the setting is missing so older users
+ * receive important notification emails unless they opt out.
+ */
+async function getUsersWithEmailSettingEnabled(
+  userIds: string[],
+  settingKey: "emailComments" | "emailGoalAssignments"
+): Promise<string[]> {
+  const enabledUserIds: string[] = [];
+
+  for (const uid of userIds) {
+    const settingsSnap = await db
+      .doc(`users/${uid}/notificationSettings/settings`)
+      .get();
+
+    const settings = settingsSnap.exists ? settingsSnap.data() : null;
+
+    // Enabled by default:
+    // undefined => enabled
+    // true => enabled
+    // false => disabled
+    if (settings?.[settingKey] !== false) {
+      enabledUserIds.push(uid);
+    }
+  }
+
+  return enabledUserIds;
+}
 
 export const onActivityEventCreated = onDocumentCreated(
   "activityEvents/{eventId}",
@@ -16,51 +59,67 @@ export const onActivityEventCreated = onDocumentCreated(
       actorUserId,
       actorName,
       targetUserIds = [],
-    } = data;
+    } = data as {
+      type: ActivityEventType;
+      postId?: string;
+      commentId?: string;
+      actorUserId?: string;
+      actorName?: string;
+      targetUserIds?: string[];
+      commentText?: string;
+      goalDescription?: string;
+      goalTitle?: string;
+    };
+
+    const cleanedTargetUserIds = targetUserIds.filter(
+      (uid) => uid && uid !== actorUserId
+    );
+
+    if (cleanedTargetUserIds.length === 0) {
+      console.warn("ActivityEvent has no valid recipients:", data);
+      return;
+    }
 
     if (!Array.isArray(targetUserIds) || targetUserIds.length === 0) {
       console.warn("ActivityEvent missing targetUserIds[]:", data);
       return;
     }
 
-    const db = admin.firestore();
+    const safeActorName = actorName || "Someone";
 
-    // -----------------------------
-    // Build notification content
-    // -----------------------------
     let title = "";
     let message = "";
 
     switch (type) {
       case "post.like":
-        title = `${actorName} liked your post`;
+        title = `${safeActorName} liked your post`;
         message = "Tap to view the post.";
         break;
 
       case "post.comment":
-        title = `${actorName} commented on your post`;
+        title = `${safeActorName} commented on your post`;
         message = data.commentText
-          ? data.commentText.slice(0, 120)
+          ? String(data.commentText).slice(0, 120)
           : "Tap to view the comment.";
         break;
 
       case "post.commentLike":
-        title = `${actorName} liked your comment`;
+        title = `${safeActorName} liked your comment`;
         message = data.commentText
-          ? data.commentText.slice(0, 120)
+          ? String(data.commentText).slice(0, 120)
           : "Tap to view the comment.";
         break;
 
       case "post.mention":
-        title = `${actorName} mentioned you`;
+        title = `${safeActorName} mentioned you`;
         message = data.goalDescription
-          ? data.goalDescription.slice(0, 120)
+          ? String(data.goalDescription).slice(0, 120)
           : "You were mentioned.";
         break;
 
       case "goal.assignment":
         title = "New Goal Assigned";
-        message = `${actorName} assigned you a goal: ${data.goalTitle}`;
+        message = `${safeActorName} assigned you a goal: ${data.goalTitle}`;
         break;
 
       default:
@@ -68,10 +127,16 @@ export const onActivityEventCreated = onDocumentCreated(
         return;
     }
 
+    const link = postId
+      ? `${APP_ORIGIN}/p/${postId}`
+      : `${APP_ORIGIN}/notifications`;
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
     // -----------------------------
-    // Fan out per user (idempotent)
+    // Fan out in-app notifications
     // -----------------------------
-    const writes = targetUserIds.map((uid: string) => {
+    const writes = cleanedTargetUserIds.map((uid: string) => {
       const notificationId = `${event.id}_${uid}`;
       const ref = db.doc(`users/${uid}/notifications/${notificationId}`);
 
@@ -83,20 +148,21 @@ export const onActivityEventCreated = onDocumentCreated(
           title,
           message,
 
-          type, // activity type (post.like, etc.)
-          intent: "activity", // ✅ REQUIRED
-          priority: "normal", // delivery quality only
+          type,
+          intent: "activity",
+          priority: "normal",
 
           postId: postId || null,
           commentId: commentId || null,
+          link,
 
-          actorUserId,
-          actorName,
+          actorUserId: actorUserId || null,
+          actorName: safeActorName,
 
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: now,
 
           deliveredVia: {
-            inApp: admin.firestore.FieldValue.serverTimestamp(),
+            inApp: now,
           },
         },
         { merge: false }
@@ -104,5 +170,44 @@ export const onActivityEventCreated = onDocumentCreated(
     });
 
     await Promise.all(writes);
+
+    // -----------------------------
+    // Email delivery for comments
+    // -----------------------------
+    if (type === "post.comment") {
+      const emailRecipients = await getUsersWithEmailSettingEnabled(
+        cleanedTargetUserIds,
+        "emailComments"
+      );
+
+      if (emailRecipients.length > 0) {
+        const link = postId
+          ? `${APP_ORIGIN}/p/${postId}`
+          : `${APP_ORIGIN}/notifications`;
+
+        await sendEmailNotificationCore({
+          title,
+          message,
+          link,
+          notificationId: event.id,
+          recipientUserIds: emailRecipients,
+        });
+
+        await Promise.all(
+          emailRecipients.map((uid) => {
+            const notificationId = `${event.id}_${uid}`;
+
+            return db.doc(`users/${uid}/notifications/${notificationId}`).set(
+              {
+                deliveredVia: {
+                  email: admin.firestore.FieldValue.serverTimestamp(),
+                },
+              },
+              { merge: true }
+            );
+          })
+        );
+      }
+    }
   }
 );
