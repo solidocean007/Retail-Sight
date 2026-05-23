@@ -15,6 +15,7 @@ import {
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
 import { useNotificationHealth } from "../hooks/useNotificationHealth";
+import { OpenPostViewerOptions } from "../utils/types";
 
 type HeaderBarProps = {
   toggleFilterMenu: () => void;
@@ -36,9 +37,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const notifications = useSelector(selectNotifications);
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
-  const currentCompany = useSelector(
-    (state: RootState) => state.currentCompany.data?.companyName,
-  );
   const { currentUser } = useSelector((state: RootState) => state.user);
   const [showMenuTab, setShowMenuTab] = useState(false);
   const unreadNotifications = useSelector(selectUnreadNotifications);
@@ -122,35 +120,20 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const handleTutorialClick = () =>
     protectedAction(() => navigate("/tutorial"));
 
-  const handleDashboardClick = () => {
-    protectedAction(() => {
-      if (isImpersonating) {
-        navigate("/dashboard");
-        return;
-      }
-
-      if (currentUser?.role === "developer") {
-        navigate("/developer-dashboard");
-        return;
-      }
-
-      if (currentUser) {
-        navigate("/dashboard");
-        return;
-      }
-
-      dispatch(showMessage("Not Logged in."));
-    });
-  };
-
   const goToNotificationSettings = () => {
     sessionStorage.setItem("dashboardMode", "NotificationsMode");
 
+    if (isImpersonating) {
+      navigate("/dashboard");
+      return;
+    }
+
     if (currentUser?.role === "developer") {
       navigate("/developer-dashboard");
-    } else {
-      navigate("/dashboard");
+      return;
     }
+
+    navigate("/dashboard");
   };
 
   const handleNotificationViewer = () => {
@@ -197,6 +180,27 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const currentCompany = isImpersonating
     ? `👁 ${impersonatedCompany?.companyName || impersonatedCompanyId}`
     : realCompanyName;
+
+  const handleDashboardClick = () => {
+    protectedAction(() => {
+      if (isImpersonating) {
+        navigate("/dashboard");
+        return;
+      }
+
+      if (currentUser?.role === "developer") {
+        navigate("/developer-dashboard");
+        return;
+      }
+
+      if (currentUser) {
+        navigate("/dashboard");
+        return;
+      }
+
+      dispatch(showMessage("Not Logged in."));
+    });
+  };
 
   return (
     <>
@@ -283,7 +287,11 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                   shouldShowNotificationWarning
                     ? notificationsBlocked
                       ? "Notifications are blocked on this device"
-                      : "Enable notifications on this device"
+                      : notificationsUnsupported
+                        ? "Notifications are not supported on this device"
+                        : missingDeviceToken
+                          ? "Notifications need to be re-enabled on this device"
+                          : "Enable notifications on this device"
                     : unreadCount > 0
                       ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
                       : "Notifications"

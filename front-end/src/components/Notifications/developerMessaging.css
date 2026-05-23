@@ -1,0 +1,55 @@
+/* developerMessaging.css */
+.developer-messaging-page {
+  width: 100%;
+  padding: 1rem;
+  color: var(--text-color);
+}
+
+.developer-messaging-header {
+  margin-bottom: 1rem;
+}
+
+.developer-messaging-header h1 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.developer-messaging-header p {
+  margin: 0;
+  color: var(--text-muted, #666);
+  line-height: 1.4;
+}
+
+.developer-messaging-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.developer-messaging-card {
+  background: var(--dashboard-card);
+  border-radius: var(--card-radius, 12px);
+  box-shadow: var(--card-shadow);
+  padding: 1rem;
+  min-width: 0;
+}
+
+.developer-messaging-card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+@media (max-width: 900px) {
+  .developer-messaging-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .developer-messaging-page {
+    padding: 0.75rem;
+  }
+
+  .developer-messaging-card {
+    padding: 0.85rem;
+  }
+}

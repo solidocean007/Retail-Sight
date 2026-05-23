@@ -9,6 +9,7 @@ import {
   Typography,
   Stack,
   Chip,
+  useMediaQuery,
 } from "@mui/material";
 import { CompanyWithUsersAndId, UserType } from "../../utils/types";
 
@@ -44,9 +45,10 @@ const DeveloperNotificationPreviewModal: React.FC<Props> = ({
   sendEmail,
   allCompaniesAndUsers,
 }) => {
+  const fullScreen = useMediaQuery("(max-width:600px)");
+
   const resolveRecipients = () => {
     const results: { company: string; users: UserType[] }[] = [];
-
     allCompaniesAndUsers.forEach((company) => {
       if (
         recipientCompanyIds.length &&
@@ -87,7 +89,13 @@ const DeveloperNotificationPreviewModal: React.FC<Props> = ({
     : "Send immediately";
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      fullScreen={fullScreen}
+    >
       <DialogTitle>🔍 Preview Notification</DialogTitle>
 
       <DialogContent dividers>
@@ -108,7 +116,7 @@ const DeveloperNotificationPreviewModal: React.FC<Props> = ({
         </Typography>
 
         {/* Channels */}
-        <Stack direction="row" spacing={1} mb={2}>
+        <Stack direction="row" spacing={1} mb={2} flexWrap="wrap" useFlexGap>
           <Chip label="In-App" />
           {sendEmail && <Chip label="Email" />}
           {scheduledAt && <Chip color="info" label="Scheduled" />}

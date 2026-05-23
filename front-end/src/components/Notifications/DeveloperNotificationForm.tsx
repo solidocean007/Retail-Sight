@@ -187,6 +187,7 @@ const DeveloperNotificationForm = ({
       <TextField
         label="Title"
         fullWidth
+        size="small"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         sx={{ mb: 1 }}
@@ -202,6 +203,7 @@ const DeveloperNotificationForm = ({
         label="Message"
         fullWidth
         multiline
+        size="small"
         rows={3}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -217,6 +219,7 @@ const DeveloperNotificationForm = ({
       <TextField
         label="Optional Link URL"
         fullWidth
+        size="small"
         value={tutorialUrl}
         onChange={(e) => setTutorialUrl(e.target.value)}
         sx={{ mb: 1 }}
@@ -224,6 +227,10 @@ const DeveloperNotificationForm = ({
       />
 
       {/* Audience */}
+      <p className="dev-form-helper">
+        Choose at least one company, role, or specific user. Selecting a company
+        limits the user picker to that company.
+      </p>
       <NotificationAudienceBuilder
         companies={allCompaniesAndUsers}
         selectedCompanies={audienceCompanies}
@@ -235,7 +242,7 @@ const DeveloperNotificationForm = ({
       />
 
       {/* Delivery options */}
-      <Stack direction="row" spacing={2} sx={{ my: 1 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ my: 1 }}>
         <FormControlLabel
           control={
             <Checkbox
@@ -302,7 +309,11 @@ const DeveloperNotificationForm = ({
         disabled={!title || !message}
         onClick={handleSubmit}
       >
-        Send Message
+        {dryRun
+          ? "Preview Message"
+          : isScheduled
+            ? "Schedule Message"
+            : "Send Message"}
       </Button>
       <DeveloperNotificationPreviewModal
         open={previewOpen}

@@ -42,20 +42,18 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
 
   const resendSystemNotification = httpsCallable(
     functions,
-    "resendSystemNotification"
+    "resendSystemNotification",
   );
   const deleteSystemNotification = httpsCallable(
     functions,
-    "deleteSystemNotification"
+    "deleteSystemNotification",
   );
 
   const { items, loading, error } = useSelector(
-    (state: RootState) => state.developerNotifications
+    (state: RootState) => state.developerNotifications,
   );
 
-  const currentUser = useSelector(
-    (state: RootState) => state.user.currentUser
-  );
+  const currentUser = useSelector((state: RootState) => state.user.currentUser);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [analyticsId, setAnalyticsId] = useState<string | null>(null);
@@ -74,9 +72,7 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
   // ---------------------------------------
   const filteredNotifications = useMemo(() => {
     const lower = searchTerm.toLowerCase();
-    return items.filter((n) =>
-      (n.title ?? "").toLowerCase().includes(lower)
-    );
+    return items.filter((n) => (n.title ?? "").toLowerCase().includes(lower));
   }, [items, searchTerm]);
 
   // ---------------------------------------
@@ -89,7 +85,7 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
           markDeveloperNotificationResent({
             id: notif.id,
             sentAt: new Date().toISOString(),
-          })
+          }),
         );
 
         await resendSystemNotification({
@@ -101,7 +97,7 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
         dispatch(fetchDeveloperNotifications());
       }
     },
-    [dispatch, resendSystemNotification]
+    [dispatch, resendSystemNotification],
   );
 
   // ---------------------------------------
@@ -111,7 +107,7 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
     async (notif: DeveloperNotificationType, status: string) => {
       if (status === "scheduled") {
         const ok = window.confirm(
-          "This notification is scheduled but not yet sent. Delete it?"
+          "This notification is scheduled but not yet sent. Delete it?",
         );
         if (!ok) return;
       }
@@ -127,7 +123,7 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
         dispatch(fetchDeveloperNotifications());
       }
     },
-    [dispatch, deleteSystemNotification]
+    [dispatch, deleteSystemNotification],
   );
 
   // ---------------------------------------
@@ -161,8 +157,8 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
         />
       </div>
 
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
-        <Table>
+      <TableContainer component={Paper} sx={{ mt: 2, overflowX: "auto" }}>
+        <Table sx={{ minWidth: 760 }}>
           <TableHead>
             <TableRow>
               <TableCell>Title</TableCell>
@@ -193,12 +189,10 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
                           notif.recipientUserIds.length !== 1 ? "s" : ""
                         }`
                       : notif.recipientCompanyIds?.length
-                      ? `${notif.recipientCompanyIds.length} Compan${
-                          notif.recipientCompanyIds.length !== 1
-                            ? "ies"
-                            : "y"
-                        }`
-                      : "All Companies"}
+                        ? `${notif.recipientCompanyIds.length} Compan${
+                            notif.recipientCompanyIds.length !== 1 ? "ies" : "y"
+                          }`
+                        : "All Companies"}
                   </TableCell>
 
                   <TableCell>{notif.priority ?? "Normal"}</TableCell>
@@ -210,15 +204,15 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
                         status === "sent"
                           ? "Sent"
                           : status === "scheduled"
-                          ? "Scheduled"
-                          : "Draft"
+                            ? "Scheduled"
+                            : "Draft"
                       }
                       color={
                         status === "sent"
                           ? "success"
                           : status === "scheduled"
-                          ? "warning"
-                          : "default"
+                            ? "warning"
+                            : "default"
                       }
                     />
                   </TableCell>
@@ -241,8 +235,8 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
                   </TableCell>
 
                   {/* ACTIONS */}
-                  <TableCell>
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                  <TableCell className="dev-notification-actions-cell">
+                    <div className="dev-notification-actions">
                       <Button
                         size="small"
                         variant="outlined"
@@ -263,12 +257,12 @@ const DeveloperNotificationsTable: React.FC<Props> = ({
                       <Button
                         size="small"
                         color="error"
-                        variant="contained"
+                        variant="outlined"
                         onClick={() => handleDelete(notif, status)}
                       >
                         Delete
                       </Button>
-                    </Box>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

@@ -80,6 +80,7 @@ export const createDeveloperNotification = onCall(
       recipientCompanyIds: normalizedInput.recipientCompanyIds?.includes("all")
         ? []
         : (normalizedInput.recipientCompanyIds ?? []),
+      recipientRoles: normalizedInput.recipientRoles ?? [],
       sendEmail: normalizedInput.sendEmail,
     });
 

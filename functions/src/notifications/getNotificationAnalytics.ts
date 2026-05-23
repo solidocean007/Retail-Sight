@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
-
+type ClickSource = "push" | "modal" | "dropdown" | "email";
 /**
  * getNotificationAnalytics
  *
@@ -73,7 +73,10 @@ export const getNotificationAnalytics = onCall(
 
     const { developerNotificationId } = request.data || {};
 
-    if (!developerNotificationId) {
+    if (
+      !developerNotificationId ||
+      typeof developerNotificationId !== "string"
+    ) {
       throw new HttpsError(
         "invalid-argument",
         "Missing developerNotificationId"
@@ -81,44 +84,108 @@ export const getNotificationAnalytics = onCall(
     }
 
     const callerSnap = await db.doc(`users/${request.auth.uid}`).get();
-    const role = callerSnap.data()?.role;
+    const callerRole = callerSnap.data()?.role;
 
-    if (!["developer", "super-admin"].includes(role)) {
+    if (!["developer", "super-admin"].includes(callerRole)) {
       throw new HttpsError("permission-denied", "Not allowed");
     }
 
-    const snap = await db
+    const devSnap = await db
       .collection("developerNotifications")
       .doc(developerNotificationId)
       .get();
 
-    if (!snap.exists) {
-      throw new HttpsError("not-found", "Notification not found");
+    if (!devSnap.exists) {
+      throw new HttpsError("not-found", "Developer notification not found");
     }
 
-    const stats = snap.data()?.stats || {};
+    const notifSnap = await db
+      .collectionGroup("notifications")
+      .where("systemNotificationId", "==", developerNotificationId)
+      .get();
 
-    const sent = stats.sent || 0;
-    const read = stats.read || 0;
-    const clicked = stats.clicked || 0;
-
-    const clickedFrom = stats.clickedFrom || {
+    const clickedFrom: Record<ClickSource, number> = {
       push: 0,
       modal: 0,
       dropdown: 0,
       email: 0,
     };
 
-    const ctr = sent ? clicked / sent : 0;
-    const readRate = sent ? read / sent : 0;
+    let sent = 0;
+    let read = 0;
+    let clicked = 0;
+
+    const userIds = new Set<string>();
+
+    const rows = notifSnap.docs.map((docSnap) => {
+      const data = docSnap.data();
+
+      const userRef = docSnap.ref.parent.parent;
+      const uid = userRef?.id ?? data.recipientUid ?? null;
+
+      if (uid) userIds.add(uid);
+
+      sent += 1;
+
+      if (data.readAt) {
+        read += 1;
+      }
+
+      const clickedAt = data.analytics?.clickedAt ?? null;
+      const source = data.analytics?.clickedFrom as ClickSource | undefined;
+
+      if (clickedAt) {
+        clicked += 1;
+
+        if (source && clickedFrom[source] !== undefined) {
+          clickedFrom[source] += 1;
+        }
+      }
+
+      return {
+        uid,
+        notificationId: docSnap.id,
+        title: data.title ?? "",
+        createdAt: data.createdAt ?? null,
+        readAt: data.readAt ?? null,
+        clickedAt,
+        clickedFrom: source ?? null,
+      };
+    });
+
+    const userRefs = [...userIds].map((uid) => db.doc(`users/${uid}`));
+    const userSnaps = userRefs.length ? await db.getAll(...userRefs) : [];
+
+    const usersByUid = new Map<string, FirebaseFirestore.DocumentData>();
+
+    userSnaps.forEach((snap) => {
+      if (snap.exists) {
+        usersByUid.set(snap.id, snap.data() || {});
+      }
+    });
+
+    const recipients = rows.map((row) => {
+      const user = row.uid ? usersByUid.get(row.uid) : null;
+
+      return {
+        ...row,
+        firstName: user?.firstName ?? "",
+        lastName: user?.lastName ?? "",
+        email: user?.email ?? "",
+        role: user?.role ?? "",
+        companyId: user?.companyId ?? "",
+        companyName: user?.companyName ?? "",
+      };
+    });
 
     return {
       sent,
       read,
       clicked,
-      ctr,
-      readRate,
+      ctr: sent ? clicked / sent : 0,
+      readRate: sent ? read / sent : 0,
       clickedFrom,
+      recipients,
     };
   }
 );
