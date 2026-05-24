@@ -198,7 +198,7 @@ export const Dashboard = () => {
           />
         )}
         {dashboardMode === "ConnectionsMode" && (
-          <CompanyConnectionsManager currentCompanyId={companyId} user={user} /> // Type 'string | null' is not assignable to type 'string | undefined'.
+          <CompanyConnectionsManager currentCompanyId={companyId} user={user} />
         )}
         {dashboardMode === "IntegrationsMode" && <IntegrationsView />}
         {dashboardMode === "TeamMode" && !isSupplier && <TeamsViewer />}
@@ -220,7 +220,7 @@ export const Dashboard = () => {
         )}
         {dashboardMode === "GoalManagerMode" &&
           canAccessAdmin &&
-          !isSupplier && <GoalManagerLayout companyId={companyId} />} // Type 'string | null' is not assignable to type 'string | undefined'.
+          !isSupplier && <GoalManagerLayout companyId={companyId} />}
 
         {dashboardMode === "CollectionsMode" && (
           <CollectionsViewer setDashboardMode={setDashboardMode} />

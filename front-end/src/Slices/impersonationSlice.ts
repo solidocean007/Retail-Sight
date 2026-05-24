@@ -53,7 +53,7 @@ export const selectEffectiveCompanyId = createSelector(
   (impersonation, currentUser) =>
     impersonation.active && impersonation.companyId
       ? impersonation.companyId
-      : (currentUser?.companyId ?? null),
+      : (currentUser?.companyId ?? undefined),
 );
 
 export const useIsImpersonating = () => useSelector(selectIsImpersonating);
