@@ -554,6 +554,8 @@ export type PostQueryFilters = {
   galloGoalId?: string | null;
   galloGoalTitle?: string | null;
   distributorCompanyId?: string | null;
+  distributorCompanyName?: string | null;
+
   feedType: FeedType;
 };
 

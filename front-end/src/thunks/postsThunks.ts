@@ -240,59 +240,59 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     batchSize?: number; // now unused
   }) => {
     let baseQuery: Query<DocumentData> = collection(db, "posts");
-    // console.log("[FILTER DEBUG] Incoming filters:", filters);
+    if (companyId) {
+      baseQuery = query(baseQuery, where("companyId", "==", companyId));
+    }
 
-      // Date filtering
-      if (filters.dateRange?.startDate) {
-        const start = Timestamp.fromDate(new Date(filters.dateRange.startDate));
-        baseQuery = query(baseQuery, where("displayDate", ">=", start));
-      }
+    // Date filtering
+    if (filters.dateRange?.startDate) {
+      const start = Timestamp.fromDate(new Date(filters.dateRange.startDate));
+      baseQuery = query(baseQuery, where("displayDate", ">=", start));
+    }
 
-      if (filters.dateRange?.endDate) {
-        // 🔧 Add time to include the entire end day
-        const end = Timestamp.fromDate(
-          new Date(`${filters.dateRange.endDate}T23:59:59.999Z`),
-        );
-        baseQuery = query(baseQuery, where("displayDate", "<=", end));
-      }
+    if (filters.dateRange?.endDate) {
+      // 🔧 Add time to include the entire end day
+      const end = Timestamp.fromDate(
+        new Date(`${filters.dateRange.endDate}T23:59:59.999Z`),
+      );
+      baseQuery = query(baseQuery, where("displayDate", "<=", end));
+    }
 
     if (filters.companyId) {
       baseQuery = filterExactMatch(
         "postUserCompanyId",
         filters.companyId ?? undefined,
-        baseQuery
+        baseQuery,
       );
     }
     if (filters.postUserUid) {
       baseQuery = query(
         baseQuery,
-        where("postUserUid", "==", filters.postUserUid)
+        where("postUserUid", "==", filters.postUserUid),
       );
     }
+
+    // accountName is display/search-only.
+    // accountNumber is the durable Firestore filter.
     if (filters.accountNumber) {
-      baseQuery = filterExactMatch(
-        "accountNumber",
-        filters.accountNumber ?? undefined,
-        baseQuery
-      );
-    }
-    // if (filters.accountName) {
-    //   baseQuery = filterExactMatch(
-    //     "accountName",
-    //     filters.accountName ?? undefined,
-    //     baseQuery
-    //   );
-    // }
-    if (filters.accountName) {
+      const accountNumberString = String(filters.accountNumber).trim();
+      const accountNumberNumber = Number(accountNumberString);
+
+      const accountNumberValues: (string | number)[] = [accountNumberString];
+
+      if (!Number.isNaN(accountNumberNumber)) {
+        accountNumberValues.push(accountNumberNumber);
+      }
+
       baseQuery = query(
         baseQuery,
-        where("accountName", "==", filters.accountName)
+        where("accountNumber", "in", accountNumberValues),
       );
     }
     if (filters.accountType) {
       baseQuery = query(
         baseQuery,
-        where("accountType", "==", filters.accountType)
+        where("accountType", "==", filters.accountType),
       );
     }
 
@@ -306,40 +306,40 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
     if (filters.minCaseCount !== null && filters.minCaseCount !== undefined) {
       baseQuery = query(
         baseQuery,
-        where("totalCaseCount", ">=", filters.minCaseCount)
+        where("totalCaseCount", ">=", filters.minCaseCount),
       );
     }
     if (filters.companyGoalId) {
       baseQuery = query(
         baseQuery,
-        where("companyGoalId", "==", filters.companyGoalId)
+        where("companyGoalId", "==", filters.companyGoalId),
       );
     }
     if (filters.galloGoalId) {
-       baseQuery = query(
+      baseQuery = query(
         baseQuery,
-        where("galloGoalId", "==", filters.galloGoalId)
+        where("galloGoalId", "==", filters.galloGoalId),
       );
     }
     if (filters.hashtag) {
       baseQuery = filterArrayContains(
         "hashtags",
         filters.hashtag ?? undefined,
-        baseQuery
+        baseQuery,
       );
     }
     if (filters.starTag) {
       baseQuery = filterArrayContains(
         "starTags",
         filters.starTag ?? undefined,
-        baseQuery
+        baseQuery,
       );
     }
     if (filters.brand) {
       baseQuery = filterArrayContains(
         "brands",
         filters.brand ?? undefined,
-        baseQuery
+        baseQuery,
       );
     }
     if (filters.productType) {
@@ -361,24 +361,24 @@ export const fetchFilteredPostsBatch = createAsyncThunk(
       baseQuery = filterExactMatch("city", filters.cities[0], baseQuery);
     }
 
-      // const finalQuery = query(baseQuery, orderBy("displayDate", "desc"));
-      const finalQuery = baseQuery;
+    // const finalQuery = query(baseQuery, orderBy("displayDate", "desc"));
+    const finalQuery = baseQuery;
 
-      const snapshot = await getDocs(finalQuery);
+    const snapshot = await getDocs(finalQuery);
 
     const posts: PostWithID[] = snapshot.docs.map((doc) =>
       normalizePost({
         ...(doc.data() as PostType),
         id: doc.id,
-      })
+      }),
     );
 
     return {
       posts,
-      lastVisible: snapshot.docs.at(-1)?.id ?? null,
+      lastVisible: snapshot.docs[snapshot.docs.length - 1]?.id ?? null,
       count: snapshot.size,
     };
-  }
+  },
 );
 
 // this function isnt being used:

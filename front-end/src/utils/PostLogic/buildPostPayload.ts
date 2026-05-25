@@ -46,7 +46,7 @@ export const buildPostPayload = (
     account,
 
     // 🔗 Flattened account fields
-    accountNumber: account?.accountNumber ?? "",
+    accountNumber: String(account?.accountNumber ?? ""),
     accountName: account?.accountName ?? "",
     accountAddress: account?.accountAddress ?? "",
     streetAddress: account?.streetAddress ?? "",

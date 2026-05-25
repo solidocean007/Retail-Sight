@@ -115,9 +115,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     useAvailableFilterUsers(isSharedFeed);
   const allPosts = useSelector((s: RootState) => s.posts.posts);
   const sharedPosts = useSelector((s: RootState) => s.sharedPosts.sharedPosts);
-  // console.log("sharedPosts size: ", sharedPosts.length)
   const sourcePosts = isSharedFeed ? sharedPosts : allPosts;
-  // console.log("sourcePosts size: ", sourcePosts.length)
   const [brandOpen, setBrandOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [lastAppliedFilters, setLastAppliedFilters] =
@@ -218,28 +216,39 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     hashtag: null,
     starTag: null,
     brand: null,
+    brandId: null,
     productType: null,
-    companyGoalId: undefined,
-    companyGoalTitle: undefined,
+    companyGoalId: null,
+    companyGoalTitle: null,
+    galloGoalId: null,
+    galloGoalTitle: null,
+    distributorCompanyId: null,
+    distributorCompanyName: null,
     states: [],
     cities: [],
     dateRange: { startDate: null, endDate: null },
     minCaseCount: null,
-    feedType: isSharedFeed ? "shared" : "company", // ✅ set feedType based on isSharedFeed prop
+    feedType: isSharedFeed ? "shared" : "company",
   });
 
+  const shouldRequireDistributorForAccount = isSupplier && isSharedFeed;
+
+  const accountFilterDisabled =
+    shouldRequireDistributorForAccount && !filters.distributorCompanyId;
   // console.log("filters: ", filters);
 
   const filtersSet: boolean = Object.entries(filters).some(([key, val]) => {
-    if (key === "feedType") return false; // ✅ ignore feedType
+    if (key === "feedType") return false;
+    if (key === "distributorCompanyName") return false;
+    if (key === "accountNumber") return false;
 
     if (Array.isArray(val)) return val.length > 0;
 
     if (typeof val === "object" && val !== null && "startDate" in val) {
-      return val.startDate || val.endDate;
+      return Boolean(val.startDate || val.endDate);
     }
 
-    return !!val;
+    return Boolean(val);
   });
 
   const availableBrands = useAvailableBrands();
@@ -264,11 +273,27 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   const availableAccounts = useMemo(() => {
     if (useNetworkAccountFilters) {
-      return availableAccountNameFacets;
+      return availableAccountNameFacets.filter((facet) => {
+        if (!filters.distributorCompanyId) return false;
+        return facet.originCompanyId === filters.distributorCompanyId;
+      });
     }
 
-    return accounts.map((a) => a.accountName).filter(Boolean) as string[];
-  }, [useNetworkAccountFilters, availableAccountNameFacets, accounts]);
+    return accounts
+      .filter((a) => a.accountName)
+      .map((a) => ({
+        accountName: a.accountName,
+        accountNumber: String(a.accountNumber ?? ""),
+        originCompanyId: companyId ?? "",
+        originCompanyName: "Your Company",
+      }));
+  }, [
+    useNetworkAccountFilters,
+    availableAccountNameFacets,
+    accounts,
+    companyId,
+    filters.distributorCompanyId,
+  ]);
 
   const { goals: availableGoals, loading: goalsLoading } = useAvailableGoals(
     isSupplier,
@@ -277,7 +302,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
   useEffect(() => {
     if (activePostSet === "posts") {
-      const cleared = clearAllFilters();
+      const cleared = clearAllFilters(isSharedFeed ? "shared" : "company");
       setFilters(cleared);
       setLastAppliedFilters(cleared);
       resetInputs(); // also clears local UI inputs
@@ -296,7 +321,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   };
 
   const handleClearFilters = () => {
-    const empty = clearAllFilters();
+    const empty = clearAllFilters(isSharedFeed ? "shared" : "company");
     setFilters(empty);
     setLastAppliedFilters(empty);
     resetInputs();
@@ -322,12 +347,34 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
   const debouncedFilters = useDebouncedValue(filters, 150);
 
   useEffect(() => {
-    if (!filtersSet) return;
-    if (!filtersChanged) return;
+    if (!areFiltersEqual(debouncedFilters, filters)) return;
+
+    const debouncedFiltersSet = Object.entries(debouncedFilters).some(
+      ([key, val]) => {
+        if (key === "feedType") return false;
+        if (key === "distributorCompanyName") return false;
+        if (key === "accountNumber") return false;
+
+        if (Array.isArray(val)) return val.length > 0;
+
+        if (typeof val === "object" && val !== null && "startDate" in val) {
+          return Boolean(val.startDate || val.endDate);
+        }
+
+        return Boolean(val);
+      },
+    );
+
+    const debouncedFiltersChanged =
+      !lastAppliedFilters ||
+      !areFiltersEqual(debouncedFilters, lastAppliedFilters);
+
+    if (!debouncedFiltersSet) return;
+    if (!debouncedFiltersChanged) return;
     if (isApplying) return;
 
-    handleApply();
-  }, [debouncedFilters]);
+    handleApply(debouncedFilters);
+  }, [debouncedFilters, filters, lastAppliedFilters, isApplying]);
 
   // in EnhancedFilterSidebar.. what is this for?  why is specifically watching filters.brand?
   useEffect(() => {
@@ -387,89 +434,115 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     value?: string,
   ) => {
     const updatedFilters = removeFilterField(filters, field, value);
-    setFilters(updatedFilters);
 
-    // reset local inputs
     if (field === "hashtag" || field === "starTag") setTagInput("");
     if (field === "brand") setBrandInput("");
     if (field === "productType") setProductTypeInput("");
+    if (field === "accountName" || field === "accountNumber") {
+      setAccountNameInput("");
+    }
 
-    const isNowEmpty = Object.entries(updatedFilters).every(([_k, v]) => {
+    const isNowEmpty = Object.entries(updatedFilters).every(([key, v]) => {
+      if (key === "feedType") return true;
+
       if (Array.isArray(v)) return v.length === 0;
+
       if (typeof v === "object" && v !== null && "startDate" in v) {
         return !v.startDate && !v.endDate;
       }
+
       return !v;
     });
 
-    // ✅ HARD RESET when last filter is removed
     if (isNowEmpty) {
-      setLastAppliedFilters(null);
-      setActiveCompanyPostSet("posts");
-      dispatch(setFilteredPosts(allPosts));
-      dispatch(setFilteredPostFetchedAt(null));
+      const empty = clearAllFilters(isSharedFeed ? "shared" : "company");
+
+      setFilters(empty);
+      setLastAppliedFilters(empty);
+      resetInputs();
+
+      if (isSharedFeed) {
+        setActiveSharedPostSet("posts");
+        dispatch(setFilteredSharedPosts([]));
+        dispatch(setFilteredSharedPostFetchedAt(null));
+      } else {
+        setActiveCompanyPostSet("posts");
+        dispatch(setFilteredPosts(allPosts));
+        dispatch(setFilteredPostFetchedAt(null));
+      }
+
       return;
     }
 
-    // otherwise update filtered view
-    if (activePostSet === "filteredPosts") {
-      const locallyFiltered = locallyFilterPosts(filteredPosts, updatedFilters);
-      dispatch(setFilteredPosts(locallyFiltered));
-      setLastAppliedFilters(updatedFilters);
-    }
+    setFilters(updatedFilters);
 
     if (isSharedFeed) {
-      setActiveSharedPostSet("posts");
-      dispatch(setFilteredSharedPosts([]));
+      const locallyFiltered = locallyFilterPosts(sourcePosts, updatedFilters);
+      dispatch(setFilteredSharedPosts(locallyFiltered));
+      dispatch(setFilteredSharedPostFetchedAt(new Date().toISOString()));
+      setActiveSharedPostSet("filteredPosts");
     } else {
-      setActiveCompanyPostSet("posts");
-      dispatch(setFilteredPosts(allPosts));
+      handleApply(updatedFilters);
     }
+
+    setLastAppliedFilters(updatedFilters);
+    onFiltersApplied?.(updatedFilters);
   };
 
-  const handleApply = async () => {
+  const handleApply = async (filtersToApply: PostQueryFilters = filters) => {
+    console.log("[SHARED FILTER DEBUG]", {
+      sourcePosts: sourcePosts.length,
+      distributorCompanyId: filtersToApply.distributorCompanyId,
+      accountName: filtersToApply.accountName,
+      accountNumber: filtersToApply.accountNumber,
+      matchingDistributorPosts: sourcePosts.filter(
+        (p) => p.companyId === filtersToApply.distributorCompanyId,
+      ).length,
+      matchingAccountPosts: sourcePosts.filter(
+        (p) =>
+          p.companyId === filtersToApply.distributorCompanyId &&
+          String(p.accountNumber ?? "") ===
+            String(filtersToApply.accountNumber ?? ""),
+      ).length,
+    });
     setIsApplying(true);
-    console.log("Applying filters: ", filters);
 
     try {
-      // ✅ SHARED FEED (local only)
       if (isSharedFeed) {
-        const locallyFiltered = locallyFilterPosts(sourcePosts, filters);
+        const locallyFiltered = locallyFilterPosts(sourcePosts, filtersToApply);
 
         dispatch(setFilteredSharedPosts(locallyFiltered));
         dispatch(setFilteredSharedPostFetchedAt(new Date().toISOString()));
 
-        setActiveSharedPostSet("filteredPosts"); // ✅ correct
-        setLastAppliedFilters(filters);
-        onFiltersApplied?.(filters);
-        return; // ✅ EXIT EARLY (important)
+        setActiveSharedPostSet("filteredPosts");
+        setLastAppliedFilters(filtersToApply);
+        onFiltersApplied?.(filtersToApply);
+        return;
       }
 
-      // ✅ COMPANY FEED (Firestore + cache)
       if (!companyId) return;
 
-      // clear stale results
       dispatch(setFilteredPostFetchedAt(null));
 
-      const hash = getFilterHash(filters);
-      const cached = await getFilteredSet(filters);
-      const needFetch = !cached || (await shouldRefetch(filters, newestRaw));
+      const cached = await getFilteredSet(filtersToApply);
+      const needFetch =
+        !cached || (await shouldRefetch(filtersToApply, newestRaw));
 
       if (!needFetch) {
         dispatch(setFilteredPosts(cached));
-        const fetchedAt = await getFetchDate(filters);
+        const fetchedAt = await getFetchDate(filtersToApply);
         dispatch(setFilteredPostFetchedAt(fetchedAt?.toISOString() ?? null));
 
         setActiveCompanyPostSet("filteredPosts");
-        setLastAppliedFilters(filters);
-        onFiltersApplied?.(filters);
+        setLastAppliedFilters(filtersToApply);
+        onFiltersApplied?.(filtersToApply);
         return;
-      } else {
-        dispatch(setFilteredPosts([]));
       }
 
+      dispatch(setFilteredPosts([]));
+
       const result = await dispatch(
-        fetchFilteredPostsBatch({ filters, companyId }),
+        fetchFilteredPostsBatch({ filters: filtersToApply, companyId }),
       );
 
       if (fetchFilteredPostsBatch.fulfilled.match(result)) {
@@ -477,11 +550,11 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
         dispatch(setFilteredPosts(fresh));
         dispatch(setFilteredPostFetchedAt(new Date().toISOString()));
-        await storeFilteredSet(filters, fresh);
+        await storeFilteredSet(filtersToApply, fresh);
 
         setActiveCompanyPostSet("filteredPosts");
-        setLastAppliedFilters(filters);
-        onFiltersApplied?.(filters);
+        setLastAppliedFilters(filtersToApply);
+        onFiltersApplied?.(filtersToApply);
       }
     } finally {
       setIsApplying(false);
@@ -529,13 +602,26 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     ? activeSharedPostSet === "filteredPosts"
     : activePostSet === "filteredPosts";
 
-  console.log(activePostSet, filteredPostCount);
+  useEffect(() => {
+    if (!accountFilterDisabled) return;
+
+    setAccountNameInput("");
+    handleChange("accountName", null);
+    handleChange("accountNumber", null);
+  }, [accountFilterDisabled]);
+
   return (
     <div className="enhanced-sidebar side-bar-box">
       {isFilteredMode && lastAppliedFilters && (
         <FilterSummaryBanner
           filteredCount={displayFilteredCount}
-          filterText={getFilterSummaryText(lastAppliedFilters, companyUsers)}
+          filterText={
+            getFilterSummaryText(lastAppliedFilters, companyUsers) +
+            (lastAppliedFilters?.distributorCompanyId &&
+            selectedDistributor?.name
+              ? ` • Distributor: ${selectedDistributor.name}`
+              : "")
+          }
           onClear={handleClearFilters}
           fetchedAt={displayFetchedAt}
         />
@@ -543,7 +629,11 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
       <h3 className="filter-title">🔎 Filters</h3>
       <div className="active-filters-chip-row">
-        <FilterChips filters={filters} onRemove={handleRemoveFilter} />
+        <FilterChips
+          filters={filters}
+          selectedDistributorName={selectedDistributor?.name ?? null}
+          onRemove={handleRemoveFilter}
+        />
       </div>
       <div className="mobile-filter-close-button">
         {/* {activePostSet === "filteredPosts" && filteredPostCount > 0 ? ( */}
@@ -638,7 +728,13 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
               onInputChange={setDistributorInput}
               onDistributorChange={(val) => {
                 setSelectedDistributor(val);
-                handleChange("distributorCompanyId", val?.id ?? null); // ✅ CORRECT FIELD
+
+                handleChange("distributorCompanyId", val?.id ?? null);
+                handleChange("distributorCompanyName", val?.name ?? null);
+
+                handleChange("accountName", null);
+                handleChange("accountNumber", null);
+                setAccountNameInput("");
               }}
             />
           </div>
@@ -729,11 +825,20 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
         </button>
         <div className="filter-group">
           <AccountNameAutocomplete
+            disabled={accountFilterDisabled}
             options={availableAccounts}
             inputValue={accountNameInput}
             selectedValue={filters.accountName}
             onInputChange={setAccountNameInput}
-            onSelect={(val) => handleChange("accountName", val)}
+            onSelect={(val) => {
+              handleChange("accountName", val?.accountName ?? null);
+              handleChange("accountNumber", val?.accountNumber ?? null);
+
+              // important for supplier/shared edge case
+              // if (val?.originCompanyId) {
+              //   handleChange("distributorCompanyId", val.originCompanyId);
+              // }
+            }}
           />
 
           <AccountTypeSelect

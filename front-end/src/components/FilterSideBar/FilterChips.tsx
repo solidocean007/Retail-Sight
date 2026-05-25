@@ -1,5 +1,5 @@
 // FilterChips.tsx
-import React, { useEffect } from "react";
+import React from "react";
 import { PostQueryFilters } from "../../utils/types";
 // import "./styles/filterChips.css"; // create this if needed
 import { useSelector } from "react-redux";
@@ -7,18 +7,29 @@ import { selectCompanyUsers } from "../../Slices/userSlice";
 
 interface FilterChipsProps {
   filters: PostQueryFilters;
+  selectedDistributorName?: string | null;
   onRemove: (field: keyof PostQueryFilters, valueToRemove?: string) => void;
 }
 
-const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
+const FilterChips: React.FC<FilterChipsProps> = ({
+  filters,
+  selectedDistributorName,
+  onRemove,
+}) => {
   const companyUsers = useSelector(selectCompanyUsers) ?? [];
 
   const hasAnyFilter = Object.entries(filters).some(([key, val]) => {
+    if (key === "feedType") return false;
+    if (key === "accountNumber") return false;
+    if (key === "distributorCompanyName") return false;
+
     if (Array.isArray(val)) return val.length > 0;
+
     if (typeof val === "object" && val !== null && "startDate" in val) {
-      return val.startDate || val.endDate;
+      return Boolean(val.startDate || val.endDate);
     }
-    return !!val;
+
+    return Boolean(val);
   });
 
   if (!hasAnyFilter) {
@@ -31,6 +42,12 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
 
   return (
     <div className="active-filters-chip-row">
+      {filters.distributorCompanyId && (
+        <span className="chip" onClick={() => onRemove("distributorCompanyId")}>
+          Distributor:{" "}
+          {selectedDistributorName || filters.distributorCompanyId} ✕
+        </span>
+      )}
       {filters.hashtag && (
         <span className="chip" onClick={() => onRemove("hashtag")}>
           {/* #{filters.hashtag} ✕ */}
@@ -58,11 +75,11 @@ const FilterChips: React.FC<FilterChipsProps> = ({ filters, onRemove }) => {
           Store: {filters.accountName} ✕
         </span>
       )}
-      {filters.accountNumber && (
+      {/* {filters.accountNumber && (
         <span className="chip" onClick={() => onRemove("accountNumber")}>
           Acct #: {filters.accountNumber} ✕
         </span>
-      )}
+      )} */}
       {filters.accountChain && (
         <span className="chip" onClick={() => onRemove("accountChain")}>
           Chain: {filters.accountChain} ✕

@@ -64,9 +64,9 @@ const toISO = (v: any): string | null => {
 export function normalizeDeveloperNotification(
   raw: any,
 ): DeveloperNotificationType {
-  // Property 'link' is missing in type '{ id: any; title: any; message: any; priority: any; recipientCompanyIds: any; recipientUserIds: any; recipientRoles: any; createdAt: string | null; scheduledAt: string | null; sentAt: string | null; createdBy: any; channels: any; audience: any; }' but required in type 'DeveloperNotificationType'
   return {
     id: raw.id,
+    link: raw.link, // Ensure 'link' is included
     title: raw.title,
     message: raw.message,
     priority: raw.priority ?? "normal",

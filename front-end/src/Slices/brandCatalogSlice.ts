@@ -18,7 +18,9 @@ const initialState: BrandCatalogState = {
 };
 
 const normalizeBrandName = (value?: string | null) =>
-  String(value || "").trim().toLowerCase();
+  String(value || "")
+    .trim()
+    .toLowerCase();
 
 const sortBrands = (brands: BrandCatalogItem[]) =>
   [...brands].sort((a, b) =>
@@ -51,7 +53,7 @@ const brandCatalogSlice = createSlice({
       state.loadingByCompanyId[companyId] = false;
       state.errorByCompanyId[companyId] = null;
       state.syncedAtByCompanyId[companyId] =
-        syncedAt ?? new Date().toISOString();
+        syncedAt === undefined ? new Date().toISOString() : syncedAt;
     },
 
     setBrandCatalogError: (
@@ -87,25 +89,29 @@ export const {
 } = brandCatalogSlice.actions;
 
 export const selectBrandCatalogForCompany =
-  (companyId?: string | null) => (state: RootState): BrandCatalogItem[] => {
+  (companyId?: string | null) =>
+  (state: RootState): BrandCatalogItem[] => {
     if (!companyId) return [];
     return state.brandCatalog.byCompanyId[companyId] ?? [];
   };
 
 export const selectBrandCatalogLoadingForCompany =
-  (companyId?: string | null) => (state: RootState): boolean => {
+  (companyId?: string | null) =>
+  (state: RootState): boolean => {
     if (!companyId) return false;
     return Boolean(state.brandCatalog.loadingByCompanyId[companyId]);
   };
 
 export const selectBrandCatalogErrorForCompany =
-  (companyId?: string | null) => (state: RootState): string | null => {
+  (companyId?: string | null) =>
+  (state: RootState): string | null => {
     if (!companyId) return null;
     return state.brandCatalog.errorByCompanyId[companyId] ?? null;
   };
 
 export const selectBrandOptionsForCompany =
-  (companyId?: string | null) => (state: RootState): string[] => {
+  (companyId?: string | null) =>
+  (state: RootState): string[] => {
     if (!companyId) return [];
 
     return (state.brandCatalog.byCompanyId[companyId] ?? [])
@@ -126,7 +132,10 @@ export const selectBrandById =
   };
 
 export const selectBrandByName =
-  (companyId: string | null | undefined, brandName: string | null | undefined) =>
+  (
+    companyId: string | null | undefined,
+    brandName: string | null | undefined,
+  ) =>
   (state: RootState): BrandCatalogItem | null => {
     if (!companyId || !brandName) return null;
 

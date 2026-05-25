@@ -13,40 +13,38 @@ import {
   getCompanyBrandCatalogFromIndexedDB,
   saveCompanyBrandCatalogToIndexedDB,
 } from "../utils/database/indexedDBUtils";
+import { normalizeFirestoreData } from "../utils/normalize";
 
 const normalizeString = (value: unknown) => String(value || "").trim();
 
 const cleanStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
 
-  return value
-    .map((item) => normalizeString(item))
-    .filter(Boolean);
+  return value.map((item) => normalizeString(item)).filter(Boolean);
 };
 
 const normalizeBrandDoc = (
   companyId: string,
   docId: string,
-  data: any,
+  rawData: any,
 ): BrandCatalogItem => {
+  const data = normalizeFirestoreData(rawData);
+
   const brandId = normalizeString(data.brandId || docId);
 
   const brandName = normalizeString(
-    data.displayName ||
-      data.brandName ||
-      data.name ||
-      data.label ||
-      brandId,
+    data.displayName || data.brandName || data.name || data.label || brandId,
   );
 
-  const normalizedBrandName =
-    normalizeString(data.normalizedBrandName || brandName).toLowerCase();
+  const normalizedBrandName = normalizeString(
+    data.normalizedBrandName || brandName,
+  ).toLowerCase();
 
   return {
     ...data,
     brandId,
     brandName,
-    displayName: brandName, // optional if your type allows it
+    displayName: brandName,
     normalizedBrandName,
     companyId: normalizeString(data.companyId || companyId),
     companyName: data.companyName || undefined,

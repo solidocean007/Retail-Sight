@@ -2,18 +2,27 @@ import React, { useMemo, useState } from "react";
 import { Autocomplete, TextField } from "@mui/material";
 import { NetworkAccountFacet } from "../../utils/database/networkFilterCacheDB";
 
+interface AccountSelectValue {
+  accountName: string | null;
+  accountNumber: string | null;
+}
+
 interface Props {
+  disabled?: boolean;
   options: NetworkAccountFacet[] | string[];
   inputValue: string;
   selectedValue: string | null | undefined;
   onInputChange: (val: string) => void;
-  onSelect: (val: string | null) => void;
+  onSelect: (val: AccountSelectValue | null) => void;
 }
 
 const MIN_SEARCH_LENGTH = 2;
 
 const normalize = (str: string) =>
-  str.toLowerCase().replace(/[\s\-#]+/g, "").trim();
+  str
+    .toLowerCase()
+    .replace(/[\s\-#]+/g, "")
+    .trim();
 
 const isFacet = (
   option: NetworkAccountFacet | string,
@@ -29,6 +38,7 @@ const getAccountLabel = (option: NetworkAccountFacet | string): string => {
 };
 
 const AccountNameAutocomplete: React.FC<Props> = ({
+  disabled,
   options,
   inputValue,
   selectedValue,
@@ -59,13 +69,14 @@ const AccountNameAutocomplete: React.FC<Props> = ({
 
   return (
     <Autocomplete<NetworkAccountFacet | string, false, false, true>
+      disabled={disabled}
       freeSolo
       options={normalizedOptions}
       value={selectedOption}
       inputValue={inputValue}
-      open={open && normalizedOptions.length > 0}
+      open={!disabled && open && normalizedOptions.length > 0}
       onOpen={() => {
-        if (inputValue.trim().length >= MIN_SEARCH_LENGTH) {
+        if (!disabled && inputValue.trim().length >= MIN_SEARCH_LENGTH) {
           setOpen(true);
         }
       }}
@@ -78,17 +89,20 @@ const AccountNameAutocomplete: React.FC<Props> = ({
 
         return (
           option.originCompanyId === value.originCompanyId &&
-          (option.accountNumber || option.accountName) ===
-            (value.accountNumber || value.accountName)
+          String(option.accountNumber || option.accountName) ===
+            String(value.accountNumber || value.accountName)
         );
       }}
       onInputChange={(_, val, reason) => {
+        if (disabled) return;
         if (reason !== "input" && reason !== "clear") return;
 
         onInputChange(val);
         setOpen(val.trim().length >= MIN_SEARCH_LENGTH);
       }}
       onChange={(_, val) => {
+        if (disabled) return;
+
         if (!val) {
           onSelect(null);
           setOpen(false);
@@ -96,12 +110,19 @@ const AccountNameAutocomplete: React.FC<Props> = ({
         }
 
         if (typeof val === "string") {
-          onSelect(val);
+          onSelect({
+            accountName: val,
+            accountNumber: null,
+          });
           setOpen(false);
           return;
         }
 
-        onSelect(val.accountName ?? null);
+        onSelect({
+          accountName: val.accountName ?? null,
+          accountNumber: val.accountNumber ? String(val.accountNumber) : null,
+        });
+
         onInputChange(val.accountName ?? "");
         setOpen(false);
       }}
@@ -145,7 +166,12 @@ const AccountNameAutocomplete: React.FC<Props> = ({
         <TextField
           {...params}
           label="Account Name"
-          placeholder="Type 2+ characters"
+          placeholder={
+            disabled ? "Select a distributor first" : "Type 2+ characters"
+          }
+          helperText={
+            disabled ? "Choose a distributor before searching accounts." : ""
+          }
         />
       )}
       fullWidth
