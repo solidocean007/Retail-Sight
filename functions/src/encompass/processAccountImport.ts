@@ -74,6 +74,11 @@ export const processAccountImport = onRequest(
         return;
       }
 
+      if (syncConfig.provider !== "encompass") {
+        res.status(200).send("Unsupported provider");
+        return;
+      }
+
       const companyId = syncConfig.companyId;
 
       if (!companyId) {
@@ -82,32 +87,39 @@ export const processAccountImport = onRequest(
         return;
       }
 
-      apiUrl.searchParams.set("APICommand", "TableView");
-      apiUrl.searchParams.set("WebRequestID", crypto.randomUUID());
-      apiUrl.searchParams.set("RequestDashboardID", "100100");
-      apiUrl.searchParams.set("TableName", "Stops");
-      apiUrl.searchParams.set("Format", "json");
-      apiUrl.searchParams.set("TitleBar", "1");
-      apiUrl.searchParams.set("Pagination", "1");
-      apiUrl.searchParams.set("RowActions", "1");
-      apiUrl.searchParams.set("ReportID", "24408998");
+      const reportId = syncConfig.reportId ?? "24408998";
+      const requestDashboardId = syncConfig.requestDashboardId ?? "100100";
+      const tableName = syncConfig.tableName ?? "Stops";
+      const selectMaxRecords = String(syncConfig.selectMaxRecords ?? 5000);
+      const parameters =
+        syncConfig.parameters ??
+        "F:Active~V:Active~O:E|F:ActivityIDEffective~V:3^21^23^22~O:E";
 
-      apiUrl.searchParams.set(
-        "SelectDisplayInParent",
+      const autoApplyDelayHours = syncConfig.autoApplyDelayHours ?? 12;
+      const selectDisplayInParent =
+        syncConfig.selectDisplayInParent ??
         "Customer ID,Stops_Customers^Customers.Company,Stops_Customers^Customers.Address," +
           "Stops_Customers^Customers.City,Stops_Customers^Customers.State,Stops_Routes^Routes.RouteNum," +
           "Stops_Customers^Customers_CustomerTypes^CustomerTypes.CustomerType," +
           "Stops_Customers^Customers.CustomerTypeID," +
           "Stops_Customers^Customers_Chains^Chains.Chain," +
-          "Stops_Customers^Customers_Chains^Chains.IsIndependent"
-      );
+          "Stops_Customers^Customers_Chains^Chains.IsIndependent";
 
-      apiUrl.searchParams.set("SelectMaxRecords", "5000");
+      apiUrl.searchParams.set("APICommand", "TableView");
+      apiUrl.searchParams.set("WebRequestID", crypto.randomUUID());
+      apiUrl.searchParams.set("RequestDashboardID", requestDashboardId);
+      apiUrl.searchParams.set("TableName", tableName);
+      apiUrl.searchParams.set("Format", "json");
+      apiUrl.searchParams.set("TitleBar", "1");
+      apiUrl.searchParams.set("Pagination", "1");
+      apiUrl.searchParams.set("RowActions", "1");
+      apiUrl.searchParams.set("ReportID", reportId);
 
-      apiUrl.searchParams.set(
-        "Parameters",
-        "F:Active~V:Active~O:E|F:ActivityIDEffective~V:3^21^23^22~O:E"
-      );
+      apiUrl.searchParams.set("SelectDisplayInParent", selectDisplayInParent);
+
+      apiUrl.searchParams.set("SelectMaxRecords", selectMaxRecords);
+
+      apiUrl.searchParams.set("Parameters", parameters);
 
       apiUrl.searchParams.set("QuickKey", quickKey);
 
@@ -209,6 +221,7 @@ export const processAccountImport = onRequest(
 
       const lastImportSnap = await db
         .collection("accountImports")
+        .where("companyId", "==", companyId)
         .orderBy("createdAt", "desc")
         .limit(1)
         .get();
@@ -225,6 +238,7 @@ export const processAccountImport = onRequest(
 
       const existingImportSnap = await db
         .collection("accountImports")
+        .where("companyId", "==", companyId)
         .where("status", "==", "pending")
         .limit(1)
         .get();
@@ -242,7 +256,7 @@ export const processAccountImport = onRequest(
         totalChanges: diffs.length,
         diffHash,
         changes: diffs,
-        autoApplyAfter: Date.now() + 1000 * 60 * 60 * 12, // 12 hours
+        autoApplyAfter: Date.now() + 1000 * 60 * 60 * autoApplyDelayHours,
       });
 
       // i think i should write to the admins here

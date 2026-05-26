@@ -5,6 +5,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { selectUser } from "../../Slices/userSlice";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
+import DeveloperAccountSyncConfigs from "../DeveloperDashboard/DeveloperAccountSyncConfigs";
 
 const DeveloperPlatform = () => {
   const dashboardUser = useSelector(selectUser);
@@ -37,9 +38,7 @@ const DeveloperPlatform = () => {
       setConnectionId("");
     } catch (err: any) {
       dispatch(
-        showMessage(
-          err?.message || "Failed to repair connection visibility.",
-        ),
+        showMessage(err?.message || "Failed to repair connection visibility."),
       );
     } finally {
       setRepairLoading(false);
@@ -53,11 +52,7 @@ const DeveloperPlatform = () => {
           API Keys
         </Typography>
 
-        {isDeveloper && (
-          <Button variant="contained">
-            Generate API Key
-          </Button>
-        )}
+        {isDeveloper && <Button variant="contained">Generate API Key</Button>}
       </Box>
 
       <Box mb={4}>
@@ -84,9 +79,9 @@ const DeveloperPlatform = () => {
       </Box>
 
       <Box>
-        <Typography variant="h6">
-          Integrations System Status
-        </Typography>
+        <Typography variant="h6">Integrations System Status</Typography>
+
+        <DeveloperAccountSyncConfigs />
       </Box>
     </div>
   );
