@@ -136,7 +136,7 @@ const MyGalloGoalCard: React.FC<Props> = ({
           </div>
 
           <div className="goal-progress-section">
-            <Typography variant="caption">Progress</Typography>
+            {/* <Typography variant="caption">Progress</Typography> */}
 
             <div className="goal-progress-numbers">
               <div>

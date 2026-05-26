@@ -88,6 +88,11 @@ const UserHomePage = () => {
   const fetchedAt = useSelector(
     (s: RootState) => s.posts.filteredPostFetchedAt,
   );
+  const sharedFetchedAt = useSelector(
+  (s: RootState) => s.sharedPosts.filteredSharedPostFetchedAt,
+);
+const displayFetchedAt =
+  activeFeedType === "shared" ? sharedFetchedAt : fetchedAt;
 
   const filteredSharedPostCount = useSelector(
     (s: RootState) => s.sharedPosts.filteredSharedPostCount,
@@ -264,7 +269,7 @@ const UserHomePage = () => {
               filteredCount={displayCount}
               filterText={filterText}
               onClear={clearSearch}
-              fetchedAt={fetchedAt}
+              fetchedAt={displayFetchedAt}
             />
           )}
 

@@ -135,6 +135,11 @@
   width: 100%;
 }
 
+.info-description p {
+  margin: 0;
+  margin-top: 5px;
+}
+
 .info-layout-row-bottom {
   display: flex;
   flex-direction: row;

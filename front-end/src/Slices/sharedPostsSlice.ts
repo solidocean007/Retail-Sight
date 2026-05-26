@@ -1,9 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { PostWithID } from "../utils/types";
-import { fetchMoreSharedPostsBatch } from "../thunks/sharedPostsThunks";
 import { removeSharedPostFromIndexedDB } from "../utils/database/sharedPostsStoreUtils";
 import { sortPostsByDate } from "./postsSlice";
 import { normalizePost } from "../utils/normalize";
+import {
+  fetchFilteredSharedPostsBatch,
+  fetchMoreSharedPostsBatch,
+} from "../thunks/sharedPostsThunks";
 
 interface SharedPostsState {
   sharedPosts: PostWithID[];
@@ -133,6 +136,25 @@ const sharedPostsSlice = createSlice({
         state.hasMore = hasMore;
       })
       .addCase(fetchMoreSharedPostsBatch.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchFilteredSharedPostsBatch.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.filteredSharedPostFetchedAt = null;
+      })
+      .addCase(fetchFilteredSharedPostsBatch.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+
+        const posts = action.payload.posts.map(normalizePost);
+
+        state.filteredSharedPosts = sortPostsByDate(posts);
+        state.filteredSharedPostCount = action.payload.count;
+        state.filteredSharedPostFetchedAt = action.payload.fetchedAt;
+      })
+      .addCase(fetchFilteredSharedPostsBatch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

@@ -45,7 +45,10 @@ const FilterChips: React.FC<FilterChipsProps> = ({
       {filters.distributorCompanyId && (
         <span className="chip" onClick={() => onRemove("distributorCompanyId")}>
           Distributor:{" "}
-          {selectedDistributorName || filters.distributorCompanyId} ✕
+          {selectedDistributorName ||
+            filters.distributorCompanyName ||
+            filters.distributorCompanyId}{" "}
+          ✕
         </span>
       )}
       {filters.hashtag && (

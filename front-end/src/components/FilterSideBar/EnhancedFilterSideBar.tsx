@@ -56,7 +56,7 @@ import {
 } from "../../Slices/sharedPostsSlice";
 import { useAvailableFilterUsers } from "../../hooks/useAvailableFilterUsers";
 import { useNetworkAccountFacets } from "../../hooks/useNetworkAccountFacets";
-// import { useNetworkUsers } from "../../hooks/useNetworkUsers";
+import { fetchFilteredSharedPostsBatch } from "../../thunks/sharedPostsThunks";
 
 interface DistributorOption {
   id: string;
@@ -444,6 +444,8 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
     const isNowEmpty = Object.entries(updatedFilters).every(([key, v]) => {
       if (key === "feedType") return true;
+      if (key === "distributorCompanyName") return true;
+      if (key === "accountNumber") return true;
 
       if (Array.isArray(v)) return v.length === 0;
 
@@ -462,6 +464,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       resetInputs();
 
       if (isSharedFeed) {
+        // there are 2 isSharedFeed conditions in this function, can we consolidate?
         setActiveSharedPostSet("posts");
         dispatch(setFilteredSharedPosts([]));
         dispatch(setFilteredSharedPostFetchedAt(null));
@@ -477,10 +480,10 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
     setFilters(updatedFilters);
 
     if (isSharedFeed) {
-      const locallyFiltered = locallyFilterPosts(sourcePosts, updatedFilters);
-      dispatch(setFilteredSharedPosts(locallyFiltered));
-      dispatch(setFilteredSharedPostFetchedAt(new Date().toISOString()));
-      setActiveSharedPostSet("filteredPosts");
+      handleApply({
+        ...updatedFilters,
+        feedType: "shared",
+      });
     } else {
       handleApply(updatedFilters);
     }
@@ -509,14 +512,72 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
 
     try {
       if (isSharedFeed) {
-        const locallyFiltered = locallyFilterPosts(sourcePosts, filtersToApply);
+        if (!companyId) return;
 
-        dispatch(setFilteredSharedPosts(locallyFiltered));
-        dispatch(setFilteredSharedPostFetchedAt(new Date().toISOString()));
+        dispatch(setFilteredSharedPosts([]));
+        dispatch(setFilteredSharedPostFetchedAt(null));
 
-        setActiveSharedPostSet("filteredPosts");
-        setLastAppliedFilters(filtersToApply);
-        onFiltersApplied?.(filtersToApply);
+        const cached = await getFilteredSet({
+          ...filtersToApply,
+          feedType: "shared",
+        });
+
+        const needFetch =
+          !cached ||
+          (await shouldRefetch(
+            {
+              ...filtersToApply,
+              feedType: "shared",
+            },
+            newestRaw,
+          ));
+
+        if (!needFetch) {
+          dispatch(setFilteredSharedPosts(cached));
+          const fetchedAt = await getFetchDate({
+            ...filtersToApply,
+            feedType: "shared",
+          });
+
+          dispatch(
+            setFilteredSharedPostFetchedAt(fetchedAt?.toISOString() ?? null),
+          );
+
+          setActiveSharedPostSet("filteredPosts");
+          setLastAppliedFilters(filtersToApply);
+          onFiltersApplied?.(filtersToApply);
+          return;
+        }
+
+        const result = await dispatch(
+          fetchFilteredSharedPostsBatch({
+            companyId,
+            filters: {
+              ...filtersToApply,
+              feedType: "shared",
+            },
+          }),
+        );
+
+        if (fetchFilteredSharedPostsBatch.fulfilled.match(result)) {
+          const fresh = result.payload.posts.map(normalizePost);
+
+          dispatch(setFilteredSharedPosts(fresh));
+          dispatch(setFilteredSharedPostFetchedAt(result.payload.fetchedAt));
+
+          await storeFilteredSet(
+            {
+              ...filtersToApply,
+              feedType: "shared",
+            },
+            fresh,
+          );
+
+          setActiveSharedPostSet("filteredPosts");
+          setLastAppliedFilters(filtersToApply);
+          onFiltersApplied?.(filtersToApply);
+        }
+
         return;
       }
 
@@ -615,13 +676,7 @@ const EnhancedFilterSidebar: React.FC<EnhancedFilterSideBarProps> = ({
       {isFilteredMode && lastAppliedFilters && (
         <FilterSummaryBanner
           filteredCount={displayFilteredCount}
-          filterText={
-            getFilterSummaryText(lastAppliedFilters, companyUsers) +
-            (lastAppliedFilters?.distributorCompanyId &&
-            selectedDistributor?.name
-              ? ` • Distributor: ${selectedDistributor.name}`
-              : "")
-          }
+          filterText={getFilterSummaryText(lastAppliedFilters, companyUsers)}
           onClear={handleClearFilters}
           fetchedAt={displayFetchedAt}
         />
