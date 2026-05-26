@@ -1,0 +1,28 @@
+.account-sync-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  margin: 0 0 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--dashboard-card);
+  color: var(--text-color);
+}
+
+.account-sync-notice span {
+  font-size: 0.9rem;
+  color: var(--muted-text-color);
+}
+
+.account-sync-notice.success {
+  border-color: rgba(46, 125, 50, 0.35);
+}
+
+.account-sync-notice.warning {
+  border-color: rgba(237, 108, 2, 0.4);
+}
+
+.account-sync-notice.info {
+  border-color: rgba(25, 118, 210, 0.35);
+}

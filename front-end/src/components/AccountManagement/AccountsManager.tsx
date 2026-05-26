@@ -58,6 +58,7 @@ import PendingAccountImportBanner from "./PendingAccountImportBanner";
 import { useAccountImportListener } from "../../hooks/useAccountImportListener";
 import { selectPendingAccountImports } from "../../Slices/accountImportSlice";
 import AccountImportNotificationSettings from "./AccountImportNotificationSettings";
+import AccountSyncStatusNotice from "./AccountSyncStatusNotice";
 
 // Utility: normalize strings (lowercase, collapse spaces)
 // Normalize helper
@@ -119,6 +120,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
   const [oldRoute, setOldRoute] = useState("");
   const [newRoute, setNewRoute] = useState("");
   const [showReassignConfirm, setShowReassignConfirm] = useState(false);
+  const [showAutomationSettings, setShowAutomationSettings] = useState(false);
+  const [showManualAccountTools, setShowManualAccountTools] = useState(false);
+  const [showAccountTools, setShowAccountTools] = useState(false);
 
   const handleReassignRoutes = () => {
     if (!oldRoute.trim() || !newRoute.trim()) {
@@ -461,14 +465,14 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       if (!accountsId) throw new Error("No accountsId for company");
 
       const accountsRef = doc(db, "accounts", accountsId);
-      const accountsSnap = await getDoc(accountsRef);
+      const accountsSnap = await getDoc(accountsRef); // this needs a backupType that includes the companyId
       if (!accountsSnap.exists())
         throw new Error("Accounts document not found");
 
       const accountsData = accountsSnap.data();
 
       const dateStr = new Date().toISOString().split("T")[0];
-      const backupRef = doc(db, "accounts_backup", `backup_${dateStr}`);
+      const backupRef = doc(db, "accounts_backup", `backup_${dateStr}`); // this doc needs a companyId written to it
 
       await setDoc(backupRef, accountsData);
       setRefreshBackupsFlag((f) => f + 1); // 🔄 bump flag
@@ -619,172 +623,224 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       <Typography variant="h4" className="account-header-title">
         Accounts Manager
       </Typography>
-      <AccountImportNotificationSettings companyId={companyId} />
-      {pendingImports?.length > 0 && (
-        <Box
-          sx={{
-            background: "#fff3cd",
-            border: "1px solid #ffeeba",
-            padding: 2,
-            marginBottom: 2,
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="body1">
-            ⚠️ {pendingImports[0].totalChanges} account changes detected.
-          </Typography>
 
-          <Typography variant="body2">
-            Changes will automatically apply in {timeRemaining}
-          </Typography>
+      {/* <AccountSyncStatusNotice companyId={companyId} />
 
-          <Button variant="contained" onClick={() => setShowImportReview(true)}>
-            Review Changes
-          </Button>
-        </Box>
-      )}
+      <AccountImportNotificationSettings companyId={companyId} /> */}
+      <section className="account-manager-section">
+        <div className="account-manager-section-header">
+          <div>
+            <h2>Account Automation</h2>
+            <p>
+              Manage automated account imports, pending account changes, and
+              admin notifications.
+            </p>
+          </div>
 
-      {(isAdmin || isSuperAdmin) && (
-        <>
-          <AccountsBackup
-            companyId={companyId}
-            backupAccounts={backupAccounts}
-            refreshTrigger={refreshBackupsFlag}
-          />
-
-          <Box
-            className="account-instructions"
-            sx={{ textAlign: "left", mb: 2 }}
+          <button
+            className="btn-outline"
+            type="button"
+            onClick={() => setShowAutomationSettings((prev) => !prev)}
           >
-            <Typography variant="body1" gutterBottom>
-              <strong>Instructions:</strong>
-            </Typography>
-            <Typography variant="body2">
-              <strong>1.</strong> Upload a <code>.csv</code> or{" "}
-              <code>.xlsx</code> file to add accounts in bulk.
-            </Typography>
-            <Typography variant="body2">
-              <strong>2.</strong> Click <strong>"Add more Accounts"</strong> to
-              append new accounts without overwriting.
-            </Typography>
-            <Typography variant="body2">
-              <strong>3.</strong> Use <strong>"Update Accounts"</strong> to
-              update existing accounts by account number.
-            </Typography>
-            <Typography variant="body2">
-              <strong>4.</strong> Use{" "}
-              <strong>"Quickly Add Single Account"</strong> to manually add one
-              account.
-            </Typography>
-          </Box>
-          <div
-            className="account-management-buttons"
-            // style={{
-            //   display: "flex",
-            //   flexWrap: "wrap",
-            //   gap: "12px",
-            //   marginBottom: "16px",
-            // }}
-          >
-            <button className="btn-outline" onClick={handleTemplateModal}>
-              View Upload File Template
-            </button>
+            {showAutomationSettings ? "Hide Settings" : "Manage"}
+          </button>
+        </div>
+
+        <AccountSyncStatusNotice companyId={companyId} />
+
+        {pendingImports?.length > 0 && (
+          <div className="account-pending-import-card">
+            <div>
+              <strong>
+                {pendingImports[0].totalChanges} account changes detected
+              </strong>
+              <p>Changes will automatically apply in {timeRemaining}.</p>
+            </div>
 
             <button
               className="button-primary"
-              onClick={() => updateInputRef.current?.click()}
+              type="button"
+              onClick={() => setShowImportReview(true)}
             >
-              Upload Accounts
-            </button>
-
-            <input
-              ref={updateInputRef}
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              style={{ display: "none" }}
-              onChange={handleFileSelected}
-            />
-
-            <button
-              className="button-primary"
-              onClick={() => {
-                setNewAccount({
-                  accountNumber: "",
-                  accountName: "",
-                  accountAddress: "",
-                  streetAddress: "",
-                  city: "",
-                  state: "",
-                  salesRouteNums: [],
-                  typeOfAccount: undefined,
-                  chain: "",
-                  chainType: "independent",
-                });
-                setOpenAddAccountModal(true);
-              }}
-            >
-              Quickly Add Single Account
+              Review Changes
             </button>
           </div>
-        </>
+        )}
+
+        {!showAutomationSettings && (
+          <p className="account-manager-muted">
+            Email admins when account imports are available. Open settings to
+            manage recipients.
+          </p>
+        )}
+
+        {showAutomationSettings && (
+          <AccountImportNotificationSettings companyId={companyId} />
+        )}
+      </section>
+      {(isAdmin || isSuperAdmin) && (
+        <section className="account-manager-section">
+          <div className="account-manager-section-header">
+            <div>
+              <h2>Manual Account Management</h2>
+              <p>
+                Use these tools for manual uploads, backups, templates, and
+                single account edits.
+              </p>
+            </div>
+
+            <button
+              className="btn-outline"
+              type="button"
+              onClick={() => setShowManualAccountTools((prev) => !prev)}
+            >
+              {showManualAccountTools ? "Close Tools" : "Open Tools"}
+            </button>
+          </div>
+
+          {showManualAccountTools && (
+            <div className="manual-account-tools">
+              <AccountsBackup
+                companyId={companyId}
+                backupAccounts={backupAccounts}
+                refreshTrigger={refreshBackupsFlag}
+              />
+
+              <div className="account-management-buttons">
+                <button className="btn-outline" onClick={handleTemplateModal}>
+                  View Upload File Template
+                </button>
+
+                <button
+                  className="button-primary"
+                  onClick={() => updateInputRef.current?.click()}
+                >
+                  Upload Accounts
+                </button>
+
+                <input
+                  ref={updateInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  style={{ display: "none" }}
+                  onChange={handleFileSelected}
+                />
+
+                <button
+                  className="button-primary"
+                  onClick={() => {
+                    setNewAccount({
+                      accountNumber: "",
+                      accountName: "",
+                      accountAddress: "",
+                      streetAddress: "",
+                      city: "",
+                      state: "",
+                      salesRouteNums: [],
+                      typeOfAccount: undefined,
+                      chain: "",
+                      chainType: "independent",
+                    });
+                    setOpenAddAccountModal(true);
+                  }}
+                >
+                  Quickly Add Single Account
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
       )}
-      <Box className="account-search-row">
-        <TextField
-          label="Search Account"
-          variant="outlined"
-          placeholder="Walmart etc"
-          slotProps={{
-            inputLabel: {
-              shrink: true,
-              sx: {
-                transform: "translate(14px, -15px) scale(0.75)",
-              },
-            },
-          }}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ marginBottom: 2 }}
-        />
 
-        <TextField
-          label="Filter by Sales Route"
-          variant="outlined"
-          slotProps={{
-            inputLabel: {
-              shrink: true,
-              sx: {
-                transform: "translate(14px, -15px) scale(0.75)",
-              },
-            },
-          }}
-          value={routeFilter}
-          onChange={(e) => setRouteFilter(e.target.value)}
-          sx={{ marginBottom: 2, marginLeft: 2 }}
-          placeholder="e.g., 45"
-        />
+      <section className="account-manager-section">
+        <div className="account-manager-section-header">
+          <div>
+            <h2>Account Directory</h2>
+            <p>
+              Search, filter, edit, and review all accounts currently stored for
+              this company.
+            </p>
+          </div>
 
-        <ReassignAccountRouteNumber
-          accounts={accounts}
-          onSubmit={async (updatedList) => {
-            await saveAccountsToFirestore(updatedList);
-            dispatch(showMessage("Route reassignment complete."));
-            fetchAccounts(); // refresh state + IndexedDB
-          }}
-        />
-      </Box>
+          {(isAdmin || isSuperAdmin) && (
+            <button
+              className="btn-outline"
+              type="button"
+              onClick={() => setShowAccountTools((prev) => !prev)}
+            >
+              {showAccountTools ? "Hide Tools" : "Tools"}
+            </button>
+          )}
+        </div>
+
+        <div className="account-search-row">
+          <TextField
+            label="Search Account"
+            variant="outlined"
+            placeholder="Walmart etc"
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+                sx: {
+                  transform: "translate(14px, -15px) scale(0.75)",
+                },
+              },
+            }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+
+          <TextField
+            label="Filter by Sales Route"
+            variant="outlined"
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+                sx: {
+                  transform: "translate(14px, -15px) scale(0.75)",
+                },
+              },
+            }}
+            value={routeFilter}
+            onChange={(e) => setRouteFilter(e.target.value)}
+            sx={{ marginBottom: 2, marginLeft: 2 }}
+            placeholder="e.g., 45"
+          />
+        </div>
+
+        {showAccountTools && (
+          <div className="account-tool-panel">
+            <h3>Batch Reassign Route Numbers</h3>
+            <ReassignAccountRouteNumber
+              accounts={accounts}
+              onSubmit={async (updatedList) => {
+                await saveAccountsToFirestore(updatedList);
+                dispatch(showMessage("Route reassignment complete."));
+                fetchAccounts();
+              }}
+            />
+          </div>
+        )}
+
+        <Typography variant="body2" sx={{ marginTop: 1 }}>
+          {filteredAccounts.length} account
+          {filteredAccounts.length !== 1 ? "s" : ""} found.
+        </Typography>
+      </section>
       <Typography variant="body2" sx={{ marginTop: 1 }}>
         {filteredAccounts.length} account
         {filteredAccounts.length !== 1 ? "s" : ""} found.
       </Typography>
 
       <Pagination
+        className="account-pagination"
         count={Math.ceil(filteredAccounts.length / itemsPerPage)}
         page={currentPage}
         onChange={(_, p) => setCurrentPage(p)}
-        sx={{ marginY: 2 }}
       />
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} className="account-table-container">
         <Table size="small">
           <TableHead>
             <TableRow>
