@@ -104,7 +104,7 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);
   const companyId = user?.companyId;
-
+  const [hasAppliedAiMatches, setHasAppliedAiMatches] = useState(false);
   const brandOptions = useBrandOptions();
 
   const {
@@ -224,26 +224,26 @@ const BrandsSelector: React.FC<BrandsSelectorProps> = ({
   // 6️⃣ Auto-select AI fuzzy matches (your corrected behavior)
   //
   useEffect(() => {
+    if (hasAppliedAiMatches) return;
     if (aiMatches.length === 0) return;
+    if (selectedBrands.length > 0) return;
 
-    const lowerSelected = selectedBrands.map((b) => b.toLowerCase());
+    updateBrands(aiMatches);
 
-    const newOnes = aiMatches.filter(
-      (m) => !lowerSelected.includes(m.toLowerCase()),
+    setHasAppliedAiMatches(true);
+
+    dispatch(
+      showMessage(
+        aiMatches.length === 1
+          ? `🤖 Auto-added AI match: ${aiMatches[0]}`
+          : `🤖 Auto-added ${aiMatches.length} detected brands`,
+      ),
     );
+  }, [aiMatches, hasAppliedAiMatches, selectedBrands.length, dispatch]);
 
-    if (newOnes.length > 0) {
-      updateBrands([...selectedBrands, ...newOnes]);
-
-      dispatch(
-        showMessage(
-          newOnes.length === 1
-            ? `🤖 Auto-added AI match: ${newOnes[0]}`
-            : `🤖 Auto-added ${newOnes.length} detected brands`,
-        ),
-      );
-    }
-  }, [aiMatches, selectedBrands, dispatch]);
+  useEffect(() => {
+    setHasAppliedAiMatches(false);
+  }, [rawCandidates]);
 
   //
   // ─────────────────────────────────────────────────────────────

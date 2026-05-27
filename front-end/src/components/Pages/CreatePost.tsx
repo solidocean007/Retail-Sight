@@ -2,14 +2,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-// import { Timestamp } from "firebase/firestore";
 import { selectUser } from "../../Slices/userSlice";
-
-// import ChannelSelector from "./ChannelSelector";
-// import CategorySelector from "./CategorySelector";
 import { AppBar, Box, Container } from "@mui/material";
-
-// import StoreLocator from "./StoreLocator";
 import { useHandlePostSubmission } from "../../utils/PostLogic/handlePostCreation";
 import {
   CompanyAccountType,
@@ -18,13 +12,8 @@ import {
   PostType,
   UserType,
 } from "../../utils/types";
-// import { CategoryType } from "./CategorySelector";
-// import { ChannelType } from "./ChannelSelector";
-// import { SupplierType } from "./SupplierSelector";
-// import { BrandType } from "./BrandsSelector";
 import "./createPost.css";
 import { CreatePostHelmet } from "../../utils/helmetConfigurations";
-// import { UploadImage } from "./UploadImage";
 import { PickStore } from "../Create-Post/PickStore";
 import { SetDisplayDetails } from "../Create-Post/SetDisplayDetails";
 import { DisplayDescription } from "../Create-Post/DisplayDescription";

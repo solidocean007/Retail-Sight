@@ -144,7 +144,7 @@ export const useHandlePostSubmission = () => {
           companyId: userData.companyId,
           imageId: newDocRef.id,
           detected: post.rawCandidates ?? [],
-          accepted: post.autoDetectedBrands ?? [],
+          accepted: post.brands ?? [],
           aiEnabled: post.aiEnabled ?? false,
         });
       } catch (err) {
