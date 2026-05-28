@@ -1,129 +1,113 @@
 .account-import-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--gray-50);
-  padding: 20px;
-  margin-top: 20px;
+  border-radius: 12px;
+  background: var(--dashboard-card);
 }
 
-/* Header */
-
-.panel-header {
-  display: flex;
+.account-import-panel.compact {
+  flex-direction: row;
   align-items: center;
+}
+
+.account-import-summary-row {
+  display: flex;
   justify-content: space-between;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 1rem;
 }
 
-.panel-header h3 {
-  margin: 0;
+.account-import-summary-row strong {
+  color: var(--text-color);
 }
 
-/* Section */
-
-.notify-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.account-import-summary-row p {
+  margin: 0.25rem 0 0;
+  color: var(--muted-text-color);
+  font-size: 0.9rem;
 }
 
-/* Checkbox rows */
-
-.checkbox-row {
+.account-import-summary-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.95rem;
+  gap: 0.5rem;
 }
 
-.checkbox-row input[type="checkbox"] {
-  cursor: pointer;
-}
-
-/* Admin email list */
-
-.admin-email-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--gray-100);
-}
-
-/* Helper text */
-
-.helper-text {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-/* Save button */
-
-.save-notify-settings {
-  align-self: flex-start;
-  margin-top: 8px;
-}
-
-/* Muted text */
-
-.muted {
-  color: var(--text-muted);
-  margin-left: 4px;
+.account-import-settings-body {
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .status-pill {
-  font-size: 0.8rem;
-  padding: 4px 10px;
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
   font-weight: 600;
-  display: inline-block;
 }
 
 .status-pill.success {
-  background: var(--success-light);
-  color: var(--success);
+  color: #1b5e20;
+  background: rgba(46, 125, 50, 0.12);
+  border: 1px solid rgba(46, 125, 50, 0.25);
 }
 
 .status-pill.disabled {
+  color: var(--muted-text-color);
   background: var(--gray-100);
-  color: var(--text-muted);
+  border: 1px solid var(--border-color);
 }
 
-/* -------------------------------- */
-/* Mobile responsiveness */
-/* -------------------------------- */
-
-@media (max-width: 768px) {
-  .account-import-panel {
-    padding: 16px;
-  }
-
-  .admin-email-list {
-    padding: 10px;
-  }
-
-  .checkbox-row {
-    font-size: 0.9rem;
-  }
-
-  .save-notify-settings {
-    width: 100%;
-  }
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
 }
 
-/* Very small phones */
+.checkbox-row input {
+  margin-top: 0.2rem;
+}
 
-@media (max-width: 480px) {
-  .panel-header {
+.admin-email-list {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--alt-menu-background-color);
+}
+
+.muted,
+.helper-text {
+  color: var(--muted-text-color);
+}
+
+.helper-text {
+  display: block;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.account-import-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 700px) {
+  .account-import-summary-row,
+  .account-import-summary-actions {
+    align-items: stretch;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
   }
 
-  .checkbox-row {
-    gap: 8px;
+  .account-import-summary-actions {
+    width: 100%;
   }
 }

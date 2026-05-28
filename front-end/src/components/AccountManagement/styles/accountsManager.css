@@ -167,6 +167,48 @@
   font-size: 1rem;
 }
 
+.accounts-backup-panel {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--dashboard-card);
+}
+
+.accounts-backup-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.accounts-backup-summary strong {
+  color: var(--text-color);
+}
+
+.accounts-backup-summary p {
+  margin: 0.25rem 0 0;
+  color: var(--muted-text-color);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.accounts-backup-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .accounts-backup-summary {
+    flex-direction: column;
+  }
+
+  .accounts-backup-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 700px) {
   .account-manager-section-header,
   .account-pending-import-card {

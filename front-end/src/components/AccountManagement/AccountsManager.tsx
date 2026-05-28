@@ -471,10 +471,18 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
       const accountsData = accountsSnap.data();
 
-      const dateStr = new Date().toISOString().split("T")[0];
-      const backupRef = doc(db, "accounts_backup", `backup_${dateStr}`); // this doc needs a companyId written to it
+      const backupId = `backup_${companyId}_${Date.now()}`;
 
-      await setDoc(backupRef, accountsData);
+      const backupRef = doc(db, "accounts_backup", backupId);
+
+      await setDoc(backupRef, {
+        companyId,
+        accountsId,
+        accounts: accountsData.accounts || [],
+        accountCount: accountsData.accounts?.length || 0,
+        createdAt: new Date().toISOString(),
+        deleted: false,
+      });
       setRefreshBackupsFlag((f) => f + 1); // 🔄 bump flag
       dispatch(showMessage("Accounts backup completed successfully."));
     } catch (err) {
@@ -620,9 +628,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
 
   return (
     <Box className="account-manager-container account-manager">
-      <Typography variant="h4" className="account-header-title">
+      {/* <Typography variant="h4" className="account-header-title">
         Accounts Manager
-      </Typography>
+      </Typography> */}
 
       {/* <AccountSyncStatusNotice companyId={companyId} />
 
