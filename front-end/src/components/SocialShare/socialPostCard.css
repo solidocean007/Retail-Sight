@@ -1,0 +1,241 @@
+.social-post-card {
+  width: 1080px;
+  min-height: 1350px;
+  background: #f3f4f6;
+  color: #111827;
+  font-family: Arial, Helvetica, sans-serif;
+  border-radius: 0;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+}
+
+.social-texture {
+  background:
+    radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.24), transparent 34%),
+    radial-gradient(circle at 88% 45%, rgba(139, 92, 246, 0.42), transparent 42%),
+    linear-gradient(135deg, #07111f 0%, #0f1f35 48%, #312e81 100%);
+}
+
+.social-card-brand-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 22px 44px;
+  height: 82px;
+}
+
+.social-displaygram-logo {
+  width: 520px;
+  max-width: 90%;
+  height: auto;
+  object-fit: contain;
+  background: transparent;
+  border-radius: 0;
+}
+
+.social-card-brand-header h1 {
+  margin: 0;
+  font-size: 54px;
+  letter-spacing: -1px;
+  color: white;
+}
+
+.social-card-brand-header p {
+  margin: 4px 0 0;
+  font-size: 24px;
+  opacity: 0.92;
+  color: white;
+}
+
+.social-brand-pill {
+  font-size: 24px;
+  font-weight: 800;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.social-card-body {
+  padding: 24px 42px 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+}
+
+.social-card-post-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.social-card-post-meta h2 {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1.05;
+}
+
+.social-card-post-meta p {
+  margin: 7px 0 0;
+  font-size: 22px;
+  color: var(--gray-600, #4b5563);
+}
+
+.social-card-date {
+  font-size: 22px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.social-goal-banner,
+.social-gallo-banner {
+  margin-bottom: 18px;
+  padding: 16px 22px;
+  color: white;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 900;
+  border-radius: 14px;
+  line-height: 1.2;
+}
+
+.social-goal-banner {
+  background: var(--dark-gold, #a18801);
+}
+
+.social-gallo-banner {
+  background: #6a1b9a;
+}
+
+.social-card-user-row {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  font-size: 24px;
+}
+
+.social-card-user-row span {
+  color: var(--gray-600, #4b5563);
+}
+
+.social-card-image-wrap {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 4px solid var(--gray-200, #e2e8f0);
+}
+
+.social-card-image-wrap img {
+  width: 100%;
+  height: 735px;
+  object-fit: cover;
+  display: block;
+}
+
+.social-card-details {
+  display: grid;
+  gap: 18px;
+  padding: 22px 0;
+}
+
+.two-card-layout {
+  grid-template-columns: 0.85fr 1.15fr;
+}
+
+.social-card-details div {
+  background: white;
+  border-radius: 18px;
+  padding: 18px 20px;
+  text-align: center;
+  border: 2px solid var(--gray-200, #e5e7eb);
+}
+
+.social-card-details strong {
+  display: block;
+  font-size: 28px;
+  margin-bottom: 7px;
+  line-height: 1.15;
+}
+
+.social-card-details span {
+  font-size: 18px;
+  color: var(--gray-600, #6b7280);
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.social-card-description {
+  margin: 0 0 22px;
+  font-size: 24px;
+  line-height: 1.35;
+  color: var(--gray-700, #374151);
+}
+
+.social-card-interactions {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  padding: 18px 0;
+  border-top: 2px solid var(--gray-200, #e5e7eb);
+  background: white;
+  margin: 0 -42px;
+}
+
+.social-card-interactions span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  font-weight: 800;
+  color: var(--gray-700, #374151);
+}
+
+.social-card-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 24px 52px 30px;
+  color: white;
+}
+
+.social-card-footer span {
+  font-size: 30px;
+  font-weight: 900;
+  color: white;
+}
+
+.social-card-footer small {
+  font-size: 20px;
+  opacity: 0.9;
+  max-width: 900px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: white;
+}
+
+.create-linkedin-card-button {
+  font-weight: 700;
+  font-size: 13px;
+  min-width: 150px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: none;
+  background: #0a66c2;
+  color: white;
+  cursor: pointer;
+}
+
+.create-linkedin-card-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.social-card-hidden-export {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+  width: 1080px;
+  pointer-events: none;
+  opacity: 1;
+}

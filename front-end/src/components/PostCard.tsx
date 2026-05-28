@@ -43,6 +43,7 @@ import LinkShareModal from "./LinkShareModal";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
 import { FeedImageSet } from "./PostCardRenderer";
+import CreateLinkedInCardButton from "./SocialShare/CreateLinkedInCardButton";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -358,6 +359,12 @@ const PostCard: React.FC<PostCardProps> = ({
                         >
                           {isSharing ? <CircularProgress size={20} /> : "Share"}
                         </MenuItem>
+                        {user?.role === "developer" && (
+                          <CreateLinkedInCardButton
+                            post={post}
+                            variant="menuItem"
+                          />
+                        )}
                         {canEditPost && (
                           <MenuItem onClick={handleOpenEdit}>
                             Update Post

@@ -35,6 +35,7 @@
     "firebase": "^12.0.0",
     "framer-motion": "^12.23.24",
     "heic2any": "^0.0.4",
+    "html-to-image": "^1.11.13",
     "lodash.isequal": "^4.5.0",
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.9",
