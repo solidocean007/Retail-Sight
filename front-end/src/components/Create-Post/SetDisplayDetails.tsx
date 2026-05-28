@@ -24,6 +24,23 @@ export const SetDisplayDetails: React.FC<SetDisplayDetailsProps> = ({
     [brands, productTypes],
   );
 
+  const getCandidateBrandName = (candidate: any): string => {
+    if (typeof candidate === "string") return candidate;
+
+    return (
+      candidate?.brandName ||
+      candidate?.matchedBrandName ||
+      candidate?.name ||
+      candidate?.label ||
+      ""
+    );
+  };
+
+  const normalizeBrand = (value: string) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
   const handleBrandsChange = useCallback(
     (newBrands: string[], newProductTypes: string[], brandIds: string[]) => {
       setPost((prev) => ({
