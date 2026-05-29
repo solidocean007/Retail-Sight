@@ -43,7 +43,8 @@ import LinkShareModal from "./LinkShareModal";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
 import { FeedImageSet } from "./PostCardRenderer";
-import CreateLinkedInCardButton from "./SocialShare/CreateLinkedInCardButton";
+import ExportDisplayCardButton from "./SocialShare/ExportDisplayCardButton";
+// import CreateLinkedInCardButton from "./SocialShare/CreateLinkedInCardButton";
 
 // import TotalCaseCount from "./TotalCaseCount";
 
@@ -175,6 +176,11 @@ const PostCard: React.FC<PostCardProps> = ({
   const likesCount = updatedPost?.likes?.length || 0;
   const likedByUser =
     !!currentUserUid && updatedPost?.likes?.includes(currentUserUid);
+
+  const canCreateSocialCard =
+    user?.role === "admin" ||
+    user?.role === "super-admin" ||
+    user?.role === "developer";
 
   const openCommentModal = async () => {
     setIsCommentModalOpen(true);
@@ -359,8 +365,8 @@ const PostCard: React.FC<PostCardProps> = ({
                         >
                           {isSharing ? <CircularProgress size={20} /> : "Share"}
                         </MenuItem>
-                        {user?.role === "developer" && (
-                          <CreateLinkedInCardButton
+                        {canCreateSocialCard && (
+                          <ExportDisplayCardButton
                             post={post}
                             variant="menuItem"
                           />
