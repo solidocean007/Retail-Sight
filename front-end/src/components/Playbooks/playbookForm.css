@@ -1,0 +1,48 @@
+/* src/components/Playbooks/playbookForm.css */
+
+.playbook-form-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(92vw, 520px);
+  transform: translate(-50%, -50%);
+  background: var(--card-background, #fff);
+  color: var(--text-color);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+  padding: 1.5rem;
+}
+
+.playbook-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.playbook-form h3 {
+  margin: 0 0 0.5rem;
+}
+
+.playbook-form input,
+.playbook-form textarea,
+.playbook-form select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 8px;
+  background: var(--input-background, #fff);
+  color: var(--text-color);
+  font: inherit;
+}
+
+.playbook-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.disabled-button {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

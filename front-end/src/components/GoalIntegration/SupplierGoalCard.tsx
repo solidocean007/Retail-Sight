@@ -197,7 +197,7 @@ const SupplierGoalCard: React.FC<SupplierGoalCardProps> = ({
                                 )
                               }
                             >
-                              View Post
+                              View Display
                             </button>
                           </div>
                         </div>

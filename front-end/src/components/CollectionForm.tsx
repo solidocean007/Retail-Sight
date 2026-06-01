@@ -15,16 +15,17 @@ const CollectionForm: React.FC<CollectionFormProps> = ({
   onAddCollection,
   onClose,
 }) => {
-  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
-    setName("");
+    setTitle("");
     setDescription("");
   };
 
   const handleClose = () => {
+    if (isSubmitting) return;
     resetForm();
     onClose();
   };
@@ -32,20 +33,22 @@ const CollectionForm: React.FC<CollectionFormProps> = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const trimmedName = name.trim();
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
 
-    if (!trimmedName || isSubmitting) return;
+    if (!trimmedTitle || isSubmitting) return;
 
     setIsSubmitting(true);
 
     try {
       await onAddCollection({
-        name: trimmedName,
-        description: description.trim(),
-        posts: [],
+        title: trimmedTitle,
+        description: trimmedDescription,
+        postIds: [],
         previewImages: [],
         sharedWith: [],
         isShareableOutsideCompany: false,
+        collectionType: "collection",
       });
 
       resetForm();
@@ -85,8 +88,8 @@ const CollectionForm: React.FC<CollectionFormProps> = ({
 
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="Collection Name"
             required
             autoFocus
@@ -103,13 +106,13 @@ const CollectionForm: React.FC<CollectionFormProps> = ({
           <div className="collection-form-actions">
             <button
               type="submit"
-              disabled={!name.trim() || isSubmitting}
-              className={!name.trim() || isSubmitting ? "disabled-button" : ""}
+              disabled={!title.trim() || isSubmitting}
+              className={!title.trim() || isSubmitting ? "disabled-button" : ""}
             >
               {isSubmitting ? "Creating..." : "Add Collection"}
             </button>
 
-            <button type="button" onClick={handleClose}>
+            <button type="button" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </button>
           </div>

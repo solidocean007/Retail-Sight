@@ -410,7 +410,7 @@ export const CreatePostHelmet = () => (
     />
     <meta
       name="keywords"
-      content="Displaygram, create post, retail display, share display, display innovation"
+      content="Displaygram, create display, retail display, share display, display innovation"
     />
     <link rel="canonical" href="https://displaygram.com/create-post" />
     <meta

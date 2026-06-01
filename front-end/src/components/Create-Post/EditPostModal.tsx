@@ -381,10 +381,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       }
 
       handleCloseEditModal();
-      dispatch(showMessage("Post edited successfully!"));
+      dispatch(showMessage("Display edited successfully!"));
     } catch (err) {
-      console.error("Error updating post:", err);
-      dispatch(showMessage("Error updating post."));
+      console.error("Error updating display:", err);
+      dispatch(showMessage("Error updating display."));
     }
   };
 
@@ -430,10 +430,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
       console.log("✅ Finished Firestore + Storage deletion for:", post.id);
 
       handleCloseEditModal();
-      dispatch(showMessage("Post deleted successfully!"));
+      dispatch(showMessage("Display deleted successfully!"));
     } catch (error) {
-      console.error("❌ Failed to delete post:", error);
-      dispatch(showMessage("Error deleting post."));
+      console.error("❌ Failed to delete display:", error);
+      dispatch(showMessage("Error deleting display."));
     }
   };
 
@@ -604,7 +604,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({
 
               <div className="visibility-select">
                 <label htmlFor="visibilitySelect">
-                  <strong>Post Visibility</strong>
+                  <strong>Display Visibility</strong>
                 </label>
                 <select
                   id="visibilitySelect"

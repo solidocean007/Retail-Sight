@@ -67,7 +67,7 @@ export const useHandlePostSubmission = () => {
     const user = auth.currentUser;
     if (!user) throw new Error("Auth missing");
     setIsUploading(true);
-    setUploadStatusText("☁️ Preparing post...");
+    setUploadStatusText("☁️ Preparing display...");
 
     let newDocRef: DocumentReference | undefined;
 
@@ -210,7 +210,7 @@ export const useHandlePostSubmission = () => {
         console.warn("⚠️ Failed to delete temp upload:", cleanupErr);
       }
 
-      dispatch(showMessage("🎉 Post added successfully!"));
+      dispatch(showMessage("🎉 Display added successfully!"));
       return finalPost;
     } catch (error) {
       dispatch(

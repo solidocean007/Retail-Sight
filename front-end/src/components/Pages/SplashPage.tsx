@@ -189,7 +189,7 @@ const SplashPage = () => {
 
             <div className="pricing-col">
               <ul className="pricing-preview__list">
-                <li>✔ Create & view posts in your company</li>
+                <li>✔ Create & view displays in your company</li>
                 <li>✔ No credit card required</li>
                 <li>🔒 Cross-company visibility</li>
                 <li>🔒 Goal tracking & execution insights</li>

@@ -27,6 +27,7 @@ import PastDueBanner from "./Billing/PastDueBanner.tsx";
 import { selectIsSupplier } from "../../Slices/currentCompanySlice.ts";
 import { selectEffectiveCompanyId } from "../../Slices/impersonationSlice.ts";
 import DeveloperViewAsPanel from "../DeveloperDashboard/DeveloperViewAsPanel.tsx";
+import LibraryView from "../Library/LibraryView.tsx";
 
 const ADMIN_MODES: DashboardModeType[] = [
   "ConnectionsMode",
@@ -222,8 +223,8 @@ export const Dashboard = () => {
           canAccessAdmin &&
           !isSupplier && <GoalManagerLayout companyId={companyId} />}
 
-        {dashboardMode === "CollectionsMode" && (
-          <CollectionsViewer setDashboardMode={setDashboardMode} />
+        {dashboardMode === "LibraryMode" && (
+          <LibraryView setDashboardMode={setDashboardMode} />
         )}
         {dashboardMode === "TutorialMode" && <TutorialViewer />}
         {dashboardMode === "DeveloperViewAsMode" && isDeveloper && (

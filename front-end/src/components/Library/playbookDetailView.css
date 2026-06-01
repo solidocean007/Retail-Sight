@@ -1,0 +1,460 @@
+/* src/components/Playbooks/playbookDetailView.css */
+
+.playbook-detail {
+  --playbook-radius-lg: 24px;
+  --playbook-radius-md: 18px;
+  --playbook-radius-sm: 12px;
+
+  width: 100%;
+  color: var(--text-color);
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 32rem),
+    var(--dashboard-background-color);
+  padding: 1rem;
+}
+
+.playbook-detail-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.playbook-detail-topbar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.playbook-cover {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  gap: 1rem;
+  min-height: 520px;
+  border-radius: var(--playbook-radius-lg);
+  overflow: hidden;
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow, 0 18px 60px rgba(0, 0, 0, 0.12));
+}
+
+.playbook-cover-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1.25rem, 3vw, 3rem);
+}
+
+.playbook-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.playbook-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  color: #fff;
+  background: var(--primary-blue);
+  font-size: 1.5rem;
+  font-weight: 900;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.32);
+}
+
+.playbook-brand-name {
+  margin: 0;
+  font-weight: 900;
+  font-size: 1.05rem;
+}
+
+.playbook-brand-subtitle {
+  margin: 0.1rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.playbook-cover-copy {
+  max-width: 720px;
+  padding: 3rem 0;
+}
+
+.playbook-kicker,
+.playbook-section-label {
+  margin: 0 0 0.45rem;
+  color: var(--primary-blue);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.playbook-cover h1 {
+  margin: 0;
+  font-size: clamp(2.35rem, 6vw, 5.25rem);
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+}
+
+.playbook-cover-description {
+  max-width: 640px;
+  margin: 1.25rem 0 0;
+  color: var(--text-secondary);
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  line-height: 1.5;
+}
+
+.playbook-cover-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.playbook-cover-meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.playbook-cover-meta span {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.playbook-cover-meta strong {
+  font-size: 1rem;
+  text-transform: capitalize;
+}
+
+.playbook-cover-visual {
+  position: relative;
+  min-height: 420px;
+  background: var(--menu-background-color);
+}
+
+.playbook-cover-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, transparent 52%, rgba(0, 0, 0, 0.45)),
+    linear-gradient(to right, rgba(0, 0, 0, 0.18), transparent 45%);
+  pointer-events: none;
+}
+
+.playbook-cover-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playbook-cover-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.playbook-guidance-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.playbook-guidance-card {
+  min-height: 180px;
+  padding: 1.25rem;
+  border-radius: var(--playbook-radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--card-background);
+  box-shadow: var(--card-shadow, 0 10px 34px rgba(0, 0, 0, 0.08));
+}
+
+.playbook-guidance-card-primary {
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.12), transparent),
+    var(--card-background);
+}
+
+.playbook-guidance-card h2,
+.playbook-guidance-card h3,
+.playbook-section-heading h2 {
+  margin: 0;
+}
+
+.playbook-guidance-card p:not(.playbook-section-label) {
+  margin: 0.75rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.playbook-featured-section,
+.playbook-supporting-section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: var(--playbook-radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--card-background);
+}
+
+.playbook-section-heading {
+  max-width: 820px;
+  margin-bottom: 1rem;
+}
+
+.playbook-section-heading p:not(.playbook-section-label) {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.playbook-featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.playbook-featured-card {
+  overflow: hidden;
+  border-radius: var(--playbook-radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--dashboard-background-color);
+}
+
+.playbook-featured-image {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--menu-background-color);
+}
+
+.playbook-featured-image img,
+.playbook-supporting-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playbook-featured-number {
+  position: absolute;
+  left: 0.85rem;
+  bottom: 0.85rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(8px);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.playbook-featured-body {
+  padding: 1rem;
+}
+
+.playbook-featured-body h3,
+.playbook-supporting-body h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.playbook-display-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.playbook-display-meta span:not(:last-child)::after {
+  content: "•";
+  margin-left: 0.4rem;
+  opacity: 0.65;
+}
+
+.playbook-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.playbook-chip {
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.playbook-display-description {
+  margin: 0.85rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.playbook-rep-note {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border-radius: var(--playbook-radius-sm);
+  border-left: 4px solid var(--primary-blue);
+  background: var(--card-background);
+  line-height: 1.45;
+}
+
+.playbook-supporting-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.playbook-supporting-card {
+  overflow: hidden;
+  border-radius: var(--playbook-radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--dashboard-background-color);
+}
+
+.playbook-supporting-image {
+  aspect-ratio: 1 / 1;
+  background: var(--menu-background-color);
+}
+
+.playbook-supporting-body {
+  padding: 0.85rem;
+}
+
+.playbook-supporting-brands {
+  margin: 0.55rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.playbook-image-placeholder,
+.playbook-empty-panel {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  padding: 1rem;
+  color: var(--text-secondary);
+  text-align: center;
+  background: var(--menu-background-color);
+}
+
+.playbook-empty-panel {
+  border-radius: var(--playbook-radius-md);
+  border: 1px dashed var(--border-color);
+}
+
+.playbook-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0.25rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.playbook-footer strong {
+  color: var(--text-color);
+}
+
+.playbook-footer p {
+  margin: 0.2rem 0 0;
+}
+
+@media (max-width: 980px) {
+  .playbook-cover {
+    grid-template-columns: 1fr;
+  }
+
+  .playbook-cover-visual {
+    min-height: 360px;
+    order: -1;
+  }
+
+  .playbook-guidance-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .playbook-guidance-card-primary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .playbook-detail {
+    padding: 0.75rem;
+  }
+
+  .playbook-detail-topbar,
+  .playbook-detail-topbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .playbook-cover-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .playbook-guidance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .playbook-featured-section,
+  .playbook-supporting-section {
+    padding: 0.75rem;
+  }
+
+  .playbook-footer {
+    flex-direction: column;
+  }
+}
+
+/* PDF / print-friendly structure */
+@media print {
+  .playbook-detail {
+    background: #fff;
+    padding: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .playbook-cover,
+  .playbook-guidance-card,
+  .playbook-featured-section,
+  .playbook-supporting-section,
+  .playbook-featured-card,
+  .playbook-supporting-card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .playbook-cover {
+    min-height: 95vh;
+    page-break-after: always;
+  }
+
+  .playbook-featured-card,
+  .playbook-supporting-card {
+    page-break-inside: avoid;
+  }
+}

@@ -162,7 +162,7 @@ const ViewNotificationModal: React.FC<Props> = ({
         )}
 
         {getNotificationPostId(notification) && (
-          <Button onClick={handleViewPost}>View Post</Button>
+          <Button onClick={handleViewPost}>View Display</Button>
         )}
 
         {/* <Button onClick={onClose} variant="contained">

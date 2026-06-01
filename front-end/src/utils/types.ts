@@ -594,23 +594,62 @@ export interface LocationState {
 }
 
 export interface CollectionType {
+  id: string;
+  title: string;
+  name?: string;
   companyId: string;
-  name: string;
   description?: string;
   ownerId: string;
-  posts: string[];
-  previewImages?: string[]; // Array of post IDs for preview images
+  posts?: string;
+  postIds: string[];
+  previewImages?: string[];
   sharedWith: string[];
   shareToken?: string;
   isShareableOutsideCompany: boolean;
+
+  collectionType?: "collection" | "playbook";
+  playbookStatus?: "draft" | "published" | "archived";
+  managerNotes?: string;
+  whenToUse?: string;
+  executionGoal?: string;
+  audience?: "sales" | "supervisors" | "all";
+
+  goalIds?: string[];
+  brandIds?: string[];
+  supplierId?: string;
+  featuredPostIds?: string[];
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type CollectionWithId = CollectionType & { id: string };
 
-export type CreateCollectionInput = Omit<
-  CollectionType,
-  "companyId" | "ownerId"
->;
+// export type CreateCollectionInput = Omit<
+//   CollectionType,
+//   "companyId" | "ownerId"
+// >;
+
+export type CreateCollectionInput = {
+  title: string;
+  description?: string;
+  postIds?: string[];
+  previewImages?: string[];
+  sharedWith?: string[];
+  isShareableOutsideCompany?: boolean;
+
+  collectionType?: "collection" | "playbook";
+  playbookStatus?: "draft" | "published" | "archived";
+  managerNotes?: string;
+  whenToUse?: string;
+  executionGoal?: string;
+  audience?: "sales" | "supervisors" | "all";
+
+  goalIds?: string[];
+  brandIds?: string[];
+  supplierId?: string;
+  featuredPostIds?: string[];
+};
 
 export interface TokenData {
   sharedToken: string;
@@ -874,7 +913,7 @@ export type DashboardModeType =
   | "IntegrationsMode"
   | "GoalManagerMode"
   | "ApiMode"
-  | "CollectionsMode"
+  | "LibraryMode"
   | "TutorialMode"
   | "AnnouncementsMode"
   | "DeveloperViewAsMode";

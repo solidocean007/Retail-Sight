@@ -18,7 +18,7 @@ interface ReviewAndSubmitProps {
   post: PostInputType;
   handleFieldChange: (
     field: keyof PostInputType,
-    value: PostInputType[keyof PostInputType]
+    value: PostInputType[keyof PostInputType],
   ) => void;
   isUploading: boolean;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -37,13 +37,14 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
     <div className="review-and-submit">
       <Box mt={2}>
         <Typography variant="h6" display="flex" alignItems="center" gap={1}>
-          Post Visibility
+          Display Visibility
           <Tooltip
             title={
               <>
-                <strong>Network</strong>: Shared with connected suppliers
+                <strong>Network</strong> = shared with connected suppliers for
+                matching brands
                 <br />
-                <strong>Company Only</strong>: Visible only inside your company
+                <strong>Company Only</strong> = visible only inside your company
               </>
             }
             placement="right"
@@ -59,7 +60,9 @@ export const ReviewAndSubmit: React.FC<ReviewAndSubmitProps> = ({
           fullWidth
           variant="outlined"
           value={post.migratedVisibility ?? "network"} // 👈 ensures "network" shows by default
-          onChange={(e) => handleFieldChange("migratedVisibility", e.target.value)}
+          onChange={(e) =>
+            handleFieldChange("migratedVisibility", e.target.value)
+          }
         >
           <MenuItem value="network">Network (default)</MenuItem>
           <MenuItem value="companyOnly">Company Only</MenuItem>

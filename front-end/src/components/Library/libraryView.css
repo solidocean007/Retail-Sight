@@ -1,0 +1,85 @@
+/* src/components/Library/libraryView.css */
+
+.library-view {
+  width: 100%;
+  min-height: 100%;
+  padding: 1rem;
+  color: var(--text-color);
+}
+
+.library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.library-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.library-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.library-subtitle {
+  max-width: 720px;
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary, #666);
+  line-height: 1.4;
+}
+
+.library-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-color, #ddd);
+  margin-bottom: 1rem;
+}
+
+.library-tab {
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.library-tab:hover {
+  background-color: var(--dashboard-background-color);
+}
+
+.library-tab.active {
+  color: var(--primary-blue);
+  border-bottom-color: var(--primary-blue);
+}
+
+.library-content {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .library-view {
+    padding: 0.75rem;
+  }
+
+  .library-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .library-tabs {
+    width: 100%;
+  }
+
+  .library-tab {
+    flex: 1;
+  }
+}

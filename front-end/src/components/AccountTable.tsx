@@ -56,7 +56,7 @@ const AccountTable: React.FC<AccountTableProps> = ({
             <div className="account-cell submitted-by-cell">Submitted By</div>
           )}
           <div className="account-cell submitted-at-cell">Submitted At</div>
-          <div className="account-small-cell">Post</div>
+          <div className="account-small-cell">Display</div>
         </div>
 
         <Virtuoso
@@ -106,10 +106,10 @@ const AccountTable: React.FC<AccountTableProps> = ({
                           handleViewAccountPost(acc.postId);
                         }
                       }}
-                      title="View Post"
-                      aria-label="View Post"
+                      title="View Display"
+                      aria-label="View Display"
                     >
-                      View Post
+                      View Display
                     </button>
                   ) : (
                     "—"

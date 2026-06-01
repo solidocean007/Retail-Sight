@@ -5,6 +5,7 @@ import {
   List,
   ListItem,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
   Typography,
 } from "@mui/material";
@@ -25,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import LogOutButton from "./LogOutButton";
+import LocalLibraryIcon from "@mui/icons-material/LocalLibrary";
 import UpgradePromptBanner from "./UpgradePromptBanner";
 import GoalIcon from "./icons/GoalIcon";
 
@@ -35,7 +37,10 @@ import { RootState, useAppDispatch } from "../utils/store";
 import { selectPendingAccountImports } from "../Slices/accountImportSlice";
 import { selectIsSupplier } from "../Slices/currentCompanySlice";
 import { selectUser } from "../Slices/userSlice";
-import { stopImpersonation, stopViewAsCompany } from "../Slices/impersonationSlice";
+import {
+  stopImpersonation,
+  stopViewAsCompany,
+} from "../Slices/impersonationSlice";
 
 const drawerWidth = 200;
 
@@ -142,11 +147,11 @@ const DashMenu = ({
         )}
 
         <ListItemButton
-          selected={selectedMode === "CollectionsMode"}
-          onClick={() => onMenuClick("CollectionsMode")}
+          selected={selectedMode === "LibraryMode"}
+          onClick={() => onMenuClick("LibraryMode")}
         >
-          <CollectionsBookmarkIcon sx={{ mr: 1 }} />
-          <ListItemText primary="Collections" />
+          <LocalLibraryIcon sx={{ mr: 1 }} />
+          <ListItemText primary="Library" />
         </ListItemButton>
 
         <ListItemButton

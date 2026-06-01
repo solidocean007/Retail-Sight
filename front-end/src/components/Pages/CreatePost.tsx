@@ -210,7 +210,7 @@ import { canPostOnBehalf } from "../../utils/userData/permissions";
       <Container disableGutters className="create-post-container">
         <AppBar position="static" sx={appBarStyle}>
           <div className="create-post-header">
-            <h1 style={{ marginLeft: "2rem" }}>Create Post</h1>
+            <h1 style={{ marginLeft: "2rem" }}>Create Display</h1>
             <button
               className="close-button"
               aria-label="close"
