@@ -596,15 +596,15 @@ export interface LocationState {
 export interface CollectionType {
   id: string;
   title: string;
-  name?: string;
   companyId: string;
   description?: string;
   ownerId: string;
-  posts?: string;
+
   postIds: string[];
   previewImages?: string[];
+
   sharedWith: string[];
-  shareToken?: string;
+  shareToken?: string | null;
   isShareableOutsideCompany: boolean;
 
   collectionType?: "collection" | "playbook";
@@ -618,6 +618,9 @@ export interface CollectionType {
   brandIds?: string[];
   supplierId?: string;
   featuredPostIds?: string[];
+
+  playbookPostSnapshots?: PlaybookPostSnapshot[];
+  featuredPostSnapshots?: PlaybookPostSnapshot[];
 
   createdAt?: string;
   updatedAt?: string;
@@ -644,12 +647,43 @@ export type CreateCollectionInput = {
   whenToUse?: string;
   executionGoal?: string;
   audience?: "sales" | "supervisors" | "all";
+  shareToken?: string | null;
 
   goalIds?: string[];
   brandIds?: string[];
   supplierId?: string;
   featuredPostIds?: string[];
 };
+
+export interface PlaybookPostSnapshot {
+  postId: string;
+
+  imageUrl: string;
+  originalImageUrl?: string;
+
+  accountName?: string;
+  accountNumber?: string;
+  accountAddress?: string;
+  city?: string;
+  state?: string;
+  chain?: string;
+  chainType?: string;
+
+  brands?: string[];
+  brandIds?: string[];
+  productType?: string[];
+
+  description?: string;
+  totalCaseCount?: number;
+
+  postUserUid?: string;
+  postUserFirstName?: string;
+  postUserLastName?: string;
+  postUserCompanyName?: string;
+
+  displayDate?: string;
+  addedToPlaybookAt?: string;
+}
 
 export interface TokenData {
   sharedToken: string;

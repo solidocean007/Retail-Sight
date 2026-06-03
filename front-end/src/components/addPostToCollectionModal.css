@@ -228,6 +228,57 @@
   outline-offset: 1px;
 }
 
+.library-target-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+
+.library-target-tabs button {
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-background);
+  color: var(--text-color);
+  padding: 0.65rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.library-target-tabs button.active {
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+  background: var(--dashboard-background-color);
+}
+
+.playbook-add-mode {
+  margin: 0 1rem 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--dashboard-background-color);
+}
+
+.playbook-add-mode p {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+}
+
+.playbook-add-mode label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+  color: var(--text-color);
+}
+
+.collection-picker-info small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
 @media (max-width: 600px) {
   .add-collection-modal {
     padding: 0.85rem;

@@ -1,9 +1,11 @@
-// src/components/Library/LibraryView.tsx
 import React, { useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import "./libraryView.css";
 import PlaybooksPage from "../Playbooks/PlaybooksPage";
 import CollectionsViewer from "../CollectionsViewer";
 import { DashboardModeType } from "../../utils/types";
+import { selectUser } from "../../Slices/userSlice";
+import { useCompanyCollections } from "../../hooks/useCompanyCollections";
 
 type LibraryTab = "collections" | "playbooks";
 
@@ -12,12 +14,30 @@ interface LibraryViewProps {
 }
 
 const LibraryView: React.FC<LibraryViewProps> = ({ setDashboardMode }) => {
+  const user = useSelector(selectUser);
+  const { collections, loading, createCollection, deleteCollection } =
+    useCompanyCollections(user);
+
   const [activeTab, setActiveTab] = useState<LibraryTab>("collections");
 
   const pageTitle = useMemo(() => {
     if (activeTab === "playbooks") return "Playbooks";
     return "Collections";
   }, [activeTab]);
+
+  const normalCollections = useMemo(() => {
+    return collections.filter(
+      (collection) =>
+        !collection.collectionType ||
+        collection.collectionType === "collection",
+    );
+  }, [collections]);
+
+  const playbooks = useMemo(() => {
+    return collections.filter(
+      (collection) => collection.collectionType === "playbook",
+    );
+  }, [collections]);
 
   return (
     <main className="library-view">
@@ -45,9 +65,7 @@ const LibraryView: React.FC<LibraryViewProps> = ({ setDashboardMode }) => {
 
         <button
           type="button"
-          className={`library-tab ${
-            activeTab === "playbooks" ? "active" : ""
-          }`}
+          className={`library-tab ${activeTab === "playbooks" ? "active" : ""}`}
           onClick={() => setActiveTab("playbooks")}
         >
           Playbooks
@@ -55,10 +73,24 @@ const LibraryView: React.FC<LibraryViewProps> = ({ setDashboardMode }) => {
       </nav>
 
       <section className="library-content">
-        {activeTab === "collections" ? (
-          <CollectionsViewer setDashboardMode={setDashboardMode} />
-        ) : (
-          <PlaybooksPage />
+        {loading && <p>Loading library...</p>}
+
+        {!loading && activeTab === "collections" && (
+          <CollectionsViewer
+            setDashboardMode={setDashboardMode}
+            collections={normalCollections}
+            createCollection={createCollection}
+            deleteCollection={deleteCollection}
+            loading={loading}
+          />
+        )}
+
+        {!loading && activeTab === "playbooks" && (
+          <PlaybooksPage
+            collections={playbooks}
+            loading={loading}
+            onAddPlaybook={createCollection}
+          />
         )}
       </section>
     </main>

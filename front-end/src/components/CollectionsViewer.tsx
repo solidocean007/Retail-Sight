@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CircularProgress, IconButton } from "@mui/material";
 import { Delete, Share } from "@mui/icons-material";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import CollectionForm from "./CollectionForm";
 import CustomConfirmation from "./CustomConfirmation";
@@ -13,20 +13,22 @@ import {
   DashboardModeType,
 } from "../utils/types";
 import { showMessage } from "../Slices/snackbarSlice";
-import { selectUser } from "../Slices/userSlice";
-import { useCompanyCollections } from "../hooks/useCompanyCollections";
-
 import "./collectionsViewer.css";
 
-const CollectionsViewer = ({
-  setDashboardMode,
-}: {
+interface CollectionsViewerProps {
   setDashboardMode: React.Dispatch<React.SetStateAction<DashboardModeType>>;
-}) => {
-  const user = useSelector(selectUser);
-  const { collections, loading, createCollection, deleteCollection } =
-    useCompanyCollections(user);
+  collections: CollectionWithId[];
+  loading: boolean;
+  createCollection: (input: CreateCollectionInput) => Promise<void>;
+  deleteCollection: (collectionId: string) => Promise<void>;
+}
 
+const CollectionsViewer: React.FC<CollectionsViewerProps> = ({
+  collections,
+  loading,
+  createCollection,
+  deleteCollection,
+}) => {
   const [collectionToDelete, setCollectionToDelete] = useState<string | null>(
     null,
   );
@@ -39,7 +41,16 @@ const CollectionsViewer = ({
 
   const handleAddCollection = async (newCollection: CreateCollectionInput) => {
     try {
-      await createCollection(newCollection);
+      await createCollection({
+        ...newCollection,
+        collectionType: "collection",
+        postIds: newCollection.postIds ?? [],
+        previewImages: newCollection.previewImages ?? [],
+        sharedWith: newCollection.sharedWith ?? [],
+        isShareableOutsideCompany:
+          newCollection.isShareableOutsideCompany ?? false,
+      });
+
       setShowCreateCollectionDialog(false);
     } catch (error) {
       console.error("Error adding collection:", error);
@@ -67,16 +78,25 @@ const CollectionsViewer = ({
         state: { returnToDashboard: true },
       });
     } else {
-      dispatch(showMessage("No posts are in this collection yet."));
+      dispatch(showMessage("No displays are in this collection yet."));
     }
   };
 
-  const handleCopyLink = (id: string) => {
-    navigator.clipboard.writeText(
-      `${window.location.origin}/view-collection/${id}`,
-    );
-    dispatch(showMessage("Link copied to clipboard"));
+  const handleCopyLink = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/view-collection/${id}`,
+      );
+      dispatch(showMessage("Link copied to clipboard"));
+    } catch (error) {
+      console.error("Error copying collection link:", error);
+      dispatch(showMessage("Could not copy link."));
+    }
   };
+
+  const selectedCollectionTitle =
+    collections.find((c) => c.id === collectionToDelete)?.title ||
+    "this collection";
 
   return (
     <div className="collections-viewer-container">
@@ -96,22 +116,22 @@ const CollectionsViewer = ({
       ) : collections.length === 0 ? (
         <div className="collections-empty-state">
           <h3>No collections yet</h3>
-          <p>Create a collection to organize posts for your company.</p>
+          <p>Create a collection to organize displays for your company.</p>
         </div>
       ) : (
         <div className="collections-grid">
           {collections.map((collection) => {
             const sampleImages = (collection.previewImages || []).slice(0, 6);
-            const postCount = collection.posts?.length ?? 0;
+            const postCount = collection.postIds?.length ?? 0;
 
             return (
               <div className="collection-card" key={collection.id}>
                 <div className="collection-images">
                   {sampleImages.map((url, index) => (
                     <img
-                      key={url}
+                      key={`${collection.id}-${url}-${index}`}
                       src={url}
-                      alt={`${collection.name} preview ${index + 1}`}
+                      alt={`${collection.title} preview ${index + 1}`}
                       className="collection-thumbnail"
                       style={{
                         transform: `rotate(${index * -1.5 - 5}deg)`,
@@ -123,10 +143,16 @@ const CollectionsViewer = ({
                 </div>
 
                 <div className="collection-content">
-                  <h4>{collection.name}</h4>
+                  <h4>{collection.title}</h4>
+
+                  {collection.description && (
+                    <p className="collection-description">
+                      {collection.description}
+                    </p>
+                  )}
 
                   <p>
-                    {postCount} post{postCount !== 1 ? "s" : ""}
+                    {postCount} display{postCount !== 1 ? "s" : ""}
                   </p>
 
                   <div className="collection-actions">
@@ -139,14 +165,14 @@ const CollectionsViewer = ({
                     </button>
 
                     <IconButton
-                      aria-label={`Copy share link for ${collection.name}`}
+                      aria-label={`Copy share link for ${collection.title}`}
                       onClick={() => handleCopyLink(collection.id)}
                     >
                       <Share />
                     </IconButton>
 
                     <IconButton
-                      aria-label={`Delete ${collection.name}`}
+                      aria-label={`Delete ${collection.title}`}
                       onClick={() => {
                         setCollectionToDelete(collection.id);
                         setIsConfirmationOpen(true);
@@ -172,10 +198,7 @@ const CollectionsViewer = ({
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}
         onConfirm={handleDeleteCollectionConfirmed}
-        message={`Are you sure you want to delete "${
-          collections.find((c) => c.id === collectionToDelete)?.name ||
-          "this collection"
-        }"?`}
+        message={`Are you sure you want to delete "${selectedCollectionTitle}"?`}
       />
     </div>
   );

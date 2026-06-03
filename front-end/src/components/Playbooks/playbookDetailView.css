@@ -8,7 +8,11 @@
   width: 100%;
   color: var(--text-color);
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 32rem),
+    radial-gradient(
+      circle at top left,
+      rgba(37, 99, 235, 0.12),
+      transparent 32rem
+    ),
     var(--dashboard-background-color);
   padding: 1rem;
 }
@@ -429,32 +433,74 @@
 
 /* PDF / print-friendly structure */
 @media print {
-  .playbook-detail {
-    background: #fff;
-    padding: 0;
+  body.print-playbook .playbook-detail {
+    background: #fff !important;
+    color: #111 !important;
   }
 
-  .no-print {
-    display: none !important;
+  body.print-playbook .playbook-cover {
+    display: block !important;
+    min-height: auto !important;
+    page-break-after: always;
+    border: none !important;
   }
 
-  .playbook-cover,
-  .playbook-guidance-card,
-  .playbook-featured-section,
-  .playbook-supporting-section,
-  .playbook-featured-card,
-  .playbook-supporting-card {
-    box-shadow: none;
+  body.print-playbook .playbook-cover-content {
+    padding: 0.25in !important;
+  }
+
+  body.print-playbook .playbook-cover-visual {
+    margin-top: 0.25in !important;
+    height: 5.5in !important;
+    min-height: 5.5in !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  body.print-playbook .playbook-cover-visual img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  body.print-playbook .playbook-guidance-grid {
+    display: block !important;
+  }
+
+  body.print-playbook .playbook-guidance-card {
+    margin-bottom: 0.15in !important;
     break-inside: avoid;
   }
 
-  .playbook-cover {
-    min-height: 95vh;
-    page-break-after: always;
+  body.print-playbook .playbook-featured-grid,
+  body.print-playbook .playbook-supporting-grid {
+    display: block !important;
   }
 
-  .playbook-featured-card,
-  .playbook-supporting-card {
+  body.print-playbook .playbook-featured-card,
+  body.print-playbook .playbook-supporting-card {
+    margin-bottom: 0.25in !important;
+    break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  body.print-playbook .playbook-featured-image {
+    height: 4.75in !important;
+  }
+
+  body.print-playbook .playbook-supporting-image {
+    height: 3.5in !important;
+  }
+
+  body.print-playbook .playbook-featured-image img,
+  body.print-playbook .playbook-supporting-image img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  @page {
+    size: letter;
+    margin: 0.35in;
   }
 }

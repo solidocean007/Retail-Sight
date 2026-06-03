@@ -1,15 +1,21 @@
 // src/components/Playbooks/PlaybookDetailView.tsx
 import React, { useMemo } from "react";
-import { CollectionType, PostWithID } from "../../utils/types";
+import {
+  CollectionType,
+  PlaybookPostSnapshot,
+  PostWithID,
+} from "../../utils/types";
 import "./playbookDetailView.css";
 
 interface PlaybookDetailViewProps {
   playbook: CollectionType;
-  posts: PostWithID[];
+  posts?: PostWithID[];
   onBack?: () => void;
   onExportPdf?: () => void;
   onShare?: () => void;
 }
+
+type PlaybookDisplay = PlaybookPostSnapshot;
 
 const formatAudience = (audience?: CollectionType["audience"]) => {
   if (!audience || audience === "all") return "All Team Members";
@@ -18,12 +24,46 @@ const formatAudience = (audience?: CollectionType["audience"]) => {
   return audience;
 };
 
-const getPostImage = (post: PostWithID) =>
-  post.imageUrl || post.originalImageUrl || "";
+const buildSnapshotFromPost = (post: PostWithID): PlaybookDisplay => ({
+  postId: post.id,
+  imageUrl: post.imageUrl || "",
+  originalImageUrl: post.originalImageUrl || "",
 
-const getDisplayTitle = (post: PostWithID) => {
-  const accountName = post.accountName || post.account?.accountName;
-  const brand = post.brands?.[0];
+  accountName: post.accountName || post.account?.accountName || "",
+  accountNumber:
+    post.accountNumber?.toString() ||
+    post.account?.accountNumber?.toString() ||
+    "",
+  accountAddress: post.accountAddress || post.account?.accountAddress || "",
+  city: post.city || post.account?.city || "",
+  state: post.state || post.account?.state || "",
+  chain: post.chain || post.account?.chain || "",
+  chainType: post.chainType || post.account?.chainType || "",
+
+  brands: post.brands ?? [],
+  brandIds: post.brandIds ?? [],
+  productType: post.productType ?? [],
+
+  description: post.description || "",
+  totalCaseCount: Number(post.totalCaseCount ?? 0),
+
+  postUserUid: post.postUserUid || post.postUser?.uid || "",
+  postUserFirstName: post.postUserFirstName || post.postUser?.firstName || "",
+  postUserLastName: post.postUserLastName || post.postUser?.lastName || "",
+  postUserCompanyName: post.postUserCompanyName || post.postUser?.company || "",
+
+  displayDate:
+    typeof post.displayDate === "string"
+      ? post.displayDate
+      : (post.displayDate as any)?.toDate?.()?.toISOString?.() || "",
+});
+
+const getDisplayImage = (display?: PlaybookDisplay | null) =>
+  display?.imageUrl || display?.originalImageUrl || "";
+
+const getDisplayTitle = (display: PlaybookDisplay) => {
+  const accountName = display.accountName;
+  const brand = display.brands?.[0];
 
   if (brand && accountName) return `${brand} display at ${accountName}`;
   if (accountName) return `Display at ${accountName}`;
@@ -34,28 +74,45 @@ const getDisplayTitle = (post: PostWithID) => {
 
 const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   playbook,
-  posts,
+  posts = [],
   onBack,
   onExportPdf,
   onShare,
 }) => {
-  const featuredPosts = useMemo(() => {
+  const allDisplays = useMemo<PlaybookDisplay[]>(() => {
+    const snapshots = playbook.playbookPostSnapshots ?? [];
+
+    if (snapshots.length > 0) return snapshots;
+
+    return posts.map(buildSnapshotFromPost);
+  }, [playbook.playbookPostSnapshots, posts]);
+
+  const featuredDisplays = useMemo<PlaybookDisplay[]>(() => {
+    const featuredSnapshots = playbook.featuredPostSnapshots ?? [];
+
+    if (featuredSnapshots.length > 0) return featuredSnapshots;
+
     const featuredIds = playbook.featuredPostIds ?? [];
 
-    if (!featuredIds.length) {
-      return posts.slice(0, 3);
+    if (featuredIds.length > 0) {
+      const featuredSet = new Set(featuredIds);
+      return allDisplays.filter((display) => featuredSet.has(display.postId));
     }
 
-    const featuredSet = new Set(featuredIds);
-    return posts.filter((post) => featuredSet.has(post.id));
-  }, [playbook.featuredPostIds, posts]);
+    return allDisplays.slice(0, 3);
+  }, [playbook.featuredPostSnapshots, playbook.featuredPostIds, allDisplays]);
 
-  const supportingPosts = useMemo(() => {
-    const featuredIds = new Set(featuredPosts.map((post) => post.id));
-    return posts.filter((post) => !featuredIds.has(post.id));
-  }, [featuredPosts, posts]);
+  const supportingDisplays = useMemo<PlaybookDisplay[]>(() => {
+    const featuredIds = new Set(
+      featuredDisplays.map((display) => display.postId),
+    );
 
-  const primaryHeroImage = getPostImage(featuredPosts[0] ?? posts[0]);
+    return allDisplays.filter((display) => !featuredIds.has(display.postId));
+  }, [allDisplays, featuredDisplays]);
+
+  const primaryHeroImage = getDisplayImage(
+    featuredDisplays[0] ?? allDisplays[0],
+  );
 
   return (
     <article className="playbook-detail">
@@ -69,7 +126,11 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
             Share
           </button>
 
-          <button type="button" className="button-primary" onClick={onExportPdf}>
+          <button
+            type="button"
+            className="button-primary"
+            onClick={onExportPdf}
+          >
             Export PDF
           </button>
         </div>
@@ -106,7 +167,7 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
 
             <div>
               <span>Displays</span>
-              <strong>{posts.length}</strong>
+              <strong>{allDisplays.length}</strong>
             </div>
 
             <div>
@@ -118,7 +179,7 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
 
         <div className="playbook-cover-visual">
           {primaryHeroImage ? (
-            <img src={primaryHeroImage} alt="" />
+            <img src={primaryHeroImage} alt={playbook.title} />
           ) : (
             <div className="playbook-cover-placeholder">
               Build from what worked before.
@@ -171,17 +232,23 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
           </p>
         </div>
 
-        {featuredPosts.length === 0 ? (
+        {featuredDisplays.length === 0 ? (
           <div className="playbook-empty-panel">
             No featured displays have been added yet.
           </div>
         ) : (
           <div className="playbook-featured-grid">
-            {featuredPosts.map((post, index) => (
-              <article className="playbook-featured-card" key={post.id}>
+            {featuredDisplays.map((display, index) => (
+              <article
+                className="playbook-featured-card"
+                key={`${display.postId}-featured-${index}`}
+              >
                 <div className="playbook-featured-image">
-                  {getPostImage(post) ? (
-                    <img src={getPostImage(post)} alt={getDisplayTitle(post)} />
+                  {getDisplayImage(display) ? (
+                    <img
+                      src={getDisplayImage(display)}
+                      alt={getDisplayTitle(display)}
+                    />
                   ) : (
                     <div className="playbook-image-placeholder">
                       Display photo
@@ -194,21 +261,21 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
                 </div>
 
                 <div className="playbook-featured-body">
-                  <h3>{getDisplayTitle(post)}</h3>
+                  <h3>{getDisplayTitle(display)}</h3>
 
                   <div className="playbook-display-meta">
-                    {post.accountName && <span>{post.accountName}</span>}
-                    {post.chain && <span>{post.chain}</span>}
-                    {post.city && post.state && (
+                    {display.accountName && <span>{display.accountName}</span>}
+                    {display.chain && <span>{display.chain}</span>}
+                    {display.city && display.state && (
                       <span>
-                        {post.city}, {post.state}
+                        {display.city}, {display.state}
                       </span>
                     )}
                   </div>
 
-                  {post.brands && post.brands.length > 0 && (
+                  {display.brands && display.brands.length > 0 && (
                     <div className="playbook-chip-row">
-                      {post.brands?.slice(0, 5).map((brand) => (
+                      {display.brands.slice(0, 5).map((brand) => (
                         <span className="playbook-chip" key={brand}>
                           {brand}
                         </span>
@@ -216,9 +283,9 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
                     </div>
                   )}
 
-                  {post.description && (
+                  {display.description && (
                     <p className="playbook-display-description">
-                      {post.description}
+                      {display.description}
                     </p>
                   )}
 
@@ -243,17 +310,23 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
           </p>
         </div>
 
-        {supportingPosts.length === 0 ? (
+        {supportingDisplays.length === 0 ? (
           <div className="playbook-empty-panel">
             No supporting displays have been added yet.
           </div>
         ) : (
           <div className="playbook-supporting-grid">
-            {supportingPosts.map((post) => (
-              <article className="playbook-supporting-card" key={post.id}>
+            {supportingDisplays.map((display) => (
+              <article
+                className="playbook-supporting-card"
+                key={display.postId}
+              >
                 <div className="playbook-supporting-image">
-                  {getPostImage(post) ? (
-                    <img src={getPostImage(post)} alt={getDisplayTitle(post)} />
+                  {getDisplayImage(display) ? (
+                    <img
+                      src={getDisplayImage(display)}
+                      alt={getDisplayTitle(display)}
+                    />
                   ) : (
                     <div className="playbook-image-placeholder">
                       Display photo
@@ -262,16 +335,16 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
                 </div>
 
                 <div className="playbook-supporting-body">
-                  <h3>{getDisplayTitle(post)}</h3>
+                  <h3>{getDisplayTitle(display)}</h3>
 
                   <div className="playbook-display-meta">
-                    {post.accountName && <span>{post.accountName}</span>}
-                    {post.chain && <span>{post.chain}</span>}
+                    {display.accountName && <span>{display.accountName}</span>}
+                    {display.chain && <span>{display.chain}</span>}
                   </div>
 
-                  {post.brands && post.brands?.length > 0 && (
+                  {display.brands && display.brands.length > 0 && (
                     <p className="playbook-supporting-brands">
-                      {post.brands.slice(0, 3).join(", ")}
+                      {display.brands.slice(0, 3).join(", ")}
                     </p>
                   )}
                 </div>

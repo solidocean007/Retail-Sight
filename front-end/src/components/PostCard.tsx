@@ -37,13 +37,13 @@ import { updatePostWithNewTimestamp } from "../utils/PostLogic/updatePostWithNew
 import { RootState } from "../utils/store";
 import ImageModal from "./ImageModal";
 import { MoreVert } from "@mui/icons-material";
-import AddPostToCollectionModal from "./AddPostsToCollectionModal";
 import { handlePostShare } from "../utils/handlePostShare";
 import LinkShareModal from "./LinkShareModal";
 import { handleCommentLike } from "../utils/PostLogic/handleCommentLike";
 import { formatDisplayDate } from "../utils/PostLogic/formatDisplayDate";
 import { FeedImageSet } from "./PostCardRenderer";
 import ExportDisplayCardButton from "./SocialShare/ExportDisplayCardButton";
+import AddPostToLibraryModal from "./AddPostsToLibraryModal";
 // import CreateLinkedInCardButton from "./SocialShare/CreateLinkedInCardButton";
 
 // import TotalCaseCount from "./TotalCaseCount";
@@ -102,8 +102,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareLink, setShareLink] = useState("");
   // New state for controlling the visibility of the SharePost component
-  const [isAddToCollectionModalOpen, setIsAddToCollectionModalOpen] =
-    useState(false);
+  const [isAddToLibraryModalOpen, setIsAddToLibraryModalOpen] = useState(false);
 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [fullSizeImageUrl, setFullSizeImageUrl] = useState("");
@@ -329,6 +328,12 @@ const PostCard: React.FC<PostCardProps> = ({
     ),
   };
 
+  const canManagePlaybooks =
+    user?.role === "admin" ||
+    user?.role === "super-admin" ||
+    user?.role === "supervisor" ||
+    user?.role === "developer";
+
   return (
     <>
       <div className="card-border">
@@ -377,22 +382,24 @@ const PostCard: React.FC<PostCardProps> = ({
                           </MenuItem>
                         )}
                         <MenuItem
-                          onClick={() => setIsAddToCollectionModalOpen(true)}
+                          onClick={() => {
+                            setAnchorEl(null);
+                            setIsAddToLibraryModalOpen(true);
+                          }}
                         >
-                          Add to Collections
+                          {canManagePlaybooks
+                            ? "Add to Library"
+                            : "Add to Collection"}
                         </MenuItem>
                       </Menu>
                     )}
                   </div>
-                  <Dialog
-                    open={isAddToCollectionModalOpen}
-                    onClose={() => setIsAddToCollectionModalOpen(false)}
-                  >
-                    <AddPostToCollectionModal
+                  {isAddToLibraryModalOpen && (
+                    <AddPostToLibraryModal
                       post={post}
-                      onClose={() => setIsAddToCollectionModalOpen(false)}
+                      onClose={() => setIsAddToLibraryModalOpen(false)}
                     />
-                  </Dialog>
+                  )}
                 </div>
               </div>
             </div>

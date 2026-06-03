@@ -1,28 +1,34 @@
 // src/components/Playbooks/PlaybooksPage.tsx
 import React, { useMemo, useState } from "react";
 import {
-  CollectionType,
+  CollectionWithId,
   CreateCollectionInput,
   PostWithID,
 } from "../../utils/types";
 import PlaybookForm from "./PlaybookForm";
 import "./playbooksPage.css";
-import PlaybookDetailView from "../Library/PlaybookDetailView";
+import PlaybookDetailView from "./PlaybookDetailView";
+import { useDispatch } from "react-redux";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { useAppDispatch } from "../../utils/store";
 
 interface PlaybooksPageProps {
-  collections?: CollectionType[];
+  collections: CollectionWithId[];
   posts?: PostWithID[];
-  onAddPlaybook?: (newPlaybook: CreateCollectionInput) => Promise<void>;
+  loading?: boolean;
+  onAddPlaybook: (newPlaybook: CreateCollectionInput) => Promise<void>;
 }
 
 const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
-  collections = [],
+  collections,
   posts = [],
+  loading = false,
   onAddPlaybook,
 }) => {
+  const dispatch = useAppDispatch();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPlaybook, setSelectedPlaybook] =
-    useState<CollectionType | null>(null);
+    useState<CollectionWithId | null>(null);
 
   const playbooks = useMemo(() => {
     return collections.filter(
@@ -30,12 +36,60 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
     );
   }, [collections]);
 
-  const handleAddPlaybook = async (input: CreateCollectionInput) => {
-    if (!onAddPlaybook) {
-      console.warn("Missing onAddPlaybook handler");
+  const handleOpenPlaybook = (playbook: CollectionWithId) => {
+    const displayCount = playbook.postIds?.length ?? 0;
+
+    if (displayCount === 0) {
+      dispatch(
+        showMessage(
+          "This playbook has no displays yet. Add displays before viewing the full playbook.",
+        ),
+      );
       return;
     }
 
+    setSelectedPlaybook(playbook);
+  };
+
+  const printPlaybook = async () => {
+    document.body.classList.add("print-playbook");
+
+    const images = Array.from(
+      document.querySelectorAll(".playbook-detail img"),
+    );
+
+    await Promise.all(
+      images.map((img) => {
+        const image = img as HTMLImageElement;
+
+        if (image.complete) return Promise.resolve();
+
+        return new Promise((resolve) => {
+          image.onload = resolve;
+          image.onerror = resolve;
+        });
+      }),
+    );
+
+    setTimeout(() => {
+      window.print();
+    }, 250);
+  };
+
+  React.useEffect(() => {
+    const cleanup = () => {
+      document.body.classList.remove("print-playbook");
+    };
+
+    window.addEventListener("afterprint", cleanup);
+
+    return () => {
+      window.removeEventListener("afterprint", cleanup);
+      cleanup();
+    };
+  }, []);
+
+  const handleAddPlaybook = async (input: CreateCollectionInput) => {
     await onAddPlaybook({
       ...input,
       collectionType: "playbook",
@@ -46,7 +100,13 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
       isShareableOutsideCompany: input.isShareableOutsideCompany ?? false,
       featuredPostIds: input.featuredPostIds ?? [],
     });
+
+    setIsFormOpen(false);
   };
+
+  if (loading) {
+    return <p className="playbooks-loading">Loading playbooks...</p>;
+  }
 
   if (selectedPlaybook) {
     const playbookPosts = posts.filter((post) =>
@@ -59,7 +119,7 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
         posts={playbookPosts}
         onBack={() => setSelectedPlaybook(null)}
         onShare={() => console.log("Share playbook")}
-        onExportPdf={() => window.print()}
+        onExportPdf={printPlaybook}
       />
     );
   }
@@ -144,18 +204,21 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
             const previewImages = playbook.previewImages ?? [];
             const featuredPostIds = playbook.featuredPostIds ?? [];
             const displayCount = playbook.postIds?.length ?? 0;
+            const isEmptyPlaybook = displayCount === 0;
 
             return (
               <article className="playbook-card" key={playbook.id}>
                 <div className="playbook-card-preview">
                   {previewImages.length > 0 ? (
-                    previewImages.slice(0, 3).map((imageUrl, index) => (
-                      <img
-                        key={`${playbook.id}-${imageUrl}-${index}`}
-                        src={imageUrl}
-                        alt=""
-                      />
-                    ))
+                    previewImages
+                      .slice(0, 3)
+                      .map((imageUrl, index) => (
+                        <img
+                          key={`${playbook.id}-${imageUrl}-${index}`}
+                          src={imageUrl}
+                          alt=""
+                        />
+                      ))
                   ) : (
                     <div className="playbook-card-placeholder">
                       Displaygram Playbook
@@ -206,7 +269,9 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                   </div>
 
                   <div className="playbook-stats">
-                    <span>{displayCount} displays</span>
+                    <span>
+                      {displayCount} display{displayCount !== 1 ? "s" : ""}
+                    </span>
                     <span>{featuredPostIds.length} featured</span>
                   </div>
 
@@ -214,19 +279,36 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                     <button
                       type="button"
                       className="btn-outline"
-                      onClick={() => setSelectedPlaybook(playbook)}
+                      onClick={() => handleOpenPlaybook(playbook)}
                     >
                       View Playbook
                     </button>
 
-                    <button
+                    {/* <button
                       type="button"
                       className="btn-outline"
-                      disabled
-                      title="PDF export can be added after the playbook detail view is stable."
+                      disabled={isEmptyPlaybook}
+                      title={
+                        isEmptyPlaybook
+                          ? "Add displays before exporting this playbook."
+                          : "Export this playbook as a PDF."
+                      }
+                      onClick={() => {
+                        if (isEmptyPlaybook) {
+                          dispatch(
+                            showMessage(
+                              "Add displays to this playbook before exporting.",
+                            ),
+                          );
+                          return;
+                        }
+
+                        setSelectedPlaybook(playbook);
+                        setTimeout(() => window.print(), 100);
+                      }}
                     >
                       Export PDF
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </article>

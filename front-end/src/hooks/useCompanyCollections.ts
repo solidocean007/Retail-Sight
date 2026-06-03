@@ -6,7 +6,6 @@ import {
   deleteDoc,
   doc,
   getDocs,
-  orderBy,
   query,
   serverTimestamp,
   where,
@@ -15,7 +14,6 @@ import { useDispatch } from "react-redux";
 import { db } from "../utils/firebase";
 import { showMessage } from "../Slices/snackbarSlice";
 import {
-  CollectionType,
   CollectionWithId,
   CreateCollectionInput,
   UserType,
@@ -40,10 +38,28 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
 
     const cached = await getCollectionsFromIndexedDB();
 
-    const scoped = cached.filter((collection) => {
-      return collection.companyId === companyId;
-    });
+    const scoped = cached
+      .filter((collection) => collection.companyId === companyId)
+      .map((collection: any) => ({
+        ...collection,
+        title: collection.title ?? collection.name ?? "Untitled Collection",
+        postIds: collection.postIds ?? collection.posts ?? [],
+        previewImages: collection.previewImages ?? [],
+        sharedWith: collection.sharedWith ?? [],
+        isShareableOutsideCompany:
+          collection.isShareableOutsideCompany ?? false,
+        collectionType: collection.collectionType ?? "collection",
 
+        // playbook fields
+        playbookStatus: collection.playbookStatus ?? null,
+        managerNotes: collection.managerNotes ?? "",
+        whenToUse: collection.whenToUse ?? "",
+        executionGoal: collection.executionGoal ?? "",
+        audience: collection.audience ?? "all",
+        featuredPostIds: collection.featuredPostIds ?? [],
+        playbookPostSnapshots: collection.playbookPostSnapshots ?? [],
+        featuredPostSnapshots: collection.featuredPostSnapshots ?? [],
+      }));
     setCollections(scoped);
   }, [companyId]);
 
@@ -61,10 +77,34 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
 
       const snap = await getDocs(q);
 
-      const fetched = snap.docs.map((docSnap) => ({
-        ...(docSnap.data() as CollectionType),
-        id: docSnap.id,
-      })) as CollectionWithId[];
+      const fetched = snap.docs.map((docSnap) => {
+        const data = docSnap.data() as any;
+
+        return {
+          ...data,
+          id: docSnap.id,
+
+          // Backward compatibility
+          title: data.title ?? data.name ?? "Untitled Collection",
+          postIds: data.postIds ?? data.posts ?? [],
+
+          // Defaults
+          previewImages: data.previewImages ?? [],
+          sharedWith: data.sharedWith ?? [],
+          isShareableOutsideCompany: data.isShareableOutsideCompany ?? false,
+          collectionType: data.collectionType ?? "collection",
+
+          // playbook fields
+          playbookStatus: data.playbookStatus ?? null,
+          managerNotes: data.managerNotes ?? "",
+          whenToUse: data.whenToUse ?? "",
+          executionGoal: data.executionGoal ?? "",
+          audience: data.audience ?? "all",
+          featuredPostIds: data.featuredPostIds ?? [],
+          playbookPostSnapshots: data.playbookPostSnapshots ?? [],
+          featuredPostSnapshots: data.featuredPostSnapshots ?? [],
+        };
+      }) as CollectionWithId[];
 
       await Promise.all(
         fetched.map((collectionItem) => addOrUpdateCollection(collectionItem)),
@@ -87,14 +127,30 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
       }
 
       const payload = {
-        name: newCollection.name,
+        title: newCollection.title,
         description: newCollection.description ?? "",
-        posts: newCollection.posts ?? [],
+
+        postIds: newCollection.postIds ?? [],
         previewImages: newCollection.previewImages ?? [],
+
         sharedWith: newCollection.sharedWith ?? [],
         shareToken: newCollection.shareToken ?? null,
         isShareableOutsideCompany:
           newCollection.isShareableOutsideCompany ?? false,
+
+        collectionType: newCollection.collectionType ?? "collection",
+        playbookStatus: newCollection.playbookStatus ?? null,
+        managerNotes: newCollection.managerNotes ?? "",
+        whenToUse: newCollection.whenToUse ?? "",
+        executionGoal: newCollection.executionGoal ?? "",
+        audience: newCollection.audience ?? "all",
+
+        goalIds: newCollection.goalIds ?? [],
+        brandIds: newCollection.brandIds ?? [],
+        supplierId: newCollection.supplierId ?? null,
+        featuredPostIds: newCollection.featuredPostIds ?? [],
+        playbookPostSnapshots: newCollection.playbookPostSnapshots ?? [],
+        featuredPostSnapshots: newCollection.featuredPostSnapshots ?? [],
 
         companyId,
         ownerId: uid,
@@ -105,6 +161,14 @@ export const useCompanyCollections = (user: UserType | null | undefined) => {
 
       await addDoc(collection(db, "collections"), payload);
       await fetchCollections();
+
+      dispatch(
+        showMessage(
+          payload.collectionType === "playbook"
+            ? "Playbook created successfully."
+            : "Collection created successfully.",
+        ),
+      );
     },
     [companyId, uid, dispatch, fetchCollections],
   );
