@@ -282,10 +282,28 @@ export default function InviteAcceptForm() {
   }
 
   if (error && !invite) {
+    const inviteDebugCode = inviteId?.slice(0, 6).toUpperCase();
+
     return (
       <main className="team-invite-accept-page">
         <section className="team-invite-accept-status-card team-invite-accept-status-card--error">
-          {error}
+          <h1>Invite link is no longer active</h1>
+
+          <p>
+            This invite may have expired, already been accepted, or been
+            replaced by a newer invite.
+          </p>
+
+          {inviteDebugCode && (
+            <p className="team-invite-accept-debug-code">
+              Invite code: <strong>{inviteDebugCode}</strong>
+            </p>
+          )}
+
+          <p>
+            Please open the newest Displaygram invite email, or ask your admin
+            to send a new invite.
+          </p>
         </section>
       </main>
     );
