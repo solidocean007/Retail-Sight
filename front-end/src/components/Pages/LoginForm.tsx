@@ -1,7 +1,7 @@
 // export default LoginForm;
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import "./signUpLogIn.css";
+import { useLocation, useNavigate } from "react-router-dom";
+import "./loginForm.css";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -10,7 +10,6 @@ import {
   signInWithRedirect,
   sendPasswordResetEmail,
   fetchSignInMethodsForEmail,
-  EmailAuthProvider,
   linkWithCredential,
   AuthCredential,
 } from "firebase/auth";
@@ -51,6 +50,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
     cred: AuthCredential;
   } | null>(null);
   const [showRedirectBanner, setShowRedirectBanner] = useState(false);
+  const navigate = useNavigate();
+  const { search } = useLocation();
 
   useEffect(() => {
     if (localStorage.getItem("postRedirect")) {
@@ -59,13 +60,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(search);
     const emailParam = params.get("email");
     if (emailParam) setEmail(emailParam);
-  }, [location.search]);
-
-  const navigate = useNavigate();
-  const { search } = useLocation();
+  }, [search]);
 
   const redirectTo = useMemo(() => {
     const params = new URLSearchParams(search);
@@ -224,9 +222,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
     <main className="auth-page" role="main" aria-labelledby="login-title">
       <div className="auth-card">
         <header className="auth-header">
+          <img
+            src="/displaygram-logo-long-BLUE.svg"
+            alt="Displaygram"
+            className="login-logo"
+          />
+
           <p className="auth-welcome">Welcome back</p>
+
           <h1 id="login-title" className="auth-title">
-            Log in to <span>Displaygram</span>
+            Log in to your account
           </h1>
         </header>
 
@@ -358,30 +363,41 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
             <button
               type="button"
-              className="btn-secondary auth-link"
+              className="auth-request-button"
               onClick={async () => {
-                if (!email) {
+                const normalizedEmail = email.trim().toLowerCase();
+
+                if (!normalizedEmail) {
                   navigate("/request-access");
                   return;
                 }
 
-                const exists = await checkUserExists(
-                  email.trim().toLowerCase(),
-                );
+                try {
+                  const exists = await checkUserExists(normalizedEmail);
 
-                if (exists) {
+                  if (exists) {
+                    dispatch(
+                      showMessage(
+                        "This email already has an account. Sign in or use forgot password.",
+                      ),
+                    );
+                    return;
+                  }
+
+                  navigate(
+                    `/request-access?email=${encodeURIComponent(normalizedEmail)}`,
+                  );
+                } catch (error) {
+                  console.error("Request access check failed:", error);
                   dispatch(
                     showMessage(
-                      "This email already has an account. Use 'Forgot password?' to regain access.",
+                      "Unable to check this email. Please try again.",
                     ),
                   );
-                  return;
                 }
-
-                navigate("/request-access");
               }}
             >
-              <h3>Request access for new company</h3>
+              Request access for a new company
             </button>
           </footer>
         </form>

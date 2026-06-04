@@ -239,7 +239,7 @@
   --unread-notification-bg: var(var(--gray-100));
   --read-notification-bg: var(--gray-200);
 
-   --warning-color: red;
+  --warning-color: red;
   --text-color: var(--gray-900);
   --text-muted: #6f7a8a;
   --text-on-button: black;
@@ -344,7 +344,7 @@
   --unread-notification-bg: var(--accent-light-blue);
   --card-outline: var(--gray-200);
 
-   --warning-color: #ffb020;
+  --warning-color: #ffb020;
   --text-secondary: var(--gray-300);
   --text-color: var(--gray-100);
   --text-muted: #a2a7af;
@@ -396,8 +396,8 @@
 
   --divider-color: #444; /* Darker gray for dark mode */
 
-  --btn-primary-bg: var(--gold);
-  --text-primary-button: var(--gray-800);
+  --btn-primary-bg: var(--primary-blue);
+  --text-primary-button: white;
   --btn-primary-hover: var(--primary-blue-dark);
   --btn-secondary-bg: var(--gray-700);
   --btn-secondary-hover: var(--gray-600);

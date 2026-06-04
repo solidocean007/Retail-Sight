@@ -4,10 +4,6 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  AuthCredential,
-  signInWithPopup,
-  linkWithCredential,
 } from "firebase/auth";
 import {
   collection,
@@ -21,23 +17,14 @@ import {
 import { db } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
-import { IconButton, Switch } from "@mui/material";
+import { IconButton } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import "./CompanyOnboardingAcceptForm.css";
+import "./companyOnboardingAcceptForm.css";
 import { BusinessType } from "../../utils/types";
 
-const toIso = (v: any): string =>
-  v?.toDate?.()
-    ? v.toDate().toISOString()
-    : v instanceof Date
-      ? v.toISOString()
-      : typeof v === "string"
-        ? v
-        : new Date().toISOString();
-
 export default function CompanyOnboardingAcceptForm() {
-  const { inviteId } = useParams();
+  const { companyId, inviteId } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -61,15 +48,6 @@ export default function CompanyOnboardingAcceptForm() {
     functions,
     "markAccessRequestComplete",
   );
-
-  // useEffect(() => {
-  //   setInvite({
-  //     email: "test@example.com",
-  //     companyName: "Test Company",
-  //     fromCompanyId: "test123",
-  //   });
-  //   setLoading(false);
-  // }, []);
 
   useEffect(() => {
     if (!inviteId) return;
@@ -114,66 +92,6 @@ export default function CompanyOnboardingAcceptForm() {
       }
     })();
   }, [inviteId]);
-
-  const [pendingLink, setPendingLink] = useState<{
-    email: string;
-    cred: AuthCredential;
-  } | null>(null);
-
-  const handleGoogleSignIn = async () => {
-    if (!invite) return;
-    if (!firstName.trim() || !lastName.trim()) {
-      setError("First and last name are required.");
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-    const auth = getAuth();
-    const provider = new GoogleAuthProvider();
-
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      if (user.email?.toLowerCase() !== invite.email.toLowerCase()) {
-        await auth.signOut();
-        throw new Error(
-          "Signed-in Google account does not match invited email.",
-        );
-      }
-
-      const acceptInvite = httpsCallable(functions, "acceptCompanyInvite");
-
-      await acceptInvite({
-        inviteId,
-        fromCompanyId: invite.fromCompanyId,
-        firstName,
-        lastName,
-        companyName,
-        companyType,
-      });
-
-      dispatch(showMessage("✅ Account activated!"));
-
-      navigate("/user-home-page");
-    } catch (e: any) {
-      if (e.code === "auth/account-exists-with-different-credential") {
-        const cred = GoogleAuthProvider.credentialFromError(e);
-        const email = e.customData?.email;
-        if (cred && email) {
-          setPendingLink({ email, cred });
-          setError("This email already has a password login.");
-        } else {
-          setError("An account already exists for this email.");
-        }
-      } else {
-        setError(e.message || "Google sign-in failed.");
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
@@ -222,16 +140,6 @@ export default function CompanyOnboardingAcceptForm() {
       } catch (err: any) {
         if (err.code === "auth/email-already-in-use") {
           await signInWithEmailAndPassword(auth, invite.email, password);
-
-          if (
-            pendingLink &&
-            auth.currentUser?.email?.toLowerCase() ===
-              pendingLink.email.toLowerCase()
-          ) {
-            await linkWithCredential(auth.currentUser, pendingLink.cred);
-            dispatch(showMessage("✅ Google account linked."));
-            setPendingLink(null);
-          }
         } else {
           throw err;
         }
@@ -284,69 +192,102 @@ export default function CompanyOnboardingAcceptForm() {
     }
   };
 
-  if (loading)
-    return <div className="onboarding-loading">Loading company setup…</div>;
-  if (error) return <div className="onboarding-error">{error}</div>;
+  if (loading) {
+    return (
+      <main className="company-onboarding-accept-page">
+        <section className="company-onboarding-accept-status-card">
+          Loading company setup…
+        </section>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="company-onboarding-accept-page">
+        <section className="company-onboarding-accept-status-card company-onboarding-accept-status-card--error">
+          {error}
+        </section>
+      </main>
+    );
+  }
+
   if (!invite) return null;
 
   return (
-    <div className="onboarding-page">
-      <div className="onboarding-card">
-        <h1>Activate Your Company Account</h1>
-        {/* <p>
-          <strong>{invite.companyName}</strong> is now approved and live on
-          Displaygram.
-        </p> */}
-        <p>You’re being registered as the company admin.</p>
+    <main
+      className="company-onboarding-accept-page"
+      aria-labelledby="company-onboarding-accept-title"
+    >
+      <section className="company-onboarding-accept-card">
+        <header className="company-onboarding-accept-header">
+          <img
+            src="/displaygram-logo-long-BLUE.svg"
+            alt="Displaygram"
+            className="company-onboarding-accept-logo"
+          />
 
-        <div className="plan-summary">
-          <h3>Plan: Free</h3>
+          <p className="company-onboarding-accept-eyebrow">
+            Company setup approved
+          </p>
+
+          <h1
+            id="company-onboarding-accept-title"
+            className="company-onboarding-accept-title"
+          >
+            Activate your company account
+          </h1>
+
+          <p className="company-onboarding-accept-subtitle">
+            You’re being registered as the company admin on Displaygram.
+          </p>
+        </header>
+
+        <aside className="company-onboarding-accept-plan-card">
+          <h2>Free plan</h2>
           <p>
             Includes up to <strong>5 users</strong> and{" "}
             <strong>2 connections</strong>.
           </p>
-        </div>
+        </aside>
 
-        <form onSubmit={handleSubmit} className="onboarding-form">
-          <div className="readonly-field">
+        <form
+          onSubmit={handleSubmit}
+          className="company-onboarding-accept-form"
+          noValidate
+        >
+          <div className="company-onboarding-accept-readonly-field">
             <label>Email</label>
-            <div className="readonly-value">{invite.email}</div>
+            <div className="company-onboarding-accept-readonly-value">
+              {invite.email}
+            </div>
           </div>
-          {/* <p className="onboarding-hint">
-            If you already have a Displaygram account with this email, log in
-            instead.
-          </p> */}
 
-          {/* <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            className="btn-google"
-            disabled={submitting}
-          >
-            Continue with Google
-          </button> */}
-          <div className="onboard-form-inputs">
-            <label>Company Name</label>
+          <div className="company-onboarding-accept-fields">
+            <label htmlFor="companyName">Company Name</label>
             <input
+              id="companyName"
               type="text"
-              className="auth-input"
+              className="company-onboarding-accept-input"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
+              autoComplete="organization"
               required
             />
 
             <label>Business Type</label>
 
-            <div className="business-toggle">
-              {/* <label>Business Type</label> */}
+            <div className="company-onboarding-accept-business-toggle">
               <div
-                className="business-type-pill"
+                className="company-onboarding-accept-business-pill"
                 role="radiogroup"
                 aria-label="Business Type"
               >
                 <button
                   type="button"
-                  className={`business-type-option ${companyType === "distributor" ? "active" : ""}`}
+                  className={`company-onboarding-accept-business-option ${
+                    companyType === "distributor" ? "is-active" : ""
+                  }`}
                   onClick={() => setCompanyType("distributor")}
                   aria-pressed={companyType === "distributor"}
                 >
@@ -355,7 +296,9 @@ export default function CompanyOnboardingAcceptForm() {
 
                 <button
                   type="button"
-                  className={`business-type-option ${companyType === "supplier" ? "active" : ""}`}
+                  className={`company-onboarding-accept-business-option ${
+                    companyType === "supplier" ? "is-active" : ""
+                  }`}
                   onClick={() => setCompanyType("supplier")}
                   aria-pressed={companyType === "supplier"}
                 >
@@ -363,83 +306,114 @@ export default function CompanyOnboardingAcceptForm() {
                 </button>
 
                 <div
-                  className={`business-type-slider ${companyType === "supplier" ? "right" : "left"}`}
+                  className={`company-onboarding-accept-business-slider ${
+                    companyType === "supplier" ? "is-right" : "is-left"
+                  }`}
                   aria-hidden="true"
                 />
               </div>
             </div>
 
-            {/* <div className="auth-divider">or</div> */}
-            <label>First Name</label>
+            <label htmlFor="firstName">First Name</label>
             <input
+              id="firstName"
               type="text"
-              className="auth-input"
+              className="company-onboarding-accept-input"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
+              autoComplete="given-name"
               required
             />
 
-            <label>Last Name</label>
+            <label htmlFor="lastName">Last Name</label>
             <input
+              id="lastName"
               type="text"
-              className="auth-input"
+              className="company-onboarding-accept-input"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
+              autoComplete="family-name"
               required
             />
 
-            <label>Password</label>
-            <div className="password-wrapper">
+            <label htmlFor="password">Password</label>
+            <div className="company-onboarding-accept-password-field">
               <input
+                id="password"
                 type={showPassword ? "text" : "password"}
-                className="auth-input"
+                className="company-onboarding-accept-input"
                 disabled={submitting}
                 value={password}
                 onChange={(e) => handlePasswordChange(e.target.value)}
+                autoComplete="new-password"
+                required
               />
               <IconButton
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
+                className="company-onboarding-accept-password-toggle"
               >
                 {showPassword ? <VisibilityOff /> : <Visibility />}
               </IconButton>
             </div>
+
             {passwordError && (
-              <div className="onboarding-error">{passwordError}</div>
+              <p className="company-onboarding-accept-field-error">
+                {passwordError}
+              </p>
             )}
 
-            <label>Verify Password</label>
-            <div className="password-wrapper">
+            <label htmlFor="verifyPassword">Verify Password</label>
+            <div className="company-onboarding-accept-password-field">
               <input
+                id="verifyPassword"
                 type={showPassword ? "text" : "password"}
                 disabled={submitting}
-                className="auth-input"
+                className="company-onboarding-accept-input"
                 value={verifyPassword}
                 onChange={(e) => handleVerifyPasswordChange(e.target.value)}
+                autoComplete="new-password"
+                required
               />
-              {verifyPasswordError && (
-                <div className="onboarding-error">{verifyPasswordError}</div>
-              )}
               <IconButton
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
+                className="company-onboarding-accept-password-toggle"
               >
                 {showPassword ? <VisibilityOff /> : <Visibility />}
               </IconButton>
             </div>
+
+            {verifyPasswordError && (
+              <p className="company-onboarding-accept-field-error">
+                {verifyPasswordError}
+              </p>
+            )}
           </div>
 
           <button
             type="submit"
-            className="button-primary"
+            className="company-onboarding-accept-submit"
             disabled={submitting || !!passwordError || !!verifyPasswordError}
           >
             {submitting ? "Activating…" : "Activate Account"}
           </button>
+
+          <p className="company-onboarding-accept-login-note">
+            Already have a Displaygram account with this email?{" "}
+            <button
+              type="button"
+              onClick={() =>
+                navigate(`/login?email=${encodeURIComponent(invite.email)}`)
+              }
+            >
+              Sign in instead
+            </button>
+          </p>
         </form>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
