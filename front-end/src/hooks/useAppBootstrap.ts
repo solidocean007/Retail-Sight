@@ -1,7 +1,11 @@
 // hooks/useAppBootstrap.ts
 import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { clearCompanyScopedState, RootState, useAppDispatch } from "../utils/store";
+import {
+  clearCompanyScopedState,
+  RootState,
+  useAppDispatch,
+} from "../utils/store";
 import {
   setAppReady,
   setLoadingMessage,
@@ -71,7 +75,7 @@ export function useAppBootstrap({
       })();
     }
 
-    prevCompanyIdRef.current = current;
+    prevCompanyIdRef.current = current ?? null;
   }, [companyId, dispatch]);
 
   useEffect(() => {
@@ -99,7 +103,7 @@ export function useAppBootstrap({
   useCompanyBrandCatalogSync(companyId, shouldStartSync);
 
   useUserNotificationsListener(currentUser, shouldStartSync);
-  useCompanyProductsListener(companyId, shouldStartSync);
+  useCompanyProductsListener(companyId ?? null, shouldStartSync);
   useAccountImportListener(companyId, shouldStartSync);
   useCompanySync(shouldStartSync);
   useCustomAccountsSync(shouldStartSync);
@@ -116,44 +120,53 @@ export function useAppBootstrap({
   // 1️⃣ ESSENTIAL BOOTSTRAP ONLY
   //
   useEffect(() => {
-    if (!enabled || initializing || !currentUser || !companyId) return;
+    const realCompanyId = user?.companyId;
+
+    if (!enabled || initializing || !currentUser?.uid) return;
+
+    if (!realCompanyId) {
+      dispatch(setLoadingMessage("Loading your company profile..."));
+      return;
+    }
+
     if (hasBootstrapped.current) return;
 
     hasBootstrapped.current = true;
 
-    const runDeferred = (cb: () => void) => {
-      if ("requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(cb);
-      } else {
-        setTimeout(cb, 200);
-      }
-    };
-
     const run = async () => {
       try {
         dispatch(setResetting(true));
+        dispatch(setLoadingMessage("Loading company info..."));
 
-        if (companyId) {
-          dispatch(setLoadingMessage("Loading company info..."));
-          await dispatch(fetchCurrentCompany(companyId));
-        }
+        await dispatch(fetchCurrentCompany(realCompanyId));
 
         dispatch(setAppReady(true));
         dispatch(setLoadingMessage(null));
 
-        runDeferred(() => {
-          dispatch(fetchAllPlans());
-
-          if (companyId) {
-            dispatch(fetchCompanyProducts(companyId));
-            dispatch(setupCompanyGoalsListener(companyId));
-          }
-        });
+        // Non-critical background work only.
+        if ("requestIdleCallback" in window) {
+          (window as any).requestIdleCallback(() => {
+            dispatch(fetchAllPlans());
+            dispatch(fetchCompanyProducts(realCompanyId));
+            dispatch(setupCompanyGoalsListener(realCompanyId));
+          });
+        } else {
+          queueMicrotask(() => {
+            dispatch(fetchAllPlans());
+            dispatch(fetchCompanyProducts(realCompanyId));
+            dispatch(setupCompanyGoalsListener(realCompanyId));
+          });
+        }
+      } catch (error) {
+        console.error("App bootstrap failed:", error);
+        dispatch(
+          setLoadingMessage("Something went wrong loading your account."),
+        );
       } finally {
         dispatch(setResetting(false));
       }
     };
 
     run();
-  }, [enabled, initializing, currentUser?.uid, companyId, dispatch]);
+  }, [enabled, initializing, currentUser?.uid, user?.companyId, dispatch]);
 }

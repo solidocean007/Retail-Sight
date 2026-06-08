@@ -94,11 +94,13 @@ import { syncCompanyBrandCatalog } from "./products/syncCompanyBrandCatalog";
 import { createConnectionRequest } from "./createConnectionRequest";
 import { onCompanyConnectionRequestCreated } from "./onCompanyConnectionRequestCreated";
 import { removeCompanyFromSharedWithPosts } from "./removeCompanyFromSharedWithPosts";
+import { acceptTeamInvite } from "./acceptTeamInvite";
 
 export {
   backfillSupplierGoalPosts,
   developerRecomputeCompanyCounts,
   acceptCompanyInvite,
+  acceptTeamInvite,
   getExternalApiKeyStatus,
   upsertGalloAxisKey,
   deleteGalloAxisKey,

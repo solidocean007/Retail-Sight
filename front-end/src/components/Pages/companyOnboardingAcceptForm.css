@@ -1,251 +1,345 @@
-.onboarding-page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: radial-gradient(
-    circle at 20% 30%,
-    var(--primary-blue) 0%,
-    var(--deep-navy) 35%,
-    var(--background-body) 90%
-  );
+.company-onboarding-accept-page {
+  min-height: 100svh;
   width: 100%;
-  background-attachment: fixed;
-  animation: bgPulse 12s ease-in-out infinite alternate;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 2rem);
+  background:
+    radial-gradient(
+      900px 460px at 18% 10%,
+      color-mix(in srgb, var(--primary-blue) 32%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      760px 420px at 105% 15%,
+      color-mix(in srgb, var(--accent-orange) 16%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(180deg, var(--background-body), var(--form-background-color));
 }
 
-@keyframes bgPulse {
-  0% {
-    filter: brightness(1);
-  }
-  100% {
-    filter: brightness(1.2);
-  }
-}
-
-.onboarding-card {
-  background: var(--onboarding-accept-card);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  max-width: 920px;
-  width: 90%;
-  padding: 2rem;
-  text-align: center;
-  animation: fadeIn 0.8s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.onboarding-card h1 {
-  color: var(--primary-blue);
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.onboarding-card p {
+.company-onboarding-accept-card,
+.company-onboarding-accept-status-card {
+  width: min(94vw, 620px);
+  background: var(--background-pop-out-body, var(--form-background-color));
   color: var(--text-color);
-  margin-bottom: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+  border-radius: 24px;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.22),
+    0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: clamp(1.25rem, 4vw, 2rem);
 }
 
-.plan-summary {
-  background: var(--card-panel-background);
-  border: 1px solid var(--card-outline);
-  border-radius: 10px;
-  margin: 1rem 0 1.5rem;
-  padding: 1rem;
-  box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.15);
+.company-onboarding-accept-status-card {
+  text-align: center;
+  font-weight: 800;
 }
 
-.plan-summary h3 {
-  margin: 0;
-  color: var(--primary-blue);
+.company-onboarding-accept-status-card--error {
+  color: var(--btn-error-text-color, #fff);
+  background: var(--btn-error-bg, #d32f2f);
 }
 
-.plan-summary p {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.readonly-field {
-  text-align: left;
+.company-onboarding-accept-header {
+  text-align: center;
   margin-bottom: 1rem;
 }
 
-.readonly-value {
-  background: none;
-  border-radius: 8px;
-  padding: 0.6rem;
+.company-onboarding-accept-logo {
+  display: block;
+  width: min(76%, 260px);
+  height: auto;
+  margin: 0 auto 1.1rem;
+  object-fit: contain;
+  background: transparent;
+}
+
+[data-theme="dark"] .company-onboarding-accept-logo {
+  filter: drop-shadow(0 0 18px rgba(59, 130, 246, 0.28));
+}
+
+.company-onboarding-accept-eyebrow {
+  margin: 0 0 0.4rem;
+  color: var(--text-muted, var(--text-secondary));
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.company-onboarding-accept-title {
+  margin: 0;
   color: var(--text-color);
-  font-weight: 600;
-  border: 1px solid var(--gray-300);
+  font-size: clamp(1.65rem, 5vw, 2.25rem);
+  line-height: 1.1;
+  font-weight: 900;
 }
 
-.onboard-form-inputs {
-  max-width: 500px;
+.company-onboarding-accept-subtitle {
+  max-width: 34rem;
+  margin: 0.75rem auto 0;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.5;
 }
 
-.password-wrapper {
-  position: relative;
+.company-onboarding-accept-plan-card {
+  margin: 1rem 0 1.35rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--primary-blue) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary-blue) 26%, transparent);
+  text-align: center;
+}
+
+.company-onboarding-accept-plan-card h2 {
+  margin: 0 0 0.35rem;
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+}
+
+.company-onboarding-accept-plan-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.company-onboarding-accept-form {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-bottom: 1rem;
+  gap: 1rem;
 }
 
-.auth-input {
-  width: 100%;
-  padding: 0.6rem;
-  border-radius: 8px;
-  border: 1px solid var(--input-border);
-  background: var(--input-background);
-  color: var(--input-text-color);
+.company-onboarding-accept-readonly-field {
+  display: grid;
+  gap: 0.4rem;
 }
 
-.auth-divider {
-  text-align: center;
-  color: var(--text-secondary);
-  margin: 1rem 0;
-  position: relative;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 35%;
-  height: 1px;
-  background: var(--divider-color);
-}
-
-.auth-divider::before {
-  left: 0;
-}
-
-.auth-divider::after {
-  right: 0;
-}
-
-.btn-google {
-  width: 100%;
-  background: #ffd400;
-  color: #111;
-  font-weight: 600;
-  border-radius: 8px;
-  border: none;
-  padding: 0.75rem;
-  box-shadow: var(--button-shadow);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-google:hover {
-  filter: brightness(0.9);
-  transform: translateY(-1px);
-}
-
-.btn-primary {
-  width: 100%;
-  background: var(--btn-primary-bg);
-  color: var(--btn-text-color, white);
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  padding: 0.75rem;
-  margin-top: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background: var(--btn-primary-hover);
-  transform: translateY(-1px);
-}
-
-.onboarding-error {
-  color: var(--btn-error-bg);
-  font-size: 0.9rem;
-  margin-top: 0.25rem;
-}
-
-.onboarding-loading {
+.company-onboarding-accept-readonly-field label,
+.company-onboarding-accept-fields label {
   color: var(--text-color);
-  text-align: center;
-  padding: 2rem;
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
-.business-toggle {
+.company-onboarding-accept-readonly-value {
+  width: 100%;
+  min-height: 46px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  color: var(--text-color);
+  background: color-mix(in srgb, var(--input-background) 75%, transparent);
+  border: 1px solid var(--input-border);
+  font-weight: 750;
+  overflow-wrap: anywhere;
 }
 
-.business-type-pill {
+.company-onboarding-accept-fields {
+  width: min(100%, 500px);
+  margin: 0 auto;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.company-onboarding-accept-input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  background: var(--input-background);
+  color: var(--input-text-color);
+  padding: 0.85rem 0.95rem;
+  font-size: 16px;
+  line-height: 1.4;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.company-onboarding-accept-input:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-blue) 22%, transparent);
+}
+
+.company-onboarding-accept-business-toggle {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.4rem;
+}
+
+.company-onboarding-accept-business-pill {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  align-items: center;
-  width: 100%;
-  max-width: 320px;
-  background: var(--dashboard-card);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
+  width: min(100%, 340px);
   padding: 4px;
+  border-radius: 999px;
   overflow: hidden;
+  background: var(--dashboard-card, var(--card-panel-background));
+  border: 1px solid var(--border-color);
 }
 
-.business-type-option {
+.company-onboarding-accept-business-option {
   position: relative;
   z-index: 2;
-  border: none;
+  border: 0;
+  border-radius: 999px;
   background: transparent;
   color: var(--text-color);
   font: inherit;
-  font-weight: 600;
-  padding: 10px 16px;
-  border-radius: 999px;
+  font-weight: 850;
+  padding: 0.72rem 1rem;
   cursor: pointer;
+  opacity: 0.62;
   transition:
-    opacity 0.22s ease,
-    color 0.22s ease;
-  opacity: 0.55;
+    color 0.2s ease,
+    opacity 0.2s ease;
 }
 
-.business-type-option.active {
+.company-onboarding-accept-business-option.is-active {
+  color: #fff;
   opacity: 1;
 }
 
-.business-type-slider {
+.company-onboarding-accept-business-slider {
   position: absolute;
+  z-index: 1;
   top: 4px;
   bottom: 4px;
+  left: 4px;
   width: calc(50% - 4px);
   border-radius: 999px;
-  background: var(--primary-blue);
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
   transition: transform 0.22s ease;
-  z-index: 1;
 }
 
-.business-type-slider.left {
-  left: 4px;
+.company-onboarding-accept-business-slider.is-left {
   transform: translateX(0);
 }
 
-.business-type-slider.right {
-  left: 4px;
+.company-onboarding-accept-business-slider.is-right {
   transform: translateX(100%);
 }
 
-.business-type-option.active {
-  color: white;
+.company-onboarding-accept-password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.company-onboarding-accept-password-field .company-onboarding-accept-input {
+  padding-right: 3rem;
+}
+
+.company-onboarding-accept-password-toggle {
+  position: absolute !important;
+  right: 0.35rem;
+  color: var(--text-color) !important;
+}
+
+.company-onboarding-accept-field-error {
+  margin: -0.1rem 0 0.35rem;
+  color: var(--btn-error-bg, #d32f2f);
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.company-onboarding-accept-submit {
+  width: min(100%, 500px);
+  min-height: 50px;
+  margin: 0.3rem auto 0;
+  border: 0;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  background: linear-gradient(135deg, var(--btn-primary-bg), var(--primary-blue-dark));
+  color: var(--text-primary-button, #fff);
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--primary-blue) 28%, transparent);
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.company-onboarding-accept-submit:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
+.company-onboarding-accept-submit:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.company-onboarding-accept-login-note {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.company-onboarding-accept-login-note button {
+  border: 0;
+  background: transparent;
+  color: var(--link-color);
+  font: inherit;
+  font-weight: 850;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.company-onboarding-accept-login-note button:hover {
+  color: var(--link-hover-color);
+}
+
+@media (max-width: 560px) {
+  .company-onboarding-accept-page {
+    align-items: start;
+    padding: 1rem;
+  }
+
+  .company-onboarding-accept-card,
+  .company-onboarding-accept-status-card {
+    border-radius: 20px;
+    padding: 1.15rem;
+  }
+
+  .company-onboarding-accept-title {
+    font-size: 1.65rem;
+  }
+
+  .company-onboarding-accept-plan-card {
+    padding: 0.85rem;
+  }
+
+  .company-onboarding-accept-business-option {
+    padding: 0.7rem 0.5rem;
+    font-size: 0.92rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .company-onboarding-accept-input,
+  .company-onboarding-accept-business-option,
+  .company-onboarding-accept-business-slider,
+  .company-onboarding-accept-submit {
+    transition: none;
+  }
+
+  .company-onboarding-accept-submit:hover {
+    transform: none;
+  }
 }

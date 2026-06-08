@@ -91,7 +91,7 @@ function AppContent() {
 
   useAppBootstrap({
     enabled: shouldBootstrapApp,
-    currentUser: user,
+    currentUser,
     initializing,
   });
 

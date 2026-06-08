@@ -63,6 +63,15 @@ export const createInviteAndEmail = onCall<CreateInvitePayload>(async (req) => {
   // 🔹 Create IDs + link
   const inviteRef = db.collection(`companies/${companyId}/invites`).doc();
   const inviteId = inviteRef.id;
+  const inviteCode = inviteId.slice(0, 6).toUpperCase();
+  const sentAtText = new Date().toLocaleString("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const inviteLink = `${baseUrl}/accept-invite/${companyId}/${inviteId}`;
 
   // 🔹 Deduping (mutex)
@@ -97,6 +106,8 @@ export const createInviteAndEmail = onCall<CreateInvitePayload>(async (req) => {
 
     tx.set(inviteRef, {
       inviteId,
+      inviteCode,
+      sentAtText,
       companyId,
       companyName,
       inviterUid: req.auth?.uid,
@@ -142,23 +153,39 @@ If you weren’t expecting this email, you can ignore it.
 — The Displaygram Team
 `,
       html: `
-  <div style="font-family:sans-serif;font-size:15px;color:#333;">
+  <div style="font-family:Arial,sans-serif;font-size:15px;color:#333;line-height:1.5;">
     <p>Hi there,</p>
+
     <p>
       You've been invited to join your team on <strong>Displaygram</strong> by
       <strong>${inviter.firstName ?? ""} ${inviter.lastName ?? ""}</strong>.
     </p>
+
     <p>
-      <a href="${inviteLink}" style="background:#3f51b5;color:white;padding:10px 16px;
-      border-radius:4px;text-decoration:none;">Accept Your Invite</a>
+      <a href="${inviteLink}" style="display:inline-block;background:#3f51b5;color:white;padding:10px 16px;
+      border-radius:6px;text-decoration:none;font-weight:700;">Accept Your Invite</a>
     </p>
+
+    <div style="margin:16px 0;padding:12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;">
+      <p style="margin:0;font-size:13px;color:#555;">
+        Invite code: <strong style="color:#111;">${inviteCode}</strong><br />
+        Sent: <strong style="color:#111;">${sentAtText}</strong>
+      </p>
+    </div>
+
+    <p style="font-size:13px;color:#666;">
+      If you see more than one Displaygram invite email, use the newest email and match this invite code.
+    </p>
+
     <p>If you weren’t expecting this email, you can safely ignore it.</p>
+
     <p>— The Displaygram Team</p>
-  </div>`,
+  </div>
+`,
     },
 
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  return { success: true, inviteId };
+  return { success: true, inviteId, inviteCode };
 });
