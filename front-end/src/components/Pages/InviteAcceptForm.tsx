@@ -17,6 +17,7 @@ import { db, functions } from "../../utils/firebase";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
 import "./inviteAcceptForm.css";
+import { refreshCurrentUserProfile } from "../../thunks/currentUserThunk";
 
 type InviteDoc = {
   inviteeEmail: string;
@@ -192,23 +193,36 @@ export default function InviteAcceptForm() {
     setError(null);
 
     try {
-      const acceptCompanyInvite = httpsCallable(
-        functions,
-        "acceptCompanyInvite",
-      );
+      const acceptTeamInvite = httpsCallable(functions, "acceptTeamInvite");
 
-      await acceptCompanyInvite({
+      await acceptTeamInvite({
         inviteId,
         companyId,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
       });
 
+      const authUser = getAuth().currentUser;
+
+      if (authUser) {
+        await authUser.getIdToken(true);
+        const refreshedUser = await dispatch(
+          refreshCurrentUserProfile(authUser.uid),
+        );
+
+        if (!refreshedUser?.companyId) {
+          throw new Error(
+            "Your account was created, but your company profile did not finish loading.",
+          );
+        }
+      }
+
       dispatch(showMessage("✅ Invite accepted. Welcome!"));
       navigate("/user-home-page");
     } catch (err: any) {
       console.error("Accept invite failed:", err);
       setError(err.message || "Failed to accept invite.");
+      throw err;
     } finally {
       setSubmitting(false);
     }
@@ -234,13 +248,29 @@ export default function InviteAcceptForm() {
     setSubmitting(true);
     setError(null);
 
+    let createdAuthUserThisAttempt = false;
+
     try {
       const auth = getAuth();
 
       await createUserWithEmailAndPassword(auth, invite.inviteeEmail, password);
+      createdAuthUserThisAttempt = true;
+
       await acceptInvite();
     } catch (err: any) {
       console.error("Create account invite failed:", err);
+
+      if (createdAuthUserThisAttempt) {
+        try {
+          await getAuth().currentUser?.delete();
+          await signOut(getAuth());
+        } catch (cleanupErr) {
+          console.warn(
+            "Failed to cleanup newly created auth user:",
+            cleanupErr,
+          );
+        }
+      }
 
       if (err.code === "auth/email-already-in-use") {
         setError(
