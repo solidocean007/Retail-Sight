@@ -1,15 +1,26 @@
 // src/components/Playbooks/PlaybookDetailView.tsx
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import { PostWithID, CompanyAccountType } from "../../utils/types";
+import { selectUser } from "../../Slices/userSlice";
+import { showMessage } from "../../Slices/snackbarSlice";
+import { useAppDispatch } from "../../utils/store";
 import {
   CollectionType,
+  CreatePlaybookForecastInput,
+  PlaybookForecast,
   PlaybookPostSnapshot,
-  PostWithID,
-} from "../../utils/types";
+} from "../../types/library";
 import "./playbookDetailView.css";
 
 interface PlaybookDetailViewProps {
   playbook: CollectionType;
   posts?: PostWithID[];
+
+  accounts?: CompanyAccountType[];
+  forecasts?: PlaybookForecast[];
+  onAddForecast?: (forecast: CreatePlaybookForecastInput) => Promise<void>;
+
   onBack?: () => void;
   onExportPdf?: () => void;
   onShare?: () => void;
@@ -72,13 +83,33 @@ const getDisplayTitle = (display: PlaybookDisplay) => {
   return "Retail display example";
 };
 
+const formatAccountLabel = (account: CompanyAccountType) => {
+  const name = account.accountName ?? "Unknown Account";
+  const number = account.accountNumber ? `#${account.accountNumber}` : "";
+  const address = account.accountAddress ? ` — ${account.accountAddress}` : "";
+
+  return `${name} ${number}${address}`.trim();
+};
+
 const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   playbook,
   posts = [],
+  accounts = [],
+  forecasts = [],
+  onAddForecast,
   onBack,
   onExportPdf,
   onShare,
 }) => {
+  const dispatch = useAppDispatch();
+  const user = useSelector(selectUser);
+
+  const [selectedAccountNumber, setSelectedAccountNumber] = useState("");
+  const [estimatedCases, setEstimatedCases] = useState("");
+  const [forecastNotes, setForecastNotes] = useState("");
+  const [selectedSourcePostId, setSelectedSourcePostId] = useState("");
+  const [isSubmittingForecast, setIsSubmittingForecast] = useState(false);
+
   const allDisplays = useMemo<PlaybookDisplay[]>(() => {
     const snapshots = playbook.playbookPostSnapshots ?? [];
 
@@ -103,16 +134,121 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   }, [playbook.featuredPostSnapshots, playbook.featuredPostIds, allDisplays]);
 
   const supportingDisplays = useMemo<PlaybookDisplay[]>(() => {
-    const featuredIds = new Set(
-      featuredDisplays.map((display) => display.postId),
-    );
-
+    const featuredIds = new Set(featuredDisplays.map((d) => d.postId));
     return allDisplays.filter((display) => !featuredIds.has(display.postId));
   }, [allDisplays, featuredDisplays]);
 
   const primaryHeroImage = getDisplayImage(
     featuredDisplays[0] ?? allDisplays[0],
   );
+
+  const selectedAccount = useMemo(() => {
+    return accounts.find(
+      (account) => account.accountNumber?.toString() === selectedAccountNumber,
+    );
+  }, [accounts, selectedAccountNumber]);
+
+  const playbookForecasts = useMemo(() => {
+    return forecasts.filter((forecast) => forecast.playbookId === playbook.id);
+  }, [forecasts, playbook.id]);
+
+  const userForecasts = useMemo(() => {
+    if (!user?.uid) return [];
+
+    return playbookForecasts.filter((forecast) => forecast.userId === user.uid);
+  }, [playbookForecasts, user?.uid]);
+
+  const forecastSummary = useMemo(() => {
+    const participatingUsers = new Set(playbookForecasts.map((f) => f.userId));
+    const accountNumbers = new Set(
+      playbookForecasts.map((f) => f.accountNumber),
+    );
+
+    return {
+      totalAccounts: accountNumbers.size,
+      totalEstimatedCases: playbookForecasts.reduce(
+        (sum, f) => sum + (Number(f.estimatedCases) || 0),
+        0,
+      ),
+      plannedCount: playbookForecasts.filter((f) => f.status === "planned")
+        .length,
+      pitchedCount: playbookForecasts.filter((f) => f.status === "pitched")
+        .length,
+      approvedCount: playbookForecasts.filter((f) => f.status === "approved")
+        .length,
+      executedCount: playbookForecasts.filter((f) => f.status === "executed")
+        .length,
+      missedCount: playbookForecasts.filter((f) => f.status === "missed")
+        .length,
+      participatingUserCount: participatingUsers.size,
+    };
+  }, [playbookForecasts]);
+
+  const handleSubmitForecast = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!user?.uid || !user.companyId) {
+      dispatch(showMessage("You must be signed in to forecast this play."));
+      return;
+    }
+
+    if (!onAddForecast) {
+      dispatch(showMessage("Forecasting is not available yet."));
+      return;
+    }
+
+    if (!selectedAccount) {
+      dispatch(showMessage("Choose an account first."));
+      return;
+    }
+
+    const casesNumber = Number(estimatedCases);
+
+    if (estimatedCases && (Number.isNaN(casesNumber) || casesNumber < 0)) {
+      dispatch(showMessage("Estimated cases must be a valid number."));
+      return;
+    }
+
+    setIsSubmittingForecast(true);
+
+    try {
+      await onAddForecast({
+        playbookId: playbook.id,
+        companyId: user.companyId,
+
+        userId: user.uid,
+        userFirstName: user.firstName,
+        userLastName: user.lastName,
+        userSalesRouteNum: user.salesRouteNum,
+
+        accountNumber: selectedAccount.accountNumber?.toString() || "",
+        accountName: selectedAccount.accountName,
+        accountAddress: selectedAccount.accountAddress,
+        city: selectedAccount.city,
+        state: selectedAccount.state,
+        chain: selectedAccount.chain,
+        chainType: selectedAccount.chainType,
+
+        estimatedCases: estimatedCases ? casesNumber : undefined,
+        status: "planned",
+
+        notes: forecastNotes.trim() || undefined,
+        sourcePostId: selectedSourcePostId || undefined,
+      });
+
+      setSelectedAccountNumber("");
+      setEstimatedCases("");
+      setForecastNotes("");
+      setSelectedSourcePostId("");
+
+      dispatch(showMessage("Play forecast added."));
+    } catch (error) {
+      console.error("Error adding playbook forecast:", error);
+      dispatch(showMessage("Could not add forecast."));
+    } finally {
+      setIsSubmittingForecast(false);
+    }
+  };
 
   return (
     <article className="playbook-detail">
@@ -161,12 +297,12 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
 
           <div className="playbook-cover-meta">
             <div>
-              <span>Audience</span>
+              <span>Team</span>
               <strong>{formatAudience(playbook.audience)}</strong>
             </div>
 
             <div>
-              <span>Displays</span>
+              <span>Plays</span>
               <strong>{allDisplays.length}</strong>
             </div>
 
@@ -190,8 +326,8 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
 
       <section className="playbook-guidance-grid">
         <div className="playbook-guidance-card playbook-guidance-card-primary">
-          <p className="playbook-section-label">Manager Intent</p>
-          <h2>How to use this playbook</h2>
+          <p className="playbook-section-label">Coach Intent</p>
+          <h2>How to run this playbook</h2>
           <p>
             Use these displays as starting points. The goal is not to copy every
             detail exactly. The goal is to understand what worked, adapt it to
@@ -206,6 +342,13 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
           </div>
         )}
 
+        {playbook.gamePlan && (
+          <div className="playbook-guidance-card">
+            <p className="playbook-section-label">Game Plan</p>
+            <p>{playbook.gamePlan}</p>
+          </div>
+        )}
+
         {playbook.executionGoal && (
           <div className="playbook-guidance-card">
             <p className="playbook-section-label">Execution Goal</p>
@@ -213,17 +356,17 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
           </div>
         )}
 
-        {playbook.managerNotes && (
+        {playbook.coachNotes && (
           <div className="playbook-guidance-card">
-            <p className="playbook-section-label">Manager Notes</p>
-            <p>{playbook.managerNotes}</p>
+            <p className="playbook-section-label">Coach&apos;s Notes</p>
+            <p>{playbook.coachNotes}</p>
           </div>
         )}
       </section>
 
       <section className="playbook-featured-section">
         <div className="playbook-section-heading">
-          <p className="playbook-section-label">Featured Displays</p>
+          <p className="playbook-section-label">Featured Plays</p>
           <h2>Start with these examples</h2>
           <p>
             These displays should anchor the team’s thinking. Look at structure,
@@ -234,64 +377,51 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
 
         {featuredDisplays.length === 0 ? (
           <div className="playbook-empty-panel">
-            No featured displays have been added yet.
+            No featured plays have been added yet.
           </div>
         ) : (
           <div className="playbook-featured-grid">
             {featuredDisplays.map((display, index) => (
-              <article
-                className="playbook-featured-card"
-                key={`${display.postId}-featured-${index}`}
-              >
-                <div className="playbook-featured-image">
+              <article className="playbook-display-card" key={display.postId}>
+                <div className="playbook-display-image-wrap">
                   {getDisplayImage(display) ? (
                     <img
                       src={getDisplayImage(display)}
                       alt={getDisplayTitle(display)}
                     />
                   ) : (
-                    <div className="playbook-image-placeholder">
-                      Display photo
+                    <div className="playbook-display-placeholder">No image</div>
+                  )}
+                </div>
+
+                <div className="playbook-display-body">
+                  <p className="playbook-section-label">Play {index + 1}</p>
+                  <h3>{getDisplayTitle(display)}</h3>
+
+                  {display.description && <p>{display.description}</p>}
+
+                  {display.whyThisPlayWorks && (
+                    <div className="playbook-callout">
+                      <strong>Why this play works:</strong>
+                      <p>{display.whyThisPlayWorks}</p>
                     </div>
                   )}
 
-                  <span className="playbook-featured-number">
-                    Featured {index + 1}
-                  </span>
-                </div>
-
-                <div className="playbook-featured-body">
-                  <h3>{getDisplayTitle(display)}</h3>
+                  {display.suggestedExecution && (
+                    <div className="playbook-callout">
+                      <strong>Suggested execution:</strong>
+                      <p>{display.suggestedExecution}</p>
+                    </div>
+                  )}
 
                   <div className="playbook-display-meta">
                     {display.accountName && <span>{display.accountName}</span>}
-                    {display.chain && <span>{display.chain}</span>}
-                    {display.city && display.state && (
-                      <span>
-                        {display.city}, {display.state}
-                      </span>
-                    )}
-                  </div>
-
-                  {display.brands && display.brands.length > 0 && (
-                    <div className="playbook-chip-row">
-                      {display.brands.slice(0, 5).map((brand) => (
-                        <span className="playbook-chip" key={brand}>
-                          {brand}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {display.description && (
-                    <p className="playbook-display-description">
-                      {display.description}
-                    </p>
-                  )}
-
-                  <div className="playbook-rep-note">
-                    <strong>Rep takeaway:</strong> Use this example to guide
-                    display shape, brand focus, and account-level execution.
+                    {display.brands?.length ? (
+                      <span>{display.brands.join(", ")}</span>
+                    ) : null}
+                    {display.totalCaseCount ? (
+                      <span>{display.totalCaseCount} cases</span>
+                    ) : null}
                   </div>
                 </div>
               </article>
@@ -300,71 +430,165 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
         )}
       </section>
 
-      <section className="playbook-supporting-section">
+      <section className="playbook-forecast-section no-print">
         <div className="playbook-section-heading">
-          <p className="playbook-section-label">Supporting Examples</p>
-          <h2>More displays to build from</h2>
+          <p className="playbook-section-label">Run the Play</p>
+          <h2>Forecast where this can execute</h2>
           <p>
-            Use these additional examples for variation across account types,
-            store sizes, chains, and available floor space.
+            Choose accounts where you think this playbook can work and estimate
+            the case opportunity. This gives the team a forecast before displays
+            are actually built.
           </p>
         </div>
 
-        {supportingDisplays.length === 0 ? (
-          <div className="playbook-empty-panel">
-            No supporting displays have been added yet.
+        <div className="playbook-forecast-layout">
+          <form
+            className="playbook-forecast-form"
+            onSubmit={handleSubmitForecast}
+          >
+            <label>
+              Account
+              <select
+                value={selectedAccountNumber}
+                onChange={(e) => setSelectedAccountNumber(e.target.value)}
+                required
+              >
+                <option value="">Choose an account</option>
+                {accounts.map((account) => (
+                  <option
+                    key={account.accountNumber?.toString()}
+                    value={account.accountNumber?.toString()}
+                  >
+                    {formatAccountLabel(account)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Example play this account could reflect
+              <select
+                value={selectedSourcePostId}
+                onChange={(e) => setSelectedSourcePostId(e.target.value)}
+              >
+                <option value="">No specific play</option>
+                {allDisplays.map((display) => (
+                  <option key={display.postId} value={display.postId}>
+                    {getDisplayTitle(display)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Estimated Cases
+              <input
+                type="number"
+                min="0"
+                inputMode="numeric"
+                value={estimatedCases}
+                onChange={(e) => setEstimatedCases(e.target.value)}
+                placeholder="Example: 25"
+              />
+            </label>
+
+            <label>
+              Notes
+              <textarea
+                value={forecastNotes}
+                onChange={(e) => setForecastNotes(e.target.value)}
+                placeholder="Optional: why this account is a good fit, space concerns, timing, manager interest..."
+                rows={3}
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="button-primary"
+              disabled={isSubmittingForecast || !selectedAccountNumber}
+            >
+              {isSubmittingForecast ? "Adding..." : "Add to Forecast"}
+            </button>
+          </form>
+
+          <aside className="playbook-forecast-summary">
+            <h3>Team Forecast</h3>
+
+            <div className="playbook-forecast-stat-grid">
+              <div>
+                <span>Accounts</span>
+                <strong>{forecastSummary.totalAccounts}</strong>
+              </div>
+
+              <div>
+                <span>Estimated Cases</span>
+                <strong>{forecastSummary.totalEstimatedCases}</strong>
+              </div>
+
+              <div>
+                <span>Reps</span>
+                <strong>{forecastSummary.participatingUserCount}</strong>
+              </div>
+
+              <div>
+                <span>Planned</span>
+                <strong>{forecastSummary.plannedCount}</strong>
+              </div>
+            </div>
+
+            <div className="playbook-user-forecast">
+              <h4>Your Forecast</h4>
+
+              {userForecasts.length === 0 ? (
+                <p>No accounts added yet.</p>
+              ) : (
+                <ul>
+                  {userForecasts.map((forecast) => (
+                    <li key={forecast.id}>
+                      <strong>{forecast.accountName}</strong>
+                      <span>
+                        {forecast.estimatedCases
+                          ? `${forecast.estimatedCases} cases`
+                          : "No case estimate"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      {supportingDisplays.length > 0 && (
+        <section className="playbook-supporting-section">
+          <div className="playbook-section-heading">
+            <p className="playbook-section-label">More Examples</p>
+            <h2>Additional displays in this playbook</h2>
           </div>
-        ) : (
+
           <div className="playbook-supporting-grid">
             {supportingDisplays.map((display) => (
               <article
                 className="playbook-supporting-card"
                 key={display.postId}
               >
-                <div className="playbook-supporting-image">
-                  {getDisplayImage(display) ? (
-                    <img
-                      src={getDisplayImage(display)}
-                      alt={getDisplayTitle(display)}
-                    />
-                  ) : (
-                    <div className="playbook-image-placeholder">
-                      Display photo
-                    </div>
-                  )}
-                </div>
+                {getDisplayImage(display) && (
+                  <img
+                    src={getDisplayImage(display)}
+                    alt={getDisplayTitle(display)}
+                  />
+                )}
 
-                <div className="playbook-supporting-body">
+                <div>
                   <h3>{getDisplayTitle(display)}</h3>
-
-                  <div className="playbook-display-meta">
-                    {display.accountName && <span>{display.accountName}</span>}
-                    {display.chain && <span>{display.chain}</span>}
-                  </div>
-
-                  {display.brands && display.brands.length > 0 && (
-                    <p className="playbook-supporting-brands">
-                      {display.brands.slice(0, 3).join(", ")}
-                    </p>
-                  )}
+                  {display.description && <p>{display.description}</p>}
                 </div>
               </article>
             ))}
           </div>
-        )}
-      </section>
-
-      <footer className="playbook-footer">
-        <div>
-          <strong>Displaygram</strong>
-          <p>
-            Built to help retail teams stop starting every display program from
-            scratch.
-          </p>
-        </div>
-
-        <span>{playbook.title}</span>
-      </footer>
+        </section>
+      )}
     </article>
   );
 };

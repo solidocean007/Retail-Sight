@@ -1,8 +1,8 @@
 // src/components/Playbooks/PlaybookForm.tsx
 import React, { useState } from "react";
 import { Box, Modal } from "@mui/material";
-import { CreateCollectionInput } from "../../utils/types";
 import "./playbookForm.css";
+import { CreateCollectionInput, PlaybookAudience } from "../../types/library";
 
 interface PlaybookFormProps {
   isOpen: boolean;
@@ -17,20 +17,20 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [gamePlan, setGamePlan] = useState("");
   const [executionGoal, setExecutionGoal] = useState("");
   const [whenToUse, setWhenToUse] = useState("");
-  const [managerNotes, setManagerNotes] = useState("");
-  const [audience, setAudience] = useState<"sales" | "supervisors" | "all">(
-    "sales",
-  );
+  const [coachNotes, setCoachNotes] = useState("");
+  const [audience, setAudience] = useState<PlaybookAudience>("sales");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
     setTitle("");
     setDescription("");
+    setGamePlan("");
     setExecutionGoal("");
     setWhenToUse("");
-    setManagerNotes("");
+    setCoachNotes("");
     setAudience("sales");
   };
 
@@ -38,6 +38,11 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
     if (isSubmitting) return;
     resetForm();
     onClose();
+  };
+
+  const clean = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed.length ? trimmed : undefined;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -51,7 +56,8 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
     try {
       await onAddPlaybook({
         title: trimmedTitle,
-        description: description.trim(),
+        description: clean(description),
+
         postIds: [],
         previewImages: [],
         sharedWith: [],
@@ -59,11 +65,16 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
 
         collectionType: "playbook",
         playbookStatus: "draft",
-        executionGoal: executionGoal.trim(),
-        whenToUse: whenToUse.trim(),
-        managerNotes: managerNotes.trim(),
+
+        gamePlan: clean(gamePlan),
+        executionGoal: clean(executionGoal),
+        whenToUse: clean(whenToUse),
+        coachNotes: clean(coachNotes),
         audience,
+
         featuredPostIds: [],
+        playbookPostSnapshots: [],
+        featuredPostSnapshots: [],
       });
 
       resetForm();
@@ -83,67 +94,107 @@ const PlaybookForm: React.FC<PlaybookFormProps> = ({
         <form className="playbook-form" onSubmit={handleSubmit}>
           <h3>Create Playbook</h3>
 
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Playbook Name"
-            required
-            autoFocus
-          />
+          <p className="playbook-form-subtitle">
+            Build a game plan from displays that worked before.
+          </p>
+          <div className="playbook-form-inputs">
+            <label>
+              Playbook Name
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Example: Halloween Display Game Plan"
+                required
+                autoFocus
+              />
+            </label>
 
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Short description"
-            rows={3}
-          />
+            <label>
+              Short Description
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Quick summary of what this playbook is for."
+                rows={3}
+              />
+            </label>
 
-          <input
-            type="text"
-            value={whenToUse}
-            onChange={(e) => setWhenToUse(e.target.value)}
-            placeholder="When to use this? Example: Halloween, AP5, Summer reset"
-          />
+            <label>
+              When to Use
+              <input
+                type="text"
+                value={whenToUse}
+                onChange={(e) => setWhenToUse(e.target.value)}
+                placeholder="Example: Halloween, AP5, summer reset, chain display push"
+              />
+            </label>
 
-          <textarea
-            value={executionGoal}
-            onChange={(e) => setExecutionGoal(e.target.value)}
-            placeholder="Execution goal. Example: Help reps build from proven displays."
-            rows={3}
-          />
+            <label>
+              Game Plan
+              <textarea
+                name="gamePlan"
+                value={gamePlan}
+                onChange={(e) => setGamePlan(e.target.value)}
+                placeholder="Explain the overall strategy. Example: Use proven lobby and endcap displays as starting points for seasonal execution."
+                rows={3}
+              />
+            </label>
 
-          <textarea
-            value={managerNotes}
-            onChange={(e) => setManagerNotes(e.target.value)}
-            placeholder="Manager notes for the team"
-            rows={4}
-          />
+            <label>
+              Execution Goal
+              <textarea
+                value={executionGoal}
+                onChange={(e) => setExecutionGoal(e.target.value)}
+                placeholder="What should the team accomplish? Example: Secure one incremental display in priority accounts."
+                rows={3}
+              />
+            </label>
 
-          <select
-            title="audience"
-            value={audience}
-            onChange={(e) =>
-              setAudience(e.target.value as "sales" | "supervisors" | "all")
-            }
-          >
-            <option value="sales">Sales Team</option>
-            <option value="supervisors">Supervisors</option>
-            <option value="all">All Team Members</option>
-          </select>
+            <label>
+              Coach&apos;s Notes
+              <textarea
+                name="coachNotes"
+                value={coachNotes}
+                onChange={(e) => setCoachNotes(e.target.value)}
+                placeholder="Add guidance for the team. Example: Focus on clean brand blocking, visible pricing, and seasonal tie-ins."
+                rows={4}
+              />
+            </label>
 
-          <div className="playbook-form-actions">
-            <button
-              type="submit"
-              disabled={!title.trim() || isSubmitting}
-              className={!title.trim() || isSubmitting ? "disabled-button" : ""}
-            >
-              {isSubmitting ? "Creating..." : "Create Playbook"}
-            </button>
+            <label>
+              Team
+              <select
+                title="audience"
+                value={audience}
+                onChange={(e) =>
+                  setAudience(e.target.value as PlaybookAudience)
+                }
+              >
+                <option value="sales">Sales Team</option>
+                <option value="supervisors">Supervisors</option>
+                <option value="all">All Team Members</option>
+              </select>
+            </label>
+            <div className="playbook-form-actions">
+              <button
+                type="submit"
+                disabled={!title.trim() || isSubmitting}
+                className={
+                  !title.trim() || isSubmitting ? "disabled-button" : ""
+                }
+              >
+                {isSubmitting ? "Creating..." : "Create Draft Playbook"}
+              </button>
 
-            <button type="button" onClick={handleClose} disabled={isSubmitting}>
-              Cancel
-            </button>
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </form>
       </Box>

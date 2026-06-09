@@ -1,16 +1,24 @@
 // src/components/Playbooks/PlaybooksPage.tsx
-import React, { useMemo, useState } from "react";
-import {
-  CollectionWithId,
-  CreateCollectionInput,
-  PostWithID,
-} from "../../utils/types";
+import React, { useEffect, useMemo, useState } from "react";
+import { PostWithID } from "../../utils/types";
 import PlaybookForm from "./PlaybookForm";
 import "./playbooksPage.css";
 import PlaybookDetailView from "./PlaybookDetailView";
-import { useDispatch } from "react-redux";
 import { showMessage } from "../../Slices/snackbarSlice";
 import { useAppDispatch } from "../../utils/store";
+import {
+  CreateCollectionInput,
+  CollectionWithId,
+  PlaybookForecast,
+  CreatePlaybookForecastInput,
+  isPlaybookCollection,
+} from "../../types/library";
+import {
+  addPlaybookForecast,
+  fetchPlaybookForecasts,
+} from "./helpers";
+import { selectUser } from "../../Slices/userSlice";
+import { useSelector } from "react-redux";
 
 interface PlaybooksPageProps {
   collections: CollectionWithId[];
@@ -26,28 +34,72 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
   onAddPlaybook,
 }) => {
   const dispatch = useAppDispatch();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPlaybook, setSelectedPlaybook] =
     useState<CollectionWithId | null>(null);
 
+  const user = useSelector(selectUser);
+
+  const [playbookForecasts, setPlaybookForecasts] = useState<
+    PlaybookForecast[]
+  >([]);
+
+  const [isLoadingForecasts, setIsLoadingForecasts] = useState(false);
+
+  useEffect(() => {
+    const loadForecasts = async () => {
+      if (!selectedPlaybook?.id || !user?.companyId) return;
+
+      setIsLoadingForecasts(true);
+
+      try {
+        const forecasts = await fetchPlaybookForecasts(
+          selectedPlaybook.id,
+          user.companyId,
+        );
+
+        setPlaybookForecasts(forecasts);
+      } catch (error) {
+        console.error("Error loading playbook forecasts:", error);
+        dispatch(showMessage("Could not load playbook forecast."));
+      } finally {
+        setIsLoadingForecasts(false);
+      }
+    };
+
+    loadForecasts();
+  }, [selectedPlaybook?.id, user?.companyId, dispatch]);
+
+  const handleAddPlaybookForecast = async (
+    input: CreatePlaybookForecastInput,
+  ) => {
+    try {
+      const forecastId = await addPlaybookForecast(input);
+
+      const newForecast: PlaybookForecast = {
+        id: forecastId,
+        ...input,
+        status: input.status ?? "planned",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setPlaybookForecasts((prev) => [newForecast, ...prev]);
+
+      dispatch(showMessage("Forecast added to playbook."));
+    } catch (error) {
+      console.error("Error adding playbook forecast:", error);
+      dispatch(showMessage("Could not add forecast."));
+      throw error;
+    }
+  };
+
   const playbooks = useMemo(() => {
-    return collections.filter(
-      (collection) => collection.collectionType === "playbook",
-    );
+    return collections.filter(isPlaybookCollection);
   }, [collections]);
 
   const handleOpenPlaybook = (playbook: CollectionWithId) => {
-    const displayCount = playbook.postIds?.length ?? 0;
-
-    if (displayCount === 0) {
-      dispatch(
-        showMessage(
-          "This playbook has no displays yet. Add displays before viewing the full playbook.",
-        ),
-      );
-      return;
-    }
-
     setSelectedPlaybook(playbook);
   };
 
@@ -94,13 +146,20 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
       ...input,
       collectionType: "playbook",
       playbookStatus: input.playbookStatus ?? "draft",
+
       postIds: input.postIds ?? [],
       previewImages: input.previewImages ?? [],
       sharedWith: input.sharedWith ?? [],
       isShareableOutsideCompany: input.isShareableOutsideCompany ?? false,
+
       featuredPostIds: input.featuredPostIds ?? [],
+      playbookPostSnapshots: input.playbookPostSnapshots ?? [],
+      featuredPostSnapshots: input.featuredPostSnapshots ?? [],
     });
 
+    dispatch(
+      showMessage("Playbook created. Start adding plays from proven displays."),
+    );
     setIsFormOpen(false);
   };
 
@@ -117,6 +176,9 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
       <PlaybookDetailView
         playbook={selectedPlaybook}
         posts={playbookPosts}
+        accounts={[]}
+        forecasts={playbookForecasts}
+        onAddForecast={handleAddPlaybookForecast}
         onBack={() => setSelectedPlaybook(null)}
         onShare={() => console.log("Share playbook")}
         onExportPdf={printPlaybook}
@@ -128,13 +190,14 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
     <section className="playbooks-page">
       <div className="playbooks-hero">
         <div>
-          <p className="playbooks-eyebrow">Reusable execution guidance</p>
+          <p className="playbooks-eyebrow">Build from what worked before</p>
+
           <h2>Playbooks</h2>
+
           <p>
-            Playbooks turn proven display photos into guided execution tools.
-            Managers can add context, goals, timing, and notes so reps know how
-            to use past displays as a starting point instead of starting from
-            scratch.
+            Turn proven display photos into reusable game plans. Add
+            coach&apos;s notes, execution goals, timing, and featured plays so
+            your team can run with examples instead of starting from scratch.
           </p>
         </div>
 
@@ -149,27 +212,26 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
 
       <div className="playbooks-info-grid">
         <article className="playbooks-info-card">
-          <h3>What reps should understand</h3>
+          <h3>Game Plan</h3>
           <p>
-            A playbook should explain when to use the displays, what the manager
-            is trying to accomplish, and how each example can be adapted in the
-            field.
+            Explain what the team is trying to accomplish and how past displays
+            should guide the next execution.
           </p>
         </article>
 
         <article className="playbooks-info-card">
-          <h3>What managers add</h3>
+          <h3>Coach&apos;s Notes</h3>
           <p>
-            Manager notes, execution goals, featured displays, brand/program
-            context, and reminders about what made the original execution work.
+            Add manager guidance, timing, account focus, brand priorities, and
+            reminders about what made the original displays work.
           </p>
         </article>
 
         <article className="playbooks-info-card">
-          <h3>Where this is going</h3>
+          <h3>Run the Play</h3>
           <p>
-            Playbooks can become Displaygram-branded execution guides that are
-            shareable as PDFs across a distributor, supplier, or sales network.
+            Reps use featured displays as a starting point, execute in the
+            field, and create new displays that improve future playbooks.
           </p>
         </article>
       </div>
@@ -177,9 +239,7 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
       <div className="playbooks-section-header">
         <div>
           <h3>Your Playbooks</h3>
-          <p>
-            Guided collections built from display history and manager context.
-          </p>
+          <p>Reusable game plans built from display history.</p>
         </div>
       </div>
 
@@ -187,9 +247,10 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
         <div className="playbooks-empty-state">
           <h3>No playbooks yet</h3>
           <p>
-            Create your first playbook to group proven displays with notes,
-            timing, and execution goals for your team.
+            Create your first playbook to turn proven displays into a field
+            execution guide for your team.
           </p>
+
           <button
             type="button"
             className="button-primary"
@@ -204,7 +265,8 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
             const previewImages = playbook.previewImages ?? [];
             const featuredPostIds = playbook.featuredPostIds ?? [];
             const displayCount = playbook.postIds?.length ?? 0;
-            const isEmptyPlaybook = displayCount === 0;
+            const status = playbook.playbookStatus ?? "draft";
+            const audience = playbook.audience ?? "sales";
 
             return (
               <article className="playbook-card" key={playbook.id}>
@@ -221,22 +283,15 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                       ))
                   ) : (
                     <div className="playbook-card-placeholder">
-                      Displaygram Playbook
+                      No plays added yet
                     </div>
                   )}
                 </div>
 
                 <div className="playbook-card-body">
                   <div className="playbook-card-topline">
-                    <span className="playbook-badge">
-                      {playbook.playbookStatus ?? "draft"}
-                    </span>
-
-                    {playbook.audience && (
-                      <span className="playbook-audience">
-                        {playbook.audience}
-                      </span>
-                    )}
+                    <span className="playbook-badge">{status}</span>
+                    <span className="playbook-audience">{audience}</span>
                   </div>
 
                   <h4>{playbook.title}</h4>
@@ -254,6 +309,12 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                       </p>
                     )}
 
+                    {playbook.gamePlan && (
+                      <p>
+                        <strong>Game plan:</strong> {playbook.gamePlan}
+                      </p>
+                    )}
+
                     {playbook.executionGoal && (
                       <p>
                         <strong>Execution goal:</strong>{" "}
@@ -261,18 +322,23 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                       </p>
                     )}
 
-                    {playbook.managerNotes && (
+                    {playbook.coachNotes && (
                       <p>
-                        <strong>Manager notes:</strong> {playbook.managerNotes}
+                        <strong>Coach&apos;s notes:</strong>{" "}
+                        {playbook.coachNotes}
                       </p>
                     )}
                   </div>
 
                   <div className="playbook-stats">
                     <span>
-                      {displayCount} display{displayCount !== 1 ? "s" : ""}
+                      {displayCount} play{displayCount !== 1 ? "s" : ""}
                     </span>
-                    <span>{featuredPostIds.length} featured</span>
+
+                    <span>
+                      {featuredPostIds.length} featured{" "}
+                      {featuredPostIds.length === 1 ? "play" : "plays"}
+                    </span>
                   </div>
 
                   <div className="playbook-actions">
@@ -281,34 +347,8 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                       className="btn-outline"
                       onClick={() => handleOpenPlaybook(playbook)}
                     >
-                      View Playbook
+                      Open Playbook
                     </button>
-
-                    {/* <button
-                      type="button"
-                      className="btn-outline"
-                      disabled={isEmptyPlaybook}
-                      title={
-                        isEmptyPlaybook
-                          ? "Add displays before exporting this playbook."
-                          : "Export this playbook as a PDF."
-                      }
-                      onClick={() => {
-                        if (isEmptyPlaybook) {
-                          dispatch(
-                            showMessage(
-                              "Add displays to this playbook before exporting.",
-                            ),
-                          );
-                          return;
-                        }
-
-                        setSelectedPlaybook(playbook);
-                        setTimeout(() => window.print(), 100);
-                      }}
-                    >
-                      Export PDF
-                    </button> */}
                   </div>
                 </div>
               </article>
