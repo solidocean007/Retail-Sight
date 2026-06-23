@@ -74,7 +74,14 @@ export const processAccountImport = onRequest(
         return;
       }
 
-      if (syncConfig.provider !== "encompass") {
+      const provider =
+        typeof syncConfig?.provider === "string" &&
+        syncConfig.provider.trim().length > 0
+          ? syncConfig.provider.trim().toLowerCase()
+          : "encompass";
+
+      if (provider !== "encompass") {
+        console.log("Unsupported provider for domain:", domain, provider);
         res.status(200).send("Unsupported provider");
         return;
       }
