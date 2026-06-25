@@ -221,6 +221,12 @@ export const isPublishedPlaybook = (
   );
 };
 
+export type PlaybookForecastStatus =
+  | "planned"
+  | "pitched"
+  | "approved"
+  | "executed"
+  | "missed";
 
 export interface PlaybookForecast {
   id: string;
@@ -264,46 +270,6 @@ export interface PlaybookForecast {
   updatedAt?: string;
 }
 
-
-export type PlaybookForecastStatus =
-  | "planned"
-  | "pitched"
-  | "approved"
-  | "executed"
-  | "missed";
-
-export interface PlaybookForecast {
-  id: string;
-
-  playbookId: string;
-  companyId: string;
-
-  userId: string;
-  userFirstName?: string;
-  userLastName?: string;
-  userSalesRouteNum?: string | number;
-
-  accountNumber: string;
-  accountName: string;
-  accountAddress?: string;
-  city?: string;
-  state?: string;
-  chain?: string;
-  chainType?: string;
-
-  estimatedCases?: number;
-  estimatedUnits?: number;
-
-  status: PlaybookForecastStatus;
-
-  notes?: string;
-  sourcePostId?: string;
-  executionPostId?: string;
-
-  createdAt: string;
-  updatedAt?: string;
-}
-
 export type CreatePlaybookForecastInput = {
   playbookId: string;
   companyId: string;
@@ -328,4 +294,21 @@ export type CreatePlaybookForecastInput = {
 
   notes?: string;
   sourcePostId?: string;
+  executionPostId?: string;
+};
+
+export interface PlaybookForecastSummary {
+  playbookId: string;
+
+  totalAccounts: number;
+  totalEstimatedCases: number;
+  totalEstimatedUnits: number;
+
+  plannedCount: number;
+  pitchedCount: number;
+  approvedCount: number;
+  executedCount: number;
+  missedCount: number;
+
+  participatingUserCount: number;
 };

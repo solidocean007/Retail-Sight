@@ -16,7 +16,7 @@ import {
 import {
   addPlaybookForecast,
   fetchPlaybookForecasts,
-} from "./helpers";
+} from "./playbookForecastHelpers";
 import { selectUser } from "../../Slices/userSlice";
 import { useSelector } from "react-redux";
 
@@ -49,7 +49,10 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
 
   useEffect(() => {
     const loadForecasts = async () => {
-      if (!selectedPlaybook?.id || !user?.companyId) return;
+      if (!selectedPlaybook?.id || !user?.companyId) {
+        setPlaybookForecasts([]);
+        return;
+      }
 
       setIsLoadingForecasts(true);
 
@@ -178,6 +181,7 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
         posts={playbookPosts}
         accounts={[]}
         forecasts={playbookForecasts}
+        isLoadingForecasts={isLoadingForecasts}
         onAddForecast={handleAddPlaybookForecast}
         onBack={() => setSelectedPlaybook(null)}
         onShare={() => console.log("Share playbook")}
@@ -267,6 +271,10 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
             const displayCount = playbook.postIds?.length ?? 0;
             const status = playbook.playbookStatus ?? "draft";
             const audience = playbook.audience ?? "sales";
+            const coachNotes =
+              playbook.coachNotes ??
+              (playbook as CollectionWithId & { managerNotes?: string })
+                .managerNotes;
 
             return (
               <article className="playbook-card" key={playbook.id}>
@@ -322,10 +330,10 @@ const PlaybooksPage: React.FC<PlaybooksPageProps> = ({
                       </p>
                     )}
 
-                    {playbook.coachNotes && (
+                    {coachNotes && (
                       <p>
                         <strong>Coach&apos;s notes:</strong>{" "}
-                        {playbook.coachNotes}
+                        {coachNotes}
                       </p>
                     )}
                   </div>

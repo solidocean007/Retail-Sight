@@ -19,6 +19,7 @@ interface PlaybookDetailViewProps {
 
   accounts?: CompanyAccountType[];
   forecasts?: PlaybookForecast[];
+  isLoadingForecasts?: boolean;
   onAddForecast?: (forecast: CreatePlaybookForecastInput) => Promise<void>;
 
   onBack?: () => void;
@@ -96,6 +97,7 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   posts = [],
   accounts = [],
   forecasts = [],
+  isLoadingForecasts = false,
   onAddForecast,
   onBack,
   onExportPdf,
@@ -141,6 +143,9 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
   const primaryHeroImage = getDisplayImage(
     featuredDisplays[0] ?? allDisplays[0],
   );
+
+  const coachNotes =
+    playbook.coachNotes ?? (playbook as CollectionType & { managerNotes?: string }).managerNotes;
 
   const selectedAccount = useMemo(() => {
     return accounts.find(
@@ -356,10 +361,10 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
           </div>
         )}
 
-        {playbook.coachNotes && (
+        {coachNotes && (
           <div className="playbook-guidance-card">
             <p className="playbook-section-label">Coach&apos;s Notes</p>
-            <p>{playbook.coachNotes}</p>
+            <p>{coachNotes}</p>
           </div>
         )}
       </section>
@@ -375,9 +380,10 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
           </p>
         </div>
 
-        {featuredDisplays.length === 0 ? (
+        {allDisplays.length === 0 ? (
           <div className="playbook-empty-panel">
-            No featured plays have been added yet.
+            No plays added yet. Add displays from the feed or library to build
+            this game plan.
           </div>
         ) : (
           <div className="playbook-featured-grid">
@@ -442,77 +448,87 @@ const PlaybookDetailView: React.FC<PlaybookDetailViewProps> = ({
         </div>
 
         <div className="playbook-forecast-layout">
-          <form
-            className="playbook-forecast-form"
-            onSubmit={handleSubmitForecast}
-          >
-            <label>
-              Account
-              <select
-                value={selectedAccountNumber}
-                onChange={(e) => setSelectedAccountNumber(e.target.value)}
-                required
-              >
-                <option value="">Choose an account</option>
-                {accounts.map((account) => (
-                  <option
-                    key={account.accountNumber?.toString()}
-                    value={account.accountNumber?.toString()}
-                  >
-                    {formatAccountLabel(account)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Example play this account could reflect
-              <select
-                value={selectedSourcePostId}
-                onChange={(e) => setSelectedSourcePostId(e.target.value)}
-              >
-                <option value="">No specific play</option>
-                {allDisplays.map((display) => (
-                  <option key={display.postId} value={display.postId}>
-                    {getDisplayTitle(display)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Estimated Cases
-              <input
-                type="number"
-                min="0"
-                inputMode="numeric"
-                value={estimatedCases}
-                onChange={(e) => setEstimatedCases(e.target.value)}
-                placeholder="Example: 25"
-              />
-            </label>
-
-            <label>
-              Notes
-              <textarea
-                value={forecastNotes}
-                onChange={(e) => setForecastNotes(e.target.value)}
-                placeholder="Optional: why this account is a good fit, space concerns, timing, manager interest..."
-                rows={3}
-              />
-            </label>
-
-            <button
-              type="submit"
-              className="button-primary"
-              disabled={isSubmittingForecast || !selectedAccountNumber}
+          {accounts.length === 0 ? (
+            <div className="playbook-empty-panel">
+              No accounts available yet. Account selection will be wired next.
+            </div>
+          ) : (
+            <form
+              className="playbook-forecast-form"
+              onSubmit={handleSubmitForecast}
             >
-              {isSubmittingForecast ? "Adding..." : "Add to Forecast"}
-            </button>
-          </form>
+              <label>
+                Account
+                <select
+                  value={selectedAccountNumber}
+                  onChange={(e) => setSelectedAccountNumber(e.target.value)}
+                  required
+                >
+                  <option value="">Choose an account</option>
+                  {accounts.map((account) => (
+                    <option
+                      key={account.accountNumber?.toString()}
+                      value={account.accountNumber?.toString()}
+                    >
+                      {formatAccountLabel(account)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Example play this account could reflect
+                <select
+                  value={selectedSourcePostId}
+                  onChange={(e) => setSelectedSourcePostId(e.target.value)}
+                >
+                  <option value="">No specific play</option>
+                  {allDisplays.map((display) => (
+                    <option key={display.postId} value={display.postId}>
+                      {getDisplayTitle(display)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Estimated Cases
+                <input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={estimatedCases}
+                  onChange={(e) => setEstimatedCases(e.target.value)}
+                  placeholder="Example: 25"
+                />
+              </label>
+
+              <label>
+                Notes
+                <textarea
+                  value={forecastNotes}
+                  onChange={(e) => setForecastNotes(e.target.value)}
+                  placeholder="Optional: why this account is a good fit, space concerns, timing, manager interest..."
+                  rows={3}
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="button-primary"
+                disabled={isSubmittingForecast || !selectedAccountNumber}
+              >
+                {isSubmittingForecast ? "Adding..." : "Add to Forecast"}
+              </button>
+            </form>
+          )}
 
           <aside className="playbook-forecast-summary">
             <h3>Team Forecast</h3>
+
+            {isLoadingForecasts && (
+              <p className="playbook-forecast-loading">Loading forecast...</p>
+            )}
 
             <div className="playbook-forecast-stat-grid">
               <div>
